@@ -216,7 +216,7 @@ export const EmergencyContactDirectoryPage: React.FC = () => {
                 <option value="">{t('emergency.allTypes')}</option>
                 {Object.entries(CONTACT_TYPE_LABELS).map(([value, label]) => (
                   <option key={value} value={value}>
-                    {label}
+                    {t(`emergency.contactTypes.${value}`, { defaultValue: label })}
                   </option>
                 ))}
               </select>

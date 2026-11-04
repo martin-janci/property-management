@@ -39,12 +39,11 @@ const BUNDLES: Record<string, Json> = { en, sk, cs, de, pl, hu };
 
 /** Keys ProtectedRoute resolves from the shipped locale bundles (not defaultValue-only). */
 const BUNDLE_KEYS = [
+  'accessibility.checkingAuthentication',
   'common.loading',
-  'errors.unauthorized',
-  // Was defaultValue-only, which showed Slovak/Czech users an English
-  // "Access Denied" heading; now shipped in every bundle.
   'errors.accessDenied',
   'errors.backToDashboard',
+  'errors.unauthorized',
 ] as const;
 
 /**
@@ -54,7 +53,9 @@ const BUNDLE_KEYS = [
  * inverse-parity bug that a partial add causes), so the classification test
  * below asserts they stay absent everywhere.
  */
-const DEFAULTVALUE_ONLY_KEYS = ['accessibility.checkingAuthentication'] as const;
+// `accessibility.checkingAuthentication` and `errors.accessDenied` used to live
+// here; they now ship in all six locales (see BUNDLE_KEYS).
+const DEFAULTVALUE_ONLY_KEYS: readonly string[] = [];
 
 function getPath(obj: unknown, path: string): unknown {
   return path.split('.').reduce<unknown>((acc, part) => {

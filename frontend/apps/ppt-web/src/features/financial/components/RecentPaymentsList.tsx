@@ -3,22 +3,15 @@
  */
 
 import type { Payment } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
+import { paymentMethodKey } from '../utils/constants';
+import { formatCurrency, formatDate } from '../utils/formatting';
 
 interface RecentPaymentsListProps {
   payments: Payment[];
   isLoading?: boolean;
   onViewAll?: () => void;
 }
-
-const PAYMENT_METHOD_LABELS: Record<string, string> = {
-  bank_transfer: 'Bank Transfer',
-  card: 'Card',
-  cash: 'Cash',
-  check: 'Check',
-  online: 'Online',
-  direct_debit: 'Direct Debit',
-  other: 'Other',
-};
 
 const STATUS_STYLES: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -28,26 +21,14 @@ const STATUS_STYLES: Record<string, string> = {
   cancelled: 'bg-gray-100 text-gray-800',
 };
 
-function formatCurrency(amount: number, currency = 'EUR'): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-  }).format(amount);
-}
-
-function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
-
 export function RecentPaymentsList({ payments, isLoading, onViewAll }: RecentPaymentsListProps) {
+  const { t } = useTranslation();
   if (isLoading) {
     return (
       <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Payments</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">
+          {t('financial.payments.recentPayments')}
+        </h3>
         <div className="animate-pulse space-y-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="flex items-center space-x-3">
@@ -66,8 +47,10 @@ export function RecentPaymentsList({ payments, isLoading, onViewAll }: RecentPay
   if (payments.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Payments</h3>
-        <p className="text-gray-500 text-center py-8">No recent payments</p>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">
+          {t('financial.payments.recentPayments')}
+        </h3>
+        <p className="text-gray-500 text-center py-8">{t('financial.recentPayments.empty')}</p>
       </div>
     );
   }
@@ -75,14 +58,16 @@ export function RecentPaymentsList({ payments, isLoading, onViewAll }: RecentPay
   return (
     <div className="bg-white rounded-lg shadow">
       <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-        <h3 className="text-lg font-medium text-gray-900">Recent Payments</h3>
+        <h3 className="text-lg font-medium text-gray-900">
+          {t('financial.payments.recentPayments')}
+        </h3>
         {onViewAll && (
           <button
             type="button"
             onClick={onViewAll}
             className="text-sm text-blue-600 hover:text-blue-800"
           >
-            View all
+            {t('financial.recentPayments.viewAll')}
           </button>
         )}
       </div>
@@ -96,11 +81,15 @@ export function RecentPaymentsList({ payments, isLoading, onViewAll }: RecentPay
                   {formatCurrency(payment.amount, payment.currency)}
                 </p>
                 <p className="text-sm text-gray-500">
-                  {PAYMENT_METHOD_LABELS[payment.payment_method] || payment.payment_method} •{' '}
-                  {formatDate(payment.payment_date)}
+                  {t(paymentMethodKey(payment.payment_method), {
+                    defaultValue: payment.payment_method,
+                  })}{' '}
+                  • {formatDate(payment.payment_date)}
                 </p>
                 {payment.reference && (
-                  <p className="text-xs text-gray-400 truncate">Ref: {payment.reference}</p>
+                  <p className="text-xs text-gray-400 truncate">
+                    {t('financial.recentPayments.reference', { reference: payment.reference })}
+                  </p>
                 )}
               </div>
               <span
@@ -108,7 +97,7 @@ export function RecentPaymentsList({ payments, isLoading, onViewAll }: RecentPay
                   STATUS_STYLES[payment.status] || STATUS_STYLES.pending
                 }`}
               >
-                {payment.status}
+                {t(`financial.paymentStatus.${payment.status}`, { defaultValue: payment.status })}
               </span>
             </div>
           </li>

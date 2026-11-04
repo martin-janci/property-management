@@ -21,6 +21,18 @@ export class HomePage extends SitemapPage {
     return this.nav().link(name);
   }
 
+  /** Public header "Sign in" link (anonymous visitors). */
+  signInLink(): Locator {
+    return this.navLink(/sign in|prihlásiť|přihlásit|anmelden|zaloguj|bejelentkezés/i);
+  }
+
+  /** Public header "Create account" link (anonymous visitors). */
+  createAccountLink(): Locator {
+    return this.navLink(
+      /create account|vytvoriť účet|vytvořit účet|konto erstellen|załóż konto|utwórz konto|fiók létrehozása/i
+    );
+  }
+
   homeLink(): Locator {
     return this.navLink(/home/i);
   }

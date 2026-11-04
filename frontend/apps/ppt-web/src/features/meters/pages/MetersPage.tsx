@@ -19,6 +19,8 @@ interface MetersPageProps {
   onNavigateToDetail: (meterId: string) => void;
   onNavigateToSubmitReading: (meterId: string) => void;
   onNavigateToComparison?: () => void;
+  /** Manager-only: pending reading validations queue. */
+  onNavigateToValidations?: () => void;
   onExport?: (options: ExportOptions) => void;
 }
 
@@ -31,6 +33,7 @@ export function MetersPage({
   onNavigateToDetail,
   onNavigateToSubmitReading,
   onNavigateToComparison,
+  onNavigateToValidations,
   onExport,
 }: MetersPageProps) {
   const { t, i18n } = useTranslation();
@@ -108,6 +111,15 @@ export function MetersPage({
           )}
         </div>
         <div className="flex items-center gap-2">
+          {onNavigateToValidations && (
+            <button
+              type="button"
+              onClick={onNavigateToValidations}
+              className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              {t('meters.nav.validations')}
+            </button>
+          )}
           {onNavigateToComparison && (
             <button
               type="button"
@@ -226,8 +238,7 @@ export function MetersPage({
       {/* Summary */}
       {!isLoading && meters.length > 0 && (
         <div className="mt-6 text-sm text-gray-500">
-          {t('common.showing')} {filteredMeters.length} {t('common.of')} {meters.length}{' '}
-          {t('meters.metersLabel')}
+          {t('meters.summary', { shown: filteredMeters.length, count: meters.length })}
         </div>
       )}
 

@@ -576,6 +576,29 @@ impl FeatureAnalyticsRepository {
         start_date: Option<DateTime<Utc>>,
         end_date: Option<DateTime<Utc>>,
     ) -> Result<FeatureUsageStats, SqlxError> {
+        self.feature_stats(feature_flag_id, None, start_date, end_date)
+            .await
+    }
+
+    /// Feature usage statistics restricted to one organization's events.
+    pub async fn get_feature_stats_for_org(
+        &self,
+        feature_flag_id: Uuid,
+        organization_id: Uuid,
+        start_date: Option<DateTime<Utc>>,
+        end_date: Option<DateTime<Utc>>,
+    ) -> Result<FeatureUsageStats, SqlxError> {
+        self.feature_stats(feature_flag_id, Some(organization_id), start_date, end_date)
+            .await
+    }
+
+    async fn feature_stats(
+        &self,
+        feature_flag_id: Uuid,
+        organization_id: Option<Uuid>,
+        start_date: Option<DateTime<Utc>>,
+        end_date: Option<DateTime<Utc>>,
+    ) -> Result<FeatureUsageStats, SqlxError> {
         let end = end_date.unwrap_or_else(Utc::now);
         let start = start_date.unwrap_or_else(|| end - Duration::days(30));
 
@@ -611,11 +634,13 @@ impl FeatureAnalyticsRepository {
                 COUNT(DISTINCT user_id) as unique_users
             FROM feature_usage_events
             WHERE feature_flag_id = $1 AND created_at >= $2 AND created_at <= $3
+              AND ($4::uuid IS NULL OR organization_id = $4)
             "#,
         )
         .bind(feature_flag_id)
         .bind(start)
         .bind(end)
+        .bind(organization_id)
         .fetch_one(&self.pool)
         .await?;
 

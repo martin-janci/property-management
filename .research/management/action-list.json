@@ -343,6 +343,61 @@
           "from-merged-review"
         ]
       }
+    },
+    {
+      "id": "code-review-reality-server-db-error-string-status-map",
+      "action": "reality-server maps HTTP status by substring-matching raw sqlx/Postgres error text (brittle under sqlx 0.9 / PG message changes)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-04T16:28:33Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T16:28:33Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-reality-server-inquiry-dead-fk-classify",
+      "action": "InquiriesHandler splits ListingNotFound vs RealtorNotFound by error substring, but both collapse to the same 404 at the route - dead, brittle classification",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-04T16:28:33Z (score=1 conf=medium vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T16:28:33Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "gh-issue-3299",
+      "action": "frontend CI: repo-wide apps/mobile biome lint debt fails `Lint & Format Check`, starving every frontend PR of CI coverage (Closes #3299)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-11-04T18:25:38Z (#3299)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T18:25:38Z",
+      "issue_ref": {
+        "number": 3299,
+        "url": "https://github.com/martin-janci/property-management/issues/3299",
+        "labels": [
+          "frontend",
+          "follow-up",
+          "infra"
+        ]
+      }
     }
   ],
   "generated": "2026-10-28T11:00:00Z"

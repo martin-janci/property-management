@@ -7,6 +7,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useConfirmDialog } from '../../../components/useConfirmDialog';
 import {
   useAiChatMessages,
   useAiChatSessions,
@@ -33,6 +34,7 @@ export function ChatInterface({
   onSessionChange,
 }: ChatInterfaceProps) {
   const { t } = useTranslation();
+  const { confirm, confirmDialog } = useConfirmDialog();
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(initialSessionId || null);
   const [sidebarOpen, setSidebarOpen] = useState(showSidebar);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -76,7 +78,13 @@ export function ChatInterface({
 
   const handleDeleteSession = useCallback(
     async (sessionId: string) => {
-      if (window.confirm(t('aiChat.confirmDelete'))) {
+      if (
+        await confirm({
+          message: t('aiChat.confirmDelete'),
+          confirmLabel: t('common.delete'),
+          variant: 'danger',
+        })
+      ) {
         try {
           await deleteSession.mutateAsync(sessionId);
           if (currentSessionId === sessionId) {
@@ -87,7 +95,7 @@ export function ChatInterface({
         }
       }
     },
-    [deleteSession, currentSessionId, t]
+    [deleteSession, currentSessionId, t, confirm]
   );
 
   const handleSendMessage = useCallback(
@@ -140,7 +148,7 @@ export function ChatInterface({
     [messageFeedback]
   );
 
-  const suggestedQuestions = getDefaultSuggestedQuestions();
+  const suggestedQuestions = getDefaultSuggestedQuestions(t);
   const isSending = sendMessage.isPending || createSession.isPending;
   const showWelcome = !currentSessionId || messages.length === 0;
 
@@ -257,6 +265,7 @@ export function ChatInterface({
           </div>
         )}
       </div>
+      {confirmDialog}
     </div>
   );
 }

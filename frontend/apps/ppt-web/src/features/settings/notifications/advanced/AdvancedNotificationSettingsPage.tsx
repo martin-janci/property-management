@@ -80,7 +80,7 @@ export function AdvancedNotificationSettingsPage() {
         enabled,
         error,
       });
-      setUpdateError('Failed to update category preference. Please try again.');
+      setUpdateError(t('settings.notifications.advanced.errors.category'));
     }
   };
 
@@ -119,7 +119,7 @@ export function AdvancedNotificationSettingsPage() {
               />
             </svg>
             <p className="ml-3 text-sm text-red-700">
-              Failed to load notification preferences. Please try again later.
+              {t('settings.notifications.advanced.errors.load')}
             </p>
           </div>
         </div>
@@ -130,7 +130,7 @@ export function AdvancedNotificationSettingsPage() {
   const tabs: { id: ActiveTab; label: string; icon: React.JSX.Element }[] = [
     {
       id: 'categories',
-      label: 'Categories',
+      label: t('settings.notifications.advanced.tabs.categories'),
       icon: (
         <svg
           className="h-5 w-5"
@@ -151,7 +151,7 @@ export function AdvancedNotificationSettingsPage() {
     },
     {
       id: 'schedule',
-      label: 'Schedule',
+      label: t('settings.notifications.advanced.tabs.schedule'),
       icon: (
         <svg
           className="h-5 w-5"
@@ -171,7 +171,7 @@ export function AdvancedNotificationSettingsPage() {
     },
     {
       id: 'grouping',
-      label: 'Grouping',
+      label: t('settings.notifications.advanced.tabs.grouping'),
       icon: (
         <svg
           className="h-5 w-5"
@@ -193,8 +193,10 @@ export function AdvancedNotificationSettingsPage() {
 
   return (
     <div className="max-w-3xl mx-auto p-6">
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">Advanced Notification Settings</h1>
-      <p className="text-gray-600 mb-2">Fine-tune how and when you receive notifications.</p>
+      <h1 className="text-2xl font-bold text-gray-900 mb-2">
+        {t('settings.notifications.advanced.title')}
+      </h1>
+      <p className="text-gray-600 mb-2">{t('settings.notifications.advanced.subtitle')}</p>
       {/* Cross-link to the per-event trigger UI so the two preference surfaces
           (category-level here, per-event there) are discoverable from one place. */}
       <p className="mb-6">
@@ -202,7 +204,7 @@ export function AdvancedNotificationSettingsPage() {
           to="/notifications/triggers"
           className="text-sm font-medium text-blue-600 hover:text-blue-500"
         >
-          Per-event triggers →
+          {t('settings.notifications.advanced.perEventTriggers')} →
         </Link>
       </p>
 
@@ -228,7 +230,7 @@ export function AdvancedNotificationSettingsPage() {
               onClick={() => setUpdateError(null)}
               className="ml-3 text-red-400 hover:text-red-500"
             >
-              <span className="sr-only">Dismiss</span>
+              <span className="sr-only">{t('common.dismiss')}</span>
               <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
               </svg>
@@ -271,7 +273,7 @@ export function AdvancedNotificationSettingsPage() {
       {activeTab === 'categories' && categoryQuery.data && (
         <div className="space-y-4">
           <p className="text-sm text-gray-500 mb-4">
-            Choose which types of notifications you want to receive and how.
+            {t('settings.notifications.advanced.categoriesIntro')}
           </p>
           {categoryQuery.data.categories.map((pref) => (
             <CategoryPreferenceCard
@@ -300,7 +302,7 @@ export function AdvancedNotificationSettingsPage() {
                   await updateQuietHours.mutateAsync(updates);
                 } catch (error) {
                   console.error('Failed to update quiet hours', { updates, error });
-                  setUpdateError('Failed to update quiet hours. Please try again.');
+                  setUpdateError(t('settings.notifications.advanced.errors.quietHours'));
                 }
               }}
             />
@@ -316,7 +318,7 @@ export function AdvancedNotificationSettingsPage() {
                   await updateDigest.mutateAsync(updates);
                 } catch (error) {
                   console.error('Failed to update digest preferences', { updates, error });
-                  setUpdateError('Failed to update digest preferences. Please try again.');
+                  setUpdateError(t('settings.notifications.advanced.errors.digest'));
                 }
               }}
             />
@@ -334,7 +336,7 @@ export function AdvancedNotificationSettingsPage() {
               await updateGrouping.mutateAsync(updates);
             } catch (error) {
               console.error('Failed to update grouping settings', { updates, error });
-              setUpdateError('Failed to update grouping settings. Please try again.');
+              setUpdateError(t('settings.notifications.advanced.errors.grouping'));
             }
           }}
         />

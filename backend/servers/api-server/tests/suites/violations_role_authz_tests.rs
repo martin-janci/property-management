@@ -111,6 +111,7 @@ async fn resident_cannot_issue_fine(pool: PgPool) {
     let resident = seed_user(&pool, "resident-fine@vio-authz.test").await;
     let violation_id = seed_violation(&pool, org, "VIO-AUTHZ-0001").await;
 
+    seed_membership(&pool, org, resident, "resident").await;
     let token = token_with_role(resident, org, "resident");
     let resp = app
         .execute(
@@ -139,6 +140,7 @@ async fn resident_cannot_decide_appeal(pool: PgPool) {
     let org = seed_org(&pool, "authz-appeal").await;
     let resident = seed_user(&pool, "resident-appeal@vio-authz.test").await;
 
+    seed_membership(&pool, org, resident, "resident").await;
     let token = token_with_role(resident, org, "resident");
     let resp = app
         .execute(
@@ -167,6 +169,7 @@ async fn resident_cannot_issue_violation_or_manage_rules(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org = seed_org(&pool, "authz-misc").await;
     let resident = seed_user(&pool, "resident-misc@vio-authz.test").await;
+    seed_membership(&pool, org, resident, "resident").await;
     let token = token_with_role(resident, org, "resident");
 
     let create_violation = app
@@ -230,6 +233,7 @@ async fn manager_cannot_assign_violation_to_non_member(pool: PgPool) {
     // An outsider user that exists but is NOT a member of `org`.
     let outsider = seed_user(&pool, "outsider@vio-authz.test").await;
 
+    seed_membership(&pool, org, manager, "manager").await;
     let token = token_with_role(manager, org, "manager");
     let resp = app
         .execute(
@@ -264,6 +268,7 @@ async fn manager_can_assign_violation_to_member(pool: PgPool) {
     let member = seed_user(&pool, "member@vio-authz.test").await;
     seed_membership(&pool, org, member, "resident").await;
 
+    seed_membership(&pool, org, manager, "manager").await;
     let token = token_with_role(manager, org, "manager");
     let resp = app
         .execute(
@@ -301,6 +306,7 @@ async fn manager_can_issue_fine(pool: PgPool) {
     let manager = seed_user(&pool, "manager@vio-authz.test").await;
     let violation_id = seed_violation(&pool, org, "VIO-AUTHZ-MGR-0001").await;
 
+    seed_membership(&pool, org, manager, "manager").await;
     let token = token_with_role(manager, org, "manager");
     let resp = app
         .execute(
@@ -345,6 +351,7 @@ async fn resident_cannot_add_evidence(pool: PgPool) {
     let resident = seed_user(&pool, "resident-evidence@vio-authz.test").await;
     let violation_id = seed_violation(&pool, org, "VIO-AUTHZ-EVID-0001").await;
 
+    seed_membership(&pool, org, resident, "resident").await;
     let token = token_with_role(resident, org, "resident");
     let resp = app
         .execute(
@@ -374,6 +381,7 @@ async fn manager_can_add_evidence(pool: PgPool) {
     let manager = seed_user(&pool, "manager-evidence@vio-authz.test").await;
     let violation_id = seed_violation(&pool, org, "VIO-AUTHZ-EVID-0002").await;
 
+    seed_membership(&pool, org, manager, "manager").await;
     let token = token_with_role(manager, org, "manager");
     let resp = app
         .execute(
@@ -421,6 +429,7 @@ async fn resident_forbidden_on_every_privileged_mutation(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org = seed_org(&pool, "authz-surface").await;
     let resident = seed_user(&pool, "resident-surface@vio-authz.test").await;
+    seed_membership(&pool, org, resident, "resident").await;
     let token = token_with_role(resident, org, "resident");
 
     let vid = Uuid::new_v4();
@@ -559,6 +568,7 @@ async fn resident_can_file_appeal_and_comment(pool: PgPool) {
     let org = seed_org(&pool, "authz-selfservice").await;
     let resident = seed_user(&pool, "resident-self@vio-authz.test").await;
     let violation_id = seed_violation(&pool, org, "VIO-AUTHZ-SELF-0001").await;
+    seed_membership(&pool, org, resident, "resident").await;
     let token = token_with_role(resident, org, "resident");
 
     let appeal = app
@@ -637,6 +647,7 @@ async fn resident_cannot_see_internal_comments_via_include_flag(pool: PgPool) {
     seed_comment(&pool, violation_id, staff, true).await;
 
     // Resident explicitly asks for internal notes — must be downgraded.
+    seed_membership(&pool, org, resident, "resident").await;
     let resident_token = token_with_role(resident, org, "resident");
     let resident_resp = app
         .execute(
@@ -665,11 +676,9 @@ async fn resident_cannot_see_internal_comments_via_include_flag(pool: PgPool) {
     );
 
     // Manager asking for the same sees the internal note.
-    let manager_token = token_with_role(
-        seed_user(&pool, "mgr-internal@vio-authz.test").await,
-        org,
-        "manager",
-    );
+    let manager = seed_user(&pool, "mgr-internal@vio-authz.test").await;
+    seed_membership(&pool, org, manager, "manager").await;
+    let manager_token = token_with_role(manager, org, "manager");
     let manager_resp = app
         .execute(
             app.get(&format!(

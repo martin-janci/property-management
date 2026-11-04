@@ -6,6 +6,7 @@ use api_core::extractors::RlsConnection;
 use axum::{http::StatusCode, Json};
 use chrono::NaiveDate;
 use common::errors::ErrorResponse;
+use common::TenantRole;
 use db::models::{
     ContractQuery, CreateVendor, CreateVendorContract, CreateVendorInvoice, InvoiceQuery, Vendor,
     VendorContract, VendorInvoice, VendorQuery,
@@ -26,6 +27,29 @@ pub(super) fn db_error(msg: &'static str, e: sqlx::Error) -> (StatusCode, Json<E
         StatusCode::INTERNAL_SERVER_ERROR,
         Json(ErrorResponse::new("DB_ERROR", msg)),
     )
+}
+
+/// Require a manager-class role (`manager`, `org_admin`, or a platform admin)
+/// for a mutation.
+///
+/// The role comes from the `RlsConnection`, which `ValidatedTenantExtractor`
+/// resolves from the caller's `organization_members` row (the database), never
+/// from the JWT. On rejection the connection is released before returning
+/// `403`, so the RLS context is cleared on this path too.
+pub(super) async fn require_manager(
+    rls: &mut RlsConnection,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    if rls.has_role(TenantRole::Manager) {
+        return Ok(());
+    }
+    rls.release().await;
+    Err((
+        StatusCode::FORBIDDEN,
+        Json(ErrorResponse::new(
+            "FORBIDDEN",
+            "Manager role required for this operation",
+        )),
+    ))
 }
 
 /// Build a `404` response.

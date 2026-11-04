@@ -3,7 +3,7 @@
  * tooling: residents must get the Access-Denied surface, not the dashboards.
  */
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import type { AuthContextValue } from '../../contexts/AuthContext';
 import { aiDashboardRoutes } from './ai-dashboards';

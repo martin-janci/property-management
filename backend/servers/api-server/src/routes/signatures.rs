@@ -17,8 +17,8 @@ use common::errors::ErrorResponse;
 use db::models::{
     CancelSignatureRequestRequest, CancelSignatureRequestResponse, CreateDocument,
     CreateSignatureRequest, CreateSignatureRequestResponse, ListSignatureRequestsResponse, Locale,
-    SendReminderRequest, SendReminderResponse, SignatureRequestResponse, SignatureRequestStatus,
-    SignatureWebhookEvent, SignerStatus, WebhookResponse,
+    SendReminderRequest, SendReminderResponse, SignatureRequest, SignatureRequestResponse,
+    SignatureRequestStatus, SignatureWebhookEvent, SignerStatus, WebhookResponse,
 };
 use db::repositories::{ConsumeOutcome, NonceState};
 use integrations::{generate_storage_key, ESignatureError, LightweightProvider};
@@ -73,6 +73,53 @@ pub fn document_signature_router() -> Router<AppState> {
     )
 }
 
+type SignatureApiError = (StatusCode, Json<ErrorResponse>);
+
+/// Require a manager-tier membership role (DB-resolved by `RlsConnection`).
+fn require_manager(rls: &RlsConnection) -> Result<(), SignatureApiError> {
+    if rls.role().is_manager() {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Manager role required to manage signature requests",
+            )),
+        ))
+    }
+}
+
+/// Load a signature request, returning 404 unless it belongs to the caller's
+/// organization. `signature_requests` RLS is ENABLE-only (not FORCE), so the
+/// owner-role pool bypasses the policy; this explicit comparison is the real
+/// tenant boundary. Does not release `rls`.
+async fn load_signature_request_in_org(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    id: Uuid,
+) -> Result<SignatureRequest, SignatureApiError> {
+    let org_id = rls.tenant_id();
+    match state
+        .signature_request_repo
+        .find_by_id_rls(&mut **rls.conn(), id)
+        .await
+    {
+        Ok(Some(req)) if req.organization_id == org_id => Ok(req),
+        Ok(_) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new(
+                "NOT_FOUND",
+                "Signature request not found",
+            )),
+        )),
+        Err(e) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
+        )),
+    }
+}
+
 /// Create a new signature request for a document.
 pub async fn create_signature_request(
     State(state): State<AppState>,
@@ -81,6 +128,12 @@ pub async fn create_signature_request(
     Path(document_id): Path<Uuid>,
     Json(request): Json<CreateSignatureRequest>,
 ) -> Result<(StatusCode, Json<CreateSignatureRequestResponse>), (StatusCode, Json<ErrorResponse>)> {
+    // Starting a signing workflow is a manager action. The role comes from the
+    // DB membership resolved by `RlsConnection`, never from the JWT.
+    if let Err(e) = require_manager(&rls) {
+        rls.release().await;
+        return Err(e);
+    }
     let result =
         create_signature_request_for_document(&state, &auth, &mut rls, document_id, request).await;
     rls.release().await;
@@ -120,8 +173,9 @@ pub(crate) async fn create_signature_request_for_document(
         .find_by_id_rls(&mut **rls.conn(), document_id)
         .await
     {
-        Ok(Some(doc)) => doc,
-        Ok(None) => {
+        // Explicit org guard: FORCE RLS does not bind a BYPASSRLS pool.
+        Ok(Some(doc)) if doc.organization_id == rls.tenant_id() => doc,
+        Ok(_) => {
             return Err((
                 StatusCode::NOT_FOUND,
                 Json(ErrorResponse::new("NOT_FOUND", "Document not found")),
@@ -292,8 +346,8 @@ pub async fn list_signature_requests(
         .find_by_id_rls(&mut **rls.conn(), document_id)
         .await
     {
-        Ok(Some(doc)) => doc,
-        Ok(None) => {
+        Ok(Some(doc)) if doc.organization_id == rls.tenant_id() => doc,
+        Ok(_) => {
             rls.release().await;
             return Err((
                 StatusCode::NOT_FOUND,
@@ -339,27 +393,9 @@ pub async fn get_signature_request(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<SignatureRequestResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let request = state
-        .signature_request_repo
-        .find_by_id_rls(&mut **rls.conn(), id)
-        .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new(
-                    "NOT_FOUND",
-                    "Signature request not found",
-                )),
-            )
-        })?;
-
+    let request = load_signature_request_in_org(&state, &mut rls, id).await;
     rls.release().await;
+    let request = request?;
 
     let signer_counts = request.signer_counts();
 
@@ -376,26 +412,11 @@ pub async fn send_reminder(
     Path(id): Path<Uuid>,
     Json(request): Json<SendReminderRequest>,
 ) -> Result<Json<SendReminderResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let signature_request = state
-        .signature_request_repo
-        .find_by_id_rls(&mut **rls.conn(), id)
-        .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new(
-                    "NOT_FOUND",
-                    "Signature request not found",
-                )),
-            )
-        })?;
+    let signature_request = load_signature_request_in_org(&state, &mut rls, id).await;
+    let role_check = require_manager(&rls);
     rls.release().await;
+    let signature_request = signature_request?;
+    role_check?;
 
     // Check if request is still active
     if !signature_request.can_cancel() {
@@ -525,28 +546,13 @@ pub async fn cancel_signature_request(
     Path(id): Path<Uuid>,
     Json(request): Json<CancelSignatureRequestRequest>,
 ) -> Result<Json<CancelSignatureRequestResponse>, (StatusCode, Json<ErrorResponse>)> {
-    // Verify the request exists and belongs to this org (RLS-enforced).
-    let exists = state
-        .signature_request_repo
-        .find_by_id_rls(&mut **rls.conn(), id)
-        .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
-            )
-        })?;
+    // Verify the request exists in the caller's org (explicit org predicate:
+    // `signature_requests` RLS is not FORCEd) and that the caller is a manager.
+    let exists = load_signature_request_in_org(&state, &mut rls, id).await;
+    let role_check = require_manager(&rls);
     rls.release().await;
-
-    if exists.is_none() {
-        return Err((
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new(
-                "NOT_FOUND",
-                "Signature request not found",
-            )),
-        ));
-    }
+    exists?;
+    role_check?;
 
     let signature_request = state
         .signature_request_repo

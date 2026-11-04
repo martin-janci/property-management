@@ -83,3 +83,9 @@ is empty and the URLs are documented here in prose.)
 ## Agent Log
 - 2026-06-21 — FrontendEngineer: created with the threshold-config increment
   (BIT-148, Epic 14 / FR73).
+
+## Agent Log
+
+<!-- newest entries on top -->
+
+- 2026-11-04 — agent: destructive-action confirm now uses the in-app ConfirmationDialog (useConfirmDialog) instead of window.confirm()

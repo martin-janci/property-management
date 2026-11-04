@@ -123,6 +123,43 @@ fn internal_error(e: sqlx::Error) -> (StatusCode, String) {
     (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
 }
 
+/// Require a manager-tier role (resolved from DB membership by
+/// `RlsConnection`) for certification mutations. Releases the connection on
+/// failure.
+async fn require_manager(rls: &mut RlsConnection) -> Result<(), (StatusCode, String)> {
+    if rls.role().is_manager() {
+        return Ok(());
+    }
+    rls.release().await;
+    Err((StatusCode::FORBIDDEN, "Manager role required".to_string()))
+}
+
+/// Ensure the parent certification exists in the caller's org before a child
+/// row (credit, document, milestone, ...) is attached to it. Returns 404 for
+/// another org's certification. Releases the connection on failure.
+async fn ensure_certification(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    cert_id: Uuid,
+) -> Result<(), (StatusCode, String)> {
+    let org_id = rls.tenant_id();
+    let found = state
+        .building_certification_repo
+        .get_certification(&mut **rls.conn(), org_id, cert_id)
+        .await;
+    match found {
+        Ok(Some(_)) => Ok(()),
+        Ok(None) => {
+            rls.release().await;
+            Err((StatusCode::NOT_FOUND, "Certification not found".to_string()))
+        }
+        Err(e) => {
+            rls.release().await;
+            Err(internal_error(e))
+        }
+    }
+}
+
 // ==================== Dashboard ====================
 
 /// Get certification dashboard summary.
@@ -181,6 +218,7 @@ async fn create_certification(
     mut rls: RlsConnection,
     Json(input): Json<CreateBuildingCertification>,
 ) -> Result<(StatusCode, Json<BuildingCertification>), (StatusCode, String)> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let out = state
@@ -240,6 +278,7 @@ async fn update_certification(
     Path(cert_id): Path<Uuid>,
     Json(input): Json<UpdateBuildingCertification>,
 ) -> Result<Json<BuildingCertification>, (StatusCode, String)> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .building_certification_repo
@@ -260,6 +299,7 @@ async fn delete_certification(
     mut rls: RlsConnection,
     Path(cert_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .building_certification_repo
@@ -320,6 +360,8 @@ async fn create_credit(
     Path(cert_id): Path<Uuid>,
     Json(mut input): Json<CreateCertificationCredit>,
 ) -> Result<(StatusCode, Json<CertificationCredit>), (StatusCode, String)> {
+    require_manager(&mut rls).await?;
+    ensure_certification(&state, &mut rls, cert_id).await?;
     let org_id = rls.tenant_id();
     input.certification_id = cert_id;
 
@@ -360,6 +402,7 @@ async fn update_credit(
     Path((_cert_id, credit_id)): Path<(Uuid, Uuid)>,
     Json(input): Json<UpdateCertificationCredit>,
 ) -> Result<Json<CertificationCredit>, (StatusCode, String)> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .building_certification_repo
@@ -380,6 +423,7 @@ async fn delete_credit(
     mut rls: RlsConnection,
     Path((_cert_id, credit_id)): Path<(Uuid, Uuid)>,
 ) -> Result<StatusCode, (StatusCode, String)> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .building_certification_repo
@@ -423,6 +467,8 @@ async fn create_document(
     Path(cert_id): Path<Uuid>,
     Json(mut input): Json<CreateCertificationDocument>,
 ) -> Result<(StatusCode, Json<CertificationDocument>), (StatusCode, String)> {
+    require_manager(&mut rls).await?;
+    ensure_certification(&state, &mut rls, cert_id).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     input.certification_id = cert_id;
@@ -443,6 +489,7 @@ async fn delete_document(
     mut rls: RlsConnection,
     Path((_cert_id, doc_id)): Path<(Uuid, Uuid)>,
 ) -> Result<StatusCode, (StatusCode, String)> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .building_certification_repo
@@ -486,6 +533,8 @@ async fn create_milestone(
     Path(cert_id): Path<Uuid>,
     Json(mut input): Json<CreateCertificationMilestone>,
 ) -> Result<(StatusCode, Json<CertificationMilestone>), (StatusCode, String)> {
+    require_manager(&mut rls).await?;
+    ensure_certification(&state, &mut rls, cert_id).await?;
     let org_id = rls.tenant_id();
     input.certification_id = cert_id;
 
@@ -506,6 +555,7 @@ async fn update_milestone(
     Path((_cert_id, milestone_id)): Path<(Uuid, Uuid)>,
     Json(input): Json<UpdateCertificationMilestone>,
 ) -> Result<Json<CertificationMilestone>, (StatusCode, String)> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .building_certification_repo
@@ -526,6 +576,7 @@ async fn delete_milestone(
     mut rls: RlsConnection,
     Path((_cert_id, milestone_id)): Path<(Uuid, Uuid)>,
 ) -> Result<StatusCode, (StatusCode, String)> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .building_certification_repo
@@ -569,6 +620,8 @@ async fn create_benchmark(
     Path(cert_id): Path<Uuid>,
     Json(mut input): Json<CreateCertificationBenchmark>,
 ) -> Result<(StatusCode, Json<CertificationBenchmark>), (StatusCode, String)> {
+    require_manager(&mut rls).await?;
+    ensure_certification(&state, &mut rls, cert_id).await?;
     let org_id = rls.tenant_id();
     input.certification_id = cert_id;
 
@@ -608,6 +661,8 @@ async fn create_cost(
     Path(cert_id): Path<Uuid>,
     Json(mut input): Json<CreateCertificationCost>,
 ) -> Result<(StatusCode, Json<CertificationCost>), (StatusCode, String)> {
+    require_manager(&mut rls).await?;
+    ensure_certification(&state, &mut rls, cert_id).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     input.certification_id = cert_id;
@@ -665,6 +720,8 @@ async fn create_reminder(
     Path(cert_id): Path<Uuid>,
     Json(mut input): Json<CreateCertificationReminder>,
 ) -> Result<(StatusCode, Json<CertificationReminder>), (StatusCode, String)> {
+    require_manager(&mut rls).await?;
+    ensure_certification(&state, &mut rls, cert_id).await?;
     let org_id = rls.tenant_id();
     input.certification_id = cert_id;
 

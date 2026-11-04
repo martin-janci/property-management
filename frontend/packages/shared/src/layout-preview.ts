@@ -60,27 +60,23 @@ export type PreviewParentMessage = {
 export function isPreviewChildMessage(data: unknown): data is PreviewChildMessage {
   if (data === null || typeof data !== 'object') return false;
   const d = data as Record<string, unknown>;
-  if (d['kind'] !== LAYOUT_PREVIEW_KIND) return false;
-  if (d['protocol'] !== LAYOUT_PREVIEW_PROTOCOL) return false;
-  if (d['type'] === 'ready') return true;
-  if (d['type'] === 'section-click') return typeof d['sectionType'] === 'string';
+  if (d.kind !== LAYOUT_PREVIEW_KIND) return false;
+  if (d.protocol !== LAYOUT_PREVIEW_PROTOCOL) return false;
+  if (d.type === 'ready') return true;
+  if (d.type === 'section-click') return typeof d.sectionType === 'string';
   return false;
 }
 
 export function isPreviewParentMessage(data: unknown): data is PreviewParentMessage {
   if (data === null || typeof data !== 'object') return false;
   const d = data as Record<string, unknown>;
-  if (d['kind'] !== LAYOUT_PREVIEW_KIND) return false;
-  if (d['protocol'] !== LAYOUT_PREVIEW_PROTOCOL) return false;
-  if (d['type'] !== 'config') return false;
-  const resolved = d['resolved'];
+  if (d.kind !== LAYOUT_PREVIEW_KIND) return false;
+  if (d.protocol !== LAYOUT_PREVIEW_PROTOCOL) return false;
+  if (d.type !== 'config') return false;
+  const resolved = d.resolved;
   if (resolved === null || typeof resolved !== 'object' || Array.isArray(resolved)) return false;
   const r = resolved as Record<string, unknown>;
-  return (
-    typeof r['screen'] === 'string' &&
-    typeof r['version'] === 'number' &&
-    Array.isArray(r['sections'])
-  );
+  return typeof r.screen === 'string' && typeof r.version === 'number' && Array.isArray(r.sections);
 }
 
 // ============================================

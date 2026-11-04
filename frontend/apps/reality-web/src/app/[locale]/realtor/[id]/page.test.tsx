@@ -16,7 +16,7 @@
 /// <reference types="vitest/globals" />
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { RealtorApiError } from '@/lib/realtor-api';
 import skMessages from '../../../../../messages/sk.json';
@@ -117,5 +117,92 @@ describe('AgentProfilePage real-data fetch', () => {
 
     expect(await screen.findByText('Maklér sa nenašiel')).toBeInTheDocument();
     expect(screen.queryByText(/Horáčková/)).toBeNull();
+  });
+});
+
+/**
+ * Contact-channel honesty — the headline behaviour PR #3225 introduced when it
+ * removed the fake "submit" form. The page must:
+ *   - never offer a contact action when the realtor exposes no channel,
+ *   - surface a real `tel:` link (not an email form) for phone-only realtors,
+ *   - hand off to a `mailto:` carrying the realtor's real public email.
+ * These pin the gating logic (`show_phone`/`show_email` + `email_public`) so a
+ * future edit can't silently re-introduce a fabricated/dead contact path.
+ */
+function makeProfile(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 'p-1',
+    user_id: 'realtor-abc',
+    photo_url: null,
+    bio: null,
+    tagline: 'Ing. Jozef Testovací',
+    specializations: [],
+    languages: [],
+    license_number: null,
+    license_verified_at: null,
+    phone: null,
+    email_public: null,
+    show_phone: false,
+    show_email: false,
+    accept_inquiries: false,
+    total_listings: 0,
+    active_listings: 0,
+    total_views: 0,
+    total_inquiries: 0,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-02-01T00:00:00Z',
+    ...overrides,
+  };
+}
+
+describe('AgentProfilePage contact channels', () => {
+  it('disables the contact button when no channel is exposed and inquiries are off', async () => {
+    getRealtorPublicProfile.mockResolvedValue(makeProfile());
+    getRealtorReviews.mockResolvedValue({ reviews: [], total: 0, avg_rating: null });
+
+    renderPage();
+
+    const contactBtn = await screen.findByRole('button', { name: 'Kontaktovať' });
+    expect(contactBtn).toBeDisabled();
+  });
+
+  it('opens a phone-only contact modal with a tel: link and no email form', async () => {
+    getRealtorPublicProfile.mockResolvedValue(
+      makeProfile({ show_phone: true, phone: '+421 900 111 222', accept_inquiries: true })
+    );
+    getRealtorReviews.mockResolvedValue({ reviews: [], total: 0, avg_rating: null });
+
+    renderPage();
+
+    const contactBtn = await screen.findByRole('button', { name: 'Kontaktovať' });
+    expect(contactBtn).not.toBeDisabled();
+    fireEvent.click(contactBtn);
+
+    const dialog = await screen.findByRole('dialog', { name: 'Kontaktovať makléra' });
+    // Phone-only realtors get a real tel: hand-off, never the email textarea.
+    expect(within(dialog).queryByRole('textbox')).toBeNull();
+    const telLink = within(dialog).getByRole('link');
+    expect(telLink).toHaveAttribute('href', 'tel:+421 900 111 222');
+  });
+
+  it('hands off to a mailto: carrying the realtor public email (never a fake submit)', async () => {
+    getRealtorPublicProfile.mockResolvedValue(
+      makeProfile({ show_email: true, email_public: 'jozef@example.sk', accept_inquiries: true })
+    );
+    getRealtorReviews.mockResolvedValue({ reviews: [], total: 0, avg_rating: null });
+
+    renderPage();
+
+    const contactBtn = await screen.findByRole('button', { name: 'Kontaktovať' });
+    fireEvent.click(contactBtn);
+
+    const dialog = await screen.findByRole('dialog', { name: 'Kontaktovať makléra' });
+    // Typing a message must flow into the mailto body (encoded), not a POST.
+    fireEvent.change(within(dialog).getByRole('textbox'), { target: { value: 'Ahoj & test' } });
+
+    const sendLink = within(dialog).getByRole('link', { name: /Odoslať e-mail/ });
+    const href = sendLink.getAttribute('href') ?? '';
+    expect(href.startsWith('mailto:jozef@example.sk')).toBe(true);
+    expect(href).toContain(`body=${encodeURIComponent('Ahoj & test')}`);
   });
 });

@@ -5,6 +5,7 @@
  * ErrorBoundary so it can render this page on uncaught failures.
  */
 
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { StateView } from '../components/StateView';
 
@@ -16,20 +17,21 @@ export interface ServerErrorPageProps {
 }
 
 export function ServerErrorPage({ onRetry, details }: ServerErrorPageProps) {
+  const { t } = useTranslation();
   return (
     <StateView
       icon="🛠️"
       code="500"
-      title="Something went wrong"
-      description={details ?? 'An unexpected error occurred. Please try again in a moment.'}
+      title={t('errors.somethingWentWrong')}
+      description={details ?? t('errors.pages.serverError.description')}
     >
       {onRetry && (
         <button type="button" className="state-action state-action--primary" onClick={onRetry}>
-          Try again
+          {t('errors.pages.tryAgain')}
         </button>
       )}
       <Link to="/" className="state-action state-action--secondary">
-        Back to dashboard
+        {t('errors.pages.backToDashboard')}
       </Link>
     </StateView>
   );

@@ -458,22 +458,25 @@ impl AgencyRepository {
         Ok(listing)
     }
 
-    /// Update listing visibility.
+    /// Update the visibility of a listing of `agency_id` (`None` when the
+    /// listing is not one of that agency's listings).
     pub async fn update_listing_visibility(
         &self,
+        agency_id: Uuid,
         listing_id: Uuid,
         visibility: &str,
-    ) -> Result<AgencyListing, SqlxError> {
+    ) -> Result<Option<AgencyListing>, SqlxError> {
         let listing = sqlx::query_as::<_, AgencyListing>(
             r#"
             UPDATE agency_listings SET visibility = $2
-            WHERE listing_id = $1
+            WHERE listing_id = $1 AND agency_id = $3
             RETURNING *
             "#,
         )
         .bind(listing_id)
         .bind(visibility)
-        .fetch_one(&self.pool)
+        .bind(agency_id)
+        .fetch_optional(&self.pool)
         .await?;
 
         Ok(listing)

@@ -132,8 +132,12 @@ pub async fn create_profile(
         .upsert_realtor_profile(principal.user_id, data)
         .await
         .map_err(|e| {
-            let error_str = e.to_string();
-            if error_str.contains("already exists") {
+            // A unique-constraint violation (e.g. duplicate license number)
+            // means the profile conflicts with an existing one. Classify by the
+            // typed SQLSTATE (23505), not the message text.
+            if crate::util::errors::classify_db_error(&e)
+                == crate::util::errors::DbErrorClass::UniqueViolation
+            {
                 (
                     axum::http::StatusCode::BAD_REQUEST,
                     "Profile already exists".to_string(),
@@ -171,8 +175,13 @@ pub async fn update_profile(
         .update_realtor_profile(principal.user_id, data)
         .await
         .map_err(|e| {
-            let error_str = e.to_string();
-            if error_str.contains("not found") {
+            // `fetch_one` on the UPDATE yields `RowNotFound` when the caller has
+            // no profile yet. Classify by the sqlx variant, not message text —
+            // the old `contains("not found")` never matched `RowNotFound`'s
+            // "no rows returned …" text, so this path silently 500'd.
+            if crate::util::errors::classify_db_error(&e)
+                == crate::util::errors::DbErrorClass::NotFound
+            {
                 (
                     axum::http::StatusCode::NOT_FOUND,
                     "Profile not found".to_string(),

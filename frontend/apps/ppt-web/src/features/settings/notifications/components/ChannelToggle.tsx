@@ -6,6 +6,7 @@
 
 import type { NotificationChannel } from '@ppt/api-client';
 import { CHANNEL_DESCRIPTIONS, CHANNEL_LABELS } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 
 interface ChannelToggleProps {
   channel: NotificationChannel;
@@ -15,6 +16,10 @@ interface ChannelToggleProps {
 }
 
 export function ChannelToggle({ channel, enabled, loading = false, onToggle }: ChannelToggleProps) {
+  const { t } = useTranslation();
+  const label = t(`settings.notifications.channels.${channel}.label`, {
+    defaultValue: CHANNEL_LABELS[channel],
+  });
   const handleChange = () => {
     if (!loading) {
       onToggle(!enabled);
@@ -25,9 +30,13 @@ export function ChannelToggle({ channel, enabled, loading = false, onToggle }: C
     <div className="flex items-center justify-between py-4 border-b border-gray-100 last:border-b-0">
       <div className="flex-1 min-w-0">
         <label htmlFor={`toggle-${channel}`} className="block text-sm font-medium text-gray-900">
-          {CHANNEL_LABELS[channel]}
+          {label}
         </label>
-        <p className="mt-1 text-sm text-gray-500">{CHANNEL_DESCRIPTIONS[channel]}</p>
+        <p className="mt-1 text-sm text-gray-500">
+          {t(`settings.notifications.channels.${channel}.description`, {
+            defaultValue: CHANNEL_DESCRIPTIONS[channel],
+          })}
+        </p>
       </div>
       <div className="ml-4 flex-shrink-0">
         <button
@@ -44,7 +53,9 @@ export function ChannelToggle({ channel, enabled, loading = false, onToggle }: C
             ${loading ? 'opacity-50 cursor-not-allowed' : ''}
           `}
         >
-          <span className="sr-only">Toggle {CHANNEL_LABELS[channel]}</span>
+          <span className="sr-only">
+            {t('settings.notifications.toggleChannel', { channel: label })}
+          </span>
           <span
             aria-hidden="true"
             className={`

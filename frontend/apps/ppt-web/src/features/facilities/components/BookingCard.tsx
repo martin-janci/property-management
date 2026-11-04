@@ -5,6 +5,8 @@
  */
 
 import type { BookingStatus, BookingWithDetails } from '@ppt/api-client';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 interface BookingCardProps {
   booking: BookingWithDetails;
@@ -24,18 +26,9 @@ const statusColors: Record<BookingStatus, string> = {
   no_show: 'bg-orange-100 text-orange-800',
 };
 
-const statusLabels: Record<BookingStatus, string> = {
-  pending: 'Pending Approval',
-  approved: 'Approved',
-  rejected: 'Rejected',
-  cancelled: 'Cancelled',
-  completed: 'Completed',
-  no_show: 'No Show',
-};
-
-function formatDateTime(dateStr: string): string {
+function formatDateTime(dateStr: string, locale: string): string {
   const date = new Date(dateStr);
-  return date.toLocaleString('en-US', {
+  return date.toLocaleString(locale, {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
@@ -44,16 +37,16 @@ function formatDateTime(dateStr: string): string {
   });
 }
 
-function formatDuration(start: string, end: string): string {
+function formatDuration(start: string, end: string, t: TFunction): string {
   const startDate = new Date(start);
   const endDate = new Date(end);
   const durationMs = endDate.getTime() - startDate.getTime();
   const hours = Math.floor(durationMs / (1000 * 60 * 60));
   const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
 
-  if (hours === 0) return `${minutes}m`;
-  if (minutes === 0) return `${hours}h`;
-  return `${hours}h ${minutes}m`;
+  if (hours === 0) return t('facilities.bookings.durationMinutes', { minutes });
+  if (minutes === 0) return t('facilities.bookings.durationHours', { hours });
+  return t('facilities.bookings.durationHoursMinutes', { hours, minutes });
 }
 
 export function BookingCard({
@@ -64,6 +57,7 @@ export function BookingCard({
   onReject,
   isManager,
 }: BookingCardProps) {
+  const { t, i18n } = useTranslation();
   const canCancel = booking.status === 'pending' || booking.status === 'approved';
   const canApprove = isManager && booking.status === 'pending';
   const canReject = isManager && booking.status === 'pending';
@@ -77,7 +71,7 @@ export function BookingCard({
             <span
               className={`px-2 py-1 text-xs font-medium rounded ${statusColors[booking.status]}`}
             >
-              {statusLabels[booking.status]}
+              {t(`facilities.bookings.status.${booking.status}`)}
             </span>
           </div>
 
@@ -90,7 +84,7 @@ export function BookingCard({
                   clipRule="evenodd"
                 />
               </svg>
-              {formatDateTime(booking.start_time)}
+              {formatDateTime(booking.start_time, i18n.language)}
             </p>
             <p className="flex items-center gap-2">
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
@@ -100,7 +94,9 @@ export function BookingCard({
                   clipRule="evenodd"
                 />
               </svg>
-              Duration: {formatDuration(booking.start_time, booking.end_time)}
+              {t('facilities.bookings.duration', {
+                duration: formatDuration(booking.start_time, booking.end_time, t),
+              })}
             </p>
             {booking.purpose && (
               <p className="flex items-start gap-2">
@@ -124,20 +120,21 @@ export function BookingCard({
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                   <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
                 </svg>
-                {booking.attendees_count} attendees
+                {t('facilities.bookings.attendees', { count: booking.attendees_count })}
               </p>
             )}
           </div>
 
           {booking.rejection_reason && (
             <div className="mt-2 p-2 bg-red-50 rounded text-sm text-red-700">
-              <strong>Rejection reason:</strong> {booking.rejection_reason}
+              <strong>{t('facilities.bookings.rejectionReason')}</strong> {booking.rejection_reason}
             </div>
           )}
 
           {booking.cancellation_reason && (
             <div className="mt-2 p-2 bg-gray-50 rounded text-sm text-gray-700">
-              <strong>Cancellation reason:</strong> {booking.cancellation_reason}
+              <strong>{t('facilities.bookings.cancellationReason')}</strong>{' '}
+              {booking.cancellation_reason}
             </div>
           )}
         </div>
@@ -145,27 +142,31 @@ export function BookingCard({
         {booking.total_fee && (
           <div className="text-right">
             <span className="text-lg font-semibold text-gray-900">{booking.total_fee}</span>
-            {booking.deposit_paid && <p className="text-xs text-green-600">Deposit paid</p>}
+            {booking.deposit_paid && (
+              <p className="text-xs text-green-600">{t('facilities.bookings.depositPaid')}</p>
+            )}
           </div>
         )}
       </div>
 
       {/* Actions */}
       <div className="mt-4 flex items-center gap-2 border-t pt-3">
-        <button
-          type="button"
-          onClick={() => onView?.(booking.id)}
-          className="text-sm text-blue-600 hover:text-blue-800"
-        >
-          View Details
-        </button>
+        {onView && (
+          <button
+            type="button"
+            onClick={() => onView(booking.id)}
+            className="text-sm text-blue-600 hover:text-blue-800"
+          >
+            {t('facilities.bookings.viewDetails')}
+          </button>
+        )}
         {canApprove && (
           <button
             type="button"
             onClick={() => onApprove?.(booking.id)}
             className="text-sm px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
           >
-            Approve
+            {t('facilities.bookings.approve')}
           </button>
         )}
         {canReject && (
@@ -174,7 +175,7 @@ export function BookingCard({
             onClick={() => onReject?.(booking.id)}
             className="text-sm px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
           >
-            Reject
+            {t('facilities.bookings.reject')}
           </button>
         )}
         {canCancel && !isManager && (
@@ -183,7 +184,7 @@ export function BookingCard({
             onClick={() => onCancel?.(booking.id)}
             className="text-sm text-red-600 hover:text-red-800 ml-auto"
           >
-            Cancel Booking
+            {t('facilities.bookings.cancelBooking')}
           </button>
         )}
       </div>

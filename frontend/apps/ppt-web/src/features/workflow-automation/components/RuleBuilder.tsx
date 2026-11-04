@@ -128,16 +128,13 @@ export function RuleBuilder({ initialRule, onSave, onCancel, isLoading }: RuleBu
       <nav className="mb-8" aria-label={t('aria.progress')}>
         <ol className="flex items-center">
           {steps.map((step, index) => (
-            <li
-              key={step.id}
-              className={`relative ${index !== steps.length - 1 ? 'pr-8 sm:pr-20 flex-1' : ''}`}
-            >
+            <li key={step.id} className={index !== steps.length - 1 ? 'flex-1' : ''}>
               <div className="flex items-center">
                 <button
                   type="button"
                   onClick={() => goToStep(step.id)}
                   disabled={isLoading}
-                  className={`relative flex h-10 w-10 items-center justify-center rounded-full ${
+                  className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
                     index < currentStepIndex
                       ? 'bg-blue-600 hover:bg-blue-700'
                       : index === currentStepIndex
@@ -168,21 +165,21 @@ export function RuleBuilder({ initialRule, onSave, onCancel, isLoading }: RuleBu
                     </span>
                   )}
                 </button>
-                <span className="ml-4 text-sm font-medium text-gray-900 hidden sm:block">
+                <span className="ml-3 whitespace-nowrap text-sm font-medium text-gray-900 hidden sm:block">
                   {t(step.labelKey)}
                 </span>
+                {/* Connector sits in the flex row after the label, so it fills
+                    only the gap to the next step instead of running through
+                    the labels. */}
+                {index !== steps.length - 1 && (
+                  <div className="mx-3 h-0.5 min-w-4 flex-1 bg-gray-300" aria-hidden="true">
+                    <div
+                      className={`h-full ${index < currentStepIndex ? 'bg-blue-600' : ''}`}
+                      style={{ width: index < currentStepIndex ? '100%' : '0%' }}
+                    />
+                  </div>
+                )}
               </div>
-              {index !== steps.length - 1 && (
-                <div
-                  className="absolute top-5 left-10 -ml-px mt-0.5 h-0.5 w-full sm:w-20 bg-gray-300"
-                  aria-hidden="true"
-                >
-                  <div
-                    className={`h-full ${index < currentStepIndex ? 'bg-blue-600' : ''}`}
-                    style={{ width: index < currentStepIndex ? '100%' : '0%' }}
-                  />
-                </div>
-              )}
             </li>
           ))}
         </ol>

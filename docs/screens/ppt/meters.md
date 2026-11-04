@@ -40,3 +40,10 @@ already built but unrouted; this screen is now reachable on web.
 
 ## Agent Log
 - 2026-06-08 — CTO: created on route mount (PAP-20, Epic 12).
+- 2026-11-04 — agent: Summary line now a single plural key (`meters.summary_*`); meter-type icon SVG titles removed (icons are aria-hidden, label rendered as text).
+
+## Agent Log
+
+<!-- newest entries on top -->
+
+- 2026-11-04 — agent: manager-only 'Pending validations' button → /meters/validations

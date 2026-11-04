@@ -309,6 +309,7 @@ async fn create_policy(
     mut rls: RlsConnection,
     Json(payload): Json<CreatePolicyRequest>,
 ) -> Result<Json<InsurancePolicy>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .insurance_repo
@@ -344,6 +345,7 @@ async fn update_policy(
     Path(policy_id): Path<Uuid>,
     Json(payload): Json<UpdatePolicyRequest>,
 ) -> Result<Json<InsurancePolicy>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .insurance_repo
@@ -361,6 +363,7 @@ async fn delete_policy(
     mut rls: RlsConnection,
     Path(policy_id): Path<Uuid>,
 ) -> Result<Json<DeleteResponse>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .insurance_repo
@@ -417,6 +420,7 @@ async fn add_policy_document(
     Path(policy_id): Path<Uuid>,
     Json(payload): Json<AddPolicyDocument>,
 ) -> Result<Json<InsurancePolicyDocument>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let out = state
         .insurance_repo
         .add_policy_document(&mut **rls.conn(), policy_id, payload)
@@ -433,6 +437,7 @@ async fn remove_policy_document(
     mut rls: RlsConnection,
     Path((policy_id, document_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<DeleteResponse>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let out = state
         .insurance_repo
         .remove_policy_document(&mut **rls.conn(), policy_id, document_id)
@@ -470,6 +475,7 @@ async fn create_reminder(
     Path(policy_id): Path<Uuid>,
     Json(payload): Json<CreateRenewalReminder>,
 ) -> Result<Json<InsuranceRenewalReminder>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let out = state
         .insurance_repo
         .create_reminder(&mut **rls.conn(), policy_id, payload)
@@ -487,6 +493,7 @@ async fn update_reminder(
     Path(reminder_id): Path<Uuid>,
     Json(payload): Json<UpdateRenewalReminder>,
 ) -> Result<Json<InsuranceRenewalReminder>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let out = state
         .insurance_repo
         .update_reminder(&mut **rls.conn(), reminder_id, payload)
@@ -503,6 +510,7 @@ async fn delete_reminder(
     mut rls: RlsConnection,
     Path(reminder_id): Path<Uuid>,
 ) -> Result<Json<DeleteResponse>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let out = state
         .insurance_repo
         .delete_reminder(&mut **rls.conn(), reminder_id)
@@ -615,6 +623,7 @@ async fn review_claim(
     Path(claim_id): Path<Uuid>,
     Json(payload): Json<ReviewClaimRequest>,
 ) -> Result<Json<InsuranceClaim>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let out = state
@@ -643,6 +652,7 @@ async fn record_claim_payment(
     Path(claim_id): Path<Uuid>,
     Json(payload): Json<RecordClaimPaymentRequest>,
 ) -> Result<Json<InsuranceClaim>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .insurance_repo

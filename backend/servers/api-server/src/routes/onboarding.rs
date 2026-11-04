@@ -59,7 +59,13 @@ pub struct CompleteStepRequest {
 // ==================== Helper Functions ====================
 
 /// Extract user from token.
-fn extract_user_token(
+///
+/// Roles used for role-targeted tours come from the caller's active
+/// organization memberships in the database (login tokens carry no `roles`
+/// claim): each membership contributes its `role_type`, its role name and the
+/// display name of the canonical role (e.g. "Manager"), which is how
+/// `onboarding_tours.target_roles` is written.
+async fn extract_user_token(
     headers: &axum::http::HeaderMap,
     state: &AppState,
 ) -> Result<(Uuid, Vec<String>), (StatusCode, Json<ErrorResponse>)> {
@@ -105,7 +111,29 @@ fn extract_user_token(
         )
     })?;
 
-    let roles = claims.roles.unwrap_or_default();
+    let mut roles = claims.roles.unwrap_or_default();
+    let memberships = state
+        .org_member_repo
+        .get_user_memberships(user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to load memberships for onboarding roles");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+            )
+        })?;
+    for m in memberships.into_iter().filter(|m| m.status == "active") {
+        if let Some(role) = common::TenantRole::from_role_type(&m.role_type) {
+            roles.push(role.to_string());
+        }
+        if let Some(name) = m.role_name {
+            roles.push(name);
+        }
+        roles.push(m.role_type);
+    }
+    roles.sort();
+    roles.dedup();
 
     Ok((user_id, roles))
 }
@@ -128,7 +156,7 @@ pub async fn get_onboarding_status(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<OnboardingStatusResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let (user_id, roles) = extract_user_token(&headers, &state)?;
+    let (user_id, roles) = extract_user_token(&headers, &state).await?;
 
     let needs_onboarding = state
         .onboarding_repo
@@ -179,7 +207,7 @@ pub async fn get_user_tours(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<Vec<TourWithProgress>>, (StatusCode, Json<ErrorResponse>)> {
-    let (user_id, roles) = extract_user_token(&headers, &state)?;
+    let (user_id, roles) = extract_user_token(&headers, &state).await?;
 
     let tours = state
         .onboarding_repo
@@ -217,7 +245,7 @@ pub async fn get_tour(
     headers: axum::http::HeaderMap,
     Path(tour_id): Path<String>,
 ) -> Result<Json<OnboardingTour>, (StatusCode, Json<ErrorResponse>)> {
-    let _ = extract_user_token(&headers, &state)?;
+    let _ = extract_user_token(&headers, &state).await?;
 
     let tour = state
         .onboarding_repo
@@ -260,7 +288,7 @@ pub async fn start_tour(
     headers: axum::http::HeaderMap,
     Path(tour_id): Path<String>,
 ) -> Result<Json<TourProgressResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let (user_id, _) = extract_user_token(&headers, &state)?;
+    let (user_id, _) = extract_user_token(&headers, &state).await?;
 
     let progress = state
         .onboarding_repo
@@ -299,7 +327,7 @@ pub async fn complete_step(
     headers: axum::http::HeaderMap,
     Path((tour_id, step_id)): Path<(String, String)>,
 ) -> Result<Json<TourProgressResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let (user_id, _) = extract_user_token(&headers, &state)?;
+    let (user_id, _) = extract_user_token(&headers, &state).await?;
 
     let progress = state
         .onboarding_repo
@@ -343,7 +371,7 @@ pub async fn complete_tour(
     headers: axum::http::HeaderMap,
     Path(tour_id): Path<String>,
 ) -> Result<Json<TourProgressResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let (user_id, _) = extract_user_token(&headers, &state)?;
+    let (user_id, _) = extract_user_token(&headers, &state).await?;
 
     let progress = state
         .onboarding_repo
@@ -395,7 +423,7 @@ pub async fn skip_tour(
     headers: axum::http::HeaderMap,
     Path(tour_id): Path<String>,
 ) -> Result<Json<TourProgressResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let (user_id, _) = extract_user_token(&headers, &state)?;
+    let (user_id, _) = extract_user_token(&headers, &state).await?;
 
     // Ensure progress record exists
     let _ = state.onboarding_repo.start_tour(user_id, &tour_id).await;
@@ -444,7 +472,7 @@ pub async fn reset_tour(
     headers: axum::http::HeaderMap,
     Path(tour_id): Path<String>,
 ) -> Result<Json<TourProgressResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let (user_id, _) = extract_user_token(&headers, &state)?;
+    let (user_id, _) = extract_user_token(&headers, &state).await?;
 
     let progress = state
         .onboarding_repo

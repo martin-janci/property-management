@@ -39,7 +39,7 @@ const commodityIcons: Record<OutageCommodity, string> = {
 };
 
 export function OutageCard({ outage, onView, onEdit }: OutageCardProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const canEdit = outage.status === 'planned' || outage.status === 'ongoing';
 
   return (
@@ -73,11 +73,11 @@ export function OutageCard({ outage, onView, onEdit }: OutageCardProps) {
       <div className="mt-3 text-sm text-gray-600">
         <div className="flex items-center gap-2">
           <span>{t('outages.scheduled')}:</span>
-          <span>{new Date(outage.scheduledStart).toLocaleString()}</span>
+          <span>{new Date(outage.scheduledStart).toLocaleString(i18n.language)}</span>
           {outage.scheduledEnd && (
             <>
               <span>-</span>
-              <span>{new Date(outage.scheduledEnd).toLocaleString()}</span>
+              <span>{new Date(outage.scheduledEnd).toLocaleString(i18n.language)}</span>
             </>
           )}
         </div>

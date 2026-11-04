@@ -250,7 +250,16 @@ fn default_true() -> bool {
 
 /// API call action executor.
 pub struct ApiCallExecutor {
-    client: reqwest::Client,
+    /// The built HTTP client, or the error produced while building it.
+    ///
+    /// `reqwest::Client::builder().build()` can fail when the TLS backend or
+    /// the connection pool cannot be initialised. Panicking there (the former
+    /// `.expect(...)`) would abort the whole action registry / server startup
+    /// on a transient or environment-level misconfiguration instead of
+    /// surfacing it as a recoverable error. We retain the build error and
+    /// convert it into an [`ActionError`] from [`ApiCallExecutor::client`] /
+    /// `execute`, the handler boundary that already returns `Result`.
+    client: Result<reqwest::Client, String>,
     /// The same resolver the HTTP client uses at connect time, kept so the
     /// fail-fast pre-flight check and the connect-time re-validation observe
     /// one DNS path (and so the rebinding regression test can inject a
@@ -297,6 +306,11 @@ impl ApiCallExecutor {
             }
         });
 
+        // Build the client, but DO NOT panic on failure: retain the error so
+        // it can be surfaced as a recoverable `ActionError` at execution time
+        // (see the `client` field / `ApiCallExecutor::client`). A TLS-backend
+        // or connection-pool init failure here must not take down server
+        // startup or the whole action registry.
         let client = reqwest::Client::builder()
             .timeout(Duration::from_secs(60))
             .user_agent("PPT-Workflow/1.0")
@@ -305,12 +319,22 @@ impl ApiCallExecutor {
                 resolve_ips: resolve_ips.clone(),
             }))
             .build()
-            .expect("Failed to create HTTP client");
+            .map_err(|e| format!("Failed to create workflow HTTP client: {e}"));
 
         Self {
             client,
             resolve_ips,
         }
+    }
+
+    /// Borrow the built HTTP client, or convert the retained build error into
+    /// an [`ActionError`]. This is the fail-soft replacement for the former
+    /// `.expect(...)` on `reqwest::Client::builder().build()`: a client that
+    /// could not be constructed yields a handler error instead of a panic.
+    fn client(&self) -> Result<&reqwest::Client, ActionError> {
+        self.client
+            .as_ref()
+            .map_err(|e| ActionError::ExecutionFailed(e.clone()))
     }
 
     /// Parse and validate the API call configuration.
@@ -457,13 +481,16 @@ impl ActionExecutor for ApiCallExecutor {
         common::url_validation::validate_resolved_addrs(host, port, &resolved_ips)
             .map_err(|e| ActionError::ConfigurationError(e.to_string()))?;
 
-        // Build request
+        // Build request — fail soft if the HTTP client could not be
+        // constructed (e.g. TLS/connection-pool init error) rather than having
+        // panicked at construction time.
+        let client = self.client()?;
         let mut request = match api_config.method {
-            HttpMethod::GET => self.client.get(&url),
-            HttpMethod::POST => self.client.post(&url),
-            HttpMethod::PUT => self.client.put(&url),
-            HttpMethod::PATCH => self.client.patch(&url),
-            HttpMethod::DELETE => self.client.delete(&url),
+            HttpMethod::GET => client.get(&url),
+            HttpMethod::POST => client.post(&url),
+            HttpMethod::PUT => client.put(&url),
+            HttpMethod::PATCH => client.patch(&url),
+            HttpMethod::DELETE => client.delete(&url),
         };
 
         // Set timeout
@@ -1004,5 +1031,57 @@ mod tests {
             redirect_hop_allowed("https://api.trusted.example/v2/webhook", original, 0).is_ok(),
             "a same-origin redirect (identical scheme/host/port) must still be followed"
         );
+    }
+
+    /// Regression: building the workflow HTTP client used to end in
+    /// `.build().expect("Failed to create HTTP client")`, so a TLS-backend or
+    /// connection-pool initialisation failure would **panic** — aborting the
+    /// action registry / server startup instead of surfacing a recoverable
+    /// error. The client build result is now retained and converted into an
+    /// `ActionError` at execution time.
+    ///
+    /// We cannot force `reqwest::Client::builder().build()` to fail
+    /// hermetically (there is no public fault-injection hook), so this test
+    /// drives the error branch directly: it constructs an executor whose
+    /// `client` field holds the build error (the test module shares the
+    /// module's private fields) and asserts `execute` returns
+    /// `ActionError::ExecutionFailed` — i.e. it does NOT panic and does NOT
+    /// attempt a request. This locks in the fail-soft contract that replaced
+    /// the panic.
+    #[tokio::test]
+    async fn execute_surfaces_client_build_failure_as_error_not_panic() {
+        // Hermetic resolver: always returns a public IP so the SSRF DNS
+        // pre-flight passes without touching the network, letting execution
+        // reach the client-build check this test targets.
+        let resolver: IpResolver = Arc::new(
+            |_host: String| -> Pin<Box<dyn Future<Output = std::io::Result<Vec<IpAddr>>> + Send>> {
+                Box::pin(async move { Ok(vec!["93.184.216.34".parse::<IpAddr>().unwrap()]) })
+            },
+        );
+        let executor = ApiCallExecutor {
+            client: Err("simulated TLS backend init failure".to_string()),
+            resolve_ips: resolver,
+        };
+        let context = ActionContext::new(
+            uuid::Uuid::new_v4(),
+            uuid::Uuid::new_v4(),
+            uuid::Uuid::new_v4(),
+            serde_json::json!({}),
+        );
+        let config = serde_json::json!({ "url": "https://api.example.com/webhook" });
+
+        match executor.execute(&config, &context).await {
+            Err(ActionError::ExecutionFailed(msg)) => {
+                assert!(
+                    msg.contains("simulated TLS backend init failure"),
+                    "the surfaced error should carry the retained client build \
+                     failure, got: {msg}"
+                );
+            }
+            other => panic!(
+                "a failed HTTP client build must surface as ActionError::ExecutionFailed, \
+                 got: {other:?}"
+            ),
+        }
     }
 }

@@ -35,6 +35,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams } from 'react-router-dom';
 import { AuthRequiredGate, ProtectedRoute, useToast } from '../../components';
+import { useConfirmDialog } from '../../components/useConfirmDialog';
 import { useAuth } from '../../contexts';
 import type { AlertStateFilter, SensorFormValues, ThresholdFormValues } from '../../features/iot';
 import { useIotWebSocket } from '../../features/iot';
@@ -171,6 +172,7 @@ function SensorListPageRoute() {
 
   const { data: sensorsData, isLoading } = useSensors();
   const deleteSensor = useDeleteSensor();
+  const { confirm, confirmDialog } = useConfirmDialog();
 
   const sensors = useMemo(() => sensorsData?.sensors ?? [], [sensorsData]);
 
@@ -180,13 +182,15 @@ function SensorListPageRoute() {
 
   const handleDelete = async (sensor: Sensor) => {
     if (
-      !window.confirm(
-        t('iot.sensorDeleteConfirm', {
+      !(await confirm({
+        message: t('iot.sensorDeleteConfirm', {
           name: sensor.name,
           defaultValue:
             'Delete sensor "{{name}}"? This removes its readings and alerts and cannot be undone.',
-        })
-      )
+        }),
+        confirmLabel: t('common.delete'),
+        variant: 'danger',
+      }))
     ) {
       return;
     }
@@ -207,16 +211,19 @@ function SensorListPageRoute() {
   };
 
   return (
-    <IotSensorListPage
-      sensors={sensors}
-      isLoading={isLoading}
-      deletingSensorId={deleteSensor.isPending ? (deleteSensor.variables ?? null) : null}
-      onNavigateToDashboard={() => navigate('/iot')}
-      onNavigateToRegister={() => navigate('/iot/sensors/new')}
-      onNavigateToEdit={(id) => navigate(`/iot/sensors/${id}/edit`)}
-      onNavigateToThresholds={(id) => navigate(`/iot/sensors/${id}/thresholds`)}
-      onDelete={handleDelete}
-    />
+    <>
+      <IotSensorListPage
+        sensors={sensors}
+        isLoading={isLoading}
+        deletingSensorId={deleteSensor.isPending ? (deleteSensor.variables ?? null) : null}
+        onNavigateToDashboard={() => navigate('/iot')}
+        onNavigateToRegister={() => navigate('/iot/sensors/new')}
+        onNavigateToEdit={(id) => navigate(`/iot/sensors/${id}/edit`)}
+        onNavigateToThresholds={(id) => navigate(`/iot/sensors/${id}/thresholds`)}
+        onDelete={handleDelete}
+      />
+      {confirmDialog}
+    </>
   );
 }
 
@@ -517,6 +524,7 @@ function ThresholdConfigPageRoute() {
   const toggleThreshold = useUpdateThreshold(id);
   const deleteThreshold = useDeleteThreshold(id);
   const applyTemplate = useApplyTemplate(id);
+  const { confirm, confirmDialog } = useConfirmDialog();
 
   if (!user?.organizationId) {
     return <AuthRequiredGate />;
@@ -563,11 +571,13 @@ function ThresholdConfigPageRoute() {
 
   const handleDelete = async (threshold: SensorThreshold) => {
     if (
-      !window.confirm(
-        t('iot.thresholdDeleteConfirm', {
+      !(await confirm({
+        message: t('iot.thresholdDeleteConfirm', {
           defaultValue: 'Delete this threshold? This cannot be undone.',
-        })
-      )
+        }),
+        confirmLabel: t('common.delete'),
+        variant: 'danger',
+      }))
     ) {
       return;
     }
@@ -620,24 +630,27 @@ function ThresholdConfigPageRoute() {
   };
 
   return (
-    <IotThresholdConfigPage
-      sensor={sensor ?? null}
-      sensorLoading={sensorLoading}
-      thresholds={thresholds}
-      thresholdsLoading={thresholdsLoading}
-      templates={templates}
-      templatesLoading={templatesLoading}
-      isSaving={createThreshold.isPending || updateThreshold.isPending}
-      togglingId={toggleThreshold.isPending ? (toggleThreshold.variables?.id ?? null) : null}
-      deletingId={deleteThreshold.isPending ? (deleteThreshold.variables ?? null) : null}
-      applyingTemplate={applyTemplate.isPending}
-      onCreate={handleCreate}
-      onUpdate={handleUpdate}
-      onDelete={handleDelete}
-      onToggleEnabled={handleToggle}
-      onApplyTemplate={handleApplyTemplate}
-      onBack={() => navigate('/iot/sensors')}
-    />
+    <>
+      <IotThresholdConfigPage
+        sensor={sensor ?? null}
+        sensorLoading={sensorLoading}
+        thresholds={thresholds}
+        thresholdsLoading={thresholdsLoading}
+        templates={templates}
+        templatesLoading={templatesLoading}
+        isSaving={createThreshold.isPending || updateThreshold.isPending}
+        togglingId={toggleThreshold.isPending ? (toggleThreshold.variables?.id ?? null) : null}
+        deletingId={deleteThreshold.isPending ? (deleteThreshold.variables ?? null) : null}
+        applyingTemplate={applyTemplate.isPending}
+        onCreate={handleCreate}
+        onUpdate={handleUpdate}
+        onDelete={handleDelete}
+        onToggleEnabled={handleToggle}
+        onApplyTemplate={handleApplyTemplate}
+        onBack={() => navigate('/iot/sensors')}
+      />
+      {confirmDialog}
+    </>
   );
 }
 

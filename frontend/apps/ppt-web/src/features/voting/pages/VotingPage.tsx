@@ -1,20 +1,22 @@
 /**
  * Voting list page (Epic 5, screen `ppt/voting`).
  *
- * Lists votes for the manager's current building with a status filter and an
- * entry point into the create wizard. Data comes from the `@ppt/api-client`
+ * Lists votes for the selected building (`?building=`, see `useVotingBuilding`)
+ * with a status filter and an entry point into the create wizard. Data comes from the `@ppt/api-client`
  * voting hooks; navigation is delegated to the route wrapper via props.
  */
-import { useBuildings, useVotes, type VoteStatus } from '@ppt/api-client';
+import { useVotes, type VoteStatus } from '@ppt/api-client';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Spinner } from '../../../components';
-import { VoteCard } from '../components';
+import { VoteCard, VotingBuildingSelect } from '../components';
+import { useVotingBuilding } from '../hooks';
 import { VOTE_STATUS_LABEL_KEYS } from '../types';
 
 interface VotingPageProps {
   onOpenVote: (voteId: string) => void;
-  onCreateVote: () => void;
+  /** Managers only; omitted for residents so the create actions are hidden. */
+  onCreateVote?: () => void;
 }
 
 const STATUS_FILTERS: Array<VoteStatus | 'all'> = [
@@ -28,8 +30,12 @@ const STATUS_FILTERS: Array<VoteStatus | 'all'> = [
 
 export function VotingPage({ onOpenVote, onCreateVote }: VotingPageProps) {
   const { t } = useTranslation();
-  const { data: buildingsData, isLoading: isLoadingBuildings } = useBuildings();
-  const buildingId = buildingsData?.items?.[0]?.id ?? '';
+  const {
+    buildingId,
+    options: buildingOptions,
+    setBuildingId,
+    isLoading: isLoadingBuildings,
+  } = useVotingBuilding();
 
   const [statusFilter, setStatusFilter] = useState<VoteStatus | 'all'>('all');
 
@@ -60,13 +66,23 @@ export function VotingPage({ onOpenVote, onCreateVote }: VotingPageProps) {
             {t('voting.list.closedCount', { count: counts.closed })}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onCreateVote}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          + {t('voting.list.newVote')}
-        </button>
+        {onCreateVote && (
+          <button
+            type="button"
+            onClick={onCreateVote}
+            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            + {t('voting.list.newVote')}
+          </button>
+        )}
+      </div>
+
+      <div className="mt-6">
+        <VotingBuildingSelect
+          options={buildingOptions}
+          value={buildingId}
+          onChange={setBuildingId}
+        />
       </div>
 
       <div className="mt-6 flex flex-wrap gap-2">
@@ -102,13 +118,15 @@ export function VotingPage({ onOpenVote, onCreateVote }: VotingPageProps) {
         ) : !votes || votes.length === 0 ? (
           <div className="rounded-lg bg-white p-12 text-center shadow">
             <p className="text-gray-500">{t('voting.list.empty')}</p>
-            <button
-              type="button"
-              onClick={onCreateVote}
-              className="mt-4 text-sm font-medium text-blue-600 hover:text-blue-800"
-            >
-              {t('voting.list.createFirst')}
-            </button>
+            {onCreateVote && (
+              <button
+                type="button"
+                onClick={onCreateVote}
+                className="mt-4 text-sm font-medium text-blue-600 hover:text-blue-800"
+              >
+                {t('voting.list.createFirst')}
+              </button>
+            )}
           </div>
         ) : (
           <div className="space-y-3">

@@ -77,4 +77,9 @@ describe('FaultsPage state wiring', () => {
     expect(onDelete).toHaveBeenCalledTimes(1);
     expect(onDelete).toHaveBeenCalledWith('f-1');
   });
+
+  it('hides the Delete action when no onDelete handler is wired', () => {
+    render(<FaultsPage {...baseProps} faults={[newFault]} total={1} />);
+    expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
+  });
 });

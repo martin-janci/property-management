@@ -29,7 +29,7 @@ use serde::Serialize;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::common::TestApp;
+use crate::common::{seed_membership, TestApp};
 
 /// Same secret `TestConfig::default()` stamps into `JWT_SECRET`, so tokens we
 /// mint here validate against the `AuthUser` extractor's cached verifier.
@@ -155,6 +155,8 @@ async fn resident_cannot_global_publish(pool: PgPool) {
     .await;
     let listing = seed_listing(&pool, org, user).await;
 
+    // ValidatedTenantExtractor: membership + role come from the DB row.
+    seed_membership(&pool, org, user, "resident").await;
     let token = mint_token(user, org, "resident");
     let resp = app
         .execute(authed(
@@ -190,6 +192,8 @@ async fn resident_cannot_global_unpublish(pool: PgPool) {
     .await;
     let listing = seed_listing(&pool, org, user).await;
 
+    // ValidatedTenantExtractor: membership + role come from the DB row.
+    seed_membership(&pool, org, user, "resident").await;
     let token = mint_token(user, org, "resident");
     let resp = app
         .execute(authed(
@@ -223,6 +227,7 @@ async fn manager_cannot_global_publish_other_orgs_listing(pool: PgPool) {
     let listing_in_a = seed_listing(&pool, org_a, user_a).await;
 
     // Manager of org B targeting org A's listing, with B's tenant context.
+    seed_membership(&pool, org_b, user_b, "manager").await;
     let token_b = mint_token(user_b, org_b, "manager");
     let resp = app
         .execute(authed(
@@ -262,6 +267,7 @@ async fn manager_can_global_publish_own_listing(pool: PgPool) {
     .await;
     let listing = seed_listing(&pool, org, user).await;
 
+    seed_membership(&pool, org, user, "manager").await;
     let token = mint_token(user, org, "manager");
     let resp = app
         .execute(authed(

@@ -136,7 +136,6 @@ function navigate(screen: string, params?: Record<string, unknown>) {
     throw new Error('onNavigate was never captured — DashboardScreen did not render');
   }
   act(() => {
-    // biome-ignore lint/style/noNonNullAssertion: guarded above
     capturedNavigate!(screen, params);
   });
 }

@@ -1003,6 +1003,31 @@ impl AnnouncementRepository {
         Ok(())
     }
 
+    /// Delete an attachment only if it belongs to `announcement_id`.
+    ///
+    /// Returns the number of rows deleted (0 when the attachment does not
+    /// exist under that announcement). Callers must have verified that the
+    /// announcement belongs to the caller's organization.
+    pub async fn delete_attachment_for_announcement_rls<'e, E>(
+        &self,
+        executor: E,
+        announcement_id: Uuid,
+        attachment_id: Uuid,
+    ) -> Result<u64, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let result = sqlx::query(
+            "DELETE FROM announcement_attachments WHERE id = $1 AND announcement_id = $2",
+        )
+        .bind(attachment_id)
+        .bind(announcement_id)
+        .execute(executor)
+        .await?;
+
+        Ok(result.rows_affected())
+    }
+
     // ------------------------------------------------------------------------
     // Read Tracking (Foundation for Story 6.2)
     // ------------------------------------------------------------------------

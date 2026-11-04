@@ -9,9 +9,10 @@ use axum::{
 use db::models::reserve_funds::{
     CreateContributionSchedule, FundContributionSchedule, UpdateContributionSchedule,
 };
+use db::repositories::reserve_funds::FundChildKind;
 use uuid::Uuid;
 
-use super::shared::{insert_child_error, repo_error, ActiveOnlyQuery, ApiResult};
+use super::shared::{insert_child_error, repo_error, require_manager, ActiveOnlyQuery, ApiResult};
 use crate::state::AppState;
 
 /// Contribution-schedule sub-router.
@@ -54,6 +55,7 @@ async fn create_schedule(
     Path(fund_id): Path<Uuid>,
     Json(req): Json<CreateContributionSchedule>,
 ) -> ApiResult<Json<FundContributionSchedule>> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .reserve_fund_repo
@@ -69,10 +71,27 @@ async fn create_schedule(
 async fn update_schedule(
     State(state): State<AppState>,
     mut rls: RlsConnection,
-    Path((_fund_id, schedule_id)): Path<(Uuid, Uuid)>,
+    Path((fund_id, schedule_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateContributionSchedule>,
 ) -> ApiResult<Json<FundContributionSchedule>> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
+    // The child must belong to the fund named in the path (and the fund to
+    // the caller's org), not just to some fund of the org.
+    if let Err(e) = state
+        .reserve_fund_repo
+        .ensure_child_in_fund(
+            &mut **rls.conn(),
+            org_id,
+            fund_id,
+            FundChildKind::ContributionSchedule,
+            schedule_id,
+        )
+        .await
+    {
+        rls.release().await;
+        return Err(repo_error("update schedule", "Schedule not found", e));
+    }
     let out = state
         .reserve_fund_repo
         .update_contribution_schedule(&mut **rls.conn(), org_id, schedule_id, req)

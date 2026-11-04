@@ -813,7 +813,7 @@ async fn get_verification_for_owner_succeeds(pool: PgPool) {
 async fn get_verification_as_platform_admin_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user_a = seed_user(&pool, "ver-adm-a@provider-idor.test").await;
-    let admin = seed_user(&pool, "ver-admin@provider-idor.test").await;
+    let admin = crate::common::seed_platform_user(&pool, "ver-admin@provider-idor.test").await;
     let provider_a = seed_provider(&pool, user_a, "ver-adm-a").await;
     let verification = seed_verification(&pool, provider_a).await;
 

@@ -1,7 +1,7 @@
 //! Story 67.1: AML Risk Assessment endpoints.
 
 use crate::state::AppState;
-use api_core::extractors::AuthUser;
+use api_core::extractors::TenantAuthUser;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -74,7 +74,7 @@ pub struct AmlAssessmentResponse {
 /// Create a new AML risk assessment.
 pub(super) async fn create_aml_assessment(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Json(req): Json<CreateAmlAssessmentRequest>,
 ) -> Result<Json<AmlAssessmentResponse>, (StatusCode, String)> {
     // Creating an AML risk assessment is a compliance-officer action, like every
@@ -261,7 +261,7 @@ pub struct ListAmlAssessmentsResponse {
 /// List AML assessments.
 pub(super) async fn list_aml_assessments(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(params): Query<ListAmlAssessmentsQuery>,
 ) -> Result<Json<ListAmlAssessmentsResponse>, (StatusCode, String)> {
     require_compliance_role(&user)?;
@@ -305,7 +305,7 @@ pub(super) async fn list_aml_assessments(
 /// Get a specific AML assessment.
 pub(super) async fn get_aml_assessment(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<AmlAssessmentResponse>, (StatusCode, String)> {
     require_compliance_role(&user)?;
@@ -381,7 +381,7 @@ pub struct ReviewAmlAssessmentRequest {
 /// Review an AML assessment.
 pub(super) async fn review_aml_assessment(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<ReviewAmlAssessmentRequest>,
 ) -> Result<Json<AmlAssessmentResponse>, (StatusCode, String)> {
@@ -478,7 +478,7 @@ pub struct CountryRiskEntry {
 /// Get country risk database.
 pub(super) async fn get_country_risks(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
 ) -> Result<Json<Vec<CountryRiskEntry>>, (StatusCode, String)> {
     require_compliance_role(&user)?;
 
@@ -516,7 +516,7 @@ pub struct AmlThresholdsResponse {
 /// Get AML thresholds configuration.
 pub(super) async fn get_aml_thresholds(
     State(_state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
 ) -> Result<Json<AmlThresholdsResponse>, (StatusCode, String)> {
     require_compliance_role(&user)?;
 

@@ -9,6 +9,7 @@
 
 import type { BuildingStatus, BuildingType, ListBuildingsParams } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { BuildingList } from '../components/BuildingList';
 import { useBuildings } from '../hooks';
 
@@ -23,6 +24,7 @@ export function BuildingsPage({
   onNavigateToView,
   onNavigateToEdit,
 }: BuildingsPageProps) {
+  const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [pageSize] = useState(12);
   const [filters, setFilters] = useState<Omit<ListBuildingsParams, 'page' | 'pageSize'>>({});
@@ -67,9 +69,11 @@ export function BuildingsPage({
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Error loading buildings</h3>
+              <h3 className="text-sm font-medium text-red-800">
+                {t('buildings.errors.loadFailed')}
+              </h3>
               <div className="mt-2 text-sm text-red-700">
-                {error instanceof Error ? error.message : 'An unexpected error occurred'}
+                {error instanceof Error ? error.message : t('buildings.errors.unexpected')}
               </div>
             </div>
           </div>

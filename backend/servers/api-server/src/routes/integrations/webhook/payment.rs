@@ -10,6 +10,7 @@ use axum::{
 };
 
 use common::errors::ErrorResponse;
+use db::models::{NewPaymentWebhookDeadLetter, OnlinePaymentSession};
 
 use crate::state::AppState;
 
@@ -183,16 +184,26 @@ pub async fn handle_payment_webhook(
             // has *already collected*. Acking (200) here would permanently drop
             // a paid event with no record anywhere — the bug this guards.
             //
-            // Fail loud instead: return 5xx so Stripe's at-least-once retry
-            // keeps redelivering (its retry queue is the dead-letter safety net
-            // of last resort) while operators reconcile the missing invoice,
-            // and emit an error-level log to alarm on. A durable in-house DLQ
-            // table is a worthwhile follow-up, but refusing to ack already
-            // stops the silent drop.
+            // Persist the raw signed event to the durable in-house dead-letter
+            // store FIRST (so a collected payment is recorded even if Stripe
+            // eventually stops retrying), THEN still fail loud: return 5xx so
+            // Stripe's at-least-once retry keeps redelivering while operators
+            // reconcile the missing invoice from the dead-letter table, and
+            // emit an error-level log to alarm on.
+            persist_dead_letter(
+                &state,
+                &session,
+                &event.event_type,
+                provider_session_id,
+                signature,
+                &body,
+                "invoice_missing",
+            )
+            .await;
             tracing::error!(
                 session_id = %provider_session_id,
                 invoice_id = %session.invoice_id,
-                "Stripe PAID webhook references a missing invoice — refusing to ack so Stripe retries (must not drop a collected payment)"
+                "Stripe PAID webhook references a missing invoice — dead-lettered; refusing to ack so Stripe retries (must not drop a collected payment)"
             );
             return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -203,7 +214,21 @@ pub async fn handle_payment_webhook(
             ));
         }
         Err(e) => {
+            // The invoice load itself errored (DB unavailable, etc.) on an event
+            // representing money already collected. Same hazard as the missing
+            // invoice: dead-letter the raw event, then fail loud so Stripe
+            // retries.
             tracing::error!("Failed to load invoice for webhook: {:?}", e);
+            persist_dead_letter(
+                &state,
+                &session,
+                &event.event_type,
+                provider_session_id,
+                signature,
+                &body,
+                "invoice_load_failed",
+            )
+            .await;
             return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DB_ERROR", "Failed to load invoice")),
@@ -247,4 +272,44 @@ pub async fn handle_payment_webhook(
     }
 
     Ok(StatusCode::OK)
+}
+
+/// Persist a verified-but-unsettleable Stripe paid event to the durable
+/// dead-letter store (#3284) before the caller returns 5xx.
+///
+/// Best-effort: a failure to write the dead-letter row must NOT change the
+/// handler's outcome (it still returns 5xx so Stripe keeps retrying). We log
+/// loudly on failure so the write path itself can be alarmed on, but we never
+/// convert a dead-letter write error into a different HTTP status.
+async fn persist_dead_letter(
+    state: &AppState,
+    session: &OnlinePaymentSession,
+    event_type: &str,
+    provider_session_id: &str,
+    signature: &str,
+    raw_event: &[u8],
+    failure_reason: &str,
+) {
+    let input = NewPaymentWebhookDeadLetter {
+        organization_id: session.organization_id,
+        provider: &session.provider,
+        provider_session_id,
+        invoice_id: Some(session.invoice_id),
+        event_type: Some(event_type),
+        failure_reason,
+        raw_event,
+        signature: (!signature.is_empty()).then_some(signature),
+    };
+
+    if let Err(e) = state
+        .financial_repo
+        .record_payment_webhook_dead_letter(&input)
+        .await
+    {
+        tracing::error!(
+            session_id = %provider_session_id,
+            failure_reason,
+            "Failed to persist payment-webhook dead-letter row: {:?}", e
+        );
+    }
 }

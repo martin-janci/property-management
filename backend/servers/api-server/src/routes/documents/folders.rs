@@ -1,7 +1,7 @@
 //! Document folder routes (Story 7A.2).
 
 use crate::state::AppState;
-use api_core::{extractors::RlsConnection, AuthUser, TenantExtractor};
+use api_core::{extractors::RlsConnection, AuthUser, ValidatedTenantExtractor};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -43,7 +43,7 @@ pub fn router() -> Router<AppState> {
 async fn list_folders(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Query(query): Query<ListFoldersQuery>,
 ) -> Result<Json<FolderListResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -85,7 +85,7 @@ async fn list_folders(
 async fn get_folder_tree(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
 ) -> Result<Json<FolderTreeResponse>, (StatusCode, Json<ErrorResponse>)> {
     let org_id = tenant.tenant_id;
@@ -128,7 +128,7 @@ async fn get_folder_tree(
 async fn create_folder(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Json(req): Json<CreateFolderRequest>,
 ) -> Result<(StatusCode, Json<CreateFolderResponse>), (StatusCode, Json<ErrorResponse>)> {
@@ -159,6 +159,10 @@ async fn create_folder(
 
     let org_id = tenant.tenant_id;
     let user_id = auth.user_id;
+
+    // Nested id: the parent folder must belong to the caller's org (the FK
+    // is not org-aware and FK checks ignore RLS).
+    ensure_folder_in_org(&state, &mut rls, req.parent_id, org_id).await?;
 
     let data = CreateFolder {
         organization_id: org_id,
@@ -223,7 +227,7 @@ async fn create_folder(
 async fn get_folder(
     State(state): State<AppState>,
     _auth: AuthUser,
-    _tenant: TenantExtractor,
+    _tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<FolderDetailResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -270,7 +274,7 @@ async fn get_folder(
 async fn update_folder(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateFolderRequest>,
@@ -333,6 +337,9 @@ async fn update_folder(
     // concrete parent (Some(Some)) needs the check; Some(None) detaches to root
     // and None leaves the parent unchanged (#1589).
     if let Some(Some(new_parent_id)) = req.parent_id {
+        // Nested id: the new parent must belong to the caller's org.
+        ensure_folder_in_org(&state, &mut rls, Some(new_parent_id), org_id).await?;
+
         // Cannot set a folder as its own parent
         if new_parent_id == id {
             return Err((
@@ -423,7 +430,7 @@ async fn update_folder(
 async fn delete_folder(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     body: Option<Json<DeleteFolderRequest>>,
@@ -508,3 +515,41 @@ async fn delete_folder(
 }
 
 // ============================================================================
+
+/// Ensure an optional folder id (a document's `folder_id` or a folder's
+/// `parent_id` taken from the request) refers to a live folder in `org_id`.
+///
+/// `document_folders(id)` FKs are not org-aware and Postgres FK checks ignore
+/// RLS, so without this an id from another organization could be attached
+/// (and its existence probed). Returns 404 for a foreign or missing folder.
+pub(crate) async fn ensure_folder_in_org(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    folder_id: Option<Uuid>,
+    org_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let Some(folder_id) = folder_id else {
+        return Ok(());
+    };
+    match state
+        .document_repo
+        .find_folder_by_id_rls(&mut **rls.conn(), folder_id, org_id)
+        .await
+    {
+        Ok(Some(_)) => Ok(()),
+        Ok(None) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("FOLDER_NOT_FOUND", "Folder not found")),
+        )),
+        Err(e) => {
+            tracing::error!("Failed to verify folder: {}", e);
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to verify folder",
+                )),
+            ))
+        }
+    }
+}

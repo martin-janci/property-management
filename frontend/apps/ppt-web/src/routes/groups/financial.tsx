@@ -8,32 +8,38 @@ import type { InvoiceStatus, ReportExportFormat, ReportType } from '@ppt/api-cli
 import {
   allocatePayment,
   autoMatchPayments,
+  budgetKeys,
   downloadInvoicePdf,
   exportReport,
   getARAgingReport,
   getBalanceSheet,
+  getBudgetSummary,
   getCashFlowReport,
   getIncomeStatement,
+  getInvoice,
   getOverdueInvoices,
+  listBudgets,
   listInvoices,
   listPayments,
   listUnallocatedPayments,
   sendInvoice,
+  useBuildings,
 } from '@ppt/api-client';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Route, useNavigate } from 'react-router-dom';
+import { Route, useNavigate, useParams } from 'react-router-dom';
 import { ProtectedRoute, useToast } from '../../components';
 import { useAuth } from '../../contexts';
 import {
   BudgetManagementPage,
   FinancialDashboardPage,
   FinancialReportsPage,
+  InvoiceDetail,
   InvoiceManagementPage,
   PaymentManagementPage,
 } from '../lazyRoutes';
-import { MANAGER_ROLES } from '../shared';
+import { isManagerRole, MANAGER_ROLES } from '../shared';
 
 /** Trigger a browser download for a fetched report blob. */
 function downloadBlob(blob: Blob, filename: string) {
@@ -63,8 +69,14 @@ function isoDate(d: Date): string {
  * Metrics are derived from `arReport.totals` plus invoice sums; invoiceCounts are
  * derived client-side from the invoice list. recentPayments stays `[]` — there is
  * no org-wide payments endpoint in the api-client.
+ *
+ * Recent payments come from listPayments({ organization_id, limit: 5 }) (the
+ * server orders by payment_date DESC). The building / date-range filters are
+ * not wired: invoices, overdue invoices and payments have no building or date
+ * query params, so the page hides those filters rather than render inert ones.
  */
 function FinancialDashboardPageRoute() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const orgId = user?.organizationId ?? '';
 
@@ -84,7 +96,13 @@ function FinancialDashboardPageRoute() {
     enabled: !!orgId,
   });
 
-  const isLoading = arLoading || overdueLoading || invoicesLoading;
+  const { data: paymentsData, isLoading: paymentsLoading } = useQuery({
+    queryKey: ['financial', 'payments', orgId, 'recent'],
+    queryFn: () => listPayments({ organization_id: orgId, limit: RECENT_PAYMENTS_LIMIT }),
+    enabled: !!orgId,
+  });
+
+  const isLoading = arLoading || overdueLoading || invoicesLoading || paymentsLoading;
 
   const totals = arReportData?.totals ?? {
     current: 0,
@@ -116,6 +134,7 @@ function FinancialDashboardPageRoute() {
   return (
     <FinancialDashboardPage
       organizationId={orgId}
+      isManager={isManagerRole(user?.role)}
       buildings={[]}
       metrics={{
         totalBalance: totals.total,
@@ -124,16 +143,21 @@ function FinancialDashboardPageRoute() {
         currency,
       }}
       invoiceCounts={invoiceCounts}
-      recentPayments={[]}
+      recentPayments={paymentsData?.payments ?? []}
       overdueInvoices={overdueInvoices}
       arReport={{
         entries: arReportData?.entries ?? [],
         totals,
       }}
       isLoading={isLoading}
+      onViewInvoice={(id) => navigate(`/financial/invoices/${id}`)}
+      onViewAllPayments={() => navigate('/financial/payments')}
     />
   );
 }
+
+/** Number of payments shown in the dashboard's "Recent payments" card. */
+const RECENT_PAYMENTS_LIMIT = 5;
 
 /**
  * Route wrapper for invoice management (Epic 52, #975.2).
@@ -150,6 +174,16 @@ function InvoiceManagementPageRoute() {
   const { showToast } = useToast();
   const queryClient = useQueryClient();
   const orgId = user?.organizationId ?? '';
+  // `/financial/invoices/:invoiceId` deep-links the invoice detail modal over
+  // the list (dashboard "View", list row click). `new` has no create page yet.
+  const { invoiceId: routeInvoiceId } = useParams<{ invoiceId: string }>();
+  const detailInvoiceId = routeInvoiceId && routeInvoiceId !== 'new' ? routeInvoiceId : undefined;
+
+  const detailQuery = useQuery({
+    queryKey: ['financial', 'invoice', detailInvoiceId],
+    queryFn: () => getInvoice(detailInvoiceId as string),
+    enabled: !!detailInvoiceId,
+  });
 
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -171,16 +205,17 @@ function InvoiceManagementPageRoute() {
     mutationFn: (invoiceId: string) => sendInvoice(invoiceId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['financial', 'invoices', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['financial', 'invoice'] });
       showToast({
         type: 'success',
-        title: t('financial.invoices.sent', { defaultValue: 'Invoice sent' }),
+        title: t('financial.invoices.sent'),
         message: '',
       });
     },
     onError: (err) => {
       showToast({
         type: 'error',
-        title: t('financial.invoices.sendFailed', { defaultValue: 'Failed to send invoice' }),
+        title: t('financial.invoices.sendFailed'),
         message: err instanceof Error ? err.message : '',
       });
     },
@@ -192,7 +227,9 @@ function InvoiceManagementPageRoute() {
   const downloadPdfMutation = useMutation({
     mutationFn: (id: string) => downloadInvoicePdf(id),
     onSuccess: (blob, id) => {
-      const number = data?.invoices.find((inv) => inv.id === id)?.invoice_number ?? id;
+      const number =
+        data?.invoices.find((inv) => inv.id === id)?.invoice_number ??
+        (detailQuery.data?.invoice.id === id ? detailQuery.data.invoice.invoice_number : id);
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
       anchor.href = url;
@@ -205,7 +242,7 @@ function InvoiceManagementPageRoute() {
     onError: (err) => {
       showToast({
         type: 'error',
-        title: t('financial.invoices.pdfFailed', { defaultValue: 'Failed to download PDF' }),
+        title: t('financial.invoices.pdfFailed'),
         message: err instanceof Error ? err.message : '',
       });
     },
@@ -218,24 +255,40 @@ function InvoiceManagementPageRoute() {
   };
 
   return (
-    <InvoiceManagementPage
-      invoices={data?.invoices ?? []}
-      total={data?.total ?? 0}
-      buildings={[]}
-      isLoading={isLoading}
-      onNavigateToCreate={() => navigate('/financial/invoices/new')}
-      onNavigateToDetail={(id: string) => navigate(`/financial/invoices/${id}`)}
-      onSendInvoice={(id: string) => sendInvoiceMutation.mutate(id)}
-      onDownloadPdf={handleDownloadPdf}
-      downloadingPdfId={
-        downloadPdfMutation.isPending ? (downloadPdfMutation.variables ?? null) : null
-      }
-      onFilterChange={(params) => {
-        setStatusFilter(params.status);
-        setPage(params.page);
-        setPageSize(params.pageSize);
-      }}
-    />
+    <>
+      <InvoiceManagementPage
+        invoices={data?.invoices ?? []}
+        total={data?.total ?? 0}
+        buildings={[]}
+        isLoading={isLoading}
+        onNavigateToCreate={() => navigate('/financial/invoices/new')}
+        onNavigateToDetail={(id: string) => navigate(`/financial/invoices/${id}`)}
+        onSendInvoice={(id: string) => sendInvoiceMutation.mutate(id)}
+        onDownloadPdf={handleDownloadPdf}
+        downloadingPdfId={
+          downloadPdfMutation.isPending ? (downloadPdfMutation.variables ?? null) : null
+        }
+        onFilterChange={(params) => {
+          setStatusFilter(params.status);
+          setPage(params.page);
+          setPageSize(params.pageSize);
+        }}
+      />
+      {detailInvoiceId && detailQuery.data && (
+        <InvoiceDetail
+          invoice={detailQuery.data}
+          onClose={() => navigate('/financial/invoices')}
+          onSend={() => sendInvoiceMutation.mutate(detailInvoiceId)}
+          isSending={sendInvoiceMutation.isPending}
+          onDownloadPdf={() => handleDownloadPdf(detailInvoiceId)}
+        />
+      )}
+      {detailInvoiceId && detailQuery.isError && (
+        <div role="alert" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 text-red-700">
+          {t('financial.invoiceDetail.loadFailed')}
+        </div>
+      )}
+    </>
   );
 }
 
@@ -307,9 +360,7 @@ function PaymentManagementPageRoute() {
     onError: (err) => {
       showToast({
         type: 'error',
-        title: t('financial.payments.matchFailed', {
-          defaultValue: 'Failed to allocate payment',
-        }),
+        title: t('financial.payments.matchFailed'),
         message: err instanceof Error ? err.message : '',
       });
     },
@@ -320,9 +371,7 @@ function PaymentManagementPageRoute() {
     onError: (err) => {
       showToast({
         type: 'error',
-        title: t('financial.payments.autoMatchFailed', {
-          defaultValue: 'Failed to auto-match payments',
-        }),
+        title: t('financial.payments.autoMatchFailed'),
         message: err instanceof Error ? err.message : '',
       });
     },
@@ -337,8 +386,10 @@ function PaymentManagementPageRoute() {
       unpaidInvoices={unpaidInvoices}
       metrics={{ totalReceived, pendingReconciliation, currency }}
       isLoading={isLoading}
-      onNavigateToRecord={() => navigate('/financial/payments/new')}
-      onNavigateToDetail={(id: string) => navigate(`/financial/payments/${id}`)}
+      // Recording a payment is a manager action; residents only see the list.
+      onNavigateToRecord={
+        isManagerRole(user?.role) ? () => navigate('/financial/payments/new') : undefined
+      }
       onMatch={(paymentId: string, invoiceId: string, amount: number) =>
         matchMutation.mutate({ paymentId, invoiceId, amount })
       }
@@ -351,19 +402,80 @@ function PaymentManagementPageRoute() {
   );
 }
 
+/**
+ * Budget overview (Epic 24 / Story 52.4).
+ *
+ *   listBudgets({ organizationId, fiscalYear, buildingId }) — GET /api/v1/budgets
+ *   getBudgetSummary(id) per budget                         — GET /api/v1/budgets/{id}/summary
+ *
+ * The list endpoint only returns each budget's `total_amount`, so actual spend
+ * comes from one summary query per listed budget (the list is capped at the
+ * server's default page of 50). "Remaining" is budgeted minus actual, so a
+ * positive value is under budget (green) and a negative one overspent (red).
+ */
 function BudgetManagementPageRoute() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const orgId = user?.organizationId ?? '';
+  const currentYear = new Date().getFullYear();
+  const [fiscalYear, setFiscalYear] = useState(currentYear);
+  const [buildingId, setBuildingId] = useState<string>();
+
+  const { data: buildingsData } = useBuildings({ pageSize: 100 });
+  const buildings = (buildingsData?.items ?? []).map((b) => ({ id: b.id, name: b.name }));
+  const buildingNames = new Map(buildings.map((b) => [b.id, b.name]));
+
+  const params = { organizationId: orgId, fiscalYear, buildingId };
+  const budgetsQuery = useQuery({
+    queryKey: budgetKeys.list(params),
+    queryFn: () => listBudgets(params),
+    enabled: !!orgId,
+  });
+  const budgetList = budgetsQuery.data ?? [];
+
+  const summaryQueries = useQueries({
+    queries: budgetList.map((budget) => ({
+      queryKey: budgetKeys.summary(budget.id),
+      queryFn: () => getBudgetSummary(budget.id),
+    })),
+  });
+
+  const budgets = budgetList.map((budget, i) => {
+    const totalBudget = budget.totalAmount;
+    const totalActual = summaryQueries[i]?.data?.totalActual ?? 0;
+    return {
+      id: budget.id,
+      name: budget.name,
+      year: budget.fiscalYear,
+      buildingName: budget.buildingId ? buildingNames.get(budget.buildingId) : undefined,
+      totalBudget,
+      totalActual,
+      totalVariance: totalBudget - totalActual,
+      currency: 'EUR',
+      status: budget.status,
+    };
+  });
+  const totalBudget = budgets.reduce((sum, b) => sum + b.totalBudget, 0);
+  const totalActual = budgets.reduce((sum, b) => sum + b.totalActual, 0);
 
   return (
     <BudgetManagementPage
-      budgets={[]}
-      currentYear={new Date().getFullYear()}
-      summary={{ totalBudget: 0, totalActual: 0, overallVariance: 0, currency: 'EUR' }}
-      buildings={[]}
+      budgets={budgets}
+      currentYear={currentYear}
+      summary={{
+        totalBudget,
+        totalActual,
+        overallVariance: totalBudget - totalActual,
+        currency: 'EUR',
+      }}
+      buildings={buildings}
+      isLoading={budgetsQuery.isLoading}
+      error={budgetsQuery.error instanceof Error ? budgetsQuery.error.message : null}
+      onRetry={() => budgetsQuery.refetch()}
       onNavigateToCreate={() => navigate('/financial/budgets/new')}
-      onNavigateToDetail={(id: string) => navigate(`/financial/budgets/${id}`)}
-      onYearChange={() => {}}
-      onBuildingChange={() => {}}
+      onNavigateToDetail={(id) => navigate(`/financial/budgets/${id}`)}
+      onYearChange={setFiscalYear}
+      onBuildingChange={setBuildingId}
     />
   );
 }
@@ -435,7 +547,7 @@ function FinancialReportsPageRoute() {
       .catch((err) => {
         showToast({
           type: 'error',
-          title: t('financial.reports.exportFailed', { defaultValue: 'Export failed' }),
+          title: t('financial.reports.exportFailed'),
           message: err instanceof Error ? err.message : '',
         });
       })
@@ -470,6 +582,14 @@ export function financialRoutes() {
       <Route path="/financial" element={<FinancialDashboardPageRoute />} />
       <Route
         path="/financial/invoices"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <InvoiceManagementPageRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/financial/invoices/:invoiceId"
         element={
           <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <InvoiceManagementPageRoute />

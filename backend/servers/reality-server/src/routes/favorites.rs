@@ -139,16 +139,18 @@ pub async fn add_favorite(
         .add_favorite(principal.user_id, listing_id, data.notes)
         .await
         .map_err(|e| {
-            let error_str = e.to_string();
-            if error_str.contains("not found") {
+            // `add_favorite` runs `INSERT … SELECT FROM listings WHERE id = $2
+            // RETURNING * … fetch_one`, so a non-existent listing surfaces as
+            // `RowNotFound`. Classify by the sqlx variant, not message text.
+            // (The old `contains("maximum")`/`contains("limit")` branch was
+            // dead: this route never enforces a per-user cap — the limit check
+            // lives in the `FavoritesHandler`, not the repository.)
+            if crate::util::errors::classify_db_error(&e)
+                == crate::util::errors::DbErrorClass::NotFound
+            {
                 (
                     axum::http::StatusCode::NOT_FOUND,
                     "Listing not found".to_string(),
-                )
-            } else if error_str.contains("maximum") || error_str.contains("limit") {
-                (
-                    axum::http::StatusCode::BAD_REQUEST,
-                    "Maximum favorites limit reached".to_string(),
                 )
             } else {
                 crate::util::errors::db_error("add favorite", e)
@@ -189,9 +191,12 @@ pub async fn update_favorite(
         .update_favorite(principal.user_id, listing_id, data)
         .await
         .map_err(|e| {
-            // `fetch_one` yields RowNotFound ("no rows") when the user has no
-            // such favorite — surface that as 404 rather than a 500.
-            if e.to_string().contains("no rows") {
+            // `fetch_one` yields `RowNotFound` when the user has no such
+            // favorite — surface that as 404 rather than a 500. Classify by the
+            // sqlx variant, not the "no rows" message text.
+            if crate::util::errors::classify_db_error(&e)
+                == crate::util::errors::DbErrorClass::NotFound
+            {
                 (
                     axum::http::StatusCode::NOT_FOUND,
                     "Favorite not found".to_string(),

@@ -9,7 +9,7 @@ implementations:
     component: MarketplacePage
     buildStatus: shipped
     redesignStatus: not-started
-    apiStatus: stub
+    apiStatus: partial
 endpoints: []
 relatedScreens:
   - id: ppt/community
@@ -30,7 +30,9 @@ Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, e
 ## Notes
 
 ### Specific (recent)
+- 2026-11-04 — Marketplace now real: `GET /community/buildings/{building_id}/marketplace?category=&limit=24&offset=` (server-side category + paging), cards open `/community/marketplace/:itemId`; create → `/community/marketplace/new`. Edit/delete/mark-sold hidden — no endpoints. `apiStatus: partial` until verified end-to-end: the backend community happy-path tests are quarantined (BIT-440) and the repo decodes Postgres enum columns into `String` via `SELECT *`, which likely fails at runtime.
 - 2026-05-18 — audit: stub created from `frontend/apps/ppt-web/src/App.tsx:517`.
 
 ## Agent Log
 - 2026-05-18 — agent: created stub for unmapped route.
+- 2026-11-04 — agent: marketplace list wired with server-side category filter + paging; detail/create routes added. Tests: `features/community/**/*.test.tsx` + `api-client/src/community/api.test.ts`.

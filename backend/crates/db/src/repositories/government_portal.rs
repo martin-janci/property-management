@@ -299,15 +299,20 @@ impl GovernmentPortalRepository {
         .await
     }
 
-    /// Get a specific submission.
+    /// Get a specific submission, scoped to `organization_id`.
+    ///
+    /// Returns `None` for a submission of another organization so callers can
+    /// answer 404 without revealing its existence.
     pub async fn get_submission(
         &self,
         id: Uuid,
+        organization_id: Uuid,
     ) -> Result<Option<RegulatorySubmission>, SqlxError> {
         sqlx::query_as::<_, RegulatorySubmission>(
-            "SELECT * FROM regulatory_submissions WHERE id = $1",
+            "SELECT * FROM regulatory_submissions WHERE id = $1 AND organization_id = $2",
         )
         .bind(id)
+        .bind(organization_id)
         .fetch_optional(&self.pool)
         .await
     }
@@ -353,39 +358,42 @@ impl GovernmentPortalRepository {
         .await
     }
 
-    /// Update submission data.
+    /// Update submission data, scoped to `organization_id` (`None` = not found).
     pub async fn update_submission(
         &self,
         id: Uuid,
+        organization_id: Uuid,
         report_data: Option<serde_json::Value>,
         report_xml: Option<&str>,
-    ) -> Result<RegulatorySubmission, SqlxError> {
+    ) -> Result<Option<RegulatorySubmission>, SqlxError> {
         sqlx::query_as::<_, RegulatorySubmission>(
             r#"
             UPDATE regulatory_submissions SET
                 report_data = COALESCE($2, report_data),
                 report_xml = COALESCE($3, report_xml),
                 updated_at = now()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $4
             RETURNING *
             "#,
         )
         .bind(id)
         .bind(&report_data)
         .bind(report_xml)
-        .fetch_one(&self.pool)
+        .bind(organization_id)
+        .fetch_optional(&self.pool)
         .await
     }
 
-    /// Update submission status.
+    /// Update submission status, scoped to `organization_id` (`None` = not found).
     pub async fn update_submission_status(
         &self,
         id: Uuid,
+        organization_id: Uuid,
         status: SubmissionStatus,
         validation_result: Option<serde_json::Value>,
         submission_response: Option<serde_json::Value>,
         external_reference: Option<&str>,
-    ) -> Result<RegulatorySubmission, SqlxError> {
+    ) -> Result<Option<RegulatorySubmission>, SqlxError> {
         // Set appropriate timestamps based on status
         let now = Utc::now();
 
@@ -401,7 +409,7 @@ impl GovernmentPortalRepository {
                 acknowledged_at = CASE WHEN $2 = 'acknowledged' THEN $6 ELSE acknowledged_at END,
                 processed_at = CASE WHEN $2 IN ('accepted', 'rejected') THEN $6 ELSE processed_at END,
                 updated_at = $6
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $7
             RETURNING *
             "#,
         )
@@ -411,18 +419,21 @@ impl GovernmentPortalRepository {
         .bind(&submission_response)
         .bind(external_reference)
         .bind(now)
-        .fetch_one(&self.pool)
+        .bind(organization_id)
+        .fetch_optional(&self.pool)
         .await?;
 
         Ok(submission)
     }
 
-    /// Submit a submission (set submitted_by and increment attempts).
+    /// Submit a submission (set submitted_by and increment attempts), scoped
+    /// to `organization_id` (`None` = not found).
     pub async fn submit_submission(
         &self,
         id: Uuid,
+        organization_id: Uuid,
         submitted_by: Uuid,
-    ) -> Result<RegulatorySubmission, SqlxError> {
+    ) -> Result<Option<RegulatorySubmission>, SqlxError> {
         sqlx::query_as::<_, RegulatorySubmission>(
             r#"
             UPDATE regulatory_submissions SET
@@ -431,13 +442,14 @@ impl GovernmentPortalRepository {
                 submitted_at = now(),
                 submission_attempts = submission_attempts + 1,
                 updated_at = now()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $3
             RETURNING *
             "#,
         )
         .bind(id)
         .bind(submitted_by)
-        .fetch_one(&self.pool)
+        .bind(organization_id)
+        .fetch_optional(&self.pool)
         .await
     }
 
@@ -563,12 +575,29 @@ impl GovernmentPortalRepository {
         .await
     }
 
-    /// Delete an attachment.
-    pub async fn delete_attachment(&self, id: Uuid) -> Result<bool, SqlxError> {
-        let result = sqlx::query("DELETE FROM regulatory_submission_attachments WHERE id = $1")
-            .bind(id)
-            .execute(&self.pool)
-            .await?;
+    /// Delete an attachment of `submission_id`, where the submission belongs to
+    /// `organization_id`. Returns `false` when no such attachment exists.
+    pub async fn delete_attachment(
+        &self,
+        id: Uuid,
+        submission_id: Uuid,
+        organization_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        let result = sqlx::query(
+            r#"
+            DELETE FROM regulatory_submission_attachments a
+            USING regulatory_submissions s
+            WHERE a.id = $1
+              AND a.submission_id = $2
+              AND s.id = a.submission_id
+              AND s.organization_id = $3
+            "#,
+        )
+        .bind(id)
+        .bind(submission_id)
+        .bind(organization_id)
+        .execute(&self.pool)
+        .await?;
 
         Ok(result.rows_affected() > 0)
     }
@@ -633,16 +662,18 @@ impl GovernmentPortalRepository {
         .await
     }
 
-    /// Update a schedule.
+    /// Update a schedule, scoped to `organization_id` (`None` = not found).
+    #[allow(clippy::too_many_arguments)]
     pub async fn update_schedule(
         &self,
         id: Uuid,
+        organization_id: Uuid,
         is_active: Option<bool>,
         auto_generate: Option<bool>,
         auto_submit: Option<bool>,
         notify_before_days: Option<i32>,
         notify_users: Option<Vec<Uuid>>,
-    ) -> Result<RegulatorySubmissionSchedule, SqlxError> {
+    ) -> Result<Option<RegulatorySubmissionSchedule>, SqlxError> {
         let notify_users_json = notify_users.map(|u| serde_json::json!(u));
 
         sqlx::query_as::<_, RegulatorySubmissionSchedule>(
@@ -654,7 +685,7 @@ impl GovernmentPortalRepository {
                 notify_before_days = COALESCE($5, notify_before_days),
                 notify_users = COALESCE($6, notify_users),
                 updated_at = now()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $7
             RETURNING *
             "#,
         )
@@ -664,16 +695,24 @@ impl GovernmentPortalRepository {
         .bind(auto_submit)
         .bind(notify_before_days)
         .bind(&notify_users_json)
-        .fetch_one(&self.pool)
+        .bind(organization_id)
+        .fetch_optional(&self.pool)
         .await
     }
 
-    /// Delete a schedule.
-    pub async fn delete_schedule(&self, id: Uuid) -> Result<bool, SqlxError> {
-        let result = sqlx::query("DELETE FROM regulatory_submission_schedules WHERE id = $1")
-            .bind(id)
-            .execute(&self.pool)
-            .await?;
+    /// Delete a schedule, scoped to `organization_id`.
+    pub async fn delete_schedule(
+        &self,
+        id: Uuid,
+        organization_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        let result = sqlx::query(
+            "DELETE FROM regulatory_submission_schedules WHERE id = $1 AND organization_id = $2",
+        )
+        .bind(id)
+        .bind(organization_id)
+        .execute(&self.pool)
+        .await?;
 
         Ok(result.rows_affected() > 0)
     }

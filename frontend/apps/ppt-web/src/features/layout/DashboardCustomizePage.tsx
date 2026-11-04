@@ -17,12 +17,14 @@ import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useToast } from '../../components';
+import { useConfirmDialog } from '../../components/useConfirmDialog';
 import { TenantSectionEditor } from './TenantSectionEditor';
 
 const SCREEN = 'ppt/dashboard';
 
 export function DashboardCustomizePage() {
   const { t } = useTranslation();
+  const { confirm, confirmDialog } = useConfirmDialog();
   const { showToast } = useToast();
 
   // Fetch the tenant layout envelope
@@ -91,8 +93,8 @@ export function DashboardCustomizePage() {
     }
   };
 
-  const handleReset = () => {
-    if (!window.confirm(t('layout.customize.resetConfirm'))) return;
+  const handleReset = async () => {
+    if (!(await confirm({ message: t('layout.customize.resetConfirm') }))) return;
     setLocalOverride({});
     setIsDirty(true);
     setValidationErrors([]);
@@ -178,6 +180,7 @@ export function DashboardCustomizePage() {
           </div>
         </>
       )}
+      {confirmDialog}
     </div>
   );
 }

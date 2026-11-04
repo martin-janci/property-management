@@ -3,6 +3,7 @@
  */
 
 import type { ARReportEntry, ARReportTotals } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../utils/formatting';
 
 interface ARAgingTableProps {
@@ -13,10 +14,12 @@ interface ARAgingTableProps {
 }
 
 export function ARAgingTable({ entries, totals, isLoading, onRowClick }: ARAgingTableProps) {
+  const { t } = useTranslation();
+
   if (isLoading) {
     return (
       <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Accounts Receivable Aging</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">{t('financial.arAging.title')}</h3>
         <div className="animate-pulse space-y-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="h-10 bg-gray-200 rounded" />
@@ -29,8 +32,8 @@ export function ARAgingTable({ entries, totals, isLoading, onRowClick }: ARAging
   if (entries.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Accounts Receivable Aging</h3>
-        <p className="text-gray-500 text-center py-8">No outstanding receivables</p>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">{t('financial.arAging.title')}</h3>
+        <p className="text-gray-500 text-center py-8">{t('financial.arAging.empty')}</p>
       </div>
     );
   }
@@ -38,7 +41,7 @@ export function ARAgingTable({ entries, totals, isLoading, onRowClick }: ARAging
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-200">
-        <h3 className="text-lg font-medium text-gray-900">Accounts Receivable Aging</h3>
+        <h3 className="text-lg font-medium text-gray-900">{t('financial.arAging.title')}</h3>
       </div>
 
       <div className="overflow-x-auto">
@@ -49,37 +52,37 @@ export function ARAgingTable({ entries, totals, isLoading, onRowClick }: ARAging
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                Unit
+                {t('financial.arAging.unit')}
               </th>
               <th
                 scope="col"
                 className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                Current
+                {t('financial.arAging.current')}
               </th>
               <th
                 scope="col"
                 className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                1-30 Days
+                {t('financial.arAging.days1to30')}
               </th>
               <th
                 scope="col"
                 className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                31-60 Days
+                {t('financial.arAging.days31to60')}
               </th>
               <th
                 scope="col"
                 className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                60+ Days
+                {t('financial.arAging.days60plus')}
               </th>
               <th
                 scope="col"
                 className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                Total
+                {t('financial.arAging.total')}
               </th>
             </tr>
           </thead>
@@ -97,7 +100,11 @@ export function ARAgingTable({ entries, totals, isLoading, onRowClick }: ARAging
                 }}
                 tabIndex={onRowClick ? 0 : undefined}
                 role={onRowClick ? 'button' : undefined}
-                aria-label={onRowClick ? `View details for unit ${entry.designation}` : undefined}
+                aria-label={
+                  onRowClick
+                    ? t('financial.arAging.viewUnit', { unit: entry.designation })
+                    : undefined
+                }
               >
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   {entry.designation}
@@ -126,7 +133,9 @@ export function ARAgingTable({ entries, totals, isLoading, onRowClick }: ARAging
           </tbody>
           <tfoot className="bg-gray-50">
             <tr>
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">Total</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                {t('financial.arAging.total')}
+              </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-bold text-gray-900">
                 {formatCurrency(totals.current)}
               </td>

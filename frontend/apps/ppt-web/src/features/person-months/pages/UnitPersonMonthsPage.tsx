@@ -19,7 +19,8 @@ interface UnitPersonMonthsPageProps {
   isDeleting?: boolean;
   selectedYear: number;
   onYearChange: (year: number) => void;
-  onNavigateToEdit: (year: number, month: number) => void;
+  /** Managers only; omitted for residents so the page is read-only. */
+  onNavigateToEdit?: (year: number, month: number) => void;
   onDelete?: (personMonth: PersonMonth) => void;
   onExport?: (format: ExportFormat, year: number) => void;
   onBack: () => void;
@@ -53,7 +54,7 @@ export function UnitPersonMonthsPage({
   };
 
   const handleMonthClick = (month: number) => {
-    onNavigateToEdit(year, month);
+    onNavigateToEdit?.(year, month);
   };
 
   const handleExport = (format: ExportFormat) => {
@@ -139,13 +140,15 @@ export function UnitPersonMonthsPage({
               </option>
             ))}
           </select>
-          <button
-            type="button"
-            onClick={() => onNavigateToEdit(year, new Date().getMonth() + 1)}
-            className="ml-auto px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
-          >
-            {t('personMonths.addEntry')}
-          </button>
+          {onNavigateToEdit && (
+            <button
+              type="button"
+              onClick={() => onNavigateToEdit(year, new Date().getMonth() + 1)}
+              className="ml-auto px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+            >
+              {t('personMonths.addEntry')}
+            </button>
+          )}
         </div>
       </div>
 
@@ -169,7 +172,10 @@ export function UnitPersonMonthsPage({
       {/* Yearly summary chart */}
       {!isLoading && yearlySummary && (
         <div className="mb-6">
-          <YearlySummaryChart summary={yearlySummary} onMonthClick={handleMonthClick} />
+          <YearlySummaryChart
+            summary={yearlySummary}
+            onMonthClick={onNavigateToEdit ? handleMonthClick : undefined}
+          />
         </div>
       )}
 
@@ -182,7 +188,9 @@ export function UnitPersonMonthsPage({
           {personMonths.length === 0 ? (
             <div className="bg-white rounded-lg shadow p-8 text-center">
               <p className="text-gray-500">{t('personMonths.noEntriesForYear')}</p>
-              <p className="text-sm text-gray-400 mt-2">{t('personMonths.clickAddToCreate')}</p>
+              {onNavigateToEdit && (
+                <p className="text-sm text-gray-400 mt-2">{t('personMonths.clickAddToCreate')}</p>
+              )}
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -190,7 +198,7 @@ export function UnitPersonMonthsPage({
                 <PersonMonthCard
                   key={pm.id}
                   personMonth={pm}
-                  onEdit={() => onNavigateToEdit(pm.year, pm.month)}
+                  onEdit={onNavigateToEdit ? () => onNavigateToEdit(pm.year, pm.month) : undefined}
                   onDelete={onDelete ? () => handleDelete(pm) : undefined}
                 />
               ))}

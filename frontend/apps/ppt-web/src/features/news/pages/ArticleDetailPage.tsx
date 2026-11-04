@@ -22,7 +22,7 @@ interface ArticleWithAuthor extends NewsArticle {
 }
 
 export function ArticleDetailPage({ articleId }: ArticleDetailPageProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { organizationId } = useOrganization();
   const [article, setArticle] = useState<ArticleWithAuthor | null>(null);
   const [reactionCounts, setReactionCounts] = useState<ReactionCounts | null>(null);
@@ -54,10 +54,14 @@ export function ArticleDetailPage({ articleId }: ArticleDetailPageProps) {
 
       if (articleRes.status === 'rejected') {
         const status = (articleRes.reason as { status?: number } | undefined)?.status;
-        throw new Error(status === 404 ? 'Article not found' : 'Failed to load article');
+        throw new Error(status === 404 ? t('errors.articleNotFound') : t('news.errors.loadFailed'));
       }
 
-      const articleData = articleRes.value.data;
+      // GET /news/{id} returns `{ article, media, user_reaction, reaction_counts }`
+      // (article fields flattened with author_name / author_avatar_url).
+      // Tolerate a bare article object as well.
+      const articleBody = articleRes.value.data;
+      const articleData = articleBody?.article ?? articleBody;
 
       // Convert snake_case to camelCase
       setArticle({
@@ -89,10 +93,19 @@ export function ArticleDetailPage({ articleId }: ArticleDetailPageProps) {
 
       if (reactionsRes.status === 'fulfilled') {
         setReactionCounts(reactionsRes.value.data);
+      } else if (articleBody?.reaction_counts) {
+        setReactionCounts(articleBody.reaction_counts);
+      }
+      if (articleBody?.user_reaction) {
+        setUserReaction(articleBody.user_reaction as ReactionType);
       }
 
       if (commentsRes.status === 'fulfilled') {
-        const commentsData = commentsRes.value.data;
+        // GET /news/{id}/comments returns `{ comments, count }`; tolerate a bare array.
+        const commentsBody = commentsRes.value.data;
+        const commentsData = Array.isArray(commentsBody)
+          ? commentsBody
+          : (commentsBody?.comments ?? []);
         setComments(
           commentsData.map((c: Record<string, unknown>) => ({
             id: c.id,
@@ -121,11 +134,11 @@ export function ArticleDetailPage({ articleId }: ArticleDetailPageProps) {
         // Silently ignore view tracking errors
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load article');
+      setError(err instanceof Error ? err.message : t('news.errors.loadFailed'));
     } finally {
       setLoading(false);
     }
-  }, [organizationId, articleId]);
+  }, [organizationId, articleId, t]);
 
   useEffect(() => {
     loadArticle();
@@ -150,10 +163,10 @@ export function ArticleDetailPage({ articleId }: ArticleDetailPageProps) {
         });
         setReactionCounts(countsRes.data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to update reaction');
+        setError(err instanceof Error ? err.message : t('news.errors.reactionFailed'));
       }
     },
-    [organizationId, articleId]
+    [organizationId, articleId, t]
   );
 
   const handleAddComment = useCallback(
@@ -189,10 +202,10 @@ export function ArticleDetailPage({ articleId }: ArticleDetailPageProps) {
         };
         setComments((prev) => [...prev, newComment]);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to post comment');
+        setError(err instanceof Error ? err.message : t('news.errors.commentPostFailed'));
       }
     },
-    [organizationId, articleId]
+    [organizationId, articleId, t]
   );
 
   const handleEditComment = useCallback(
@@ -218,10 +231,10 @@ export function ArticleDetailPage({ articleId }: ArticleDetailPageProps) {
           )
         );
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to update comment');
+        setError(err instanceof Error ? err.message : t('news.errors.commentUpdateFailed'));
       }
     },
-    [organizationId, articleId]
+    [organizationId, articleId, t]
   );
 
   const handleDeleteComment = useCallback(
@@ -235,18 +248,18 @@ export function ArticleDetailPage({ articleId }: ArticleDetailPageProps) {
 
         setComments((prev) => prev.filter((c) => c.id !== commentId));
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to delete comment');
+        setError(err instanceof Error ? err.message : t('news.errors.commentDeleteFailed'));
       }
     },
-    [organizationId, articleId]
+    [organizationId, articleId, t]
   );
 
   if (!organizationId) {
-    return <div className="article-error">Please select an organization</div>;
+    return <div className="article-error">{t('common.selectOrganization')}</div>;
   }
 
   if (loading) {
-    return <div className="article-loading">Loading article...</div>;
+    return <div className="article-loading">{t('news.loadingArticle')}</div>;
   }
 
   if (error) {
@@ -254,24 +267,24 @@ export function ArticleDetailPage({ articleId }: ArticleDetailPageProps) {
       <div className="article-error" role="alert">
         {error}
         <button type="button" onClick={loadArticle}>
-          Retry
+          {t('common.retry')}
         </button>
       </div>
     );
   }
 
   if (!article) {
-    return <div className="article-not-found">Article not found</div>;
+    return <div className="article-not-found">{t('errors.articleNotFound')}</div>;
   }
 
   return (
     <article className="article-detail-page">
       <header className="article-header">
         <Link to="/news" className="back-link">
-          &larr; Back to News
+          &larr; {t('news.backToNews')}
         </Link>
 
-        {article.pinned && <span className="pinned-badge">Pinned</span>}
+        {article.pinned && <span className="pinned-badge">{t('news.pinned')}</span>}
 
         <h1>{article.title}</h1>
 
@@ -288,10 +301,10 @@ export function ArticleDetailPage({ articleId }: ArticleDetailPageProps) {
           </span>
           {article.publishedAt && (
             <time dateTime={article.publishedAt}>
-              {new Date(article.publishedAt).toLocaleDateString()}
+              {new Date(article.publishedAt).toLocaleDateString(i18n.language)}
             </time>
           )}
-          <span className="views">{article.viewCount} views</span>
+          <span className="views">{t('news.viewCount', { count: article.viewCount })}</span>
         </div>
       </header>
 

@@ -6,6 +6,7 @@
 /// <reference types="vitest/globals" />
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { TFunction } from 'i18next';
 import type { SuggestedQuestion } from '../types';
 import { getDefaultSuggestedQuestions, SuggestedQuestions } from './SuggestedQuestions';
 
@@ -91,15 +92,27 @@ describe('SuggestedQuestions', () => {
 });
 
 describe('getDefaultSuggestedQuestions', () => {
+  const stubT = ((key: string) => key) as unknown as TFunction;
+
+  it('resolves question text and category through the translator', () => {
+    const questions = getDefaultSuggestedQuestions(stubT);
+
+    expect(questions[0]).toEqual({
+      id: '1',
+      text: 'aiChat.suggested.reportFault',
+      category: 'aiChat.categories.faults',
+    });
+  });
+
   it('returns an array of suggested questions', () => {
-    const questions = getDefaultSuggestedQuestions();
+    const questions = getDefaultSuggestedQuestions(stubT);
 
     expect(Array.isArray(questions)).toBe(true);
     expect(questions.length).toBeGreaterThan(0);
   });
 
   it('returns questions with required properties', () => {
-    const questions = getDefaultSuggestedQuestions();
+    const questions = getDefaultSuggestedQuestions(stubT);
 
     for (const question of questions) {
       expect(question).toHaveProperty('id');
@@ -109,7 +122,7 @@ describe('getDefaultSuggestedQuestions', () => {
   });
 
   it('returns unique question IDs', () => {
-    const questions = getDefaultSuggestedQuestions();
+    const questions = getDefaultSuggestedQuestions(stubT);
     const ids = questions.map((q) => q.id);
     const uniqueIds = new Set(ids);
 

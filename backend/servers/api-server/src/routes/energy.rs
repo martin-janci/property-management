@@ -12,6 +12,7 @@ use axum::{
 };
 use chrono::Datelike;
 use common::errors::ErrorResponse;
+use common::TenantRole;
 use db::models::energy::{
     BenchmarkAlertsQuery, BenchmarkQuery, CalculateBenchmark, CreateCarbonEmission,
     CreateCarbonTarget, CreateEnergyPerformanceCertificate, CreateSustainabilityScore,
@@ -263,6 +264,40 @@ async fn verify_org_access(
     Ok(())
 }
 
+/// Verify the authenticated user is a manager-tier member of `org_id`.
+///
+/// The role is read from `organization_members` (never the JWT). Energy/ESG
+/// reads stay membership-only; every mutation goes through this gate.
+async fn verify_org_manager(
+    state: &AppState,
+    user_id: Uuid,
+    org_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(state, user_id, org_id).await?;
+    let role_type = state
+        .org_member_repo
+        .get_user_role_type(org_id, user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = ?e, "Failed to load membership role");
+            internal_error("Database error")
+        })?;
+    let is_manager = role_type
+        .as_deref()
+        .and_then(TenantRole::from_role_type)
+        .is_some_and(|r| r.is_manager());
+    if !is_manager {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "INSUFFICIENT_ROLE",
+                "Manager role required",
+            )),
+        ));
+    }
+    Ok(())
+}
+
 /// Resolve the org that owns `building_id` and verify the caller is a member of
 /// it. Returns the building's organization_id. A 404 is returned for an unknown
 /// building so cross-tenant probing cannot distinguish missing from forbidden.
@@ -368,7 +403,7 @@ async fn create_unit_epc(
     if payload.data.unit_id != unit_id {
         return Err(forbidden_error("Path unit_id does not match body unit_id"));
     }
-    verify_org_access(&state, auth.user_id, payload.organization_id).await?;
+    verify_org_manager(&state, auth.user_id, payload.organization_id).await?;
     let unit_org = verify_unit_access(&state, auth.user_id, payload.data.unit_id).await?;
     if unit_org != payload.organization_id {
         return Err(forbidden_error(
@@ -405,7 +440,8 @@ async fn update_unit_epc(
     Path(unit_id): Path<Uuid>,
     Json(payload): Json<UpdateEpcRequest>,
 ) -> ApiResult<Json<db::models::energy::EnergyPerformanceCertificate>> {
-    verify_unit_access(&state, auth.user_id, unit_id).await?;
+    let unit_org = verify_unit_access(&state, auth.user_id, unit_id).await?;
+    verify_org_manager(&state, auth.user_id, unit_org).await?;
 
     let repo = &state.energy_repo;
 
@@ -516,7 +552,7 @@ async fn delete_epc(
             internal_error("Failed to get EPC")
         })?
         .ok_or_else(|| not_found_error("EPC not found"))?;
-    verify_org_access(&state, auth.user_id, epc.organization_id).await?;
+    verify_org_manager(&state, auth.user_id, epc.organization_id).await?;
 
     match repo.delete_epc(id).await {
         Ok(true) => Ok(StatusCode::NO_CONTENT),
@@ -585,7 +621,7 @@ async fn record_emission(
             "Path building_id does not match body building_id",
         ));
     }
-    verify_org_access(&state, auth.user_id, payload.organization_id).await?;
+    verify_org_manager(&state, auth.user_id, payload.organization_id).await?;
     let building_org =
         verify_building_access(&state, auth.user_id, payload.data.building_id).await?;
     if building_org != payload.organization_id {
@@ -658,7 +694,7 @@ async fn set_carbon_target(
             "Path building_id does not match body building_id",
         ));
     }
-    verify_org_access(&state, auth.user_id, payload.organization_id).await?;
+    verify_org_manager(&state, auth.user_id, payload.organization_id).await?;
     let building_org =
         verify_building_access(&state, auth.user_id, payload.data.building_id).await?;
     if building_org != payload.organization_id {
@@ -753,26 +789,54 @@ async fn get_sustainability_score(
     responses(
         (status = 201, description = "Score created", body = db::models::energy::SustainabilityScore),
         (status = 400, description = "Invalid request", body = ErrorResponse),
+        (status = 404, description = "Listing not found in organization", body = ErrorResponse),
     ),
     tag = "energy"
 )]
 async fn create_sustainability_score(
     State(state): State<AppState>,
     auth: AuthUser,
-    Path(_listing_id): Path<Uuid>,
+    Path(listing_id): Path<Uuid>,
     Json(payload): Json<CreateSustainabilityScoreRequest>,
 ) -> ApiResult<(StatusCode, Json<db::models::energy::SustainabilityScore>)> {
-    verify_org_access(&state, auth.user_id, payload.organization_id).await?;
+    // The persisted listing is the body's; it must match the path so the
+    // route cannot be used as a confused deputy.
+    if payload.data.listing_id != listing_id {
+        return Err(forbidden_error(
+            "Path listing_id does not match body listing_id",
+        ));
+    }
+    verify_org_manager(&state, auth.user_id, payload.organization_id).await?;
 
     let repo = &state.energy_repo;
 
-    repo.upsert_sustainability_score(payload.organization_id, payload.data)
+    // The listing itself must belong to the caller's org; otherwise an org
+    // could create the (listing-unique) score row first and lock the real
+    // owner out of it.
+    let owned = repo
+        .listing_in_org(listing_id, payload.organization_id)
         .await
-        .map(|score| (StatusCode::CREATED, Json(score)))
         .map_err(|e| {
-            tracing::error!("Failed to create sustainability score: {:?}", e);
+            tracing::error!("Failed to verify listing ownership: {:?}", e);
             internal_error("Failed to create sustainability score")
-        })
+        })?;
+    if !owned {
+        return Err(not_found_error("Listing not found"));
+    }
+
+    // The upsert only overwrites a score owned by the same org; a listing
+    // whose score belongs to another org yields RowNotFound -> 404.
+    match repo
+        .upsert_sustainability_score(payload.organization_id, payload.data)
+        .await
+    {
+        Ok(score) => Ok((StatusCode::CREATED, Json(score))),
+        Err(sqlx::Error::RowNotFound) => Err(not_found_error("Listing not found")),
+        Err(e) => {
+            tracing::error!("Failed to create sustainability score: {:?}", e);
+            Err(internal_error("Failed to create sustainability score"))
+        }
+    }
 }
 
 /// Update sustainability score for a listing.
@@ -804,7 +868,7 @@ async fn update_sustainability_score(
             internal_error("Failed to get sustainability score")
         })?
         .ok_or_else(|| not_found_error("Sustainability score not found"))?;
-    verify_org_access(&state, auth.user_id, existing.organization_id).await?;
+    verify_org_manager(&state, auth.user_id, existing.organization_id).await?;
 
     match repo
         .update_sustainability_score(listing_id, payload.data)
@@ -912,7 +976,7 @@ async fn calculate_benchmark(
             "Path building_id does not match body building_id",
         ));
     }
-    verify_org_access(&state, auth.user_id, payload.organization_id).await?;
+    verify_org_manager(&state, auth.user_id, payload.organization_id).await?;
     let building_org =
         verify_building_access(&state, auth.user_id, payload.data.building_id).await?;
     if building_org != payload.organization_id {
@@ -988,7 +1052,7 @@ async fn resolve_benchmark_alert(
             internal_error("Failed to get benchmark alert")
         })?
         .ok_or_else(|| not_found_error("Alert not found"))?;
-    verify_org_access(&state, auth.user_id, alert.organization_id).await?;
+    verify_org_manager(&state, auth.user_id, alert.organization_id).await?;
 
     match repo.resolve_benchmark_alert(id, auth.user_id).await {
         Ok(alert) => Ok(Json(alert)),

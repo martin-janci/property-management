@@ -731,7 +731,14 @@ async fn submit_quote_returns_201(pool: PgPool) {
     let rfq_id = seed_rfq(&pool, org_id, user_id, "sq").await;
     // Provider is a separate user
     let provider_user = seed_user(&pool, "sq-provider@test.local").await;
-    seed_provider_profile(&pool, provider_user, "sq").await;
+    let provider_id = seed_provider_profile(&pool, provider_user, "sq").await;
+    // Quotes are invitation-only (audit4): the provider must be invited.
+    sqlx::query("INSERT INTO rfq_invitations (rfq_id, provider_id) VALUES ($1, $2)")
+        .bind(rfq_id)
+        .bind(provider_id)
+        .execute(&pool)
+        .await
+        .expect("seed invitation");
     let token = mint_token(provider_user, org_id);
 
     let resp = app
@@ -940,7 +947,7 @@ async fn submit_verification_returns_201(pool: PgPool) {
 async fn list_verifications_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "lv").await;
-    let user_id = seed_user(&pool, "lv@test.local").await;
+    let user_id = crate::common::seed_platform_user(&pool, "lv@test.local").await;
     seed_membership(&pool, org_id, user_id, "platform_admin").await;
     let token = mint_platform_admin_token(user_id, org_id);
 
@@ -968,7 +975,7 @@ async fn list_verifications_returns_200(pool: PgPool) {
 async fn get_verification_queue_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "gvq").await;
-    let user_id = seed_user(&pool, "gvq@test.local").await;
+    let user_id = crate::common::seed_platform_user(&pool, "gvq@test.local").await;
     seed_membership(&pool, org_id, user_id, "platform_admin").await;
     let token = mint_platform_admin_token(user_id, org_id);
 
@@ -996,7 +1003,7 @@ async fn get_verification_queue_returns_200(pool: PgPool) {
 async fn get_expiring_verifications_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "gev").await;
-    let user_id = seed_user(&pool, "gev@test.local").await;
+    let user_id = crate::common::seed_platform_user(&pool, "gev@test.local").await;
     seed_membership(&pool, org_id, user_id, "platform_admin").await;
     let token = mint_platform_admin_token(user_id, org_id);
 

@@ -72,9 +72,10 @@ pub async fn list_statements(
         return Err(StatusCode::FORBIDDEN);
     }
 
+    let tenant_id = rls.tenant_id();
     let statements = state
         .accounting_repo
-        .list_bank_statements_rls(&mut **rls)
+        .list_bank_statements_for_tenant(&mut **rls, tenant_id)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
@@ -93,9 +94,10 @@ pub async fn list_statement_lines(
         return Err(StatusCode::FORBIDDEN);
     }
 
+    let tenant_id = rls.tenant_id();
     let lines = state
         .accounting_repo
-        .list_bank_statement_lines_rls(&mut **rls, id)
+        .list_bank_statement_lines_for_tenant(&mut **rls, tenant_id, id)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
