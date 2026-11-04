@@ -603,3 +603,60 @@ async fn list_active_by_building_succeeds(pool: PgPool) {
         .await;
     assert_eq!(resp.status, StatusCode::OK, "{}", resp.text());
 }
+
+/// A resident (here: a tenant member) may read and cast, but must not manage
+/// votes. Before the role check any org member could create and publish one.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn non_manager_cannot_manage_votes(pool: PgPool) {
+    let ctx = setup(pool.clone(), "rbac").await;
+    let vote_id = ctx.create_vote().await;
+
+    let email = format!("rbac-tenant-{}@voting-hp.test", Uuid::new_v4());
+    let tenant_user = seed_user(&pool, &email).await;
+    seed_membership(&pool, ctx.org_id, tenant_user, "tenant").await;
+    let tenant_token = mint_token(tenant_user, &email, ctx.org_id);
+
+    let create = ctx
+        .app
+        .execute(
+            ctx.app
+                .post("/api/v1/voting")
+                .bearer(&tenant_token)
+                .header("X-Tenant-ID", &ctx.tenant())
+                .json(json!({
+                    "building_id": ctx.building_id,
+                    "title": "Tenant vote",
+                    "end_at": (Utc::now() + Duration::days(7)).to_rfc3339(),
+                    "quorum_type": "simple_majority"
+                }))
+                .build(),
+        )
+        .await;
+    assert_eq!(create.status, StatusCode::FORBIDDEN, "{}", create.text());
+
+    let publish = ctx
+        .app
+        .execute(
+            ctx.app
+                .post(&format!("/api/v1/voting/{vote_id}/publish"))
+                .bearer(&tenant_token)
+                .header("X-Tenant-ID", &ctx.tenant())
+                .json(json!({}))
+                .build(),
+        )
+        .await;
+    assert_eq!(publish.status, StatusCode::FORBIDDEN, "{}", publish.text());
+
+    // Reading stays open to members.
+    let read = ctx
+        .app
+        .execute(
+            ctx.app
+                .get(&format!("/api/v1/voting/{vote_id}"))
+                .bearer(&tenant_token)
+                .header("X-Tenant-ID", &ctx.tenant())
+                .build(),
+        )
+        .await;
+    assert_eq!(read.status, StatusCode::OK, "{}", read.text());
+}

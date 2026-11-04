@@ -87,6 +87,11 @@ UC-38 dispute management hub. Manager-side CRUD; resident-side filtered to "my d
 
 ### Specific (recent)
 
+- 2026-11-03: list uses `GET /api/v1/disputes` (org from JWT; `organization_id`
+  must match or 403) instead of the non-existent
+  `/disputes/organizations/{org}/list`. Status/category/priority/search filters
+  are passed through; the backend returns no count, so pagination fetches
+  `limit + 1` rows and `total` is a lower bound until the last page.
 - 8-state pillset uses `--status-dispute-{state}-{bg|ink}` token pairs; ensure tokens defined in `colors_and_type.css` extension.
 - Mediator column shows avatar + name when assigned, italic muted "Bez mediátora" when not.
 - Multi-select within and across filter groups: AND between groups, OR within (matches `ppt/documents` filter semantics).
@@ -95,6 +100,10 @@ UC-38 dispute management hub. Manager-side CRUD; resident-side filtered to "my d
 ## Agent Log
 
 <!-- newest entries on top -->
+
+- 2026-11-03 — agent: fixed disputes list 404 (client path + backend summary
+  shape) and closed cross-org `organization_id` trust on list/statistics/
+  actions/filing.
 
 - 2026-05-09 — agent: integrated Batch C delivery (pages/ppt-disputes.html — 4 artboards: loaded-3-selected / empty / loading / error); flipped redesignStatus → in-progress; attached designSource; populated 6-section checklist + 4 states + design-specific notes; declared 6 sharedComponents; linked UC-38
 - 2026-05-08 — init: created from scan (source: sitemap)

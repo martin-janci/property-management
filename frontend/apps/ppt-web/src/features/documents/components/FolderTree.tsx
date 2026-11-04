@@ -15,7 +15,7 @@ import {
   useUpdateFolder,
 } from '@ppt/api-client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { useToast } from '../../../components/Toast';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -175,7 +175,7 @@ function FolderNode({
                   setExpanded(true);
                   onAddChild(folder.id, depth);
                 }}
-                title="Nový podpriečinok"
+                title={t('aria.newSubfolder')}
                 aria-label={t('aria.newSubfolder')}
               >
                 <svg
@@ -196,7 +196,7 @@ function FolderNode({
               type="button"
               className="folder-row__action-btn"
               onClick={handleEditStart}
-              title="Premenovať"
+              title={t('documents.folder.rename')}
               aria-label={t('aria.renameFolder')}
             >
               <svg
@@ -216,7 +216,7 @@ function FolderNode({
               type="button"
               className="folder-row__action-btn folder-row__action-btn--danger"
               onClick={() => onDelete(folder.id, folder.name)}
-              title="Odstrániť"
+              title={t('documents.folder.delete')}
               aria-label={t('aria.deleteFolder')}
             >
               <svg
@@ -307,7 +307,7 @@ function NewFolderRow({ parentId: _parentId, depth, onCommit, onCancel }: NewFol
           ref={inputRef}
           type="text"
           className="folder-row__edit-input"
-          placeholder="Názov priečinka…"
+          placeholder={t('documents.folder.namePlaceholder')}
           value={name}
           onChange={(e) => setName(e.target.value)}
           onBlur={() => {
@@ -381,9 +381,13 @@ function DeleteDialog({ folderName, onConfirm, onCancel }: DeleteDialogProps) {
       aria-label={t('aria.deleteFolder')}
     >
       <div className="folder-delete-dialog__box">
-        <h3 className="folder-delete-dialog__title">Odstrániť priečinok</h3>
+        <h3 className="folder-delete-dialog__title">{t('aria.deleteFolder')}</h3>
         <p className="folder-delete-dialog__body">
-          Naozaj chcete odstrániť priečinok <strong>{folderName}</strong>?
+          <Trans
+            i18nKey="documents.folder.deleteConfirm"
+            values={{ name: folderName }}
+            components={{ strong: <strong /> }}
+          />
         </p>
         <div className="folder-delete-dialog__actions">
           <button
@@ -391,21 +395,21 @@ function DeleteDialog({ folderName, onConfirm, onCancel }: DeleteDialogProps) {
             className="folder-delete-dialog__btn folder-delete-dialog__btn--secondary"
             onClick={onCancel}
           >
-            Zrušiť
+            {t('common.cancel')}
           </button>
           <button
             type="button"
             className="folder-delete-dialog__btn folder-delete-dialog__btn--warning"
             onClick={() => onConfirm(false)}
           >
-            Odstrániť (presunúť dokumenty do koreňa)
+            {t('documents.folder.deleteKeepDocuments')}
           </button>
           <button
             type="button"
             className="folder-delete-dialog__btn folder-delete-dialog__btn--danger"
             onClick={() => onConfirm(true)}
           >
-            Odstrániť vrátane dokumentov
+            {t('documents.folder.deleteWithDocuments')}
           </button>
         </div>
       </div>
@@ -531,9 +535,12 @@ export function FolderTree({ buildingId, selectedFolderId, onSelectFolder }: Fol
     <div className="folder-tree">
       {/* Header */}
       <div className="folder-tree__header">
-        <span className="folder-tree__title">Priečinky</span>
+        <span className="folder-tree__title">{t('documents.page.folders')}</span>
         {totalFolders > 0 && (
-          <span className="folder-tree__count" aria-label={`${totalFolders} priečinkov`}>
+          <span
+            className="folder-tree__count"
+            aria-label={t('documents.folder.count', { count: totalFolders })}
+          >
             {totalFolders}
           </span>
         )}
@@ -542,7 +549,7 @@ export function FolderTree({ buildingId, selectedFolderId, onSelectFolder }: Fol
             type="button"
             className="folder-tree__add-root"
             onClick={() => setNewFolder({ parentId: null, depth: 0 })}
-            title="Nový priečinok"
+            title={t('documents.folder.newFolder')}
             aria-label={t('aria.newRootFolder')}
             disabled={createFolder.isPending}
           >
@@ -582,7 +589,7 @@ export function FolderTree({ buildingId, selectedFolderId, onSelectFolder }: Fol
           <line x1="8" y1="21" x2="16" y2="21" />
           <line x1="12" y1="17" x2="12" y2="21" />
         </svg>
-        Všetky dokumenty
+        {t('documents.folder.allDocuments')}
       </button>
 
       {/* Loading */}
@@ -605,9 +612,9 @@ export function FolderTree({ buildingId, selectedFolderId, onSelectFolder }: Fol
       {/* Error */}
       {error && !isLoading && (
         <div className="folder-tree__error" role="alert">
-          <p>Priečinky sa nepodarilo načítať.</p>
+          <p>{t('documents.folder.loadError')}</p>
           <button type="button" className="folder-tree__retry" onClick={() => refetch()}>
-            Skúsiť znova
+            {t('common.tryAgain')}
           </button>
         </div>
       )}
@@ -615,13 +622,13 @@ export function FolderTree({ buildingId, selectedFolderId, onSelectFolder }: Fol
       {/* Empty */}
       {!isLoading && !error && tree.length === 0 && !newFolder && (
         <div className="folder-tree__empty">
-          <p>Žiadne priečinky</p>
+          <p>{t('documents.folder.empty')}</p>
           <button
             type="button"
             className="folder-tree__retry"
             onClick={() => setNewFolder({ parentId: null, depth: 0 })}
           >
-            Vytvoriť prvý priečinok
+            {t('documents.folder.createFirst')}
           </button>
         </div>
       )}

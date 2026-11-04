@@ -4234,21 +4234,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                required:
-                  - data
-                  - pagination
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Organizations.OrganizationMember'
-                    description: Array of items
-                  pagination:
-                    allOf:
-                      - $ref: '#/components/schemas/Shared.PaginationMeta'
-                    description: Pagination metadata
-                description: Paginated response wrapper
+                $ref: '#/components/schemas/Organizations.ListOrganizationMembersResponse'
         '401':
           description: Unauthorized - Authentication required
           content:
@@ -8051,6 +8037,22 @@ components:
         message:
           type: string
       description: Invite member request
+    Organizations.ListOrganizationMembersResponse:
+      type: object
+      required:
+        - members
+        - total
+      properties:
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/Organizations.OrganizationMemberListItem'
+          description: Members
+        total:
+          type: integer
+          format: int64
+          description: Total count
+      description: List organization members response (mirrors api-server `ListMembersResponse`)
     Organizations.MemberStatus:
       type: string
       enum:
@@ -8211,6 +8213,44 @@ components:
             - $ref: '#/components/schemas/Organizations.MemberStatus'
           description: Membership status
       description: Organization member
+    Organizations.OrganizationMemberListItem:
+      type: object
+      required:
+        - user_id
+        - name
+        - email
+        - role_id
+        - role_name
+        - role_type
+        - joined_at
+      properties:
+        user_id:
+          allOf:
+            - $ref: '#/components/schemas/Shared.uuid'
+          description: User ID
+        name:
+          type: string
+          description: User name
+        email:
+          type: string
+          description: User email
+        role_id:
+          type: string
+          allOf:
+            - $ref: '#/components/schemas/Shared.uuid'
+          nullable: true
+          description: Role ID
+        role_name:
+          type: string
+          description: Role name
+        role_type:
+          type: string
+          description: Role type
+        joined_at:
+          type: string
+          nullable: true
+          description: Joined timestamp (RFC 3339)
+      description: Organization member as returned by the member list endpoint (snake_case, mirrors api-server `MemberResponse`)
     Organizations.OrganizationStatus:
       type: string
       enum:

@@ -60,21 +60,17 @@ describe('decodeJwtPayload', () => {
     expect(decodeJwtPayload(token)).toBeNull();
   });
 
-  it('mojibakes multi-byte (UTF-8) claim values — Latin1 `atob` limitation, pinned', () => {
-    // A real server base64-encodes the UTF-8 *bytes* of the payload. `atob`
-    // returns a Latin1 string, so a genuinely multi-byte char (outside the
-    // Latin1 range that `btoa` can encode) comes back mojibake'd. `tenant_id`
-    // is a UUID today so this never bites; this pins the limitation the source
-    // only notes in a comment. Built by hand because `makeJwt`'s `btoa` can't
-    // encode multi-byte chars directly.
-    const json = JSON.stringify({ note: '你好' });
+  it('decodes multi-byte (UTF-8) claim values', () => {
+    // A real server base64-encodes the UTF-8 *bytes* of the payload; the
+    // decoder must re-assemble them so names such as "Nováková" survive.
+    const json = JSON.stringify({ note: '你好', name: 'Jana Nováková' });
     const b64url = btoa(String.fromCharCode(...new TextEncoder().encode(json)))
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
       .replace(/=+$/, '');
     const decoded = decodeJwtPayload(`header.${b64url}.sig`);
-    expect(decoded).not.toBeNull();
-    expect(decoded?.note).not.toBe('你好');
+    expect(decoded?.note).toBe('你好');
+    expect(decoded?.name).toBe('Jana Nováková');
   });
 });
 

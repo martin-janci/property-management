@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { categoryLabels, type DisputeCategory } from './DisputeCard';
+import { categoryLabelKeys, type DisputeCategory } from './DisputeCard';
 
 export interface FileDisputeData {
   category: DisputeCategory;
@@ -92,11 +92,12 @@ export function FileDisputeDialog({
           <form onSubmit={handleSubmit}>
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b">
-              <h2 className="text-xl font-semibold text-gray-900">File a Dispute</h2>
+              <h2 className="text-xl font-semibold text-gray-900">{t('disputes.filePageTitle')}</h2>
               <button
                 type="button"
                 onClick={handleClose}
                 className="text-gray-400 hover:text-gray-600"
+                aria-label={t('aria.close')}
               >
                 X
               </button>
@@ -106,16 +107,18 @@ export function FileDisputeDialog({
             <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
               {/* Category */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('disputes.form.categoryRequired')}
+                </label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value as DisputeCategory)}
                   className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 >
-                  {Object.entries(categoryLabels).map(([value, label]) => (
+                  {Object.entries(categoryLabelKeys).map(([value, labelKey]) => (
                     <option key={value} value={value}>
-                      {label}
+                      {t(labelKey)}
                     </option>
                   ))}
                 </select>
@@ -123,12 +126,14 @@ export function FileDisputeDialog({
 
               {/* Title */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('disputes.form.titleRequired')}
+                </label>
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Brief summary of the dispute"
+                  placeholder={t('disputes.subjectPlaceholder')}
                   className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                   maxLength={200}
@@ -139,7 +144,7 @@ export function FileDisputeDialog({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Building (optional)
+                    {t('disputes.form.buildingOptional')}
                   </label>
                   <select
                     value={buildingId}
@@ -149,7 +154,7 @@ export function FileDisputeDialog({
                     }}
                     className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="">Select building...</option>
+                    <option value="">{t('disputes.form.selectBuilding')}</option>
                     {buildings?.map((b) => (
                       <option key={b.id} value={b.id}>
                         {b.name}
@@ -159,7 +164,7 @@ export function FileDisputeDialog({
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Unit (optional)
+                    {t('disputes.form.unitOptional')}
                   </label>
                   <select
                     value={unitId}
@@ -167,7 +172,7 @@ export function FileDisputeDialog({
                     className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     disabled={!buildingId}
                   >
-                    <option value="">Select unit...</option>
+                    <option value="">{t('disputes.form.selectUnit')}</option>
                     {filteredUnits?.map((u) => (
                       <option key={u.id} value={u.id}>
                         {u.designation}
@@ -180,12 +185,12 @@ export function FileDisputeDialog({
               {/* Description */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description of Issue *
+                  {t('disputes.form.descriptionRequired')}
                 </label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Describe the issue in detail. Include dates, times, and specific incidents."
+                  placeholder={t('disputes.form.issuePlaceholder')}
                   rows={4}
                   className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
@@ -195,12 +200,12 @@ export function FileDisputeDialog({
               {/* Desired Resolution */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Desired Resolution (optional)
+                  {t('disputes.form.desiredResolutionOptional')}
                 </label>
                 <textarea
                   value={desiredResolution}
                   onChange={(e) => setDesiredResolution(e.target.value)}
-                  placeholder="What outcome would you like to see?"
+                  placeholder={t('disputes.form.desiredResolutionPlaceholder')}
                   rows={2}
                   className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -210,7 +215,7 @@ export function FileDisputeDialog({
               {residents && residents.length > 0 && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Other Party/Parties Involved
+                    {t('disputes.form.otherParties')}
                   </label>
                   <div className="border border-gray-300 rounded-md p-3 max-h-40 overflow-y-auto space-y-2">
                     {filteredResidents?.map((resident) => (
@@ -230,9 +235,7 @@ export function FileDisputeDialog({
 
               {/* Evidence Notice */}
               <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
-                <p className="text-sm text-blue-800">
-                  You can add evidence (photos, documents) after filing the dispute.
-                </p>
+                <p className="text-sm text-blue-800">{t('disputes.form.evidenceNotice')}</p>
               </div>
             </div>
 
@@ -243,14 +246,14 @@ export function FileDisputeDialog({
                 onClick={handleClose}
                 className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 type="submit"
                 disabled={!title.trim() || !description.trim()}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                File Dispute
+                {t('disputes.form.submit')}
               </button>
             </div>
           </form>

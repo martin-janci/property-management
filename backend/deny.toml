@@ -219,6 +219,19 @@ ignore = [
     "RUSTSEC-2026-0368",
     "RUSTSEC-2026-0369",
 
+    # RUSTSEC-2026-0429 (GHSA-q7v9-x93c-xqv3, added 2026-11-03) — `zip` aborts
+    # the process on an attacker-declared `uncompressed_size` (unchecked
+    # `Vec::with_capacity`), a denial-of-service when reading untrusted archives.
+    # Patched floor `>= 9.0.0`, identical to -0367/-0368/-0369 above and with the
+    # same split: the reachable rust_xlsxwriter line is already on zip 9.0.x
+    # (and only writes xlsx), so this ignore covers ONLY the un-upgradable zip
+    # 3.0.0 build dependency of `utoipa-swagger-ui 9.0.2`, whose build script
+    # reads a fixed, trusted Swagger-UI bundle vendored in the crate. No runtime
+    # path reaches it. The existing `[bans]` zip patched-floor guard still trips
+    # if the reachable line ever drops below 9.0.0.
+    # Follow-up: same as GH #3124 — drop with the zip 3.0.0 line.
+    "RUSTSEC-2026-0429",
+
     # RUSTSEC-2026-0387 (GH #3168) — multiple timing-variability issues in
     # `crypto-bigint 0.5.5` operations intended to be constant-time. NO in-range
     # fix: the advisory is patched only on the crypto-bigint 0.6.x line, but our

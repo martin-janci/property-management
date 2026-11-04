@@ -17,12 +17,14 @@
 
 import { getDownloadUrl } from '@ppt/api-client';
 import { useCallback, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '../../../components/Toast';
 
 export function useDocumentDownload(documentId: string, fileName: string) {
   const [isDownloading, setIsDownloading] = useState(false);
   const isDownloadingRef = useRef(false);
   const { showToast } = useToast();
+  const { t } = useTranslation();
 
   const download = useCallback(async () => {
     if (isDownloadingRef.current) return;
@@ -44,14 +46,14 @@ export function useDocumentDownload(documentId: string, fileName: string) {
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Stiahnutie zlyhalo',
-        message: err instanceof Error ? err.message : 'Dokument sa nepodarilo stiahnuť.',
+        title: t('documents.downloadError.title'),
+        message: err instanceof Error ? err.message : t('documents.downloadError.message'),
       });
     } finally {
       isDownloadingRef.current = false;
       setIsDownloading(false);
     }
-  }, [documentId, fileName, showToast]);
+  }, [documentId, fileName, showToast, t]);
 
   return { download, isDownloading };
 }

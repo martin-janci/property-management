@@ -39,29 +39,80 @@ export interface Dispute {
   updatedAt: string;
 }
 
+/** Dispute category values stored by the backend (`dispute_category`). */
+export type DisputeCategory =
+  | 'noise'
+  | 'damage'
+  | 'payment'
+  | 'lease_terms'
+  | 'common_area'
+  | 'parking'
+  | 'pets'
+  | 'maintenance'
+  | 'privacy'
+  | 'harassment'
+  | 'other';
+
+/** Dispute status values stored by the backend (`dispute_status`). */
+export type DisputeListStatus =
+  | 'filed'
+  | 'under_review'
+  | 'mediation'
+  | 'awaiting_response'
+  | 'resolved'
+  | 'escalated'
+  | 'withdrawn'
+  | 'closed';
+
+export type DisputePriority = 'low' | 'medium' | 'high' | 'urgent';
+
+/**
+ * Filters for `GET /api/v1/disputes`. The organization is taken from the
+ * caller's JWT tenant, so it is not part of the query.
+ */
 export interface DisputeFilters {
-  status?: DisputeStatus;
-  type?: DisputeType;
-  dateFrom?: string;
-  dateTo?: string;
-  unitId?: string;
+  status?: DisputeListStatus;
+  category?: DisputeCategory;
+  priority?: DisputePriority;
+  search?: string;
+  buildingId?: string;
   filedBy?: string;
-  assignedMediator?: string;
+  assignedTo?: string;
+  fromDate?: string;
+  toDate?: string;
 }
 
 export interface DisputeListQuery extends DisputeFilters {
+  /** 1-based page number. */
   page?: number;
   limit?: number;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+}
+
+/** One row of the dispute list. Mirrors backend `DisputeSummary`. */
+export interface DisputeListItem {
+  id: string;
+  referenceNumber: string;
+  category: DisputeCategory;
+  title: string;
+  status: DisputeListStatus;
+  priority: DisputePriority;
+  filedByName: string;
+  assignedToName?: string;
+  partyCount: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface PaginatedDisputes {
-  data: Dispute[];
+  data: DisputeListItem[];
+  /**
+   * Lower bound on the total row count. The backend returns no count, so this
+   * is exact on the last page and `offset + limit + 1` while more pages exist.
+   */
   total: number;
   page: number;
   limit: number;
-  totalPages: number;
+  hasMore: boolean;
 }
 
 // ============================================

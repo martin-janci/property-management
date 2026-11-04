@@ -5,6 +5,7 @@
  */
 
 import { bearerAuthHeader } from '../auth';
+import { authenticatedFetch } from '../lib/fetch';
 import type {
   AddMediationNoteRequest,
   AssignMediatorRequest,
@@ -12,6 +13,7 @@ import type {
   CreateDisputeResponse,
   Dispute,
   DisputeEvidence,
+  DisputeListItem,
   DisputeListQuery,
   DisputeStatistics,
   DisputeWithDetails,
@@ -45,7 +47,7 @@ function buildQueryString(params: object): string {
 
 // Helper for API requests
 async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(url, {
+  const response = await authenticatedFetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -68,7 +70,7 @@ async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T>
 
 // Helper for multipart form data requests (file uploads)
 async function apiFormDataRequest<T>(url: string, formData: FormData): Promise<T> {
-  const response = await fetch(url, {
+  const response = await authenticatedFetch(url, {
     method: 'POST',
     body: formData,
     headers: {
@@ -88,12 +90,71 @@ async function apiFormDataRequest<T>(url: string, formData: FormData): Promise<T
 // Dispute Listing & Details (Story 80.1)
 // ============================================
 
+/** Backend `DisputeSummary` row (snake_case on the wire). */
+interface DisputeSummaryWire {
+  id: string;
+  reference_number: string;
+  category: DisputeListItem['category'];
+  title: string;
+  status: DisputeListItem['status'];
+  priority: DisputeListItem['priority'];
+  filed_by_name: string;
+  assigned_to_name?: string | null;
+  party_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * List disputes for the caller's organization (`GET /api/v1/disputes`).
+ *
+ * `organizationId` must be the caller's own organization; the backend scopes
+ * the list to the JWT tenant and rejects a mismatching id with 403.
+ */
 export async function listDisputes(
   organizationId: string,
-  query?: DisputeListQuery
+  query: DisputeListQuery = {}
 ): Promise<PaginatedDisputes> {
-  const qs = buildQueryString(query || {});
-  return apiRequest<PaginatedDisputes>(`${API_BASE}/organizations/${organizationId}/list${qs}`);
+  const limit = query.limit ?? 20;
+  const page = Math.max(1, query.page ?? 1);
+  const offset = (page - 1) * limit;
+  const qs = buildQueryString({
+    organization_id: organizationId,
+    status: query.status,
+    category: query.category,
+    priority: query.priority,
+    search: query.search?.trim() || undefined,
+    building_id: query.buildingId,
+    filed_by: query.filedBy,
+    assigned_to: query.assignedTo,
+    from_date: query.fromDate,
+    to_date: query.toDate,
+    // Ask for one extra row to learn whether another page exists.
+    limit: limit + 1,
+    offset,
+  });
+  const rows = await apiRequest<DisputeSummaryWire[]>(`${API_BASE}${qs}`);
+  const hasMore = rows.length > limit;
+  const data: DisputeListItem[] = rows.slice(0, limit).map((r) => ({
+    id: r.id,
+    referenceNumber: r.reference_number,
+    category: r.category,
+    title: r.title,
+    status: r.status,
+    priority: r.priority,
+    filedByName: r.filed_by_name,
+    assignedToName: r.assigned_to_name ?? undefined,
+    partyCount: r.party_count,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  }));
+  return {
+    data,
+    total: offset + data.length + (hasMore ? 1 : 0),
+    page,
+    limit,
+    hasMore,
+  };
 }
 
 export async function getDispute(id: string): Promise<DisputeWithDetails> {

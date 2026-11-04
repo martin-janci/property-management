@@ -22,16 +22,17 @@ import { useToast } from '../../../components/Toast';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-function shareTypeLabel(type: ShareType): string {
+/** i18n key for the human-readable share type label. */
+function shareTypeLabelKey(type: ShareType): string {
   switch (type) {
     case SHARE_TYPE.USER:
-      return 'Specific user';
+      return 'documents.share.type.user';
     case SHARE_TYPE.ROLE:
-      return 'Role';
+      return 'documents.share.type.role';
     case SHARE_TYPE.BUILDING:
-      return 'Building';
+      return 'documents.share.type.building';
     case SHARE_TYPE.LINK:
-      return 'Public link';
+      return 'documents.share.type.link';
   }
 }
 
@@ -41,8 +42,8 @@ function isActiveShare(share: ShareWithDocument): boolean {
   return true;
 }
 
-function fmtExpiry(d: string): string {
-  return new Date(d).toLocaleDateString('en-US', {
+function fmtExpiry(d: string, locale: string): string {
+  return new Date(d).toLocaleDateString(locale, {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -73,20 +74,20 @@ function CreateShareForm({
     if (shareType === SHARE_TYPE.USER) {
       const trimmed = targetId.trim();
       if (!trimmed) {
-        setFormError('User ID is required.');
+        setFormError(t('documents.share.errors.userIdRequired'));
         return;
       }
       if (!UUID_RE.test(trimmed)) {
-        setFormError('User ID must be a valid UUID.');
+        setFormError(t('documents.share.errors.userIdInvalid'));
         return;
       }
     }
     if (shareType === SHARE_TYPE.ROLE && !targetRole.trim()) {
-      setFormError('Role name is required.');
+      setFormError(t('documents.share.errors.roleRequired'));
       return;
     }
     if (usePassword && password.trim().length < 4) {
-      setFormError('Password must be at least 4 characters.');
+      setFormError(t('documents.share.errors.passwordTooShort'));
       return;
     }
     const req: CreateShareRequest = { share_type: shareType };
@@ -96,7 +97,7 @@ function CreateShareForm({
     if (useExpiry) {
       const days = parseInt(expiryDays, 10);
       if (Number.isNaN(days) || days < 1) {
-        setFormError('Expiry must be at least 1 day.');
+        setFormError(t('documents.share.errors.expiryTooShort'));
         return;
       }
       const expiry = new Date();
@@ -112,7 +113,7 @@ function CreateShareForm({
       setUseExpiry(false);
       onCreated(result.share_url);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Failed to create share.');
+      setFormError(err instanceof Error ? err.message : t('documents.share.errors.createFailed'));
     }
   }, [
     shareType,
@@ -124,11 +125,12 @@ function CreateShareForm({
     expiryDays,
     createMutation,
     onCreated,
+    t,
   ]);
 
   return (
     <div className="sp-form">
-      <h4 className="sp-form-title">New share</h4>
+      <h4 className="sp-form-title">{t('documents.share.newShare')}</h4>
       <div className="sp-type-row">
         {(Object.values(SHARE_TYPE) as ShareType[]).map((type) => (
           <button
@@ -140,20 +142,20 @@ function CreateShareForm({
               setFormError(null);
             }}
           >
-            {shareTypeLabel(type)}
+            {t(shareTypeLabelKey(type))}
           </button>
         ))}
       </div>
       {shareType === SHARE_TYPE.USER && (
         <div className="sp-field">
           <label className="sp-label" htmlFor="sp-user-id">
-            User ID
+            {t('documents.share.userId')}
           </label>
           <input
             id="sp-user-id"
             className="sp-input"
             type="text"
-            placeholder="uuid-of-user"
+            placeholder={t('documents.share.userIdPlaceholder')}
             value={targetId}
             onChange={(e) => setTargetId(e.target.value)}
             onBlur={() => setTargetIdTouched(true)}
@@ -165,7 +167,7 @@ function CreateShareForm({
           />
           {targetIdTouched && targetId.trim() !== '' && !UUID_RE.test(targetId.trim()) && (
             <span id="sp-user-id-hint" className="sp-error" role="alert">
-              Must be a valid UUID.
+              {t('documents.share.mustBeUuid')}
             </span>
           )}
         </div>
@@ -173,13 +175,13 @@ function CreateShareForm({
       {shareType === SHARE_TYPE.ROLE && (
         <div className="sp-field">
           <label className="sp-label" htmlFor="sp-role">
-            Role name
+            {t('documents.share.roleName')}
           </label>
           <input
             id="sp-role"
             className="sp-input"
             type="text"
-            placeholder="e.g. manager"
+            placeholder={t('documents.share.roleNamePlaceholder')}
             value={targetRole}
             onChange={(e) => setTargetRole(e.target.value)}
             autoComplete="off"
@@ -188,7 +190,7 @@ function CreateShareForm({
       )}
       {shareType === SHARE_TYPE.LINK && (
         <div className="sp-toggle-row">
-          <span className="sp-toggle-label">Password protect</span>
+          <span className="sp-toggle-label">{t('documents.share.passwordProtect')}</span>
           <label className="sp-switch" aria-label={t('aria.enablePasswordProtection')}>
             <input
               type="checkbox"
@@ -202,13 +204,13 @@ function CreateShareForm({
       {shareType === SHARE_TYPE.LINK && usePassword && (
         <div className="sp-field">
           <label className="sp-label" htmlFor="sp-password">
-            Password
+            {t('documents.share.password')}
           </label>
           <input
             id="sp-password"
             className="sp-input"
             type="password"
-            placeholder="Min. 4 characters"
+            placeholder={t('documents.share.passwordPlaceholder')}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="new-password"
@@ -216,7 +218,7 @@ function CreateShareForm({
         </div>
       )}
       <div className="sp-toggle-row">
-        <span className="sp-toggle-label">Set expiry</span>
+        <span className="sp-toggle-label">{t('documents.share.setExpiry')}</span>
         <label className="sp-switch" aria-label={t('aria.enableExpiry')}>
           <input
             type="checkbox"
@@ -237,7 +239,9 @@ function CreateShareForm({
             onChange={(e) => setExpiryDays(e.target.value)}
             aria-label={t('aria.expiryDays')}
           />
-          <span className="sp-expiry-unit">days</span>
+          <span className="sp-expiry-unit">
+            {t('documents.share.days', { count: Number(expiryDays) || 0 })}
+          </span>
         </div>
       )}
       {formError && <p className="sp-error">{formError}</p>}
@@ -251,13 +255,14 @@ function CreateShareForm({
             (targetId.trim() === '' || !UUID_RE.test(targetId.trim())))
         }
       >
-        {createMutation.isPending ? 'Creating…' : 'Create share'}
+        {createMutation.isPending ? t('documents.share.creating') : t('documents.share.create')}
       </button>
     </div>
   );
 }
 
 function ShareList({ documentId, shares }: { documentId: string; shares: ShareWithDocument[] }) {
+  const { t, i18n } = useTranslation();
   const { showToast } = useToast();
   const revokeMutation = useRevokeDocumentShare(documentId);
   const [confirmingRevokeId, setConfirmingRevokeId] = useState<string | null>(null);
@@ -267,18 +272,23 @@ function ShareList({ documentId, shares }: { documentId: string; shares: ShareWi
       const url = `${window.location.origin}/documents/shared/${token}`;
       navigator.clipboard.writeText(url).then(
         () => {
-          showToast({ type: 'success', title: 'Link copied', message: url, duration: 3000 });
+          showToast({
+            type: 'success',
+            title: t('documents.share.linkCopied'),
+            message: url,
+            duration: 3000,
+          });
         },
         () => {
           showToast({
             type: 'error',
-            title: 'Copy failed',
-            message: 'Could not copy to clipboard.',
+            title: t('documents.share.copyFailed'),
+            message: t('documents.share.copyFailedMessage'),
           });
         }
       );
     },
-    [showToast]
+    [showToast, t]
   );
 
   const handleRevokeRequest = useCallback((shareId: string) => {
@@ -290,36 +300,44 @@ function ShareList({ documentId, shares }: { documentId: string; shares: ShareWi
     if (!shareId) return;
     try {
       await revokeMutation.mutateAsync(shareId);
-      showToast({ type: 'success', title: 'Share revoked', duration: 3000 });
+      showToast({ type: 'success', title: t('documents.share.revoked'), duration: 3000 });
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Revoke failed',
-        message: err instanceof Error ? err.message : 'Failed.',
+        title: t('documents.share.revokeFailed'),
+        message: err instanceof Error ? err.message : t('documents.share.revokeFailedMessage'),
       });
     } finally {
       setConfirmingRevokeId(null);
     }
-  }, [confirmingRevokeId, revokeMutation, showToast]);
+  }, [confirmingRevokeId, revokeMutation, showToast, t]);
 
   const active = shares.filter(isActiveShare);
-  if (active.length === 0) return <p className="sp-empty">No active shares yet.</p>;
+  if (active.length === 0) return <p className="sp-empty">{t('documents.share.empty')}</p>;
 
   return (
     <div className="sp-list">
-      <h4 className="sp-list-title">Active shares</h4>
+      <h4 className="sp-list-title">{t('documents.share.activeShares')}</h4>
       {active.map((share) => (
         <div key={share.id} className="sp-row">
           <div className="sp-row-info">
-            <span className="sp-row-type">{shareTypeLabel(share.share_type)}</span>
-            {share.target_role && <span className="sp-row-meta">Role: {share.target_role}</span>}
+            <span className="sp-row-type">{t(shareTypeLabelKey(share.share_type))}</span>
+            {share.target_role && (
+              <span className="sp-row-meta">
+                {t('documents.share.roleLabel', { role: share.target_role })}
+              </span>
+            )}
             {share.target_id && (
               <span className="sp-row-meta">
-                User: <code className="sp-code">{share.target_id}</code>
+                {t('documents.share.userLabel')} <code className="sp-code">{share.target_id}</code>
               </span>
             )}
             {share.expires_at && (
-              <span className="sp-row-meta">Expires: {fmtExpiry(share.expires_at)}</span>
+              <span className="sp-row-meta">
+                {t('documents.share.expires', {
+                  date: fmtExpiry(share.expires_at, i18n.language),
+                })}
+              </span>
             )}
             {share.share_token && (
               <button
@@ -327,7 +345,7 @@ function ShareList({ documentId, shares }: { documentId: string; shares: ShareWi
                 className="sp-copy-link"
                 onClick={() => handleCopyLink(share.share_token as string)}
               >
-                Copy link
+                {t('documents.share.copyLink')}
               </button>
             )}
           </div>
@@ -337,16 +355,16 @@ function ShareList({ documentId, shares }: { documentId: string; shares: ShareWi
             onClick={() => handleRevokeRequest(share.id)}
             disabled={revokeMutation.isPending && revokeMutation.variables === share.id}
           >
-            Revoke
+            {t('documents.share.revoke')}
           </button>
         </div>
       ))}
       <ConfirmationDialog
         isOpen={confirmingRevokeId !== null}
-        title="Revoke share?"
-        message="Recipients will immediately lose access. This action cannot be undone."
-        confirmLabel="Revoke"
-        cancelLabel="Cancel"
+        title={t('documents.share.revokeConfirmTitle')}
+        message={t('documents.share.revokeConfirmMessage')}
+        confirmLabel={t('documents.share.revoke')}
+        cancelLabel={t('common.cancel')}
         variant="danger"
         isLoading={revokeMutation.isPending}
         onConfirm={handleRevokeConfirm}
@@ -363,6 +381,7 @@ export function DocumentSharePanel({
   documentId: string;
   documentTitle: string;
 }) {
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const { data, isLoading, error, refetch } = useDocumentShares(documentId);
 
@@ -373,26 +392,26 @@ export function DocumentSharePanel({
           () => {
             showToast({
               type: 'success',
-              title: 'Share created',
-              message: 'Public link copied.',
+              title: t('documents.share.created'),
+              message: t('documents.share.publicLinkCopied'),
               duration: 5000,
             });
           },
           () => {
             showToast({
               type: 'success',
-              title: 'Share created',
-              message: `Link: ${shareUrl}`,
+              title: t('documents.share.created'),
+              message: t('documents.share.linkMessage', { url: shareUrl }),
               duration: 5000,
             });
           }
         );
       } else {
-        showToast({ type: 'success', title: 'Share created', duration: 3000 });
+        showToast({ type: 'success', title: t('documents.share.created'), duration: 3000 });
       }
       refetch();
     },
-    [showToast, refetch]
+    [showToast, refetch, t]
   );
 
   return (
@@ -414,14 +433,14 @@ export function DocumentSharePanel({
           <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
         </svg>
         <div className="sp-panel-titles">
-          <span className="sp-panel-title">Share</span>
+          <span className="sp-panel-title">{t('documents.share.title')}</span>
           <span className="sp-panel-subtitle">{documentTitle}</span>
         </div>
       </div>
       <CreateShareForm documentId={documentId} onCreated={handleCreated} />
       <div className="sp-divider" />
-      {isLoading && <p className="sp-loading">Loading shares…</p>}
-      {error && <p className="sp-fetch-error">Could not load shares.</p>}
+      {isLoading && <p className="sp-loading">{t('documents.share.loading')}</p>}
+      {error && <p className="sp-fetch-error">{t('documents.share.loadError')}</p>}
       {data && <ShareList documentId={documentId} shares={data.shares} />}
       <style>{panelStyles}</style>
     </div>

@@ -675,7 +675,7 @@ async fn test_terminate_lease_returns_200(pool: PgPool) {
     let lease_id = seed_lease(&pool, org_id, unit_id, user_id).await;
 
     let body = json!({
-        "termination_reason": "Mutual agreement"
+        "termination_reason": "mutual_agreement"
     });
 
     let resp = app
@@ -822,6 +822,15 @@ async fn test_record_payment_returns_200(pool: PgPool) {
     common::seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint_manager_jwt(user_id, org_id);
     let lease_id = seed_lease(&pool, org_id, unit_id, user_id).await;
+    let payment_id: Uuid = sqlx::query_scalar(
+        "INSERT INTO lease_payments (lease_id, organization_id, due_date, amount, payment_type) \
+         VALUES ($1,$2,CURRENT_DATE + 30, 800.00, 'rent') RETURNING id",
+    )
+    .bind(lease_id)
+    .bind(org_id)
+    .fetch_one(&pool)
+    .await
+    .expect("seed_payment");
 
     let body = json!({
         "paid_amount": "800.00",
@@ -832,7 +841,7 @@ async fn test_record_payment_returns_200(pool: PgPool) {
         .execute(
             Request::builder()
                 .method(Method::POST)
-                .uri(format!("/api/v1/leases/{lease_id}/payments"))
+                .uri(format!("/api/v1/leases/{lease_id}/payments/{payment_id}"))
                 .header(header::CONTENT_TYPE, "application/json")
                 .header(header::AUTHORIZATION, format!("Bearer {token}"))
                 .header("X-Tenant-ID", org_id.to_string())

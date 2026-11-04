@@ -27,7 +27,7 @@ export function DocumentsPage({ organizationId, buildingId }: DocumentsPageProps
   return (
     <div className="documents-page">
       <div className="page-header">
-        <h1 className="page-title">Documents</h1>
+        <h1 className="page-title">{t('documents.title')}</h1>
         <div className="header-actions">
           <Link to="/documents/folders" className="folders-link">
             <svg
@@ -41,7 +41,7 @@ export function DocumentsPage({ organizationId, buildingId }: DocumentsPageProps
             >
               <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
             </svg>
-            Priečinky
+            {t('documents.page.folders')}
           </Link>
           <Link to="/documents/upload" className="upload-link">
             <svg
@@ -57,7 +57,7 @@ export function DocumentsPage({ organizationId, buildingId }: DocumentsPageProps
               <polyline points="17 8 12 3 7 8" />
               <line x1="12" y1="3" x2="12" y2="15" />
             </svg>
-            Upload
+            {t('documents.page.upload')}
           </Link>
           <Link to="/documents/templates" className="folders-link">
             <svg
@@ -72,7 +72,7 @@ export function DocumentsPage({ organizationId, buildingId }: DocumentsPageProps
               <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
               <polyline points="14 2 14 8 20 8" />
             </svg>
-            Šablóny
+            {t('documents.page.templates')}
           </Link>
           <div className="view-toggle">
             <button
@@ -92,7 +92,7 @@ export function DocumentsPage({ organizationId, buildingId }: DocumentsPageProps
                 <circle cx="11" cy="11" r="8" />
                 <path d="M21 21l-4.35-4.35" />
               </svg>
-              Search
+              {t('documents.page.search')}
             </button>
             <button
               type="button"
@@ -115,7 +115,7 @@ export function DocumentsPage({ organizationId, buildingId }: DocumentsPageProps
                 <line x1="3" y1="12" x2="3.01" y2="12" />
                 <line x1="3" y1="18" x2="3.01" y2="18" />
               </svg>
-              Zoznam
+              {t('documents.page.list')}
             </button>
           </div>
         </div>

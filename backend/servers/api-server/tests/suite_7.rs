@@ -53,6 +53,8 @@ mod rental_guest_id_document_tests;
 mod rental_tenant_scope_tests;
 #[path = "suites/rentals_core_backfill_batch2_tests.rs"]
 mod rentals_core_backfill_batch2_tests;
+#[path = "suites/rentals_list_contract_tests.rs"]
+mod rentals_list_contract_tests;
 #[path = "suites/report_execution_download_retry_e2e_tests.rs"]
 mod report_execution_download_retry_e2e_tests;
 #[path = "suites/report_schedule_create_tests.rs"]

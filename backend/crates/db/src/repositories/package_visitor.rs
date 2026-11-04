@@ -344,8 +344,8 @@ impl PackageVisitorRepository {
                 COUNT(*) FILTER (WHERE status = 'received' OR status = 'notified') as received_packages,
                 COUNT(*) FILTER (WHERE status = 'picked_up') as picked_up_packages,
                 COUNT(*) FILTER (WHERE status = 'unclaimed') as unclaimed_packages,
-                AVG(EXTRACT(EPOCH FROM (picked_up_at - received_at)) / 3600)
-                    FILTER (WHERE picked_up_at IS NOT NULL AND received_at IS NOT NULL) as avg_pickup_time_hours
+                (AVG(EXTRACT(EPOCH FROM (picked_up_at - received_at)) / 3600)
+                    FILTER (WHERE picked_up_at IS NOT NULL AND received_at IS NOT NULL))::float8 as avg_pickup_time_hours
             FROM packages
             WHERE tenant_id = $1 AND building_id = $2
             "#,

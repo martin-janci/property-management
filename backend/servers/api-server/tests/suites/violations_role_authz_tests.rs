@@ -331,6 +331,79 @@ async fn manager_can_issue_fine(pool: PgPool) {
 }
 
 // ---------------------------------------------------------------------------
+// Evidence attachment is manager-gated (gh-issue-3164).
+//
+// Follow-up to the privileged-mutation role-authz fix: `add_evidence` was left
+// ungated (only a `tenant_id`-presence check) while its sibling
+// `delete_evidence` was manager-gated, so any authenticated tenant member could
+// attach evidence to any violation in their org. The fix adds `require_manager`
+// to `add_evidence`, matching `delete_evidence`.
+// ---------------------------------------------------------------------------
+
+/// The core follow-up finding: a Resident (a legitimate tenant member) must NOT
+/// be able to attach evidence to a violation. Before the fix this returned 2xx;
+/// after the fix it is 403. The gate runs before any DB lookup, so a seeded
+/// violation is used only to make the pre-fix path reach a successful insert.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn resident_cannot_add_evidence(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org = seed_org(&pool, "authz-evidence").await;
+    let resident = seed_user(&pool, "resident-evidence@vio-authz.test").await;
+    let violation_id = seed_violation(&pool, org, "VIO-AUTHZ-EVID-0001").await;
+
+    let token = token_with_role(resident, org, "resident");
+    let resp = app
+        .execute(
+            app.post(&format!("/api/v1/violations/{violation_id}/evidence"))
+                .bearer(&token)
+                .json(json!({ "file_name": "photo.jpg", "file_type": "image/jpeg" }))
+                .build(),
+        )
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "a non-manager tenant member must NOT be able to attach evidence; got {} (body: {})",
+        resp.status,
+        resp.text()
+    );
+}
+
+/// Positive control: a Manager passes the gate and successfully attaches
+/// evidence (2xx), proving the fix rejects only unprivileged roles rather than
+/// the mutation itself.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn manager_can_add_evidence(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org = seed_org(&pool, "authz-evidence-mgr").await;
+    let manager = seed_user(&pool, "manager-evidence@vio-authz.test").await;
+    let violation_id = seed_violation(&pool, org, "VIO-AUTHZ-EVID-0002").await;
+
+    let token = token_with_role(manager, org, "manager");
+    let resp = app
+        .execute(
+            app.post(&format!("/api/v1/violations/{violation_id}/evidence"))
+                .bearer(&token)
+                .json(json!({ "file_name": "photo.jpg", "file_type": "image/jpeg" }))
+                .build(),
+        )
+        .await;
+
+    assert!(
+        resp.status.is_success(),
+        "a manager must be able to attach evidence; got {} (body: {})",
+        resp.status,
+        resp.text()
+    );
+    assert_ne!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "manager must never be blocked by the role gate"
+    );
+}
+
+// ---------------------------------------------------------------------------
 // Full privileged-mutation surface: every `require_manager`-gated route must
 // reject a non-manager member with 403.
 // ---------------------------------------------------------------------------
@@ -342,9 +415,13 @@ async fn manager_can_issue_fine(pool: PgPool) {
 /// them — or adding a new privileged mutation without the gate — trips a test.
 ///
 /// Self-service routes deliberately NOT in this list (open to any member):
-/// `POST /{id}/evidence` (add_evidence), `POST /{id}/appeals` (create_appeal),
-/// `POST /{id}/comments` (add_comment). They get their own positive control in
-/// `resident_can_file_appeal_and_comment`.
+/// `POST /{id}/appeals` (create_appeal), `POST /{id}/comments` (add_comment).
+/// They get their own positive control in `resident_can_file_appeal_and_comment`.
+///
+/// `POST /{id}/evidence` (add_evidence) IS manager-gated — attaching evidence is
+/// a privileged enforcement action, matching `delete_evidence` (gh-issue-3164).
+/// It has its own dedicated pair (`resident_cannot_add_evidence` /
+/// `manager_can_add_evidence`) and is also enumerated below.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn resident_forbidden_on_every_privileged_mutation(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -406,6 +483,12 @@ async fn resident_forbidden_on_every_privileged_mutation(pool: PgPool) {
             M::Post,
             format!("/api/v1/violations/{vid}/assign"),
             json!({ "assigned_to": Uuid::new_v4() }),
+        ),
+        (
+            "POST /{id}/evidence (add_evidence)",
+            M::Post,
+            format!("/api/v1/violations/{vid}/evidence"),
+            json!({ "file_name": "photo.jpg", "file_type": "image/jpeg" }),
         ),
         (
             "DELETE /{id}/evidence/{eid} (delete_evidence)",

@@ -117,6 +117,14 @@ impl<'a> SeedFactories<'a> {
 
         let role_id: Option<Uuid> = role_row.map(|r| r.get("id"));
 
+        // `role_type` must hold the canonical snake_case value (`manager`,
+        // `org_admin`, …) that `TenantRole::from_role_type`, the RLS policies
+        // (`role_type IN ('org_admin','manager')`) and the login `tenants`
+        // payload expect. The seed data names roles by their display name
+        // ("Organization Admin") to find `role_id`; storing that display name
+        // left every seeded user without manager rights.
+        let canonical = canonical_role_type(role_type);
+
         let row = sqlx::query(
             r#"
             INSERT INTO organization_members (
@@ -130,8 +138,24 @@ impl<'a> SeedFactories<'a> {
         .bind(org_id)
         .bind(user_id)
         .bind(role_id)
-        .bind(role_type)
+        .bind(&canonical)
         .fetch_one(self.pool)
+        .await?;
+
+        // Host-resolved requests (`RequestPrincipal`) authorize against
+        // `user_memberships`, not `organization_members`; without this row a
+        // seeded user gets "no active membership in this organization".
+        sqlx::query(
+            r#"
+            INSERT INTO user_memberships (user_id, organization_id, role)
+            VALUES ($1, $2, $3)
+            ON CONFLICT DO NOTHING
+            "#,
+        )
+        .bind(user_id)
+        .bind(org_id)
+        .bind(&canonical)
+        .execute(self.pool)
         .await?;
 
         Ok(row.get("id"))
@@ -888,7 +912,17 @@ impl<'a> SeedFactories<'a> {
         .execute(&mut *tx)
         .await?;
 
-        // 2. Delete organization_members for seed users
+        // 2. Delete user_memberships + organization_members for seed users
+        sqlx::query(
+            r#"
+            DELETE FROM user_memberships
+            WHERE user_id IN (SELECT id FROM users WHERE email LIKE $1)
+            "#,
+        )
+        .bind(&pattern)
+        .execute(&mut *tx)
+        .await?;
+
         let members_result = sqlx::query(
             r#"
             DELETE FROM organization_members
@@ -1028,4 +1062,42 @@ pub struct CleanupStats {
     pub members_deleted: u64,
     pub residents_deleted: u64,
     // Phase 6: portal_users_deleted removed — portal users are now `users` rows.
+}
+
+/// Map a seed role display name ("Organization Admin", "Technical Manager")
+/// to the canonical snake_case `role_type` ("org_admin", "technical_manager").
+/// Already-canonical values pass through unchanged.
+pub(crate) fn canonical_role_type(role: &str) -> String {
+    let normalized = role.trim().to_lowercase().replace([' ', '-'], "_");
+    match normalized.as_str() {
+        "organization_admin" | "organisation_admin" => "org_admin".to_string(),
+        _ => normalized,
+    }
+}
+
+#[cfg(test)]
+mod canonical_role_type_tests {
+    use super::canonical_role_type;
+
+    #[test]
+    fn maps_display_names_to_snake_case() {
+        assert_eq!(canonical_role_type("Organization Admin"), "org_admin");
+        assert_eq!(canonical_role_type("Super Admin"), "super_admin");
+        assert_eq!(
+            canonical_role_type("Technical Manager"),
+            "technical_manager"
+        );
+        assert_eq!(canonical_role_type("Owner Delegate"), "owner_delegate");
+        assert_eq!(
+            canonical_role_type("Real Estate Agent"),
+            "real_estate_agent"
+        );
+        assert_eq!(canonical_role_type("Manager"), "manager");
+    }
+
+    #[test]
+    fn canonical_values_pass_through() {
+        assert_eq!(canonical_role_type("org_admin"), "org_admin");
+        assert_eq!(canonical_role_type("tenant"), "tenant");
+    }
 }

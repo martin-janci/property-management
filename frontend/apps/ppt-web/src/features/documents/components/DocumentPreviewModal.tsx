@@ -53,7 +53,7 @@ function ImagePreview({ documentId, title }: ImagePreviewProps) {
     return (
       <div className="doc-preview__loading" aria-busy="true" aria-label={t('aria.loadingPreview')}>
         <div className="doc-preview__spinner" />
-        <p>Načítavanie náhľadu…</p>
+        <p>{t('documents.preview.loading')}</p>
       </div>
     );
   }
@@ -61,7 +61,7 @@ function ImagePreview({ documentId, title }: ImagePreviewProps) {
   if (error || !data?.url) {
     return (
       <div className="doc-preview__fallback">
-        <p>Náhľad nie je dostupný.</p>
+        <p>{t('documents.preview.unavailable')}</p>
       </div>
     );
   }
@@ -74,6 +74,7 @@ function ImagePreview({ documentId, title }: ImagePreviewProps) {
 }
 
 function FallbackPreview({ fileName }: { fileName: string }) {
+  const { t } = useTranslation();
   return (
     <div className="doc-preview__fallback">
       <svg
@@ -90,9 +91,7 @@ function FallbackPreview({ fileName }: { fileName: string }) {
         <polyline points="14 2 14 8 20 8" />
       </svg>
       <p className="doc-preview__fallback-name">{fileName}</p>
-      <p className="doc-preview__fallback-msg">
-        Náhľad nie je pre tento typ súboru k dispozícii. Stiahnite si súbor pre zobrazenie.
-      </p>
+      <p className="doc-preview__fallback-msg">{t('documents.preview.unsupportedType')}</p>
     </div>
   );
 }
@@ -108,6 +107,7 @@ function DownloadButton({
   fileName,
   className = 'doc-preview__download-btn',
 }: DownloadButtonProps) {
+  const { t } = useTranslation();
   const { download, isDownloading } = useDocumentDownload(documentId, fileName);
 
   return (
@@ -116,7 +116,7 @@ function DownloadButton({
       className={className}
       onClick={download}
       disabled={isDownloading}
-      aria-label={`Stiahnuť ${fileName}`}
+      aria-label={t('documents.browse.downloadFile', { name: fileName })}
     >
       <svg
         width="16"
@@ -131,7 +131,7 @@ function DownloadButton({
         <polyline points="7 10 12 15 17 10" />
         <line x1="12" y1="15" x2="12" y2="3" />
       </svg>
-      {isDownloading ? 'Sťahujem…' : 'Stiahnuť'}
+      {isDownloading ? t('documents.preview.downloading') : t('documents.download')}
     </button>
   );
 }

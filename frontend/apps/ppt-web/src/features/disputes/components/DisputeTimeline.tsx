@@ -3,6 +3,9 @@
  * Epic 77: Dispute Resolution (Story 77.3)
  */
 
+import { useTranslation } from 'react-i18next';
+import { formatTime } from '../utils/formatTime';
+
 export type ActivityType =
   | 'dispute_filed'
   | 'status_changed'
@@ -73,28 +76,14 @@ interface DisputeTimelineProps {
 export function DisputeTimeline({ entries, maxEntries, onShowMore }: DisputeTimelineProps) {
   const displayedEntries = maxEntries ? entries.slice(0, maxEntries) : entries;
   const hasMore = maxEntries ? entries.length > maxEntries : false;
-
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return date.toLocaleDateString();
-  };
+  const { t, i18n } = useTranslation();
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-gray-900">Activity Timeline</h3>
+      <h3 className="text-lg font-semibold text-gray-900">{t('disputes.timeline.title')}</h3>
 
       {entries.length === 0 ? (
-        <p className="text-gray-500">No activity yet.</p>
+        <p className="text-gray-500">{t('disputes.timeline.empty')}</p>
       ) : (
         <div className="relative">
           {/* Timeline line */}
@@ -129,15 +118,19 @@ export function DisputeTimeline({ entries, maxEntries, onShowMore }: DisputeTime
                 <div className="flex-1 bg-white rounded-lg border border-gray-200 p-3">
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-gray-900">{entry.actorName}</span>
-                    <span className="text-sm text-gray-500">{formatTime(entry.createdAt)}</span>
+                    <span className="text-sm text-gray-500">
+                      {formatTime(entry.createdAt, i18n.language)}
+                    </span>
                   </div>
                   <p className="mt-1 text-gray-700">{entry.description}</p>
                   {entry.metadata && Object.keys(entry.metadata).length > 0 && (
                     <div className="mt-2 text-sm text-gray-500">
                       {'oldStatus' in entry.metadata && 'newStatus' in entry.metadata && (
                         <span>
-                          Status: {String(entry.metadata.oldStatus)} →{' '}
-                          {String(entry.metadata.newStatus)}
+                          {t('disputes.timeline.statusChange', {
+                            from: String(entry.metadata.oldStatus),
+                            to: String(entry.metadata.newStatus),
+                          })}
                         </span>
                       )}
                     </div>
@@ -153,7 +146,7 @@ export function DisputeTimeline({ entries, maxEntries, onShowMore }: DisputeTime
               onClick={onShowMore}
               className="mt-4 ml-10 text-blue-600 hover:text-blue-800 text-sm"
             >
-              Show more activity...
+              {t('disputes.timeline.showMore')}
             </button>
           )}
         </div>
