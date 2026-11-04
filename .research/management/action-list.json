@@ -221,6 +221,26 @@
         "score": 1,
         "vector": "i18n"
       }
+    },
+    {
+      "id": "gh-issue-3223",
+      "action": "Follow-up: vote eligibility-reason i18n depends on brittle exact-English string matching against backend free-text (PR #3222) (Closes #3223)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-11-03T20:24:02Z (#3223)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-03T20:24:02Z",
+      "issue_ref": {
+        "number": 3223,
+        "url": "https://github.com/martin-janci/property-management/issues/3223",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     }
   ],
   "generated": "2026-10-28T11:00:00Z"
