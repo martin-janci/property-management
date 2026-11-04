@@ -275,34 +275,26 @@ pub async fn suspend_organization(
         }
     };
 
-    // Get all org member user IDs for session invalidation
-    let user_ids = state
-        .platform_admin_repo
-        .get_org_member_user_ids(org_id)
+    // Cascade: revoke every active member's sessions so the suspension takes
+    // effect immediately. A partial failure (members not enumerable, or some
+    // revocations erroring) is surfaced below rather than swallowed, so the
+    // operator knows the cleanup was incomplete and can retry.
+    let revoked = crate::routes::suspend_cascade::revoke_org_member_sessions(&state, org_id)
         .await
-        .unwrap_or_default();
-
-    // Revoke all sessions for org members
-    for user_id in &user_ids {
-        if let Err(e) = state
-            .session_repo
-            .revoke_all_user_tokens(*user_id, None)
-            .await
-        {
-            tracing::warn!(
-                user_id = %user_id,
-                error = %e,
-                "Failed to revoke sessions for org member"
-            );
-        }
-    }
+        .map_err(|e| {
+            tracing::error!(org_id = %org_id, error = %e, "Organization suspend cascade failed");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("SUSPEND_CASCADE_FAILED", e.message())),
+            )
+        })?;
 
     tracing::info!(
         org_id = %org_id,
         admin_id = %admin_id,
         admin_email = %admin_email,
         reason = %req.reason,
-        affected_users = user_ids.len(),
+        affected_users = revoked,
         "Organization suspended"
     );
 
@@ -332,10 +324,7 @@ pub async fn suspend_organization(
         })?;
 
     Ok(Json(OrganizationActionResponse {
-        message: format!(
-            "Organization suspended successfully. {} user sessions revoked.",
-            user_ids.len()
-        ),
+        message: format!("Organization suspended successfully. {revoked} user sessions revoked."),
         organization: org_detail,
     }))
 }

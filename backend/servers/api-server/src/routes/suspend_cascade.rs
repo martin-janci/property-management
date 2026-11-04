@@ -59,7 +59,10 @@ impl std::fmt::Display for SuspendCascadeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             SuspendCascadeError::Enumerate(e) => {
-                write!(f, "failed to enumerate org members for session cascade: {e}")
+                write!(
+                    f,
+                    "failed to enumerate org members for session cascade: {e}"
+                )
             }
             SuspendCascadeError::PartialRevoke { total, failed } => write!(
                 f,
@@ -79,10 +82,11 @@ impl std::error::Error for SuspendCascadeError {}
 /// revocation errored. Returns `Ok(total)` when every revocation succeeded,
 /// otherwise `Err(PartialRevoke)` so the partial failure is surfaced.
 fn classify_revocations(total: usize, failed: Vec<Uuid>) -> Result<usize, SuspendCascadeError> {
-    // NOTE: current behaviour swallows per-member revocation failures — callers
-    // only ever see a success count. See the module docs.
-    let _ = failed;
-    Ok(total)
+    if failed.is_empty() {
+        Ok(total)
+    } else {
+        Err(SuspendCascadeError::PartialRevoke { total, failed })
+    }
 }
 
 /// Revoke every active member's sessions for a just-suspended organization.
@@ -95,17 +99,22 @@ pub async fn revoke_org_member_sessions(
     state: &AppState,
     org_id: Uuid,
 ) -> Result<usize, SuspendCascadeError> {
-    // Enumeration failure currently degrades to "no members", silently revoking
-    // nothing while reporting success. See the module docs.
+    // Propagate an enumeration failure instead of degrading to "no members":
+    // silently revoking nothing while reporting success is exactly the swallow
+    // this cascade must avoid.
     let user_ids = state
         .platform_admin_repo
         .get_org_member_user_ids(org_id)
         .await
-        .unwrap_or_default();
+        .map_err(|e| SuspendCascadeError::Enumerate(e.to_string()))?;
 
     let mut failed = Vec::new();
     for user_id in &user_ids {
-        if let Err(e) = state.session_repo.revoke_all_user_tokens(*user_id, None).await {
+        if let Err(e) = state
+            .session_repo
+            .revoke_all_user_tokens(*user_id, None)
+            .await
+        {
             tracing::warn!(
                 user_id = %user_id,
                 error = %e,
@@ -148,6 +157,10 @@ mod tests {
             other => panic!("expected PartialRevoke, got {other:?}"),
         }
         // Operator-facing message carries the retry-relevant counts.
-        assert!(err.message().contains("2/5"), "message was: {}", err.message());
+        assert!(
+            err.message().contains("2/5"),
+            "message was: {}",
+            err.message()
+        );
     }
 }
