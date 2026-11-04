@@ -10,8 +10,10 @@ use std::sync::Arc;
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Extension, Json};
 use serde::{Deserialize, Serialize};
 
-use admin_core::{AuditOutcome, AuditWriter, Capability};
+use admin_core::{AuditOutcome, AuditWriter};
 use api_core::extractors::principal::RequestPrincipal;
+
+use super::audit_mfa_event;
 
 use crate::state::AppState;
 
@@ -155,19 +157,17 @@ pub async fn start_enroll(
         internal()
     })?;
 
-    // Audit.
-    let _ = audit
-        .record(
-            Some(user_id),
-            Capability::UsersWrite, // closest semantic match for self-enrollment
-            AuditOutcome::Allowed,
-            Some("mfa_enroll_start"),
-            Some(user_id),
-            None,
-            None,
-            None,
-        )
-        .await;
+    // Audit. `UsersWrite` is the closest semantic capability for
+    // self-enrollment (see `audit_mfa_event`).
+    audit_mfa_event(
+        &audit,
+        user_id,
+        AuditOutcome::Allowed,
+        "mfa_enroll_start",
+        user_id,
+        None,
+    )
+    .await;
 
     tracing::info!(user_id = %user_id, "admin mfa enroll/start");
     Ok(Json(EnrollStartResponse {
@@ -256,18 +256,15 @@ pub async fn verify_enroll(
         .unwrap_or(false);
 
     if !valid {
-        let _ = audit
-            .record(
-                Some(user_id),
-                Capability::UsersWrite,
-                AuditOutcome::Denied,
-                Some("mfa_enroll_verify"),
-                Some(user_id),
-                None,
-                None,
-                None,
-            )
-            .await;
+        audit_mfa_event(
+            &audit,
+            user_id,
+            AuditOutcome::Denied,
+            "mfa_enroll_verify",
+            user_id,
+            None,
+        )
+        .await;
         return Err((
             StatusCode::UNPROCESSABLE_ENTITY,
             Json(serde_json::json!({
@@ -328,18 +325,15 @@ pub async fn verify_enroll(
     })?;
 
     // Audit success.
-    let _ = audit
-        .record(
-            Some(user_id),
-            Capability::UsersWrite,
-            AuditOutcome::Allowed,
-            Some("mfa_enrolled"),
-            Some(user_id),
-            None,
-            None,
-            None,
-        )
-        .await;
+    audit_mfa_event(
+        &audit,
+        user_id,
+        AuditOutcome::Allowed,
+        "mfa_enrolled",
+        user_id,
+        None,
+    )
+    .await;
 
     tracing::info!(user_id = %user_id, "admin mfa enrolled");
     Ok(Json(EnrollVerifyResponse {
