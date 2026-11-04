@@ -7,7 +7,10 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::common::{create_authenticated_user_with_org, TestApp, TestUser};
+use crate::common::{
+    create_authenticated_user, create_authenticated_user_with_org, seed_membership, TestApp,
+    TestUser,
+};
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn budget_module_happy_path_lifecycle(pool: PgPool) {
@@ -308,12 +311,22 @@ async fn budget_module_happy_path_lifecycle(pool: PgPool) {
     assert_eq!(submitted_budget["status"], "pending_approval");
 
     // 4.2 POST /api/v1/budgets/{id}/approve -> approve_budget
+    // The creator may not approve their own budget, so a second manager
+    // (org_admin) of the same organization approves it.
+    let approver = TestUser::new();
+    let (approver_token, _) = create_authenticated_user(&app, &approver).await;
+    let approver_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
+        .bind(&approver.email)
+        .fetch_one(&app.pool)
+        .await
+        .expect("resolve approver id");
+    seed_membership(&app.pool, org_id, approver_id, "org_admin").await;
     let resp = app
         .execute(
             app.post(&format!(
                 "/api/v1/budgets/{budget_id}/approve?organization_id={org_id}"
             ))
-            .bearer(&token)
+            .bearer(&approver_token)
             .tenant(org_id)
             .build(),
         )
@@ -524,6 +537,7 @@ async fn budget_module_happy_path_lifecycle(pool: PgPool) {
     assert_eq!(closed_budget["status"], "closed");
 
     // 7.2 DELETE /api/v1/budgets/items/{item_id} -> delete_budget_item
+    // Budget lines are frozen once the budget left `draft`.
     let resp = app
         .execute(
             app.delete(&format!("/api/v1/budgets/items/{item_id}"))
@@ -534,12 +548,28 @@ async fn budget_module_happy_path_lifecycle(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::NO_CONTENT,
-        "delete_budget_item failed: {}",
+        StatusCode::BAD_REQUEST,
+        "delete_budget_item on a closed budget must be rejected: {}",
         resp.text()
     );
 
     // 7.3 DELETE /api/v1/budgets/categories/{id} -> delete_category
+    // (the original category is still referenced by the frozen line, so
+    // delete an unused one)
+    let resp = app
+        .execute(
+            app.post("/api/v1/budgets/categories")
+                .bearer(&token)
+                .tenant(org_id)
+                .json(json!({ "organization_id": org_id, "name": "Throwaway" }))
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::CREATED, "{}", resp.text());
+    let category_id = resp.json_value()["id"]
+        .as_str()
+        .expect("id missing")
+        .to_string();
     let resp = app
         .execute(
             app.delete(&format!(

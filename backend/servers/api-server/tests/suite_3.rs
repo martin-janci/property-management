@@ -11,6 +11,8 @@ mod common;
 mod booking_oauth_routes_tests;
 #[path = "suites/budget_capital_forecast_tests.rs"]
 mod budget_capital_forecast_tests;
+#[path = "suites/budgets_authz_tests.rs"]
+mod budgets_authz_tests;
 #[path = "suites/budgets_tests.rs"]
 mod budgets_tests;
 #[path = "suites/building_manager_rbac_tests.rs"]
