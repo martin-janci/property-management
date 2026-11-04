@@ -19,14 +19,32 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { RealtorApiError } from '@/lib/realtor-api';
+import skMessages from '../../../../../messages/sk.json';
 import AgentProfilePage from './page';
 
 vi.mock('next/navigation', () => ({
   useParams: () => ({ id: 'realtor-abc' }),
 }));
 
+// Resolve translations against the real sk.json so the assertions below pin
+// the actual rendered copy (not raw keys) — this guards that the page is wired
+// through next-intl AND that the sk message bundle carries every key used.
 vi.mock('next-intl', () => ({
   useLocale: () => 'sk',
+  useTranslations: (namespace: string) => {
+    const node = namespace
+      .split('.')
+      .reduce<unknown>((acc, part) => (acc as Record<string, unknown>)?.[part], skMessages);
+    return (key: string, values?: Record<string, unknown>) => {
+      let str = (node as Record<string, string> | undefined)?.[key] ?? key;
+      if (values) {
+        for (const [k, v] of Object.entries(values)) {
+          str = str.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v));
+        }
+      }
+      return str;
+    };
+  },
 }));
 
 vi.mock('@/components/ui', () => ({
