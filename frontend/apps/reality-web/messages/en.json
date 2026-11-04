@@ -1184,6 +1184,7 @@
       "feedNamePlaceholder": "My Property Feed",
       "fetchError": "Failed to fetch feed. Please check the URL and try again.",
       "updateError": "Failed to update the feed. Please try again.",
+      "syncError": "Failed to start the feed sync. Please try again.",
       "removeError": "Failed to remove the feed. Please try again.",
       "format": "Format",
       "itemsFound": "Items Found",

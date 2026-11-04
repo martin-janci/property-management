@@ -1184,6 +1184,7 @@
       "feedNamePlaceholder": "Môj feed nehnuteľností",
       "fetchError": "Nepodarilo sa načítať feed. Skontrolujte URL a skúste to znova.",
       "updateError": "Nepodarilo sa aktualizovať feed. Skúste to znova.",
+      "syncError": "Nepodarilo sa spustiť synchronizáciu feedu. Skúste to znova.",
       "removeError": "Nepodarilo sa odstrániť feed. Skúste to znova.",
       "format": "Formát",
       "itemsFound": "Nájdené položky",
