@@ -38,3 +38,9 @@ Note: existing `ppt/dashboard` screen-map is mobile-only — this is the web-onl
 ## Agent Log
 - 2026-10-05 — agent: reconciled screen-map with PR #3002 — recorded that bare `/dashboard` now fans out non-manager roles to `/dashboard/resident`; routing only, no build/api status change.
 - 2026-05-18 — agent: created stub for unmapped route.
+
+## Agent Log
+
+<!-- newest entries on top -->
+
+- 2026-11-04 — agent: action queue hidden outside DEV mock mode (no /api/v1/action-queue backend) instead of a false 'all caught up'; meter item links to /meters (was /meters/reading → matched /meters/:meterId)
