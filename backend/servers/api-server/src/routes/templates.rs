@@ -288,9 +288,27 @@ async fn load_template_list(
     org_id: Uuid,
     query: TemplateListQuery,
 ) -> Result<TemplateListResponse, (StatusCode, Json<ErrorResponse>)> {
-    let templates = repo.list(org_id, query.clone()).await.unwrap_or_default();
+    let templates = repo.list(org_id, query.clone()).await.map_err(|e| {
+        tracing::error!("Failed to list templates: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "INTERNAL_ERROR",
+                "Failed to list templates",
+            )),
+        )
+    })?;
 
-    let total = repo.count(org_id, query).await.unwrap_or(0);
+    let total = repo.count(org_id, query).await.map_err(|e| {
+        tracing::error!("Failed to count templates: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "INTERNAL_ERROR",
+                "Failed to list templates",
+            )),
+        )
+    })?;
 
     let count = templates.len();
     Ok(TemplateListResponse {
@@ -704,8 +722,7 @@ mod tests {
             .expect("connect_lazy builds without connecting");
         let repo = DocumentTemplateRepository::new(pool);
 
-        let result =
-            load_template_list(&repo, Uuid::nil(), TemplateListQuery::default()).await;
+        let result = load_template_list(&repo, Uuid::nil(), TemplateListQuery::default()).await;
 
         let (status, _body) =
             result.expect_err("DB error must not be swallowed into an Ok response");
