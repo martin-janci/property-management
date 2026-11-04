@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GuestForm } from '../components/GuestForm';
+import { parseIsoDate } from '../mappers';
 import type { CreateGuestRequest, RentalGuest, UpdateGuestRequest } from '../types';
 
 interface BookingWithGuests {
@@ -28,14 +29,9 @@ interface GuestRegistrationPageProps {
   onBack: () => void;
 }
 
-function formatDateRange(checkIn: string, checkOut: string): string {
-  const start = new Date(checkIn);
-  const end = new Date(checkOut);
-  const options: Intl.DateTimeFormatOptions = {
-    month: 'short',
-    day: 'numeric',
-  };
-  return `${start.toLocaleDateString(undefined, options)} - ${end.toLocaleDateString(undefined, options)}`;
+function formatDateRange(checkIn: string, checkOut: string, language: string): string {
+  const fmt = new Intl.DateTimeFormat(language, { month: 'short', day: 'numeric' });
+  return `${fmt.format(parseIsoDate(checkIn))} – ${fmt.format(parseIsoDate(checkOut))}`;
 }
 
 export function GuestRegistrationPage({
@@ -48,7 +44,7 @@ export function GuestRegistrationPage({
   onAddGuest,
   onBack,
 }: GuestRegistrationPageProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [expandedBookingId, setExpandedBookingId] = useState<string | null>(null);
   const [editingGuestId, setEditingGuestId] = useState<string | null>(null);
   const [addingToBookingId, setAddingToBookingId] = useState<string | null>(null);
@@ -189,7 +185,7 @@ export function GuestRegistrationPage({
                           <h3 className="font-semibold text-gray-900">{booking.guestName}</h3>
                           <p className="text-sm text-gray-500">
                             {booking.unitName} |{' '}
-                            {formatDateRange(booking.checkIn, booking.checkOut)}
+                            {formatDateRange(booking.checkIn, booking.checkOut, i18n.language)}
                           </p>
                         </div>
                       </div>

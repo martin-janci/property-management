@@ -46,4 +46,38 @@ describe('AnnouncementsPage state wiring', () => {
     render(<AnnouncementsPage {...baseProps} isLoading />);
     expect(screen.queryByText('No announcements found.')).not.toBeInTheDocument();
   });
+  it('renders a read-only list for residents (canManage=false)', () => {
+    render(
+      <AnnouncementsPage
+        {...baseProps}
+        canManage={false}
+        total={1}
+        announcements={[
+          {
+            id: 'a1',
+            title: 'Water outage',
+            status: 'published',
+            targetType: 'building',
+            publishedAt: '2026-04-10T08:00:00Z',
+            pinned: true,
+            commentsEnabled: false,
+            acknowledgmentRequired: false,
+          },
+        ]}
+      />
+    );
+    // Title appears in the list (and in the pinned band when provided).
+    expect(screen.getAllByText('Water outage').length).toBeGreaterThan(0);
+    expect(screen.queryAllByRole('combobox')).toHaveLength(0);
+    for (const name of ['Create Announcement', 'Archive', 'Unpin', 'Edit', 'Delete']) {
+      expect(screen.queryByRole('button', { name })).not.toBeInTheDocument();
+    }
+    expect(screen.getByRole('button', { name: 'View' })).toBeInTheDocument();
+  });
+
+  it('hides the "create first" call-to-action from residents', () => {
+    render(<AnnouncementsPage {...baseProps} canManage={false} isLoading={false} />);
+    expect(screen.getByText('No announcements found.')).toBeInTheDocument();
+    expect(screen.queryAllByRole('button')).toHaveLength(0);
+  });
 });
