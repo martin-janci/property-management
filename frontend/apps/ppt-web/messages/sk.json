@@ -1316,7 +1316,9 @@
         "message": "Vyskytla sa neočakávaná chyba."
       },
       "rateLimitRetry": "Pred ďalším pokusom prosím počkajte {{seconds}} sekúnd."
-    }
+    },
+    "accessDenied": "Prístup zamietnutý",
+    "backToDashboard": "Späť na prehľad"
   },
   "notifications": {
     "title": "Oznámenia",

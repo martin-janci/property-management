@@ -30,7 +30,7 @@ import {
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { useToast } from '../../components';
+import { ProtectedRoute, useToast } from '../../components';
 import { useAuth } from '../../contexts';
 import type {
   FaultDetail,
@@ -49,7 +49,7 @@ import {
   FaultReportsPage,
   FaultsPage,
 } from '../lazyRoutes';
-import { isManagerRole } from '../shared';
+import { isManagerRole, MANAGER_ROLES } from '../shared';
 
 /**
  * Map API FaultStatus (snake_case values) → UI FaultStatus.
@@ -581,7 +581,14 @@ export function faultRoutes() {
     <>
       <Route path="/faults" element={<FaultsPageRoute />} />
       <Route path="/faults/new" element={<CreateFaultPageRoute />} />
-      <Route path="/faults/reports" element={<FaultReportsPageRoute />} />
+      <Route
+        path="/faults/reports"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <FaultReportsPageRoute />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/faults/:faultId" element={<FaultDetailPageRoute />} />
       <Route path="/faults/:faultId/edit" element={<EditFaultPageRoute />} />
     </>

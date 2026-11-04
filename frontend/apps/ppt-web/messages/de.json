@@ -1128,7 +1128,9 @@
         "message": "Ein unerwarteter Fehler ist aufgetreten."
       },
       "rateLimitRetry": "Bitte warten Sie {{seconds}} Sekunden, bevor Sie es erneut versuchen."
-    }
+    },
+    "accessDenied": "Zugriff verweigert",
+    "backToDashboard": "Zurück zur Übersicht"
   },
   "notifications": {
     "title": "Benachrichtigungen",

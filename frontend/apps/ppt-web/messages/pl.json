@@ -1130,7 +1130,9 @@
         "message": "Wystąpił nieoczekiwany błąd."
       },
       "rateLimitRetry": "Poczekaj {{seconds}} sekund przed ponowną próbą."
-    }
+    },
+    "accessDenied": "Brak dostępu",
+    "backToDashboard": "Powrót do pulpitu"
   },
   "notifications": {
     "title": "Powiadomienia",

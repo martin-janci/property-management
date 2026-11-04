@@ -41,6 +41,7 @@ import type {
   RentalStatistics,
   TaxReportData,
 } from '../../features/rentals/types';
+import { MANAGER_ROLES } from '../shared';
 
 // Rentals feature pages (Epic 18 / UC-29, UC-30) — lazy-loaded for code splitting.
 const RentalsDashboardPage = lazy(() =>
@@ -635,7 +636,7 @@ export function rentalRoutes() {
       <Route
         path="/rentals"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <RentalsDashboardPageRoute />
           </ProtectedRoute>
         }
@@ -643,7 +644,7 @@ export function rentalRoutes() {
       <Route
         path="/rentals/connections"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <PlatformConnectionsPageRoute />
           </ProtectedRoute>
         }
@@ -651,7 +652,7 @@ export function rentalRoutes() {
       <Route
         path="/rentals/bookings"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <BookingsPageRoute />
           </ProtectedRoute>
         }
@@ -659,7 +660,7 @@ export function rentalRoutes() {
       <Route
         path="/rentals/bookings/:bookingId"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <BookingDetailPageRoute />
           </ProtectedRoute>
         }
@@ -667,7 +668,7 @@ export function rentalRoutes() {
       <Route
         path="/rentals/calendar"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <RentalsCalendarPageRoute />
           </ProtectedRoute>
         }
@@ -675,7 +676,7 @@ export function rentalRoutes() {
       <Route
         path="/rentals/guests"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <GuestRegistrationPageRoute />
           </ProtectedRoute>
         }
@@ -683,7 +684,7 @@ export function rentalRoutes() {
       <Route
         path="/rentals/reports"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <TaxReportPageRoute />
           </ProtectedRoute>
         }

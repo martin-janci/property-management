@@ -1316,7 +1316,9 @@
         "message": "Došlo k neočekávané chybě."
       },
       "rateLimitRetry": "Před dalším pokusem prosím počkejte {{seconds}} sekund."
-    }
+    },
+    "accessDenied": "Přístup odepřen",
+    "backToDashboard": "Zpět na přehled"
   },
   "notifications": {
     "title": "Oznámení",

@@ -24,11 +24,11 @@ import {
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, Route, useNavigate, useParams } from 'react-router-dom';
-import { AuthRequiredGate, useToast } from '../../components';
+import { AuthRequiredGate, ProtectedRoute, useToast } from '../../components';
 import { useAuth } from '../../contexts';
 import type { ListOutagesParams, OutageDetail } from '../../features/outages';
 import { CreateOutagePage, EditOutagePage, OutagesPage, ViewOutagePage } from '../lazyRoutes';
-import { transformBuildingForUI } from '../shared';
+import { MANAGER_ROLES, transformBuildingForUI } from '../shared';
 
 /**
  * Route wrapper for outages list page (UC-12).
@@ -365,9 +365,23 @@ export function outageRoutes() {
   return (
     <>
       <Route path="/outages" element={<OutagesPageRoute />} />
-      <Route path="/outages/new" element={<CreateOutagePageRoute />} />
+      <Route
+        path="/outages/new"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <CreateOutagePageRoute />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/outages/:outageId" element={<ViewOutagePageRoute />} />
-      <Route path="/outages/:outageId/edit" element={<EditOutagePageRoute />} />
+      <Route
+        path="/outages/:outageId/edit"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <EditOutagePageRoute />
+          </ProtectedRoute>
+        }
+      />
     </>
   );
 }

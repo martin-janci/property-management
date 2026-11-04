@@ -38,6 +38,7 @@ vi.mock('react-i18next', () => ({
 const mockShowToast = vi.fn();
 vi.mock('../../components', () => ({
   useToast: () => ({ showToast: mockShowToast }),
+  ProtectedRoute: ({ children }: { children: unknown }) => children,
 }));
 
 // ── auth ──
