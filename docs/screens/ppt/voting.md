@@ -110,6 +110,7 @@ UC-04 voting list. Quorum tile pattern matches `ui_kits/ppt-web/manager-dashboar
 
 <!-- newest entries on top -->
 
+- 2026-11-04 — agent: r3-nav-roles — "+ New vote" / "Create the first vote" only rendered when the route passes `onCreateVote` (managers) (audit r3 #14).
 - 2026-08-31 — agent: screen-map-drift-pr-2889-ppt — reconcile drift from PR #2889 (realtime ws→query-invalidation fix). ppt-web `WebSocketContext` re-keyed cache invalidation to canonical `domain.action` events and its `notification.created` subscriber routes by `payload.category`, so `category=votes` now invalidates the `votes` root; `App.tsx` wires `onEntityEvent → queryClient.invalidateQueries`. No route/component/endpoint/status change — frontmatter unchanged; docs-only.
 
 - 2026-06-08 — agent (CTO/PAP-19): built ppt-web `features/voting/VotingPage` (status-filtered vote list, quorum tile, create CTA) wired to `@ppt/api-client` `useVotes`/`useBuildings`; mounted `votingRoutes()` (`/voting`) in `AppRoutes.tsx` + lazyRoutes; flipped ppt-web buildStatus planned→shipped, apiStatus stub→complete, added route. Functional MVP (English labels); Slovak-localized design-system polish remains a follow-up.

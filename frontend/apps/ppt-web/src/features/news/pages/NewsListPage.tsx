@@ -6,8 +6,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../contexts';
 import { useOrganization } from '../../../hooks';
 import { getApiClient } from '../../../lib/api';
+import { isManagerRole } from '../../../routes/shared';
 import { NewsArticleCard } from '../components';
 import type { ArticleStatus, ArticleSummary } from '../types';
 
@@ -15,6 +17,8 @@ export function NewsListPage() {
   const { t } = useTranslation();
   const { organizationId } = useOrganization();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isManager = isManagerRole(user?.role);
   const [articles, setArticles] = useState<ArticleSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -166,9 +170,11 @@ export function NewsListPage() {
     <div className="news-list-page">
       <header className="news-header">
         <h1>News & Announcements</h1>
-        <Link to="/news/new" className="btn btn-primary">
-          Create Article
-        </Link>
+        {isManager && (
+          <Link to="/news/new" className="btn btn-primary">
+            Create Article
+          </Link>
+        )}
       </header>
 
       {error && (
@@ -229,13 +235,19 @@ export function NewsListPage() {
               onView={(id) => {
                 navigate(`/news/${id}`);
               }}
-              onEdit={(id) => {
-                navigate(`/news/${id}/edit`);
-              }}
-              onPublish={handlePublish}
-              onArchive={handleArchive}
-              onDelete={handleDelete}
-              onPin={handlePin}
+              // Writing news is manager-only on the server (403 otherwise),
+              // so residents get read-only cards.
+              onEdit={
+                isManager
+                  ? (id) => {
+                      navigate(`/news/${id}/edit`);
+                    }
+                  : undefined
+              }
+              onPublish={isManager ? handlePublish : undefined}
+              onArchive={isManager ? handleArchive : undefined}
+              onDelete={isManager ? handleDelete : undefined}
+              onPin={isManager ? handlePin : undefined}
             />
           ))}
         </div>

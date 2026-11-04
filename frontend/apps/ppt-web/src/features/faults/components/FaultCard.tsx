@@ -144,7 +144,7 @@ export function FaultCard({ fault, onView, onEdit, onTriage, onDelete }: FaultCa
         <button type="button" onClick={() => onView?.(fault.id)} className="fault-card__action">
           View
         </button>
-        {canEdit && (
+        {canEdit && onEdit && (
           <button
             type="button"
             onClick={() => onEdit?.(fault.id)}
@@ -153,7 +153,7 @@ export function FaultCard({ fault, onView, onEdit, onTriage, onDelete }: FaultCa
             Edit
           </button>
         )}
-        {canTriage && (
+        {canTriage && onTriage && (
           <button type="button" onClick={() => onTriage?.(fault.id)} className="fault-card__action">
             Triage
           </button>

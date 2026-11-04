@@ -28,7 +28,7 @@ import { AuthRequiredGate, useToast } from '../../components';
 import { useAuth } from '../../contexts';
 import type { ListOutagesParams, OutageDetail } from '../../features/outages';
 import { CreateOutagePage, EditOutagePage, OutagesPage, ViewOutagePage } from '../lazyRoutes';
-import { transformBuildingForUI } from '../shared';
+import { isManagerRole, transformBuildingForUI } from '../shared';
 
 /**
  * Route wrapper for outages list page (UC-12).
@@ -37,6 +37,7 @@ import { transformBuildingForUI } from '../shared';
 function OutagesPageRoute() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isManager = isManagerRole(user?.role);
   const [queryParams, setQueryParams] = useState<OutageListQuery>({ limit: 10, offset: 0 });
 
   const { data, isLoading } = useOutages(queryParams);
@@ -66,9 +67,11 @@ function OutagesPageRoute() {
       outages={outages}
       total={total}
       isLoading={isLoading}
-      onNavigateToCreate={handleNavigateToCreate}
+      // Creating and editing outages is manager-only on the server, so
+      // residents get a read-only list.
+      onNavigateToCreate={isManager ? handleNavigateToCreate : undefined}
       onNavigateToView={handleNavigateToView}
-      onNavigateToEdit={handleNavigateToEdit}
+      onNavigateToEdit={isManager ? handleNavigateToEdit : undefined}
       onFilterChange={handleFilterChange}
     />
   );

@@ -50,6 +50,8 @@ Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, e
 - 2026-05-18 — audit: stub created from `frontend/apps/ppt-web/src/App.tsx:530`.
 
 ## Agent Log
+
+- 2026-11-04 — agent: r3-nav-roles — "Record payment" only for managers (`onNavigateToRecord` omitted for residents) (audit r3 #14).
 - 2026-08-04 — agent: screen-map-drift-pr-2649-ppt — reconciled this screen-map
   with PR #2649 (surface rentals/financial mutation failures via error toast).
   Documented the new `onError` error-toast wiring on the `allocatePayment` /

@@ -70,6 +70,8 @@ Reachable from the building detail page via a "Person-months" quick link.
   units that already have an entry.
 
 ## Agent Log
+
+- 2026-11-04 — agent: r3-nav-roles — bulk entry and per-unit edit routes are manager-gated; summary/unit pages are read-only for residents (audit r3 #14). Backend still only checks org membership on upsert/bulk.
 - 2026-07-13 — agent: gap-screens-normalize-frontmatter — normalized story-id-style epic ref(s) Epic-3-5 → Epic-3 (strip story suffix); /screens validate clean.
 - 2026-06-22 — FrontendEngineer: created on route+api-client wiring (BIT-190).
 - 2026-07-09 — agent: linked UC-10 (Person-Months, docs/use-cases.md) in useCases frontmatter (gap-screens-link-uc-10).

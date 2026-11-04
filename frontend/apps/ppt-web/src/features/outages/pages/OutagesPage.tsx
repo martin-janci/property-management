@@ -24,9 +24,11 @@ interface OutagesPageProps {
   outages: OutageSummary[];
   total: number;
   isLoading?: boolean;
-  onNavigateToCreate: () => void;
+  /** Managers only; omitted for residents so the create button is hidden. */
+  onNavigateToCreate?: () => void;
   onNavigateToView: (id: string) => void;
-  onNavigateToEdit: (id: string) => void;
+  /** Managers only; omitted for residents so the cards hide Edit. */
+  onNavigateToEdit?: (id: string) => void;
   onFilterChange: (params: ListOutagesParams) => void;
 }
 

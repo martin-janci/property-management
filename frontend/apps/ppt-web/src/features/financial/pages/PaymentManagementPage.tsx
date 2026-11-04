@@ -27,7 +27,8 @@ export interface PaymentManagementPageProps {
     currency: string;
   };
   isLoading?: boolean;
-  onNavigateToRecord: () => void;
+  /** Managers only; omitted for residents so the record button is hidden. */
+  onNavigateToRecord?: () => void;
   onNavigateToDetail: (paymentId: string) => void;
   onMatch: (paymentId: string, invoiceId: string, amount: number) => void;
   onAutoMatch: () => void;
@@ -99,13 +100,15 @@ export function PaymentManagementPage({
                 onChange={handleBuildingChange}
                 isLoading={isLoading}
               />
-              <button
-                type="button"
-                onClick={onNavigateToRecord}
-                className="px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-md"
-              >
-                {t('financial.payments.recordPayment')}
-              </button>
+              {onNavigateToRecord && (
+                <button
+                  type="button"
+                  onClick={onNavigateToRecord}
+                  className="px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-md"
+                >
+                  {t('financial.payments.recordPayment')}
+                </button>
+              )}
             </div>
           </div>
         </div>
