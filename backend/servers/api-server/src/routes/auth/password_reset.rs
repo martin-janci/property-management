@@ -79,11 +79,18 @@ pub async fn forgot_password(
     // Try to find user and send email
     match state.user_repo.find_by_email(&req.email).await {
         Ok(Some(user)) if user.status == "active" => {
-            // Invalidate any existing reset tokens for this user
-            let _ = state
-                .password_reset_repo
-                .invalidate_user_tokens(user.id)
-                .await;
+            // Invalidate any existing reset tokens for this user before issuing
+            // a new one. A DB failure here must NOT be swallowed: proceeding
+            // would mint a fresh reset token while leaving the prior token(s)
+            // valid, so the account would have multiple live reset links at
+            // once. Surface it as a 500 so the handler aborts instead of
+            // issuing a new token alongside stale ones.
+            invalidation_outcome(
+                state
+                    .password_reset_repo
+                    .invalidate_user_tokens(user.id)
+                    .await,
+            )?;
 
             // Generate reset token (1 hour expiry)
             let token = state.auth_service.generate_token();
