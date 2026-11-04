@@ -40,3 +40,4 @@ already built but unrouted; this screen is now reachable on web.
 
 ## Agent Log
 - 2026-06-08 — CTO: created on route mount (PAP-20, Epic 19).
+- 2026-11-04 — agent: Expiring-lease rows: hard-coded `View` / `Renew` / `{n}d` translated; Renew now deep-links to `/leases/{id}?action=renew`.
