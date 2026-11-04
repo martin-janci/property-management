@@ -854,6 +854,12 @@
         "completed": "Dokončeno",
         "cancelled": "Zrušeno"
       },
+      "type": {
+        "general": "Obecná poptávka",
+        "viewing_request": "Žádost o prohlídku",
+        "price_negotiation": "Vyjednávání ceny",
+        "availability": "Dostupnost"
+      },
       "viewingScheduled": "Prohlídka naplánována: {date} v {time}",
       "agentResponse": "Odpověď makléře:",
       "cancelConfirm": "Zrušit tuto poptávku?",
@@ -1178,6 +1184,7 @@
       "feedNamePlaceholder": "Můj feed nemovitostí",
       "fetchError": "Nepodařilo se načíst feed. Zkontrolujte URL a zkuste to znovu.",
       "updateError": "Nepodařilo se aktualizovat feed. Zkuste to znovu.",
+      "syncError": "Nepodařilo se spustit synchronizaci feedu. Zkuste to znovu.",
       "removeError": "Nepodařilo se odstranit feed. Zkuste to znovu.",
       "format": "Formát",
       "itemsFound": "Nalezené položky",

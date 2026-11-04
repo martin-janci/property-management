@@ -27,7 +27,10 @@ function lastCall(): { url: string; method: string } {
   const calls = vi.mocked(fetch).mock.calls;
   const call = calls[calls.length - 1];
   if (!call) throw new Error('fetch was not called');
-  const url = String(call[0]);
+  // Requests go through `authenticatedFetch`, which resolves the path against
+  // the generated client's base URL; compare on path + query only.
+  const resolved = new URL(String(call[0]), 'http://origin.invalid');
+  const url = resolved.pathname + resolved.search;
   const method = ((call[1] as RequestInit | undefined)?.method ?? 'GET').toUpperCase();
   return { url, method };
 }

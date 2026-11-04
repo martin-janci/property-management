@@ -175,6 +175,15 @@ function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
     }
   };
 
+  const handleSync = async () => {
+    setActionError(null);
+    try {
+      await syncMutation.mutateAsync();
+    } catch {
+      setActionError(t('syncError'));
+    }
+  };
+
   return (
     <div className="feed-card">
       <div className="card-header">
@@ -216,7 +225,7 @@ function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
         <button
           type="button"
           className="action-button sync"
-          onClick={() => syncMutation.mutate()}
+          onClick={handleSync}
           disabled={syncMutation.isPending || feed.status === 'error'}
         >
           {syncMutation.isPending ? t('syncing') : t('syncNow')}

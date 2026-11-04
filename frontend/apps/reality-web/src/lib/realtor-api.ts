@@ -265,3 +265,65 @@ export function getRealtorReviews(realtorId: string, limit = 20): Promise<Realto
     `/api/v1/realtors/${encodeURIComponent(realtorId)}/reviews?limit=${limit}`
   );
 }
+
+/**
+ * Public realtor profile.
+ *
+ * snake_case wire mirror of reality-server's `RealtorProfile`
+ * (`backend/crates/db/src/models/reality_portal.rs`, served by
+ * `GET /api/v1/realtors/{user_id}/profile` → `ProfileResponse { profile }`).
+ * This endpoint is NOT camelCased, so the fields are kept as-is.
+ *
+ * Note the server intentionally does not expose a display name on this
+ * contract (the public profile is sourced from `realtor_profiles` only, not
+ * joined to the user record), so the UI falls back to the tagline / a generic
+ * label rather than fabricating one. Contact fields are gated server-side-ish
+ * via `show_phone` / `show_email`; the UI honours those flags.
+ */
+export interface PublicRealtorProfile {
+  id: string;
+  user_id: string;
+  photo_url?: string | null;
+  bio?: string | null;
+  tagline?: string | null;
+  specializations?: string[] | null;
+  experience_years?: number | null;
+  languages?: string[] | null;
+  license_number?: string | null;
+  license_verified_at?: string | null;
+  certifications?: string[] | null;
+  phone?: string | null;
+  whatsapp?: string | null;
+  email_public?: string | null;
+  linkedin_url?: string | null;
+  facebook_url?: string | null;
+  instagram_url?: string | null;
+  show_phone: boolean;
+  show_email: boolean;
+  accept_inquiries: boolean;
+  total_listings: number;
+  active_listings: number;
+  total_views: number;
+  total_inquiries: number;
+  avg_response_time_hours?: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ProfileResponse {
+  profile: PublicRealtorProfile;
+}
+
+/**
+ * Fetch a realtor's public profile by user id
+ * (`GET /api/v1/realtors/{id}/profile`).
+ *
+ * Throws `RealtorApiError` with `status === 404` when no profile exists for
+ * the id, which callers map to a not-found state (never a fabricated profile).
+ */
+export async function getRealtorPublicProfile(realtorId: string): Promise<PublicRealtorProfile> {
+  const res = await request<ProfileResponse>(
+    `/api/v1/realtors/${encodeURIComponent(realtorId)}/profile`
+  );
+  return res.profile;
+}

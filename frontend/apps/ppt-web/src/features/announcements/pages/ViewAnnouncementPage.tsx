@@ -4,10 +4,12 @@ import type {
   AnnouncementStatus,
   AnnouncementWithDetails,
 } from '@ppt/api-client';
+import { renderMarkdownSafe } from '../../../lib/markdown';
 import { AcknowledgmentStats as AcknowledgmentStatsPanel } from '../components/AcknowledgmentStats';
 import type { AnnouncementCommentsProps } from '../components/AnnouncementComments';
 import { AnnouncementComments } from '../components/AnnouncementComments';
 import './ViewAnnouncementPage.css';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface ViewAnnouncementPageProps {
@@ -30,6 +32,12 @@ interface ViewAnnouncementPageProps {
    * Omit to suppress the section (e.g. commentsEnabled=false, or while loading).
    */
   commentsProps?: AnnouncementCommentsProps;
+  /**
+   * Whether the viewer may manage the announcement (edit / publish / archive /
+   * pin / delete, read statistics). Residents get a read-only view.
+   * Defaults to `true` for backwards compatibility.
+   */
+  canManage?: boolean;
 }
 
 const statusPillClass: Record<AnnouncementStatus, string> = {
@@ -39,12 +47,12 @@ const statusPillClass: Record<AnnouncementStatus, string> = {
   archived: 'ann-status-pill ann-status-pill--archived',
 };
 
-const targetTypeLabels = {
-  all: 'All Users',
-  building: 'Building',
-  units: 'Specific Units',
-  roles: 'By Role',
-};
+const targetTypeLabelKeys = {
+  all: 'announcements.target.allUsers',
+  building: 'announcements.target.building',
+  units: 'announcements.target.specificUnits',
+  roles: 'announcements.target.byRole',
+} as const;
 
 export function ViewAnnouncementPage({
   announcement,
@@ -60,12 +68,16 @@ export function ViewAnnouncementPage({
   onAcknowledge,
   acknowledgmentStats,
   commentsProps,
+  canManage = true,
 }: ViewAnnouncementPageProps) {
-  const { t } = useTranslation();
-  const canEdit = announcement.status === 'draft' || announcement.status === 'scheduled';
-  const canDelete = announcement.status === 'draft';
-  const canPublish = announcement.status === 'draft' || announcement.status === 'scheduled';
-  const canArchive = announcement.status === 'published';
+  const { t, i18n } = useTranslation();
+  const canEdit =
+    canManage && (announcement.status === 'draft' || announcement.status === 'scheduled');
+  const canDelete = canManage && announcement.status === 'draft';
+  const canPublish =
+    canManage && (announcement.status === 'draft' || announcement.status === 'scheduled');
+  const canArchive = canManage && announcement.status === 'published';
+  const bodyHtml = useMemo(() => renderMarkdownSafe(announcement.content), [announcement.content]);
 
   if (isLoading) {
     return (
@@ -88,7 +100,7 @@ export function ViewAnnouncementPage({
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
-        Back to Announcements
+        {t('announcements.view.backToList')}
       </button>
 
       <div className="view-announcement__card">
@@ -96,7 +108,7 @@ export function ViewAnnouncementPage({
           <div>
             <div className="view-announcement__badge-row">
               {announcement.pinned && (
-                <span className="view-announcement__pin-icon" title="Pinned">
+                <span className="view-announcement__pin-icon" title={t('announcements.pinned')}>
                   <svg
                     width="20"
                     height="20"
@@ -109,46 +121,66 @@ export function ViewAnnouncementPage({
                 </span>
               )}
               <span className={statusPillClass[announcement.status]}>
-                {announcement.status.charAt(0).toUpperCase() + announcement.status.slice(1)}
+                {t(`announcements.status.${announcement.status}`)}
               </span>
             </div>
             <h1 className="view-announcement__title">{announcement.title}</h1>
             <div className="view-announcement__byline">
-              <span>By {announcement.authorName}</span>
-              <span>{targetTypeLabels[announcement.targetType]}</span>
+              {announcement.authorName && (
+                <span>{t('announcements.view.byAuthor', { author: announcement.authorName })}</span>
+              )}
+              <span>{t(targetTypeLabelKeys[announcement.targetType])}</span>
               {announcement.publishedAt && (
-                <span>Published: {new Date(announcement.publishedAt).toLocaleDateString()}</span>
+                <span>
+                  {t('announcements.card.publishedOn', {
+                    date: new Date(announcement.publishedAt).toLocaleDateString(i18n.language),
+                  })}
+                </span>
               )}
             </div>
           </div>
 
           <div className="view-announcement__stats">
-            <span className="view-announcement__stat">
-              <strong>{announcement.readCount}</strong> reads
-            </span>
-            {announcement.acknowledgmentRequired && (
+            {canManage && (
               <span className="view-announcement__stat">
-                <strong>{announcement.acknowledgedCount}</strong> acknowledged
+                <strong>{announcement.readCount ?? 0}</strong>{' '}
+                {t('announcements.view.reads', { count: announcement.readCount ?? 0 })}
+              </span>
+            )}
+            {canManage && announcement.acknowledgmentRequired && (
+              <span className="view-announcement__stat">
+                <strong>{announcement.acknowledgedCount ?? 0}</strong>{' '}
+                {t('announcements.view.acknowledgedCount', {
+                  count: announcement.acknowledgedCount ?? 0,
+                })}
               </span>
             )}
             {announcement.commentsEnabled && (
               <span className="view-announcement__stat">
-                <strong>{announcement.commentCount}</strong> comments
+                <strong>{announcement.commentCount ?? 0}</strong>{' '}
+                {t('announcements.view.comments', { count: announcement.commentCount ?? 0 })}
               </span>
             )}
             <span className="view-announcement__stat">
-              <strong>{announcement.attachmentCount}</strong> attachments
+              <strong>{announcement.attachmentCount ?? 0}</strong>{' '}
+              {t('announcements.view.attachments', { count: announcement.attachmentCount ?? 0 })}
             </span>
           </div>
         </div>
 
         <div className="view-announcement__content">
-          <div className="view-announcement__body">{announcement.content}</div>
+          <div
+            className="view-announcement__body view-announcement__body--markdown"
+            // biome-ignore lint/security/noDangerouslySetInnerHtml: markdown is HTML-escaped first, then sanitized with a strict DOMPurify allowlist (lib/markdown)
+            dangerouslySetInnerHTML={{ __html: bodyHtml }}
+          />
         </div>
 
         {attachments.length > 0 && (
           <div className="view-announcement__attachments">
-            <h3 className="view-announcement__attachments-title">Attachments</h3>
+            <h3 className="view-announcement__attachments-title">
+              {t('announcements.view.attachmentsTitle')}
+            </h3>
             <ul className="view-announcement__attachment-list">
               {attachments.map((attachment) => (
                 <li key={attachment.id} className="view-announcement__attachment">
@@ -178,7 +210,7 @@ export function ViewAnnouncementPage({
           </div>
         )}
 
-        {announcement.acknowledgmentRequired && acknowledgmentStats && (
+        {canManage && announcement.acknowledgmentRequired && acknowledgmentStats && (
           <AcknowledgmentStatsPanel
             stats={acknowledgmentStats}
             className="view-announcement__ack-stats"
@@ -197,7 +229,7 @@ export function ViewAnnouncementPage({
               onClick={onEdit}
               className="view-announcement__btn view-announcement__btn--edit"
             >
-              Edit
+              {t('common.edit')}
             </button>
           )}
           {canPublish && (
@@ -206,7 +238,7 @@ export function ViewAnnouncementPage({
               onClick={onPublish}
               className="view-announcement__btn view-announcement__btn--publish"
             >
-              Publish Now
+              {t('announcements.actions.publishNow')}
             </button>
           )}
           {canArchive && (
@@ -215,23 +247,27 @@ export function ViewAnnouncementPage({
               onClick={onArchive}
               className="view-announcement__btn view-announcement__btn--archive"
             >
-              Archive
+              {t('announcements.actions.archive')}
             </button>
           )}
-          <button
-            type="button"
-            onClick={() => onPin(!announcement.pinned)}
-            className="view-announcement__btn view-announcement__btn--pin"
-          >
-            {announcement.pinned ? 'Unpin' : 'Pin'}
-          </button>
+          {canManage && (
+            <button
+              type="button"
+              onClick={() => onPin(!announcement.pinned)}
+              className="view-announcement__btn view-announcement__btn--pin"
+            >
+              {announcement.pinned
+                ? t('announcements.actions.unpin')
+                : t('announcements.actions.pin')}
+            </button>
+          )}
           {announcement.acknowledgmentRequired && onAcknowledge && (
             <button
               type="button"
               onClick={onAcknowledge}
               className="view-announcement__btn view-announcement__btn--ack"
             >
-              Acknowledge
+              {t('announcements.actions.acknowledge')}
             </button>
           )}
           {onMarkRead && (
@@ -240,7 +276,7 @@ export function ViewAnnouncementPage({
               onClick={onMarkRead}
               className="view-announcement__btn view-announcement__btn--read"
             >
-              Mark as Read
+              {t('announcements.actions.markAsRead')}
             </button>
           )}
           {canDelete && (
@@ -249,7 +285,7 @@ export function ViewAnnouncementPage({
               onClick={onDelete}
               className="view-announcement__btn view-announcement__btn--delete"
             >
-              Delete
+              {t('common.delete')}
             </button>
           )}
         </div>

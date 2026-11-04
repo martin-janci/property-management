@@ -19,10 +19,10 @@ use db::models::{
     AuditAction, BookingListQuery, BookingWithGuests, BookingsResponse, CalendarBlock,
     CalendarEvent, ConnectionStatus, CreateAuditLog, CreateBooking, CreateCalendarBlock,
     CreateGuest, CreateGuestIdDocument, CreateICalFeed, CreatePlatformConnection, GenerateReport,
-    ICalFeed, PlatformConnectionDetail, PlatformConnectionSummary, PlatformSyncStatus,
-    RentalBooking, RentalGuest, RentalGuestIdDocument, RentalGuestReport, RentalPlatformConnection,
-    RentalStatistics, ReportPreview, ReportSummary, UpdateBooking, UpdateBookingStatus,
-    UpdateGuest, UpdateICalFeed, UpdatePlatformConnection,
+    GuestListItem, GuestListQuery, ICalFeed, PlatformConnectionDetail, PlatformConnectionSummary,
+    PlatformSyncStatus, RentalBooking, RentalGuest, RentalGuestIdDocument, RentalGuestReport,
+    RentalPlatformConnection, RentalStatistics, ReportPreview, ReportSummary, UpdateBooking,
+    UpdateBookingStatus, UpdateGuest, UpdateICalFeed, UpdatePlatformConnection,
 };
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -104,7 +104,7 @@ pub fn router() -> Router<AppState> {
         .route("/calendar/blocks", post(create_calendar_block))
         .route("/calendar/blocks/{id}", delete(delete_calendar_block))
         // Guests (Story 18.3)
-        .route("/guests", post(create_guest))
+        .route("/guests", get(list_guests).post(create_guest))
         .route("/guests/{id}", get(get_guest))
         .route("/guests/{id}", put(update_guest))
         .route("/guests/{id}", delete(delete_guest))
@@ -156,6 +156,23 @@ async fn ensure_unit_in_org(
             axum::http::StatusCode::NOT_FOUND,
             "Unit not found".to_string(),
         ))
+    }
+}
+
+/// Map an authority-report repo error. `RowNotFound` means the requested
+/// building does not exist in the caller's org (the repo scopes the building
+/// lookup by `organization_id`), so it is 404 rather than a 500 that would
+/// distinguish foreign buildings from missing ones.
+fn report_err(e: sqlx::Error, ctx: &str) -> (axum::http::StatusCode, String) {
+    match e {
+        sqlx::Error::RowNotFound => (
+            axum::http::StatusCode::NOT_FOUND,
+            "Building not found".to_string(),
+        ),
+        e => (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            format!("{ctx}: {e}"),
+        ),
     }
 }
 
@@ -268,6 +285,10 @@ pub async fn create_connection(
     TenantExtractor(tenant): TenantExtractor,
     Json(data): Json<CreatePlatformConnection>,
 ) -> Result<Json<RentalPlatformConnection>, (axum::http::StatusCode, String)> {
+    // SECURITY: the unit comes from the request body; it must belong to the
+    // caller's org (404 otherwise) before anything is written against it.
+    ensure_unit_in_org(&state, tenant.tenant_id, data.unit_id).await?;
+
     let connection = state
         .rental_repo
         .create_connection(tenant.tenant_id, data)
@@ -506,6 +527,10 @@ pub async fn create_booking(
     TenantExtractor(tenant): TenantExtractor,
     Json(data): Json<CreateBooking>,
 ) -> Result<Json<RentalBooking>, (axum::http::StatusCode, String)> {
+    // SECURITY: the unit comes from the request body; it must belong to the
+    // caller's org (404 otherwise) before anything is written against it.
+    ensure_unit_in_org(&state, tenant.tenant_id, data.unit_id).await?;
+
     // Check availability first
     let available = state
         .rental_repo
@@ -832,6 +857,10 @@ pub async fn create_calendar_block(
     TenantExtractor(tenant): TenantExtractor,
     Json(data): Json<CreateCalendarBlock>,
 ) -> Result<Json<CalendarBlock>, (axum::http::StatusCode, String)> {
+    // SECURITY: the unit comes from the request body; it must belong to the
+    // caller's org (404 otherwise) before anything is written against it.
+    ensure_unit_in_org(&state, tenant.tenant_id, data.unit_id).await?;
+
     let block = state
         .rental_repo
         .create_calendar_block(tenant.tenant_id, data)
@@ -888,6 +917,63 @@ pub async fn delete_calendar_block(
 // ============================================
 // Guests (Story 18.3)
 // ============================================
+
+/// List guests (with booking context) for the guest-registration screen.
+#[utoipa::path(
+    get,
+    path = "/api/v1/rentals/guests",
+    tag = "Rentals",
+    params(
+        ("status" = Option<String>, Query, description = "Filter by registration status (pending, registered, reported, expired)"),
+        ("booking_id" = Option<Uuid>, Query, description = "Filter to one booking"),
+        ("limit" = Option<i64>, Query, description = "Max rows (default 200, max 500)")
+    ),
+    responses(
+        (status = 200, description = "Guests with booking context", body = Vec<GuestListItem>),
+        (status = 400, description = "Invalid status filter"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Not a manager in this organization")
+    )
+)]
+pub async fn list_guests(
+    State(state): State<AppState>,
+    TenantExtractor(tenant): TenantExtractor,
+    Query(query): Query<GuestListQuery>,
+) -> Result<Json<Vec<GuestListItem>>, (axum::http::StatusCode, String)> {
+    // SECURITY (#1766): guest rows carry identity PII; gate to managers like
+    // the other guest/booking read paths.
+    require_manager_in_org(&state, tenant.tenant_id, tenant.user_id)
+        .await
+        .map_err(|(status, body)| (status, body.0.message))?;
+
+    if let Some(ref status) = query.status {
+        let valid = [
+            db::models::guest_status::PENDING,
+            db::models::guest_status::REGISTERED,
+            db::models::guest_status::REPORTED,
+            db::models::guest_status::EXPIRED,
+        ];
+        if !valid.contains(&status.as_str()) {
+            return Err((
+                axum::http::StatusCode::BAD_REQUEST,
+                format!("Invalid guest status filter: {status}"),
+            ));
+        }
+    }
+
+    let guests = state
+        .rental_repo
+        .list_guests_for_org(tenant.tenant_id, query)
+        .await
+        .map_err(|e| {
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to list guests: {}", e),
+            )
+        })?;
+
+    Ok(Json(guests))
+}
 
 /// Create guest.
 #[utoipa::path(
@@ -1627,12 +1713,7 @@ pub async fn generate_report_preview(
             data.period_end,
         )
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to generate preview: {}", e),
-            )
-        })?;
+        .map_err(|e| report_err(e, "Failed to generate preview"))?;
 
     Ok(Json(preview))
 }
@@ -1657,12 +1738,7 @@ pub async fn create_report(
         .rental_repo
         .create_report(tenant.tenant_id, data, tenant.user_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to create report: {}", e),
-            )
-        })?;
+        .map_err(|e| report_err(e, "Failed to create report"))?;
 
     Ok(Json(report))
 }
@@ -1764,6 +1840,10 @@ pub async fn create_ical_feed(
     TenantExtractor(tenant): TenantExtractor,
     Json(data): Json<CreateICalFeed>,
 ) -> Result<Json<ICalFeed>, (axum::http::StatusCode, String)> {
+    // SECURITY: the unit comes from the request body; it must belong to the
+    // caller's org (404 otherwise) before anything is written against it.
+    ensure_unit_in_org(&state, tenant.tenant_id, data.unit_id).await?;
+
     let feed = state
         .rental_repo
         .create_ical_feed(tenant.tenant_id, data)

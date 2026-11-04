@@ -27,13 +27,13 @@ const DocumentPreviewModal = lazy(() =>
   import('../components/DocumentPreviewModal').then((m) => ({ default: m.DocumentPreviewModal }))
 );
 
-/** Human-readable labels for the access_scope values returned by the backend (7a-3). */
-const AUDIENCE_LABELS: Record<AccessScope, string> = {
-  organization: 'All members',
-  building: 'Building members',
-  unit: 'Unit members',
-  user: 'Specific users',
-  public: 'Public',
+/** i18n keys for the access_scope values returned by the backend (7a-3). */
+const AUDIENCE_LABEL_KEYS: Record<AccessScope, string> = {
+  organization: 'documents.detail.audience.organization',
+  building: 'documents.detail.audience.building',
+  unit: 'documents.detail.audience.unit',
+  user: 'documents.detail.audience.user',
+  public: 'documents.detail.audience.public',
 };
 
 interface DocumentDetailProps {
@@ -89,7 +89,7 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
   const versions = useDocumentVersions(documentId);
   const reprocessOcr = useReprocessOcr();
   const [showSharePanel, setShowSharePanel] = useState(false);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [showPreview, setShowPreview] = useState(false);
   // Hook order must stay unconditional (called before the early returns); the
   // file name is resolved lazily inside the hook when download() runs.
@@ -102,7 +102,7 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
     return (
       <div className="document-detail loading">
         <div className="loading-spinner" />
-        <p>Loading document...</p>
+        <p>{t('documents.detail.loading')}</p>
 
         <style>{detailStyles}</style>
       </div>
@@ -129,11 +129,8 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
             <path d="M7 11V7a5 5 0 0110 0v4" />
           </svg>
-          <p className="permission-message">Tento dokument nie je prístupný pre váš účet.</p>
-          <p className="permission-hint">
-            Dokument mohol byť nastavený ako viditeľný iba pre správcov alebo konkrétnych
-            používateľov.
-          </p>
+          <p className="permission-message">{t('documents.detail.forbidden')}</p>
+          <p className="permission-hint">{t('documents.detail.forbiddenHint')}</p>
 
           <style>{detailStyles}</style>
         </div>
@@ -142,9 +139,9 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
 
     return (
       <div className="document-detail error">
-        <p className="error-message">Detail dokumentu sa nepodarilo načítať.</p>
+        <p className="error-message">{t('documents.detail.loadError')}</p>
         <button type="button" onClick={() => refetch()} className="retry-btn">
-          Skúsiť znova
+          {t('common.tryAgain')}
         </button>
 
         <style>{detailStyles}</style>
@@ -155,7 +152,7 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
   if (!data?.document) {
     return (
       <div className="document-detail empty">
-        <p>Dokument nebol nájdený.</p>
+        <p>{t('documents.notFound')}</p>
 
         <style>{detailStyles}</style>
       </div>
@@ -174,7 +171,7 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
   // Format date
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString(i18n.language, {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -235,7 +232,9 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
         <h2 className="document-title">{doc.title}</h2>
 
         <div className="document-meta">
-          <span className="meta-item category">{doc.category}</span>
+          <span className="meta-item category">
+            {t(`documents.category.${doc.category}`, { defaultValue: doc.category })}
+          </span>
           <span className="meta-separator">|</span>
           <span className="meta-item">{doc.file_name}</span>
           <span className="meta-separator">|</span>
@@ -245,7 +244,11 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
               <span className="meta-separator">|</span>
               <span
                 className="meta-item audience-badge"
-                title={`Visible to: ${AUDIENCE_LABELS[doc.access_scope] ?? doc.access_scope}`}
+                title={t('documents.detail.visibleTo', {
+                  audience: AUDIENCE_LABEL_KEYS[doc.access_scope]
+                    ? t(AUDIENCE_LABEL_KEYS[doc.access_scope])
+                    : doc.access_scope,
+                })}
               >
                 <svg
                   width="12"
@@ -260,7 +263,9 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                   <circle cx="12" cy="12" r="3" />
                 </svg>
-                {AUDIENCE_LABELS[doc.access_scope] ?? doc.access_scope}
+                {AUDIENCE_LABEL_KEYS[doc.access_scope]
+                  ? t(AUDIENCE_LABEL_KEYS[doc.access_scope])
+                  : doc.access_scope}
               </span>
             </>
           )}
@@ -269,8 +274,8 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
         {doc.description && <p className="document-description">{doc.description}</p>}
 
         <div className="document-dates">
-          <p>Created: {formatDate(doc.created_at)}</p>
-          <p>Updated: {formatDate(doc.updated_at)}</p>
+          <p>{t('documents.detail.createdAt', { date: formatDate(doc.created_at) })}</p>
+          <p>{t('documents.detail.updatedAt', { date: formatDate(doc.updated_at) })}</p>
         </div>
 
         {/* Document Actions */}
@@ -294,7 +299,7 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
               <polyline points="7 10 12 15 17 10" />
               <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
-            {isDownloading ? 'Downloading…' : 'Download'}
+            {isDownloading ? t('documents.preview.downloading') : t('documents.download')}
           </button>
           <button type="button" onClick={() => setShowPreview(true)} className="action-btn">
             <svg
@@ -309,7 +314,7 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
               <circle cx="12" cy="12" r="3" />
             </svg>
-            Preview
+            {t('documents.browse.preview')}
           </button>
           <button
             type="button"
@@ -333,7 +338,7 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
               <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
               <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
             </svg>
-            Share
+            {t('documents.share.title')}
           </button>
         </div>
 
@@ -360,7 +365,7 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
       <div className="intelligence-section">
         <h3 className="section-title">
           <span className="ai-icon">AI</span>
-          Document Intelligence
+          {t('documents.detail.intelligence')}
         </h3>
 
         {/* Summary (Story 39.4) */}
@@ -403,8 +408,10 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
         {/* OCR Text Preview */}
         {doc.ocr_text && (
           <div className="ocr-preview">
-            <h4 className="preview-title">Extracted Text</h4>
-            <p className="word-count">{wordCount} words extracted</p>
+            <h4 className="preview-title">{t('documents.detail.extractedText')}</h4>
+            <p className="word-count">
+              {t('documents.detail.wordsExtracted', { count: wordCount })}
+            </p>
             <div className="ocr-text-container">
               <pre className="ocr-text">{doc.ocr_text}</pre>
             </div>

@@ -415,8 +415,13 @@ export function VoteDetailScreen({ voteId, onBack }: VoteDetailScreenProps) {
  * as `t(..., { defaultValue })` so an untranslated locale (or a reason we don't
  * yet map) still shows readable text instead of a bare key, mirroring how the
  * rest of this screen renders server-adjacent strings.
+ *
+ * Exported so the sibling `*.eligibilityReason.parity.test.ts` drift guard can
+ * pin these source sentences against the Rust literals they mirror
+ * (`repositories/vote.rs`) — a backend copy-edit then fails CI instead of
+ * silently dropping a non-English voter back to English (GH #3223).
  */
-const ELIGIBILITY_REASON_KEYS: Record<string, string> = {
+export const ELIGIBILITY_REASON_KEYS: Record<string, string> = {
   'Vote is not currently accepting ballots': 'voteNotAcceptingBallots',
   'User is not eligible to vote in this building': 'notEligibleInBuilding',
   'All eligible units have already voted': 'allUnitsVoted',

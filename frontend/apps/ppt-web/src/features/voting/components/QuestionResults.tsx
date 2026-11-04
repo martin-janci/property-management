@@ -1,12 +1,14 @@
 /** Per-question results bars for the vote-detail / results view (Epic 5). */
 import type { QuestionResult } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 
 export function QuestionResults({ result }: { result: QuestionResult }) {
+  const { t } = useTranslation();
   return (
     <div className="rounded-lg border border-gray-200 p-4">
       <h4 className="text-sm font-semibold text-gray-900">{result.question_text}</h4>
       <p className="mb-3 mt-0.5 text-xs text-gray-500">
-        {result.total_responses} response{result.total_responses === 1 ? '' : 's'}
+        {t('voting.results.responseCount', { count: result.total_responses })}
       </p>
       <div className="space-y-3">
         {result.options.map((opt) => {

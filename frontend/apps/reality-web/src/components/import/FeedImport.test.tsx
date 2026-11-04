@@ -1,9 +1,11 @@
 /**
  * FeedImport Component Tests
  *
- * - FeedCard: a failed pause-toggle or delete used to be indistinguishable
- *   from success. These tests ensure the failure is surfaced inline
- *   (role="alert"), and that a successful action shows no error.
+ * - FeedCard: a failed pause-toggle, delete, or "Sync now" used to be
+ *   indistinguishable from success. ("Sync now" fired a fire-and-forget
+ *   `mutate()` with no error handling, so sync failures were silent.) These
+ *   tests ensure the failure is surfaced inline (role="alert"), and that a
+ *   successful action shows no error.
  * - AddFeedModal: the add-feed wizard swallowed create mutateAsync rejections
  *   and hung with no user-facing feedback (mirrors the RealtorManagement
  *   invite-modal fix). These tests ensure the error is surfaced inline and the
@@ -18,7 +20,11 @@ vi.mock('@ppt/reality-api-client', () => ({
   useMyAgency: vi.fn(() => ({ data: { id: 'agency-1' } })),
   useFeedSources: vi.fn(),
   useDeleteFeedSource: vi.fn(),
-  useSyncFeedSource: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+  useSyncFeedSource: vi.fn(() => ({
+    mutate: vi.fn(),
+    mutateAsync: vi.fn().mockResolvedValue({}),
+    isPending: false,
+  })),
   useUpdateFeedSource: vi.fn(),
   useFeedSyncHistory: vi.fn(() => ({ data: undefined })),
   useCreateFeedSource: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
@@ -30,6 +36,7 @@ import {
   useDeleteFeedSource,
   useFeedPreview,
   useFeedSources,
+  useSyncFeedSource,
   useUpdateFeedSource,
 } from '@ppt/reality-api-client';
 import { AddFeedModal, FeedImport } from './FeedImport';
@@ -37,6 +44,7 @@ import { AddFeedModal, FeedImport } from './FeedImport';
 const mockUseFeedSources = vi.mocked(useFeedSources);
 const mockUseUpdateFeedSource = vi.mocked(useUpdateFeedSource);
 const mockUseDeleteFeedSource = vi.mocked(useDeleteFeedSource);
+const mockUseSyncFeedSource = vi.mocked(useSyncFeedSource);
 const mockUseCreateFeedSource = vi.mocked(useCreateFeedSource);
 const mockUseFeedPreview = vi.mocked(useFeedPreview);
 
@@ -54,9 +62,11 @@ const activeFeed = {
 function setMutations({
   updateReject = false,
   deleteReject = false,
+  syncReject = false,
 }: {
   updateReject?: boolean;
   deleteReject?: boolean;
+  syncReject?: boolean;
 } = {}) {
   mockUseFeedSources.mockReturnValue({
     data: [activeFeed],
@@ -76,6 +86,14 @@ function setMutations({
       : vi.fn().mockResolvedValue({}),
     isPending: false,
   } as unknown as ReturnType<typeof useDeleteFeedSource>);
+
+  mockUseSyncFeedSource.mockReturnValue({
+    mutate: vi.fn(),
+    mutateAsync: syncReject
+      ? vi.fn().mockRejectedValue(new Error('Network error'))
+      : vi.fn().mockResolvedValue({}),
+    isPending: false,
+  } as unknown as ReturnType<typeof useSyncFeedSource>);
 }
 
 describe('FeedCard — mutation error handling', () => {
@@ -129,6 +147,29 @@ describe('FeedCard — mutation error handling', () => {
 
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     confirmSpy.mockRestore();
+  });
+
+  it('surfaces an inline error when "Sync now" fails', async () => {
+    setMutations({ syncReject: true });
+    render(<FeedImport />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'syncNow' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+    expect(screen.getByRole('alert')).toHaveTextContent('syncError');
+  });
+
+  it('shows no error when "Sync now" succeeds', async () => {
+    setMutations({ syncReject: false });
+    render(<FeedImport />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'syncNow' }));
+
+    // Give any rejected promise a chance to settle before asserting absence.
+    await Promise.resolve();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });
 

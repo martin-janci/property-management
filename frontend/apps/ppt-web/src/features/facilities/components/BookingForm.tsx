@@ -17,6 +17,24 @@ interface BookingFormProps {
   isSubmitting?: boolean;
 }
 
+/**
+ * Whether a local date-time is bookable given the availability response.
+ *
+ * The api-server reports existing bookings as `is_available: false` slots and
+ * never lists the free time, so a time is free unless it falls inside one of
+ * them. If the response ever does list explicit free slots
+ * (`is_available: true`), the time must also fall inside one of those.
+ */
+export function isTimeAvailable(localDateTime: string, slots?: AvailableSlot[]): boolean {
+  if (!slots || slots.length === 0) return true;
+  const at = new Date(localDateTime);
+  const contains = (slot: AvailableSlot) =>
+    at >= new Date(slot.start_time) && at < new Date(slot.end_time);
+  if (slots.some((slot) => !slot.is_available && contains(slot))) return false;
+  const freeSlots = slots.filter((slot) => slot.is_available);
+  return freeSlots.length === 0 || freeSlots.some(contains);
+}
+
 export function BookingForm({
   facility,
   availableSlots,
@@ -107,17 +125,8 @@ export function BookingForm({
   }
 
   // Filter to available slots if provided
-  const isSlotAvailable = (time: string): boolean => {
-    if (!availableSlots) return true;
-    // Convert to Date objects for proper comparison
-    const dateTime = new Date(`${selectedDate}T${time}:00`);
-    return availableSlots.some((slot) => {
-      if (!slot.is_available) return false;
-      const slotStart = new Date(slot.start_time);
-      const slotEnd = new Date(slot.end_time);
-      return dateTime >= slotStart && dateTime < slotEnd;
-    });
-  };
+  const isSlotAvailable = (time: string): boolean =>
+    isTimeAvailable(`${selectedDate}T${time}:00`, availableSlots);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
