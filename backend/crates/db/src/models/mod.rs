@@ -547,7 +547,8 @@ pub use integration::{
 };
 
 pub use automation::{
-    AutomationAction, AutomationLogSummary, AutomationRuleWithStats, CallWebhookConfig,
+    AutomationAction, AutomationExecution, AutomationExecutionFilter, AutomationExecutionList,
+    AutomationExecutionStats, AutomationLogSummary, AutomationRuleWithStats, CallWebhookConfig,
     ConditionTriggerConfig, CreateAutomationRule, CreateRuleFromTemplate, EventTriggerConfig,
     GenerateReportConfig, ScheduleTriggerConfig, SendEmailConfig, SendNotificationConfig,
     UpdateAutomationRule, WorkflowAutomationLog, WorkflowAutomationRule,
