@@ -118,74 +118,6 @@
       "first_open_at": "2026-10-28T11:00:00Z"
     },
     {
-      "id": "code-review-api-core-api-call-client-build-expect",
-      "action": "api-server workflow api_call client-build uses .expect() — panics on TLS/connect-pool misconfig instead of returning error",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-04T04:24:45Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-04T04:24:45Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-api-handlers-refresh-rotation-nonatomic",
-      "action": "api-server refresh-token rotation is non-atomic — revoke failure leaves old refresh token live alongside new one",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-04T04:24:45Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-04T04:24:45Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-api-handlers-reset-token-invalidate-ignored",
-      "action": "api-server password_reset ignores invalidate_user_tokens error — stale reset tokens remain valid alongside new ones",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-04T04:24:45Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-04T04:24:45Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-api-handlers-suspend-cascade-silent-skip",
-      "action": "api-server suspend-cascade handler silently skips downstream cleanup on partial error",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-04T04:24:45Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-04T04:24:45Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-mobile-native-kmp-sso-error-body-unguarded",
       "action": "KMP realtor SSO error-body parsing is unguarded — crashes on non-JSON response",
       "owner_role": "pm-backend",
@@ -234,40 +166,6 @@
         "plan": null,
         "score": 2,
         "vector": "security"
-      }
-    },
-    {
-      "id": "screen-map-drift-pr-3217-reality",
-      "action": "Screen-map drift: PR #3217 edited reality-web listings/[id]/edit without updating docs/screens/reality/account-listing-edit.md",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-04T04:24:45Z (score=2 conf=medium vector=test-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-04T04:24:45Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "test-gap"
-      }
-    },
-    {
-      "id": "screen-map-drift-pr-3224-reality",
-      "action": "Screen-map drift: PR #3224 translated inquiry type without updating docs/screens/reality/inquiries.md",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-04T04:24:45Z (score=2 conf=medium vector=test-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-04T04:24:45Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "test-gap"
       }
     },
     {
@@ -325,43 +223,6 @@
       }
     },
     {
-      "id": "gh-issue-3284",
-      "action": "Follow-up: add a durable dead-letter path for Stripe paid-webhook/missing-invoice instead of relying only on Stripe retries (PR #3273) (Closes #3284)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-11-04T14:28:32Z (#3284)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-04T14:28:32Z",
-      "issue_ref": {
-        "number": 3284,
-        "url": "https://github.com/martin-janci/property-management/issues/3284",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "code-review-reality-server-db-error-string-status-map",
-      "action": "reality-server maps HTTP status by substring-matching raw sqlx/Postgres error text (brittle under sqlx 0.9 / PG message changes)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-04T16:28:33Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-04T16:28:33Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-reality-server-inquiry-dead-fk-classify",
       "action": "InquiriesHandler splits ListingNotFound vs RealtorNotFound by error substring, but both collapse to the same 404 at the route - dead, brittle classification",
       "owner_role": "pm-tech-lead",
@@ -397,6 +258,294 @@
           "follow-up",
           "infra"
         ]
+      }
+    },
+    {
+      "id": "gh-issue-3304",
+      "action": "Follow-up: member-role escalation gate reimplements role parsing instead of reusing common::TenantRole::from_role_type (PR #3291) (Closes #3304)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3304)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T20:32:18Z",
+      "issue_ref": {
+        "number": 3304,
+        "url": "https://github.com/martin-janci/property-management/issues/3304",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-3305",
+      "action": "Follow-up: fold IoT org-scope check into the insert on the hot add_reading path instead of a separate SELECT EXISTS (PR #3289) (Closes #3305)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3305)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T20:32:18Z",
+      "issue_ref": {
+        "number": 3305,
+        "url": "https://github.com/martin-janci/property-management/issues/3305",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-3306",
+      "action": "Follow-up: consolidate per-file require_manager(rls) helpers onto the shared rls_authz::require_manager_rls (PR #3287) (Closes #3306)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3306)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T20:32:18Z",
+      "issue_ref": {
+        "number": 3306,
+        "url": "https://github.com/martin-janci/property-management/issues/3306",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-3307",
+      "action": "Follow-up: fault update/triage/status handlers manually guard org on an id-only query instead of using find_by_id_for_org (PR #3286) (Closes #3307)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3307)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T20:32:18Z",
+      "issue_ref": {
+        "number": 3307,
+        "url": "https://github.com/martin-janci/property-management/issues/3307",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-3308",
+      "action": "Follow-up: add RLS-aware repo variants for vote sub-resource reads instead of pool-bypass + manual vote_in_org guard (PR #3281) (Closes #3308)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3308)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T20:32:18Z",
+      "issue_ref": {
+        "number": 3308,
+        "url": "https://github.com/martin-janci/property-management/issues/3308",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-3309",
+      "action": "Follow-up: cs.json/sk.json were reordered (~9k-line churn) instead of appended; enforce stable key order for messages/*.json (PR #3260) (Closes #3309)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3309)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T20:32:18Z",
+      "issue_ref": {
+        "number": 3309,
+        "url": "https://github.com/martin-janci/property-management/issues/3309",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-3310",
+      "action": "Follow-up: community feed shows every author as \"Neighbor\" (API returns ids only); formatMoney coerces Decimal via Number() (PR #3269) (Closes #3310)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3310)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T20:32:18Z",
+      "issue_ref": {
+        "number": 3310,
+        "url": "https://github.com/martin-janci/property-management/issues/3310",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-3311",
+      "action": "Follow-up: POST /leases/{id}/payments path param is a lease id by the route but a payment id in the handler; client works around it (PR #3268) (Closes #3311)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3311)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T20:32:18Z",
+      "issue_ref": {
+        "number": 3311,
+        "url": "https://github.com/martin-janci/property-management/issues/3311",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-3312",
+      "action": "Follow-up: resolution-term responsiblePartyId resolved via the user-id map, not nameByParty like votes (PR #3264) (Closes #3312)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3312)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T20:32:18Z",
+      "issue_ref": {
+        "number": 3312,
+        "url": "https://github.com/martin-janci/property-management/issues/3312",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-3314",
+      "action": "Follow-up: org-wide automation execution list/stats endpoints are not manager-gated (any member can read them) (PR #3253) (Closes #3314)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3314)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T20:32:18Z",
+      "issue_ref": {
+        "number": 3314,
+        "url": "https://github.com/martin-janci/property-management/issues/3314",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-3315",
+      "action": "Follow-up: RecentActivity filters \"faults you reported\" client-side over a capped 20-row org-wide fetch (PR #3252) (Closes #3315)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3315)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T20:32:18Z",
+      "issue_ref": {
+        "number": 3315,
+        "url": "https://github.com/martin-janci/property-management/issues/3315",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3237-ppt",
+      "action": "Screen-map drift: PR #3237 restructured ppt-web app shell + landing without docs/screens/ppt/*.md update",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-04T20:32:55Z (score=2 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T20:32:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3242-ppt",
+      "action": "Screen-map drift: PR #3242 localized financial/buildings/my-unit routes without docs/screens/ppt update",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-04T20:32:55Z (score=2 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T20:32:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3244-ppt",
+      "action": "Screen-map drift: PR #3244 localized faults/news/settings/error pages without docs/screens/ppt update",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-04T20:32:55Z (score=2 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T20:32:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3254-ppt",
+      "action": "Screen-map drift: PR #3254 rewired ppt-web rentals routes to /bookings/* without docs/screens/ppt update",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-04T20:32:55Z (score=2 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T20:32:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
       }
     }
   ],

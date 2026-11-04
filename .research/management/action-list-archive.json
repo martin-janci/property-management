@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-11-04T14:33:06Z",
+  "archived_at": "2026-11-04T20:44:24Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2944,6 +2944,29 @@
       }
     },
     {
+      "id": "code-review-api-core-api-call-client-build-expect",
+      "action": "api-server workflow api_call client-build uses .expect() — panics on TLS/connect-pool misconfig instead of returning error",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-04T04:24:45Z (score=2 conf=medium vector=bug) | dev-reconcile 2026-11-04T20:31:10Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T04:24:45Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "635ddd6a304ba831b02292e100ef20df350b0dfc",
+        "subject": "code-review-api-core-api-call-client-build-expect: propagate workflow HTTP client build failure instead of panicking (#3296)",
+        "at": "2026-11-04T20:31:10Z"
+      }
+    },
+    {
       "id": "code-review-api-core-api-call-ssrf-hostname",
       "action": "backend/servers/api-server/src/services/actions/api_call.rs:179 (validate_external_url) — the private/internal-IP guard only runs when the host is a LITERAL IP (`if let Ok(ip) = host.parse::<IpAddr>()`). A DNS hostname that resolves to a pr",
       "owner_role": "pm-backend",
@@ -4478,6 +4501,30 @@
       }
     },
     {
+      "id": "code-review-api-handlers-refresh-rotation-nonatomic",
+      "action": "api-server refresh-token rotation is non-atomic — revoke failure leaves old refresh token live alongside new one",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-11-04T04:24:45Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-11-04T20:31:10Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T04:24:45Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-04T20:31:10Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-registration-token-discard",
       "action": "api-server resend-verification silently discards invalidate_user_tokens() result — a DB error leaves prior email-verification tokens valid",
       "owner_role": "pm-backend",
@@ -4545,6 +4592,29 @@
         "commit": "b403a1a875b728ea46572d7215cfc3628cda6077",
         "subject": "code-review-api-handlers-reports-csv-injection: sanitize vote titles in reports CSV export (#2731)",
         "at": "2026-08-11T06:05:56Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-reset-token-invalidate-ignored",
+      "action": "api-server password_reset ignores invalidate_user_tokens error — stale reset tokens remain valid alongside new ones",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-04T04:24:45Z (score=2 conf=medium vector=bug) | dev-reconcile 2026-11-04T20:31:10Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T04:24:45Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "10aacad898df34ba088af0cb56d3ec9341ffc4ef",
+        "subject": "code-review-api-handlers-reset-token-invalidate-ignored: propagate forgot-password token invalidation error (#3295)",
+        "at": "2026-11-04T20:31:10Z"
       }
     },
     {
@@ -4633,6 +4703,29 @@
         "commit": "75aa85e0991093463da4edd1ac3ccdd588df6d64",
         "subject": "code-review-api-handlers-stripe-webhook-drops-settlement: do not ack Stripe paid webhook when invoice is missing (#3273)",
         "at": "2026-11-04T14:28:07Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-suspend-cascade-silent-skip",
+      "action": "api-server suspend-cascade handler silently skips downstream cleanup on partial error",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-04T04:24:45Z (score=2 conf=medium vector=bug) | dev-reconcile 2026-11-04T20:31:10Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T04:24:45Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "7be867e6a4704110b252408408d27f810aa84640",
+        "subject": "code-review-api-handlers-suspend-cascade-silent-skip: surface suspend-cascade partial failures instead of swallowing (#3297)",
+        "at": "2026-11-04T20:31:10Z"
       }
     },
     {
@@ -8683,6 +8776,29 @@
       "stale_reconciled": {
         "at": "2026-08-09T14:11:09Z",
         "reason": "assignment merged in archive; action-list row left in-progress (reconciler gap — open-only)"
+      }
+    },
+    {
+      "id": "code-review-reality-server-db-error-string-status-map",
+      "action": "reality-server maps HTTP status by substring-matching raw sqlx/Postgres error text (brittle under sqlx 0.9 / PG message changes)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-04T16:28:33Z (score=1 conf=medium vector=bug) | dev-reconcile 2026-11-04T20:31:10Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T16:28:33Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "21e3082838d536214781cbdddd2b7c417d380104",
+        "subject": "code-review-reality-server-db-error-string-status-map: classify DB errors by sqlx variant, not message text (#3302)",
+        "at": "2026-11-04T20:31:10Z"
       }
     },
     {
@@ -20992,6 +21108,32 @@
       }
     },
     {
+      "id": "gh-issue-3284",
+      "action": "Follow-up: add a durable dead-letter path for Stripe paid-webhook/missing-invoice instead of relying only on Stripe retries (PR #3273) (Closes #3284)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-11-04T14:28:32Z (#3284) | dev-reconcile 2026-11-04T20:31:10Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T14:28:32Z",
+      "issue_ref": {
+        "number": 3284,
+        "url": "https://github.com/martin-janci/property-management/issues/3284",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "e2de633adeccd6d917328c34dd6d66a40d1bc326",
+        "subject": "gh-issue-3284: durable dead-letter path for unsettleable Stripe paid webhooks (#3300)",
+        "at": "2026-11-04T20:31:10Z"
+      }
+    },
+    {
       "id": "integrations-webhook-hardening-audit-2026-07-23",
       "action": "Audit all webhook handlers (booking, airbnb, esignature, layout) for timestamp/replay/idempotency parity — #2485 shows layout webhook lacks it; treat as cross-cutting review",
       "owner_role": "pm-integration",
@@ -23864,6 +24006,52 @@
         "merged_pr": 3216,
         "merged_at": "2026-11-02T12:36:21Z",
         "at": "2026-11-02T14:48:05Z"
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3217-reality",
+      "action": "Screen-map drift: PR #3217 edited reality-web listings/[id]/edit without updating docs/screens/reality/account-listing-edit.md",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-04T04:24:45Z (score=2 conf=medium vector=test-gap) | dev-reconcile 2026-11-04T20:31:10Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T04:24:45Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "cf6ce1b88ad0c96d6c7c1ed2eb589c99c0bee007",
+        "subject": "screen-map-drift-pr-3217-reality: reconcile account-listing-edit screen-map with PR #3217 (#3292)",
+        "at": "2026-11-04T20:31:10Z"
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3224-reality",
+      "action": "Screen-map drift: PR #3224 translated inquiry type without updating docs/screens/reality/inquiries.md",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-04T04:24:45Z (score=2 conf=medium vector=test-gap) | dev-reconcile 2026-11-04T20:31:10Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T04:24:45Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "79ce0667da6e76407bf28104b2e3bd48d08660bb",
+        "subject": "screen-map-drift-pr-3224-reality: reconcile reality inquiries screen-map with PR #3224 (#3298)",
+        "at": "2026-11-04T20:31:10Z"
       }
     },
     {
