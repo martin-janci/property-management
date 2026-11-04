@@ -27,15 +27,18 @@ interface RentalsDashboardPageProps {
   onExportTaxReport?: () => void;
 }
 
-function formatCurrency(amount: number, currency: string): string {
-  return new Intl.NumberFormat(undefined, {
+function formatCurrency(amount: number, currency: string, language: string): string {
+  return new Intl.NumberFormat(language, {
     style: 'currency',
     currency,
   }).format(amount);
 }
 
-function formatPercentage(value: number): string {
-  return `${(value * 100).toFixed(1)}%`;
+function formatPercentage(value: number, language: string): string {
+  return new Intl.NumberFormat(language, {
+    style: 'percent',
+    maximumFractionDigits: 1,
+  }).format(value);
 }
 
 export function RentalsDashboardPage({
@@ -56,7 +59,7 @@ export function RentalsDashboardPage({
   onViewTaxReport,
   onExportTaxReport,
 }: RentalsDashboardPageProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const connectedPlatforms = platformConnections.filter((c) => c.status === 'connected').length;
   const totalPlatforms = platformConnections.length;
 
@@ -147,7 +150,7 @@ export function RentalsDashboardPage({
                       {t('rentals.dashboard.totalRevenue')}
                     </p>
                     <p className="mt-2 text-3xl font-bold text-gray-900">
-                      {formatCurrency(statistics.totalRevenue, statistics.currency)}
+                      {formatCurrency(statistics.totalRevenue, statistics.currency, i18n.language)}
                     </p>
                   </div>
                   <div className="p-3 bg-green-100 rounded-full">
@@ -177,7 +180,7 @@ export function RentalsDashboardPage({
                       {t('rentals.dashboard.occupancyRate')}
                     </p>
                     <p className="mt-2 text-3xl font-bold text-gray-900">
-                      {formatPercentage(statistics.occupancyRate)}
+                      {formatPercentage(statistics.occupancyRate, i18n.language)}
                     </p>
                   </div>
                   <div className="p-3 bg-purple-100 rounded-full">

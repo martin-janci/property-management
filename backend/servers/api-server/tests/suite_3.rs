@@ -11,6 +11,8 @@ mod common;
 mod booking_oauth_routes_tests;
 #[path = "suites/budget_capital_forecast_tests.rs"]
 mod budget_capital_forecast_tests;
+#[path = "suites/budgets_authz_tests.rs"]
+mod budgets_authz_tests;
 #[path = "suites/budgets_tests.rs"]
 mod budgets_tests;
 #[path = "suites/building_manager_rbac_tests.rs"]
@@ -33,6 +35,8 @@ mod dev_mode_tenant_tests;
 mod dispute_cross_org_idor_tests;
 #[path = "suites/dispute_evidence_auth_tests.rs"]
 mod dispute_evidence_auth_tests;
+#[path = "suites/dispute_subresource_tenant_tests.rs"]
+mod dispute_subresource_tenant_tests;
 #[path = "suites/disputes_happy_path_tests.rs"]
 mod disputes_happy_path_tests;
 #[path = "suites/document_access_rls_tests.rs"]

@@ -8,6 +8,8 @@ import type { DayOfWeek, QuietHoursConfig as QuietHoursConfigType } from '@ppt/a
 import { ALL_DAYS, DAY_LABELS } from '@ppt/api-client';
 import { useTranslation } from 'react-i18next';
 
+const WEEKEND_DAYS: DayOfWeek[] = ['saturday', 'sunday'];
+
 interface QuietHoursConfigProps {
   config: QuietHoursConfigType;
   loading?: boolean;
@@ -16,10 +18,14 @@ interface QuietHoursConfigProps {
 
 export function QuietHoursConfig({ config, loading, onUpdate }: QuietHoursConfigProps) {
   const { t } = useTranslation();
+  // Quiet hours share one window on every weekday; only the weekend can be
+  // switched off as a block (Saturday and Sunday toggle together).
   const handleDayToggle = (day: DayOfWeek) => {
-    const newDays = config.daysOfWeek.includes(day)
-      ? config.daysOfWeek.filter((d) => d !== day)
-      : [...config.daysOfWeek, day];
+    if (!WEEKEND_DAYS.includes(day)) return;
+    const weekendOn = WEEKEND_DAYS.some((d) => config.daysOfWeek.includes(d));
+    const newDays = weekendOn
+      ? config.daysOfWeek.filter((d) => !WEEKEND_DAYS.includes(d))
+      : [...config.daysOfWeek.filter((d) => !WEEKEND_DAYS.includes(d)), ...WEEKEND_DAYS];
     onUpdate({ daysOfWeek: newDays });
   };
 
@@ -113,6 +119,7 @@ export function QuietHoursConfig({ config, loading, onUpdate }: QuietHoursConfig
             <div className="flex flex-wrap gap-2">
               {ALL_DAYS.map((day) => {
                 const isSelected = config.daysOfWeek.includes(day);
+                const isFixed = !WEEKEND_DAYS.includes(day);
                 return (
                   <button
                     key={day}
@@ -120,7 +127,7 @@ export function QuietHoursConfig({ config, loading, onUpdate }: QuietHoursConfig
                     aria-pressed={isSelected}
                     aria-label={`${DAY_LABELS[day]} - ${isSelected ? 'active' : 'inactive'}`}
                     onClick={() => handleDayToggle(day)}
-                    disabled={loading}
+                    disabled={loading || isFixed}
                     className={`
                       px-3 py-1.5 rounded-md text-sm font-medium transition-colors
                       ${
@@ -128,7 +135,7 @@ export function QuietHoursConfig({ config, loading, onUpdate }: QuietHoursConfig
                           ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                       }
-                      ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                      ${loading ? 'opacity-50 cursor-not-allowed' : isFixed ? 'cursor-default' : 'cursor-pointer'}
                     `}
                   >
                     {DAY_LABELS[day]}
@@ -159,38 +166,10 @@ export function QuietHoursConfig({ config, loading, onUpdate }: QuietHoursConfig
             </select>
           </div>
 
-          {/* Emergency override */}
-          <div className="flex items-center justify-between pt-2">
-            <div>
-              <p className="text-sm font-medium text-gray-700">Allow Emergency Notifications</p>
-              <p className="text-xs text-gray-500">
-                Critical alerts will still come through during quiet hours
-              </p>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={config.allowEmergency}
-              aria-label={t('aria.allowEmergencyNotifications')}
-              onClick={() => onUpdate({ allowEmergency: !config.allowEmergency })}
-              disabled={loading}
-              className={`
-                relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full
-                border-2 border-transparent transition-colors duration-200 ease-in-out
-                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-                ${config.allowEmergency ? 'bg-blue-600' : 'bg-gray-200'}
-                ${loading ? 'opacity-50 cursor-not-allowed' : ''}
-              `}
-            >
-              <span
-                className={`
-                  pointer-events-none inline-block h-4 w-4 transform rounded-full
-                  bg-white shadow ring-0 transition duration-200 ease-in-out
-                  ${config.allowEmergency ? 'translate-x-4' : 'translate-x-0'}
-                `}
-              />
-            </button>
-          </div>
+          <p className="text-xs text-gray-500">
+            Push notifications that arrive during quiet hours are held and delivered once the quiet
+            period ends.
+          </p>
         </div>
       )}
     </div>

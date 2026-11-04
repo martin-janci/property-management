@@ -30,6 +30,12 @@ interface AnnouncementListProps {
   onArchive: (id: string) => void;
   onPin: (id: string, pinned: boolean) => void;
   onCreate: () => void;
+  /**
+   * Whether the viewer may manage announcements. Residents get a read-only
+   * list: no create button, no status/target filters (they only ever see
+   * published announcements) and no per-card management actions.
+   */
+  canManage?: boolean;
 }
 
 export function AnnouncementList({
@@ -51,6 +57,7 @@ export function AnnouncementList({
   onArchive,
   onPin,
   onCreate,
+  canManage = true,
 }: AnnouncementListProps) {
   const { t } = useTranslation();
   const [statusFilter, setStatusFilter] = useState<AnnouncementStatus | ''>('');
@@ -87,41 +94,45 @@ export function AnnouncementList({
       {/* Header with filters */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl font-bold text-gray-900">{t('announcements.title')}</h1>
-        <button
-          type="button"
-          onClick={onCreate}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-        >
-          {t('announcements.form.create')}
-        </button>
+        {canManage && (
+          <button
+            type="button"
+            onClick={onCreate}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          >
+            {t('announcements.form.create')}
+          </button>
+        )}
       </div>
 
-      {/* Filters */}
-      <div className="mb-6 flex flex-wrap gap-4">
-        <select
-          value={statusFilter}
-          onChange={(e) => handleStatusChange(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">{t('announcements.list.allStatuses')}</option>
-          <option value="draft">{t('announcements.status.draft')}</option>
-          <option value="scheduled">{t('announcements.status.scheduled')}</option>
-          <option value="published">{t('announcements.status.published')}</option>
-          <option value="archived">{t('announcements.status.archived')}</option>
-        </select>
+      {/* Filters (managers only — residents only ever see published items) */}
+      {canManage && (
+        <div className="mb-6 flex flex-wrap gap-4">
+          <select
+            value={statusFilter}
+            onChange={(e) => handleStatusChange(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">{t('announcements.list.allStatuses')}</option>
+            <option value="draft">{t('announcements.status.draft')}</option>
+            <option value="scheduled">{t('announcements.status.scheduled')}</option>
+            <option value="published">{t('announcements.status.published')}</option>
+            <option value="archived">{t('announcements.status.archived')}</option>
+          </select>
 
-        <select
-          value={targetTypeFilter}
-          onChange={(e) => handleTargetTypeChange(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">{t('announcements.list.allTargets')}</option>
-          <option value="all">{t('announcements.target.allUsers')}</option>
-          <option value="building">{t('announcements.target.building')}</option>
-          <option value="units">{t('announcements.target.specificUnits')}</option>
-          <option value="roles">{t('announcements.target.byRole')}</option>
-        </select>
-      </div>
+          <select
+            value={targetTypeFilter}
+            onChange={(e) => handleTargetTypeChange(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">{t('announcements.list.allTargets')}</option>
+            <option value="all">{t('announcements.target.allUsers')}</option>
+            <option value="building">{t('announcements.target.building')}</option>
+            <option value="units">{t('announcements.target.specificUnits')}</option>
+            <option value="roles">{t('announcements.target.byRole')}</option>
+          </select>
+        </div>
+      )}
 
       {/* List */}
       {isError ? (
@@ -149,13 +160,15 @@ export function AnnouncementList({
       ) : announcements.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
           <p>{t('announcements.list.empty')}</p>
-          <button
-            type="button"
-            onClick={onCreate}
-            className="mt-4 text-blue-600 hover:text-blue-800"
-          >
-            {t('announcements.list.createFirst')}
-          </button>
+          {canManage && (
+            <button
+              type="button"
+              onClick={onCreate}
+              className="mt-4 text-blue-600 hover:text-blue-800"
+            >
+              {t('announcements.list.createFirst')}
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid gap-4">
@@ -169,6 +182,7 @@ export function AnnouncementList({
               onPublish={onPublish}
               onArchive={onArchive}
               onPin={onPin}
+              canManage={canManage}
             />
           ))}
         </div>
