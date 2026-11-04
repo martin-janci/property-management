@@ -201,6 +201,36 @@ async fn process_meter_reading(
         return Err(not_found("Meter not found"));
     }
 
+    // Managers may read any meter of the org; everyone else only the meters
+    // of a unit they own or live in (not other residents' or building meters).
+    let is_manager = state
+        .org_member_repo
+        .get_user_role_type(meter.organization_id, auth.user_id)
+        .await
+        .map_err(|_| internal_err("Database error"))?
+        .as_deref()
+        .and_then(common::TenantRole::from_role_type)
+        .is_some_and(|role| role.is_manager());
+    if !is_manager {
+        let linked = match meter.unit_id {
+            Some(unit_id) => state
+                .unit_repo
+                .is_user_linked_to_unit_in_org_pooled(meter.organization_id, unit_id, auth.user_id)
+                .await
+                .map_err(|_| internal_err("Database error"))?,
+            None => false,
+        };
+        if !linked {
+            return Err((
+                StatusCode::FORBIDDEN,
+                Json(ErrorResponse::new(
+                    "FORBIDDEN",
+                    "You can only submit readings for meters of your own unit",
+                )),
+            ));
+        }
+    }
+
     // Resolve the photo URL. The three cases below must stay distinct — an
     // earlier version collapsed them into a single `else` branch that
     // fabricated a `pending-upload/{meter}/{uuid}` URL whenever the real

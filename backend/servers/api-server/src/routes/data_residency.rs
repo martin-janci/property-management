@@ -250,6 +250,7 @@ async fn configure_residency(
     mut rls: RlsConnection,
     Json(payload): Json<ConfigureDataResidency>,
 ) -> Result<Json<DataResidencyConfigResponse>, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let out = do_configure_residency(&state, &mut rls, org_id, user_id, payload).await;
@@ -319,6 +320,7 @@ async fn update_residency_config(
     mut rls: RlsConnection,
     Json(payload): Json<ConfigureDataResidency>,
 ) -> Result<Json<DataResidencyConfigResponse>, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let out = do_configure_residency(&state, &mut rls, org_id, user_id, payload).await;
@@ -452,6 +454,7 @@ async fn log_cross_region_access(
     mut rls: RlsConnection,
     Json(payload): Json<LogCrossRegionAccess>,
 ) -> Result<Json<CrossRegionAccessLog>, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let out = log_cross_region_access_impl(&state, &mut rls, payload).await;
     rls.release().await;
     out
@@ -483,6 +486,7 @@ async fn list_access_logs(
     State(state): State<AppState>,
     mut rls: RlsConnection,
 ) -> Result<Json<Vec<CrossRegionAccessLog>>, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let out = list_access_logs_impl(&state, &mut rls).await;
     rls.release().await;
     out
@@ -518,6 +522,7 @@ async fn run_compliance_verification(
     mut rls: RlsConnection,
     Json(_payload): Json<RunComplianceVerification>,
 ) -> Result<Json<ComplianceVerificationResponse>, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let out = run_compliance_verification_impl(&state, &mut rls).await;
     rls.release().await;
     out
@@ -629,6 +634,7 @@ async fn get_verification_result(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ComplianceVerificationResponse>, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let out = get_verification_result_impl(&state, &mut rls, id).await;
     rls.release().await;
     out
@@ -711,6 +717,7 @@ async fn list_audit_logs(
     mut rls: RlsConnection,
     Query(query_params): Query<AuditLogQuery>,
 ) -> Result<Json<AuditLogResponse>, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let out = list_audit_logs_impl(&state, &mut rls, query_params).await;
     rls.release().await;
     out
@@ -804,6 +811,7 @@ async fn get_audit_entry(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<AuditLogEntry>, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let out = get_audit_entry_impl(&state, &mut rls, id).await;
     rls.release().await;
     out
@@ -863,6 +871,7 @@ async fn verify_audit_chain(
     State(state): State<AppState>,
     mut rls: RlsConnection,
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let out = verify_audit_chain_impl(&state, &mut rls).await;
     rls.release().await;
     out

@@ -49,6 +49,7 @@ pub mod pagination;
 pub mod person_months;
 pub mod platform_admin;
 pub mod rentals;
+pub mod rls_authz;
 pub mod signatures;
 pub mod templates;
 pub mod tenant_config;

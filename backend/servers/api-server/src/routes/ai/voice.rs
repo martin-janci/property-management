@@ -71,6 +71,44 @@ pub(crate) async fn link_voice_device(
     let tenant_id = rls.tenant_id();
     let user_id = rls.user_id();
 
+    // The optional unit binds later voice commands (fault reports, meter
+    // readings) to that unit, so it must be a unit of the caller's org that
+    // the caller lives in / owns (managers: any unit of the org). 404 otherwise.
+    if let Some(unit_id) = req.unit_id {
+        let allowed = if rls.role().is_manager() {
+            state
+                .unit_repo
+                .unit_belongs_to_org(&mut **rls.conn(), tenant_id, unit_id)
+                .await
+        } else {
+            state
+                .unit_repo
+                .is_user_linked_to_unit_in_org(&mut **rls.conn(), tenant_id, unit_id, user_id)
+                .await
+        };
+        match allowed {
+            Ok(true) => {}
+            Ok(false) => {
+                rls.release().await;
+                return Err((
+                    StatusCode::NOT_FOUND,
+                    Json(ErrorResponse::new("UNIT_NOT_FOUND", "Unit not found")),
+                ));
+            }
+            Err(e) => {
+                tracing::error!(error = %e, "Failed to verify voice device unit");
+                rls.release().await;
+                return Err((
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "INTERNAL_ERROR",
+                        "Failed to link device",
+                    )),
+                ));
+            }
+        }
+    }
+
     // Generate a unique device ID: platform prefix + UUID for debugging and uniqueness.
     // Format: "google_assistant_550e8400-e29b-41d4-a716-446655440000"
     // While longer than a plain UUID, the platform prefix aids in debugging and log analysis.

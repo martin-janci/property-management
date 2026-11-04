@@ -1223,6 +1223,7 @@ async fn update_escalation_config(
     mut rls: RlsConnection,
     Json(req): Json<UpdateEscalationConfig>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let tenant_id = rls.tenant_id();
 
     let result = state

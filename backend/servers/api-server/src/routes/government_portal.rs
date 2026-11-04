@@ -2,7 +2,7 @@
 //!
 //! UC-22.3: Government Portal Integration
 
-use api_core::{AuthUser, TenantExtractor};
+use api_core::{AuthUser, ValidatedTenantExtractor};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -76,6 +76,81 @@ pub fn router() -> Router<AppState> {
         .route("/stats", get(get_stats))
 }
 
+type ApiError = (StatusCode, Json<ErrorResponse>);
+
+fn db_error(e: sqlx::Error) -> ApiError {
+    tracing::error!(error = %e, "government portal database error");
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+    )
+}
+
+fn submission_not_found() -> ApiError {
+    (
+        StatusCode::NOT_FOUND,
+        Json(ErrorResponse::new(
+            "SUBMISSION_NOT_FOUND",
+            "Submission not found",
+        )),
+    )
+}
+
+/// Portal connections, regulatory filings and their schedules are managed by
+/// the organization's managers. `tenant.role` comes from the caller's
+/// `organization_members` row (ValidatedTenantExtractor), not from the JWT.
+fn require_manager(tenant: &ValidatedTenantExtractor) -> Result<(), ApiError> {
+    if tenant.role.is_manager() {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Manager-level access required for government portal changes",
+            )),
+        ))
+    }
+}
+
+/// Load a submission of the caller's organization, or 404.
+async fn load_submission(
+    state: &AppState,
+    id: Uuid,
+    org_id: Uuid,
+) -> Result<RegulatorySubmission, ApiError> {
+    state
+        .government_portal_repo
+        .get_submission(id, org_id)
+        .await
+        .map_err(db_error)?
+        .ok_or_else(submission_not_found)
+}
+
+/// A portal connection referenced from a request body must belong to the
+/// caller's organization (404 otherwise).
+async fn ensure_connection_in_org(
+    state: &AppState,
+    connection_id: Uuid,
+    org_id: Uuid,
+) -> Result<(), ApiError> {
+    state
+        .government_portal_repo
+        .get_connection(connection_id, org_id)
+        .await
+        .map_err(db_error)?
+        .map(|_| ())
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "CONNECTION_NOT_FOUND",
+                    "Portal connection not found",
+                )),
+            )
+        })
+}
+
 // ============================================================================
 // Portal Connections
 // ============================================================================
@@ -84,7 +159,7 @@ pub fn router() -> Router<AppState> {
 async fn list_connections(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
 ) -> Result<Json<Vec<GovernmentPortalConnection>>, (StatusCode, Json<ErrorResponse>)> {
     let connections = state
         .government_portal_repo
@@ -104,7 +179,7 @@ async fn list_connections(
 async fn get_connection(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<GovernmentPortalConnection>, (StatusCode, Json<ErrorResponse>)> {
     let connection = state
@@ -134,9 +209,10 @@ async fn get_connection(
 async fn create_connection(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Json(request): Json<CreatePortalConnection>,
 ) -> Result<(StatusCode, Json<GovernmentPortalConnection>), (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&tenant)?;
     let connection = state
         .government_portal_repo
         .create_connection(tenant.tenant_id, request, auth.user_id)
@@ -162,10 +238,11 @@ async fn create_connection(
 async fn update_connection(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
     Json(request): Json<UpdatePortalConnection>,
 ) -> Result<Json<GovernmentPortalConnection>, (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&tenant)?;
     let connection = state
         .government_portal_repo
         .update_connection(
@@ -209,9 +286,10 @@ async fn update_connection(
 async fn delete_connection(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&tenant)?;
     let deleted = state
         .government_portal_repo
         .delete_connection(id, tenant.tenant_id)
@@ -246,9 +324,10 @@ async fn delete_connection(
 async fn test_connection(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<TestConnectionResponse>, (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&tenant)?;
     // In a real implementation, this would actually test the connection
     // For now, we just record the test and return success
 
@@ -360,7 +439,7 @@ async fn get_template(
 async fn list_submissions(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Query(query): Query<SubmissionQuery>,
 ) -> Result<Json<Vec<RegulatorySubmission>>, (StatusCode, Json<ErrorResponse>)> {
     let submissions = state
@@ -388,28 +467,10 @@ async fn list_submissions(
 /// Get a submission.
 async fn get_submission(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    tenant: ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RegulatorySubmission>, (StatusCode, Json<ErrorResponse>)> {
-    let submission = state
-        .government_portal_repo
-        .get_submission(id)
-        .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new(
-                    "SUBMISSION_NOT_FOUND",
-                    "Submission not found",
-                )),
-            )
-        })?;
+    let submission = load_submission(&state, id, tenant.tenant_id).await?;
 
     Ok(Json(submission))
 }
@@ -418,9 +479,13 @@ async fn get_submission(
 async fn create_submission(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Json(request): Json<CreateRegulatorySubmission>,
 ) -> Result<(StatusCode, Json<RegulatorySubmission>), (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&tenant)?;
+    if let Some(connection_id) = request.portal_connection_id {
+        ensure_connection_in_org(&state, connection_id, tenant.tenant_id).await?;
+    }
     let submission = state
         .government_portal_repo
         .create_submission(tenant.tenant_id, request, auth.user_id)
@@ -470,19 +535,22 @@ async fn create_submission(
 async fn update_submission(
     State(state): State<AppState>,
     auth: AuthUser,
+    tenant: ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
     Json(request): Json<UpdateRegulatorySubmission>,
 ) -> Result<Json<RegulatorySubmission>, (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&tenant)?;
     let submission = state
         .government_portal_repo
-        .update_submission(id, request.report_data, request.report_xml.as_deref())
+        .update_submission(
+            id,
+            tenant.tenant_id,
+            request.report_data,
+            request.report_xml.as_deref(),
+        )
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?
+        .ok_or_else(submission_not_found)?;
 
     info!(
         user_id = %auth.user_id,
@@ -497,28 +565,12 @@ async fn update_submission(
 async fn validate_submission(
     State(state): State<AppState>,
     auth: AuthUser,
+    tenant: ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RegulatorySubmission>, (StatusCode, Json<ErrorResponse>)> {
-    // Get current submission
-    let current = state
-        .government_portal_repo
-        .get_submission(id)
-        .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new(
-                    "SUBMISSION_NOT_FOUND",
-                    "Submission not found",
-                )),
-            )
-        })?;
+    require_manager(&tenant)?;
+    // Get current submission (scoped to the caller's org)
+    let current = load_submission(&state, id, tenant.tenant_id).await?;
 
     // In a real implementation, this would validate against the template schema
     // For now, we just mark it as validated
@@ -532,18 +584,15 @@ async fn validate_submission(
         .government_portal_repo
         .update_submission_status(
             id,
+            tenant.tenant_id,
             SubmissionStatus::Validated,
             Some(validation_result),
             None,
             None,
         )
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?
+        .ok_or_else(submission_not_found)?;
 
     // Create audit entry
     let _ = state
@@ -573,28 +622,12 @@ async fn validate_submission(
 async fn submit_submission(
     State(state): State<AppState>,
     auth: AuthUser,
+    tenant: ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RegulatorySubmission>, (StatusCode, Json<ErrorResponse>)> {
-    // Get current submission
-    let current = state
-        .government_portal_repo
-        .get_submission(id)
-        .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new(
-                    "SUBMISSION_NOT_FOUND",
-                    "Submission not found",
-                )),
-            )
-        })?;
+    require_manager(&tenant)?;
+    // Get current submission (scoped to the caller's org)
+    let current = load_submission(&state, id, tenant.tenant_id).await?;
 
     // Check if validated
     if current.status != SubmissionStatus::Validated {
@@ -610,14 +643,10 @@ async fn submit_submission(
     // Submit
     let submission = state
         .government_portal_repo
-        .submit_submission(id, auth.user_id)
+        .submit_submission(id, tenant.tenant_id, auth.user_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?
+        .ok_or_else(submission_not_found)?;
 
     // Create audit entry
     let _ = state
@@ -647,28 +676,12 @@ async fn submit_submission(
 async fn cancel_submission(
     State(state): State<AppState>,
     auth: AuthUser,
+    tenant: ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RegulatorySubmission>, (StatusCode, Json<ErrorResponse>)> {
-    // Get current submission
-    let current = state
-        .government_portal_repo
-        .get_submission(id)
-        .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new(
-                    "SUBMISSION_NOT_FOUND",
-                    "Submission not found",
-                )),
-            )
-        })?;
+    require_manager(&tenant)?;
+    // Get current submission (scoped to the caller's org)
+    let current = load_submission(&state, id, tenant.tenant_id).await?;
 
     // Check if can be cancelled
     if matches!(
@@ -686,14 +699,17 @@ async fn cancel_submission(
 
     let submission = state
         .government_portal_repo
-        .update_submission_status(id, SubmissionStatus::Cancelled, None, None, None)
+        .update_submission_status(
+            id,
+            tenant.tenant_id,
+            SubmissionStatus::Cancelled,
+            None,
+            None,
+            None,
+        )
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?
+        .ok_or_else(submission_not_found)?;
 
     // Create audit entry
     let _ = state
@@ -722,9 +738,10 @@ async fn cancel_submission(
 /// Get submission audit trail.
 async fn get_submission_audit(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    tenant: ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<RegulatorySubmissionAudit>>, (StatusCode, Json<ErrorResponse>)> {
+    load_submission(&state, id, tenant.tenant_id).await?;
     let audit = state
         .government_portal_repo
         .get_submission_audit(id)
@@ -746,9 +763,10 @@ async fn get_submission_audit(
 /// List attachments for a submission.
 async fn list_attachments(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    tenant: ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<RegulatorySubmissionAttachment>>, (StatusCode, Json<ErrorResponse>)> {
+    load_submission(&state, id, tenant.tenant_id).await?;
     let attachments = state
         .government_portal_repo
         .get_submission_attachments(id)
@@ -767,9 +785,12 @@ async fn list_attachments(
 async fn add_attachment(
     State(state): State<AppState>,
     auth: AuthUser,
+    tenant: ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
     Json(request): Json<AddSubmissionAttachment>,
 ) -> Result<(StatusCode, Json<RegulatorySubmissionAttachment>), (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&tenant)?;
+    load_submission(&state, id, tenant.tenant_id).await?;
     let attachment = state
         .government_portal_repo
         .add_attachment(id, request)
@@ -801,11 +822,13 @@ struct AttachmentPath {
 async fn delete_attachment(
     State(state): State<AppState>,
     auth: AuthUser,
+    tenant: ValidatedTenantExtractor,
     Path(path): Path<AttachmentPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&tenant)?;
     let deleted = state
         .government_portal_repo
-        .delete_attachment(path.attachment_id)
+        .delete_attachment(path.attachment_id, path.submission_id, tenant.tenant_id)
         .await
         .map_err(|e| {
             (
@@ -842,7 +865,7 @@ async fn delete_attachment(
 async fn list_schedules(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
 ) -> Result<Json<Vec<RegulatorySubmissionSchedule>>, (StatusCode, Json<ErrorResponse>)> {
     let schedules = state
         .government_portal_repo
@@ -862,7 +885,7 @@ async fn list_schedules(
 async fn get_schedule(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RegulatorySubmissionSchedule>, (StatusCode, Json<ErrorResponse>)> {
     let schedules = state
@@ -893,9 +916,11 @@ async fn get_schedule(
 async fn create_schedule(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Json(request): Json<CreateSubmissionSchedule>,
 ) -> Result<(StatusCode, Json<RegulatorySubmissionSchedule>), (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&tenant)?;
+    ensure_connection_in_org(&state, request.portal_connection_id, tenant.tenant_id).await?;
     let schedule = state
         .government_portal_repo
         .create_schedule(tenant.tenant_id, request, auth.user_id)
@@ -920,13 +945,16 @@ async fn create_schedule(
 async fn update_schedule(
     State(state): State<AppState>,
     auth: AuthUser,
+    tenant: ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
     Json(request): Json<UpdateSubmissionSchedule>,
 ) -> Result<Json<RegulatorySubmissionSchedule>, (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&tenant)?;
     let schedule = state
         .government_portal_repo
         .update_schedule(
             id,
+            tenant.tenant_id,
             request.is_active,
             request.auto_generate,
             request.auto_submit,
@@ -934,10 +962,14 @@ async fn update_schedule(
             request.notify_users,
         )
         .await
-        .map_err(|e| {
+        .map_err(db_error)?
+        .ok_or_else(|| {
             (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "SCHEDULE_NOT_FOUND",
+                    "Schedule not found",
+                )),
             )
         })?;
 
@@ -954,11 +986,13 @@ async fn update_schedule(
 async fn delete_schedule(
     State(state): State<AppState>,
     auth: AuthUser,
+    tenant: ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&tenant)?;
     let deleted = state
         .government_portal_repo
-        .delete_schedule(id)
+        .delete_schedule(id, tenant.tenant_id)
         .await
         .map_err(|e| {
             (
@@ -994,7 +1028,7 @@ async fn delete_schedule(
 async fn get_stats(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
 ) -> Result<Json<GovernmentPortalStats>, (StatusCode, Json<ErrorResponse>)> {
     let stats = state
         .government_portal_repo
