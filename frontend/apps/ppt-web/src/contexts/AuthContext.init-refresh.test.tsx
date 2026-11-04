@@ -145,12 +145,14 @@ describe('AuthContext cold-boot init — role re-derivation (#574 gap)', () => {
   });
 
   /**
-   * Seed a cold-boot session: a persisted refresh token, a stored user with a
-   * STALE role, and tenants reflecting a server-side promotion — but NO live
-   * access token, so the init effect must take the cold-boot refresh branch.
+   * Seed a cold-boot session: a stored user with a STALE role and tenants
+   * reflecting a server-side promotion, but NO live access token — so the init
+   * effect must take the cold-boot refresh branch. The refresh token itself is
+   * NOT in localStorage any more; it is carried by the HttpOnly cookie, so the
+   * stored user is what signals a recoverable session. The silent refresh is
+   * mocked at the api-client boundary, so no real cookie is needed.
    */
   function seedColdBootSession() {
-    localStorage.setItem(REFRESH_TOKEN_KEY, 'cold-refresh');
     localStorage.setItem(USER_KEY, JSON.stringify({ id: 'u-1', email: 'a@b.c', role: 'manager' }));
     // Server has since promoted this membership to org_admin.
     localStorage.setItem(
@@ -174,9 +176,11 @@ describe('AuthContext cold-boot init — role re-derivation (#574 gap)', () => {
       expect(ctxRef.current?.isLoading).toBe(false);
     });
 
-    // Cold-boot refresh went through refreshTokenInternal exactly once.
+    // Cold-boot refresh went through refreshTokenInternal exactly once. After a
+    // reload the in-memory token is empty, so the request body carries no token
+    // and the backend reads it from the HttpOnly cookie instead.
     expect(refreshTokenSpy).toHaveBeenCalledTimes(1);
-    expect(refreshTokenSpy).toHaveBeenCalledWith({ refreshToken: 'cold-refresh' });
+    expect(refreshTokenSpy).toHaveBeenCalledWith({ refreshToken: '' });
 
     // Session is authenticated and the role reflects the server-side promotion,
     // NOT the stale 'manager' stored on the user record. This is the assertion
@@ -186,8 +190,9 @@ describe('AuthContext cold-boot init — role re-derivation (#574 gap)', () => {
     });
     expect(ctxRef.current?.user?.role).toBe('org_admin');
 
-    // Fresh tokens + the updated user role are persisted for the next boot.
-    expect(localStorage.getItem(REFRESH_TOKEN_KEY)).toBe('fresh-refresh');
+    // The rotated refresh token stays out of localStorage; only the updated
+    // user role is persisted for the next boot.
+    expect(localStorage.getItem(REFRESH_TOKEN_KEY)).toBeNull();
     const storedUser = JSON.parse(localStorage.getItem(USER_KEY) as string);
     expect(storedUser.role).toBe('org_admin');
   });
@@ -249,11 +254,12 @@ describe('AuthContext cold-boot init — access-token exp validation', () => {
   }
 
   it('routes an expired-but-present access token through the silent refresh (no flicker)', async () => {
-    // Stored access token whose `exp` is well in the past, plus a live refresh
-    // token — the exact expired-but-present cold boot the fix targets.
+    // Stored access token whose `exp` is well in the past, plus a stored user —
+    // the exact expired-but-present cold boot the fix targets. The refresh token
+    // lives in the HttpOnly cookie (mocked at the api-client boundary), not in
+    // localStorage.
     seedUser('manager');
     localStorage.setItem(ACCESS_TOKEN_KEY, makeJwt({ sub: 'u-1', exp: NOW_SECONDS - 60 }));
-    localStorage.setItem(REFRESH_TOKEN_KEY, 'cold-refresh');
     refreshTokenSpy.mockResolvedValue({
       accessToken: makeJwt({ sub: 'u-1', tenant_id: 't-1', exp: NOW_SECONDS + 3600 }),
       refreshToken: 'fresh-refresh',
@@ -267,23 +273,24 @@ describe('AuthContext cold-boot init — access-token exp validation', () => {
 
     // The boot took the silent-refresh path exactly once instead of trusting
     // the stale token — this is the assertion that fails against the pre-fix
-    // "mark authenticated regardless of exp" behaviour.
+    // "mark authenticated regardless of exp" behaviour. The body token is empty
+    // (cookie-based) after a reload.
     expect(refreshTokenSpy).toHaveBeenCalledTimes(1);
-    expect(refreshTokenSpy).toHaveBeenCalledWith({ refreshToken: 'cold-refresh' });
+    expect(refreshTokenSpy).toHaveBeenCalledWith({ refreshToken: '' });
 
     await waitFor(() => {
       expect(ctxRef.current?.isAuthenticated).toBe(true);
     });
-    // Role reflects the fresh token's tenant, and rotated tokens are persisted.
+    // Role reflects the fresh token's tenant; the rotated refresh token is not
+    // persisted to localStorage.
     expect(ctxRef.current?.user?.role).toBe('org_admin');
-    expect(localStorage.getItem(REFRESH_TOKEN_KEY)).toBe('fresh-refresh');
+    expect(localStorage.getItem(REFRESH_TOKEN_KEY)).toBeNull();
   });
 
   it('near-expiry (inside the skew buffer) access token also triggers a refresh', async () => {
     seedUser('manager');
     // exp is in the future but within the ~30s skew buffer — treated as stale.
     localStorage.setItem(ACCESS_TOKEN_KEY, makeJwt({ sub: 'u-1', exp: NOW_SECONDS + 5 }));
-    localStorage.setItem(REFRESH_TOKEN_KEY, 'cold-refresh');
     refreshTokenSpy.mockResolvedValue({
       accessToken: makeJwt({ sub: 'u-1', tenant_id: 't-1', exp: NOW_SECONDS + 3600 }),
       refreshToken: 'fresh-refresh',
@@ -305,7 +312,6 @@ describe('AuthContext cold-boot init — access-token exp validation', () => {
     seedUser('manager');
     // exp comfortably in the future — no network round-trip should happen.
     localStorage.setItem(ACCESS_TOKEN_KEY, makeJwt({ sub: 'u-1', exp: NOW_SECONDS + 3600 }));
-    localStorage.setItem(REFRESH_TOKEN_KEY, 'cold-refresh');
 
     const { ctxRef } = renderAuthApp();
 
@@ -317,10 +323,14 @@ describe('AuthContext cold-boot init — access-token exp validation', () => {
     expect(ctxRef.current?.isAuthenticated).toBe(true);
   });
 
-  it('an expired access token with NO refresh token leaves a clean anonymous session', async () => {
+  it('an expired access token triggers a cookie refresh; stays anonymous when the cookie is also invalid', async () => {
     seedUser('manager');
     localStorage.setItem(ACCESS_TOKEN_KEY, makeJwt({ sub: 'u-1', exp: NOW_SECONDS - 60 }));
-    // No refresh token — nothing can recover the session.
+    // The refresh token is no longer in localStorage — a stored user signals a
+    // possibly-recoverable session, so the cookie-based silent refresh is
+    // attempted. Here the server rejects it (no / expired cookie), so the
+    // session must resolve cleanly to anonymous.
+    refreshTokenSpy.mockRejectedValue(new Error('refresh_token_revoked'));
 
     const { ctxRef } = renderAuthApp();
 
@@ -328,7 +338,8 @@ describe('AuthContext cold-boot init — access-token exp validation', () => {
       expect(ctxRef.current?.isLoading).toBe(false);
     });
 
-    expect(refreshTokenSpy).not.toHaveBeenCalled();
+    expect(refreshTokenSpy).toHaveBeenCalledTimes(1);
+    expect(refreshTokenSpy).toHaveBeenCalledWith({ refreshToken: '' });
     expect(ctxRef.current?.isAuthenticated).toBe(false);
     // Stale tokens are purged rather than left to 401 on the next request.
     expect(localStorage.getItem(ACCESS_TOKEN_KEY)).toBeNull();
@@ -339,7 +350,6 @@ describe('AuthContext cold-boot init — access-token exp validation', () => {
     // treated as expired, and the runtime 401 interceptor stays the backstop.
     seedUser('manager');
     localStorage.setItem(ACCESS_TOKEN_KEY, 'opaque-access-token');
-    localStorage.setItem(REFRESH_TOKEN_KEY, 'cold-refresh');
 
     const { ctxRef } = renderAuthApp();
 
