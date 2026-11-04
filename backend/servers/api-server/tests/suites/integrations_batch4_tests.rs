@@ -731,6 +731,8 @@ async fn test_get_resolved_features_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let user_id = seed_user(&pool, "resf").await;
     let org_id = seed_org(&pool, "resf").await;
+    // /features requires an active membership of the token's org.
+    common::seed_membership(&pool, org_id, user_id, "resident").await;
     let token = mint_service_jwt(user_id, Some(org_id), None);
 
     let resp = app
@@ -755,6 +757,8 @@ async fn test_check_feature_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let user_id = seed_user(&pool, "chkf").await;
     let org_id = seed_org(&pool, "chkf").await;
+    // /features requires an active membership of the token's org.
+    common::seed_membership(&pool, org_id, user_id, "resident").await;
     let token = mint_service_jwt(user_id, Some(org_id), None);
 
     // "new_dashboard" is seeded by migration 00030
@@ -781,6 +785,8 @@ async fn test_get_upgrade_options_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let user_id = seed_user(&pool, "upgf").await;
     let org_id = seed_org(&pool, "upgf").await;
+    // /features requires an active membership of the token's org.
+    common::seed_membership(&pool, org_id, user_id, "resident").await;
     let token = mint_service_jwt(user_id, Some(org_id), None);
 
     let resp = app
@@ -805,6 +811,8 @@ async fn test_log_feature_event_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let user_id = seed_user(&pool, "levt").await;
     let org_id = seed_org(&pool, "levt").await;
+    // /features requires an active membership of the token's org.
+    common::seed_membership(&pool, org_id, user_id, "resident").await;
     let token = mint_service_jwt(user_id, Some(org_id), None);
 
     let body = json!({
