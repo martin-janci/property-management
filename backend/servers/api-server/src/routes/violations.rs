@@ -404,6 +404,26 @@ async fn add_evidence(
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
 
+    // A client-supplied `storage_path` must lie inside the caller's own org
+    // storage namespace (`{org_id}/…`, the shape `/documents/upload-url` mints
+    // via `integrations::generate_storage_key`), with no `..` traversal.
+    // Otherwise any member could attach another tenant's object (or a
+    // `messages/…` attachment) as "evidence" and later fetch it — the same
+    // bucket-wide IDOR guarded for documents in #2320. 400 on violation.
+    if let Some(path) = req.storage_path.as_deref() {
+        crate::routes::documents::core::validate_file_key_org_scope(path, org_id).map_err(
+            |_| {
+                (
+                    StatusCode::BAD_REQUEST,
+                    Json(ErrorResponse::new(
+                        "INVALID_STORAGE_PATH",
+                        "storage_path must reference an object uploaded for this organization",
+                    )),
+                )
+            },
+        )?;
+    }
+
     state
         .violation_repo
         .add_evidence(violation_id, org_id, req, user.user_id)
