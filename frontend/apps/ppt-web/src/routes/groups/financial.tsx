@@ -337,7 +337,6 @@ function PaymentManagementPageRoute() {
       metrics={{ totalReceived, pendingReconciliation, currency }}
       isLoading={isLoading}
       onNavigateToRecord={() => navigate('/financial/payments/new')}
-      onNavigateToDetail={(id: string) => navigate(`/financial/payments/${id}`)}
       onMatch={(paymentId: string, invoiceId: string, amount: number) =>
         matchMutation.mutate({ paymentId, invoiceId, amount })
       }
@@ -350,17 +349,19 @@ function PaymentManagementPageRoute() {
   );
 }
 
+/**
+ * Budget overview. No budgets api-client exists yet (the api-server exposes
+ * `/api/v1/budgets`, but nothing in `@ppt/api-client` wraps it), so the page
+ * renders its empty state and the create / detail navigation is omitted —
+ * those screens are not routed, and a button to them would land on not-found.
+ */
 function BudgetManagementPageRoute() {
-  const navigate = useNavigate();
-
   return (
     <BudgetManagementPage
       budgets={[]}
       currentYear={new Date().getFullYear()}
       summary={{ totalBudget: 0, totalActual: 0, overallVariance: 0, currency: 'EUR' }}
       buildings={[]}
-      onNavigateToCreate={() => navigate('/financial/budgets/new')}
-      onNavigateToDetail={(id: string) => navigate(`/financial/budgets/${id}`)}
       onYearChange={() => {}}
       onBuildingChange={() => {}}
     />

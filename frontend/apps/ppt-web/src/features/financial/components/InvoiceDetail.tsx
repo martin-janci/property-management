@@ -49,11 +49,13 @@ export function InvoiceDetail({
           {/* Header */}
           <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">Invoice {inv.invoice_number}</h2>
+              <h2 className="text-xl font-semibold text-gray-900">
+                {t('financial.invoiceDetail.title', { number: inv.invoice_number })}
+              </h2>
               <span
                 className={`mt-1 inline-block px-2.5 py-0.5 rounded-full text-xs font-medium ${INVOICE_STATUS_STYLES[inv.status]}`}
               >
-                {inv.status.toUpperCase()}
+                {t(`financial.invoiceStatuses.${inv.status}`)}
               </span>
             </div>
             <button
@@ -84,18 +86,20 @@ export function InvoiceDetail({
             {/* Dates */}
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <p className="text-sm text-gray-500">Issue Date</p>
+                <p className="text-sm text-gray-500">{t('financial.invoiceDetail.issueDate')}</p>
                 <p className="font-medium">{formatDetailedDate(inv.issue_date)}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Due Date</p>
+                <p className="text-sm text-gray-500">{t('financial.invoiceDetail.dueDate')}</p>
                 <p className={`font-medium ${inv.status === 'overdue' ? 'text-red-600' : ''}`}>
                   {formatDetailedDate(inv.due_date)}
                 </p>
               </div>
               {inv.billing_period_start && inv.billing_period_end && (
                 <div>
-                  <p className="text-sm text-gray-500">Billing Period</p>
+                  <p className="text-sm text-gray-500">
+                    {t('financial.invoiceDetail.billingPeriod')}
+                  </p>
                   <p className="font-medium">
                     {formatDetailedDate(inv.billing_period_start)} -{' '}
                     {formatDetailedDate(inv.billing_period_end)}
@@ -106,24 +110,26 @@ export function InvoiceDetail({
 
             {/* Line Items */}
             <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-3">Line Items</h3>
+              <h3 className="text-sm font-medium text-gray-700 mb-3">
+                {t('financial.invoiceDetail.lineItems')}
+              </h3>
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                      Description
+                      {t('financial.invoiceDetail.description')}
                     </th>
                     <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">
-                      Qty
+                      {t('financial.invoiceDetail.quantity')}
                     </th>
                     <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">
-                      Unit Price
+                      {t('financial.invoiceDetail.unitPrice')}
                     </th>
                     <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">
-                      Tax
+                      {t('financial.invoiceDetail.tax')}
                     </th>
                     <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">
-                      Amount
+                      {t('financial.invoiceDetail.amount')}
                     </th>
                   </tr>
                 </thead>
@@ -153,22 +159,22 @@ export function InvoiceDetail({
             <div className="border-t pt-4">
               <div className="flex flex-col items-end space-y-2">
                 <div className="flex justify-between w-64">
-                  <span className="text-gray-500">Subtotal:</span>
+                  <span className="text-gray-500">{t('financial.invoiceDetail.subtotal')}:</span>
                   <span className="font-medium">{formatCurrency(inv.subtotal, inv.currency)}</span>
                 </div>
                 <div className="flex justify-between w-64">
-                  <span className="text-gray-500">Tax:</span>
+                  <span className="text-gray-500">{t('financial.invoiceDetail.tax')}:</span>
                   <span className="font-medium">
                     {formatCurrency(inv.tax_amount, inv.currency)}
                   </span>
                 </div>
                 <div className="flex justify-between w-64 text-lg">
-                  <span className="font-medium">Total:</span>
+                  <span className="font-medium">{t('financial.invoiceDetail.total')}:</span>
                   <span className="font-bold">{formatCurrency(inv.total, inv.currency)}</span>
                 </div>
                 {inv.amount_paid > 0 && (
                   <div className="flex justify-between w-64 text-green-600">
-                    <span>Paid:</span>
+                    <span>{t('financial.invoiceDetail.paid')}:</span>
                     <span className="font-medium">
                       {formatCurrency(inv.amount_paid, inv.currency)}
                     </span>
@@ -176,7 +182,7 @@ export function InvoiceDetail({
                 )}
                 {inv.balance_due > 0 && (
                   <div className="flex justify-between w-64 text-red-600 text-lg">
-                    <span className="font-medium">Balance Due:</span>
+                    <span className="font-medium">{t('financial.invoiceDetail.balanceDue')}:</span>
                     <span className="font-bold">
                       {formatCurrency(inv.balance_due, inv.currency)}
                     </span>
@@ -188,7 +194,9 @@ export function InvoiceDetail({
             {/* Payment History */}
             {payments.length > 0 && (
               <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-3">Payment History</h3>
+                <h3 className="text-sm font-medium text-gray-700 mb-3">
+                  {t('financial.invoiceDetail.paymentHistory')}
+                </h3>
                 <ul className="divide-y divide-gray-200 border rounded-lg">
                   {payments.map((payment) => (
                     <li key={payment.id} className="px-4 py-3 flex justify-between">
@@ -207,7 +215,9 @@ export function InvoiceDetail({
             {/* Notes */}
             {inv.notes && (
               <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-2">Notes</h3>
+                <h3 className="text-sm font-medium text-gray-700 mb-2">
+                  {t('financial.invoiceDetail.notes')}
+                </h3>
                 <p className="text-sm text-gray-600 bg-gray-50 rounded-lg p-3">{inv.notes}</p>
               </div>
             )}
@@ -222,7 +232,9 @@ export function InvoiceDetail({
                 disabled={isSending}
                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
               >
-                {isSending ? 'Sending...' : 'Send Invoice'}
+                {isSending
+                  ? t('financial.invoiceDetail.sending')
+                  : t('financial.invoiceDetail.send')}
               </button>
             )}
             {inv.pdf_file_path && onDownloadPdf && (
@@ -231,7 +243,7 @@ export function InvoiceDetail({
                 onClick={onDownloadPdf}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
               >
-                Download PDF
+                {t('financial.invoiceDetail.downloadPdf')}
               </button>
             )}
             {inv.balance_due > 0 && onRecordPayment && (
@@ -240,7 +252,7 @@ export function InvoiceDetail({
                 onClick={onRecordPayment}
                 className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700"
               >
-                Record Payment
+                {t('financial.invoiceDetail.recordPayment')}
               </button>
             )}
             <button
@@ -248,7 +260,7 @@ export function InvoiceDetail({
               onClick={onClose}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
-              Close
+              {t('common.close')}
             </button>
           </div>
         </div>

@@ -4,6 +4,7 @@
 
 import type { Invoice, PaymentMethod, RecordPayment } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { PAYMENT_METHODS } from '../utils/constants';
 import { formatCurrency } from '../utils/formatting';
 
@@ -36,6 +37,7 @@ export function PaymentForm({
   onCancel,
   isSubmitting,
 }: PaymentFormProps) {
+  const { t } = useTranslation();
   const [unitId, setUnitId] = useState(initialUnitId || '');
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState('EUR');
@@ -52,15 +54,15 @@ export function PaymentForm({
     const newErrors: FormErrors = {};
 
     if (!unitId) {
-      newErrors.unit_id = 'Unit is required';
+      newErrors.unit_id = t('financial.paymentForm.unitRequired');
     }
 
     if (!amount || Number.parseFloat(amount) <= 0) {
-      newErrors.amount = 'Valid amount is required';
+      newErrors.amount = t('financial.paymentForm.amountRequired');
     }
 
     if (!paymentMethod) {
-      newErrors.payment_method = 'Payment method is required';
+      newErrors.payment_method = t('financial.paymentForm.paymentMethodRequired');
     }
 
     setErrors(newErrors);
@@ -107,7 +109,7 @@ export function PaymentForm({
       {/* Unit Selection */}
       <div>
         <label htmlFor="unit" className="block text-sm font-medium text-gray-700">
-          Unit *
+          {t('financial.paymentForm.unit')} *
         </label>
         <select
           id="unit"
@@ -121,7 +123,7 @@ export function PaymentForm({
             errors.unit_id ? 'border-red-300' : 'border-gray-300'
           }`}
         >
-          <option value="">Select a unit</option>
+          <option value="">{t('financial.paymentForm.selectUnit')}</option>
           {units.map((unit) => (
             <option key={unit.id} value={unit.id}>
               {unit.building_name} - {unit.unit_number}
@@ -135,14 +137,18 @@ export function PaymentForm({
       {unitId && filteredInvoices.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-2">
-            <span className="block text-sm font-medium text-gray-700">Allocate to Invoices</span>
+            <span className="block text-sm font-medium text-gray-700">
+              {t('financial.paymentForm.allocateToInvoices')}
+            </span>
             {selectedInvoiceIds.length > 0 && (
               <button
                 type="button"
                 onClick={handleAutoFillAmount}
                 className="text-sm text-blue-600 hover:text-blue-800"
               >
-                Auto-fill amount ({formatCurrency(selectedTotal, currency)})
+                {t('financial.paymentForm.autoFillAmount', {
+                  amount: formatCurrency(selectedTotal, currency),
+                })}
               </button>
             )}
           </div>
@@ -161,7 +167,9 @@ export function PaymentForm({
                 <div className="ml-3 flex-1">
                   <p className="text-sm font-medium text-gray-900">{invoice.invoice_number}</p>
                   <p className="text-sm text-gray-500">
-                    Due: {new Date(invoice.due_date).toLocaleDateString()}
+                    {t('financial.paymentForm.due', {
+                      date: new Date(invoice.due_date).toLocaleDateString(),
+                    })}
                   </p>
                 </div>
                 <span
@@ -181,7 +189,7 @@ export function PaymentForm({
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
-            Amount *
+            {t('financial.paymentForm.amount')} *
           </label>
           <div className="mt-1 relative">
             <input
@@ -204,7 +212,7 @@ export function PaymentForm({
         </div>
         <div>
           <label htmlFor="currency" className="block text-sm font-medium text-gray-700">
-            Currency
+            {t('financial.paymentForm.currency')}
           </label>
           <select
             id="currency"
@@ -223,7 +231,7 @@ export function PaymentForm({
       {/* Payment Method */}
       <div>
         <label htmlFor="payment-method" className="block text-sm font-medium text-gray-700">
-          Payment Method *
+          {t('financial.paymentForm.paymentMethod')} *
         </label>
         <select
           id="payment-method"
@@ -236,10 +244,10 @@ export function PaymentForm({
             errors.payment_method ? 'border-red-300' : 'border-gray-300'
           }`}
         >
-          <option value="">Select payment method</option>
+          <option value="">{t('financial.paymentForm.selectPaymentMethod')}</option>
           {PAYMENT_METHODS.map((method) => (
             <option key={method.value} value={method.value}>
-              {method.label}
+              {t(`financial.paymentMethods.${method.value}`)}
             </option>
           ))}
         </select>
@@ -252,7 +260,7 @@ export function PaymentForm({
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label htmlFor="reference" className="block text-sm font-medium text-gray-700">
-            Reference Number
+            {t('financial.paymentForm.reference')}
           </label>
           <input
             type="text"
@@ -260,12 +268,12 @@ export function PaymentForm({
             value={reference}
             onChange={(e) => setReference(e.target.value)}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Bank ref, check #, etc."
+            placeholder={t('financial.paymentForm.referencePlaceholder')}
           />
         </div>
         <div>
           <label htmlFor="payment-date" className="block text-sm font-medium text-gray-700">
-            Payment Date
+            {t('financial.paymentForm.paymentDate')}
           </label>
           <input
             type="date"
@@ -280,7 +288,7 @@ export function PaymentForm({
       {/* Notes */}
       <div>
         <label htmlFor="notes" className="block text-sm font-medium text-gray-700">
-          Notes
+          {t('financial.paymentForm.notes')}
         </label>
         <textarea
           id="notes"
@@ -288,7 +296,7 @@ export function PaymentForm({
           onChange={(e) => setNotes(e.target.value)}
           rows={2}
           className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-          placeholder="Optional notes"
+          placeholder={t('financial.paymentForm.notesPlaceholder')}
         />
       </div>
 
@@ -300,14 +308,14 @@ export function PaymentForm({
           disabled={isSubmitting}
           className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
         >
-          Cancel
+          {t('common.cancel')}
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
           className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 disabled:opacity-50"
         >
-          {isSubmitting ? 'Recording...' : 'Record Payment'}
+          {isSubmitting ? t('financial.paymentForm.submitting') : t('financial.paymentForm.submit')}
         </button>
       </div>
     </form>
