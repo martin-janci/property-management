@@ -12,8 +12,10 @@ import { formatRelativeTime, RecentActivity } from './RecentActivity';
 const mockUseAnnouncements = vi.fn();
 const mockUseFaults = vi.fn();
 vi.mock('@ppt/api-client', () => ({
-  useAnnouncements: (...args: unknown[]) => mockUseAnnouncements(...args),
   useFaults: (...args: unknown[]) => mockUseFaults(...args),
+}));
+vi.mock('../hooks/useResidentAnnouncements', () => ({
+  useResidentAnnouncements: (...args: unknown[]) => mockUseAnnouncements(...args),
 }));
 
 vi.mock('../../../contexts', () => ({

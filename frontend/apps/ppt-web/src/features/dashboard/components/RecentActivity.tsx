@@ -8,11 +8,12 @@
  * @module features/dashboard/components/RecentActivity
  */
 
-import { useAnnouncements, useFaults } from '@ppt/api-client';
+import { useFaults } from '@ppt/api-client';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../contexts';
+import { useResidentAnnouncements } from '../hooks/useResidentAnnouncements';
 
 const MAX_ITEMS = 5;
 
@@ -49,7 +50,8 @@ export function RecentActivity() {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
 
-  const announcements = useAnnouncements({ status: 'published', pageSize: MAX_ITEMS });
+  // Resident-visible endpoint; the manager list 403s for owners and tenants.
+  const announcements = useResidentAnnouncements(MAX_ITEMS);
   const faults = useFaults({ limit: 20 });
 
   const entries = useMemo<ActivityEntry[]>(() => {
