@@ -5,8 +5,8 @@
  * Regression coverage for the dispute-filing surface acceptance criteria:
  *  - AC-1: dispute-type radio-card grid renders all 6 categories + is required
  *  - AC-3: subject (min 5) + description (min 30) validation, char counter
- *  - AC-1/AC-3: required unit selector
- *  - AC-5: valid submit forwards { values, evidence } to onSubmit; the submit
+ *  - AC-1/AC-3: unit selector — required when units are offered, hidden otherwise
+ *  - AC-5: valid submit forwards { values } to onSubmit; the submit
  *          button is disabled (shows "Filing…") while isSubmitting is true
  *  - navigation: Cancel / Back route to /disputes
  */
@@ -14,10 +14,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { type DisputeFormValues, FileDisputePage } from './FileDisputePage';
-
-// jsdom lacks object-URL support used by the embedded EvidenceUploader.
-URL.createObjectURL = vi.fn(() => 'blob:mock-url');
-URL.revokeObjectURL = vi.fn();
 
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async (importOriginal) => {
@@ -43,20 +39,6 @@ function renderPage(props: Partial<React.ComponentProps<typeof FileDisputePage>>
     </MemoryRouter>
   );
   return { onSubmit };
-}
-
-/** Build a File with a forced size (jsdom derives size from blob parts). */
-function makeFile(name: string, type: string, sizeBytes = 1024): File {
-  const file = new File(['x'], name, { type });
-  Object.defineProperty(file, 'size', { value: sizeBytes });
-  return file;
-}
-
-/** Drop files onto the embedded EvidenceUploader file input. */
-function attachEvidence(files: File[]) {
-  const input = document.querySelector('input[type="file"]') as HTMLInputElement;
-  Object.defineProperty(input, 'files', { value: files, configurable: true });
-  fireEvent.change(input);
 }
 
 /** Fill the three required fields with valid values. */
@@ -147,6 +129,23 @@ describe('FileDisputePage', () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
+  it('hides the unit selector and files without a unit when no units are offered', async () => {
+    const { onSubmit } = renderPage({ units: [] });
+    expect(screen.queryByLabelText(/^unit/i)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('radio', { name: /noise/i }));
+    fireEvent.change(screen.getByLabelText(/^subject/i), {
+      target: { value: 'A valid subject line' },
+    });
+    fireEvent.change(screen.getByLabelText(/^description/i), {
+      target: { value: 'A sufficiently long description that clears the thirty-char minimum.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /file dispute/i }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(onSubmit.mock.calls[0][0].values.unitId).toBe('');
+  });
+
   it('updates the description character counter as the user types', () => {
     renderPage();
     fireEvent.change(screen.getByLabelText(/^description/i), {
@@ -156,7 +155,7 @@ describe('FileDisputePage', () => {
   });
 
   // ── AC-5: submit ──
-  it('forwards the validated values and evidence array to onSubmit', async () => {
+  it('forwards the validated values to onSubmit', async () => {
     const { onSubmit } = renderPage();
 
     fillValidForm();
@@ -165,17 +164,14 @@ describe('FileDisputePage', () => {
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalledTimes(1);
     });
-    const payload = onSubmit.mock.calls[0][0] as {
-      values: DisputeFormValues;
-      evidence: unknown[];
-    };
+    const payload = onSubmit.mock.calls[0][0] as { values: DisputeFormValues };
     expect(payload.values).toMatchObject({
       type: 'noise',
       unitId: 'unit-1',
       subject: 'Loud parties past midnight',
     });
     expect(payload.values.description.length).toBeGreaterThanOrEqual(30);
-    expect(Array.isArray(payload.evidence)).toBe(true);
+    expect(Object.keys(payload)).toEqual(['values']);
   });
 
   it('disables the submit button and shows a filing spinner while submitting', () => {
@@ -206,69 +202,11 @@ describe('FileDisputePage', () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  // ── AC-2 ↔ AC-5: evidence flows through the filing surface ──
-  it('renders the optional evidence section with the uploader drop zone', () => {
+  // Evidence upload has no backend route, so the filing page does not offer it.
+  it('does not render an evidence uploader', () => {
     renderPage();
-    expect(screen.getByRole('heading', { name: /evidence \(optional\)/i })).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /drop evidence files here or click to browse/i })
-    ).toBeInTheDocument();
-  });
-
-  it('forwards attached evidence files in the onSubmit payload', async () => {
-    const { onSubmit } = renderPage();
-
-    fillValidForm();
-    attachEvidence([
-      makeFile('photo.jpg', 'image/jpeg'),
-      makeFile('report.pdf', 'application/pdf'),
-    ]);
-
-    fireEvent.click(screen.getByRole('button', { name: /file dispute/i }));
-
-    await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledTimes(1);
-    });
-    const payload = onSubmit.mock.calls[0][0] as {
-      values: DisputeFormValues;
-      evidence: Array<{ file: File; status: string }>;
-    };
-    expect(payload.evidence).toHaveLength(2);
-    expect(payload.evidence.map((e) => e.file.name)).toEqual(['photo.jpg', 'report.pdf']);
-    expect(payload.evidence.every((e) => e.status === 'pending')).toBe(true);
-  });
-
-  it('keeps an invalid evidence file in the payload tagged as error', async () => {
-    const { onSubmit } = renderPage();
-
-    fillValidForm();
-    // Unsupported type — the uploader keeps it queued with status 'error' so the
-    // route wrapper can filter it out before upload.
-    attachEvidence([makeFile('virus.exe', 'application/x-msdownload')]);
-
-    fireEvent.click(screen.getByRole('button', { name: /file dispute/i }));
-
-    await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledTimes(1);
-    });
-    const payload = onSubmit.mock.calls[0][0] as {
-      evidence: Array<{ status: string }>;
-    };
-    expect(payload.evidence).toHaveLength(1);
-    expect(payload.evidence[0].status).toBe('error');
-  });
-
-  it('submits with an empty evidence array when no files are attached', async () => {
-    const { onSubmit } = renderPage();
-
-    fillValidForm();
-    fireEvent.click(screen.getByRole('button', { name: /file dispute/i }));
-
-    await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledTimes(1);
-    });
-    const payload = onSubmit.mock.calls[0][0] as { evidence: unknown[] };
-    expect(payload.evidence).toEqual([]);
+    expect(screen.queryByRole('heading', { name: /evidence/i })).not.toBeInTheDocument();
+    expect(document.querySelector('input[type="file"]')).toBeNull();
   });
 
   // ── Step 2 · parties: optional respondent selector ──

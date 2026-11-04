@@ -525,7 +525,9 @@ async fn submit_quote_succeeds(pool: PgPool) {
     let rfq = seed_rfq(&pool, org, buyer).await;
 
     let prov_user = seed_user(&pool, "quote-prov@mp-batch2.test").await;
-    seed_provider(&pool, prov_user, "quote").await;
+    let provider = seed_provider(&pool, prov_user, "quote").await;
+    // Quotes are invitation-only (audit4): the provider must be invited.
+    seed_invitation(&pool, rfq, provider).await;
     let token = mint_token(prov_user, "quote-prov@mp-batch2.test", None);
 
     let resp = app
@@ -705,7 +707,7 @@ async fn list_verifications_as_admin_succeeds(pool: PgPool) {
     .await
     .expect("seed verification");
 
-    let admin = seed_user(&pool, "ver-admin@mp-batch2.test").await;
+    let admin = crate::common::seed_platform_user(&pool, "ver-admin@mp-batch2.test").await;
     let token = mint_token_with_role(admin, "ver-admin@mp-batch2.test", None, "super_admin");
 
     let resp = app

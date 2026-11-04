@@ -4,7 +4,8 @@
 
 import type { Invoice, InvoiceStatus } from '@ppt/api-client';
 import { useState } from 'react';
-import { INVOICE_STATUS_LABELS, INVOICE_STATUS_STYLES } from '../utils/constants';
+import { useTranslation } from 'react-i18next';
+import { INVOICE_STATUS_STYLES, INVOICE_STATUSES, invoiceStatusKey } from '../utils/constants';
 import { formatCurrency, formatDate } from '../utils/formatting';
 
 interface InvoiceListProps {
@@ -37,6 +38,7 @@ export function InvoiceList({
   onStatusFilter,
   onSearch,
 }: InvoiceListProps) {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<InvoiceStatus>();
 
@@ -76,7 +78,8 @@ export function InvoiceList({
           <div className="flex-1">
             <input
               type="text"
-              placeholder="Search invoices..."
+              placeholder={t('financial.invoices.searchPlaceholder')}
+              aria-label={t('financial.invoices.searchPlaceholder')}
               value={searchQuery}
               onChange={handleSearchChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -86,12 +89,13 @@ export function InvoiceList({
             <select
               value={selectedStatus || ''}
               onChange={handleStatusChange}
+              aria-label={t('financial.invoices.columns.status')}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="">All Statuses</option>
-              {Object.entries(INVOICE_STATUS_LABELS).map(([value, label]) => (
+              <option value="">{t('financial.invoices.allStatuses')}</option>
+              {INVOICE_STATUSES.map((value) => (
                 <option key={value} value={value}>
-                  {label}
+                  {t(invoiceStatusKey(value))}
                 </option>
               ))}
             </select>
@@ -102,7 +106,7 @@ export function InvoiceList({
       {/* Table */}
       {invoices.length === 0 ? (
         <div className="p-8 text-center">
-          <p className="text-gray-500">No invoices found</p>
+          <p className="text-gray-500">{t('financial.invoices.empty')}</p>
         </div>
       ) : (
         <div className="overflow-x-auto">
@@ -113,43 +117,43 @@ export function InvoiceList({
                   scope="col"
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
-                  Invoice #
+                  {t('financial.invoices.columns.number')}
                 </th>
                 <th
                   scope="col"
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
-                  Issue Date
+                  {t('financial.invoices.columns.issueDate')}
                 </th>
                 <th
                   scope="col"
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
-                  Due Date
+                  {t('financial.invoices.columns.dueDate')}
                 </th>
                 <th
                   scope="col"
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
-                  Status
+                  {t('financial.invoices.columns.status')}
                 </th>
                 <th
                   scope="col"
                   className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
-                  Total
+                  {t('financial.invoices.columns.total')}
                 </th>
                 <th
                   scope="col"
                   className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
-                  Balance Due
+                  {t('financial.invoices.columns.balanceDue')}
                 </th>
                 <th
                   scope="col"
                   className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
-                  Actions
+                  {t('common.actions')}
                 </th>
               </tr>
             </thead>
@@ -166,7 +170,7 @@ export function InvoiceList({
                     }
                   }}
                   tabIndex={0}
-                  aria-label={`View invoice details for ${invoice.invoice_number}`}
+                  aria-label={t('financial.invoices.viewAria', { number: invoice.invoice_number })}
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {invoice.invoice_number}
@@ -181,7 +185,7 @@ export function InvoiceList({
                     <span
                       className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${INVOICE_STATUS_STYLES[invoice.status]}`}
                     >
-                      {INVOICE_STATUS_LABELS[invoice.status]}
+                      {t(invoiceStatusKey(invoice.status), { defaultValue: invoice.status })}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">
@@ -205,7 +209,7 @@ export function InvoiceList({
                           }}
                           className="text-blue-600 hover:text-blue-800"
                         >
-                          Send
+                          {t('financial.invoices.send')}
                         </button>
                       )}
                       {onDownloadPdf &&
@@ -222,7 +226,9 @@ export function InvoiceList({
                               aria-busy={isDownloading}
                               className="text-gray-600 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              {isDownloading ? 'PDF…' : 'PDF'}
+                              {isDownloading
+                                ? t('financial.invoices.pdfDownloading')
+                                : t('financial.invoices.pdf')}
                             </button>
                           );
                         })()}
@@ -234,7 +240,7 @@ export function InvoiceList({
                         }}
                         className="text-gray-600 hover:text-gray-800"
                       >
-                        View
+                        {t('financial.view')}
                       </button>
                     </div>
                   </td>
@@ -249,8 +255,11 @@ export function InvoiceList({
       {totalPages > 1 && (
         <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
           <div className="text-sm text-gray-500">
-            Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, total)} of {total}{' '}
-            invoices
+            {t('financial.invoices.pagination', {
+              from: (page - 1) * pageSize + 1,
+              to: Math.min(page * pageSize, total),
+              total,
+            })}
           </div>
           <div className="flex gap-2">
             <button
@@ -259,7 +268,7 @@ export function InvoiceList({
               disabled={page === 1}
               className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
             >
-              Previous
+              {t('common.previous')}
             </button>
             <button
               type="button"
@@ -267,7 +276,7 @@ export function InvoiceList({
               disabled={page === totalPages}
               className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
             >
-              Next
+              {t('common.next')}
             </button>
           </div>
         </div>

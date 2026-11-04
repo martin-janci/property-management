@@ -85,7 +85,7 @@ export function LeaseCard({ lease, onView, onRenew, onTerminate }: LeaseCardProp
             <span>{formatDate(lease.endDate)}</span>
             {lease.daysUntilExpiry !== undefined && lease.daysUntilExpiry <= 90 && (
               <span className="ml-2 text-orange-600">
-                ({lease.daysUntilExpiry} {t('leases.daysRemaining')})
+                ({t('leases.daysRemaining', { count: lease.daysUntilExpiry })})
               </span>
             )}
           </div>

@@ -5,6 +5,7 @@
 
 import { useTranslation } from 'react-i18next';
 import { formatTime } from '../utils/formatTime';
+import { disputeStatusLabel } from '../utils/labels';
 
 export type ActivityType =
   | 'dispute_filed'
@@ -31,24 +32,6 @@ export interface TimelineEntry {
   metadata?: Record<string, unknown>;
   createdAt: string;
 }
-
-// Icons for timeline entries - exported for use in other components
-export const activityIcons: Record<ActivityType, string> = {
-  dispute_filed: 'document-plus',
-  status_changed: 'arrow-path',
-  party_added: 'user-plus',
-  evidence_added: 'photo',
-  session_scheduled: 'calendar',
-  session_completed: 'check-circle',
-  resolution_proposed: 'light-bulb',
-  resolution_voted: 'hand-raised',
-  resolution_accepted: 'check-badge',
-  action_created: 'clipboard-list',
-  action_completed: 'clipboard-check',
-  comment_added: 'chat-bubble-left',
-  escalated: 'arrow-trending-up',
-  closed: 'lock-closed',
-};
 
 const activityColors: Record<ActivityType, string> = {
   dispute_filed: 'bg-blue-100 text-blue-600',
@@ -128,8 +111,8 @@ export function DisputeTimeline({ entries, maxEntries, onShowMore }: DisputeTime
                       {'oldStatus' in entry.metadata && 'newStatus' in entry.metadata && (
                         <span>
                           {t('disputes.timeline.statusChange', {
-                            from: String(entry.metadata.oldStatus),
-                            to: String(entry.metadata.newStatus),
+                            from: disputeStatusLabel(t, String(entry.metadata.oldStatus)),
+                            to: disputeStatusLabel(t, String(entry.metadata.newStatus)),
                           })}
                         </span>
                       )}

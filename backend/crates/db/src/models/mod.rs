@@ -78,11 +78,11 @@ pub use equipment::{
     UpdateEquipment, UpdateMaintenance,
 };
 pub use sensor::{
-    sensor_status, sensor_type, AggregatedReading, AlertQuery, BatchSensorReadings, CreateSensor,
-    CreateSensorAlert, CreateSensorFaultCorrelation, CreateSensorReading, CreateSensorThreshold,
-    ReadingQuery, Sensor, SensorAlert, SensorDashboard, SensorFaultCorrelation, SensorQuery,
-    SensorReading, SensorSummary, SensorThreshold, SensorThresholdTemplate, SensorTypeCount,
-    SingleReading, UpdateSensor, UpdateSensorThreshold,
+    sensor_connection_type, sensor_status, sensor_type, AggregatedReading, AlertQuery,
+    BatchSensorReadings, CreateSensor, CreateSensorAlert, CreateSensorFaultCorrelation,
+    CreateSensorReading, CreateSensorThreshold, ReadingQuery, Sensor, SensorAlert, SensorDashboard,
+    SensorFaultCorrelation, SensorQuery, SensorReading, SensorSummary, SensorThreshold,
+    SensorThresholdTemplate, SensorTypeCount, SingleReading, UpdateSensor, UpdateSensorThreshold,
 };
 pub use sentiment::{
     alert_type, BuildingSentiment, CreateSentimentAlert, SentimentAlert, SentimentDashboard,
@@ -198,9 +198,10 @@ pub use financial::{
     CreateInvoice, CreateInvoiceItem, CreateTransaction, FeeFrequency, FeeSchedule,
     FinancialAccount, FinancialAccountResponse, FinancialAccountType, IncomeStatement,
     IncomeStatementLine, InitiatePaymentResponse, Invoice, InvoiceItem, InvoiceResponse,
-    InvoiceStatus, LateFeeConfig, ListInvoicesResponse, OnlinePaymentSession, Payment,
-    PaymentAllocation, PaymentMethod, PaymentResponse, PaymentStatus, RecordPayment,
-    ReminderSchedule, TransactionCategory, TransactionType, UnitCreditBalance, UnitFee,
+    InvoiceStatus, LateFeeConfig, ListInvoicesResponse, NewPaymentWebhookDeadLetter,
+    OnlinePaymentSession, Payment, PaymentAllocation, PaymentMethod, PaymentResponse,
+    PaymentStatus, PaymentWebhookDeadLetter, RecordPayment, ReminderSchedule, TransactionCategory,
+    TransactionType, UnitCreditBalance, UnitFee,
 };
 pub use granular_notification::{
     AddToGroupRequest, CategorySummary, CreateHeldNotification, DigestNotification,
@@ -548,7 +549,8 @@ pub use integration::{
 };
 
 pub use automation::{
-    AutomationAction, AutomationLogSummary, AutomationRuleWithStats, CallWebhookConfig,
+    AutomationAction, AutomationExecution, AutomationExecutionFilter, AutomationExecutionList,
+    AutomationExecutionStats, AutomationLogSummary, AutomationRuleWithStats, CallWebhookConfig,
     ConditionTriggerConfig, CreateAutomationRule, CreateRuleFromTemplate, EventTriggerConfig,
     GenerateReportConfig, ScheduleTriggerConfig, SendEmailConfig, SendNotificationConfig,
     UpdateAutomationRule, WorkflowAutomationLog, WorkflowAutomationRule,

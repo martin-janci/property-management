@@ -131,6 +131,62 @@ impl SessionRepository {
         Ok(result.rows_affected() > 0)
     }
 
+    /// Atomically rotate a refresh token: revoke `old_id` and persist its
+    /// replacement inside a single transaction.
+    ///
+    /// The revoke is a compare-and-swap (`WHERE id = $1 AND revoked_at IS
+    /// NULL`). If it affects zero rows — the old token was already revoked by
+    /// a concurrent rotation or a replay — the whole transaction rolls back
+    /// and `Ok(None)` is returned, so **no** replacement token is ever issued.
+    /// A new token is inserted only when the revoke actually flipped the old
+    /// row. This guarantees a revoke failure can never leave the old refresh
+    /// token live alongside a freshly-issued one (two valid tokens from one
+    /// rotation).
+    pub async fn rotate_refresh_token(
+        &self,
+        old_id: Uuid,
+        data: CreateRefreshToken,
+    ) -> Result<Option<RefreshToken>, SqlxError> {
+        let mut tx = self.pool.begin().await?;
+
+        let revoked = sqlx::query(
+            r#"
+            UPDATE refresh_tokens SET revoked_at = NOW()
+            WHERE id = $1 AND revoked_at IS NULL
+            "#,
+        )
+        .bind(old_id)
+        .execute(&mut *tx)
+        .await?;
+
+        // Zero rows => the old token was already revoked (concurrent rotation
+        // or replay). Roll back and refuse to issue a replacement.
+        if revoked.rows_affected() == 0 {
+            tx.rollback().await?;
+            return Ok(None);
+        }
+
+        let token = sqlx::query_as::<_, RefreshToken>(
+            r#"
+            INSERT INTO refresh_tokens (user_id, token_hash, expires_at, user_agent, ip_address, device_info)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING *
+            "#,
+        )
+        .bind(data.user_id)
+        .bind(&data.token_hash)
+        .bind(data.expires_at)
+        .bind(&data.user_agent)
+        .bind(data.ip_address)
+        .bind(&data.device_info)
+        .fetch_one(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
+
+        Ok(Some(token))
+    }
+
     /// Revoke all refresh tokens for a user (except optionally one).
     pub async fn revoke_all_user_tokens(
         &self,

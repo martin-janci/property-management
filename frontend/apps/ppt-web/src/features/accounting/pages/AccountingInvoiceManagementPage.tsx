@@ -17,6 +17,7 @@ import { parseApiError } from '../../../lib/errorHandler';
 import { queryKeys } from '../../../lib/queryKeys';
 import { AccountingInvoiceForm } from '../components/AccountingInvoiceForm';
 import { AccountingInvoiceList } from '../components/AccountingInvoiceList';
+import { AccountingSubNav } from '../components/AccountingSubNav';
 
 export function AccountingInvoiceManagementPage() {
   const { t } = useTranslation();
@@ -73,6 +74,7 @@ export function AccountingInvoiceManagementPage() {
 
   return (
     <div className="p-8">
+      <AccountingSubNav />
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{t('accounting.title')}</h1>
@@ -103,11 +105,10 @@ export function AccountingInvoiceManagementPage() {
         <AccountingInvoiceList
           invoices={invoices?.data || []}
           isLoading={isLoading}
-          onViewInvoice={() => {
-            // TODO(#1522): wire invoice-detail navigation once the detail route
-            // exists. Intentionally a no-op (not console.log) so nothing logs in
-            // production.
-          }}
+          // No onViewInvoice: these are accounting-server invoices (a separate
+          // entity from /financial invoices) and no accounting invoice detail
+          // view exists yet (#1522), so rows are not clickable rather than a
+          // silent no-op.
           onDeleteInvoice={(id) => setDeleteTargetId(id)}
         />
       )}

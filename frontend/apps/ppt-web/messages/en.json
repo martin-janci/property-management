@@ -366,7 +366,12 @@
     "saveFailed": "Save failed",
     "deleteFailed": "Delete failed",
     "submitFailed": "Submit failed",
-    "pleaseTryAgain": "Please try again."
+    "pleaseTryAgain": "Please try again.",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "more": "More options",
+    "settings": "Settings",
+    "confirmTitle": "Are you sure?"
   },
   "nav": {
     "home": "Home",
@@ -396,7 +401,15 @@
     "integrations": "Integrations",
     "portalWebhooks": "Portal Webhooks",
     "notificationTriggers": "Notification Triggers",
-    "notificationAnalytics": "Notification Analytics"
+    "notificationAnalytics": "Notification Analytics",
+    "myUnit": "My unit",
+    "voting": "Voting",
+    "reports": "Reports",
+    "accounting": "Accounting",
+    "automations": "Automations",
+    "iot": "Smart building",
+    "rentals": "Short-term rentals",
+    "sessions": "Active sessions"
   },
   "auth": {
     "signIn": "Sign In",
@@ -571,11 +584,62 @@
       "regenerating": "Regenerating…",
       "saveNewCodes": "Save these {{count}} new recovery codes — they will not be shown again.",
       "done": "Done"
-    }
+    },
+    "completingSignIn": "Completing sign-in…",
+    "redirecting": "Redirecting…",
+    "signInFailed": "Sign-in failed",
+    "backToLogin": "Back to login",
+    "callbackMissingParams": "Invalid callback URL: missing code or state parameters.",
+    "stateValidationFailed": "Authentication failed: state parameter mismatch. Please try signing in again.",
+    "ssoCallbackFailed": "SSO login failed. Please try again.",
+    "ssoProviderError": "The identity provider returned an error."
   },
   "home": {
-    "title": "Property Management System",
-    "welcome": "Welcome to the Property Management System."
+    "title": "Property management without the paperwork",
+    "welcome": "Welcome to the Property Management System.",
+    "tagline": "One place for building managers, owners and tenants: report faults, vote on decisions, follow costs and stay informed.",
+    "audiences": {
+      "title": "Built for everyone in the building",
+      "managers": {
+        "title": "Building managers",
+        "text": "Run several buildings from one dashboard: faults, announcements, meter readings, finances and owners’ meetings."
+      },
+      "owners": {
+        "title": "Owners",
+        "text": "Vote online, read meeting minutes and documents, follow the repair fund and your payments."
+      },
+      "tenants": {
+        "title": "Tenants and residents",
+        "text": "Report a fault in a minute, get notified about outages and keep in touch with the manager and neighbours."
+      }
+    },
+    "features": {
+      "title": "What you can do",
+      "faults": {
+        "title": "Fault reporting",
+        "text": "Report issues with photos, track their status and see who is handling them."
+      },
+      "voting": {
+        "title": "Online voting",
+        "text": "Prepare votes on owners’ decisions, collect ballots electronically and publish results."
+      },
+      "communication": {
+        "title": "Announcements and messages",
+        "text": "Inform everyone about outages, maintenance and meetings, and message the manager directly."
+      },
+      "finance": {
+        "title": "Finances",
+        "text": "Advance payments, invoices, budgets and the repair fund — transparent for every owner."
+      },
+      "meters": {
+        "title": "Meter readings",
+        "text": "Submit readings online with a photo and compare consumption between periods."
+      },
+      "documents": {
+        "title": "Documents",
+        "text": "Contracts, minutes, house rules and statements stored securely in one place."
+      }
+    }
   },
   "facilities": {
     "bookings": {
@@ -584,12 +648,203 @@
       "listTitle": "Bookings",
       "bookFacility": "Book Facility",
       "empty": "No bookings found.",
-      "allCaughtUp": "All caught up! No pending bookings to review."
+      "allCaughtUp": "All caught up! No pending bookings to review.",
+      "status": {
+        "pending": "Pending approval",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "cancelled": "Cancelled",
+        "completed": "Completed",
+        "no_show": "No show"
+      },
+      "allStatuses": "All statuses",
+      "statusLabel": "Booking status",
+      "from": "From:",
+      "to": "To:",
+      "duration": "Duration: {{duration}}",
+      "durationHours": "{{hours}}h",
+      "durationMinutes": "{{minutes}}m",
+      "durationHoursMinutes": "{{hours}}h {{minutes}}m",
+      "attendees": "Attendees: {{count}}",
+      "rejectionReason": "Rejection reason:",
+      "cancellationReason": "Cancellation reason:",
+      "depositPaid": "Deposit paid",
+      "viewDetails": "View details",
+      "approve": "Approve",
+      "reject": "Reject",
+      "cancelBooking": "Cancel booking",
+      "loadFailed": "Failed to load bookings",
+      "loadPendingFailed": "Failed to load pending bookings",
+      "cancelFailed": "Failed to cancel booking",
+      "approveFailed": "Failed to approve booking",
+      "rejectFailed": "Failed to reject booking",
+      "createFailed": "Failed to create booking",
+      "loadFacilityFailed": "Failed to load facility details",
+      "form": {
+        "location": "Location: {{location}}",
+        "capacity": "Capacity (people): {{count}}",
+        "fee": "Fee: {{fee}}/hour",
+        "maxDuration": "Max duration: {{hours}} h",
+        "requiresApproval": "This facility requires approval",
+        "date": "Date",
+        "startTime": "Start time",
+        "endTime": "End time",
+        "selectTime": "Select time",
+        "unavailable": "(unavailable)",
+        "purpose": "Purpose of booking",
+        "purposePlaceholder": "e.g. team meeting, birthday party",
+        "attendeesCount": "Number of attendees",
+        "maxPlaceholder": "Max: {{count}}",
+        "notes": "Additional notes",
+        "notesPlaceholder": "Any special requirements or notes",
+        "durationLabel": "Duration:",
+        "hoursValue": "{{hours}} h",
+        "estimatedTotal": "Estimated total:",
+        "depositRequired": "Deposit required:",
+        "cancel": "Cancel",
+        "submitting": "Booking…",
+        "submitForApproval": "Submit for approval",
+        "bookNow": "Book now",
+        "errors": {
+          "selectDate": "Please select a date",
+          "selectStart": "Please select a start time",
+          "selectEnd": "Please select an end time",
+          "endAfterStart": "End time must be after start time",
+          "maxDuration": "Maximum booking duration is {{hours}} hours",
+          "maxCapacity": "Maximum capacity is {{count}}"
+        }
+      },
+      "cancelDialog": {
+        "title": "Cancel booking",
+        "confirm": "Are you sure you want to cancel this booking?",
+        "reason": "Reason for cancellation (optional)",
+        "reasonPlaceholder": "Let others know why you're cancelling…",
+        "keep": "Keep booking",
+        "submitting": "Cancelling…",
+        "submit": "Cancel booking"
+      },
+      "rejectDialog": {
+        "title": "Reject booking",
+        "subtitle": "Rejecting booking for: {{name}}",
+        "reason": "Reason for rejection *",
+        "reasonPlaceholder": "Please explain why this booking is being rejected…",
+        "reasonRequired": "Please provide a reason for rejection",
+        "cancel": "Cancel",
+        "submitting": "Rejecting…",
+        "submit": "Reject booking"
+      }
     },
     "errors": {
       "fetchFailedTitle": "Couldn't load facilities",
       "fetchFailedDescription": "Something went wrong while loading facilities. Please try again.",
-      "retry": "Try again"
+      "retry": "Try again",
+      "createFailed": "Failed to create facility",
+      "updateFailed": "Failed to update facility",
+      "loadFailed": "Failed to load facility",
+      "unexpected": "An unexpected error occurred."
+    },
+    "title": "Facilities",
+    "addFacility": "Add facility",
+    "addFirstFacility": "Add the first facility",
+    "empty": "No facilities found.",
+    "createTitle": "Add new facility",
+    "editTitle": "Edit facility",
+    "notFound": "Facility not found",
+    "notBookable": "This facility is not available for booking",
+    "goBack": "Go back",
+    "types": {
+      "gym": "Gym",
+      "laundry": "Laundry",
+      "meeting_room": "Meeting room",
+      "party_room": "Party room",
+      "sauna": "Sauna",
+      "pool": "Pool",
+      "playground": "Playground",
+      "parking": "Parking",
+      "storage": "Storage",
+      "garden": "Garden",
+      "bbq": "BBQ area",
+      "bike_storage": "Bike storage",
+      "other": "Other"
+    },
+    "filters": {
+      "allTypes": "All types",
+      "typeLabel": "Facility type",
+      "bookableLabel": "Bookability",
+      "allFacilities": "All facilities",
+      "bookableOnly": "Bookable only",
+      "nonBookable": "Non-bookable"
+    },
+    "pagination": {
+      "showing": "Showing {{from}} to {{to}} of {{total}}",
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page {{page}} of {{totalPages}}"
+    },
+    "card": {
+      "inactive": "Inactive",
+      "requiresApproval": "Requires approval",
+      "capacity": "Capacity: {{count}}",
+      "perHour": "{{fee}}/hr",
+      "viewDetails": "View details",
+      "bookNow": "Book now",
+      "edit": "Edit"
+    },
+    "days": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    },
+    "form": {
+      "basicInfo": "Basic information",
+      "bookingRules": "Booking rules",
+      "pricing": "Pricing",
+      "amenities": "Amenities",
+      "name": "Name *",
+      "type": "Type *",
+      "description": "Description",
+      "location": "Location",
+      "locationPlaceholder": "e.g. ground floor, building A",
+      "capacity": "Capacity",
+      "capacityPlaceholder": "Maximum number of people",
+      "allowBooking": "Allow booking",
+      "active": "Active",
+      "requiresApproval": "Requires approval",
+      "maxBookingHours": "Max booking duration (hours)",
+      "maxAdvanceDays": "Max advance booking (days)",
+      "minAdvanceHours": "Min advance booking (hours)",
+      "availableFrom": "Available from",
+      "availableTo": "Available until",
+      "availableDays": "Available days",
+      "hourlyFee": "Hourly fee",
+      "hourlyFeePlaceholder": "e.g. 25.00",
+      "depositAmount": "Deposit amount",
+      "depositPlaceholder": "e.g. 50.00",
+      "amenityPlaceholder": "Add amenity (e.g. Wi-Fi, projector)",
+      "add": "Add",
+      "removeAmenity": "Remove {{name}}",
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "update": "Save changes",
+      "create": "Create facility",
+      "errors": {
+        "nameRequired": "Name is required",
+        "typeRequired": "Facility type is required",
+        "availableToAfterFrom": "Available until must be after available from",
+        "mustBePositive": "Must be greater than 0",
+        "selectDay": "Select at least one available day",
+        "notNegative": "Cannot be negative"
+      }
+    },
+    "nav": {
+      "label": "Facilities",
+      "book": "Book a facility",
+      "myBookings": "My bookings",
+      "buildingFacilities": "Facilities"
     }
   },
   "faults": {
@@ -721,7 +976,83 @@
     "reported": "Fault reported",
     "reportFailed": "Failed to report fault",
     "updated": "Fault updated",
-    "updateFailed": "Failed to update fault"
+    "updateFailed": "Failed to update fault",
+    "allStatuses": "All statuses",
+    "allPriorities": "All priorities",
+    "allCategories": "All categories",
+    "searchPlaceholder": "Search faults...",
+    "noFaultsFound": "No faults found.",
+    "paginationSummary": "Showing {{from}} to {{to}} of {{total}} faults",
+    "reportedDate": "Reported: {{date}}",
+    "timeline": {
+      "title": "Timeline",
+      "empty": "No timeline entries.",
+      "internal": "Internal",
+      "action": {
+        "created": "Reported fault",
+        "triaged": "Triaged fault",
+        "assigned": "Assigned fault",
+        "status_changed": "Changed status",
+        "priority_changed": "Changed priority",
+        "work_note": "Added work note",
+        "comment": "Added comment",
+        "attachment_added": "Added attachment",
+        "scheduled": "Scheduled work",
+        "resolved": "Resolved fault",
+        "confirmed": "Confirmed resolution",
+        "reopened": "Reopened fault",
+        "rated": "Rated resolution"
+      }
+    },
+    "edit": {
+      "backToFault": "Back to Fault",
+      "title": "Edit Fault",
+      "subtitle": "Update the fault details. Note: editing is only available before the fault is triaged."
+    },
+    "triageDialog": {
+      "title": "Triage Fault",
+      "submit": "Triage Fault",
+      "aiSuggests": "AI suggests: <strong>{{category}}</strong>",
+      "aiSuggestsWithPriority": "AI suggests: <strong>{{category}}</strong> with <strong>{{priority}}</strong> priority",
+      "aiConfidence": "({{percent}}% confidence)",
+      "priorityHint": {
+        "low": "Minor issue, no urgency",
+        "medium": "Standard priority",
+        "high": "Needs prompt attention",
+        "urgent": "Immediate action required"
+      },
+      "assignTo": "Assign to (optional)",
+      "unassigned": "Unassigned"
+    },
+    "viewReports": "View reports",
+    "statsTotal": "Total",
+    "createDescription": "Describe the issue you're experiencing. Include as much detail as possible to help us resolve it quickly.",
+    "reports": {
+      "title": "Fault Reports",
+      "subtitle": "Fault analytics across buildings and time.",
+      "forbidden": "You do not have permission to view fault reports.",
+      "allBuildings": "All buildings",
+      "building": "Building",
+      "dateFrom": "From",
+      "dateTo": "To",
+      "exportCsv": "Export CSV",
+      "exportPdf": "Export PDF",
+      "failedToLoad": "Failed to load fault statistics",
+      "empty": "No faults match the selected filters.",
+      "kpiTotal": "Total faults",
+      "kpiOpen": "Open",
+      "kpiClosed": "Closed",
+      "kpiResolution": "Avg resolution (h)",
+      "kpiRating": "Avg rating",
+      "byStatus": "By status",
+      "byCategory": "By category",
+      "byPriority": "By priority",
+      "noData": "No data available",
+      "viewFaultsInBucket": "{{label}}. View these faults"
+    },
+    "confirmDelete": "Delete this fault? This action cannot be undone.",
+    "deleted": "Fault deleted",
+    "deleteFailed": "Failed to delete fault"
   },
   "buildings": {
     "title": "Buildings",
@@ -731,7 +1062,159 @@
     "units": "Units",
     "floors": "Floors",
     "yearBuilt": "Year Built",
-    "manager": "Manager"
+    "manager": "Manager",
+    "view": "View",
+    "status": {
+      "active": "Active",
+      "under_construction": "Under Construction",
+      "renovation": "Renovation",
+      "inactive": "Inactive"
+    },
+    "type": {
+      "residential": "Residential",
+      "commercial": "Commercial",
+      "mixed": "Mixed Use",
+      "industrial": "Industrial"
+    },
+    "list": {
+      "subtitle_one": "{{count}} building in your organization",
+      "subtitle_other": "{{count}} buildings in your organization",
+      "addBuilding": "Add Building",
+      "allStatuses": "All Statuses",
+      "allTypes": "All Types",
+      "statusFilter": "Filter by status",
+      "typeFilter": "Filter by type",
+      "emptyTitle": "No buildings",
+      "emptyBody": "Get started by adding your first building.",
+      "pageOf": "Showing page <bold>{{page}}</bold> of <bold>{{totalPages}}</bold>"
+    },
+    "card": {
+      "unitCount_one": "{{count}} unit",
+      "unitCount_other": "{{count}} units",
+      "floorCount_one": "{{count}} floor",
+      "floorCount_other": "{{count}} floors"
+    },
+    "errors": {
+      "loadFailed": "Error loading buildings",
+      "unexpected": "An unexpected error occurred",
+      "notFoundBody": "The requested building could not be found.",
+      "generic": "Something went wrong. Please try again."
+    },
+    "detail": {
+      "personMonths": "Person-months",
+      "type": "Type",
+      "totalArea": "Total Area",
+      "floorFallback": "Floor {{number}}",
+      "noFloors": "No floors defined for this building.",
+      "commonAreas": "Common Areas",
+      "noCommonAreas": "No common areas defined for this building."
+    },
+    "commonAreaType": {
+      "staircase": "Staircase",
+      "elevator": "Elevator",
+      "lobby": "Lobby",
+      "hallway": "Hallway",
+      "basement": "Basement",
+      "attic": "Attic",
+      "parking": "Parking",
+      "garage": "Garage",
+      "garden": "Garden",
+      "playground": "Playground",
+      "pool": "Pool",
+      "gym": "Gym",
+      "laundry_room": "Laundry room",
+      "storage_room": "Storage room",
+      "other": "Other"
+    },
+    "map": {
+      "title": "Location",
+      "openInOsm": "Open in OpenStreetMap",
+      "iframeTitle": "Map showing {{name}}",
+      "iframeTitleFallback": "Building location map"
+    },
+    "unitType": {
+      "apartment": "Apartment",
+      "commercial": "Commercial",
+      "parking": "Parking",
+      "storage": "Storage",
+      "other": "Other"
+    },
+    "occupancy": {
+      "unknown": "Unknown",
+      "owner_occupied": "Owner occupied",
+      "rented": "Rented",
+      "vacant": "Vacant"
+    },
+    "unitForm": {
+      "addTitle": "Add unit",
+      "editTitle": "Edit unit",
+      "designation": "Designation",
+      "designationPlaceholder": "e.g. \"3B\" or \"101\"",
+      "floor": "Floor",
+      "entrance": "Entrance",
+      "type": "Type",
+      "occupancy": "Occupancy",
+      "size": "Size (m²)",
+      "rooms": "Rooms",
+      "share": "Share (%)",
+      "description": "Description",
+      "saving": "Saving…",
+      "errors": {
+        "designationRequired": "Designation is required.",
+        "designationTooLong": "Designation must be {{max}} characters or fewer.",
+        "floorInteger": "Floor must be a whole number.",
+        "shareRequired": "Ownership share is required.",
+        "shareRange": "Ownership share must be between 0 and 100.",
+        "sizeInvalid": "Size must be a non-negative number.",
+        "roomsInvalid": "Rooms must be a non-negative whole number."
+      }
+    },
+    "unitsSection": {
+      "showArchived": "Show archived",
+      "loadFailed": "Could not load units",
+      "loadFailedBody": "The units could not be loaded.",
+      "empty": "No units defined for this building yet. Use “Add unit” to create one.",
+      "unit": "Unit",
+      "status": "Status",
+      "active": "Active",
+      "archived": "Archived",
+      "restore": "Restore",
+      "archive": "Archive",
+      "archiving": "Archiving…",
+      "archiveTitle": "Archive unit",
+      "archiveConfirm": "Archive unit <bold>{{designation}}</bold>? It will be hidden from the active list but can be restored later.",
+      "floorGround": "G",
+      "floorBasement": "B{{level}}"
+    },
+    "myUnit": {
+      "title": "My Unit",
+      "subtitle": "Your unit details and residency status.",
+      "loading": "Loading your unit…",
+      "loadError": "Could not load your unit: {{message}}",
+      "unknownError": "Unknown error",
+      "emptyNotRegistered": "You are not currently registered as a resident of any unit.",
+      "emptyContactManager": "If you believe this is a mistake, please contact your building manager.",
+      "chooseUnit": "Choose a unit",
+      "unitHeading": "Unit {{designation}}",
+      "entrance": "Entrance {{entrance}}",
+      "size": "Size",
+      "ownershipShare": "Ownership share",
+      "building": "Building",
+      "residency": "Your residency",
+      "role": "Role",
+      "primaryContact": "Primary contact",
+      "active": "Active",
+      "ended": "Ended",
+      "since": "Since",
+      "until": "Until",
+      "privacyNote": "For your privacy, other residents and owners of this unit are not shown here.",
+      "residentType": {
+        "owner": "Owner",
+        "tenant": "Tenant",
+        "family_member": "Family member",
+        "subtenant": "Subtenant"
+      }
+    }
   },
   "documents": {
     "title": "Documents",
@@ -1128,9 +1611,6 @@
     "selectUnit": "Please select a unit for this dispute.",
     "multipleRespondents": "Multiple respondents",
     "multipleRespondentsMsg": "Only the first respondent will be recorded.",
-    "addEvidence": "Add Evidence",
-    "filedWithEvidenceErrors": "Dispute filed (some files failed)",
-    "evidenceUploadErrorsMsg": "{{count}} evidence file(s) could not be uploaded. Retry from the dispute detail page.",
     "mediation": {
       "title": "Mediation Workspace",
       "backToDispute": "← Back to Dispute",
@@ -1271,7 +1751,12 @@
           "resolutionProposed": "Resolution proposed",
           "resolutionAccepted": "Resolution accepted",
           "escalated": "Escalated",
-          "closed": "Closed"
+          "closed": "Closed",
+          "partyAdded": "Party added",
+          "sessionCompleted": "Session completed",
+          "resolutionVoted": "Vote on resolution",
+          "actionCreated": "Action item created",
+          "actionCompleted": "Action item completed"
         }
       },
       "errors": {
@@ -1306,15 +1791,6 @@
     "filePageTitle": "File a Dispute",
     "subjectPlaceholder": "Brief summary of the dispute",
     "descriptionPlaceholder": "Describe the dispute in detail. Include dates, times, and specific incidents (minimum 30 characters).",
-    "evidence": {
-      "unsupportedType": "Unsupported file type: {{type}}",
-      "fileTooLarge": "File too large (max {{maxMb}} MB): {{name}}",
-      "dropHint": "Drop files here or <1>browse</1>",
-      "formatHint": "JPG, PNG, PDF, MP3, MP4 · max {{maxMb}} MB per file · up to {{maxFiles}} files",
-      "descriptionPlaceholder": "Short description (optional)",
-      "descriptionLabel": "Description for {{name}}",
-      "removeLabel": "Remove {{name}}"
-    },
     "categoryCommonArea": "Common Area",
     "categoryParking": "Parking",
     "categoryPets": "Pets",
@@ -1428,10 +1904,10 @@
       },
       "mediation": "Mediation",
       "resolve": "Resolve",
-      "overdueActions_one": "{{count}} overdue action",
-      "overdueActions_other": "{{count}} overdue actions",
-      "pendingActions_one": "{{count}} pending action",
-      "pendingActions_other": "{{count}} pending actions",
+      "overdueActions_one": "{{count}} overdue action item",
+      "overdueActions_other": "{{count}} overdue action items",
+      "pendingActions_one": "{{count}} pending action item",
+      "pendingActions_other": "{{count}} pending action items",
       "desiredResolution": "Desired Resolution",
       "evidenceCount": "Evidence ({{count}})",
       "noEvidence": "No evidence submitted.",
@@ -1446,19 +1922,44 @@
       "filedOn": "Filed on",
       "assignedTo": "Assigned to",
       "parties": "Parties",
-      "proposalPlaceholder": "Describe your proposed resolution...",
+      "proposalPlaceholder": "Describe your proposed resolution…",
       "propose": "Propose",
       "createActionItem": "Create Action Item",
       "actionTitle": "Title",
       "assignTo": "Assign to",
-      "selectParty": "Select party...",
-      "dueDate": "Due Date"
+      "selectParty": "Select party…",
+      "dueDate": "Due Date",
+      "changeStatus": "Change status…",
+      "applyStatus": "Apply",
+      "unknownUser": "Unknown user",
+      "actionFailed": "Action failed",
+      "evidenceDeleted": "Evidence deleted",
+      "resolutionProposed": "Resolution proposed",
+      "voteRecorded": "Vote recorded",
+      "resolutionAccepted": "Resolution accepted",
+      "resolutionImplemented": "Resolution marked as implemented",
+      "actionCreated": "Action item created",
+      "actionCompleted": "Action item completed",
+      "reminderSent": "Reminder sent",
+      "actionEscalationReason": "Action item not completed as agreed",
+      "actionEscalated": "Action item escalated",
+      "description": "Description",
+      "evidenceHeading": "Evidence ({{total}})",
+      "viewEvidence": "View",
+      "deleteEvidence": "Delete",
+      "details": "Details",
+      "unit": "Unit",
+      "createActionTitle": "Create Action Item",
+      "actionDescription": "Description",
+      "actionAssignee": "Assign to",
+      "actionDueDate": "Due date",
+      "create": "Create"
     },
     "timeline": {
       "title": "Activity Timeline",
       "empty": "No activity yet.",
       "statusChange": "Status: {{from}} → {{to}}",
-      "showMore": "Show more activity..."
+      "showMore": "Show more activity…"
     },
     "resolution": {
       "status": {
@@ -1466,9 +1967,10 @@
         "accepted": "Accepted",
         "rejected": "Rejected",
         "partially_accepted": "Partially Accepted",
-        "implemented": "Implemented"
+        "implemented": "Implemented",
+        "partiallyAccepted": "Partially Accepted"
       },
-      "approval": "{{percent}}% approval",
+      "approval": "{{rate}} approval",
       "proposedBy": "Proposed by {{name}} on {{date}}",
       "proposalTitle": "Resolution Proposal",
       "terms": "Terms ({{completed}}/{{total}})",
@@ -1479,7 +1981,13 @@
       "reject": "Reject",
       "accept": "Accept",
       "finalize": "Finalize Resolution",
-      "markImplemented": "Mark as Implemented"
+      "markImplemented": "Mark as Implemented",
+      "proposalHeading": "Resolution Proposal",
+      "termAssignedTo": "Assigned to: {{name}}",
+      "termDue": "Due: {{date}}",
+      "termCompleted": "Completed: {{date}}",
+      "voteAccepted": "Accepted",
+      "voteRejected": "Rejected"
     },
     "action": {
       "status": {
@@ -1487,7 +1995,8 @@
         "in_progress": "In Progress",
         "completed": "Completed",
         "overdue": "Overdue",
-        "escalated": "Escalated"
+        "escalated": "Escalated",
+        "inProgress": "In Progress"
       },
       "overdueBy_one": "Overdue by {{count}} day",
       "overdueBy_other": "Overdue by {{count}} days",
@@ -1503,7 +2012,60 @@
       "start": "Start",
       "complete": "Complete",
       "sendReminder": "Send Reminder",
-      "escalate": "Escalate"
+      "escalate": "Escalate",
+      "completedNotes": "Completed:",
+      "reminderSentOn": "Reminder sent: {{date}}",
+      "view": "View"
+    },
+    "partyRole": {
+      "complainant": "Complainant",
+      "respondent": "Respondent",
+      "witness": "Witness",
+      "mediator": "Mediator"
+    },
+    "file": {
+      "intro": "Submit a formal dispute. All fields marked <1>*</1> are required.",
+      "typeHeading": "Dispute type",
+      "locationHeading": "Location",
+      "unitLabel": "Unit",
+      "selectUnit": "Select unit…",
+      "otherPartyLabel": "Other party (optional)",
+      "notSpecified": "Not specified",
+      "detailsHeading": "Details",
+      "subjectLabel": "Subject",
+      "descriptionLabel": "Description",
+      "descriptionHint_one": "Min {{count}} character",
+      "descriptionHint_other": "Min {{count}} characters",
+      "nextHeading": "What happens next?",
+      "nextStep1": "Your dispute receives a reference number",
+      "nextStep2": "The other party is notified and can respond",
+      "nextStep3": "A manager or mediator reviews the case",
+      "nextStep4": "Mediation sessions may be scheduled if needed",
+      "nextStep5": "A resolution will be proposed and tracked",
+      "filing": "Filing…",
+      "submit": "File Dispute",
+      "types": {
+        "noise": "Noise",
+        "noiseDesc": "Excessive noise, disturbances, quiet hours violations",
+        "damage": "Property Damage",
+        "damageDesc": "Physical damage to property, equipment, or common areas",
+        "payment": "Payment / Fees",
+        "paymentDesc": "Disputed charges, unpaid fees, billing disagreements",
+        "lease": "Lease Terms",
+        "leaseDesc": "Violations or disagreements about lease conditions",
+        "maintenance": "Maintenance",
+        "maintenanceDesc": "Unresolved maintenance issues, neglect of repairs",
+        "other": "Other",
+        "otherDesc": "Any other dispute not covered by the categories above"
+      },
+      "errors": {
+        "typeRequired": "Please select a dispute type.",
+        "subjectMin": "Subject must be at least 5 characters.",
+        "subjectMax": "Subject must be at most 200 characters.",
+        "descriptionMin": "Description must be at least 30 characters.",
+        "descriptionMax": "Description must be at most 5000 characters.",
+        "unitRequired": "Please select a unit."
+      }
     }
   },
   "financial": {
@@ -1517,7 +2079,26 @@
     "invoices": {
       "title": "Invoice Management",
       "subtitle": "Create, send, and track invoices",
-      "createNew": "Create Invoice"
+      "createNew": "Create Invoice",
+      "searchPlaceholder": "Search invoices...",
+      "allStatuses": "All Statuses",
+      "empty": "No invoices found",
+      "columns": {
+        "number": "Invoice #",
+        "issueDate": "Issue Date",
+        "dueDate": "Due Date",
+        "status": "Status",
+        "total": "Total",
+        "balanceDue": "Balance Due"
+      },
+      "send": "Send",
+      "pdf": "PDF",
+      "pdfDownloading": "PDF…",
+      "viewAria": "View invoice details for {{number}}",
+      "pagination": "Showing {{from}} to {{to}} of {{total}} invoices",
+      "sent": "Invoice sent",
+      "sendFailed": "Failed to send invoice",
+      "pdfFailed": "Failed to download PDF"
     },
     "payments": {
       "title": "Payment Management",
@@ -1526,7 +2107,9 @@
       "totalReceived": "Total Received",
       "pendingReconciliation": "Pending Reconciliation",
       "pendingReconciliationTitle": "Pending Reconciliation",
-      "recentPayments": "Recent Payments"
+      "recentPayments": "Recent Payments",
+      "matchFailed": "Failed to allocate payment",
+      "autoMatchFailed": "Failed to auto-match payments"
     },
     "budgets": {
       "title": "Budget Management",
@@ -1535,6 +2118,429 @@
       "budgetsList": "Budgets",
       "noBudgets": "No budgets found",
       "createFirst": "Create Your First Budget"
+    },
+    "startDate": "Start date",
+    "endDate": "End date",
+    "view": "View",
+    "invoiceStatus": {
+      "draft": "Draft",
+      "sent": "Sent",
+      "paid": "Paid",
+      "partial": "Partial",
+      "overdue": "Overdue",
+      "cancelled": "Cancelled",
+      "void": "Void"
+    },
+    "paymentMethod": {
+      "bank_transfer": "Bank Transfer",
+      "card": "Card",
+      "cash": "Cash",
+      "check": "Check",
+      "online": "Online Payment",
+      "direct_debit": "Direct Debit",
+      "other": "Other"
+    },
+    "paymentStatus": {
+      "pending": "Pending",
+      "completed": "Completed",
+      "failed": "Failed",
+      "refunded": "Refunded",
+      "cancelled": "Cancelled"
+    },
+    "budgetStatus": {
+      "draft": "Draft",
+      "approved": "Approved",
+      "active": "Active",
+      "closed": "Closed"
+    },
+    "buildingFilter": {
+      "label": "Building:",
+      "allBuildings": "All Buildings"
+    },
+    "dateRange": {
+      "today": "Today",
+      "week": "This Week",
+      "month": "This Month",
+      "quarter": "This Quarter",
+      "year": "This Year",
+      "clear": "Clear",
+      "from": "From:",
+      "to": "To:"
+    },
+    "dashboard": {
+      "title": "Financial Dashboard",
+      "totalBalance": "Total Balance",
+      "totalBalanceSubtitle": "Across all accounts",
+      "outstanding": "Outstanding",
+      "outstandingSubtitle": "Pending payments",
+      "overdueSubtitle_one": "{{count}} invoice past due",
+      "overdueSubtitle_other": "{{count}} invoices past due",
+      "quickNav": {
+        "label": "Finance sections",
+        "invoices": "Invoices",
+        "invoicesDesc": "Create, send and track invoices",
+        "payments": "Payments",
+        "paymentsDesc": "Record and reconcile payments",
+        "budgets": "Budgets",
+        "budgetsDesc": "Plan and track budgets",
+        "reports": "Reports",
+        "reportsDesc": "Income statement, balance sheet and cash flow"
+      }
+    },
+    "invoiceChart": {
+      "title": "Invoice Status",
+      "empty": "No invoices yet"
+    },
+    "recentPayments": {
+      "empty": "No recent payments",
+      "viewAll": "View all",
+      "reference": "Ref: {{reference}}"
+    },
+    "overdueInvoices": {
+      "title": "Overdue Invoices",
+      "empty": "No overdue invoices",
+      "daysOverdue_one": "{{count}} day overdue",
+      "daysOverdue_other": "{{count}} days overdue",
+      "dueAndBalance": "Due: {{date}} • Balance: {{amount}}",
+      "sendReminder": "Send Reminder"
+    },
+    "arAging": {
+      "title": "Accounts Receivable Aging",
+      "empty": "No outstanding receivables",
+      "unit": "Unit",
+      "current": "Current",
+      "days1to30": "1-30 Days",
+      "days31to60": "31-60 Days",
+      "days60plus": "60+ Days",
+      "total": "Total",
+      "viewUnit": "View details for unit {{unit}}"
+    },
+    "invoiceDetail": {
+      "title": "Invoice {{number}}",
+      "billingPeriod": "Billing period",
+      "lineItems": "Line items",
+      "description": "Description",
+      "quantity": "Qty",
+      "unitPrice": "Unit price",
+      "tax": "Tax",
+      "sending": "Sending...",
+      "send": "Send invoice",
+      "downloadPdf": "Download PDF",
+      "paymentHistory": "Payment history",
+      "issueDate": "Issue date",
+      "dueDate": "Due date",
+      "amount": "Amount",
+      "subtotal": "Subtotal",
+      "total": "Total",
+      "paid": "Paid",
+      "balanceDue": "Balance due",
+      "notes": "Notes",
+      "recordPayment": "Record payment",
+      "loadFailed": "Could not load this invoice."
+    },
+    "totals": {
+      "subtotal": "Subtotal:",
+      "tax": "Tax:",
+      "total": "Total:",
+      "paid": "Paid:",
+      "balanceDue": "Balance Due:"
+    },
+    "form": {
+      "unit": "Unit",
+      "selectUnit": "Select a unit",
+      "unitRequired": "Unit is required",
+      "currency": "Currency",
+      "notes": "Notes",
+      "notesPlaceholder": "Optional notes",
+      "removeRow": "Remove",
+      "saving": "Saving..."
+    },
+    "invoiceForm": {
+      "billingPeriodStart": "Billing period start",
+      "billingPeriodEnd": "Billing period end",
+      "dueDateRequired": "Due date is required",
+      "itemsRequired": "At least one line item is required",
+      "addItem": "Add item",
+      "taxRatePlaceholder": "Tax %",
+      "notesPlaceholder": "Optional notes to include on the invoice",
+      "submitting": "Creating...",
+      "unit": "Unit",
+      "selectUnit": "Select a unit",
+      "unitRequired": "Unit is required",
+      "dueDate": "Due date",
+      "currency": "Currency",
+      "lineItems": "Line items",
+      "description": "Description",
+      "quantity": "Qty",
+      "unitPrice": "Unit price",
+      "taxRate": "Tax %",
+      "removeItem": "Remove item",
+      "subtotal": "Subtotal",
+      "tax": "Tax",
+      "total": "Total",
+      "notes": "Notes",
+      "submit": "Create invoice"
+    },
+    "paymentForm": {
+      "allocateToInvoices": "Allocate to invoices",
+      "autoFillAmount": "Auto-fill amount ({{amount}})",
+      "due": "Due: {{date}}",
+      "amountRequired": "Valid amount is required",
+      "paymentMethod": "Payment method",
+      "selectPaymentMethod": "Select payment method",
+      "paymentMethodRequired": "Payment method is required",
+      "reference": "Reference number",
+      "referencePlaceholder": "Bank ref, check no., etc.",
+      "paymentDate": "Payment date",
+      "submitting": "Recording...",
+      "unit": "Unit",
+      "selectUnit": "Select a unit",
+      "unitRequired": "Unit is required",
+      "amount": "Amount",
+      "currency": "Currency",
+      "notes": "Notes",
+      "notesPlaceholder": "Optional notes",
+      "submit": "Record payment"
+    },
+    "reconciliation": {
+      "title": "Payment Reconciliation",
+      "allReconciled": "All Reconciled",
+      "allReconciledBody": "No unallocated payments or unpaid invoices",
+      "autoMatchAll": "Auto-Match All",
+      "unallocatedPayments": "Unallocated Payments ({{count}})",
+      "noUnallocated": "No unallocated payments",
+      "unpaidInvoices": "Unpaid Invoices ({{count}})",
+      "noUnpaid": "No unpaid invoices",
+      "due": "Due: {{date}}",
+      "payment": "Payment:",
+      "amount": "Amount:",
+      "invoice": "Invoice:",
+      "amountDue": "({{amount}} due)",
+      "match": "Match"
+    },
+    "budget": {
+      "overBudget": "Over Budget",
+      "percentUsed": "{{percent}}% used",
+      "budgetAmount": "{{amount}} budget",
+      "budget": "Budget",
+      "actual": "Actual",
+      "variance": "Variance",
+      "noBudgetForYear": "No budget set for {{year}}",
+      "overviewTitle": "Budget Overview - {{year}}",
+      "percentOfBudgetUsed": "{{percent}}% of budget used",
+      "editBudget": "Edit Budget",
+      "totalBudget": "Total Budget",
+      "totalSpent": "Total Spent",
+      "totalActual": "Total Actual",
+      "remaining": "Remaining",
+      "alertTitle": "Budget Alert",
+      "categoryCount_one": "{{count}} category",
+      "categoryCount_other": "{{count}} categories",
+      "alertBody_one": "{{categories}} is over budget.",
+      "alertBody_other": "{{categories}} are over budget."
+    },
+    "budgetForm": {
+      "year": "Budget Year",
+      "categories": "Budget Categories",
+      "addCategory": "Add Category",
+      "categoryNamePlaceholder": "Category name",
+      "categoriesRequired": "At least one category with amount is required",
+      "save": "Save Budget",
+      "defaultCategories": {
+        "maintenance": "Maintenance",
+        "utilities": "Utilities",
+        "insurance": "Insurance",
+        "managementFees": "Management Fees",
+        "repairs": "Repairs",
+        "cleaning": "Cleaning",
+        "security": "Security",
+        "landscaping": "Landscaping",
+        "reserveFund": "Reserve Fund",
+        "other": "Other"
+      }
+    },
+    "reports": {
+      "title": "Financial Reports",
+      "subtitle": "Income statement, balance sheet, and cash-flow reports.",
+      "tabs": {
+        "incomeStatement": "Income Statement",
+        "balanceSheet": "Balance Sheet",
+        "cashFlow": "Cash Flow"
+      },
+      "from": "From",
+      "to": "To",
+      "asOf": "As of",
+      "export": "Export:",
+      "exporting": "Exporting…",
+      "exportFailed": "Export failed",
+      "noEntries": "No entries",
+      "balance": "Balance",
+      "asOfDate": "As of {{date}}",
+      "balanceSheetEmpty": "Select an as-of date to view the balance sheet.",
+      "incomeStatementEmpty": "Select a date range to view the income statement.",
+      "cashFlowEmpty": "Select a date range to view the cash-flow statement.",
+      "noAccounts": "No accounts",
+      "totalAssets": "Total Assets",
+      "totalLiabilities": "Total Liabilities",
+      "netEquity": "Net Equity",
+      "incomeStatement": {
+        "revenue": "Revenue",
+        "totalRevenue": "Total Revenue",
+        "expenses": "Expenses",
+        "totalExpenses": "Total Expenses",
+        "netIncome": "Net Income"
+      },
+      "cashFlow": {
+        "inflows": "Inflows",
+        "totalInflows": "Total Inflows",
+        "outflows": "Outflows",
+        "totalOutflows": "Total Outflows",
+        "netCashFlow": "Net Cash Flow"
+      },
+      "accountType": {
+        "operating": "Operating",
+        "reserve": "Reserve",
+        "utilities": "Utilities",
+        "unit_ledger": "Unit Ledgers",
+        "custom": "Custom"
+      }
+    },
+    "paymentMethods": {
+      "bank_transfer": "Bank transfer",
+      "card": "Card",
+      "cash": "Cash",
+      "check": "Check",
+      "online": "Online payment",
+      "direct_debit": "Direct debit",
+      "other": "Other"
+    },
+    "invoiceStatuses": {
+      "draft": "Draft",
+      "sent": "Sent",
+      "paid": "Paid",
+      "partial": "Partially paid",
+      "overdue": "Overdue",
+      "cancelled": "Cancelled",
+      "void": "Void"
+    },
+    "pages": {
+      "newInvoiceTitle": "New invoice",
+      "newInvoiceSubtitle": "Bill a unit for fees and services",
+      "newPaymentTitle": "Record payment",
+      "newPaymentSubtitle": "Record a received payment and allocate it to open invoices",
+      "backToInvoices": "Back to invoices",
+      "backToPayments": "Back to payments",
+      "invoiceCreated": "Invoice created",
+      "createInvoiceFailed": "Failed to create invoice",
+      "paymentRecorded": "Payment recorded",
+      "recordPaymentFailed": "Failed to record payment",
+      "invoiceSent": "Invoice sent",
+      "sendInvoiceFailed": "Failed to send invoice",
+      "pdfFailed": "Failed to download PDF",
+      "invoiceNotFound": "Invoice not found",
+      "noUnits": "No units available. Add units to a building first."
+    },
+    "budgetPages": {
+      "loading": "Loading…",
+      "retry": "Retry",
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "budgeted": "Budgeted",
+      "actual": "Actual",
+      "remaining": "Remaining",
+      "wholeOrganization": "Whole organization",
+      "backToBudgets": "Back to budgets",
+      "newTitle": "New budget",
+      "newSubtitle": "Set up an annual budget, then add its line items",
+      "notFound": "Budget not found",
+      "status": {
+        "draft": "Draft",
+        "pending_approval": "Pending approval",
+        "approved": "Approved",
+        "active": "Active",
+        "closed": "Closed"
+      },
+      "list": {
+        "title": "Budget Management",
+        "subtitle": "Plan and track budgets against actual spending",
+        "createNew": "Create budget",
+        "createFirst": "Create your first budget",
+        "budgetsList": "Budgets",
+        "noBudgets": "No budgets for {{year}}",
+        "loadFailed": "Failed to load budgets",
+        "totalBudget": "Total budgeted",
+        "totalActual": "Total actual",
+        "remaining": "Remaining",
+        "yearFilter": "Fiscal year"
+      },
+      "form": {
+        "name": "Budget name",
+        "namePlaceholder": "e.g. Operating budget 2027",
+        "nameRequired": "Enter a budget name",
+        "fiscalYear": "Fiscal year",
+        "building": "Building",
+        "wholeOrganization": "Whole organization (all buildings)",
+        "notes": "Notes",
+        "itemsHint": "After saving you can add budget line items by category.",
+        "submit": "Create budget"
+      },
+      "detail": {
+        "fiscalYear": "Fiscal year {{year}}",
+        "approvedOn": "Approved on {{date}}",
+        "itemsOverBudget": "Items over budget"
+      },
+      "items": {
+        "title": "Budget items",
+        "empty": "This budget has no items.",
+        "emptyDraft": "No items yet. Add the first line item below.",
+        "addTitle": "Add line item",
+        "add": "Add item",
+        "category": "Category",
+        "newCategory": "+ New category",
+        "newCategoryName": "New category name",
+        "noCategories": "No categories yet — name a new one.",
+        "name": "Item",
+        "amount": "Budgeted amount",
+        "description": "Description",
+        "actions": "Actions",
+        "remove": "Remove",
+        "removeNamed": "Remove {{name}}",
+        "categoryRequired": "Enter a category name",
+        "nameRequired": "Enter an item name",
+        "amountInvalid": "Enter a valid amount"
+      },
+      "actuals": {
+        "record": "Record actual",
+        "recordNamed": "Record actual spend for {{name}}",
+        "title": "Record actual spend for {{item}}",
+        "amount": "Amount spent",
+        "date": "Date",
+        "save": "Save",
+        "dateRequired": "Enter a date"
+      },
+      "actions": {
+        "submit": "Submit for approval",
+        "approve": "Approve",
+        "activate": "Activate",
+        "close": "Close budget",
+        "delete": "Delete",
+        "confirmDelete": "Confirm delete"
+      },
+      "toast": {
+        "created": "Budget created",
+        "createFailed": "Failed to create budget",
+        "submitDone": "Budget submitted for approval",
+        "approveDone": "Budget approved",
+        "activateDone": "Budget activated",
+        "closeDone": "Budget closed",
+        "deleteDone": "Budget deleted",
+        "actionFailed": "Action failed",
+        "itemAdded": "Item added",
+        "itemAddFailed": "Failed to add item",
+        "itemRemoveFailed": "Failed to remove item",
+        "actualRecorded": "Actual spend recorded",
+        "actualFailed": "Failed to record actual spend"
+      }
     }
   },
   "announcements": {
@@ -1726,6 +2732,34 @@
       "failedToCreate": "Failed to create emergency contact",
       "failedToUpdate": "Failed to update emergency contact",
       "failedToDelete": "Failed to delete emergency contact"
+    },
+    "contactTypes": {
+      "fire_department": "Fire Department",
+      "police": "Police",
+      "ambulance": "Ambulance",
+      "utility_company": "Utility Company",
+      "building_manager": "Building Manager",
+      "security": "Security",
+      "maintenance": "Maintenance",
+      "medical": "Medical",
+      "other": "Other"
+    },
+    "card": {
+      "inactive": "Inactive",
+      "role": "Role:",
+      "phone": "Phone:",
+      "phoneSecondary": "Secondary Phone:",
+      "email": "Email:",
+      "address": "Address:",
+      "availableHours": "Available Hours:",
+      "notes": "Notes:",
+      "priority": "Priority:",
+      "editAria": "Edit {{name}}",
+      "deleteAria": "Delete {{name}}"
+    },
+    "list": {
+      "empty": "No emergency contacts found.",
+      "emptyHint": "Add your first emergency contact to get started."
     }
   },
   "news": {
@@ -1750,7 +2784,73 @@
       "contentRequired": "Content is required",
       "createFailed": "Failed to create article",
       "updateFailed": "Failed to update article",
-      "loadFailed": "Failed to load article"
+      "loadFailed": "Failed to load article",
+      "loadListFailed": "Failed to load articles",
+      "deleteFailed": "Failed to delete article",
+      "publishFailed": "Failed to publish article",
+      "archiveFailed": "Failed to archive article",
+      "pinFailed": "Failed to update pin status",
+      "reactionFailed": "Failed to update reaction",
+      "commentPostFailed": "Failed to post comment",
+      "commentUpdateFailed": "Failed to update comment",
+      "commentDeleteFailed": "Failed to delete comment"
+    },
+    "listTitle": "News & Announcements",
+    "searchPlaceholder": "Search articles...",
+    "filters": {
+      "allStatuses": "All statuses",
+      "drafts": "Drafts",
+      "pinnedOnly": "Pinned only"
+    },
+    "loadingArticles": "Loading articles...",
+    "loadingArticle": "Loading article...",
+    "emptyFiltered": "No articles match your filters.",
+    "empty": "No articles yet. Create your first article!",
+    "confirmDelete": "Delete this article? This cannot be undone.",
+    "backToNews": "Back to News",
+    "pinned": "Pinned",
+    "views": "Views",
+    "viewCount_one": "{{count}} view",
+    "viewCount_other": "{{count}} views",
+    "coverAlt": "Cover for: {{title}}",
+    "statusAria": "Status: {{status}}",
+    "publishedOn": "Published: {{date}}",
+    "actions": {
+      "viewAria": "View article: {{title}}",
+      "editAria": "Edit article: {{title}}",
+      "publishAria": "Publish article: {{title}}",
+      "archiveAria": "Archive article: {{title}}",
+      "deleteAria": "Delete article: {{title}}",
+      "publish": "Publish",
+      "archive": "Archive",
+      "pin": "Pin",
+      "unpin": "Unpin",
+      "pinAria": "Pin article",
+      "unpinAria": "Unpin article"
+    },
+    "reactions": {
+      "like": "Like",
+      "love": "Love",
+      "surprised": "Surprised",
+      "sad": "Sad",
+      "angry": "Angry",
+      "aria": "{{reaction}} reaction",
+      "ariaActive": "{{reaction}} reaction (active)",
+      "total_one": "{{count}} reaction",
+      "total_other": "{{count}} reactions"
+    },
+    "comments": {
+      "title": "Comments ({{count}})",
+      "placeholder": "Write a comment...",
+      "replyPlaceholder": "Write a reply...",
+      "charCount": "{{length}}/{{max}} characters",
+      "post": "Post Comment",
+      "posting": "Posting...",
+      "reply": "Reply",
+      "deleted": "[This comment has been deleted]",
+      "empty": "No comments yet. Be the first to comment!",
+      "replyCount_one": "{{count}} reply",
+      "replyCount_other": "{{count}} replies"
     }
   },
   "errors": {
@@ -1858,8 +2958,33 @@
       },
       "rateLimitRetry": "Please wait {{seconds}} seconds before trying again."
     },
+    "pages": {
+      "goBack": "Go back",
+      "tryAgain": "Try again",
+      "backToDashboard": "Back to dashboard",
+      "notFound": {
+        "title": "Page not found",
+        "description": "The page you're looking for doesn't exist or has moved."
+      },
+      "forbidden": {
+        "title": "Access denied",
+        "description": "You don't have permission to view this page. Contact your manager if you think this is a mistake."
+      },
+      "serverError": {
+        "description": "An unexpected error occurred. Please try again in a moment."
+      },
+      "sessionExpired": {
+        "title": "Your session has expired",
+        "description": "Sign in again to continue. We'll bring you back to where you were.",
+        "signIn": "Sign in"
+      },
+      "inlineError": {
+        "description": "Please try again. If the issue persists, contact support."
+      }
+    },
     "accessDenied": "Access Denied",
-    "backToDashboard": "Back to dashboard"
+    "backToDashboard": "Back to dashboard",
+    "neighborNotFound": "Neighbor not found."
   },
   "notifications": {
     "title": "Notifications",
@@ -1872,7 +2997,8 @@
     "highContrast": "High Contrast",
     "fontSize": "Font Size",
     "reducedMotion": "Reduced Motion",
-    "screenReader": "Screen Reader Optimized"
+    "screenReader": "Screen Reader Optimized",
+    "checkingAuthentication": "Checking authentication"
   },
   "outages": {
     "title": "Outages",
@@ -1930,7 +3056,10 @@
       "low": "Low",
       "medium": "Medium",
       "high": "High",
-      "critical": "Critical"
+      "critical": "Critical",
+      "informational": "Informational",
+      "minor": "Minor",
+      "major": "Major"
     },
     "form": {
       "title": "Title",
@@ -1952,7 +3081,10 @@
       "startRequired": "Scheduled start time is required",
       "outageNotFound": "Outage not found",
       "outageNotFoundDesc": "The outage you're looking for does not exist."
-    }
+    },
+    "failedToStart": "Failed to start outage",
+    "failedToResolve": "Failed to resolve outage",
+    "failedToCancel": "Failed to cancel outage"
   },
   "criticalNotifications": {
     "title": "Critical Notifications",
@@ -2042,9 +3174,11 @@
     "completeIn60Seconds": "Most tasks complete in under 60 seconds",
     "recentActivity": "Recent activity",
     "activity": {
-      "meterReadingSubmitted": "Meter reading submitted",
-      "voteSubmitted": "Vote submitted",
-      "faultReported": "Fault reported"
+      "announcementPublished": "New announcement: {{title}}",
+      "faultReportedByYou": "You reported a fault: {{title}}",
+      "loading": "Loading activity…",
+      "loadFailed": "Could not load recent activity.",
+      "empty": "No activity yet. New announcements and faults you report will appear here."
     },
     "stats": {
       "pendingFaults": "Pending faults",
@@ -2062,7 +3196,9 @@
       "closeFilters": "Close filters",
       "showHelp": "Show this help",
       "hint": "Focus the action list to use these shortcuts"
-    }
+    },
+    "refresh": "Refresh",
+    "viewMyUnit": "View my unit"
   },
   "neighbors": {
     "title": "Building Neighbors",
@@ -2129,7 +3265,9 @@
       "showMoveInDate": "Move-in Date",
       "showMoveInDateDescription": "When you moved into the building",
       "saveSuccess": "Privacy settings saved successfully",
-      "saveError": "Failed to save privacy settings"
+      "saveError": "Failed to save privacy settings",
+      "saved": "Privacy settings saved.",
+      "saveFailed": "Failed to save privacy settings."
     },
     "invitation": {
       "title": "Invite Neighbor",
@@ -2277,11 +3415,12 @@
       "fileTooLarge": "File \"{{name}}\" is too large. Maximum size is 25MB.",
       "invalidFileType": "File \"{{name}}\" has an unsupported file type.",
       "downloadFailed": "Failed to download attachment"
-    }
+    },
+    "messageSent": "Message sent",
+    "sendFailed": "Failed to send message"
   },
   "meters": {
     "title": "Meters",
-    "metersLabel": "meters",
     "meterInfo": "Meter Information",
     "type": "Type",
     "serialNumber": "Serial Number",
@@ -2312,7 +3451,6 @@
     "pendingValidations": "Pending Validations",
     "pendingValidationsDescription": "Review and validate meter readings submitted by residents.",
     "noPendingValidations": "No pending validations",
-    "pendingReadings": "pending readings",
     "approve": "Approve",
     "reject": "Reject",
     "correct": "Correct",
@@ -2323,7 +3461,6 @@
     "correctedValue": "Corrected Value",
     "correctionNotesPlaceholder": "Optional notes about the correction...",
     "compare": "Compare",
-    "readings": "readings",
     "perPeriod": "per period",
     "trend": "Trend",
     "trendUp": "Consumption increasing",
@@ -2401,7 +3538,10 @@
       "overlay": "Overlay",
       "sideBySide": "Side by Side",
       "selectToCompare": "Select meters and click Compare to view data",
-      "exportData": "Export Data"
+      "exportData": "Export Data",
+      "noData": "No consumption data for the selected meters in this period",
+      "loadFailedTitle": "Comparison failed",
+      "loadFailed": "Could not load consumption for one or more meters"
     },
     "tips": {
       "title": "Tips for Accurate Readings",
@@ -2444,7 +3584,22 @@
     "updateFailed": "Could not update reading",
     "readingValidated": "Reading validated",
     "validationFailedTitle": "Validation failed",
-    "validationFailed": "Could not validate reading"
+    "validationFailed": "Could not validate reading",
+    "summary_one": "Showing {{shown}} of {{count}} meter",
+    "summary_other": "Showing {{shown}} of {{count}} meters",
+    "pendingSummary_one": "Showing {{shown}} of {{count}} pending reading",
+    "pendingSummary_other": "Showing {{shown}} of {{count}} pending readings",
+    "readings_one": "{{count}} reading",
+    "readings_other": "{{count}} readings",
+    "notice": {
+      "loading": "Loading meter…",
+      "notFound": "Meter not found",
+      "notFoundBody": "This meter could not be loaded. It may have been removed or you may not have access.",
+      "back": "Back to meters"
+    },
+    "nav": {
+      "validations": "Pending validations"
+    }
   },
   "personMonths": {
     "title": "Person Months",
@@ -2784,7 +3939,8 @@
         "propertySizeRequired": "Please enter a valid property size",
         "startDateRequired": "Please select a start date"
       }
-    }
+    },
+    "policyType": "Policy type"
   },
   "subscription": {
     "dashboard": {
@@ -3505,7 +4661,6 @@
   "leases": {
     "title": "Lease Management",
     "perMonth": "/month",
-    "daysRemaining": "days remaining",
     "expiringSoon": "Expiring Soon",
     "renew": "Renew",
     "terminate": "Terminate",
@@ -3537,7 +4692,9 @@
         "pendingApplications": "Pending Applications",
         "overduePayments": "Overdue Payments",
         "occupancyRate": "Occupancy: {{rate}}"
-      }
+      },
+      "daysShort_one": "{{count}} day",
+      "daysShort_other": "{{count}} days"
     },
     "list": {
       "title": "All Leases",
@@ -3547,10 +4704,14 @@
       "allStatuses": "All Statuses",
       "allBuildings": "All Buildings",
       "allExpiry": "All Expiry Dates",
-      "expiringIn": "Expiring in {{days}} days",
       "clearFilters": "Clear Filters",
       "noLeases": "No leases found",
-      "createFirst": "Create your first lease"
+      "createFirst": "Create your first lease",
+      "expiringIn_one": "Expiring in {{count}} day",
+      "expiringIn_other": "Expiring in {{count}} days",
+      "filterByStatus": "Filter by status",
+      "filterByBuilding": "Filter by building",
+      "filterByExpiry": "Filter by expiry"
     },
     "detail": {
       "backToLeases": "Back to Leases",
@@ -3587,8 +4748,10 @@
       "reportViolation": "Report Violation",
       "viewAllViolations": "View All Violations",
       "noViolations": "No violations recorded for this lease",
-      "openViolationsWarning": "{{count}} open violation(s) require attention",
-      "moreViolations": "+{{count}} more violation(s)"
+      "openViolationsWarning_one": "{{count}} open violation requires attention",
+      "openViolationsWarning_other": "{{count}} open violations require attention",
+      "moreViolations_one": "+{{count}} more violation",
+      "moreViolations_other": "+{{count}} more violations"
     },
     "create": {
       "title": "Create New Lease",
@@ -3640,12 +4803,29 @@
         "overdue": "Overdue",
         "partial": "Partial",
         "waived": "Waived"
-      }
+      },
+      "recordModal": {
+        "title": "Record payment",
+        "dueOn": "Scheduled payment due on {{date}}",
+        "amount": "Amount paid",
+        "amountInvalid": "Enter an amount greater than zero",
+        "method": "Payment method",
+        "referencePlaceholder": "e.g. variable symbol or transaction ID"
+      },
+      "methods": {
+        "bank_transfer": "Bank transfer",
+        "cash": "Cash",
+        "credit_card": "Credit card",
+        "debit_card": "Debit card",
+        "check": "Cheque",
+        "other": "Other"
+      },
+      "recorded": "Payment recorded",
+      "recordFailed": "Could not record payment"
     },
     "applications": {
       "title": "Tenant Applications",
       "showing": "Showing {{count}} of {{total}} applications",
-      "pendingReview": "pending review",
       "searchPlaceholder": "Search by name or email...",
       "allStatuses": "All Statuses",
       "allUnits": "All Units",
@@ -3715,7 +4895,16 @@
         "pending": "Pending Review",
         "approved": "Approved",
         "rejected": "Rejected"
-      }
+      },
+      "screeningStarted": "Tenant screening requested",
+      "screeningFailed": "Could not start tenant screening",
+      "approved": "Application approved",
+      "rejected": "Application rejected",
+      "reviewFailed": "Could not save the review",
+      "pendingReview_one": "{{count}} pending review",
+      "pendingReview_other": "{{count}} pending review",
+      "filterByStatus": "Filter by status",
+      "filterByUnit": "Filter by unit"
     },
     "templates": {
       "title": "Lease Templates",
@@ -3731,7 +4920,6 @@
       "deactivate": "Deactivate",
       "defaultRent": "Default Rent",
       "duration": "Duration",
-      "months": "months",
       "form": {
         "name": "Template Name",
         "namePlaceholder": "e.g., Standard 12-Month Lease",
@@ -3748,7 +4936,15 @@
       "errors": {
         "nameRequired": "Template name is required",
         "contentRequired": "Lease content is required"
-      }
+      },
+      "created": "Template created",
+      "createFailed": "Could not create template",
+      "updated": "Template updated",
+      "updateFailed": "Could not update template",
+      "activated": "Template activated",
+      "deactivated": "Template deactivated",
+      "months_one": "{{count}} month",
+      "months_other": "{{count}} months"
     },
     "violations": {
       "title": "Lease Violations",
@@ -3838,12 +5034,10 @@
         "violationDate": "Date of Violation",
         "description": "Description",
         "descriptionPlaceholder": "Provide details about the violation, including what happened, when, and any witnesses...",
-        "characters": "characters",
         "evidence": "Evidence (Optional)",
         "uploadFiles": "Upload files",
         "orDragDrop": "or drag and drop",
         "fileTypesHint": "PNG, JPG, PDF, DOC up to 10MB each",
-        "filesSelected": "file(s) selected",
         "submit": "Submit Violation Report",
         "errors": {
           "leaseRequired": "Please select a lease",
@@ -3853,8 +5047,19 @@
           "descriptionTooShort": "Description must be at least 10 characters",
           "dateRequired": "Please provide the date of the violation",
           "dateInFuture": "Violation date cannot be in the future"
-        }
-      }
+        },
+        "characters_one": "{{count}} character",
+        "characters_other": "{{count}} characters",
+        "filesSelected_one": "{{count}} file selected",
+        "filesSelected_other": "{{count}} files selected"
+      },
+      "resolved": "Violation resolved",
+      "resolveFailed": "Could not resolve violation",
+      "disputed": "Dispute submitted",
+      "disputeFailed": "Could not submit dispute",
+      "evidenceUploaded": "Evidence uploaded",
+      "evidenceUploadFailed": "Could not upload evidence",
+      "uploadingEvidence": "Uploading…"
     },
     "esign": {
       "requestSignature": "Request Signature",
@@ -3884,7 +5089,105 @@
     "created": "Lease created",
     "createFailed": "Could not create lease",
     "violationRecorded": "Violation recorded",
-    "violationCreateFailed": "Could not record violation"
+    "violationCreateFailed": "Could not record violation",
+    "daysShort": "{{count}}d",
+    "daysRemaining_one": "{{count}} day remaining",
+    "daysRemaining_other": "{{count}} days remaining",
+    "actions": {
+      "edit": {
+        "title": "Edit lease",
+        "description": "Rent, dates and parties are fixed once a lease exists. Use a renewal or an amendment to change them.",
+        "tenantPhone": "Tenant phone",
+        "parkingSpaces": "Parking spaces",
+        "storageUnits": "Storage units",
+        "maxOccupants": "Maximum occupants",
+        "petsAllowed": "Pets allowed",
+        "smokingAllowed": "Smoking allowed",
+        "invalidNumber": "Enter a whole number of 0 or more",
+        "submit": "Save changes",
+        "success": "Lease updated",
+        "failed": "Could not update the lease"
+      },
+      "renew": {
+        "title": "Renew lease",
+        "description": "A new draft lease starting on {{date}} will be created and this lease will be marked as renewed.",
+        "newEndDate": "New end date",
+        "term_one": "Term: {{count}} month",
+        "term_other": "Term: {{count}} months",
+        "newMonthlyRent": "New monthly rent",
+        "newSecurityDeposit": "New security deposit",
+        "depositHint": "Leave empty to keep the current deposit",
+        "endDateInvalid": "The new end date must be after {{date}}",
+        "rentInvalid": "Enter an amount greater than zero",
+        "depositInvalid": "Enter an amount greater than zero or leave the field empty",
+        "submit": "Renew lease",
+        "success": "Lease renewed. A new draft lease was created.",
+        "failed": "Could not renew the lease"
+      },
+      "terminate": {
+        "title": "Terminate lease",
+        "description": "Record why and as of when the lease ends. You will be asked to confirm.",
+        "reason": "Termination reason",
+        "selectReason": "Select a reason",
+        "reasonRequired": "Select a termination reason",
+        "effectiveDate": "Effective date",
+        "dateRequired": "Choose the effective date",
+        "continue": "Continue",
+        "reasons": {
+          "end_of_term": "End of term",
+          "mutual_agreement": "Mutual agreement",
+          "tenant_breach": "Breach by the tenant",
+          "landlord_breach": "Breach by the landlord",
+          "property_sale": "Sale of the property",
+          "renovation": "Renovation",
+          "other": "Other"
+        },
+        "confirmTitle": "Terminate this lease?",
+        "confirmMessage": "The lease for {{unit}} ({{tenant}}) will be terminated as of {{date}}. This cannot be undone.",
+        "confirm": "Terminate lease",
+        "success": "Lease terminated",
+        "failed": "Could not terminate the lease"
+      },
+      "amendment": {
+        "title": "Add amendment",
+        "amendmentTitle": "Title",
+        "titlePlaceholder": "e.g. Rent adjustment",
+        "titleRequired": "Enter a title",
+        "description": "Description",
+        "dateRequired": "Choose the effective date",
+        "newMonthlyRent": "New monthly rent (optional)",
+        "rentHint": "The new rent is recorded in the amendment; the lease rent itself is not changed automatically.",
+        "submit": "Add amendment",
+        "success": "Amendment added",
+        "failed": "Could not add the amendment"
+      }
+    },
+    "notice": {
+      "loading": {
+        "lease": "Loading lease…",
+        "application": "Loading application…",
+        "violation": "Loading violation…"
+      },
+      "notFound": {
+        "lease": "Lease not found",
+        "application": "Application not found",
+        "violation": "Violation not found"
+      },
+      "notFoundBody": {
+        "lease": "This lease could not be loaded. It may have been removed or you may not have access.",
+        "application": "This application could not be loaded. It may have been removed or you may not have access.",
+        "violation": "This violation could not be loaded. It may have been removed or you may not have access."
+      },
+      "back": {
+        "lease": "Back to leases",
+        "application": "Back to applications",
+        "violation": "Back to violations"
+      }
+    },
+    "nav": {
+      "templates": "Lease templates",
+      "violations": "Violations"
+    }
   },
   "help": {
     "title": "Help Center",
@@ -4143,7 +5446,23 @@
     "wasHelpful": "Was this helpful?",
     "helpful": "Mark as helpful",
     "notHelpful": "Mark as not helpful",
-    "responseTime": "Response time: {{ms}}ms"
+    "responseTime": "Response time: {{ms}}ms",
+    "suggested": {
+      "reportFault": "How do I report a maintenance issue?",
+      "upcomingVotes": "What are the upcoming building votes?",
+      "meterReadings": "How do I submit my meter readings?",
+      "buildingContacts": "Who are my building contacts?",
+      "ownersMeeting": "When is the next owners meeting?",
+      "paymentHistory": "How do I view my payment history?"
+    },
+    "categories": {
+      "faults": "Faults",
+      "voting": "Voting",
+      "utilities": "Utilities",
+      "community": "Community",
+      "events": "Events",
+      "finance": "Finance"
+    }
   },
   "admin": {
     "common": {
@@ -4429,6 +5748,28 @@
       "statusPending": "Pending",
       "statusCancelled": "Cancelled",
       "statusSkipped": "Skipped"
+    },
+    "page": {
+      "title": "Reports & analytics",
+      "tabs": {
+        "dashboard": "Dashboard",
+        "reports": "Reports",
+        "schedules": "Schedules"
+      },
+      "newReport": "+ New report",
+      "newSchedule": "+ New schedule",
+      "keyMetrics": "Key metrics",
+      "trends": "Trends",
+      "revenueTrend": "Revenue trend",
+      "analytics": "Analytics",
+      "monthlyPerformance": "Monthly performance",
+      "buildingPerformance": "Building performance",
+      "savedReports": "Saved reports",
+      "noReports": "No reports created yet",
+      "createFirstReport": "Create your first report",
+      "createdOn": "Created {{date}}",
+      "public": "Public",
+      "createSchedule": "Create schedule"
     }
   },
   "settings": {
@@ -4439,7 +5780,186 @@
       "updateError": "Failed to update preference. Please try again.",
       "disableError": "Failed to disable notifications. Please try again.",
       "dismiss": "Dismiss",
-      "lastUpdated": "Last updated: {{when}}"
+      "lastUpdated": "Last updated: {{when}}",
+      "disableAll": {
+        "title": "Disable All Notifications?",
+        "intro": "You are about to disable all notification channels. This means you will not receive any notifications about:",
+        "itemAnnouncements": "Important announcements from your property manager",
+        "itemFaults": "Updates on reported faults and maintenance",
+        "itemVoting": "Voting deadlines and results",
+        "itemMessages": "Direct messages from neighbors",
+        "warning": "You may miss critical information about your property.",
+        "confirm": "Disable All Notifications",
+        "keep": "Keep Notifications"
+      },
+      "toggleChannel": "Toggle {{channel}}",
+      "channels": {
+        "push": {
+          "label": "Push Notifications",
+          "description": "Receive notifications on your mobile device"
+        },
+        "email": {
+          "label": "Email Notifications",
+          "description": "Receive notifications via email"
+        },
+        "in_app": {
+          "label": "In-App Notifications",
+          "description": "See notifications within the application"
+        }
+      },
+      "advanced": {
+        "title": "Advanced Notification Settings",
+        "subtitle": "Fine-tune how and when you receive notifications.",
+        "perEventTriggers": "Per-event triggers",
+        "categoriesIntro": "Choose which types of notifications you want to receive and how.",
+        "tabs": {
+          "categories": "Categories",
+          "schedule": "Schedule",
+          "grouping": "Grouping"
+        },
+        "errors": {
+          "load": "Failed to load notification preferences. Please try again later.",
+          "category": "Failed to update category preference. Please try again.",
+          "quietHours": "Failed to update quiet hours. Please try again.",
+          "digest": "Failed to update digest preferences. Please try again.",
+          "grouping": "Failed to update grouping settings. Please try again."
+        },
+        "off": "Off",
+        "allOn": "All On",
+        "channelShort": {
+          "push": "Push",
+          "email": "Email",
+          "in_app": "In-App"
+        },
+        "channelAria": "{{channel}} notifications for {{category}}",
+        "enableChannelTitle": "Enable {{channel}} for {{category}}",
+        "disableChannelTitle": "Disable {{channel}} for {{category}}",
+        "categories": {
+          "faults": {
+            "label": "Fault Reports",
+            "description": "Updates on fault reports, repairs, and resolutions"
+          },
+          "voting": {
+            "label": "Voting & Decisions",
+            "description": "New votes, results, and voting reminders"
+          },
+          "announcements": {
+            "label": "Announcements",
+            "description": "Building announcements and news"
+          },
+          "documents": {
+            "label": "Documents",
+            "description": "New documents, signatures, and updates"
+          },
+          "messages": {
+            "label": "Messages",
+            "description": "Direct messages from neighbors and managers"
+          },
+          "community": {
+            "label": "Community",
+            "description": "Community posts, events, and marketplace activity"
+          },
+          "financial": {
+            "label": "Financial",
+            "description": "Payment reminders, invoices, and financial updates"
+          },
+          "maintenance": {
+            "label": "Maintenance",
+            "description": "Scheduled maintenance and work orders"
+          },
+          "system": {
+            "label": "System Updates",
+            "description": "App updates, security alerts, and system notifications"
+          }
+        },
+        "days": {
+          "monday": "Monday",
+          "tuesday": "Tuesday",
+          "wednesday": "Wednesday",
+          "thursday": "Thursday",
+          "friday": "Friday",
+          "saturday": "Saturday",
+          "sunday": "Sunday"
+        },
+        "daysShort": {
+          "monday": "Mon",
+          "tuesday": "Tue",
+          "wednesday": "Wed",
+          "thursday": "Thu",
+          "friday": "Fri",
+          "saturday": "Sat",
+          "sunday": "Sun"
+        },
+        "digest": {
+          "title": "Notification Digest",
+          "subtitle": "Receive notification summaries instead of individual alerts",
+          "frequency": "Frequency",
+          "deliveryTime": "Delivery Time",
+          "deliveryDay": "Delivery Day",
+          "nextDelivery": "Next Delivery",
+          "nextDisabled": "Digests are disabled",
+          "nextHourly": "Every hour at :00",
+          "nextDaily": "Every day at {{time}}",
+          "nextWeekly": "Every {{day}} at {{time}}",
+          "include": "Include in Digest",
+          "allCategories": "All categories included (no filter applied)",
+          "categoriesSelected": "{{selected}} of {{total}} categories selected",
+          "frequencies": {
+            "hourly": {
+              "label": "Every Hour",
+              "description": "Receive a summary every hour with all new notifications"
+            },
+            "daily": {
+              "label": "Daily",
+              "description": "Receive a daily summary at your preferred time"
+            },
+            "weekly": {
+              "label": "Weekly",
+              "description": "Receive a weekly summary on your chosen day"
+            },
+            "disabled": {
+              "label": "Disabled",
+              "description": "Receive notifications immediately instead of in digests"
+            }
+          }
+        },
+        "quietHours": {
+          "title": "Quiet Hours",
+          "subtitle": "Silence non-emergency notifications during specific hours",
+          "startTime": "Start Time",
+          "endTime": "End Time",
+          "timeFormatHint": "Times are in 24-hour format (HH:MM) and use the timezone selected below.",
+          "preview": "Schedule Preview",
+          "previewRange": "Quiet from <strong>{{start}}</strong> to <strong>{{end}}</strong>",
+          "activeDays": "Active Days",
+          "dayActive": "{{day}} - active",
+          "dayInactive": "{{day}} - inactive",
+          "timezone": "Timezone",
+          "allowEmergency": "Allow Emergency Notifications",
+          "allowEmergencyHelp": "Critical alerts will still come through during quiet hours"
+        },
+        "grouping": {
+          "title": "Smart Grouping",
+          "subtitle": "Group similar notifications together to reduce clutter",
+          "byCategory": "Group by Category",
+          "byCategoryHelp": "Combine notifications of the same type (e.g., \"5 new fault updates\")",
+          "bySource": "Group by Source",
+          "bySourceHelp": "Combine notifications from the same building or issue",
+          "maxGroupSize": "Max Group Size",
+          "maxGroupSizeHelp": "Show \"and X more\" after this many",
+          "autoExpand": "Auto-Expand Threshold",
+          "autoExpandHelp": "Expand groups with fewer items",
+          "neverExpand": "Never auto-expand",
+          "preview": "Preview",
+          "clickToExpand": "Click to expand and see individual items",
+          "expandGroup": "Expand notification group",
+          "items_one": "{{count}} item",
+          "items_other": "{{count}} items",
+          "orFewer": "{{count}} or fewer",
+          "previewNewComments_one": "{{count}} new comment",
+          "previewNewComments_other": "{{count}} new comments"
+        }
+      }
     },
     "portalWebhooks": {
       "title": "Portal Webhooks",
@@ -4572,6 +6092,43 @@
       "created": "Signed in",
       "unknownDevice": "Unknown device",
       "unknownIp": "Unknown"
+    },
+    "accessibilityPage": {
+      "intro": "Customize the application to meet your accessibility needs.",
+      "visualTitle": "Visual Preferences",
+      "colorScheme": "Color Scheme",
+      "colorSchemeHelp": "Choose a color scheme that works best for you. High contrast mode improves text readability.",
+      "colorSchemes": {
+        "light": "Light",
+        "dark": "Dark",
+        "high-contrast": "High Contrast"
+      },
+      "textSize": "Text Size",
+      "textSizeHelp": "Adjust the text size for better readability across the application.",
+      "textSizes": {
+        "small": "Small",
+        "medium": "Medium",
+        "large": "Large",
+        "extra-large": "Extra Large"
+      },
+      "motionTitle": "Motion Preferences",
+      "reduceMotion": "Reduce Motion",
+      "reduceMotionHelp": "Minimize animations and transitions that may cause discomfort or distraction.",
+      "navigationTitle": "Navigation Preferences",
+      "screenReader": "Screen Reader Mode",
+      "screenReaderHelp": "Optimize the interface for screen reader users with enhanced ARIA labels and descriptions.",
+      "keyboardNav": "Enhanced Keyboard Navigation",
+      "keyboardNavHelp": "Display enhanced focus indicators for keyboard-only navigation.",
+      "previewTitle": "Preview",
+      "previewText": "This is a preview of how text will appear with your current settings. The quick brown fox jumps over the lazy dog.",
+      "sampleButton": "Sample Button",
+      "helpTitle": "Additional Help",
+      "helpText": "If you experience any accessibility issues or have suggestions for improvement, please contact our support team.",
+      "shortcutsTitle": "Keyboard Shortcuts:",
+      "shortcutTab": "Navigate forward through interactive elements",
+      "shortcutShiftTab": "Navigate backward through interactive elements",
+      "shortcutEnter": "Activate buttons and links",
+      "shortcutEsc": "Close dialogs and menus"
     }
   },
   "connectionStatus": {
@@ -4705,13 +6262,6 @@
     "fieldLocation": "Location",
     "fieldLocationDescription": "Location description",
     "fieldConnectionType": "Connection type",
-    "connectionTypeNone": "Not specified",
-    "connectionTypes": {
-      "api": "API",
-      "mqtt": "MQTT",
-      "webhook": "Webhook",
-      "polling": "Polling"
-    },
     "fieldUnit": "Unit of measurement",
     "fieldInterval": "Reporting interval (s)",
     "fieldManufacturer": "Manufacturer",
@@ -4824,16 +6374,69 @@
     "sensorRegistered": "Sensor registered",
     "sensorRegisterFailed": "Failed to register sensor",
     "sensorUpdated": "Sensor updated",
-    "sensorUpdateFailed": "Failed to update sensor"
+    "sensorUpdateFailed": "Failed to update sensor",
+    "connectionTypeNone": "Not specified",
+    "connectionTypes": {
+      "api": "API",
+      "mqtt": "MQTT",
+      "webhook": "Webhook",
+      "polling": "Polling"
+    },
+    "live": "Live",
+    "offline": "Offline",
+    "offlineBannerTitle": "Live updates disconnected",
+    "offlineBannerMessage": "The real-time telemetry connection was lost and could not be re-established. Readings shown may be out of date — reload the page to reconnect."
   },
   "commandPalette": {
     "commands": {
       "goToIotAlerts": "Go to Sensor Alerts",
-      "goToIntegrations": "Go to Integrations"
+      "goToIntegrations": "Go to Integrations",
+      "goToDashboard": "Go to dashboard",
+      "goToDocuments": "Go to documents",
+      "goToNews": "Go to news",
+      "goToEmergency": "Go to emergency contacts",
+      "goToDisputes": "Go to disputes",
+      "goToOutages": "Go to outages",
+      "goToIot": "Go to Smart Building",
+      "goToSensors": "Go to sensors",
+      "createDispute": "File a dispute",
+      "createOutage": "Report an outage",
+      "uploadDocument": "Upload document",
+      "goToAccessibility": "Accessibility settings",
+      "goToPrivacy": "Privacy settings"
     },
     "descriptions": {
       "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve",
-      "goToIntegrations": "Connect Airbnb & Booking.com channels and manage sync"
+      "goToIntegrations": "Connect Airbnb & Booking.com channels and manage sync",
+      "goToDashboard": "Home page",
+      "goToDocuments": "Building and organization documents",
+      "goToNews": "News and announcements",
+      "goToEmergency": "Emergency contact directory",
+      "goToDisputes": "Overview of disputes and mediations",
+      "goToOutages": "Planned and unplanned outages",
+      "goToIot": "IoT sensors, telemetry and alerts",
+      "goToSensors": "Manage registered IoT devices",
+      "createDispute": "File a new formal dispute",
+      "createOutage": "Notify residents about a service interruption",
+      "uploadDocument": "Upload a new document",
+      "goToAccessibility": "Display, motion and keyboard control",
+      "goToPrivacy": "Privacy and personal data (GDPR)"
+    },
+    "title": "Command palette",
+    "placeholder": "Type a command or search…",
+    "searchLabel": "Search commands",
+    "resultsLabel": "Results",
+    "noResults": "No commands found",
+    "navigate": "Navigate",
+    "select": "Select",
+    "shortcutHint": "Press {{shortcut}} to open the palette",
+    "categories": {
+      "recent": "Recent",
+      "navigation": "Navigation",
+      "create": "Create",
+      "settings": "Settings",
+      "action": "Actions",
+      "search": "Search"
     }
   },
   "documentTemplates": {
@@ -4952,7 +6555,135 @@
     "priorityBadge": "Priority",
     "saveFailed": "Could not update trigger",
     "resetDone": "Triggers reset to defaults",
-    "resetFailed": "Could not reset triggers"
+    "resetFailed": "Could not reset triggers",
+    "events": {
+      "fault": {
+        "created": {
+          "name": "New fault report",
+          "description": "A new fault has been reported in your building"
+        },
+        "updated": {
+          "name": "Fault updated",
+          "description": "A fault you reported or are tracking has been updated"
+        },
+        "resolved": {
+          "name": "Fault resolved",
+          "description": "A fault has been marked as resolved"
+        },
+        "assigned": {
+          "name": "Fault assigned",
+          "description": "A fault has been assigned to you"
+        }
+      },
+      "vote": {
+        "created": {
+          "name": "New vote",
+          "description": "A new vote has been created in your building"
+        },
+        "reminder": {
+          "name": "Vote reminder",
+          "description": "Reminder to cast your vote before the deadline"
+        },
+        "closing_soon": {
+          "name": "Vote closing soon",
+          "description": "A vote closes within 24 hours"
+        },
+        "closed": {
+          "name": "Vote closed",
+          "description": "A vote has closed and results are available"
+        }
+      },
+      "announcement": {
+        "posted": {
+          "name": "New announcement",
+          "description": "A new announcement has been posted"
+        },
+        "urgent": {
+          "name": "Urgent announcement",
+          "description": "An urgent announcement needs your attention"
+        },
+        "comment": {
+          "name": "Announcement comment",
+          "description": "Someone commented on an announcement"
+        }
+      },
+      "document": {
+        "shared": {
+          "name": "Document shared",
+          "description": "A document has been shared with you"
+        },
+        "signature_request": {
+          "name": "Signature required",
+          "description": "You have been asked to sign a document"
+        },
+        "signed": {
+          "name": "Document signed",
+          "description": "A document has been fully signed"
+        }
+      },
+      "message": {
+        "received": {
+          "name": "New message",
+          "description": "You have received a new direct message"
+        },
+        "thread_reply": {
+          "name": "Thread reply",
+          "description": "Someone replied to a message thread"
+        }
+      },
+      "critical": {
+        "emergency": {
+          "name": "Emergency alert",
+          "description": "Emergency alert for your building"
+        },
+        "maintenance": {
+          "name": "Scheduled maintenance",
+          "description": "Scheduled maintenance notice"
+        },
+        "security": {
+          "name": "Security alert",
+          "description": "Security-related alert"
+        }
+      },
+      "finance": {
+        "payment_due": {
+          "name": "Payment due",
+          "description": "A payment is due soon"
+        },
+        "payment_received": {
+          "name": "Payment received",
+          "description": "Your payment has been received"
+        },
+        "balance_low": {
+          "name": "Low balance warning",
+          "description": "Your account balance is running low"
+        }
+      },
+      "facility": {
+        "booking_confirmed": {
+          "name": "Booking confirmed",
+          "description": "Your facility booking has been confirmed"
+        },
+        "booking_cancelled": {
+          "name": "Booking cancelled",
+          "description": "A facility booking has been cancelled"
+        },
+        "booking_reminder": {
+          "name": "Booking reminder",
+          "description": "Reminder of an upcoming facility booking"
+        }
+      }
+    },
+    "categories": {
+      "fault": "Faults",
+      "vote": "Voting",
+      "announcement": "Announcements",
+      "document": "Documents",
+      "message": "Messages",
+      "critical": "Critical alerts",
+      "finance": "Finance",
+      "facility": "Facilities"
+    }
   },
   "documentSign": {
     "title": "Sign document",
@@ -5007,7 +6738,6 @@
   },
   "aria": {
     "acknowledgmentRequired": "Acknowledgment required",
-    "addEvidenceFiles": "Add evidence files",
     "additionalInformation": "Additional information",
     "allowEmergencyNotifications": "Allow emergency notifications during quiet hours",
     "articleActions": "Article actions",
@@ -5092,6 +6822,10 @@
     "zoomOut": "Zoom out"
   },
   "voting": {
+    "buildingSelect": {
+      "label": "Building",
+      "mine": "{{building}} (my building)"
+    },
     "detail": {
       "backToVoting": "Back to voting",
       "unavailableTitle": "Vote unavailable",
@@ -5625,6 +7359,13 @@
         "saveFailed": "Failed to save registry rules",
         "saveFailedBody": "Your changes could not be saved. Please try again."
       }
+    },
+    "confirm": {
+      "deletePet": "Delete this pet registration?",
+      "approvePet": "Approve this pet registration?",
+      "deleteVehicle": "Delete this vehicle registration?",
+      "approveVehicle": "Approve this vehicle registration?",
+      "approve": "Approve"
     }
   },
   "community": {
@@ -5637,19 +7378,14 @@
     "deleteFailed": "Could not delete the group",
     "deleteGroupConfirm": "Delete this group? This action cannot be undone.",
     "common": {
-      "edit": "Edit",
       "delete": "Delete",
       "cancel": "Cancel",
-      "add": "Add",
-      "view": "View",
       "search": "Search",
       "previous": "Previous",
       "next": "Next",
       "loading": "Loading...",
-      "loadMore": "Load More",
       "backToGroups": "Back to Groups",
-      "official": "Official",
-      "pageOf": "Page {{page}} of {{total}}"
+      "official": "Official"
     },
     "post": {
       "pinned": "Pinned",
@@ -5659,38 +7395,14 @@
       "daysAgo": "{{count}}d ago",
       "likes": "{{count}} likes",
       "comments": "{{count}} comments",
-      "shares": "{{count}} shares",
       "like": "Like",
-      "comment": "Comment",
-      "share": "Share",
       "mediaAlt": "Post media {{index}}"
-    },
-    "comments": {
-      "justNow": "just now",
-      "minutes": "{{count}}m",
-      "hours": "{{count}}h",
-      "days": "{{count}}d",
-      "liked": "Liked",
-      "like": "Like",
-      "reply": "Reply",
-      "replyPlaceholder": "Write a reply...",
-      "empty": "No comments yet. Be the first to comment!"
     },
     "feed": {
       "title": "Community Feed",
       "subtitle": "See what's happening in your community",
       "filters": {
-        "all": "All Posts",
-        "myGroups": "My Groups",
-        "building": "Building"
-      },
-      "types": {
-        "all": "All Types",
-        "text": "Text",
-        "photos": "Photos",
-        "polls": "Polls",
-        "events": "Events",
-        "items": "Items"
+        "myGroups": "My Groups"
       },
       "post": "post",
       "posts": "posts",
@@ -5698,19 +7410,7 @@
       "emptyBody": "Be the first to share something with your community!"
     },
     "createPost": {
-      "types": {
-        "text": "Text",
-        "photo": "Photo",
-        "poll": "Poll"
-      },
-      "visibility": {
-        "group": "Group Only",
-        "building": "Building",
-        "public": "Public"
-      },
       "contentPlaceholder": "What's on your mind?",
-      "imageUrlPlaceholder": "Enter image URL",
-      "previewAlt": "Preview {{index}}",
       "posting": "Posting...",
       "submit": "Post"
     },
@@ -5719,37 +7419,18 @@
       "subtitle": "Connect with your neighbors through shared interests",
       "create": "Create Group",
       "searchPlaceholder": "Search groups...",
-      "categoryLabel": "Category",
-      "visibilityLabel": "Visibility",
       "myGroupsOnly": "My Groups Only",
       "emptyTitle": "No groups found",
       "emptyBodyMember": "You haven't joined any groups yet.",
       "emptyBodyDefault": "Try adjusting your filters or create a new group.",
-      "showing": "Showing {{count}} of {{total}} groups",
-      "categories": {
-        "allCategories": "All Categories",
-        "social": "Social",
-        "sports": "Sports",
-        "hobbies": "Hobbies",
-        "parenting": "Parenting",
-        "pets": "Pets",
-        "business": "Business",
-        "other": "Other"
-      },
-      "visibility": {
-        "all": "All Groups",
-        "public": "Public",
-        "private": "Private"
-      }
+      "showing": "Showing {{count}} of {{total}} groups"
     },
     "groupCard": {
       "visibility": {
         "public": "Public",
         "private": "Private",
-        "hidden": "Hidden"
+        "secret": "Secret"
       },
-      "member": "member",
-      "members": "members",
       "joining": "Joining...",
       "join": "Join",
       "leaving": "Leaving...",
@@ -5766,71 +7447,39 @@
           "label": "Private",
           "description": "Anyone can find but must request to join"
         },
-        "hidden": {
-          "label": "Hidden",
-          "description": "Only invited users can find this group"
+        "secret": {
+          "label": "Secret",
+          "description": "Hidden from the group list; only members can see it"
         }
       },
-      "namePreviewDefault": "Group Name",
       "nameLabel": "Group Name",
       "namePlaceholder": "Enter group name",
       "descriptionLabel": "Description",
       "descriptionPlaceholder": "Describe what your group is about...",
-      "categoryLabel": "Category",
       "visibilityLegend": "Visibility",
-      "coverPreviewAlt": "Cover preview",
-      "coverUrlLabel": "Cover Image URL (optional)",
-      "coverUrlPlaceholder": "https://example.com/image.jpg",
       "errors": {
         "nameRequired": "Group name is required",
         "nameMin": "Group name must be at least 3 characters",
         "nameMax": "Group name must be less than 100 characters",
-        "descriptionRequired": "Description is required",
-        "descriptionMin": "Description must be at least 10 characters",
-        "descriptionMax": "Description must be less than 1000 characters",
-        "categoryRequired": "Category is required",
-        "invalidUrl": "Please enter a valid URL"
+        "descriptionMax": "Description must be less than 1000 characters"
       },
-      "updating": "Updating...",
       "creating": "Creating...",
-      "update": "Update Group",
       "create": "Create Group"
     },
     "groupMembers": {
       "roles": {
-        "owner": "Owner",
-        "admin": "Admin",
-        "moderator": "Moderator",
-        "member": "Member"
-      },
-      "empty": "No members yet",
-      "pendingApproval": "Pending approval",
-      "you": "(you)",
-      "joined": "Joined {{date}}",
-      "makeModerator": "Make Moderator",
-      "makeAdmin": "Make Admin",
-      "removeFromGroup": "Remove from group",
-      "banFromGroup": "Ban from group"
+        "owner": "Owner"
+      }
     },
     "groupDetail": {
-      "tabAbout": "About",
-      "tabMembers": "Members ({{count}})",
-      "tabPosts": "Posts ({{count}})",
       "members": "{{count}} members",
-      "groupSettings": "Group Settings",
       "ownersCannotLeave": "Owners cannot leave the group",
-      "leaveGroupTitle": "Leave group",
       "leaving": "Leaving...",
       "leaveGroup": "Leave Group",
       "joining": "Joining...",
       "joinGroup": "Join Group",
       "aboutTitle": "About this group",
       "createdOn": "Created on {{date}}",
-      "membersTitle": "Members",
-      "inviteMembers": "Invite Members",
-      "postsPlaceholder": "Posts will be shown here. See the Feed tab for all community posts.",
-      "adminActions": "Admin Actions",
-      "editGroup": "Edit Group",
       "deleteGroup": "Delete Group"
     },
     "createGroup": {
@@ -5840,24 +7489,6 @@
       "title": "Community Events",
       "subtitle": "Discover and join events in your community",
       "create": "Create Event",
-      "time": {
-        "upcoming": "Upcoming",
-        "past": "Past",
-        "all": "All"
-      },
-      "status": {
-        "all": "All Status",
-        "published": "Published",
-        "draft": "Draft",
-        "cancelled": "Cancelled",
-        "completed": "Completed"
-      },
-      "rsvp": {
-        "all": "All RSVPs",
-        "going": "Going",
-        "maybe": "Maybe",
-        "notGoing": "Not Going"
-      },
       "event": "event",
       "events": "events",
       "emptyTitle": "No events found",
@@ -5865,22 +7496,7 @@
       "emptyBodyDefault": "No events match your filters."
     },
     "eventCard": {
-      "relative": {
-        "past": "Past",
-        "today": "Today",
-        "tomorrow": "Tomorrow",
-        "inDays": "In {{count}} days",
-        "inWeeks": "In {{count}} weeks",
-        "inMonths": "In {{count}} months"
-      },
-      "status": {
-        "draft": "Draft",
-        "published": "Published",
-        "cancelled": "Cancelled",
-        "completed": "Completed"
-      },
       "going": "{{count}} going",
-      "maybe": "{{count}} maybe",
       "max": "Max {{count}}",
       "rsvpGoing": "You're going",
       "rsvpMaybe": "You're interested",
@@ -5888,15 +7504,9 @@
       "btnGoing": "Going",
       "btnMaybe": "Maybe",
       "btnCantGo": "Can't Go",
-      "ended": "Event ended",
-      "eventCancelled": "Event cancelled",
-      "rsvpNotAvailable": "RSVP not available",
-      "addToCalendar": "Add to Calendar",
-      "editEvent": "Edit Event",
-      "deleteEvent": "Delete Event"
+      "rsvpNotAvailable": "RSVP not available"
     },
     "eventForm": {
-      "titlePreviewDefault": "Event Title",
       "titleLabel": "Event Title",
       "titlePlaceholder": "Enter event title",
       "descriptionLabel": "Description",
@@ -5909,26 +7519,18 @@
       "allDay": "All day event",
       "start": "Start",
       "end": "End",
-      "coverUrlLabel": "Cover Image URL (optional)",
-      "coverUrlPlaceholder": "https://example.com/image.jpg",
-      "coverPreviewAlt": "Cover preview",
       "maxAttendeesLabel": "Maximum Attendees (optional)",
       "maxAttendeesPlaceholder": "Leave empty for unlimited",
       "errors": {
         "titleRequired": "Title is required",
         "titleMin": "Title must be at least 3 characters",
-        "descriptionRequired": "Description is required",
-        "descriptionMin": "Description must be at least 10 characters",
-        "locationRequired": "Location is required",
         "startRequired": "Start date is required",
         "endRequired": "End date is required",
         "endAfterStart": "End date must be after start date",
         "invalidUrl": "Please enter a valid URL",
         "invalidNumber": "Please enter a valid number"
       },
-      "updating": "Updating...",
       "creating": "Creating...",
-      "update": "Update Event",
       "create": "Create Event"
     },
     "marketplace": {
@@ -5937,36 +7539,8 @@
       "create": "Create Listing",
       "searchPlaceholder": "Search items...",
       "categories": {
-        "allCategories": "All Categories",
-        "electronics": "Electronics",
-        "furniture": "Furniture",
-        "clothing": "Clothing",
-        "books": "Books",
-        "sports": "Sports",
-        "homeGarden": "Home & Garden",
-        "kidsBaby": "Kids & Baby",
-        "vehicles": "Vehicles",
-        "other": "Other"
+        "allCategories": "All Categories"
       },
-      "listingType": {
-        "all": "All Types",
-        "sale": "For Sale",
-        "free": "Free",
-        "wanted": "Wanted",
-        "trade": "For Trade"
-      },
-      "condition": {
-        "all": "Any Condition",
-        "new": "New",
-        "likeNew": "Like New",
-        "good": "Good",
-        "fair": "Fair",
-        "poor": "Poor"
-      },
-      "minPrice": "Min €",
-      "maxPrice": "Max €",
-      "item": "item",
-      "items": "items",
       "emptyTitle": "No items found",
       "emptyBody": "Try adjusting your filters or create a new listing."
     },
@@ -5974,91 +7548,156 @@
       "price": {
         "free": "FREE",
         "wanted": "Wanted",
-        "trade": "Trade",
         "contact": "Contact for price"
       },
-      "minutesAgo": "{{count}}m ago",
-      "hoursAgo": "{{count}}h ago",
-      "daysAgo": "{{count}}d ago",
-      "reserved": "Reserved",
-      "sold": "Sold",
       "views": "{{count}} views",
       "messages": "{{count}} messages",
-      "markSold": "Mark Sold",
       "contactSeller": "Contact Seller",
       "viewDetails": "View Details"
     },
     "itemForm": {
-      "listingTypes": {
-        "sale": {
-          "label": "For Sale",
-          "description": "Selling for a price"
-        },
-        "free": {
-          "label": "Free",
-          "description": "Giving away for free"
-        },
-        "wanted": {
-          "label": "Wanted",
-          "description": "Looking to buy"
-        },
-        "trade": {
-          "label": "For Trade",
-          "description": "Looking to trade"
-        }
-      },
-      "conditions": {
-        "new": {
-          "label": "New",
-          "description": "Brand new, never used"
-        },
-        "likeNew": {
-          "label": "Like New",
-          "description": "Used once or twice, perfect condition"
-        },
-        "good": {
-          "label": "Good",
-          "description": "Lightly used, minor signs of wear"
-        },
-        "fair": {
-          "label": "Fair",
-          "description": "Used regularly, visible wear"
-        },
-        "poor": {
-          "label": "Poor",
-          "description": "Heavy wear, may need repair"
-        }
-      },
-      "photos": "Photos (up to 10)",
-      "imageUrlPlaceholder": "Enter image URL",
-      "imageAlt": "Item {{index}}",
       "titleLabel": "Title",
       "titlePlaceholder": "What are you selling?",
       "descriptionLabel": "Description",
       "descriptionPlaceholder": "Describe your item in detail...",
-      "listingTypeLegend": "Listing Type",
       "priceLabel": "Price",
-      "pricePlaceholder": "0.00",
-      "currencyLabel": "Currency",
-      "categoryLabel": "Category",
-      "conditionLegend": "Condition",
       "errors": {
         "titleRequired": "Title is required",
         "titleMin": "Title must be at least 3 characters",
-        "titleMax": "Title must be less than 100 characters",
-        "descriptionRequired": "Description is required",
-        "descriptionMin": "Description must be at least 10 characters",
         "invalidPrice": "Please enter a valid price"
       },
-      "updating": "Updating...",
       "creating": "Creating...",
-      "update": "Update Listing",
       "create": "Create Listing"
+    },
+    "hub": {
+      "tabs": {
+        "feed": "Feed",
+        "groups": "Groups",
+        "events": "Events",
+        "marketplace": "Marketplace"
+      },
+      "tabsLabel": "Community sections",
+      "building": "Building",
+      "buildingsError": "Could not load your buildings.",
+      "noBuildingTitle": "No building available",
+      "noBuildingBody": "The community is organised per building. Once you are linked to a unit or building, its groups, events and marketplace will appear here.",
+      "loadError": "Could not load the data. Please try again.",
+      "retry": "Try again",
+      "you": "You",
+      "neighbor": "Neighbour",
+      "anonymous": "Anonymous",
+      "feedNoGroupsTitle": "Your feed is empty",
+      "feedNoGroupsBody": "Join a group in this building to see and share posts.",
+      "browseGroups": "Browse groups",
+      "filterByGroup": "Show",
+      "postTo": "Post to",
+      "postType": "Type",
+      "postTitlePlaceholder": "Title (optional)",
+      "postAnonymously": "Post anonymously",
+      "postCreated": "Your post was published.",
+      "postFailed": "Could not publish the post",
+      "likeFailed": "Could not like the post",
+      "postsHeading": "Posts",
+      "postCount": "Posts: {{count}}",
+      "joinToPost": "Join this group to post.",
+      "groupType": "Group type",
+      "allGroupTypes": "All group types",
+      "groupRules": "Group rules",
+      "groupRulesPlaceholder": "e.g. Be kind, no advertising",
+      "createGroupFailed": "Could not create the group",
+      "eventType": "Event type",
+      "allEventTypes": "All event types",
+      "attendees": "Attendees",
+      "joinOnline": "Join online",
+      "rsvp": "Your response",
+      "rsvpSaved": "Your response was saved.",
+      "rsvpFailed": "Could not save your response",
+      "isVirtual": "Online event",
+      "virtualLink": "Meeting link",
+      "costPerPerson": "Cost per person (optional, EUR)",
+      "eventCreated": "The event was created.",
+      "createEventFailed": "Could not create the event",
+      "category": "Category",
+      "condition": "Condition",
+      "pricing": "Price",
+      "giveAwayFree": "Give away for free",
+      "negotiable": "Price negotiable",
+      "tradeAccepted": "Open to trades",
+      "photoUrl": "Photo URL (optional)",
+      "pickupDetails": "Pickup details",
+      "itemCreated": "Your listing was published.",
+      "createItemFailed": "Could not create the listing",
+      "noPhoto": "No photo",
+      "itemNotFound": "Listing not found",
+      "backToMarketplace": "Back to marketplace",
+      "listedOn": "Listed on",
+      "ownListing": "This is your listing. Neighbours can contact you about it from this page.",
+      "listingUnavailable": "This listing is no longer available.",
+      "message": "Message",
+      "messagePlaceholder": "Hi, is this still available?",
+      "messageRequired": "Please write a message.",
+      "offerPrice": "Your offer (optional)",
+      "sendMessage": "Send message",
+      "sending": "Sending...",
+      "inquirySent": "Your message was sent to the seller.",
+      "inquiryFailed": "Could not send the message"
+    },
+    "groupTypes": {
+      "interest": "Interest",
+      "floor": "Floor",
+      "building": "Building",
+      "neighborhood": "Neighbourhood",
+      "official": "Official"
+    },
+    "postTypes": {
+      "text": "Post",
+      "photo": "Photo",
+      "poll": "Poll",
+      "event": "Event",
+      "marketplace": "Marketplace",
+      "question": "Question",
+      "announcement": "Announcement"
+    },
+    "eventTypes": {
+      "social": "Social",
+      "meeting": "Meeting",
+      "workshop": "Workshop",
+      "volunteer": "Volunteering",
+      "sports": "Sports",
+      "cultural": "Cultural",
+      "other": "Other"
+    },
+    "marketplaceCategories": {
+      "furniture": "Furniture",
+      "electronics": "Electronics",
+      "clothing": "Clothing",
+      "sports": "Sports",
+      "books": "Books",
+      "toys": "Toys",
+      "home_garden": "Home & Garden",
+      "services": "Services",
+      "free": "Free",
+      "wanted": "Wanted",
+      "other": "Other"
+    },
+    "itemConditions": {
+      "new": "New",
+      "like_new": "Like new",
+      "good": "Good",
+      "fair": "Fair",
+      "for_parts": "For parts"
+    },
+    "itemStatus": {
+      "active": "Active",
+      "sold": "Sold",
+      "reserved": "Reserved",
+      "expired": "Expired",
+      "removed": "Removed"
     }
   },
   "accounting": {
     "title": "Issued Invoices",
-    "subtitle": "Native accounting MVP",
+    "subtitle": "Invoices, payments and accounting records for your organization",
     "createInvoice": "Create Invoice",
     "newInvoice": "New Invoice",
     "createFailed": "Failed to create invoice",
@@ -6117,6 +7756,184 @@
         "requiredFields": "Please fill all required fields",
         "invalidNumbers": "Quantity and unit price must be valid numbers"
       }
+    },
+    "paymentMatching": {
+      "title": "Payment matching",
+      "subtitle": "Review and confirm matches from bank statements",
+      "statements": "Bank statements",
+      "uploadCsv": "Upload CSV",
+      "chooseFile": "Choose file",
+      "uploading": "Processing upload…",
+      "uploadFailed": "Upload failed",
+      "noStatements": "No statements uploaded yet",
+      "transactions": "Transactions",
+      "selectStatement": "Select a statement to view items",
+      "noTransactions": "This statement has no transactions",
+      "variableSymbol": "Variable symbol",
+      "counterpartyIban": "Counterparty IBAN",
+      "state": {
+        "unmatched": "Unmatched",
+        "suggested": "Suggested",
+        "matched": "Matched"
+      },
+      "matchReview": "Match review",
+      "selectTransaction": "Select a transaction to see suggested invoice matches",
+      "confidence": "Confidence score",
+      "invoiceReference": "Invoice reference",
+      "matchReason": "Match reason",
+      "matchReasonText": "Suggested from a variable symbol match; a matching amount and counterparty IBAN raise the score.",
+      "confirm": "Confirm payment match",
+      "confirming": "Processing…",
+      "reject": "Not a match",
+      "rejecting": "Rejecting…",
+      "confirmed": "Match confirmed",
+      "linkedInvoice": "Linked to invoice:",
+      "noSuggestions": "No active match suggestions",
+      "actionFailed": "The action could not be completed. Please try again."
+    },
+    "nav": {
+      "label": "Accounting sections",
+      "invoices": "Invoices",
+      "paymentMatching": "Payment matching"
+    }
+  },
+  "shell": {
+    "brand": "Property Manager",
+    "mainNavigation": "Main navigation",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "createAccount": "Create account",
+    "sections": {
+      "overview": "Overview",
+      "operations": "Building operations",
+      "governance": "Owners & governance",
+      "community": "Community",
+      "finance": "Finance",
+      "rentals": "Leasing & rentals",
+      "tools": "Tools"
+    },
+    "account": {
+      "password": "Password",
+      "twoFactor": "Two-factor authentication",
+      "notifications": "Notification preferences"
+    },
+    "roles": {
+      "super_admin": "Super admin",
+      "platform_admin": "Platform admin",
+      "org_admin": "Organization admin",
+      "manager": "Manager",
+      "technical_manager": "Technical manager",
+      "property_manager": "Property manager",
+      "owner": "Owner",
+      "owner_delegate": "Owner delegate",
+      "tenant": "Tenant",
+      "resident": "Resident",
+      "guest": "Guest",
+      "real_estate_agent": "Real estate agent"
+    },
+    "publicNavigation": "Site navigation"
+  },
+  "notificationAnalytics": {
+    "title": "Notification Analytics",
+    "subtitle": "Delivery and failure rates per notification channel.",
+    "forbidden": "You do not have permission to view notification delivery analytics.",
+    "failedToLoad": "Failed to load notification analytics",
+    "empty": "No notification activity in the selected window.",
+    "tableCaption": "Notification delivery metrics per channel",
+    "alertTitle": "Elevated notification failure rate",
+    "alertBody": "Failure rate {{rate}} exceeds the {{threshold}} threshold over {{attempted}} attempted deliveries.",
+    "allChannels": "All channels",
+    "channel": "Channel",
+    "window": "Time window",
+    "colChannel": "Channel",
+    "colSent": "Sent",
+    "colDelivered": "Delivered",
+    "colOpened": "Opened",
+    "colClicked": "Clicked",
+    "colFailed": "Failed",
+    "colSkipped": "Skipped",
+    "colFailureRate": "Failure rate",
+    "kpiAttempted": "Attempted",
+    "kpiSent": "Sent",
+    "kpiFailed": "Failed",
+    "kpiFailureRate": "Failure rate"
+  },
+  "oauthGrants": {
+    "title": "Authorized applications",
+    "loading": "Loading authorized applications…",
+    "loadFailed": "Failed to load authorized applications. Please try again.",
+    "retry": "Retry",
+    "description": "These third-party applications have been granted access to your account. You can revoke access at any time — the application will need to request authorization again to regain access.",
+    "empty": "You have no authorized third-party applications.",
+    "authorized": "Authorized:",
+    "permissions": "Permissions:",
+    "scopesLabel": "Scopes: {{scopes}}",
+    "revoke": "Revoke access",
+    "revokeFor": "Revoke access for {{name}}",
+    "revoking": "Revoking…",
+    "cancel": "Cancel",
+    "confirmTitle": "Revoke access?",
+    "confirmMessage": "Revoking access for <strong>{{name}}</strong> will invalidate all active tokens. The application will no longer be able to access your account until you grant access again.",
+    "revoked": "Access revoked",
+    "revokedMessage": "{{name}} can no longer access your account.",
+    "revokeFailed": "Failed to revoke access",
+    "unexpected": "An unexpected error occurred."
+  },
+  "gdprPrivacy": {
+    "title": "Privacy & data settings",
+    "subtitle": "Manage your privacy preferences and data in accordance with GDPR.",
+    "loading": "Loading privacy settings…",
+    "dismiss": "Dismiss",
+    "preferences": {
+      "title": "Privacy preferences",
+      "visibility": "Profile visibility",
+      "visible": "Visible to all residents",
+      "contactsOnly": "Visible to contacts only",
+      "hidden": "Hidden from everyone",
+      "visibilityHint": "Controls who can see your profile in the resident directory.",
+      "showContact": "Show contact information on profile",
+      "showContactHint": "When enabled, your email and phone will be visible on your profile.",
+      "save": "Save preferences",
+      "saving": "Saving…",
+      "saved": "Privacy settings saved successfully",
+      "saveFailed": "Failed to save settings"
+    },
+    "export": {
+      "title": "Your data",
+      "description": "Under GDPR Article 15, you have the right to access your personal data. Request a copy of all data we hold about you.",
+      "request": "Request data export",
+      "requested": "Data export requested. You will be notified when it is ready.",
+      "requestFailed": "Failed to request data export",
+      "history": "Export history",
+      "download": "Download",
+      "status": {
+        "pending": "Pending",
+        "processing": "Processing",
+        "completed": "Completed",
+        "failed": "Failed"
+      }
+    },
+    "deletion": {
+      "title": "Delete account",
+      "description": "Under GDPR Article 17, you have the right to erasure (\"right to be forgotten\"). Requesting deletion will schedule your account and all associated data for permanent removal after a 30-day grace period.",
+      "warningLabel": "Warning:",
+      "warning": "This action cannot be undone after the grace period. You will lose access to all your data, messages, and account history.",
+      "request": "Request account deletion",
+      "confirmPrompt": "This will schedule your account and all associated data for permanent deletion after a 30-day grace period. This cannot be undone after the grace period.\n\nType your account email address to confirm:",
+      "emailMismatch": "The email you entered does not match your account email.",
+      "requested": "Account deletion requested. You have 30 days to cancel this request.",
+      "requestFailed": "Failed to request account deletion"
+    },
+    "errors": {
+      "loadSettings": "Failed to load privacy settings",
+      "loadHistory": "Failed to load export history"
+    }
+  },
+  "aiDashboards": {
+    "nav": {
+      "label": "AI insights",
+      "sentiment": "Resident sentiment",
+      "predictiveMaintenance": "Predictive maintenance"
     }
   }
 }

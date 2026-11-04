@@ -55,7 +55,7 @@ describe('TriageFaultDialog', () => {
       />
     );
     expect(screen.getByText(/AI suggests/)).toBeInTheDocument();
-    expect(screen.getByText(/electrical/)).toBeInTheDocument();
+    expect(screen.getByText('Electrical', { selector: 'strong' })).toBeInTheDocument();
     expect(screen.getByText(/90% confidence/)).toBeInTheDocument();
   });
 
@@ -76,7 +76,7 @@ describe('TriageFaultDialog', () => {
         aiSuggestion={{ category: 'plumbing', priority: 'urgent', confidence: 0.95 }}
       />
     );
-    expect(screen.getByText(/urgent/)).toBeInTheDocument();
+    expect(screen.getByText('Urgent', { selector: 'strong' })).toBeInTheDocument();
   });
 
   it('does not render the technician selector when no technicians are provided', () => {

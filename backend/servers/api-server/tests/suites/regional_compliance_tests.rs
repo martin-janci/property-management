@@ -338,3 +338,85 @@ async fn configure_writes_require_manager(pool: PgPool) {
     let resp = app.execute(req).await;
     resp.assert_status(StatusCode::OK);
 }
+
+/// The four vote-reading compliance endpoints look the vote up scoped to the
+/// caller's org: another org's vote id is a 404 "Vote not found", while the
+/// owning org gets past the lookup.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn vote_endpoints_are_404_for_another_org(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let user_a = seed_user(&pool, "a@xorg-compliance.test").await;
+    let org_a = seed_org(&pool, "xorg-comp-a").await;
+    seed_membership(&pool, org_a, user_a, "manager").await;
+    let building_a = seed_building(&pool, org_a).await;
+    let vote: Uuid = sqlx::query_scalar(
+        "INSERT INTO votes (organization_id, building_id, title, start_at, end_at, status, \
+                            created_by, published_by, published_at) \
+         VALUES ($1, $2, 'Org A vote', NOW() - INTERVAL '8 days', NOW() - INTERVAL '1 day', \
+                 'closed', $3, $3, NOW() - INTERVAL '8 days') RETURNING id",
+    )
+    .bind(org_a)
+    .bind(building_a)
+    .bind(user_a)
+    .fetch_one(&pool)
+    .await
+    .expect("seed vote");
+
+    let user_b = seed_user(&pool, "b@xorg-compliance.test").await;
+    let org_b = seed_org(&pool, "xorg-comp-b").await;
+    seed_membership(&pool, org_b, user_b, "manager").await;
+
+    let base = "/api/v1/regional-compliance";
+    let cases = [
+        (
+            Method::POST,
+            format!("{base}/slovak/voting/validate"),
+            Some(serde_json::json!({ "vote_id": vote, "decision_type": "simple_majority" })),
+        ),
+        (
+            Method::GET,
+            format!("{base}/slovak/voting/minutes/{vote}"),
+            None,
+        ),
+        (
+            Method::POST,
+            format!("{base}/czech/svj/validate"),
+            Some(serde_json::json!({ "vote_id": vote, "decision_type": "simple_majority" })),
+        ),
+        (
+            Method::GET,
+            format!("{base}/czech/svj/usneseni/{vote}"),
+            None,
+        ),
+    ];
+
+    for (user, org, foreign) in [(user_b, org_b, true), (user_a, org_a, false)] {
+        let token = access_token(user, Some(org));
+        for (method, uri, body) in &cases {
+            let mut req = RequestBuilder::new(method.clone(), uri)
+                .bearer(&token)
+                .header("X-Tenant-ID", &org.to_string());
+            if let Some(b) = body {
+                req = req.json(b.clone());
+            }
+            let resp = app.execute(req.build()).await;
+            if foreign {
+                assert_eq!(
+                    resp.status,
+                    StatusCode::NOT_FOUND,
+                    "{method} {uri} from another org: {}",
+                    resp.text()
+                );
+                assert!(resp.text().contains("Vote not found"), "{}", resp.text());
+            } else {
+                assert!(
+                    !resp.text().contains("Vote not found"),
+                    "{method} {uri} must find the owning org's vote: {} {}",
+                    resp.status,
+                    resp.text()
+                );
+            }
+        }
+    }
+}

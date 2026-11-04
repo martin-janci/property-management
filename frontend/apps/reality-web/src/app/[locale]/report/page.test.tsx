@@ -252,7 +252,7 @@ describe('ReportPage — abuse-report submit wiring', () => {
   });
 
   it('does not append [ref: …] when the reference is the bare UUID', async () => {
-    const OTHER = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
+    const _OTHER = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
     const fetchMock = vi.fn((_url: string, _init?: RequestInit) =>
       Promise.resolve({ ok: true, status: 201, json: async () => ({ report: { id: 'r-4' } }) })
     );

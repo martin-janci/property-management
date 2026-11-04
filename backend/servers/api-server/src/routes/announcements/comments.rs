@@ -3,7 +3,7 @@
 use super::shared::*;
 use crate::state::AppState;
 use api_core::extractors::RlsConnection;
-use api_core::{AuthUser, TenantExtractor};
+use api_core::{AuthUser, ValidatedTenantExtractor};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -42,37 +42,13 @@ pub(super) fn router() -> Router<AppState> {
 pub(super) async fn list_comments(
     State(state): State<AppState>,
     _auth: AuthUser,
-    _tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Query(query): Query<ListCommentsQuery>,
 ) -> Result<Json<CommentsResponse>, (StatusCode, Json<ErrorResponse>)> {
-    // Check announcement exists
-    match state
-        .announcement_repo
-        .find_by_id_rls(&mut **rls.conn(), id)
-        .await
-    {
-        Ok(None) => {
-            rls.release().await;
-            return Err((
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Announcement not found")),
-            ));
-        }
-        Err(e) => {
-            rls.release().await;
-            tracing::error!("Failed to find announcement: {}", e);
-            return Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to find announcement",
-                )),
-            ));
-        }
-        Ok(Some(_)) => {}
-    }
+    // Check announcement exists in the caller's org (404 otherwise).
+    load_announcement_in_org(&state, &mut rls, tenant.tenant_id, id).await?;
 
     // Get total count
     let total = match state
@@ -174,7 +150,7 @@ pub(super) async fn list_comments(
 pub(super) async fn create_comment(
     State(state): State<AppState>,
     auth: AuthUser,
-    _tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<CreateCommentRequest>,
@@ -204,32 +180,8 @@ pub(super) async fn create_comment(
         ));
     }
 
-    // Check announcement exists and has comments enabled
-    let announcement = match state
-        .announcement_repo
-        .find_by_id_rls(&mut **rls.conn(), id)
-        .await
-    {
-        Ok(Some(a)) => a,
-        Ok(None) => {
-            rls.release().await;
-            return Err((
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Announcement not found")),
-            ));
-        }
-        Err(e) => {
-            rls.release().await;
-            tracing::error!("Failed to find announcement: {}", e);
-            return Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to find announcement",
-                )),
-            ));
-        }
-    };
+    // Check announcement exists in the caller's org and has comments enabled
+    let announcement = load_announcement_in_org(&state, &mut rls, tenant.tenant_id, id).await?;
 
     // Check comments are enabled
     if !announcement.comments_enabled {
@@ -416,11 +368,14 @@ pub(super) async fn create_comment(
 pub(super) async fn delete_comment(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path((id, comment_id)): Path<(Uuid, Uuid)>,
     body: Option<Json<DeleteCommentRequest>>,
 ) -> Result<Json<AnnouncementComment>, (StatusCode, Json<ErrorResponse>)> {
+    // Org scope: the parent announcement must belong to the caller's org.
+    load_announcement_in_org(&state, &mut rls, tenant.tenant_id, id).await?;
+
     // Get the comment
     let comment = match state
         .announcement_repo

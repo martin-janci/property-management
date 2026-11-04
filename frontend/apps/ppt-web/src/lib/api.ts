@@ -56,7 +56,11 @@ export type TokenGetter = () => string | null | Promise<string | null>;
  * not be recovered — the interceptor then rejects the original request and the
  * handler is responsible for any session teardown (logout / redirect).
  */
-export type UnauthorizedHandler = () => void | string | null | Promise<string | null | undefined>;
+export type UnauthorizedHandler = () =>
+  | undefined
+  | string
+  | null
+  | Promise<string | null | undefined>;
 
 /**
  * API client configuration options.

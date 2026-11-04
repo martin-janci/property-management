@@ -5,6 +5,14 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  faultCategories,
+  faultCategoryKeys,
+  faultPriorities,
+  faultPriorityKeys,
+  faultStatuses,
+  faultStatusKeys,
+} from '../utils/faultLabels';
 import type { FaultCategory, FaultPriority, FaultStatus, FaultSummary } from './FaultCard';
 import { FaultCard } from './FaultCard';
 
@@ -24,46 +32,14 @@ interface FaultListProps {
   onCategoryFilter: (category?: FaultCategory) => void;
   onSearch: (query: string) => void;
   onView: (id: string) => void;
-  onEdit: (id: string) => void;
-  onTriage: (id: string) => void;
+  /** Manager-only; omitted for residents so the card hides the action. */
+  onEdit?: (id: string) => void;
+  /** Manager-only; omitted for residents so the card hides the action. */
+  onTriage?: (id: string) => void;
   /** Delete a fault (only shown for 'new' status faults). Wired to useDeleteFault in route wrapper. */
   onDelete?: (id: string) => void;
   onCreate: () => void;
 }
-
-const statusOptions: { value: FaultStatus | ''; label: string }[] = [
-  { value: '', label: 'All Statuses' },
-  { value: 'new', label: 'New' },
-  { value: 'triaged', label: 'Triaged' },
-  { value: 'in_progress', label: 'In Progress' },
-  { value: 'waiting_parts', label: 'Waiting for Parts' },
-  { value: 'scheduled', label: 'Scheduled' },
-  { value: 'resolved', label: 'Resolved' },
-  { value: 'closed', label: 'Closed' },
-  { value: 'reopened', label: 'Reopened' },
-];
-
-const priorityOptions: { value: FaultPriority | ''; label: string }[] = [
-  { value: '', label: 'All Priorities' },
-  { value: 'urgent', label: 'Urgent' },
-  { value: 'high', label: 'High' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'low', label: 'Low' },
-];
-
-const categoryOptions: { value: FaultCategory | ''; label: string }[] = [
-  { value: '', label: 'All Categories' },
-  { value: 'plumbing', label: 'Plumbing' },
-  { value: 'electrical', label: 'Electrical' },
-  { value: 'heating', label: 'Heating' },
-  { value: 'structural', label: 'Structural' },
-  { value: 'exterior', label: 'Exterior' },
-  { value: 'elevator', label: 'Elevator' },
-  { value: 'common_area', label: 'Common Area' },
-  { value: 'security', label: 'Security' },
-  { value: 'cleaning', label: 'Cleaning' },
-  { value: 'other', label: 'Other' },
-];
 
 export function FaultList({
   faults,
@@ -97,13 +73,13 @@ export function FaultList({
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Faults</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('nav.faults')}</h1>
         <button
           type="button"
           onClick={onCreate}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
-          Report Fault
+          {t('faults.reportFault')}
         </button>
       </div>
 
@@ -112,7 +88,8 @@ export function FaultList({
         <form onSubmit={handleSearchSubmit} className="flex-1 min-w-[200px]">
           <input
             type="text"
-            placeholder="Search faults..."
+            placeholder={t('faults.searchPlaceholder')}
+            aria-label={t('faults.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -124,9 +101,10 @@ export function FaultList({
           }
           className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          {statusOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
+          <option value="">{t('faults.allStatuses')}</option>
+          {faultStatuses.map((value) => (
+            <option key={value} value={value}>
+              {t(faultStatusKeys[value])}
             </option>
           ))}
         </select>
@@ -136,9 +114,10 @@ export function FaultList({
           }
           className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          {priorityOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
+          <option value="">{t('faults.allPriorities')}</option>
+          {faultPriorities.map((value) => (
+            <option key={value} value={value}>
+              {t(faultPriorityKeys[value])}
             </option>
           ))}
         </select>
@@ -148,9 +127,10 @@ export function FaultList({
           }
           className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          {categoryOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
+          <option value="">{t('faults.allCategories')}</option>
+          {faultCategories.map((value) => (
+            <option key={value} value={value}>
+              {t(faultCategoryKeys[value])}
             </option>
           ))}
         </select>
@@ -186,7 +166,7 @@ export function FaultList({
 
       {/* List */}
       {!isLoading && !isError && faults.length === 0 && (
-        <div className="text-center py-8 text-gray-500">No faults found.</div>
+        <div className="text-center py-8 text-gray-500">{t('faults.noFaultsFound')}</div>
       )}
 
       {!isLoading && !isError && faults.length > 0 && (
@@ -208,8 +188,11 @@ export function FaultList({
       {totalPages > 1 && (
         <div className="flex items-center justify-between py-4 border-t">
           <p className="text-sm text-gray-500">
-            Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, total)} of {total}{' '}
-            faults
+            {t('faults.paginationSummary', {
+              from: (page - 1) * pageSize + 1,
+              to: Math.min(page * pageSize, total),
+              total,
+            })}
           </p>
           <div className="flex gap-2">
             <button
@@ -218,7 +201,7 @@ export function FaultList({
               disabled={page <= 1}
               className="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
             >
-              Previous
+              {t('common.previous')}
             </button>
             <button
               type="button"
@@ -226,7 +209,7 @@ export function FaultList({
               disabled={page >= totalPages}
               className="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
             >
-              Next
+              {t('common.next')}
             </button>
           </div>
         </div>

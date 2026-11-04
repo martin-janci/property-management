@@ -257,7 +257,7 @@ export function CreateViolationPage({
           />
           {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description}</p>}
           <p className="mt-1 text-xs text-gray-500">
-            {description.length} {t('leases.violations.form.characters')}
+            {t('leases.violations.form.characters', { count: description.length })}
           </p>
         </div>
 
@@ -304,7 +304,7 @@ export function CreateViolationPage({
           {evidence && evidence.length > 0 && (
             <div className="mt-2">
               <p className="text-sm text-gray-600">
-                {evidence.length} {t('leases.violations.form.filesSelected')}
+                {t('leases.violations.form.filesSelected', { count: evidence.length })}
               </p>
               <ul className="mt-1 text-xs text-gray-500">
                 {Array.from(evidence).map((file, idx) => (

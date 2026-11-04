@@ -22,6 +22,39 @@ use uuid::Uuid;
 use super::sync::{verify_manager_role_in_org, verify_org_access, OrgIdPath, ResourceIdPath};
 use common::errors::ErrorResponse;
 
+/// The caller's role in `org_id` (the path org), or 403 when they are not an
+/// active member of it.
+///
+/// Login access tokens carry no `tenant_id` / `role` claim, so comparing
+/// `AuthUser.tenant_id` with the path org and reading `AuthUser.role` rejected
+/// every real manager. Platform admins (role claim on service tokens) keep
+/// their bypass.
+async fn caller_role_in_org(
+    state: &crate::state::AppState,
+    auth: &api_core::AuthUser,
+    org_id: Uuid,
+) -> Result<common::TenantRole, (StatusCode, Json<ErrorResponse>)> {
+    if auth.is_platform_admin() {
+        return Ok(auth.role.unwrap_or(common::TenantRole::SuperAdmin));
+    }
+    verify_org_access(state, auth.user_id, org_id).await?;
+    let role_type = state
+        .org_member_repo
+        .get_user_role_type(org_id, auth.user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to look up org role");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+            )
+        })?;
+    Ok(role_type
+        .as_deref()
+        .and_then(common::TenantRole::from_role_type)
+        .unwrap_or(common::TenantRole::Guest))
+}
+
 const MAX_BATCH_SIZE: usize = 500;
 
 // ==================== Booking.com Push Validation ====================
@@ -505,6 +538,9 @@ pub async fn connect_airbnb(
 
     // Issue #765: prevent cross-org IDOR — caller must belong to this org.
     verify_org_access(&state, auth.user_id, path.org_id).await?;
+    // Connecting the org's channel account is a manager action (matches
+    // disconnect_airbnb and the OAuth callback).
+    verify_manager_role_in_org(&state, auth.user_id, path.org_id).await?;
 
     // Issue #711: AppState carries Airbnb credentials loaded once at startup.
     let client_id = state.airbnb_config.client_id.clone();
@@ -573,6 +609,8 @@ pub async fn sync_airbnb(
 
     // Issue #765: prevent cross-org IDOR — caller must belong to this org.
     verify_org_access(&state, auth.user_id, path.org_id).await?;
+    // Syncing refreshes/rotates the org's stored tokens: manager only.
+    verify_manager_role_in_org(&state, auth.user_id, path.org_id).await?;
 
     // Issue #711 + Gap 83-1: use cached config; wrap the Airbnb API calls in
     // `with_token_refresh` so the access token is proactively renewed near
@@ -1026,6 +1064,9 @@ pub async fn sync_booking(
 
     // Issue #765: prevent cross-org IDOR — caller must belong to this org.
     verify_org_access(&state, auth.user_id, path.org_id).await?;
+    // Syncing calls Booking.com with the org's credentials and writes guest
+    // bookings: manager only (matches connect/disconnect_booking).
+    verify_manager_role_in_org(&state, auth.user_id, path.org_id).await?;
 
     let rental_repo = &state.rental_repo;
 
@@ -1128,8 +1169,14 @@ pub async fn sync_booking(
             .ok()
             .flatten();
 
+        // The room mapping comes from the external feed: only accept a unit
+        // connection that belongs to this organization.
         let unit_id = match unit_conn {
-            Some(ref conn) if conn.unit_id != uuid::Uuid::nil() => conn.unit_id,
+            Some(ref conn)
+                if conn.unit_id != uuid::Uuid::nil() && conn.organization_id == path.org_id =>
+            {
+                conn.unit_id
+            }
             _ => continue,
         };
 
@@ -1340,17 +1387,19 @@ pub async fn push_booking_availability(
         "Pushing availability to Booking.com"
     );
 
-    if auth.tenant_id != Some(path.org_id) && !auth.is_platform_admin() {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new("FORBIDDEN", "Access denied")),
-        ));
-    }
+    // Login JWTs carry no tenant claim: check membership of the path org.
+    caller_role_in_org(&state, &auth, path.org_id).await?;
 
     validate_push_availability(&request)
         .map_err(|(code, msg)| (StatusCode::BAD_REQUEST, Json(ErrorResponse::new(code, msg))))?;
 
     let rental_repo = &state.rental_repo;
+
+    // Pushing to the org's Booking.com channel is a manager action (role
+    // from the DB membership of the path org, not the JWT).
+    if !auth.is_platform_admin() {
+        verify_manager_role_in_org(&state, auth.user_id, path.org_id).await?;
+    }
 
     let connection = rental_repo
         .find_booking_connection_by_org(path.org_id)
@@ -1488,17 +1537,19 @@ pub async fn push_booking_rates(
         "Pushing rates to Booking.com"
     );
 
-    if auth.tenant_id != Some(path.org_id) && !auth.is_platform_admin() {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new("FORBIDDEN", "Access denied")),
-        ));
-    }
+    // Login JWTs carry no tenant claim: check membership of the path org.
+    caller_role_in_org(&state, &auth, path.org_id).await?;
 
     validate_push_rates(&request)
         .map_err(|(code, msg)| (StatusCode::BAD_REQUEST, Json(ErrorResponse::new(code, msg))))?;
 
     let rental_repo = &state.rental_repo;
+
+    // Pushing to the org's Booking.com channel is a manager action (role
+    // from the DB membership of the path org, not the JWT).
+    if !auth.is_platform_admin() {
+        verify_manager_role_in_org(&state, auth.user_id, path.org_id).await?;
+    }
 
     let connection = rental_repo
         .find_booking_connection_by_org(path.org_id)
@@ -1884,16 +1935,7 @@ pub async fn direct_connect_airbnb(
     Json(request): Json<AirbnbDirectConnectRequest>,
 ) -> Result<Json<AirbnbDirectConnectResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Org ownership guard — prevent IDOR.
-    if auth.tenant_id != Some(path.org_id) && !auth.is_platform_admin() {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "FORBIDDEN",
-                "You do not have access to this organization",
-            )),
-        ));
-    }
-    let role = auth.role.unwrap_or(common::TenantRole::Guest);
+    let role = caller_role_in_org(&state, &auth, path.org_id).await?;
     if !matches!(
         role,
         common::TenantRole::SuperAdmin
@@ -2065,16 +2107,7 @@ pub async fn enqueue_airbnb_availability_sync(
     Path(path): Path<OrgIdPath>,
 ) -> Result<(StatusCode, Json<AirbnbAvailabilitySyncResponse>), (StatusCode, Json<ErrorResponse>)> {
     // Org ownership guard.
-    if auth.tenant_id != Some(path.org_id) && !auth.is_platform_admin() {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "FORBIDDEN",
-                "You do not have access to this organization",
-            )),
-        ));
-    }
-    let role = auth.role.unwrap_or(common::TenantRole::Guest);
+    let role = caller_role_in_org(&state, &auth, path.org_id).await?;
     if !matches!(
         role,
         common::TenantRole::SuperAdmin

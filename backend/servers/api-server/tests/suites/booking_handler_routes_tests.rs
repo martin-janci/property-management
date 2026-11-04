@@ -13,7 +13,7 @@
 //! | POST   | `/organizations/{org_id}/booking/push-rates`                 | `push_booking_rates`        |
 //!
 //! Coverage: authentication (anon rejected), cross-org IDOR (membership gate
-//! for status/connect/sync/disconnect; JWT-tenant gate for the push routes),
+//! for status/connect/sync/disconnect; org-membership gate for the push routes),
 //! request validation (`NO_UPDATES`, `BATCH_TOO_LARGE`,
 //! `INVALID_AVAILABLE_COUNT`), connection-state branches (no connection → 404,
 //! `external_property_id` NULL → 400 `NOT_CONFIGURED`), disconnect credential
@@ -622,7 +622,7 @@ async fn push_availability_rejects_unauthenticated(pool: PgPool) {
     );
 }
 
-/// Cross-tenant gate: the push routes authorize on the JWT `tenant_id` claim.
+/// Cross-tenant gate: the push routes require membership of the path org.
 /// A caller whose token is scoped to org B must get 403 for org A's path —
 /// before validation, connection lookup, or any upstream call.
 #[sqlx::test(migrator = "db::MIGRATOR")]

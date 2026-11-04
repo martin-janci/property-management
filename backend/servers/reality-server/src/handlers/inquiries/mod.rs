@@ -335,15 +335,22 @@ impl InquiriesHandler {
                 InquiryResult::Created(Box::new(inquiry))
             }
             Err(e) => {
-                let error_str = e.to_string();
-                if error_str.contains("violates foreign key") {
-                    if error_str.contains("listing") {
-                        InquiryResult::ListingNotFound
-                    } else {
-                        InquiryResult::RealtorNotFound
+                use crate::util::errors::{classify_db_error, db_constraint, DbErrorClass};
+                match classify_db_error(&e) {
+                    // A foreign-key violation means the referenced listing or
+                    // realtor does not exist. Disambiguate off the typed
+                    // constraint name (a stable schema identifier) rather than
+                    // scraping the free-text message: the realtor FK is
+                    // `listing_inquiries_realtor_id_fkey`; anything else on this
+                    // insert is the listing FK.
+                    DbErrorClass::ForeignKeyViolation => {
+                        if db_constraint(&e).is_some_and(|c| c.contains("realtor")) {
+                            InquiryResult::RealtorNotFound
+                        } else {
+                            InquiryResult::ListingNotFound
+                        }
                     }
-                } else {
-                    InquiryResult::DatabaseError(error_str)
+                    _ => InquiryResult::DatabaseError(e.to_string()),
                 }
             }
         }

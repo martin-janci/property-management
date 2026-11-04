@@ -961,6 +961,7 @@ async fn get_trends(
     mut rls: RlsConnection,
     Query(query): Query<SentimentTrendQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     // RLS context (org GUC) is set on rls.conn(); tenant_id is the authoritative org.
     let tenant_id = rls.tenant_id();
 
@@ -987,6 +988,7 @@ async fn list_alerts(
     mut rls: RlsConnection,
     Query(query): Query<AlertsQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let tenant_id = rls.tenant_id();
 
     let result = state
@@ -1021,6 +1023,7 @@ async fn acknowledge_alert(
     mut rls: RlsConnection,
     Path(alert_id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
 
@@ -1053,6 +1056,7 @@ async fn get_thresholds(
     State(state): State<AppState>,
     mut rls: RlsConnection,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let tenant_id = rls.tenant_id();
 
     let result = state
@@ -1081,6 +1085,7 @@ async fn update_thresholds(
     mut rls: RlsConnection,
     Json(req): Json<UpdateSentimentThresholds>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let tenant_id = rls.tenant_id();
 
     let result = state
@@ -1105,6 +1110,7 @@ async fn get_dashboard(
     State(state): State<AppState>,
     mut rls: RlsConnection,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let today = chrono::Utc::now().date_naive();
     let thirty_days_ago = today - chrono::Duration::days(30);

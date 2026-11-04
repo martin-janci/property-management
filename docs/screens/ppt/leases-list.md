@@ -40,3 +40,4 @@ already built but unrouted; this screen is now reachable on web.
 
 ## Agent Log
 - 2026-06-08 — CTO: created on route mount (PAP-20, Epic 19).
+- 2026-11-04 — agent: Filters wired (were `onFilterChange={() => {}}`): status + expiry window + page persist in the URL (`?status=&expiring=&page=`) and map to `GET /leases` `status` / `expiring_within_days` / `limit=12` / `offset` (`pending_signatures`→`pending_signature`; synthetic `expiring_soon`→`active` + 90 days). Search and building filter hidden — the list endpoint supports neither. Card Renew/Terminate deep-link to `/leases/{id}?action=…`.

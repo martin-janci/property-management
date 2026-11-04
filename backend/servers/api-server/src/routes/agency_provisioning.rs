@@ -19,6 +19,7 @@ use utoipa::ToSchema;
 
 use crate::routes::platform_admin::extract_super_admin_token;
 use crate::state::AppState;
+use admin_core::{require_capability, Capability, RequireCapability};
 
 /// Default platform apex used to derive `{slug}.{apex}` when no explicit host
 /// is supplied. Overridable via the `PLATFORM_APEX` env var.
@@ -29,7 +30,14 @@ const DEFAULT_PLATFORM_APEX: &str = "dev.rlt.sk";
 /// Mounted with no extra prefix: paths here are relative to the
 /// `/api/v1/platform-admin` nest that `platform_admin::router()` lives under.
 pub fn router() -> Router<AppState> {
-    Router::new().route("/agencies", post(create_agency))
+    // Same platform-admin contract as the sibling `platform_admin` routes:
+    // the `RequireCapability` gate re-derives the principal kind from the
+    // `users` table and enforces MFA + a capability grant + an audit row,
+    // instead of trusting the JWT `roles` claim alone.
+    Router::new().route(
+        "/agencies",
+        post(create_agency).layer(require_capability(Capability::AgenciesWrite)),
+    )
 }
 
 // ==================== Types ====================
@@ -123,6 +131,7 @@ fn db_error(msg: &str) -> (StatusCode, Json<ErrorResponse>) {
     )
 )]
 pub async fn create_agency(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateAgencyRequest>,

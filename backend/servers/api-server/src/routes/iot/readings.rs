@@ -3,7 +3,7 @@
 //! via [`super::realtime`].
 
 use super::realtime::{publish_sensor_event, EVENT_READINGS_BATCH, EVENT_READING_CREATED};
-use super::shared::{db_error, insert_child_error};
+use super::shared::{db_error, ensure_in_org, insert_child_error, IotManager, IotScope};
 use crate::state::AppState;
 use api_core::extractors::RlsConnection;
 use axum::{
@@ -21,6 +21,7 @@ pub(super) async fn list_readings(
     Path(id): Path<Uuid>,
     Query(query): Query<ReadingQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    ensure_in_org(&state, &mut rls, IotScope::Sensor(id)).await?;
     let out = state
         .sensor_repo
         .list_readings(&mut **rls.conn(), id, query)
@@ -33,10 +34,12 @@ pub(super) async fn list_readings(
 
 pub(super) async fn add_reading(
     State(state): State<AppState>,
+    _manager: IotManager,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(mut req): Json<CreateSensorReading>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
+    ensure_in_org(&state, &mut rls, IotScope::Sensor(id)).await?;
     req.sensor_id = id;
     // Capture the validated org before releasing the RLS connection so the
     // realtime fanout targets the caller's tenant and never a client-supplied
@@ -67,10 +70,12 @@ pub(super) async fn add_reading(
 
 pub(super) async fn add_batch_readings(
     State(state): State<AppState>,
+    _manager: IotManager,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<BatchSensorReadings>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
+    ensure_in_org(&state, &mut rls, IotScope::Sensor(id)).await?;
     let org_id = rls.tenant_id();
     let result = state
         .sensor_repo
@@ -109,6 +114,7 @@ pub(super) async fn get_aggregated_readings(
     Path(id): Path<Uuid>,
     Query(query): Query<ReadingQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    ensure_in_org(&state, &mut rls, IotScope::Sensor(id)).await?;
     let aggregation = query
         .aggregation
         .clone()

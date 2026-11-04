@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-11-04T04:00:00Z",
+  "last_run_iso": "2026-11-04T18:35:00Z",
   "last_run_ms": 900000,
-  "last_pr_seen": 3230,
-  "last_issue_seen": 3223,
-  "last_commit_sha": "920c80b8",
+  "last_pr_seen": 3291,
+  "last_issue_seen": 3304,
+  "last_commit_sha": "b61a77779f35d2537171a4a90e6267defe563fe8",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -1260,6 +1260,10 @@
     "screen-map-drift-pr-3217-reality",
     "screen-map-drift-pr-3224-reality",
     "screen-map-drift-pr-3225-reality",
+    "screen-map-drift-pr-3237-ppt",
+    "screen-map-drift-pr-3242-ppt",
+    "screen-map-drift-pr-3244-ppt",
+    "screen-map-drift-pr-3254-ppt",
     "screen-map-drift-pr-460-reality",
     "screen-map-drift-pr-464-ppt",
     "screen-map-drift-pr-547-ppt",
@@ -1352,7 +1356,7 @@
   "review_cursor": {
     "api-handlers": "2026-11-04",
     "api-core": "2026-11-04",
-    "reality-server": "2026-10-28",
+    "reality-server": "2026-11-04",
     "ppt-web-ui": "2026-11-02",
     "ppt-web-core": "2026-11-04",
     "reality-web": "2026-11-03",
@@ -1360,8 +1364,8 @@
     "mobile-native-kmp": "2026-11-04"
   },
   "stats": {
-    "runs": 111,
-    "vectors_created": 505,
+    "runs": 112,
+    "vectors_created": 509,
     "plans_created": 35,
     "quiet_days": 8,
     "auto_fix_count": 0

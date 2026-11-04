@@ -457,6 +457,26 @@ pub async fn reassign_listings(
     // Verify caller is agency admin
     verify_agency_admin(&state, id, tenant.user_id).await?;
 
+    // Listings may only be handed to an active member of this agency:
+    // `can_access_listing` grants access to the listing's realtor, so an
+    // outside user would otherwise gain control of the agency's listings.
+    let target = state
+        .agency_repo
+        .get_member(id, to_user_id)
+        .await
+        .map_err(|e| {
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to check membership: {}", e),
+            )
+        })?;
+    if !target.is_some_and(|m| m.is_active) {
+        return Err((
+            axum::http::StatusCode::NOT_FOUND,
+            "Target user is not an active member of this agency".to_string(),
+        ));
+    }
+
     let count = state
         .agency_repo
         .reassign_listings(id, user_id, to_user_id)
@@ -494,16 +514,30 @@ pub async fn update_visibility(
     Json(data): Json<db::models::UpdateListingVisibility>,
 ) -> Result<Json<db::models::AgencyListing>, (axum::http::StatusCode, String)> {
     // Verify caller has access to listing
-    verify_listing_access(&state, id, listing_id, tenant.user_id).await?;
+    let (member, listing) = verify_listing_access(&state, id, listing_id, tenant.user_id).await?;
+
+    // Only the listing's realtor or an agency admin may change who can see it.
+    if listing.realtor_id != tenant.user_id && member.role != member_role::ADMIN {
+        return Err((
+            axum::http::StatusCode::FORBIDDEN,
+            "Only the listing's realtor or an agency admin can change its visibility".to_string(),
+        ));
+    }
 
     let listing = state
         .agency_repo
-        .update_listing_visibility(listing_id, &data.visibility)
+        .update_listing_visibility(id, listing_id, &data.visibility)
         .await
         .map_err(|e| {
             (
                 axum::http::StatusCode::INTERNAL_SERVER_ERROR,
                 format!("Failed to update visibility: {}", e),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                axum::http::StatusCode::NOT_FOUND,
+                "Listing not found".to_string(),
             )
         })?;
 
@@ -725,13 +759,17 @@ async fn verify_agency_admin(
     }
 }
 
-/// Verify that the user has access to a listing (is a member of the agency or owns the listing).
+/// Verify that the user has access to a listing of `agency_id` (is an active
+/// member of the agency and may see the listing). The listing must belong to
+/// the path agency (404 otherwise). Returns the caller's membership and the
+/// listing.
 async fn verify_listing_access(
     state: &AppState,
     agency_id: Uuid,
     listing_id: Uuid,
     user_id: Uuid,
-) -> Result<(), (axum::http::StatusCode, String)> {
+) -> Result<(db::models::AgencyMember, db::models::AgencyListing), (axum::http::StatusCode, String)>
+{
     // First check if user is an agency member
     let member = state
         .agency_repo
@@ -744,12 +782,34 @@ async fn verify_listing_access(
             )
         })?;
 
-    if member.is_none() || !member.as_ref().unwrap().is_active {
-        return Err((
-            axum::http::StatusCode::FORBIDDEN,
-            "You are not a member of this agency".to_string(),
-        ));
-    }
+    let member = match member {
+        Some(m) if m.is_active => m,
+        _ => {
+            return Err((
+                axum::http::StatusCode::FORBIDDEN,
+                "You are not a member of this agency".to_string(),
+            ));
+        }
+    };
+
+    // The listing must be one of this agency's listings.
+    let listing = state
+        .agency_repo
+        .get_agency_listing(listing_id)
+        .await
+        .map_err(|e| {
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to load listing: {}", e),
+            )
+        })?
+        .filter(|l| l.agency_id == agency_id)
+        .ok_or_else(|| {
+            (
+                axum::http::StatusCode::NOT_FOUND,
+                "Listing not found".to_string(),
+            )
+        })?;
 
     // Check listing access based on visibility and role
     let can_access = state
@@ -770,5 +830,5 @@ async fn verify_listing_access(
         ));
     }
 
-    Ok(())
+    Ok((member, listing))
 }

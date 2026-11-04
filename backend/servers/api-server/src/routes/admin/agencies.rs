@@ -178,29 +178,17 @@ async fn suspend_agency(
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     // Cascade the suspension: revoke every org member's sessions so the block
-    // takes effect immediately rather than waiting for token expiry. Mirrors
-    // the cascade in `platform_admin::suspend_organization`. Failures here are
-    // logged but do not fail the request — the org is already suspended and the
-    // auth path also drops suspended-org memberships at login/refresh.
-    let user_ids = state
-        .platform_admin_repo
-        .get_org_member_user_ids(id)
+    // takes effect immediately rather than waiting for token expiry. Shares the
+    // cascade used by `platform_admin::suspend_organization`. A partial failure
+    // (members not enumerable, or some revocations erroring) is surfaced as a
+    // 500 rather than swallowed — the org is already suspended, but the operator
+    // must know the session cleanup was incomplete so they can retry.
+    crate::routes::suspend_cascade::revoke_org_member_sessions(&state, id)
         .await
-        .unwrap_or_default();
-
-    for user_id in &user_ids {
-        if let Err(e) = state
-            .session_repo
-            .revoke_all_user_tokens(*user_id, None)
-            .await
-        {
-            tracing::warn!(
-                user_id = %user_id,
-                error = %e,
-                "Failed to revoke sessions for suspended org member"
-            );
-        }
-    }
+        .map_err(|e| {
+            tracing::error!(org_id = %id, error = %e, "Agency suspend cascade failed");
+            (StatusCode::INTERNAL_SERVER_ERROR, e.message())
+        })?;
 
     Ok(StatusCode::NO_CONTENT)
 }

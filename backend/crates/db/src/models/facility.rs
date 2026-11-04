@@ -53,9 +53,11 @@ pub struct Facility {
     pub available_to: Option<NaiveTime>,
     pub available_days: Option<Vec<i32>>,
     pub rules: Option<String>,
-    #[sqlx(try_from = "rust_decimal::Decimal")]
+    // Nullable NUMERIC: decode straight into `Option<Decimal>` (a
+    // `try_from` adapter rejects NULL with UnexpectedNullError -> 500).
     pub hourly_fee: Option<Decimal>,
-    #[sqlx(try_from = "rust_decimal::Decimal")]
+    // Nullable NUMERIC: decode straight into `Option<Decimal>` (a
+    // `try_from` adapter rejects NULL with UnexpectedNullError -> 500).
     pub deposit_amount: Option<Decimal>,
     pub is_active: bool,
     pub photos: serde_json::Value,
@@ -172,7 +174,8 @@ pub struct FacilityBooking {
     pub rejection_reason: Option<String>,
     pub cancelled_at: Option<DateTime<Utc>>,
     pub cancellation_reason: Option<String>,
-    #[sqlx(try_from = "rust_decimal::Decimal")]
+    // Nullable NUMERIC: decode straight into `Option<Decimal>` (a
+    // `try_from` adapter rejects NULL with UnexpectedNullError -> 500).
     pub total_fee: Option<Decimal>,
     pub deposit_paid: bool,
     pub created_at: DateTime<Utc>,

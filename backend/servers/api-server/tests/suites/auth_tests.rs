@@ -1226,3 +1226,141 @@ mod error_responses {
         response.assert_status(StatusCode::BAD_REQUEST);
     }
 }
+
+// =============================================================================
+// Refresh-token rotation atomicity (regression)
+// =============================================================================
+//
+// Regression for the non-atomic rotation bug: `/auth/refresh` used to revoke
+// the old refresh token with a best-effort call whose error/zero-row result
+// was swallowed ("continue anyway - better to issue new token than fail"), then
+// unconditionally store a new token. A revoke that didn't actually land left
+// the OLD refresh token live alongside the NEW one — two valid refresh tokens
+// from a single rotation (RFC 9700 violation). The fix funnels rotation through
+// `SessionRepository::rotate_refresh_token`, which revokes-then-issues inside
+// one transaction with a compare-and-swap revoke, so a failed/no-op revoke can
+// never produce a second live token.
+#[cfg(test)]
+mod refresh_rotation_atomicity {
+    use chrono::{Duration, Utc};
+    use db::models::CreateRefreshToken;
+    use db::repositories::SessionRepository;
+    use sqlx::PgPool;
+    use uuid::Uuid;
+
+    async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
+        sqlx::query_scalar::<_, Uuid>(
+            r#"
+            INSERT INTO users (email, password_hash, name, status, email_verified_at)
+            VALUES ($1, 'test_hash', 'Rotation Test User', 'active', NOW())
+            RETURNING id
+            "#,
+        )
+        .bind(email)
+        .fetch_one(pool)
+        .await
+        .expect("seed user")
+    }
+
+    async fn live_token_count(pool: &PgPool, user_id: Uuid) -> i64 {
+        sqlx::query_scalar::<_, i64>(
+            r#"
+            SELECT COUNT(*) FROM refresh_tokens
+            WHERE user_id = $1 AND revoked_at IS NULL
+            "#,
+        )
+        .bind(user_id)
+        .fetch_one(pool)
+        .await
+        .expect("count live tokens")
+    }
+
+    fn new_token(user_id: Uuid, token_hash: &str) -> CreateRefreshToken {
+        CreateRefreshToken {
+            user_id,
+            token_hash: token_hash.to_string(),
+            expires_at: Utc::now() + Duration::days(7),
+            user_agent: None,
+            ip_address: None,
+            device_info: None,
+        }
+    }
+
+    /// Core regression: when the old token is already revoked (as happens on a
+    /// concurrent rotation or replay, or any time the revoke affects zero rows),
+    /// rotation MUST NOT mint a replacement. Before the fix the handler issued
+    /// one anyway, leaving two valid tokens; here the repository refuses and no
+    /// new live token row appears.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn rotation_refuses_to_issue_when_old_token_already_revoked(pool: PgPool) {
+        let repo = SessionRepository::new(pool.clone());
+        let user_id = seed_user(&pool, "rotation-stale@test").await;
+
+        let old = repo
+            .create_refresh_token(new_token(user_id, "old-hash"))
+            .await
+            .expect("create old token");
+
+        // Simulate the revoke already having landed (concurrent rotation).
+        assert!(
+            repo.revoke_token(old.id).await.expect("revoke old"),
+            "precondition: old token revoked"
+        );
+
+        let before = live_token_count(&pool, user_id).await;
+        assert_eq!(before, 0, "precondition: no live tokens after revoke");
+
+        let result = repo
+            .rotate_refresh_token(old.id, new_token(user_id, "new-hash"))
+            .await
+            .expect("rotate call");
+
+        assert!(
+            result.is_none(),
+            "rotation from an already-revoked token must NOT issue a replacement"
+        );
+        assert_eq!(
+            live_token_count(&pool, user_id).await,
+            0,
+            "a no-op revoke must not leave a newly-issued refresh token behind"
+        );
+    }
+
+    /// Happy path: rotating a live token revokes exactly the old one and issues
+    /// exactly one new live token — never two.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn rotation_revokes_old_and_issues_exactly_one_new(pool: PgPool) {
+        let repo = SessionRepository::new(pool.clone());
+        let user_id = seed_user(&pool, "rotation-happy@test").await;
+
+        let old = repo
+            .create_refresh_token(new_token(user_id, "old-hash-2"))
+            .await
+            .expect("create old token");
+        assert_eq!(live_token_count(&pool, user_id).await, 1);
+
+        let issued = repo
+            .rotate_refresh_token(old.id, new_token(user_id, "new-hash-2"))
+            .await
+            .expect("rotate call")
+            .expect("rotation must issue a new token for a live old token");
+
+        assert_ne!(issued.id, old.id, "a fresh token row must be created");
+        assert_eq!(
+            live_token_count(&pool, user_id).await,
+            1,
+            "exactly one live token must exist after rotation — old revoked, new issued"
+        );
+
+        // The presented (old) token is now revoked.
+        let reloaded = repo
+            .find_by_token_hash_any_status("old-hash-2")
+            .await
+            .expect("lookup old")
+            .expect("old token row still present");
+        assert!(
+            reloaded.is_revoked(),
+            "old token must be revoked post-rotation"
+        );
+    }
+}

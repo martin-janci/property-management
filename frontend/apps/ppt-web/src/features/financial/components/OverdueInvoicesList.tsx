@@ -3,6 +3,7 @@
  */
 
 import type { Invoice } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 import { formatCurrency, formatDate } from '../utils/formatting';
 
 interface OverdueInvoicesListProps {
@@ -31,10 +32,13 @@ export function OverdueInvoicesList({
   onViewInvoice,
   onSendReminder,
 }: OverdueInvoicesListProps) {
+  const { t } = useTranslation();
   if (isLoading) {
     return (
       <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Overdue Invoices</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">
+          {t('financial.overdueInvoices.title')}
+        </h3>
         <div className="animate-pulse space-y-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="h-16 bg-gray-200 rounded" />
@@ -47,10 +51,12 @@ export function OverdueInvoicesList({
   if (invoices.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Overdue Invoices</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">
+          {t('financial.overdueInvoices.title')}
+        </h3>
         <div className="text-center py-8">
           <div className="text-green-500 text-4xl mb-2">✓</div>
-          <p className="text-gray-500">No overdue invoices</p>
+          <p className="text-gray-500">{t('financial.overdueInvoices.empty')}</p>
         </div>
       </div>
     );
@@ -60,7 +66,7 @@ export function OverdueInvoicesList({
     <div className="bg-white rounded-lg shadow">
       <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
         <h3 className="text-lg font-medium text-gray-900">
-          Overdue Invoices
+          {t('financial.overdueInvoices.title')}
           <span className="ml-2 px-2 py-0.5 text-sm font-medium bg-red-100 text-red-800 rounded-full">
             {invoices.length}
           </span>
@@ -79,12 +85,14 @@ export function OverdueInvoicesList({
                     <span
                       className={`px-2 py-0.5 text-xs font-medium rounded-full ${getOverdueStyle(daysOverdue)}`}
                     >
-                      {daysOverdue} days overdue
+                      {t('financial.overdueInvoices.daysOverdue', { count: daysOverdue })}
                     </span>
                   </div>
                   <p className="text-sm text-gray-500">
-                    Due: {formatDate(invoice.due_date)} • Balance:{' '}
-                    {formatCurrency(invoice.balance_due, invoice.currency)}
+                    {t('financial.overdueInvoices.dueAndBalance', {
+                      date: formatDate(invoice.due_date),
+                      amount: formatCurrency(invoice.balance_due, invoice.currency),
+                    })}
                   </p>
                 </div>
                 <div className="ml-4 flex items-center gap-2">
@@ -94,7 +102,7 @@ export function OverdueInvoicesList({
                       onClick={() => onSendReminder(invoice.id)}
                       className="text-sm text-blue-600 hover:text-blue-800"
                     >
-                      Send Reminder
+                      {t('financial.overdueInvoices.sendReminder')}
                     </button>
                   )}
                   {onViewInvoice && (
@@ -103,7 +111,7 @@ export function OverdueInvoicesList({
                       onClick={() => onViewInvoice(invoice.id)}
                       className="text-sm text-gray-600 hover:text-gray-800"
                     >
-                      View
+                      {t('financial.view')}
                     </button>
                   )}
                 </div>

@@ -28,6 +28,46 @@ impl RegistryRepository {
     }
 
     // ========================================================================
+    // Tenant scoping helpers
+    // ========================================================================
+
+    /// Returns `true` iff `unit_id` is a unit of a building owned by `tenant_id`.
+    pub async fn unit_in_tenant(
+        &self,
+        tenant_id: Uuid,
+        unit_id: Uuid,
+    ) -> Result<bool, sqlx::Error> {
+        sqlx::query_scalar(
+            r#"
+            SELECT EXISTS(
+                SELECT 1 FROM units u
+                JOIN buildings b ON b.id = u.building_id
+                WHERE u.id = $1 AND b.organization_id = $2
+            )
+            "#,
+        )
+        .bind(unit_id)
+        .bind(tenant_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
+    /// Returns `true` iff `building_id` is owned by `tenant_id`.
+    pub async fn building_in_tenant(
+        &self,
+        tenant_id: Uuid,
+        building_id: Uuid,
+    ) -> Result<bool, sqlx::Error> {
+        sqlx::query_scalar(
+            "SELECT EXISTS(SELECT 1 FROM buildings WHERE id = $1 AND organization_id = $2)",
+        )
+        .bind(building_id)
+        .bind(tenant_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
+    // ========================================================================
     // Pet Registration Operations
     // ========================================================================
 
@@ -124,10 +164,11 @@ impl RegistryRepository {
             SELECT u.designation AS unit_number, b.name as building_name
             FROM units u
             JOIN buildings b ON b.id = u.building_id
-            WHERE u.id = $1
+            WHERE u.id = $1 AND b.organization_id = $2
             "#,
         )
         .bind(registration.unit_id)
+        .bind(tenant_id)
         .fetch_optional(&self.pool)
         .await?;
 
@@ -414,10 +455,11 @@ impl RegistryRepository {
             SELECT u.designation AS unit_number, b.name as building_name
             FROM units u
             JOIN buildings b ON b.id = u.building_id
-            WHERE u.id = $1
+            WHERE u.id = $1 AND b.organization_id = $2
             "#,
         )
         .bind(registration.unit_id)
+        .bind(tenant_id)
         .fetch_optional(&self.pool)
         .await?;
 

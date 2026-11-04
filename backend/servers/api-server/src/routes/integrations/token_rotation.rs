@@ -36,7 +36,7 @@ use integrations::{
 };
 use uuid::Uuid;
 
-use super::sync::{verify_org_access, OrgIdPath};
+use super::sync::{verify_manager_role_in_org, verify_org_access, OrgIdPath};
 use crate::state::AppState;
 use common::errors::ErrorResponse;
 
@@ -302,8 +302,10 @@ pub async fn revoke_airbnb_token(
         "Revoking Airbnb tokens"
     );
 
-    // IDOR guard.
+    // IDOR guard + manager gate: revoking disconnects the org's Airbnb
+    // integration, which only managers may do (matches disconnect_airbnb).
     verify_org_access(&state, auth.user_id, path.org_id).await?;
+    verify_manager_role_in_org(&state, auth.user_id, path.org_id).await?;
 
     let rental_repo = &state.rental_repo;
 

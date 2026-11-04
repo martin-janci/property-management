@@ -7,6 +7,8 @@
 
 mod common;
 
+#[path = "suites/analytics_org_authz_tests.rs"]
+mod analytics_org_authz_tests;
 #[path = "suites/payment_webhook_settlement_tests.rs"]
 mod payment_webhook_settlement_tests;
 #[path = "suites/person_months_happy_path_tests.rs"]
@@ -27,6 +29,8 @@ mod predictive_maintenance_happy_path_tests;
 mod predictive_maintenance_photos_idor_tests;
 #[path = "suites/principal_platform_host_tests.rs"]
 mod principal_platform_host_tests;
+#[path = "suites/property_cluster_org_scope_tests.rs"]
+mod property_cluster_org_scope_tests;
 #[path = "suites/property_valuation_happy_path_tests.rs"]
 mod property_valuation_happy_path_tests;
 #[path = "suites/push_delivery_receipt_tests.rs"]
@@ -53,6 +57,8 @@ mod rental_tenant_scope_tests;
 mod rentals_core_backfill_batch2_tests;
 #[path = "suites/rentals_list_contract_tests.rs"]
 mod rentals_list_contract_tests;
+#[path = "suites/rentals_round4_role_tests.rs"]
+mod rentals_round4_role_tests;
 #[path = "suites/report_execution_download_retry_e2e_tests.rs"]
 mod report_execution_download_retry_e2e_tests;
 #[path = "suites/report_schedule_create_tests.rs"]

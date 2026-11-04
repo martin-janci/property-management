@@ -63,3 +63,9 @@ client.
 ## Agent Log
 - 2026-06-23 — FrontendEngineer: created this screen-map as part of the #1674
   follow-up (Epic 13 / Story 13.3).
+
+## Agent Log
+
+<!-- newest entries on top -->
+
+- 2026-11-04 — agent: linked from the AI assistant page for managers (was orphan)

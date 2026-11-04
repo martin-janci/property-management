@@ -59,11 +59,17 @@ mod documents_intelligence_templates_tests;
 mod dsa_report_download_tests;
 #[path = "suites/emergency_cross_org_idor_tests.rs"]
 mod emergency_cross_org_idor_tests;
+#[path = "suites/emergency_round4_role_tests.rs"]
+mod emergency_round4_role_tests;
 #[path = "suites/endpoints_smoke_tests.rs"]
 mod endpoints_smoke_tests;
 #[path = "suites/enhanced_screening_cross_org_idor_tests.rs"]
 mod enhanced_screening_cross_org_idor_tests;
+#[path = "suites/enhanced_screening_round4_authz_tests.rs"]
+mod enhanced_screening_round4_authz_tests;
 #[path = "suites/equipment_cross_tenant_idor_tests.rs"]
 mod equipment_cross_tenant_idor_tests;
 #[path = "suites/esg_reporting_cross_org_idor_tests.rs"]
 mod esg_reporting_cross_org_idor_tests;
+#[path = "suites/login_token_role_scope_tests.rs"]
+mod login_token_role_scope_tests;

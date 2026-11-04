@@ -432,7 +432,7 @@ async fn google_actions_webhook(
 )]
 async fn oauth_token_exchange(
     State(state): State<AppState>,
-    auth: api_core::AuthUser,
+    api_core::TenantAuthUser(auth): api_core::TenantAuthUser,
     Json(request): Json<VoiceOAuthExchangeRequest>,
 ) -> Result<Json<VoiceOAuthExchangeResponse>, (StatusCode, Json<ErrorResponse>)> {
     use integrations::{VoiceOAuthManager, VoicePlatform};

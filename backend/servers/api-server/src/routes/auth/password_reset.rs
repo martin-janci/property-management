@@ -24,6 +24,26 @@ pub struct ForgotPasswordResponse {
     pub message: String,
 }
 
+/// Decide how `forgot_password` reacts to the result of invalidating a user's
+/// outstanding password-reset tokens.
+///
+/// Issuing a fresh reset token while a previous one is still valid leaves
+/// multiple live reset links for the same account, so a DB failure while
+/// invalidating the old tokens must be surfaced (propagated as a 500) rather
+/// than swallowed — matching the error convention of the surrounding handlers
+/// and the sibling `/resend-verification` flow
+/// (`registration::invalidation_outcome`).
+fn invalidation_outcome(result: Result<u64, sqlx::Error>) -> Result<(), AuthError> {
+    result.map(|_| ()).map_err(|e| {
+        tracing::error!(error = %e, "Failed to invalidate old password reset tokens");
+        err_response(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "DATABASE_ERROR",
+            "Failed to process password reset request",
+        )
+    })
+}
+
 /// Forgot password endpoint - initiates password reset.
 #[utoipa::path(
     post,
@@ -59,11 +79,18 @@ pub async fn forgot_password(
     // Try to find user and send email
     match state.user_repo.find_by_email(&req.email).await {
         Ok(Some(user)) if user.status == "active" => {
-            // Invalidate any existing reset tokens for this user
-            let _ = state
-                .password_reset_repo
-                .invalidate_user_tokens(user.id)
-                .await;
+            // Invalidate any existing reset tokens for this user before issuing
+            // a new one. A DB failure here must NOT be swallowed: proceeding
+            // would mint a fresh reset token while leaving the prior token(s)
+            // valid, so the account would have multiple live reset links at
+            // once. Surface it as a 500 so the handler aborts instead of
+            // issuing a new token alongside stale ones.
+            invalidation_outcome(
+                state
+                    .password_reset_repo
+                    .invalidate_user_tokens(user.id)
+                    .await,
+            )?;
 
             // Generate reset token (1 hour expiry)
             let token = state.auth_service.generate_token();
@@ -327,4 +354,35 @@ pub async fn reset_password(
     Ok(Json(ResetPasswordResponse {
         message: "Password has been reset. Please log in with your new password.".to_string(),
     }))
+}
+
+#[cfg(test)]
+mod forgot_password_token_tests {
+    use super::invalidation_outcome;
+    use axum::http::StatusCode;
+
+    /// Regression: a DB failure while invalidating a user's existing
+    /// password-reset tokens must NOT be silently swallowed. Before the fix
+    /// `forgot_password` did `let _ = state.password_reset_repo
+    /// .invalidate_user_tokens(..).await`, so a failed invalidation left the
+    /// prior reset token(s) valid while a brand-new token was issued — leaving
+    /// multiple live reset links for one account. The invalidation outcome must
+    /// surface as an error so the handler aborts instead of proceeding as if
+    /// invalidation succeeded.
+    #[test]
+    fn invalidation_db_error_is_surfaced_not_swallowed() {
+        let outcome = invalidation_outcome(Err(sqlx::Error::PoolClosed));
+        assert!(
+            outcome.is_err(),
+            "a DB failure while invalidating old reset tokens must be surfaced, not swallowed"
+        );
+        let (status, _) = outcome.unwrap_err();
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    /// A successful invalidation lets the handler proceed to issue the new token.
+    #[test]
+    fn invalidation_success_proceeds() {
+        assert!(invalidation_outcome(Ok(1)).is_ok());
+    }
 }

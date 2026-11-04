@@ -14385,7 +14385,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [api-handlers]"
       ],
@@ -14406,7 +14406,12 @@
       "segment": "api-handlers",
       "score_delta": 1,
       "candidate_vector": "bug",
-      "expert": "rust"
+      "expert": "rust",
+      "reconciled": {
+        "at": "2026-11-04T14:28:07Z",
+        "assignment_status": "merged",
+        "pr_number": 3266
+      }
     },
     {
       "id": "code-review-api-handlers-mfa-audit-discard",
@@ -14414,7 +14419,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [api-handlers]"
       ],
@@ -14438,7 +14443,12 @@
       "segment": "api-handlers",
       "score_delta": 1,
       "candidate_vector": "bug",
-      "expert": "rust"
+      "expert": "rust",
+      "reconciled": {
+        "at": "2026-11-04T14:28:07Z",
+        "assignment_status": "merged",
+        "pr_number": 3267
+      }
     },
     {
       "id": "churn-hotspot-reality-web-realtor-id-page",
@@ -14536,7 +14546,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3225"
       ],
@@ -14550,7 +14560,12 @@
       ],
       "created_at": "2026-11-04",
       "updated_at": "2026-11-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-04T14:28:07Z",
+        "assignment_status": "merged",
+        "pr_number": 3271
+      }
     },
     {
       "id": "code-review-api-handlers-refresh-rotation-nonatomic",
@@ -14579,7 +14594,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-11-04 api-handlers (dispatcher Tier-1d)"
       ],
@@ -14592,7 +14607,12 @@
       ],
       "created_at": "2026-11-04",
       "updated_at": "2026-11-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-04T14:28:07Z",
+        "assignment_status": "merged",
+        "pr_number": 3273
+      }
     },
     {
       "id": "code-review-api-handlers-reset-token-invalidate-ignored",
@@ -14663,7 +14683,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-11-03 api-handlers (dispatcher Tier-1d)"
       ],
@@ -14675,7 +14695,12 @@
       ],
       "created_at": "2026-11-04",
       "updated_at": "2026-11-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-04T14:28:07Z",
+        "assignment_status": "merged",
+        "pr_number": 3278
+      }
     },
     {
       "id": "code-review-api-handlers-listing-detail-photos-silent-drop",
@@ -14683,7 +14708,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-11-03 api-handlers (dispatcher Tier-1d)"
       ],
@@ -14695,7 +14720,12 @@
       ],
       "created_at": "2026-11-04",
       "updated_at": "2026-11-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-04T14:28:07Z",
+        "assignment_status": "merged",
+        "pr_number": 3279
+      }
     },
     {
       "id": "code-review-mobile-native-kmp-sso-error-body-unguarded",
@@ -14754,6 +14784,156 @@
       ],
       "files": [
         "frontend/apps/ppt-web/src/"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-db-error-string-status-map",
+      "title": "reality-server maps HTTP status by substring-matching raw sqlx/Postgres error text (brittle under sqlx 0.9 / PG message changes)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [reality-server]"
+      ],
+      "evidence": [
+        "Multiple reality-server error-mapping closures branch on e.to_string().contains(...) to choose the HTTP status, instead of matching the typed sqlx::Error (e.g. sqlx::Error::RowNotFound) or a DB error code. The matched substrings are Display text, which is not a stable API across sqlx/Postgres versions (backend is on sqlx 0.9).",
+        "backend/servers/reality-server/src/routes/favorites.rs:143 add_favorite maps contains(\"not found\")->404 and :148 contains(\"maximum\")/contains(\"limit\")->400; :194 update_favorite maps contains(\"no rows\")->404",
+        "backend/servers/reality-server/src/routes/realtors.rs:136 contains(\"already exists\")->400; :175 contains(\"not found\")->404",
+        "backend/servers/reality-server/src/routes/agencies.rs:97 contains(\"duplicate\")/contains(\"already exists\")->4xx; :434 contains(\"not found\")->404",
+        "backend/servers/reality-server/src/handlers/favorites/mod.rs:70 contains(\"violates foreign key\")->ListingNotFound; :137 contains(\"no rows\")->FavoriteNotFound",
+        "backend/servers/reality-server/src/handlers/inquiries/mod.rs:339 contains(\"violates foreign key\")->Listing/RealtorNotFound (reachable via routes/inquiries.rs and routes/reports.rs)",
+        "The codebase itself flags this as an anti-pattern: backend/servers/reality-server/src/routes/saved_searches.rs:55 documents moving away from err.to_string().contains(\"maximum\")/contains(\"not found\"). Risk if the text drifts: a legitimate 404/400/409 silently degrades to a generic 500. Fix: match sqlx::Error variants / SQLSTATE codes (23503 FK, 23505 unique, RowNotFound) rather than Display substrings."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/favorites.rs",
+        "backend/servers/reality-server/src/routes/realtors.rs",
+        "backend/servers/reality-server/src/routes/agencies.rs",
+        "backend/servers/reality-server/src/handlers/favorites/mod.rs",
+        "backend/servers/reality-server/src/handlers/inquiries/mod.rs"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-inquiry-dead-fk-classify",
+      "title": "InquiriesHandler splits ListingNotFound vs RealtorNotFound by error substring, but both collapse to the same 404 at the route - dead, brittle classification",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [reality-server]"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/handlers/inquiries/mod.rs:339-345 - on a FK violation the handler does a nested if error_str.contains(\"listing\") to return InquiryResult::ListingNotFound vs RealtorNotFound.",
+        "backend/servers/reality-server/src/routes/inquiries.rs:158-161 - inquiry_result_to_id maps ListingNotFound | RealtorNotFound to the identical (404, \"Listing not found\") response, so the handler's listing/realtor distinction is never observable to clients.",
+        "Net effect: extra complexity layered on a brittle substring match (same class as the db-error-string finding) that produces no behavioral difference. Collapse the two branches into one Not-Found outcome, or drop the nested contains(\"listing\") check."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/handlers/inquiries/mod.rs",
+        "backend/servers/reality-server/src/routes/inquiries.rs"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "expert": "rust"
+    },
+    {
+      "id": "screen-map-drift-pr-3237-ppt",
+      "title": "Screen-map drift: PR #3237 restructured ppt-web app shell + landing without docs/screens/ppt/*.md update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3237"
+      ],
+      "evidence": [
+        "PR #3237 (feat/grouped, role-aware app shell + landing) edited App.tsx + routes/groups/core.tsx. No docs/screens/ppt/*.md touched. Shell navigation structure changed substantially — screen-map likely drifted.",
+        "Best-effort heuristic: landing + shell reorganization is a real behavioral change, review candidate for actual doc sync."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3242-ppt",
+      "title": "Screen-map drift: PR #3242 localized financial/buildings/my-unit routes without docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3242"
+      ],
+      "evidence": [
+        "PR #3242 (fix/localize financial, buildings, my-unit) edited routes/groups/financial.tsx. No docs/screens/ppt/*.md touched. Pure i18n — heuristic fires but drift low-impact.",
+        "Best-effort heuristic caveat applies."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3244-ppt",
+      "title": "Screen-map drift: PR #3244 localized faults/news/settings/error pages without docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3244"
+      ],
+      "evidence": [
+        "PR #3244 (fix/localize faults, news, settings, error pages) edited routes/groups/outages.tsx. No docs/screens/ppt/*.md touched. Mostly i18n — heuristic fires but low-impact.",
+        "Best-effort heuristic caveat applies."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/outages.tsx"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3254-ppt",
+      "title": "Screen-map drift: PR #3254 rewired ppt-web rentals routes to /bookings/* without docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3254"
+      ],
+      "evidence": [
+        "PR #3254 (fix/wire rentals pages to the real rentals API) rewrote routes/groups/rentals.tsx from /rentals/* SDK to /bookings/* + /statistics + /connections. Real behavioral change — screen-map doc needs sync.",
+        "docs/screens/ppt/rentals-dashboard.md was not touched by this PR; PR #3257 did touch it but for a different flow (calendar/tax-report) — the bookings rewire is separately undocumented."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx"
       ],
       "created_at": "2026-11-04",
       "updated_at": "2026-11-04",

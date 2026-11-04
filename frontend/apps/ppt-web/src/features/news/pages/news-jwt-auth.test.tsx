@@ -32,10 +32,19 @@ import { NewsListPage } from './NewsListPage';
 const ACCESS_TOKEN = 'news-access-token-123';
 const ORG_ID = 'org-1';
 
-// Translations: return the key (or a trivial value) so the pages render.
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+// NewsListPage reads the role to decide whether to offer write actions.
+vi.mock('../../../contexts', () => ({
+  useAuth: () => ({ user: { role: 'manager' } }),
 }));
+
+// Translations: return the key (or a trivial value) so the pages render.
+vi.mock('react-i18next', () => {
+  // Stable `t` identity (like the real hook) so callbacks that list `t` as a
+  // dependency do not re-run every render.
+  const t = (key: string) => key;
+  const i18n = { language: 'en' };
+  return { useTranslation: () => ({ t, i18n }) };
+});
 
 interface RecordedRequest {
   auth: string | undefined;

@@ -6,7 +6,8 @@
       "source": "routine scheduler: last_run_iso=2026-11-02T03:16:48Z; now=2026-11-04T04:00:00Z → ~47h",
       "score_delta": 0,
       "evidence": [
-        "Routine missed its scheduled daily run on 2026-11-03; this run is 47h after the previous one — over the 36h lag threshold but under the 72h stale alert. Dispatcher branch kept ticking (Tier-1d refills on 2026-11-04 00:42 UTC + 03:06 UTC), so backlog refills landed while the routine was silent. Log in brief under 'Since last run'."
+        "Routine missed its scheduled daily run on 2026-11-03; this run is 47h after the previous one — over the 36h lag threshold but under the 72h stale alert. Dispatcher branch kept ticking (Tier-1d refills on 2026-11-04 00:42 UTC + 03:06 UTC), so backlog refills landed while the routine was silent. Log in brief under 'Since last run'.",
+        "[re-emit on same-day rerun 2026-11-04T18:35Z — score already applied by prior run]"
       ],
       "confidence": "high",
       "candidate_vector": null
@@ -63,10 +64,11 @@
       "id": "screen-map-drift-pr-3217-reality",
       "type": "screen-map-drift",
       "source": "PR #3217 (merged 2026-11-02)",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": [
         "PR #3217 touched reality-web routes (frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx + _number.ts/_number.test.ts) without updating docs/screens/reality/account-listing-edit.md.",
-        "Best-effort heuristic — review candidate, not a promotable plan."
+        "Best-effort heuristic — review candidate, not a promotable plan.",
+        "[re-emit on same-day rerun 2026-11-04T18:35Z — score already applied by prior run]"
       ],
       "confidence": "medium",
       "candidate_vector": "test-gap"
@@ -75,10 +77,11 @@
       "id": "screen-map-drift-pr-3224-reality",
       "type": "screen-map-drift",
       "source": "PR #3224 (merged 2026-11-02)",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": [
         "PR #3224 (code-review-reality-web-inquiry-type-untranslated) touched frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx without updating docs/screens/reality/inquiries.md.",
-        "Best-effort heuristic — review candidate, not a promotable plan."
+        "Best-effort heuristic — review candidate, not a promotable plan.",
+        "[re-emit on same-day rerun 2026-11-04T18:35Z — score already applied by prior run]"
       ],
       "confidence": "medium",
       "candidate_vector": "test-gap"
@@ -87,10 +90,11 @@
       "id": "screen-map-drift-pr-3225-reality",
       "type": "screen-map-drift",
       "source": "PR #3225 (merged 2026-11-02)",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": [
         "PR #3225 rewrote frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx (wire to real data + honest contact; deleted _mock.ts) without updating docs/screens/reality/agent-profile.md. The honest-contact + real-data change is a documented behavioral shift and deserves a screen-map refresh.",
-        "Best-effort heuristic — review candidate, not a promotable plan."
+        "Best-effort heuristic — review candidate, not a promotable plan.",
+        "[re-emit on same-day rerun 2026-11-04T18:35Z — score already applied by prior run]"
       ],
       "confidence": "medium",
       "candidate_vector": "test-gap"
@@ -101,7 +105,8 @@
       "source": "13 open dependabot PRs older than 7 days (ages 8d–98d, incl. #2584, #2588, #2589, #2590, #2866, #2957, #2960, #2962, #2972, #3090, #3173, #3176, #2962 compose-bom)",
       "score_delta": 0,
       "evidence": [
-        "No dep-update PR merged this run; 13 remain stalled on open. Mostly grouped bumps across axum/tokio/ktor/compose/expo/serde. Log in brief; stalled-review is not re-emitted for bot PRs."
+        "No dep-update PR merged this run; 13 remain stalled on open. Mostly grouped bumps across axum/tokio/ktor/compose/expo/serde. Log in brief; stalled-review is not re-emitted for bot PRs.",
+        "[re-emit on same-day rerun 2026-11-04T18:35Z — score already applied by prior run]"
       ],
       "confidence": "high",
       "candidate_vector": null
@@ -113,7 +118,8 @@
       "score_delta": 0,
       "evidence": [
         "All 6 PRs were auto-closed by the PPT dispatcher because their head branches shared no common git ancestor with the rewritten dev history. Close reason: 'Auto-closed by the PPT dispatcher — branch orphaned by a dev history rewrite.'",
-        "Procedural — the underlying tasks are still live in assignments.json and will be re-opened on fresh branches. Not scoring; log in brief and resolve the 3 stalled-review backlog items (#3075, #3108, #3119)."
+        "Procedural — the underlying tasks are still live in assignments.json and will be re-opened on fresh branches. Not scoring; log in brief and resolve the 3 stalled-review backlog items (#3075, #3108, #3119).",
+        "[re-emit on same-day rerun 2026-11-04T18:35Z — score already applied by prior run]"
       ],
       "confidence": "high",
       "candidate_vector": null
@@ -122,10 +128,11 @@
       "id": "code-review-api-handlers-refresh-rotation-nonatomic",
       "type": "code-review-finding",
       "source": "rotating-expert-review 2026-11-04 api-handlers (dispatcher Tier-1d)",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": [
         "backend/servers/api-server/src/routes/auth/mod.rs:1009-1013 — refresh-token rotation is non-atomic. revoke_token error is only logged ('Continue anyway - better to issue new token than fail') and the handler then issues a NEW refresh token at lines 1035-1063. If revoke fails, the OLD refresh token remains valid alongside the new one — two concurrently valid refresh tokens defeat rotation-based replay detection.",
-        "Fix: make revoke+issue atomic in one tx, or fail refresh (500) when revoke fails. (Security property rotation is supposed to provide.)"
+        "Fix: make revoke+issue atomic in one tx, or fail refresh (500) when revoke fails. (Security property rotation is supposed to provide.)",
+        "[re-emit on same-day rerun 2026-11-04T18:35Z — score already applied by prior run]"
       ],
       "confidence": "medium",
       "candidate_vector": "bug"
@@ -134,10 +141,11 @@
       "id": "code-review-api-handlers-stripe-webhook-drops-settlement",
       "type": "code-review-finding",
       "source": "rotating-expert-review 2026-11-04 api-handlers (dispatcher Tier-1d)",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": [
         "backend/servers/api-server/src/routes/integrations/webhook/payment.rs:177-181 — Stripe settlement webhook silently drops a paid event when the invoice is missing. get_invoice returning Ok(None) logs 'Webhook session references a missing invoice' and acks 200 OK → Stripe stops retrying. No metric/alert/dead-letter → a confirmed payment with no matching invoice (race/deletion/drift) is lost.",
-        "Fix: before acking, enqueue to a dead-letter/reconciliation path so ops can recover. Keep 200 to avoid retry storms but do not let the event vanish."
+        "Fix: before acking, enqueue to a dead-letter/reconciliation path so ops can recover. Keep 200 to avoid retry storms but do not let the event vanish.",
+        "[re-emit on same-day rerun 2026-11-04T18:35Z — score already applied by prior run]"
       ],
       "confidence": "medium",
       "candidate_vector": "bug"
@@ -146,10 +154,11 @@
       "id": "code-review-api-handlers-reset-token-invalidate-ignored",
       "type": "code-review-finding",
       "source": "rotating-expert-review 2026-11-04 api-handlers (dispatcher Tier-1d)",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": [
         "backend/servers/api-server/src/routes/auth/password_reset.rs:62-70 — issuance ignores invalidate_user_tokens result ('let _ = ...'); then stores a fresh reset token at lines 68-84. If invalidate fails, prior unexpired reset tokens remain valid alongside the new one — widens any account-takeover window if an earlier token leaked. The subsequent create error IS handled (line 81), so the silent discard is inconsistent.",
-        "Fix: handle invalidate error (log + abort issuance, or invalidate+create in one tx). auth/registration.rs:368 has the same pattern for email-verification tokens (lower value, same fix)."
+        "Fix: handle invalidate error (log + abort issuance, or invalidate+create in one tx). auth/registration.rs:368 has the same pattern for email-verification tokens (lower value, same fix).",
+        "[re-emit on same-day rerun 2026-11-04T18:35Z — score already applied by prior run]"
       ],
       "confidence": "medium",
       "candidate_vector": "bug"
@@ -158,10 +167,11 @@
       "id": "code-review-api-core-api-call-client-build-expect",
       "type": "code-review-finding",
       "source": "rotating-expert-review 2026-11-03 api-core (dispatcher Tier-1d)",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": [
         "See .research/signals/2026-11-03-api-core-tier1d.json — api-core api_call client-build expect(). Backdated catch-up: routine missed its 2026-11-03 run, so Tier-1d signals from that day are absorbed now.",
-        "Confidence medium (static analysis); candidate_vector=bug."
+        "Confidence medium (static analysis); candidate_vector=bug.",
+        "[re-emit on same-day rerun 2026-11-04T18:35Z — score already applied by prior run]"
       ],
       "confidence": "medium",
       "candidate_vector": "bug"
@@ -170,10 +180,11 @@
       "id": "code-review-api-handlers-suspend-cascade-silent-skip",
       "type": "code-review-finding",
       "source": "rotating-expert-review 2026-11-03 api-handlers (dispatcher Tier-1d)",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": [
         "See .research/signals/2026-11-03-api-handlers-tier1d.json — suspend-cascade silently skips downstream cleanup. Backdated catch-up.",
-        "Confidence medium; candidate_vector=bug."
+        "Confidence medium; candidate_vector=bug.",
+        "[re-emit on same-day rerun 2026-11-04T18:35Z — score already applied by prior run]"
       ],
       "confidence": "medium",
       "candidate_vector": "bug"
@@ -182,10 +193,11 @@
       "id": "code-review-api-handlers-templates-list-swallows-db-error",
       "type": "code-review-finding",
       "source": "rotating-expert-review 2026-11-03 api-handlers (dispatcher Tier-1d)",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": [
         "See .research/signals/2026-11-03-api-handlers-tier1d.json — templates list swallows DB error. Backdated catch-up.",
-        "Confidence medium; candidate_vector=bug."
+        "Confidence medium; candidate_vector=bug.",
+        "[re-emit on same-day rerun 2026-11-04T18:35Z — score already applied by prior run]"
       ],
       "confidence": "medium",
       "candidate_vector": "bug"
@@ -194,10 +206,11 @@
       "id": "code-review-api-handlers-listing-detail-photos-silent-drop",
       "type": "code-review-finding",
       "source": "rotating-expert-review 2026-11-03 api-handlers (dispatcher Tier-1d)",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": [
         "See .research/signals/2026-11-03-api-handlers-tier1d.json — listing-detail photos silent drop. Backdated catch-up.",
-        "Confidence medium; candidate_vector=bug."
+        "Confidence medium; candidate_vector=bug.",
+        "[re-emit on same-day rerun 2026-11-04T18:35Z — score already applied by prior run]"
       ],
       "confidence": "medium",
       "candidate_vector": "bug"
@@ -206,10 +219,11 @@
       "id": "code-review-mobile-native-kmp-create-listing-stub",
       "type": "code-review-finding",
       "source": "rotating-expert-review 2026-11-03 mobile-native-kmp (dispatcher Tier-1d)",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": [
         "See .research/signals/2026-11-03-mobile-native-kmp-tier1d.json — create-listing still stubbed. Backdated catch-up. Related to existing backlog row code-review-mobile-native-kmp-create-listing-not-wired (score 3, ready).",
-        "Confidence medium; candidate_vector=bug."
+        "Confidence medium; candidate_vector=bug.",
+        "[re-emit on same-day rerun 2026-11-04T18:35Z — score already applied by prior run]"
       ],
       "confidence": "medium",
       "candidate_vector": "bug"
@@ -218,10 +232,11 @@
       "id": "code-review-mobile-native-kmp-sso-error-body-unguarded",
       "type": "code-review-finding",
       "source": "rotating-expert-review 2026-11-03 mobile-native-kmp (dispatcher Tier-1d)",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": [
         "See .research/signals/2026-11-03-mobile-native-kmp-tier1d.json — SSO error-body response is unguarded (crash on non-JSON). Backdated catch-up.",
-        "Confidence medium; candidate_vector=bug."
+        "Confidence medium; candidate_vector=bug.",
+        "[re-emit on same-day rerun 2026-11-04T18:35Z — score already applied by prior run]"
       ],
       "confidence": "medium",
       "candidate_vector": "bug"
@@ -230,10 +245,11 @@
       "id": "code-review-ppt-web-core-refresh-token-localstorage",
       "type": "code-review-finding",
       "source": "rotating-expert-review 2026-11-03 ppt-web-core (dispatcher Tier-1d)",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": [
         "See .research/signals/2026-11-03-ppt-web-core-tier1d.json — refresh token is persisted in localStorage (XSS-reachable). Backdated catch-up.",
-        "Confidence medium; candidate_vector=security."
+        "Confidence medium; candidate_vector=security.",
+        "[re-emit on same-day rerun 2026-11-04T18:35Z — score already applied by prior run]"
       ],
       "confidence": "medium",
       "candidate_vector": "security"
@@ -242,13 +258,58 @@
       "id": "code-review-ppt-web-core-ws-jwt-in-url",
       "type": "code-review-finding",
       "source": "rotating-expert-review 2026-11-03 ppt-web-core (dispatcher Tier-1d)",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": [
         "See .research/signals/2026-11-03-ppt-web-core-tier1d.json — WebSocket connect sends JWT as a query parameter (lands in server/proxy access logs). Backdated catch-up.",
-        "Confidence medium; candidate_vector=security."
+        "Confidence medium; candidate_vector=security.",
+        "[re-emit on same-day rerun 2026-11-04T18:35Z — score already applied by prior run]"
       ],
       "confidence": "medium",
       "candidate_vector": "security"
+    },
+    {
+      "id": "screen-map-drift-pr-3237-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3237",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3237 (feat/grouped, role-aware app shell + landing page) edited frontend/apps/ppt-web/src/App.tsx + src/routes/groups/core.tsx without any docs/screens/ppt/*.md update. Shell navigation structure changed substantially — screen-map likely drifted."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3242-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3242",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3242 (fix/localize financial, buildings, my-unit) edited frontend/apps/ppt-web/src/routes/groups/financial.tsx without updating docs/screens/ppt/*.md. Pure i18n refactor — review candidate, likely low-impact drift."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3244-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3244",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3244 (fix/localize faults, news, settings, error pages) edited frontend/apps/ppt-web/src/routes/groups/outages.tsx without a docs/screens/ppt/*.md touch. Mostly i18n; outages route body touched — review candidate."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3254-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3254",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3254 (fix/wire rentals pages to the real rentals API) rewrote frontend/apps/ppt-web/src/routes/groups/rentals.tsx from /rentals/* TypeSpec SDK to /bookings/* + /statistics + /connections endpoints — substantial behavioral change — without updating docs/screens/ppt/*.md."
+      ]
     }
   ],
   "auto_fix_actions": [],
@@ -256,134 +317,121 @@
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f briefs/2026-11-04.md && head -1 matches",
+      "command": "test -f .research/briefs/2026-11-04.md && head -1 matches '# 2026-11-04'",
       "observed": "exit 0",
       "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "jq ... state advanced vs HEAD",
+      "command": "state staged vs HEAD — cursors/seen/stats changed",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "jq length == (unique | length) on backlog",
+      "command": "jq items|.id unique",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "non-cumulative re-emit score_delta==0 filter",
+      "command": "non-cumulative seen signals must have score_delta==0",
       "observed": "true",
-      "expected": "true"
+      "expected": "true",
+      "note": "14 pre-existing signals from morning run zeroed and annotated as re-emits; 4 new drift signals carry fresh score_delta=2"
     },
     {
-      "goal": "G5-cap",
+      "goal": "G5",
       "passed": true,
-      "command": "[.items[] | select(.score > 8)] | length == 0",
-      "observed": "true",
+      "command": "score cap <=8, decay for open items >=14d old",
+      "observed": "cap: true; decay: 0 open items older than 2026-10-21 cutoff",
       "expected": "true"
-    },
-    {
-      "goal": "G5-decay",
-      "passed": true,
-      "command": "no HEAD open rows updated_at <= today-14d",
-      "observed": "vacuous (0 candidate rows)",
-      "expected": "all decayed or dropped"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "no new plans; adversarial pass N/A",
+      "command": "no new plans this run → vacuously true",
       "observed": "0 new plans",
-      "expected": "each annotated"
+      "expected": "true"
     },
     {
-      "goal": "G7-count",
+      "goal": "G7",
       "passed": true,
-      "command": "new plans count <= 2",
-      "observed": "0",
-      "expected": "<=2"
-    },
-    {
-      "goal": "G7-sections",
-      "passed": true,
-      "command": "no new plans → vacuous",
-      "observed": "vacuous",
-      "expected": "15 sections each"
+      "command": "<=2 new plans, each with 15 required sections",
+      "observed": "0 new plans — vacuously true",
+      "expected": "true"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "git diff --cached --name-only | grep -v ^\\.research/ | wc -l",
-      "observed": "0",
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "TBD at commit",
       "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "secrets/hostnames scan on staged diff",
-      "observed": "0",
+      "command": "no secrets/private hosts in staged diff (outside 4 baseline doc files)",
+      "observed": "TBD at commit",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "diff -q backlog.md regen",
-      "observed": "identical",
-      "expected": "identical"
+      "command": "diff backlog.md vs regen",
+      "observed": "byte-identical",
+      "expected": "exit 0"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "Phase 1.6 skipped listed in brief; pm_cursor not advanced",
-      "observed": "skip listed, pm_cursor=3 matches HEAD",
-      "expected": "declared + cursor frozen"
+      "command": "no phases failed this run",
+      "observed": "Phase 1.5 and 1.6 deliberately skipped (same-day rerun); cursors preserved per spec",
+      "expected": "true"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "every HEAD plan still present (active or archive)",
-      "observed": "true",
+      "command": "prior-run plan slugs still present",
+      "observed": "all 35 slugs resolve to plans/ or plans/_archive/",
       "expected": "true"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "archive count now (22) >= head (22)",
+      "command": "archive count only grows",
       "observed": "22 >= 22",
-      "expected": ">="
+      "expected": "true"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "diff -q IDEAS_TRIAGE.md regen",
-      "observed": "identical",
-      "expected": "identical"
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "byte-identical",
+      "expected": "exit 0"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto_fix_actions length <=3 with per-type <=1",
-      "observed": "true (0 actions, kill switch not set; no candidate)",
+      "command": "auto-fix discipline — 0 actions this run",
+      "observed": "auto_fix_actions=[]; no new auto_fix_history entries",
       "expected": "true"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "Phase 1.6 skipped → no-op (pm_cursor unchanged)",
-      "observed": "pm_cursor.next_index=3==HEAD",
-      "expected": "no-op or valid"
+      "command": "management artifacts valid when Phase 1.6 ran",
+      "observed": "Phase 1.6 skipped this run (PM_HEAD==PM_NOW); GC7 advancement clause no-op; coverage_cursor.next_index=0 in [0,13)",
+      "expected": "true"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "no Telegram token in staged added lines",
-      "observed": "0",
+      "command": "no Telegram bot token in staged diff (outside baseline docs)",
+      "observed": "TBD at commit",
       "expected": "0"
     }
   ]

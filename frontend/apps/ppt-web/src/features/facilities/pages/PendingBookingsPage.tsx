@@ -8,7 +8,7 @@ import type { BookingWithDetails } from '@ppt/api-client';
 import { approveBooking, listPendingBookings, rejectBooking } from '@ppt/api-client';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useToast } from '../../../components';
 import { BookingList, RejectBookingDialog } from '../components';
 
@@ -17,7 +17,6 @@ const PAGE_SIZE = 10;
 export function PendingBookingsPage() {
   const { t } = useTranslation();
   const { buildingId } = useParams<{ buildingId: string }>();
-  const navigate = useNavigate();
   const { showToast } = useToast();
 
   const [bookings, setBookings] = useState<BookingWithDetails[]>([]);
@@ -43,8 +42,8 @@ export function PendingBookingsPage() {
     } catch (error) {
       showToast({
         type: 'error',
-        title: 'Failed to load pending bookings',
-        message: error instanceof Error ? error.message : 'An unexpected error occurred.',
+        title: t('facilities.bookings.loadPendingFailed'),
+        message: error instanceof Error ? error.message : t('facilities.errors.unexpected'),
       });
     } finally {
       setIsLoading(false);
@@ -56,10 +55,6 @@ export function PendingBookingsPage() {
     refreshBookings(page);
   }, [buildingId, page]);
 
-  const handleView = (id: string) => {
-    navigate(`/bookings/${id}`);
-  };
-
   const handleApprove = async (id: string) => {
     setIsProcessing(true);
     try {
@@ -68,8 +63,8 @@ export function PendingBookingsPage() {
     } catch (error) {
       showToast({
         type: 'error',
-        title: 'Failed to approve booking',
-        message: error instanceof Error ? error.message : 'An unexpected error occurred.',
+        title: t('facilities.bookings.approveFailed'),
+        message: error instanceof Error ? error.message : t('facilities.errors.unexpected'),
       });
     } finally {
       setIsProcessing(false);
@@ -94,8 +89,8 @@ export function PendingBookingsPage() {
     } catch (error) {
       showToast({
         type: 'error',
-        title: 'Failed to reject booking',
-        message: error instanceof Error ? error.message : 'An unexpected error occurred.',
+        title: t('facilities.bookings.rejectFailed'),
+        message: error instanceof Error ? error.message : t('facilities.errors.unexpected'),
       });
     } finally {
       setIsProcessing(false);
@@ -117,7 +112,6 @@ export function PendingBookingsPage() {
         isManager={true}
         title={t('facilities.bookings.pendingTitle')}
         onPageChange={handlePageChange}
-        onView={handleView}
         onApprove={handleApprove}
         onReject={handleRejectClick}
       />
