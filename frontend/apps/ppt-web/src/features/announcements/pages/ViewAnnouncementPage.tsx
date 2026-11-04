@@ -4,10 +4,12 @@ import type {
   AnnouncementStatus,
   AnnouncementWithDetails,
 } from '@ppt/api-client';
+import { renderMarkdownSafe } from '../../../lib/markdown';
 import { AcknowledgmentStats as AcknowledgmentStatsPanel } from '../components/AcknowledgmentStats';
 import type { AnnouncementCommentsProps } from '../components/AnnouncementComments';
 import { AnnouncementComments } from '../components/AnnouncementComments';
 import './ViewAnnouncementPage.css';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface ViewAnnouncementPageProps {
@@ -30,6 +32,12 @@ interface ViewAnnouncementPageProps {
    * Omit to suppress the section (e.g. commentsEnabled=false, or while loading).
    */
   commentsProps?: AnnouncementCommentsProps;
+  /**
+   * Whether the viewer may manage the announcement (edit / publish / archive /
+   * pin / delete, read statistics). Residents get a read-only view.
+   * Defaults to `true` for backwards compatibility.
+   */
+  canManage?: boolean;
 }
 
 const statusPillClass: Record<AnnouncementStatus, string> = {
@@ -60,12 +68,16 @@ export function ViewAnnouncementPage({
   onAcknowledge,
   acknowledgmentStats,
   commentsProps,
+  canManage = true,
 }: ViewAnnouncementPageProps) {
   const { t, i18n } = useTranslation();
-  const canEdit = announcement.status === 'draft' || announcement.status === 'scheduled';
-  const canDelete = announcement.status === 'draft';
-  const canPublish = announcement.status === 'draft' || announcement.status === 'scheduled';
-  const canArchive = announcement.status === 'published';
+  const canEdit =
+    canManage && (announcement.status === 'draft' || announcement.status === 'scheduled');
+  const canDelete = canManage && announcement.status === 'draft';
+  const canPublish =
+    canManage && (announcement.status === 'draft' || announcement.status === 'scheduled');
+  const canArchive = canManage && announcement.status === 'published';
+  const bodyHtml = useMemo(() => renderMarkdownSafe(announcement.content), [announcement.content]);
 
   if (isLoading) {
     return (
@@ -114,7 +126,9 @@ export function ViewAnnouncementPage({
             </div>
             <h1 className="view-announcement__title">{announcement.title}</h1>
             <div className="view-announcement__byline">
-              <span>{t('announcements.view.byAuthor', { author: announcement.authorName })}</span>
+              {announcement.authorName && (
+                <span>{t('announcements.view.byAuthor', { author: announcement.authorName })}</span>
+              )}
               <span>{t(targetTypeLabelKeys[announcement.targetType])}</span>
               {announcement.publishedAt && (
                 <span>
@@ -127,33 +141,39 @@ export function ViewAnnouncementPage({
           </div>
 
           <div className="view-announcement__stats">
-            <span className="view-announcement__stat">
-              <strong>{announcement.readCount}</strong>{' '}
-              {t('announcements.view.reads', { count: announcement.readCount })}
-            </span>
-            {announcement.acknowledgmentRequired && (
+            {canManage && (
               <span className="view-announcement__stat">
-                <strong>{announcement.acknowledgedCount}</strong>{' '}
+                <strong>{announcement.readCount ?? 0}</strong>{' '}
+                {t('announcements.view.reads', { count: announcement.readCount ?? 0 })}
+              </span>
+            )}
+            {canManage && announcement.acknowledgmentRequired && (
+              <span className="view-announcement__stat">
+                <strong>{announcement.acknowledgedCount ?? 0}</strong>{' '}
                 {t('announcements.view.acknowledgedCount', {
-                  count: announcement.acknowledgedCount,
+                  count: announcement.acknowledgedCount ?? 0,
                 })}
               </span>
             )}
             {announcement.commentsEnabled && (
               <span className="view-announcement__stat">
-                <strong>{announcement.commentCount}</strong>{' '}
-                {t('announcements.view.comments', { count: announcement.commentCount })}
+                <strong>{announcement.commentCount ?? 0}</strong>{' '}
+                {t('announcements.view.comments', { count: announcement.commentCount ?? 0 })}
               </span>
             )}
             <span className="view-announcement__stat">
-              <strong>{announcement.attachmentCount}</strong>{' '}
-              {t('announcements.view.attachments', { count: announcement.attachmentCount })}
+              <strong>{announcement.attachmentCount ?? 0}</strong>{' '}
+              {t('announcements.view.attachments', { count: announcement.attachmentCount ?? 0 })}
             </span>
           </div>
         </div>
 
         <div className="view-announcement__content">
-          <div className="view-announcement__body">{announcement.content}</div>
+          <div
+            className="view-announcement__body view-announcement__body--markdown"
+            // biome-ignore lint/security/noDangerouslySetInnerHtml: markdown is HTML-escaped first, then sanitized with a strict DOMPurify allowlist (lib/markdown)
+            dangerouslySetInnerHTML={{ __html: bodyHtml }}
+          />
         </div>
 
         {attachments.length > 0 && (
@@ -190,7 +210,7 @@ export function ViewAnnouncementPage({
           </div>
         )}
 
-        {announcement.acknowledgmentRequired && acknowledgmentStats && (
+        {canManage && announcement.acknowledgmentRequired && acknowledgmentStats && (
           <AcknowledgmentStatsPanel
             stats={acknowledgmentStats}
             className="view-announcement__ack-stats"
@@ -230,15 +250,17 @@ export function ViewAnnouncementPage({
               {t('announcements.actions.archive')}
             </button>
           )}
-          <button
-            type="button"
-            onClick={() => onPin(!announcement.pinned)}
-            className="view-announcement__btn view-announcement__btn--pin"
-          >
-            {announcement.pinned
-              ? t('announcements.actions.unpin')
-              : t('announcements.actions.pin')}
-          </button>
+          {canManage && (
+            <button
+              type="button"
+              onClick={() => onPin(!announcement.pinned)}
+              className="view-announcement__btn view-announcement__btn--pin"
+            >
+              {announcement.pinned
+                ? t('announcements.actions.unpin')
+                : t('announcements.actions.pin')}
+            </button>
+          )}
           {announcement.acknowledgmentRequired && onAcknowledge && (
             <button
               type="button"

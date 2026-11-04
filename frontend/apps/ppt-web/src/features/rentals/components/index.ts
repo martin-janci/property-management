@@ -4,7 +4,9 @@
  */
 
 export * from './BookingCard';
+export * from './BookingFormDialog';
 export * from './CalendarView';
+export * from './ConnectionSettingsDialog';
 export * from './GuestForm';
 export * from './PlatformConnectionCard';
 export * from './TaxReportPreview';
