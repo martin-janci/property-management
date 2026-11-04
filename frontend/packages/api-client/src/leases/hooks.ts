@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as api from './api';
 import type {
   CreateApplicationRequest,
+  CreateLeaseAmendmentRequest,
   CreateLeaseRequest,
   CreateLeaseTemplateRequest,
   CreateViolationAppealRequest,
@@ -17,7 +18,10 @@ import type {
   ListApplicationsQuery,
   ListLeasesQuery,
   RecordLeasePaymentRequest,
+  RenewLeaseRequest,
   ReviewApplicationRequest,
+  TerminateLeaseRequest,
+  UpdateLeaseRequest,
   UpdateLeaseTemplateRequest,
   UpdateViolationRequest,
   ViolationQuery,
@@ -145,6 +149,58 @@ export function useCreateLease() {
     mutationFn: (body: CreateLeaseRequest) => api.createLease(body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: leaseKeys.all });
+    },
+  });
+}
+
+/**
+ * Invalidate one lease's detail plus every list / statistics / expiring view
+ * after a lease mutation.
+ */
+function invalidateLease(queryClient: ReturnType<typeof useQueryClient>, id: string) {
+  queryClient.invalidateQueries({ queryKey: leaseKeys.detail(id) });
+  queryClient.invalidateQueries({ queryKey: leaseKeys.lists() });
+  queryClient.invalidateQueries({ queryKey: [...leaseKeys.all, 'statistics'] });
+  queryClient.invalidateQueries({ queryKey: [...leaseKeys.all, 'expiring'] });
+}
+
+/** Update a lease's editable fields; invalidates the lease and lists. */
+export function useUpdateLease() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: UpdateLeaseRequest }) =>
+      api.updateLease(id, body),
+    onSuccess: (_data, { id }) => invalidateLease(queryClient, id),
+  });
+}
+
+/** Terminate a lease; invalidates the lease and lists. */
+export function useTerminateLease() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: TerminateLeaseRequest }) =>
+      api.terminateLease(id, body),
+    onSuccess: (_data, { id }) => invalidateLease(queryClient, id),
+  });
+}
+
+/** Renew a lease (creates a new draft lease); invalidates the old lease and lists. */
+export function useRenewLease() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: RenewLeaseRequest }) => api.renewLease(id, body),
+    onSuccess: (_data, { id }) => invalidateLease(queryClient, id),
+  });
+}
+
+/** Add a lease amendment; invalidates the lease detail (amendments are embedded). */
+export function useCreateLeaseAmendment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: CreateLeaseAmendmentRequest }) =>
+      api.createLeaseAmendment(id, body),
+    onSuccess: (_data, { id }) => {
+      queryClient.invalidateQueries({ queryKey: leaseKeys.detail(id) });
     },
   });
 }

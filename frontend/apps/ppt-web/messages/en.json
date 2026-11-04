@@ -3323,7 +3323,6 @@
   },
   "meters": {
     "title": "Meters",
-    "metersLabel": "meters",
     "meterInfo": "Meter Information",
     "type": "Type",
     "serialNumber": "Serial Number",
@@ -3354,7 +3353,6 @@
     "pendingValidations": "Pending Validations",
     "pendingValidationsDescription": "Review and validate meter readings submitted by residents.",
     "noPendingValidations": "No pending validations",
-    "pendingReadings": "pending readings",
     "approve": "Approve",
     "reject": "Reject",
     "correct": "Correct",
@@ -3365,7 +3363,6 @@
     "correctedValue": "Corrected Value",
     "correctionNotesPlaceholder": "Optional notes about the correction...",
     "compare": "Compare",
-    "readings": "readings",
     "perPeriod": "per period",
     "trend": "Trend",
     "trendUp": "Consumption increasing",
@@ -3489,7 +3486,19 @@
     "updateFailed": "Could not update reading",
     "readingValidated": "Reading validated",
     "validationFailedTitle": "Validation failed",
-    "validationFailed": "Could not validate reading"
+    "validationFailed": "Could not validate reading",
+    "summary_one": "Showing {{shown}} of {{count}} meter",
+    "summary_other": "Showing {{shown}} of {{count}} meters",
+    "pendingSummary_one": "Showing {{shown}} of {{count}} pending reading",
+    "pendingSummary_other": "Showing {{shown}} of {{count}} pending readings",
+    "readings_one": "{{count}} reading",
+    "readings_other": "{{count}} readings",
+    "notice": {
+      "loading": "Loading meter…",
+      "notFound": "Meter not found",
+      "notFoundBody": "This meter could not be loaded. It may have been removed or you may not have access.",
+      "back": "Back to meters"
+    }
   },
   "personMonths": {
     "title": "Person Months",
@@ -4551,7 +4560,6 @@
   "leases": {
     "title": "Lease Management",
     "perMonth": "/month",
-    "daysRemaining": "days remaining",
     "expiringSoon": "Expiring Soon",
     "renew": "Renew",
     "terminate": "Terminate",
@@ -4583,7 +4591,9 @@
         "pendingApplications": "Pending Applications",
         "overduePayments": "Overdue Payments",
         "occupancyRate": "Occupancy: {{rate}}"
-      }
+      },
+      "daysShort_one": "{{count}} day",
+      "daysShort_other": "{{count}} days"
     },
     "list": {
       "title": "All Leases",
@@ -4593,10 +4603,14 @@
       "allStatuses": "All Statuses",
       "allBuildings": "All Buildings",
       "allExpiry": "All Expiry Dates",
-      "expiringIn": "Expiring in {{days}} days",
       "clearFilters": "Clear Filters",
       "noLeases": "No leases found",
-      "createFirst": "Create your first lease"
+      "createFirst": "Create your first lease",
+      "expiringIn_one": "Expiring in {{count}} day",
+      "expiringIn_other": "Expiring in {{count}} days",
+      "filterByStatus": "Filter by status",
+      "filterByBuilding": "Filter by building",
+      "filterByExpiry": "Filter by expiry"
     },
     "detail": {
       "backToLeases": "Back to Leases",
@@ -4633,8 +4647,10 @@
       "reportViolation": "Report Violation",
       "viewAllViolations": "View All Violations",
       "noViolations": "No violations recorded for this lease",
-      "openViolationsWarning": "{{count}} open violation(s) require attention",
-      "moreViolations": "+{{count}} more violation(s)"
+      "openViolationsWarning_one": "{{count}} open violation requires attention",
+      "openViolationsWarning_other": "{{count}} open violations require attention",
+      "moreViolations_one": "+{{count}} more violation",
+      "moreViolations_other": "+{{count}} more violations"
     },
     "create": {
       "title": "Create New Lease",
@@ -4709,7 +4725,6 @@
     "applications": {
       "title": "Tenant Applications",
       "showing": "Showing {{count}} of {{total}} applications",
-      "pendingReview": "pending review",
       "searchPlaceholder": "Search by name or email...",
       "allStatuses": "All Statuses",
       "allUnits": "All Units",
@@ -4784,7 +4799,11 @@
       "screeningFailed": "Could not start tenant screening",
       "approved": "Application approved",
       "rejected": "Application rejected",
-      "reviewFailed": "Could not save the review"
+      "reviewFailed": "Could not save the review",
+      "pendingReview_one": "{{count}} pending review",
+      "pendingReview_other": "{{count}} pending review",
+      "filterByStatus": "Filter by status",
+      "filterByUnit": "Filter by unit"
     },
     "templates": {
       "title": "Lease Templates",
@@ -4800,7 +4819,6 @@
       "deactivate": "Deactivate",
       "defaultRent": "Default Rent",
       "duration": "Duration",
-      "months": "months",
       "form": {
         "name": "Template Name",
         "namePlaceholder": "e.g., Standard 12-Month Lease",
@@ -4823,7 +4841,9 @@
       "updated": "Template updated",
       "updateFailed": "Could not update template",
       "activated": "Template activated",
-      "deactivated": "Template deactivated"
+      "deactivated": "Template deactivated",
+      "months_one": "{{count}} month",
+      "months_other": "{{count}} months"
     },
     "violations": {
       "title": "Lease Violations",
@@ -4913,12 +4933,10 @@
         "violationDate": "Date of Violation",
         "description": "Description",
         "descriptionPlaceholder": "Provide details about the violation, including what happened, when, and any witnesses...",
-        "characters": "characters",
         "evidence": "Evidence (Optional)",
         "uploadFiles": "Upload files",
         "orDragDrop": "or drag and drop",
         "fileTypesHint": "PNG, JPG, PDF, DOC up to 10MB each",
-        "filesSelected": "file(s) selected",
         "submit": "Submit Violation Report",
         "errors": {
           "leaseRequired": "Please select a lease",
@@ -4928,7 +4946,11 @@
           "descriptionTooShort": "Description must be at least 10 characters",
           "dateRequired": "Please provide the date of the violation",
           "dateInFuture": "Violation date cannot be in the future"
-        }
+        },
+        "characters_one": "{{count}} character",
+        "characters_other": "{{count}} characters",
+        "filesSelected_one": "{{count}} file selected",
+        "filesSelected_other": "{{count}} files selected"
       },
       "resolved": "Violation resolved",
       "resolveFailed": "Could not resolve violation",
@@ -4967,7 +4989,100 @@
     "createFailed": "Could not create lease",
     "violationRecorded": "Violation recorded",
     "violationCreateFailed": "Could not record violation",
-    "daysShort": "{{count}}d"
+    "daysShort": "{{count}}d",
+    "daysRemaining_one": "{{count}} day remaining",
+    "daysRemaining_other": "{{count}} days remaining",
+    "actions": {
+      "edit": {
+        "title": "Edit lease",
+        "description": "Rent, dates and parties are fixed once a lease exists. Use a renewal or an amendment to change them.",
+        "tenantPhone": "Tenant phone",
+        "parkingSpaces": "Parking spaces",
+        "storageUnits": "Storage units",
+        "maxOccupants": "Maximum occupants",
+        "petsAllowed": "Pets allowed",
+        "smokingAllowed": "Smoking allowed",
+        "invalidNumber": "Enter a whole number of 0 or more",
+        "submit": "Save changes",
+        "success": "Lease updated",
+        "failed": "Could not update the lease"
+      },
+      "renew": {
+        "title": "Renew lease",
+        "description": "A new draft lease starting on {{date}} will be created and this lease will be marked as renewed.",
+        "newEndDate": "New end date",
+        "term_one": "Term: {{count}} month",
+        "term_other": "Term: {{count}} months",
+        "newMonthlyRent": "New monthly rent",
+        "newSecurityDeposit": "New security deposit",
+        "depositHint": "Leave empty to keep the current deposit",
+        "endDateInvalid": "The new end date must be after {{date}}",
+        "rentInvalid": "Enter an amount greater than zero",
+        "depositInvalid": "Enter an amount greater than zero or leave the field empty",
+        "submit": "Renew lease",
+        "success": "Lease renewed. A new draft lease was created.",
+        "failed": "Could not renew the lease"
+      },
+      "terminate": {
+        "title": "Terminate lease",
+        "description": "Record why and as of when the lease ends. You will be asked to confirm.",
+        "reason": "Termination reason",
+        "selectReason": "Select a reason",
+        "reasonRequired": "Select a termination reason",
+        "effectiveDate": "Effective date",
+        "dateRequired": "Choose the effective date",
+        "continue": "Continue",
+        "reasons": {
+          "end_of_term": "End of term",
+          "mutual_agreement": "Mutual agreement",
+          "tenant_breach": "Breach by the tenant",
+          "landlord_breach": "Breach by the landlord",
+          "property_sale": "Sale of the property",
+          "renovation": "Renovation",
+          "other": "Other"
+        },
+        "confirmTitle": "Terminate this lease?",
+        "confirmMessage": "The lease for {{unit}} ({{tenant}}) will be terminated as of {{date}}. This cannot be undone.",
+        "confirm": "Terminate lease",
+        "success": "Lease terminated",
+        "failed": "Could not terminate the lease"
+      },
+      "amendment": {
+        "title": "Add amendment",
+        "amendmentTitle": "Title",
+        "titlePlaceholder": "e.g. Rent adjustment",
+        "titleRequired": "Enter a title",
+        "description": "Description",
+        "dateRequired": "Choose the effective date",
+        "newMonthlyRent": "New monthly rent (optional)",
+        "rentHint": "The new rent is recorded in the amendment; the lease rent itself is not changed automatically.",
+        "submit": "Add amendment",
+        "success": "Amendment added",
+        "failed": "Could not add the amendment"
+      }
+    },
+    "notice": {
+      "loading": {
+        "lease": "Loading lease…",
+        "application": "Loading application…",
+        "violation": "Loading violation…"
+      },
+      "notFound": {
+        "lease": "Lease not found",
+        "application": "Application not found",
+        "violation": "Violation not found"
+      },
+      "notFoundBody": {
+        "lease": "This lease could not be loaded. It may have been removed or you may not have access.",
+        "application": "This application could not be loaded. It may have been removed or you may not have access.",
+        "violation": "This violation could not be loaded. It may have been removed or you may not have access."
+      },
+      "back": {
+        "lease": "Back to leases",
+        "application": "Back to applications",
+        "violation": "Back to violations"
+      }
+    }
   },
   "help": {
     "title": "Help Center",

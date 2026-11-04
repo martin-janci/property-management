@@ -307,7 +307,7 @@ function ExpirationBucket({
                 <div className="flex items-center gap-2">
                   {lease.daysUntilExpiry !== undefined && (
                     <span className="text-sm text-gray-500">
-                      {t('leases.daysShort', { count: lease.daysUntilExpiry })}
+                      {t('leases.dashboard.daysShort', { count: lease.daysUntilExpiry })}
                     </span>
                   )}
                   <button

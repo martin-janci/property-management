@@ -41,3 +41,4 @@ already built but unrouted; this screen is now reachable on web.
 ## Agent Log
 - 2026-06-08 — CTO: created on route mount (PAP-20, Epic 19).
 - 2026-11-04 — agent: create (`POST /leases/templates`), edit and (de)activate (`PUT /leases/templates/{id}`) wired with toasts; Delete hidden (no backend endpoint); default rent/currency inputs hidden (not persisted by the API).
+- 2026-11-04 — agent: Duration label pluralised (`leases.templates.months_*`).

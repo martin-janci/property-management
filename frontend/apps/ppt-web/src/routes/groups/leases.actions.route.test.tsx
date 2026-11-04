@@ -154,6 +154,10 @@ vi.mock('@ppt/api-client', () => ({
   useUpdateViolation: mutationHook(mutations.updateViolation),
   useCreateViolationAppeal: mutationHook(mutations.createAppeal),
   useAddViolationEvidence: mutationHook(mutations.addEvidence),
+  useUpdateLease: mutationHook(vi.fn()),
+  useRenewLease: mutationHook(vi.fn()),
+  useTerminateLease: mutationHook(vi.fn()),
+  useCreateLeaseAmendment: mutationHook(vi.fn()),
 }));
 
 import { leaseRoutes, mapScreeningToUi, selectTenantCandidates } from './leases';
