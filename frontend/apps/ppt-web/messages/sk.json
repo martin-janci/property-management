@@ -2695,5 +2695,332 @@
       "createFailed": "Hosťa sa nepodarilo pridať",
       "deleteFailed": "Hosťa sa nepodarilo odstrániť"
     }
+  },
+  "community": {
+    "groupCreated": "Skupina vytvorená",
+    "groupJoined": "Pripojili ste sa do skupiny.",
+    "joinFailed": "Nepodarilo sa pripojiť do skupiny",
+    "groupLeft": "Opustili ste skupinu.",
+    "leaveFailed": "Nepodarilo sa opustiť skupinu",
+    "groupDeleted": "Skupina odstránená.",
+    "deleteFailed": "Nepodarilo sa odstrániť skupinu",
+    "deleteGroupConfirm": "Odstrániť túto skupinu? Túto akciu nie je možné vrátiť späť.",
+    "common": {
+      "delete": "Odstrániť",
+      "cancel": "Zrušiť",
+      "search": "Hľadať",
+      "previous": "Predchádzajúca",
+      "next": "Ďalšia",
+      "loading": "Načítava sa...",
+      "backToGroups": "Späť na skupiny",
+      "official": "Oficiálna"
+    },
+    "post": {
+      "pinned": "Pripnuté",
+      "justNow": "práve teraz",
+      "minutesAgo": "pred {{count}} min",
+      "hoursAgo": "pred {{count}} h",
+      "daysAgo": "pred {{count}} d",
+      "likes": "{{count}} páči sa mi",
+      "comments": "{{count}} komentárov",
+      "like": "Páči sa mi",
+      "mediaAlt": "Médiá príspevku {{index}}"
+    },
+    "feed": {
+      "title": "Komunitný kanál",
+      "subtitle": "Pozrite sa, čo sa deje vo vašej komunite",
+      "filters": {
+        "myGroups": "Moje skupiny"
+      },
+      "post": "príspevok",
+      "posts": "príspevkov",
+      "emptyTitle": "Zatiaľ žiadne príspevky",
+      "emptyBody": "Buďte prvý, kto sa niečo podelí s komunitou!"
+    },
+    "createPost": {
+      "contentPlaceholder": "Čo máte na mysli?",
+      "posting": "Pridáva sa...",
+      "submit": "Pridať"
+    },
+    "groupList": {
+      "title": "Komunitné skupiny",
+      "subtitle": "Spojte sa so susedmi prostredníctvom spoločných záujmov",
+      "create": "Vytvoriť skupinu",
+      "searchPlaceholder": "Hľadať skupiny...",
+      "myGroupsOnly": "Len moje skupiny",
+      "emptyTitle": "Nenašli sa žiadne skupiny",
+      "emptyBodyMember": "Zatiaľ ste sa nepridali do žiadnej skupiny.",
+      "emptyBodyDefault": "Skúste upraviť filtre alebo vytvorte novú skupinu.",
+      "showing": "Zobrazuje sa {{count}} z {{total}} skupín"
+    },
+    "groupCard": {
+      "visibility": {
+        "public": "Verejná",
+        "private": "Súkromná",
+        "secret": "Tajná"
+      },
+      "joining": "Pripája sa...",
+      "join": "Pridať sa",
+      "leaving": "Odchádza sa...",
+      "leave": "Opustiť",
+      "coverAlt": "Obal skupiny {{name}}"
+    },
+    "groupForm": {
+      "visibilityOptions": {
+        "public": {
+          "label": "Verejná",
+          "description": "Túto skupinu môže nájsť a pridať sa do nej ktokoľvek"
+        },
+        "private": {
+          "label": "Súkromná",
+          "description": "Ktokoľvek ju nájde, ale o členstvo musí požiadať"
+        },
+        "secret": {
+          "label": "Tajná",
+          "description": "Skrytá v zozname skupín; vidia ju len členovia"
+        }
+      },
+      "nameLabel": "Názov skupiny",
+      "namePlaceholder": "Zadajte názov skupiny",
+      "descriptionLabel": "Popis",
+      "descriptionPlaceholder": "Opíšte, o čom je vaša skupina...",
+      "visibilityLegend": "Viditeľnosť",
+      "errors": {
+        "nameRequired": "Názov skupiny je povinný",
+        "nameMin": "Názov skupiny musí mať aspoň 3 znaky",
+        "nameMax": "Názov skupiny musí mať menej ako 100 znakov",
+        "descriptionMax": "Popis musí mať menej ako 1000 znakov"
+      },
+      "creating": "Vytvára sa...",
+      "create": "Vytvoriť skupinu"
+    },
+    "groupMembers": {
+      "roles": {
+        "owner": "Vlastník"
+      }
+    },
+    "groupDetail": {
+      "members": "{{count}} členov",
+      "ownersCannotLeave": "Vlastníci nemôžu opustiť skupinu",
+      "leaving": "Odchádza sa...",
+      "leaveGroup": "Opustiť skupinu",
+      "joining": "Pripája sa...",
+      "joinGroup": "Pridať sa do skupiny",
+      "aboutTitle": "O tejto skupine",
+      "createdOn": "Vytvorené {{date}}",
+      "deleteGroup": "Odstrániť skupinu"
+    },
+    "createGroup": {
+      "title": "Vytvoriť novú skupinu"
+    },
+    "events": {
+      "title": "Komunitné udalosti",
+      "subtitle": "Objavujte a zúčastňujte sa udalostí vo svojej komunite",
+      "create": "Vytvoriť udalosť",
+      "event": "udalosť",
+      "events": "udalostí",
+      "emptyTitle": "Nenašli sa žiadne udalosti",
+      "emptyBodyUpcoming": "Žiadne nadchádzajúce udalosti. Vytvorte prvú!",
+      "emptyBodyDefault": "Žiadne udalosti nezodpovedajú filtrom."
+    },
+    "eventCard": {
+      "going": "{{count}} ide",
+      "max": "Max. {{count}}",
+      "rsvpGoing": "Zúčastníte sa",
+      "rsvpMaybe": "Máte záujem",
+      "rsvpNotGoing": "Odmietli ste",
+      "btnGoing": "Zúčastním sa",
+      "btnMaybe": "Možno",
+      "btnCantGo": "Nemôžem",
+      "rsvpNotAvailable": "Odpoveď nie je dostupná"
+    },
+    "eventForm": {
+      "titleLabel": "Názov udalosti",
+      "titlePlaceholder": "Zadajte názov udalosti",
+      "descriptionLabel": "Popis",
+      "descriptionPlaceholder": "O čom je táto udalosť?",
+      "locationLabel": "Miesto",
+      "locationPlaceholder": "napr. Spoločenská miestnosť",
+      "locationDetailsLabel": "Podrobnosti o mieste (voliteľné)",
+      "locationDetailsPlaceholder": "napr. Budova A, 2. poschodie",
+      "dateTime": "Dátum a čas",
+      "allDay": "Celodenná udalosť",
+      "start": "Začiatok",
+      "end": "Koniec",
+      "maxAttendeesLabel": "Maximálny počet účastníkov (voliteľné)",
+      "maxAttendeesPlaceholder": "Ponechajte prázdne pre neobmedzený počet",
+      "errors": {
+        "titleRequired": "Názov je povinný",
+        "titleMin": "Názov musí mať aspoň 3 znaky",
+        "startRequired": "Dátum začiatku je povinný",
+        "endRequired": "Dátum konca je povinný",
+        "endAfterStart": "Dátum konca musí byť po dátume začiatku",
+        "invalidUrl": "Zadajte platnú URL adresu",
+        "invalidNumber": "Zadajte platné číslo"
+      },
+      "creating": "Vytvára sa...",
+      "create": "Vytvoriť udalosť"
+    },
+    "marketplace": {
+      "title": "Trhovisko",
+      "subtitle": "Kupujte, predávajte a vymieňajte so susedmi",
+      "create": "Vytvoriť inzerát",
+      "searchPlaceholder": "Hľadať inzeráty...",
+      "categories": {
+        "allCategories": "Všetky kategórie"
+      },
+      "emptyTitle": "Nenašli sa žiadne inzeráty",
+      "emptyBody": "Skúste upraviť filtre alebo vytvorte nový inzerát."
+    },
+    "itemCard": {
+      "price": {
+        "free": "ZADARMO",
+        "wanted": "Kúpim",
+        "contact": "Cena na vyžiadanie"
+      },
+      "views": "{{count}} zobrazení",
+      "messages": "{{count}} správ",
+      "contactSeller": "Kontaktovať predajcu",
+      "viewDetails": "Zobraziť detaily"
+    },
+    "itemForm": {
+      "titleLabel": "Názov",
+      "titlePlaceholder": "Čo predávate?",
+      "descriptionLabel": "Popis",
+      "descriptionPlaceholder": "Opíšte svoj inzerát podrobne...",
+      "priceLabel": "Cena",
+      "errors": {
+        "titleRequired": "Názov je povinný",
+        "titleMin": "Názov musí mať aspoň 3 znaky",
+        "invalidPrice": "Zadajte platnú cenu"
+      },
+      "creating": "Vytvára sa...",
+      "create": "Vytvoriť inzerát"
+    },
+    "hub": {
+      "tabs": {
+        "feed": "Príspevky",
+        "groups": "Skupiny",
+        "events": "Podujatia",
+        "marketplace": "Bazár"
+      },
+      "tabsLabel": "Sekcie komunity",
+      "building": "Budova",
+      "buildingsError": "Nepodarilo sa načítať vaše budovy.",
+      "noBuildingTitle": "Žiadna dostupná budova",
+      "noBuildingBody": "Komunita je organizovaná podľa budov. Keď budete priradení k jednotke alebo budove, zobrazia sa tu jej skupiny, podujatia a bazár.",
+      "loadError": "Údaje sa nepodarilo načítať. Skúste to znova.",
+      "retry": "Skúsiť znova",
+      "you": "Vy",
+      "neighbor": "Sused",
+      "anonymous": "Anonym",
+      "feedNoGroupsTitle": "Váš prehľad je prázdny",
+      "feedNoGroupsBody": "Pridajte sa do skupiny v tejto budove, aby ste videli a zdieľali príspevky.",
+      "browseGroups": "Prehliadať skupiny",
+      "filterByGroup": "Zobraziť",
+      "postTo": "Uverejniť v",
+      "postType": "Typ",
+      "postTitlePlaceholder": "Nadpis (voliteľné)",
+      "postAnonymously": "Uverejniť anonymne",
+      "postCreated": "Váš príspevok bol uverejnený.",
+      "postFailed": "Príspevok sa nepodarilo uverejniť",
+      "likeFailed": "Príspevok sa nepodarilo označiť ako páči sa mi",
+      "postsHeading": "Príspevky",
+      "postCount": "Príspevky: {{count}}",
+      "joinToPost": "Ak chcete prispievať, pridajte sa do tejto skupiny.",
+      "groupType": "Typ skupiny",
+      "allGroupTypes": "Všetky typy skupín",
+      "groupRules": "Pravidlá skupiny",
+      "groupRulesPlaceholder": "napr. Buďte milí, žiadna reklama",
+      "createGroupFailed": "Skupinu sa nepodarilo vytvoriť",
+      "eventType": "Typ podujatia",
+      "allEventTypes": "Všetky typy podujatí",
+      "attendees": "Účastníci",
+      "joinOnline": "Pripojiť sa online",
+      "rsvp": "Vaša odpoveď",
+      "rsvpSaved": "Vaša odpoveď bola uložená.",
+      "rsvpFailed": "Odpoveď sa nepodarilo uložiť",
+      "isVirtual": "Online podujatie",
+      "virtualLink": "Odkaz na stretnutie",
+      "costPerPerson": "Cena na osobu (voliteľné, EUR)",
+      "eventCreated": "Podujatie bolo vytvorené.",
+      "createEventFailed": "Podujatie sa nepodarilo vytvoriť",
+      "category": "Kategória",
+      "condition": "Stav",
+      "pricing": "Cena",
+      "giveAwayFree": "Darovať zadarmo",
+      "negotiable": "Cena dohodou",
+      "tradeAccepted": "Možná výmena",
+      "photoUrl": "URL fotografie (voliteľné)",
+      "pickupDetails": "Podrobnosti o vyzdvihnutí",
+      "itemCreated": "Váš inzerát bol zverejnený.",
+      "createItemFailed": "Inzerát sa nepodarilo vytvoriť",
+      "noPhoto": "Bez fotografie",
+      "itemNotFound": "Inzerát sa nenašiel",
+      "backToMarketplace": "Späť na bazár",
+      "listedOn": "Zverejnené",
+      "ownListing": "Toto je váš inzerát. Susedia vás môžu kontaktovať z tejto stránky.",
+      "listingUnavailable": "Tento inzerát už nie je dostupný.",
+      "message": "Správa",
+      "messagePlaceholder": "Dobrý deň, je to ešte dostupné?",
+      "messageRequired": "Napíšte správu.",
+      "offerPrice": "Vaša ponuka (voliteľné)",
+      "sendMessage": "Odoslať správu",
+      "sending": "Odosiela sa...",
+      "inquirySent": "Vaša správa bola odoslaná predávajúcemu.",
+      "inquiryFailed": "Správu sa nepodarilo odoslať"
+    },
+    "groupTypes": {
+      "interest": "Záujmová",
+      "floor": "Poschodie",
+      "building": "Budova",
+      "neighborhood": "Susedstvo",
+      "official": "Oficiálna"
+    },
+    "postTypes": {
+      "text": "Príspevok",
+      "photo": "Fotografia",
+      "poll": "Anketa",
+      "event": "Podujatie",
+      "marketplace": "Bazár",
+      "question": "Otázka",
+      "announcement": "Oznam"
+    },
+    "eventTypes": {
+      "social": "Spoločenské",
+      "meeting": "Stretnutie",
+      "workshop": "Workshop",
+      "volunteer": "Dobrovoľníctvo",
+      "sports": "Šport",
+      "cultural": "Kultúrne",
+      "other": "Iné"
+    },
+    "marketplaceCategories": {
+      "furniture": "Nábytok",
+      "electronics": "Elektronika",
+      "clothing": "Oblečenie",
+      "sports": "Šport",
+      "books": "Knihy",
+      "toys": "Hračky",
+      "home_garden": "Dom a záhrada",
+      "services": "Služby",
+      "free": "Zadarmo",
+      "wanted": "Kúpim",
+      "other": "Iné"
+    },
+    "itemConditions": {
+      "new": "Nové",
+      "like_new": "Ako nové",
+      "good": "Dobrý stav",
+      "fair": "Používané",
+      "for_parts": "Na súčiastky"
+    },
+    "itemStatus": {
+      "active": "Aktívny",
+      "sold": "Predané",
+      "reserved": "Rezervované",
+      "expired": "Expirované",
+      "removed": "Odstránené"
+    }
   }
 }
