@@ -35,10 +35,14 @@ mod legal_cross_org_idor_tests;
 mod legal_insurance_wave1b_tests;
 #[path = "suites/legal_notices_audit_tests.rs"]
 mod legal_notices_audit_tests;
+#[path = "suites/legal_round4_role_tests.rs"]
+mod legal_round4_role_tests;
 #[path = "suites/listings_core_backfill_batch3_tests.rs"]
 mod listings_core_backfill_batch3_tests;
 #[path = "suites/listings_global_publish_authz_tests.rs"]
 mod listings_global_publish_authz_tests;
+#[path = "suites/listings_round4_authz_tests.rs"]
+mod listings_round4_authz_tests;
 #[path = "suites/market_pricing_happy_path_tests.rs"]
 mod market_pricing_happy_path_tests;
 #[path = "suites/marketplace_award_quote_idor_tests.rs"]
@@ -49,6 +53,8 @@ mod marketplace_ecosystem_backfill_batch3_tests;
 mod marketplace_lifecycle_backfill_batch2_tests;
 #[path = "suites/marketplace_provider_profile_tests.rs"]
 mod marketplace_provider_profile_tests;
+#[path = "suites/marketplace_round4_authz_tests.rs"]
+mod marketplace_round4_authz_tests;
 #[path = "suites/marketplace_voting_investor_cross_org_idor_tests.rs"]
 mod marketplace_voting_investor_cross_org_idor_tests;
 #[path = "suites/messaging_attachments_authz_tests.rs"]
