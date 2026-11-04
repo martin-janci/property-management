@@ -854,6 +854,12 @@
         "completed": "Abgeschlossen",
         "cancelled": "Storniert"
       },
+      "type": {
+        "general": "Allgemeine Anfrage",
+        "viewing_request": "Besichtigungsanfrage",
+        "price_negotiation": "Preisverhandlung",
+        "availability": "Verfügbarkeit"
+      },
       "viewingScheduled": "Besichtigung geplant: {date} um {time}",
       "agentResponse": "Antwort des Maklers:",
       "cancelConfirm": "Diese Anfrage stornieren?",

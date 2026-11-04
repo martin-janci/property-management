@@ -854,6 +854,12 @@
         "completed": "Dokončeno",
         "cancelled": "Zrušeno"
       },
+      "type": {
+        "general": "Obecná poptávka",
+        "viewing_request": "Žádost o prohlídku",
+        "price_negotiation": "Vyjednávání ceny",
+        "availability": "Dostupnost"
+      },
       "viewingScheduled": "Prohlídka naplánována: {date} v {time}",
       "agentResponse": "Odpověď makléře:",
       "cancelConfirm": "Zrušit tuto poptávku?",
