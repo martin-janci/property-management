@@ -49,12 +49,10 @@ Reviewers (4 spawned, opus, all `verdict=approve`): #3317, #3316, #3313, #3303.
 ## Phase 3 — claims
 0 claimed. WIP throttle: WIP=13 ≥ cap 8 → free_slots=0 (smooth back-pressure; merges drain the pool).
 
-## ⚠️ Phase 6 — persistence DEFERRED (infra blocker)
-The `.research` ledger was NOT pushed this run. The dispatcher's own `mcp-push-size-guard` aborted (rc=3): `backlog.json` is 781 KB (active-state, > 64 KiB MCP inline ceiling), and the append-only archives (`assignments-archive.json` 1.1 MB, `action-list-archive.json` 1.0 MB) route to `git push`, which is **HTTP-403'd by the proxy** in this environment. Both push paths are unavailable for oversize files, so Phase 6 deferred per spec ("a blocked push is recoverable; the next run retries").
+## Phase 6 — persistence SUCCEEDED (via git push)
+The full `.research` ledger was pushed to `origin/dev` (commit `1e2f4c6`): `assignments.json` (4 active), `assignments-archive.json` (+11 merged, 1.1 MB), `action-list.json`, `action-list-archive.json` (+8), `backlog.json`, `gc1-orphan-triage.md`, and the Tier-1d signals file — all landed valid and un-truncated.
 
-**No data lost / no corruption:** all merges, issue closes, branch refreshes and the orphan merge are persisted on GitHub. Next run's Phase 2 + idempotent reconcilers re-derive the `.research` bookkeeping from GitHub truth.
-
-**Operator action recommended:** the archive/backlog files have outgrown the MCP inline-push limit while `git push` is proxy-blocked, so the dispatcher cannot persist archive-moves whenever Tier-1b (buffer-low) modifies `backlog.json`. Options: (a) restore direct `git push` for the runner, (b) add a reconcile/shard step so `backlog.json` and the archives stay under 64 KiB, or (c) raise `MCP_INLINE_MAX_BYTES` if `mcp__github__push_files` reliably handles ~1 MB here (recent runs 81d92a2/c8e821e did push archive-moves today).
+**Note on push method (correcting an earlier false alarm):** the `mcp-push-size-guard` would abort under `PUSH_METHOD=mcp` because `backlog.json` (781 KB) and the archives (1.0–1.1 MB) exceed the 64 KiB MCP inline-push ceiling — that is the *designed* routing to `PUSH_METHOD=git` for oversize files. An initial `git push` test returned HTTP 403, but that was the up-to-date no-op edge case; the real Phase 6 fallback (fetch → rebase onto `origin/dev` → `git push`) **succeeded cleanly** and git push has no inline-size limit. No infra blocker exists; no operator action needed.
 
 ## Phase 8
 Skipped — output can't persist this run (push deferred); phase is also past its documented TEMP removal date (2026-06-30).
