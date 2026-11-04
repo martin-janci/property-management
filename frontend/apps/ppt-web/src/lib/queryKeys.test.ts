@@ -32,6 +32,7 @@
  */
 
 import {
+  buildingKeys,
   communityKeys,
   complianceKeys,
   disputeKeys,
@@ -211,6 +212,8 @@ describe('AUTHED_QUERY_KEY_ROOTS logout-purge coverage', () => {
       // allow-list (this fix). `votingKeys` (root `voting`) is the live voting
       // factory — the allow-list's legacy `votes` root never matched it.
       communityKeys,
+      // Community's building selector reads the org building list directly.
+      buildingKeys,
       disputeKeys,
       iotKeys,
       outageKeys,

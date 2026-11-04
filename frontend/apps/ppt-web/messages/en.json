@@ -4917,19 +4917,14 @@
     "deleteFailed": "Could not delete the group",
     "deleteGroupConfirm": "Delete this group? This action cannot be undone.",
     "common": {
-      "edit": "Edit",
       "delete": "Delete",
       "cancel": "Cancel",
-      "add": "Add",
-      "view": "View",
       "search": "Search",
       "previous": "Previous",
       "next": "Next",
       "loading": "Loading...",
-      "loadMore": "Load More",
       "backToGroups": "Back to Groups",
-      "official": "Official",
-      "pageOf": "Page {{page}} of {{total}}"
+      "official": "Official"
     },
     "post": {
       "pinned": "Pinned",
@@ -4939,38 +4934,14 @@
       "daysAgo": "{{count}}d ago",
       "likes": "{{count}} likes",
       "comments": "{{count}} comments",
-      "shares": "{{count}} shares",
       "like": "Like",
-      "comment": "Comment",
-      "share": "Share",
       "mediaAlt": "Post media {{index}}"
-    },
-    "comments": {
-      "justNow": "just now",
-      "minutes": "{{count}}m",
-      "hours": "{{count}}h",
-      "days": "{{count}}d",
-      "liked": "Liked",
-      "like": "Like",
-      "reply": "Reply",
-      "replyPlaceholder": "Write a reply...",
-      "empty": "No comments yet. Be the first to comment!"
     },
     "feed": {
       "title": "Community Feed",
       "subtitle": "See what's happening in your community",
       "filters": {
-        "all": "All Posts",
-        "myGroups": "My Groups",
-        "building": "Building"
-      },
-      "types": {
-        "all": "All Types",
-        "text": "Text",
-        "photos": "Photos",
-        "polls": "Polls",
-        "events": "Events",
-        "items": "Items"
+        "myGroups": "My Groups"
       },
       "post": "post",
       "posts": "posts",
@@ -4978,19 +4949,7 @@
       "emptyBody": "Be the first to share something with your community!"
     },
     "createPost": {
-      "types": {
-        "text": "Text",
-        "photo": "Photo",
-        "poll": "Poll"
-      },
-      "visibility": {
-        "group": "Group Only",
-        "building": "Building",
-        "public": "Public"
-      },
       "contentPlaceholder": "What's on your mind?",
-      "imageUrlPlaceholder": "Enter image URL",
-      "previewAlt": "Preview {{index}}",
       "posting": "Posting...",
       "submit": "Post"
     },
@@ -4999,37 +4958,18 @@
       "subtitle": "Connect with your neighbors through shared interests",
       "create": "Create Group",
       "searchPlaceholder": "Search groups...",
-      "categoryLabel": "Category",
-      "visibilityLabel": "Visibility",
       "myGroupsOnly": "My Groups Only",
       "emptyTitle": "No groups found",
       "emptyBodyMember": "You haven't joined any groups yet.",
       "emptyBodyDefault": "Try adjusting your filters or create a new group.",
-      "showing": "Showing {{count}} of {{total}} groups",
-      "categories": {
-        "allCategories": "All Categories",
-        "social": "Social",
-        "sports": "Sports",
-        "hobbies": "Hobbies",
-        "parenting": "Parenting",
-        "pets": "Pets",
-        "business": "Business",
-        "other": "Other"
-      },
-      "visibility": {
-        "all": "All Groups",
-        "public": "Public",
-        "private": "Private"
-      }
+      "showing": "Showing {{count}} of {{total}} groups"
     },
     "groupCard": {
       "visibility": {
         "public": "Public",
         "private": "Private",
-        "hidden": "Hidden"
+        "secret": "Secret"
       },
-      "member": "member",
-      "members": "members",
       "joining": "Joining...",
       "join": "Join",
       "leaving": "Leaving...",
@@ -5046,71 +4986,39 @@
           "label": "Private",
           "description": "Anyone can find but must request to join"
         },
-        "hidden": {
-          "label": "Hidden",
-          "description": "Only invited users can find this group"
+        "secret": {
+          "label": "Secret",
+          "description": "Hidden from the group list; only members can see it"
         }
       },
-      "namePreviewDefault": "Group Name",
       "nameLabel": "Group Name",
       "namePlaceholder": "Enter group name",
       "descriptionLabel": "Description",
       "descriptionPlaceholder": "Describe what your group is about...",
-      "categoryLabel": "Category",
       "visibilityLegend": "Visibility",
-      "coverPreviewAlt": "Cover preview",
-      "coverUrlLabel": "Cover Image URL (optional)",
-      "coverUrlPlaceholder": "https://example.com/image.jpg",
       "errors": {
         "nameRequired": "Group name is required",
         "nameMin": "Group name must be at least 3 characters",
         "nameMax": "Group name must be less than 100 characters",
-        "descriptionRequired": "Description is required",
-        "descriptionMin": "Description must be at least 10 characters",
-        "descriptionMax": "Description must be less than 1000 characters",
-        "categoryRequired": "Category is required",
-        "invalidUrl": "Please enter a valid URL"
+        "descriptionMax": "Description must be less than 1000 characters"
       },
-      "updating": "Updating...",
       "creating": "Creating...",
-      "update": "Update Group",
       "create": "Create Group"
     },
     "groupMembers": {
       "roles": {
-        "owner": "Owner",
-        "admin": "Admin",
-        "moderator": "Moderator",
-        "member": "Member"
-      },
-      "empty": "No members yet",
-      "pendingApproval": "Pending approval",
-      "you": "(you)",
-      "joined": "Joined {{date}}",
-      "makeModerator": "Make Moderator",
-      "makeAdmin": "Make Admin",
-      "removeFromGroup": "Remove from group",
-      "banFromGroup": "Ban from group"
+        "owner": "Owner"
+      }
     },
     "groupDetail": {
-      "tabAbout": "About",
-      "tabMembers": "Members ({{count}})",
-      "tabPosts": "Posts ({{count}})",
       "members": "{{count}} members",
-      "groupSettings": "Group Settings",
       "ownersCannotLeave": "Owners cannot leave the group",
-      "leaveGroupTitle": "Leave group",
       "leaving": "Leaving...",
       "leaveGroup": "Leave Group",
       "joining": "Joining...",
       "joinGroup": "Join Group",
       "aboutTitle": "About this group",
       "createdOn": "Created on {{date}}",
-      "membersTitle": "Members",
-      "inviteMembers": "Invite Members",
-      "postsPlaceholder": "Posts will be shown here. See the Feed tab for all community posts.",
-      "adminActions": "Admin Actions",
-      "editGroup": "Edit Group",
       "deleteGroup": "Delete Group"
     },
     "createGroup": {
@@ -5120,24 +5028,6 @@
       "title": "Community Events",
       "subtitle": "Discover and join events in your community",
       "create": "Create Event",
-      "time": {
-        "upcoming": "Upcoming",
-        "past": "Past",
-        "all": "All"
-      },
-      "status": {
-        "all": "All Status",
-        "published": "Published",
-        "draft": "Draft",
-        "cancelled": "Cancelled",
-        "completed": "Completed"
-      },
-      "rsvp": {
-        "all": "All RSVPs",
-        "going": "Going",
-        "maybe": "Maybe",
-        "notGoing": "Not Going"
-      },
       "event": "event",
       "events": "events",
       "emptyTitle": "No events found",
@@ -5145,22 +5035,7 @@
       "emptyBodyDefault": "No events match your filters."
     },
     "eventCard": {
-      "relative": {
-        "past": "Past",
-        "today": "Today",
-        "tomorrow": "Tomorrow",
-        "inDays": "In {{count}} days",
-        "inWeeks": "In {{count}} weeks",
-        "inMonths": "In {{count}} months"
-      },
-      "status": {
-        "draft": "Draft",
-        "published": "Published",
-        "cancelled": "Cancelled",
-        "completed": "Completed"
-      },
       "going": "{{count}} going",
-      "maybe": "{{count}} maybe",
       "max": "Max {{count}}",
       "rsvpGoing": "You're going",
       "rsvpMaybe": "You're interested",
@@ -5168,15 +5043,9 @@
       "btnGoing": "Going",
       "btnMaybe": "Maybe",
       "btnCantGo": "Can't Go",
-      "ended": "Event ended",
-      "eventCancelled": "Event cancelled",
-      "rsvpNotAvailable": "RSVP not available",
-      "addToCalendar": "Add to Calendar",
-      "editEvent": "Edit Event",
-      "deleteEvent": "Delete Event"
+      "rsvpNotAvailable": "RSVP not available"
     },
     "eventForm": {
-      "titlePreviewDefault": "Event Title",
       "titleLabel": "Event Title",
       "titlePlaceholder": "Enter event title",
       "descriptionLabel": "Description",
@@ -5189,26 +5058,18 @@
       "allDay": "All day event",
       "start": "Start",
       "end": "End",
-      "coverUrlLabel": "Cover Image URL (optional)",
-      "coverUrlPlaceholder": "https://example.com/image.jpg",
-      "coverPreviewAlt": "Cover preview",
       "maxAttendeesLabel": "Maximum Attendees (optional)",
       "maxAttendeesPlaceholder": "Leave empty for unlimited",
       "errors": {
         "titleRequired": "Title is required",
         "titleMin": "Title must be at least 3 characters",
-        "descriptionRequired": "Description is required",
-        "descriptionMin": "Description must be at least 10 characters",
-        "locationRequired": "Location is required",
         "startRequired": "Start date is required",
         "endRequired": "End date is required",
         "endAfterStart": "End date must be after start date",
         "invalidUrl": "Please enter a valid URL",
         "invalidNumber": "Please enter a valid number"
       },
-      "updating": "Updating...",
       "creating": "Creating...",
-      "update": "Update Event",
       "create": "Create Event"
     },
     "marketplace": {
@@ -5217,36 +5078,8 @@
       "create": "Create Listing",
       "searchPlaceholder": "Search items...",
       "categories": {
-        "allCategories": "All Categories",
-        "electronics": "Electronics",
-        "furniture": "Furniture",
-        "clothing": "Clothing",
-        "books": "Books",
-        "sports": "Sports",
-        "homeGarden": "Home & Garden",
-        "kidsBaby": "Kids & Baby",
-        "vehicles": "Vehicles",
-        "other": "Other"
+        "allCategories": "All Categories"
       },
-      "listingType": {
-        "all": "All Types",
-        "sale": "For Sale",
-        "free": "Free",
-        "wanted": "Wanted",
-        "trade": "For Trade"
-      },
-      "condition": {
-        "all": "Any Condition",
-        "new": "New",
-        "likeNew": "Like New",
-        "good": "Good",
-        "fair": "Fair",
-        "poor": "Poor"
-      },
-      "minPrice": "Min €",
-      "maxPrice": "Max €",
-      "item": "item",
-      "items": "items",
       "emptyTitle": "No items found",
       "emptyBody": "Try adjusting your filters or create a new listing."
     },
@@ -5254,86 +5087,151 @@
       "price": {
         "free": "FREE",
         "wanted": "Wanted",
-        "trade": "Trade",
         "contact": "Contact for price"
       },
-      "minutesAgo": "{{count}}m ago",
-      "hoursAgo": "{{count}}h ago",
-      "daysAgo": "{{count}}d ago",
-      "reserved": "Reserved",
-      "sold": "Sold",
       "views": "{{count}} views",
       "messages": "{{count}} messages",
-      "markSold": "Mark Sold",
       "contactSeller": "Contact Seller",
       "viewDetails": "View Details"
     },
     "itemForm": {
-      "listingTypes": {
-        "sale": {
-          "label": "For Sale",
-          "description": "Selling for a price"
-        },
-        "free": {
-          "label": "Free",
-          "description": "Giving away for free"
-        },
-        "wanted": {
-          "label": "Wanted",
-          "description": "Looking to buy"
-        },
-        "trade": {
-          "label": "For Trade",
-          "description": "Looking to trade"
-        }
-      },
-      "conditions": {
-        "new": {
-          "label": "New",
-          "description": "Brand new, never used"
-        },
-        "likeNew": {
-          "label": "Like New",
-          "description": "Used once or twice, perfect condition"
-        },
-        "good": {
-          "label": "Good",
-          "description": "Lightly used, minor signs of wear"
-        },
-        "fair": {
-          "label": "Fair",
-          "description": "Used regularly, visible wear"
-        },
-        "poor": {
-          "label": "Poor",
-          "description": "Heavy wear, may need repair"
-        }
-      },
-      "photos": "Photos (up to 10)",
-      "imageUrlPlaceholder": "Enter image URL",
-      "imageAlt": "Item {{index}}",
       "titleLabel": "Title",
       "titlePlaceholder": "What are you selling?",
       "descriptionLabel": "Description",
       "descriptionPlaceholder": "Describe your item in detail...",
-      "listingTypeLegend": "Listing Type",
       "priceLabel": "Price",
-      "pricePlaceholder": "0.00",
-      "currencyLabel": "Currency",
-      "categoryLabel": "Category",
-      "conditionLegend": "Condition",
       "errors": {
         "titleRequired": "Title is required",
         "titleMin": "Title must be at least 3 characters",
-        "titleMax": "Title must be less than 100 characters",
-        "descriptionRequired": "Description is required",
-        "descriptionMin": "Description must be at least 10 characters",
         "invalidPrice": "Please enter a valid price"
       },
-      "updating": "Updating...",
       "creating": "Creating...",
-      "update": "Update Listing",
       "create": "Create Listing"
+    },
+    "hub": {
+      "tabs": {
+        "feed": "Feed",
+        "groups": "Groups",
+        "events": "Events",
+        "marketplace": "Marketplace"
+      },
+      "tabsLabel": "Community sections",
+      "building": "Building",
+      "buildingsError": "Could not load your buildings.",
+      "noBuildingTitle": "No building available",
+      "noBuildingBody": "The community is organised per building. Once you are linked to a unit or building, its groups, events and marketplace will appear here.",
+      "loadError": "Could not load the data. Please try again.",
+      "retry": "Try again",
+      "you": "You",
+      "neighbor": "Neighbour",
+      "anonymous": "Anonymous",
+      "feedNoGroupsTitle": "Your feed is empty",
+      "feedNoGroupsBody": "Join a group in this building to see and share posts.",
+      "browseGroups": "Browse groups",
+      "filterByGroup": "Show",
+      "postTo": "Post to",
+      "postType": "Type",
+      "postTitlePlaceholder": "Title (optional)",
+      "postAnonymously": "Post anonymously",
+      "postCreated": "Your post was published.",
+      "postFailed": "Could not publish the post",
+      "likeFailed": "Could not like the post",
+      "postsHeading": "Posts",
+      "postCount": "Posts: {{count}}",
+      "joinToPost": "Join this group to post.",
+      "groupType": "Group type",
+      "allGroupTypes": "All group types",
+      "groupRules": "Group rules",
+      "groupRulesPlaceholder": "e.g. Be kind, no advertising",
+      "createGroupFailed": "Could not create the group",
+      "eventType": "Event type",
+      "allEventTypes": "All event types",
+      "attendees": "Attendees",
+      "joinOnline": "Join online",
+      "rsvp": "Your response",
+      "rsvpSaved": "Your response was saved.",
+      "rsvpFailed": "Could not save your response",
+      "isVirtual": "Online event",
+      "virtualLink": "Meeting link",
+      "costPerPerson": "Cost per person (optional, EUR)",
+      "eventCreated": "The event was created.",
+      "createEventFailed": "Could not create the event",
+      "category": "Category",
+      "condition": "Condition",
+      "pricing": "Price",
+      "giveAwayFree": "Give away for free",
+      "negotiable": "Price negotiable",
+      "tradeAccepted": "Open to trades",
+      "photoUrl": "Photo URL (optional)",
+      "pickupDetails": "Pickup details",
+      "itemCreated": "Your listing was published.",
+      "createItemFailed": "Could not create the listing",
+      "noPhoto": "No photo",
+      "itemNotFound": "Listing not found",
+      "backToMarketplace": "Back to marketplace",
+      "listedOn": "Listed on",
+      "ownListing": "This is your listing. Neighbours can contact you about it from this page.",
+      "listingUnavailable": "This listing is no longer available.",
+      "message": "Message",
+      "messagePlaceholder": "Hi, is this still available?",
+      "messageRequired": "Please write a message.",
+      "offerPrice": "Your offer (optional)",
+      "sendMessage": "Send message",
+      "sending": "Sending...",
+      "inquirySent": "Your message was sent to the seller.",
+      "inquiryFailed": "Could not send the message"
+    },
+    "groupTypes": {
+      "interest": "Interest",
+      "floor": "Floor",
+      "building": "Building",
+      "neighborhood": "Neighbourhood",
+      "official": "Official"
+    },
+    "postTypes": {
+      "text": "Post",
+      "photo": "Photo",
+      "poll": "Poll",
+      "event": "Event",
+      "marketplace": "Marketplace",
+      "question": "Question",
+      "announcement": "Announcement"
+    },
+    "eventTypes": {
+      "social": "Social",
+      "meeting": "Meeting",
+      "workshop": "Workshop",
+      "volunteer": "Volunteering",
+      "sports": "Sports",
+      "cultural": "Cultural",
+      "other": "Other"
+    },
+    "marketplaceCategories": {
+      "furniture": "Furniture",
+      "electronics": "Electronics",
+      "clothing": "Clothing",
+      "sports": "Sports",
+      "books": "Books",
+      "toys": "Toys",
+      "home_garden": "Home & Garden",
+      "services": "Services",
+      "free": "Free",
+      "wanted": "Wanted",
+      "other": "Other"
+    },
+    "itemConditions": {
+      "new": "New",
+      "like_new": "Like new",
+      "good": "Good",
+      "fair": "Fair",
+      "for_parts": "For parts"
+    },
+    "itemStatus": {
+      "active": "Active",
+      "sold": "Sold",
+      "reserved": "Reserved",
+      "expired": "Expired",
+      "removed": "Removed"
     }
   },
   "accounting": {

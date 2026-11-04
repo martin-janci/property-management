@@ -2609,19 +2609,14 @@
     "deleteFailed": "Löschen der Gruppe fehlgeschlagen",
     "deleteGroupConfirm": "Diese Gruppe löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
     "common": {
-      "edit": "Bearbeiten",
       "delete": "Löschen",
       "cancel": "Abbrechen",
-      "add": "Hinzufügen",
-      "view": "Ansehen",
       "search": "Suchen",
       "previous": "Zurück",
       "next": "Weiter",
       "loading": "Wird geladen...",
-      "loadMore": "Mehr laden",
       "backToGroups": "Zurück zu Gruppen",
-      "official": "Offiziell",
-      "pageOf": "Seite {{page}} von {{total}}"
+      "official": "Offiziell"
     },
     "post": {
       "pinned": "Angeheftet",
@@ -2631,38 +2626,14 @@
       "daysAgo": "vor {{count}} Tg.",
       "likes": "{{count}} Gefällt mir",
       "comments": "{{count}} Kommentare",
-      "shares": "{{count}} geteilt",
       "like": "Gefällt mir",
-      "comment": "Kommentieren",
-      "share": "Teilen",
       "mediaAlt": "Beitrags-Medien {{index}}"
-    },
-    "comments": {
-      "justNow": "gerade eben",
-      "minutes": "{{count}} Min.",
-      "hours": "{{count}} Std.",
-      "days": "{{count}} Tg.",
-      "liked": "Gefällt mir",
-      "like": "Gefällt mir",
-      "reply": "Antworten",
-      "replyPlaceholder": "Antwort schreiben...",
-      "empty": "Noch keine Kommentare. Schreiben Sie den ersten!"
     },
     "feed": {
       "title": "Community-Feed",
       "subtitle": "Sehen Sie, was in Ihrer Community passiert",
       "filters": {
-        "all": "Alle Beiträge",
-        "myGroups": "Meine Gruppen",
-        "building": "Gebäude"
-      },
-      "types": {
-        "all": "Alle Typen",
-        "text": "Text",
-        "photos": "Fotos",
-        "polls": "Umfragen",
-        "events": "Veranstaltungen",
-        "items": "Artikel"
+        "myGroups": "Meine Gruppen"
       },
       "post": "Beitrag",
       "posts": "Beiträge",
@@ -2670,19 +2641,7 @@
       "emptyBody": "Teilen Sie als Erster etwas mit Ihrer Community!"
     },
     "createPost": {
-      "types": {
-        "text": "Text",
-        "photo": "Foto",
-        "poll": "Umfrage"
-      },
-      "visibility": {
-        "group": "Nur Gruppe",
-        "building": "Gebäude",
-        "public": "Öffentlich"
-      },
       "contentPlaceholder": "Was gibt es Neues?",
-      "imageUrlPlaceholder": "Bild-URL eingeben",
-      "previewAlt": "Vorschau {{index}}",
       "posting": "Wird gesendet...",
       "submit": "Posten"
     },
@@ -2691,37 +2650,18 @@
       "subtitle": "Vernetzen Sie sich mit Nachbarn über gemeinsame Interessen",
       "create": "Gruppe erstellen",
       "searchPlaceholder": "Gruppen suchen...",
-      "categoryLabel": "Kategorie",
-      "visibilityLabel": "Sichtbarkeit",
       "myGroupsOnly": "Nur meine Gruppen",
       "emptyTitle": "Keine Gruppen gefunden",
       "emptyBodyMember": "Sie sind noch keiner Gruppe beigetreten.",
       "emptyBodyDefault": "Passen Sie Ihre Filter an oder erstellen Sie eine neue Gruppe.",
-      "showing": "{{count}} von {{total}} Gruppen",
-      "categories": {
-        "allCategories": "Alle Kategorien",
-        "social": "Soziales",
-        "sports": "Sport",
-        "hobbies": "Hobbys",
-        "parenting": "Elternschaft",
-        "pets": "Haustiere",
-        "business": "Geschäft",
-        "other": "Sonstiges"
-      },
-      "visibility": {
-        "all": "Alle Gruppen",
-        "public": "Öffentlich",
-        "private": "Privat"
-      }
+      "showing": "{{count}} von {{total}} Gruppen"
     },
     "groupCard": {
       "visibility": {
         "public": "Öffentlich",
         "private": "Privat",
-        "hidden": "Verborgen"
+        "secret": "Geheim"
       },
-      "member": "Mitglied",
-      "members": "Mitglieder",
       "joining": "Beitreten...",
       "join": "Beitreten",
       "leaving": "Verlassen...",
@@ -2738,71 +2678,39 @@
           "label": "Privat",
           "description": "Jeder kann sie finden, muss aber den Beitritt anfragen"
         },
-        "hidden": {
-          "label": "Verborgen",
-          "description": "Nur eingeladene Nutzer können diese Gruppe finden"
+        "secret": {
+          "label": "Geheim",
+          "description": "Nicht in der Gruppenliste sichtbar; nur Mitglieder sehen sie"
         }
       },
-      "namePreviewDefault": "Gruppenname",
       "nameLabel": "Gruppenname",
       "namePlaceholder": "Gruppennamen eingeben",
       "descriptionLabel": "Beschreibung",
       "descriptionPlaceholder": "Beschreiben Sie, worum es in Ihrer Gruppe geht...",
-      "categoryLabel": "Kategorie",
       "visibilityLegend": "Sichtbarkeit",
-      "coverPreviewAlt": "Titelbild-Vorschau",
-      "coverUrlLabel": "URL des Titelbilds (optional)",
-      "coverUrlPlaceholder": "https://example.com/image.jpg",
       "errors": {
         "nameRequired": "Gruppenname ist erforderlich",
         "nameMin": "Der Gruppenname muss mindestens 3 Zeichen lang sein",
         "nameMax": "Der Gruppenname muss weniger als 100 Zeichen lang sein",
-        "descriptionRequired": "Beschreibung ist erforderlich",
-        "descriptionMin": "Die Beschreibung muss mindestens 10 Zeichen lang sein",
-        "descriptionMax": "Die Beschreibung muss weniger als 1000 Zeichen lang sein",
-        "categoryRequired": "Kategorie ist erforderlich",
-        "invalidUrl": "Bitte geben Sie eine gültige URL ein"
+        "descriptionMax": "Die Beschreibung muss weniger als 1000 Zeichen lang sein"
       },
-      "updating": "Wird aktualisiert...",
       "creating": "Wird erstellt...",
-      "update": "Gruppe aktualisieren",
       "create": "Gruppe erstellen"
     },
     "groupMembers": {
       "roles": {
-        "owner": "Eigentümer",
-        "admin": "Administrator",
-        "moderator": "Moderator",
-        "member": "Mitglied"
-      },
-      "empty": "Noch keine Mitglieder",
-      "pendingApproval": "Warten auf Genehmigung",
-      "you": "(Sie)",
-      "joined": "Beigetreten {{date}}",
-      "makeModerator": "Zum Moderator machen",
-      "makeAdmin": "Zum Administrator machen",
-      "removeFromGroup": "Aus Gruppe entfernen",
-      "banFromGroup": "Aus Gruppe verbannen"
+        "owner": "Eigentümer"
+      }
     },
     "groupDetail": {
-      "tabAbout": "Info",
-      "tabMembers": "Mitglieder ({{count}})",
-      "tabPosts": "Beiträge ({{count}})",
       "members": "{{count}} Mitglieder",
-      "groupSettings": "Gruppeneinstellungen",
       "ownersCannotLeave": "Eigentümer können die Gruppe nicht verlassen",
-      "leaveGroupTitle": "Gruppe verlassen",
       "leaving": "Verlassen...",
       "leaveGroup": "Gruppe verlassen",
       "joining": "Beitreten...",
       "joinGroup": "Gruppe beitreten",
       "aboutTitle": "Über diese Gruppe",
       "createdOn": "Erstellt am {{date}}",
-      "membersTitle": "Mitglieder",
-      "inviteMembers": "Mitglieder einladen",
-      "postsPlaceholder": "Beiträge werden hier angezeigt. Alle Community-Beiträge finden Sie im Tab Feed.",
-      "adminActions": "Administratoraktionen",
-      "editGroup": "Gruppe bearbeiten",
       "deleteGroup": "Gruppe löschen"
     },
     "createGroup": {
@@ -2812,24 +2720,6 @@
       "title": "Community-Veranstaltungen",
       "subtitle": "Entdecken Sie Veranstaltungen in Ihrer Community und nehmen Sie teil",
       "create": "Veranstaltung erstellen",
-      "time": {
-        "upcoming": "Bevorstehend",
-        "past": "Vergangen",
-        "all": "Alle"
-      },
-      "status": {
-        "all": "Alle Status",
-        "published": "Veröffentlicht",
-        "draft": "Entwurf",
-        "cancelled": "Abgesagt",
-        "completed": "Abgeschlossen"
-      },
-      "rsvp": {
-        "all": "Alle Zusagen",
-        "going": "Zusage",
-        "maybe": "Vielleicht",
-        "notGoing": "Absage"
-      },
       "event": "Veranstaltung",
       "events": "Veranstaltungen",
       "emptyTitle": "Keine Veranstaltungen gefunden",
@@ -2837,22 +2727,7 @@
       "emptyBodyDefault": "Keine Veranstaltungen entsprechen Ihren Filtern."
     },
     "eventCard": {
-      "relative": {
-        "past": "Vergangen",
-        "today": "Heute",
-        "tomorrow": "Morgen",
-        "inDays": "In {{count}} Tagen",
-        "inWeeks": "In {{count}} Wochen",
-        "inMonths": "In {{count}} Monaten"
-      },
-      "status": {
-        "draft": "Entwurf",
-        "published": "Veröffentlicht",
-        "cancelled": "Abgesagt",
-        "completed": "Abgeschlossen"
-      },
       "going": "{{count}} Zusagen",
-      "maybe": "{{count}} Vielleicht",
       "max": "Max. {{count}}",
       "rsvpGoing": "Sie nehmen teil",
       "rsvpMaybe": "Sie sind interessiert",
@@ -2860,15 +2735,9 @@
       "btnGoing": "Zusagen",
       "btnMaybe": "Vielleicht",
       "btnCantGo": "Kann nicht",
-      "ended": "Veranstaltung beendet",
-      "eventCancelled": "Veranstaltung abgesagt",
-      "rsvpNotAvailable": "Zusage nicht möglich",
-      "addToCalendar": "Zum Kalender hinzufügen",
-      "editEvent": "Veranstaltung bearbeiten",
-      "deleteEvent": "Veranstaltung löschen"
+      "rsvpNotAvailable": "Zusage nicht möglich"
     },
     "eventForm": {
-      "titlePreviewDefault": "Veranstaltungstitel",
       "titleLabel": "Veranstaltungstitel",
       "titlePlaceholder": "Veranstaltungstitel eingeben",
       "descriptionLabel": "Beschreibung",
@@ -2881,26 +2750,18 @@
       "allDay": "Ganztägige Veranstaltung",
       "start": "Beginn",
       "end": "Ende",
-      "coverUrlLabel": "URL des Titelbilds (optional)",
-      "coverUrlPlaceholder": "https://example.com/image.jpg",
-      "coverPreviewAlt": "Titelbild-Vorschau",
       "maxAttendeesLabel": "Maximale Teilnehmerzahl (optional)",
       "maxAttendeesPlaceholder": "Für unbegrenzt leer lassen",
       "errors": {
         "titleRequired": "Titel ist erforderlich",
         "titleMin": "Der Titel muss mindestens 3 Zeichen lang sein",
-        "descriptionRequired": "Beschreibung ist erforderlich",
-        "descriptionMin": "Die Beschreibung muss mindestens 10 Zeichen lang sein",
-        "locationRequired": "Ort ist erforderlich",
         "startRequired": "Startdatum ist erforderlich",
         "endRequired": "Enddatum ist erforderlich",
         "endAfterStart": "Das Enddatum muss nach dem Startdatum liegen",
         "invalidUrl": "Bitte geben Sie eine gültige URL ein",
         "invalidNumber": "Bitte geben Sie eine gültige Zahl ein"
       },
-      "updating": "Wird aktualisiert...",
       "creating": "Wird erstellt...",
-      "update": "Veranstaltung aktualisieren",
       "create": "Veranstaltung erstellen"
     },
     "marketplace": {
@@ -2909,36 +2770,8 @@
       "create": "Anzeige erstellen",
       "searchPlaceholder": "Artikel suchen...",
       "categories": {
-        "allCategories": "Alle Kategorien",
-        "electronics": "Elektronik",
-        "furniture": "Möbel",
-        "clothing": "Kleidung",
-        "books": "Bücher",
-        "sports": "Sport",
-        "homeGarden": "Haus & Garten",
-        "kidsBaby": "Kinder & Baby",
-        "vehicles": "Fahrzeuge",
-        "other": "Sonstiges"
+        "allCategories": "Alle Kategorien"
       },
-      "listingType": {
-        "all": "Alle Typen",
-        "sale": "Zu verkaufen",
-        "free": "Kostenlos",
-        "wanted": "Gesucht",
-        "trade": "Zum Tausch"
-      },
-      "condition": {
-        "all": "Jeder Zustand",
-        "new": "Neu",
-        "likeNew": "Wie neu",
-        "good": "Gut",
-        "fair": "Akzeptabel",
-        "poor": "Schlecht"
-      },
-      "minPrice": "Min. €",
-      "maxPrice": "Max. €",
-      "item": "Artikel",
-      "items": "Artikel",
       "emptyTitle": "Keine Artikel gefunden",
       "emptyBody": "Passen Sie Ihre Filter an oder erstellen Sie eine neue Anzeige."
     },
@@ -2946,86 +2779,151 @@
       "price": {
         "free": "KOSTENLOS",
         "wanted": "Gesucht",
-        "trade": "Tausch",
         "contact": "Preis auf Anfrage"
       },
-      "minutesAgo": "vor {{count}} Min.",
-      "hoursAgo": "vor {{count}} Std.",
-      "daysAgo": "vor {{count}} Tg.",
-      "reserved": "Reserviert",
-      "sold": "Verkauft",
       "views": "{{count}} Aufrufe",
       "messages": "{{count}} Nachrichten",
-      "markSold": "Als verkauft markieren",
       "contactSeller": "Verkäufer kontaktieren",
       "viewDetails": "Details ansehen"
     },
     "itemForm": {
-      "listingTypes": {
-        "sale": {
-          "label": "Zu verkaufen",
-          "description": "Verkauf zu einem Preis"
-        },
-        "free": {
-          "label": "Kostenlos",
-          "description": "Kostenlos abzugeben"
-        },
-        "wanted": {
-          "label": "Gesucht",
-          "description": "Suche zum Kauf"
-        },
-        "trade": {
-          "label": "Zum Tausch",
-          "description": "Suche zum Tausch"
-        }
-      },
-      "conditions": {
-        "new": {
-          "label": "Neu",
-          "description": "Brandneu, nie benutzt"
-        },
-        "likeNew": {
-          "label": "Wie neu",
-          "description": "Ein- oder zweimal benutzt, perfekter Zustand"
-        },
-        "good": {
-          "label": "Gut",
-          "description": "Leicht gebraucht, geringe Gebrauchsspuren"
-        },
-        "fair": {
-          "label": "Akzeptabel",
-          "description": "Regelmäßig benutzt, sichtbare Abnutzung"
-        },
-        "poor": {
-          "label": "Schlecht",
-          "description": "Starke Abnutzung, evtl. reparaturbedürftig"
-        }
-      },
-      "photos": "Fotos (bis zu 10)",
-      "imageUrlPlaceholder": "Bild-URL eingeben",
-      "imageAlt": "Artikel {{index}}",
       "titleLabel": "Titel",
       "titlePlaceholder": "Was verkaufen Sie?",
       "descriptionLabel": "Beschreibung",
       "descriptionPlaceholder": "Beschreiben Sie Ihren Artikel im Detail...",
-      "listingTypeLegend": "Anzeigentyp",
       "priceLabel": "Preis",
-      "pricePlaceholder": "0,00",
-      "currencyLabel": "Währung",
-      "categoryLabel": "Kategorie",
-      "conditionLegend": "Zustand",
       "errors": {
         "titleRequired": "Titel ist erforderlich",
         "titleMin": "Der Titel muss mindestens 3 Zeichen lang sein",
-        "titleMax": "Der Titel muss weniger als 100 Zeichen lang sein",
-        "descriptionRequired": "Beschreibung ist erforderlich",
-        "descriptionMin": "Die Beschreibung muss mindestens 10 Zeichen lang sein",
         "invalidPrice": "Bitte geben Sie einen gültigen Preis ein"
       },
-      "updating": "Wird aktualisiert...",
       "creating": "Wird erstellt...",
-      "update": "Anzeige aktualisieren",
       "create": "Anzeige erstellen"
+    },
+    "hub": {
+      "tabs": {
+        "feed": "Feed",
+        "groups": "Gruppen",
+        "events": "Veranstaltungen",
+        "marketplace": "Marktplatz"
+      },
+      "tabsLabel": "Community-Bereiche",
+      "building": "Gebäude",
+      "buildingsError": "Ihre Gebäude konnten nicht geladen werden.",
+      "noBuildingTitle": "Kein Gebäude verfügbar",
+      "noBuildingBody": "Die Community ist nach Gebäuden organisiert. Sobald Sie einer Einheit oder einem Gebäude zugeordnet sind, erscheinen hier dessen Gruppen, Veranstaltungen und Marktplatz.",
+      "loadError": "Die Daten konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+      "retry": "Erneut versuchen",
+      "you": "Sie",
+      "neighbor": "Nachbar",
+      "anonymous": "Anonym",
+      "feedNoGroupsTitle": "Ihr Feed ist leer",
+      "feedNoGroupsBody": "Treten Sie einer Gruppe in diesem Gebäude bei, um Beiträge zu sehen und zu teilen.",
+      "browseGroups": "Gruppen durchsuchen",
+      "filterByGroup": "Anzeigen",
+      "postTo": "Posten in",
+      "postType": "Art",
+      "postTitlePlaceholder": "Titel (optional)",
+      "postAnonymously": "Anonym posten",
+      "postCreated": "Ihr Beitrag wurde veröffentlicht.",
+      "postFailed": "Beitrag konnte nicht veröffentlicht werden",
+      "likeFailed": "Beitrag konnte nicht geliked werden",
+      "postsHeading": "Beiträge",
+      "postCount": "Beiträge: {{count}}",
+      "joinToPost": "Treten Sie dieser Gruppe bei, um zu posten.",
+      "groupType": "Gruppentyp",
+      "allGroupTypes": "Alle Gruppentypen",
+      "groupRules": "Gruppenregeln",
+      "groupRulesPlaceholder": "z. B. Freundlich bleiben, keine Werbung",
+      "createGroupFailed": "Gruppe konnte nicht erstellt werden",
+      "eventType": "Veranstaltungsart",
+      "allEventTypes": "Alle Veranstaltungsarten",
+      "attendees": "Teilnehmende",
+      "joinOnline": "Online teilnehmen",
+      "rsvp": "Ihre Zusage",
+      "rsvpSaved": "Ihre Antwort wurde gespeichert.",
+      "rsvpFailed": "Antwort konnte nicht gespeichert werden",
+      "isVirtual": "Online-Veranstaltung",
+      "virtualLink": "Meeting-Link",
+      "costPerPerson": "Kosten pro Person (optional, EUR)",
+      "eventCreated": "Die Veranstaltung wurde erstellt.",
+      "createEventFailed": "Veranstaltung konnte nicht erstellt werden",
+      "category": "Kategorie",
+      "condition": "Zustand",
+      "pricing": "Preis",
+      "giveAwayFree": "Kostenlos abgeben",
+      "negotiable": "Preis verhandelbar",
+      "tradeAccepted": "Tausch möglich",
+      "photoUrl": "Foto-URL (optional)",
+      "pickupDetails": "Abholdetails",
+      "itemCreated": "Ihr Inserat wurde veröffentlicht.",
+      "createItemFailed": "Inserat konnte nicht erstellt werden",
+      "noPhoto": "Kein Foto",
+      "itemNotFound": "Inserat nicht gefunden",
+      "backToMarketplace": "Zurück zum Marktplatz",
+      "listedOn": "Eingestellt am",
+      "ownListing": "Dies ist Ihr Inserat. Nachbarn können Sie über diese Seite kontaktieren.",
+      "listingUnavailable": "Dieses Inserat ist nicht mehr verfügbar.",
+      "message": "Nachricht",
+      "messagePlaceholder": "Hallo, ist das noch verfügbar?",
+      "messageRequired": "Bitte schreiben Sie eine Nachricht.",
+      "offerPrice": "Ihr Angebot (optional)",
+      "sendMessage": "Nachricht senden",
+      "sending": "Wird gesendet...",
+      "inquirySent": "Ihre Nachricht wurde an den Verkäufer gesendet.",
+      "inquiryFailed": "Nachricht konnte nicht gesendet werden"
+    },
+    "groupTypes": {
+      "interest": "Interessen",
+      "floor": "Etage",
+      "building": "Gebäude",
+      "neighborhood": "Nachbarschaft",
+      "official": "Offiziell"
+    },
+    "postTypes": {
+      "text": "Beitrag",
+      "photo": "Foto",
+      "poll": "Umfrage",
+      "event": "Veranstaltung",
+      "marketplace": "Marktplatz",
+      "question": "Frage",
+      "announcement": "Ankündigung"
+    },
+    "eventTypes": {
+      "social": "Gesellig",
+      "meeting": "Treffen",
+      "workshop": "Workshop",
+      "volunteer": "Ehrenamt",
+      "sports": "Sport",
+      "cultural": "Kultur",
+      "other": "Sonstiges"
+    },
+    "marketplaceCategories": {
+      "furniture": "Möbel",
+      "electronics": "Elektronik",
+      "clothing": "Kleidung",
+      "sports": "Sport",
+      "books": "Bücher",
+      "toys": "Spielzeug",
+      "home_garden": "Haus & Garten",
+      "services": "Dienstleistungen",
+      "free": "Kostenlos",
+      "wanted": "Gesucht",
+      "other": "Sonstiges"
+    },
+    "itemConditions": {
+      "new": "Neu",
+      "like_new": "Wie neu",
+      "good": "Gut",
+      "fair": "Gebraucht",
+      "for_parts": "Für Ersatzteile"
+    },
+    "itemStatus": {
+      "active": "Aktiv",
+      "sold": "Verkauft",
+      "reserved": "Reserviert",
+      "expired": "Abgelaufen",
+      "removed": "Entfernt"
     }
   },
   "meters": {
