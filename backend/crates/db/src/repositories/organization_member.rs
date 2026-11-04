@@ -462,4 +462,38 @@ impl OrganizationMemberRepository {
 
         Ok(role_type)
     }
+
+    /// Count active manager-level members of `org_id` other than `user_id`.
+    ///
+    /// The role set mirrors `TenantRole::is_manager()` (super/platform/org
+    /// admin, manager, technical manager), and the case-insensitive spellings
+    /// accepted by the tenant extractor when it resolves the role from
+    /// `organization_members.role_type` (via [`Self::get_user_role_type`]).
+    /// Uses the pool like the extractor: under RLS a member only sees their
+    /// own membership row.
+    pub async fn count_other_active_managers(
+        &self,
+        org_id: Uuid,
+        user_id: Uuid,
+    ) -> Result<i64, SqlxError> {
+        sqlx::query_scalar::<_, i64>(
+            r#"
+            SELECT COUNT(*) FROM organization_members
+            WHERE organization_id = $1
+              AND user_id <> $2
+              AND status = 'active'
+              AND LOWER(role_type) IN (
+                  'super_admin', 'superadmin',
+                  'platform_admin', 'platformadmin',
+                  'org_admin', 'orgadmin',
+                  'manager',
+                  'technical_manager', 'technicalmanager'
+              )
+            "#,
+        )
+        .bind(org_id)
+        .bind(user_id)
+        .fetch_one(&self.pool)
+        .await
+    }
 }

@@ -47,6 +47,8 @@ mod registry_backfill_tests;
 mod rental_connection_token_leak_tests;
 #[path = "suites/rental_guest_id_document_tests.rs"]
 mod rental_guest_id_document_tests;
+#[path = "suites/rental_tenant_scope_tests.rs"]
+mod rental_tenant_scope_tests;
 #[path = "suites/rentals_core_backfill_batch2_tests.rs"]
 mod rentals_core_backfill_batch2_tests;
 #[path = "suites/rentals_list_contract_tests.rs"]

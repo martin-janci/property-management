@@ -867,6 +867,97 @@ impl LeaseRepository {
         Ok(lease)
     }
 
+    // ------------------------------------------------------------------------
+    // Ownership scopes (application-layer org guards)
+    // ------------------------------------------------------------------------
+    //
+    // These lightweight lookups let route handlers enforce org ownership
+    // explicitly instead of relying solely on the RLS policies, which fail open
+    // on a BYPASSRLS/superuser pool (e.g. the integration-test pool). Each
+    // returns only the columns the guard needs, so they never hit the enum
+    // decode issues a full-row `SELECT *` can.
+
+    /// `organization_id` of a lease, or `None` if not found / not visible.
+    pub async fn lease_org_rls<'e, E>(
+        &self,
+        executor: E,
+        lease_id: Uuid,
+    ) -> Result<Option<Uuid>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_scalar::<_, Uuid>("SELECT organization_id FROM leases WHERE id = $1")
+            .bind(lease_id)
+            .fetch_optional(executor)
+            .await
+    }
+
+    /// `organization_id` of a lease template, or `None` if not found.
+    pub async fn template_org_rls<'e, E>(
+        &self,
+        executor: E,
+        template_id: Uuid,
+    ) -> Result<Option<Uuid>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_scalar::<_, Uuid>("SELECT organization_id FROM lease_templates WHERE id = $1")
+            .bind(template_id)
+            .fetch_optional(executor)
+            .await
+    }
+
+    /// `(organization_id, applicant_email)` of a tenant application, or `None`.
+    pub async fn application_scope_rls<'e, E>(
+        &self,
+        executor: E,
+        application_id: Uuid,
+    ) -> Result<Option<(Uuid, String)>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, (Uuid, String)>(
+            "SELECT organization_id, applicant_email FROM tenant_applications WHERE id = $1",
+        )
+        .bind(application_id)
+        .fetch_optional(executor)
+        .await
+    }
+
+    /// `(organization_id, application_id)` of a tenant screening, or `None`.
+    pub async fn screening_scope_rls<'e, E>(
+        &self,
+        executor: E,
+        screening_id: Uuid,
+    ) -> Result<Option<(Uuid, Uuid)>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, (Uuid, Uuid)>(
+            "SELECT organization_id, application_id FROM tenant_screenings WHERE id = $1",
+        )
+        .bind(screening_id)
+        .fetch_optional(executor)
+        .await
+    }
+
+    /// `(organization_id, lease_id)` of a lease payment, or `None`.
+    pub async fn payment_scope_rls<'e, E>(
+        &self,
+        executor: E,
+        payment_id: Uuid,
+    ) -> Result<Option<(Uuid, Uuid)>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, (Uuid, Uuid)>(
+            "SELECT organization_id, lease_id FROM lease_payments WHERE id = $1",
+        )
+        .bind(payment_id)
+        .fetch_optional(executor)
+        .await
+    }
+
     /// Update lease with RLS context.
     pub async fn update_lease_rls<'e, E>(
         &self,
