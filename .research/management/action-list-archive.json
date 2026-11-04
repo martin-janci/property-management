@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-11-04T06:37:23Z",
+  "archived_at": "2026-11-04T14:33:06Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -4266,6 +4266,29 @@
       }
     },
     {
+      "id": "code-review-api-handlers-listing-detail-photos-silent-drop",
+      "action": "api-server listing-detail silently drops photos on serialization edge case",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-04T04:24:45Z (score=2 conf=medium vector=bug) | dev-reconcile 2026-11-04T14:28:07Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T04:24:45Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "a8eb7f48e4c6dbfc7fca8dd32c9f9ecf1c97644c",
+        "subject": "code-review-api-handlers-listing-detail-photos-silent-drop: surface photo-fetch failures in get_listing (#3279)",
+        "at": "2026-11-04T14:28:07Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-marketplace-award-quote-idor",
       "action": "backend/servers/api-server/src/routes/marketplace.rs:922-951 — award_quote (wired POST /api/v1/marketplace/rfqs/{id}/award at marketplace.rs:246) authorizes ONLY the parent RFQ: load_rfq_for_org(&state, user.user_id, id) verifies the path {",
       "owner_role": "pm-security",
@@ -4309,6 +4332,29 @@
         "merged_pr": 2747,
         "merged_at": "2026-08-13T10:39:42Z",
         "at": "2026-08-13T12:25:29Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-mfa-audit-discard",
+      "action": "api-server MFA security-event audit writes are fire-and-forget (let _ = audit.record) — a DB failure silently drops MFA enroll/disable/verify/recovery audit records",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-04T02:26:52Z (score=1 conf=medium vector=bug) | dev-reconcile 2026-11-04T14:28:07Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T02:26:52Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "d0387742d3d72c69c31b3d24dc5d8cba4ce43da2",
+        "subject": "code-review-api-handlers-mfa-audit-discard: log MFA audit write failures (#3267)",
+        "at": "2026-11-04T14:28:07Z"
       }
     },
     {
@@ -4432,6 +4478,29 @@
       }
     },
     {
+      "id": "code-review-api-handlers-registration-token-discard",
+      "action": "api-server resend-verification silently discards invalidate_user_tokens() result — a DB error leaves prior email-verification tokens valid",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-04T02:26:52Z (score=1 conf=medium vector=bug) | dev-reconcile 2026-11-04T14:28:07Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T02:26:52Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "f8d213566bb2c773e188f2d954883a18b14aaecc",
+        "subject": "code-review-api-handlers-registration-token-discard: surface token-invalidation DB errors on resend-verification (#3266)",
+        "at": "2026-11-04T14:28:07Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-report-content-unbounded",
       "action": "api-handlers moderation.rs report_content — req.reason has no length validation on an endpoint open to all authenticated users; MB-scale rows persistable",
       "owner_role": "pm-backend",
@@ -4541,6 +4610,52 @@
         "merged_pr": 2181,
         "merged_at": "2026-07-08T18:03:00Z",
         "at": "2026-07-08T18:10:39Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-stripe-webhook-drops-settlement",
+      "action": "api-server Stripe settlement webhook silently drops paid events when invoice is missing (no DLQ)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-04T04:24:45Z (score=2 conf=medium vector=bug) | dev-reconcile 2026-11-04T14:28:07Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T04:24:45Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "75aa85e0991093463da4edd1ac3ccdd588df6d64",
+        "subject": "code-review-api-handlers-stripe-webhook-drops-settlement: do not ack Stripe paid webhook when invoice is missing (#3273)",
+        "at": "2026-11-04T14:28:07Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-templates-list-swallows-db-error",
+      "action": "api-server templates list handler swallows DB error and returns an empty 200 response",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-04T04:24:45Z (score=2 conf=medium vector=bug) | dev-reconcile 2026-11-04T14:28:07Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T04:24:45Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "8130cbd81f19d21f247fdceb9f94ceabbe9a0b79",
+        "subject": "code-review-api-handlers-templates-list-swallows-db-error: propagate DB errors from templates list (#3278)",
+        "at": "2026-11-04T14:28:07Z"
       }
     },
     {
@@ -20687,6 +20802,32 @@
         "merged_pr": 3167,
         "merged_at": "2026-10-26T04:32:38Z",
         "at": "2026-10-26T08:26:10Z"
+      }
+    },
+    {
+      "id": "gh-issue-3164",
+      "action": "Follow-up: violations add_evidence left ungated while delete_evidence is manager-gated (PR #3072) (Closes #3164)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-10-25T22:26:31Z (#3164) | dev-reconcile 2026-11-04T14:28:07Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-25T22:26:31Z",
+      "issue_ref": {
+        "number": 3164,
+        "url": "https://github.com/martin-janci/property-management/issues/3164",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "161ae141e7c935e0f9666d0471b8ddedde754576",
+        "subject": "gh-issue-3164: gate violations add_evidence behind require_manager (#3227)",
+        "at": "2026-11-04T14:28:07Z"
       }
     },
     {
