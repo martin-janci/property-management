@@ -4,6 +4,7 @@
  * Client functions for facility management and booking.
  */
 
+import { authenticatedFetch } from '../lib/fetch';
 import type {
   AvailabilityQuery,
   AvailableSlot,
@@ -25,11 +26,11 @@ import type {
 
 const API_BASE = '/api/v1';
 
-// NOTE: Authentication headers (Authorization, etc.) are handled at a higher level
-// by the global fetch interceptor or API client wrapper, not in individual API calls.
+// Authorization and X-Tenant-ID come from the shared token/org providers via
+// `authenticatedFetch`, the same as the generated SDK.
 
 async function fetchApi<T>(url: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(url, {
+  const response = await authenticatedFetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
