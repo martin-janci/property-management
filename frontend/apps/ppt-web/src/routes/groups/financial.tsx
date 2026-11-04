@@ -35,6 +35,7 @@ import {
   InvoiceManagementPage,
   PaymentManagementPage,
 } from '../lazyRoutes';
+import { isManagerRole } from '../shared';
 
 /** Trigger a browser download for a fetched report blob. */
 function downloadBlob(blob: Blob, filename: string) {
@@ -129,6 +130,7 @@ function FinancialDashboardPageRoute() {
   return (
     <FinancialDashboardPage
       organizationId={orgId}
+      isManager={isManagerRole(user?.role)}
       buildings={[]}
       metrics={{
         totalBalance: totals.total,

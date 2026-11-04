@@ -138,9 +138,9 @@ export function newsRoutes() {
         }
       />
       {/* Create/edit are registered BEFORE `/news/:articleId` so `/news/new`
-          is not swallowed by the detail route. Creating is manager-only on
-          the server (POST /news → 403 for non-managers); editing is allowed
-          for managers or the article author, which the server enforces. */}
+          is not swallowed by the detail route. Both are manager-only:
+          POST /news returns 403 for non-managers, and only managers can
+          author articles, so residents get Access Denied instead of a form. */}
       <Route
         path="/news/new"
         element={
@@ -152,7 +152,7 @@ export function newsRoutes() {
       <Route
         path="/news/:id/edit"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <EditArticlePage />
           </ProtectedRoute>
         }

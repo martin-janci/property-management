@@ -53,14 +53,19 @@ interface FinancialDashboardPageProps {
   onViewAllPayments?: () => void;
   onSendReminder?: (invoiceId: string) => void;
   onUnitClick?: (unitId: string) => void;
+  /**
+   * Manager roles see every sub-section. Invoices, budgets and reports are
+   * manager-only routes, so residents only get the payments card.
+   */
+  isManager?: boolean;
 }
 
 /** Finance sub-sections reachable from the dashboard (Epic 52 routes). */
 const QUICK_NAV = [
-  { key: 'invoices', to: '/financial/invoices' },
-  { key: 'payments', to: '/financial/payments' },
-  { key: 'budgets', to: '/financial/budgets' },
-  { key: 'reports', to: '/financial/reports' },
+  { key: 'invoices', to: '/financial/invoices', managerOnly: true },
+  { key: 'payments', to: '/financial/payments', managerOnly: false },
+  { key: 'budgets', to: '/financial/budgets', managerOnly: true },
+  { key: 'reports', to: '/financial/reports', managerOnly: true },
 ] as const;
 
 export function FinancialDashboardPage({
@@ -77,6 +82,7 @@ export function FinancialDashboardPage({
   onViewAllPayments,
   onSendReminder,
   onUnitClick,
+  isManager = false,
 }: FinancialDashboardPageProps) {
   const { t } = useTranslation();
   const [selectedBuildingId, setSelectedBuildingId] = useState<string>();
@@ -136,7 +142,7 @@ export function FinancialDashboardPage({
         {/* Quick navigation to finance sub-sections */}
         <nav aria-label={t('financial.dashboard.quickNav.label')} className="mb-8">
           <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {QUICK_NAV.map((item) => (
+            {QUICK_NAV.filter((item) => isManager || !item.managerOnly).map((item) => (
               <li key={item.key}>
                 <Link
                   to={item.to}

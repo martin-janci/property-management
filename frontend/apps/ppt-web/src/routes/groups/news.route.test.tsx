@@ -74,6 +74,14 @@ describe('news routes', () => {
     expect(screen.getByTestId('article-edit')).toBeInTheDocument();
   });
 
+  it('/news/:id/edit is gated to manager roles', () => {
+    renderAt('/news/a-1/edit');
+    const roles = screen.getByTestId('protected').getAttribute('data-roles') ?? '';
+    expect(roles.split(',')).toEqual(expect.arrayContaining(['manager', 'org_admin']));
+    expect(roles).not.toContain('owner');
+    expect(roles).not.toContain('tenant');
+  });
+
   it('/news/:articleId still renders the detail page', () => {
     renderAt('/news/a-1');
     expect(screen.getByTestId('article-detail')).toHaveTextContent('a-1');

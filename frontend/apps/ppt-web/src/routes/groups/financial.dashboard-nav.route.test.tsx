@@ -28,8 +28,10 @@ vi.mock('../../components', async (importOriginal) => ({
   useToast: () => ({ showToast: vi.fn() }),
 }));
 
+const authRole = vi.hoisted(() => ({ current: 'manager' }));
+
 vi.mock('../../contexts', () => ({
-  useAuth: () => ({ user: { id: 'user-1', organizationId: 'org-1', role: 'manager' } }),
+  useAuth: () => ({ user: { id: 'user-1', organizationId: 'org-1', role: authRole.current } }),
 }));
 
 const overdue = {
@@ -78,6 +80,7 @@ function renderAt(path: string) {
 }
 
 beforeEach(() => {
+  authRole.current = 'manager';
   mockListPayments.mockReset().mockResolvedValue({
     payments: [
       {
@@ -120,6 +123,19 @@ describe('FinancialDashboardPageRoute', () => {
       '/financial/reports',
     ]);
   });
+
+  it.each(['owner', 'tenant'])(
+    'shows "%s" only the payments card (invoices, budgets, reports are manager-only)',
+    async (role) => {
+      authRole.current = role;
+      renderAt('/financial');
+      const nav = await screen.findByRole('navigation', {
+        name: 'financial.dashboard.quickNav.label',
+      });
+      const hrefs = Array.from(nav.querySelectorAll('a')).map((a) => a.getAttribute('href'));
+      expect(hrefs).toEqual(['/financial/payments']);
+    }
+  );
 
   it('shows recent payments from listPayments (limit 5)', async () => {
     renderAt('/financial');
