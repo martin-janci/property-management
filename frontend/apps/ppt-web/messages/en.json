@@ -396,7 +396,15 @@
     "integrations": "Integrations",
     "portalWebhooks": "Portal Webhooks",
     "notificationTriggers": "Notification Triggers",
-    "notificationAnalytics": "Notification Analytics"
+    "notificationAnalytics": "Notification Analytics",
+    "myUnit": "My unit",
+    "voting": "Voting",
+    "reports": "Reports",
+    "accounting": "Accounting",
+    "automations": "Automations",
+    "iot": "Smart building",
+    "rentals": "Short-term rentals",
+    "sessions": "Active sessions"
   },
   "auth": {
     "signIn": "Sign In",
@@ -574,8 +582,51 @@
     }
   },
   "home": {
-    "title": "Property Management System",
-    "welcome": "Welcome to the Property Management System."
+    "title": "Property management without the paperwork",
+    "welcome": "Welcome to the Property Management System.",
+    "tagline": "One place for building managers, owners and tenants: report faults, vote on decisions, follow costs and stay informed.",
+    "audiences": {
+      "title": "Built for everyone in the building",
+      "managers": {
+        "title": "Building managers",
+        "text": "Run several buildings from one dashboard: faults, announcements, meter readings, finances and owners’ meetings."
+      },
+      "owners": {
+        "title": "Owners",
+        "text": "Vote online, read meeting minutes and documents, follow the repair fund and your payments."
+      },
+      "tenants": {
+        "title": "Tenants and residents",
+        "text": "Report a fault in a minute, get notified about outages and keep in touch with the manager and neighbours."
+      }
+    },
+    "features": {
+      "title": "What you can do",
+      "faults": {
+        "title": "Fault reporting",
+        "text": "Report issues with photos, track their status and see who is handling them."
+      },
+      "voting": {
+        "title": "Online voting",
+        "text": "Prepare votes on owners’ decisions, collect ballots electronically and publish results."
+      },
+      "communication": {
+        "title": "Announcements and messages",
+        "text": "Inform everyone about outages, maintenance and meetings, and message the manager directly."
+      },
+      "finance": {
+        "title": "Finances",
+        "text": "Advance payments, invoices, budgets and the repair fund — transparent for every owner."
+      },
+      "meters": {
+        "title": "Meter readings",
+        "text": "Submit readings online with a photo and compare consumption between periods."
+      },
+      "documents": {
+        "title": "Documents",
+        "text": "Contracts, minutes, house rules and statements stored securely in one place."
+      }
+    }
   },
   "facilities": {
     "bookings": {
@@ -6118,5 +6169,41 @@
         "invalidNumbers": "Quantity and unit price must be valid numbers"
       }
     }
+  },
+  "shell": {
+    "brand": "Property Manager",
+    "mainNavigation": "Main navigation",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "createAccount": "Create account",
+    "sections": {
+      "overview": "Overview",
+      "operations": "Building operations",
+      "governance": "Owners & governance",
+      "community": "Community",
+      "finance": "Finance",
+      "rentals": "Leasing & rentals",
+      "tools": "Tools"
+    },
+    "account": {
+      "password": "Password",
+      "twoFactor": "Two-factor authentication",
+      "notifications": "Notification preferences"
+    },
+    "roles": {
+      "super_admin": "Super admin",
+      "platform_admin": "Platform admin",
+      "org_admin": "Organization admin",
+      "manager": "Manager",
+      "technical_manager": "Technical manager",
+      "property_manager": "Property manager",
+      "owner": "Owner",
+      "owner_delegate": "Owner delegate",
+      "tenant": "Tenant",
+      "resident": "Resident",
+      "guest": "Guest",
+      "real_estate_agent": "Real estate agent"
+    },
+    "publicNavigation": "Site navigation"
   }
 }

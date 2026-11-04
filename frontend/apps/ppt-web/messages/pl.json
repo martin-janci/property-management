@@ -373,11 +373,22 @@
     "privacy": "Prywatność",
     "admin": "Administracja",
     "aiChat": "Asystent AI",
-    "iotAlerts": "Sensor Alerts",
+    "iotAlerts": "Alerty czujników",
     "integrations": "Integracje",
     "portalWebhooks": "Webhooki portali",
     "notificationTriggers": "Wyzwalacze powiadomień",
-    "notificationAnalytics": "Analityka powiadomień"
+    "notificationAnalytics": "Analityka powiadomień",
+    "myUnit": "Moje mieszkanie",
+    "voting": "Głosowania",
+    "reports": "Raporty",
+    "accounting": "Księgowość",
+    "automations": "Automatyzacje",
+    "iot": "Inteligentny budynek",
+    "rentals": "Najem krótkoterminowy",
+    "sessions": "Aktywne sesje",
+    "messages": "Wiadomości",
+    "meters": "Liczniki",
+    "outages": "Przerwy w dostawach"
   },
   "auth": {
     "signIn": "Zaloguj się",
@@ -557,8 +568,51 @@
     }
   },
   "home": {
-    "title": "System zarządzania nieruchomościami",
-    "welcome": "Witamy w systemie zarządzania nieruchomościami."
+    "title": "Zarządzanie budynkiem bez papierologii",
+    "welcome": "Witamy w systemie zarządzania nieruchomościami.",
+    "tagline": "Jedno miejsce dla zarządców, właścicieli i najemców: zgłaszaj usterki, głosuj nad decyzjami, śledź koszty i bądź na bieżąco.",
+    "audiences": {
+      "title": "Dla wszystkich w budynku",
+      "managers": {
+        "title": "Zarządcy",
+        "text": "Zarządzaj wieloma budynkami z jednego panelu: usterki, ogłoszenia, odczyty liczników, finanse i zebrania właścicieli."
+      },
+      "owners": {
+        "title": "Właściciele",
+        "text": "Głosuj online, czytaj protokoły i dokumenty, śledź fundusz remontowy i swoje płatności."
+      },
+      "tenants": {
+        "title": "Najemcy i mieszkańcy",
+        "text": "Zgłoś usterkę w minutę, otrzymuj powiadomienia o przerwach w dostawach i bądź w kontakcie z zarządcą i sąsiadami."
+      }
+    },
+    "features": {
+      "title": "Co możesz zrobić",
+      "faults": {
+        "title": "Zgłaszanie usterek",
+        "text": "Zgłaszaj problemy ze zdjęciem, śledź ich status i zobacz, kto się nimi zajmuje."
+      },
+      "voting": {
+        "title": "Głosowanie online",
+        "text": "Przygotuj uchwały właścicieli, zbieraj głosy elektronicznie i publikuj wyniki."
+      },
+      "communication": {
+        "title": "Ogłoszenia i wiadomości",
+        "text": "Informuj wszystkich o przerwach, konserwacji i zebraniach oraz pisz bezpośrednio do zarządcy."
+      },
+      "finance": {
+        "title": "Finanse",
+        "text": "Zaliczki, faktury, budżety i fundusz remontowy — przejrzyście dla każdego właściciela."
+      },
+      "meters": {
+        "title": "Odczyty liczników",
+        "text": "Podawaj odczyty online ze zdjęciem i porównuj zużycie między okresami."
+      },
+      "documents": {
+        "title": "Dokumenty",
+        "text": "Umowy, protokoły, regulamin i rozliczenia bezpiecznie w jednym miejscu."
+      }
+    }
   },
   "facilities": {
     "bookings": {
@@ -3857,6 +3911,28 @@
         "invalidNumbers": "Ilość i cena jednostkowa muszą być prawidłowymi liczbami"
       }
     }
+  },
+  "shell": {
+    "brand": "Zarządzanie nieruchomościami",
+    "mainNavigation": "Nawigacja główna",
+    "openMenu": "Otwórz menu",
+    "closeMenu": "Zamknij menu",
+    "createAccount": "Utwórz konto",
+    "sections": {
+      "overview": "Przegląd",
+      "operations": "Eksploatacja budynku",
+      "governance": "Właściciele i zarządzanie",
+      "community": "Społeczność",
+      "finance": "Finanse",
+      "rentals": "Najem",
+      "tools": "Narzędzia"
+    },
+    "account": {
+      "password": "Hasło",
+      "twoFactor": "Uwierzytelnianie dwuskładnikowe",
+      "notifications": "Ustawienia powiadomień"
+    },
+    "publicNavigation": "Nawigacja witryny"
   },
   "rentals": {
     "dashboard": {

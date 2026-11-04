@@ -373,11 +373,22 @@
     "privacy": "Adatvédelem",
     "admin": "Adminisztráció",
     "aiChat": "AI asszisztens",
-    "iotAlerts": "Sensor Alerts",
+    "iotAlerts": "Érzékelő riasztások",
     "integrations": "Integrációk",
     "portalWebhooks": "Portál webhookok",
     "notificationTriggers": "Értesítési triggerek",
-    "notificationAnalytics": "Értesítési analitika"
+    "notificationAnalytics": "Értesítési analitika",
+    "myUnit": "Lakásom",
+    "voting": "Szavazások",
+    "reports": "Jelentések",
+    "accounting": "Könyvelés",
+    "automations": "Automatizálás",
+    "iot": "Okos épület",
+    "rentals": "Rövid távú bérbeadás",
+    "sessions": "Aktív munkamenetek",
+    "messages": "Üzenetek",
+    "meters": "Mérőórák",
+    "outages": "Szolgáltatáskiesések"
   },
   "auth": {
     "signIn": "Bejelentkezés",
@@ -555,8 +566,51 @@
     }
   },
   "home": {
-    "title": "Ingatlankezelő rendszer",
-    "welcome": "Üdvözöljük az ingatlankezelő rendszerben."
+    "title": "Házkezelés papírmunka nélkül",
+    "welcome": "Üdvözöljük az ingatlankezelő rendszerben.",
+    "tagline": "Egy hely a kezelőknek, tulajdonosoknak és bérlőknek: jelentsen hibát, szavazzon a döntésekről, kövesse a költségeket és legyen naprakész.",
+    "audiences": {
+      "title": "Mindenkinek a házban",
+      "managers": {
+        "title": "Közös képviselők",
+        "text": "Több épület egy áttekintésben: hibák, közlemények, mérőóra-leolvasások, pénzügyek és közgyűlések."
+      },
+      "owners": {
+        "title": "Tulajdonosok",
+        "text": "Szavazzon online, olvassa a jegyzőkönyveket és dokumentumokat, kövesse a felújítási alapot és befizetéseit."
+      },
+      "tenants": {
+        "title": "Bérlők és lakók",
+        "text": "Jelentsen hibát egy perc alatt, kapjon értesítést a kiesésekről és tartsa a kapcsolatot a kezelővel és a szomszédokkal."
+      }
+    },
+    "features": {
+      "title": "Mit intézhet",
+      "faults": {
+        "title": "Hibabejelentés",
+        "text": "Jelentsen problémát fotóval, kövesse az állapotát és lássa, ki foglalkozik vele."
+      },
+      "voting": {
+        "title": "Online szavazás",
+        "text": "Készítse elő a tulajdonosi döntéseket, gyűjtse a szavazatokat elektronikusan és tegye közzé az eredményt."
+      },
+      "communication": {
+        "title": "Közlemények és üzenetek",
+        "text": "Tájékoztasson mindenkit a kiesésekről, karbantartásról és gyűlésekről, és írjon közvetlenül a kezelőnek."
+      },
+      "finance": {
+        "title": "Pénzügyek",
+        "text": "Előlegek, számlák, költségvetés és felújítási alap — átláthatóan minden tulajdonosnak."
+      },
+      "meters": {
+        "title": "Mérőóra-leolvasás",
+        "text": "Adja meg az állást online fotóval, és hasonlítsa össze a fogyasztást időszakok között."
+      },
+      "documents": {
+        "title": "Dokumentumok",
+        "text": "Szerződések, jegyzőkönyvek, házirend és elszámolások biztonságosan egy helyen."
+      }
+    }
   },
   "facilities": {
     "bookings": {
@@ -3797,6 +3851,28 @@
         "invalidNumbers": "A mennyiségnek és az egységárnak érvényes számnak kell lennie"
       }
     }
+  },
+  "shell": {
+    "brand": "Ingatlankezelés",
+    "mainNavigation": "Fő navigáció",
+    "openMenu": "Menü megnyitása",
+    "closeMenu": "Menü bezárása",
+    "createAccount": "Fiók létrehozása",
+    "sections": {
+      "overview": "Áttekintés",
+      "operations": "Épületüzemeltetés",
+      "governance": "Tulajdonosok és kezelés",
+      "community": "Közösség",
+      "finance": "Pénzügyek",
+      "rentals": "Bérlés",
+      "tools": "Eszközök"
+    },
+    "account": {
+      "password": "Jelszó",
+      "twoFactor": "Kétlépcsős azonosítás",
+      "notifications": "Értesítési beállítások"
+    },
+    "publicNavigation": "Webhely-navigáció"
   },
   "rentals": {
     "dashboard": {

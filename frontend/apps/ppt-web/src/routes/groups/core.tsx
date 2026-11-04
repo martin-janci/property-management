@@ -8,7 +8,7 @@
  */
 import { lazy } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, Navigate, Route, useNavigate } from 'react-router-dom';
+import { Navigate, Route, useNavigate } from 'react-router-dom';
 import { ProtectedRoute } from '../../components';
 import { useAuth } from '../../contexts';
 import { ManagerDashboardPage, ResidentDashboardPage } from '../../features/dashboard';
@@ -87,7 +87,7 @@ export function Home() {
       <section className="text-center py-10">
         <h1 className="text-3xl md:text-4xl font-bold mb-3">{t('home.title')}</h1>
         <p className="text-lg max-w-2xl mx-auto" style={{ color: 'var(--color-text-secondary)' }}>
-          {t('home.welcome')}
+          {t(isAuthenticated ? 'home.welcome' : 'home.tagline')}
         </p>
         {!isAuthenticated && (
           <div className="mt-6 flex flex-wrap justify-center gap-3">
@@ -103,7 +103,7 @@ export function Home() {
               onClick={() => navigate('/register')}
               className="btn-outline-token px-5 py-2.5 rounded-lg font-medium"
             >
-              {t('auth.register', { defaultValue: 'Register' })}
+              {t('shell.createAccount', { defaultValue: 'Create account' })}
             </button>
           </div>
         )}
@@ -120,30 +120,43 @@ export function Home() {
         )}
       </section>
 
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[
-          { to: '/documents', titleKey: 'nav.documents' },
-          { to: '/news', titleKey: 'nav.news' },
-          { to: '/disputes', titleKey: 'nav.disputes' },
-          { to: '/outages', titleKey: 'nav.outages' },
-          { to: '/emergency', titleKey: 'nav.emergency' },
-          { to: '/settings/accessibility', titleKey: 'nav.accessibility' },
-        ].map((card) => (
-          <Link
-            key={card.to}
-            to={card.to}
-            className="block p-5 rounded-xl"
-            style={{
-              backgroundColor: 'var(--color-surface)',
-              border: '1px solid var(--color-border)',
-            }}
-          >
-            <span className="font-semibold" style={{ color: 'var(--color-text)' }}>
-              {t(card.titleKey)}
-            </span>
-          </Link>
-        ))}
-      </section>
+      {!isAuthenticated && (
+        <>
+          <section aria-labelledby="home-audiences" className="space-y-4">
+            <h2 id="home-audiences" className="text-xl font-semibold text-center">
+              {t('home.audiences.title')}
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {(['managers', 'owners', 'tenants'] as const).map((key) => (
+                <article key={key} className="home-card">
+                  <h3 className="text-base font-semibold mb-1">
+                    {t(`home.audiences.${key}.title`)}
+                  </h3>
+                  <p className="text-sm home-card__text">{t(`home.audiences.${key}.text`)}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section aria-labelledby="home-features" className="space-y-4">
+            <h2 id="home-features" className="text-xl font-semibold text-center">
+              {t('home.features.title')}
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {(
+                ['faults', 'voting', 'communication', 'finance', 'meters', 'documents'] as const
+              ).map((key) => (
+                <article key={key} className="home-card">
+                  <h3 className="text-base font-semibold mb-1">
+                    {t(`home.features.${key}.title`)}
+                  </h3>
+                  <p className="text-sm home-card__text">{t(`home.features.${key}.text`)}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+        </>
+      )}
     </div>
   );
 }
