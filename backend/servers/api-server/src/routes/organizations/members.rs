@@ -14,6 +14,93 @@ use uuid::Uuid;
 
 use super::core::{extract_bearer_token, validate_access_token};
 use crate::state::AppState;
+use common::TenantRole;
+
+type ApiError = (StatusCode, Json<ErrorResponse>);
+
+/// Parse an `organization_members.role_type` value the way the tenant
+/// extractors do: case-insensitive, with or without `_`/`-`/space separators.
+/// `None` for a custom/unknown value (the extractors treat those as Guest).
+fn parse_role_type(raw: &str) -> Option<TenantRole> {
+    let norm = |s: &str| {
+        s.chars()
+            .filter(|c| c.is_ascii_alphanumeric())
+            .map(|c| c.to_ascii_lowercase())
+            .collect::<String>()
+    };
+    let wanted = norm(raw);
+    [
+        TenantRole::SuperAdmin,
+        TenantRole::PlatformAdmin,
+        TenantRole::OrgAdmin,
+        TenantRole::Manager,
+        TenantRole::TechnicalManager,
+        TenantRole::Owner,
+        TenantRole::OwnerDelegate,
+        TenantRole::PropertyManager,
+        TenantRole::RealEstateAgent,
+        TenantRole::Tenant,
+        TenantRole::Resident,
+        TenantRole::Guest,
+    ]
+    .into_iter()
+    .find(|role| {
+        serde_json::to_value(role)
+            .ok()
+            .and_then(|v| v.as_str().map(norm))
+            .is_some_and(|s| s == wanted)
+    })
+}
+
+/// Authorization level of a stored `role_type` (unknown values rank as Guest,
+/// matching `ValidatedTenantExtractor`).
+fn role_type_level(raw: &str) -> u8 {
+    parse_role_type(raw).unwrap_or(TenantRole::Guest).level()
+}
+
+/// SECURITY: `role_type` is what the tenant extractors use as the caller's
+/// authoritative org role, so a member-management permission must not let the
+/// caller mint a role above their own. Platform roles are never assignable via
+/// org membership.
+fn ensure_role_type_assignable(caller_role_type: &str, requested: &str) -> Result<(), ApiError> {
+    let requested_role = parse_role_type(requested);
+    if matches!(
+        requested_role,
+        Some(TenantRole::SuperAdmin | TenantRole::PlatformAdmin)
+    ) {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "ROLE_NOT_ASSIGNABLE",
+                "Platform roles cannot be assigned through organization membership",
+            )),
+        ));
+    }
+    if role_type_level(requested) > role_type_level(caller_role_type) {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "ROLE_NOT_ASSIGNABLE",
+                "You cannot assign a role higher than your own",
+            )),
+        ));
+    }
+    Ok(())
+}
+
+fn require_active_membership(status: &str) -> Result<(), ApiError> {
+    if status == "active" {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "NOT_MEMBER",
+                "You are not an active member of this organization",
+            )),
+        ))
+    }
+}
 
 /// Create organizations members router.
 pub fn router() -> Router<AppState> {
@@ -272,6 +359,8 @@ pub async fn add_organization_member(
         }
     };
 
+    require_active_membership(&membership.status)?;
+
     if !role.has_permission("users:create") {
         return Err((
             StatusCode::FORBIDDEN,
@@ -355,13 +444,16 @@ pub async fn add_organization_member(
         }
     }
 
+    let role_type = req.role_type.unwrap_or_else(|| "member".to_string());
+    ensure_role_type_assignable(&membership.role_type, &role_type)?;
+
     // Add member
     use db::models::CreateOrganizationMember;
     let create_member = CreateOrganizationMember {
         organization_id: id,
         user_id: req.user_id,
         role_id: Some(req.role_id),
-        role_type: req.role_type.unwrap_or_else(|| "member".to_string()),
+        role_type,
         invited_by: Some(admin_user_id),
     };
 
@@ -495,6 +587,8 @@ pub async fn update_organization_member(
         }
     };
 
+    require_active_membership(&admin_membership.status)?;
+
     // Check permission to update members
     if !role.has_permission("users:update") {
         return Err((
@@ -566,10 +660,33 @@ pub async fn update_organization_member(
         }
     };
 
+    // SECURITY: members cannot change their own role, nor touch a member who
+    // outranks them.
+    if target_user_id == admin_user_id {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "CANNOT_CHANGE_OWN_ROLE",
+                "You cannot change your own role",
+            )),
+        ));
+    }
+    if role_type_level(&target_membership.role_type) > role_type_level(&admin_membership.role_type)
+    {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "ROLE_NOT_ASSIGNABLE",
+                "You cannot change the role of a member above your own role",
+            )),
+        ));
+    }
+
     // Derive role_type from the role name if not provided
     let role_type = req
         .role_type
         .unwrap_or_else(|| new_role.name.to_lowercase().replace(' ', "_"));
+    ensure_role_type_assignable(&admin_membership.role_type, &role_type)?;
 
     // Update the member
     use db::models::UpdateOrganizationMember;
