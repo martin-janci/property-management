@@ -100,7 +100,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/3294",
       "merged_at": null,
       "specialist": null,
-      "implementer_summary": "round 1: no PR code change \u2014 only blocker is repo-wide apps/mobile biome debt (#3299), not this diff. Rebased onto origin/dev (clean, not pushed: churn-only re-trigger would stay red). Blocked pending #3299.",
+      "implementer_summary": "round 1: no PR code change — only blocker is repo-wide apps/mobile biome debt (#3299), not this diff. Rebased onto origin/dev (clean, not pushed: churn-only re-trigger would stay red). Blocked pending #3299.",
       "reviewer_summary": null,
       "last_reviewed_oid": "70da401a82b7d6f53869f94e9212ea5e9d578e00",
       "scope_drift": null,
@@ -111,7 +111,7 @@
       "fix_rounds": 1,
       "merge_attempted_at": null,
       "quarantined_at": "2026-11-04T18:44:37Z",
-      "quarantine_reason": "blocked on #3299: pre-existing frontend/apps/mobile biome debt reddens frontend.yml (Lint & Format Check -> frontend/E2E skipped/failed); PR code sound, no change warranted (reviewer confirmed). Rebased onto origin/dev (clean) at round 1 to check if debt was fixed upstream \u2014 apps/mobile + biome config byte-identical on dev, still red. Backend required gates (check+test) green. Un-quarantine (status->review) once #3299 clears the debt or scopes the lint gate per-package."
+      "quarantine_reason": "blocked on #3299: pre-existing frontend/apps/mobile biome debt reddens frontend.yml (Lint & Format Check -> frontend/E2E skipped/failed); PR code sound, no change warranted (reviewer confirmed). Rebased onto origin/dev (clean) at round 1 to check if debt was fixed upstream — apps/mobile + biome config byte-identical on dev, still red. Backend required gates (check+test) green. Un-quarantine (status->review) once #3299 clears the debt or scopes the lint gate per-package."
     },
     {
       "task_id": "screen-map-drift-pr-3217-reality",
@@ -274,18 +274,18 @@
     {
       "task_id": "churn-hotspot-ppt-web-messages-sk",
       "branch": "auto-impl/churn-hotspot-ppt-web-messages-sk-da5501ef",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-04T18:30:06Z",
-      "last_updated": "2026-11-04T18:30:06Z",
-      "status_changed_at": "2026-11-04T18:30:06Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-04T18:53:12Z",
+      "status_changed_at": "2026-11-04T18:53:12Z",
+      "pr_number": 3316,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3316",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=3316 status=done specialist=react-web scope_drift=false note=churn-watch found real defect class: added ppt-web locale namespace-parity regression test locking merge-train drops; verify green 8155 tests",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -322,5 +322,5 @@
       "first_open_at": null
     }
   ],
-  "generated": "2026-11-04T18:44:06Z"
+  "generated": "2026-11-04T18:53:12Z"
 }
