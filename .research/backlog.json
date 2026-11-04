@@ -14456,7 +14456,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3225"
       ],
@@ -14468,7 +14468,12 @@
       ],
       "created_at": "2026-11-04",
       "updated_at": "2026-11-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-04T22:28:58Z",
+        "assignment_status": "merged",
+        "pr_number": 3313
+      }
     },
     {
       "id": "churn-hotspot-ppt-web-messages-sk",
@@ -14476,7 +14481,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3218",
         "PR #3220"
@@ -14494,7 +14499,12 @@
       ],
       "created_at": "2026-11-04",
       "updated_at": "2026-11-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-04T22:28:58Z",
+        "assignment_status": "merged",
+        "pr_number": 3316
+      }
     },
     {
       "id": "screen-map-drift-pr-3217-reality",
@@ -14502,7 +14512,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3217"
       ],
@@ -14516,7 +14526,12 @@
       ],
       "created_at": "2026-11-04",
       "updated_at": "2026-11-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-04T22:28:58Z",
+        "assignment_status": "merged",
+        "pr_number": 3292
+      }
     },
     {
       "id": "screen-map-drift-pr-3224-reality",
@@ -14524,7 +14539,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3224"
       ],
@@ -14538,7 +14553,12 @@
       ],
       "created_at": "2026-11-04",
       "updated_at": "2026-11-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-04T22:28:58Z",
+        "assignment_status": "merged",
+        "pr_number": 3298
+      }
     },
     {
       "id": "screen-map-drift-pr-3225-reality",
@@ -14625,7 +14645,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-11-04 api-handlers (dispatcher Tier-1d)"
       ],
@@ -14639,7 +14659,12 @@
       ],
       "created_at": "2026-11-04",
       "updated_at": "2026-11-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-04T22:28:58Z",
+        "assignment_status": "merged",
+        "pr_number": 3295
+      }
     },
     {
       "id": "code-review-api-core-api-call-client-build-expect",
@@ -14647,7 +14672,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-11-03 api-core (dispatcher Tier-1d)"
       ],
@@ -14660,7 +14685,12 @@
       ],
       "created_at": "2026-11-04",
       "updated_at": "2026-11-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-04T22:28:58Z",
+        "assignment_status": "merged",
+        "pr_number": 3296
+      }
     },
     {
       "id": "code-review-api-handlers-suspend-cascade-silent-skip",
@@ -14668,7 +14698,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-11-03 api-handlers (dispatcher Tier-1d)"
       ],
@@ -14680,7 +14710,12 @@
       ],
       "created_at": "2026-11-04",
       "updated_at": "2026-11-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-04T22:28:58Z",
+        "assignment_status": "merged",
+        "pr_number": 3297
+      }
     },
     {
       "id": "code-review-api-handlers-templates-list-swallows-db-error",
@@ -14800,7 +14835,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [reality-server]"
       ],
@@ -14828,7 +14863,12 @@
       "segment": "reality-server",
       "score_delta": 1,
       "candidate_vector": "bug",
-      "expert": "rust"
+      "expert": "rust",
+      "reconciled": {
+        "at": "2026-11-04T22:28:58Z",
+        "assignment_status": "merged",
+        "pr_number": 3302
+      }
     },
     {
       "id": "code-review-reality-server-inquiry-dead-fk-classify",
