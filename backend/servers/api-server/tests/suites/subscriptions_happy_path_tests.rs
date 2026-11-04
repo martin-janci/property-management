@@ -482,9 +482,10 @@ async fn subscriptions_endpoints_happy_path(pool: PgPool) {
     resp.assert_status(StatusCode::OK);
 
     // 6.4 POST /api/v1/subscriptions/invoices/{id}/pay -> mark_invoice_paid
+    // Settling/voiding a platform billing invoice is platform-admin-only.
     let resp = app
         .execute(
-            session
+            admin_session
                 .post(&format!("/api/v1/subscriptions/invoices/{invoice_id}/pay"))
                 .build(),
         )
@@ -492,9 +493,10 @@ async fn subscriptions_endpoints_happy_path(pool: PgPool) {
     resp.assert_status(StatusCode::OK);
 
     // 6.5 POST /api/v1/subscriptions/invoices/{id}/void -> void_invoice
+    // Settling/voiding a platform billing invoice is platform-admin-only.
     let resp = app
         .execute(
-            session
+            admin_session
                 .post(&format!("/api/v1/subscriptions/invoices/{invoice_id}/void"))
                 .build(),
         )

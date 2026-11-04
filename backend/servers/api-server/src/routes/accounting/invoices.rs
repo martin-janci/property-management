@@ -109,9 +109,10 @@ pub async fn list_invoices(
         return Err(StatusCode::FORBIDDEN);
     }
 
+    let tenant_id = rls.tenant_id();
     let invoices = state
         .accounting_repo
-        .list_invoices_rls(&mut **rls)
+        .list_invoices_for_tenant(&mut **rls, tenant_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to list invoices: {}", e);
@@ -218,13 +219,14 @@ pub async fn create_invoice(
     mut rls: RlsConnection,
     State(state): State<AppState>,
     AuthUser {
-        user_id: _user_id,
-        tenant_id,
-        ..
+        user_id: _user_id, ..
     }: AuthUser,
     Json(mut data): Json<CreateInvoice>,
 ) -> Result<(StatusCode, Json<Invoice>), StatusCode> {
-    let tenant_id = tenant_id.ok_or(StatusCode::FORBIDDEN)?;
+    // The tenant is the one `RlsConnection` validated membership against
+    // (X-Tenant-ID / host), not the optional JWT `tenant_id` claim, which
+    // login tokens do not carry.
+    let tenant_id = rls.tenant_id();
 
     // Role check: Accounting is manager-only
     if !rls.is_super_admin() && !rls.has_role(TenantRole::Manager) {

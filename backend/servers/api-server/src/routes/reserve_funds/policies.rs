@@ -9,7 +9,7 @@ use axum::{
 use db::models::reserve_funds::{CreateInvestmentPolicy, FundInvestmentPolicy};
 use uuid::Uuid;
 
-use super::shared::{insert_child_error, repo_error, ApiResult};
+use super::shared::{insert_child_error, repo_error, require_manager, ApiResult};
 use crate::state::AppState;
 
 /// Investment-policy sub-router.
@@ -46,6 +46,7 @@ async fn create_policy(
     Path(fund_id): Path<Uuid>,
     Json(req): Json<CreateInvestmentPolicy>,
 ) -> ApiResult<Json<FundInvestmentPolicy>> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .reserve_fund_repo
