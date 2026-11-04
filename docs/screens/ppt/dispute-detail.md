@@ -91,6 +91,7 @@ UC-38 single-dispute deep view. Combines patterns from `ppt/announcements` (chro
 ## Agent Log
 
 <!-- newest entries on top -->
+- 2026-11-04 — agent: page renders spinner / load-error / not-found before reading `dispute.*` (crashed on undefined dispute); route passes real loading and error flags (R3 #3).
 - 2026-11-04 — agent: localized the detail page (headings, buttons, dialogs, empty states, pending/overdue counters with plurals), ActionItemCard, ResolutionCard and DisputeTimeline into `disputes.detail|action|resolution|timeline.*` in all six locales; status/priority/category/role labels via shared `utils/labels.ts` key maps; dates and the approval percentage now use the app language (`i18n.language`), not the browser locale. Added `disputesI18nCompleteness.test.ts` (parity, plural forms, placeholders, used-keys-exist) and `DisputeCards.i18n.test.tsx`.
 
 - 2026-11-04 — agent: wired the detail page + mediation workspace to the real dispute routes (detail, activities, evidence, resolutions+votes, action items, status PATCH, resolve PATCH, escalations, parties). Removed affordances with no backend route (evidence upload, resolution-term completion, discussion/chat tab). Role gating aligned with backend: status change + resolve + assign mediator manager-only; mediator can escalate/run sessions; parties can open the workspace, vote and submit. New tests: api-client disputes mappings, DisputeDetailPage.test.tsx, rewritten routes/groups/disputes.test.tsx; i18n keys in all 6 locales. buildStatus/apiStatus unchanged (shipped/complete).
