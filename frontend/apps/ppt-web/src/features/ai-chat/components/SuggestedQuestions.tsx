@@ -5,6 +5,7 @@
  * Displays quick-start questions for new conversations.
  */
 
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import type { SuggestedQuestion } from '../types';
 
@@ -71,38 +72,20 @@ export function SuggestedQuestions({
   );
 }
 
-/** Default suggested questions for property management context */
-export function getDefaultSuggestedQuestions(): SuggestedQuestion[] {
-  return [
-    {
-      id: '1',
-      text: 'How do I report a maintenance issue?',
-      category: 'Faults',
-    },
-    {
-      id: '2',
-      text: 'What are the upcoming building votes?',
-      category: 'Voting',
-    },
-    {
-      id: '3',
-      text: 'How do I submit my meter readings?',
-      category: 'Utilities',
-    },
-    {
-      id: '4',
-      text: 'Who are my building contacts?',
-      category: 'Community',
-    },
-    {
-      id: '5',
-      text: 'When is the next owners meeting?',
-      category: 'Events',
-    },
-    {
-      id: '6',
-      text: 'How do I view my payment history?',
-      category: 'Finance',
-    },
-  ];
+const DEFAULT_QUESTIONS = [
+  { id: '1', key: 'reportFault', category: 'faults' },
+  { id: '2', key: 'upcomingVotes', category: 'voting' },
+  { id: '3', key: 'meterReadings', category: 'utilities' },
+  { id: '4', key: 'buildingContacts', category: 'community' },
+  { id: '5', key: 'ownersMeeting', category: 'events' },
+  { id: '6', key: 'paymentHistory', category: 'finance' },
+] as const;
+
+/** Default suggested questions for property management context, in the active language. */
+export function getDefaultSuggestedQuestions(t: TFunction): SuggestedQuestion[] {
+  return DEFAULT_QUESTIONS.map(({ id, key, category }) => ({
+    id,
+    text: t(`aiChat.suggested.${key}`),
+    category: t(`aiChat.categories.${category}`),
+  }));
 }

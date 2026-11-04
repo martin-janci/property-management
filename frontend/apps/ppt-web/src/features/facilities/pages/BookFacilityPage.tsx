@@ -32,7 +32,7 @@ export function BookFacilityPage() {
         const data = await getFacility(buildingId, facilityId);
         setFacility(data);
       } catch (err) {
-        setError('Failed to load facility details');
+        setError(t('facilities.bookings.loadFacilityFailed'));
         console.error('Failed to fetch facility:', err);
       } finally {
         setIsLoading(false);
@@ -40,7 +40,7 @@ export function BookFacilityPage() {
     };
 
     fetchFacility();
-  }, [buildingId, facilityId]);
+  }, [buildingId, facilityId, t]);
 
   // Fetch availability when date changes
   useEffect(() => {
@@ -66,9 +66,9 @@ export function BookFacilityPage() {
 
     try {
       await createBooking(buildingId, facilityId, data);
-      navigate(`/buildings/${buildingId}/facilities/${facilityId}?booked=true`);
+      navigate('/facilities/bookings/my');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create booking');
+      setError(err instanceof Error ? err.message : t('facilities.bookings.createFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -92,13 +92,13 @@ export function BookFacilityPage() {
     return (
       <div className="max-w-2xl mx-auto px-4 py-8">
         <div className="text-center py-12">
-          <p className="text-red-600">{error || 'Facility not found'}</p>
+          <p className="text-red-600">{error || t('facilities.notFound')}</p>
           <button
             type="button"
             onClick={() => navigate(-1)}
             className="mt-4 text-blue-600 hover:text-blue-800"
           >
-            Go back
+            {t('facilities.goBack')}
           </button>
         </div>
       </div>
@@ -109,13 +109,13 @@ export function BookFacilityPage() {
     return (
       <div className="max-w-2xl mx-auto px-4 py-8">
         <div className="text-center py-12">
-          <p className="text-yellow-600">This facility is not available for booking</p>
+          <p className="text-yellow-600">{t('facilities.notBookable')}</p>
           <button
             type="button"
             onClick={() => navigate(-1)}
             className="mt-4 text-blue-600 hover:text-blue-800"
           >
-            Go back
+            {t('facilities.goBack')}
           </button>
         </div>
       </div>

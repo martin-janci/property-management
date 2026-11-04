@@ -32,6 +32,7 @@
  */
 
 import {
+  announcementKeys,
   communityKeys,
   complianceKeys,
   disputeKeys,
@@ -228,6 +229,9 @@ describe('AUTHED_QUERY_KEY_ROOTS logout-purge coverage', () => {
       oauthGrantKeys,
       mfaKeys,
       layoutKeys,
+      // Resident dashboard RecentActivity reads `/announcements/published`
+      // through `announcementKeys.published()`.
+      announcementKeys,
     };
 
     it.each(

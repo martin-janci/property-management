@@ -1,7 +1,8 @@
 /**
  * Resident dashboard page with action-first UX pattern.
  * Shows a prioritized queue of items needing resident attention.
- * Designed for 60-second task completion.
+ * Designed for 60-second task completion. Recent activity comes from real
+ * announcements and the user's own fault reports (see RecentActivity).
  *
  * @module features/dashboard/pages/ResidentDashboardPage
  */
@@ -9,6 +10,7 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { ActionQueue } from '../components/ActionQueue';
+import { RecentActivity } from '../components/RecentActivity';
 import type { ActionButton, ActionItem } from '../hooks/useActionQueue';
 import './ResidentDashboardPage.css';
 
@@ -17,8 +19,7 @@ interface ResidentDashboardPageProps {
 }
 
 export function ResidentDashboardPage({ onItemAction }: ResidentDashboardPageProps) {
-  const { t, i18n } = useTranslation();
-  const relativeTime = new Intl.RelativeTimeFormat(i18n.language, { numeric: 'auto' });
+  const { t } = useTranslation();
 
   return (
     <div className="resident-page">
@@ -39,52 +40,13 @@ export function ResidentDashboardPage({ onItemAction }: ResidentDashboardPagePro
 
       <nav className="resident-page__quick-links">
         <Link to="/my-unit" className="resident-page__quick-link">
-          {t('dashboard.viewMyUnit', 'View my unit')}
+          {t('dashboard.viewMyUnit')}
         </Link>
       </nav>
 
       <ActionQueue userRole="resident" onItemAction={onItemAction} />
 
-      <section className="resident-page__activity">
-        <h2 className="resident-page__activity-title">{t('dashboard.recentActivity')}</h2>
-        <div className="resident-page__activity-list">
-          <ActivityItem
-            icon="✅"
-            text={t('dashboard.activity.meterReadingSubmitted')}
-            time={relativeTime.format(-2, 'hour')}
-          />
-          <ActivityItem
-            icon="🗳️"
-            text={t('dashboard.activity.voteSubmitted')}
-            time={relativeTime.format(-1, 'day')}
-          />
-          <ActivityItem
-            icon="🔧"
-            text={t('dashboard.activity.faultReported')}
-            time={relativeTime.format(-3, 'day')}
-          />
-        </div>
-      </section>
-    </div>
-  );
-}
-
-interface ActivityItemProps {
-  icon: string;
-  text: string;
-  time: string;
-}
-
-function ActivityItem({ icon, text, time }: ActivityItemProps) {
-  return (
-    <div className="activity-item">
-      <span className="activity-item__icon" aria-hidden="true">
-        {icon}
-      </span>
-      <div>
-        <p className="activity-item__text">{text}</p>
-        <p className="activity-item__time">{time}</p>
-      </div>
+      <RecentActivity />
     </div>
   );
 }

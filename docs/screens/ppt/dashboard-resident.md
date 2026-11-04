@@ -36,5 +36,7 @@ Note: existing `ppt/dashboard` screen-map is mobile-only — this is the web-onl
 - 2026-05-18 — audit: stub created from `frontend/apps/ppt-web/src/App.tsx:395`.
 
 ## Agent Log
+- 2026-11-04 — agent: Recent activity reads announcements from the resident-visible `GET /announcements/published` (`useResidentAnnouncements`); the manager list returned 403 for owners/tenants (R3 #17).
+- 2026-11-04 — agent: removed the hardcoded "Posledná aktivita" rows (invented meter/vote/fault items with fixed times). New `RecentActivity` component builds the feed from real data — published announcements (`useAnnouncements`) + faults the signed-in user reported (`useFaults`, filtered by `reporter_id`) — with loading/empty/error states and locale-aware relative times; added missing `dashboard.viewMyUnit` key. apiStatus unchanged (action queue still has no backend).
 - 2026-10-05 — agent: reconciled screen-map with PR #3002 — recorded that bare `/dashboard` now fans out non-manager roles to `/dashboard/resident`; routing only, no build/api status change.
 - 2026-05-18 — agent: created stub for unmapped route.
