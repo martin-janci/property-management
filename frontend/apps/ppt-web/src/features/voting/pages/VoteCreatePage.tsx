@@ -14,6 +14,7 @@ import {
   type QuorumType,
   useBuildings,
   useCreateVote,
+  useDeleteVote,
 } from '@ppt/api-client';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -25,7 +26,7 @@ interface VoteCreatePageProps {
   onCancel: () => void;
 }
 
-interface DraftQuestion {
+export interface DraftQuestion {
   key: string;
   question_text: string;
   question_type: QuestionType;
@@ -41,10 +42,11 @@ function newId(): string {
   return crypto.randomUUID();
 }
 
-function yesNoOptions() {
+export function yesNoOptions() {
   return [
-    { id: 'yes', text: 'Yes' },
-    { id: 'no', text: 'No' },
+    // The server parses option ids as UUIDs (422 otherwise).
+    { id: newId(), text: 'Yes' },
+    { id: newId(), text: 'No' },
   ];
 }
 
@@ -58,12 +60,29 @@ function blankQuestion(): DraftQuestion {
   };
 }
 
+/**
+ * Build the `POST /voting/{id}/questions` body for a draft question. Every
+ * option id must be a UUID — the server rejects anything else with 422.
+ */
+export function toQuestionPayload(q: DraftQuestion, index: number): AddQuestionRequest {
+  return {
+    question_text: q.question_text.trim(),
+    question_type: q.question_type,
+    options: q.options
+      .filter((o) => o.text.trim() || q.question_type === 'yes_no')
+      .map((o, idx) => ({ id: o.id, text: o.text.trim(), order: idx })),
+    display_order: index,
+    is_required: q.is_required,
+  };
+}
+
 export function VoteCreatePage({ onCreated, onCancel }: VoteCreatePageProps) {
   const { t } = useTranslation();
   const { showToast } = useToast();
   const { data: buildingsData } = useBuildings();
   const buildingId = buildingsData?.items?.[0]?.id ?? '';
   const createVote = useCreateVote();
+  const discardDraft = useDeleteVote();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -154,18 +173,14 @@ export function VoteCreatePage({ onCreated, onCancel }: VoteCreatePageProps) {
         quorum_percentage: quorumPercentage ? Number(quorumPercentage) : null,
       });
 
-      for (let i = 0; i < questions.length; i++) {
-        const q = questions[i];
-        const payload: AddQuestionRequest = {
-          question_text: q.question_text.trim(),
-          question_type: q.question_type,
-          options: q.options
-            .filter((o) => o.text.trim() || q.question_type === 'yes_no')
-            .map((o, idx) => ({ id: o.id, text: o.text.trim(), order: idx })),
-          display_order: i,
-          is_required: q.is_required,
-        };
-        await addQuestion(vote.id, payload);
+      try {
+        for (let i = 0; i < questions.length; i++) {
+          await addQuestion(vote.id, toQuestionPayload(questions[i], i));
+        }
+      } catch (questionError) {
+        // Don't leave an empty draft behind when a question is rejected.
+        await discardDraft.mutateAsync(vote.id).catch(() => undefined);
+        throw questionError;
       }
 
       if (publish) {
