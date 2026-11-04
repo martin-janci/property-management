@@ -42,9 +42,6 @@ vi.mock('react-i18next', () => ({
 vi.mock('../components/MediationTimelineView', () => ({
   MediationTimelineView: () => null,
 }));
-vi.mock('../components/MediationChatThread', () => ({
-  MediationChatThread: () => <div data-testid="chat-thread" />,
-}));
 
 // Expose the props the workspace threads into the sessions panel so we can
 // assert both the API data and the canManage permission actually arrive, and
@@ -115,14 +112,28 @@ function mockDispute(overrides: Record<string, unknown> = {}) {
   mockUseDispute.mockReturnValue({
     data: {
       id: 'dsp-0001-abcd',
-      subject: 'Leaky tap dispute',
+      referenceNumber: 'DSP-2026-00042',
+      title: 'Leaky tap dispute',
       status: 'mediation',
       filedBy: FILER_ID,
-      respondentId: 'user-respondent',
-      assignedMediatorId: MEDIATOR_ID,
-      filedAt: '2026-01-01T00:00:00.000Z',
-      filerDetails: { name: 'Filer Fred', email: 'fred@example.com' },
-      respondentDetails: { name: 'Respondent Rita', email: 'rita@example.com' },
+      createdAt: '2026-01-01T00:00:00.000Z',
+      parties: [
+        { id: 'p1', userId: FILER_ID, role: 'complainant', userName: 'Filer Fred', userEmail: '' },
+        {
+          id: 'p2',
+          userId: 'user-respondent',
+          role: 'respondent',
+          userName: 'Respondent Rita',
+          userEmail: '',
+        },
+        {
+          id: 'p3',
+          userId: MEDIATOR_ID,
+          role: 'mediator',
+          userName: 'Mediator Mia',
+          userEmail: '',
+        },
+      ],
       ...overrides,
     },
     isLoading: false,

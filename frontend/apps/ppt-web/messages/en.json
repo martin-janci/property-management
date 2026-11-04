@@ -1611,9 +1611,6 @@
     "selectUnit": "Please select a unit for this dispute.",
     "multipleRespondents": "Multiple respondents",
     "multipleRespondentsMsg": "Only the first respondent will be recorded.",
-    "addEvidence": "Add Evidence",
-    "filedWithEvidenceErrors": "Dispute filed (some files failed)",
-    "evidenceUploadErrorsMsg": "{{count}} evidence file(s) could not be uploaded. Retry from the dispute detail page.",
     "mediation": {
       "title": "Mediation Workspace",
       "backToDispute": "← Back to Dispute",
@@ -1754,7 +1751,12 @@
           "resolutionProposed": "Resolution proposed",
           "resolutionAccepted": "Resolution accepted",
           "escalated": "Escalated",
-          "closed": "Closed"
+          "closed": "Closed",
+          "partyAdded": "Party added",
+          "sessionCompleted": "Session completed",
+          "resolutionVoted": "Vote on resolution",
+          "actionCreated": "Action item created",
+          "actionCompleted": "Action item completed"
         }
       },
       "errors": {
@@ -1789,15 +1791,6 @@
     "filePageTitle": "File a Dispute",
     "subjectPlaceholder": "Brief summary of the dispute",
     "descriptionPlaceholder": "Describe the dispute in detail. Include dates, times, and specific incidents (minimum 30 characters).",
-    "evidence": {
-      "unsupportedType": "Unsupported file type: {{type}}",
-      "fileTooLarge": "File too large (max {{maxMb}} MB): {{name}}",
-      "dropHint": "Drop files here or <1>browse</1>",
-      "formatHint": "JPG, PNG, PDF, MP3, MP4 · max {{maxMb}} MB per file · up to {{maxFiles}} files",
-      "descriptionPlaceholder": "Short description (optional)",
-      "descriptionLabel": "Description for {{name}}",
-      "removeLabel": "Remove {{name}}"
-    },
     "categoryCommonArea": "Common Area",
     "categoryParking": "Parking",
     "categoryPets": "Pets",
@@ -1911,10 +1904,10 @@
       },
       "mediation": "Mediation",
       "resolve": "Resolve",
-      "overdueActions_one": "{{count}} overdue action",
-      "overdueActions_other": "{{count}} overdue actions",
-      "pendingActions_one": "{{count}} pending action",
-      "pendingActions_other": "{{count}} pending actions",
+      "overdueActions_one": "{{count}} overdue action item",
+      "overdueActions_other": "{{count}} overdue action items",
+      "pendingActions_one": "{{count}} pending action item",
+      "pendingActions_other": "{{count}} pending action items",
       "desiredResolution": "Desired Resolution",
       "evidenceCount": "Evidence ({{count}})",
       "noEvidence": "No evidence submitted.",
@@ -1929,19 +1922,44 @@
       "filedOn": "Filed on",
       "assignedTo": "Assigned to",
       "parties": "Parties",
-      "proposalPlaceholder": "Describe your proposed resolution...",
+      "proposalPlaceholder": "Describe your proposed resolution…",
       "propose": "Propose",
       "createActionItem": "Create Action Item",
       "actionTitle": "Title",
       "assignTo": "Assign to",
-      "selectParty": "Select party...",
-      "dueDate": "Due Date"
+      "selectParty": "Select party…",
+      "dueDate": "Due Date",
+      "changeStatus": "Change status…",
+      "applyStatus": "Apply",
+      "unknownUser": "Unknown user",
+      "actionFailed": "Action failed",
+      "evidenceDeleted": "Evidence deleted",
+      "resolutionProposed": "Resolution proposed",
+      "voteRecorded": "Vote recorded",
+      "resolutionAccepted": "Resolution accepted",
+      "resolutionImplemented": "Resolution marked as implemented",
+      "actionCreated": "Action item created",
+      "actionCompleted": "Action item completed",
+      "reminderSent": "Reminder sent",
+      "actionEscalationReason": "Action item not completed as agreed",
+      "actionEscalated": "Action item escalated",
+      "description": "Description",
+      "evidenceHeading": "Evidence ({{total}})",
+      "viewEvidence": "View",
+      "deleteEvidence": "Delete",
+      "details": "Details",
+      "unit": "Unit",
+      "createActionTitle": "Create Action Item",
+      "actionDescription": "Description",
+      "actionAssignee": "Assign to",
+      "actionDueDate": "Due date",
+      "create": "Create"
     },
     "timeline": {
       "title": "Activity Timeline",
       "empty": "No activity yet.",
       "statusChange": "Status: {{from}} → {{to}}",
-      "showMore": "Show more activity..."
+      "showMore": "Show more activity…"
     },
     "resolution": {
       "status": {
@@ -1949,9 +1967,10 @@
         "accepted": "Accepted",
         "rejected": "Rejected",
         "partially_accepted": "Partially Accepted",
-        "implemented": "Implemented"
+        "implemented": "Implemented",
+        "partiallyAccepted": "Partially Accepted"
       },
-      "approval": "{{percent}}% approval",
+      "approval": "{{rate}} approval",
       "proposedBy": "Proposed by {{name}} on {{date}}",
       "proposalTitle": "Resolution Proposal",
       "terms": "Terms ({{completed}}/{{total}})",
@@ -1962,7 +1981,13 @@
       "reject": "Reject",
       "accept": "Accept",
       "finalize": "Finalize Resolution",
-      "markImplemented": "Mark as Implemented"
+      "markImplemented": "Mark as Implemented",
+      "proposalHeading": "Resolution Proposal",
+      "termAssignedTo": "Assigned to: {{name}}",
+      "termDue": "Due: {{date}}",
+      "termCompleted": "Completed: {{date}}",
+      "voteAccepted": "Accepted",
+      "voteRejected": "Rejected"
     },
     "action": {
       "status": {
@@ -1970,7 +1995,8 @@
         "in_progress": "In Progress",
         "completed": "Completed",
         "overdue": "Overdue",
-        "escalated": "Escalated"
+        "escalated": "Escalated",
+        "inProgress": "In Progress"
       },
       "overdueBy_one": "Overdue by {{count}} day",
       "overdueBy_other": "Overdue by {{count}} days",
@@ -1986,7 +2012,60 @@
       "start": "Start",
       "complete": "Complete",
       "sendReminder": "Send Reminder",
-      "escalate": "Escalate"
+      "escalate": "Escalate",
+      "completedNotes": "Completed:",
+      "reminderSentOn": "Reminder sent: {{date}}",
+      "view": "View"
+    },
+    "partyRole": {
+      "complainant": "Complainant",
+      "respondent": "Respondent",
+      "witness": "Witness",
+      "mediator": "Mediator"
+    },
+    "file": {
+      "intro": "Submit a formal dispute. All fields marked <1>*</1> are required.",
+      "typeHeading": "Dispute type",
+      "locationHeading": "Location",
+      "unitLabel": "Unit",
+      "selectUnit": "Select unit…",
+      "otherPartyLabel": "Other party (optional)",
+      "notSpecified": "Not specified",
+      "detailsHeading": "Details",
+      "subjectLabel": "Subject",
+      "descriptionLabel": "Description",
+      "descriptionHint_one": "Min {{count}} character",
+      "descriptionHint_other": "Min {{count}} characters",
+      "nextHeading": "What happens next?",
+      "nextStep1": "Your dispute receives a reference number",
+      "nextStep2": "The other party is notified and can respond",
+      "nextStep3": "A manager or mediator reviews the case",
+      "nextStep4": "Mediation sessions may be scheduled if needed",
+      "nextStep5": "A resolution will be proposed and tracked",
+      "filing": "Filing…",
+      "submit": "File Dispute",
+      "types": {
+        "noise": "Noise",
+        "noiseDesc": "Excessive noise, disturbances, quiet hours violations",
+        "damage": "Property Damage",
+        "damageDesc": "Physical damage to property, equipment, or common areas",
+        "payment": "Payment / Fees",
+        "paymentDesc": "Disputed charges, unpaid fees, billing disagreements",
+        "lease": "Lease Terms",
+        "leaseDesc": "Violations or disagreements about lease conditions",
+        "maintenance": "Maintenance",
+        "maintenanceDesc": "Unresolved maintenance issues, neglect of repairs",
+        "other": "Other",
+        "otherDesc": "Any other dispute not covered by the categories above"
+      },
+      "errors": {
+        "typeRequired": "Please select a dispute type.",
+        "subjectMin": "Subject must be at least 5 characters.",
+        "subjectMax": "Subject must be at most 200 characters.",
+        "descriptionMin": "Description must be at least 30 characters.",
+        "descriptionMax": "Description must be at most 5000 characters.",
+        "unitRequired": "Please select a unit."
+      }
     }
   },
   "financial": {
@@ -6659,7 +6738,6 @@
   },
   "aria": {
     "acknowledgmentRequired": "Acknowledgment required",
-    "addEvidenceFiles": "Add evidence files",
     "additionalInformation": "Additional information",
     "allowEmergencyNotifications": "Allow emergency notifications during quiet hours",
     "articleActions": "Article actions",

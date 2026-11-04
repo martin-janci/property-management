@@ -4,6 +4,7 @@
  */
 
 import { useTranslation } from 'react-i18next';
+import { actionStatusKeys, formatDisputeDate } from '../utils/labels';
 
 export type ActionStatus = 'pending' | 'in_progress' | 'completed' | 'overdue' | 'escalated';
 
@@ -30,15 +31,6 @@ const statusColors: Record<ActionStatus, string> = {
   completed: 'bg-green-100 text-green-800',
   overdue: 'bg-red-100 text-red-800',
   escalated: 'bg-red-200 text-red-900',
-};
-
-/** i18n keys for action item status labels. */
-const statusLabelKeys: Record<ActionStatus, string> = {
-  pending: 'disputes.action.status.pending',
-  in_progress: 'disputes.action.status.in_progress',
-  completed: 'disputes.action.status.completed',
-  overdue: 'disputes.action.status.overdue',
-  escalated: 'disputes.action.status.escalated',
 };
 
 interface ActionItemCardProps {
@@ -68,9 +60,7 @@ export function ActionItemCard({
   const isOverdue = dueDate < now && action.status !== 'completed';
   const daysUntilDue = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString(i18n.language);
-  };
+  const formatDate = (dateString: string) => formatDisputeDate(dateString, i18n.language);
 
   const getDueDateDisplay = () => {
     if (action.status === 'completed') {
@@ -79,7 +69,7 @@ export function ActionItemCard({
     if (isOverdue) {
       return (
         <span className="text-red-600 font-medium">
-          {t('disputes.action.overdueBy', { count: Math.abs(daysUntilDue) })}
+          {t('disputes.action.overdueBy', { count: Math.max(1, Math.abs(daysUntilDue)) })}
         </span>
       );
     }
@@ -116,7 +106,7 @@ export function ActionItemCard({
             <span
               className={`px-2 py-0.5 text-xs font-medium rounded ${statusColors[action.status]}`}
             >
-              {t(statusLabelKeys[action.status])}
+              {t(actionStatusKeys[action.status])}
             </span>
             {getDueDateDisplay()}
           </div>
@@ -137,7 +127,7 @@ export function ActionItemCard({
       {action.completedAt && action.completionNotes && (
         <div className="mb-3 p-2 bg-green-50 border border-green-100 rounded">
           <p className="text-sm text-green-800">
-            <span className="font-medium">{t('disputes.action.completedLabel')}</span>{' '}
+            <span className="font-medium">{t('disputes.action.completedNotes')}</span>{' '}
             {action.completionNotes}
           </p>
           <p className="text-xs text-green-600 mt-1">{formatDate(action.completedAt)}</p>
@@ -147,7 +137,7 @@ export function ActionItemCard({
       {/* Reminder/Escalation Info */}
       {action.reminderSentAt && (
         <div className="text-xs text-gray-500 mb-2">
-          {t('disputes.action.reminderSent', { date: formatDate(action.reminderSentAt) })}
+          {t('disputes.action.reminderSentOn', { date: formatDate(action.reminderSentAt) })}
         </div>
       )}
       {action.escalatedAt && (
@@ -164,7 +154,7 @@ export function ActionItemCard({
             onClick={() => onView(action.id)}
             className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
           >
-            {t('disputes.view')}
+            {t('disputes.action.view')}
           </button>
         )}
 
@@ -217,5 +207,3 @@ export function ActionItemCard({
     </div>
   );
 }
-
-export { statusLabelKeys };

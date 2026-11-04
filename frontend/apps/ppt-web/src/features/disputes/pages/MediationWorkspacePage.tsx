@@ -17,7 +17,6 @@ import { useTranslation } from 'react-i18next';
 import { Spinner } from '../../../components/Spinner';
 import { useConfirmDialog } from '../../../components/useConfirmDialog';
 import { MediationAssignDialog } from '../components/MediationAssignDialog';
-import { MediationChatThread } from '../components/MediationChatThread';
 import { MediationEscalateDialog } from '../components/MediationEscalateDialog';
 import { MediationResolutionForm } from '../components/MediationResolutionForm';
 import { MediationSessionDialog } from '../components/MediationSessionDialog';
@@ -25,31 +24,26 @@ import { MediationSessionsPanel } from '../components/MediationSessionsPanel';
 import { MediationSubmissionsPanel } from '../components/MediationSubmissionsPanel';
 import { MediationTimelineView } from '../components/MediationTimelineView';
 import { formatDisputeReference } from '../utils/formatReference';
+import { disputeStatusKeys, formatDisputeDate } from '../utils/labels';
 
-type Tab = 'timeline' | 'chat' | 'submissions' | 'resolve';
+type Tab = 'timeline' | 'submissions' | 'resolve';
 
 const statusColors: Record<string, string> = {
   filed: 'bg-blue-100 text-blue-800',
   under_review: 'bg-yellow-100 text-yellow-800',
   mediation: 'bg-violet-100 text-violet-800',
+  awaiting_response: 'bg-orange-100 text-orange-800',
   escalated: 'bg-red-100 text-red-800',
+  withdrawn: 'bg-gray-100 text-gray-600',
   resolved: 'bg-green-100 text-green-800',
   closed: 'bg-gray-100 text-gray-700',
 };
 
-const statusLabelKeys: Record<string, string> = {
-  filed: 'disputes.statusFiled',
-  under_review: 'disputes.statusUnderReview',
-  mediation: 'disputes.statusInMediation',
-  escalated: 'disputes.statusEscalated',
-  resolved: 'disputes.statusResolved',
-  closed: 'disputes.statusClosed',
-};
+const statusLabelKeys: Record<string, string> = disputeStatusKeys;
 
 export interface MediationWorkspacePageProps {
   disputeId: string;
   currentUserId?: string;
-  currentUserName?: string;
   organizationId: string;
   isManager?: boolean;
   onBack: () => void;
@@ -60,7 +54,6 @@ export interface MediationWorkspacePageProps {
 export function MediationWorkspacePage({
   disputeId,
   currentUserId,
-  currentUserName,
   organizationId,
   isManager = false,
   onBack,
@@ -93,12 +86,15 @@ export function MediationWorkspacePage({
   const updateSession = useUpdateSession(disputeId);
   const cancelSession = useCancelSession(disputeId);
 
-  const isMediator = !!dispute && dispute.assignedMediatorId === currentUserId;
-  const isParty =
-    !!dispute && (dispute.filedBy === currentUserId || dispute.respondentId === currentUserId);
+  const parties = dispute?.parties ?? [];
+  const myParties = parties.filter((p) => !!currentUserId && p.userId === currentUserId);
+  const isMediator = myParties.some((p) => p.role === 'mediator');
+  // Submissions and votes resolve the caller's party membership server-side.
+  const isParty = myParties.some((p) => p.role !== 'mediator');
   const canManage = isManager || isMediator;
-  const canChat = canManage || isParty;
-  const isActive = !!dispute && dispute.status !== 'resolved' && dispute.status !== 'closed';
+  const filer = parties.find((p) => p.userId === dispute?.filedBy);
+  const isActive =
+    !!dispute && !['resolved', 'closed', 'withdrawn'].includes(dispute.status as string);
 
   const handleResolve = async (data: ResolveDisputeRequest) => {
     try {
@@ -251,15 +247,16 @@ export function MediationWorkspacePage({
   }
 
   const disputeStatus = dispute?.status ?? 'unknown';
-  const referenceNumber = dispute ? formatDisputeReference(dispute.id) : disputeId;
-  const disputeTitle = dispute?.subject ?? t('disputes.title');
+  const referenceNumber = dispute
+    ? dispute.referenceNumber || formatDisputeReference(dispute.id)
+    : disputeId;
+  const disputeTitle = dispute?.title ?? t('disputes.title');
   const statusLabel = statusLabelKeys[disputeStatus]
     ? t(statusLabelKeys[disputeStatus])
     : disputeStatus;
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'timeline', label: t('disputes.mediation.tabTimeline') },
-    { id: 'chat', label: t('disputes.mediation.tabDiscussion') },
     { id: 'submissions', label: t('disputes.mediation.tabSubmissions') },
     { id: 'resolve', label: t('disputes.mediation.tabResolution') },
   ];
@@ -292,13 +289,15 @@ export function MediationWorkspacePage({
 
           {isActive && canManage && (
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setShowAssignDialog(true)}
-                className="px-4 py-2 text-sm border border-violet-300 text-violet-700 rounded-lg hover:bg-violet-50"
-              >
-                {t('disputes.mediation.assignMediator')}
-              </button>
+              {isManager && (
+                <button
+                  type="button"
+                  onClick={() => setShowAssignDialog(true)}
+                  className="px-4 py-2 text-sm border border-violet-300 text-violet-700 rounded-lg hover:bg-violet-50"
+                >
+                  {t('disputes.mediation.assignMediator')}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => setShowEscalateDialog(true)}
@@ -306,13 +305,15 @@ export function MediationWorkspacePage({
               >
                 {t('disputes.mediation.escalate')}
               </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('resolve')}
-                className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
-              >
-                {t('disputes.mediation.resolveDispute')}
-              </button>
+              {isManager && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('resolve')}
+                  className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
+                >
+                  {t('disputes.mediation.resolveDispute')}
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -329,44 +330,16 @@ export function MediationWorkspacePage({
                 <dt className="text-xs text-gray-400 uppercase tracking-wide">
                   {t('disputes.mediation.filedBy')}
                 </dt>
-                <dd className="font-medium text-gray-900">
-                  {dispute?.filerDetails?.name ?? dispute?.filedBy ?? '—'}
-                </dd>
+                <dd className="font-medium text-gray-900">{filer?.userName ?? '—'}</dd>
               </div>
-              {dispute?.respondent && (
-                <div>
-                  <dt className="text-xs text-gray-400 uppercase tracking-wide">
-                    {t('disputes.mediation.respondent')}
-                  </dt>
-                  <dd className="font-medium text-gray-900">{dispute.respondent}</dd>
-                </div>
-              )}
-              {dispute?.assignedMediator && (
-                <div>
-                  <dt className="text-xs text-gray-400 uppercase tracking-wide">
-                    {t('disputes.mediation.mediator')}
-                  </dt>
-                  <dd className="font-medium text-violet-700">{dispute.assignedMediator}</dd>
-                </div>
-              )}
               <div>
                 <dt className="text-xs text-gray-400 uppercase tracking-wide">
                   {t('disputes.mediation.filed')}
                 </dt>
                 <dd className="text-gray-600">
-                  {dispute ? new Date(dispute.filedAt).toLocaleDateString(i18n.language) : '—'}
+                  {dispute ? formatDisputeDate(dispute.createdAt, i18n.language) : '—'}
                 </dd>
               </div>
-              {dispute?.resolutionDeadline && (
-                <div>
-                  <dt className="text-xs text-gray-400 uppercase tracking-wide">
-                    {t('disputes.mediation.deadline')}
-                  </dt>
-                  <dd className="text-orange-600 font-medium">
-                    {new Date(dispute.resolutionDeadline).toLocaleDateString(i18n.language)}
-                  </dd>
-                </div>
-              )}
             </dl>
           </div>
 
@@ -375,39 +348,25 @@ export function MediationWorkspacePage({
               {t('disputes.mediation.parties')}
             </h3>
             <div className="space-y-2">
-              {dispute?.filerDetails && (
-                <div className="p-2.5 bg-blue-50 rounded-lg">
-                  <p className="text-sm font-medium text-gray-900">{dispute.filerDetails.name}</p>
-                  <p className="text-xs text-blue-600 mt-0.5">{t('disputes.mediation.filer')}</p>
-                  {dispute.filerDetails.email && (
-                    <p className="text-xs text-gray-500">{dispute.filerDetails.email}</p>
-                  )}
-                </div>
-              )}
-              {dispute?.respondentDetails && (
-                <div className="p-2.5 bg-gray-50 rounded-lg">
-                  <p className="text-sm font-medium text-gray-900">
-                    {dispute.respondentDetails.name}
-                  </p>
+              {parties.map((party) => (
+                <div
+                  key={party.id}
+                  className={`p-2.5 rounded-lg ${
+                    party.role === 'mediator'
+                      ? 'bg-violet-50'
+                      : party.role === 'complainant'
+                        ? 'bg-blue-50'
+                        : 'bg-gray-50'
+                  }`}
+                >
+                  <p className="text-sm font-medium text-gray-900">{party.userName}</p>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    {t('disputes.mediation.respondent')}
+                    {t(`disputes.partyRole.${party.role}`)}
                   </p>
-                  {dispute.respondentDetails.email && (
-                    <p className="text-xs text-gray-500">{dispute.respondentDetails.email}</p>
-                  )}
+                  {party.userEmail && <p className="text-xs text-gray-500">{party.userEmail}</p>}
                 </div>
-              )}
-              {dispute?.mediatorDetails && (
-                <div className="p-2.5 bg-violet-50 rounded-lg">
-                  <p className="text-sm font-medium text-gray-900">
-                    {dispute.mediatorDetails.name}
-                  </p>
-                  <p className="text-xs text-violet-600 mt-0.5">
-                    {t('disputes.mediation.mediator')}
-                  </p>
-                </div>
-              )}
-              {!dispute?.filerDetails && !dispute?.respondentDetails && (
+              ))}
+              {parties.length === 0 && (
                 <p className="text-xs text-gray-400">
                   {t('disputes.mediation.partyDetailsUnavailable')}
                 </p>
@@ -462,24 +421,6 @@ export function MediationWorkspacePage({
             <div className="p-6">
               {activeTab === 'timeline' && <MediationTimelineView disputeId={disputeId} />}
 
-              {activeTab === 'chat' && (
-                <>
-                  {canChat ? (
-                    <MediationChatThread
-                      disputeId={disputeId}
-                      currentUserId={currentUserId}
-                      currentUserName={currentUserName}
-                      canSendPrivate={canManage}
-                      onError={onToastError}
-                    />
-                  ) : (
-                    <p className="text-sm text-gray-500 text-center py-8">
-                      {t('disputes.mediation.mustBeParty')}
-                    </p>
-                  )}
-                </>
-              )}
-
               {activeTab === 'submissions' && (
                 <MediationSubmissionsPanel
                   disputeId={disputeId}
@@ -504,7 +445,7 @@ export function MediationWorkspacePage({
                         {t('disputes.mediation.noLongerActive')}
                       </p>
                     </div>
-                  ) : canManage ? (
+                  ) : isManager ? (
                     <>
                       <h2 className="text-base font-semibold text-gray-900 mb-4">
                         {t('disputes.mediation.recordResolution')}
