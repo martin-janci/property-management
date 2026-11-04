@@ -116,7 +116,6 @@ pub mod regional_compliance;
 
 // Epic 73: Infrastructure & Operations
 pub mod operations;
-pub mod org_scope;
 
 // Epic 74: Owner Investment Analytics
 pub mod owner_analytics;

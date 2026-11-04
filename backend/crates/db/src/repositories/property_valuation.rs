@@ -496,6 +496,21 @@ impl PropertyValuationRepository {
         .await
     }
 
+    /// Whether the comparable belongs to `org_id`.
+    pub async fn comparable_in_org(
+        &self,
+        org_id: Uuid,
+        comparable_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        sqlx::query_scalar(
+            "SELECT EXISTS(SELECT 1 FROM valuation_comparables WHERE id = $1 AND organization_id = $2)",
+        )
+        .bind(comparable_id)
+        .bind(org_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
     /// Update a comparable.
     pub async fn update_comparable(
         &self,

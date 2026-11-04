@@ -122,7 +122,9 @@ async fn ensure_unit(
     org_id: Uuid,
     unit_id: Uuid,
 ) -> Result<(), (StatusCode, String)> {
-    if crate::routes::org_scope::unit_in_org(&state.db, unit_id, org_id)
+    if state
+        .unit_repo
+        .belongs_to_organization(unit_id, org_id)
         .await
         .map_err(db_err)?
     {
@@ -138,7 +140,9 @@ async fn ensure_building(
     org_id: Uuid,
     building_id: Uuid,
 ) -> Result<(), (StatusCode, String)> {
-    if crate::routes::org_scope::building_in_org(&state.db, building_id, org_id)
+    if state
+        .building_repo
+        .belongs_to_organization(building_id, org_id)
         .await
         .map_err(db_err)?
     {
@@ -184,14 +188,11 @@ async fn ensure_comparable(
     org_id: Uuid,
     comparable_id: Uuid,
 ) -> Result<(), (StatusCode, String)> {
-    let owned: bool = sqlx::query_scalar(
-        "SELECT EXISTS(SELECT 1 FROM valuation_comparables WHERE id = $1 AND organization_id = $2)",
-    )
-    .bind(comparable_id)
-    .bind(org_id)
-    .fetch_one(&state.db)
-    .await
-    .map_err(db_err)?;
+    let owned = state
+        .property_valuation_repo
+        .comparable_in_org(org_id, comparable_id)
+        .await
+        .map_err(db_err)?;
     if owned {
         Ok(())
     } else {

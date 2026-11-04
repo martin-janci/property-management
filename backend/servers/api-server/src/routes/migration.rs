@@ -40,22 +40,18 @@ async fn require_platform_admin(
     if user.is_platform_admin() {
         return Ok(());
     }
-    let kind: Option<String> = sqlx::query_scalar(
-        "SELECT principal_kind FROM users WHERE id = $1 AND status != 'deleted'",
-    )
-    .bind(user.user_id)
-    .fetch_optional(&state.db)
-    .await
-    .map_err(|e| {
-        tracing::error!(error = %e, "principal_kind lookup failed");
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "Failed to verify platform access".to_string(),
-        )
-    })?;
-    if kind.as_deref().map(db::models::PrincipalKind::parse)
-        == Some(db::models::PrincipalKind::Platform)
-    {
+    let platform_user = state
+        .user_repo
+        .find_by_id_and_kind(user.user_id, db::models::PrincipalKind::Platform)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "principal_kind lookup failed");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to verify platform access".to_string(),
+            )
+        })?;
+    if platform_user.is_some() {
         Ok(())
     } else {
         Err((

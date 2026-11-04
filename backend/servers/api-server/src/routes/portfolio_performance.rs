@@ -336,7 +336,9 @@ async fn add_property(
     require_manager(&auth)?;
     verify_portfolio(&state, &auth, portfolio_id).await?;
     let org_id = get_org_id(&auth)?;
-    if !crate::routes::org_scope::building_in_org(&state.db, req.building_id, org_id)
+    if !state
+        .building_repo
+        .belongs_to_organization(req.building_id, org_id)
         .await
         .map_err(internal_error)?
     {

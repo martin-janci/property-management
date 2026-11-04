@@ -58,7 +58,9 @@ async fn verify_buildings(
     building_ids: impl IntoIterator<Item = Uuid>,
 ) -> ApiResult<()> {
     for building_id in building_ids {
-        let owned = crate::routes::org_scope::building_in_org(&s.db, building_id, org_id)
+        let owned = s
+            .building_repo
+            .belongs_to_organization(building_id, org_id)
             .await
             .map_err(|e| {
                 (
