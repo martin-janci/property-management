@@ -23,21 +23,21 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Spinner, useToast } from '../../../components';
 import { BallotQuestion, QuestionResults, QuorumTile, VoteStatusBadge } from '../components';
-import { QUORUM_TYPE_LABELS } from '../types';
+import { QUORUM_TYPE_LABEL_KEYS } from '../types';
 
 interface VoteDetailPageProps {
   voteId: string;
   onBack: () => void;
 }
 
-function formatDateTime(value: string | null): string {
+function formatDateTime(value: string | null, locale: string): string {
   if (!value) return '—';
   const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString();
+  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString(locale);
 }
 
 export function VoteDetailPage({ voteId, onBack }: VoteDetailPageProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { showToast } = useToast();
   const { data: vote, isLoading, error } = useVote(voteId);
   const { data: eligibility } = useVoteEligibility(voteId);
@@ -176,7 +176,7 @@ export function VoteDetailPage({ voteId, onBack }: VoteDetailPageProps) {
           <div className="flex items-center gap-2">
             <VoteStatusBadge status={vote.status} />
             <span className="text-xs text-gray-500">
-              {t('voting.detail.closes', { date: formatDateTime(vote.end_at) })}
+              {t('voting.detail.closes', { date: formatDateTime(vote.end_at, i18n.language) })}
             </span>
           </div>
           <h1 className="mt-1.5 text-2xl font-bold text-gray-900">{vote.title}</h1>
@@ -229,7 +229,9 @@ export function VoteDetailPage({ voteId, onBack }: VoteDetailPageProps) {
       <div className="mt-4 flex flex-wrap items-center gap-6 rounded-lg bg-white p-4 shadow">
         <div className="text-sm">
           <span className="text-gray-500">{t('voting.detail.quorumLabel')}</span>{' '}
-          <span className="font-medium text-gray-900">{QUORUM_TYPE_LABELS[vote.quorum_type]}</span>
+          <span className="font-medium text-gray-900">
+            {t(QUORUM_TYPE_LABEL_KEYS[vote.quorum_type])}
+          </span>
         </div>
         <QuorumTile
           participation={vote.participation_count}
@@ -328,7 +330,9 @@ export function VoteDetailPage({ voteId, onBack }: VoteDetailPageProps) {
               <div key={c.id} className="rounded-md border border-gray-100 bg-gray-50 p-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-900">{c.user_name}</span>
-                  <span className="text-xs text-gray-400">{formatDateTime(c.created_at)}</span>
+                  <span className="text-xs text-gray-400">
+                    {formatDateTime(c.created_at, i18n.language)}
+                  </span>
                 </div>
                 <p className="mt-1 text-sm text-gray-700">{c.content}</p>
               </div>

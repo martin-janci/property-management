@@ -66,7 +66,7 @@ export function MediationWorkspacePage({
   onToastSuccess,
   onToastError,
 }: MediationWorkspacePageProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState<Tab>('timeline');
   const [showEscalateDialog, setShowEscalateDialog] = useState(false);
   const [showAssignDialog, setShowAssignDialog] = useState(false);
@@ -347,7 +347,7 @@ export function MediationWorkspacePage({
                   {t('disputes.mediation.filed')}
                 </dt>
                 <dd className="text-gray-600">
-                  {dispute ? new Date(dispute.filedAt).toLocaleDateString() : '—'}
+                  {dispute ? new Date(dispute.filedAt).toLocaleDateString(i18n.language) : '—'}
                 </dd>
               </div>
               {dispute?.resolutionDeadline && (
@@ -356,7 +356,7 @@ export function MediationWorkspacePage({
                     {t('disputes.mediation.deadline')}
                   </dt>
                   <dd className="text-orange-600 font-medium">
-                    {new Date(dispute.resolutionDeadline).toLocaleDateString()}
+                    {new Date(dispute.resolutionDeadline).toLocaleDateString(i18n.language)}
                   </dd>
                 </div>
               )}

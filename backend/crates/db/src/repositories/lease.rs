@@ -1634,7 +1634,7 @@ impl LeaseRepository {
                 (SELECT COUNT(*) FROM tenant_applications WHERE organization_id = $1) as total_applications,
                 (SELECT COUNT(*) FROM tenant_applications WHERE organization_id = $1 AND status IN ('submitted', 'under_review', 'screening_pending')) as pending_applications,
                 (SELECT COALESCE(SUM(monthly_rent), 0) FROM leases WHERE organization_id = $1 AND status = 'active') as total_monthly_rent,
-                (SELECT COUNT(*) FROM units WHERE organization_id = $1) as total_units,
+                (SELECT COUNT(*) FROM units u JOIN buildings b ON b.id = u.building_id WHERE b.organization_id = $1) as total_units,
                 (SELECT COUNT(DISTINCT unit_id) FROM leases WHERE organization_id = $1 AND status = 'active') as occupied_units
             "#,
         )

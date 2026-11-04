@@ -4,7 +4,7 @@ import * as SecureStore from 'expo-secure-store';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getApiBaseUrl } from '../config/api';
 import { CACHE_PREFIX, LAST_SYNC_KEY, QUEUE_KEY } from '../services/localCacheKeys';
-import { extractTenantId } from '../utils/jwt';
+import { resolveTenantId } from '../utils/session';
 
 // Storage keys. The AsyncStorage cache/queue namespaces live in
 // `services/localCacheKeys` (shared with `resetLocalData`, issue #2399). The
@@ -287,7 +287,7 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
         // X-Tenant-ID. The tenant id lives in the JWT's `tenant_id`
         // claim — extract it so replayed offline actions hit the same
         // tenant the user was signed into when they enqueued.
-        const tenantId = extractTenantId(accessToken);
+        const tenantId = await resolveTenantId(accessToken);
         if (tenantId) {
           headers['X-Tenant-ID'] = tenantId;
         }

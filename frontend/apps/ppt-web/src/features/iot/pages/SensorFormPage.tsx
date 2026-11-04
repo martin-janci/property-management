@@ -78,6 +78,12 @@ const SENSOR_TYPE_OPTIONS = [
 
 const STATUS_OPTIONS = ['active', 'offline', 'error', 'maintenance'];
 
+/**
+ * Connection types the database accepts (`sensors.connection_type` CHECK).
+ * Anything else made the create fail with a 500.
+ */
+export const CONNECTION_TYPE_OPTIONS = ['api', 'mqtt', 'webhook', 'polling'] as const;
+
 const fieldClass =
   'mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500';
 const labelClass = 'block text-sm font-medium text-gray-700';
@@ -275,14 +281,19 @@ export function SensorFormPage({
             <label htmlFor="sensor-connection" className={labelClass}>
               {t('iot.fieldConnectionType', { defaultValue: 'Connection type' })}
             </label>
-            <input
+            <select
               id="sensor-connection"
-              type="text"
               className={fieldClass}
-              placeholder="mqtt, http, modbus…"
               value={values.connectionType}
               onChange={(e) => setField('connectionType', e.target.value)}
-            />
+            >
+              <option value="">{t('iot.connectionTypeNone')}</option>
+              {CONNECTION_TYPE_OPTIONS.map((opt) => (
+                <option key={opt} value={opt}>
+                  {t(`iot.connectionTypes.${opt}`)}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label htmlFor="sensor-unit" className={labelClass}>
