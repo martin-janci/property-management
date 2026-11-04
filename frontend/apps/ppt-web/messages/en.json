@@ -4256,7 +4256,10 @@
       "loadMore": "Load more",
       "loading": "Loading...",
       "errorTitle": "Failed to load executions",
-      "errorMessage": "Please try again later."
+      "errorMessage": "Please try again later.",
+      "notFoundTitle": "Schedule not found",
+      "notFoundDescription": "This report schedule doesn't exist or you don't have access to it.",
+      "frequencyAt": "{{frequency}} at {{time}}"
     },
     "schedule": {
       "created": "Schedule created successfully.",
@@ -4618,6 +4621,13 @@
     "fieldLocation": "Location",
     "fieldLocationDescription": "Location description",
     "fieldConnectionType": "Connection type",
+    "connectionTypeNone": "Not specified",
+    "connectionTypes": {
+      "api": "API",
+      "mqtt": "MQTT",
+      "webhook": "Webhook",
+      "polling": "Polling"
+    },
     "fieldUnit": "Unit of measurement",
     "fieldInterval": "Reporting interval (s)",
     "fieldManufacturer": "Manufacturer",

@@ -4361,7 +4361,10 @@
       "loadMore": "Načíst více",
       "loading": "Načítá se...",
       "errorTitle": "Nepodařilo se načíst spuštění",
-      "errorMessage": "Zkuste to prosím později."
+      "errorMessage": "Zkuste to prosím později.",
+      "notFoundTitle": "Plán nebyl nalezen",
+      "notFoundDescription": "Tento plán reportů neexistuje nebo k němu nemáte přístup.",
+      "frequencyAt": "{{frequency}} v {{time}}"
     },
     "schedule": {
       "created": "Plán byl úspěšně vytvořen.",
@@ -4723,6 +4726,13 @@
     "fieldLocation": "Umístění",
     "fieldLocationDescription": "Popis umístění",
     "fieldConnectionType": "Typ připojení",
+    "connectionTypeNone": "Neuvedeno",
+    "connectionTypes": {
+      "api": "API",
+      "mqtt": "MQTT",
+      "webhook": "Webhook",
+      "polling": "Pravidelné dotazování"
+    },
     "fieldUnit": "Měrná jednotka",
     "fieldInterval": "Interval hlášení (s)",
     "fieldManufacturer": "Výrobce",

@@ -2046,7 +2046,10 @@
       "loadMore": "Mehr laden",
       "loading": "Laden...",
       "errorTitle": "Ausführungen konnten nicht geladen werden",
-      "errorMessage": "Bitte versuchen Sie es später erneut."
+      "errorMessage": "Bitte versuchen Sie es später erneut.",
+      "notFoundTitle": "Zeitplan nicht gefunden",
+      "notFoundDescription": "Dieser Berichtszeitplan existiert nicht oder Sie haben keinen Zugriff darauf.",
+      "frequencyAt": "{{frequency}} um {{time}}"
     },
     "schedule": {
       "created": "Zeitplan erfolgreich erstellt.",
@@ -2439,6 +2442,13 @@
     "fieldLocation": "Standort",
     "fieldLocationDescription": "Standortbeschreibung",
     "fieldConnectionType": "Verbindungstyp",
+    "connectionTypeNone": "Nicht angegeben",
+    "connectionTypes": {
+      "api": "API",
+      "mqtt": "MQTT",
+      "webhook": "Webhook",
+      "polling": "Periodische Abfrage"
+    },
     "fieldUnit": "Maßeinheit",
     "fieldInterval": "Meldeintervall (s)",
     "fieldManufacturer": "Hersteller",

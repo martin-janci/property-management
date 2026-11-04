@@ -14,6 +14,7 @@ import {
   type QuorumType,
   useBuildings,
   useCreateVote,
+  useDeleteVote,
 } from '@ppt/api-client';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -25,7 +26,7 @@ interface VoteCreatePageProps {
   onCancel: () => void;
 }
 
-interface DraftQuestion {
+export interface DraftQuestion {
   key: string;
   question_text: string;
   question_type: QuestionType;
@@ -60,12 +61,37 @@ function blankQuestion(): DraftQuestion {
   };
 }
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Build the `POST /voting/{id}/questions` body for a draft question. The
+ * server parses every option id as a UUID and rejects anything else with 422
+ * (the yes/no options carry the local ids "yes"/"no"), so non-UUID ids are
+ * replaced with fresh UUIDs here.
+ */
+export function toQuestionPayload(q: DraftQuestion, index: number): AddQuestionRequest {
+  return {
+    question_text: q.question_text.trim(),
+    question_type: q.question_type,
+    options: q.options
+      .filter((o) => o.text.trim() || q.question_type === 'yes_no')
+      .map((o, idx) => ({
+        id: UUID_PATTERN.test(o.id) ? o.id : newId(),
+        text: o.text.trim(),
+        order: idx,
+      })),
+    display_order: index,
+    is_required: q.is_required,
+  };
+}
+
 export function VoteCreatePage({ onCreated, onCancel }: VoteCreatePageProps) {
   const { t } = useTranslation();
   const { showToast } = useToast();
   const { data: buildingsData } = useBuildings();
   const buildingId = buildingsData?.items?.[0]?.id ?? '';
   const createVote = useCreateVote();
+  const discardDraft = useDeleteVote();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -156,18 +182,14 @@ export function VoteCreatePage({ onCreated, onCancel }: VoteCreatePageProps) {
         quorum_percentage: quorumPercentage ? Number(quorumPercentage) : null,
       });
 
-      for (let i = 0; i < questions.length; i++) {
-        const q = questions[i];
-        const payload: AddQuestionRequest = {
-          question_text: q.question_text.trim(),
-          question_type: q.question_type,
-          options: q.options
-            .filter((o) => o.text.trim() || q.question_type === 'yes_no')
-            .map((o, idx) => ({ id: o.id, text: o.text.trim(), order: idx })),
-          display_order: i,
-          is_required: q.is_required,
-        };
-        await addQuestion(vote.id, payload);
+      try {
+        for (let i = 0; i < questions.length; i++) {
+          await addQuestion(vote.id, toQuestionPayload(questions[i], i));
+        }
+      } catch (questionError) {
+        // Don't leave an empty draft behind when a question is rejected.
+        await discardDraft.mutateAsync(vote.id).catch(() => undefined);
+        throw questionError;
       }
 
       if (publish) {

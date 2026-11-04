@@ -2046,7 +2046,10 @@
       "loadMore": "Több betöltése",
       "loading": "Betöltés...",
       "errorTitle": "Nem sikerült betölteni a végrehajtásokat",
-      "errorMessage": "Kérjük, próbálja újra később."
+      "errorMessage": "Kérjük, próbálja újra később.",
+      "notFoundTitle": "Az ütemterv nem található",
+      "notFoundDescription": "Ez a jelentésütemterv nem létezik, vagy nincs hozzáférése.",
+      "frequencyAt": "{{frequency}}, {{time}}"
     },
     "schedule": {
       "created": "Ütemezés sikeresen létrehozva.",
@@ -2408,6 +2411,13 @@
     "fieldLocation": "Hely",
     "fieldLocationDescription": "Helyleírás",
     "fieldConnectionType": "Kapcsolat típusa",
+    "connectionTypeNone": "Nincs megadva",
+    "connectionTypes": {
+      "api": "API",
+      "mqtt": "MQTT",
+      "webhook": "Webhook",
+      "polling": "Időszakos lekérdezés"
+    },
     "fieldUnit": "Mértékegység",
     "fieldInterval": "Jelentési időköz (mp)",
     "fieldManufacturer": "Gyártó",

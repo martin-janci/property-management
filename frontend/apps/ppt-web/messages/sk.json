@@ -4361,7 +4361,10 @@
       "loadMore": "Načítať viac",
       "loading": "Načítava sa...",
       "errorTitle": "Nepodarilo sa načítať spustenia",
-      "errorMessage": "Skúste to prosím neskôr."
+      "errorMessage": "Skúste to prosím neskôr.",
+      "notFoundTitle": "Plán sa nenašiel",
+      "notFoundDescription": "Tento plán reportov neexistuje alebo k nemu nemáte prístup.",
+      "frequencyAt": "{{frequency}} o {{time}}"
     },
     "schedule": {
       "created": "Plán bol úspešne vytvorený.",
@@ -4723,6 +4726,13 @@
     "fieldLocation": "Umiestnenie",
     "fieldLocationDescription": "Popis umiestnenia",
     "fieldConnectionType": "Typ pripojenia",
+    "connectionTypeNone": "Neuvedené",
+    "connectionTypes": {
+      "api": "API",
+      "mqtt": "MQTT",
+      "webhook": "Webhook",
+      "polling": "Pravidelné dopytovanie"
+    },
     "fieldUnit": "Merná jednotka",
     "fieldInterval": "Interval hlásenia (s)",
     "fieldManufacturer": "Výrobca",
