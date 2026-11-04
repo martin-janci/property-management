@@ -110,6 +110,7 @@ PPT manager landing — the daily-use surface for property managers. Action-queu
 
 <!-- newest entries on top -->
 
+- 2026-11-04 — agent: r3-nav-roles — signed-in users on `/` now redirect to their role dashboard (`dashboardPathForRole`); the landing page is anonymous-only (audit r3 #15).
 - 2026-10-05 — agent: reconciled with PR #2995 (ppt-web Home CTA role drift fix). The Home "Open dashboard" CTA now routes via `isManagerRole(user?.role)` (MANAGER_ROLES membership) instead of the literal `user?.role === 'manager'`, so `org_admin`/`property_manager`/`technical_manager`/`super_admin` now land on `/dashboard/manager` instead of being misrouted to `/dashboard/resident`. Client-side routing only — no frontmatter change (buildStatus `shipped` / apiStatus `partial` unchanged).
 - 2026-05-09 — agent: design analyzed (ui_kits/ppt-web/manager-dashboard.html); flipped ppt-web redesignStatus → in-progress; attached designSource; populated functionality checklist (5 sections), all 4 states, design-specific notes; linked UC-15/03/02/04/17; declared 6 sharedComponents; added 3 relatedScreens
 - 2026-05-08 — init: created from scan (source: sitemap)

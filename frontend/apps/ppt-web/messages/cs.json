@@ -388,7 +388,9 @@
     "sessions": "Aktivní relace",
     "messages": "Zprávy",
     "meters": "Měřiče",
-    "outages": "Odstávky"
+    "outages": "Odstávky",
+    "neighbors": "Sousedé",
+    "leases": "Nájmy"
   },
   "auth": {
     "signIn": "Přihlásit se",
@@ -2165,7 +2167,135 @@
     "priorityBadge": "Prioritní",
     "saveFailed": "Spouštěč se nepodařilo aktualizovat",
     "resetDone": "Spouštěče obnoveny na výchozí",
-    "resetFailed": "Spouštěče se nepodařilo obnovit"
+    "resetFailed": "Spouštěče se nepodařilo obnovit",
+    "events": {
+      "fault": {
+        "created": {
+          "name": "Nová závada",
+          "description": "Ve vašem domě byla nahlášena nová závada"
+        },
+        "updated": {
+          "name": "Závada aktualizována",
+          "description": "Závada, kterou jste nahlásili nebo sledujete, byla aktualizována"
+        },
+        "resolved": {
+          "name": "Závada vyřešena",
+          "description": "Závada byla označena jako vyřešená"
+        },
+        "assigned": {
+          "name": "Závada přidělena",
+          "description": "Byla vám přidělena závada"
+        }
+      },
+      "vote": {
+        "created": {
+          "name": "Nové hlasování",
+          "description": "Ve vašem domě bylo vytvořeno nové hlasování"
+        },
+        "reminder": {
+          "name": "Připomenutí hlasování",
+          "description": "Připomenutí, abyste hlasovali před termínem"
+        },
+        "closing_soon": {
+          "name": "Hlasování brzy končí",
+          "description": "Hlasování skončí do 24 hodin"
+        },
+        "closed": {
+          "name": "Hlasování ukončeno",
+          "description": "Hlasování skončilo a výsledky jsou k dispozici"
+        }
+      },
+      "announcement": {
+        "posted": {
+          "name": "Nové oznámení",
+          "description": "Bylo zveřejněno nové oznámení"
+        },
+        "urgent": {
+          "name": "Naléhavé oznámení",
+          "description": "Naléhavé oznámení vyžaduje vaši pozornost"
+        },
+        "comment": {
+          "name": "Komentář k oznámení",
+          "description": "Někdo okomentoval oznámení"
+        }
+      },
+      "document": {
+        "shared": {
+          "name": "Sdílený dokument",
+          "description": "Byl s vámi sdílen dokument"
+        },
+        "signature_request": {
+          "name": "Vyžaduje se podpis",
+          "description": "Byli jste požádáni o podpis dokumentu"
+        },
+        "signed": {
+          "name": "Dokument podepsán",
+          "description": "Dokument byl podepsán všemi stranami"
+        }
+      },
+      "message": {
+        "received": {
+          "name": "Nová zpráva",
+          "description": "Obdrželi jste novou přímou zprávu"
+        },
+        "thread_reply": {
+          "name": "Odpověď ve vlákně",
+          "description": "Někdo odpověděl ve vlákně zpráv"
+        }
+      },
+      "critical": {
+        "emergency": {
+          "name": "Nouzové upozornění",
+          "description": "Nouzové upozornění pro váš dům"
+        },
+        "maintenance": {
+          "name": "Plánovaná údržba",
+          "description": "Oznámení o plánované údržbě"
+        },
+        "security": {
+          "name": "Bezpečnostní upozornění",
+          "description": "Upozornění týkající se bezpečnosti"
+        }
+      },
+      "finance": {
+        "payment_due": {
+          "name": "Splatná platba",
+          "description": "Brzy je splatná platba"
+        },
+        "payment_received": {
+          "name": "Platba přijata",
+          "description": "Vaše platba byla přijata"
+        },
+        "balance_low": {
+          "name": "Upozornění na nízký zůstatek",
+          "description": "Zůstatek na vašem účtu je nízký"
+        }
+      },
+      "facility": {
+        "booking_confirmed": {
+          "name": "Rezervace potvrzena",
+          "description": "Vaše rezervace prostoru byla potvrzena"
+        },
+        "booking_cancelled": {
+          "name": "Rezervace zrušena",
+          "description": "Rezervace prostoru byla zrušena"
+        },
+        "booking_reminder": {
+          "name": "Připomenutí rezervace",
+          "description": "Připomenutí nadcházející rezervace prostoru"
+        }
+      }
+    },
+    "categories": {
+      "fault": "Závady",
+      "vote": "Hlasování",
+      "announcement": "Oznámení",
+      "document": "Dokumenty",
+      "message": "Zprávy",
+      "critical": "Kritická upozornění",
+      "finance": "Finance",
+      "facility": "Společné prostory"
+    }
   },
   "documentSign": {
     "title": "Podepsat dokument",

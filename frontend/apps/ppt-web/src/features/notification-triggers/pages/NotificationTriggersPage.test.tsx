@@ -7,6 +7,8 @@
 /// <reference types="vitest/globals" />
 import type { EventTriggersResponse } from '@ppt/api-client';
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import i18n from 'i18next';
+import sk from '../../../../messages/sk.json';
 import { NotificationTriggersPage } from './NotificationTriggersPage';
 
 const noop = () => {};
@@ -71,8 +73,8 @@ describe('NotificationTriggersPage', () => {
 
   it('groups triggers by category and shows the priority badge', () => {
     render(<NotificationTriggersPage {...baseProps} data={data} />);
-    expect(screen.getByRole('heading', { name: 'Fault' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Critical' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Faults' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Critical alerts' })).toBeInTheDocument();
     expect(screen.getByText('Priority')).toBeInTheDocument();
   });
 
@@ -115,8 +117,61 @@ describe('NotificationTriggersPage', () => {
 
   it('shows the per-category enabled count', () => {
     render(<NotificationTriggersPage {...baseProps} data={data} />);
-    const faultSection = screen.getByRole('heading', { name: 'Fault' }).closest('section');
+    const faultSection = screen.getByRole('heading', { name: 'Faults' }).closest('section');
     expect(faultSection).not.toBeNull();
     expect(within(faultSection as HTMLElement).getByText('1 of 1 enabled')).toBeInTheDocument();
+  });
+
+  describe('seeded catalogue text is translated by event-type key', () => {
+    const seeded: EventTriggersResponse = {
+      preferences: [
+        {
+          eventType: 'fault.created',
+          category: 'fault',
+          // English text as seeded in notification_event_types.
+          displayName: 'New Fault Report',
+          description: 'A new fault has been reported in your building',
+          isPriority: false,
+          pushEnabled: true,
+          emailEnabled: true,
+          inAppEnabled: true,
+        },
+        {
+          eventType: 'custom.unknown_event',
+          category: 'custom',
+          displayName: 'Server-only trigger',
+          description: 'Only the server knows this one',
+          isPriority: false,
+          pushEnabled: false,
+          emailEnabled: false,
+          inAppEnabled: true,
+        },
+      ],
+      categories: [],
+    };
+
+    beforeAll(() => {
+      i18n.addResourceBundle('sk', 'translation', sk, true, true);
+    });
+
+    afterEach(async () => {
+      await i18n.changeLanguage('en');
+    });
+
+    it('renders the Slovak name, description and category for a known event type', async () => {
+      await i18n.changeLanguage('sk');
+      render(<NotificationTriggersPage {...baseProps} data={seeded} />);
+      expect(screen.getByRole('heading', { name: 'Poruchy' })).toBeInTheDocument();
+      expect(screen.getByText('Nová porucha')).toBeInTheDocument();
+      expect(screen.getByText('Vo vašom dome bola nahlásená nová porucha')).toBeInTheDocument();
+      expect(screen.queryByText('New Fault Report')).not.toBeInTheDocument();
+    });
+
+    it('falls back to the server text for an event type the client does not know', async () => {
+      await i18n.changeLanguage('sk');
+      render(<NotificationTriggersPage {...baseProps} data={seeded} />);
+      expect(screen.getByText('Server-only trigger')).toBeInTheDocument();
+      expect(screen.getByText('Only the server knows this one')).toBeInTheDocument();
+    });
   });
 });
