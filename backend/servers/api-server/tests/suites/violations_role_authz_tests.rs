@@ -351,6 +351,7 @@ async fn resident_cannot_add_evidence(pool: PgPool) {
     let resident = seed_user(&pool, "resident-evidence@vio-authz.test").await;
     let violation_id = seed_violation(&pool, org, "VIO-AUTHZ-EVID-0001").await;
 
+    seed_membership(&pool, org, resident, "resident").await;
     let token = token_with_role(resident, org, "resident");
     let resp = app
         .execute(
@@ -380,6 +381,7 @@ async fn manager_can_add_evidence(pool: PgPool) {
     let manager = seed_user(&pool, "manager-evidence@vio-authz.test").await;
     let violation_id = seed_violation(&pool, org, "VIO-AUTHZ-EVID-0002").await;
 
+    seed_membership(&pool, org, manager, "manager").await;
     let token = token_with_role(manager, org, "manager");
     let resp = app
         .execute(
