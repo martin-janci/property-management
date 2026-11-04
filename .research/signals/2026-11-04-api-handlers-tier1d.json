@@ -1,0 +1,49 @@
+{
+  "generator": "ppt-dev-review",
+  "generated_at": "2026-11-04",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "oldest-unreviewed (among landable segments; mobile-native-kmp was older but is mobile-native-gated/unlandable per dispatcher Tier 1d directive, so skipped in favor of the oldest landable backend segment)",
+  "experts_used": ["rust", "security"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-api-handlers-refresh-rotation-nonatomic",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/auth/mod.rs:1009-1013 — Refresh-token rotation is non-atomic. On the rotation path, `state.session_repo.revoke_token(stored_token.id)` is called and, on error, the handler only logs (`tracing::error!(\"Failed to revoke old refresh token\")`) and continues with the comment 'Continue anyway - better to issue new token than fail'. It then generates and stores a NEW refresh token (lines 1035-1063). If the revoke DB write fails, the OLD refresh token remains valid in the DB alongside the newly issued one, so two refresh tokens are concurrently valid. This defeats rotation-based refresh-token replay/theft detection (a stolen-and-reused old token is no longer invalidated), which is the security property rotation exists to provide. Fix: make revoke+issue atomic (same tx) or fail the refresh (return 500) when revoke fails, rather than issuing a second live token."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-stripe-webhook-drops-settlement",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/webhook/payment.rs:177-181 — Stripe settlement webhook silently drops a paid event when the referenced invoice is missing. `get_invoice(session.invoice_id)` returning `Ok(None)` logs `tracing::error!(\"Webhook session references a missing invoice\")` and then `return Ok(StatusCode::OK)`. Acking 200 OK tells Stripe to stop retrying, so a genuine confirmed payment whose invoice is absent (race, deletion, or data drift) is lost to reconciliation with only a log line — no metric, alert, or dead-letter/replay queue. Fix: before acking, enqueue the unmatched settlement to a dead-letter/reconciliation path (or emit an alertable metric) so ops can recover the payment; keep the 200 to avoid Stripe retry storms but do not let the event vanish."
+      ],
+      "expert": "security"
+    },
+    {
+      "id": "code-review-api-handlers-reset-token-invalidate-ignored",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/auth/password_reset.rs:62-70 — Password-reset token issuance ignores the result of invalidating prior tokens. `let _ = state.password_reset_repo.invalidate_user_tokens(user.id).await;` discards any DB error, then a fresh reset token is generated and stored (lines 68-84). If the invalidate write fails, previously issued (still-unexpired) reset tokens remain valid alongside the new one, so multiple live reset tokens can coexist — widening the account-takeover window if an earlier token leaked. The subsequent `create` error IS handled (line 81), so the silent-discard here is inconsistent. Fix: handle the invalidate error (log + abort issuance, or invalidate+create in one tx) so a failed invalidation cannot leave stale reset tokens valid. Note: auth/registration.rs:368 has the same `let _ = ... invalidate_user_tokens(...)` pattern for email-verification tokens (lower value) and should get the same treatment."
+      ],
+      "expert": "security"
+    }
+  ]
+}
