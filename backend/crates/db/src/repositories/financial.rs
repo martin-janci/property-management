@@ -7,8 +7,9 @@ use crate::models::financial::{
     ARReportEntry, ARReportTotals, AccountTransaction, AccountsReceivableReport, CreateFeeSchedule,
     CreateFinancialAccount, CreateInvoice, CreateTransaction, FeeSchedule, FinancialAccount,
     FinancialAccountResponse, Invoice, InvoiceItem, InvoiceResponse, InvoiceStatus, LateFeeConfig,
-    ListInvoicesResponse, OnlinePaymentSession, Payment, PaymentAllocation, PaymentResponse,
-    RecordPayment, ReminderSchedule, TransactionType, UnitCreditBalance, UnitFee,
+    ListInvoicesResponse, NewPaymentWebhookDeadLetter, OnlinePaymentSession, Payment,
+    PaymentAllocation, PaymentResponse, PaymentWebhookDeadLetter, RecordPayment, ReminderSchedule,
+    TransactionType, UnitCreditBalance, UnitFee,
 };
 use crate::DbPool;
 use chrono::{NaiveDate, Utc};
@@ -1283,6 +1284,52 @@ impl FinancialRepository {
         )
         .bind(provider_session_id)
         .fetch_optional(&self.pool)
+        .await
+    }
+
+    /// Record a payment-webhook dead-letter (#3284).
+    ///
+    /// Durable, in-house store for a verified Stripe paid-webhook delivery that
+    /// cannot be settled server-side (its session references a missing invoice,
+    /// or the invoice load errored). The handler persists the raw signed event
+    /// here BEFORE still returning 5xx, so a collected payment is recorded even
+    /// if Stripe eventually stops retrying.
+    ///
+    /// Idempotent on `(provider, provider_session_id)`: Stripe redelivers the
+    /// same event repeatedly while operators reconcile, so a redelivery bumps
+    /// `attempts` and refreshes the raw payload rather than inserting a
+    /// duplicate row. Resolution columns are left untouched on conflict.
+    pub async fn record_payment_webhook_dead_letter(
+        &self,
+        input: &NewPaymentWebhookDeadLetter<'_>,
+    ) -> Result<PaymentWebhookDeadLetter, SqlxError> {
+        sqlx::query_as::<_, PaymentWebhookDeadLetter>(
+            r#"
+            INSERT INTO payment_webhook_dead_letters (
+                organization_id, provider, provider_session_id, invoice_id,
+                event_type, failure_reason, raw_event, signature
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            ON CONFLICT (provider, provider_session_id) DO UPDATE
+            SET attempts = payment_webhook_dead_letters.attempts + 1,
+                invoice_id = EXCLUDED.invoice_id,
+                event_type = EXCLUDED.event_type,
+                failure_reason = EXCLUDED.failure_reason,
+                raw_event = EXCLUDED.raw_event,
+                signature = EXCLUDED.signature,
+                updated_at = NOW()
+            RETURNING *
+            "#,
+        )
+        .bind(input.organization_id)
+        .bind(input.provider)
+        .bind(input.provider_session_id)
+        .bind(input.invoice_id)
+        .bind(input.event_type)
+        .bind(input.failure_reason)
+        .bind(input.raw_event)
+        .bind(input.signature)
+        .fetch_one(&self.pool)
         .await
     }
 

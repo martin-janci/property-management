@@ -198,9 +198,10 @@ pub use financial::{
     CreateInvoice, CreateInvoiceItem, CreateTransaction, FeeFrequency, FeeSchedule,
     FinancialAccount, FinancialAccountResponse, FinancialAccountType, IncomeStatement,
     IncomeStatementLine, InitiatePaymentResponse, Invoice, InvoiceItem, InvoiceResponse,
-    InvoiceStatus, LateFeeConfig, ListInvoicesResponse, OnlinePaymentSession, Payment,
-    PaymentAllocation, PaymentMethod, PaymentResponse, PaymentStatus, RecordPayment,
-    ReminderSchedule, TransactionCategory, TransactionType, UnitCreditBalance, UnitFee,
+    InvoiceStatus, LateFeeConfig, ListInvoicesResponse, NewPaymentWebhookDeadLetter,
+    OnlinePaymentSession, Payment, PaymentAllocation, PaymentMethod, PaymentResponse,
+    PaymentStatus, PaymentWebhookDeadLetter, RecordPayment, ReminderSchedule, TransactionCategory,
+    TransactionType, UnitCreditBalance, UnitFee,
 };
 pub use granular_notification::{
     AddToGroupRequest, CategorySummary, CreateHeldNotification, DigestNotification,

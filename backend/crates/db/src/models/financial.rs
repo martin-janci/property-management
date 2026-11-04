@@ -468,6 +468,50 @@ pub struct OnlinePaymentSession {
     pub updated_at: DateTime<Utc>,
 }
 
+/// Dead-letter record for a Stripe paid-webhook delivery that could not be
+/// settled server-side (#3284). Written on the missing-invoice and
+/// invoice-load-failure branches of the payment webhook receiver before it
+/// still returns 5xx, so a collected payment is durably recorded in-house even
+/// if Stripe eventually stops retrying. Operators reconcile and set
+/// `resolved_at` / `resolution`.
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+pub struct PaymentWebhookDeadLetter {
+    pub id: Uuid,
+    pub organization_id: Uuid,
+    pub provider: String,
+    pub provider_session_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub invoice_id: Option<Uuid>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub event_type: Option<String>,
+    pub failure_reason: String,
+    /// The raw, signature-verified request body as received.
+    #[schema(value_type = String, format = Binary)]
+    pub raw_event: Vec<u8>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub signature: Option<String>,
+    pub attempts: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub resolved_at: Option<DateTime<Utc>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub resolution: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+/// Input for recording a payment-webhook dead-letter (#3284).
+#[derive(Debug, Clone)]
+pub struct NewPaymentWebhookDeadLetter<'a> {
+    pub organization_id: Uuid,
+    pub provider: &'a str,
+    pub provider_session_id: &'a str,
+    pub invoice_id: Option<Uuid>,
+    pub event_type: Option<&'a str>,
+    pub failure_reason: &'a str,
+    pub raw_event: &'a [u8],
+    pub signature: Option<&'a str>,
+}
+
 /// Response for online payment initiation.
 #[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct InitiatePaymentResponse {
