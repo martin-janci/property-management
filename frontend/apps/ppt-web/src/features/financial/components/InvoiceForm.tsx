@@ -4,6 +4,8 @@
 
 import type { CreateInvoice, CreateInvoiceItem } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { formatCurrency } from '../utils/formatting';
 
 interface Unit {
   id: string;
@@ -32,6 +34,7 @@ export function InvoiceForm({
   onCancel,
   isSubmitting,
 }: InvoiceFormProps) {
+  const { t } = useTranslation();
   const [unitId, setUnitId] = useState(initialData?.unit_id || '');
   const [billingPeriodStart, setBillingPeriodStart] = useState(
     initialData?.billing_period_start || ''
@@ -49,15 +52,15 @@ export function InvoiceForm({
     const newErrors: FormErrors = {};
 
     if (!unitId) {
-      newErrors.unit_id = 'Unit is required';
+      newErrors.unit_id = t('financial.form.unitRequired');
     }
 
     if (!dueDate) {
-      newErrors.due_date = 'Due date is required';
+      newErrors.due_date = t('financial.invoiceForm.dueDateRequired');
     }
 
     if (items.length === 0 || items.every((item) => !item.description)) {
-      newErrors.items = 'At least one line item is required';
+      newErrors.items = t('financial.invoiceForm.itemsRequired');
     }
 
     setErrors(newErrors);
@@ -122,7 +125,7 @@ export function InvoiceForm({
       {/* Unit Selection */}
       <div>
         <label htmlFor="unit" className="block text-sm font-medium text-gray-700">
-          Unit *
+          {t('financial.form.unit')} *
         </label>
         <select
           id="unit"
@@ -135,7 +138,7 @@ export function InvoiceForm({
             errors.unit_id ? 'border-red-300' : 'border-gray-300'
           }`}
         >
-          <option value="">Select a unit</option>
+          <option value="">{t('financial.form.selectUnit')}</option>
           {units.map((unit) => (
             <option key={unit.id} value={unit.id}>
               {unit.building_name} - {unit.unit_number}
@@ -149,7 +152,7 @@ export function InvoiceForm({
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label htmlFor="billing-period-start" className="block text-sm font-medium text-gray-700">
-            Billing Period Start
+            {t('financial.invoiceForm.billingPeriodStart')}
           </label>
           <input
             type="date"
@@ -161,7 +164,7 @@ export function InvoiceForm({
         </div>
         <div>
           <label htmlFor="billing-period-end" className="block text-sm font-medium text-gray-700">
-            Billing Period End
+            {t('financial.invoiceForm.billingPeriodEnd')}
           </label>
           <input
             type="date"
@@ -177,7 +180,7 @@ export function InvoiceForm({
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label htmlFor="due-date" className="block text-sm font-medium text-gray-700">
-            Due Date *
+            {t('financial.dueDate')} *
           </label>
           <input
             type="date"
@@ -195,7 +198,7 @@ export function InvoiceForm({
         </div>
         <div>
           <label htmlFor="currency" className="block text-sm font-medium text-gray-700">
-            Currency
+            {t('financial.form.currency')}
           </label>
           <select
             id="currency"
@@ -214,13 +217,15 @@ export function InvoiceForm({
       {/* Line Items */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <span className="block text-sm font-medium text-gray-700">Line Items *</span>
+          <span className="block text-sm font-medium text-gray-700">
+            {t('financial.invoiceDetail.lineItems')} *
+          </span>
           <button
             type="button"
             onClick={addItem}
             className="text-sm text-blue-600 hover:text-blue-800"
           >
-            + Add Item
+            + {t('financial.invoiceForm.addItem')}
           </button>
         </div>
         {errors.items && <p className="mb-2 text-sm text-red-600">{errors.items}</p>}
@@ -230,7 +235,8 @@ export function InvoiceForm({
               <div className="col-span-5">
                 <input
                   type="text"
-                  placeholder="Description"
+                  placeholder={t('financial.invoiceDetail.description')}
+                  aria-label={t('financial.invoiceDetail.description')}
                   value={item.description}
                   onChange={(e) => updateItem(index, 'description', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
@@ -239,7 +245,8 @@ export function InvoiceForm({
               <div className="col-span-2">
                 <input
                   type="number"
-                  placeholder="Qty"
+                  placeholder={t('financial.invoiceDetail.quantity')}
+                  aria-label={t('financial.invoiceDetail.quantity')}
                   value={item.quantity || ''}
                   onChange={(e) =>
                     updateItem(index, 'quantity', Number.parseFloat(e.target.value) || 1)
@@ -252,7 +259,8 @@ export function InvoiceForm({
               <div className="col-span-2">
                 <input
                   type="number"
-                  placeholder="Unit Price"
+                  placeholder={t('financial.invoiceDetail.unitPrice')}
+                  aria-label={t('financial.invoiceDetail.unitPrice')}
                   value={item.unit_price || ''}
                   onChange={(e) =>
                     updateItem(index, 'unit_price', Number.parseFloat(e.target.value) || 0)
@@ -265,7 +273,8 @@ export function InvoiceForm({
               <div className="col-span-2">
                 <input
                   type="number"
-                  placeholder="Tax %"
+                  placeholder={t('financial.invoiceForm.taxRatePlaceholder')}
+                  aria-label={t('financial.invoiceForm.taxRatePlaceholder')}
                   value={item.tax_rate || ''}
                   onChange={(e) =>
                     updateItem(index, 'tax_rate', Number.parseFloat(e.target.value) || 0)
@@ -281,6 +290,8 @@ export function InvoiceForm({
                   type="button"
                   onClick={() => removeItem(index)}
                   disabled={items.length === 1}
+                  aria-label={t('financial.form.removeRow')}
+                  title={t('financial.form.removeRow')}
                   className="text-red-600 hover:text-red-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   ✕
@@ -294,21 +305,21 @@ export function InvoiceForm({
         <div className="mt-4 border-t pt-4">
           <div className="flex justify-end space-x-8 text-sm">
             <div className="text-gray-500">
-              Subtotal:{' '}
+              {t('financial.totals.subtotal')}{' '}
               <span className="font-medium text-gray-900">
-                {currency} {calculateSubtotal().toFixed(2)}
+                {formatCurrency(calculateSubtotal(), currency)}
               </span>
             </div>
             <div className="text-gray-500">
-              Tax:{' '}
+              {t('financial.totals.tax')}{' '}
               <span className="font-medium text-gray-900">
-                {currency} {calculateTax().toFixed(2)}
+                {formatCurrency(calculateTax(), currency)}
               </span>
             </div>
             <div className="text-gray-700 font-medium">
-              Total:{' '}
+              {t('financial.totals.total')}{' '}
               <span className="text-gray-900">
-                {currency} {(calculateSubtotal() + calculateTax()).toFixed(2)}
+                {formatCurrency(calculateSubtotal() + calculateTax(), currency)}
               </span>
             </div>
           </div>
@@ -318,7 +329,7 @@ export function InvoiceForm({
       {/* Notes */}
       <div>
         <label htmlFor="notes" className="block text-sm font-medium text-gray-700">
-          Notes
+          {t('financial.form.notes')}
         </label>
         <textarea
           id="notes"
@@ -326,7 +337,7 @@ export function InvoiceForm({
           onChange={(e) => setNotes(e.target.value)}
           rows={3}
           className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-          placeholder="Optional notes to include on the invoice"
+          placeholder={t('financial.invoiceForm.notesPlaceholder')}
         />
       </div>
 
@@ -338,14 +349,14 @@ export function InvoiceForm({
           disabled={isSubmitting}
           className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
         >
-          Cancel
+          {t('common.cancel')}
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
           className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50"
         >
-          {isSubmitting ? 'Creating...' : 'Create Invoice'}
+          {isSubmitting ? t('financial.invoiceForm.submitting') : t('financial.invoices.createNew')}
         </button>
       </div>
     </form>

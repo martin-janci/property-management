@@ -106,6 +106,7 @@ export function BudgetManagementPage({
                 value={selectedYear}
                 onChange={(e) => handleYearChange(Number(e.target.value))}
                 className="px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                aria-label={t('financial.budgetForm.year')}
               >
                 {years.map((year) => (
                   <option key={year} value={year}>
@@ -130,19 +131,19 @@ export function BudgetManagementPage({
         {/* Summary */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-500">Total Budget</p>
+            <p className="text-sm text-gray-500">{t('financial.budget.totalBudget')}</p>
             <p className="mt-1 text-2xl font-semibold text-gray-900">
               {formatCurrency(summary.totalBudget, summary.currency)}
             </p>
           </div>
           <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-500">Total Actual</p>
+            <p className="text-sm text-gray-500">{t('financial.budget.totalActual')}</p>
             <p className="mt-1 text-2xl font-semibold text-gray-900">
               {formatCurrency(summary.totalActual, summary.currency)}
             </p>
           </div>
           <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-500">Variance</p>
+            <p className="text-sm text-gray-500">{t('financial.budget.variance')}</p>
             <p className={`mt-1 text-2xl font-semibold ${varianceColor}`}>
               {formatCurrency(summary.overallVariance, summary.currency)}
             </p>
@@ -196,24 +197,26 @@ export function BudgetManagementPage({
                     <span
                       className={`px-2 py-1 text-xs font-medium rounded ${statusColors[budget.status]}`}
                     >
-                      {budget.status}
+                      {t(`financial.budgetStatus.${budget.status}`, {
+                        defaultValue: budget.status,
+                      })}
                     </span>
                   </div>
                   <div className="mt-4 space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Budget</span>
+                      <span className="text-gray-500">{t('financial.budget.budget')}</span>
                       <span className="font-medium">
                         {formatCurrency(budget.totalBudget, budget.currency)}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Actual</span>
+                      <span className="text-gray-500">{t('financial.budget.actual')}</span>
                       <span className="font-medium">
                         {formatCurrency(budget.totalActual, budget.currency)}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Variance</span>
+                      <span className="text-gray-500">{t('financial.budget.variance')}</span>
                       <span
                         className={`font-medium ${budget.totalVariance >= 0 ? 'text-green-600' : 'text-red-600'}`}
                       >

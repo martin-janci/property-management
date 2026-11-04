@@ -1,5 +1,9 @@
 /**
  * Shared constants for financial components.
+ *
+ * Human-readable labels live in the locale bundles; these constants only carry
+ * the enum values and their i18n keys (`financial.invoiceStatus.*`,
+ * `financial.paymentMethod.*`).
  */
 
 import type { InvoiceStatus, PaymentMethod } from '@ppt/api-client';
@@ -18,34 +22,37 @@ export const INVOICE_STATUS_STYLES: Record<InvoiceStatus, string> = {
 };
 
 /**
- * Human-readable labels for invoice statuses.
+ * Invoice statuses in display order (labels: `financial.invoiceStatus.<status>`).
  */
-export const INVOICE_STATUS_LABELS: Record<InvoiceStatus, string> = {
-  draft: 'Draft',
-  sent: 'Sent',
-  paid: 'Paid',
-  partial: 'Partial',
-  overdue: 'Overdue',
-  cancelled: 'Cancelled',
-  void: 'Void',
-};
-
-/**
- * Payment method options with values and labels.
- */
-export const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
-  { value: 'bank_transfer', label: 'Bank Transfer' },
-  { value: 'card', label: 'Card' },
-  { value: 'cash', label: 'Cash' },
-  { value: 'check', label: 'Check' },
-  { value: 'online', label: 'Online Payment' },
-  { value: 'direct_debit', label: 'Direct Debit' },
-  { value: 'other', label: 'Other' },
+export const INVOICE_STATUSES: InvoiceStatus[] = [
+  'draft',
+  'sent',
+  'paid',
+  'partial',
+  'overdue',
+  'cancelled',
+  'void',
 ];
 
+/** i18n key for an invoice status label. */
+export function invoiceStatusKey(status: string): string {
+  return `financial.invoiceStatus.${status}`;
+}
+
 /**
- * Map of payment method values to labels.
+ * Payment methods in display order (labels: `financial.paymentMethod.<method>`).
  */
-export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = Object.fromEntries(
-  PAYMENT_METHODS.map((method) => [method.value, method.label])
-) as Record<PaymentMethod, string>;
+export const PAYMENT_METHODS: PaymentMethod[] = [
+  'bank_transfer',
+  'card',
+  'cash',
+  'check',
+  'online',
+  'direct_debit',
+  'other',
+];
+
+/** i18n key for a payment method label. */
+export function paymentMethodKey(method: string): string {
+  return `financial.paymentMethod.${method}`;
+}

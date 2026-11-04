@@ -7,6 +7,7 @@
  */
 
 import type { Building, BuildingStatus, BuildingType } from '@ppt/api-client';
+import { Trans, useTranslation } from 'react-i18next';
 import { BuildingCard } from './BuildingCard';
 
 interface BuildingListProps {
@@ -23,20 +24,20 @@ interface BuildingListProps {
   onCreate?: () => void;
 }
 
-const STATUS_OPTIONS: { value: BuildingStatus | ''; label: string }[] = [
-  { value: '', label: 'All Statuses' },
-  { value: 'active', label: 'Active' },
-  { value: 'under_construction', label: 'Under Construction' },
-  { value: 'renovation', label: 'Renovation' },
-  { value: 'inactive', label: 'Inactive' },
+const STATUS_OPTIONS: { value: BuildingStatus | ''; labelKey: string }[] = [
+  { value: '', labelKey: 'buildings.list.allStatuses' },
+  { value: 'active', labelKey: 'buildings.status.active' },
+  { value: 'under_construction', labelKey: 'buildings.status.under_construction' },
+  { value: 'renovation', labelKey: 'buildings.status.renovation' },
+  { value: 'inactive', labelKey: 'buildings.status.inactive' },
 ];
 
-const TYPE_OPTIONS: { value: BuildingType | ''; label: string }[] = [
-  { value: '', label: 'All Types' },
-  { value: 'residential', label: 'Residential' },
-  { value: 'commercial', label: 'Commercial' },
-  { value: 'mixed', label: 'Mixed Use' },
-  { value: 'industrial', label: 'Industrial' },
+const TYPE_OPTIONS: { value: BuildingType | ''; labelKey: string }[] = [
+  { value: '', labelKey: 'buildings.list.allTypes' },
+  { value: 'residential', labelKey: 'buildings.type.residential' },
+  { value: 'commercial', labelKey: 'buildings.type.commercial' },
+  { value: 'mixed', labelKey: 'buildings.type.mixed' },
+  { value: 'industrial', labelKey: 'buildings.type.industrial' },
 ];
 
 export function BuildingList({
@@ -52,6 +53,7 @@ export function BuildingList({
   onEdit,
   onCreate,
 }: BuildingListProps) {
+  const { t } = useTranslation();
   const totalPages = Math.ceil(total / pageSize);
 
   return (
@@ -59,9 +61,9 @@ export function BuildingList({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Buildings</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('buildings.title')}</h1>
           <p className="text-sm text-gray-500 mt-1">
-            {total} building{total !== 1 ? 's' : ''} in your organization
+            {t('buildings.list.subtitle', { count: total })}
           </p>
         </div>
         {onCreate && (
@@ -78,7 +80,7 @@ export function BuildingList({
                 d="M12 6v6m0 0v6m0-6h6m-6 0H6"
               />
             </svg>
-            Add Building
+            {t('buildings.list.addBuilding')}
           </button>
         )}
       </div>
@@ -88,11 +90,12 @@ export function BuildingList({
         <select
           className="block w-40 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
           onChange={(e) => onStatusFilter(e.target.value as BuildingStatus | undefined)}
+          aria-label={t('buildings.list.statusFilter')}
           defaultValue=""
         >
           {STATUS_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
-              {option.label}
+              {t(option.labelKey)}
             </option>
           ))}
         </select>
@@ -100,11 +103,12 @@ export function BuildingList({
         <select
           className="block w-40 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
           onChange={(e) => onTypeFilter(e.target.value as BuildingType | undefined)}
+          aria-label={t('buildings.list.typeFilter')}
           defaultValue=""
         >
           {TYPE_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
-              {option.label}
+              {t(option.labelKey)}
             </option>
           ))}
         </select>
@@ -133,8 +137,10 @@ export function BuildingList({
               d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
             />
           </svg>
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No buildings</h3>
-          <p className="mt-1 text-sm text-gray-500">Get started by adding your first building.</p>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">
+            {t('buildings.list.emptyTitle')}
+          </h3>
+          <p className="mt-1 text-sm text-gray-500">{t('buildings.list.emptyBody')}</p>
           {onCreate && (
             <div className="mt-6">
               <button
@@ -142,7 +148,7 @@ export function BuildingList({
                 onClick={onCreate}
                 className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
               >
-                Add Building
+                {t('buildings.list.addBuilding')}
               </button>
             </div>
           )}
@@ -168,7 +174,7 @@ export function BuildingList({
               disabled={page === 1}
               className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Previous
+              {t('common.previous')}
             </button>
             <button
               type="button"
@@ -176,14 +182,17 @@ export function BuildingList({
               disabled={page === totalPages}
               className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Next
+              {t('common.next')}
             </button>
           </div>
           <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
             <div>
               <p className="text-sm text-gray-700">
-                Showing page <span className="font-medium">{page}</span> of{' '}
-                <span className="font-medium">{totalPages}</span>
+                <Trans
+                  i18nKey="buildings.list.pageOf"
+                  values={{ page, totalPages }}
+                  components={{ bold: <span className="font-medium" /> }}
+                />
               </p>
             </div>
             <div>
@@ -194,7 +203,7 @@ export function BuildingList({
                   disabled={page === 1}
                   className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <span className="sr-only">Previous</span>
+                  <span className="sr-only">{t('common.previous')}</span>
                   <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path
                       fillRule="evenodd"
@@ -209,7 +218,7 @@ export function BuildingList({
                   disabled={page === totalPages}
                   className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <span className="sr-only">Next</span>
+                  <span className="sr-only">{t('common.next')}</span>
                   <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path
                       fillRule="evenodd"
