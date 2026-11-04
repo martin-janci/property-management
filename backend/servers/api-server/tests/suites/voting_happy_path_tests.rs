@@ -779,3 +779,207 @@ async fn list_votes_includes_question_count(pool: PgPool) {
     assert_eq!(active.len(), 1);
     assert_eq!(active[0]["question_count"], 2);
 }
+
+// ---------------------------------------------------------------------------
+// Cross-org isolation of every `/voting/{id}/*` sub-route
+// ---------------------------------------------------------------------------
+
+/// A caller from org B must get 404 on every sub-route of org A's vote (the
+/// vote tables only ENABLE RLS, so the handlers check the org explicitly).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn vote_sub_routes_are_404_for_another_org(pool: PgPool) {
+    let a = setup(pool.clone(), "xorg-a").await;
+    let b = setup(pool, "xorg-b").await;
+    let vote = a.create_vote().await;
+    let question = a.add_question(vote).await;
+    let comment = a.add_comment(vote).await;
+    let unit = Uuid::new_v4();
+
+    use axum::http::Method;
+    let cases: Vec<(Method, String, Option<serde_json::Value>)> = vec![
+        (Method::GET, format!("/api/v1/voting/{vote}"), None),
+        (
+            Method::PUT,
+            format!("/api/v1/voting/{vote}"),
+            Some(json!({})),
+        ),
+        (
+            Method::GET,
+            format!("/api/v1/voting/{vote}/questions"),
+            None,
+        ),
+        (
+            Method::POST,
+            format!("/api/v1/voting/{vote}/questions"),
+            Some(json!({ "question_text": "x", "question_type": "yes_no" })),
+        ),
+        (
+            Method::PUT,
+            format!("/api/v1/voting/{vote}/questions/{question}"),
+            Some(json!({ "question_text": "hijacked" })),
+        ),
+        (
+            Method::DELETE,
+            format!("/api/v1/voting/{vote}/questions/{question}"),
+            None,
+        ),
+        (
+            Method::GET,
+            format!("/api/v1/voting/{vote}/eligibility"),
+            None,
+        ),
+        (
+            Method::POST,
+            format!("/api/v1/voting/{vote}/cast"),
+            Some(json!({ "unit_id": unit, "answers": {} })),
+        ),
+        (
+            Method::GET,
+            format!("/api/v1/voting/{vote}/my-response?unit_id={unit}"),
+            None,
+        ),
+        (
+            Method::POST,
+            format!("/api/v1/voting/{vote}/comments"),
+            Some(json!({ "content": "spam", "ai_consent": false })),
+        ),
+        (Method::GET, format!("/api/v1/voting/{vote}/comments"), None),
+        (
+            Method::GET,
+            format!("/api/v1/voting/{vote}/comments/{comment}/replies"),
+            None,
+        ),
+        (
+            Method::POST,
+            format!("/api/v1/voting/{vote}/comments/{comment}/hide"),
+            Some(json!({ "reason": "x" })),
+        ),
+        (Method::GET, format!("/api/v1/voting/{vote}/results"), None),
+        (Method::GET, format!("/api/v1/voting/{vote}/report"), None),
+        (
+            Method::GET,
+            format!("/api/v1/voting/{vote}/report.pdf"),
+            None,
+        ),
+        (Method::GET, format!("/api/v1/voting/{vote}/audit"), None),
+        (
+            Method::POST,
+            format!("/api/v1/voting/{vote}/publish"),
+            Some(json!({})),
+        ),
+        (
+            Method::POST,
+            format!("/api/v1/voting/{vote}/cancel"),
+            Some(json!({ "reason": "x" })),
+        ),
+        (Method::POST, format!("/api/v1/voting/{vote}/close"), None),
+        (Method::DELETE, format!("/api/v1/voting/{vote}"), None),
+    ];
+
+    for (method, uri, body) in cases {
+        let builder = match method {
+            Method::GET => b.app.get(&uri),
+            Method::POST => b.app.post(&uri),
+            Method::PUT => b.app.put(&uri),
+            Method::DELETE => b.app.delete(&uri),
+            _ => unreachable!(),
+        }
+        .bearer(&b.token)
+        .header("X-Tenant-ID", &b.tenant());
+        let builder = match body {
+            Some(j) => builder.json(j),
+            None => builder,
+        };
+        let resp = b.app.execute(builder.build()).await;
+        assert_eq!(
+            resp.status,
+            StatusCode::NOT_FOUND,
+            "{method} {uri} from another org: {}",
+            resp.text()
+        );
+    }
+
+    // Org A's data is untouched and still visible to org A.
+    let resp = a
+        .app
+        .execute(
+            a.app
+                .get(&format!("/api/v1/voting/{vote}"))
+                .bearer(&a.token)
+                .header("X-Tenant-ID", &a.tenant())
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::OK, "{}", resp.text());
+    let body = resp.json_value();
+    assert_eq!(body["status"], "draft");
+    assert_eq!(
+        body["questions"][0]["question_text"],
+        "Do you approve the budget?"
+    );
+    assert_eq!(body["comment_count"], 1);
+
+    // The building's active list from org B never includes org A's votes.
+    a.publish_now(vote).await;
+    let resp = b
+        .app
+        .execute(
+            b.app
+                .get(&format!("/api/v1/voting/building/{}/active", a.building_id))
+                .bearer(&b.token)
+                .header("X-Tenant-ID", &b.tenant())
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::OK, "{}", resp.text());
+    assert_eq!(resp.json_value().as_array().map(Vec::len), Some(0));
+}
+
+/// A question or comment id from a different vote (same org) is a 404, not a
+/// write against the other vote.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn question_and_comment_ids_must_belong_to_the_vote(pool: PgPool) {
+    let ctx = setup(pool, "child").await;
+    let vote = ctx.create_vote().await;
+    let other = ctx.create_vote().await;
+    let other_question = ctx.add_question(other).await;
+    let other_comment = ctx.add_comment(other).await;
+
+    let send = |b: crate::common::RequestBuilder| {
+        b.bearer(&ctx.token).header("X-Tenant-ID", &ctx.tenant())
+    };
+    let resp = ctx
+        .app
+        .execute(
+            send(
+                ctx.app
+                    .put(&format!("/api/v1/voting/{vote}/questions/{other_question}")),
+            )
+            .json(json!({ "question_text": "moved" }))
+            .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::NOT_FOUND, "{}", resp.text());
+    let resp = ctx
+        .app
+        .execute(
+            send(
+                ctx.app
+                    .delete(&format!("/api/v1/voting/{vote}/questions/{other_question}")),
+            )
+            .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::NOT_FOUND, "{}", resp.text());
+    let resp = ctx
+        .app
+        .execute(
+            send(ctx.app.post(&format!(
+                "/api/v1/voting/{vote}/comments/{other_comment}/hide"
+            )))
+            .json(json!({ "reason": "x" }))
+            .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::NOT_FOUND, "{}", resp.text());
+}

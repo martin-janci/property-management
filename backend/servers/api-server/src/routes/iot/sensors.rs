@@ -85,6 +85,8 @@ pub(super) async fn create_sensor(
     // Pin the new sensor to the caller's validated org so the INSERT's
     // organization_id and the RLS WITH CHECK can never disagree.
     req.organization_id = rls.tenant_id();
+    // Likewise the creator is the authenticated caller, never a body value.
+    req.created_by = rls.user_id();
     let out = state
         .sensor_repo
         .create(&mut **rls.conn(), req)

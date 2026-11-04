@@ -223,3 +223,32 @@ async fn sensor_update_rejects_unknown_connection_type_and_status(pool: PgPool) 
         );
     }
 }
+
+/// `created_by` (and `organization_id`) come from the authenticated caller;
+/// a body value is ignored and the fields may be omitted.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn sensor_create_takes_creator_from_the_caller(pool: PgPool) {
+    let ctx = setup(pool, "iot-creator").await;
+
+    let mut spoofed = sensor_body(&ctx, "api");
+    spoofed["created_by"] = json!(Uuid::new_v4());
+    spoofed["organization_id"] = json!(Uuid::new_v4());
+    let resp = ctx.post("/api/v1/iot/sensors", spoofed).await;
+    assert_eq!(resp.status, StatusCode::CREATED, "{}", resp.text());
+    let body = resp.json_value();
+    assert_eq!(body["created_by"], ctx.user_id.to_string());
+    assert_eq!(body["organization_id"], ctx.org_id.to_string());
+
+    let resp = ctx
+        .post(
+            "/api/v1/iot/sensors",
+            json!({
+                "building_id": ctx.building_id,
+                "name": "No creator in body",
+                "sensor_type": "humidity"
+            }),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::CREATED, "{}", resp.text());
+    assert_eq!(resp.json_value()["created_by"], ctx.user_id.to_string());
+}

@@ -723,9 +723,11 @@ impl<'a> SeedFactories<'a> {
 
     /// Create a question for a vote.
     ///
-    /// For "yes_no" questions, options are empty (yes/no is implied).
     /// Options for "single_choice" questions are passed in from the seed data.
-    /// For "yes_no" questions pass an empty slice.
+    /// For "yes_no" questions pass an empty slice: they get the Yes/No pair
+    /// ("Áno"/"Nie", in that order), because results tallying maps a `true`
+    /// answer to option 0 and `false` to option 1. With no options the
+    /// results of a seeded yes/no question showed no counts at all.
     ///
     /// Returns the question's UUID.
     pub async fn create_vote_question(
@@ -736,6 +738,11 @@ impl<'a> SeedFactories<'a> {
         display_order: i32,
         option_texts: &[&str],
     ) -> Result<Uuid, sqlx::Error> {
+        let option_texts: &[&str] = if question_type == "yes_no" && option_texts.is_empty() {
+            &["Áno", "Nie"]
+        } else {
+            option_texts
+        };
         let options = serde_json::Value::Array(
             option_texts
                 .iter()

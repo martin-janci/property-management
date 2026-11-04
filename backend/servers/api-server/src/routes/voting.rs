@@ -24,6 +24,81 @@ use sqlx::Error as SqlxError;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
+// ============================================================================
+// Tenant scoping helpers
+// ============================================================================
+
+type ApiError = (StatusCode, Json<ErrorResponse>);
+
+fn vote_not_found() -> ApiError {
+    (
+        StatusCode::NOT_FOUND,
+        Json(ErrorResponse::new("NOT_FOUND", "Vote not found")),
+    )
+}
+
+fn voting_db_error(e: SqlxError) -> ApiError {
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(ErrorResponse::new(
+            "DATABASE_ERROR",
+            format!("Failed to get vote: {}", e),
+        )),
+    )
+}
+
+/// Load vote `id` if it belongs to the caller's organization, else 404.
+///
+/// The vote tables only ENABLE (not FORCE) row-level security, so a
+/// repository call on the pool or as the table owner is not tenant-isolated
+/// by itself. Every `/voting/{id}/*` handler that does not already load the
+/// vote with `find_poll_by_id_for_org` goes through this first. Releases the
+/// RLS connection on failure.
+async fn vote_in_org(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    id: Uuid,
+) -> Result<Vote, ApiError> {
+    let found = state
+        .vote_repo
+        .find_poll_by_id_for_org(id, rls.tenant_id(), &mut **rls.conn())
+        .await;
+    match found {
+        Ok(Some(vote)) => Ok(vote),
+        Ok(None) => {
+            rls.release().await;
+            Err(vote_not_found())
+        }
+        Err(e) => {
+            rls.release().await;
+            Err(voting_db_error(e))
+        }
+    }
+}
+
+/// 404 unless `child_id` (a question or comment, via `belongs`) is part of
+/// vote `vote_id`. Releases the RLS connection on failure.
+async fn ensure_child_of_vote(
+    rls: &mut RlsConnection,
+    belongs: Result<bool, SqlxError>,
+    what: &'static str,
+) -> Result<(), ApiError> {
+    match belongs {
+        Ok(true) => Ok(()),
+        Ok(false) => {
+            rls.release().await;
+            Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", what)),
+            ))
+        }
+        Err(e) => {
+            rls.release().await;
+            Err(voting_db_error(e))
+        }
+    }
+}
+
 /// Create voting router.
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -383,7 +458,7 @@ async fn update_vote(
     // Check vote exists and is in draft status
     let existing = state
         .vote_repo
-        .find_poll_by_id_rls(&mut **rls.conn(), id)
+        .find_poll_by_id_for_org(id, rls.tenant_id(), &mut **rls.conn())
         .await
         .map_err(|e| {
             (
@@ -461,7 +536,7 @@ async fn delete_vote(
     // Check vote exists and is in draft status
     let existing = state
         .vote_repo
-        .find_poll_by_id_rls(&mut **rls.conn(), id)
+        .find_poll_by_id_for_org(id, rls.tenant_id(), &mut **rls.conn())
         .await
         .map_err(|e| {
             (
@@ -534,7 +609,7 @@ async fn publish_vote(
     // Check vote exists and is in draft status
     let existing = state
         .vote_repo
-        .find_poll_by_id_rls(&mut **rls.conn(), id)
+        .find_poll_by_id_for_org(id, rls.tenant_id(), &mut **rls.conn())
         .await
         .map_err(|e| {
             (
@@ -662,7 +737,7 @@ async fn cancel_vote(
     // Check vote exists
     let existing = state
         .vote_repo
-        .find_poll_by_id_rls(&mut **rls.conn(), id)
+        .find_poll_by_id_for_org(id, rls.tenant_id(), &mut **rls.conn())
         .await
         .map_err(|e| {
             (
@@ -734,7 +809,7 @@ async fn close_vote(
 ) -> Result<Json<Vote>, (StatusCode, Json<ErrorResponse>)> {
     let existing = state
         .vote_repo
-        .find_poll_by_id_rls(&mut **rls.conn(), id)
+        .find_poll_by_id_for_org(id, rls.tenant_id(), &mut **rls.conn())
         .await
         .map_err(|e| {
             (
@@ -807,7 +882,7 @@ async fn add_question(
     // Check vote exists and is in draft status
     let existing = state
         .vote_repo
-        .find_poll_by_id_rls(&mut **rls.conn(), id)
+        .find_poll_by_id_for_org(id, rls.tenant_id(), &mut **rls.conn())
         .await
         .map_err(|e| {
             (
@@ -880,6 +955,8 @@ async fn list_questions(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<VoteQuestion>>, (StatusCode, Json<ErrorResponse>)> {
+    vote_in_org(&state, &mut rls, id).await?;
+
     // Note: get_questions() doesn't have an RLS version yet
     let questions = state.vote_repo.get_questions(id).await.map_err(|e| {
         (
@@ -921,7 +998,7 @@ async fn update_question(
     // Check vote exists and is in draft status
     let existing = state
         .vote_repo
-        .find_poll_by_id_rls(&mut **rls.conn(), id)
+        .find_poll_by_id_for_org(id, rls.tenant_id(), &mut **rls.conn())
         .await
         .map_err(|e| {
             (
@@ -938,6 +1015,12 @@ async fn update_question(
                 Json(ErrorResponse::new("NOT_FOUND", "Vote not found")),
             )
         })?;
+
+    let belongs = state
+        .vote_repo
+        .question_belongs_to_vote(question_id, id)
+        .await;
+    ensure_child_of_vote(&mut rls, belongs, "Question not found").await?;
 
     if !existing.can_edit() {
         rls.release().await;
@@ -1001,7 +1084,7 @@ async fn delete_question(
     // Check vote exists and is in draft status
     let existing = state
         .vote_repo
-        .find_poll_by_id_rls(&mut **rls.conn(), id)
+        .find_poll_by_id_for_org(id, rls.tenant_id(), &mut **rls.conn())
         .await
         .map_err(|e| {
             (
@@ -1018,6 +1101,12 @@ async fn delete_question(
                 Json(ErrorResponse::new("NOT_FOUND", "Vote not found")),
             )
         })?;
+
+    let belongs = state
+        .vote_repo
+        .question_belongs_to_vote(question_id, id)
+        .await;
+    ensure_child_of_vote(&mut rls, belongs, "Question not found").await?;
 
     if !existing.can_edit() {
         rls.release().await;
@@ -1072,6 +1161,8 @@ async fn check_eligibility(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<VoteEligibility>, (StatusCode, Json<ErrorResponse>)> {
+    vote_in_org(&state, &mut rls, id).await?;
+
     // Note: check_eligibility() doesn't have an RLS version yet
     let eligibility = state
         .vote_repo
@@ -1116,7 +1207,7 @@ async fn cast_vote(
     // Check vote exists and is active
     let existing = state
         .vote_repo
-        .find_poll_by_id_rls(&mut **rls.conn(), id)
+        .find_poll_by_id_for_org(id, rls.tenant_id(), &mut **rls.conn())
         .await
         .map_err(|e| {
             (
@@ -1241,6 +1332,8 @@ async fn get_my_response(
     Path(id): Path<Uuid>,
     Query(params): Query<MyResponseQuery>,
 ) -> Result<Json<Option<db::models::VoteResponse>>, (StatusCode, Json<ErrorResponse>)> {
+    vote_in_org(&state, &mut rls, id).await?;
+
     // Note: get_user_response() doesn't have an RLS version yet
     let response = state
         .vote_repo
@@ -1285,6 +1378,8 @@ async fn add_comment(
     Path(id): Path<Uuid>,
     Json(req): Json<AddCommentRequest>,
 ) -> Result<(StatusCode, Json<db::models::VoteComment>), (StatusCode, Json<ErrorResponse>)> {
+    vote_in_org(&state, &mut rls, id).await?;
+
     let data = CreateVoteComment {
         vote_id: id,
         user_id: rls.user_id(),
@@ -1327,6 +1422,8 @@ async fn list_comments(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<VoteCommentWithUser>>, (StatusCode, Json<ErrorResponse>)> {
+    vote_in_org(&state, &mut rls, id).await?;
+
     // Note: list_comments() doesn't have an RLS version yet
     let comments = state
         .vote_repo
@@ -1364,8 +1461,15 @@ async fn list_comments(
 async fn list_replies(
     State(state): State<AppState>,
     mut rls: RlsConnection,
-    Path((_id, comment_id)): Path<(Uuid, Uuid)>,
+    Path((id, comment_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<Vec<VoteCommentWithUser>>, (StatusCode, Json<ErrorResponse>)> {
+    vote_in_org(&state, &mut rls, id).await?;
+    let belongs = state
+        .vote_repo
+        .comment_belongs_to_vote(comment_id, id)
+        .await;
+    ensure_child_of_vote(&mut rls, belongs, "Comment not found").await?;
+
     // Note: list_replies() doesn't have an RLS version yet
     let replies = state
         .vote_repo
@@ -1404,9 +1508,16 @@ async fn list_replies(
 async fn hide_comment(
     State(state): State<AppState>,
     mut rls: RlsConnection,
-    Path((_id, comment_id)): Path<(Uuid, Uuid)>,
+    Path((id, comment_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<HideCommentRequest>,
 ) -> Result<Json<db::models::VoteComment>, (StatusCode, Json<ErrorResponse>)> {
+    vote_in_org(&state, &mut rls, id).await?;
+    let belongs = state
+        .vote_repo
+        .comment_belongs_to_vote(comment_id, id)
+        .await;
+    ensure_child_of_vote(&mut rls, belongs, "Comment not found").await?;
+
     let data = HideVoteComment { reason: req.reason };
 
     // Note: hide_comment() doesn't have an RLS version yet
@@ -1451,6 +1562,8 @@ async fn get_results(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<VoteResults>, (StatusCode, Json<ErrorResponse>)> {
+    vote_in_org(&state, &mut rls, id).await?;
+
     let results = state
         .vote_repo
         .get_poll_results_rls(&mut **rls.conn(), id)
@@ -1504,6 +1617,8 @@ async fn get_report_pdf(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Response, (StatusCode, Json<ErrorResponse>)> {
+    vote_in_org(&state, &mut rls, id).await?;
+
     let pdf_bytes = generate_and_archive_pdf(&state, &mut rls, id).await?;
     rls.release().await;
 
@@ -1538,6 +1653,8 @@ async fn get_report_data(
     headers: axum::http::HeaderMap,
     Query(query): Query<ReportQuery>,
 ) -> Result<Response, (StatusCode, Json<ErrorResponse>)> {
+    vote_in_org(&state, &mut rls, id).await?;
+
     // Note: generate_report_data() doesn't have an RLS version yet
     let report = state
         .vote_repo
@@ -1971,6 +2088,8 @@ async fn get_audit_log(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<VoteAuditLog>>, (StatusCode, Json<ErrorResponse>)> {
+    vote_in_org(&state, &mut rls, id).await?;
+
     // Note: get_audit_log() doesn't have an RLS version yet
     let entries = state.vote_repo.get_audit_log(id).await.map_err(|e| {
         (
@@ -2008,9 +2127,10 @@ async fn list_active_by_building(
     mut rls: RlsConnection,
     Path(building_id): Path<Uuid>,
 ) -> Result<Json<Vec<VoteSummary>>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
     let votes = state
         .vote_repo
-        .list_polls_by_building_rls(&mut **rls.conn(), building_id)
+        .list_polls_by_building_rls(&mut **rls.conn(), building_id, org_id)
         .await
         .map_err(|e| {
             (

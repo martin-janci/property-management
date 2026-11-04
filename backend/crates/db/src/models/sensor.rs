@@ -106,6 +106,8 @@ pub struct Sensor {
 /// Create sensor request.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreateSensor {
+    /// Ignored on input: the route sets it from the validated tenant.
+    #[serde(default)]
     pub organization_id: Uuid,
     pub building_id: Uuid,
     pub unit_id: Option<Uuid>,
@@ -123,6 +125,8 @@ pub struct CreateSensor {
     pub serial_number: Option<String>,
     pub installed_at: Option<DateTime<Utc>>,
     pub metadata: Option<serde_json::Value>,
+    /// Ignored on input: the route sets it from the authenticated user.
+    #[serde(default)]
     pub created_by: Uuid,
 }
 

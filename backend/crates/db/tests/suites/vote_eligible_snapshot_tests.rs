@@ -259,3 +259,62 @@ async fn vote_details_include_ordered_questions(pool: PgPool) {
         .unwrap()
         .is_none());
 }
+
+/// Seeded yes/no questions get the Yes/No pair, so a `true` ballot is counted
+/// on option 0 ("Áno") in the results.
+#[sqlx::test(migrations = "./migrations")]
+async fn seeded_yes_no_question_has_options_and_counts(pool: PgPool) {
+    let f = fixture(&pool, "seed-yesno").await;
+    let factories = SeedFactories::new(&pool);
+    let vote = factories
+        .create_vote(
+            f.org,
+            f.building,
+            "YN",
+            None,
+            "active",
+            f.owner_a,
+            "simple_majority",
+        )
+        .await
+        .unwrap();
+    let question = factories
+        .create_vote_question(vote, "Approve?", "yes_no", 0, &[])
+        .await
+        .unwrap();
+
+    let repo = VoteRepository::new(pool.clone());
+    let questions = repo.get_questions(vote).await.unwrap();
+    let texts: Vec<_> = questions[0]
+        .options
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|o| o["text"].as_str().unwrap().to_string())
+        .collect();
+    assert_eq!(texts, ["Áno", "Nie"]);
+
+    // One "yes" ballot, written directly (the cast path needs a full RLS ctx).
+    let unit: Uuid = sqlx::query_scalar("SELECT unit_id FROM unit_residents WHERE user_id = $1")
+        .bind(f.owner_a)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    sqlx::query(
+        "INSERT INTO vote_responses (vote_id, user_id, unit_id, answers, vote_weight, response_hash) \
+         VALUES ($1, $2, $3, $4, 1, 'r')",
+    )
+    .bind(vote)
+    .bind(f.owner_a)
+    .bind(unit)
+    .bind(serde_json::json!({ question.to_string(): true }))
+    .execute(&pool)
+    .await
+    .expect("insert ballot");
+
+    let results = repo.calculate_results(vote).await.expect("results");
+    let q = &results.questions[0];
+    assert_eq!(q.results.len(), 2);
+    assert_eq!(q.results[0].count, 1, "yes counted");
+    assert_eq!(q.results[1].count, 0);
+}
