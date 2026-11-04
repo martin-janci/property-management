@@ -19,7 +19,9 @@ import type {
   RentalCalendarBlock,
   RentalCalendarEvent,
   RentalCalendarQuery,
+  RentalConnectionDetail,
   RentalConnectionSummary,
+  RentalCreateBookingBody,
   RentalCreateCalendarBlockBody,
   RentalCreateConnectionBody,
   RentalCreateGuestBody,
@@ -33,7 +35,9 @@ import type {
   RentalReportPreview,
   RentalReportPreviewBody,
   RentalReportSummary,
+  RentalUpdateBookingBody,
   RentalUpdateBookingStatusBody,
+  RentalUpdateConnectionBody,
   RentalUpdateGuestBody,
 } from './types';
 
@@ -71,6 +75,31 @@ export function getRentalBookingWithGuests(
   headers: RentalsRequestHeaders
 ): Promise<RentalBookingWithGuests> {
   return authenticatedFetchJson(`${RENTALS_BASE}/bookings/${encodeURIComponent(id)}/guests`, {
+    headers,
+  });
+}
+
+/** `POST /rentals/bookings` — 409s when the unit is not available for the dates. */
+export function createRentalBooking(
+  body: RentalCreateBookingBody,
+  headers: RentalsRequestHeaders
+): Promise<RentalBookingRecord> {
+  return authenticatedFetchJson(`${RENTALS_BASE}/bookings`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+    headers,
+  });
+}
+
+/** `PUT /rentals/bookings/{id}` — partial update of guest, dates, amount and notes. */
+export function updateRentalBooking(
+  id: string,
+  body: RentalUpdateBookingBody,
+  headers: RentalsRequestHeaders
+): Promise<RentalBookingRecord> {
+  return authenticatedFetchJson(`${RENTALS_BASE}/bookings/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    body: JSON.stringify(body),
     headers,
   });
 }
@@ -140,6 +169,37 @@ export function createRentalConnection(
   return authenticatedFetchJson(`${RENTALS_BASE}/connections`, {
     method: 'POST',
     body: JSON.stringify(body),
+    headers,
+  });
+}
+
+/** `GET /rentals/connections/{id}` — sync settings of one connection (no tokens). */
+export function getRentalConnection(
+  id: string,
+  headers: RentalsRequestHeaders
+): Promise<RentalConnectionDetail> {
+  return authenticatedFetchJson(`${RENTALS_BASE}/connections/${encodeURIComponent(id)}`, {
+    headers,
+  });
+}
+
+/** `PUT /rentals/connections/{id}` — partial update (sync settings, `is_active`). */
+export function updateRentalConnection(
+  id: string,
+  body: RentalUpdateConnectionBody,
+  headers: RentalsRequestHeaders
+): Promise<RentalConnectionDetail> {
+  return authenticatedFetchJson(`${RENTALS_BASE}/connections/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    body: JSON.stringify(body),
+    headers,
+  });
+}
+
+/** `DELETE /rentals/connections/{id}` — removes the connection (204). */
+export function deleteRentalConnection(id: string, headers: RentalsRequestHeaders): Promise<void> {
+  return authenticatedFetchJson(`${RENTALS_BASE}/connections/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
     headers,
   });
 }

@@ -199,6 +199,66 @@ export interface RentalCreateConnectionBody {
   block_other_platforms?: boolean;
 }
 
+/**
+ * `GET|PUT /api/v1/rentals/connections/{id}` response (`PlatformConnectionDetail`,
+ * token-free: `is_connected` is derived from token presence).
+ */
+export interface RentalConnectionDetail {
+  id: string;
+  organization_id: string;
+  unit_id: string;
+  platform: string;
+  is_connected: boolean;
+  token_expires_at?: string | null;
+  external_property_id?: string | null;
+  external_listing_url?: string | null;
+  is_active: boolean;
+  last_sync_at?: string | null;
+  sync_error?: string | null;
+  sync_calendar: boolean;
+  sync_interval_minutes: number;
+  block_other_platforms: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * `PUT /api/v1/rentals/connections/{id}` body (`UpdatePlatformConnection`).
+ * Every field is optional; the server keeps the stored value for an omitted
+ * (or null) field, so a value cannot be cleared back to null.
+ */
+export interface RentalUpdateConnectionBody {
+  external_property_id?: string;
+  external_listing_url?: string;
+  is_active?: boolean;
+  sync_calendar?: boolean;
+  sync_interval_minutes?: number;
+  block_other_platforms?: boolean;
+}
+
+/** `POST /api/v1/rentals/bookings` body (`CreateBooking`). Dates are `YYYY-MM-DD`. */
+export interface RentalCreateBookingBody {
+  unit_id: string;
+  platform?: RentalPlatformCode;
+  external_booking_id?: string;
+  guest_name: string;
+  guest_email?: string;
+  guest_phone?: string;
+  guest_count?: number;
+  check_in: string;
+  check_out: string;
+  /** Decimal as a string, e.g. `"240.00"`. */
+  total_amount?: string;
+  currency?: string;
+  guest_notes?: string;
+  internal_notes?: string;
+}
+
+/** `PUT /api/v1/rentals/bookings/{id}` body (`UpdateBooking`); omitted fields are kept. */
+export type RentalUpdateBookingBody = Partial<
+  Omit<RentalCreateBookingBody, 'unit_id' | 'platform' | 'external_booking_id'>
+>;
+
 /** `GET /api/v1/rentals/statistics` response (`RentalStatistics`). */
 export interface RentalDashboardStatistics {
   total_units: number;
