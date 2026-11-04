@@ -29,7 +29,7 @@ import {
 } from 'react-native';
 import { getApiBaseUrl } from '../../config/api';
 import { transcodeToJpeg } from '../../utils/imageCompression';
-import { extractTenantId } from '../../utils/jwt';
+import { resolveTenantId } from '../../utils/session';
 import { colors } from '../shared/screenStyles';
 
 // ─── Constants ────────────────────────────────────────────────
@@ -158,7 +158,7 @@ export async function uploadDocumentMultipart(params: {
     // Fail fast: no point streaming the file only to be rejected with a 401.
     throw new UploadAuthError();
   }
-  const tenantId = extractTenantId(token);
+  const tenantId = await resolveTenantId(token);
   const baseUrl = getApiBaseUrl();
 
   const formData = new FormData();

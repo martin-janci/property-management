@@ -49,6 +49,8 @@ mod registry_enum_decode_tests;
 mod registry_parking_spot_cross_tenant_tests;
 #[path = "suites/registry_rules_enum_decode_tests.rs"]
 mod registry_rules_enum_decode_tests;
+#[path = "suites/rental_booking_external_id_unique_tests.rs"]
+mod rental_booking_external_id_unique_tests;
 #[path = "suites/rental_booking_nullable_decimal_tests.rs"]
 mod rental_booking_nullable_decimal_tests;
 #[path = "suites/rental_cross_tenant_upsert_tests.rs"]

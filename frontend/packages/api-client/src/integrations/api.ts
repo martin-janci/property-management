@@ -4,7 +4,7 @@
  * API functions for External Integrations (Epic 61).
  */
 
-import { authenticatedFetchJson } from '../lib/fetch';
+import { authenticatedFetch, authenticatedFetchJson } from '../lib/fetch';
 import type {
   AccountingExport,
   AccountingExportQuery,
@@ -68,7 +68,7 @@ function buildQueryString(params: object): string {
 
 // Helper for API requests
 async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(url, {
+  const response = await authenticatedFetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',

@@ -854,6 +854,12 @@
         "completed": "Completed",
         "cancelled": "Cancelled"
       },
+      "type": {
+        "general": "General inquiry",
+        "viewing_request": "Viewing request",
+        "price_negotiation": "Price negotiation",
+        "availability": "Availability"
+      },
       "viewingScheduled": "Viewing scheduled: {date} at {time}",
       "agentResponse": "Agent response:",
       "cancelConfirm": "Cancel this inquiry?",
@@ -1178,6 +1184,7 @@
       "feedNamePlaceholder": "My Property Feed",
       "fetchError": "Failed to fetch feed. Please check the URL and try again.",
       "updateError": "Failed to update the feed. Please try again.",
+      "syncError": "Failed to start the feed sync. Please try again.",
       "removeError": "Failed to remove the feed. Please try again.",
       "format": "Format",
       "itemsFound": "Items Found",

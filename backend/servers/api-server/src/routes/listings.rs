@@ -301,6 +301,25 @@ pub async fn list_listings(
     }))
 }
 
+/// Map a listing-photo fetch result into a handler response.
+///
+/// `get_listing` previously called `.unwrap_or_default()` on the photo
+/// fetch, which silently dropped every photo whenever the fetch failed
+/// (for example a row that fails to deserialize into `ListingPhoto`). That
+/// made a transient/serialization error look like a listing with no photos.
+/// Routing the result through this helper keeps the behavior in one place so
+/// the edge case is surfaced instead of swallowed.
+fn photos_or_error<E: std::fmt::Display>(
+    result: Result<Vec<ListingPhoto>, E>,
+) -> Result<Vec<ListingPhoto>, (axum::http::StatusCode, String)> {
+    result.map_err(|e| {
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to fetch listing photos: {}", e),
+        )
+    })
+}
+
 /// Get listing by ID.
 #[utoipa::path(
     get,
@@ -335,7 +354,7 @@ pub async fn get_listing(
             )
         })?;
 
-    let photos = state.listing_repo.get_photos(id).await.unwrap_or_default();
+    let photos = photos_or_error(state.listing_repo.get_photos(id).await)?;
     let syndications = state
         .listing_repo
         .get_syndications(id)
@@ -1295,4 +1314,38 @@ pub async fn global_unpublish(
     }
 
     Ok(Json(listing))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn photos_or_error_surfaces_fetch_failure() {
+        // Regression (code-review finding): get_listing must NOT silently
+        // drop photos when the photo fetch fails (e.g. a row that fails to
+        // deserialize into ListingPhoto). The failure must surface as a 500
+        // rather than be reported as a listing with an empty photo list.
+        let failed: Result<Vec<ListingPhoto>, String> =
+            Err("photo row failed to deserialize".to_string());
+        let mapped = photos_or_error(failed);
+        assert!(
+            mapped.is_err(),
+            "a photo-fetch failure must surface as an error, not be swallowed into an empty list"
+        );
+        assert_eq!(
+            mapped.unwrap_err().0,
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            "a photo-fetch failure must map to 500 INTERNAL_SERVER_ERROR"
+        );
+    }
+
+    #[test]
+    fn photos_or_error_passes_photos_through() {
+        let ok: Result<Vec<ListingPhoto>, String> = Ok(Vec::new());
+        assert!(
+            photos_or_error(ok).is_ok(),
+            "a successful fetch must pass the photos through unchanged"
+        );
+    }
 }
