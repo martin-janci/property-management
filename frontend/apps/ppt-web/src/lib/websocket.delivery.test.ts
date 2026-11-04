@@ -180,7 +180,11 @@ describe('WebSocketService — message:new delivery', () => {
  */
 describe('WebSocketService — token rotation re-auth', () => {
   function tokenParam(socket: FakeWebSocket): string | null {
-    return new URL(socket.url).searchParams.get('token');
+    // The JWT travels in the `Sec-WebSocket-Protocol` handshake header as
+    // `bearer.<jwt>`, never in the URL (it would leak into access logs).
+    const protocols = Array.isArray(socket.protocols) ? socket.protocols : [];
+    const bearer = protocols.find((p) => p.startsWith('bearer.'));
+    return bearer ? bearer.slice('bearer.'.length) : null;
   }
 
   it('tears down the stale socket and reconnects with the rotated token', () => {

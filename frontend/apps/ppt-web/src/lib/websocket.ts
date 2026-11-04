@@ -82,23 +82,52 @@ export function parseServerMessage(raw: unknown): WebSocketMessage | null {
 }
 
 /**
- * Build the full WebSocket connection URL: base origin + canonical path +
- * `?token=<jwt>` query param.
+ * Build the full WebSocket connection URL: base origin + canonical path.
  *
- * Browsers cannot set an `Authorization` header on a WebSocket handshake, so
- * the api-server reads the JWT from the `token` query parameter (see
- * `WsQuery` in `ws_notifications.rs`). The `base` may be a bare origin
- * (`ws://localhost:8080`) or already include the path — in either case we
- * normalise to the canonical path and attach the token.
+ * The JWT access token is deliberately NOT placed in the URL. A query-string
+ * token (`?token=<jwt>`) leaks the bearer credential into api-server access
+ * logs and any intermediary proxy logs — a single captured log line is enough
+ * for session takeover. The token is instead carried in the
+ * `Sec-WebSocket-Protocol` handshake header via {@link buildWsSubprotocols},
+ * which the api-server reads (see `ws_notifications.rs`). The `base` may be a
+ * bare origin (`ws://localhost:8080`) or already include a path — in either
+ * case we normalise to the canonical handler path.
  */
-export function buildWebSocketUrl(base: string, token: string): string {
+export function buildWebSocketUrl(base: string): string {
   // `URL` needs an absolute base; ws/wss are valid absolute schemes.
   const url = new URL(base);
   // Force the canonical path regardless of what the base carried, so a
   // legacy `/ws` (or empty) path is corrected to the mounted handler.
   url.pathname = WS_NOTIFICATIONS_PATH;
-  url.searchParams.set('token', token);
   return url.toString();
+}
+
+/**
+ * Subprotocol token that prefixes the JWT in the `Sec-WebSocket-Protocol`
+ * handshake header. The api-server strips this prefix to recover the raw JWT
+ * (see `WS_BEARER_SUBPROTOCOL_PREFIX` in `ws_notifications.rs`). Keep the two
+ * in sync.
+ */
+export const WS_BEARER_SUBPROTOCOL_PREFIX = 'bearer.';
+
+/**
+ * Protocol-version subprotocol. The api-server echoes this one back to
+ * complete the handshake (Issue #438) — the browser aborts the connection
+ * with a silent network error if the server selects none of the offered
+ * subprotocols, so it must always be offered alongside the bearer token.
+ */
+export const WS_PROTOCOL_VERSION = 'ppt.v1';
+
+/**
+ * Build the `Sec-WebSocket-Protocol` offer list for an authenticated WS
+ * handshake: the bearer-token subprotocol followed by the protocol-version
+ * subprotocol the server echoes.
+ *
+ * JWTs are base64url (`[A-Za-z0-9-_]`) with `.` segment separators — all valid
+ * subprotocol token characters per RFC 6455 — so no escaping is required.
+ */
+export function buildWsSubprotocols(token: string): string[] {
+  return [`${WS_BEARER_SUBPROTOCOL_PREFIX}${token}`, WS_PROTOCOL_VERSION];
 }
 
 /**
@@ -217,9 +246,10 @@ export interface WebSocketServiceConfig {
 /**
  * Compute the default WebSocket base origin (scheme + host, no path).
  *
- * The canonical handler path ({@link WS_NOTIFICATIONS_PATH}) and `?token=`
- * query param are appended by {@link buildWebSocketUrl} at connect time, so
- * this only needs to resolve the origin.
+ * The canonical handler path ({@link WS_NOTIFICATIONS_PATH}) is appended by
+ * {@link buildWebSocketUrl} at connect time and the JWT travels in the
+ * handshake subprotocol ({@link buildWsSubprotocols}), so this only needs to
+ * resolve the origin.
  *
  * In dev we keep the explicit cleartext `ws://localhost:8080` so the local
  * Vite stack works without TLS. In production we never default to cleartext:
@@ -391,16 +421,17 @@ export class WebSocketService {
     this.shouldReconnect = true;
     this.clearReconnectTimeout();
 
-    // Auth transport: the api-server reads the JWT from the `token` query
-    // parameter (see `WsQuery` in `ws_notifications.rs`). Browsers cannot set
-    // an `Authorization` header on a WS handshake, so the query param is the
-    // contract the server validates. We still offer the `ppt.v1` subprotocol
-    // because the server echoes it (Issue #438) to complete the handshake and
-    // to leave room for future protocol-version negotiation.
+    // Auth transport: browsers cannot set an `Authorization` header on a WS
+    // handshake, so the JWT is carried in the `Sec-WebSocket-Protocol` header
+    // as `bearer.<jwt>` (see `buildWsSubprotocols`). The api-server reads it
+    // from there (see `ws_notifications.rs`). This replaces the previous
+    // `?token=<jwt>` query param, which leaked the bearer token into access
+    // logs. The `ppt.v1` subprotocol is offered alongside it because the
+    // server echoes it (Issue #438) to complete the handshake.
     this.setConnectionState('connecting');
 
     try {
-      this.socket = new WebSocket(buildWebSocketUrl(this.url, token), ['ppt.v1']);
+      this.socket = new WebSocket(buildWebSocketUrl(this.url), buildWsSubprotocols(token));
       this.setupSocketHandlers();
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Failed to create WebSocket');

@@ -20,6 +20,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   buildWebSocketUrl,
+  buildWsSubprotocols,
   parseServerMessage,
   WebSocketService,
   WS_NOTIFICATIONS_PATH,
@@ -27,31 +28,31 @@ import {
 
 describe('buildWebSocketUrl', () => {
   it('appends the canonical handler path to a bare origin', () => {
-    const url = buildWebSocketUrl('ws://localhost:8080', 'jwt-abc');
-    expect(url).toBe(`ws://localhost:8080${WS_NOTIFICATIONS_PATH}?token=jwt-abc`);
+    const url = buildWebSocketUrl('ws://localhost:8080');
+    expect(url).toBe(`ws://localhost:8080${WS_NOTIFICATIONS_PATH}`);
   });
 
-  it('attaches the JWT as the token query param', () => {
-    const url = new URL(buildWebSocketUrl('wss://app.example.com', 'jwt-xyz'));
-    expect(url.searchParams.get('token')).toBe('jwt-xyz');
+  it('never puts a token in the URL (JWT travels in the handshake subprotocol)', () => {
+    const url = new URL(buildWebSocketUrl('wss://app.example.com'));
+    expect(url.searchParams.get('token')).toBeNull();
+    expect(url.search).toBe('');
     expect(url.pathname).toBe(WS_NOTIFICATIONS_PATH);
   });
 
   it('corrects a legacy /ws path on the base to the canonical path', () => {
-    const url = new URL(buildWebSocketUrl('ws://localhost:8080/ws', 'tok'));
+    const url = new URL(buildWebSocketUrl('ws://localhost:8080/ws'));
     expect(url.pathname).toBe(WS_NOTIFICATIONS_PATH);
   });
 
   it('preserves the wss scheme for production hosts', () => {
-    const url = buildWebSocketUrl('wss://app.example.com', 'tok');
+    const url = buildWebSocketUrl('wss://app.example.com');
     expect(url.startsWith('wss://app.example.com')).toBe(true);
   });
+});
 
-  it('url-encodes a token containing reserved characters', () => {
-    const token = 'a.b+c/d=';
-    const url = new URL(buildWebSocketUrl('ws://localhost:8080', token));
-    // round-trips back to the exact token despite encoding on the wire
-    expect(url.searchParams.get('token')).toBe(token);
+describe('buildWsSubprotocols', () => {
+  it('carries the JWT as a bearer subprotocol alongside the version protocol', () => {
+    expect(buildWsSubprotocols('jwt-abc')).toEqual(['bearer.jwt-abc', 'ppt.v1']);
   });
 });
 
