@@ -155,7 +155,7 @@ fn inquiry_result_to_id(
         // calling the handler, so a foreign-key failure here means the
         // listing/realtor vanished concurrently — surface it as the same 404
         // the pre-wiring code returned for a missing listing.
-        InquiryResult::ListingNotFound | InquiryResult::RealtorNotFound => Err((
+        InquiryResult::ReferencedEntityNotFound => Err((
             axum::http::StatusCode::NOT_FOUND,
             "Listing not found".to_string(),
         )),
@@ -866,17 +866,15 @@ mod inquiry_result_mapping_tests {
     }
 
     /// A vanished listing/realtor (FK failure inside the handler) becomes a 404,
-    /// preserving the pre-wiring public contract.
+    /// preserving the pre-wiring public contract. The handler no longer splits
+    /// listing-vs-realtor (that distinction was dead at this route — both arms
+    /// produced this identical response), so there is a single typed variant.
     #[test]
-    fn listing_or_realtor_not_found_maps_to_404() {
-        for result in [
-            InquiryResult::ListingNotFound,
-            InquiryResult::RealtorNotFound,
-        ] {
-            let err = inquiry_result_to_id("ctx", result).expect_err("must be an error");
-            assert_eq!(err.0, StatusCode::NOT_FOUND);
-            assert_eq!(err.1, "Listing not found");
-        }
+    fn referenced_entity_not_found_maps_to_404() {
+        let err = inquiry_result_to_id("ctx", InquiryResult::ReferencedEntityNotFound)
+            .expect_err("must be an error");
+        assert_eq!(err.0, StatusCode::NOT_FOUND);
+        assert_eq!(err.1, "Listing not found");
     }
 
     /// Validation errors from the handler are joined into a 400 body.

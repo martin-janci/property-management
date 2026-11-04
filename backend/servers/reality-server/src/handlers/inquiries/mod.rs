@@ -16,6 +16,7 @@ use api_core::middleware::RateLimitDecision;
 use async_trait::async_trait;
 use db::models::{CreateListingInquiry, ListingInquiry, ViewingSchedule};
 use db::repositories::RealityPortalRepository;
+use sqlx::Error as SqlxError;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -117,10 +118,12 @@ pub enum InquiryResult {
     Created(Box<ListingInquiry>),
     /// Validation failed
     ValidationFailed(Vec<ValidationError>),
-    /// Listing not found
-    ListingNotFound,
-    /// Realtor not found
-    RealtorNotFound,
+    /// A row the inquiry references (its listing or its realtor) does not
+    /// exist — the insert hit a foreign-key violation, which the public route
+    /// surfaces as 404. Listing-vs-realtor is deliberately NOT split: both
+    /// collapse to an identical response/telemetry at every call site, so a
+    /// finer variant would be dead classification (see `classify_create_error`).
+    ReferencedEntityNotFound,
     /// Rate limited (too many inquiries)
     RateLimited,
     /// Database error
@@ -334,18 +337,34 @@ impl InquiriesHandler {
                 Self::dispatch_new_inquiry(self.notifier.as_ref(), &inquiry).await;
                 InquiryResult::Created(Box::new(inquiry))
             }
-            Err(e) => {
-                let error_str = e.to_string();
-                if error_str.contains("violates foreign key") {
-                    if error_str.contains("listing") {
-                        InquiryResult::ListingNotFound
-                    } else {
-                        InquiryResult::RealtorNotFound
-                    }
-                } else {
-                    InquiryResult::DatabaseError(error_str)
-                }
-            }
+            Err(e) => Self::classify_create_error(&e),
+        }
+    }
+
+    /// Classify a failed inquiry insert into an [`InquiryResult`].
+    ///
+    /// Uses the Postgres SQLSTATE code (structured) rather than substring-
+    /// matching the error message: `23503` (`foreign_key_violation`) means the
+    /// referenced listing or realtor row no longer exists — a concurrent delete
+    /// race, since both public routes resolve the realtor from an ACTIVE listing
+    /// before inserting. Everything else is an opaque database error (500).
+    ///
+    /// The previous implementation matched `error_str.contains("violates
+    /// foreign key")` and then split listing-vs-realtor on
+    /// `error_str.contains("listing")`. That split was dead and brittle: the
+    /// two outcomes mapped to an identical 404 at the route (and identical
+    /// telemetry), and the string match broke silently the moment Postgres
+    /// localized its message or a constraint was renamed. SQLSTATE is the
+    /// stable, locale-independent classifier (matching the existing idiom in
+    /// `api-server`'s `budgets::db_error` and `ai::llm`).
+    fn classify_create_error(err: &SqlxError) -> InquiryResult {
+        const PG_FOREIGN_KEY_VIOLATION: &str = "23503";
+        if err.as_database_error().and_then(|db| db.code()).as_deref()
+            == Some(PG_FOREIGN_KEY_VIOLATION)
+        {
+            InquiryResult::ReferencedEntityNotFound
+        } else {
+            InquiryResult::DatabaseError(err.to_string())
         }
     }
 
