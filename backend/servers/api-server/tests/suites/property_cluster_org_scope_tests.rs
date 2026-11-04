@@ -784,6 +784,48 @@ async fn energy_mutations_require_manager(pool: PgPool) {
     expect(&resp, StatusCode::FORBIDDEN, "foreign org emission");
 }
 
+async fn seed_listing(pool: &PgPool, org_id: Uuid, created_by: Uuid) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"INSERT INTO listings
+               (organization_id, created_by, status, transaction_type, title,
+                property_type, street, city, postal_code, country, price)
+           VALUES ($1, $2, 'active', 'sale', 'R4 Listing', 'apartment',
+                   'Main 1', 'Bratislava', '81101', 'SK', 100000)
+           RETURNING id"#,
+    )
+    .bind(org_id)
+    .bind(created_by)
+    .fetch_one(pool)
+    .await
+    .expect("seed listing")
+}
+
+/// An org-A manager must not be able to create a sustainability score on
+/// org B's listing (the listing-unique row would lock org B out). The
+/// ownership check runs before any energy-table query, so this is reachable
+/// even though the energy tables have no migration yet.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn sustainability_score_rejects_foreign_listing(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let w = world(&pool).await;
+    let listing_b = seed_listing(&pool, w.org_b, w.mgr_b.user_id).await;
+
+    for (listing, label) in [
+        (listing_b, "org A manager on org B listing"),
+        (Uuid::new_v4(), "org A manager on unknown listing"),
+    ] {
+        let resp = call(
+            &app,
+            "POST",
+            &format!("/api/v1/energy/listings/{listing}/sustainability"),
+            &w.mgr_a,
+            Some(json!({ "organization_id": w.org_a, "listing_id": listing })),
+        )
+        .await;
+        expect(&resp, StatusCode::NOT_FOUND, label);
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Registry
 // ---------------------------------------------------------------------------

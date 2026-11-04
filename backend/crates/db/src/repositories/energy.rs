@@ -462,6 +462,25 @@ impl EnergyRepository {
     // SUSTAINABILITY SCORES (Story 65.3)
     // ========================================================================
 
+    /// Whether `listing_id` exists and belongs to `org_id`.
+    ///
+    /// Used to stop an organization from attaching a sustainability score to
+    /// another organization's listing (`listing_id` is UNIQUE on
+    /// `sustainability_scores`, so such a row would squat the listing).
+    pub async fn listing_in_org(
+        &self,
+        listing_id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, sqlx::Error> {
+        sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS(SELECT 1 FROM listings WHERE id = $1 AND organization_id = $2)",
+        )
+        .bind(listing_id)
+        .bind(org_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
     /// Create or update sustainability score for a listing.
     ///
     /// Only a score owned by `org_id` is updated on conflict; if the listing's

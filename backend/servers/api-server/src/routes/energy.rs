@@ -789,6 +789,7 @@ async fn get_sustainability_score(
     responses(
         (status = 201, description = "Score created", body = db::models::energy::SustainabilityScore),
         (status = 400, description = "Invalid request", body = ErrorResponse),
+        (status = 404, description = "Listing not found in organization", body = ErrorResponse),
     ),
     tag = "energy"
 )]
@@ -808,6 +809,20 @@ async fn create_sustainability_score(
     verify_org_manager(&state, auth.user_id, payload.organization_id).await?;
 
     let repo = &state.energy_repo;
+
+    // The listing itself must belong to the caller's org; otherwise an org
+    // could create the (listing-unique) score row first and lock the real
+    // owner out of it.
+    let owned = repo
+        .listing_in_org(listing_id, payload.organization_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to verify listing ownership: {:?}", e);
+            internal_error("Failed to create sustainability score")
+        })?;
+    if !owned {
+        return Err(not_found_error("Listing not found"));
+    }
 
     // The upsert only overwrites a score owned by the same org; a listing
     // whose score belongs to another org yields RowNotFound -> 404.
