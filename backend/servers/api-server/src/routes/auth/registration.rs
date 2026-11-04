@@ -321,10 +321,14 @@ pub async fn verify_email(
 /// invalidating the old tokens must be surfaced (propagated as a 500) rather
 /// than swallowed — matching the error convention of the surrounding handlers.
 fn invalidation_outcome(result: Result<u64, sqlx::Error>) -> Result<(), AuthError> {
-    // PRE-FIX placeholder: swallow the result (mirrors the original
-    // `let _ = ...`). Replaced in the fix commit.
-    let _ = result;
-    Ok(())
+    result.map(|_| ()).map_err(|e| {
+        tracing::error!(error = %e, "Failed to invalidate old verification tokens");
+        err_response(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "DATABASE_ERROR",
+            "Failed to resend verification email",
+        )
+    })
 }
 
 /// Resend verification request.
