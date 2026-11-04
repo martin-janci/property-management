@@ -48,6 +48,25 @@ impl AccountingRepository {
             .await
     }
 
+    /// List the contacts of `tenant_id`.
+    ///
+    /// Carries an explicit tenant predicate so isolation does not depend on
+    /// RLS alone (a connection whose role bypasses RLS still sees only this
+    /// tenant's rows).
+    pub async fn list_contacts_for_tenant<'e, E>(
+        &self,
+        executor: E,
+        tenant_id: Uuid,
+    ) -> Result<Vec<Contact>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, Contact>("SELECT * FROM contact WHERE tenant_id = $1 ORDER BY name ASC")
+            .bind(tenant_id)
+            .fetch_all(executor)
+            .await
+    }
+
     // --- Invoices ---
 
     /// List invoices with RLS.
@@ -58,6 +77,24 @@ impl AccountingRepository {
         sqlx::query_as::<_, Invoice>(
             "SELECT * FROM invoice ORDER BY issue_date DESC, created_at DESC",
         )
+        .fetch_all(executor)
+        .await
+    }
+
+    /// List the invoices of `tenant_id` (explicit tenant predicate; see
+    /// [`list_contacts_for_tenant`](Self::list_contacts_for_tenant)).
+    pub async fn list_invoices_for_tenant<'e, E>(
+        &self,
+        executor: E,
+        tenant_id: Uuid,
+    ) -> Result<Vec<Invoice>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, Invoice>(
+            "SELECT * FROM invoice WHERE tenant_id = $1 ORDER BY issue_date DESC, created_at DESC",
+        )
+        .bind(tenant_id)
         .fetch_all(executor)
         .await
     }
@@ -322,6 +359,24 @@ impl AccountingRepository {
             .await
     }
 
+    /// List the bank statements of `tenant_id` (explicit tenant predicate;
+    /// see [`list_contacts_for_tenant`](Self::list_contacts_for_tenant)).
+    pub async fn list_bank_statements_for_tenant<'e, E>(
+        &self,
+        executor: E,
+        tenant_id: Uuid,
+    ) -> Result<Vec<BankStatement>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, BankStatement>(
+            "SELECT * FROM bank_statement WHERE tenant_id = $1 ORDER BY imported_at DESC",
+        )
+        .bind(tenant_id)
+        .fetch_all(executor)
+        .await
+    }
+
     /// Create a bank statement.
     pub async fn create_bank_statement_rls<'e, E>(
         &self,
@@ -395,6 +450,31 @@ impl AccountingRepository {
             "SELECT * FROM bank_statement_line WHERE statement_id = $1 ORDER BY booking_date DESC",
         )
         .bind(statement_id)
+        .fetch_all(executor)
+        .await
+    }
+
+    /// List the lines of `statement_id`, only when the statement (and line)
+    /// belong to `tenant_id`. A foreign statement id yields an empty list.
+    pub async fn list_bank_statement_lines_for_tenant<'e, E>(
+        &self,
+        executor: E,
+        tenant_id: Uuid,
+        statement_id: Uuid,
+    ) -> Result<Vec<BankStatementLine>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, BankStatementLine>(
+            r#"
+            SELECT l.* FROM bank_statement_line l
+            JOIN bank_statement s ON s.id = l.statement_id
+            WHERE l.statement_id = $1 AND s.tenant_id = $2 AND l.tenant_id = $2
+            ORDER BY l.booking_date DESC
+            "#,
+        )
+        .bind(statement_id)
+        .bind(tenant_id)
         .fetch_all(executor)
         .await
     }

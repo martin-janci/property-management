@@ -32,6 +32,9 @@
  */
 
 import {
+  announcementKeys,
+  budgetKeys,
+  buildingKeys,
   communityKeys,
   complianceKeys,
   disputeKeys,
@@ -211,6 +214,8 @@ describe('AUTHED_QUERY_KEY_ROOTS logout-purge coverage', () => {
       // allow-list (this fix). `votingKeys` (root `voting`) is the live voting
       // factory — the allow-list's legacy `votes` root never matched it.
       communityKeys,
+      // Community's building selector reads the org building list directly.
+      buildingKeys,
       disputeKeys,
       iotKeys,
       outageKeys,
@@ -228,6 +233,10 @@ describe('AUTHED_QUERY_KEY_ROOTS logout-purge coverage', () => {
       oauthGrantKeys,
       mfaKeys,
       layoutKeys,
+      // Resident dashboard RecentActivity reads `/announcements/published`
+      // through `announcementKeys.published()`.
+      announcementKeys,
+      budgetKeys,
     };
 
     it.each(
@@ -252,7 +261,7 @@ describe('AUTHED_QUERY_KEY_ROOTS logout-purge coverage', () => {
         .sort();
       expect(
         unlisted,
-        `api-client key factories imported by ppt-web production code but missing from ` +
+        'api-client key factories imported by ppt-web production code but missing from ' +
           `consumedApiClientFactories (logout-purge coverage unenforced): ${unlisted.join(', ')}`
       ).toEqual([]);
     });

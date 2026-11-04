@@ -9,7 +9,7 @@
  * building-units dropdown (that feeds person-months) empty. This test seeds a
  * token provider on the configured client, captures the outbound request via a
  * recording adapter, and asserts it carried `Authorization: Bearer <token>` and
- * hit `/units` with the building filter. It fails on the raw-fetch version
+ * hit the building's units endpoint. It fails on the raw-fetch version
  * (no header) and passes once the hook uses getApiClient().
  */
 /// <reference types="vitest/globals" />
@@ -39,7 +39,12 @@ function recordingAdapter(): {
       params: config.params,
     });
     const response: AxiosResponse = {
-      data: { data: [{ id: 'unit-1', unitNumber: 'A/1' }] },
+      data: {
+        units: [{ id: 'unit-1', building_id: 'building-1', designation: 'A/1', floor: 1 }],
+        total: 1,
+        offset: 0,
+        limit: 100,
+      },
       status: 200,
       statusText: 'OK',
       headers: {},
@@ -65,7 +70,7 @@ describe('useBuildingUnits — routes through the JWT-injecting axios client', (
     resetApiClient();
   });
 
-  it('sends the Authorization header and the buildingId filter on /units', async () => {
+  it('sends the Authorization header to /buildings/{id}/units', async () => {
     // Configure the shared client exactly as AuthProvider does at runtime.
     const instance = configureApiClient({ getToken: () => ACCESS_TOKEN });
     const { adapter, requests } = recordingAdapter();
@@ -87,12 +92,12 @@ describe('useBuildingUnits — routes through the JWT-injecting axios client', (
     expect(result.current.units).toEqual([{ id: 'unit-1', designation: 'A/1' }]);
 
     // Core assertions: the request carried the bearer token (proving it went
-    // through the axios interceptor, not a raw fetch) and targeted /units for
-    // the requested building.
+    // through the axios interceptor, not a raw fetch) and targeted the
+    // building-scoped units endpoint (there is no org-wide `/units` route).
     const reqs = requests();
     expect(reqs).toHaveLength(1);
     expect(reqs[0].auth).toBe(`Bearer ${ACCESS_TOKEN}`);
-    expect(reqs[0].url).toBe('/units');
-    expect(reqs[0].params).toMatchObject({ buildingId: 'building-1', limit: 500 });
+    expect(reqs[0].url).toBe('/buildings/building-1/units');
+    expect(reqs[0].params).toMatchObject({ offset: 0, limit: 100 });
   });
 });

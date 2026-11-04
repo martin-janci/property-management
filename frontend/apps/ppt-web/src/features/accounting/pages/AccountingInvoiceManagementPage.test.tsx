@@ -13,6 +13,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { AccountingInvoiceManagementPage } from './AccountingInvoiceManagementPage';
 
 const invoicesApiList = vi.fn();
@@ -54,7 +55,9 @@ function renderPage(): ReactElement {
   });
   return (
     <QueryClientProvider client={queryClient}>
-      <AccountingInvoiceManagementPage />
+      <MemoryRouter>
+        <AccountingInvoiceManagementPage />
+      </MemoryRouter>
     </QueryClientProvider>
   );
 }
@@ -74,7 +77,8 @@ describe('AccountingInvoiceManagementPage — error surfacing', () => {
 
     // Wait for the list to render the invoice row, then click its delete icon.
     await screen.findByText('INV-001');
-    const list = screen.getByRole('list');
+    // The invoice list is the <ul> that holds the row (the sub-nav is a list too).
+    const list = screen.getByText('INV-001').closest('ul') as HTMLElement;
     await userEvent.click(within(list).getByRole('button'));
 
     // The native confirm() is gone — a ConfirmationDialog opens instead. Confirm

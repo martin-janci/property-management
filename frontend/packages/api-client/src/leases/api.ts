@@ -2,19 +2,31 @@
  * Leases API client functions (Epic 19: Lease Management & Tenant Screening,
  * plus Epic 142 violation tracking).
  *
- * Thin typed `fetch` wrappers over `/api/v1/leases/*` and `/api/v1/violations/*`.
+ * Thin typed wrappers over `/api/v1/leases/*` and `/api/v1/violations/*`.
  * Mirrors the structure of the meters module (its own `fetchApi`/`buildQueryString`
  * helpers) so the modules stay consistent.
+ *
+ * Every request goes through the shared authenticated transport
+ * (`authenticatedFetchJson`) so it carries the bearer token — every lease and
+ * violation route is behind `AuthUser` / `RlsConnection`, and a bare `fetch`
+ * would be rejected with 401.
  */
 
-import { authenticatedFetch } from '../lib/fetch';
+import { authenticatedFetchJson } from '../lib/fetch';
 import type {
   CreateApplicationRequest,
+  CreateLeaseAmendmentRequest,
   CreateLeaseRequest,
+  CreateLeaseTemplateRequest,
+  CreateViolationAppealRequest,
+  CreateViolationEvidenceRequest,
   CreateViolationRequest,
   ExpirationOverview,
   ExpiringLeasesQuery,
+  InitiateScreeningRequest,
   Lease,
+  LeaseAmendment,
+  LeasePayment,
   LeaseStatistics,
   LeaseTemplate,
   LeaseWithDetails,
@@ -22,8 +34,19 @@ import type {
   ListApplicationsResponse,
   ListLeasesQuery,
   ListLeasesResponse,
+  OrganizationMembersResponse,
+  RecordLeasePaymentRequest,
+  RenewLeaseRequest,
+  ReviewApplicationRequest,
   TenantApplication,
+  TenantScreening,
+  TerminateLeaseRequest,
+  UpdateLeaseRequest,
+  UpdateLeaseTemplateRequest,
+  UpdateViolationRequest,
   Violation,
+  ViolationAppeal,
+  ViolationEvidence,
   ViolationQuery,
   ViolationSummary,
 } from './types';
@@ -45,22 +68,9 @@ function buildQueryString(
   return query ? `?${query}` : '';
 }
 
-/** Generic fetch wrapper with error handling. */
-async function fetchApi<T>(url: string, options?: RequestInit): Promise<T> {
-  const response = await authenticatedFetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Request failed' }));
-    throw new Error(error.message || `HTTP ${response.status}`);
-  }
-
-  return response.json();
+/** Authenticated JSON fetch (bearer token + MFA retry); throws `ApiError` on non-2xx. */
+function fetchApi<T>(url: string, options?: RequestInit): Promise<T> {
+  return authenticatedFetchJson<T>(url, options);
 }
 
 // ============================================================================
@@ -89,6 +99,41 @@ export async function getLease(id: string): Promise<LeaseWithDetails> {
 /** Create a lease. */
 export async function createLease(body: CreateLeaseRequest): Promise<Lease> {
   return fetchApi<Lease>(`${LEASES_BASE}`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+/** Update a lease's editable ancillary fields (`PUT /api/v1/leases/{id}`). */
+export async function updateLease(id: string, body: UpdateLeaseRequest): Promise<Lease> {
+  return fetchApi<Lease>(`${LEASES_BASE}/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(body),
+  });
+}
+
+/** Terminate a lease (`POST /api/v1/leases/{id}/terminate`). */
+export async function terminateLease(id: string, body: TerminateLeaseRequest): Promise<Lease> {
+  return fetchApi<Lease>(`${LEASES_BASE}/${id}/terminate`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+/** Renew a lease (`POST /api/v1/leases/{id}/renew`); returns the new draft lease. */
+export async function renewLease(id: string, body: RenewLeaseRequest): Promise<Lease> {
+  return fetchApi<Lease>(`${LEASES_BASE}/${id}/renew`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+/** Add an amendment to a lease (`POST /api/v1/leases/{id}/amendments`). */
+export async function createLeaseAmendment(
+  id: string,
+  body: CreateLeaseAmendmentRequest
+): Promise<LeaseAmendment> {
+  return fetchApi<LeaseAmendment>(`${LEASES_BASE}/${id}/amendments`, {
     method: 'POST',
     body: JSON.stringify(body),
   });
@@ -124,6 +169,51 @@ export async function getLeaseTemplate(id: string): Promise<LeaseTemplate> {
   return fetchApi<LeaseTemplate>(`${LEASES_BASE}/templates/${id}`);
 }
 
+/** Create a lease template (`POST /api/v1/leases/templates`). */
+export async function createLeaseTemplate(
+  body: CreateLeaseTemplateRequest
+): Promise<LeaseTemplate> {
+  return fetchApi<LeaseTemplate>(`${LEASES_BASE}/templates`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+/** Update a lease template, incl. (de)activation (`PUT /api/v1/leases/templates/{id}`). */
+export async function updateLeaseTemplate(
+  id: string,
+  body: UpdateLeaseTemplateRequest
+): Promise<LeaseTemplate> {
+  return fetchApi<LeaseTemplate>(`${LEASES_BASE}/templates/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(body),
+  });
+}
+
+// ============================================================================
+// Payments
+// ============================================================================
+
+/**
+ * Record a payment against an existing scheduled lease payment row.
+ *
+ * NOTE: the backend registers this as `POST /api/v1/leases/{id}/payments`, but
+ * its handler (`routes/leases.rs::record_payment`) extracts the single `{id}`
+ * path segment as the **payment** id and runs `UPDATE lease_payments … WHERE
+ * id = $1`. Sending the lease id there would always 500 (row not found), so the
+ * client deliberately puts the payment id in that segment to match the live
+ * server.
+ */
+export async function recordLeasePayment(
+  paymentId: string,
+  body: RecordLeasePaymentRequest
+): Promise<LeasePayment> {
+  return fetchApi<LeasePayment>(`${LEASES_BASE}/${paymentId}/payments`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
 // ============================================================================
 // Applications
 // ============================================================================
@@ -157,6 +247,43 @@ export async function createApplication(
   });
 }
 
+/** Approve or reject an application (`POST /api/v1/leases/applications/{id}/review`). Manager-only. */
+export async function reviewApplication(
+  id: string,
+  body: ReviewApplicationRequest
+): Promise<TenantApplication> {
+  return fetchApi<TenantApplication>(`${LEASES_BASE}/applications/${id}/review`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+/**
+ * Initiate tenant screening for an application
+ * (`POST /api/v1/leases/applications/{id}/screening`). Returns one row per
+ * requested screening type, each in `pending_consent`.
+ */
+export async function initiateScreening(
+  applicationId: string,
+  body: InitiateScreeningRequest
+): Promise<TenantScreening[]> {
+  return fetchApi<TenantScreening[]>(`${LEASES_BASE}/applications/${applicationId}/screening`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+// ============================================================================
+// Organization members (tenant picker for lease creation)
+// ============================================================================
+
+/** List organization members (`GET /api/v1/organizations/{id}/members`). */
+export async function listOrganizationMembers(
+  organizationId: string
+): Promise<OrganizationMembersResponse> {
+  return fetchApi<OrganizationMembersResponse>(`/api/v1/organizations/${organizationId}/members`);
+}
+
 // ============================================================================
 // Violations
 // ============================================================================
@@ -187,6 +314,51 @@ export async function getViolation(id: string): Promise<Violation> {
 /** Create a violation. */
 export async function createViolation(body: CreateViolationRequest): Promise<Violation> {
   return fetchApi<Violation>(`${VIOLATIONS_BASE}`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+/** Update a violation — used to resolve it (`PUT /api/v1/violations/{id}`). Manager-only. */
+export async function updateViolation(
+  id: string,
+  body: UpdateViolationRequest
+): Promise<Violation> {
+  return fetchApi<Violation>(`${VIOLATIONS_BASE}/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(body),
+  });
+}
+
+/**
+ * Dispute a violation by filing an appeal (`POST /api/v1/violations/{id}/appeals`).
+ * The server flips the violation status to `disputed`.
+ */
+export async function createViolationAppeal(
+  id: string,
+  body: CreateViolationAppealRequest
+): Promise<ViolationAppeal> {
+  return fetchApi<ViolationAppeal>(`${VIOLATIONS_BASE}/${id}/appeals`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+/** List evidence attached to a violation (`GET /api/v1/violations/{id}/evidence`). */
+export async function listViolationEvidence(id: string): Promise<ViolationEvidence[]> {
+  return fetchApi<ViolationEvidence[]>(`${VIOLATIONS_BASE}/${id}/evidence`);
+}
+
+/**
+ * Attach an evidence record to a violation (`POST /api/v1/violations/{id}/evidence`).
+ * The bytes are uploaded first (presigned `documents/upload-url`); this call
+ * registers the metadata with the returned storage key.
+ */
+export async function addViolationEvidence(
+  id: string,
+  body: CreateViolationEvidenceRequest
+): Promise<ViolationEvidence> {
+  return fetchApi<ViolationEvidence>(`${VIOLATIONS_BASE}/${id}/evidence`, {
     method: 'POST',
     body: JSON.stringify(body),
   });

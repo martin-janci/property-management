@@ -4,14 +4,9 @@ import { AccessibilityProvider, SkipNavigation } from '@ppt/ui-kit';
 import { useQueryClient } from '@tanstack/react-query';
 import { type ReactNode, Suspense, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BrowserRouter, Link, useLocation, useNavigate } from 'react-router-dom';
-import {
-  AnnouncerProvider,
-  ConnectionStatus,
-  LanguageSwitcher,
-  OfflineIndicator,
-  ToastProvider,
-} from './components';
+import { BrowserRouter, useLocation } from 'react-router-dom';
+import { AnnouncerProvider, OfflineIndicator, ToastProvider } from './components';
+import { AppShell } from './components/AppShell/AppShell';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import './styles/accessibility.css';
 import './features/settings/styles/accessibility.css';
@@ -22,7 +17,6 @@ import {
   useNavigationCommands,
 } from './features/command-palette';
 import { AppRoutes } from './routes/AppRoutes';
-import { isManagerRole } from './routes/shared';
 
 /**
  * MFA challenge wrapper (N9).
@@ -120,79 +114,6 @@ function WebSocketWrapper({ children }: { children: ReactNode }) {
   );
 }
 
-function AppNavigation() {
-  const { t } = useTranslation();
-  const { isAuthenticated, logout, user } = useAuth();
-  const navigate = useNavigate();
-  const isOperator = isManagerRole(user?.role);
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login', { replace: true });
-  };
-
-  return (
-    <nav className="app-nav" aria-label="Main navigation">
-      <Link to="/">{t('nav.home')}</Link>
-      <Link to="/buildings">{t('nav.buildings')}</Link>
-      <Link to="/documents">{t('nav.documents')}</Link>
-      <Link to="/ai-assistant">{t('nav.aiChat')}</Link>
-      <Link to="/news">{t('nav.news')}</Link>
-      <Link to="/emergency">{t('nav.emergency')}</Link>
-      <Link to="/disputes">{t('nav.disputes')}</Link>
-      <Link to="/leases">{t('nav.leases', { defaultValue: 'Leases' })}</Link>
-      <Link to="/outages">{t('nav.outages')}</Link>
-      <Link to="/iot">{t('nav.iot', { defaultValue: 'Smart Building' })}</Link>
-      <Link to="/iot/alerts">{t('nav.iotAlerts', { defaultValue: 'Sensor Alerts' })}</Link>
-      <Link to="/rentals">{t('nav.rentals', { defaultValue: 'Rentals' })}</Link>
-      {isOperator && (
-        <Link to="/notifications/analytics">
-          {t('nav.notificationAnalytics', { defaultValue: 'Notification Analytics' })}
-        </Link>
-      )}
-      <Link to="/settings/integrations">
-        {t('nav.integrations', { defaultValue: 'Integrations' })}
-      </Link>
-      {isOperator && (
-        <Link to="/settings/portal-webhooks">
-          {t('nav.portalWebhooks', { defaultValue: 'Portal Webhooks' })}
-        </Link>
-      )}
-      <Link to="/settings/accessibility">{t('nav.accessibility')}</Link>
-      <Link to="/settings/privacy">{t('nav.privacy')}</Link>
-      <Link to="/settings/sessions">{t('nav.sessions', { defaultValue: 'Sessions' })}</Link>
-      {isAuthenticated && (
-        <Link to="/notifications/triggers">
-          {t('nav.notificationTriggers', { defaultValue: 'Notification Triggers' })}
-        </Link>
-      )}
-      {/* Super-admin moved to admin.rlt.sk (separate SPA) — no nav link here. */}
-      <div className="ml-auto flex items-center gap-3">
-        {isAuthenticated && <ConnectionStatus />}
-        <LanguageSwitcher />
-        {isAuthenticated && (
-          <button
-            type="button"
-            className="btn-outline-token px-3 py-1.5 rounded-lg text-sm font-medium"
-            onClick={handleLogout}
-            aria-label={t('auth.signOut', { defaultValue: 'Sign out' })}
-          >
-            {t('auth.signOut', { defaultValue: 'Sign out' })}
-          </button>
-        )}
-        {!isAuthenticated && (
-          <Link
-            to="/login"
-            className="btn-primary-token px-3 py-1.5 rounded-lg text-sm font-medium"
-          >
-            {t('auth.signIn')}
-          </Link>
-        )}
-      </div>
-    </nav>
-  );
-}
-
 function RouteLoading() {
   const { t } = useTranslation();
   return (
@@ -220,7 +141,7 @@ function RouteLoading() {
  * to the top-level `<ErrorBoundary>` in `main.tsx`, which wraps the *entire*
  * `<App />` — nav, providers and all — and replaces the whole UI with the
  * global fallback. Placing a boundary here, as a child of `<main>` and a
- * sibling *below* `<AppNavigation>`, keeps the shell (nav, language switcher,
+ * sibling *below* the `<AppShell>` header/sidebar, keeps the shell (nav, language switcher,
  * connection status) mounted and renders the fallback only inside the content
  * region. The reused `ErrorBoundary` fallback already offers a reload
  * affordance ("Reload Page") plus an in-place "Try Again".
@@ -263,11 +184,10 @@ function App() {
                       <CommandPaletteWrapper>
                         <SkipNavigation mainContentId="main-content" />
                         <OfflineIndicator />
-                        <div className="app">
-                          {/* Phase 5 impersonation banner moved with the
-                              admin SPA to admin.rlt.sk. ppt-web tenants
-                              never see impersonation tokens directly. */}
-                          <AppNavigation />
+                        {/* Phase 5 impersonation banner moved with the
+                            admin SPA to admin.rlt.sk. ppt-web tenants
+                            never see impersonation tokens directly. */}
+                        <AppShell>
                           <main id="main-content">
                             <RouteErrorBoundary>
                               <Suspense fallback={<RouteLoading />}>
@@ -275,7 +195,7 @@ function App() {
                               </Suspense>
                             </RouteErrorBoundary>
                           </main>
-                        </div>
+                        </AppShell>
                       </CommandPaletteWrapper>
                     </CommandPaletteProvider>
                   </BrowserRouter>

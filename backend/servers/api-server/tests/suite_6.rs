@@ -61,3 +61,5 @@ mod outages_happy_path_tests;
 mod owner_analytics_cross_org_idor_tests;
 #[path = "suites/package_visitor_happy_path_tests.rs"]
 mod package_visitor_happy_path_tests;
+#[path = "suites/package_visitor_round4_authz_tests.rs"]
+mod package_visitor_round4_authz_tests;

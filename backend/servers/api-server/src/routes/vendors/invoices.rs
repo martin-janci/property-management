@@ -13,8 +13,8 @@ use db::models::{InvoiceSummary, UpdateVendorInvoice, VendorInvoice};
 use uuid::Uuid;
 
 use super::shared::{
-    db_error, load_invoice_for_user, not_found, CreateInvoiceRequest, InvoiceSummaryQuery,
-    ListInvoicesQuery, OrgQuery, RecordPaymentRequest, RejectRequest,
+    db_error, load_invoice_for_user, not_found, require_manager, CreateInvoiceRequest,
+    InvoiceSummaryQuery, ListInvoicesQuery, OrgQuery, RecordPaymentRequest, RejectRequest,
 };
 use crate::state::AppState;
 
@@ -23,6 +23,7 @@ pub(super) async fn create_invoice(
     mut rls: RlsConnection,
     Json(payload): Json<CreateInvoiceRequest>,
 ) -> Result<(StatusCode, Json<VendorInvoice>), (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let out = state
@@ -99,6 +100,7 @@ pub(super) async fn update_invoice(
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateVendorInvoice>,
 ) -> Result<Json<VendorInvoice>, (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = async {
         load_invoice_for_user(&state, &mut rls, id).await?;
@@ -119,6 +121,7 @@ pub(super) async fn delete_invoice(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = async {
         load_invoice_for_user(&state, &mut rls, id).await?;
@@ -143,6 +146,7 @@ pub(super) async fn approve_invoice(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<VendorInvoice>, (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let out = async {
@@ -165,6 +169,7 @@ pub(super) async fn reject_invoice(
     Path(id): Path<Uuid>,
     Json(data): Json<RejectRequest>,
 ) -> Result<Json<VendorInvoice>, (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let out = async {
@@ -187,6 +192,7 @@ pub(super) async fn record_payment(
     Path(id): Path<Uuid>,
     Json(data): Json<RecordPaymentRequest>,
 ) -> Result<Json<VendorInvoice>, (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = async {
         load_invoice_for_user(&state, &mut rls, id).await?;

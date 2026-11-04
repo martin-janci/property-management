@@ -1,4 +1,4 @@
-import { type TimelineEventType, useDisputeTimeline } from '@ppt/api-client';
+import { type TimelineEventType, useDispute, useDisputeTimeline } from '@ppt/api-client';
 import { useTranslation } from 'react-i18next';
 import { Spinner } from '../../../components/Spinner';
 import { formatTime } from '../utils/formatTime';
@@ -10,12 +10,16 @@ interface MediationTimelineViewProps {
 const eventAriaLabelKeys: Record<TimelineEventType, string> = {
   dispute_filed: 'disputes.mediation.timeline.icon.disputeFiled',
   status_changed: 'disputes.mediation.timeline.icon.statusChanged',
-  mediator_assigned: 'disputes.mediation.timeline.icon.mediatorAssigned',
+  party_added: 'disputes.mediation.timeline.icon.partyAdded',
   evidence_added: 'disputes.mediation.timeline.icon.evidenceAdded',
-  note_added: 'disputes.mediation.timeline.icon.noteAdded',
-  meeting_scheduled: 'disputes.mediation.timeline.icon.meetingScheduled',
+  session_scheduled: 'disputes.mediation.timeline.icon.meetingScheduled',
+  session_completed: 'disputes.mediation.timeline.icon.sessionCompleted',
   resolution_proposed: 'disputes.mediation.timeline.icon.resolutionProposed',
+  resolution_voted: 'disputes.mediation.timeline.icon.resolutionVoted',
   resolution_accepted: 'disputes.mediation.timeline.icon.resolutionAccepted',
+  action_created: 'disputes.mediation.timeline.icon.actionCreated',
+  action_completed: 'disputes.mediation.timeline.icon.actionCompleted',
+  comment_added: 'disputes.mediation.timeline.icon.noteAdded',
   escalated: 'disputes.mediation.timeline.icon.escalated',
   closed: 'disputes.mediation.timeline.icon.closed',
 };
@@ -23,12 +27,16 @@ const eventAriaLabelKeys: Record<TimelineEventType, string> = {
 const eventIconMap: Record<TimelineEventType, string> = {
   dispute_filed: '📋',
   status_changed: '🔄',
-  mediator_assigned: '👤',
+  party_added: '👤',
   evidence_added: '📎',
-  note_added: '📝',
-  meeting_scheduled: '📅',
+  session_scheduled: '📅',
+  session_completed: '🤝',
   resolution_proposed: '💡',
+  resolution_voted: '🗳️',
   resolution_accepted: '✅',
+  action_created: '📌',
+  action_completed: '☑️',
+  comment_added: '📝',
   escalated: '⚠️',
   closed: '🔒',
 };
@@ -36,12 +44,16 @@ const eventIconMap: Record<TimelineEventType, string> = {
 const eventColorMap: Record<TimelineEventType, string> = {
   dispute_filed: 'bg-blue-100',
   status_changed: 'bg-yellow-100',
-  mediator_assigned: 'bg-violet-100',
+  party_added: 'bg-violet-100',
   evidence_added: 'bg-indigo-100',
-  note_added: 'bg-gray-100',
-  meeting_scheduled: 'bg-teal-100',
+  session_scheduled: 'bg-teal-100',
+  session_completed: 'bg-teal-200',
   resolution_proposed: 'bg-orange-100',
+  resolution_voted: 'bg-orange-50',
   resolution_accepted: 'bg-green-100',
+  action_created: 'bg-sky-100',
+  action_completed: 'bg-green-50',
+  comment_added: 'bg-gray-100',
   escalated: 'bg-red-100',
   closed: 'bg-gray-200',
 };
@@ -49,6 +61,10 @@ const eventColorMap: Record<TimelineEventType, string> = {
 export function MediationTimelineView({ disputeId }: MediationTimelineViewProps) {
   const { t, i18n } = useTranslation();
   const { data: events, isLoading } = useDisputeTimeline(disputeId);
+  // The activity log carries only actor ids; resolve names from the parties
+  // already loaded (and cached) by the workspace page's useDispute call.
+  const { data: dispute } = useDispute(disputeId);
+  const actorNames = new Map((dispute?.parties ?? []).map((p) => [p.userId, p.userName]));
 
   if (isLoading) {
     return (
@@ -89,7 +105,11 @@ export function MediationTimelineView({ disputeId }: MediationTimelineViewProps)
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="text-sm font-medium text-gray-900">{event.description}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{event.actorName}</p>
+                    {actorNames.has(event.actorId) && (
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {actorNames.get(event.actorId)}
+                      </p>
+                    )}
                   </div>
                   <time dateTime={event.createdAt} className="text-xs text-gray-400 shrink-0">
                     {formatTime(event.createdAt, i18n.language)}

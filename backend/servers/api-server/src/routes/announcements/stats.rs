@@ -3,7 +3,7 @@
 use super::shared::*;
 use crate::state::AppState;
 use api_core::extractors::RlsConnection;
-use api_core::{AuthUser, TenantExtractor};
+use api_core::{AuthUser, ValidatedTenantExtractor};
 use axum::{extract::State, http::StatusCode, routing::get, Json, Router};
 use common::errors::ErrorResponse;
 
@@ -31,7 +31,7 @@ pub(super) fn router() -> Router<AppState> {
 pub(super) async fn get_statistics(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
 ) -> Result<Json<StatisticsResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Authorization: require manager-level role (Task 3.7)
@@ -85,7 +85,7 @@ pub(super) async fn get_statistics(
 pub(super) async fn get_unread_count(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
 ) -> Result<Json<UnreadCountResponse>, (StatusCode, Json<ErrorResponse>)> {
     let org_id = tenant.tenant_id;

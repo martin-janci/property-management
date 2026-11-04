@@ -3,7 +3,7 @@
 use super::shared::*;
 use crate::state::AppState;
 use api_core::extractors::RlsConnection;
-use api_core::{AuthUser, TenantExtractor};
+use api_core::{AuthUser, ValidatedTenantExtractor};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -46,10 +46,13 @@ pub(super) fn router() -> Router<AppState> {
 pub(super) async fn list_attachments(
     State(state): State<AppState>,
     _auth: AuthUser,
-    _tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<AttachmentsResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // Org scope: 404 unless the announcement belongs to the caller's org.
+    load_announcement_in_org(&state, &mut rls, tenant.tenant_id, id).await?;
+
     match state
         .announcement_repo
         .get_attachments_rls(&mut **rls.conn(), id)
@@ -94,7 +97,7 @@ pub(super) async fn list_attachments(
 pub(super) async fn add_attachment(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<AddAttachmentRequest>,
@@ -110,6 +113,9 @@ pub(super) async fn add_attachment(
             )),
         ));
     }
+
+    // Org scope: 404 unless the announcement belongs to the caller's org.
+    load_announcement_in_org(&state, &mut rls, tenant.tenant_id, id).await?;
     let data = CreateAnnouncementAttachment {
         announcement_id: id,
         file_key: req.file_key,
@@ -162,9 +168,9 @@ pub(super) async fn add_attachment(
 pub(super) async fn delete_attachment(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
-    Path((_id, attachment_id)): Path<(Uuid, Uuid)>,
+    Path((id, attachment_id)): Path<(Uuid, Uuid)>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
     // Authorization: require manager-level role (Task 3.7)
     if !tenant.role.is_manager() {
@@ -177,11 +183,22 @@ pub(super) async fn delete_attachment(
             )),
         ));
     }
+
+    // Org scope: 404 unless the announcement belongs to the caller's org.
+    load_announcement_in_org(&state, &mut rls, tenant.tenant_id, id).await?;
+    // Nested id: the attachment must belong to this announcement.
     match state
         .announcement_repo
-        .delete_attachment_rls(&mut **rls.conn(), attachment_id)
+        .delete_attachment_for_announcement_rls(&mut **rls.conn(), id, attachment_id)
         .await
     {
+        Ok(0) => {
+            rls.release().await;
+            Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Attachment not found")),
+            ))
+        }
         Ok(_) => {
             rls.release().await;
             Ok(StatusCode::NO_CONTENT)
@@ -217,10 +234,12 @@ pub(super) async fn delete_attachment(
 pub(super) async fn mark_read(
     State(state): State<AppState>,
     auth: AuthUser,
-    _tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    // Org scope: 404 unless the announcement belongs to the caller's org.
+    load_announcement_in_org(&state, &mut rls, tenant.tenant_id, id).await?;
     let user_id = auth.user_id;
 
     match state
@@ -263,10 +282,12 @@ pub(super) async fn mark_read(
 pub(super) async fn acknowledge(
     State(state): State<AppState>,
     auth: AuthUser,
-    _tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    // Org scope: 404 unless the announcement belongs to the caller's org.
+    load_announcement_in_org(&state, &mut rls, tenant.tenant_id, id).await?;
     let user_id = auth.user_id;
 
     match state
@@ -313,7 +334,7 @@ pub(super) async fn acknowledge(
 pub(super) async fn get_acknowledgments(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Query(_query): Query<AcknowledgmentListQuery>,
@@ -329,6 +350,9 @@ pub(super) async fn get_acknowledgments(
             )),
         ));
     }
+
+    // Org scope: 404 unless the announcement belongs to the caller's org.
+    load_announcement_in_org(&state, &mut rls, tenant.tenant_id, id).await?;
 
     // Check announcement exists
     match state

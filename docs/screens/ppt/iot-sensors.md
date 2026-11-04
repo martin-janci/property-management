@@ -68,3 +68,9 @@ points, mounted by `routes/groups/iot.tsx` on the `@ppt/api-client` IoT module
 - 2026-11-04 — agent: sensor form "Connection type" is now a select of api/mqtt/webhook/polling (the DB CHECK values) with labels in all locales; free text caused a 500 on create (R3 #12). IoT route error toasts use translated copy by HTTP status (R3 #34). Status unchanged.
 - 2026-06-21 — FrontendEngineer: created with the sensor-CRUD increment
   (BIT-146, Epic 14 / FR71).
+
+## Agent Log
+
+<!-- newest entries on top -->
+
+- 2026-11-04 — agent: destructive-action confirm now uses the in-app ConfirmationDialog (useConfirmDialog) instead of window.confirm()

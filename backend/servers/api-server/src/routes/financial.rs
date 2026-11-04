@@ -12,6 +12,7 @@ use axum::{
 };
 use chrono::NaiveDate;
 use common::errors::ErrorResponse;
+use common::TenantRole;
 use db::models::{
     CreateFeeSchedule, CreateFinancialAccount, CreateInvoice, CreateTransaction,
     InitiatePaymentResponse, InvoiceStatus, Payment, PaymentAllocation, RecordPayment,
@@ -104,6 +105,87 @@ async fn verify_account_access(
     }
 
     Ok(account)
+}
+
+/// Require a manager-class membership (`manager`, `org_admin` or higher) in
+/// `org_id` for financial mutations.
+///
+/// The role is read from `organization_members.role_type` (the database), never
+/// from the JWT. A non-member gets the same `403` as [`verify_org_access`]; a
+/// member with a lower role (owner, tenant, resident, ...) gets `403` too.
+async fn verify_org_manager(
+    state: &AppState,
+    user_id: Uuid,
+    org_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let role_type = state
+        .org_member_repo
+        .get_user_role_type(org_id, user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = ?e, "Failed to look up org role");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+            )
+        })?;
+    let Some(role_type) = role_type else {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "You are not a member of this organization",
+            )),
+        ));
+    };
+    let is_manager = TenantRole::from_role_type(&role_type)
+        .map(|role| role.level() >= TenantRole::Manager.level())
+        .unwrap_or(false);
+    if !is_manager {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Manager role required for this operation",
+            )),
+        ));
+    }
+    Ok(())
+}
+
+/// Map an ownership-check DB error to a `500`.
+fn scope_db_error(e: sqlx::Error) -> (StatusCode, Json<ErrorResponse>) {
+    tracing::error!(error = ?e, "Failed to verify resource ownership");
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+    )
+}
+
+/// `404` for a nested id that does not belong to the caller's organization.
+fn scope_not_found(msg: &'static str) -> (StatusCode, Json<ErrorResponse>) {
+    (
+        StatusCode::NOT_FOUND,
+        Json(ErrorResponse::new("NOT_FOUND", msg)),
+    )
+}
+
+/// Reject (`404`) a unit that is not in a building of `org_id`.
+async fn ensure_unit_in_org(
+    state: &AppState,
+    unit_id: Uuid,
+    org_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    if state
+        .financial_repo
+        .unit_in_org(unit_id, org_id)
+        .await
+        .map_err(scope_db_error)?
+    {
+        Ok(())
+    } else {
+        Err(scope_not_found("Unit not found"))
+    }
 }
 
 /// Membership check that maps DB errors to a 500 but returns a plain bool for
@@ -431,7 +513,20 @@ async fn create_account(
     auth: AuthUser,
     Json(payload): Json<CreateAccountRequest>,
 ) -> Result<(StatusCode, Json<db::models::FinancialAccount>), (StatusCode, Json<ErrorResponse>)> {
-    verify_org_access(&state, auth.user_id, payload.organization_id).await?;
+    verify_org_manager(&state, auth.user_id, payload.organization_id).await?;
+    if let Some(building_id) = payload.data.building_id {
+        if !state
+            .financial_repo
+            .building_in_org(building_id, payload.organization_id)
+            .await
+            .map_err(scope_db_error)?
+        {
+            return Err(scope_not_found("Building not found"));
+        }
+    }
+    if let Some(unit_id) = payload.data.unit_id {
+        ensure_unit_in_org(&state, unit_id, payload.organization_id).await?;
+    }
     state
         .financial_repo
         .create_account(payload.organization_id, payload.data)
@@ -523,8 +618,37 @@ async fn create_transaction(
     Path(id): Path<Uuid>,
     Json(mut payload): Json<CreateTransaction>,
 ) -> Result<(StatusCode, Json<db::models::AccountTransaction>), (StatusCode, Json<ErrorResponse>)> {
-    verify_account_access(&state, auth.user_id, id).await?;
+    let account = verify_account_access(&state, auth.user_id, id).await?;
+    verify_org_manager(&state, auth.user_id, account.organization_id).await?;
     payload.account_id = id;
+
+    // Linked records must belong to the account's organization.
+    let org_id = account.organization_id;
+    let repo = &state.financial_repo;
+    let counterpart: Vec<Uuid> = payload.counterpart_account_id.into_iter().collect();
+    if !repo
+        .accounts_in_org(&counterpart, org_id)
+        .await
+        .map_err(scope_db_error)?
+    {
+        return Err(scope_not_found("Counterpart account not found"));
+    }
+    let invoice: Vec<Uuid> = payload.invoice_id.into_iter().collect();
+    if !repo
+        .invoices_in_org(&invoice, org_id)
+        .await
+        .map_err(scope_db_error)?
+    {
+        return Err(scope_not_found("Invoice not found"));
+    }
+    let payment: Vec<Uuid> = payload.payment_id.into_iter().collect();
+    if !repo
+        .payments_in_org(&payment, org_id)
+        .await
+        .map_err(scope_db_error)?
+    {
+        return Err(scope_not_found("Payment not found"));
+    }
 
     state
         .financial_repo
@@ -548,16 +672,24 @@ async fn get_unit_ledger(
     auth: AuthUser,
     Path(unit_id): Path<Uuid>,
 ) -> Result<Json<db::models::FinancialAccountResponse>, (StatusCode, Json<ErrorResponse>)> {
-    match state.financial_repo.get_unit_ledger(unit_id).await {
+    // Resolve the unit's owning org from the building, verify membership
+    // (non-members get 404), and only read that org's ledger so a ledger row
+    // created by another org for this unit can never shadow it.
+    let unit_org = state
+        .financial_repo
+        .get_unit_organization(unit_id)
+        .await
+        .map_err(scope_db_error)?;
+    let org_id = match unit_org {
+        Some(org_id) if is_member_or_not_found(&state, auth.user_id, org_id).await? => org_id,
+        _ => return Err(scope_not_found("Unit ledger not found")),
+    };
+    match state
+        .financial_repo
+        .get_unit_ledger_for_org(unit_id, org_id)
+        .await
+    {
         Ok(Some(account)) => {
-            // The ledger account carries the owning org; verify membership
-            // before returning any data (treat non-members as 404).
-            if !is_member_or_not_found(&state, auth.user_id, account.organization_id).await? {
-                return Err((
-                    StatusCode::NOT_FOUND,
-                    Json(ErrorResponse::new("NOT_FOUND", "Unit ledger not found")),
-                ));
-            }
             match state
                 .financial_repo
                 .get_account_with_transactions(account.id, 20)
@@ -591,7 +723,7 @@ async fn create_fee_schedule(
     auth: AuthUser,
     Json(payload): Json<CreateFeeScheduleRequest>,
 ) -> Result<(StatusCode, Json<db::models::FeeSchedule>), (StatusCode, Json<ErrorResponse>)> {
-    verify_org_access(&state, auth.user_id, payload.organization_id).await?;
+    verify_org_manager(&state, auth.user_id, payload.organization_id).await?;
     state
         .financial_repo
         .create_fee_schedule(payload.organization_id, auth.user_id, payload.data)
@@ -673,6 +805,7 @@ async fn get_unit_fees(
     Query(query): Query<UnitFeesQuery>,
 ) -> Result<Json<Vec<db::models::UnitFee>>, (StatusCode, Json<ErrorResponse>)> {
     verify_org_access(&state, auth.user_id, query.organization_id).await?;
+    ensure_unit_in_org(&state, unit_id, query.organization_id).await?;
     let as_of = query
         .as_of
         .unwrap_or_else(|| chrono::Utc::now().date_naive());
@@ -696,7 +829,16 @@ async fn assign_unit_fee(
     Path(unit_id): Path<Uuid>,
     Json(payload): Json<AssignUnitFeeRequest>,
 ) -> Result<(StatusCode, Json<db::models::UnitFee>), (StatusCode, Json<ErrorResponse>)> {
-    verify_org_access(&state, auth.user_id, payload.organization_id).await?;
+    verify_org_manager(&state, auth.user_id, payload.organization_id).await?;
+    ensure_unit_in_org(&state, unit_id, payload.organization_id).await?;
+    if !state
+        .financial_repo
+        .fee_schedules_in_org(&[payload.fee_schedule_id], payload.organization_id)
+        .await
+        .map_err(scope_db_error)?
+    {
+        return Err(scope_not_found("Fee schedule not found"));
+    }
     state
         .financial_repo
         .assign_unit_fee(
@@ -724,7 +866,37 @@ async fn create_invoice(
     auth: AuthUser,
     Json(payload): Json<CreateInvoiceRequest>,
 ) -> Result<(StatusCode, Json<db::models::InvoiceResponse>), (StatusCode, Json<ErrorResponse>)> {
-    verify_org_access(&state, auth.user_id, payload.organization_id).await?;
+    let org_id = payload.organization_id;
+    verify_org_manager(&state, auth.user_id, org_id).await?;
+    ensure_unit_in_org(&state, payload.data.unit_id, org_id).await?;
+    let fee_schedule_ids: Vec<Uuid> = payload
+        .data
+        .items
+        .iter()
+        .filter_map(|i| i.fee_schedule_id)
+        .collect();
+    if !state
+        .financial_repo
+        .fee_schedules_in_org(&fee_schedule_ids, org_id)
+        .await
+        .map_err(scope_db_error)?
+    {
+        return Err(scope_not_found("Fee schedule not found"));
+    }
+    let meter_reading_ids: Vec<Uuid> = payload
+        .data
+        .items
+        .iter()
+        .filter_map(|i| i.meter_reading_id)
+        .collect();
+    if !state
+        .financial_repo
+        .meter_readings_in_org(&meter_reading_ids, org_id)
+        .await
+        .map_err(scope_db_error)?
+    {
+        return Err(scope_not_found("Meter reading not found"));
+    }
     state
         .financial_repo
         .create_invoice(payload.organization_id, auth.user_id, payload.data)
@@ -995,6 +1167,7 @@ async fn send_invoice(
                     Json(ErrorResponse::new("NOT_FOUND", "Invoice not found")),
                 ));
             }
+            verify_org_manager(&state, auth.user_id, existing.organization_id).await?;
         }
         Ok(None) => {
             return Err((
@@ -1060,7 +1233,20 @@ async fn record_payment(
     auth: AuthUser,
     Json(payload): Json<RecordPaymentRequest>,
 ) -> Result<(StatusCode, Json<db::models::PaymentResponse>), (StatusCode, Json<ErrorResponse>)> {
-    verify_org_access(&state, auth.user_id, payload.organization_id).await?;
+    let org_id = payload.organization_id;
+    verify_org_manager(&state, auth.user_id, org_id).await?;
+    // The unit and every explicitly targeted invoice must belong to the
+    // caller's organization, otherwise a payment could settle another org's
+    // invoices or credit another org's unit.
+    ensure_unit_in_org(&state, payload.data.unit_id, org_id).await?;
+    if !state
+        .financial_repo
+        .invoices_in_org(&payload.data.invoice_ids, org_id)
+        .await
+        .map_err(scope_db_error)?
+    {
+        return Err(scope_not_found("Invoice not found"));
+    }
     state
         .financial_repo
         .record_payment(payload.organization_id, auth.user_id, payload.data)
@@ -1341,7 +1527,7 @@ async fn allocate_payment(
     Path(id): Path<Uuid>,
     Json(payload): Json<AllocatePaymentRequest>,
 ) -> Result<(StatusCode, Json<PaymentAllocation>), (StatusCode, Json<ErrorResponse>)> {
-    verify_org_access(&state, auth.user_id, payload.organization_id).await?;
+    verify_org_manager(&state, auth.user_id, payload.organization_id).await?;
     let allocation = state
         .financial_repo
         .allocate_existing_payment(
@@ -1377,7 +1563,7 @@ async fn auto_match_payments(
     auth: AuthUser,
     Json(payload): Json<AutoMatchRequest>,
 ) -> Result<Json<AutoMatchResponse>, (StatusCode, Json<ErrorResponse>)> {
-    verify_org_access(&state, auth.user_id, payload.organization_id).await?;
+    verify_org_manager(&state, auth.user_id, payload.organization_id).await?;
     let matched = state
         .financial_repo
         .auto_match_payments(payload.organization_id)

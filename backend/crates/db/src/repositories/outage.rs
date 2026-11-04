@@ -60,6 +60,10 @@ struct OutageDetailsRow {
 /// Repository for outage operations.
 #[derive(Clone)]
 pub struct OutageRepository {
+    // Every query now runs on the caller's RLS connection with an explicit
+    // `organization_id` predicate; the pool is kept so the constructor stays
+    // stable for `AppState`.
+    #[allow(dead_code)]
     pool: DbPool,
 }
 
@@ -126,6 +130,7 @@ impl OutageRepository {
     pub async fn find_by_id_rls<'e, E>(
         &self,
         executor: E,
+        org_id: Uuid,
         id: Uuid,
     ) -> Result<Option<Outage>, SqlxError>
     where
@@ -139,10 +144,11 @@ impl OutageRepository {
                 building_ids, scheduled_start, scheduled_end,
                 actual_start, actual_end, external_reference, supplier_name,
                 resolution_notes, created_at, updated_at
-            FROM outages WHERE id = $1
+            FROM outages WHERE id = $1 AND organization_id = $2
             "#,
         )
         .bind(id)
+        .bind(org_id)
         .fetch_optional(executor)
         .await?;
 
@@ -153,6 +159,7 @@ impl OutageRepository {
     pub async fn find_by_id_with_details_rls<'e, E>(
         &self,
         executor: E,
+        org_id: Uuid,
         id: Uuid,
     ) -> Result<Option<OutageWithDetails>, SqlxError>
     where
@@ -171,10 +178,11 @@ impl OutageRepository {
                 (SELECT COUNT(*) FROM outage_notifications WHERE outage_id = o.id AND read_at IS NOT NULL) as read_count
             FROM outages o
             JOIN users u ON o.created_by = u.id
-            WHERE o.id = $1
+            WHERE o.id = $1 AND o.organization_id = $2
             "#,
         )
         .bind(id)
+        .bind(org_id)
         .fetch_optional(executor)
         .await?;
 
@@ -214,6 +222,7 @@ impl OutageRepository {
     pub async fn list_rls<'e, E>(
         &self,
         executor: E,
+        org_id: Uuid,
         query: &OutageListQuery,
     ) -> Result<Vec<OutageSummary>, SqlxError>
     where
@@ -223,7 +232,9 @@ impl OutageRepository {
         let offset = query.offset.unwrap_or(0);
 
         // Build dynamic WHERE clause
-        let mut conditions = vec!["1=1".to_string()];
+        // Org scope is always bound as the first parameter (defense in depth:
+        // `outages` RLS is not FORCEd, so the owner role bypasses it).
+        let mut conditions = vec!["organization_id = $1".to_string()];
 
         if query.active_only.unwrap_or(false) {
             conditions.push("status IN ('planned', 'ongoing')".to_string());
@@ -247,12 +258,13 @@ impl OutageRepository {
                     ELSE 3
                 END,
                 scheduled_start DESC
-            LIMIT $1 OFFSET $2
+            LIMIT $2 OFFSET $3
             "#,
             conditions.join(" AND ")
         );
 
         let outages = sqlx::query_as::<_, OutageSummary>(sqlx::AssertSqlSafe(sql))
+            .bind(org_id)
             .bind(limit)
             .bind(offset)
             .fetch_all(executor)
@@ -265,12 +277,15 @@ impl OutageRepository {
     pub async fn count_rls<'e, E>(
         &self,
         executor: E,
+        org_id: Uuid,
         query: &OutageListQuery,
     ) -> Result<i64, SqlxError>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let mut conditions = vec!["1=1".to_string()];
+        // Org scope is always bound as the first parameter (defense in depth:
+        // `outages` RLS is not FORCEd, so the owner role bypasses it).
+        let mut conditions = vec!["organization_id = $1".to_string()];
 
         if query.active_only.unwrap_or(false) {
             conditions.push("status IN ('planned', 'ongoing')".to_string());
@@ -282,6 +297,7 @@ impl OutageRepository {
         );
 
         let row = sqlx::query(sqlx::AssertSqlSafe(sql))
+            .bind(org_id)
             .fetch_one(executor)
             .await?;
         let count: i64 = row.get("count");
@@ -293,6 +309,7 @@ impl OutageRepository {
     pub async fn update_rls<'e, E>(
         &self,
         executor: E,
+        org_id: Uuid,
         id: Uuid,
         data: UpdateOutage,
     ) -> Result<Outage, SqlxError>
@@ -317,7 +334,7 @@ impl OutageRepository {
                 external_reference = COALESCE($9, external_reference),
                 supplier_name = COALESCE($10, supplier_name),
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $11
             RETURNING
                 id, organization_id, created_by, title, description,
                 commodity::text as commodity, severity::text as severity, status::text as status,
@@ -336,6 +353,7 @@ impl OutageRepository {
         .bind(data.scheduled_end)
         .bind(&data.external_reference)
         .bind(&data.supplier_name)
+        .bind(org_id)
         .fetch_one(executor)
         .await?;
 
@@ -346,6 +364,7 @@ impl OutageRepository {
     pub async fn start_rls<'e, E>(
         &self,
         executor: E,
+        org_id: Uuid,
         id: Uuid,
         actual_start: Option<DateTime<Utc>>,
     ) -> Result<Outage, SqlxError>
@@ -360,7 +379,7 @@ impl OutageRepository {
                 status = 'ongoing'::outage_status,
                 actual_start = $2,
                 updated_at = NOW()
-            WHERE id = $1 AND status = 'planned'::outage_status
+            WHERE id = $1 AND organization_id = $3 AND status = 'planned'::outage_status
             RETURNING
                 id, organization_id, created_by, title, description,
                 commodity::text as commodity, severity::text as severity, status::text as status,
@@ -371,6 +390,7 @@ impl OutageRepository {
         )
         .bind(id)
         .bind(start_time)
+        .bind(org_id)
         .fetch_one(executor)
         .await?;
 
@@ -381,6 +401,7 @@ impl OutageRepository {
     pub async fn resolve_rls<'e, E>(
         &self,
         executor: E,
+        org_id: Uuid,
         id: Uuid,
         actual_end: Option<DateTime<Utc>>,
         resolution_notes: Option<String>,
@@ -397,7 +418,7 @@ impl OutageRepository {
                 actual_end = $2,
                 resolution_notes = COALESCE($3, resolution_notes),
                 updated_at = NOW()
-            WHERE id = $1 AND status IN ('planned'::outage_status, 'ongoing'::outage_status)
+            WHERE id = $1 AND organization_id = $4 AND status IN ('planned'::outage_status, 'ongoing'::outage_status)
             RETURNING
                 id, organization_id, created_by, title, description,
                 commodity::text as commodity, severity::text as severity, status::text as status,
@@ -409,6 +430,7 @@ impl OutageRepository {
         .bind(id)
         .bind(end_time)
         .bind(&resolution_notes)
+        .bind(org_id)
         .fetch_one(executor)
         .await?;
 
@@ -419,6 +441,7 @@ impl OutageRepository {
     pub async fn cancel_rls<'e, E>(
         &self,
         executor: E,
+        org_id: Uuid,
         id: Uuid,
         reason: Option<String>,
     ) -> Result<Outage, SqlxError>
@@ -431,7 +454,7 @@ impl OutageRepository {
                 status = 'cancelled'::outage_status,
                 resolution_notes = COALESCE($2, resolution_notes),
                 updated_at = NOW()
-            WHERE id = $1 AND status IN ('planned'::outage_status, 'ongoing'::outage_status)
+            WHERE id = $1 AND organization_id = $3 AND status IN ('planned'::outage_status, 'ongoing'::outage_status)
             RETURNING
                 id, organization_id, created_by, title, description,
                 commodity::text as commodity, severity::text as severity, status::text as status,
@@ -442,6 +465,7 @@ impl OutageRepository {
         )
         .bind(id)
         .bind(&reason)
+        .bind(org_id)
         .fetch_one(executor)
         .await?;
 
@@ -449,16 +473,25 @@ impl OutageRepository {
     }
 
     /// Delete an outage.
-    pub async fn delete_rls<'e, E>(&self, executor: E, id: Uuid) -> Result<(), SqlxError>
+    ///
+    /// Returns the number of rows deleted (0 when the outage does not exist
+    /// in `org_id`).
+    pub async fn delete_rls<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+        id: Uuid,
+    ) -> Result<u64, SqlxError>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        sqlx::query("DELETE FROM outages WHERE id = $1")
+        let result = sqlx::query("DELETE FROM outages WHERE id = $1 AND organization_id = $2")
             .bind(id)
+            .bind(org_id)
             .execute(executor)
             .await?;
 
-        Ok(())
+        Ok(result.rows_affected())
     }
 
     // ------------------------------------------------------------------------
@@ -469,6 +502,7 @@ impl OutageRepository {
     pub async fn get_statistics_rls<'e, E>(
         &self,
         executor: E,
+        org_id: Uuid,
     ) -> Result<OutageStatistics, SqlxError>
     where
         E: Executor<'e, Database = Postgres>,
@@ -482,8 +516,10 @@ impl OutageRepository {
                 COUNT(*) FILTER (WHERE status = 'resolved') as resolved,
                 COUNT(*) FILTER (WHERE status = 'cancelled') as cancelled
             FROM outages
+            WHERE organization_id = $1
             "#,
         )
+        .bind(org_id)
         .fetch_one(executor)
         .await?;
 
@@ -491,12 +527,16 @@ impl OutageRepository {
     }
 
     /// Get outage dashboard data.
-    pub async fn get_dashboard_rls<'e, E>(&self, executor: E) -> Result<OutageDashboard, SqlxError>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
+    ///
+    /// All three queries run on the caller's RLS connection and are filtered
+    /// by `org_id` explicitly.
+    pub async fn get_dashboard_rls(
+        &self,
+        conn: &mut sqlx::PgConnection,
+        org_id: Uuid,
+    ) -> Result<OutageDashboard, SqlxError> {
         // Get counts
-        let stats = self.get_statistics_rls(&self.pool).await?;
+        let stats = self.get_statistics_rls(&mut *conn, org_id).await?;
 
         // Get upcoming outages
         let upcoming = sqlx::query_as::<_, OutageSummary>(
@@ -506,12 +546,13 @@ impl OutageRepository {
                 commodity::text as commodity, severity::text as severity, status::text as status,
                 scheduled_start, scheduled_end, actual_start, actual_end
             FROM outages
-            WHERE status IN ('planned', 'ongoing')
+            WHERE organization_id = $1 AND status IN ('planned', 'ongoing')
             ORDER BY scheduled_start ASC
             LIMIT 10
             "#,
         )
-        .fetch_all(executor)
+        .bind(org_id)
+        .fetch_all(&mut *conn)
         .await?;
 
         // Get counts by commodity
@@ -519,11 +560,12 @@ impl OutageRepository {
             r#"
             SELECT commodity::text as commodity, COUNT(*) as count
             FROM outages
-            WHERE status IN ('planned', 'ongoing')
+            WHERE organization_id = $1 AND status IN ('planned', 'ongoing')
             GROUP BY commodity
             "#,
         )
-        .fetch_all(&self.pool)
+        .bind(org_id)
+        .fetch_all(&mut *conn)
         .await?;
 
         Ok(OutageDashboard {

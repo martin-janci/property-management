@@ -115,13 +115,13 @@ impl AccountingService {
     ) -> Result<(), AppError> {
         let lines = self
             .repo
-            .list_bank_statement_lines_rls(&mut *executor, statement_id)
+            .list_bank_statement_lines_for_tenant(&mut *executor, tenant_id, statement_id)
             .await
             .map_err(|e| AppError::Database(e.to_string()))?;
 
         let open_invoices = self
             .repo
-            .list_invoices_rls(&mut *executor)
+            .list_invoices_for_tenant(&mut *executor, tenant_id)
             .await
             .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -140,7 +140,7 @@ impl AccountingService {
         // in canonical form.
         let contact_iban: HashMap<Uuid, String> = self
             .repo
-            .list_contacts_rls(&mut *executor)
+            .list_contacts_for_tenant(&mut *executor, tenant_id)
             .await
             .map_err(|e| AppError::Database(e.to_string()))?
             .into_iter()

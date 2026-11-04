@@ -2,7 +2,7 @@
 /**
  * AutomationRulesPage mutation-feedback regression tests.
  *
- * History: the automation-rules page fired its delete / toggle / run mutations
+ * History: the automation-rules page fired its delete / toggle mutations
  * with a bare `await mutation.mutateAsync(...)` and no try/catch. A rejected
  * mutation therefore surfaced nothing to the user (no toast, no inline error)
  * and produced an unhandled promise rejection — the failure was swallowed
@@ -22,7 +22,6 @@ import { AutomationRulesPage } from './AutomationRulesPage';
 
 const deleteMutate = vi.fn();
 const updateMutate = vi.fn();
-const runMutate = vi.fn();
 
 const rules = [
   {
@@ -49,7 +48,6 @@ vi.mock('@ppt/api-client', () => ({
   })),
   useDeleteAutomationRule: vi.fn(() => ({ mutateAsync: deleteMutate, isPending: false })),
   useUpdateAutomationRule: vi.fn(() => ({ mutateAsync: updateMutate, isPending: false })),
-  useRunAutomationRule: vi.fn(() => ({ mutateAsync: runMutate, isPending: false })),
 }));
 
 function renderPage() {
@@ -84,7 +82,6 @@ describe('AutomationRulesPage mutation feedback', () => {
   beforeEach(() => {
     deleteMutate.mockReset();
     updateMutate.mockReset();
-    runMutate.mockReset();
   });
 
   afterEach(() => {
@@ -126,22 +123,8 @@ describe('AutomationRulesPage mutation feedback', () => {
     await waitFor(() => expect(hasToast(/update failed/i)).toBe(true));
   });
 
-  it('surfaces an error toast when running a rule fails', async () => {
-    runMutate.mockRejectedValueOnce(new Error('run-error'));
+  it('does not offer "Run now" — there is no manual-execution endpoint', () => {
     renderPage();
-
-    fireEvent.click(screen.getByRole('button', { name: /run now/i }));
-
-    await waitFor(() => expect(hasToast(/run failed/i)).toBe(true));
-  });
-
-  it('shows a success toast when running a rule succeeds', async () => {
-    runMutate.mockResolvedValueOnce({ id: 'exec-1' });
-    renderPage();
-
-    fireEvent.click(screen.getByRole('button', { name: /run now/i }));
-
-    await waitFor(() => expect(hasToast(/rule triggered/i)).toBe(true));
-    expect(runMutate).toHaveBeenCalledWith('rule-manual');
+    expect(screen.queryByRole('button', { name: /run now/i })).not.toBeInTheDocument();
   });
 });

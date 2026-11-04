@@ -733,6 +733,22 @@ pub async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
     .expect("seed org")
 }
 
+/// Insert an active, verified **platform** principal (`users.principal_kind =
+/// 'platform'`) and return its id. Platform-admin gates resolve platform
+/// status from this column, not the JWT `role` claim. The INSERT bypasses the
+/// `BEFORE UPDATE` principal_kind guard, so the kind can be set directly.
+pub async fn seed_platform_user(pool: &PgPool, email: &str) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"INSERT INTO users (email, password_hash, name, status, email_verified_at, principal_kind)
+           VALUES ($1, 'test_hash', 'Platform Admin', 'active', NOW(), 'platform')
+           RETURNING id"#,
+    )
+    .bind(email)
+    .fetch_one(pool)
+    .await
+    .expect("seed platform user")
+}
+
 /// Make `user_id` an active member of `org_id` with the given `role` (the
 /// `role_type` column, e.g. `"org_admin"`, `"resident"`).
 ///

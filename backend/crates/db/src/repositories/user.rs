@@ -42,6 +42,17 @@ impl UserRepository {
     }
 
     /// Find user by ID.
+    /// Whether `id` is an active platform principal according to
+    /// `users.principal_kind` (the database, not a token claim).
+    pub async fn is_active_platform_principal(&self, id: Uuid) -> Result<bool, SqlxError> {
+        sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS(SELECT 1 FROM users WHERE id = $1 AND principal_kind = 'platform' AND status = 'active')",
+        )
+        .bind(id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
     pub async fn find_by_id(&self, id: Uuid) -> Result<Option<User>, SqlxError> {
         let user = sqlx::query_as::<_, User>(
             r#"

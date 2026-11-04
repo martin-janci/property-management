@@ -27,8 +27,13 @@ export interface PaymentManagementPageProps {
     currency: string;
   };
   isLoading?: boolean;
-  onNavigateToRecord: () => void;
-  onNavigateToDetail: (paymentId: string) => void;
+  /** Managers only; omitted for residents so the record button is hidden. */
+  onNavigateToRecord?: () => void;
+  /**
+   * Open a payment's detail view. Optional: there is no payment-detail screen
+   * yet, so the route omits it and the "view all" link stays hidden.
+   */
+  onNavigateToDetail?: (paymentId: string) => void;
   onMatch: (paymentId: string, invoiceId: string, amount: number) => void;
   onAutoMatch: () => void;
   onFilterChange: (params: {
@@ -99,13 +104,15 @@ export function PaymentManagementPage({
                 onChange={handleBuildingChange}
                 isLoading={isLoading}
               />
-              <button
-                type="button"
-                onClick={onNavigateToRecord}
-                className="px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-md"
-              >
-                {t('financial.payments.recordPayment')}
-              </button>
+              {onNavigateToRecord && (
+                <button
+                  type="button"
+                  onClick={onNavigateToRecord}
+                  className="px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-md"
+                >
+                  {t('financial.payments.recordPayment')}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -134,7 +141,7 @@ export function PaymentManagementPage({
           <div className="flex flex-wrap gap-4 items-center">
             <div>
               <label htmlFor="start-date" className="block text-sm font-medium text-gray-700 mb-1">
-                {t('common.startDate')}
+                {t('financial.startDate')}
               </label>
               <input
                 type="date"
@@ -146,7 +153,7 @@ export function PaymentManagementPage({
             </div>
             <div>
               <label htmlFor="end-date" className="block text-sm font-medium text-gray-700 mb-1">
-                {t('common.endDate')}
+                {t('financial.endDate')}
               </label>
               <input
                 type="date"
@@ -185,7 +192,11 @@ export function PaymentManagementPage({
           <RecentPaymentsList
             payments={payments}
             isLoading={isLoading}
-            onViewAll={() => onNavigateToDetail(payments[0]?.id || '')}
+            onViewAll={
+              onNavigateToDetail && payments[0]
+                ? () => onNavigateToDetail(payments[0].id)
+                : undefined
+            }
           />
         </div>
       </div>

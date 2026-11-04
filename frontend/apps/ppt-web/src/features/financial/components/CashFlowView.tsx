@@ -6,6 +6,7 @@
  */
 
 import type { CashFlowReport } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 import { formatCurrency, formatDate } from '../utils/formatting';
 
 interface CashFlowViewProps {
@@ -15,11 +16,12 @@ interface CashFlowViewProps {
 }
 
 function SectionRows({ lines, currency }: { lines: CashFlowReport['inflows']; currency: string }) {
+  const { t } = useTranslation();
   if (lines.length === 0) {
     return (
       <tr>
         <td colSpan={2} className="px-6 py-4 text-sm text-gray-400 text-center">
-          No entries
+          {t('financial.reports.noEntries')}
         </td>
       </tr>
     );
@@ -39,6 +41,8 @@ function SectionRows({ lines, currency }: { lines: CashFlowReport['inflows']; cu
 }
 
 export function CashFlowView({ data, isLoading, currency = 'EUR' }: CashFlowViewProps) {
+  const { t } = useTranslation();
+
   if (isLoading) {
     return (
       <div className="bg-white rounded-lg shadow p-6 animate-pulse space-y-3">
@@ -52,9 +56,7 @@ export function CashFlowView({ data, isLoading, currency = 'EUR' }: CashFlowView
   if (!data) {
     return (
       <div className="bg-white rounded-lg shadow p-6">
-        <p className="text-gray-500 text-center py-8">
-          Select a date range to view the cash-flow statement.
-        </p>
+        <p className="text-gray-500 text-center py-8">{t('financial.reports.cashFlowEmpty')}</p>
       </div>
     );
   }
@@ -62,7 +64,9 @@ export function CashFlowView({ data, isLoading, currency = 'EUR' }: CashFlowView
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-200">
-        <h3 className="text-lg font-medium text-gray-900">Cash Flow</h3>
+        <h3 className="text-lg font-medium text-gray-900">
+          {t('financial.reports.tabs.cashFlow')}
+        </h3>
         <p className="mt-1 text-sm text-gray-500">
           {formatDate(data.from_date)} – {formatDate(data.to_date)}
         </p>
@@ -76,18 +80,20 @@ export function CashFlowView({ data, isLoading, currency = 'EUR' }: CashFlowView
                 scope="col"
                 className="px-6 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
               >
-                Inflows
+                {t('financial.reports.cashFlow.inflows')}
               </th>
               <th
                 scope="col"
                 className="px-6 py-2 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider"
               >
-                Amount
+                {t('financial.amount')}
               </th>
             </tr>
             <SectionRows lines={data.inflows} currency={currency} />
             <tr className="bg-gray-50/60">
-              <td className="px-6 py-3 text-sm font-medium text-gray-900">Total Inflows</td>
+              <td className="px-6 py-3 text-sm font-medium text-gray-900">
+                {t('financial.reports.cashFlow.totalInflows')}
+              </td>
               <td className="px-6 py-3 text-sm text-right font-medium text-gray-900 tabular-nums">
                 {formatCurrency(data.total_inflows, currency)}
               </td>
@@ -98,18 +104,20 @@ export function CashFlowView({ data, isLoading, currency = 'EUR' }: CashFlowView
                 scope="col"
                 className="px-6 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
               >
-                Outflows
+                {t('financial.reports.cashFlow.outflows')}
               </th>
               <th
                 scope="col"
                 className="px-6 py-2 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider"
               >
-                Amount
+                {t('financial.amount')}
               </th>
             </tr>
             <SectionRows lines={data.outflows} currency={currency} />
             <tr className="bg-gray-50/60">
-              <td className="px-6 py-3 text-sm font-medium text-gray-900">Total Outflows</td>
+              <td className="px-6 py-3 text-sm font-medium text-gray-900">
+                {t('financial.reports.cashFlow.totalOutflows')}
+              </td>
               <td className="px-6 py-3 text-sm text-right font-medium text-gray-900 tabular-nums">
                 {formatCurrency(data.total_outflows, currency)}
               </td>
@@ -117,7 +125,9 @@ export function CashFlowView({ data, isLoading, currency = 'EUR' }: CashFlowView
           </tbody>
           <tfoot className="bg-gray-100">
             <tr>
-              <td className="px-6 py-4 text-sm font-bold text-gray-900">Net Cash Flow</td>
+              <td className="px-6 py-4 text-sm font-bold text-gray-900">
+                {t('financial.reports.cashFlow.netCashFlow')}
+              </td>
               <td
                 className={`px-6 py-4 text-sm text-right font-bold tabular-nums ${
                   data.net_cash_flow < 0 ? 'text-red-600' : 'text-green-700'

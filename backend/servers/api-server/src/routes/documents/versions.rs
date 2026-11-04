@@ -1,7 +1,7 @@
 //! Document version routes (Story 7B.1).
 
 use crate::state::AppState;
-use api_core::{extractors::RlsConnection, AuthUser, TenantExtractor};
+use api_core::{extractors::RlsConnection, AuthUser, ValidatedTenantExtractor};
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -43,10 +43,13 @@ pub fn router() -> Router<AppState> {
 async fn get_version_history(
     State(state): State<AppState>,
     _auth: AuthUser,
-    _tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<VersionHistoryResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // Explicit org guard: the version queries filter documents by id only.
+    ensure_document_in_org(&state, &mut rls, id, tenant.tenant_id).await?;
+
     match state
         .document_repo
         .get_version_history_rls(&mut **rls.conn(), id)
@@ -93,7 +96,7 @@ async fn get_version_history(
 async fn create_version(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<UploadVersionRequest>,
@@ -124,6 +127,9 @@ async fn create_version(
             ));
         }
     };
+
+    // Explicit org guard (FORCE RLS does not bind a BYPASSRLS pool).
+    super::core::validate_document_org_scope(existing.organization_id, tenant.tenant_id)?;
 
     // Only creator or manager can upload new versions
     if existing.created_by != user_id && !tenant.role.is_manager() {
@@ -225,10 +231,13 @@ async fn create_version(
 async fn get_version(
     State(state): State<AppState>,
     _auth: AuthUser,
-    _tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path((id, version_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<VersionResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // Explicit org guard: the version queries filter documents by id only.
+    ensure_document_in_org(&state, &mut rls, id, tenant.tenant_id).await?;
+
     match state
         .document_repo
         .get_version_rls(&mut **rls.conn(), id, version_id)
@@ -274,7 +283,7 @@ async fn get_version(
 async fn restore_version(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path((id, version_id)): Path<(Uuid, Uuid)>,
 ) -> Result<(StatusCode, Json<CreateVersionResponse>), (StatusCode, Json<ErrorResponse>)> {
@@ -304,6 +313,9 @@ async fn restore_version(
             ));
         }
     };
+
+    // Explicit org guard (FORCE RLS does not bind a BYPASSRLS pool).
+    super::core::validate_document_org_scope(existing.organization_id, tenant.tenant_id)?;
 
     // Only creator or manager can restore versions
     if existing.created_by != user_id && !tenant.role.is_manager() {
@@ -383,3 +395,37 @@ async fn restore_version(
 }
 
 // ============================================================================
+
+/// 404 unless document `id` exists and belongs to `org_id`.
+///
+/// `documents` is FORCE RLS, but a BYPASSRLS/superuser pool skips it, so the
+/// version read handlers re-check the org explicitly like the sibling
+/// handlers in `core.rs` do.
+async fn ensure_document_in_org(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    id: Uuid,
+    org_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    match state
+        .document_repo
+        .find_by_id_rls(&mut **rls.conn(), id)
+        .await
+    {
+        Ok(Some(d)) => super::core::validate_document_org_scope(d.organization_id, org_id),
+        Ok(None) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Document not found")),
+        )),
+        Err(e) => {
+            tracing::error!("Failed to find document: {}", e);
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to find document",
+                )),
+            ))
+        }
+    }
+}

@@ -2,7 +2,7 @@
 
 use super::shared::*;
 use crate::state::AppState;
-use api_core::{AuthUser, TenantExtractor};
+use api_core::{AuthUser, ValidatedTenantExtractor};
 use axum::{extract::State, http::StatusCode, routing::post, Json, Router};
 use common::errors::ErrorResponse;
 
@@ -31,7 +31,7 @@ pub(super) fn router() -> Router<AppState> {
 pub(super) async fn generate_ai_draft(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Json(req): Json<GenerateAiDraftRequest>,
 ) -> Result<Json<GenerateAiDraftResponse>, (StatusCode, Json<ErrorResponse>)> {
     use std::time::Instant;

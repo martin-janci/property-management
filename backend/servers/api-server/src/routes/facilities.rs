@@ -23,6 +23,170 @@ use uuid::Uuid;
 
 use crate::state::AppState;
 
+/// Error type shared by facility handlers.
+type FacilityApiError = (StatusCode, Json<ErrorResponse>);
+
+/// Load a building and authorize the caller against it.
+///
+/// The building must belong to the caller's tenant (RLS on `buildings` is not
+/// FORCE'd, so the org predicate is explicit) — other orgs get 404 so existence
+/// is not leaked. When `require_manager` is set, the caller's DB membership role
+/// must be manager-level.
+async fn authorize_building(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    user_id: Uuid,
+    building_id: Uuid,
+    require_manager: bool,
+) -> Result<(), FacilityApiError> {
+    let building = state
+        .building_repo
+        .find_by_id_rls(&mut **rls.conn(), building_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to get building");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .filter(|b| b.organization_id == rls.tenant_id())
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
+            )
+        })?;
+
+    let is_member = state
+        .org_member_repo
+        .is_member(building.organization_id, user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to check org membership");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?;
+
+    if !is_member {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "NOT_AUTHORIZED",
+                "You are not a member of this organization",
+            )),
+        ));
+    }
+
+    if require_manager && !rls.role().is_manager() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "INSUFFICIENT_ROLE",
+                "Manager role required",
+            )),
+        ));
+    }
+
+    Ok(())
+}
+
+/// Load a facility and ensure it belongs to `building_id` (404 otherwise).
+async fn facility_in_building(
+    state: &AppState,
+    facility_id: Uuid,
+    building_id: Uuid,
+) -> Result<Facility, FacilityApiError> {
+    state
+        .facility_repo
+        .find_by_id(facility_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to get facility");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .filter(|f| f.building_id == building_id)
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    "Facility not found in this building",
+                )),
+            )
+        })
+}
+
+/// Authorize a manager action on a booking: the booking's facility must be in
+/// a building of the caller's tenant (404 otherwise) and the caller's DB
+/// membership role must be manager-level (403 otherwise).
+async fn authorize_booking_manager(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    booking_id: Uuid,
+) -> Result<(), FacilityApiError> {
+    let not_found = || {
+        (
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Booking not found")),
+        )
+    };
+    let booking = state
+        .facility_repo
+        .find_booking_by_id(booking_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to get booking");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .ok_or_else(not_found)?;
+    let facility = state
+        .facility_repo
+        .find_by_id(booking.facility_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to get facility");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .ok_or_else(not_found)?;
+    let org_id = rls.tenant_id();
+    let in_org = state
+        .building_repo
+        .belongs_to_organization_rls(&mut **rls.conn(), facility.building_id, org_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to verify building organization");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?;
+    if !in_org {
+        return Err(not_found());
+    }
+    if !rls.role().is_manager() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "INSUFFICIENT_ROLE",
+                "Manager role required",
+            )),
+        ));
+    }
+    Ok(())
+}
+
 /// Create facilities router.
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -324,47 +488,8 @@ pub async fn list_facilities(
     mut rls: RlsConnection,
     Path(building_id): Path<Uuid>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
-    // Verify building exists and user has access
-    let building = state
-        .building_repo
-        .find_by_id_rls(&mut **rls.conn(), building_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get building");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
-            )
-        })?;
-
-    let is_member = state
-        .org_member_repo
-        .is_member(building.organization_id, auth.user_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to check org membership");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?;
-
-    if !is_member {
-        rls.release().await;
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "NOT_AUTHORIZED",
-                "You are not a member of this organization",
-            )),
-        ));
-    }
+    // Verify the building is in the caller's organization and they may act on it
+    authorize_building(&state, &mut rls, auth.user_id, building_id, false).await?;
 
     let facilities = state
         .facility_repo
@@ -403,46 +528,8 @@ pub async fn create_facility(
     Path(building_id): Path<Uuid>,
     Json(req): Json<CreateFacilityRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
-    // Verify building exists and user has access
-    let building = state
-        .building_repo
-        .find_by_id_rls(&mut **rls.conn(), building_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get building");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
-            )
-        })?;
-
-    let is_member = state
-        .org_member_repo
-        .is_member(building.organization_id, auth.user_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to check org membership");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?;
-
-    if !is_member {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "NOT_AUTHORIZED",
-                "You are not a member of this organization",
-            )),
-        ));
-    }
+    // Verify the building is in the caller's organization and they may act on it
+    authorize_building(&state, &mut rls, auth.user_id, building_id, true).await?;
 
     // Validate name
     if req.name.trim().is_empty() {
@@ -526,46 +613,8 @@ pub async fn get_facility(
     mut rls: RlsConnection,
     Path((building_id, id)): Path<(Uuid, Uuid)>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
-    // Verify building exists and user has access
-    let building = state
-        .building_repo
-        .find_by_id_rls(&mut **rls.conn(), building_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get building");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
-            )
-        })?;
-
-    let is_member = state
-        .org_member_repo
-        .is_member(building.organization_id, auth.user_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to check org membership");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?;
-
-    if !is_member {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "NOT_AUTHORIZED",
-                "You are not a member of this organization",
-            )),
-        ));
-    }
+    // Verify the building is in the caller's organization and they may act on it
+    authorize_building(&state, &mut rls, auth.user_id, building_id, false).await?;
 
     let facility = state
         .facility_repo
@@ -624,46 +673,11 @@ pub async fn update_facility(
     Path((building_id, id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateFacilityRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
-    // Verify building exists and user has access
-    let building = state
-        .building_repo
-        .find_by_id_rls(&mut **rls.conn(), building_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get building");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
-            )
-        })?;
+    // Verify the building is in the caller's organization and they may act on it
+    authorize_building(&state, &mut rls, auth.user_id, building_id, true).await?;
 
-    let is_member = state
-        .org_member_repo
-        .is_member(building.organization_id, auth.user_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to check org membership");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?;
-
-    if !is_member {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "NOT_AUTHORIZED",
-                "You are not a member of this organization",
-            )),
-        ));
-    }
+    // The facility must belong to the path building (nested-id scoping).
+    facility_in_building(&state, id, building_id).await?;
 
     // Parse time strings
     let available_from = req
@@ -742,46 +756,11 @@ pub async fn delete_facility(
     mut rls: RlsConnection,
     Path((building_id, id)): Path<(Uuid, Uuid)>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
-    // Verify building exists and user has access
-    let building = state
-        .building_repo
-        .find_by_id_rls(&mut **rls.conn(), building_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get building");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
-            )
-        })?;
+    // Verify the building is in the caller's organization and they may act on it
+    authorize_building(&state, &mut rls, auth.user_id, building_id, true).await?;
 
-    let is_member = state
-        .org_member_repo
-        .is_member(building.organization_id, auth.user_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to check org membership");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?;
-
-    if !is_member {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "NOT_AUTHORIZED",
-                "You are not a member of this organization",
-            )),
-        ));
-    }
+    // The facility must belong to the path building (nested-id scoping).
+    facility_in_building(&state, id, building_id).await?;
 
     let deleted = state.facility_repo.delete(id).await.map_err(|e| {
         tracing::error!(error = %e, "Failed to delete facility");
@@ -828,46 +807,11 @@ pub async fn list_facility_bookings(
     Path((building_id, facility_id)): Path<(Uuid, Uuid)>,
     Query(query): Query<BookingsQuery>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
-    // Verify building and access
-    let building = state
-        .building_repo
-        .find_by_id_rls(&mut **rls.conn(), building_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get building");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
-            )
-        })?;
+    // Verify the building is in the caller's organization and they may act on it
+    authorize_building(&state, &mut rls, auth.user_id, building_id, false).await?;
 
-    let is_member = state
-        .org_member_repo
-        .is_member(building.organization_id, auth.user_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to check org membership");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?;
-
-    if !is_member {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "NOT_AUTHORIZED",
-                "You are not a member of this organization",
-            )),
-        ));
-    }
+    // The facility must belong to the path building (nested-id scoping).
+    facility_in_building(&state, facility_id, building_id).await?;
 
     let from = query.from.unwrap_or_else(Utc::now);
     let to = query
@@ -917,45 +861,34 @@ pub async fn create_booking(
     Path((building_id, facility_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<CreateBookingRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
-    // Verify building and access
-    let building = state
-        .building_repo
-        .find_by_id_rls(&mut **rls.conn(), building_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get building");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
-            )
-        })?;
+    // Verify the building is in the caller's organization and they may act on it
+    authorize_building(&state, &mut rls, auth.user_id, building_id, false).await?;
 
-    let is_member = state
-        .org_member_repo
-        .is_member(building.organization_id, auth.user_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to check org membership");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?;
+    // The facility must belong to the path building (nested-id scoping).
+    facility_in_building(&state, facility_id, building_id).await?;
 
-    if !is_member {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "NOT_AUTHORIZED",
-                "You are not a member of this organization",
-            )),
-        ));
+    // A unit referenced by the booking must be in the same building.
+    if let Some(unit_id) = req.unit_id {
+        let unit_ok = state
+            .unit_repo
+            .belongs_to_building_rls(&mut **rls.conn(), unit_id, building_id)
+            .await
+            .map_err(|e| {
+                tracing::error!(error = %e, "Failed to verify unit");
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new("DB_ERROR", "Database error")),
+                )
+            })?;
+        if !unit_ok {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse::new(
+                    "INVALID_UNIT",
+                    "Unit does not belong to this building",
+                )),
+            ));
+        }
     }
 
     // Validate time range
@@ -1058,46 +991,11 @@ pub async fn check_availability(
     Path((building_id, facility_id)): Path<(Uuid, Uuid)>,
     Query(query): Query<AvailabilityQuery>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
-    // Verify building and access
-    let building = state
-        .building_repo
-        .find_by_id_rls(&mut **rls.conn(), building_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get building");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
-            )
-        })?;
+    // Verify the building is in the caller's organization and they may act on it
+    authorize_building(&state, &mut rls, auth.user_id, building_id, false).await?;
 
-    let is_member = state
-        .org_member_repo
-        .is_member(building.organization_id, auth.user_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to check org membership");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?;
-
-    if !is_member {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "NOT_AUTHORIZED",
-                "You are not a member of this organization",
-            )),
-        ));
-    }
+    // The facility must belong to the path building (nested-id scoping).
+    facility_in_building(&state, facility_id, building_id).await?;
 
     // Get existing bookings in range
     let bookings = state
@@ -1429,46 +1327,8 @@ pub async fn list_pending_bookings(
     mut rls: RlsConnection,
     Path(building_id): Path<Uuid>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
-    // Verify building and access
-    let building = state
-        .building_repo
-        .find_by_id_rls(&mut **rls.conn(), building_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get building");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
-            )
-        })?;
-
-    let is_member = state
-        .org_member_repo
-        .is_member(building.organization_id, auth.user_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to check org membership");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?;
-
-    if !is_member {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "NOT_AUTHORIZED",
-                "You are not a member of this organization",
-            )),
-        ));
-    }
+    // Verify the building is in the caller's organization and they may act on it
+    authorize_building(&state, &mut rls, auth.user_id, building_id, false).await?;
 
     let bookings = state
         .facility_repo
@@ -1504,8 +1364,11 @@ pub async fn list_pending_bookings(
 pub async fn approve_booking(
     State(state): State<AppState>,
     auth: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
+    authorize_booking_manager(&state, &mut rls, id).await?;
+
     let booking = state
         .facility_repo
         .approve_booking(id, auth.user_id)
@@ -1554,9 +1417,12 @@ pub async fn approve_booking(
 pub async fn reject_booking(
     State(state): State<AppState>,
     auth: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<RejectBookingRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
+    authorize_booking_manager(&state, &mut rls, id).await?;
+
     let booking = state
         .facility_repo
         .reject_booking(id, auth.user_id, &req.reason)

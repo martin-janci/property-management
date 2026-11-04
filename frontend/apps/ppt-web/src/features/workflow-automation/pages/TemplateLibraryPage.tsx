@@ -63,7 +63,10 @@ export function TemplateLibraryPage() {
 
   const handleUseTemplate = async (template: AutomationTemplate) => {
     try {
-      const result = await createFromTemplate.mutateAsync(template.id);
+      const result = await createFromTemplate.mutateAsync({
+        templateId: template.id,
+        name: template.name,
+      });
       if (result?.id) {
         navigate(`/automations/rules/${result.id}/edit`);
       } else {

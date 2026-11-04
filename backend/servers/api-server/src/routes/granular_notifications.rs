@@ -6,7 +6,7 @@
 //! - 8B.3: Notification Schedule (Do Not Disturb)
 //! - 8B.4: Role-Based Default Preferences
 
-use api_core::{AuthUser, TenantExtractor};
+use api_core::{AuthUser, ValidatedTenantExtractor};
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -454,7 +454,7 @@ fn check_quiet_hours(schedule: &NotificationSchedule) -> bool {
 pub async fn list_role_defaults(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
 ) -> Result<Json<RoleDefaultsListResponse>, (StatusCode, Json<ErrorResponse>)> {
     let organization_id = tenant.tenant_id;
 
@@ -476,7 +476,7 @@ pub async fn list_role_defaults(
 pub async fn get_role_defaults(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Path(role): Path<String>,
 ) -> Result<Json<RoleNotificationDefaults>, (StatusCode, Json<ErrorResponse>)> {
     let organization_id = tenant.tenant_id;
@@ -508,7 +508,7 @@ pub async fn get_role_defaults(
 pub async fn update_role_defaults(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Path(role): Path<String>,
     Json(request): Json<UpdateRoleDefaultsRequest>,
 ) -> Result<Json<RoleNotificationDefaults>, (StatusCode, Json<ErrorResponse>)> {
@@ -583,7 +583,7 @@ pub async fn update_role_defaults(
 pub async fn delete_role_defaults(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Path(role): Path<String>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
     // Deleting org-wide role notification defaults is a manager action
@@ -624,7 +624,7 @@ pub async fn delete_role_defaults(
 pub async fn apply_role_defaults(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Path(role): Path<String>,
 ) -> Result<Json<EventPreferencesResponse>, (StatusCode, Json<ErrorResponse>)> {
     let user_id = auth.user_id;

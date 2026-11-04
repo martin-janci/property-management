@@ -7,6 +7,8 @@
 
 mod common;
 
+#[path = "suites/finance_r4_authz_tests.rs"]
+mod finance_r4_authz_tests;
 #[path = "suites/mobile_config_route_tests.rs"]
 mod mobile_config_route_tests;
 #[path = "suites/reports_export_org_scope_tests.rs"]
@@ -65,5 +67,7 @@ mod voting_tests;
 mod work_order_cross_org_idor_tests;
 #[path = "suites/work_orders_happy_path_tests.rs"]
 mod work_orders_happy_path_tests;
+#[path = "suites/work_orders_round4_role_tests.rs"]
+mod work_orders_round4_role_tests;
 #[path = "suites/workflow_cross_tenant_idor_tests.rs"]
 mod workflow_cross_tenant_idor_tests;

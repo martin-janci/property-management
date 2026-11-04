@@ -529,6 +529,24 @@ impl NewsArticleRepository {
         Ok(result.map(|(r,)| r))
     }
 
+    /// Whether comment `comment_id` exists on article `article_id`.
+    ///
+    /// `article_comments.parent_id` is only an FK to `article_comments(id)`,
+    /// so a reply's parent must be checked against the article explicitly.
+    pub async fn comment_belongs_to_article(
+        &self,
+        comment_id: Uuid,
+        article_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS(SELECT 1 FROM article_comments WHERE id = $1 AND article_id = $2)",
+        )
+        .bind(comment_id)
+        .bind(article_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
     pub async fn add_comment(
         &self,
         article_id: Uuid,

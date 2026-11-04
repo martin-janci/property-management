@@ -5,6 +5,7 @@
  */
 
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useFocusTrap } from '../../../hooks/useFocusTrap';
 
 interface RejectBookingDialogProps {
@@ -21,6 +22,7 @@ export function RejectBookingDialog({
   onCancel,
   isSubmitting,
 }: RejectBookingDialogProps) {
+  const { t } = useTranslation();
   const [reason, setReason] = useState('');
   const [error, setError] = useState('');
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -29,7 +31,7 @@ export function RejectBookingDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!reason.trim()) {
-      setError('Please provide a reason for rejection');
+      setError(t('facilities.bookings.rejectDialog.reasonRequired'));
       return;
     }
     onConfirm(reason.trim());
@@ -57,16 +59,18 @@ export function RejectBookingDialog({
           {/* Header */}
           <div className="px-6 py-4 border-b">
             <h3 id="dialog-title" className="text-lg font-semibold text-gray-900">
-              Reject Booking
+              {t('facilities.bookings.rejectDialog.title')}
             </h3>
-            <p className="mt-1 text-sm text-gray-500">Rejecting booking for: {facilityName}</p>
+            <p className="mt-1 text-sm text-gray-500">
+              {t('facilities.bookings.rejectDialog.subtitle', { name: facilityName })}
+            </p>
           </div>
 
           {/* Content */}
           <form onSubmit={handleSubmit}>
             <div className="px-6 py-4">
               <label htmlFor="reason" className="block text-sm font-medium text-gray-700">
-                Reason for Rejection *
+                {t('facilities.bookings.rejectDialog.reason')}
               </label>
               <textarea
                 id="reason"
@@ -76,7 +80,7 @@ export function RejectBookingDialog({
                   setError('');
                 }}
                 rows={4}
-                placeholder="Please explain why this booking is being rejected..."
+                placeholder={t('facilities.bookings.rejectDialog.reasonPlaceholder')}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
@@ -89,14 +93,16 @@ export function RejectBookingDialog({
                 onClick={onCancel}
                 className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors"
               >
-                Cancel
+                {t('facilities.bookings.rejectDialog.cancel')}
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
                 className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isSubmitting ? 'Rejecting...' : 'Reject Booking'}
+                {isSubmitting
+                  ? t('facilities.bookings.rejectDialog.submitting')
+                  : t('facilities.bookings.rejectDialog.submit')}
               </button>
             </div>
           </form>

@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { CommentWithAuthor } from '../types';
 
 interface ArticleCommentsProps {
@@ -35,6 +36,7 @@ function CommentItem({
   onShowReplies,
   disabled,
 }: CommentItemProps) {
+  const { t, i18n } = useTranslation();
   const [isReplying, setIsReplying] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [replyContent, setReplyContent] = useState('');
@@ -60,7 +62,7 @@ function CommentItem({
   };
 
   if (isDeleted) {
-    return <div className="text-sm text-gray-400 italic py-2">[This comment has been deleted]</div>;
+    return <div className="text-sm text-gray-400 italic py-2">{t('news.comments.deleted')}</div>;
   }
 
   return (
@@ -86,7 +88,7 @@ function CommentItem({
           <div className="flex items-center gap-2">
             <span className="font-medium text-sm text-gray-900">{comment.authorName}</span>
             <span className="text-xs text-gray-500">
-              {new Date(comment.createdAt).toLocaleDateString()}
+              {new Date(comment.createdAt).toLocaleDateString(i18n.language)}
             </span>
           </div>
 
@@ -105,7 +107,7 @@ function CommentItem({
                   onClick={handleSubmitEdit}
                   className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
                 >
-                  Save
+                  {t('common.save')}
                 </button>
                 <button
                   type="button"
@@ -115,7 +117,7 @@ function CommentItem({
                   }}
                   className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
               </div>
             </div>
@@ -130,7 +132,7 @@ function CommentItem({
                 onClick={() => setIsReplying(!isReplying)}
                 className="text-blue-600 hover:text-blue-800"
               >
-                Reply
+                {t('news.comments.reply')}
               </button>
             )}
             {isOwnComment && !disabled && (
@@ -140,14 +142,14 @@ function CommentItem({
                   onClick={() => setIsEditing(true)}
                   className="text-gray-600 hover:text-gray-800"
                 >
-                  Edit
+                  {t('common.edit')}
                 </button>
                 <button
                   type="button"
                   onClick={onDelete}
                   className="text-red-600 hover:text-red-800"
                 >
-                  Delete
+                  {t('common.delete')}
                 </button>
               </>
             )}
@@ -157,7 +159,7 @@ function CommentItem({
                 onClick={onShowReplies}
                 className="text-blue-600 hover:text-blue-800"
               >
-                {comment.replyCount} {comment.replyCount === 1 ? 'reply' : 'replies'}
+                {t('news.comments.replyCount', { count: comment.replyCount })}
               </button>
             )}
           </div>
@@ -167,7 +169,7 @@ function CommentItem({
               <textarea
                 value={replyContent}
                 onChange={(e) => setReplyContent(e.target.value)}
-                placeholder="Write a reply..."
+                placeholder={t('news.comments.replyPlaceholder')}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
                 rows={2}
                 maxLength={2000}
@@ -179,7 +181,7 @@ function CommentItem({
                   disabled={!replyContent.trim()}
                   className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Reply
+                  {t('news.comments.reply')}
                 </button>
                 <button
                   type="button"
@@ -189,7 +191,7 @@ function CommentItem({
                   }}
                   className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
               </div>
             </div>
@@ -209,6 +211,7 @@ export function ArticleComments({
   currentUserId,
   disabled = false,
 }: ArticleCommentsProps) {
+  const { t } = useTranslation();
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -226,28 +229,32 @@ export function ArticleComments({
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-gray-900">Comments ({comments.length})</h3>
+      <h3 className="text-lg font-semibold text-gray-900">
+        {t('news.comments.title', { count: comments.length })}
+      </h3>
 
       {!disabled && (
         <div>
           <textarea
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Write a comment..."
+            placeholder={t('news.comments.placeholder')}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             rows={3}
             maxLength={2000}
             disabled={isSubmitting}
           />
           <div className="mt-2 flex justify-between items-center">
-            <span className="text-xs text-gray-500">{newComment.length}/2000 characters</span>
+            <span className="text-xs text-gray-500">
+              {t('news.comments.charCount', { length: newComment.length, max: 2000 })}
+            </span>
             <button
               type="button"
               onClick={handleSubmitComment}
               disabled={!newComment.trim() || isSubmitting}
               className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'Posting...' : 'Post Comment'}
+              {isSubmitting ? t('news.comments.posting') : t('news.comments.post')}
             </button>
           </div>
         </div>
@@ -271,7 +278,7 @@ export function ArticleComments({
       </div>
 
       {comments.length === 0 && (
-        <p className="text-center text-gray-500 py-8">No comments yet. Be the first to comment!</p>
+        <p className="text-center text-gray-500 py-8">{t('news.comments.empty')}</p>
       )}
     </div>
   );

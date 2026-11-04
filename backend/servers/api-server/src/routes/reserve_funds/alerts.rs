@@ -9,7 +9,7 @@ use axum::{
 use db::models::reserve_funds::FundAlert;
 use uuid::Uuid;
 
-use super::shared::{internal_error, repo_error, ApiResult};
+use super::shared::{internal_error, repo_error, require_manager, ApiResult};
 use crate::state::AppState;
 
 /// Alert sub-router.
@@ -42,6 +42,7 @@ async fn acknowledge_alert(
     mut rls: RlsConnection,
     Path(alert_id): Path<Uuid>,
 ) -> ApiResult<Json<FundAlert>> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let out = state
@@ -60,6 +61,7 @@ async fn resolve_alert(
     mut rls: RlsConnection,
     Path(alert_id): Path<Uuid>,
 ) -> ApiResult<Json<FundAlert>> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let out = state

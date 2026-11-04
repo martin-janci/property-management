@@ -9,9 +9,10 @@ use axum::{
 use db::models::reserve_funds::{
     CreateFundProjection, CreateProjectionItem, FundProjection, FundProjectionItem,
 };
+use db::repositories::reserve_funds::FundChildKind;
 use uuid::Uuid;
 
-use super::shared::{insert_child_error, repo_error, ApiResult};
+use super::shared::{insert_child_error, repo_error, require_manager, ApiResult};
 use crate::state::AppState;
 
 /// Projection sub-router.
@@ -35,6 +36,7 @@ async fn create_projection(
     Path(fund_id): Path<Uuid>,
     Json(req): Json<CreateFundProjection>,
 ) -> ApiResult<Json<FundProjection>> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .reserve_fund_repo
@@ -67,9 +69,29 @@ async fn get_current_projection(
 async fn get_projection_items(
     State(state): State<AppState>,
     mut rls: RlsConnection,
-    Path((_fund_id, projection_id)): Path<(Uuid, Uuid)>,
+    Path((fund_id, projection_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResult<Json<Vec<FundProjectionItem>>> {
     let org_id = rls.tenant_id();
+    // The child must belong to the fund named in the path (and the fund to
+    // the caller's org), not just to some fund of the org.
+    if let Err(e) = state
+        .reserve_fund_repo
+        .ensure_child_in_fund(
+            &mut **rls.conn(),
+            org_id,
+            fund_id,
+            FundChildKind::Projection,
+            projection_id,
+        )
+        .await
+    {
+        rls.release().await;
+        return Err(repo_error(
+            "get projection items",
+            "Projection not found",
+            e,
+        ));
+    }
     let out = state
         .reserve_fund_repo
         .get_projection_items(rls.conn(), org_id, projection_id)
@@ -84,10 +106,31 @@ async fn get_projection_items(
 async fn add_projection_items(
     State(state): State<AppState>,
     mut rls: RlsConnection,
-    Path((_fund_id, projection_id)): Path<(Uuid, Uuid)>,
+    Path((fund_id, projection_id)): Path<(Uuid, Uuid)>,
     Json(items): Json<Vec<CreateProjectionItem>>,
 ) -> ApiResult<Json<Vec<FundProjectionItem>>> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
+    // The child must belong to the fund named in the path (and the fund to
+    // the caller's org), not just to some fund of the org.
+    if let Err(e) = state
+        .reserve_fund_repo
+        .ensure_child_in_fund(
+            &mut **rls.conn(),
+            org_id,
+            fund_id,
+            FundChildKind::Projection,
+            projection_id,
+        )
+        .await
+    {
+        rls.release().await;
+        return Err(repo_error(
+            "add projection items",
+            "Projection not found",
+            e,
+        ));
+    }
     let out = state
         .reserve_fund_repo
         .add_projection_items(rls.conn(), org_id, projection_id, items)

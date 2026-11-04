@@ -2,7 +2,7 @@
 
 use crate::state::AppState;
 use api_core::extractors::RlsConnection;
-use api_core::{AuthUser, TenantExtractor};
+use api_core::AuthUser;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -177,6 +177,48 @@ pub fn router() -> Router<AppState> {
 }
 
 // ============================================================================
+// Authorization helpers
+// ============================================================================
+
+fn outage_not_found() -> (StatusCode, Json<ErrorResponse>) {
+    (
+        StatusCode::NOT_FOUND,
+        Json(ErrorResponse::new("NOT_FOUND", "Outage not found")),
+    )
+}
+
+/// Ensure the outage exists in the caller's organization; 404 otherwise.
+///
+/// `outages` RLS is not FORCEd, so the owner-role pool bypasses the policy —
+/// the explicit `organization_id` predicate is the real tenant boundary.
+/// Releases `rls` before returning an error.
+async fn ensure_outage_in_org(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
+    match state
+        .outage_repo
+        .find_by_id_rls(&mut **rls.conn(), org_id, id)
+        .await
+    {
+        Ok(Some(_)) => Ok(()),
+        Ok(None) => {
+            rls.release().await;
+            Err(outage_not_found())
+        }
+        Err(e) => {
+            rls.release().await;
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("INTERNAL_ERROR", e.to_string())),
+            ))
+        }
+    }
+}
+
+// ============================================================================
 // Handlers
 // ============================================================================
 
@@ -337,10 +379,10 @@ async fn create_outage(
 async fn list_outages(
     State(state): State<AppState>,
     _auth: AuthUser,
-    _tenant: TenantExtractor,
     mut rls: RlsConnection,
     Query(query): Query<ListOutagesQuery>,
 ) -> Result<Json<OutageListResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
     let list_query = OutageListQuery {
         status: query.status.map(|s| vec![s]),
         commodity: query.commodity.map(|c| vec![c]),
@@ -355,7 +397,7 @@ async fn list_outages(
 
     let outages = state
         .outage_repo
-        .list_rls(&mut **rls.conn(), &list_query)
+        .list_rls(&mut **rls.conn(), org_id, &list_query)
         .await
         .map_err(|e| {
             (
@@ -366,7 +408,7 @@ async fn list_outages(
 
     let total = state
         .outage_repo
-        .count_rls(&mut **rls.conn(), &list_query)
+        .count_rls(&mut **rls.conn(), org_id, &list_query)
         .await
         .map_err(|e| {
             (
@@ -399,9 +441,9 @@ async fn list_outages(
 async fn list_active_outages(
     State(state): State<AppState>,
     _auth: AuthUser,
-    _tenant: TenantExtractor,
     mut rls: RlsConnection,
 ) -> Result<Json<OutageListResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
     let list_query = OutageListQuery {
         active_only: Some(true),
         limit: Some(50),
@@ -410,7 +452,7 @@ async fn list_active_outages(
 
     let outages = state
         .outage_repo
-        .list_rls(&mut **rls.conn(), &list_query)
+        .list_rls(&mut **rls.conn(), org_id, &list_query)
         .await
         .map_err(|e| {
             (
@@ -421,7 +463,7 @@ async fn list_active_outages(
 
     let total = state
         .outage_repo
-        .count_rls(&mut **rls.conn(), &list_query)
+        .count_rls(&mut **rls.conn(), org_id, &list_query)
         .await
         .map_err(|e| {
             (
@@ -456,13 +498,13 @@ async fn list_active_outages(
 async fn get_outage(
     State(state): State<AppState>,
     _auth: AuthUser,
-    _tenant: TenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<OutageDetailResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
     let outage = state
         .outage_repo
-        .find_by_id_with_details_rls(&mut **rls.conn(), id)
+        .find_by_id_with_details_rls(&mut **rls.conn(), org_id, id)
         .await
         .map_err(|e| {
             (
@@ -506,6 +548,7 @@ async fn update_outage(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateOutageRequest>,
 ) -> Result<Json<OutageActionResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
     // Authorization: require manager-level role (DB-validated via RlsConnection).
     if !rls.role().is_manager() {
         rls.release().await;
@@ -517,6 +560,8 @@ async fn update_outage(
             )),
         ));
     }
+
+    ensure_outage_in_org(&state, &mut rls, id).await?;
 
     // Validate commodity if provided
     if let Some(ref commodity) = req.commodity {
@@ -566,7 +611,7 @@ async fn update_outage(
 
     let outage = state
         .outage_repo
-        .update_rls(&mut **rls.conn(), id, data)
+        .update_rls(&mut **rls.conn(), org_id, id, data)
         .await
         .map_err(|e| {
             (
@@ -604,6 +649,7 @@ async fn delete_outage(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
     // Authorization: require manager-level role (DB-validated via RlsConnection).
     if !rls.role().is_manager() {
         rls.release().await;
@@ -616,9 +662,11 @@ async fn delete_outage(
         ));
     }
 
-    state
+    ensure_outage_in_org(&state, &mut rls, id).await?;
+
+    let deleted = state
         .outage_repo
-        .delete_rls(&mut **rls.conn(), id)
+        .delete_rls(&mut **rls.conn(), org_id, id)
         .await
         .map_err(|e| {
             (
@@ -628,6 +676,10 @@ async fn delete_outage(
         })?;
 
     rls.release().await;
+
+    if deleted == 0 {
+        return Err(outage_not_found());
+    }
 
     Ok(StatusCode::NO_CONTENT)
 }
@@ -656,6 +708,7 @@ async fn start_outage(
     Path(id): Path<Uuid>,
     Json(req): Json<StartOutageRequest>,
 ) -> Result<Json<OutageActionResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
     // Authorization: require manager-level role (DB-validated via RlsConnection).
     if !rls.role().is_manager() {
         rls.release().await;
@@ -668,9 +721,11 @@ async fn start_outage(
         ));
     }
 
+    ensure_outage_in_org(&state, &mut rls, id).await?;
+
     let outage = state
         .outage_repo
-        .start_rls(&mut **rls.conn(), id, req.actual_start)
+        .start_rls(&mut **rls.conn(), org_id, id, req.actual_start)
         .await
         .map_err(|e| {
             (
@@ -711,6 +766,7 @@ async fn resolve_outage(
     Path(id): Path<Uuid>,
     Json(req): Json<ResolveOutageRequest>,
 ) -> Result<Json<OutageActionResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
     // Authorization: require manager-level role (DB-validated via RlsConnection).
     if !rls.role().is_manager() {
         rls.release().await;
@@ -723,9 +779,17 @@ async fn resolve_outage(
         ));
     }
 
+    ensure_outage_in_org(&state, &mut rls, id).await?;
+
     let outage = state
         .outage_repo
-        .resolve_rls(&mut **rls.conn(), id, req.actual_end, req.resolution_notes)
+        .resolve_rls(
+            &mut **rls.conn(),
+            org_id,
+            id,
+            req.actual_end,
+            req.resolution_notes,
+        )
         .await
         .map_err(|e| {
             (
@@ -766,6 +830,7 @@ async fn cancel_outage(
     Path(id): Path<Uuid>,
     Json(req): Json<CancelOutageRequest>,
 ) -> Result<Json<OutageActionResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
     // Authorization: require manager-level role (DB-validated via RlsConnection).
     if !rls.role().is_manager() {
         rls.release().await;
@@ -778,9 +843,11 @@ async fn cancel_outage(
         ));
     }
 
+    ensure_outage_in_org(&state, &mut rls, id).await?;
+
     let outage = state
         .outage_repo
-        .cancel_rls(&mut **rls.conn(), id, req.reason)
+        .cancel_rls(&mut **rls.conn(), org_id, id, req.reason)
         .await
         .map_err(|e| {
             (
@@ -812,7 +879,6 @@ async fn cancel_outage(
 async fn mark_read(
     State(state): State<AppState>,
     auth: AuthUser,
-    _tenant: TenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
@@ -846,12 +912,12 @@ async fn mark_read(
 async fn get_statistics(
     State(state): State<AppState>,
     _auth: AuthUser,
-    _tenant: TenantExtractor,
     mut rls: RlsConnection,
 ) -> Result<Json<OutageStatisticsResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
     let statistics = state
         .outage_repo
-        .get_statistics_rls(&mut **rls.conn())
+        .get_statistics_rls(&mut **rls.conn(), org_id)
         .await
         .map_err(|e| {
             (
@@ -879,12 +945,12 @@ async fn get_statistics(
 async fn get_dashboard(
     State(state): State<AppState>,
     _auth: AuthUser,
-    _tenant: TenantExtractor,
     mut rls: RlsConnection,
 ) -> Result<Json<OutageDashboardResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
     let dashboard = state
         .outage_repo
-        .get_dashboard_rls(&mut **rls.conn())
+        .get_dashboard_rls(rls.conn(), org_id)
         .await
         .map_err(|e| {
             (
@@ -912,7 +978,6 @@ async fn get_dashboard(
 async fn get_unread_count(
     State(state): State<AppState>,
     auth: AuthUser,
-    _tenant: TenantExtractor,
     mut rls: RlsConnection,
 ) -> Result<Json<UnreadOutagesCountResponse>, (StatusCode, Json<ErrorResponse>)> {
     let unread_count = state

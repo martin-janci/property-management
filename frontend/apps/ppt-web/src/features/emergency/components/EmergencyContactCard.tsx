@@ -7,6 +7,7 @@
 import type { EmergencyContact } from '@ppt/api-client';
 import { CONTACT_TYPE_LABELS } from '@ppt/api-client';
 import type React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface EmergencyContactCardProps {
   contact: EmergencyContact;
@@ -21,8 +22,12 @@ export const EmergencyContactCard: React.FC<EmergencyContactCardProps> = ({
   onDelete,
   showActions = true,
 }) => {
-  const contactTypeLabel =
-    CONTACT_TYPE_LABELS[contact.contact_type as keyof typeof CONTACT_TYPE_LABELS] || contact.role;
+  const { t } = useTranslation();
+  const englishTypeLabel =
+    CONTACT_TYPE_LABELS[contact.contact_type as keyof typeof CONTACT_TYPE_LABELS];
+  const contactTypeLabel = englishTypeLabel
+    ? t(`emergency.contactTypes.${contact.contact_type}`, { defaultValue: englishTypeLabel })
+    : contact.role;
 
   return (
     <div className="emergency-contact-card">
@@ -31,18 +36,20 @@ export const EmergencyContactCard: React.FC<EmergencyContactCardProps> = ({
           <h3 className="emergency-contact-card-name">{contact.name}</h3>
           <span className="emergency-contact-card-type">{contactTypeLabel}</span>
         </div>
-        {!contact.is_active && <span className="emergency-contact-card-badge">Inactive</span>}
+        {!contact.is_active && (
+          <span className="emergency-contact-card-badge">{t('emergency.card.inactive')}</span>
+        )}
       </div>
 
       <div className="emergency-contact-card-body">
         <div className="emergency-contact-card-field">
-          <span className="emergency-contact-card-label">Role:</span>
+          <span className="emergency-contact-card-label">{t('emergency.card.role')}</span>
           <span className="emergency-contact-card-value">{contact.role}</span>
         </div>
 
         {contact.phone && (
           <div className="emergency-contact-card-field">
-            <span className="emergency-contact-card-label">Phone:</span>
+            <span className="emergency-contact-card-label">{t('emergency.card.phone')}</span>
             <a href={`tel:${contact.phone}`} className="emergency-contact-card-value link">
               {contact.phone}
             </a>
@@ -51,7 +58,9 @@ export const EmergencyContactCard: React.FC<EmergencyContactCardProps> = ({
 
         {contact.phone_secondary && (
           <div className="emergency-contact-card-field">
-            <span className="emergency-contact-card-label">Secondary Phone:</span>
+            <span className="emergency-contact-card-label">
+              {t('emergency.card.phoneSecondary')}
+            </span>
             <a
               href={`tel:${contact.phone_secondary}`}
               className="emergency-contact-card-value link"
@@ -63,7 +72,7 @@ export const EmergencyContactCard: React.FC<EmergencyContactCardProps> = ({
 
         {contact.email && (
           <div className="emergency-contact-card-field">
-            <span className="emergency-contact-card-label">Email:</span>
+            <span className="emergency-contact-card-label">{t('emergency.card.email')}</span>
             <a href={`mailto:${contact.email}`} className="emergency-contact-card-value link">
               {contact.email}
             </a>
@@ -72,27 +81,29 @@ export const EmergencyContactCard: React.FC<EmergencyContactCardProps> = ({
 
         {contact.address && (
           <div className="emergency-contact-card-field">
-            <span className="emergency-contact-card-label">Address:</span>
+            <span className="emergency-contact-card-label">{t('emergency.card.address')}</span>
             <span className="emergency-contact-card-value">{contact.address}</span>
           </div>
         )}
 
         {contact.available_hours && (
           <div className="emergency-contact-card-field">
-            <span className="emergency-contact-card-label">Available Hours:</span>
+            <span className="emergency-contact-card-label">
+              {t('emergency.card.availableHours')}
+            </span>
             <span className="emergency-contact-card-value">{contact.available_hours}</span>
           </div>
         )}
 
         {contact.notes && (
           <div className="emergency-contact-card-field">
-            <span className="emergency-contact-card-label">Notes:</span>
+            <span className="emergency-contact-card-label">{t('emergency.card.notes')}</span>
             <span className="emergency-contact-card-value">{contact.notes}</span>
           </div>
         )}
 
         <div className="emergency-contact-card-field">
-          <span className="emergency-contact-card-label">Priority:</span>
+          <span className="emergency-contact-card-label">{t('emergency.card.priority')}</span>
           <span className="emergency-contact-card-value">{contact.priority_order}</span>
         </div>
       </div>
@@ -104,9 +115,9 @@ export const EmergencyContactCard: React.FC<EmergencyContactCardProps> = ({
               type="button"
               onClick={() => onEdit(contact)}
               className="emergency-contact-card-button edit"
-              aria-label={`Edit ${contact.name}`}
+              aria-label={t('emergency.card.editAria', { name: contact.name })}
             >
-              Edit
+              {t('common.edit')}
             </button>
           )}
           {onDelete && (
@@ -114,9 +125,9 @@ export const EmergencyContactCard: React.FC<EmergencyContactCardProps> = ({
               type="button"
               onClick={() => onDelete(contact)}
               className="emergency-contact-card-button delete"
-              aria-label={`Delete ${contact.name}`}
+              aria-label={t('emergency.card.deleteAria', { name: contact.name })}
             >
-              Delete
+              {t('common.delete')}
             </button>
           )}
         </div>

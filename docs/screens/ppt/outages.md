@@ -30,4 +30,6 @@ Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, e
 - 2026-05-18 — audit: stub created from `frontend/apps/ppt-web/src/App.tsx:465`.
 
 ## Agent Log
+
+- 2026-11-04 — agent: r3-nav-roles — create button and card Edit only for managers (route omits the handlers for residents) (audit r3 #14).
 - 2026-05-18 — agent: created stub for unmapped route.

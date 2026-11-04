@@ -2,6 +2,9 @@
  * InvoiceStatusChart component for visualizing invoice distribution.
  */
 
+import { useTranslation } from 'react-i18next';
+import { invoiceStatusKey } from '../utils/constants';
+
 interface InvoiceStatusChartProps {
   data: {
     draft: number;
@@ -18,32 +21,34 @@ const STATUS_COLORS: Record<string, string> = {
   paid: 'bg-green-500',
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  draft: 'Draft',
-  sent: 'Sent',
-  overdue: 'Overdue',
-  paid: 'Paid',
-};
-
 export function InvoiceStatusChart({ data }: InvoiceStatusChartProps) {
+  const { t, i18n } = useTranslation();
   const total = data.draft + data.sent + data.overdue + data.paid;
 
   if (total === 0) {
     return (
       <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Invoice Status</h3>
-        <p className="text-gray-500 text-center py-8">No invoices yet</p>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">
+          {t('financial.invoiceChart.title')}
+        </h3>
+        <p className="text-gray-500 text-center py-8">{t('financial.invoiceChart.empty')}</p>
       </div>
     );
   }
 
   const getPercentage = (value: number) => {
-    return total > 0 ? ((value / total) * 100).toFixed(1) : '0';
+    const percent = total > 0 ? (value / total) * 100 : 0;
+    return percent.toLocaleString(i18n.language, {
+      minimumFractionDigits: total > 0 ? 1 : 0,
+      maximumFractionDigits: 1,
+    });
   };
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
-      <h3 className="text-lg font-medium text-gray-900 mb-4">Invoice Status</h3>
+      <h3 className="text-lg font-medium text-gray-900 mb-4">
+        {t('financial.invoiceChart.title')}
+      </h3>
 
       {/* Horizontal stacked bar */}
       <div className="h-8 flex rounded-lg overflow-hidden mb-6">
@@ -55,7 +60,7 @@ export function InvoiceStatusChart({ data }: InvoiceStatusChartProps) {
               key={status}
               className={`${STATUS_COLORS[status]} transition-all duration-300`}
               style={{ width: `${percentage}%` }}
-              title={`${STATUS_LABELS[status]}: ${value}`}
+              title={`${t(invoiceStatusKey(status))}: ${value}`}
             />
           );
         })}
@@ -67,7 +72,7 @@ export function InvoiceStatusChart({ data }: InvoiceStatusChartProps) {
           <div key={status} className="flex items-center justify-between">
             <div className="flex items-center">
               <span className={`w-3 h-3 rounded-full ${STATUS_COLORS[status]} mr-2`} />
-              <span className="text-sm text-gray-600">{STATUS_LABELS[status]}</span>
+              <span className="text-sm text-gray-600">{t(invoiceStatusKey(status))}</span>
             </div>
             <div className="text-right">
               <span className="text-sm font-medium text-gray-900">{value}</span>

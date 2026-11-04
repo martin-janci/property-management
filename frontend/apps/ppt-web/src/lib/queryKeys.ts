@@ -402,6 +402,9 @@ export const AUTHED_QUERY_KEY_ROOTS = [
   'oauth-grants',
   'mfa',
   'layout',
+  // Budgets (Epic 24) — `budgetKeys.all === ['budgets']`, consumed by the
+  // financial budget list / create / detail routes. Org-scoped.
+  'budgets',
   // Ad-hoc roots used directly in feature hooks
   'developer',
   'ocr',

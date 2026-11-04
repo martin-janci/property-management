@@ -48,6 +48,121 @@ fn require_staff_role(auth: &AuthUser) -> Result<(), (StatusCode, Json<ErrorResp
     }
 }
 
+/// Staff check resolved from the caller's `organization_members` row in the
+/// request tenant (never the JWT). Same role set as [`require_staff_role`].
+async fn is_staff_in_org(
+    state: &AppState,
+    tenant: &common::TenantContext,
+) -> Result<bool, (StatusCode, Json<ErrorResponse>)> {
+    let role_type = state
+        .org_member_repo
+        .get_user_role_type(tenant.tenant_id, tenant.user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = ?e, "Failed to look up org role");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?;
+    Ok(matches!(
+        role_type.as_deref().and_then(TenantRole::from_role_type),
+        Some(
+            TenantRole::Manager
+                | TenantRole::TechnicalManager
+                | TenantRole::OrgAdmin
+                | TenantRole::SuperAdmin
+                | TenantRole::PlatformAdmin
+                | TenantRole::PropertyManager
+        )
+    ))
+}
+
+fn staff_forbidden() -> (StatusCode, Json<ErrorResponse>) {
+    (
+        StatusCode::FORBIDDEN,
+        Json(ErrorResponse::new(
+            "FORBIDDEN",
+            "This action requires staff or manager privileges",
+        )),
+    )
+}
+
+/// SECURITY (audit4): settings and deletes are staff-only.
+async fn require_staff_in_org(
+    state: &AppState,
+    tenant: &common::TenantContext,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    if is_staff_in_org(state, tenant).await? {
+        Ok(())
+    } else {
+        Err(staff_forbidden())
+    }
+}
+
+/// SECURITY (audit4): a package may be changed / picked up only by its
+/// resident or by staff (previously any tenant member could act on any
+/// package). `404` when the package is not in the tenant.
+async fn require_package_resident_or_staff(
+    state: &AppState,
+    tenant: &common::TenantContext,
+    package_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let package = state
+        .package_visitor_repo
+        .get_package(tenant.tenant_id, package_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to load package: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Package not found")),
+            )
+        })?;
+    if package.resident_id == tenant.user_id || is_staff_in_org(state, tenant).await? {
+        Ok(())
+    } else {
+        Err(staff_forbidden())
+    }
+}
+
+/// SECURITY (audit4): a visitor registration may be changed / cancelled /
+/// deleted only by its host or by staff. `404` when not in the tenant.
+async fn require_visitor_host_or_staff(
+    state: &AppState,
+    tenant: &common::TenantContext,
+    visitor_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let visitor = state
+        .package_visitor_repo
+        .get_visitor(tenant.tenant_id, visitor_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to load visitor: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Visitor not found")),
+            )
+        })?;
+    if visitor.host_id == tenant.user_id || is_staff_in_org(state, tenant).await? {
+        Ok(())
+    } else {
+        Err(staff_forbidden())
+    }
+}
+
 // ============================================================================
 // Response Types
 // ============================================================================
@@ -180,7 +295,7 @@ async fn create_package(
 )]
 async fn get_package(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<PackageDetailResponse>, (StatusCode, Json<ErrorResponse>)> {
     let package = state
@@ -226,7 +341,7 @@ async fn get_package(
 )]
 async fn list_packages(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Query(query): Query<PackageQuery>,
 ) -> Result<Json<PackageListResponse>, (StatusCode, Json<ErrorResponse>)> {
     let (packages, total) = state
@@ -262,10 +377,11 @@ async fn list_packages(
 )]
 async fn update_package(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdatePackage>,
 ) -> Result<Json<PackageActionResponse>, (StatusCode, Json<ErrorResponse>)> {
+    require_package_resident_or_staff(&state, &tenant, id).await?;
     let package = state
         .package_visitor_repo
         .update_package(tenant.tenant_id, id, data)
@@ -372,6 +488,7 @@ async fn pickup_package(
     Path(id): Path<Uuid>,
     Json(data): Json<PickupPackage>,
 ) -> Result<Json<PackageActionResponse>, (StatusCode, Json<ErrorResponse>)> {
+    require_package_resident_or_staff(&state, &tenant, id).await?;
     let package = state
         .package_visitor_repo
         .pickup_package(tenant.tenant_id, id, auth.user_id, data)
@@ -419,9 +536,10 @@ async fn pickup_package(
 )]
 async fn delete_package(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    require_staff_in_org(&state, &tenant).await?;
     let deleted = state
         .package_visitor_repo
         .delete_package(tenant.tenant_id, id)
@@ -463,7 +581,7 @@ async fn delete_package(
 )]
 async fn get_package_statistics(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Path(building_id): Path<Uuid>,
 ) -> Result<Json<PackageStatisticsResponse>, (StatusCode, Json<ErrorResponse>)> {
     let statistics = state
@@ -548,7 +666,7 @@ async fn create_visitor(
 )]
 async fn get_visitor(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<VisitorDetailResponse>, (StatusCode, Json<ErrorResponse>)> {
     let visitor = state
@@ -595,7 +713,7 @@ async fn get_visitor(
 )]
 async fn list_visitors(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Query(query): Query<VisitorQuery>,
 ) -> Result<Json<VisitorListResponse>, (StatusCode, Json<ErrorResponse>)> {
     let (visitors, total) = state
@@ -631,10 +749,11 @@ async fn list_visitors(
 )]
 async fn update_visitor(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateVisitor>,
 ) -> Result<Json<VisitorActionResponse>, (StatusCode, Json<ErrorResponse>)> {
+    require_visitor_host_or_staff(&state, &tenant, id).await?;
     let visitor = state
         .package_visitor_repo
         .update_visitor(tenant.tenant_id, id, data)
@@ -794,9 +913,10 @@ async fn check_out_visitor(
 )]
 async fn cancel_visitor(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<VisitorActionResponse>, (StatusCode, Json<ErrorResponse>)> {
+    require_visitor_host_or_staff(&state, &tenant, id).await?;
     let visitor = state
         .package_visitor_repo
         .cancel_visitor(tenant.tenant_id, id)
@@ -841,7 +961,7 @@ async fn cancel_visitor(
 )]
 async fn verify_access_code(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Json(data): Json<VerifyAccessCode>,
 ) -> Result<Json<AccessCodeVerification>, (StatusCode, Json<ErrorResponse>)> {
     let verification = state
@@ -879,9 +999,10 @@ async fn verify_access_code(
 )]
 async fn delete_visitor(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    require_visitor_host_or_staff(&state, &tenant, id).await?;
     let deleted = state
         .package_visitor_repo
         .delete_visitor(tenant.tenant_id, id)
@@ -923,7 +1044,7 @@ async fn delete_visitor(
 )]
 async fn get_visitor_statistics(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Path(building_id): Path<Uuid>,
 ) -> Result<Json<VisitorStatisticsResponse>, (StatusCode, Json<ErrorResponse>)> {
     let statistics = state
@@ -965,7 +1086,7 @@ async fn get_visitor_statistics(
 )]
 async fn get_package_settings(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Path(building_id): Path<Uuid>,
 ) -> Result<Json<PackageSettingsResponse>, (StatusCode, Json<ErrorResponse>)> {
     let settings = state
@@ -1012,10 +1133,11 @@ async fn get_package_settings(
 )]
 async fn update_package_settings(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Path(building_id): Path<Uuid>,
     Json(data): Json<UpdateBuildingPackageSettings>,
 ) -> Result<Json<PackageSettingsResponse>, (StatusCode, Json<ErrorResponse>)> {
+    require_staff_in_org(&state, &tenant).await?;
     let settings = state
         .package_visitor_repo
         .upsert_package_settings(tenant.tenant_id, building_id, data)
@@ -1051,7 +1173,7 @@ async fn update_package_settings(
 )]
 async fn get_visitor_settings(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Path(building_id): Path<Uuid>,
 ) -> Result<Json<VisitorSettingsResponse>, (StatusCode, Json<ErrorResponse>)> {
     let settings = state
@@ -1098,10 +1220,11 @@ async fn get_visitor_settings(
 )]
 async fn update_visitor_settings(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Path(building_id): Path<Uuid>,
     Json(data): Json<UpdateBuildingVisitorSettings>,
 ) -> Result<Json<VisitorSettingsResponse>, (StatusCode, Json<ErrorResponse>)> {
+    require_staff_in_org(&state, &tenant).await?;
     let settings = state
         .package_visitor_repo
         .upsert_visitor_settings(tenant.tenant_id, building_id, data)
