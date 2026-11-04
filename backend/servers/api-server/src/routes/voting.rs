@@ -24,8 +24,6 @@ use sqlx::Error as SqlxError;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-/// Create voting router.
-
 /// Vote lifecycle (create / edit / publish / cancel / close / delete), ballot
 /// questions, comment moderation and the audit trail are manager operations.
 /// Owners and tenants read votes, cast ballots and comment. The role comes
@@ -43,6 +41,7 @@ macro_rules! require_manager {
     };
 }
 
+/// Create voting router.
 pub fn router() -> Router<AppState> {
     Router::new()
         // Vote CRUD
