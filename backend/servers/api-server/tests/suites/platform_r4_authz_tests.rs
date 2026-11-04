@@ -1017,6 +1017,105 @@ async fn feature_endpoints_use_db_membership(pool: PgPool) {
 }
 
 // ---------------------------------------------------------------------------
+// Organization members: role permission subset
+// ---------------------------------------------------------------------------
+
+async fn role_with(pool: &PgPool, org: Uuid, perms: serde_json::Value) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"INSERT INTO roles (organization_id, name, permissions, is_system)
+           VALUES ($1, $2, $3, FALSE) RETURNING id"#,
+    )
+    .bind(org)
+    .bind(format!("R4 Role {}", Uuid::new_v4()))
+    .bind(perms)
+    .fetch_one(pool)
+    .await
+    .expect("seed role")
+}
+
+async fn role_id_of(pool: &PgPool, org: Uuid, user: Uuid) -> Option<Uuid> {
+    sqlx::query_scalar::<_, Option<Uuid>>(
+        "SELECT role_id FROM organization_members WHERE organization_id = $1 AND user_id = $2",
+    )
+    .bind(org)
+    .bind(user)
+    .fetch_one(pool)
+    .await
+    .expect("role_id")
+}
+
+/// A member-management permission does not let the caller hand out a role
+/// row with permissions they lack (e.g. `["*"]`), whatever `role_type` says.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn members_cannot_assign_role_with_permissions_they_lack(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org = seed_org(&pool, "mem-perm").await;
+    let mgr_role = role_with(
+        &pool,
+        org,
+        json!(["users:create", "users:update", "faults:read"]),
+    )
+    .await;
+    let wildcard = wildcard_role(&pool, org).await;
+    let users_star = role_with(&pool, org, json!(["users:*"])).await;
+    let narrow = role_with(&pool, org, json!(["faults:read"])).await;
+
+    let mgr = permissioned_member(&pool, org, "manager", mgr_role).await;
+    let target = permissioned_member(&pool, org, "resident", narrow).await;
+
+    for (role, label) in [(wildcard, "[*]"), (users_star, "[users:*]")] {
+        let resp = call(
+            &app,
+            "PUT",
+            &format!("/api/v1/organizations/{org}/members/{}", target.id),
+            &mgr,
+            org,
+            Some(json!({ "role_id": role, "role_type": "owner" })),
+        )
+        .await;
+        expect(&resp, StatusCode::FORBIDDEN, &format!("update to {label}"));
+    }
+    assert_eq!(role_id_of(&pool, org, target.id).await, Some(narrow));
+
+    let (newbie, _) = seed_user(&pool, "perm-newbie").await;
+    let resp = call(
+        &app,
+        "POST",
+        &format!("/api/v1/organizations/{org}/members"),
+        &mgr,
+        org,
+        Some(json!({ "user_id": newbie, "role_id": wildcard, "role_type": "tenant" })),
+    )
+    .await;
+    expect(&resp, StatusCode::FORBIDDEN, "add member with [*] role");
+
+    // A role whose permissions the caller holds is still assignable.
+    let subset = role_with(&pool, org, json!(["users:update", "faults:read"])).await;
+    let resp = call(
+        &app,
+        "PUT",
+        &format!("/api/v1/organizations/{org}/members/{}", target.id),
+        &mgr,
+        org,
+        Some(json!({ "role_id": subset, "role_type": "owner" })),
+    )
+    .await;
+    expect(&resp, StatusCode::OK, "update to subset role");
+    assert_eq!(role_id_of(&pool, org, target.id).await, Some(subset));
+
+    let resp = call(
+        &app,
+        "POST",
+        &format!("/api/v1/organizations/{org}/members"),
+        &mgr,
+        org,
+        Some(json!({ "user_id": newbie, "role_id": narrow, "role_type": "tenant" })),
+    )
+    .await;
+    expect(&resp, StatusCode::CREATED, "add member with subset role");
+}
+
+// ---------------------------------------------------------------------------
 // Platform routes: admin-core capability gate
 // ---------------------------------------------------------------------------
 //

@@ -58,6 +58,35 @@ fn role_type_level(raw: &str) -> u8 {
     parse_role_type(raw).unwrap_or(TenantRole::Guest).level()
 }
 
+/// SECURITY: a member-management permission must not let the caller hand out
+/// a role row carrying permissions they do not hold themselves (e.g. a manager
+/// with only `users:update` assigning a `["*"]` role). Every permission on the
+/// assigned role must be granted by the caller's own role; malformed
+/// permission sets are rejected.
+fn ensure_role_permissions_assignable(
+    caller_role: &db::models::Role,
+    assigned_role: &db::models::Role,
+) -> Result<(), ApiError> {
+    let covered = match assigned_role.permissions.as_array() {
+        Some(perms) => perms
+            .iter()
+            .all(|p| p.as_str().is_some_and(|p| caller_role.has_permission(p))),
+        // `null` / non-array: no permissions to escalate with.
+        None => assigned_role.permissions.is_null(),
+    };
+    if covered {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "ROLE_NOT_ASSIGNABLE",
+                "You cannot assign a role with permissions you do not hold",
+            )),
+        ))
+    }
+}
+
 /// SECURITY: `role_type` is what the tenant extractors use as the caller's
 /// authoritative org role, so a member-management permission must not let the
 /// caller mint a role above their own. Platform roles are never assignable via
@@ -390,8 +419,8 @@ pub async fn add_organization_member(
     }
 
     // Verify role exists and belongs to this organization
-    match state.role_repo.find_by_id(req.role_id).await {
-        Ok(Some(r)) if r.organization_id == id => {}
+    let assigned_role = match state.role_repo.find_by_id(req.role_id).await {
+        Ok(Some(r)) if r.organization_id == id => r,
         Ok(Some(_)) => {
             return Err((
                 StatusCode::BAD_REQUEST,
@@ -414,7 +443,8 @@ pub async fn add_organization_member(
                 Json(ErrorResponse::new("DATABASE_ERROR", "Failed to find role")),
             ));
         }
-    }
+    };
+    ensure_role_permissions_assignable(&role, &assigned_role)?;
 
     // Check if user is already a member
     match state
@@ -687,6 +717,7 @@ pub async fn update_organization_member(
         .role_type
         .unwrap_or_else(|| new_role.name.to_lowercase().replace(' ', "_"));
     ensure_role_type_assignable(&admin_membership.role_type, &role_type)?;
+    ensure_role_permissions_assignable(&role, &new_role)?;
 
     // Update the member
     use db::models::UpdateOrganizationMember;
