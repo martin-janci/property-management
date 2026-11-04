@@ -51,6 +51,7 @@ pub mod platform_admin;
 pub mod rentals;
 pub mod rls_authz;
 pub mod signatures;
+pub mod suspend_cascade;
 pub mod templates;
 pub mod tenant_config;
 pub mod unit_residents;
