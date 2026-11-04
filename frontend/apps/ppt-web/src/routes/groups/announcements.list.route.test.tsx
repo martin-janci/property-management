@@ -12,6 +12,8 @@
  *  (c) successful data renders an announcement title (item → AnnouncementCard)
  *  (d) empty list (no error) → "No announcements found." empty state
  *  (e) pinned-band query (usePinnedAnnouncements) feeds the sticky band
+ *  (f) residents (owner/tenant) read usePublishedAnnouncements, never the
+ *      manager-only list (which 403s), and get a read-only list
  *
  * Renders the real route via MemoryRouter + Routes + TanStack
  * QueryClientProvider, exactly as in production. A dedicated test file (rather
@@ -38,14 +40,17 @@ vi.mock('../../components', () => ({
 }));
 
 // ── auth ──
+let mockRole = 'manager';
 vi.mock('../../contexts', () => ({
-  useAuth: () => ({ user: { role: 'manager' } }),
+  useAuth: () => ({ user: { role: mockRole } }),
 }));
 
 // ── api-client stubs ──
 const mockUseAnnouncements = vi.fn();
 const mockUsePinnedAnnouncements = vi.fn();
+const mockUsePublishedAnnouncements = vi.fn();
 vi.mock('@ppt/api-client', () => ({
+  usePublishedAnnouncements: (...args: unknown[]) => mockUsePublishedAnnouncements(...args),
   useAnnouncements: (...args: unknown[]) => mockUseAnnouncements(...args),
   usePinnedAnnouncements: (...args: unknown[]) => mockUsePinnedAnnouncements(...args),
   useDeleteAnnouncement: () => ({ mutateAsync: vi.fn() }),
@@ -101,8 +106,15 @@ function renderAnnouncementsRoute() {
 describe('AnnouncementsPageRoute API wiring (Story 79.1)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockRole = 'manager';
     // Default: pinned band empty unless a test overrides it.
     mockUsePinnedAnnouncements.mockReturnValue({ data: { items: [] } });
+    mockUsePublishedAnnouncements.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: null,
+      refetch: noopRefetch,
+    });
   });
 
   it('(a) does not show empty state while loading', async () => {
@@ -186,5 +198,57 @@ describe('AnnouncementsPageRoute API wiring (Story 79.1)', () => {
     ).toBeInTheDocument();
     // The list query result is independent of the pinned-band query.
     expect(mockUsePinnedAnnouncements).toHaveBeenCalled();
+  });
+  it.each(['owner', 'tenant'])(
+    '(f) %s reads published announcements and gets a read-only list',
+    async (role) => {
+      mockRole = role;
+      mockUseAnnouncements.mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        error: null,
+        refetch: noopRefetch,
+      });
+      mockUsePinnedAnnouncements.mockReturnValue({ data: undefined });
+      mockUsePublishedAnnouncements.mockReturnValue({
+        data: {
+          items: [makeSummary({ id: 'pub-1', title: 'Water shutoff notice', pinned: true })],
+          total: 1,
+        },
+        isLoading: false,
+        error: null,
+        refetch: noopRefetch,
+      });
+
+      renderAnnouncementsRoute();
+
+      // Pinned resident item shows in both the band and the list.
+      expect(
+        (await screen.findAllByText('Water shutoff notice', {}, { timeout: 5000 })).length
+      ).toBeGreaterThanOrEqual(1);
+      // Manager-only queries are disabled; the resident query is enabled.
+      expect(mockUseAnnouncements).toHaveBeenCalledWith(expect.anything(), false);
+      expect(mockUsePinnedAnnouncements).toHaveBeenCalledWith(false);
+      expect(mockUsePublishedAnnouncements).toHaveBeenCalledWith({ page: 1, pageSize: 10 }, true);
+      expect(screen.queryByRole('button', { name: 'Create Announcement' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Archive' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Unpin' })).not.toBeInTheDocument();
+      expect(screen.queryAllByRole('combobox')).toHaveLength(0);
+    }
+  );
+
+  it('(g) managers keep the full list and do not enable the resident query', async () => {
+    mockUseAnnouncements.mockReturnValue({
+      data: { items: [], total: 0 },
+      isLoading: false,
+      error: null,
+      refetch: noopRefetch,
+    });
+
+    renderAnnouncementsRoute();
+
+    await screen.findByRole('button', { name: 'Create Announcement' }, { timeout: 5000 });
+    expect(mockUseAnnouncements).toHaveBeenCalledWith(expect.anything(), true);
+    expect(mockUsePublishedAnnouncements).toHaveBeenCalledWith(expect.anything(), false);
   });
 });
