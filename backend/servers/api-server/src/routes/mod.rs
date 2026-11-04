@@ -50,6 +50,7 @@ pub mod person_months;
 pub mod platform_admin;
 pub mod rentals;
 pub mod signatures;
+pub mod suspend_cascade;
 pub mod templates;
 pub mod tenant_config;
 pub mod unit_residents;
