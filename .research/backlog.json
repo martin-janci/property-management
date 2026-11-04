@@ -14853,6 +14853,91 @@
       "score_delta": 1,
       "candidate_vector": "refactor",
       "expert": "rust"
+    },
+    {
+      "id": "screen-map-drift-pr-3237-ppt",
+      "title": "Screen-map drift: PR #3237 restructured ppt-web app shell + landing without docs/screens/ppt/*.md update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3237"
+      ],
+      "evidence": [
+        "PR #3237 (feat/grouped, role-aware app shell + landing) edited App.tsx + routes/groups/core.tsx. No docs/screens/ppt/*.md touched. Shell navigation structure changed substantially — screen-map likely drifted.",
+        "Best-effort heuristic: landing + shell reorganization is a real behavioral change, review candidate for actual doc sync."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3242-ppt",
+      "title": "Screen-map drift: PR #3242 localized financial/buildings/my-unit routes without docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3242"
+      ],
+      "evidence": [
+        "PR #3242 (fix/localize financial, buildings, my-unit) edited routes/groups/financial.tsx. No docs/screens/ppt/*.md touched. Pure i18n — heuristic fires but drift low-impact.",
+        "Best-effort heuristic caveat applies."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3244-ppt",
+      "title": "Screen-map drift: PR #3244 localized faults/news/settings/error pages without docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3244"
+      ],
+      "evidence": [
+        "PR #3244 (fix/localize faults, news, settings, error pages) edited routes/groups/outages.tsx. No docs/screens/ppt/*.md touched. Mostly i18n — heuristic fires but low-impact.",
+        "Best-effort heuristic caveat applies."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/outages.tsx"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3254-ppt",
+      "title": "Screen-map drift: PR #3254 rewired ppt-web rentals routes to /bookings/* without docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3254"
+      ],
+      "evidence": [
+        "PR #3254 (fix/wire rentals pages to the real rentals API) rewrote routes/groups/rentals.tsx from /rentals/* SDK to /bookings/* + /statistics + /connections. Real behavioral change — screen-map doc needs sync.",
+        "docs/screens/ppt/rentals-dashboard.md was not touched by this PR; PR #3257 did touch it but for a different flow (calendar/tax-report) — the bookings rewire is separately undocumented."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null
     }
   ]
 }
