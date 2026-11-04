@@ -7,6 +7,7 @@ use axum::{
     http::{request::Parts, HeaderValue, StatusCode},
 };
 use common::TenantRole;
+use uuid::Uuid;
 
 const TENANT_HEADER: &str = "X-Tenant-ID";
 
@@ -54,7 +55,51 @@ where
     type Rejection = (StatusCode, &'static str);
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        Self::extract(parts, state, None).await
+    }
+}
+
+impl TenantAuthUser {
+    /// Extract a [`TenantAuthUser`] for a handler that also accepts a
+    /// client-supplied organization id (a legacy `organization_id` query or
+    /// body field).
+    ///
+    /// When `requested_org` is `Some` and differs from the org this request
+    /// targets (Host-resolved org, else `X-Tenant-ID`, else the JWT claim), the
+    /// request is rejected with 403 *before* the membership lookup: a caller
+    /// naming another org is refused the same way whether or not they belong to
+    /// the targeted one, and a cross-org probe never costs a DB round trip (nor
+    /// surfaces a DB failure as a 500). Otherwise this behaves exactly like the
+    /// extractor.
+    pub async fn for_org<S>(
+        parts: &mut Parts,
+        state: &S,
+        requested_org: Option<Uuid>,
+    ) -> Result<Self, (StatusCode, &'static str)>
+    where
+        S: TenantMembershipProvider,
+    {
+        Self::extract(parts, state, requested_org).await
+    }
+
+    async fn extract<S>(
+        parts: &mut Parts,
+        state: &S,
+        requested_org: Option<Uuid>,
+    ) -> Result<Self, (StatusCode, &'static str)>
+    where
+        S: TenantMembershipProvider,
+    {
         let mut user = AuthUser::from_request_parts(parts, state).await?;
+
+        if let (Some(requested), Some(target)) = (requested_org, target_tenant(parts, &user)) {
+            if requested != target {
+                return Err((
+                    StatusCode::FORBIDDEN,
+                    "organization_id does not match the caller's organization",
+                ));
+            }
+        }
 
         let has_request_tenant = parts.extensions.get::<ResolvedTenant>().is_some()
             || parts.headers.contains_key(TENANT_HEADER);
@@ -76,6 +121,20 @@ where
         user.tenant_id = Some(ctx.tenant_id);
         user.role = Some(cap_platform_tier(ctx.role, user.is_platform_admin()));
         Ok(TenantAuthUser(user))
+    }
+}
+
+/// The org a request targets, resolved in the same order as the extractor
+/// (Host-resolved org, then a parseable `X-Tenant-ID`, then the JWT claim),
+/// without any DB access. `None` when the request names no org.
+fn target_tenant(parts: &Parts, user: &AuthUser) -> Option<Uuid> {
+    if let Some(resolved) = parts.extensions.get::<ResolvedTenant>() {
+        return Some(resolved.organization_id);
+    }
+    match parts.headers.get(TENANT_HEADER) {
+        // An unparseable header is rejected later by `ValidatedTenantExtractor`.
+        Some(value) => value.to_str().ok().and_then(|s| Uuid::parse_str(s).ok()),
+        None => user.tenant_id,
     }
 }
 

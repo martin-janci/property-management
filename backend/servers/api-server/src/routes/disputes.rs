@@ -6,7 +6,7 @@
 use api_core::extractors::{AuthUser, TenantAuthUser};
 use axum::{
     extract::{Path, Query, State},
-    http::StatusCode,
+    http::{request::Parts, StatusCode},
     routing::{delete, get, patch, post},
     Json, Router,
 };
@@ -127,8 +127,9 @@ fn require_org(user: &AuthUser) -> Result<Uuid, (StatusCode, Json<ErrorResponse>
 
 /// Resolve the organization for an org-scoped collection call.
 ///
-/// The organization always comes from the caller's verified JWT tenant. A
-/// client-supplied `organization_id` (query or body) is accepted only for
+/// The organization always comes from the caller's validated tenant
+/// (`TenantAuthUser`: Host / `X-Tenant-ID`, else the JWT claim, with an active
+/// membership). A client-supplied `organization_id` (query or body) is accepted only for
 /// backwards compatibility and must match that tenant; a mismatch is rejected
 /// with 403 so one org's members can never list, count or file disputes in
 /// another org by swapping the id.
@@ -147,6 +148,33 @@ fn scoped_org(
         )),
         _ => Ok(org),
     }
+}
+
+/// [`TenantAuthUser`] for a collection handler that still accepts a legacy
+/// client-supplied `organization_id`.
+///
+/// A `requested` org that differs from the org the request targets is
+/// rejected with 403 before the membership lookup (see
+/// [`TenantAuthUser::for_org`]), so a cross-org probe is refused cleanly and
+/// never turns into a DB round trip or a 500. `scoped_org` still re-checks the
+/// validated tenant afterwards.
+async fn tenant_user_for_org(
+    parts: &mut Parts,
+    state: &AppState,
+    requested: Option<Uuid>,
+) -> Result<AuthUser, (StatusCode, Json<ErrorResponse>)> {
+    TenantAuthUser::for_org(parts, state, requested)
+        .await
+        .map(|TenantAuthUser(user)| user)
+        .map_err(|(status, msg)| {
+            let code = match status {
+                StatusCode::UNAUTHORIZED => "UNAUTHORIZED",
+                StatusCode::FORBIDDEN => "FORBIDDEN",
+                StatusCode::BAD_REQUEST => "BAD_REQUEST",
+                _ => "INTERNAL_ERROR",
+            };
+            (status, Json(ErrorResponse::new(code, msg)))
+        })
 }
 
 /// Map a repository error from an org-scoped sub-resource call to an HTTP
@@ -579,9 +607,10 @@ pub struct PaginationQuery {
 /// File a new dispute.
 async fn file_dispute(
     State(state): State<AppState>,
-    TenantAuthUser(user): TenantAuthUser,
+    mut parts: Parts,
     Json(payload): Json<FileDisputeRequest>,
 ) -> Result<(StatusCode, Json<Dispute>), (StatusCode, Json<ErrorResponse>)> {
+    let user = tenant_user_for_org(&mut parts, &state, payload.organization_id).await?;
     let organization_id = scoped_org(&user, payload.organization_id)?;
     let data = FileDispute {
         organization_id,
@@ -612,9 +641,10 @@ async fn file_dispute(
 /// List disputes for an organization.
 async fn list_disputes(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut parts: Parts,
     Query(query): Query<ListDisputesQuery>,
 ) -> Result<Json<Vec<DisputeSummary>>, (StatusCode, Json<ErrorResponse>)> {
+    let user = tenant_user_for_org(&mut parts, &state, query.organization_id).await?;
     let organization_id = scoped_org(&user, query.organization_id)?;
     state
         .dispute_repo
@@ -633,9 +663,10 @@ async fn list_disputes(
 /// Get dispute statistics.
 async fn get_statistics(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut parts: Parts,
     Query(query): Query<OrgQuery>,
 ) -> Result<Json<DisputeStatistics>, (StatusCode, Json<ErrorResponse>)> {
+    let user = tenant_user_for_org(&mut parts, &state, query.organization_id).await?;
     let organization_id = scoped_org(&user, query.organization_id)?;
     state
         .dispute_repo
@@ -1999,9 +2030,10 @@ async fn resolve_escalation(
 /// Get action items for the current user.
 async fn get_my_actions(
     State(state): State<AppState>,
-    TenantAuthUser(user): TenantAuthUser,
+    mut parts: Parts,
     Query(query): Query<OrgQuery>,
 ) -> Result<Json<PartyActionsDashboard>, (StatusCode, Json<ErrorResponse>)> {
+    let user = tenant_user_for_org(&mut parts, &state, query.organization_id).await?;
     let organization_id = scoped_org(&user, query.organization_id)?;
     state
         .dispute_repo
@@ -2020,9 +2052,10 @@ async fn get_my_actions(
 /// List overdue action items.
 async fn list_overdue_actions(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut parts: Parts,
     Query(query): Query<OrgQuery>,
 ) -> Result<Json<Vec<ActionItem>>, (StatusCode, Json<ErrorResponse>)> {
+    let user = tenant_user_for_org(&mut parts, &state, query.organization_id).await?;
     let organization_id = scoped_org(&user, query.organization_id)?;
     state
         .dispute_repo
