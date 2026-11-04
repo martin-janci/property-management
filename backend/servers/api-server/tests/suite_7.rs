@@ -27,6 +27,8 @@ mod predictive_maintenance_happy_path_tests;
 mod predictive_maintenance_photos_idor_tests;
 #[path = "suites/principal_platform_host_tests.rs"]
 mod principal_platform_host_tests;
+#[path = "suites/property_cluster_org_scope_tests.rs"]
+mod property_cluster_org_scope_tests;
 #[path = "suites/property_valuation_happy_path_tests.rs"]
 mod property_valuation_happy_path_tests;
 #[path = "suites/push_delivery_receipt_tests.rs"]
