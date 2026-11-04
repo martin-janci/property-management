@@ -1,14 +1,15 @@
 /**
  * Voting list page (Epic 5, screen `ppt/voting`).
  *
- * Lists votes for the manager's current building with a status filter and an
- * entry point into the create wizard. Data comes from the `@ppt/api-client`
+ * Lists votes for the selected building (`?building=`, see `useVotingBuilding`)
+ * with a status filter and an entry point into the create wizard. Data comes from the `@ppt/api-client`
  * voting hooks; navigation is delegated to the route wrapper via props.
  */
-import { useBuildings, useVotes, type VoteStatus } from '@ppt/api-client';
+import { useVotes, type VoteStatus } from '@ppt/api-client';
 import { useMemo, useState } from 'react';
 import { Spinner } from '../../../components';
-import { VoteCard } from '../components';
+import { VoteCard, VotingBuildingSelect } from '../components';
+import { useVotingBuilding } from '../hooks';
 import { VOTE_STATUS_LABELS } from '../types';
 
 interface VotingPageProps {
@@ -26,8 +27,12 @@ const STATUS_FILTERS: Array<VoteStatus | 'all'> = [
 ];
 
 export function VotingPage({ onOpenVote, onCreateVote }: VotingPageProps) {
-  const { data: buildingsData, isLoading: isLoadingBuildings } = useBuildings();
-  const buildingId = buildingsData?.items?.[0]?.id ?? '';
+  const {
+    buildingId,
+    options: buildingOptions,
+    setBuildingId,
+    isLoading: isLoadingBuildings,
+  } = useVotingBuilding();
 
   const [statusFilter, setStatusFilter] = useState<VoteStatus | 'all'>('all');
 
@@ -64,6 +69,14 @@ export function VotingPage({ onOpenVote, onCreateVote }: VotingPageProps) {
         >
           + New vote
         </button>
+      </div>
+
+      <div className="mt-6">
+        <VotingBuildingSelect
+          options={buildingOptions}
+          value={buildingId}
+          onChange={setBuildingId}
+        />
       </div>
 
       <div className="mt-6 flex flex-wrap gap-2">

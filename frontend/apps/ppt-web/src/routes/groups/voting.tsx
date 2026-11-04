@@ -6,17 +6,19 @@
  * are thin: the pages consume the voting hooks directly and the wrappers only
  * supply navigation callbacks and the `:voteId` route param.
  */
-import { Route, useNavigate, useParams } from 'react-router-dom';
+import { Route, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ProtectedRoute } from '../../components';
 import { VoteCreatePage, VoteDetailPage, VotingPage } from '../lazyRoutes';
 
 /** Route wrapper: voting list (`/voting`). */
 function VotingPageRoute() {
   const navigate = useNavigate();
+  // Carry the selected building (`?building=`) into the create wizard.
+  const { search } = useLocation();
   return (
     <VotingPage
       onOpenVote={(voteId) => navigate(`/voting/${voteId}`)}
-      onCreateVote={() => navigate('/voting/new')}
+      onCreateVote={() => navigate(`/voting/new${search}`)}
     />
   );
 }
@@ -24,10 +26,11 @@ function VotingPageRoute() {
 /** Route wrapper: create vote (`/voting/new`). */
 function VoteCreatePageRoute() {
   const navigate = useNavigate();
+  const { search } = useLocation();
   return (
     <VoteCreatePage
       onCreated={(voteId) => navigate(`/voting/${voteId}`)}
-      onCancel={() => navigate('/voting')}
+      onCancel={() => navigate(`/voting${search}`)}
     />
   );
 }

@@ -2113,6 +2113,10 @@
     "zoomOut": "Kicsinyítés"
   },
   "voting": {
+    "buildingSelect": {
+      "label": "Épület",
+      "mine": "{{building}} (saját épületem)"
+    },
     "detail": {
       "backToVoting": "Vissza a szavazáshoz",
       "unavailableTitle": "A szavazás nem érhető el",

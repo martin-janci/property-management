@@ -2251,6 +2251,10 @@
     "zoomOut": "Oddálit"
   },
   "voting": {
+    "buildingSelect": {
+      "label": "Budova",
+      "mine": "{{building}} (moje budova)"
+    },
     "detail": {
       "backToVoting": "Zpět na hlasování",
       "unavailableTitle": "Hlasování není dostupné",

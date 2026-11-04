@@ -4452,6 +4452,10 @@
     "zoomOut": "Zoom out"
   },
   "voting": {
+    "buildingSelect": {
+      "label": "Building",
+      "mine": "{{building}} (my building)"
+    },
     "detail": {
       "backToVoting": "Back to voting",
       "unavailableTitle": "Vote unavailable",
