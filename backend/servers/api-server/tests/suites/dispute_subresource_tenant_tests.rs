@@ -591,3 +591,486 @@ async fn accept_and_implement_resolution_require_manager(pool: PgPool) {
         "proposed"
     );
 }
+
+// =============================================================================
+// Role rules within the owning org (sessions, action items, escalations)
+// =============================================================================
+
+/// Seed an org member with `member_role` and optionally add them to the
+/// fixture's dispute as a party with `party_role`. Returns the user and token.
+async fn seed_actor(
+    pool: &PgPool,
+    f: &OrgFixture,
+    tag: &str,
+    member_role: &str,
+    party_role: Option<&str>,
+) -> (Uuid, String) {
+    let user = seed_user(pool, tag).await;
+    seed_membership(pool, f.org, user, member_role).await;
+    if let Some(role) = party_role {
+        sqlx::query("INSERT INTO dispute_parties (dispute_id, user_id, role) VALUES ($1, $2, $3)")
+            .bind(f.dispute)
+            .bind(user)
+            .bind(role)
+            .execute(pool)
+            .await
+            .expect("seed party");
+    }
+    (user, mint_token(user, f.org, member_role))
+}
+
+fn session_body() -> Value {
+    json!({
+        "session_type": "in_person",
+        "scheduled_at": (Utc::now() + Duration::days(2)).to_rfc3339(),
+    })
+}
+
+fn action_body(assignee: Uuid) -> Value {
+    json!({
+        "assigned_to": assignee,
+        "title": "Fix the leak",
+        "description": "Within a week",
+        "due_date": (Utc::now() + Duration::days(7)).to_rfc3339(),
+    })
+}
+
+async fn count(pool: &PgPool, sql: &'static str, id: Uuid) -> i64 {
+    sqlx::query_scalar::<_, i64>(sql)
+        .bind(id)
+        .fetch_one(pool)
+        .await
+        .expect("count")
+}
+
+/// A same-org resident who is not a party to the dispute cannot schedule or
+/// read sessions, create action items, escalate or resolve escalations.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn resident_non_party_is_403_on_mediation_writes(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let f = seed_fixture(&pool, "np").await;
+    let (_, token) = seed_actor(&pool, &f, "np-res", "resident", None).await;
+    let d = f.dispute;
+
+    let cases: Vec<(Method, String, Option<Value>)> = vec![
+        (Method::GET, format!("/api/v1/disputes/{d}/sessions"), None),
+        (
+            Method::GET,
+            format!("/api/v1/disputes/{d}/sessions/{}", f.session),
+            None,
+        ),
+        (
+            Method::GET,
+            format!("/api/v1/disputes/{d}/sessions/{}/attendance", f.session),
+            None,
+        ),
+        (
+            Method::POST,
+            format!("/api/v1/disputes/{d}/sessions"),
+            Some(session_body()),
+        ),
+        (
+            Method::POST,
+            format!("/api/v1/disputes/{d}/sessions/{}/cancel", f.session),
+            None,
+        ),
+        (
+            Method::POST,
+            format!("/api/v1/disputes/{d}/actions"),
+            Some(action_body(f.user)),
+        ),
+        (
+            Method::POST,
+            format!("/api/v1/disputes/{d}/actions/{}/complete", f.action),
+            Some(json!({ "completion_notes": "x" })),
+        ),
+        (
+            Method::POST,
+            format!("/api/v1/disputes/{d}/escalations"),
+            Some(json!({ "reason": "late", "severity": "warning" })),
+        ),
+        (
+            Method::POST,
+            format!("/api/v1/disputes/{d}/escalations/{}/resolve", f.escalation),
+            Some(json!({ "resolution_notes": "closed" })),
+        ),
+    ];
+    for (method, uri, body) in cases {
+        let resp = call(&app, &token, f.org, method.clone(), &uri, body).await;
+        assert_eq!(
+            resp.status,
+            StatusCode::FORBIDDEN,
+            "{method} {uri} by non-party resident must be 403, got {}: {}",
+            resp.status,
+            resp.text()
+        );
+    }
+
+    assert_eq!(
+        count(
+            &pool,
+            "SELECT COUNT(*) FROM mediation_sessions WHERE dispute_id = $1",
+            d
+        )
+        .await,
+        1
+    );
+    assert_eq!(
+        count(
+            &pool,
+            "SELECT COUNT(*) FROM action_items WHERE dispute_id = $1",
+            d
+        )
+        .await,
+        1
+    );
+    assert_eq!(
+        count(
+            &pool,
+            "SELECT COUNT(*) FROM escalations WHERE dispute_id = $1",
+            d
+        )
+        .await,
+        1
+    );
+}
+
+/// The dispute's mediator (a resident by org role) may schedule sessions,
+/// record notes and create action items.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn mediator_can_schedule_and_create_actions(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let f = seed_fixture(&pool, "med").await;
+    let (mediator, token) = seed_actor(&pool, &f, "med", "resident", Some("mediator")).await;
+    let d = f.dispute;
+
+    let resp = call(
+        &app,
+        &token,
+        f.org,
+        Method::POST,
+        &format!("/api/v1/disputes/{d}/sessions"),
+        Some(session_body()),
+    )
+    .await;
+    assert_eq!(resp.status, StatusCode::CREATED, "{}", resp.text());
+    let session: Value = resp.json();
+    assert_eq!(session["mediator_id"], json!(mediator));
+    assert_eq!(session["dispute_id"], json!(d));
+
+    let resp = call(
+        &app,
+        &token,
+        f.org,
+        Method::POST,
+        &format!("/api/v1/disputes/{d}/sessions/{}/notes", f.session),
+        Some(json!({ "notes": "Both parties attended" })),
+    )
+    .await;
+    assert!(resp.status.is_success(), "{}: {}", resp.status, resp.text());
+
+    let resp = call(
+        &app,
+        &token,
+        f.org,
+        Method::POST,
+        &format!("/api/v1/disputes/{d}/actions"),
+        Some(action_body(f.user)),
+    )
+    .await;
+    assert_eq!(resp.status, StatusCode::CREATED, "{}", resp.text());
+
+    // Mediator may read sessions too.
+    let resp = call(
+        &app,
+        &token,
+        f.org,
+        Method::GET,
+        &format!("/api/v1/disputes/{d}/sessions"),
+        None,
+    )
+    .await;
+    assert_eq!(resp.status, StatusCode::OK, "{}", resp.text());
+
+    // ... but cannot resolve escalations (manager only).
+    let resp = call(
+        &app,
+        &token,
+        f.org,
+        Method::POST,
+        &format!("/api/v1/disputes/{d}/escalations/{}/resolve", f.escalation),
+        Some(json!({ "resolution_notes": "closed" })),
+    )
+    .await;
+    assert_eq!(resp.status, StatusCode::FORBIDDEN, "{}", resp.text());
+}
+
+/// A non-mediator party may read sessions and escalate, but may not schedule
+/// sessions, create action items or resolve escalations.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn party_can_escalate_but_not_resolve(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let f = seed_fixture(&pool, "pty").await;
+    let (party, token) = seed_actor(&pool, &f, "pty", "resident", Some("respondent")).await;
+    let d = f.dispute;
+
+    let resp = call(
+        &app,
+        &token,
+        f.org,
+        Method::GET,
+        &format!("/api/v1/disputes/{d}/sessions"),
+        None,
+    )
+    .await;
+    assert_eq!(resp.status, StatusCode::OK, "{}", resp.text());
+
+    let resp = call(
+        &app,
+        &token,
+        f.org,
+        Method::POST,
+        &format!("/api/v1/disputes/{d}/escalations"),
+        Some(json!({ "reason": "not complied", "severity": "warning" })),
+    )
+    .await;
+    assert_eq!(resp.status, StatusCode::CREATED, "{}", resp.text());
+    let esc: Value = resp.json();
+    assert_eq!(esc["escalated_by"], json!(party));
+    let esc_id = esc["id"].as_str().expect("escalation id").to_string();
+
+    for (method, uri, body) in [
+        (
+            Method::POST,
+            format!("/api/v1/disputes/{d}/escalations/{esc_id}/resolve"),
+            Some(json!({ "resolution_notes": "closed" })),
+        ),
+        (
+            Method::POST,
+            format!("/api/v1/disputes/{d}/sessions"),
+            Some(session_body()),
+        ),
+        (
+            Method::POST,
+            format!("/api/v1/disputes/{d}/actions"),
+            Some(action_body(party)),
+        ),
+    ] {
+        let resp = call(&app, &token, f.org, method.clone(), &uri, body).await;
+        assert_eq!(
+            resp.status,
+            StatusCode::FORBIDDEN,
+            "{method} {uri} by party must be 403, got {}: {}",
+            resp.status,
+            resp.text()
+        );
+    }
+}
+
+/// The assignee may complete their own action item (but not update it); a
+/// different resident may not complete it.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn assignee_can_complete_own_action_item(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let f = seed_fixture(&pool, "asg").await;
+    let (assignee, token) = seed_actor(&pool, &f, "asg", "resident", Some("respondent")).await;
+    let (_, other_token) = seed_actor(&pool, &f, "asg-o", "resident", Some("witness")).await;
+    let d = f.dispute;
+
+    let item = sqlx::query_scalar::<_, Uuid>(
+        r#"INSERT INTO action_items (dispute_id, assigned_to, title, description, due_date)
+           VALUES ($1, $2, 'Repaint', 'Hallway', NOW() + INTERVAL '7 days') RETURNING id"#,
+    )
+    .bind(d)
+    .bind(assignee)
+    .fetch_one(&pool)
+    .await
+    .expect("seed action item");
+
+    let complete = format!("/api/v1/disputes/{d}/actions/{item}/complete");
+    let resp = call(
+        &app,
+        &other_token,
+        f.org,
+        Method::POST,
+        &complete,
+        Some(json!({ "completion_notes": "not mine" })),
+    )
+    .await;
+    assert_eq!(resp.status, StatusCode::FORBIDDEN, "{}", resp.text());
+
+    let resp = call(
+        &app,
+        &token,
+        f.org,
+        Method::PATCH,
+        &format!("/api/v1/disputes/{d}/actions/{item}"),
+        Some(json!({ "title": "Changed" })),
+    )
+    .await;
+    assert_eq!(resp.status, StatusCode::FORBIDDEN, "{}", resp.text());
+
+    let resp = call(
+        &app,
+        &token,
+        f.org,
+        Method::POST,
+        &complete,
+        Some(json!({ "completion_notes": "done" })),
+    )
+    .await;
+    assert_eq!(resp.status, StatusCode::OK, "{}", resp.text());
+    assert_eq!(
+        scalar_text(&pool, "SELECT status FROM action_items WHERE id = $1", item).await,
+        "completed"
+    );
+}
+
+/// `assigned_to` / `escalated_to` must be active members of the caller's org.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn foreign_org_assignee_or_escalation_target_is_400(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let a = seed_fixture(&pool, "fa").await;
+    let b = seed_fixture(&pool, "fb").await;
+    let token = mint_token(a.user, a.org, "manager");
+    let d = a.dispute;
+
+    let resp = call(
+        &app,
+        &token,
+        a.org,
+        Method::POST,
+        &format!("/api/v1/disputes/{d}/actions"),
+        Some(action_body(b.user)),
+    )
+    .await;
+    assert_eq!(resp.status, StatusCode::BAD_REQUEST, "{}", resp.text());
+    assert_eq!(resp.json::<Value>()["code"], "INVALID_ASSIGNEE");
+
+    let resp = call(
+        &app,
+        &token,
+        a.org,
+        Method::POST,
+        &format!("/api/v1/disputes/{d}/escalations"),
+        Some(json!({ "reason": "x", "severity": "warning", "escalated_to": b.user })),
+    )
+    .await;
+    assert_eq!(resp.status, StatusCode::BAD_REQUEST, "{}", resp.text());
+    assert_eq!(resp.json::<Value>()["code"], "INVALID_ESCALATION_TARGET");
+
+    assert_eq!(
+        count(
+            &pool,
+            "SELECT COUNT(*) FROM action_items WHERE dispute_id = $1",
+            d
+        )
+        .await,
+        1
+    );
+    assert_eq!(
+        count(
+            &pool,
+            "SELECT COUNT(*) FROM escalations WHERE dispute_id = $1",
+            d
+        )
+        .await,
+        1
+    );
+
+    // A same-org member is accepted.
+    let resp = call(
+        &app,
+        &token,
+        a.org,
+        Method::POST,
+        &format!("/api/v1/disputes/{d}/escalations"),
+        Some(json!({ "reason": "x", "severity": "warning", "escalated_to": a.user })),
+    )
+    .await;
+    assert_eq!(resp.status, StatusCode::CREATED, "{}", resp.text());
+}
+
+/// `dispute_id` / `proposed_by` come from the path / JWT: bodies without them
+/// succeed, and bodies that still carry them (older clients) are not rejected
+/// and cannot override them.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn bodies_without_path_or_jwt_fields_are_accepted(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let f = seed_fixture(&pool, "dto").await;
+    let other = seed_fixture(&pool, "dto-o").await;
+    let token = mint_token(f.user, f.org, "manager");
+    let d = f.dispute;
+
+    let resp = call(
+        &app,
+        &token,
+        f.org,
+        Method::POST,
+        &format!("/api/v1/disputes/{d}/resolutions"),
+        Some(json!({
+            "resolution_text": "Quiet hours",
+            "terms": [{ "id": "term-1", "description": "No noise after 22:00", "completed": false }],
+        })),
+    )
+    .await;
+    assert_eq!(resp.status, StatusCode::CREATED, "{}", resp.text());
+    let r: Value = resp.json();
+    assert_eq!(r["dispute_id"], json!(d));
+    assert_eq!(r["proposed_by"], json!(f.user));
+
+    let resp = call(
+        &app,
+        &token,
+        f.org,
+        Method::POST,
+        &format!("/api/v1/disputes/{d}/actions"),
+        Some(action_body(f.user)),
+    )
+    .await;
+    assert_eq!(resp.status, StatusCode::CREATED, "{}", resp.text());
+    assert_eq!(resp.json::<Value>()["dispute_id"], json!(d));
+
+    // Legacy shape (frontend sends placeholders) — extra fields ignored.
+    let resp = call(
+        &app,
+        &token,
+        f.org,
+        Method::POST,
+        &format!("/api/v1/disputes/{d}/resolutions"),
+        Some(json!({
+            "dispute_id": other.dispute,
+            "proposed_by": "00000000-0000-0000-0000-000000000000",
+            "resolution_text": "Second proposal",
+            "terms": [],
+        })),
+    )
+    .await;
+    assert_eq!(resp.status, StatusCode::CREATED, "{}", resp.text());
+    let r: Value = resp.json();
+    assert_eq!(r["dispute_id"], json!(d));
+    assert_eq!(r["proposed_by"], json!(f.user));
+
+    let mut legacy_action = action_body(f.user);
+    legacy_action["dispute_id"] = json!(other.dispute);
+    let resp = call(
+        &app,
+        &token,
+        f.org,
+        Method::POST,
+        &format!("/api/v1/disputes/{d}/actions"),
+        Some(legacy_action),
+    )
+    .await;
+    assert_eq!(resp.status, StatusCode::CREATED, "{}", resp.text());
+    assert_eq!(resp.json::<Value>()["dispute_id"], json!(d));
+    assert_eq!(
+        count(
+            &pool,
+            "SELECT COUNT(*) FROM action_items WHERE dispute_id = $1",
+            other.dispute
+        )
+        .await,
+        1
+    );
+}
