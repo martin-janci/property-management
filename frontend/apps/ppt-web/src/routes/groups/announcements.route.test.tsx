@@ -64,8 +64,9 @@ vi.mock('../../components', () => ({
   useToast: () => ({ showToast: vi.fn() }),
 }));
 
+let mockUser = { id: 'mgr-1', role: 'manager' };
 vi.mock('../../contexts', () => ({
-  useAuth: () => ({ user: { id: 'mgr-1', role: 'manager' } }),
+  useAuth: () => ({ user: mockUser }),
 }));
 
 // Import after the mocks are registered.
@@ -105,6 +106,7 @@ describe('ViewAnnouncementPageInner — route wiring (Story 6.2)', () => {
     markReadMutateAsync.mockClear();
     ackStatsCalls.length = 0;
     announcementData = { announcement: undefined };
+    mockUser = { id: 'mgr-1', role: 'manager' };
   });
 
   it('auto-fires the read-receipt mutation exactly once on mount', async () => {
@@ -146,5 +148,24 @@ describe('ViewAnnouncementPageInner — route wiring (Story 6.2)', () => {
     render(<ViewAnnouncementPageInner announcementId="ann-1" />);
 
     expect(ackStatsCalls.every(([, enabled]) => enabled === false)).toBe(true);
+  });
+  it('gives residents a read-only view and never requests manager-only ack stats', () => {
+    mockUser = { id: 'tenant-1', role: 'tenant' };
+    announcementData = {
+      announcement: makeAnnouncement({ pinned: true, acknowledgmentRequired: true }),
+    };
+    render(<ViewAnnouncementPageInner announcementId="ann-1" />);
+
+    expect(ackStatsCalls.every(([, enabled]) => enabled === false)).toBe(true);
+    expect(screen.queryByRole('button', { name: 'Archive' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Unpin' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Acknowledge' })).toBeInTheDocument();
+  });
+
+  it('keeps manager actions for managers', () => {
+    announcementData = { announcement: makeAnnouncement({ pinned: true }) };
+    render(<ViewAnnouncementPageInner announcementId="ann-1" />);
+    expect(screen.getByRole('button', { name: 'Archive' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Unpin' })).toBeInTheDocument();
   });
 });
