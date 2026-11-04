@@ -89,6 +89,7 @@ UC-13 long-form publishing. Distinct from `ppt/announcements` — articles are e
 
 <!-- newest entries on top -->
 
+- 2026-11-04 — agent: destructive-action confirm now uses the in-app ConfirmationDialog (useConfirmDialog) instead of window.confirm()
 - 2026-11-04 — agent: registered /news/new (manager-gated) and /news/:id/edit routes before /news/:articleId — Create/Edit actions no longer hit the detail error / 404
 - 2026-05-09 — agent: integrated Batch D (pages/ppt-news.html — 4 artboards: loaded-grid / empty / loading / error); flipped redesignStatus → in-progress; attached designSource; populated 6 sections + 4 states + 3 notes; declared 5 sharedComponents
 - 2026-05-08 — init: created from scan (source: sitemap)

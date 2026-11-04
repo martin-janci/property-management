@@ -366,7 +366,8 @@
     "saveFailed": "Save failed",
     "deleteFailed": "Delete failed",
     "submitFailed": "Submit failed",
-    "pleaseTryAgain": "Please try again."
+    "pleaseTryAgain": "Please try again.",
+    "confirmTitle": "Are you sure?"
   },
   "nav": {
     "home": "Home",
@@ -1230,7 +1231,8 @@
       "createFailed": "Failed to create article",
       "updateFailed": "Failed to update article",
       "loadFailed": "Failed to load article"
-    }
+    },
+    "confirmDelete": "Delete this article? This cannot be undone."
   },
   "errors": {
     "generic": "An error occurred. Please try again.",
@@ -4935,6 +4937,13 @@
         "saveFailed": "Failed to save registry rules",
         "saveFailedBody": "Your changes could not be saved. Please try again."
       }
+    },
+    "confirm": {
+      "deletePet": "Delete this pet registration?",
+      "approvePet": "Approve this pet registration?",
+      "deleteVehicle": "Delete this vehicle registration?",
+      "approveVehicle": "Approve this vehicle registration?",
+      "approve": "Approve"
     }
   },
   "community": {

@@ -39,3 +39,9 @@ Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, e
 - 2026-08-18 — agent: screen-map-drift-pr-2647 — noted i18n update in PR #2647: `GroupDetailPageRoute` in `frontend/apps/ppt-web/src/routes/groups/community.tsx` now renders its missing-param fallback via `t('errors.groupNotFound', 'Group not found')` (was hardcoded English); `errors.groupNotFound` key added to all locale bundles. No route or component change.
 - 2026-10-09 — agent: screen-map-drift-pr-3034 — reconciled with PR #3034 (merged): route wired to real Community API (`useGroup`/`useGroupMembers`/`useJoinGroup`/`useLeaveGroup`), fabricated "Sample Group" mock removed, loading/not-found states added. Flipped `apiStatus: stub → partial`. No route/component/buildStatus change. `endpoints:` kept empty — community-group ops absent from `@ppt/sitemap`, so listing them would break `/screens validate`.
 - 2026-10-16 — agent: code-review-ppt-web-core-group-delete-stub-retry1 — wired Delete Group to `useDeleteGroup` (confirm + error toast + cache invalidation + navigate-on-success) and added the `deleteGroup`/`useDeleteGroup` client (`DELETE /community/groups/{id}`); strengthened `community.group-detail.route.test.tsx` with 4 delete-wiring cases and added `community.groupDeleted`/`community.deleteFailed` toast keys (6 locales + i18n contract test). Backend `DELETE /groups/{id}` route still missing — flagged for a follow-up backend task. No route/component/buildStatus/apiStatus change.
+
+## Agent Log
+
+<!-- newest entries on top -->
+
+- 2026-11-04 — agent: destructive-action confirm now uses the in-app ConfirmationDialog (useConfirmDialog) instead of window.confirm()

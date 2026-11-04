@@ -352,7 +352,8 @@
     "saveFailed": "A mentés sikertelen",
     "deleteFailed": "A törlés sikertelen",
     "submitFailed": "A beküldés sikertelen",
-    "pleaseTryAgain": "Kérjük, próbálja újra."
+    "pleaseTryAgain": "Kérjük, próbálja újra.",
+    "confirmTitle": "Biztos benne?"
   },
   "nav": {
     "home": "Főoldal",
@@ -702,6 +703,9 @@
       "empty": "Ehhez a dokumentumhoz nincsenek elérhető verziók.",
       "version": "{{n}}. verzió",
       "current": "Aktuális"
+    },
+    "esign": {
+      "cancelConfirm": "Visszavonja ezt az aláírási kérelmet? Az aláírók ezután nem tudnak aláírni."
     }
   },
   "disputes": {
@@ -2589,6 +2593,13 @@
         "saveFailed": "Failed to save registry rules",
         "saveFailedBody": "Your changes could not be saved. Please try again."
       }
+    },
+    "confirm": {
+      "deletePet": "Törli ezt a kisállat-regisztrációt?",
+      "approvePet": "Jóváhagyja ezt a kisállat-regisztrációt?",
+      "deleteVehicle": "Törli ezt a járműregisztrációt?",
+      "approveVehicle": "Jóváhagyja ezt a járműregisztrációt?",
+      "approve": "Jóváhagyás"
     }
   },
   "community": {
@@ -3125,5 +3136,11 @@
       "sentiment": "Lakói hangulat",
       "predictiveMaintenance": "Prediktív karbantartás"
     }
+  },
+  "news": {
+    "confirmDelete": "Törli ezt a cikket? Ez nem vonható vissza."
+  },
+  "aiChat": {
+    "confirmDelete": "Biztosan törölni szeretné ezt a beszélgetést?"
   }
 }

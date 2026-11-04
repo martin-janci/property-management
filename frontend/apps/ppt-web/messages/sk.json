@@ -353,7 +353,8 @@
     "saveFailed": "Uloženie zlyhalo",
     "deleteFailed": "Odstránenie zlyhalo",
     "submitFailed": "Odoslanie zlyhalo",
-    "pleaseTryAgain": "Skúste to znova."
+    "pleaseTryAgain": "Skúste to znova.",
+    "confirmTitle": "Ste si istí?"
   },
   "nav": {
     "home": "Domov",
@@ -2733,6 +2734,13 @@
         "saveFailed": "Pravidlá registra sa nepodarilo uložiť",
         "saveFailedBody": "Vaše zmeny sa nepodarilo uložiť. Skúste to znova."
       }
+    },
+    "confirm": {
+      "deletePet": "Vymazať túto registráciu zvieraťa?",
+      "approvePet": "Schváliť túto registráciu zvieraťa?",
+      "deleteVehicle": "Vymazať túto registráciu vozidla?",
+      "approveVehicle": "Schváliť túto registráciu vozidla?",
+      "approve": "Schváliť"
     }
   },
   "community": {
@@ -3259,5 +3267,11 @@
       "sentiment": "Nálada obyvateľov",
       "predictiveMaintenance": "Prediktívna údržba"
     }
+  },
+  "news": {
+    "confirmDelete": "Vymazať tento článok? Túto akciu nie je možné vrátiť."
+  },
+  "aiChat": {
+    "confirmDelete": "Naozaj chcete vymazať túto konverzáciu?"
   }
 }

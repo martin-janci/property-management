@@ -352,7 +352,8 @@
     "saveFailed": "Uložení selhalo",
     "deleteFailed": "Odstranění selhalo",
     "submitFailed": "Odeslání selhalo",
-    "pleaseTryAgain": "Zkuste to znovu."
+    "pleaseTryAgain": "Zkuste to znovu.",
+    "confirmTitle": "Jste si jisti?"
   },
   "nav": {
     "home": "Domů",
@@ -2731,6 +2732,13 @@
         "saveFailed": "Failed to save registry rules",
         "saveFailedBody": "Your changes could not be saved. Please try again."
       }
+    },
+    "confirm": {
+      "deletePet": "Smazat tuto registraci zvířete?",
+      "approvePet": "Schválit tuto registraci zvířete?",
+      "deleteVehicle": "Smazat tuto registraci vozidla?",
+      "approveVehicle": "Schválit tuto registraci vozidla?",
+      "approve": "Schválit"
     }
   },
   "community": {
@@ -3257,5 +3265,11 @@
       "sentiment": "Nálada obyvatel",
       "predictiveMaintenance": "Prediktivní údržba"
     }
+  },
+  "news": {
+    "confirmDelete": "Smazat tento článek? Tuto akci nelze vrátit."
+  },
+  "aiChat": {
+    "confirmDelete": "Opravdu chcete smazat tuto konverzaci?"
   }
 }

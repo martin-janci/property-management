@@ -67,3 +67,9 @@ points, mounted by `routes/groups/iot.tsx` on the `@ppt/api-client` IoT module
 ## Agent Log
 - 2026-06-21 — FrontendEngineer: created with the sensor-CRUD increment
   (BIT-146, Epic 14 / FR71).
+
+## Agent Log
+
+<!-- newest entries on top -->
+
+- 2026-11-04 — agent: destructive-action confirm now uses the in-app ConfirmationDialog (useConfirmDialog) instead of window.confirm()

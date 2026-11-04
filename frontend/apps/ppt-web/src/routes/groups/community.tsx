@@ -14,6 +14,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams } from 'react-router-dom';
 import { Spinner, useToast } from '../../components';
+import { useConfirmDialog } from '../../components/useConfirmDialog';
 import { useAuth } from '../../contexts';
 import { getErrorMessage } from '../../lib/api';
 import {
@@ -98,6 +99,7 @@ function CreateGroupPageRoute() {
 export function GroupDetailPageInner({ groupId }: { groupId: string }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { confirm, confirmDialog } = useConfirmDialog();
   const { user } = useAuth();
   const { showToast } = useToast();
 
@@ -184,12 +186,14 @@ export function GroupDetailPageInner({ groupId }: { groupId: string }) {
   // on failure, surface the error and keep the user on the page (the previous
   // handler navigated unconditionally without ever calling the API, which lied
   // about the outcome).
-  const handleDelete = () => {
-    const confirmed = window.confirm(
-      t('community.deleteGroupConfirm', {
+  const handleDelete = async () => {
+    const confirmed = await confirm({
+      message: t('community.deleteGroupConfirm', {
         defaultValue: 'Delete this group? This action cannot be undone.',
-      })
-    );
+      }),
+      confirmLabel: t('common.delete'),
+      variant: 'danger',
+    });
     if (!confirmed) {
       return;
     }
@@ -214,25 +218,28 @@ export function GroupDetailPageInner({ groupId }: { groupId: string }) {
   };
 
   return (
-    <GroupDetailPage
-      group={group}
-      members={members}
-      currentUserId={currentUserId}
-      isMember={isMember}
-      isAdmin={isAdmin}
-      isOwner={isOwner}
-      isJoining={joinGroup.isPending}
-      isLeaving={leaveGroup.isPending}
-      onNavigateBack={() => navigate('/community/groups')}
-      onJoin={handleJoin}
-      onLeave={handleLeave}
-      onEdit={() => {}}
-      onDelete={handleDelete}
-      onNavigateToSettings={() => {}}
-      onPromoteMember={() => {}}
-      onRemoveMember={() => {}}
-      onBanMember={() => {}}
-    />
+    <>
+      <GroupDetailPage
+        group={group}
+        members={members}
+        currentUserId={currentUserId}
+        isMember={isMember}
+        isAdmin={isAdmin}
+        isOwner={isOwner}
+        isJoining={joinGroup.isPending}
+        isLeaving={leaveGroup.isPending}
+        onNavigateBack={() => navigate('/community/groups')}
+        onJoin={handleJoin}
+        onLeave={handleLeave}
+        onEdit={() => {}}
+        onDelete={handleDelete}
+        onNavigateToSettings={() => {}}
+        onPromoteMember={() => {}}
+        onRemoveMember={() => {}}
+        onBanMember={() => {}}
+      />
+      {confirmDialog}
+    </>
   );
 }
 

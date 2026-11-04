@@ -55,6 +55,13 @@ vi.mock('react-router-dom', () => ({
   Route: () => null,
 }));
 
+// The delete confirmation is the in-app ConfirmationDialog (via
+// useConfirmDialog), not window.confirm — stub its promise-based confirm().
+const confirmMock = vi.fn();
+vi.mock('../../components/useConfirmDialog', () => ({
+  useConfirmDialog: () => ({ confirm: confirmMock, confirmDialog: null }),
+}));
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, def?: unknown) =>
@@ -153,8 +160,8 @@ describe('GroupDetailPageInner — route wiring (Story 42.1)', () => {
     showToastMock.mockClear();
     navigateMock.mockClear();
     // Default: the delete confirmation dialog is accepted. Individual tests
-    // override this to exercise the cancel path. jsdom has no real confirm().
-    window.confirm = vi.fn(() => true);
+    // override this to exercise the cancel path.
+    confirmMock.mockReset().mockResolvedValue(true);
     groupResult = { data: undefined, isLoading: false, error: null };
     membersResult = { data: [] };
   });
@@ -323,12 +330,12 @@ describe('GroupDetailPageInner — route wiring (Story 42.1)', () => {
   it('wires Delete to useDeleteGroup().mutate with the route groupId (after confirm)', async () => {
     groupResult = { data: makeGroup(), isLoading: false, error: null };
     membersResult = { data: [makeMember({ role: 'owner' })] };
-    window.confirm = vi.fn(() => true);
+    confirmMock.mockResolvedValue(true);
     render(<GroupDetailPageInner groupId="grp-1" />);
 
     await userEvent.click(screen.getByRole('button', { name: 'delete' }));
 
-    expect(window.confirm).toHaveBeenCalledTimes(1);
+    expect(confirmMock).toHaveBeenCalledTimes(1);
     expect(deleteMutate).toHaveBeenCalledTimes(1);
     expect(deleteMutate.mock.calls[0]?.[0]).toBe('grp-1');
   });
@@ -336,12 +343,12 @@ describe('GroupDetailPageInner — route wiring (Story 42.1)', () => {
   it('does NOT call the delete API when the confirm dialog is cancelled', async () => {
     groupResult = { data: makeGroup(), isLoading: false, error: null };
     membersResult = { data: [makeMember({ role: 'owner' })] };
-    window.confirm = vi.fn(() => false);
+    confirmMock.mockResolvedValue(false);
     render(<GroupDetailPageInner groupId="grp-1" />);
 
     await userEvent.click(screen.getByRole('button', { name: 'delete' }));
 
-    expect(window.confirm).toHaveBeenCalledTimes(1);
+    expect(confirmMock).toHaveBeenCalledTimes(1);
     expect(deleteMutate).not.toHaveBeenCalled();
     expect(navigateMock).not.toHaveBeenCalled();
   });

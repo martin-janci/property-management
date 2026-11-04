@@ -352,7 +352,8 @@
     "saveFailed": "Zapisywanie nie powiodło się",
     "deleteFailed": "Usuwanie nie powiodło się",
     "submitFailed": "Przesyłanie nie powiodło się",
-    "pleaseTryAgain": "Spróbuj ponownie."
+    "pleaseTryAgain": "Spróbuj ponownie.",
+    "confirmTitle": "Czy na pewno?"
   },
   "nav": {
     "home": "Strona główna",
@@ -704,6 +705,9 @@
       "empty": "Brak dostępnych wersji dla tego dokumentu.",
       "version": "Wersja {{n}}",
       "current": "Bieżąca"
+    },
+    "esign": {
+      "cancelConfirm": "Anulować tę prośbę o podpis? Sygnatariusze nie będą mogli już podpisać."
     }
   },
   "disputes": {
@@ -2595,6 +2599,13 @@
         "saveFailed": "Failed to save registry rules",
         "saveFailedBody": "Your changes could not be saved. Please try again."
       }
+    },
+    "confirm": {
+      "deletePet": "Usunąć tę rejestrację zwierzęcia?",
+      "approvePet": "Zatwierdzić tę rejestrację zwierzęcia?",
+      "deleteVehicle": "Usunąć tę rejestrację pojazdu?",
+      "approveVehicle": "Zatwierdzić tę rejestrację pojazdu?",
+      "approve": "Zatwierdź"
     }
   },
   "community": {
@@ -3131,5 +3142,11 @@
       "sentiment": "Nastroje mieszkańców",
       "predictiveMaintenance": "Konserwacja predykcyjna"
     }
+  },
+  "news": {
+    "confirmDelete": "Usunąć ten artykuł? Tej operacji nie można cofnąć."
+  },
+  "aiChat": {
+    "confirmDelete": "Czy na pewno chcesz usunąć tę rozmowę?"
   }
 }

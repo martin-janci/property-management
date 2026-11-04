@@ -352,7 +352,8 @@
     "saveFailed": "Speichern fehlgeschlagen",
     "deleteFailed": "Löschen fehlgeschlagen",
     "submitFailed": "Übermittlung fehlgeschlagen",
-    "pleaseTryAgain": "Bitte versuchen Sie es erneut."
+    "pleaseTryAgain": "Bitte versuchen Sie es erneut.",
+    "confirmTitle": "Sind Sie sicher?"
   },
   "nav": {
     "home": "Startseite",
@@ -702,6 +703,9 @@
       "empty": "Für dieses Dokument sind keine Versionen verfügbar.",
       "version": "Version {{n}}",
       "current": "Aktuell"
+    },
+    "esign": {
+      "cancelConfirm": "Diese Signaturanfrage abbrechen? Unterzeichner können dann nicht mehr unterschreiben."
     }
   },
   "disputes": {
@@ -2624,6 +2628,13 @@
         "saveFailed": "Failed to save registry rules",
         "saveFailedBody": "Your changes could not be saved. Please try again."
       }
+    },
+    "confirm": {
+      "deletePet": "Diese Haustier-Registrierung löschen?",
+      "approvePet": "Diese Haustier-Registrierung genehmigen?",
+      "deleteVehicle": "Diese Fahrzeug-Registrierung löschen?",
+      "approveVehicle": "Diese Fahrzeug-Registrierung genehmigen?",
+      "approve": "Genehmigen"
     }
   },
   "community": {
@@ -3150,5 +3161,11 @@
       "sentiment": "Bewohnerstimmung",
       "predictiveMaintenance": "Vorausschauende Wartung"
     }
+  },
+  "news": {
+    "confirmDelete": "Diesen Artikel löschen? Dies kann nicht rückgängig gemacht werden."
+  },
+  "aiChat": {
+    "confirmDelete": "Möchten Sie diese Unterhaltung wirklich löschen?"
   }
 }

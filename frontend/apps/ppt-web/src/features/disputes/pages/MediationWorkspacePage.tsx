@@ -15,6 +15,7 @@ import {
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Spinner } from '../../../components/Spinner';
+import { useConfirmDialog } from '../../../components/useConfirmDialog';
 import { MediationAssignDialog } from '../components/MediationAssignDialog';
 import { MediationChatThread } from '../components/MediationChatThread';
 import { MediationEscalateDialog } from '../components/MediationEscalateDialog';
@@ -67,6 +68,7 @@ export function MediationWorkspacePage({
   onToastError,
 }: MediationWorkspacePageProps) {
   const { t } = useTranslation();
+  const { confirm, confirmDialog } = useConfirmDialog();
   const [activeTab, setActiveTab] = useState<Tab>('timeline');
   const [showEscalateDialog, setShowEscalateDialog] = useState(false);
   const [showAssignDialog, setShowAssignDialog] = useState(false);
@@ -173,7 +175,12 @@ export function MediationWorkspacePage({
   };
 
   const handleCancelSession = async (session: MediationSession) => {
-    if (!window.confirm(t('disputes.mediation.sessions.cancelConfirm'))) {
+    if (
+      !(await confirm({
+        message: t('disputes.mediation.sessions.cancelConfirm'),
+        variant: 'danger',
+      }))
+    ) {
       return;
     }
     try {
@@ -545,6 +552,7 @@ export function MediationWorkspacePage({
           isSubmitting={scheduleSession.isPending || updateSession.isPending}
         />
       )}
+      {confirmDialog}
     </div>
   );
 }
