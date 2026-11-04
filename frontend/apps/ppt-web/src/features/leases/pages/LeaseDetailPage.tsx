@@ -16,7 +16,8 @@ interface LeaseDetailPageProps {
   violations?: ViolationSummary[];
   isLoading?: boolean;
   onBack: () => void;
-  onEdit: (id: string) => void;
+  /** Omit to hide the Edit button (no update endpoint / no permission). */
+  onEdit?: (id: string) => void;
   onRenew: (id: string) => void;
   onTerminate: (id: string) => void;
   onAddAmendment: (id: string) => void;
@@ -92,7 +93,16 @@ export function LeaseDetailPage({
     }).format(amount);
   };
 
-  const canEdit = lease.status === 'draft' || lease.status === 'pending_signatures';
+  // Ancillary fields (contact, parking, pets, notes) stay editable for any
+  // lease that is still in force; closed leases are read-only.
+  const isOpenLease =
+    lease.status === 'draft' ||
+    lease.status === 'pending_signatures' ||
+    lease.status === 'active' ||
+    lease.status === 'expiring_soon';
+  const canEdit = !!onEdit && isOpenLease;
+  // Amendments change the terms of a lease that is in force (or about to be).
+  const canAmend = isOpenLease;
   const canRenew = lease.status === 'active' || lease.status === 'expiring_soon';
   const canTerminate = lease.status === 'active' || lease.status === 'expiring_soon';
 
@@ -159,7 +169,7 @@ export function LeaseDetailPage({
             {canEdit && (
               <button
                 type="button"
-                onClick={() => onEdit(lease.id)}
+                onClick={() => onEdit?.(lease.id)}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
               >
                 {t('common.edit')}
@@ -325,7 +335,7 @@ export function LeaseDetailPage({
                 <h3 className="text-lg font-medium text-gray-900">
                   {t('leases.detail.amendments')}
                 </h3>
-                {canEdit && (
+                {canAmend && (
                   <button
                     type="button"
                     onClick={() => onAddAmendment(lease.id)}

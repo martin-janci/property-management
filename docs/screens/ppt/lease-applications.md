@@ -46,3 +46,4 @@ already built but unrouted; this screen is now reachable on web.
 ## Agent Log
 - 2026-07-09 — agent: linked UC-33 (Tenant Screening) to useCases frontmatter — list-level compare (UC-33.10) belongs here; detail screening on lease-application-detail.
 - 2026-06-08 — CTO: created on route mount (PAP-20, Epic 19).
+- 2026-11-04 — agent: Filters wired: status + unit + page persist in the URL (`?status=&unit=&page=`) → `GET /leases/applications` `status` / `unit_id` / `limit` / `offset`; unit picker now lists every org unit (fan-out `GET /buildings/{id}/units`); UI `screening` maps to `screening_pending`. Free-text search hidden (no server support).

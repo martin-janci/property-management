@@ -58,3 +58,4 @@ already built but unrouted; this screen is now reachable on web.
 - 2026-07-09 — agent: linked UC-33 (Tenant Screening) to useCases frontmatter — screening actions live on the application-detail screen.
 - 2026-06-08 — CTO: created on route mount (PAP-20, Epic 19).
 - 2026-11-04 — agent: screening (`POST /leases/applications/{id}/screening`) and approve/reject review (`POST …/review`) wired; screening rows returned by the initiate call render (no screening list endpoint); unit/building label taken from the applications list summary.
+- 2026-11-04 — agent: Not-found/loading notice translated (`leases.notice.*.application`).

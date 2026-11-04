@@ -41,3 +41,4 @@ already built but unrouted; this screen is now reachable on web.
 ## Agent Log
 - 2026-06-08 — CTO: created on route mount (PAP-20, Epic 19).
 - 2026-11-04 — agent: unit picker now lists units of every org building (fan-out `GET /buildings/{id}/units`), tenant picker lists org members (`GET /organizations/{id}/members`) minus manager roles; submit sends tenant name/e-mail + landlord (org) name, only active templates offered.
+- 2026-11-04 — agent: `leases` namespace fully translated into sk/cs/de/pl/hu (was ~95% English fallback).
