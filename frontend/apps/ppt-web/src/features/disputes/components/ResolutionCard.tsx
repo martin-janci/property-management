@@ -246,8 +246,9 @@ export function ResolutionCard({
         )}
         {canImplement &&
           onImplement &&
-          resolution.status === 'accepted' &&
-          progressPercent === 100 && (
+          // Term completion is not tracked by the api-server (the checkboxes
+          // are read-only), so an accepted resolution can always be implemented.
+          resolution.status === 'accepted' && (
             <button
               type="button"
               onClick={() => onImplement(resolution.id)}

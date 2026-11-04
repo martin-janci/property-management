@@ -109,4 +109,26 @@ describe('ResolutionCard (en)', () => {
     expect(screen.getByText('Resolution Proposal')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
   });
+
+  it('offers "Mark as Implemented" on an accepted resolution without terms', () => {
+    const onImplement = vi.fn();
+    render(
+      <ResolutionCard
+        resolution={{
+          id: 'r-2',
+          disputeId: 'd-1',
+          proposedBy: 'u-1',
+          proposedByName: 'Ann',
+          resolutionText: 'Store bikes in the cellar',
+          terms: [],
+          status: 'accepted',
+          proposedAt: '2026-07-01T10:00:00Z',
+        }}
+        canImplement
+        onImplement={onImplement}
+      />
+    );
+    screen.getByRole('button', { name: 'Mark as Implemented' }).click();
+    expect(onImplement).toHaveBeenCalledWith('r-2');
+  });
 });
