@@ -39,6 +39,8 @@ export interface RentalBooking {
   currency?: string;
   guestCount: number;
   notes?: string;
+  guestNotes?: string;
+  internalNotes?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -160,6 +162,31 @@ export interface CreatePlatformConnectionRequest {
   platform: PlatformType;
   platformPropertyId?: string;
   isAutoSyncEnabled: boolean;
+}
+
+/** Editable sync settings of one platform connection (`PUT /rentals/connections/{id}`). */
+export interface ConnectionSettings {
+  externalPropertyId: string;
+  externalListingUrl: string;
+  syncCalendar: boolean;
+  syncIntervalMinutes: number;
+  blockOtherPlatforms: boolean;
+}
+
+/** Create / edit booking form values (`POST` / `PUT /rentals/bookings`). */
+export interface BookingFormValues {
+  unitId: string;
+  source: BookingSource;
+  guestName: string;
+  guestEmail: string;
+  guestPhone: string;
+  guestCount: number;
+  checkIn: string;
+  checkOut: string;
+  totalPrice: string;
+  currency: string;
+  guestNotes: string;
+  internalNotes: string;
 }
 
 export interface CalendarBlockRequest {

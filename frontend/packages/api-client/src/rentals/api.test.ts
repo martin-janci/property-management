@@ -6,15 +6,20 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   checkRentalAvailability,
+  createRentalBooking,
   createRentalCalendarBlock,
   createRentalReport,
   deleteRentalCalendarBlock,
+  deleteRentalConnection,
   getRentalCalendar,
+  getRentalConnection,
   listRentalBuildings,
   listRentalBuildingUnits,
   listRentalReports,
   previewRentalReport,
   submitRentalReport,
+  updateRentalBooking,
+  updateRentalConnection,
 } from './api';
 
 const HEADERS = { Authorization: 'Bearer t', 'X-Tenant-ID': 'org-1' };
@@ -125,5 +130,48 @@ describe('building / unit pickers', () => {
     expect(lastCall().url).toBe('/api/v1/buildings?organization_id=org-1&limit=100');
     await listRentalBuildingUnits('b1', HEADERS);
     expect(lastCall().url).toBe('/api/v1/buildings/b1/units?limit=100');
+  });
+});
+
+describe('rentals connections', () => {
+  it('GETs, PUTs and DELETEs one connection by id', async () => {
+    fetchSpy.mockResolvedValueOnce(ok({ id: 'c1', sync_calendar: true }));
+    await getRentalConnection('c 1', HEADERS);
+    expect(lastCall().url).toBe('/api/v1/rentals/connections/c%201');
+    expect(lastCall().init.method ?? 'GET').toBe('GET');
+
+    fetchSpy.mockResolvedValueOnce(ok({ id: 'c1', is_active: false }));
+    await updateRentalConnection('c1', { is_active: false }, HEADERS);
+    let call = lastCall();
+    expect(call.url).toBe('/api/v1/rentals/connections/c1');
+    expect(call.init.method).toBe('PUT');
+    expect(JSON.parse(String(call.init.body))).toEqual({ is_active: false });
+    expect(new Headers(call.init.headers).get('X-Tenant-ID')).toBe('org-1');
+
+    fetchSpy.mockResolvedValueOnce({ ok: true, status: 204, json: async () => null } as Response);
+    await deleteRentalConnection('c1', HEADERS);
+    call = lastCall();
+    expect(call.url).toBe('/api/v1/rentals/connections/c1');
+    expect(call.init.method).toBe('DELETE');
+  });
+});
+
+describe('rentals bookings', () => {
+  it('POSTs a new booking and PUTs an update by id', async () => {
+    fetchSpy.mockResolvedValue(ok({ id: 'bk1' }));
+    await createRentalBooking(
+      { unit_id: 'u1', guest_name: 'Jana', check_in: '2026-11-03', check_out: '2026-11-05' },
+      HEADERS
+    );
+    let call = lastCall();
+    expect(call.url).toBe('/api/v1/rentals/bookings');
+    expect(call.init.method).toBe('POST');
+    expect(JSON.parse(String(call.init.body))).toMatchObject({ unit_id: 'u1', guest_name: 'Jana' });
+
+    await updateRentalBooking('bk1', { guest_count: 3 }, HEADERS);
+    call = lastCall();
+    expect(call.url).toBe('/api/v1/rentals/bookings/bk1');
+    expect(call.init.method).toBe('PUT');
+    expect(JSON.parse(String(call.init.body))).toEqual({ guest_count: 3 });
   });
 });

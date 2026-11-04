@@ -25,14 +25,17 @@ import type {
 } from '@ppt/api-client';
 import {
   checkRentalAvailability,
+  createRentalBooking,
   createRentalCalendarBlock,
   createRentalConnection,
   createRentalGuest,
   createRentalReport,
   deleteRentalCalendarBlock,
+  deleteRentalConnection,
   deleteRentalGuest,
   getRentalBookingWithGuests,
   getRentalCalendar,
+  getRentalConnection,
   getRentalStatistics,
   getToken,
   listRentalBookings,
@@ -46,7 +49,9 @@ import {
   submitRentalReport,
   syncAirbnb,
   syncBooking,
+  updateRentalBooking,
   updateRentalBookingStatus,
+  updateRentalConnection,
   updateRentalGuest,
 } from '@ppt/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -57,16 +62,23 @@ import { ProtectedRoute, type Toast, useToast } from '../../components';
 import { AuthError, type AuthErrorCode, useAuth } from '../../contexts';
 import {
   addDaysIso,
+  bookingFormToCreateBody,
+  bookingFormToUpdateBody,
+  bookingRecordToForm,
   buildPropertyOptions,
   calendarFetchRange,
   mapCalendarEventToUi,
+  mapConnectionDetailToSettings,
+  mapConnectionSettingsToApi,
   mapReportPreviewToUi,
   mapReportSummaryToUi,
 } from '../../features/rentals/mappers';
 import type { CalendarBlockInput } from '../../features/rentals/pages/CalendarPage';
 import type {
+  BookingFormValues,
   BookingListParams,
   BookingWithGuests,
+  ConnectionSettings,
   CreateGuestRequest,
   GuestReportParams,
   RentalBooking,
@@ -177,6 +189,8 @@ export function mapBookingRecordToUi(rec: RentalBookingRecord): RentalBooking {
     currency: rec.currency ?? undefined,
     guestCount: rec.guest_count,
     notes: rec.guest_notes ?? rec.internal_notes ?? undefined,
+    guestNotes: rec.guest_notes ?? undefined,
+    internalNotes: rec.internal_notes ?? undefined,
     createdAt: rec.created_at,
     updatedAt: rec.updated_at,
   };
@@ -512,11 +526,14 @@ function PlatformConnectionsPageRoute() {
 
   // There is no per-connection sync route; each channel syncs org-wide through
   // its integrations endpoint (`/integrations/organizations/{org}/{airbnb|booking}/sync`).
+  const [syncingConnectionId, setSyncingConnectionId] = useState<string>();
   const syncPlatform = useMutation({
-    mutationFn: (platform: RentalPlatformType) => {
+    mutationFn: (vars: { platform: RentalPlatformType; connectionId: string }) => {
       const { 'X-Tenant-ID': orgId } = requireRentalsAuthHeaders(auth);
-      return platform === 'booking' ? syncBooking(orgId) : syncAirbnb(orgId);
+      return vars.platform === 'booking' ? syncBooking(orgId) : syncAirbnb(orgId);
     },
+    onMutate: (vars) => setSyncingConnectionId(vars.connectionId),
+    onSettled: () => setSyncingConnectionId(undefined),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rentals', 'connections'] });
     },
@@ -529,20 +546,104 @@ function PlatformConnectionsPageRoute() {
       }),
   });
 
+  // Disconnect / reconnect toggle `is_active` (PUT /rentals/connections/{id});
+  // the connection and its settings are kept so it can be reactivated.
+  const setActive = useMutation({
+    mutationFn: (vars: { id: string; isActive: boolean }) =>
+      updateRentalConnection(
+        vars.id,
+        { is_active: vars.isActive },
+        requireRentalsAuthHeaders(auth)
+      ),
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['rentals', 'connections'] });
+      queryClient.invalidateQueries({ queryKey: ['rentals', 'statistics'] });
+      showToast({
+        type: 'success',
+        title: vars.isActive
+          ? t('rentals.connections.reconnected')
+          : t('rentals.connections.disconnected'),
+      });
+    },
+    onError: (error, vars) =>
+      handleRentalsMutationError(error, {
+        logout,
+        showToast,
+        title: vars.isActive
+          ? t('rentals.connections.reconnectFailed')
+          : t('rentals.connections.disconnectFailed'),
+        fallbackMessage: t('common.pleaseTryAgain', { defaultValue: 'Please try again.' }),
+      }),
+  });
+
   const connections = (data ?? []).map(mapConnectionSummaryToUi);
+
+  const loadSettings = async (id: string): Promise<ConnectionSettings> =>
+    mapConnectionDetailToSettings(await getRentalConnection(id, requireRentalsAuthHeaders(auth)));
+
+  const saveSettings = async (
+    id: string,
+    next: ConnectionSettings,
+    previous: ConnectionSettings
+  ): Promise<void> => {
+    try {
+      await updateRentalConnection(
+        id,
+        mapConnectionSettingsToApi(next, previous),
+        requireRentalsAuthHeaders(auth)
+      );
+    } catch (error) {
+      // The dialog shows the failure inline; a lost session still logs out.
+      handleRentalsAuthError(error, logout);
+      throw error;
+    }
+    queryClient.invalidateQueries({ queryKey: ['rentals', 'connections'] });
+    showToast({ type: 'success', title: t('rentals.connections.settings.saved') });
+  };
+
+  const removeConnection = async (id: string): Promise<void> => {
+    try {
+      await deleteRentalConnection(id, requireRentalsAuthHeaders(auth));
+    } catch (error) {
+      handleRentalsMutationError(error, {
+        logout,
+        showToast,
+        title: t('rentals.connections.removeFailed'),
+        fallbackMessage: t('common.pleaseTryAgain', { defaultValue: 'Please try again.' }),
+      });
+      throw error;
+    }
+    queryClient.invalidateQueries({ queryKey: ['rentals'] });
+    showToast({ type: 'success', title: t('rentals.connections.removed') });
+  };
 
   return (
     <PlatformConnectionsPage
       connections={connections}
       units={properties.data?.units ?? []}
       isLoading={isLoading}
-      onConnect={() => {}}
-      onDisconnect={() => {}}
+      syncingConnectionId={syncingConnectionId}
+      onConnect={(connectionId) => {
+        const conn = connections.find((c) => c.id === connectionId);
+        if (!conn) return;
+        if (conn.status === 'disconnected') {
+          setActive.mutate({ id: connectionId, isActive: true });
+        } else {
+          // Account authorization (Airbnb OAuth / Booking.com property mapping)
+          // lives on the organisation integrations page.
+          navigate('/settings/integrations');
+        }
+      }}
+      onDisconnect={async (connectionId) => {
+        await setActive.mutateAsync({ id: connectionId, isActive: false });
+      }}
       onSync={(connectionId) => {
         const conn = connections.find((c) => c.id === connectionId);
-        if (conn) syncPlatform.mutate(conn.platform);
+        if (conn) syncPlatform.mutate({ platform: conn.platform, connectionId });
       }}
-      onSettings={() => {}}
+      onLoadSettings={loadSettings}
+      onSaveSettings={saveSettings}
+      onRemoveConnection={removeConnection}
       onCreateConnection={(unitId, platform) => createConnection.mutate({ unitId, platform })}
       onBack={() => navigate('/rentals')}
     />
@@ -589,6 +690,27 @@ function BookingsPageRoute() {
   const [filters, setFilters] = useState<BookingListParams>({});
   const updateStatus = useBookingStatusMutation(auth);
   const properties = useRentalPropertyOptions(auth);
+  const queryClient = useQueryClient();
+  const { logout } = useAuth();
+  const { showToast } = useToast();
+  const { t } = useTranslation();
+
+  const createBooking = async (values: BookingFormValues) => {
+    let created: RentalBookingRecord;
+    try {
+      created = await createRentalBooking(
+        bookingFormToCreateBody(values),
+        requireRentalsAuthHeaders(auth)
+      );
+    } catch (error) {
+      // The dialog shows the failure inline; a lost session still logs out.
+      handleRentalsAuthError(error, logout);
+      throw error;
+    }
+    queryClient.invalidateQueries({ queryKey: ['rentals'] });
+    showToast({ type: 'success', title: t('rentals.bookingForm.created') });
+    navigate(`/rentals/bookings/${created.id}`);
+  };
 
   const { data, isLoading } = useQuery({
     queryKey: ['rentals', 'bookings', auth?.xTenantId, filters],
@@ -620,11 +742,11 @@ function BookingsPageRoute() {
       isLoading={isLoading}
       onFilterChange={setFilters}
       onViewBooking={(id) => navigate(`/rentals/bookings/${id}`)}
-      onEditBooking={(id) => navigate(`/rentals/bookings/${id}`)}
+      onEditBooking={(id) => navigate(`/rentals/bookings/${id}?edit=1`)}
       onCancelBooking={(id) => updateStatus.mutate({ id, status: 'cancelled' })}
       onCheckIn={(id) => updateStatus.mutate({ id, status: 'checked_in' })}
       onCheckOut={(id) => updateStatus.mutate({ id, status: 'checked_out' })}
-      onCreateBooking={() => navigate('/rentals/bookings')}
+      onCreateBooking={createBooking}
       onBack={() => navigate('/rentals')}
     />
   );
@@ -685,11 +807,16 @@ function useGuestMutations(auth: RentalsAuth | null) {
 /** Route wrapper for a single booking detail. */
 function BookingDetailPageRoute() {
   const { bookingId } = useParams<{ bookingId: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const auth = useRentalsAuth();
   const { t } = useTranslation();
+  const { logout } = useAuth();
+  const { showToast } = useToast();
+  const queryClient = useQueryClient();
   const updateStatus = useBookingStatusMutation(auth);
   const guestMutations = useGuestMutations(auth);
+  const properties = useRentalPropertyOptions(auth);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['rentals', 'booking', bookingId, auth?.xTenantId],
@@ -709,9 +836,30 @@ function BookingDetailPageRoute() {
     );
   }
 
+  // The booking record carries only the unit id; name it from the picker model.
+  const unit = properties.data?.units.find((u) => u.id === data.booking.unit_id);
   const booking: BookingWithGuests = {
     ...mapBookingRecordToUi(data.booking),
+    unitName: unit?.name,
+    buildingId: unit?.buildingId ?? '',
+    buildingName: unit?.buildingName,
     guests: data.guests.map(mapGuestRecordToUi),
+  };
+  const editForm = bookingRecordToForm(data.booking);
+
+  const saveBooking = async (values: BookingFormValues) => {
+    try {
+      await updateRentalBooking(
+        bookingId,
+        bookingFormToUpdateBody(values, editForm),
+        requireRentalsAuthHeaders(auth)
+      );
+    } catch (error) {
+      handleRentalsAuthError(error, logout);
+      throw error;
+    }
+    queryClient.invalidateQueries({ queryKey: ['rentals'] });
+    showToast({ type: 'success', title: t('rentals.bookingForm.saved') });
   };
 
   return (
@@ -719,12 +867,18 @@ function BookingDetailPageRoute() {
       booking={booking}
       isLoading={isLoading}
       onBack={() => navigate('/rentals/bookings')}
-      onEdit={() => {}}
+      editForm={editForm}
+      initialEditing={searchParams.get('edit') === '1'}
+      onSaveBooking={saveBooking}
       onCancel={(id) => updateStatus.mutate({ id, status: 'cancelled' })}
       onCheckIn={(id) => updateStatus.mutate({ id, status: 'checked_in' })}
       onCheckOut={(id) => updateStatus.mutate({ id, status: 'checked_out' })}
-      onAddGuest={() => navigate('/rentals/guests')}
-      onEditGuest={() => navigate('/rentals/guests')}
+      onAddGuest={async (guestData) => {
+        await guestMutations.create.mutateAsync(guestData);
+      }}
+      onEditGuest={async (guestId, guestData) => {
+        await guestMutations.update.mutateAsync({ id: guestId, data: guestData });
+      }}
       onRegisterGuest={(guestId) => guestMutations.register.mutate([guestId])}
       onDeleteGuest={(guestId) => guestMutations.remove.mutate(guestId)}
     />

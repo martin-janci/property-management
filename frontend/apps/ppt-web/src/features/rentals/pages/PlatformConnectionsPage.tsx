@@ -5,8 +5,15 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ConfirmationDialog } from '../../../components/ConfirmationDialog';
+import { ConnectionSettingsDialog } from '../components/ConnectionSettingsDialog';
 import { PlatformConnectionCard } from '../components/PlatformConnectionCard';
-import type { PlatformConnection, PlatformType } from '../types';
+import type { ConnectionSettings, PlatformConnection, PlatformType } from '../types';
+
+const PLATFORM_NAMES: Record<PlatformType, string> = {
+  airbnb: 'Airbnb',
+  booking: 'Booking.com',
+};
 
 interface Unit {
   id: string;
@@ -19,10 +26,18 @@ interface PlatformConnectionsPageProps {
   units: Unit[];
   isLoading?: boolean;
   syncingConnectionId?: string;
+  /** Reactivate a disconnected connection, or start authorizing a pending one. */
   onConnect: (connectionId: string) => void;
-  onDisconnect: (connectionId: string) => void;
+  /** Called only after the user confirmed; the dialog stays open until it settles. */
+  onDisconnect: (connectionId: string) => Promise<void>;
   onSync: (connectionId: string) => void;
-  onSettings: (connectionId: string) => void;
+  onLoadSettings: (connectionId: string) => Promise<ConnectionSettings>;
+  onSaveSettings: (
+    connectionId: string,
+    next: ConnectionSettings,
+    previous: ConnectionSettings
+  ) => Promise<void>;
+  onRemoveConnection: (connectionId: string) => Promise<void>;
   onCreateConnection: (unitId: string, platform: PlatformType) => void;
   onBack: () => void;
 }
@@ -35,11 +50,29 @@ export function PlatformConnectionsPage({
   onConnect,
   onDisconnect,
   onSync,
-  onSettings,
+  onLoadSettings,
+  onSaveSettings,
+  onRemoveConnection,
   onCreateConnection,
   onBack,
 }: PlatformConnectionsPageProps) {
   const { t } = useTranslation();
+  const [disconnectTarget, setDisconnectTarget] = useState<PlatformConnection | null>(null);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [settingsTarget, setSettingsTarget] = useState<PlatformConnection | null>(null);
+
+  const handleConfirmDisconnect = async () => {
+    if (!disconnectTarget) return;
+    setIsDisconnecting(true);
+    try {
+      await onDisconnect(disconnectTarget.id);
+    } catch {
+      // The caller surfaces the failure (toast); just close the dialog.
+    } finally {
+      setIsDisconnecting(false);
+      setDisconnectTarget(null);
+    }
+  };
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedUnitId, setSelectedUnitId] = useState<string>('');
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformType>('airbnb');
@@ -259,9 +292,9 @@ export function PlatformConnectionsPage({
                 key={connection.id}
                 connection={connection}
                 onConnect={onConnect}
-                onDisconnect={onDisconnect}
+                onDisconnect={() => setDisconnectTarget(connection)}
                 onSync={onSync}
-                onSettings={onSettings}
+                onSettings={() => setSettingsTarget(connection)}
                 isSyncing={syncingConnectionId === connection.id}
               />
             ))}
@@ -362,6 +395,36 @@ export function PlatformConnectionsPage({
             </div>
           </div>
         </div>
+      )}
+
+      <ConfirmationDialog
+        isOpen={disconnectTarget !== null}
+        title={t('rentals.connections.disconnectTitle')}
+        message={
+          disconnectTarget
+            ? t('rentals.connections.disconnectMessage', {
+                platform: PLATFORM_NAMES[disconnectTarget.platform],
+                unit: disconnectTarget.unitName ?? '',
+              })
+            : ''
+        }
+        confirmLabel={t('rentals.connection.disconnect')}
+        cancelLabel={t('common.cancel')}
+        variant="danger"
+        isLoading={isDisconnecting}
+        onConfirm={handleConfirmDisconnect}
+        onCancel={() => setDisconnectTarget(null)}
+      />
+
+      {settingsTarget && (
+        <ConnectionSettingsDialog
+          connection={settingsTarget}
+          platformName={PLATFORM_NAMES[settingsTarget.platform]}
+          onLoad={onLoadSettings}
+          onSave={onSaveSettings}
+          onRemove={onRemoveConnection}
+          onClose={() => setSettingsTarget(null)}
+        />
       )}
     </div>
   );

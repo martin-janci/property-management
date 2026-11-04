@@ -50,9 +50,9 @@ Rentals calls go through the hand-written `@ppt/api-client` rentals module
 (`frontend/packages/api-client/src/rentals/`) against the real
 `/api/v1/rentals` routes (the TypeSpec `rentalsApi*` SDK targets routes the
 server never implemented):
-- `listRentalBookings`, `getRentalBookingWithGuests`, `updateRentalBookingStatus` — bookings
+- `listRentalBookings`, `getRentalBookingWithGuests`, `createRentalBooking`, `updateRentalBooking`, `updateRentalBookingStatus` — bookings
 - `listRentalGuests`, `createRentalGuest`, `updateRentalGuest`, `registerRentalGuest`, `deleteRentalGuest` — guests
-- `listRentalConnections`, `createRentalConnection` — platform connections; `getRentalStatistics` — dashboard
+- `listRentalConnections`, `createRentalConnection`, `getRentalConnection`, `updateRentalConnection`, `deleteRentalConnection` — platform connections; `syncAirbnb` / `syncBooking` — org-wide channel sync; `getRentalStatistics` — dashboard
 - `getRentalCalendar`, `checkRentalAvailability`, `createRentalCalendarBlock`, `deleteRentalCalendarBlock` — calendar
 - `listRentalReports`, `previewRentalReport`, `createRentalReport`, `submitRentalReport` — daňový výkaz
 - `listRentalBuildings` + `listRentalBuildingUnits` (`GET /buildings?organization_id=…`,
@@ -61,6 +61,28 @@ server never implemented):
 ## Notes
 
 ### Specific (recent)
+- 2026-11-04 — **connections actions, booking create/edit, full rentals i18n.**
+  `/rentals/connections`: Disconnect asks in the app `ConfirmationDialog`, then
+  `PUT /rentals/connections/{id}` `{is_active:false}` (connection + settings
+  kept); a disconnected card offers Reconnect (`is_active:true`); a pending
+  (never synced) card's "Connect" goes to `/settings/integrations` (OAuth /
+  Booking.com mapping live there). The gear opens `ConnectionSettingsDialog`:
+  `GET /rentals/connections/{id}` → listing id, listing URL, calendar sync,
+  sync interval, block other platforms → `PUT`; "Remove connection" →
+  confirm → `DELETE`. The server COALESCEs every field, so a text field can be
+  cleared only to `""`, never back to null. `/rentals/bookings` "New booking"
+  opens `BookingFormDialog` (`POST /rentals/bookings`, 409 → "unit not
+  available"); the list's edit goes to `/rentals/bookings/{id}?edit=1`, where
+  the same dialog edits via `PUT /rentals/bookings/{id}`. Cancel booking and
+  delete guest now confirm first; add / edit guest open `GuestForm` in a dialog
+  on the detail page (was a redirect to `/rentals/guests`, which never lists a
+  booking without pending guests). Detail shows unit/building from the picker
+  model and guest vs internal notes separately. Whole `rentals` namespace
+  translated in sk/cs/de/pl/hu with real plurals (`_one/_few/_many/_other`);
+  dates/currency/percent/"last sync" use the UI language. Tests:
+  `routes/groups/rentals.connections.test.tsx`, `features/rentals/formMappers.test.ts`,
+  `pages/BookingsPage.test.tsx`, `pages/BookingDetailPage.test.tsx`,
+  `i18n/rentalsI18n.test.ts` (parity, plural forms, placeholders, used keys).
 - 2026-11-05 — **calendar + daňový výkaz wired to real data.** `/rentals/calendar`
   loads `GET /rentals/calendar/{unit_id}` for the visible Monday-first month grid
   (unit picker from real buildings/units, `?unit=` in the URL, Intl month/day
@@ -107,13 +129,19 @@ server never implemented):
   `@ppt/sitemap` endpoint catalogue (same situation as `ppt/settings-integrations`).
 - `apiStatus: partial` — bookings, guests, connections, statistics, calendar and
   the authority guest report are live. Still missing server-side: rental
-  income / expense / income-tax computation and report file rendering, plus the
-  connection disconnect / settings actions (no-ops in the route wrapper).
+  income / expense / income-tax computation and report file rendering. iCal
+  feeds (`/rentals/ical*`) have server routes but no UI yet.
 - No `sitemapRefs`: the `/rentals*` routes are not present in `@ppt/sitemap`
   (only `/settings/integrations` is). The rest of the rentals routes remain
   unmapped in the sitemap + screen-map tree — a follow-up drift item.
 
 ## Agent Log
+- 2026-11-04 — agent: wired connection disconnect/reconnect/settings/remove
+  (`GET|PUT|DELETE /rentals/connections/{id}`) with confirm dialogs, booking
+  create/edit dialogs (`POST|PUT /rentals/bookings`), guest add/edit dialogs and
+  cancel/delete confirmations on the detail page; translated the full `rentals`
+  namespace into sk/cs/de/pl/hu; localized dates, currency and relative sync
+  times. `apiStatus` stays `partial` (income/tax + iCal UI).
 - 2026-11-05 — agent: wired `/rentals/calendar` (calendar events, blocks,
   availability, booking lookup) and `/rentals/reports` (daňový výkaz preview /
   save / submit / list) to the real rentals API; real building/unit pickers on

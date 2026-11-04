@@ -8,17 +8,24 @@
  */
 
 import type {
+  RentalBookingRecord,
   RentalBuildingListItem,
   RentalBuildingUnitItem,
   RentalCalendarEvent,
+  RentalConnectionDetail,
+  RentalCreateBookingBody,
   RentalReportPreview,
   RentalReportSummary,
+  RentalUpdateBookingBody,
+  RentalUpdateConnectionBody,
 } from '@ppt/api-client';
 import type {
+  BookingFormValues,
   BookingSource,
   BookingStatus,
   CalendarBlockReason,
   CalendarEvent,
+  ConnectionSettings,
   GuestReportPeriodType,
   GuestReportPreviewData,
   GuestReportSummaryItem,
@@ -277,4 +284,174 @@ export function localizedCountryName(
     // Unsupported code or runtime without DisplayNames.
   }
   return fallback || code;
+}
+
+// ---------------------------------------------------------------------------
+// Platform connection settings
+// ---------------------------------------------------------------------------
+
+/** Sync intervals offered in the connection settings dialog (minutes). */
+export const SYNC_INTERVAL_OPTIONS = [15, 30, 60, 180, 360, 720, 1440] as const;
+
+/** `GET /rentals/connections/{id}` → the settings form model. */
+export function mapConnectionDetailToSettings(d: RentalConnectionDetail): ConnectionSettings {
+  return {
+    externalPropertyId: d.external_property_id ?? '',
+    externalListingUrl: d.external_listing_url ?? '',
+    syncCalendar: d.sync_calendar,
+    syncIntervalMinutes: d.sync_interval_minutes,
+    blockOtherPlatforms: d.block_other_platforms,
+  };
+}
+
+/**
+ * Settings form → `PUT /rentals/connections/{id}` body. Text fields are
+ * trimmed; an empty field that was empty before is omitted (the server keeps
+ * the stored value for omitted fields, so there is nothing to send).
+ */
+export function mapConnectionSettingsToApi(
+  next: ConnectionSettings,
+  previous?: ConnectionSettings
+): RentalUpdateConnectionBody {
+  const body: RentalUpdateConnectionBody = {
+    sync_calendar: next.syncCalendar,
+    sync_interval_minutes: next.syncIntervalMinutes,
+    block_other_platforms: next.blockOtherPlatforms,
+  };
+  const propertyId = next.externalPropertyId.trim();
+  if (propertyId || previous?.externalPropertyId) body.external_property_id = propertyId;
+  const listingUrl = next.externalListingUrl.trim();
+  if (listingUrl || previous?.externalListingUrl) body.external_listing_url = listingUrl;
+  return body;
+}
+
+/** True for an empty value or an absolute http(s) URL. */
+export function isValidListingUrl(value: string): boolean {
+  const v = value.trim();
+  if (!v) return true;
+  try {
+    const url = new URL(v);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Booking create / edit form
+// ---------------------------------------------------------------------------
+
+/** Empty create-booking form (direct booking, one guest, EUR). */
+export function emptyBookingForm(unitId = ''): BookingFormValues {
+  return {
+    unitId,
+    source: 'direct',
+    guestName: '',
+    guestEmail: '',
+    guestPhone: '',
+    guestCount: 1,
+    checkIn: '',
+    checkOut: '',
+    totalPrice: '',
+    currency: 'EUR',
+    guestNotes: '',
+    internalNotes: '',
+  };
+}
+
+/** A full booking record → the edit form. */
+export function bookingRecordToForm(rec: RentalBookingRecord): BookingFormValues {
+  const platform = rec.platform;
+  return {
+    unitId: rec.unit_id,
+    source:
+      platform === 'airbnb' || platform === 'booking' || platform === 'direct' ? platform : 'other',
+    guestName: rec.guest_name,
+    guestEmail: rec.guest_email ?? '',
+    guestPhone: rec.guest_phone ?? '',
+    guestCount: rec.guest_count,
+    checkIn: rec.check_in.slice(0, 10),
+    checkOut: rec.check_out.slice(0, 10),
+    totalPrice: rec.total_amount ?? '',
+    currency: rec.currency ?? 'EUR',
+    guestNotes: rec.guest_notes ?? '',
+    internalNotes: rec.internal_notes ?? '',
+  };
+}
+
+/** Field-level problems of a booking form; empty when it can be submitted. */
+export type BookingFormError =
+  | 'unit'
+  | 'guestName'
+  | 'dates'
+  | 'dateOrder'
+  | 'guestCount'
+  | 'price';
+
+export function validateBookingForm(v: BookingFormValues): BookingFormError[] {
+  const errors: BookingFormError[] = [];
+  if (!v.unitId) errors.push('unit');
+  if (!v.guestName.trim()) errors.push('guestName');
+  if (!v.checkIn || !v.checkOut) errors.push('dates');
+  else if (v.checkOut <= v.checkIn) errors.push('dateOrder');
+  if (!Number.isInteger(v.guestCount) || v.guestCount < 1) errors.push('guestCount');
+  const price = v.totalPrice.trim().replace(',', '.');
+  if (price && !(Number.isFinite(Number(price)) && Number(price) >= 0)) errors.push('price');
+  return errors;
+}
+
+function optionalText(value: string): string | undefined {
+  const v = value.trim();
+  return v ? v : undefined;
+}
+
+function normalizedAmount(value: string): string | undefined {
+  const v = value.trim().replace(',', '.');
+  return v ? v : undefined;
+}
+
+/** Booking form → `POST /rentals/bookings` body. */
+export function bookingFormToCreateBody(v: BookingFormValues): RentalCreateBookingBody {
+  return {
+    unit_id: v.unitId,
+    // The server enum has no 'other'; a manual entry is a direct booking.
+    platform: v.source === 'other' ? 'direct' : v.source,
+    guest_name: v.guestName.trim(),
+    guest_email: optionalText(v.guestEmail),
+    guest_phone: optionalText(v.guestPhone),
+    guest_count: v.guestCount,
+    check_in: v.checkIn,
+    check_out: v.checkOut,
+    total_amount: normalizedAmount(v.totalPrice),
+    currency: normalizedAmount(v.totalPrice) ? optionalText(v.currency) : undefined,
+    guest_notes: optionalText(v.guestNotes),
+    internal_notes: optionalText(v.internalNotes),
+  };
+}
+
+/**
+ * Edit form → `PUT /rentals/bookings/{id}` body. The server keeps the stored
+ * value for omitted fields, so cleared optional text is sent as `""` only when
+ * it had a value before.
+ */
+export function bookingFormToUpdateBody(
+  v: BookingFormValues,
+  previous: BookingFormValues
+): RentalUpdateBookingBody {
+  const text = (next: string, prev: string) => {
+    const t = next.trim();
+    return t || prev ? t : undefined;
+  };
+  return {
+    guest_name: v.guestName.trim(),
+    guest_email: text(v.guestEmail, previous.guestEmail),
+    guest_phone: text(v.guestPhone, previous.guestPhone),
+    guest_count: v.guestCount,
+    check_in: v.checkIn,
+    check_out: v.checkOut,
+    total_amount: normalizedAmount(v.totalPrice),
+    currency: normalizedAmount(v.totalPrice) ? optionalText(v.currency) : undefined,
+    guest_notes: text(v.guestNotes, previous.guestNotes),
+    internal_notes: text(v.internalNotes, previous.internalNotes),
+  };
 }
