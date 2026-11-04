@@ -59,7 +59,7 @@ pub(super) async fn audit_mfa_event(
     target_id: Uuid,
     payload: Option<&serde_json::Value>,
 ) {
-    let _ = audit
+    if let Err(e) = audit
         .record(
             Some(actor),
             Capability::UsersWrite,
@@ -70,7 +70,15 @@ pub(super) async fn audit_mfa_event(
             None,
             None,
         )
-        .await;
+        .await
+    {
+        tracing::warn!(
+            error = %e,
+            actor = %actor,
+            target = %target_type,
+            "MFA security-event audit write failed",
+        );
+    }
 }
 
 #[cfg(test)]
