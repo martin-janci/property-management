@@ -12,12 +12,14 @@
  * wrappers fetch their single entity and render it live.
  */
 import type {
+  ConsumptionHistoryResponse as ApiConsumptionHistory,
   Meter as ApiMeter,
   MeterReading as ApiMeterReading,
   MeterType as ApiMeterType,
   ReadingStatus as ApiReadingStatus,
 } from '@ppt/api-client';
 import {
+  getConsumptionHistory,
   listMetersForBuilding,
   meterKeys,
   useBuildings,
@@ -28,11 +30,13 @@ import {
   useValidateReading,
 } from '@ppt/api-client';
 import { useQueries } from '@tanstack/react-query';
-import { lazy } from 'react';
+import { lazy, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams } from 'react-router-dom';
 import { ProtectedRoute, useToast } from '../../components';
 import type {
+  ComparisonParams,
+  ReadingChartData,
   Meter as UiMeter,
   MeterReading as UiMeterReading,
   MeterType as UiMeterType,
@@ -369,20 +373,91 @@ function PendingValidationsPageRoute() {
   );
 }
 
-/** Route wrapper: cross-meter consumption comparison. Meter selector is live. */
+/** Palette for comparison series — mirrors the page's own chart colours. */
+const COMPARISON_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+
+/**
+ * Map one meter's `GET /meters/{id}/consumption` payload onto a comparison
+ * chart series. The plotted `value` is the per-period consumption (comparing
+ * cumulative register readings across different meters is meaningless).
+ */
+export function mapConsumptionToChartData(
+  history: ApiConsumptionHistory,
+  meter: UiMeter | undefined,
+  index: number
+): ReadingChartData {
+  const name = meter
+    ? [meter.serialNumber, meter.location ?? meter.buildingName].filter(Boolean).join(' · ')
+    : history.meter_id;
+  return {
+    meterId: history.meter_id,
+    meterName: name,
+    meterType: meter?.meterType ?? mapMeterType(history.meter_type),
+    unit: meter?.unit ?? (history.unit_of_measure as UiMeterUnit),
+    dataPoints: history.history.map((p) => ({
+      date: p.date,
+      value: Number(p.consumption),
+      consumption: Number(p.consumption),
+    })),
+    color: COMPARISON_COLORS[index % COMPARISON_COLORS.length],
+  };
+}
+
+/**
+ * Route wrapper: cross-meter consumption comparison. The meter selector is
+ * live; "Compare" fans out one `GET /meters/{id}/consumption?from&to` per
+ * selected meter and renders the series side by side / overlaid.
+ */
 function ReadingComparisonPageRoute() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { showToast } = useToast();
   const { meters, isLoading } = useAllMeters();
+  const [params, setParams] = useState<ComparisonParams | null>(null);
+
+  const results = useQueries({
+    queries: (params?.meterIds ?? []).map((meterId) => {
+      const query = { from: params?.startDate ?? '', to: params?.endDate ?? '' };
+      return {
+        queryKey: meterKeys.consumption(meterId, query),
+        queryFn: () => getConsumptionHistory(meterId, query),
+        enabled: !!params,
+      };
+    }),
+  });
+
+  const isComparing = results.some((r) => r.isLoading);
+  const failed = results.some((r) => r.isError);
+
+  // Toast once per comparison run that ends in an error.
+  const toastedFor = useRef<ComparisonParams | null>(null);
+  useEffect(() => {
+    if (failed && params && toastedFor.current !== params) {
+      toastedFor.current = params;
+      showToast({
+        type: 'error',
+        title: t('meters.comparison.loadFailedTitle'),
+        message: t('meters.comparison.loadFailed'),
+      });
+    }
+  }, [failed, params, showToast, t]);
+
+  const metersById = new Map(meters.map((m) => [m.id, m]));
+  const comparisonData = results
+    .map((r) => r.data)
+    .filter((d): d is ApiConsumptionHistory => !!d)
+    .map((d, i) => mapConsumptionToChartData(d, metersById.get(d.meter_id), i))
+    .filter((series) => series.dataPoints.length > 0);
+
+  const hasRun = !!params && !isComparing;
   return (
     <ReadingComparisonPage
       meters={meters}
-      // The chart series are fetched per selected meter+range once the user runs
-      // a comparison; that wiring is tracked as a meters follow-up. The meter
-      // selector itself is live.
-      comparisonData={[]}
-      isLoading={isLoading}
+      comparisonData={comparisonData}
+      isLoading={isLoading || isComparing}
       onBack={() => navigate('/meters')}
-      onCompare={() => {}}
+      onCompare={(next) => setParams(next)}
+      emptyMessage={hasRun ? t('meters.comparison.noData') : undefined}
     />
   );
 }

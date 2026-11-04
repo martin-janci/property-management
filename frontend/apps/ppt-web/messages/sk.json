@@ -3188,7 +3188,12 @@
     "updateFailed": "Nepodarilo sa aktualizovať odpočet",
     "readingValidated": "Odpočet overený",
     "validationFailedTitle": "Overenie zlyhalo",
-    "validationFailed": "Nepodarilo sa overiť odpočet"
+    "validationFailed": "Nepodarilo sa overiť odpočet",
+    "comparison": {
+      "noData": "Pre vybrané merače nie sú v tomto období žiadne údaje o spotrebe",
+      "loadFailedTitle": "Porovnanie zlyhalo",
+      "loadFailed": "Spotrebu jedného alebo viacerých meračov sa nepodarilo načítať"
+    }
   },
   "personMonths": {
     "unitsUpdated": "Aktualizované jednotky: {{count}}",

@@ -3060,7 +3060,12 @@
     "updateFailed": "Nie udało się zaktualizować odczytu",
     "readingValidated": "Odczyt zweryfikowany",
     "validationFailedTitle": "Weryfikacja nie powiodła się",
-    "validationFailed": "Nie udało się zweryfikować odczytu"
+    "validationFailed": "Nie udało się zweryfikować odczytu",
+    "comparison": {
+      "noData": "Brak danych o zużyciu dla wybranych liczników w tym okresie",
+      "loadFailedTitle": "Porównanie nie powiodło się",
+      "loadFailed": "Nie udało się wczytać zużycia dla co najmniej jednego licznika"
+    }
   },
   "personMonths": {
     "unitsUpdated": "Zaktualizowano jednostki: {{count}}",

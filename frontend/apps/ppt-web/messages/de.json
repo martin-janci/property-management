@@ -3079,7 +3079,12 @@
     "updateFailed": "Ablesung konnte nicht aktualisiert werden",
     "readingValidated": "Ablesung validiert",
     "validationFailedTitle": "Validierung fehlgeschlagen",
-    "validationFailed": "Ablesung konnte nicht validiert werden"
+    "validationFailed": "Ablesung konnte nicht validiert werden",
+    "comparison": {
+      "noData": "Keine Verbrauchsdaten für die ausgewählten Zähler in diesem Zeitraum",
+      "loadFailedTitle": "Vergleich fehlgeschlagen",
+      "loadFailed": "Der Verbrauch eines oder mehrerer Zähler konnte nicht geladen werden"
+    }
   },
   "personMonths": {
     "unitsUpdated": "{{count}} Einheit(en) aktualisiert",

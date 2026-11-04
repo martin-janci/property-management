@@ -1855,7 +1855,10 @@
       "overlay": "Overlay",
       "sideBySide": "Side by Side",
       "selectToCompare": "Select meters and click Compare to view data",
-      "exportData": "Export Data"
+      "exportData": "Export Data",
+      "noData": "No consumption data for the selected meters in this period",
+      "loadFailedTitle": "Comparison failed",
+      "loadFailed": "Could not load consumption for one or more meters"
     },
     "tips": {
       "title": "Tips for Accurate Readings",

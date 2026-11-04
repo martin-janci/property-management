@@ -3054,7 +3054,12 @@
     "updateFailed": "Nem sikerült frissíteni a leolvasást",
     "readingValidated": "Leolvasás jóváhagyva",
     "validationFailedTitle": "A jóváhagyás sikertelen",
-    "validationFailed": "Nem sikerült jóváhagyni a leolvasást"
+    "validationFailed": "Nem sikerült jóváhagyni a leolvasást",
+    "comparison": {
+      "noData": "A kiválasztott mérőkhöz nincs fogyasztási adat ebben az időszakban",
+      "loadFailedTitle": "Az összehasonlítás sikertelen",
+      "loadFailed": "Egy vagy több mérő fogyasztását nem sikerült betölteni"
+    }
   },
   "personMonths": {
     "unitsUpdated": "{{count}} egység frissítve",

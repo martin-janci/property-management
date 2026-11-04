@@ -3186,7 +3186,12 @@
     "updateFailed": "Nepodařilo se aktualizovat odečet",
     "readingValidated": "Odečet ověřen",
     "validationFailedTitle": "Ověření selhalo",
-    "validationFailed": "Nepodařilo se ověřit odečet"
+    "validationFailed": "Nepodařilo se ověřit odečet",
+    "comparison": {
+      "noData": "Pro vybrané měřiče nejsou v tomto období žádné údaje o spotřebě",
+      "loadFailedTitle": "Porovnání selhalo",
+      "loadFailed": "Spotřebu jednoho nebo více měřičů se nepodařilo načíst"
+    }
   },
   "personMonths": {
     "unitsUpdated": "Aktualizované jednotky: {{count}}",
