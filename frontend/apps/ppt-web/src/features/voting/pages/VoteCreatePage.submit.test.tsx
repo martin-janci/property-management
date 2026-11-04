@@ -8,6 +8,7 @@
  *   deleted so no empty orphan vote is left in the list.
  */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { ToastProvider } from '../../../components';
 import { toQuestionPayload, VoteCreatePage } from './VoteCreatePage';
 
@@ -22,6 +23,8 @@ const h = vi.hoisted(() => ({
 
 vi.mock('@ppt/api-client', () => ({
   useBuildings: () => ({ data: { items: [{ id: 'b1', name: 'Building 1' }] } }),
+  // Used by the building picker on the buildings-voting branch.
+  useMyUnits: () => ({ data: [] }),
   useCreateVote: () => ({ mutateAsync: h.createVote, isPending: false }),
   useDeleteVote: () => ({ mutateAsync: h.deleteVote, isPending: false }),
   addQuestion: h.addQuestion,
@@ -30,9 +33,11 @@ vi.mock('@ppt/api-client', () => ({
 
 function fillAndSaveDraft() {
   const { container } = render(
-    <ToastProvider>
-      <VoteCreatePage onCreated={onCreated} onCancel={() => {}} />
-    </ToastProvider>
+    <MemoryRouter>
+      <ToastProvider>
+        <VoteCreatePage onCreated={onCreated} onCancel={() => {}} />
+      </ToastProvider>
+    </MemoryRouter>
   );
   const textboxes = screen.getAllByRole('textbox');
   // [0] title, [1] description, [2] first question text
