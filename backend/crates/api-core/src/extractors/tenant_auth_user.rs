@@ -6,6 +6,7 @@ use axum::{
     extract::FromRequestParts,
     http::{request::Parts, HeaderValue, StatusCode},
 };
+use common::TenantRole;
 
 const TENANT_HEADER: &str = "X-Tenant-ID";
 
@@ -24,7 +25,8 @@ const TENANT_HEADER: &str = "X-Tenant-ID";
 ///
 /// - `tenant_id` is always `Some(<validated org>)`;
 /// - `role` is always `Some(<membership role>)` (platform admins keep their
-///   JWT role, as in `ValidatedTenantExtractor`).
+///   JWT role, as in `ValidatedTenantExtractor`); a membership never grants
+///   the platform tier, see [`cap_platform_tier`].
 ///
 /// The tenant comes from the Host-resolved org or the `X-Tenant-ID` header,
 /// falling back to a signed JWT `tenant_id` claim when neither is present
@@ -72,7 +74,48 @@ where
         let ValidatedTenantExtractor(ctx) =
             ValidatedTenantExtractor::from_request_parts(parts, state).await?;
         user.tenant_id = Some(ctx.tenant_id);
-        user.role = Some(ctx.role);
+        user.role = Some(cap_platform_tier(ctx.role, user.is_platform_admin()));
         Ok(TenantAuthUser(user))
+    }
+}
+
+/// Platform tier (`SuperAdmin` / `PlatformAdmin`) is never granted by an org
+/// membership row: org admins can write any `role_type` on members of their own
+/// org, so trusting it here would let them unlock platform-wide endpoints
+/// (compliance audit logs, migration, AML/EDD). A membership-derived platform
+/// role is capped at `OrgAdmin`; platform tier still comes only from a platform
+/// admin's token, exactly as before.
+fn cap_platform_tier(role: TenantRole, caller_is_platform_admin: bool) -> TenantRole {
+    match role {
+        TenantRole::SuperAdmin | TenantRole::PlatformAdmin if !caller_is_platform_admin => {
+            TenantRole::OrgAdmin
+        }
+        other => other,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::cap_platform_tier;
+    use common::TenantRole;
+
+    #[test]
+    fn membership_never_grants_platform_tier() {
+        assert_eq!(
+            cap_platform_tier(TenantRole::SuperAdmin, false),
+            TenantRole::OrgAdmin
+        );
+        assert_eq!(
+            cap_platform_tier(TenantRole::PlatformAdmin, false),
+            TenantRole::OrgAdmin
+        );
+        assert_eq!(
+            cap_platform_tier(TenantRole::SuperAdmin, true),
+            TenantRole::SuperAdmin
+        );
+        assert_eq!(
+            cap_platform_tier(TenantRole::Manager, false),
+            TenantRole::Manager
+        );
     }
 }

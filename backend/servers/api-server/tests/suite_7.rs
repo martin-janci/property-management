@@ -7,6 +7,8 @@
 
 mod common;
 
+#[path = "suites/analytics_org_authz_tests.rs"]
+mod analytics_org_authz_tests;
 #[path = "suites/payment_webhook_settlement_tests.rs"]
 mod payment_webhook_settlement_tests;
 #[path = "suites/person_months_happy_path_tests.rs"]

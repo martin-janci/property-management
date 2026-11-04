@@ -2,7 +2,7 @@
 //! AI Lease Abstraction & Document Intelligence for automated extraction of key terms.
 
 use crate::state::AppState;
-use api_core::extractors::AuthUser;
+use api_core::extractors::{AuthUser, TenantAuthUser};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -20,6 +20,21 @@ use tracing::{info, warn};
 use uuid::Uuid;
 
 type ApiResult<T> = Result<T, (StatusCode, Json<ErrorResponse>)>;
+
+/// Manager-class role, read from the caller's membership (`TenantAuthUser`),
+/// for the mutations of this module.
+fn require_manager(user: &AuthUser) -> ApiResult<()> {
+    if user.role.is_some_and(|r| r.is_manager()) {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::forbidden(
+                "Manager role required for this action",
+            )),
+        ))
+    }
+}
 
 /// Serialize a value to `serde_json::Value`, mapping failures to a 500 response.
 fn to_json_value<T: Serialize>(value: T) -> ApiResult<serde_json::Value> {
@@ -64,7 +79,7 @@ pub fn router() -> Router<AppState> {
 /// List lease documents for the organization.
 async fn list_documents(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(query): Query<LeaseDocumentQuery>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -87,9 +102,10 @@ async fn list_documents(
 #[allow(deprecated)]
 async fn upload_document(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Json(req): Json<CreateLeaseDocument>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
@@ -170,7 +186,7 @@ async fn upload_document(
 /// Get a lease document by ID.
 async fn get_document(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -196,9 +212,10 @@ async fn get_document(
 /// Delete a lease document.
 async fn delete_document(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
@@ -222,10 +239,11 @@ async fn delete_document(
 /// Process a document with AI extraction.
 async fn process_document(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<ProcessDocumentRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
@@ -393,7 +411,7 @@ async fn perform_ai_extraction(
 /// List extractions for a document.
 async fn list_extractions(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(document_id): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -434,7 +452,7 @@ async fn list_extractions(
 /// Get extraction by ID.
 async fn get_extraction(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -464,7 +482,7 @@ async fn get_extraction(
 /// Get extraction with all fields expanded for UI.
 async fn get_extraction_fields(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -498,10 +516,11 @@ async fn get_extraction_fields(
 /// Approve an extraction with optional corrections.
 async fn approve_extraction(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<ApproveExtraction>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
@@ -573,10 +592,11 @@ async fn approve_extraction(
 /// Reject an extraction with reason.
 async fn reject_extraction(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<RejectExtraction>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
@@ -637,7 +657,7 @@ async fn reject_extraction(
 /// List corrections for an extraction.
 async fn list_corrections(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -671,10 +691,11 @@ async fn list_corrections(
 /// Add a correction to an extraction.
 async fn add_correction(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<CreateExtractionCorrection>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
@@ -716,10 +737,11 @@ async fn add_correction(
 #[allow(deprecated)]
 async fn validate_import(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<ImportExtractionRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
@@ -798,10 +820,11 @@ async fn validate_import(
 #[allow(deprecated)]
 async fn import_to_lease(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<ImportExtractionRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
@@ -896,7 +919,7 @@ async fn import_to_lease(
 /// List lease imports.
 async fn list_imports(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
         (
@@ -917,7 +940,7 @@ async fn list_imports(
 /// Get import by ID.
 async fn get_import(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {

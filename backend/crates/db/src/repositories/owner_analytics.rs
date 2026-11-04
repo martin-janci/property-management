@@ -491,11 +491,17 @@ impl OwnerAnalyticsRepository {
         &self,
         q: OwnerPropertiesQuery,
     ) -> Result<PortfolioSummary, AppError> {
-        // Get properties for the owner/organization
+        // Get properties for the owner/organization. Without an org there is
+        // nothing to scope to: never fall back to every organization's units.
+        let Some(organization_id) = q.organization_id else {
+            return Err(AppError::BadRequest(
+                "organization_id is required".to_string(),
+            ));
+        };
         let properties = sqlx::query(
             r#"
             SELECT u.id as unit_id,
-                   COALESCE(u.name, b.address || ' #' || u.unit_number) as address,
+                   (b.street || ', ' || b.city || ' #' || u.designation) as address,
                    COALESCE(
                        (SELECT estimated_value FROM property_valuations
                         WHERE unit_id = u.id ORDER BY valuation_date DESC LIMIT 1),
@@ -503,11 +509,16 @@ impl OwnerAnalyticsRepository {
                    ) as current_value
             FROM units u
             JOIN buildings b ON u.building_id = b.id
-            WHERE ($1::uuid IS NULL OR b.organization_id = $1)
+            WHERE b.organization_id = $1
+              AND ($2::uuid IS NULL OR EXISTS (
+                    SELECT 1 FROM unit_owners uo
+                    WHERE uo.unit_id = u.id AND uo.user_id = $2
+                      AND (uo.valid_until IS NULL OR uo.valid_until >= CURRENT_DATE)))
             LIMIT 50
             "#,
         )
-        .bind(q.organization_id)
+        .bind(organization_id)
+        .bind(q.owner_id)
         .fetch_all(&self.pool)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;

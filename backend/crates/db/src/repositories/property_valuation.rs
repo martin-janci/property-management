@@ -581,8 +581,11 @@ impl PropertyValuationRepository {
     /// Create a comparable adjustment.
     pub async fn create_adjustment(
         &self,
+        org_id: Uuid,
         data: &CreateAdjustment,
-    ) -> Result<ComparableAdjustment, SqlxError> {
+    ) -> Result<Option<ComparableAdjustment>, SqlxError> {
+        // INSERT ... SELECT from the org's own comparable: a foreign or unknown
+        // comparable inserts nothing and yields `None` (404 at the route).
         sqlx::query_as::<_, ComparableAdjustment>(
             r#"
             INSERT INTO comparable_adjustments (
@@ -590,7 +593,9 @@ impl PropertyValuationRepository {
                 subject_value, comparable_value, adjustment_amount,
                 adjustment_percent, justification
             )
-            VALUES ($1, $2::adjustment_type, $3, $4, $5, $6, $7, $8)
+            SELECT c.id, $2::adjustment_type, $3, $4, $5, $6, $7, $8
+            FROM valuation_comparables c
+            WHERE c.id = $1 AND c.organization_id = $9
             RETURNING *
             "#,
         )
@@ -606,33 +611,46 @@ impl PropertyValuationRepository {
                 .and_then(Result::ok),
         )
         .bind(&data.justification)
-        .fetch_one(&self.pool)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
         .await
     }
 
-    /// Get adjustments for a comparable.
+    /// Get adjustments for a comparable of `org_id` (empty for a foreign one).
     pub async fn list_adjustments(
         &self,
+        org_id: Uuid,
         comparable_id: Uuid,
     ) -> Result<Vec<ComparableAdjustment>, SqlxError> {
         sqlx::query_as::<_, ComparableAdjustment>(
             r#"
-            SELECT * FROM comparable_adjustments
-            WHERE comparable_id = $1
-            ORDER BY created_at ASC
+            SELECT a.* FROM comparable_adjustments a
+            JOIN valuation_comparables c ON c.id = a.comparable_id
+            WHERE a.comparable_id = $1 AND c.organization_id = $2
+            ORDER BY a.created_at ASC
             "#,
         )
         .bind(comparable_id)
+        .bind(org_id)
         .fetch_all(&self.pool)
         .await
     }
 
-    /// Delete an adjustment.
-    pub async fn delete_adjustment(&self, adjustment_id: Uuid) -> Result<bool, SqlxError> {
-        let result = sqlx::query(r#"DELETE FROM comparable_adjustments WHERE id = $1"#)
-            .bind(adjustment_id)
-            .execute(&self.pool)
-            .await?;
+    /// Delete an adjustment whose comparable belongs to `org_id`.
+    pub async fn delete_adjustment(
+        &self,
+        org_id: Uuid,
+        adjustment_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        let result = sqlx::query(
+            r#"DELETE FROM comparable_adjustments a
+               USING valuation_comparables c
+               WHERE a.id = $1 AND a.comparable_id = c.id AND c.organization_id = $2"#,
+        )
+        .bind(adjustment_id)
+        .bind(org_id)
+        .execute(&self.pool)
+        .await?;
 
         Ok(result.rows_affected() > 0)
     }

@@ -3,7 +3,7 @@
 //! cross-currency transactions, cross-border lease management, and reporting.
 
 use crate::state::AppState;
-use api_core::extractors::AuthUser;
+use api_core::extractors::{AuthUser, TenantAuthUser};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -94,7 +94,7 @@ pub fn router() -> Router<AppState> {
 /// Get organization currency configuration
 async fn get_currency_config(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
         (
@@ -119,7 +119,7 @@ async fn get_currency_config(
 /// Create or update organization currency configuration
 async fn create_or_update_currency_config(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Json(req): Json<CreateCurrencyConfig>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -145,7 +145,7 @@ async fn create_or_update_currency_config(
 /// Update organization currency configuration
 async fn update_currency_config(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Json(req): Json<UpdateCurrencyConfig>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -175,7 +175,7 @@ async fn update_currency_config(
 /// List property currency configurations
 async fn list_property_currency_configs(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
         (
@@ -200,7 +200,7 @@ async fn list_property_currency_configs(
 /// Create property currency configuration
 async fn create_property_currency_config(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Json(req): Json<CreatePropertyCurrencyConfig>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -226,7 +226,7 @@ async fn create_property_currency_config(
 /// Get property currency configuration
 async fn get_property_currency_config(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(building_id): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -258,7 +258,7 @@ async fn get_property_currency_config(
 /// Update property currency configuration
 async fn update_property_currency_config(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(building_id): Path<Uuid>,
     Json(req): Json<UpdatePropertyCurrencyConfig>,
 ) -> ApiResult<Json<serde_json::Value>> {
@@ -373,7 +373,7 @@ async fn override_exchange_rate(
 /// Trigger exchange rate fetch from external source
 async fn fetch_exchange_rates(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
         (
@@ -424,7 +424,7 @@ async fn fetch_exchange_rates(
 /// List multi-currency transactions
 async fn list_transactions(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(query): Query<TransactionQuery>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -446,7 +446,7 @@ async fn list_transactions(
 /// Create multi-currency transaction
 async fn create_transaction(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Json(req): Json<CreateMultiCurrencyTransaction>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -484,7 +484,7 @@ async fn create_transaction(
 /// Get multi-currency transaction
 async fn get_transaction(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -510,7 +510,7 @@ async fn get_transaction(
 /// Update transaction exchange rate
 async fn update_transaction_rate(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateTransactionRate>,
 ) -> ApiResult<Json<serde_json::Value>> {
@@ -545,7 +545,7 @@ async fn update_transaction_rate(
 /// List cross-border leases
 async fn list_cross_border_leases(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(query): Query<CrossBorderLeaseQuery>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -571,7 +571,7 @@ async fn list_cross_border_leases(
 /// Create cross-border lease
 async fn create_cross_border_lease(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Json(req): Json<CreateCrossBorderLease>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -597,7 +597,7 @@ async fn create_cross_border_lease(
 /// Get cross-border lease
 async fn get_cross_border_lease(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(lease_id): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -627,7 +627,7 @@ async fn get_cross_border_lease(
 /// Update cross-border lease
 async fn update_cross_border_lease(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(lease_id): Path<Uuid>,
     Json(req): Json<UpdateCrossBorderLease>,
 ) -> ApiResult<Json<serde_json::Value>> {
@@ -689,7 +689,7 @@ async fn get_compliance_requirements(
 /// List report configurations
 async fn list_report_configs(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
         (
@@ -710,7 +710,7 @@ async fn list_report_configs(
 /// Create report configuration
 async fn create_report_config(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Json(req): Json<CreateReportConfig>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -736,7 +736,7 @@ async fn create_report_config(
 /// Generate report snapshot
 async fn generate_report(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Json(req): Json<GenerateReportRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -762,7 +762,7 @@ async fn generate_report(
 /// List report snapshots
 async fn list_report_snapshots(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
         (
@@ -792,7 +792,7 @@ pub struct ExposureQuery {
 /// Get currency exposure analysis
 async fn get_currency_exposure(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(query): Query<ExposureQuery>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -829,7 +829,7 @@ async fn get_currency_exposure(
 /// Get multi-currency dashboard
 async fn get_dashboard(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
         (
@@ -884,7 +884,7 @@ async fn get_dashboard(
 /// Get multi-currency statistics
 async fn get_statistics(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
         (

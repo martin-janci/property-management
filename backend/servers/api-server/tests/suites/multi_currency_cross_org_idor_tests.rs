@@ -14,9 +14,9 @@
 //! A foreign-org row therefore surfaces as `None` → HTTP 404, never a
 //! cross-tenant read.
 //!
-//! Tenancy here comes straight from the JWT `tenant_id` claim, which `AuthUser`
-//! reads without a DB membership lookup. That lets these tests mint a real
-//! access token per org and drive the handler end-to-end:
+//! Tenancy comes from the JWT `tenant_id` claim validated against an active
+//! `organization_members` row (`TenantAuthUser`), so each caller is seeded as a
+//! member of their own org:
 //!   - Org A's token reading Org A's property config -> 200 (same-org succeeds).
 //!   - Org B's token reading Org A's property config -> 404 (cross-org blocked).
 
@@ -28,7 +28,7 @@ use serde::Serialize;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::common::{TestApp, TestConfig};
+use crate::common::{seed_membership, TestApp, TestConfig};
 
 // ---------------------------------------------------------------------------
 // JWT minting (matches api_core::extractors::auth::Claims)
@@ -145,6 +145,8 @@ async fn get_property_currency_config_same_org_succeeds(pool: PgPool) {
     let building_id = seed_building(&pool, org_a, "same-a").await;
     seed_property_currency_config(&pool, org_a, building_id).await;
 
+    seed_membership(&pool, org_a, user, "manager").await;
+
     let token = access_token(user, org_a);
     let req = app
         .get(&format!("/api/v1/multi-currency/properties/{building_id}"))
@@ -179,6 +181,7 @@ async fn get_property_currency_config_cross_org_is_not_found(pool: PgPool) {
     seed_property_currency_config(&pool, org_a, building_id).await;
 
     // Org B token targeting Org A's building.
+    seed_membership(&pool, org_b, user_b, "manager").await;
     let token = access_token(user_b, org_b);
     let req = app
         .get(&format!("/api/v1/multi-currency/properties/{building_id}"))

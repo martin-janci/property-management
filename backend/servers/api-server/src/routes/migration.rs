@@ -3,7 +3,7 @@
 //! Handles import templates, bulk import, data export, and validation.
 
 use crate::state::AppState;
-use api_core::extractors::{AuthUser, RlsConnection};
+use api_core::extractors::{AuthUser, RlsConnection, TenantAuthUser};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -28,8 +28,34 @@ use uuid::Uuid;
 /// units, residents, financials) and is therefore high-blast-radius. Gate the whole
 /// surface behind the platform-admin capability so ordinary tenant users cannot
 /// trigger bulk import/export. Returns 403 for authenticated non-admins.
-fn require_platform_admin(user: &AuthUser) -> Result<(), (StatusCode, String)> {
+async fn require_platform_admin(
+    state: &AppState,
+    user: &AuthUser,
+) -> Result<(), (StatusCode, String)> {
+    // Login tokens carry no role claim, so the platform tier is also read from
+    // the trusted `users.principal_kind` column (the same source
+    // `RequestPrincipal::is_platform` uses). An org membership row never
+    // grants it (`TenantAuthUser` caps membership roles below the platform
+    // tier, since org admins can write any `role_type` on their members).
     if user.is_platform_admin() {
+        return Ok(());
+    }
+    let kind: Option<String> = sqlx::query_scalar(
+        "SELECT principal_kind FROM users WHERE id = $1 AND status != 'deleted'",
+    )
+    .bind(user.user_id)
+    .fetch_optional(&state.db)
+    .await
+    .map_err(|e| {
+        tracing::error!(error = %e, "principal_kind lookup failed");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to verify platform access".to_string(),
+        )
+    })?;
+    if kind.as_deref().map(db::models::PrincipalKind::parse)
+        == Some(db::models::PrincipalKind::Platform)
+    {
         Ok(())
     } else {
         Err((
@@ -108,11 +134,11 @@ pub struct ListTemplatesResponse {
 /// List import templates for the organization.
 async fn list_templates(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Query(query): Query<ListTemplatesQuery>,
 ) -> Result<Json<ListTemplatesResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -180,10 +206,10 @@ async fn list_templates(
 /// List system-provided templates.
 async fn list_system_templates(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
 ) -> Result<Json<Vec<ImportTemplateSummary>>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
 
     let db_templates = state
         .migration_repo
@@ -227,11 +253,11 @@ pub struct CreateTemplateRequest {
 /// Create a new import template.
 async fn create_template(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Json(req): Json<CreateTemplateRequest>,
 ) -> Result<Json<ImportTemplateSummary>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -307,11 +333,11 @@ pub struct TemplateDetailResponse {
 /// Get a specific template.
 async fn get_template(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(template_id): Path<Uuid>,
 ) -> Result<Json<TemplateDetailResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -349,12 +375,12 @@ async fn get_template(
 /// Update an import template.
 async fn update_template(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(template_id): Path<Uuid>,
     Json(req): Json<UpdateImportTemplate>,
 ) -> Result<Json<ImportTemplateSummary>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -429,11 +455,11 @@ async fn update_template(
 /// Delete an import template.
 async fn delete_template(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(template_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -495,12 +521,12 @@ pub struct TemplateDownloadResponse {
 /// Download a template as CSV/Excel.
 async fn download_template(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(template_id): Path<Uuid>,
     Query(query): Query<DownloadTemplateQuery>,
 ) -> Result<Json<TemplateDownloadResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -552,11 +578,11 @@ async fn download_template(
 /// Duplicate a template.
 async fn duplicate_template(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(template_id): Path<Uuid>,
 ) -> Result<Json<ImportTemplateSummary>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -677,11 +703,11 @@ pub struct UploadImportResponse {
 /// Upload an import file.
 async fn upload_import_file(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     mut multipart: Multipart,
 ) -> Result<Json<UploadImportResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -852,11 +878,11 @@ pub struct ListImportJobsResponse {
 /// List import jobs for the organization.
 async fn list_import_jobs(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Query(query): Query<ListImportJobsQuery>,
 ) -> Result<Json<ListImportJobsResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -896,11 +922,11 @@ async fn list_import_jobs(
 /// Get import job status.
 async fn get_import_job_status(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(job_id): Path<Uuid>,
 ) -> Result<Json<ImportJobStatusResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -965,11 +991,11 @@ async fn get_import_job_status(
 /// Cancel an import job.
 async fn cancel_import_job(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(job_id): Path<Uuid>,
 ) -> Result<Json<ImportJobStatusResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -1064,11 +1090,11 @@ async fn cancel_import_job(
 /// Retry a failed import job.
 async fn retry_import_job(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(job_id): Path<Uuid>,
 ) -> Result<Json<ImportJobStatusResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -1153,12 +1179,12 @@ pub struct ImportJobErrorsResponse {
 /// Get detailed errors for an import job.
 async fn get_import_job_errors(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(job_id): Path<Uuid>,
     Query(pagination): Query<MigrationPagination>,
 ) -> Result<Json<ImportJobErrorsResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -1216,11 +1242,11 @@ pub struct RequestMigrationExportRequest {
 /// Request a full data export for migration.
 async fn request_migration_export(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Json(req): Json<RequestMigrationExportRequest>,
 ) -> Result<Json<MigrationExportResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -1275,11 +1301,11 @@ async fn request_migration_export(
 /// Get migration export status.
 async fn get_export_status(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(export_id): Path<Uuid>,
 ) -> Result<Json<MigrationExportStatusResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -1342,11 +1368,11 @@ pub struct ExportDownloadResponse {
 /// Download a migration export.
 async fn download_export(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(export_id): Path<Uuid>,
 ) -> Result<Json<ExportDownloadResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -1433,11 +1459,11 @@ pub struct ExportHistoryEntry {
 /// Get export history.
 async fn get_export_history(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Query(pagination): Query<MigrationPagination>,
 ) -> Result<Json<Vec<ExportHistoryEntry>>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -1485,10 +1511,10 @@ async fn get_export_history(
 
 /// Get available export categories with record counts.
 async fn get_export_categories(
-    State(_state): State<AppState>,
-    user: AuthUser,
+    State(state): State<AppState>,
+    TenantAuthUser(user): TenantAuthUser,
 ) -> Result<Json<ExportCategoriesResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let _org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -1563,11 +1589,11 @@ async fn get_export_categories(
 /// Get import preview/validation results.
 async fn get_import_preview(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(job_id): Path<Uuid>,
 ) -> Result<Json<ImportPreviewResult>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -1629,12 +1655,12 @@ async fn get_import_preview(
 /// Approve and execute import.
 async fn approve_import(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(job_id): Path<Uuid>,
     Json(req): Json<ApproveImportRequest>,
 ) -> Result<Json<ApproveImportResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -1690,11 +1716,11 @@ async fn approve_import(
 /// Trigger validation for an import job.
 async fn validate_import(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(job_id): Path<Uuid>,
 ) -> Result<Json<ImportJobStatusResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),

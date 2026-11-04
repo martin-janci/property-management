@@ -3,11 +3,10 @@
 //! Exercises 20+ different endpoints covering currency configuration, exchange rate management,
 //! cross-currency transactions, cross-border lease management, reporting, and dashboard.
 //!
-//! Auth note: every handler in `routes/multi_currency.rs` derives the org from
-//! `AuthUser.tenant_id`, which is read from the JWT `tenant_id` claim — NOT from
-//! the `X-Tenant-ID` header or `organization_members`. A token minted by the
-//! login flow carries no tenant claim, so we mint one directly here (the same
-//! pattern as `analytics_owner_success_tests.rs`).
+//! Auth note: handlers in `routes/multi_currency.rs` take `TenantAuthUser`, so
+//! the org and role come from an active `organization_members` row for the
+//! request's tenant (here the JWT `tenant_id` claim, as no `X-Tenant-ID` header
+//! is sent). The caller is therefore seeded as a member.
 
 use axum::http::StatusCode;
 use chrono::Utc;
@@ -17,7 +16,7 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::common::{TestApp, TestConfig};
+use crate::common::{seed_membership, TestApp, TestConfig};
 
 // ---------------------------------------------------------------------------
 // JWT mint — tenant-scoped access token (AuthUser reads `tenant_id` from claims)
@@ -91,6 +90,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
     let org_id = seed_org(&app.pool, "mchappy").await;
     let email = format!("mc-{}@example.com", Uuid::new_v4());
     let user_id = seed_user(&app.pool, &email).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint(user_id, &email, org_id);
 
     // Seed building
