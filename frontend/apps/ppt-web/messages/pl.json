@@ -3030,7 +3030,11 @@
     "created": "Umowa najmu utworzona",
     "createFailed": "Nie udało się utworzyć umowy najmu",
     "violationRecorded": "Naruszenie zarejestrowane",
-    "violationCreateFailed": "Nie udało się zarejestrować naruszenia"
+    "violationCreateFailed": "Nie udało się zarejestrować naruszenia",
+    "nav": {
+      "templates": "Szablony umów",
+      "violations": "Naruszenia"
+    }
   },
   "meters": {
     "readingSubmitted": "Odczyt przesłany",
@@ -3039,7 +3043,10 @@
     "updateFailed": "Nie udało się zaktualizować odczytu",
     "readingValidated": "Odczyt zweryfikowany",
     "validationFailedTitle": "Weryfikacja nie powiodła się",
-    "validationFailed": "Nie udało się zweryfikować odczytu"
+    "validationFailed": "Nie udało się zweryfikować odczytu",
+    "nav": {
+      "validations": "Oczekujące weryfikacje"
+    }
   },
   "personMonths": {
     "unitsUpdated": "Zaktualizowano jednostki: {{count}}",
@@ -3111,6 +3118,18 @@
         "requiredFields": "Wypełnij wszystkie wymagane pola",
         "invalidNumbers": "Ilość i cena jednostkowa muszą być prawidłowymi liczbami"
       }
+    },
+    "nav": {
+      "label": "Sekcje księgowości",
+      "invoices": "Faktury",
+      "paymentMatching": "Dopasowanie płatności"
+    }
+  },
+  "aiDashboards": {
+    "nav": {
+      "label": "Analizy AI",
+      "sentiment": "Nastroje mieszkańców",
+      "predictiveMaintenance": "Konserwacja predykcyjna"
     }
   }
 }

@@ -40,3 +40,9 @@ already built but unrouted; this screen is now reachable on web.
 
 ## Agent Log
 - 2026-06-08 — CTO: created on route mount (PAP-20, Epic 12).
+
+## Agent Log
+
+<!-- newest entries on top -->
+
+- 2026-11-04 — agent: now linked from the meters page header for managers (was orphan)

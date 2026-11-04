@@ -1562,7 +1562,11 @@
     "created": "Mietvertrag erstellt",
     "createFailed": "Mietvertrag konnte nicht erstellt werden",
     "violationRecorded": "Verstoß erfasst",
-    "violationCreateFailed": "Verstoß konnte nicht erfasst werden"
+    "violationCreateFailed": "Verstoß konnte nicht erfasst werden",
+    "nav": {
+      "templates": "Mietvertragsvorlagen",
+      "violations": "Verstöße"
+    }
   },
   "settings": {
     "notifications": {
@@ -3058,7 +3062,10 @@
     "updateFailed": "Ablesung konnte nicht aktualisiert werden",
     "readingValidated": "Ablesung validiert",
     "validationFailedTitle": "Validierung fehlgeschlagen",
-    "validationFailed": "Ablesung konnte nicht validiert werden"
+    "validationFailed": "Ablesung konnte nicht validiert werden",
+    "nav": {
+      "validations": "Ausstehende Prüfungen"
+    }
   },
   "personMonths": {
     "unitsUpdated": "{{count}} Einheit(en) aktualisiert",
@@ -3130,6 +3137,18 @@
         "requiredFields": "Bitte füllen Sie alle Pflichtfelder aus",
         "invalidNumbers": "Menge und Einzelpreis müssen gültige Zahlen sein"
       }
+    },
+    "nav": {
+      "label": "Buchhaltungsbereiche",
+      "invoices": "Rechnungen",
+      "paymentMatching": "Zahlungsabgleich"
+    }
+  },
+  "aiDashboards": {
+    "nav": {
+      "label": "KI-Einblicke",
+      "sentiment": "Bewohnerstimmung",
+      "predictiveMaintenance": "Vorausschauende Wartung"
     }
   }
 }

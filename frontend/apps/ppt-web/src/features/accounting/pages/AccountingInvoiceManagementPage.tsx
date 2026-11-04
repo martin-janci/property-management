@@ -17,6 +17,7 @@ import { parseApiError } from '../../../lib/errorHandler';
 import { queryKeys } from '../../../lib/queryKeys';
 import { AccountingInvoiceForm } from '../components/AccountingInvoiceForm';
 import { AccountingInvoiceList } from '../components/AccountingInvoiceList';
+import { AccountingSubNav } from '../components/AccountingSubNav';
 
 export function AccountingInvoiceManagementPage() {
   const { t } = useTranslation();
@@ -73,6 +74,7 @@ export function AccountingInvoiceManagementPage() {
 
   return (
     <div className="p-8">
+      <AccountingSubNav />
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{t('accounting.title')}</h1>

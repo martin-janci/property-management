@@ -20,6 +20,7 @@ import {
   rejectMatch,
   uploadStatement,
 } from '../api/paymentMatching';
+import { AccountingSubNav } from '../components/AccountingSubNav';
 
 function formatDate(value: string, month: 'short' | 'long'): string {
   return new Date(value).toLocaleDateString(undefined, {
@@ -74,6 +75,7 @@ export function PaymentMatchingPage() {
 
   return (
     <div className="p-8">
+      <AccountingSubNav />
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Payment Matching</h1>

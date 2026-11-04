@@ -32,6 +32,7 @@ import { lazy } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams } from 'react-router-dom';
 import { ProtectedRoute, useToast } from '../../components';
+import { useAuth } from '../../contexts';
 import type {
   Meter as UiMeter,
   MeterReading as UiMeterReading,
@@ -41,6 +42,7 @@ import type {
   ValidationResult,
 } from '../../features/meters/types';
 import { useOrganization } from '../../hooks/useOrganization';
+import { isManagerRole } from '../shared';
 
 // Meters feature pages (Epic 12) — lazy-loaded for code splitting.
 const MetersPage = lazy(() =>
@@ -178,6 +180,7 @@ function useAllMeters() {
 /** Route wrapper: meters list (Epic 12), live across all buildings. */
 function MetersPageRoute() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { meters, isLoading } = useAllMeters();
   return (
     <MetersPage
@@ -186,6 +189,10 @@ function MetersPageRoute() {
       onNavigateToDetail={(meterId) => navigate(`/meters/${meterId}`)}
       onNavigateToSubmitReading={(meterId) => navigate(`/meters/${meterId}/submit`)}
       onNavigateToComparison={() => navigate('/meters/comparison')}
+      // Validating readings is a manager task; residents never see the queue.
+      onNavigateToValidations={
+        isManagerRole(user?.role) ? () => navigate('/meters/validations') : undefined
+      }
     />
   );
 }

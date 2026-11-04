@@ -1921,7 +1921,10 @@
     "updateFailed": "Could not update reading",
     "readingValidated": "Reading validated",
     "validationFailedTitle": "Validation failed",
-    "validationFailed": "Could not validate reading"
+    "validationFailed": "Could not validate reading",
+    "nav": {
+      "validations": "Pending validations"
+    }
   },
   "personMonths": {
     "title": "Person Months",
@@ -3277,7 +3280,11 @@
     "created": "Lease created",
     "createFailed": "Could not create lease",
     "violationRecorded": "Violation recorded",
-    "violationCreateFailed": "Could not record violation"
+    "violationCreateFailed": "Could not record violation",
+    "nav": {
+      "templates": "Lease templates",
+      "violations": "Violations"
+    }
   },
   "help": {
     "title": "Help Center",
@@ -5420,6 +5427,18 @@
         "requiredFields": "Please fill all required fields",
         "invalidNumbers": "Quantity and unit price must be valid numbers"
       }
+    },
+    "nav": {
+      "label": "Accounting sections",
+      "invoices": "Invoices",
+      "paymentMatching": "Payment matching"
+    }
+  },
+  "aiDashboards": {
+    "nav": {
+      "label": "AI insights",
+      "sentiment": "Resident sentiment",
+      "predictiveMaintenance": "Predictive maintenance"
     }
   }
 }

@@ -576,6 +576,8 @@ function LeasesDashboardPageRoute() {
       onNavigateToLeases={() => navigate('/leases/list')}
       onNavigateToApplications={() => navigate('/leases/applications')}
       onNavigateToCreateLease={() => navigate('/leases/new')}
+      onNavigateToTemplates={() => navigate('/leases/templates')}
+      onNavigateToViolations={() => navigate('/leases/violations')}
     />
   );
 }

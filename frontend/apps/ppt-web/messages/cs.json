@@ -1613,7 +1613,11 @@
     "created": "Nájemní smlouva vytvořena",
     "createFailed": "Nepodařilo se vytvořit nájemní smlouvu",
     "violationRecorded": "Porušení zaznamenáno",
-    "violationCreateFailed": "Nepodařilo se zaznamenat porušení"
+    "violationCreateFailed": "Nepodařilo se zaznamenat porušení",
+    "nav": {
+      "templates": "Šablony smluv",
+      "violations": "Porušení"
+    }
   },
   "settings": {
     "notifications": {
@@ -3165,7 +3169,10 @@
     "updateFailed": "Nepodařilo se aktualizovat odečet",
     "readingValidated": "Odečet ověřen",
     "validationFailedTitle": "Ověření selhalo",
-    "validationFailed": "Nepodařilo se ověřit odečet"
+    "validationFailed": "Nepodařilo se ověřit odečet",
+    "nav": {
+      "validations": "Čekající ověření"
+    }
   },
   "personMonths": {
     "unitsUpdated": "Aktualizované jednotky: {{count}}",
@@ -3237,6 +3244,18 @@
         "requiredFields": "Vyplňte všechna povinná pole",
         "invalidNumbers": "Množství a jednotková cena musí být platná čísla"
       }
+    },
+    "nav": {
+      "label": "Sekce účetnictví",
+      "invoices": "Faktury",
+      "paymentMatching": "Párování plateb"
+    }
+  },
+  "aiDashboards": {
+    "nav": {
+      "label": "AI přehledy",
+      "sentiment": "Nálada obyvatel",
+      "predictiveMaintenance": "Prediktivní údržba"
     }
   }
 }
