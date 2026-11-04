@@ -26,9 +26,14 @@ export function VoteCard({ vote, onOpen }: VoteCardProps) {
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <VoteStatusBadge status={vote.status} />
-          <span className="text-xs text-gray-400">
-            {t('voting.card.questionCount', { count: vote.question_count })}
-          </span>
+          {/* The list endpoint's VoteSummary does not carry question_count yet;
+              without a count i18next cannot pick a plural form and would
+              render the raw key, so hide the label instead. */}
+          {vote.question_count != null && (
+            <span className="text-xs text-gray-400">
+              {t('voting.card.questionCount', { count: vote.question_count })}
+            </span>
+          )}
         </div>
         <h3 className="mt-1.5 truncate text-base font-semibold text-gray-900">{vote.title}</h3>
         {vote.description ? (
