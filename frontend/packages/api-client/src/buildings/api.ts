@@ -135,6 +135,19 @@ export async function getBuilding(id: string, signal?: AbortSignal): Promise<Bui
   return normalizeBuilding(building);
 }
 
+/**
+ * List units in a building (`GET /api/v1/buildings/{id}/units`, paginated).
+ * Archived units are excluded unless `params.include_archived` is set.
+ */
+export async function listBuildingUnits(
+  buildingId: string,
+  params?: ListUnitsParams,
+  signal?: AbortSignal
+): Promise<UnitsListResponse> {
+  const qs = buildQueryString(params || {});
+  return apiRequest<UnitsListResponse>(`${API_BASE}/${buildingId}/units${qs}`, { signal });
+}
+
 // ============================================
 // Factory-based API Client (legacy pattern)
 // ============================================

@@ -6,7 +6,13 @@
 
 // Direct API functions
 // Factory-based API and hooks (legacy pattern)
-export { type BuildingsApi, createBuildingsApi, getBuilding, listBuildings } from './api';
+export {
+  type BuildingsApi,
+  createBuildingsApi,
+  getBuilding,
+  listBuildings,
+  listBuildingUnits,
+} from './api';
 // Direct hooks
 export {
   type BuildingHooks,
