@@ -37,11 +37,14 @@ async fn get(app: &TestApp, token: &str, org: Option<Uuid>, uri: &str) -> TestRe
     app.execute(builder.build()).await
 }
 
-/// One read endpoint per module group touched by the fix.
+/// One read endpoint per module group touched by the fix. Multi-currency is
+/// not listed: it now uses `ValidatedTenantExtractor` (#3285), which answers a
+/// missing `X-Tenant-ID` with 400, and its cross-org/role behaviour is pinned
+/// by `multi_currency_cross_org_idor_tests` and the explicit checks in
+/// `login_token_without_membership_is_forbidden`.
 const ENDPOINTS: &[&str] = &[
     "/api/v1/market-pricing/regions",
     "/api/v1/portfolio-analytics/benchmarks",
-    "/api/v1/multi-currency/properties",
     "/api/v1/owner-analytics/expense-rules",
     "/api/v1/owner-analytics/portfolio",
     "/api/v1/lease-abstraction/documents",
@@ -59,7 +62,11 @@ async fn manager_login_token_reaches_every_org_scoped_group(pool: sqlx::PgPool) 
     let (token, user_id) = login(&app).await;
     seed_membership(&pool, org, user_id, "manager").await;
 
-    for uri in ENDPOINTS {
+    for uri in ENDPOINTS
+        .iter()
+        .copied()
+        .chain(["/api/v1/multi-currency/properties"])
+    {
         let resp = get(&app, &token, Some(org), uri).await;
         assert_eq!(
             resp.status,
@@ -99,6 +106,26 @@ async fn login_token_without_membership_is_forbidden(pool: sqlx::PgPool) {
             other.text()
         );
     }
+
+    // Multi-currency (ValidatedTenantExtractor): no tenant is a 400, a foreign
+    // org the caller is not a member of is still refused with 403.
+    let mc = "/api/v1/multi-currency/properties";
+    let none = get(&app, &token, None, mc).await;
+    assert_eq!(
+        none.status,
+        StatusCode::BAD_REQUEST,
+        "no tenant GET {mc}: got {} body={}",
+        none.status,
+        none.text()
+    );
+    let other = get(&app, &token, Some(foreign), mc).await;
+    assert_eq!(
+        other.status,
+        StatusCode::FORBIDDEN,
+        "foreign tenant GET {mc}: got {} body={}",
+        other.status,
+        other.text()
+    );
 }
 
 /// Lists are scoped to the caller's org: a pricing region created by org A's
