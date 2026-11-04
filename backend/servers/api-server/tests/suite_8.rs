@@ -9,6 +9,8 @@ mod common;
 
 #[path = "suites/mobile_config_route_tests.rs"]
 mod mobile_config_route_tests;
+#[path = "suites/platform_r4_authz_tests.rs"]
+mod platform_r4_authz_tests;
 #[path = "suites/reports_export_org_scope_tests.rs"]
 mod reports_export_org_scope_tests;
 #[path = "suites/reports_get_execution_happy_path_tests.rs"]
