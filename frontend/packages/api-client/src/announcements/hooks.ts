@@ -10,7 +10,9 @@ import { type AnnouncementsApi, toAnnouncementCommentBody, toAnnouncementWriteBo
 import type {
   AddAttachmentRequest,
   Announcement,
+  AnnouncementAttachment,
   AnnouncementSummary,
+  AnnouncementWithDetails,
   CreateAnnouncementRequest,
   CreateCommentRequest,
   ListAnnouncementsParams,
@@ -121,6 +123,85 @@ export function toPaginatedResponse(
     page,
     pageSize,
     totalPages: pageSize > 0 ? Math.ceil((raw.total ?? 0) / pageSize) : 0,
+  };
+}
+
+/**
+ * Raw backend detail response (`AnnouncementDetailResponse`). Like the list
+ * summaries, `AnnouncementWithDetails` / `AnnouncementAttachment` serialize
+ * snake_case (no `serde(rename_all = "camelCase")`), so reading them straight
+ * into the camelCase UI types left `authorName`, `readCount`, `targetType`,
+ * `publishedAt`, `commentsEnabled`, … undefined on the detail page.
+ * Each field falls back to its camelCase spelling so the mapper keeps working
+ * if the backend ever switches to camelCase.
+ */
+type RawRecord = Record<string, unknown>;
+
+export interface BackendAnnouncementDetailResponse {
+  announcement: RawRecord;
+  attachments?: RawRecord[];
+}
+
+function pick<T>(raw: RawRecord, snake: string, camel: string): T | undefined {
+  const v = raw[snake] ?? raw[camel];
+  return v === null ? undefined : (v as T | undefined);
+}
+
+function num(raw: RawRecord, snake: string, camel: string): number {
+  const v = Number(pick<number | string>(raw, snake, camel) ?? 0);
+  return Number.isFinite(v) ? v : 0;
+}
+
+export function mapAnnouncementDetail(raw: RawRecord): AnnouncementWithDetails {
+  const targetIds = pick<unknown>(raw, 'target_ids', 'targetIds');
+  return {
+    id: String(raw.id ?? ''),
+    organizationId: pick<string>(raw, 'organization_id', 'organizationId') ?? '',
+    authorId: pick<string>(raw, 'author_id', 'authorId') ?? '',
+    authorName: pick<string>(raw, 'author_name', 'authorName') ?? '',
+    title: String(raw.title ?? ''),
+    content: String(raw.content ?? ''),
+    status: (raw.status as AnnouncementWithDetails['status']) ?? 'draft',
+    targetType:
+      pick<AnnouncementWithDetails['targetType']>(raw, 'target_type', 'targetType') ?? 'all',
+    targetIds: Array.isArray(targetIds) ? (targetIds as string[]) : [],
+    scheduledAt: pick<string>(raw, 'scheduled_at', 'scheduledAt'),
+    publishedAt: pick<string>(raw, 'published_at', 'publishedAt'),
+    pinned: Boolean(raw.pinned),
+    pinnedAt: pick<string>(raw, 'pinned_at', 'pinnedAt'),
+    pinnedBy: pick<string>(raw, 'pinned_by', 'pinnedBy'),
+    commentsEnabled: Boolean(pick<boolean>(raw, 'comments_enabled', 'commentsEnabled')),
+    acknowledgmentRequired: Boolean(
+      pick<boolean>(raw, 'acknowledgment_required', 'acknowledgmentRequired')
+    ),
+    createdAt: pick<string>(raw, 'created_at', 'createdAt') ?? '',
+    updatedAt: pick<string>(raw, 'updated_at', 'updatedAt') ?? '',
+    readCount: num(raw, 'read_count', 'readCount'),
+    acknowledgedCount: num(raw, 'acknowledged_count', 'acknowledgedCount'),
+    commentCount: num(raw, 'comment_count', 'commentCount'),
+    attachmentCount: num(raw, 'attachment_count', 'attachmentCount'),
+  };
+}
+
+export function mapAnnouncementAttachment(raw: RawRecord): AnnouncementAttachment {
+  return {
+    id: String(raw.id ?? ''),
+    announcementId: pick<string>(raw, 'announcement_id', 'announcementId') ?? '',
+    fileKey: pick<string>(raw, 'file_key', 'fileKey') ?? '',
+    fileName: pick<string>(raw, 'file_name', 'fileName') ?? '',
+    fileType: pick<string>(raw, 'file_type', 'fileType') ?? '',
+    fileSize: num(raw, 'file_size', 'fileSize'),
+    createdAt: pick<string>(raw, 'created_at', 'createdAt') ?? '',
+  };
+}
+
+export function toAnnouncementDetail(raw: BackendAnnouncementDetailResponse): {
+  announcement: AnnouncementWithDetails;
+  attachments: AnnouncementAttachment[];
+} {
+  return {
+    announcement: mapAnnouncementDetail(raw.announcement ?? {}),
+    attachments: (raw.attachments ?? []).map(mapAnnouncementAttachment),
   };
 }
 
@@ -421,8 +502,12 @@ export type AnnouncementHooks = ReturnType<typeof createAnnouncementHooks>;
 // needing an instantiated AnnouncementsApi config object.
 // ============================================================================
 
-/** List announcements with optional filters */
-export function useAnnouncements(params?: ListAnnouncementsParams) {
+/**
+ * List announcements with optional filters (manager-only endpoint —
+ * `GET /announcements` returns 403 for residents; pass `enabled: false` and use
+ * {@link usePublishedAnnouncements} for non-managers).
+ */
+export function useAnnouncements(params?: ListAnnouncementsParams, enabled = true) {
   return useQuery<PaginatedResponse<AnnouncementSummary>>({
     queryKey: announcementKeys.list(params),
     queryFn: async () => {
@@ -431,6 +516,32 @@ export function useAnnouncements(params?: ListAnnouncementsParams) {
       );
       return toPaginatedResponse(raw, params);
     },
+    enabled,
+  });
+}
+
+/**
+ * Published announcements targeted at the current user
+ * (`GET /announcements/published`). Available to every authenticated member —
+ * the backend filters by the announcement's targeting (all / building / units
+ * / roles) so owners and tenants only see what is addressed to them.
+ * Only paging (`page` / `pageSize`) applies; status/target filters are ignored
+ * by this endpoint.
+ */
+export function usePublishedAnnouncements(
+  params?: Pick<ListAnnouncementsParams, 'page' | 'pageSize'>,
+  enabled = true
+) {
+  const paging: ListAnnouncementsParams = { page: params?.page, pageSize: params?.pageSize };
+  return useQuery<PaginatedResponse<AnnouncementSummary>>({
+    queryKey: [...announcementKeys.published(), paging] as const,
+    queryFn: async () => {
+      const raw = await fetchJson<BackendAnnouncementListResponse>(
+        `${ANNOUNCEMENTS_BASE}/published${buildAnnouncementQuery(paging)}`
+      );
+      return toPaginatedResponse(raw, paging);
+    },
+    enabled,
   });
 }
 
@@ -441,9 +552,10 @@ export function useAnnouncements(params?: ListAnnouncementsParams) {
  * collide with the main list cache. Refreshes every 5 minutes — pinned items
  * change infrequently and do not need a tight polling loop.
  */
-export function usePinnedAnnouncements() {
+export function usePinnedAnnouncements(enabled = true) {
   const params: ListAnnouncementsParams = { pinned: true, status: 'published', pageSize: 20 };
   return useQuery<PaginatedResponse<AnnouncementSummary>>({
+    enabled,
     queryKey: announcementKeys.list(params),
     queryFn: async () => {
       const raw = await fetchJson<BackendAnnouncementListResponse>(
@@ -568,7 +680,10 @@ export function useAnnouncement(id: string, enabled = true) {
     attachments: import('./types').AnnouncementAttachment[];
   }>({
     queryKey: announcementKeys.detail(id),
-    queryFn: () => fetchJson(`${ANNOUNCEMENTS_BASE}/${id}`),
+    queryFn: async () =>
+      toAnnouncementDetail(
+        await fetchJson<BackendAnnouncementDetailResponse>(`${ANNOUNCEMENTS_BASE}/${id}`)
+      ),
     enabled: enabled && !!id,
   });
 }
