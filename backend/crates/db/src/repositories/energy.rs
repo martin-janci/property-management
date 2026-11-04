@@ -463,6 +463,10 @@ impl EnergyRepository {
     // ========================================================================
 
     /// Create or update sustainability score for a listing.
+    ///
+    /// Only a score owned by `org_id` is updated on conflict; if the listing's
+    /// score belongs to another organization no row is returned and this
+    /// yields `sqlx::Error::RowNotFound`.
     pub async fn upsert_sustainability_score(
         &self,
         org_id: Uuid,
@@ -496,6 +500,8 @@ impl EnergyRepository {
                 energy_rating = EXCLUDED.energy_rating,
                 notes = EXCLUDED.notes,
                 calculated_at = NOW()
+            -- Never overwrite another organization's score for the listing.
+            WHERE sustainability_scores.organization_id = EXCLUDED.organization_id
             RETURNING *
             "#,
         )

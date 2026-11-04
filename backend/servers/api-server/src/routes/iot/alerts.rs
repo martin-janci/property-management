@@ -1,6 +1,6 @@
 //! Sensor alert handlers (Story 14.4) — list, acknowledge, resolve.
 
-use super::shared::{db_error, write_error};
+use super::shared::{db_error, ensure_in_org, write_error, IotScope};
 use crate::state::AppState;
 use api_core::extractors::RlsConnection;
 use axum::{
@@ -36,6 +36,7 @@ pub(super) async fn acknowledge_alert(
     mut rls: RlsConnection,
     Path(alert_id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    ensure_in_org(&state, &mut rls, IotScope::Alert(alert_id)).await?;
     let user_id = rls.user_id();
     let out = state
         .sensor_repo
@@ -58,6 +59,7 @@ pub(super) async fn resolve_alert(
     Path(alert_id): Path<Uuid>,
     Json(req): Json<ResolveAlertRequest>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    ensure_in_org(&state, &mut rls, IotScope::Alert(alert_id)).await?;
     // Pass resolved_value as Option - NULL is valid when value wasn't captured
     let out = state
         .sensor_repo

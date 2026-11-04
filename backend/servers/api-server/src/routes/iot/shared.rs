@@ -20,10 +20,103 @@
 //! can never disagree. `rls.release()` clears the context before the connection
 //! returns to the pool.
 
-use axum::{http::StatusCode, Json};
+use api_core::extractors::{RlsConnection, TenantMembershipProvider, ValidatedTenantExtractor};
+use axum::{
+    extract::FromRequestParts,
+    http::{request::Parts, StatusCode},
+    Json,
+};
 use common::errors::ErrorResponse;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
+use uuid::Uuid;
+
+// ============================================================================
+// Authorization
+// ============================================================================
+
+/// Extractor that admits only manager-tier members of the request tenant.
+///
+/// The role comes from `ValidatedTenantExtractor`, which resolves it from the
+/// caller's DB membership (never the JWT). Add it as a parameter to every IoT
+/// mutation handler; reads stay open to any member. Carries the validated
+/// tenant so handlers can scope SQL without re-borrowing the `RlsConnection`.
+pub(super) struct IotManager {
+    pub tenant_id: Uuid,
+}
+
+impl<S> FromRequestParts<S> for IotManager
+where
+    S: TenantMembershipProvider,
+{
+    type Rejection = (StatusCode, &'static str);
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let tenant = ValidatedTenantExtractor::from_request_parts(parts, state).await?;
+        if !tenant.role.is_manager() {
+            return Err((StatusCode::FORBIDDEN, "Manager role required"));
+        }
+        Ok(IotManager {
+            tenant_id: tenant.tenant_id,
+        })
+    }
+}
+
+/// Which by-id IoT resource a scope check targets.
+pub(super) enum IotScope {
+    Sensor(Uuid),
+    Threshold(Uuid),
+    Alert(Uuid),
+    Correlation(Uuid),
+    Template(Uuid),
+    Fault(Uuid),
+}
+
+/// Ensure a by-id IoT resource belongs to the caller's org (404 otherwise).
+///
+/// Ownership is resolved through `sensors.organization_id` so it holds even
+/// when RLS is bypassed by the connection's role. Releases the connection on
+/// failure.
+pub(super) async fn ensure_in_org(
+    state: &crate::state::AppState,
+    rls: &mut RlsConnection,
+    scope: IotScope,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
+    let repo = &state.sensor_repo;
+    let conn = &mut **rls.conn();
+    let (found, msg) = match scope {
+        IotScope::Sensor(id) => (
+            repo.sensor_in_org(conn, id, org_id).await,
+            "Sensor not found",
+        ),
+        IotScope::Threshold(id) => (
+            repo.threshold_in_org(conn, id, org_id).await,
+            "Threshold not found",
+        ),
+        IotScope::Alert(id) => (repo.alert_in_org(conn, id, org_id).await, "Alert not found"),
+        IotScope::Correlation(id) => (
+            repo.correlation_in_org(conn, id, org_id).await,
+            "Correlation not found",
+        ),
+        IotScope::Template(id) => (
+            repo.template_visible_to_org(conn, id, org_id).await,
+            "Template not found",
+        ),
+        IotScope::Fault(id) => (repo.fault_in_org(conn, id, org_id).await, "Fault not found"),
+    };
+    match found {
+        Ok(true) => Ok(()),
+        Ok(false) => {
+            rls.release().await;
+            Err(not_found(msg))
+        }
+        Err(e) => {
+            rls.release().await;
+            Err(db_error("Failed to verify resource scope", e))
+        }
+    }
+}
 
 // ============================================================================
 // Error Helpers

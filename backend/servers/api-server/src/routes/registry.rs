@@ -4,7 +4,7 @@
 //! parking spots, and building registry rules.
 
 use crate::state::AppState;
-use api_core::{AuthUser, TenantExtractor};
+use api_core::{AuthUser, ValidatedTenantExtractor};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -101,6 +101,140 @@ pub struct RegistryStatisticsResponse {
 }
 
 // ============================================================================
+// Authorization helpers
+// ============================================================================
+
+type RegistryApiError = (StatusCode, Json<ErrorResponse>);
+
+/// Require a manager-tier role. `ValidatedTenantExtractor` resolves the role
+/// from the caller's DB membership (never the JWT).
+fn require_manager(tenant: &ValidatedTenantExtractor) -> Result<(), RegistryApiError> {
+    if tenant.role.is_manager() {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "INSUFFICIENT_ROLE",
+                "Manager role required",
+            )),
+        ))
+    }
+}
+
+fn registry_db_error(e: sqlx::Error) -> RegistryApiError {
+    tracing::error!("Registry authorization lookup failed: {:?}", e);
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(ErrorResponse::new("DB_ERROR", "Database error")),
+    )
+}
+
+/// Ensure `unit_id` belongs to a building of the caller's organization.
+async fn ensure_unit_in_tenant(
+    state: &AppState,
+    tenant_id: Uuid,
+    unit_id: Uuid,
+) -> Result<(), RegistryApiError> {
+    if state
+        .registry_repo
+        .unit_in_tenant(tenant_id, unit_id)
+        .await
+        .map_err(registry_db_error)?
+    {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Unit not found")),
+        ))
+    }
+}
+
+/// Ensure `building_id` belongs to the caller's organization.
+async fn ensure_building_in_tenant(
+    state: &AppState,
+    tenant_id: Uuid,
+    building_id: Uuid,
+) -> Result<(), RegistryApiError> {
+    if state
+        .registry_repo
+        .building_in_tenant(tenant_id, building_id)
+        .await
+        .map_err(registry_db_error)?
+    {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
+        ))
+    }
+}
+
+/// Only the registration's owner or a manager may modify/delete it.
+fn require_owner_or_manager(
+    tenant: &ValidatedTenantExtractor,
+    owner_id: Uuid,
+) -> Result<(), RegistryApiError> {
+    if owner_id == tenant.user_id || tenant.role.is_manager() {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "NOT_AUTHORIZED",
+                "Only the owner or a manager can modify this registration",
+            )),
+        ))
+    }
+}
+
+async fn require_pet_owner_or_manager(
+    state: &AppState,
+    tenant: &ValidatedTenantExtractor,
+    id: Uuid,
+) -> Result<(), RegistryApiError> {
+    let reg = state
+        .registry_repo
+        .get_pet_registration(tenant.tenant_id, id)
+        .await
+        .map_err(registry_db_error)?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    "Pet registration not found",
+                )),
+            )
+        })?;
+    require_owner_or_manager(tenant, reg.owner_id)
+}
+
+async fn require_vehicle_owner_or_manager(
+    state: &AppState,
+    tenant: &ValidatedTenantExtractor,
+    id: Uuid,
+) -> Result<(), RegistryApiError> {
+    let reg = state
+        .registry_repo
+        .get_vehicle_registration(tenant.tenant_id, id)
+        .await
+        .map_err(registry_db_error)?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    "Vehicle registration not found",
+                )),
+            )
+        })?;
+    require_owner_or_manager(tenant, reg.owner_id)
+}
+
+// ============================================================================
 // Pet Registration Endpoints
 // ============================================================================
 
@@ -120,10 +254,12 @@ pub struct RegistryStatisticsResponse {
 )]
 async fn create_pet_registration(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     auth: AuthUser,
     Json(data): Json<CreatePetRegistration>,
 ) -> Result<(StatusCode, Json<PetRegistrationActionResponse>), (StatusCode, Json<ErrorResponse>)> {
+    ensure_unit_in_tenant(&state, tenant.tenant_id, data.unit_id).await?;
+
     let registration = state
         .registry_repo
         .create_pet_registration(tenant.tenant_id, auth.user_id, data)
@@ -165,7 +301,7 @@ async fn create_pet_registration(
 )]
 async fn get_pet_registration(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<PetRegistrationDetailResponse>, (StatusCode, Json<ErrorResponse>)> {
     let registration = state
@@ -217,7 +353,7 @@ async fn get_pet_registration(
 )]
 async fn list_pet_registrations(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Query(query): Query<PetRegistrationQuery>,
 ) -> Result<Json<PetRegistrationListResponse>, (StatusCode, Json<ErrorResponse>)> {
     let (registrations, total) = state
@@ -259,10 +395,12 @@ async fn list_pet_registrations(
 )]
 async fn update_pet_registration(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdatePetRegistration>,
 ) -> Result<Json<PetRegistrationActionResponse>, (StatusCode, Json<ErrorResponse>)> {
+    require_pet_owner_or_manager(&state, &tenant, id).await?;
+
     let registration = state
         .registry_repo
         .update_pet_registration(tenant.tenant_id, id, data)
@@ -312,11 +450,13 @@ async fn update_pet_registration(
 )]
 async fn review_pet_registration(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     auth: AuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<ReviewRegistration>,
 ) -> Result<Json<PetRegistrationActionResponse>, (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&tenant)?;
+
     let registration = state
         .registry_repo
         .review_pet_registration(tenant.tenant_id, id, auth.user_id, data)
@@ -370,9 +510,11 @@ async fn review_pet_registration(
 )]
 async fn delete_pet_registration(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    require_pet_owner_or_manager(&state, &tenant, id).await?;
+
     let deleted = state
         .registry_repo
         .delete_pet_registration(tenant.tenant_id, id)
@@ -420,11 +562,13 @@ async fn delete_pet_registration(
 )]
 async fn create_vehicle_registration(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     auth: AuthUser,
     Json(data): Json<CreateVehicleRegistration>,
 ) -> Result<(StatusCode, Json<VehicleRegistrationActionResponse>), (StatusCode, Json<ErrorResponse>)>
 {
+    ensure_unit_in_tenant(&state, tenant.tenant_id, data.unit_id).await?;
+
     let registration = state
         .registry_repo
         .create_vehicle_registration(tenant.tenant_id, auth.user_id, data)
@@ -466,7 +610,7 @@ async fn create_vehicle_registration(
 )]
 async fn get_vehicle_registration(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<VehicleRegistrationDetailResponse>, (StatusCode, Json<ErrorResponse>)> {
     let registration = state
@@ -518,7 +662,7 @@ async fn get_vehicle_registration(
 )]
 async fn list_vehicle_registrations(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Query(query): Query<VehicleRegistrationQuery>,
 ) -> Result<Json<VehicleRegistrationListResponse>, (StatusCode, Json<ErrorResponse>)> {
     let (registrations, total) = state
@@ -560,10 +704,12 @@ async fn list_vehicle_registrations(
 )]
 async fn update_vehicle_registration(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateVehicleRegistration>,
 ) -> Result<Json<VehicleRegistrationActionResponse>, (StatusCode, Json<ErrorResponse>)> {
+    require_vehicle_owner_or_manager(&state, &tenant, id).await?;
+
     let registration = state
         .registry_repo
         .update_vehicle_registration(tenant.tenant_id, id, data)
@@ -613,11 +759,13 @@ async fn update_vehicle_registration(
 )]
 async fn review_vehicle_registration(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     auth: AuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<ReviewRegistration>,
 ) -> Result<Json<VehicleRegistrationActionResponse>, (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&tenant)?;
+
     let registration = state
         .registry_repo
         .review_vehicle_registration(tenant.tenant_id, id, auth.user_id, data)
@@ -671,9 +819,11 @@ async fn review_vehicle_registration(
 )]
 async fn delete_vehicle_registration(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    require_vehicle_owner_or_manager(&state, &tenant, id).await?;
+
     let deleted = state
         .registry_repo
         .delete_vehicle_registration(tenant.tenant_id, id)
@@ -721,9 +871,15 @@ async fn delete_vehicle_registration(
 )]
 async fn create_parking_spot(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Json(data): Json<CreateParkingSpot>,
 ) -> Result<(StatusCode, Json<ParkingSpotActionResponse>), (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&tenant)?;
+    ensure_building_in_tenant(&state, tenant.tenant_id, data.building_id).await?;
+    if let Some(unit_id) = data.assigned_to_unit_id {
+        ensure_unit_in_tenant(&state, tenant.tenant_id, unit_id).await?;
+    }
+
     let spot = state
         .registry_repo
         .create_parking_spot(tenant.tenant_id, data)
@@ -765,7 +921,7 @@ async fn create_parking_spot(
 )]
 async fn get_parking_spot(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ParkingSpotDetailResponse>, (StatusCode, Json<ErrorResponse>)> {
     let spot = state
@@ -812,7 +968,7 @@ async fn get_parking_spot(
 )]
 async fn list_parking_spots(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Query(query): Query<ParkingSpotQuery>,
 ) -> Result<Json<ParkingSpotListResponse>, (StatusCode, Json<ErrorResponse>)> {
     let (spots, total) = state
@@ -851,10 +1007,15 @@ async fn list_parking_spots(
 )]
 async fn update_parking_spot(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateParkingSpot>,
 ) -> Result<Json<ParkingSpotActionResponse>, (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&tenant)?;
+    if let Some(unit_id) = data.assigned_to_unit_id {
+        ensure_unit_in_tenant(&state, tenant.tenant_id, unit_id).await?;
+    }
+
     let spot = state
         .registry_repo
         .update_parking_spot(tenant.tenant_id, id, data)
@@ -899,9 +1060,11 @@ async fn update_parking_spot(
 )]
 async fn delete_parking_spot(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&tenant)?;
+
     let deleted = state
         .registry_repo
         .delete_parking_spot(tenant.tenant_id, id)
@@ -948,7 +1111,7 @@ async fn delete_parking_spot(
 )]
 async fn get_registry_rules(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Path(building_id): Path<Uuid>,
 ) -> Result<Json<RegistryRulesResponse>, (StatusCode, Json<ErrorResponse>)> {
     let rules = state
@@ -993,10 +1156,13 @@ async fn get_registry_rules(
 )]
 async fn update_registry_rules(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Path(building_id): Path<Uuid>,
     Json(data): Json<UpdateRegistryRules>,
 ) -> Result<Json<RegistryRulesResponse>, (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&tenant)?;
+    ensure_building_in_tenant(&state, tenant.tenant_id, building_id).await?;
+
     let rules = state
         .registry_repo
         .upsert_registry_rules(tenant.tenant_id, building_id, data)
@@ -1035,7 +1201,7 @@ async fn update_registry_rules(
 )]
 async fn get_registry_statistics(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Path(building_id): Path<Uuid>,
 ) -> Result<Json<RegistryStatisticsResponse>, (StatusCode, Json<ErrorResponse>)> {
     let statistics = state
