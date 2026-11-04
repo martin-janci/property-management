@@ -658,7 +658,8 @@
     "reported": "Störung gemeldet",
     "reportFailed": "Störung konnte nicht gemeldet werden",
     "updated": "Störung aktualisiert",
-    "updateFailed": "Störung konnte nicht aktualisiert werden"
+    "updateFailed": "Störung konnte nicht aktualisiert werden",
+    "createDescription": "Beschreiben Sie das Problem. Geben Sie möglichst viele Details an, damit wir es schnell beheben können."
   },
   "buildings": {
     "title": "Gebäude",

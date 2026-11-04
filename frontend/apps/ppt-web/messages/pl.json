@@ -660,7 +660,8 @@
     "reported": "Usterka zgłoszona",
     "reportFailed": "Nie udało się zgłosić usterki",
     "updated": "Usterka zaktualizowana",
-    "updateFailed": "Nie udało się zaktualizować usterki"
+    "updateFailed": "Nie udało się zaktualizować usterki",
+    "createDescription": "Opisz problem, który występuje. Podaj jak najwięcej szczegółów, abyśmy mogli szybko go rozwiązać."
   },
   "buildings": {
     "title": "Budynki",

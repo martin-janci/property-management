@@ -721,7 +721,8 @@
     "reported": "Fault reported",
     "reportFailed": "Failed to report fault",
     "updated": "Fault updated",
-    "updateFailed": "Failed to update fault"
+    "updateFailed": "Failed to update fault",
+    "createDescription": "Describe the issue you're experiencing. Include as much detail as possible to help us resolve it quickly."
   },
   "buildings": {
     "title": "Buildings",

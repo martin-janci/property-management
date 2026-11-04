@@ -659,7 +659,8 @@
     "reported": "Závada nahlášena",
     "reportFailed": "Nepodařilo se nahlásit závadu",
     "updated": "Závada aktualizována",
-    "updateFailed": "Nepodařilo se aktualizovat závadu"
+    "updateFailed": "Nepodařilo se aktualizovat závadu",
+    "createDescription": "Popište problém, který řešíte. Uveďte co nejvíce podrobností, abychom jej mohli rychle vyřešit."
   },
   "buildings": {
     "title": "Budovy",

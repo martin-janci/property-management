@@ -661,7 +661,8 @@
     "reported": "Porucha nahlásená",
     "reportFailed": "Nepodarilo sa nahlásiť poruchu",
     "updated": "Porucha aktualizovaná",
-    "updateFailed": "Nepodarilo sa aktualizovať poruchu"
+    "updateFailed": "Nepodarilo sa aktualizovať poruchu",
+    "createDescription": "Opíšte problém, ktorý riešite. Uveďte čo najviac podrobností, aby sme ho mohli rýchlo vyriešiť."
   },
   "buildings": {
     "title": "Budovy",

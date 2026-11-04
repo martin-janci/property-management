@@ -102,7 +102,9 @@ export function FaultCard({ fault, onView, onEdit, onTriage, onDelete }: FaultCa
   const { t } = useTranslation();
   const canEdit = fault.status === 'new';
   const canTriage = fault.status === 'new';
-  const canDelete = fault.status === 'new';
+  // Delete is offered only when a handler is wired (the API has no
+  // DELETE /faults/{id} today, so the route omits it).
+  const canDelete = fault.status === 'new' && !!onDelete;
 
   return (
     <div className="fault-card">

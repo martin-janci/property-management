@@ -12,13 +12,11 @@ import type {
   FaultWithDetails,
 } from '@ppt/api-client';
 import {
-  useAddAttachment,
   useAddComment,
   useBuildings,
   useConfirmFault,
   useCreateFault,
   useDeleteAttachment,
-  useDeleteFault,
   useFault,
   useFaultStatistics,
   useFaults,
@@ -32,6 +30,7 @@ import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useToast } from '../../components';
 import { useAuth } from '../../contexts';
+import { useUnits } from '../../features/buildings/hooks';
 import type {
   FaultDetail,
   FaultReportFilters,
@@ -236,7 +235,6 @@ function FaultsPageRoute() {
   }));
 
   const { data, isLoading, error, refetch } = useFaults(faultQuery);
-  const deleteFault = useDeleteFault();
   // Statistics are building-wide (no building filter at list level yet); fetched
   // unconditionally so the summary bar is always up-to-date alongside the list.
   const { data: statsData } = useFaultStatistics();
@@ -253,35 +251,6 @@ function FaultsPageRoute() {
 
   const faults = (data?.faults ?? []).map(transformApiFaultToUi);
   const total = data?.count ?? 0;
-
-  const handleDelete = async (id: string) => {
-    // Deleting a fault is destructive and irreversible — confirm first, matching
-    // the rest of the app's destructive actions (registry/news/accounting, and
-    // FaultDetailPage's own confirm). #1588 F1.
-    if (
-      !window.confirm(
-        t('faults.confirmDelete', {
-          defaultValue: 'Delete this fault? This action cannot be undone.',
-        })
-      )
-    ) {
-      return;
-    }
-    try {
-      await deleteFault.mutateAsync(id);
-      showToast({
-        type: 'success',
-        title: t('faults.deleted', { defaultValue: 'Fault deleted' }),
-        message: '',
-      });
-    } catch (err) {
-      showToast({
-        type: 'error',
-        title: t('faults.deleteFailed', { defaultValue: 'Failed to delete fault' }),
-        message: err instanceof Error ? err.message : '',
-      });
-    }
-  };
 
   // useCallback so child FaultsPage doesn't re-render on every parent render
   // (#486). Status mapping uses the module-level UI_FAULT_STATUS_TO_API.
@@ -326,7 +295,8 @@ function FaultsPageRoute() {
       onRetry={() => {
         void refetch();
       }}
-      onDelete={handleDelete}
+      // No onDelete: the API exposes no DELETE /faults/{id} (only GET/PUT),
+      // so the card hides the Delete action instead of 405-ing.
       stats={stats}
       onNavigateToCreate={() => navigate('/faults/new')}
       onNavigateToView={(id) => navigate(`/faults/${id}`)}
@@ -338,25 +308,41 @@ function FaultsPageRoute() {
   );
 }
 
+/**
+ * Units of the building selected in the fault form, in the `{ id, designation }`
+ * shape FaultForm renders (GET /api/v1/buildings/{id}/units). Empty until a
+ * building is chosen.
+ */
+export function useFaultFormUnits(buildingId: string) {
+  const { data } = useUnits(buildingId, { limit: 100 }, !!buildingId);
+  return (data?.units ?? []).map((u) => ({ id: u.id, designation: u.designation }));
+}
+
 function CreateFaultPageRoute() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { showToast } = useToast();
   const { data: buildingsData } = useBuildings();
   const createFault = useCreateFault();
+  const [buildingId, setBuildingId] = useState('');
+  const units = useFaultFormUnits(buildingId);
 
   const buildings = (buildingsData?.items ?? []).map((b) => ({ id: b.id, name: b.name }));
 
   return (
     <CreateFaultPage
       buildings={buildings}
-      units={[]}
+      units={units}
+      onBuildingChange={setBuildingId}
+      // Photo-first is off: POST /faults/{id}/attachments only records
+      // metadata for an already-stored object (storage_url) and there is no
+      // fault-scoped presigned upload endpoint, so photos picked here could
+      // never be persisted. Hide the picker rather than silently drop them.
+      enablePhotoFirst={false}
       isSubmitting={createFault.isPending}
       onSubmit={async (data) => {
         try {
           // Map FaultFormData (camelCase) -> CreateFaultRequest (snake_case).
-          // NOTE: photos (File[]) are not sent here — base64/upload wiring via
-          // useAddAttachment is a separate follow-up (see fault-new screen-map).
           const created = await createFault.mutateAsync({
             building_id: data.buildingId,
             unit_id: data.unitId,
@@ -409,7 +395,6 @@ function FaultDetailPageRoute() {
   const confirm = useConfirmFault(faultId ?? '');
   const reopen = useReopenFault(faultId ?? '');
   const addComment = useAddComment(faultId ?? '');
-  const addAttachment = useAddAttachment(faultId ?? '');
   const deleteAttachment = useDeleteAttachment(faultId ?? '');
 
   useEffect(() => {
@@ -462,7 +447,9 @@ function FaultDetailPageRoute() {
       onAddComment={(content, isInternal) =>
         addComment.mutate({ content, is_internal: isInternal })
       }
-      onAddAttachment={(file) => addAttachment.mutate(file)}
+      // No onAddAttachment: the attachment endpoint takes JSON metadata of an
+      // already-uploaded object, not multipart bytes, so the upload control
+      // is hidden until a storage upload flow exists.
       onDeleteAttachment={(id) => deleteAttachment.mutate(id)}
     />
   );
@@ -476,6 +463,8 @@ function EditFaultPageRoute() {
   const { data, isLoading } = useFault(faultId ?? '');
   const { data: buildingsData } = useBuildings();
   const updateFault = useUpdateFault(faultId ?? '');
+  const [selectedBuildingId, setSelectedBuildingId] = useState<string | undefined>();
+  const units = useFaultFormUnits(selectedBuildingId ?? data?.fault.building_id ?? '');
 
   if (!faultId) {
     return <div>{t('errors.faultNotFound', 'Fault not found')}</div>;
@@ -500,7 +489,8 @@ function EditFaultPageRoute() {
         priority: fault.priority,
       }}
       buildings={buildings}
-      units={[]}
+      units={units}
+      onBuildingChange={setSelectedBuildingId}
       isSubmitting={updateFault.isPending}
       onSubmit={async (formData) => {
         try {

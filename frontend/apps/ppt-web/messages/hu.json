@@ -658,7 +658,8 @@
     "reported": "Hiba bejelentve",
     "reportFailed": "A hiba bejelentése sikertelen",
     "updated": "Hiba frissítve",
-    "updateFailed": "A hiba frissítése sikertelen"
+    "updateFailed": "A hiba frissítése sikertelen",
+    "createDescription": "Írja le a tapasztalt problémát. Adjon meg minél több részletet, hogy gyorsan megoldhassuk."
   },
   "buildings": {
     "title": "Épületek",
