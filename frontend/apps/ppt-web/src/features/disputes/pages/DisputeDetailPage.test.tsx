@@ -89,24 +89,26 @@ describe('DisputeDetailPage', () => {
   it('does not offer status changes to a mediator (backend is manager-only)', () => {
     renderPage({ isMediator: true });
     expect(screen.queryByLabelText('disputes.detail.changeStatus')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Mediation' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'disputes.detail.mediation' })).toBeInTheDocument();
   });
 
   it('offers no status change once the dispute is closed', () => {
     renderPage({ isManager: true, dispute: { ...dispute, status: 'closed' } });
     expect(screen.queryByLabelText('disputes.detail.changeStatus')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Mediation' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'disputes.detail.mediation' })
+    ).not.toBeInTheDocument();
   });
 
   it('lets a party open the mediation workspace but not change status', () => {
     renderPage({ isParty: true });
-    expect(screen.getByRole('button', { name: 'Mediation' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'disputes.detail.mediation' })).toBeInTheDocument();
     expect(screen.queryByLabelText('disputes.detail.changeStatus')).not.toBeInTheDocument();
   });
 
   it('has no evidence upload affordance', () => {
     renderPage({ isManager: true, isParty: true });
-    expect(screen.queryByText('Add Evidence')).not.toBeInTheDocument();
+    expect(screen.queryByText('disputes.addEvidence')).not.toBeInTheDocument();
     expect(document.querySelector('input[type="file"]')).toBeNull();
   });
 
@@ -137,6 +139,16 @@ describe('DisputeDetailPage', () => {
         },
       ],
     });
-    expect(screen.getAllByRole('link', { name: 'View' })).toHaveLength(1);
+    expect(screen.getAllByRole('link', { name: 'disputes.detail.viewEvidence' })).toHaveLength(1);
+  });
+
+  it('renders status, category, priority and copy through i18n keys', () => {
+    renderPage();
+    expect(screen.getByText('disputes.statusUnderReview')).toBeInTheDocument();
+    expect(screen.getByText('disputes.categoryNoise')).toBeInTheDocument();
+    expect(screen.getByText('disputes.priorityWithLabel')).toBeInTheDocument();
+    expect(screen.getByText('common.backToDisputes')).toBeInTheDocument();
+    expect(screen.getByText('disputes.detail.noEvidence')).toBeInTheDocument();
+    expect(screen.getByText('disputes.timeline.title')).toBeInTheDocument();
   });
 });

@@ -23,6 +23,7 @@ import { MediationSessionsPanel } from '../components/MediationSessionsPanel';
 import { MediationSubmissionsPanel } from '../components/MediationSubmissionsPanel';
 import { MediationTimelineView } from '../components/MediationTimelineView';
 import { formatDisputeReference } from '../utils/formatReference';
+import { disputeStatusKeys, formatDisputeDate } from '../utils/labels';
 
 type Tab = 'timeline' | 'submissions' | 'resolve';
 
@@ -37,16 +38,7 @@ const statusColors: Record<string, string> = {
   closed: 'bg-gray-100 text-gray-700',
 };
 
-const statusLabelKeys: Record<string, string> = {
-  filed: 'disputes.statusFiled',
-  under_review: 'disputes.statusUnderReview',
-  mediation: 'disputes.statusInMediation',
-  awaiting_response: 'disputes.statusAwaitingResponse',
-  escalated: 'disputes.statusEscalated',
-  withdrawn: 'disputes.statusWithdrawn',
-  resolved: 'disputes.statusResolved',
-  closed: 'disputes.statusClosed',
-};
+const statusLabelKeys: Record<string, string> = disputeStatusKeys;
 
 export interface MediationWorkspacePageProps {
   disputeId: string;
@@ -67,7 +59,7 @@ export function MediationWorkspacePage({
   onToastSuccess,
   onToastError,
 }: MediationWorkspacePageProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState<Tab>('timeline');
   const [showEscalateDialog, setShowEscalateDialog] = useState(false);
   const [showAssignDialog, setShowAssignDialog] = useState(false);
@@ -338,7 +330,7 @@ export function MediationWorkspacePage({
                   {t('disputes.mediation.filed')}
                 </dt>
                 <dd className="text-gray-600">
-                  {dispute ? new Date(dispute.createdAt).toLocaleDateString() : '—'}
+                  {dispute ? formatDisputeDate(dispute.createdAt, i18n.language) : '—'}
                 </dd>
               </div>
             </dl>

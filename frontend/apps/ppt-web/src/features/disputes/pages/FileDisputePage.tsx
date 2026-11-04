@@ -15,7 +15,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import React from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { DraftSavedIndicator } from '../components/DraftSavedIndicator';
@@ -31,16 +31,17 @@ export const DISPUTE_DRAFT_KEY = 'ppt-dispute-filing-draft';
 const DISPUTE_TYPES = ['noise', 'damage', 'payment', 'lease', 'maintenance', 'other'] as const;
 export type DisputeTypeValue = (typeof DISPUTE_TYPES)[number];
 
+// Validation messages are i18n keys; the form translates them when rendering.
 const disputeSchema = z.object({
-  type: z.enum(DISPUTE_TYPES, { required_error: 'Please select a dispute type.' }),
+  type: z.enum(DISPUTE_TYPES, { required_error: 'disputes.file.errors.typeRequired' }),
   subject: z
     .string()
-    .min(5, 'Subject must be at least 5 characters.')
-    .max(200, 'Subject must be at most 200 characters.'),
+    .min(5, 'disputes.file.errors.subjectMin')
+    .max(200, 'disputes.file.errors.subjectMax'),
   description: z
     .string()
-    .min(30, 'Description must be at least 30 characters.')
-    .max(5000, 'Description must be at most 5000 characters.'),
+    .min(30, 'disputes.file.errors.descriptionMin')
+    .max(5000, 'disputes.file.errors.descriptionMax'),
   // Optional on the backend; required by the form only when units are offered.
   unitId: z.string().optional(),
   respondentId: z.string().optional(),
@@ -48,7 +49,7 @@ const disputeSchema = z.object({
 
 /** Same schema, but a unit must be chosen (used when the caller has units). */
 const disputeSchemaWithUnit = disputeSchema.extend({
-  unitId: z.string().min(1, 'Please select a unit.'),
+  unitId: z.string().min(1, 'disputes.file.errors.unitRequired'),
 });
 
 export type DisputeFormValues = z.infer<typeof disputeSchema>;
@@ -57,38 +58,50 @@ export type DisputeFormValues = z.infer<typeof disputeSchema>;
 // Type metadata
 // ============================================
 
-const TYPE_META: Record<DisputeTypeValue, { label: string; description: string; icon: string }> = {
+const TYPE_META: Record<
+  DisputeTypeValue,
+  { labelKey: string; descriptionKey: string; icon: string }
+> = {
   noise: {
-    label: 'Noise',
-    description: 'Excessive noise, disturbances, quiet hours violations',
+    labelKey: 'disputes.file.types.noise',
+    descriptionKey: 'disputes.file.types.noiseDesc',
     icon: '🔊',
   },
   damage: {
-    label: 'Property Damage',
-    description: 'Physical damage to property, equipment, or common areas',
+    labelKey: 'disputes.file.types.damage',
+    descriptionKey: 'disputes.file.types.damageDesc',
     icon: '🔨',
   },
   payment: {
-    label: 'Payment / Fees',
-    description: 'Disputed charges, unpaid fees, billing disagreements',
+    labelKey: 'disputes.file.types.payment',
+    descriptionKey: 'disputes.file.types.paymentDesc',
     icon: '💶',
   },
   lease: {
-    label: 'Lease Terms',
-    description: 'Violations or disagreements about lease conditions',
+    labelKey: 'disputes.file.types.lease',
+    descriptionKey: 'disputes.file.types.leaseDesc',
     icon: '📄',
   },
   maintenance: {
-    label: 'Maintenance',
-    description: 'Unresolved maintenance issues, neglect of repairs',
+    labelKey: 'disputes.file.types.maintenance',
+    descriptionKey: 'disputes.file.types.maintenanceDesc',
     icon: '🔧',
   },
   other: {
-    label: 'Other',
-    description: 'Any other dispute not covered by the categories above',
+    labelKey: 'disputes.file.types.other',
+    descriptionKey: 'disputes.file.types.otherDesc',
     icon: '⚙️',
   },
 };
+
+/** Ordered "what happens next" steps shown under the form. */
+const NEXT_STEP_KEYS = [
+  'disputes.file.nextStep1',
+  'disputes.file.nextStep2',
+  'disputes.file.nextStep3',
+  'disputes.file.nextStep4',
+  'disputes.file.nextStep5',
+] as const;
 
 // ============================================
 // Props
@@ -198,7 +211,7 @@ export function FileDisputePage({
           onClick={() => navigate('/disputes')}
           className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 mb-4"
         >
-          ← Back to Disputes
+          ← {t('common.backToDisputes')}
         </button>
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -206,8 +219,10 @@ export function FileDisputePage({
               {t('disputes.filePageTitle', 'File a Dispute')}
             </h1>
             <p className="text-gray-500 mt-1">
-              Submit a formal dispute. All fields marked <span className="text-red-500">*</span> are
-              required.
+              <Trans
+                i18nKey="disputes.file.intro"
+                components={{ 1: <span className="text-red-500" /> }}
+              />
             </p>
           </div>
           <DraftSavedIndicator savedAt={savedAt} className="mt-1 shrink-0" />
@@ -223,7 +238,7 @@ export function FileDisputePage({
         {/* ── Section 1: Dispute type ── */}
         <section aria-labelledby="type-heading">
           <h2 id="type-heading" className="text-base font-semibold text-gray-800 mb-3">
-            Dispute type <span className="text-red-500">*</span>
+            {t('disputes.file.typeHeading')} <span className="text-red-500">*</span>
           </h2>
           <Controller
             name="type"
@@ -235,12 +250,13 @@ export function FileDisputePage({
                 aria-label={t('aria.disputeType')}
                 className="grid grid-cols-1 sm:grid-cols-2 gap-3"
               >
-                {DISPUTE_TYPES.map((t) => {
-                  const meta = TYPE_META[t];
-                  const checked = field.value === t;
+                {DISPUTE_TYPES.map((type) => {
+                  const meta = TYPE_META[type];
+                  const label = t(meta.labelKey);
+                  const checked = field.value === type;
                   return (
                     <label
-                      key={t}
+                      key={type}
                       className={[
                         'relative flex items-start gap-3 rounded-lg border p-4 cursor-pointer',
                         'transition-colors duration-150',
@@ -251,18 +267,18 @@ export function FileDisputePage({
                     >
                       <input
                         type="radio"
-                        value={t}
+                        value={type}
                         checked={checked}
-                        onChange={() => field.onChange(t)}
+                        onChange={() => field.onChange(type)}
                         className="sr-only"
-                        aria-label={meta.label}
+                        aria-label={label}
                       />
                       <span className="text-2xl leading-none" aria-hidden="true">
                         {meta.icon}
                       </span>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{meta.label}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">{meta.description}</p>
+                        <p className="text-sm font-medium text-gray-900">{label}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{t(meta.descriptionKey)}</p>
                       </div>
                       {checked && (
                         <div className="absolute top-3 right-3 w-4 h-4 rounded-full bg-blue-600 flex items-center justify-center">
@@ -284,7 +300,7 @@ export function FileDisputePage({
           />
           {errors.type && (
             <p className="mt-1 text-sm text-red-600" role="alert">
-              {errors.type.message}
+              {t(errors.type.message ?? '')}
             </p>
           )}
         </section>
@@ -293,13 +309,14 @@ export function FileDisputePage({
         {(hasUnits || respondents.length > 0) && (
           <section aria-labelledby="location-heading">
             <h2 id="location-heading" className="text-base font-semibold text-gray-800 mb-3">
-              Location {hasUnits && <span className="text-red-500">*</span>}
+              {t('disputes.file.locationHeading')}{' '}
+              {hasUnits && <span className="text-red-500">*</span>}
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {hasUnits && (
                 <div>
                   <label htmlFor="unitId" className="block text-sm font-medium text-gray-700 mb-1">
-                    Unit <span className="text-red-500">*</span>
+                    {t('disputes.file.unitLabel')} <span className="text-red-500">*</span>
                   </label>
                   <select
                     id="unitId"
@@ -309,7 +326,7 @@ export function FileDisputePage({
                       errors.unitId ? 'border-red-400' : 'border-gray-300',
                     ].join(' ')}
                   >
-                    <option value="">Select unit…</option>
+                    <option value="">{t('disputes.file.selectUnit')}</option>
                     {units.map((u) => (
                       <option key={u.id} value={u.id}>
                         {u.label}
@@ -318,7 +335,7 @@ export function FileDisputePage({
                   </select>
                   {errors.unitId && (
                     <p className="mt-1 text-xs text-red-600" role="alert">
-                      {errors.unitId.message}
+                      {t(errors.unitId.message ?? '')}
                     </p>
                   )}
                 </div>
@@ -331,14 +348,14 @@ export function FileDisputePage({
                     htmlFor="respondentId"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    Other party (optional)
+                    {t('disputes.file.otherPartyLabel')}
                   </label>
                   <select
                     id="respondentId"
                     {...register('respondentId')}
                     className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="">Not specified</option>
+                    <option value="">{t('disputes.file.notSpecified')}</option>
                     {respondents.map((r) => (
                       <option key={r.id} value={r.id}>
                         {r.name}
@@ -354,13 +371,13 @@ export function FileDisputePage({
         {/* ── Section 3: Details ── */}
         <section aria-labelledby="details-heading">
           <h2 id="details-heading" className="text-base font-semibold text-gray-800 mb-3">
-            Details
+            {t('disputes.file.detailsHeading')}
           </h2>
           <div className="space-y-4">
             {/* Subject */}
             <div>
               <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">
-                Subject <span className="text-red-500">*</span>
+                {t('disputes.file.subjectLabel')} <span className="text-red-500">*</span>
               </label>
               <input
                 id="subject"
@@ -376,7 +393,7 @@ export function FileDisputePage({
               />
               {errors.subject && (
                 <p id="subject-error" className="mt-1 text-xs text-red-600" role="alert">
-                  {errors.subject.message}
+                  {t(errors.subject.message ?? '')}
                 </p>
               )}
             </div>
@@ -384,7 +401,7 @@ export function FileDisputePage({
             {/* Description */}
             <div>
               <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                Description <span className="text-red-500">*</span>
+                {t('disputes.file.descriptionLabel')} <span className="text-red-500">*</span>
               </label>
               <textarea
                 id="description"
@@ -404,11 +421,11 @@ export function FileDisputePage({
               <div className="mt-1 flex justify-between">
                 {errors.description ? (
                   <p id="description-error" className="text-xs text-red-600" role="alert">
-                    {errors.description.message}
+                    {t(errors.description.message ?? '')}
                   </p>
                 ) : (
                   <span id="description-hint" className="text-xs text-gray-400">
-                    Min 30 characters
+                    {t('disputes.file.descriptionHint', { count: 30 })}
                   </span>
                 )}
                 <span className="text-xs text-gray-400">{descriptionLength} / 5000</span>
@@ -419,13 +436,13 @@ export function FileDisputePage({
 
         {/* ── Info box ── */}
         <div className="rounded-lg bg-blue-50 border border-blue-100 p-4">
-          <h3 className="text-sm font-semibold text-blue-900 mb-1">What happens next?</h3>
+          <h3 className="text-sm font-semibold text-blue-900 mb-1">
+            {t('disputes.file.nextHeading')}
+          </h3>
           <ol className="text-sm text-blue-800 list-decimal list-inside space-y-0.5">
-            <li>Your dispute receives a reference number</li>
-            <li>The other party is notified and can respond</li>
-            <li>A manager or mediator reviews the case</li>
-            <li>Mediation sessions may be scheduled if needed</li>
-            <li>A resolution will be proposed and tracked</li>
+            {NEXT_STEP_KEYS.map((key) => (
+              <li key={key}>{t(key)}</li>
+            ))}
           </ol>
         </div>
 
@@ -437,7 +454,7 @@ export function FileDisputePage({
             disabled={isSubmitting}
             className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             type="submit"
@@ -450,10 +467,10 @@ export function FileDisputePage({
                   className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
                   aria-hidden="true"
                 />
-                Filing…
+                {t('disputes.file.filing')}
               </span>
             ) : (
-              'File Dispute'
+              t('disputes.file.submit')
             )}
           </button>
         </div>
