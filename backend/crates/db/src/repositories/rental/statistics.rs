@@ -15,11 +15,14 @@ impl RentalRepository {
     /// Get rental statistics for organization.
     pub async fn get_statistics(&self, org_id: Uuid) -> Result<RentalStatistics, SqlxError> {
         // Get unit counts
-        let (total_units,): (i64,) =
-            sqlx::query_as(r#"SELECT COUNT(DISTINCT id) FROM units WHERE organization_id = $1"#)
-                .bind(org_id)
-                .fetch_one(&self.pool)
-                .await?;
+        // `units` has no organization_id column; units belong to an org via
+        // their building.
+        let (total_units,): (i64,) = sqlx::query_as(
+            r#"SELECT COUNT(DISTINCT u.id) FROM units u JOIN buildings b ON b.id = u.building_id WHERE b.organization_id = $1"#,
+        )
+        .bind(org_id)
+        .fetch_one(&self.pool)
+        .await?;
 
         let (connected_units,): (i64,) = sqlx::query_as(
             r#"SELECT COUNT(DISTINCT unit_id) FROM rental_platform_connections WHERE organization_id = $1 AND is_active = true"#,

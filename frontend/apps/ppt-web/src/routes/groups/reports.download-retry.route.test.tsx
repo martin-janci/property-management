@@ -45,6 +45,11 @@ vi.mock('../../components', async (importOriginal) => ({
 
 // Override only the four hooks the route module consumes; preserve the rest of
 // the api-client surface (types/utils the page may import).
+vi.mock('../../contexts', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../contexts')>()),
+  useAuth: () => ({ user: { id: 'u1', organizationId: 'org-1' } }),
+}));
+
 vi.mock('@ppt/api-client', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@ppt/api-client')>()),
   useReportExecutionHistory: () => ({
@@ -71,6 +76,29 @@ vi.mock('@ppt/api-client', async (importOriginal) => ({
         },
       ],
       hasMore: false,
+    },
+    isLoading: false,
+    isError: false,
+  }),
+  useReportSchedules: () => ({
+    data: {
+      schedules: [
+        {
+          id: SCHEDULE_ID,
+          report_id: 'rep-1',
+          organization_id: 'org-1',
+          name: 'Monthly Building Report',
+          frequency: 'monthly',
+          time: '08:00',
+          timezone: 'UTC',
+          format: 'pdf',
+          recipients: [],
+          is_active: true,
+          created_at: '2026-01-01T00:00:00Z',
+          updated_at: '2026-01-01T00:00:00Z',
+        },
+      ],
+      total: 1,
     },
     isLoading: false,
     isError: false,

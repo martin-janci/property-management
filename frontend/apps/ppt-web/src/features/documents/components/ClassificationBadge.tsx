@@ -10,6 +10,7 @@ import {
   useSubmitClassificationFeedback,
 } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface ClassificationBadgeProps {
   category: string;
@@ -24,6 +25,7 @@ export function ClassificationBadge({
   compact = false,
   accepted,
 }: ClassificationBadgeProps) {
+  const { t } = useTranslation();
   // Confidence level styling
   const getConfidenceLevel = (conf: number) => {
     if (conf >= 0.8) return 'high';
@@ -39,7 +41,9 @@ export function ClassificationBadge({
       className={`classification-badge confidence-${confidenceLevel} ${compact ? 'compact' : ''} ${accepted ? 'accepted' : ''}`}
     >
       <span className="ai-icon">AI</span>
-      <span className="category-label">{category}</span>
+      <span className="category-label">
+        {t(`documents.category.${category}`, { defaultValue: category })}
+      </span>
       {!compact && <span className="confidence-value">{confidencePercent}%</span>}
       {accepted && <span className="accepted-icon">✓</span>}
 
@@ -127,6 +131,7 @@ export function ClassificationUI({
   classification,
   onFeedbackSubmitted,
 }: ClassificationUIProps) {
+  const { t, i18n } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const submitFeedback = useSubmitClassificationFeedback();
@@ -171,7 +176,7 @@ export function ClassificationUI({
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
-    return date.toLocaleString('en-US', {
+    return date.toLocaleString(i18n.language, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -185,7 +190,7 @@ export function ClassificationUI({
       <div className="classification-ui">
         <div className="no-classification">
           <span className="ai-icon-large">AI</span>
-          <p>No classification available yet. The document will be automatically analyzed.</p>
+          <p>{t('documents.classification.none')}</p>
         </div>
 
         <style>{`
@@ -223,10 +228,12 @@ export function ClassificationUI({
   return (
     <div className="classification-ui">
       <div className="classification-header">
-        <h4 className="section-title">AI Classification</h4>
+        <h4 className="section-title">{t('documents.classification.title')}</h4>
         {classification.classified_at && (
           <span className="classified-date">
-            Classified: {formatDate(classification.classified_at)}
+            {t('documents.classification.classifiedAt', {
+              date: formatDate(classification.classified_at),
+            })}
           </span>
         )}
       </div>
@@ -243,9 +250,9 @@ export function ClassificationUI({
       {classification.accepted !== null && classification.accepted !== undefined && (
         <div className={`feedback-status ${classification.accepted ? 'accepted' : 'rejected'}`}>
           {classification.accepted ? (
-            <p>You confirmed this classification is correct.</p>
+            <p>{t('documents.classification.confirmed')}</p>
           ) : (
-            <p>You provided a correction for this classification.</p>
+            <p>{t('documents.classification.corrected')}</p>
           )}
         </div>
       )}
@@ -255,7 +262,7 @@ export function ClassificationUI({
         <div className="feedback-actions">
           {!isEditing ? (
             <>
-              <p className="feedback-prompt">Is this classification correct?</p>
+              <p className="feedback-prompt">{t('documents.classification.isCorrect')}</p>
               <div className="feedback-buttons">
                 <button
                   type="button"
@@ -263,7 +270,9 @@ export function ClassificationUI({
                   disabled={submitFeedback.isPending}
                   className="btn btn-accept"
                 >
-                  {submitFeedback.isPending ? 'Saving...' : 'Yes, correct'}
+                  {submitFeedback.isPending
+                    ? t('documents.classification.saving')
+                    : t('documents.classification.yesCorrect')}
                 </button>
                 <button
                   type="button"
@@ -271,14 +280,14 @@ export function ClassificationUI({
                   disabled={submitFeedback.isPending}
                   className="btn btn-reject"
                 >
-                  No, suggest correction
+                  {t('documents.classification.suggestCorrection')}
                 </button>
               </div>
             </>
           ) : (
             <div className="correction-form">
               <label className="correction-label" htmlFor="category-select">
-                Select the correct category:
+                {t('documents.classification.selectCorrect')}
               </label>
               <select
                 id="category-select"
@@ -286,10 +295,10 @@ export function ClassificationUI({
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 className="category-select"
               >
-                <option value="">Select a category...</option>
+                <option value="">{t('documents.classification.selectCategory')}</option>
                 {DOCUMENT_CATEGORIES.map((cat) => (
                   <option key={cat} value={cat}>
-                    {cat}
+                    {t(`documents.category.${cat}`, { defaultValue: cat })}
                   </option>
                 ))}
               </select>
@@ -300,7 +309,9 @@ export function ClassificationUI({
                   disabled={!selectedCategory || submitFeedback.isPending}
                   className="btn btn-submit"
                 >
-                  {submitFeedback.isPending ? 'Saving...' : 'Submit Correction'}
+                  {submitFeedback.isPending
+                    ? t('documents.classification.saving')
+                    : t('documents.classification.submitCorrection')}
                 </button>
                 <button
                   type="button"
@@ -308,7 +319,7 @@ export function ClassificationUI({
                   disabled={submitFeedback.isPending}
                   className="btn btn-cancel"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
               </div>
             </div>
@@ -317,7 +328,7 @@ export function ClassificationUI({
       ) : null}
 
       {submitFeedback.isError && (
-        <div className="error-message">Failed to submit feedback. Please try again.</div>
+        <div className="error-message">{t('documents.classification.feedbackFailed')}</div>
       )}
 
       <style>{`

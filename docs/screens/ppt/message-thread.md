@@ -41,6 +41,7 @@ the API's `ThreadDetailResponse` to the feature-layer `ThreadWithMessages` type 
 - 2026-06-25 — group conversations (BIT-244): detail header renders all other participants (`ThreadDetailResponse.otherParticipant` → `participants: ParticipantInfo[]`, backend PR #1848). `formatParticipantNames` already collapses N>2 to "X and N others".
 
 ## Agent Log
+- 2026-11-04 — agent: messaging client builds the Authorization header per request from the token provider, so a deep-linked thread no longer gets 401 "Missing Authorization header" (R3 #19). Status unchanged.
 - 2026-07-13 — agent: gap-screens-normalize-frontmatter — normalized story-id-style epic ref(s) Epic-6-5 → Epic-6 (strip story suffix); /screens validate clean.
 - 2026-06-25 — agent: group conversations (BIT-244 / PM #972.5b) — `mapApiThreadDetailToUi` maps every other participant from `participants[]`; the N-party header rendering was already in place. No route/status change.
 - 2026-05-18 — agent: created stub for unmapped route.

@@ -1483,7 +1483,7 @@ impl FaultRepository {
         // Average resolution time
         let avg_resolution: Option<f64> = sqlx::query_scalar(
             r#"
-            SELECT AVG(EXTRACT(EPOCH FROM (resolved_at - created_at)) / 3600)
+            SELECT (AVG(EXTRACT(EPOCH FROM (resolved_at - created_at)) / 3600))::float8
             FROM faults
             WHERE organization_id = $1
               AND ($2::uuid IS NULL OR building_id = $2)

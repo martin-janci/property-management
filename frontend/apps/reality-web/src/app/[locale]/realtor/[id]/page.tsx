@@ -2,44 +2,133 @@
 
 /**
  * Agent / realtor public profile page — Reality Portal.
- * Route: /[locale]/realtor/[id]
+ * Route: /[locale]/realtor/[id]  (the `[id]` segment is the realtor's user id)
  * Screen-map: docs/screens/reality/agent-profile.md
+ *
+ * Data is fetched client-side via TanStack Query against the real
+ * reality-server endpoints (mirrors the agency/[slug] public-profile pattern):
+ *   - `GET /api/v1/realtors/{id}/profile`  → public realtor profile
+ *   - `GET /api/v1/realtors/{id}/reviews`  → realtor reviews
+ * There is no realtor-scoped public "listings" endpoint and no
+ * realtor-direct inquiry endpoint (inquiries are listing-scoped:
+ * `POST /api/v1/inquiries/contact/{listing_id}`), so the listings grid is
+ * omitted and the contact modal surfaces the realtor's real contact channels
+ * (mailto / tel) instead of faking a submit. Missing fields degrade to a
+ * not-found / empty state rather than being fabricated.
  */
 
+import { useQuery } from '@tanstack/react-query';
+import { useParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Footer, Header } from '@/components/ui';
-import { formatPrice } from '@/lib/format';
-import { MOCK_AGENT, MOCK_AGENT_LISTINGS, MOCK_AGENT_REVIEWS } from './_mock';
+import { getRealtorPublicProfile, getRealtorReviews, RealtorApiError } from '@/lib/realtor-api';
 
-// TODO: replace listing cards with @ppt/ui-kit/ListingCard once available
-// TODO: replace status badges with @ppt/ui-kit/StatusPill once available
+const PAGE_BG: React.CSSProperties = {
+  minHeight: '100vh',
+  display: 'flex',
+  flexDirection: 'column',
+  background: 'var(--ppt-bg-app)',
+};
+
+function formatMonthYear(iso: string | null | undefined, locale: string): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  return new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(d);
+}
 
 export default function AgentProfilePage() {
   const locale = useLocale();
+  const params = useParams<{ id: string }>();
+  const id = params?.id ?? '';
+
   const [contactOpen, setContactOpen] = useState(false);
   const [message, setMessage] = useState('');
-  const [messageSent, setMessageSent] = useState(false);
-  const agent = MOCK_AGENT;
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (message.trim()) {
-      setMessageSent(true);
-      setContactOpen(false);
-    }
-  };
+  const {
+    data: profile,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ['realtor-profile', id],
+    queryFn: () => getRealtorPublicProfile(id),
+    enabled: !!id,
+    retry: (count, err) => !(err instanceof RealtorApiError && err.status === 404) && count < 1,
+  });
+
+  const { data: reviewsData } = useQuery({
+    queryKey: ['realtor-reviews', id],
+    queryFn: () => getRealtorReviews(id),
+    enabled: !!id,
+  });
+
+  const reviews = reviewsData?.reviews ?? [];
+  const reviewCount = reviewsData?.total ?? reviews.length;
+  const avgRating = reviewsData?.avg_rating ?? null;
+
+  // The public profile contract carries no display name (see realtor-api.ts),
+  // so fall back to the tagline or a generic label — never a fabricated name.
+  const displayName = profile?.tagline?.trim() || 'Realitný maklér';
+
+  const showEmail = !!(profile?.show_email && profile?.email_public);
+  const showPhone = !!(profile?.show_phone && profile?.phone);
+
+  const mailtoHref = useMemo(() => {
+    if (!showEmail || !profile?.email_public) return null;
+    const subject = encodeURIComponent('Kontakt cez Reality Portal');
+    const body = encodeURIComponent(message);
+    return `mailto:${profile.email_public}?subject=${subject}${body ? `&body=${body}` : ''}`;
+  }, [showEmail, profile?.email_public, message]);
+
+  if (isLoading) {
+    return (
+      <div style={PAGE_BG}>
+        <Header />
+        <main style={{ flex: 1, padding: 48, textAlign: 'center' }}>Načítavam…</main>
+        <Footer />
+      </div>
+    );
+  }
+
+  const notFound =
+    (isError && error instanceof RealtorApiError && error.status === 404) || !profile;
+
+  if (isError || notFound) {
+    return (
+      <div style={PAGE_BG}>
+        <Header />
+        <main style={{ flex: 1, padding: 48, textAlign: 'center' }}>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--ppt-fg-primary)' }}>
+            Maklér sa nenašiel
+          </h1>
+          <p style={{ color: 'var(--ppt-fg-secondary)', marginTop: 8 }}>
+            Profil tohto makléra nie je dostupný.
+          </p>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  const specializations = profile.specializations ?? [];
+  const languages = profile.languages ?? [];
+
+  const stats: { label: string; value: string | number }[] = [
+    { label: 'Aktívne inzeráty', value: profile.active_listings },
+    { label: 'Inzeráty celkom', value: profile.total_listings },
+    { label: 'Zobrazenia', value: profile.total_views },
+  ];
+  if (reviewCount > 0) {
+    stats.push({
+      label: 'Hodnotenie',
+      value: `${avgRating != null ? avgRating.toFixed(1) : '—'} ★ (${reviewCount})`,
+    });
+  }
 
   return (
-    <div
-      data-i18n="pages.agent-profile.root"
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        background: 'var(--ppt-bg-app)',
-      }}
-    >
+    <div data-i18n="pages.agent-profile.root" style={PAGE_BG}>
       <Header />
 
       <main style={{ flex: 1 }}>
@@ -47,7 +136,7 @@ export default function AgentProfilePage() {
         <div
           style={{
             height: 220,
-            background: `url(${agent.coverUrl}) center/cover no-repeat, linear-gradient(135deg, #1e3a5f, #2563eb)`,
+            background: 'linear-gradient(135deg, #1e3a5f, #2563eb)',
           }}
         />
 
@@ -69,19 +158,39 @@ export default function AgentProfilePage() {
                 flexWrap: 'wrap',
               }}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={agent.avatarUrl}
-                alt={agent.name}
-                style={{
-                  width: 96,
-                  height: 96,
-                  borderRadius: '50%',
-                  border: '4px solid var(--ppt-bg-surface)',
-                  objectFit: 'cover',
-                  flexShrink: 0,
-                }}
-              />
+              {profile.photo_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={profile.photo_url}
+                  alt={displayName}
+                  style={{
+                    width: 96,
+                    height: 96,
+                    borderRadius: '50%',
+                    border: '4px solid var(--ppt-bg-surface)',
+                    objectFit: 'cover',
+                    flexShrink: 0,
+                  }}
+                />
+              ) : (
+                <div
+                  aria-hidden
+                  style={{
+                    width: 96,
+                    height: 96,
+                    borderRadius: '50%',
+                    border: '4px solid var(--ppt-bg-surface)',
+                    background: 'var(--ppt-bg-subtle, #e2e8f0)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '2rem',
+                    flexShrink: 0,
+                  }}
+                >
+                  🏠
+                </div>
+              )}
               <div style={{ flex: 1, paddingBottom: 4 }}>
                 <div
                   style={{
@@ -100,10 +209,9 @@ export default function AgentProfilePage() {
                       margin: 0,
                     }}
                   >
-                    {agent.name}
+                    {displayName}
                   </h1>
-                  {agent.verified && (
-                    /* TODO: replace with @ppt/ui-kit/StatusPill once available */
+                  {profile.license_verified_at && (
                     <span
                       style={{
                         padding: '3px 10px',
@@ -118,30 +226,22 @@ export default function AgentProfilePage() {
                     </span>
                   )}
                 </div>
-                <div
-                  style={{
-                    color: 'var(--ppt-fg-secondary)',
-                    marginBottom: 4,
-                    fontSize: '0.9375rem',
-                  }}
-                >
-                  {agent.title}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={agent.agencyLogoUrl}
-                    alt={agent.agencyName}
-                    style={{ width: 24, height: 24, borderRadius: 4 }}
-                  />
-                  <span style={{ fontSize: '0.875rem', color: 'var(--ppt-fg-secondary)' }}>
-                    {agent.agencyName}
-                  </span>
-                </div>
+                {profile.experience_years != null && (
+                  <div
+                    style={{
+                      color: 'var(--ppt-fg-secondary)',
+                      marginBottom: 4,
+                      fontSize: '0.9375rem',
+                    }}
+                  >
+                    {profile.experience_years} rokov skúseností
+                  </div>
+                )}
               </div>
               <button
                 type="button"
                 onClick={() => setContactOpen(true)}
+                disabled={!profile.accept_inquiries && !showEmail && !showPhone}
                 style={{
                   padding: '12px 28px',
                   background: 'var(--ppt-color-primary, #2563eb)',
@@ -160,15 +260,7 @@ export default function AgentProfilePage() {
 
             {/* Stats band */}
             <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
-              {[
-                { label: 'Aktívne inzeráty', value: agent.stats.activeListings },
-                { label: 'Predaných (12m)', value: agent.stats.soldLastYear },
-                { label: 'Priem. dni na trhu', value: agent.stats.avgDaysOnMarket },
-                {
-                  label: 'Hodnotenie',
-                  value: `${agent.stats.avgRating} ★ (${agent.stats.reviewCount})`,
-                },
-              ].map((stat) => (
+              {stats.map((stat) => (
                 <div key={stat.label}>
                   <div
                     style={{
@@ -203,121 +295,21 @@ export default function AgentProfilePage() {
           {/* Left column */}
           <div>
             {/* Bio */}
-            <section style={{ marginBottom: 40 }}>
-              <h2
-                style={{
-                  fontSize: '1.125rem',
-                  fontWeight: 700,
-                  color: 'var(--ppt-fg-primary)',
-                  marginBottom: 12,
-                }}
-              >
-                O makléri
-              </h2>
-              <p style={{ color: 'var(--ppt-fg-secondary)', lineHeight: 1.7 }}>{agent.bio}</p>
-            </section>
-
-            {/* Listings grid */}
-            <section style={{ marginBottom: 40 }}>
-              <h2
-                style={{
-                  fontSize: '1.125rem',
-                  fontWeight: 700,
-                  color: 'var(--ppt-fg-primary)',
-                  marginBottom: 16,
-                }}
-              >
-                Aktívne ponuky ({MOCK_AGENT_LISTINGS.length})
-              </h2>
-              {/* TODO: replace with @ppt/ui-kit/ListingCard once available */}
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-                  gap: 16,
-                }}
-              >
-                {MOCK_AGENT_LISTINGS.map((listing) => (
-                  <div
-                    key={listing.id}
-                    style={{
-                      background: 'var(--ppt-bg-surface)',
-                      borderRadius: 10,
-                      overflow: 'hidden',
-                      boxShadow: '0 1px 3px rgba(0,0,0,.07)',
-                    }}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={listing.imageUrl}
-                      alt={listing.title}
-                      style={{ width: '100%', height: 160, objectFit: 'cover' }}
-                    />
-                    <div style={{ padding: '12px 14px' }}>
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'flex-start',
-                          gap: 6,
-                          marginBottom: 4,
-                        }}
-                      >
-                        <div
-                          style={{
-                            fontWeight: 600,
-                            fontSize: '0.9rem',
-                            color: 'var(--ppt-fg-primary)',
-                            lineHeight: 1.3,
-                          }}
-                        >
-                          {listing.title}
-                        </div>
-                        {/* TODO: replace with @ppt/ui-kit/StatusPill once available */}
-                        <span
-                          style={{
-                            padding: '2px 8px',
-                            borderRadius: 99,
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            background:
-                              listing.type === 'sale'
-                                ? 'var(--ppt-color-info-light, #dbeafe)'
-                                : 'var(--ppt-color-success-light, #d1fae5)',
-                            color:
-                              listing.type === 'sale'
-                                ? 'var(--ppt-color-info-dark, #1e40af)'
-                                : 'var(--ppt-color-success-dark, #047857)',
-                            flexShrink: 0,
-                          }}
-                        >
-                          {listing.type === 'sale' ? 'Predaj' : 'Prenájom'}
-                        </span>
-                      </div>
-                      <div
-                        style={{
-                          fontSize: '0.8125rem',
-                          color: 'var(--ppt-fg-secondary)',
-                          marginBottom: 6,
-                        }}
-                      >
-                        {listing.location} · {listing.area} m²
-                      </div>
-                      <div
-                        style={{
-                          fontWeight: 700,
-                          color: 'var(--ppt-fg-primary)',
-                          fontSize: '0.9375rem',
-                        }}
-                      >
-                        {formatPrice(listing.price, locale)}
-                        {listing.type === 'rent' ? '/mes' : ''}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
+            {profile.bio && (
+              <section style={{ marginBottom: 40 }}>
+                <h2
+                  style={{
+                    fontSize: '1.125rem',
+                    fontWeight: 700,
+                    color: 'var(--ppt-fg-primary)',
+                    marginBottom: 12,
+                  }}
+                >
+                  O makléri
+                </h2>
+                <p style={{ color: 'var(--ppt-fg-secondary)', lineHeight: 1.7 }}>{profile.bio}</p>
+              </section>
+            )}
 
             {/* Reviews */}
             <section>
@@ -329,73 +321,81 @@ export default function AgentProfilePage() {
                   marginBottom: 16,
                 }}
               >
-                Hodnotenia ({MOCK_AGENT_REVIEWS.length})
+                Hodnotenia ({reviewCount})
               </h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {MOCK_AGENT_REVIEWS.map((review) => (
-                  <div
-                    key={review.id}
-                    style={{
-                      background: 'var(--ppt-bg-surface)',
-                      borderRadius: 10,
-                      padding: '18px 20px',
-                      boxShadow: '0 1px 3px rgba(0,0,0,.05)',
-                    }}
-                  >
+              {reviews.length === 0 ? (
+                <p style={{ color: 'var(--ppt-fg-secondary)' }}>Zatiaľ žiadne hodnotenia.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  {reviews.map((review) => (
                     <div
+                      key={review.id}
                       style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: 8,
-                        gap: 10,
-                        flexWrap: 'wrap',
+                        background: 'var(--ppt-bg-surface)',
+                        borderRadius: 10,
+                        padding: '18px 20px',
+                        boxShadow: '0 1px 3px rgba(0,0,0,.05)',
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontWeight: 600, color: 'var(--ppt-fg-primary)' }}>
-                          {review.reviewer}
-                        </span>
-                        {review.verified && (
-                          <span
-                            style={{
-                              fontSize: '0.75rem',
-                              color: 'var(--ppt-color-success-dark, #047857)',
-                            }}
-                          >
-                            ✓ Overené
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: 8,
+                          gap: 10,
+                          flexWrap: 'wrap',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontWeight: 600, color: 'var(--ppt-fg-primary)' }}>
+                            {review.reviewer_name}
                           </span>
-                        )}
+                          {review.verified_buyer && (
+                            <span
+                              style={{
+                                fontSize: '0.75rem',
+                                color: 'var(--ppt-color-success-dark, #047857)',
+                              }}
+                            >
+                              ✓ Overené
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', gap: 1 }}>
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <span
+                              key={`star-${review.id}-${i}`}
+                              style={{
+                                color: i < review.rating ? '#facc15' : '#d1d5db',
+                                fontSize: '0.9375rem',
+                              }}
+                            >
+                              ★
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                      <div style={{ display: 'flex', gap: 1 }}>
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <span
-                            key={`star-${review.id}-${i}`}
-                            style={{
-                              color: i < review.rating ? '#facc15' : '#d1d5db',
-                              fontSize: '0.9375rem',
-                            }}
-                          >
-                            ★
-                          </span>
-                        ))}
-                      </div>
+                      {review.body && (
+                        <p
+                          style={{
+                            color: 'var(--ppt-fg-secondary)',
+                            margin: '0 0 8px',
+                            lineHeight: 1.65,
+                          }}
+                        >
+                          {review.body}
+                        </p>
+                      )}
+                      <span
+                        style={{ fontSize: '0.8125rem', color: 'var(--ppt-fg-muted, #9ca3af)' }}
+                      >
+                        {formatMonthYear(review.created_at, locale)}
+                      </span>
                     </div>
-                    <p
-                      style={{
-                        color: 'var(--ppt-fg-secondary)',
-                        margin: '0 0 8px',
-                        lineHeight: 1.65,
-                      }}
-                    >
-                      {review.comment}
-                    </p>
-                    <span style={{ fontSize: '0.8125rem', color: 'var(--ppt-fg-muted, #9ca3af)' }}>
-                      {review.date}
-                    </span>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </section>
           </div>
 
@@ -421,45 +421,65 @@ export default function AgentProfilePage() {
               >
                 Kontaktné údaje
               </h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
-                <a
-                  href={`tel:${agent.phone}`}
+              {!showPhone && !showEmail ? (
+                <p
                   style={{
-                    display: 'flex',
-                    gap: 10,
-                    alignItems: 'center',
-                    color: 'var(--ppt-fg-primary)',
-                    textDecoration: 'none',
-                    fontSize: '0.9375rem',
+                    fontSize: '0.875rem',
+                    color: 'var(--ppt-fg-secondary)',
+                    marginBottom: 16,
                   }}
                 >
-                  <span>📞</span> {agent.phone}
-                </a>
-                <a
-                  href={`mailto:${agent.email}`}
-                  style={{
-                    display: 'flex',
-                    gap: 10,
-                    alignItems: 'center',
-                    color: 'var(--ppt-fg-primary)',
-                    textDecoration: 'none',
-                    fontSize: '0.9375rem',
-                    wordBreak: 'break-all',
-                  }}
+                  Maklér nezverejnil kontaktné údaje.
+                </p>
+              ) : (
+                <div
+                  style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}
                 >
-                  <span>✉️</span> {agent.email}
-                </a>
-              </div>
+                  {showPhone && (
+                    <a
+                      href={`tel:${profile.phone}`}
+                      style={{
+                        display: 'flex',
+                        gap: 10,
+                        alignItems: 'center',
+                        color: 'var(--ppt-fg-primary)',
+                        textDecoration: 'none',
+                        fontSize: '0.9375rem',
+                      }}
+                    >
+                      <span>📞</span> {profile.phone}
+                    </a>
+                  )}
+                  {showEmail && (
+                    <a
+                      href={`mailto:${profile.email_public}`}
+                      style={{
+                        display: 'flex',
+                        gap: 10,
+                        alignItems: 'center',
+                        color: 'var(--ppt-fg-primary)',
+                        textDecoration: 'none',
+                        fontSize: '0.9375rem',
+                        wordBreak: 'break-all',
+                      }}
+                    >
+                      <span>✉️</span> {profile.email_public}
+                    </a>
+                  )}
+                </div>
+              )}
 
-              <div
-                style={{
-                  fontSize: '0.8125rem',
-                  color: 'var(--ppt-fg-muted, #9ca3af)',
-                  marginBottom: 6,
-                }}
-              >
-                Licencia: {agent.licenseNumber}
-              </div>
+              {profile.license_number && (
+                <div
+                  style={{
+                    fontSize: '0.8125rem',
+                    color: 'var(--ppt-fg-muted, #9ca3af)',
+                    marginBottom: 6,
+                  }}
+                >
+                  Licencia: {profile.license_number}
+                </div>
+              )}
               <div
                 style={{
                   fontSize: '0.8125rem',
@@ -467,90 +487,84 @@ export default function AgentProfilePage() {
                   marginBottom: 16,
                 }}
               >
-                Člen od: {agent.memberSince}
+                Člen od: {formatMonthYear(profile.created_at, locale)}
               </div>
 
-              <div style={{ marginBottom: 14 }}>
-                <div
+              {specializations.length > 0 && (
+                <div style={{ marginBottom: 14 }}>
+                  <div
+                    style={{
+                      fontSize: '0.875rem',
+                      fontWeight: 600,
+                      color: 'var(--ppt-fg-primary)',
+                      marginBottom: 6,
+                    }}
+                  >
+                    Špecializácia
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {specializations.map((s) => (
+                      <span
+                        key={s}
+                        style={{
+                          padding: '3px 10px',
+                          background: 'var(--ppt-bg-subtle, #f1f5f9)',
+                          borderRadius: 99,
+                          fontSize: '0.8125rem',
+                          color: 'var(--ppt-fg-secondary)',
+                        }}
+                      >
+                        {s}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {languages.length > 0 && (
+                <div style={{ marginBottom: 20 }}>
+                  <div
+                    style={{
+                      fontSize: '0.875rem',
+                      fontWeight: 600,
+                      color: 'var(--ppt-fg-primary)',
+                      marginBottom: 6,
+                    }}
+                  >
+                    Jazyky
+                  </div>
+                  <div style={{ fontSize: '0.875rem', color: 'var(--ppt-fg-secondary)' }}>
+                    {languages.join(' · ')}
+                  </div>
+                </div>
+              )}
+
+              {(showEmail || showPhone) && (
+                <button
+                  type="button"
+                  onClick={() => setContactOpen(true)}
                   style={{
-                    fontSize: '0.875rem',
-                    fontWeight: 600,
-                    color: 'var(--ppt-fg-primary)',
-                    marginBottom: 6,
+                    width: '100%',
+                    padding: '12px',
+                    background: 'var(--ppt-color-primary, #2563eb)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 8,
+                    fontWeight: 700,
+                    cursor: 'pointer',
                   }}
                 >
-                  Špecializácia
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {agent.specializations.map((s) => (
-                    <span
-                      key={s}
-                      style={{
-                        padding: '3px 10px',
-                        background: 'var(--ppt-bg-subtle, #f1f5f9)',
-                        borderRadius: 99,
-                        fontSize: '0.8125rem',
-                        color: 'var(--ppt-fg-secondary)',
-                      }}
-                    >
-                      {s}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div style={{ marginBottom: 20 }}>
-                <div
-                  style={{
-                    fontSize: '0.875rem',
-                    fontWeight: 600,
-                    color: 'var(--ppt-fg-primary)',
-                    marginBottom: 6,
-                  }}
-                >
-                  Jazyky
-                </div>
-                <div style={{ fontSize: '0.875rem', color: 'var(--ppt-fg-secondary)' }}>
-                  {agent.languages.join(' · ')}
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setContactOpen(true)}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  background: 'var(--ppt-color-primary, #2563eb)',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                }}
-              >
-                Odoslať správu
-              </button>
-
-              {messageSent && (
-                <p
-                  style={{
-                    marginTop: 12,
-                    color: 'var(--ppt-color-success-dark, #047857)',
-                    fontSize: '0.875rem',
-                    textAlign: 'center',
-                  }}
-                >
-                  ✓ Správa odoslaná!
-                </p>
+                  Odoslať správu
+                </button>
               )}
             </div>
           </aside>
         </div>
       </main>
 
-      {/* Contact modal */}
-      {/* TODO: replace with @ppt/ui-kit/ModalDrawer once available */}
+      {/* Contact modal — no realtor-direct inquiry endpoint exists, so we hand
+          off to the agent's real contact channel (mailto) rather than faking a
+          submit. */}
       {contactOpen && (
         <div
           role="dialog"
@@ -587,60 +601,107 @@ export default function AgentProfilePage() {
                 margin: '0 0 20px',
               }}
             >
-              Kontaktovať {agent.name}
+              Kontaktovať {displayName}
             </h2>
-            <form
-              onSubmit={handleSendMessage}
-              style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
-            >
-              <textarea
-                rows={5}
-                required
-                placeholder="Dobrý deň, mám záujem o Vaše služby..."
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '11px 14px',
-                  borderRadius: 8,
-                  border: '1px solid var(--ppt-border-default, #e5e7eb)',
-                  fontSize: '0.9375rem',
-                  resize: 'vertical',
-                  boxSizing: 'border-box',
-                  outline: 'none',
-                }}
-              />
-              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-                <button
-                  type="button"
-                  onClick={() => setContactOpen(false)}
+
+            {showEmail ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <textarea
+                  rows={5}
+                  placeholder="Dobrý deň, mám záujem o Vaše služby..."
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
                   style={{
-                    padding: '10px 20px',
-                    background: 'var(--ppt-bg-app)',
+                    width: '100%',
+                    padding: '11px 14px',
+                    borderRadius: 8,
                     border: '1px solid var(--ppt-border-default, #e5e7eb)',
-                    borderRadius: 8,
-                    cursor: 'pointer',
-                    fontWeight: 600,
+                    fontSize: '0.9375rem',
+                    resize: 'vertical',
+                    boxSizing: 'border-box',
+                    outline: 'none',
                   }}
-                >
-                  Zrušiť
-                </button>
-                <button
-                  type="submit"
+                />
+                <p
                   style={{
-                    padding: '10px 24px',
-                    background: 'var(--ppt-color-primary, #2563eb)',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: 8,
-                    fontWeight: 700,
-                    cursor: 'pointer',
+                    fontSize: '0.8125rem',
+                    color: 'var(--ppt-fg-muted, #9ca3af)',
+                    margin: 0,
                   }}
                 >
-                  Odoslať
-                </button>
+                  Správa sa otvorí vo vašom e-mailovom klientovi.
+                </p>
+                <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                  <button
+                    type="button"
+                    onClick={() => setContactOpen(false)}
+                    style={{
+                      padding: '10px 20px',
+                      background: 'var(--ppt-bg-app)',
+                      border: '1px solid var(--ppt-border-default, #e5e7eb)',
+                      borderRadius: 8,
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Zrušiť
+                  </button>
+                  <a
+                    href={mailtoHref ?? '#'}
+                    onClick={() => setContactOpen(false)}
+                    style={{
+                      padding: '10px 24px',
+                      background: 'var(--ppt-color-primary, #2563eb)',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: 8,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      textDecoration: 'none',
+                    }}
+                  >
+                    Odoslať e-mail
+                  </a>
+                </div>
               </div>
-            </form>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <p style={{ color: 'var(--ppt-fg-secondary)', margin: 0, lineHeight: 1.6 }}>
+                  {showPhone
+                    ? 'Tohto makléra môžete kontaktovať telefonicky:'
+                    : 'Maklér momentálne nezverejnil kontaktné údaje.'}
+                </p>
+                {showPhone && (
+                  <a
+                    href={`tel:${profile.phone}`}
+                    style={{
+                      fontSize: '1.0625rem',
+                      fontWeight: 700,
+                      color: 'var(--ppt-color-primary, #2563eb)',
+                      textDecoration: 'none',
+                    }}
+                  >
+                    📞 {profile.phone}
+                  </a>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <button
+                    type="button"
+                    onClick={() => setContactOpen(false)}
+                    style={{
+                      padding: '10px 20px',
+                      background: 'var(--ppt-bg-app)',
+                      border: '1px solid var(--ppt-border-default, #e5e7eb)',
+                      borderRadius: 8,
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Zavrieť
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

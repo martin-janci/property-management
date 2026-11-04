@@ -34,7 +34,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { Alert } from 'react-native';
-import { VoteDetailScreen } from './VoteDetailScreen';
+import { ELIGIBILITY_REASON_KEYS, VoteDetailScreen } from './VoteDetailScreen';
 
 jest.mock('../../hooks/useApi', () => ({
   useApiQuery: jest.fn(),
@@ -416,22 +416,31 @@ describe('VoteDetailScreen — eligibility reason i18n', () => {
     mockUseApiMutation.mockReturnValue(IDLE_MUTATION);
   });
 
-  it('routes a known server reason through t() with a derived key and the raw string as defaultValue', () => {
-    mockQueries('Vote is not currently accepting ballots');
+  // Cover EVERY mapped reason, not just one — the other two mappings
+  // (`notEligibleInBuilding`, `allUnitsVoted`) were previously unverified, so a
+  // typo in either key or a dropped mapping went unnoticed (GH #3223). Driven
+  // off the exported map so a future 4th entry is covered automatically. The
+  // `VoteDetailScreen.eligibilityReason.parity.test.ts` sibling separately pins
+  // these source sentences against the Rust literals they mirror.
+  it.each(Object.entries(ELIGIBILITY_REASON_KEYS))(
+    'routes mapped server reason %p through t() with key suffix %p and the raw string as defaultValue',
+    (reason, keySuffix) => {
+      mockQueries(reason);
 
-    renderScreen({ voteId: VOTE_ID });
+      renderScreen({ voteId: VOTE_ID });
 
-    // The load-bearing assertion: the reason must go through the i18n layer.
-    // Pre-fix (`<Text>{eligibilityReason}</Text>`) never calls t with this key.
-    expect(mockT).toHaveBeenCalledWith(
-      'voting.eligibilityReason.voteNotAcceptingBallots',
-      expect.objectContaining({ defaultValue: 'Vote is not currently accepting ballots' })
-    );
+      // The load-bearing assertion: the reason must go through the i18n layer.
+      // Pre-fix (`<Text>{eligibilityReason}</Text>`) never calls t with this key.
+      expect(mockT).toHaveBeenCalledWith(
+        `voting.eligibilityReason.${keySuffix}`,
+        expect.objectContaining({ defaultValue: reason })
+      );
 
-    // And the raw sentence is NOT the only thing rendered by its own — it is the
-    // defaultValue fallback, so it still shows (graceful degradation) but now via t.
-    expect(screen.getByText('Vote is not currently accepting ballots')).toBeTruthy();
-  });
+      // And the raw sentence is NOT rendered on its own — it is the defaultValue
+      // fallback, so it still shows (graceful degradation) but now via t.
+      expect(screen.getByText(reason)).toBeTruthy();
+    }
+  );
 
   it('derives a slug key for an unmapped reason, still falling back to the raw string', () => {
     mockQueries('Some brand new backend reason');

@@ -2,6 +2,7 @@
  * News Articles API client for Epic 59.
  */
 
+import { authenticatedFetch } from '../lib/fetch';
 import type {
   ArticleListQuery,
   ArticleMedia,
@@ -34,7 +35,7 @@ export async function listArticles(query: ArticleListQuery): Promise<ArticleSumm
   if (query.limit) params.append('limit', String(query.limit));
   if (query.offset) params.append('offset', String(query.offset));
 
-  const response = await fetch(`${API_BASE}?${params.toString()}`);
+  const response = await authenticatedFetch(`${API_BASE}?${params.toString()}`);
 
   if (!response.ok) {
     throw new Error('Unable to load articles. Please try again later.');
@@ -50,7 +51,7 @@ export async function getArticle(id: string, organizationId: string): Promise<Ar
   const params = new URLSearchParams();
   params.append('organization_id', organizationId);
 
-  const response = await fetch(`${API_BASE}/${id}?${params.toString()}`);
+  const response = await authenticatedFetch(`${API_BASE}/${id}?${params.toString()}`);
 
   if (!response.ok) {
     if (response.status === 404) {
@@ -69,7 +70,7 @@ export async function createArticle(
   organizationId: string,
   data: CreateArticleRequest
 ): Promise<NewsArticle> {
-  const response = await fetch(`${API_BASE}`, {
+  const response = await authenticatedFetch(`${API_BASE}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -93,7 +94,7 @@ export async function updateArticle(
   organizationId: string,
   data: UpdateArticleRequest
 ): Promise<NewsArticle> {
-  const response = await fetch(`${API_BASE}/${id}`, {
+  const response = await authenticatedFetch(`${API_BASE}/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -119,7 +120,7 @@ export async function deleteArticle(id: string, organizationId: string): Promise
   const params = new URLSearchParams();
   params.append('organization_id', organizationId);
 
-  const response = await fetch(`${API_BASE}/${id}?${params.toString()}`, {
+  const response = await authenticatedFetch(`${API_BASE}/${id}?${params.toString()}`, {
     method: 'DELETE',
   });
 
@@ -135,7 +136,7 @@ export async function deleteArticle(id: string, organizationId: string): Promise
  * Publish an article.
  */
 export async function publishArticle(id: string, organizationId: string): Promise<NewsArticle> {
-  const response = await fetch(`${API_BASE}/${id}/publish`, {
+  const response = await authenticatedFetch(`${API_BASE}/${id}/publish`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ organization_id: organizationId }),
@@ -152,7 +153,7 @@ export async function publishArticle(id: string, organizationId: string): Promis
  * Archive an article.
  */
 export async function archiveArticle(id: string, organizationId: string): Promise<NewsArticle> {
-  const response = await fetch(`${API_BASE}/${id}/archive`, {
+  const response = await authenticatedFetch(`${API_BASE}/${id}/archive`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ organization_id: organizationId }),
@@ -169,7 +170,7 @@ export async function archiveArticle(id: string, organizationId: string): Promis
  * Restore an archived article.
  */
 export async function restoreArticle(id: string, organizationId: string): Promise<NewsArticle> {
-  const response = await fetch(`${API_BASE}/${id}/restore`, {
+  const response = await authenticatedFetch(`${API_BASE}/${id}/restore`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ organization_id: organizationId }),
@@ -190,7 +191,7 @@ export async function pinArticle(
   organizationId: string,
   pinned: boolean
 ): Promise<NewsArticle> {
-  const response = await fetch(`${API_BASE}/${id}/pin`, {
+  const response = await authenticatedFetch(`${API_BASE}/${id}/pin`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ organization_id: organizationId, pinned }),
@@ -207,7 +208,7 @@ export async function pinArticle(
  * Record a view for an article.
  */
 export async function recordView(id: string, organizationId: string): Promise<void> {
-  const response = await fetch(`${API_BASE}/${id}/view`, {
+  const response = await authenticatedFetch(`${API_BASE}/${id}/view`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ organization_id: organizationId }),
@@ -226,7 +227,7 @@ export async function getStatistics(organizationId: string): Promise<ArticleStat
   const params = new URLSearchParams();
   params.append('organization_id', organizationId);
 
-  const response = await fetch(`${API_BASE}/statistics?${params.toString()}`);
+  const response = await authenticatedFetch(`${API_BASE}/statistics?${params.toString()}`);
 
   if (!response.ok) {
     throw new Error('Unable to load statistics. Please try again later.');
@@ -247,7 +248,7 @@ export async function listMedia(
   const params = new URLSearchParams();
   params.append('organization_id', organizationId);
 
-  const response = await fetch(`${API_BASE}/${articleId}/media?${params.toString()}`);
+  const response = await authenticatedFetch(`${API_BASE}/${articleId}/media?${params.toString()}`);
 
   if (!response.ok) {
     throw new Error('Unable to load media. Please try again later.');
@@ -264,7 +265,7 @@ export async function addMedia(
   organizationId: string,
   data: CreateMediaRequest
 ): Promise<ArticleMedia> {
-  const response = await fetch(`${API_BASE}/${articleId}/media`, {
+  const response = await authenticatedFetch(`${API_BASE}/${articleId}/media`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -291,9 +292,12 @@ export async function deleteMedia(
   const params = new URLSearchParams();
   params.append('organization_id', organizationId);
 
-  const response = await fetch(`${API_BASE}/${articleId}/media/${mediaId}?${params.toString()}`, {
-    method: 'DELETE',
-  });
+  const response = await authenticatedFetch(
+    `${API_BASE}/${articleId}/media/${mediaId}?${params.toString()}`,
+    {
+      method: 'DELETE',
+    }
+  );
 
   if (!response.ok) {
     throw new Error('Unable to delete media. Please try again later.');
@@ -310,7 +314,7 @@ export async function toggleReaction(
   organizationId: string,
   reactionType: ReactionType
 ): Promise<{ added: boolean; reaction_type: ReactionType }> {
-  const response = await fetch(`${API_BASE}/${articleId}/reactions`, {
+  const response = await authenticatedFetch(`${API_BASE}/${articleId}/reactions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -336,7 +340,9 @@ export async function getReactionCounts(
   const params = new URLSearchParams();
   params.append('organization_id', organizationId);
 
-  const response = await fetch(`${API_BASE}/${articleId}/reactions/counts?${params.toString()}`);
+  const response = await authenticatedFetch(
+    `${API_BASE}/${articleId}/reactions/counts?${params.toString()}`
+  );
 
   if (!response.ok) {
     throw new Error('Unable to load reactions. Please try again later.');
@@ -357,7 +363,9 @@ export async function listComments(
   const params = new URLSearchParams();
   params.append('organization_id', organizationId);
 
-  const response = await fetch(`${API_BASE}/${articleId}/comments?${params.toString()}`);
+  const response = await authenticatedFetch(
+    `${API_BASE}/${articleId}/comments?${params.toString()}`
+  );
 
   if (!response.ok) {
     throw new Error('Unable to load comments. Please try again later.');
@@ -374,7 +382,7 @@ export async function createComment(
   organizationId: string,
   data: CreateNewsCommentRequest
 ): Promise<NewsCommentWithAuthor> {
-  const response = await fetch(`${API_BASE}/${articleId}/comments`, {
+  const response = await authenticatedFetch(`${API_BASE}/${articleId}/comments`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -399,7 +407,7 @@ export async function updateComment(
   organizationId: string,
   content: string
 ): Promise<NewsCommentWithAuthor> {
-  const response = await fetch(`${API_BASE}/${articleId}/comments/${commentId}`, {
+  const response = await authenticatedFetch(`${API_BASE}/${articleId}/comments/${commentId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -426,7 +434,7 @@ export async function deleteComment(
   const params = new URLSearchParams();
   params.append('organization_id', organizationId);
 
-  const response = await fetch(
+  const response = await authenticatedFetch(
     `${API_BASE}/${articleId}/comments/${commentId}?${params.toString()}`,
     {
       method: 'DELETE',
@@ -449,7 +457,7 @@ export async function listReplies(
   const params = new URLSearchParams();
   params.append('organization_id', organizationId);
 
-  const response = await fetch(
+  const response = await authenticatedFetch(
     `${API_BASE}/${articleId}/comments/${commentId}/replies?${params.toString()}`
   );
 

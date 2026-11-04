@@ -78,7 +78,7 @@ function fakeT(
 }
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: fakeT }),
+  useTranslation: () => ({ t: fakeT, i18n: { language: 'en' } }),
 }));
 
 import { DocumentDetail } from './DocumentDetail';
