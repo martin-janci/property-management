@@ -62,6 +62,135 @@ impl FinancialRepository {
         Ok(account)
     }
 
+    // ========================================================================
+    // ORG-SCOPE OWNERSHIP CHECKS
+    //
+    // Handlers resolve the caller's organization and must confirm that every
+    // nested id taken from a path or body belongs to it before using it. Each
+    // helper answers "does this id belong to `org_id`?" so a foreign id can
+    // be rejected (404) instead of being written across tenants.
+    // ========================================================================
+
+    /// Organization that owns `unit_id` (unit -> building -> organization).
+    pub async fn get_unit_organization(&self, unit_id: Uuid) -> Result<Option<Uuid>, SqlxError> {
+        sqlx::query_scalar::<_, Uuid>(
+            r#"
+            SELECT b.organization_id FROM units u
+            JOIN buildings b ON b.id = u.building_id
+            WHERE u.id = $1
+            "#,
+        )
+        .bind(unit_id)
+        .fetch_optional(&self.pool)
+        .await
+    }
+
+    /// Whether `unit_id` belongs to a building of `org_id`.
+    pub async fn unit_in_org(&self, unit_id: Uuid, org_id: Uuid) -> Result<bool, SqlxError> {
+        Ok(self.get_unit_organization(unit_id).await? == Some(org_id))
+    }
+
+    /// Whether `building_id` belongs to `org_id`.
+    pub async fn building_in_org(
+        &self,
+        building_id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS(SELECT 1 FROM buildings WHERE id = $1 AND organization_id = $2)",
+        )
+        .bind(building_id)
+        .bind(org_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
+    /// Whether every id in `ids` is a financial account of `org_id`.
+    pub async fn accounts_in_org(&self, ids: &[Uuid], org_id: Uuid) -> Result<bool, SqlxError> {
+        self.all_in_org(
+            "SELECT COUNT(DISTINCT id) FROM financial_accounts WHERE id = ANY($1) AND organization_id = $2",
+            ids,
+            org_id,
+        )
+        .await
+    }
+
+    /// Whether every id in `ids` is an invoice of `org_id`.
+    pub async fn invoices_in_org(&self, ids: &[Uuid], org_id: Uuid) -> Result<bool, SqlxError> {
+        self.all_in_org(
+            "SELECT COUNT(DISTINCT id) FROM invoices WHERE id = ANY($1) AND organization_id = $2",
+            ids,
+            org_id,
+        )
+        .await
+    }
+
+    /// Whether every id in `ids` is a payment of `org_id`.
+    pub async fn payments_in_org(&self, ids: &[Uuid], org_id: Uuid) -> Result<bool, SqlxError> {
+        self.all_in_org(
+            "SELECT COUNT(DISTINCT id) FROM payments WHERE id = ANY($1) AND organization_id = $2",
+            ids,
+            org_id,
+        )
+        .await
+    }
+
+    /// Whether every id in `ids` is a fee schedule of `org_id`.
+    pub async fn fee_schedules_in_org(
+        &self,
+        ids: &[Uuid],
+        org_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        self.all_in_org(
+            "SELECT COUNT(DISTINCT id) FROM fee_schedules WHERE id = ANY($1) AND organization_id = $2",
+            ids,
+            org_id,
+        )
+        .await
+    }
+
+    /// Whether every id in `ids` is a meter reading of a meter owned by `org_id`.
+    pub async fn meter_readings_in_org(
+        &self,
+        ids: &[Uuid],
+        org_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        self.all_in_org(
+            r#"
+            SELECT COUNT(DISTINCT mr.id) FROM meter_readings mr
+            JOIN meters m ON m.id = mr.meter_id
+            WHERE mr.id = ANY($1) AND m.organization_id = $2
+            "#,
+            ids,
+            org_id,
+        )
+        .await
+    }
+
+    /// Shared body for the `*_in_org` checks: `sql` must count the distinct
+    /// ids from `$1` that belong to `$2`. An empty `ids` slice is trivially
+    /// in scope.
+    async fn all_in_org(
+        &self,
+        sql: &'static str,
+        ids: &[Uuid],
+        org_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        let mut unique = ids.to_vec();
+        unique.sort_unstable();
+        unique.dedup();
+        if unique.is_empty() {
+            return Ok(true);
+        }
+        let expected = unique.len() as i64;
+        let found: i64 = sqlx::query_scalar(sql)
+            .bind(unique)
+            .bind(org_id)
+            .fetch_one(&self.pool)
+            .await?;
+        Ok(found == expected)
+    }
+
     /// Get a financial account by ID.
     pub async fn get_account(&self, id: Uuid) -> Result<Option<FinancialAccount>, SqlxError> {
         sqlx::query_as::<_, FinancialAccount>("SELECT * FROM financial_accounts WHERE id = $1")
@@ -131,6 +260,26 @@ impl FinancialRepository {
             .fetch_all(&self.pool)
             .await
         }
+    }
+
+    /// Get the unit ledger account owned by `org_id`.
+    pub async fn get_unit_ledger_for_org(
+        &self,
+        unit_id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<FinancialAccount>, SqlxError> {
+        sqlx::query_as::<_, FinancialAccount>(
+            r#"
+            SELECT * FROM financial_accounts
+            WHERE unit_id = $1 AND organization_id = $2 AND account_type = 'unit_ledger'
+            ORDER BY created_at ASC
+            LIMIT 1
+            "#,
+        )
+        .bind(unit_id)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await
     }
 
     /// Get unit ledger account.
@@ -690,11 +839,12 @@ impl FinancialRepository {
             let unpaid_invoices = sqlx::query_as::<_, Invoice>(
                 r#"
                 SELECT * FROM invoices
-                WHERE unit_id = $1 AND balance_due > 0
+                WHERE unit_id = $1 AND organization_id = $2 AND balance_due > 0
                 ORDER BY due_date ASC
                 "#,
             )
             .bind(data.unit_id)
+            .bind(org_id)
             .fetch_all(&self.pool)
             .await?;
 
@@ -718,7 +868,16 @@ impl FinancialRepository {
                     break;
                 }
 
-                if let Some(invoice) = self.get_invoice(invoice_id).await? {
+                // Only invoices of the payment's own organization can be
+                // settled by it; foreign ids are skipped.
+                let invoice = sqlx::query_as::<_, Invoice>(
+                    "SELECT * FROM invoices WHERE id = $1 AND organization_id = $2",
+                )
+                .bind(invoice_id)
+                .bind(org_id)
+                .fetch_optional(&self.pool)
+                .await?;
+                if let Some(invoice) = invoice {
                     let allocation_amount = remaining.min(invoice.balance_due);
                     remaining -= allocation_amount;
 
