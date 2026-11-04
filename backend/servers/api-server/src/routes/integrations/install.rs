@@ -505,6 +505,9 @@ pub async fn connect_airbnb(
 
     // Issue #765: prevent cross-org IDOR — caller must belong to this org.
     verify_org_access(&state, auth.user_id, path.org_id).await?;
+    // Connecting the org's channel account is a manager action (matches
+    // disconnect_airbnb and the OAuth callback).
+    verify_manager_role_in_org(&state, auth.user_id, path.org_id).await?;
 
     // Issue #711: AppState carries Airbnb credentials loaded once at startup.
     let client_id = state.airbnb_config.client_id.clone();
@@ -573,6 +576,8 @@ pub async fn sync_airbnb(
 
     // Issue #765: prevent cross-org IDOR — caller must belong to this org.
     verify_org_access(&state, auth.user_id, path.org_id).await?;
+    // Syncing refreshes/rotates the org's stored tokens: manager only.
+    verify_manager_role_in_org(&state, auth.user_id, path.org_id).await?;
 
     // Issue #711 + Gap 83-1: use cached config; wrap the Airbnb API calls in
     // `with_token_refresh` so the access token is proactively renewed near
@@ -1026,6 +1031,9 @@ pub async fn sync_booking(
 
     // Issue #765: prevent cross-org IDOR — caller must belong to this org.
     verify_org_access(&state, auth.user_id, path.org_id).await?;
+    // Syncing calls Booking.com with the org's credentials and writes guest
+    // bookings: manager only (matches connect/disconnect_booking).
+    verify_manager_role_in_org(&state, auth.user_id, path.org_id).await?;
 
     let rental_repo = &state.rental_repo;
 
@@ -1128,8 +1136,14 @@ pub async fn sync_booking(
             .ok()
             .flatten();
 
+        // The room mapping comes from the external feed: only accept a unit
+        // connection that belongs to this organization.
         let unit_id = match unit_conn {
-            Some(ref conn) if conn.unit_id != uuid::Uuid::nil() => conn.unit_id,
+            Some(ref conn)
+                if conn.unit_id != uuid::Uuid::nil() && conn.organization_id == path.org_id =>
+            {
+                conn.unit_id
+            }
             _ => continue,
         };
 
@@ -1352,6 +1366,12 @@ pub async fn push_booking_availability(
 
     let rental_repo = &state.rental_repo;
 
+    // Pushing to the org's Booking.com channel is a manager action (role
+    // from the DB membership of the path org, not the JWT).
+    if !auth.is_platform_admin() {
+        verify_manager_role_in_org(&state, auth.user_id, path.org_id).await?;
+    }
+
     let connection = rental_repo
         .find_booking_connection_by_org(path.org_id)
         .await
@@ -1499,6 +1519,12 @@ pub async fn push_booking_rates(
         .map_err(|(code, msg)| (StatusCode::BAD_REQUEST, Json(ErrorResponse::new(code, msg))))?;
 
     let rental_repo = &state.rental_repo;
+
+    // Pushing to the org's Booking.com channel is a manager action (role
+    // from the DB membership of the path org, not the JWT).
+    if !auth.is_platform_admin() {
+        verify_manager_role_in_org(&state, auth.user_id, path.org_id).await?;
+    }
 
     let connection = rental_repo
         .find_booking_connection_by_org(path.org_id)

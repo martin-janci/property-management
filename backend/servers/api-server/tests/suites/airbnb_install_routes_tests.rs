@@ -459,12 +459,11 @@ async fn connect_honours_redirect_uri_override(pool: PgPool) {
     );
 }
 
-/// BEHAVIOUR PIN — connect is membership-gated, not manager-gated: a plain
-/// (non-manager) member currently passes `verify_org_access` and receives the
-/// OAuth URL. If a manager gate is added for parity with token exchange
-/// (#1585) / listings (#1626), flip this expectation to 403.
+/// BEHAVIOUR PIN — connect is manager-gated (parity with token exchange
+/// #1585 / listings #1626 / disconnect): a plain (non-manager) member of the
+/// org is rejected with 403 before any OAuth URL is issued.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-async fn connect_membership_gate_admits_plain_member_pin(pool: PgPool) {
+async fn connect_manager_gate_rejects_plain_member_pin(pool: PgPool) {
     let app = test_app(&pool).await;
     let org_id = seed_org(&pool, "co-member-pin").await;
     let user_id = seed_user(&pool, "co-member-pin@test.local").await;
@@ -481,8 +480,8 @@ async fn connect_membership_gate_admits_plain_member_pin(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::OK,
-        "current contract: plain member passes the membership gate on connect; got {}: {}",
+        StatusCode::FORBIDDEN,
+        "plain member must be rejected by the manager gate on connect; got {}: {}",
         resp.status,
         resp.text()
     );
