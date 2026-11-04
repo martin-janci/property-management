@@ -7409,6 +7409,29 @@
       "merge_attempted_at": "2026-08-06T22:13:48Z"
     },
     {
+      "task_id": "code-review-ppt-web-core-ws-jwt-in-url",
+      "branch": "auto-impl/code-review-ppt-web-core-ws-jwt-in-url-31e9018f",
+      "owner_role": "pm-security",
+      "status": "merged",
+      "claimed_at": "2026-11-04T04:29:30Z",
+      "last_updated": "2026-11-04T22:43:41Z",
+      "status_changed_at": "2026-11-04T22:43:41Z",
+      "pr_number": 3280,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3280",
+      "merged_at": "2026-11-04T22:42:46Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "[dispatcher Phase 2: branch 2 commits ahead, draft PR #3280 created]",
+      "reviewer_summary": "verdict=approve note=rebase-preserved-ws-jwt-subprotocol-fix; CI green, tests ok; re-review at rebased head",
+      "last_reviewed_oid": "49a218b0eb6d2f524f25770556d5ad34d85d03c9",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 1,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-11-04T20:42:30Z"
+    },
+    {
       "task_id": "code-review-ppt-web-core-ws-pong-timeout-drop",
       "branch": "auto-impl/code-review-ppt-web-core-ws-pong-timeout-1957eba9",
       "status": "merged",
@@ -19257,6 +19280,29 @@
       "owner_role": "pm-tech-lead"
     },
     {
+      "task_id": "gh-issue-3283",
+      "branch": "auto-impl/gh-issue-3283-955538b4",
+      "status": "merged",
+      "claimed_at": "2026-11-04T14:32:24Z",
+      "last_updated": "2026-11-04T22:43:41Z",
+      "status_changed_at": "2026-11-04T22:43:41Z",
+      "pr_number": 3293,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3293",
+      "merged_at": "2026-11-04T22:43:09Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve note=rebase-preserved i18n extraction; all 6 locales x32 keys, placeholders intact, CI green",
+      "last_reviewed_oid": "8cd3c7ceb28e320f4cf5fa9ed936f8c6a005d904",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 1,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-04T20:42:30Z",
+      "owner_role": "pm-tech-lead"
+    },
+    {
       "task_id": "gh-issue-3284",
       "branch": "auto-impl/gh-issue-3284-a1b480a3",
       "status": "merged",
@@ -22801,5 +22847,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-04T20:44:24Z"
+  "archived_at": "2026-11-04T22:44:31Z"
 }

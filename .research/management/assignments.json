@@ -1,29 +1,6 @@
 {
   "assignments": [
     {
-      "task_id": "code-review-ppt-web-core-ws-jwt-in-url",
-      "branch": "auto-impl/code-review-ppt-web-core-ws-jwt-in-url-31e9018f",
-      "owner_role": "pm-security",
-      "status": "review",
-      "claimed_at": "2026-11-04T04:29:30Z",
-      "last_updated": "2026-11-04T20:42:30Z",
-      "status_changed_at": "2026-11-04T16:26:49Z",
-      "pr_number": 3280,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/3280",
-      "merged_at": null,
-      "specialist": "rust-backend",
-      "implementer_summary": "[dispatcher Phase 2: branch 2 commits ahead, draft PR #3280 created]",
-      "reviewer_summary": "verdict=approve note=ws-jwt moved to subprotocol (secure); FE lint red is pre-existing mobile-i18n debt",
-      "last_reviewed_oid": "646fc2e52a59f9a6950359b3cddb28a471678aa7",
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 1,
-      "reclaim_attempts": 0,
-      "fix_rounds": 1,
-      "merge_attempted_at": "2026-11-04T20:42:30Z"
-    },
-    {
       "task_id": "code-review-ppt-web-core-refresh-token-localstorage",
       "branch": "auto-impl/code-review-ppt-web-core-refresh-token-l-cc7d8fc2",
       "status": "quarantined",
@@ -46,29 +23,6 @@
       "merge_attempted_at": null,
       "quarantined_at": "2026-11-04T18:44:37Z",
       "quarantine_reason": "blocked on #3299: pre-existing frontend/apps/mobile biome debt reddens frontend.yml (Lint & Format Check -> frontend/E2E skipped/failed); PR code sound, no change warranted (reviewer confirmed). Rebased onto origin/dev (clean) at round 1 to check if debt was fixed upstream — apps/mobile + biome config byte-identical on dev, still red. Backend required gates (check+test) green. Un-quarantine (status->review) once #3299 clears the debt or scopes the lint gate per-package."
-    },
-    {
-      "task_id": "gh-issue-3283",
-      "branch": "auto-impl/gh-issue-3283-955538b4",
-      "status": "review",
-      "claimed_at": "2026-11-04T14:32:24Z",
-      "last_updated": "2026-11-04T20:42:30Z",
-      "status_changed_at": "2026-11-04T16:26:49Z",
-      "pr_number": 3293,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/3293",
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": "verdict=approve note=i18n all 6 locales + completeness test; FE CI red is pre-existing workspace biome debt, not this diff",
-      "last_reviewed_oid": "40af9aec099f2d01a31d4ed1168f95f9df0e711b",
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 1,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": "2026-11-04T20:42:30Z",
-      "owner_role": "pm-tech-lead"
     },
     {
       "task_id": "code-review-reality-server-inquiry-dead-fk-classify",
@@ -203,5 +157,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-04T20:42:30Z"
+  "generated": "2026-11-04T22:44:31Z"
 }
