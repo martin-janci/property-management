@@ -37,6 +37,13 @@ const TYPE_LABELS: Record<BuildingType, string> = {
   industrial: 'Industrial',
 };
 
+/**
+ * The backend has no GET /buildings/{id}/common-areas yet, so every detail
+ * load logged a 404. Until it exists the page neither requests nor shows
+ * common areas; flip this when the endpoint ships.
+ */
+const COMMON_AREAS_API_AVAILABLE = false;
+
 export function BuildingDetailPage({ buildingId }: BuildingDetailPageProps) {
   const {
     data: building,
@@ -46,7 +53,7 @@ export function BuildingDetailPage({ buildingId }: BuildingDetailPageProps) {
   const { data: floors, isLoading: floorsLoading } = useBuildingFloors(buildingId, !!building);
   const { data: commonAreas, isLoading: areasLoading } = useBuildingCommonAreas(
     buildingId,
-    !!building
+    COMMON_AREAS_API_AVAILABLE && !!building
   );
 
   if (buildingLoading) {
@@ -217,8 +224,9 @@ export function BuildingDetailPage({ buildingId }: BuildingDetailPageProps) {
       {/* Units Section */}
       <UnitsSection buildingId={buildingId} />
 
-      {/* Common Areas Section — hidden when the backend does not offer it (`null`). */}
-      {commonAreas !== null && (
+      {/* Common Areas Section — hidden while the endpoint does not exist, or
+          when the backend reports it unavailable (`null`). */}
+      {COMMON_AREAS_API_AVAILABLE && commonAreas !== null && (
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Common Areas</h2>
           {areasLoading ? (

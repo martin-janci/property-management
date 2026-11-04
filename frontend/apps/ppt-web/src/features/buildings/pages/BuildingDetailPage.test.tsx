@@ -1,7 +1,7 @@
 /**
- * The backend has no common-areas route, so `listCommonAreas` resolves `null`
- * on 404. The detail page must then hide the Common Areas section entirely
- * rather than render an error or an empty state.
+ * The backend has no common-areas route. The detail page must not request it
+ * (every load logged a 404, round-3 audit #39) and must hide the Common Areas
+ * section entirely rather than render an error or an empty state.
  */
 /// <reference types="vitest/globals" />
 
@@ -12,6 +12,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const commonAreasResult = vi.hoisted(() => ({
   current: { data: null as unknown, isLoading: false },
 }));
+const commonAreasCalls = vi.hoisted(() => [] as Array<[string, boolean | undefined]>);
 
 vi.mock('../hooks', () => ({
   useBuilding: () => ({
@@ -28,7 +29,10 @@ vi.mock('../hooks', () => ({
     error: null,
   }),
   useBuildingFloors: () => ({ data: [], isLoading: false }),
-  useBuildingCommonAreas: () => commonAreasResult.current,
+  useBuildingCommonAreas: (buildingId: string, enabled?: boolean) => {
+    commonAreasCalls.push([buildingId, enabled]);
+    return commonAreasResult.current;
+  },
 }));
 
 vi.mock('../components', () => ({
@@ -49,6 +53,13 @@ function renderPage() {
 describe('BuildingDetailPage — common areas', () => {
   beforeEach(() => {
     commonAreasResult.current = { data: null, isLoading: false };
+    commonAreasCalls.length = 0;
+  });
+
+  it('does not request common areas while the endpoint does not exist', () => {
+    renderPage();
+    expect(commonAreasCalls.length).toBeGreaterThan(0);
+    expect(commonAreasCalls.every(([, enabled]) => enabled === false)).toBe(true);
   });
 
   it('hides the Common Areas section when the feature is unavailable (404 → null)', () => {
@@ -58,13 +69,13 @@ describe('BuildingDetailPage — common areas', () => {
     expect(screen.queryByText(/No common areas defined/)).not.toBeInTheDocument();
   });
 
-  it('shows the section when the list loads', () => {
+  it('keeps the section hidden even if a cached list is present', () => {
     commonAreasResult.current = {
       data: [{ id: 'ca1', buildingId: 'b1', name: 'Garden', type: 'garden' }],
       isLoading: false,
     };
     renderPage();
-    expect(screen.getByText('Common Areas')).toBeInTheDocument();
-    expect(screen.getByText('Garden')).toBeInTheDocument();
+    expect(screen.queryByText('Common Areas')).not.toBeInTheDocument();
+    expect(screen.queryByText('Garden')).not.toBeInTheDocument();
   });
 });
