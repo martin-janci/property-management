@@ -15,6 +15,7 @@ import type {
   EventTriggersResponse,
   TriggerChannel,
 } from '@ppt/api-client';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 export interface NotificationTriggersPageProps {
@@ -43,6 +44,24 @@ const CHANNEL_LABEL_KEY: Record<TriggerChannel, { key: string; def: string }> = 
 function humanise(value: string): string {
   const s = value.replace(/_/g, ' ');
   return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+/**
+ * Localised trigger name. The backend catalogue (`notification_event_types`)
+ * only carries English display text, so translate by the stable event-type key
+ * and fall back to the server text for event types the client does not know.
+ */
+function eventName(t: TFunction, pref: EventTriggerPreference): string {
+  return t(`notificationTriggers.events.${pref.eventType}.name`, {
+    defaultValue: humanise(pref.displayName || pref.eventType),
+  });
+}
+
+/** Localised trigger description (same key scheme as {@link eventName}). */
+function eventDescription(t: TFunction, pref: EventTriggerPreference): string {
+  return t(`notificationTriggers.events.${pref.eventType}.description`, {
+    defaultValue: pref.description ?? '',
+  });
 }
 
 function channelValue(pref: EventTriggerPreference, channel: TriggerChannel): boolean {
@@ -181,7 +200,9 @@ export function NotificationTriggersPage({
                   >
                     <div className="flex items-center justify-between bg-gray-50 px-4 py-3 border-b border-gray-200">
                       <h2 className="font-semibold text-gray-800">
-                        {summary?.displayName ? humanise(summary.displayName) : humanise(category)}
+                        {t(`notificationTriggers.categories.${category}`, {
+                          defaultValue: humanise(summary?.displayName || category),
+                        })}
                       </h2>
                       {summary && (
                         <span className="text-xs text-gray-500 tabular-nums">
@@ -221,11 +242,13 @@ export function NotificationTriggersPage({
                         <tbody className="divide-y divide-gray-100">
                           {rows.map((pref) => {
                             const rowSaving = savingEventType === pref.eventType;
+                            const name = eventName(t, pref);
+                            const description = eventDescription(t, pref);
                             return (
                               <tr key={pref.eventType} className="text-gray-800">
                                 <td className="px-4 py-3">
                                   <div className="font-medium flex items-center gap-2">
-                                    {humanise(pref.displayName || pref.eventType)}
+                                    {name}
                                     {pref.isPriority && (
                                       <span className="inline-block text-[10px] uppercase tracking-wide font-semibold text-red-700 bg-red-50 border border-red-200 rounded px-1.5 py-0.5">
                                         {t('notificationTriggers.priorityBadge', {
@@ -234,10 +257,8 @@ export function NotificationTriggersPage({
                                       </span>
                                     )}
                                   </div>
-                                  {pref.description && (
-                                    <p className="text-xs text-gray-500 mt-0.5">
-                                      {pref.description}
-                                    </p>
+                                  {description && (
+                                    <p className="text-xs text-gray-500 mt-0.5">{description}</p>
                                   )}
                                 </td>
                                 {CHANNELS.map((channel) => {
@@ -255,9 +276,7 @@ export function NotificationTriggersPage({
                                         className="h-4 w-4 accent-blue-600 disabled:opacity-40"
                                         checked={forced ? true : checked}
                                         disabled={rowSaving || forced}
-                                        aria-label={`${humanise(
-                                          pref.displayName || pref.eventType
-                                        )} — ${labelText}`}
+                                        aria-label={`${name} — ${labelText}`}
                                         onChange={(e) =>
                                           onToggle(pref.eventType, channel, e.target.checked)
                                         }

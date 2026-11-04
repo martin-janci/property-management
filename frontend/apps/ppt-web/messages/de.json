@@ -388,7 +388,9 @@
     "sessions": "Aktive Sitzungen",
     "messages": "Nachrichten",
     "meters": "Zähler",
-    "outages": "Störungen"
+    "outages": "Störungen",
+    "neighbors": "Nachbarn",
+    "leases": "Mietverträge"
   },
   "auth": {
     "signIn": "Anmelden",
@@ -2692,7 +2694,135 @@
     "priorityBadge": "Priorität",
     "saveFailed": "Auslöser konnte nicht aktualisiert werden",
     "resetDone": "Auslöser auf Standard zurückgesetzt",
-    "resetFailed": "Auslöser konnten nicht zurückgesetzt werden"
+    "resetFailed": "Auslöser konnten nicht zurückgesetzt werden",
+    "events": {
+      "fault": {
+        "created": {
+          "name": "Neue Störungsmeldung",
+          "description": "In Ihrem Gebäude wurde eine neue Störung gemeldet"
+        },
+        "updated": {
+          "name": "Störung aktualisiert",
+          "description": "Eine von Ihnen gemeldete oder verfolgte Störung wurde aktualisiert"
+        },
+        "resolved": {
+          "name": "Störung behoben",
+          "description": "Eine Störung wurde als behoben markiert"
+        },
+        "assigned": {
+          "name": "Störung zugewiesen",
+          "description": "Ihnen wurde eine Störung zugewiesen"
+        }
+      },
+      "vote": {
+        "created": {
+          "name": "Neue Abstimmung",
+          "description": "In Ihrem Gebäude wurde eine neue Abstimmung erstellt"
+        },
+        "reminder": {
+          "name": "Abstimmungserinnerung",
+          "description": "Erinnerung, vor Fristende abzustimmen"
+        },
+        "closing_soon": {
+          "name": "Abstimmung endet bald",
+          "description": "Eine Abstimmung endet innerhalb von 24 Stunden"
+        },
+        "closed": {
+          "name": "Abstimmung beendet",
+          "description": "Eine Abstimmung ist beendet, die Ergebnisse liegen vor"
+        }
+      },
+      "announcement": {
+        "posted": {
+          "name": "Neue Ankündigung",
+          "description": "Eine neue Ankündigung wurde veröffentlicht"
+        },
+        "urgent": {
+          "name": "Dringende Ankündigung",
+          "description": "Eine dringende Ankündigung erfordert Ihre Aufmerksamkeit"
+        },
+        "comment": {
+          "name": "Kommentar zur Ankündigung",
+          "description": "Jemand hat eine Ankündigung kommentiert"
+        }
+      },
+      "document": {
+        "shared": {
+          "name": "Dokument geteilt",
+          "description": "Ein Dokument wurde mit Ihnen geteilt"
+        },
+        "signature_request": {
+          "name": "Unterschrift erforderlich",
+          "description": "Sie wurden gebeten, ein Dokument zu unterschreiben"
+        },
+        "signed": {
+          "name": "Dokument unterschrieben",
+          "description": "Ein Dokument wurde vollständig unterschrieben"
+        }
+      },
+      "message": {
+        "received": {
+          "name": "Neue Nachricht",
+          "description": "Sie haben eine neue Direktnachricht erhalten"
+        },
+        "thread_reply": {
+          "name": "Antwort im Verlauf",
+          "description": "Jemand hat in einem Nachrichtenverlauf geantwortet"
+        }
+      },
+      "critical": {
+        "emergency": {
+          "name": "Notfallwarnung",
+          "description": "Notfallwarnung für Ihr Gebäude"
+        },
+        "maintenance": {
+          "name": "Geplante Wartung",
+          "description": "Hinweis auf geplante Wartung"
+        },
+        "security": {
+          "name": "Sicherheitswarnung",
+          "description": "Sicherheitsbezogene Warnung"
+        }
+      },
+      "finance": {
+        "payment_due": {
+          "name": "Zahlung fällig",
+          "description": "Eine Zahlung ist bald fällig"
+        },
+        "payment_received": {
+          "name": "Zahlung eingegangen",
+          "description": "Ihre Zahlung ist eingegangen"
+        },
+        "balance_low": {
+          "name": "Warnung: niedriger Kontostand",
+          "description": "Ihr Kontostand ist niedrig"
+        }
+      },
+      "facility": {
+        "booking_confirmed": {
+          "name": "Buchung bestätigt",
+          "description": "Ihre Buchung der Einrichtung wurde bestätigt"
+        },
+        "booking_cancelled": {
+          "name": "Buchung storniert",
+          "description": "Eine Buchung der Einrichtung wurde storniert"
+        },
+        "booking_reminder": {
+          "name": "Buchungserinnerung",
+          "description": "Erinnerung an eine bevorstehende Buchung"
+        }
+      }
+    },
+    "categories": {
+      "fault": "Störungen",
+      "vote": "Abstimmungen",
+      "announcement": "Ankündigungen",
+      "document": "Dokumente",
+      "message": "Nachrichten",
+      "critical": "Kritische Warnungen",
+      "finance": "Finanzen",
+      "facility": "Einrichtungen"
+    }
   },
   "documentSign": {
     "title": "Dokument unterschreiben",

@@ -14,7 +14,8 @@ import { VOTE_STATUS_LABEL_KEYS } from '../types';
 
 interface VotingPageProps {
   onOpenVote: (voteId: string) => void;
-  onCreateVote: () => void;
+  /** Managers only; omitted for residents so the create actions are hidden. */
+  onCreateVote?: () => void;
 }
 
 const STATUS_FILTERS: Array<VoteStatus | 'all'> = [
@@ -60,13 +61,15 @@ export function VotingPage({ onOpenVote, onCreateVote }: VotingPageProps) {
             {t('voting.list.closedCount', { count: counts.closed })}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onCreateVote}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          + {t('voting.list.newVote')}
-        </button>
+        {onCreateVote && (
+          <button
+            type="button"
+            onClick={onCreateVote}
+            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            + {t('voting.list.newVote')}
+          </button>
+        )}
       </div>
 
       <div className="mt-6 flex flex-wrap gap-2">
@@ -102,13 +105,15 @@ export function VotingPage({ onOpenVote, onCreateVote }: VotingPageProps) {
         ) : !votes || votes.length === 0 ? (
           <div className="rounded-lg bg-white p-12 text-center shadow">
             <p className="text-gray-500">{t('voting.list.empty')}</p>
-            <button
-              type="button"
-              onClick={onCreateVote}
-              className="mt-4 text-sm font-medium text-blue-600 hover:text-blue-800"
-            >
-              {t('voting.list.createFirst')}
-            </button>
+            {onCreateVote && (
+              <button
+                type="button"
+                onClick={onCreateVote}
+                className="mt-4 text-sm font-medium text-blue-600 hover:text-blue-800"
+              >
+                {t('voting.list.createFirst')}
+              </button>
+            )}
           </div>
         ) : (
           <div className="space-y-3">

@@ -330,8 +330,10 @@ function FaultsPageRoute() {
       stats={stats}
       onNavigateToCreate={() => navigate('/faults/new')}
       onNavigateToView={(id) => navigate(`/faults/${id}`)}
-      onNavigateToEdit={(id) => navigate(`/faults/${id}/edit`)}
-      onNavigateToTriage={(id) => navigate(`/faults/${id}`)}
+      // Edit and triage are manager actions (PUT /faults/{id} and triage
+      // return 403 for residents), so the cards only offer them to managers.
+      onNavigateToEdit={isManager ? (id) => navigate(`/faults/${id}/edit`) : undefined}
+      onNavigateToTriage={isManager ? (id) => navigate(`/faults/${id}`) : undefined}
       onNavigateToReports={isManager ? () => navigate('/faults/reports') : undefined}
       onFilterChange={handleFaultsFilterChange}
     />
@@ -584,7 +586,14 @@ export function faultRoutes() {
         }
       />
       <Route path="/faults/:faultId" element={<FaultDetailPageRoute />} />
-      <Route path="/faults/:faultId/edit" element={<EditFaultPageRoute />} />
+      <Route
+        path="/faults/:faultId/edit"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <EditFaultPageRoute />
+          </ProtectedRoute>
+        }
+      />
     </>
   );
 }

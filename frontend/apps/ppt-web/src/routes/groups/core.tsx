@@ -82,81 +82,67 @@ export function Home() {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
 
+  // `/` is the public landing page. A signed-in user has nothing to do here,
+  // so send them straight to their role's dashboard (same target as the bare
+  // `/dashboard` redirect).
+  if (isAuthenticated) {
+    return <Navigate to={dashboardPathForRole(user?.role)} replace />;
+  }
+
   return (
     <div className="space-y-10">
       <section className="text-center py-10">
         <h1 className="text-3xl md:text-4xl font-bold mb-3">{t('home.title')}</h1>
         <p className="text-lg max-w-2xl mx-auto" style={{ color: 'var(--color-text-secondary)' }}>
-          {t(isAuthenticated ? 'home.welcome' : 'home.tagline')}
+          {t('home.tagline')}
         </p>
-        {!isAuthenticated && (
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <button
-              type="button"
-              onClick={() => navigate('/login')}
-              className="btn-primary-token px-5 py-2.5 rounded-lg font-medium"
-            >
-              {t('auth.signIn')}
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/register')}
-              className="btn-outline-token px-5 py-2.5 rounded-lg font-medium"
-            >
-              {t('shell.createAccount', { defaultValue: 'Create account' })}
-            </button>
-          </div>
-        )}
-        {isAuthenticated && (
-          <div className="mt-6">
-            <button
-              type="button"
-              onClick={() => navigate(dashboardPathForRole(user?.role))}
-              className="btn-primary-token px-5 py-2.5 rounded-lg font-medium"
-            >
-              {t('nav.dashboard', { defaultValue: 'Open dashboard' })}
-            </button>
-          </div>
-        )}
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate('/login')}
+            className="btn-primary-token px-5 py-2.5 rounded-lg font-medium"
+          >
+            {t('auth.signIn')}
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/register')}
+            className="btn-outline-token px-5 py-2.5 rounded-lg font-medium"
+          >
+            {t('shell.createAccount', { defaultValue: 'Create account' })}
+          </button>
+        </div>
       </section>
 
-      {!isAuthenticated && (
-        <>
-          <section aria-labelledby="home-audiences" className="space-y-4">
-            <h2 id="home-audiences" className="text-xl font-semibold text-center">
-              {t('home.audiences.title')}
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {(['managers', 'owners', 'tenants'] as const).map((key) => (
-                <article key={key} className="home-card">
-                  <h3 className="text-base font-semibold mb-1">
-                    {t(`home.audiences.${key}.title`)}
-                  </h3>
-                  <p className="text-sm home-card__text">{t(`home.audiences.${key}.text`)}</p>
-                </article>
-              ))}
-            </div>
-          </section>
+      <section aria-labelledby="home-audiences" className="space-y-4">
+        <h2 id="home-audiences" className="text-xl font-semibold text-center">
+          {t('home.audiences.title')}
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {(['managers', 'owners', 'tenants'] as const).map((key) => (
+            <article key={key} className="home-card">
+              <h3 className="text-base font-semibold mb-1">{t(`home.audiences.${key}.title`)}</h3>
+              <p className="text-sm home-card__text">{t(`home.audiences.${key}.text`)}</p>
+            </article>
+          ))}
+        </div>
+      </section>
 
-          <section aria-labelledby="home-features" className="space-y-4">
-            <h2 id="home-features" className="text-xl font-semibold text-center">
-              {t('home.features.title')}
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {(
-                ['faults', 'voting', 'communication', 'finance', 'meters', 'documents'] as const
-              ).map((key) => (
-                <article key={key} className="home-card">
-                  <h3 className="text-base font-semibold mb-1">
-                    {t(`home.features.${key}.title`)}
-                  </h3>
-                  <p className="text-sm home-card__text">{t(`home.features.${key}.text`)}</p>
-                </article>
-              ))}
-            </div>
-          </section>
-        </>
-      )}
+      <section aria-labelledby="home-features" className="space-y-4">
+        <h2 id="home-features" className="text-xl font-semibold text-center">
+          {t('home.features.title')}
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {(['faults', 'voting', 'communication', 'finance', 'meters', 'documents'] as const).map(
+            (key) => (
+              <article key={key} className="home-card">
+                <h3 className="text-base font-semibold mb-1">{t(`home.features.${key}.title`)}</h3>
+                <p className="text-sm home-card__text">{t(`home.features.${key}.text`)}</p>
+              </article>
+            )
+          )}
+        </div>
+      </section>
     </div>
   );
 }
@@ -288,7 +274,7 @@ export function settingsRoutes() {
       <Route
         path="/settings/integrations"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <IntegrationsPage />
           </ProtectedRoute>
         }

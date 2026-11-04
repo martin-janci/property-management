@@ -33,7 +33,7 @@ import {
   InvoiceManagementPage,
   PaymentManagementPage,
 } from '../lazyRoutes';
-import { MANAGER_ROLES } from '../shared';
+import { isManagerRole, MANAGER_ROLES } from '../shared';
 
 /** Trigger a browser download for a fetched report blob. */
 function downloadBlob(blob: Blob, filename: string) {
@@ -337,7 +337,10 @@ function PaymentManagementPageRoute() {
       unpaidInvoices={unpaidInvoices}
       metrics={{ totalReceived, pendingReconciliation, currency }}
       isLoading={isLoading}
-      onNavigateToRecord={() => navigate('/financial/payments/new')}
+      // Recording a payment is a manager action; residents only see the list.
+      onNavigateToRecord={
+        isManagerRole(user?.role) ? () => navigate('/financial/payments/new') : undefined
+      }
       onNavigateToDetail={(id: string) => navigate(`/financial/payments/${id}`)}
       onMatch={(paymentId: string, invoiceId: string, amount: number) =>
         matchMutation.mutate({ paymentId, invoiceId, amount })

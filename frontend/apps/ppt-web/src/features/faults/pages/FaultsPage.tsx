@@ -50,8 +50,10 @@ interface FaultsPageProps {
   onNavigateToReports?: () => void;
   onNavigateToCreate: () => void;
   onNavigateToView: (id: string) => void;
-  onNavigateToEdit: (id: string) => void;
-  onNavigateToTriage: (id: string) => void;
+  /** Managers only; omitted for residents so the cards hide Edit. */
+  onNavigateToEdit?: (id: string) => void;
+  /** Managers only; omitted for residents so the cards hide Triage. */
+  onNavigateToTriage?: (id: string) => void;
   onFilterChange: (params: FaultListParams) => void;
 }
 

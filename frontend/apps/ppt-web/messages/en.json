@@ -5003,7 +5003,135 @@
     "priorityBadge": "Priority",
     "saveFailed": "Could not update trigger",
     "resetDone": "Triggers reset to defaults",
-    "resetFailed": "Could not reset triggers"
+    "resetFailed": "Could not reset triggers",
+    "events": {
+      "fault": {
+        "created": {
+          "name": "New fault report",
+          "description": "A new fault has been reported in your building"
+        },
+        "updated": {
+          "name": "Fault updated",
+          "description": "A fault you reported or are tracking has been updated"
+        },
+        "resolved": {
+          "name": "Fault resolved",
+          "description": "A fault has been marked as resolved"
+        },
+        "assigned": {
+          "name": "Fault assigned",
+          "description": "A fault has been assigned to you"
+        }
+      },
+      "vote": {
+        "created": {
+          "name": "New vote",
+          "description": "A new vote has been created in your building"
+        },
+        "reminder": {
+          "name": "Vote reminder",
+          "description": "Reminder to cast your vote before the deadline"
+        },
+        "closing_soon": {
+          "name": "Vote closing soon",
+          "description": "A vote closes within 24 hours"
+        },
+        "closed": {
+          "name": "Vote closed",
+          "description": "A vote has closed and results are available"
+        }
+      },
+      "announcement": {
+        "posted": {
+          "name": "New announcement",
+          "description": "A new announcement has been posted"
+        },
+        "urgent": {
+          "name": "Urgent announcement",
+          "description": "An urgent announcement needs your attention"
+        },
+        "comment": {
+          "name": "Announcement comment",
+          "description": "Someone commented on an announcement"
+        }
+      },
+      "document": {
+        "shared": {
+          "name": "Document shared",
+          "description": "A document has been shared with you"
+        },
+        "signature_request": {
+          "name": "Signature required",
+          "description": "You have been asked to sign a document"
+        },
+        "signed": {
+          "name": "Document signed",
+          "description": "A document has been fully signed"
+        }
+      },
+      "message": {
+        "received": {
+          "name": "New message",
+          "description": "You have received a new direct message"
+        },
+        "thread_reply": {
+          "name": "Thread reply",
+          "description": "Someone replied to a message thread"
+        }
+      },
+      "critical": {
+        "emergency": {
+          "name": "Emergency alert",
+          "description": "Emergency alert for your building"
+        },
+        "maintenance": {
+          "name": "Scheduled maintenance",
+          "description": "Scheduled maintenance notice"
+        },
+        "security": {
+          "name": "Security alert",
+          "description": "Security-related alert"
+        }
+      },
+      "finance": {
+        "payment_due": {
+          "name": "Payment due",
+          "description": "A payment is due soon"
+        },
+        "payment_received": {
+          "name": "Payment received",
+          "description": "Your payment has been received"
+        },
+        "balance_low": {
+          "name": "Low balance warning",
+          "description": "Your account balance is running low"
+        }
+      },
+      "facility": {
+        "booking_confirmed": {
+          "name": "Booking confirmed",
+          "description": "Your facility booking has been confirmed"
+        },
+        "booking_cancelled": {
+          "name": "Booking cancelled",
+          "description": "A facility booking has been cancelled"
+        },
+        "booking_reminder": {
+          "name": "Booking reminder",
+          "description": "Reminder of an upcoming facility booking"
+        }
+      }
+    },
+    "categories": {
+      "fault": "Faults",
+      "vote": "Voting",
+      "announcement": "Announcements",
+      "document": "Documents",
+      "message": "Messages",
+      "critical": "Critical alerts",
+      "finance": "Finance",
+      "facility": "Facilities"
+    }
   },
   "documentSign": {
     "title": "Sign document",

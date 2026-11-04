@@ -388,7 +388,9 @@
     "sessions": "Aktív munkamenetek",
     "messages": "Üzenetek",
     "meters": "Mérőórák",
-    "outages": "Szolgáltatáskiesések"
+    "outages": "Szolgáltatáskiesések",
+    "neighbors": "Szomszédok",
+    "leases": "Bérleti szerződések"
   },
   "auth": {
     "signIn": "Bejelentkezés",
@@ -2661,7 +2663,135 @@
     "priorityBadge": "Prioritás",
     "saveFailed": "A trigger frissítése sikertelen",
     "resetDone": "Triggerek visszaállítva alapértékre",
-    "resetFailed": "A triggerek visszaállítása sikertelen"
+    "resetFailed": "A triggerek visszaállítása sikertelen",
+    "events": {
+      "fault": {
+        "created": {
+          "name": "Új hibabejelentés",
+          "description": "Új hibát jelentettek az épületében"
+        },
+        "updated": {
+          "name": "Hiba frissítve",
+          "description": "Egy Ön által bejelentett vagy követett hiba frissült"
+        },
+        "resolved": {
+          "name": "Hiba megoldva",
+          "description": "Egy hibát megoldottnak jelöltek"
+        },
+        "assigned": {
+          "name": "Hiba kiosztva",
+          "description": "Önhöz rendeltek egy hibát"
+        }
+      },
+      "vote": {
+        "created": {
+          "name": "Új szavazás",
+          "description": "Új szavazás indult az épületében"
+        },
+        "reminder": {
+          "name": "Szavazási emlékeztető",
+          "description": "Emlékeztető, hogy a határidő előtt szavazzon"
+        },
+        "closing_soon": {
+          "name": "Hamarosan lezárul a szavazás",
+          "description": "Egy szavazás 24 órán belül lezárul"
+        },
+        "closed": {
+          "name": "Szavazás lezárva",
+          "description": "Egy szavazás lezárult, az eredmények elérhetők"
+        }
+      },
+      "announcement": {
+        "posted": {
+          "name": "Új közlemény",
+          "description": "Új közleményt tettek közzé"
+        },
+        "urgent": {
+          "name": "Sürgős közlemény",
+          "description": "Egy sürgős közlemény figyelmet igényel"
+        },
+        "comment": {
+          "name": "Hozzászólás közleményhez",
+          "description": "Valaki hozzászólt egy közleményhez"
+        }
+      },
+      "document": {
+        "shared": {
+          "name": "Megosztott dokumentum",
+          "description": "Megosztottak Önnel egy dokumentumot"
+        },
+        "signature_request": {
+          "name": "Aláírás szükséges",
+          "description": "Egy dokumentum aláírását kérték Öntől"
+        },
+        "signed": {
+          "name": "Dokumentum aláírva",
+          "description": "Egy dokumentumot minden fél aláírt"
+        }
+      },
+      "message": {
+        "received": {
+          "name": "Új üzenet",
+          "description": "Új közvetlen üzenetet kapott"
+        },
+        "thread_reply": {
+          "name": "Válasz a beszélgetésben",
+          "description": "Valaki válaszolt egy üzenetszálban"
+        }
+      },
+      "critical": {
+        "emergency": {
+          "name": "Vészriasztás",
+          "description": "Vészriasztás az épületére"
+        },
+        "maintenance": {
+          "name": "Tervezett karbantartás",
+          "description": "Értesítés tervezett karbantartásról"
+        },
+        "security": {
+          "name": "Biztonsági riasztás",
+          "description": "Biztonsággal kapcsolatos riasztás"
+        }
+      },
+      "finance": {
+        "payment_due": {
+          "name": "Esedékes fizetés",
+          "description": "Hamarosan esedékes egy fizetés"
+        },
+        "payment_received": {
+          "name": "Fizetés beérkezett",
+          "description": "Befizetése beérkezett"
+        },
+        "balance_low": {
+          "name": "Alacsony egyenleg",
+          "description": "A számlaegyenlege alacsony"
+        }
+      },
+      "facility": {
+        "booking_confirmed": {
+          "name": "Foglalás megerősítve",
+          "description": "A létesítményfoglalását megerősítették"
+        },
+        "booking_cancelled": {
+          "name": "Foglalás lemondva",
+          "description": "Egy létesítményfoglalást lemondtak"
+        },
+        "booking_reminder": {
+          "name": "Foglalási emlékeztető",
+          "description": "Emlékeztető egy közelgő létesítményfoglalásról"
+        }
+      }
+    },
+    "categories": {
+      "fault": "Hibák",
+      "vote": "Szavazások",
+      "announcement": "Közlemények",
+      "document": "Dokumentumok",
+      "message": "Üzenetek",
+      "critical": "Kritikus riasztások",
+      "finance": "Pénzügyek",
+      "facility": "Közös helyiségek"
+    }
   },
   "documentSign": {
     "title": "Dokumentum aláírása",

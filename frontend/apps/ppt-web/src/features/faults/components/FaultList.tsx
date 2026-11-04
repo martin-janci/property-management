@@ -24,8 +24,10 @@ interface FaultListProps {
   onCategoryFilter: (category?: FaultCategory) => void;
   onSearch: (query: string) => void;
   onView: (id: string) => void;
-  onEdit: (id: string) => void;
-  onTriage: (id: string) => void;
+  /** Manager-only; omitted for residents so the card hides the action. */
+  onEdit?: (id: string) => void;
+  /** Manager-only; omitted for residents so the card hides the action. */
+  onTriage?: (id: string) => void;
   /** Delete a fault (only shown for 'new' status faults). Wired to useDeleteFault in route wrapper. */
   onDelete?: (id: string) => void;
   onCreate: () => void;

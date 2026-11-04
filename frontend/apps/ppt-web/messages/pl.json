@@ -388,7 +388,9 @@
     "sessions": "Aktywne sesje",
     "messages": "Wiadomości",
     "meters": "Liczniki",
-    "outages": "Przerwy w dostawach"
+    "outages": "Przerwy w dostawach",
+    "neighbors": "Sąsiedzi",
+    "leases": "Umowy najmu"
   },
   "auth": {
     "signIn": "Zaloguj się",
@@ -2711,7 +2713,135 @@
     "priorityBadge": "Priorytet",
     "saveFailed": "Nie udało się zaktualizować wyzwalacza",
     "resetDone": "Przywrócono domyślne wyzwalacze",
-    "resetFailed": "Nie udało się zresetować wyzwalaczy"
+    "resetFailed": "Nie udało się zresetować wyzwalaczy",
+    "events": {
+      "fault": {
+        "created": {
+          "name": "Nowe zgłoszenie usterki",
+          "description": "W Twoim budynku zgłoszono nową usterkę"
+        },
+        "updated": {
+          "name": "Usterka zaktualizowana",
+          "description": "Zgłoszona lub obserwowana przez Ciebie usterka została zaktualizowana"
+        },
+        "resolved": {
+          "name": "Usterka usunięta",
+          "description": "Usterka została oznaczona jako usunięta"
+        },
+        "assigned": {
+          "name": "Usterka przydzielona",
+          "description": "Przydzielono Ci usterkę"
+        }
+      },
+      "vote": {
+        "created": {
+          "name": "Nowe głosowanie",
+          "description": "W Twoim budynku utworzono nowe głosowanie"
+        },
+        "reminder": {
+          "name": "Przypomnienie o głosowaniu",
+          "description": "Przypomnienie o oddaniu głosu przed terminem"
+        },
+        "closing_soon": {
+          "name": "Głosowanie wkrótce się kończy",
+          "description": "Głosowanie zakończy się w ciągu 24 godzin"
+        },
+        "closed": {
+          "name": "Głosowanie zakończone",
+          "description": "Głosowanie zostało zakończone, wyniki są dostępne"
+        }
+      },
+      "announcement": {
+        "posted": {
+          "name": "Nowe ogłoszenie",
+          "description": "Opublikowano nowe ogłoszenie"
+        },
+        "urgent": {
+          "name": "Pilne ogłoszenie",
+          "description": "Pilne ogłoszenie wymaga Twojej uwagi"
+        },
+        "comment": {
+          "name": "Komentarz do ogłoszenia",
+          "description": "Ktoś skomentował ogłoszenie"
+        }
+      },
+      "document": {
+        "shared": {
+          "name": "Udostępniony dokument",
+          "description": "Udostępniono Ci dokument"
+        },
+        "signature_request": {
+          "name": "Wymagany podpis",
+          "description": "Poproszono Cię o podpisanie dokumentu"
+        },
+        "signed": {
+          "name": "Dokument podpisany",
+          "description": "Dokument został podpisany przez wszystkie strony"
+        }
+      },
+      "message": {
+        "received": {
+          "name": "Nowa wiadomość",
+          "description": "Otrzymałeś nową wiadomość prywatną"
+        },
+        "thread_reply": {
+          "name": "Odpowiedź w wątku",
+          "description": "Ktoś odpowiedział w wątku wiadomości"
+        }
+      },
+      "critical": {
+        "emergency": {
+          "name": "Alarm awaryjny",
+          "description": "Alarm awaryjny dla Twojego budynku"
+        },
+        "maintenance": {
+          "name": "Planowana konserwacja",
+          "description": "Powiadomienie o planowanej konserwacji"
+        },
+        "security": {
+          "name": "Alert bezpieczeństwa",
+          "description": "Alert dotyczący bezpieczeństwa"
+        }
+      },
+      "finance": {
+        "payment_due": {
+          "name": "Termin płatności",
+          "description": "Wkrótce mija termin płatności"
+        },
+        "payment_received": {
+          "name": "Płatność otrzymana",
+          "description": "Twoja płatność została zaksięgowana"
+        },
+        "balance_low": {
+          "name": "Ostrzeżenie o niskim saldzie",
+          "description": "Saldo Twojego konta jest niskie"
+        }
+      },
+      "facility": {
+        "booking_confirmed": {
+          "name": "Rezerwacja potwierdzona",
+          "description": "Twoja rezerwacja obiektu została potwierdzona"
+        },
+        "booking_cancelled": {
+          "name": "Rezerwacja anulowana",
+          "description": "Rezerwacja obiektu została anulowana"
+        },
+        "booking_reminder": {
+          "name": "Przypomnienie o rezerwacji",
+          "description": "Przypomnienie o nadchodzącej rezerwacji obiektu"
+        }
+      }
+    },
+    "categories": {
+      "fault": "Usterki",
+      "vote": "Głosowania",
+      "announcement": "Ogłoszenia",
+      "document": "Dokumenty",
+      "message": "Wiadomości",
+      "critical": "Alerty krytyczne",
+      "finance": "Finanse",
+      "facility": "Obiekty wspólne"
+    }
   },
   "documentSign": {
     "title": "Podpisz dokument",
