@@ -312,9 +312,12 @@ pub async fn list_listings(
 fn photos_or_error<E: std::fmt::Display>(
     result: Result<Vec<ListingPhoto>, E>,
 ) -> Result<Vec<ListingPhoto>, (axum::http::StatusCode, String)> {
-    // NOTE: intentionally still swallows the error in this commit — this is
-    // the pre-fix behavior under test (see the `fix:` commit that follows).
-    Ok(result.unwrap_or_default())
+    result.map_err(|e| {
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to fetch listing photos: {}", e),
+        )
+    })
 }
 
 /// Get listing by ID.
