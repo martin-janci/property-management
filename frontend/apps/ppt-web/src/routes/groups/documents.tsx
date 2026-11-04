@@ -10,14 +10,17 @@ import { AuthRequiredGate, ProtectedRoute } from '../../components';
 import { useAuth } from '../../contexts';
 import {
   ArticleDetailPage,
+  CreateArticlePage,
   DocumentDetailPage,
   DocumentSignPage,
   DocumentsPage,
   DocumentTemplatesPage,
   DocumentUploadPage,
+  EditArticlePage,
   FolderTreePage,
   NewsListPage,
 } from '../lazyRoutes';
+import { MANAGER_ROLES } from '../shared';
 
 /** Route wrapper for documents page */
 export function DocumentsPageRoute() {
@@ -131,6 +134,26 @@ export function newsRoutes() {
         element={
           <ProtectedRoute>
             <NewsListPage />
+          </ProtectedRoute>
+        }
+      />
+      {/* Create/edit are registered BEFORE `/news/:articleId` so `/news/new`
+          is not swallowed by the detail route. Creating is manager-only on
+          the server (POST /news → 403 for non-managers); editing is allowed
+          for managers or the article author, which the server enforces. */}
+      <Route
+        path="/news/new"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <CreateArticlePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/news/:id/edit"
+        element={
+          <ProtectedRoute>
+            <EditArticlePage />
           </ProtectedRoute>
         }
       />
