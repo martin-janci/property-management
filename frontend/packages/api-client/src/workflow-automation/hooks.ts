@@ -5,7 +5,7 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-
+import { authenticatedFetch } from '../lib/fetch';
 import type {
   AutomationRule,
   AutomationRulesQuery,
@@ -34,7 +34,7 @@ export function useAutomationRules(query: AutomationRulesQuery = {}) {
       if (query.triggerType) params.set('triggerType', query.triggerType);
       if (query.search) params.set('search', query.search);
 
-      const response = await fetch(`${API_BASE}/rules?${params}`);
+      const response = await authenticatedFetch(`${API_BASE}/rules?${params}`);
       if (!response.ok) throw new Error('Failed to fetch automation rules');
       return response.json();
     },
@@ -45,7 +45,7 @@ export function useAutomationRule(id: string) {
   return useQuery({
     queryKey: ['automation-rule', id],
     queryFn: async (): Promise<AutomationRule> => {
-      const response = await fetch(`${API_BASE}/rules/${id}`);
+      const response = await authenticatedFetch(`${API_BASE}/rules/${id}`);
       if (!response.ok) throw new Error('Failed to fetch automation rule');
       return response.json();
     },
@@ -58,7 +58,7 @@ export function useCreateAutomationRule() {
 
   return useMutation({
     mutationFn: async (rule: CreateAutomationRuleInput): Promise<AutomationRule> => {
-      const response = await fetch(`${API_BASE}/rules`, {
+      const response = await authenticatedFetch(`${API_BASE}/rules`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(rule),
@@ -83,7 +83,7 @@ export function useUpdateAutomationRule() {
       id: string;
       data: Partial<AutomationRule>;
     }): Promise<AutomationRule> => {
-      const response = await fetch(`${API_BASE}/rules/${id}`, {
+      const response = await authenticatedFetch(`${API_BASE}/rules/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -103,7 +103,7 @@ export function useDeleteAutomationRule() {
 
   return useMutation({
     mutationFn: async (id: string): Promise<void> => {
-      const response = await fetch(`${API_BASE}/rules/${id}`, {
+      const response = await authenticatedFetch(`${API_BASE}/rules/${id}`, {
         method: 'DELETE',
       });
       if (!response.ok) throw new Error('Failed to delete automation rule');
@@ -119,7 +119,7 @@ export function useRunAutomationRule() {
 
   return useMutation({
     mutationFn: async (id: string): Promise<ExecutionLog> => {
-      const response = await fetch(`${API_BASE}/rules/${id}/run`, {
+      const response = await authenticatedFetch(`${API_BASE}/rules/${id}/run`, {
         method: 'POST',
       });
       if (!response.ok) throw new Error('Failed to run automation rule');
@@ -144,7 +144,7 @@ export function useAutomationTemplates(query: AutomationTemplatesQuery = {}) {
       if (query.category) params.set('category', query.category);
       if (query.search) params.set('search', query.search);
 
-      const response = await fetch(`${API_BASE}/templates?${params}`);
+      const response = await authenticatedFetch(`${API_BASE}/templates?${params}`);
       if (!response.ok) throw new Error('Failed to fetch automation templates');
       return response.json();
     },
@@ -156,7 +156,7 @@ export function useCreateRuleFromTemplate() {
 
   return useMutation({
     mutationFn: async (templateId: string): Promise<AutomationRule> => {
-      const response = await fetch(`${API_BASE}/templates/${templateId}/use`, {
+      const response = await authenticatedFetch(`${API_BASE}/templates/${templateId}/use`, {
         method: 'POST',
       });
       if (!response.ok) throw new Error('Failed to create rule from template');
@@ -181,7 +181,7 @@ export function useExecutionLogs(query: ExecutionLogsQuery = {}) {
       if (query.ruleId) params.set('ruleId', query.ruleId);
       if (query.since) params.set('since', query.since);
 
-      const response = await fetch(`${API_BASE}/executions?${params}`);
+      const response = await authenticatedFetch(`${API_BASE}/executions?${params}`);
       if (!response.ok) throw new Error('Failed to fetch execution logs');
       return response.json();
     },
@@ -196,7 +196,7 @@ export function useExecutionStats(query: ExecutionStatsQuery = {}) {
       if (query.ruleId) params.set('ruleId', query.ruleId);
       if (query.since) params.set('since', query.since);
 
-      const response = await fetch(`${API_BASE}/executions/stats?${params}`);
+      const response = await authenticatedFetch(`${API_BASE}/executions/stats?${params}`);
       if (!response.ok) throw new Error('Failed to fetch execution stats');
       return response.json();
     },
@@ -208,7 +208,7 @@ export function useRetryExecution() {
 
   return useMutation({
     mutationFn: async (executionId: string): Promise<ExecutionLog> => {
-      const response = await fetch(`${API_BASE}/executions/${executionId}/retry`, {
+      const response = await authenticatedFetch(`${API_BASE}/executions/${executionId}/retry`, {
         method: 'POST',
       });
       if (!response.ok) throw new Error('Failed to retry execution');

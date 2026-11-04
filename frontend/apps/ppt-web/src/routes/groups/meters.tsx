@@ -45,6 +45,7 @@ import type {
   ValidationResult,
 } from '../../features/meters/types';
 import { useOrganization } from '../../hooks/useOrganization';
+import { MANAGER_ROLES } from '../shared';
 
 // Meters feature pages (Epic 12) — lazy-loaded for code splitting.
 const MetersPage = lazy(() =>
@@ -512,7 +513,7 @@ export function meterRoutes() {
       <Route
         path="/meters/validations"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <PendingValidationsPageRoute />
           </ProtectedRoute>
         }

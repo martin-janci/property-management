@@ -14,6 +14,7 @@ use db::models::{
     GenerateDocumentRequest, GenerateDocumentResponse, TemplateListQuery, TemplatePlaceholder,
     TemplateSummary, TemplateWithDetails, UpdateTemplate,
 };
+use db::repositories::DocumentTemplateRepository;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -277,24 +278,44 @@ async fn list_templates(
         offset: query.offset,
     };
 
-    let templates = state
-        .document_template_repo
-        .list(org_id, list_query.clone())
-        .await
-        .unwrap_or_default();
+    let response = load_template_list(&state.document_template_repo, org_id, list_query).await?;
+    Ok(Json(response))
+}
 
-    let total = state
-        .document_template_repo
-        .count(org_id, list_query)
-        .await
-        .unwrap_or(0);
+/// Fetch the paginated template list and total count for an organization.
+async fn load_template_list(
+    repo: &DocumentTemplateRepository,
+    org_id: Uuid,
+    query: TemplateListQuery,
+) -> Result<TemplateListResponse, (StatusCode, Json<ErrorResponse>)> {
+    let templates = repo.list(org_id, query.clone()).await.map_err(|e| {
+        tracing::error!("Failed to list templates: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "INTERNAL_ERROR",
+                "Failed to list templates",
+            )),
+        )
+    })?;
+
+    let total = repo.count(org_id, query).await.map_err(|e| {
+        tracing::error!("Failed to count templates: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "INTERNAL_ERROR",
+                "Failed to list templates",
+            )),
+        )
+    })?;
 
     let count = templates.len();
-    Ok(Json(TemplateListResponse {
+    Ok(TemplateListResponse {
         templates,
         count,
         total,
-    }))
+    })
 }
 
 /// Get template details.
@@ -682,5 +703,29 @@ async fn generate_document(
                 )),
             ))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Regression (code-review): `list_templates` used `.unwrap_or_default()` /
+    /// `.unwrap_or(0)` on the repo calls, so a DB failure was masked behind an
+    /// empty `200 OK`. A repo backed by an unreachable database must surface a
+    /// `500`, not an empty page.
+    #[tokio::test]
+    async fn list_propagates_db_error_instead_of_empty_200() {
+        let pool = sqlx::postgres::PgPoolOptions::new()
+            .acquire_timeout(std::time::Duration::from_millis(250))
+            .connect_lazy("postgres://never-used:never@127.0.0.1:1/never")
+            .expect("connect_lazy builds without connecting");
+        let repo = DocumentTemplateRepository::new(pool);
+
+        let result = load_template_list(&repo, Uuid::nil(), TemplateListQuery::default()).await;
+
+        let (status, _body) =
+            result.expect_err("DB error must not be swallowed into an Ok response");
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
     }
 }

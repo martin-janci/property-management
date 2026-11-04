@@ -23,20 +23,18 @@ interface BulkEntryPageProps {
 const currentYear = new Date().getFullYear();
 const currentMonth = new Date().getMonth() + 1;
 
-const monthOptions = [
-  { value: 1, key: 'january' },
-  { value: 2, key: 'february' },
-  { value: 3, key: 'march' },
-  { value: 4, key: 'april' },
-  { value: 5, key: 'may' },
-  { value: 6, key: 'june' },
-  { value: 7, key: 'july' },
-  { value: 8, key: 'august' },
-  { value: 9, key: 'september' },
-  { value: 10, key: 'october' },
-  { value: 11, key: 'november' },
-  { value: 12, key: 'december' },
-];
+const monthValues = Array.from({ length: 12 }, (_, i) => i + 1);
+
+/**
+ * Localized month name (1-12) from `Intl`, so the dropdown follows the UI
+ * language without per-locale month keys.
+ */
+export function monthName(month: number, locale: string): string {
+  const name = new Intl.DateTimeFormat(locale, { month: 'long' }).format(
+    new Date(2000, month - 1, 1)
+  );
+  return name.charAt(0).toLocaleUpperCase(locale) + name.slice(1);
+}
 
 const yearOptions = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
 
@@ -52,12 +50,20 @@ export function BulkEntryPage({
   onBack,
   onDismissResults,
 }: BulkEntryPageProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [year, setYear] = useState(initialYear ?? currentYear);
   const [month, setMonth] = useState(initialMonth ?? currentMonth);
-  const [entries, setEntries] = useState<Map<string, number>>(
-    () => new Map(units.map((u) => [u.unitId, u.currentPersonCount ?? 0]))
-  );
+  // Only the counts the user changed. Units (and their current counts) load
+  // asynchronously, so anything not edited falls back to the unit's value —
+  // seeding a map once at mount left late-loading units without a count and
+  // flagged them as invalid.
+  const [entries, setEntries] = useState<Map<string, number>>(() => new Map());
+  const countFor = (unitId: string): number => {
+    const edited = entries.get(unitId);
+    if (edited !== undefined) return edited;
+    const unit = units.find((u) => u.unitId === unitId);
+    return unit?.currentPersonCount ?? unit?.personCount ?? 0;
+  };
   const [errors, setErrors] = useState<Map<string, string>>(new Map());
   const [showConfirmation, setShowConfirmation] = useState(false);
 
@@ -74,14 +80,14 @@ export function BulkEntryPage({
   };
 
   const incrementCount = (unitId: string) => {
-    const current = entries.get(unitId) ?? 0;
+    const current = countFor(unitId);
     if (current < 100) {
       setEntries((prev) => new Map(prev).set(unitId, current + 1));
     }
   };
 
   const decrementCount = (unitId: string) => {
-    const current = entries.get(unitId) ?? 0;
+    const current = countFor(unitId);
     if (current > 0) {
       setEntries((prev) => new Map(prev).set(unitId, current - 1));
     }
@@ -91,8 +97,8 @@ export function BulkEntryPage({
     const newErrors = new Map<string, string>();
 
     for (const unit of units) {
-      const count = entries.get(unit.unitId);
-      if (count === undefined || count < 0) {
+      const count = countFor(unit.unitId);
+      if (!Number.isFinite(count) || count < 0) {
         newErrors.set(unit.unitId, t('personMonths.errors.personCountInvalid'));
       } else if (count > 100) {
         newErrors.set(unit.unitId, t('personMonths.errors.personCountTooHigh'));
@@ -118,7 +124,7 @@ export function BulkEntryPage({
       entries: units.map((unit) => ({
         unitId: unit.unitId,
         unitDesignation: unit.unitDesignation,
-        personCount: entries.get(unit.unitId) ?? 0,
+        personCount: countFor(unit.unitId),
       })),
     };
     onSubmit(data);
@@ -128,8 +134,9 @@ export function BulkEntryPage({
     setShowConfirmation(false);
   };
 
-  const totalPersons = Array.from(entries.values()).reduce((sum, count) => sum + count, 0);
-  const unitsWithData = Array.from(entries.values()).filter((count) => count > 0).length;
+  const counts = units.map((unit) => countFor(unit.unitId));
+  const totalPersons = counts.reduce((sum, count) => sum + count, 0);
+  const unitsWithData = counts.filter((count) => count > 0).length;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -249,9 +256,9 @@ export function BulkEntryPage({
                 disabled={isSubmitting}
                 className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
               >
-                {monthOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {t(`personMonths.months.${option.key}`)}
+                {monthValues.map((value) => (
+                  <option key={value} value={value}>
+                    {monthName(value, i18n.language)}
                   </option>
                 ))}
               </select>
@@ -299,7 +306,7 @@ export function BulkEntryPage({
               <tbody className="bg-white divide-y divide-gray-200">
                 {units.map((unit) => {
                   const error = errors.get(unit.unitId);
-                  const currentValue = entries.get(unit.unitId) ?? 0;
+                  const currentValue = countFor(unit.unitId);
 
                   return (
                     <tr key={unit.unitId} className={error ? 'bg-red-50' : ''}>
@@ -416,7 +423,7 @@ export function BulkEntryPage({
             <p className="text-gray-600 mb-4">
               {t('personMonths.bulkEntryConfirmMessage', {
                 count: units.length,
-                month: t(`personMonths.months.${monthOptions.find((m) => m.value === month)?.key}`),
+                month: monthName(month, i18n.language),
                 year,
               })}
             </p>

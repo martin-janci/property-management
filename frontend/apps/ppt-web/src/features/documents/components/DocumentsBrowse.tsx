@@ -38,29 +38,24 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('sk-SK', {
+function formatDate(iso: string, locale: string): string {
+  return new Date(iso).toLocaleDateString(locale, {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
   });
 }
 
-/** Map access_scope value to a human-readable audience label. */
-function audienceLabel(scope: string | undefined): string {
+/** Map access_scope value to the i18n key of its human-readable audience label. */
+function audienceLabelKey(scope: string | undefined): string {
   switch (scope) {
-    case 'organization':
-      return 'Všetci rezidenti';
     case 'building':
-      return 'Bytový dom';
     case 'unit':
-      return 'Iba jednotka';
     case 'user':
-      return 'Konkrétni používatelia';
     case 'public':
-      return 'Verejné';
+      return `documents.browse.audience.${scope}`;
     default:
-      return 'Všetci rezidenti';
+      return 'documents.browse.audience.organization';
   }
 }
 
@@ -91,6 +86,7 @@ interface DocumentRowProps {
 }
 
 function RowDownloadButton({ doc }: { doc: DocumentSummary }) {
+  const { t } = useTranslation();
   const { download, isDownloading } = useDocumentDownload(doc.id, doc.file_name);
 
   return (
@@ -102,8 +98,8 @@ function RowDownloadButton({ doc }: { doc: DocumentSummary }) {
         download();
       }}
       disabled={isDownloading}
-      aria-label={`Stiahnuť ${doc.file_name}`}
-      title="Stiahnuť"
+      aria-label={t('documents.browse.downloadFile', { name: doc.file_name })}
+      title={t('documents.download')}
     >
       <svg
         width="14"
@@ -123,6 +119,7 @@ function RowDownloadButton({ doc }: { doc: DocumentSummary }) {
 }
 
 function DocumentRow({ doc, onSelect, onPreview, onMoveRequest, selected }: DocumentRowProps) {
+  const { t, i18n } = useTranslation();
   const ext = doc.file_name.split('.').pop()?.toUpperCase() ?? 'DOC';
 
   // Use div+role="button" to avoid invalid interactive-in-interactive nesting (HTML spec §4.10.6).
@@ -146,15 +143,18 @@ function DocumentRow({ doc, onSelect, onPreview, onMoveRequest, selected }: Docu
       <span className="doc-row__body">
         <span className="doc-row__title">{doc.title}</span>
         <span className="doc-row__meta">
-          {doc.category} · {formatFileSize(doc.size_bytes)} · {formatDate(doc.updated_at)}
+          {t(`documents.category.${doc.category}`, { defaultValue: doc.category })} ·{' '}
+          {formatFileSize(doc.size_bytes)} · {formatDate(doc.updated_at, i18n.language)}
         </span>
       </span>
       <span className={`doc-row__audience ${audienceMod(doc.access_scope)}`}>
-        {audienceLabel(doc.access_scope)}
+        {t(audienceLabelKey(doc.access_scope))}
       </span>
       {doc.status && doc.status !== 'published' && (
         <span className={`doc-row__status doc-row__status--${doc.status}`}>
-          {doc.status === 'draft' ? 'Návrh' : 'Archivované'}
+          {doc.status === 'draft'
+            ? t('documents.browse.statusDraft')
+            : t('documents.browse.statusArchived')}
         </span>
       )}
       {/* Row action buttons (gap-7a-4: preview + download; gap-7a-2: move) */}
@@ -166,8 +166,8 @@ function DocumentRow({ doc, onSelect, onPreview, onMoveRequest, selected }: Docu
             e.stopPropagation();
             onPreview(doc);
           }}
-          aria-label={`Náhľad ${doc.file_name}`}
-          title="Náhľad"
+          aria-label={t('documents.browse.previewFile', { name: doc.file_name })}
+          title={t('documents.browse.preview')}
         >
           <svg
             width="14"
@@ -190,8 +190,8 @@ function DocumentRow({ doc, onSelect, onPreview, onMoveRequest, selected }: Docu
             e.stopPropagation();
             onMoveRequest(doc);
           }}
-          aria-label={`Presunúť ${doc.file_name} do priečinka`}
-          title="Presunúť do priečinka"
+          aria-label={t('documents.browse.moveFile', { name: doc.file_name })}
+          title={t('documents.browse.moveToFolder')}
         >
           <svg
             width="14"
@@ -214,20 +214,14 @@ function DocumentRow({ doc, onSelect, onPreview, onMoveRequest, selected }: Docu
 
 // ─── main component ───────────────────────────────────────────────────────────
 
-const STATUS_TABS: { label: string; value: DocumentStatus | undefined }[] = [
-  { label: 'Všetky', value: undefined },
-  { label: 'Publikované', value: 'published' },
-  { label: 'Návrhy', value: 'draft' },
-  { label: 'Archivované', value: 'archived' },
+const STATUS_TABS: { labelKey: string; value: DocumentStatus | undefined }[] = [
+  { labelKey: 'documents.browse.tabs.all', value: undefined },
+  { labelKey: 'documents.browse.tabs.published', value: 'published' },
+  { labelKey: 'documents.browse.tabs.draft', value: 'draft' },
+  { labelKey: 'documents.browse.tabs.archived', value: 'archived' },
 ];
 
-const AUDIENCE_OPTIONS: { label: string; value: AccessScope }[] = [
-  { label: 'Všetci rezidenti', value: 'organization' },
-  { label: 'Bytový dom', value: 'building' },
-  { label: 'Iba jednotka', value: 'unit' },
-  { label: 'Konkrétni používatelia', value: 'user' },
-  { label: 'Verejné', value: 'public' },
-];
+const AUDIENCE_OPTIONS: AccessScope[] = ['organization', 'building', 'unit', 'user', 'public'];
 
 export interface DocumentsBrowseProps {
   organizationId: string;
@@ -328,7 +322,7 @@ export function DocumentsBrowse({
               setPage(0);
             }}
           >
-            {tab.label}
+            {t(tab.labelKey)}
           </button>
         ))}
       </div>
@@ -355,7 +349,7 @@ export function DocumentsBrowse({
               setSearch(e.target.value);
               setPage(0);
             }}
-            placeholder="Hľadať podľa názvu…"
+            placeholder={t('documents.browse.searchPlaceholder')}
             className="docs-browse__search"
             aria-label={t('aria.searchDocuments')}
           />
@@ -363,20 +357,20 @@ export function DocumentsBrowse({
 
         {/* Audience filter */}
         <fieldset className="docs-browse__fieldset">
-          <legend className="docs-browse__legend">Publikum</legend>
+          <legend className="docs-browse__legend">{t('documents.browse.audienceLegend')}</legend>
           <div className="docs-browse__chips">
-            {AUDIENCE_OPTIONS.map((opt) => (
+            {AUDIENCE_OPTIONS.map((scope) => (
               <button
-                key={opt.value}
+                key={scope}
                 type="button"
-                aria-pressed={selectedAudience === opt.value}
-                className={`docs-browse__chip${selectedAudience === opt.value ? ' docs-browse__chip--active' : ''}`}
+                aria-pressed={selectedAudience === scope}
+                className={`docs-browse__chip${selectedAudience === scope ? ' docs-browse__chip--active' : ''}`}
                 onClick={() => {
-                  setSelectedAudience(selectedAudience === opt.value ? undefined : opt.value);
+                  setSelectedAudience(selectedAudience === scope ? undefined : scope);
                   setPage(0);
                 }}
               >
-                {opt.label}
+                {t(audienceLabelKey(scope))}
               </button>
             ))}
           </div>
@@ -384,7 +378,7 @@ export function DocumentsBrowse({
 
         {/* Category filter */}
         <fieldset className="docs-browse__fieldset">
-          <legend className="docs-browse__legend">Kategória</legend>
+          <legend className="docs-browse__legend">{t('documents.browse.categoryLegend')}</legend>
           <div className="docs-browse__chips">
             {DOCUMENT_CATEGORIES.map((cat: string) => (
               <button
@@ -397,7 +391,7 @@ export function DocumentsBrowse({
                   setPage(0);
                 }}
               >
-                {cat}
+                {t(`documents.category.${cat}`, { defaultValue: cat })}
               </button>
             ))}
           </div>
@@ -405,7 +399,7 @@ export function DocumentsBrowse({
 
         {hasActiveFilters && (
           <button type="button" className="docs-browse__clear" onClick={handleClearFilters}>
-            Vymazať filtre
+            {t('documents.browse.clearFilters')}
           </button>
         )}
       </div>
@@ -426,19 +420,19 @@ export function DocumentsBrowse({
 
         {error && !isLoading && (
           <div className="docs-browse__error" role="alert">
-            <p>Dokumenty sa nepodarilo načítať.</p>
+            <p>{t('documents.browse.loadError')}</p>
             <button type="button" className="docs-browse__retry" onClick={() => refetch()}>
-              Skúsiť znova
+              {t('common.tryAgain')}
             </button>
           </div>
         )}
 
         {!isLoading && !error && data && data.documents.length === 0 && (
           <div className="docs-browse__empty">
-            <p>Žiadne dokumenty nezodpovedajú zvoleným filtrom.</p>
+            <p>{t('documents.browse.emptyFiltered')}</p>
             {hasActiveFilters && (
               <button type="button" className="docs-browse__clear" onClick={handleClearFilters}>
-                Vymazať filtre
+                {t('documents.browse.clearFilters')}
               </button>
             )}
           </div>
@@ -447,8 +441,8 @@ export function DocumentsBrowse({
         {!isLoading && !error && data && data.documents.length > 0 && (
           <>
             <div className="docs-browse__count" aria-live="polite">
-              {data.total} dokument{data.total !== 1 ? 'ov' : ''} · zobrazených{' '}
-              {data.documents.length}
+              {t('documents.browse.totalCount', { count: data.total })} ·{' '}
+              {t('documents.browse.shownCount', { shown: data.documents.length })}
             </div>
             <ul className="docs-browse__list">
               {data.documents.map((doc: DocumentSummary) => (
@@ -474,10 +468,13 @@ export function DocumentsBrowse({
                   onClick={() => setPage((p: number) => Math.max(0, p - 1))}
                   aria-label={t('aria.previousPage')}
                 >
-                  ‹ Predch.
+                  ‹ {t('documents.browse.prevPage')}
                 </button>
                 <span className="docs-browse__page-info">
-                  Strana {page + 1} / {Math.ceil(data.total / PAGE_SIZE)}
+                  {t('documents.browse.pageOf', {
+                    page: page + 1,
+                    total: Math.ceil(data.total / PAGE_SIZE),
+                  })}
                 </span>
                 <button
                   type="button"
@@ -486,7 +483,7 @@ export function DocumentsBrowse({
                   onClick={() => setPage((p: number) => p + 1)}
                   aria-label={t('aria.nextPage')}
                 >
-                  Ďalšia ›
+                  {t('documents.browse.nextPage')} ›
                 </button>
               </div>
             )}

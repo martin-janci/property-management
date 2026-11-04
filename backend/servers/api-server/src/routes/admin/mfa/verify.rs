@@ -21,8 +21,10 @@ use std::sync::Arc;
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Extension, Json};
 use serde::{Deserialize, Serialize};
 
-use admin_core::{AuditOutcome, AuditWriter, Capability};
+use admin_core::{AuditOutcome, AuditWriter};
 use api_core::extractors::principal::RequestPrincipal;
+
+use super::audit_mfa_event;
 
 use crate::state::AppState;
 
@@ -114,18 +116,15 @@ pub async fn verify_step_up(
         .unwrap_or(false);
 
     if !valid {
-        let _ = audit
-            .record(
-                Some(user_id),
-                Capability::UsersWrite,
-                AuditOutcome::Denied,
-                Some("mfa_step_up_invalid"),
-                Some(user_id),
-                None,
-                None,
-                None,
-            )
-            .await;
+        audit_mfa_event(
+            &audit,
+            user_id,
+            AuditOutcome::Denied,
+            "mfa_step_up_invalid",
+            user_id,
+            None,
+        )
+        .await;
         return Err((
             StatusCode::UNPROCESSABLE_ENTITY,
             Json(serde_json::json!({
@@ -146,18 +145,15 @@ pub async fn verify_step_up(
             internal()
         })?;
 
-    let _ = audit
-        .record(
-            Some(user_id),
-            Capability::UsersWrite,
-            AuditOutcome::Allowed,
-            Some("mfa_step_up"),
-            Some(user_id),
-            None,
-            None,
-            None,
-        )
-        .await;
+    audit_mfa_event(
+        &audit,
+        user_id,
+        AuditOutcome::Allowed,
+        "mfa_step_up",
+        user_id,
+        None,
+    )
+    .await;
 
     tracing::info!(user_id = %user_id, "admin mfa step-up verified");
     Ok(Json(VerifyStepUpResponse {

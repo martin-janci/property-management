@@ -28,16 +28,14 @@ import { MemoryRouter, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ── i18n ──
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (key: string, opts?: { defaultValue?: string }) => opts?.defaultValue ?? key,
-  }),
-}));
+// react-i18next is not mocked: the global test setup initialises i18next with
+// the real English bundle, so the list renders its actual English copy.
 
 // ── toast ──
 const mockShowToast = vi.fn();
 vi.mock('../../components', () => ({
   useToast: () => ({ showToast: mockShowToast }),
+  ProtectedRoute: ({ children }: { children: unknown }) => children,
 }));
 
 // ── auth ──

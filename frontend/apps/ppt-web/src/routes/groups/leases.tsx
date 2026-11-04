@@ -1365,7 +1365,7 @@ export function leaseRoutes() {
       <Route
         path="/leases"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <LeasesDashboardPageRoute />
           </ProtectedRoute>
         }
@@ -1373,7 +1373,7 @@ export function leaseRoutes() {
       <Route
         path="/leases/list"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <LeasesListPageRoute />
           </ProtectedRoute>
         }
@@ -1381,7 +1381,7 @@ export function leaseRoutes() {
       <Route
         path="/leases/new"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <CreateLeasePageRoute />
           </ProtectedRoute>
         }
@@ -1389,7 +1389,7 @@ export function leaseRoutes() {
       <Route
         path="/leases/templates"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <TemplatesPageRoute />
           </ProtectedRoute>
         }
@@ -1397,7 +1397,7 @@ export function leaseRoutes() {
       <Route
         path="/leases/applications"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <ApplicationsPageRoute />
           </ProtectedRoute>
         }
@@ -1405,7 +1405,7 @@ export function leaseRoutes() {
       <Route
         path="/leases/applications/:applicationId"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <ApplicationDetailPageRoute />
           </ProtectedRoute>
         }
@@ -1413,7 +1413,7 @@ export function leaseRoutes() {
       <Route
         path="/leases/violations"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <ViolationsPageRoute />
           </ProtectedRoute>
         }
@@ -1421,7 +1421,7 @@ export function leaseRoutes() {
       <Route
         path="/leases/violations/new"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <CreateViolationPageRoute />
           </ProtectedRoute>
         }
@@ -1429,7 +1429,7 @@ export function leaseRoutes() {
       <Route
         path="/leases/violations/:violationId"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <ViolationDetailPageRoute />
           </ProtectedRoute>
         }
@@ -1437,7 +1437,7 @@ export function leaseRoutes() {
       <Route
         path="/leases/:leaseId"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <LeaseDetailPageRoute />
           </ProtectedRoute>
         }

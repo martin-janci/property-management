@@ -199,49 +199,57 @@
   white-space: normal;
 }
 
-/* ============================================
- * ARIA Live Regions
- * ============================================ */
+/*
+ * Element-level defaults live in the `base` cascade layer so that Tailwind
+ * utilities (`text-white`, `text-gray-700`, `absolute`, …) applied on a
+ * specific element win over them. Unlayered, these rules beat every utility
+ * class and painted e.g. `bg-blue-600 text-white` buttons blue-on-blue.
+ */
+@layer base {
+  /* ============================================
+   * ARIA Live Regions
+   * ============================================ */
 
-[role="alert"],
-[role="status"],
-[aria-live] {
-  position: relative;
-}
+  [role="alert"],
+  [role="status"],
+  [aria-live] {
+    position: relative;
+  }
 
-/* ============================================
- * Component Styles
- * ============================================ */
+  /* ============================================
+   * Component Styles
+   * ============================================ */
 
-body {
-  background-color: var(--color-background);
-  color: var(--color-text);
-  font-size: var(--font-size-base);
-}
+  body {
+    background-color: var(--color-background);
+    color: var(--color-text);
+    font-size: var(--font-size-base);
+  }
 
-button,
-a {
-  color: var(--color-primary);
-}
+  button,
+  a {
+    color: var(--color-primary);
+  }
 
-button:hover,
-a:hover {
-  color: var(--color-primary-hover);
-}
+  button:hover,
+  a:hover {
+    color: var(--color-primary-hover);
+  }
 
-input,
-select,
-textarea {
-  border-color: var(--color-border);
-  background-color: var(--color-surface);
-  color: var(--color-text);
-}
+  input,
+  select,
+  textarea {
+    border-color: var(--color-border);
+    background-color: var(--color-surface);
+    color: var(--color-text);
+  }
 
-input:focus,
-select:focus,
-textarea:focus {
-  border-color: var(--color-primary);
-  outline-color: var(--color-focus);
+  input:focus,
+  select:focus,
+  textarea:focus {
+    border-color: var(--color-primary);
+    outline-color: var(--color-focus);
+  }
 }
 
 /* ============================================

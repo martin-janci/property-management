@@ -12,7 +12,7 @@ import { setReturnUrl } from '@ppt/shared';
 import type React from 'react';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import './ProtectedRoute.css';
 
@@ -137,6 +137,9 @@ export function ProtectedRoute({
               defaultValue: 'You are not authorized to view this page.',
             })}
           </p>
+          <Link to="/dashboard" className="btn-primary-token protected-route-unauthorized__back">
+            {t('errors.backToDashboard', { defaultValue: 'Back to dashboard' })}
+          </Link>
         </div>
       );
     }

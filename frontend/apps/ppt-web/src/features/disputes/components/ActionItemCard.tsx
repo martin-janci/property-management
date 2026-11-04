@@ -3,6 +3,8 @@
  * Epic 77: Dispute Resolution (Story 77.4)
  */
 
+import { useTranslation } from 'react-i18next';
+
 export type ActionStatus = 'pending' | 'in_progress' | 'completed' | 'overdue' | 'escalated';
 
 export interface ActionItem {
@@ -30,12 +32,13 @@ const statusColors: Record<ActionStatus, string> = {
   escalated: 'bg-red-200 text-red-900',
 };
 
-const statusLabels: Record<ActionStatus, string> = {
-  pending: 'Pending',
-  in_progress: 'In Progress',
-  completed: 'Completed',
-  overdue: 'Overdue',
-  escalated: 'Escalated',
+/** i18n keys for action item status labels. */
+const statusLabelKeys: Record<ActionStatus, string> = {
+  pending: 'disputes.action.status.pending',
+  in_progress: 'disputes.action.status.in_progress',
+  completed: 'disputes.action.status.completed',
+  overdue: 'disputes.action.status.overdue',
+  escalated: 'disputes.action.status.escalated',
 };
 
 interface ActionItemCardProps {
@@ -59,34 +62,45 @@ export function ActionItemCard({
   onEscalate,
   onView,
 }: ActionItemCardProps) {
+  const { t, i18n } = useTranslation();
   const dueDate = new Date(action.dueDate);
   const now = new Date();
   const isOverdue = dueDate < now && action.status !== 'completed';
   const daysUntilDue = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
+    return new Date(dateString).toLocaleDateString(i18n.language);
   };
 
   const getDueDateDisplay = () => {
     if (action.status === 'completed') {
-      return <span className="text-green-600">Completed</span>;
+      return <span className="text-green-600">{t('disputes.action.status.completed')}</span>;
     }
     if (isOverdue) {
       return (
-        <span className="text-red-600 font-medium">Overdue by {Math.abs(daysUntilDue)} days</span>
+        <span className="text-red-600 font-medium">
+          {t('disputes.action.overdueBy', { count: Math.abs(daysUntilDue) })}
+        </span>
       );
     }
     if (daysUntilDue === 0) {
-      return <span className="text-orange-600 font-medium">Due today</span>;
+      return <span className="text-orange-600 font-medium">{t('disputes.action.dueToday')}</span>;
     }
     if (daysUntilDue === 1) {
-      return <span className="text-orange-600">Due tomorrow</span>;
+      return <span className="text-orange-600">{t('disputes.action.dueTomorrow')}</span>;
     }
     if (daysUntilDue <= 3) {
-      return <span className="text-yellow-600">Due in {daysUntilDue} days</span>;
+      return (
+        <span className="text-yellow-600">
+          {t('disputes.action.dueInDays', { count: daysUntilDue })}
+        </span>
+      );
     }
-    return <span className="text-gray-600">Due {formatDate(action.dueDate)}</span>;
+    return (
+      <span className="text-gray-600">
+        {t('disputes.action.dueOn', { date: formatDate(action.dueDate) })}
+      </span>
+    );
   };
 
   return (
@@ -102,7 +116,7 @@ export function ActionItemCard({
             <span
               className={`px-2 py-0.5 text-xs font-medium rounded ${statusColors[action.status]}`}
             >
-              {statusLabels[action.status]}
+              {t(statusLabelKeys[action.status])}
             </span>
             {getDueDateDisplay()}
           </div>
@@ -115,7 +129,7 @@ export function ActionItemCard({
 
       {/* Assignee */}
       <div className="text-sm text-gray-500 mb-3">
-        <span>Assigned to: </span>
+        <span>{t('disputes.action.assignedTo')} </span>
         <span className="font-medium text-gray-700">{action.assignedToName}</span>
       </div>
 
@@ -123,7 +137,8 @@ export function ActionItemCard({
       {action.completedAt && action.completionNotes && (
         <div className="mb-3 p-2 bg-green-50 border border-green-100 rounded">
           <p className="text-sm text-green-800">
-            <span className="font-medium">Completed:</span> {action.completionNotes}
+            <span className="font-medium">{t('disputes.action.completedLabel')}</span>{' '}
+            {action.completionNotes}
           </p>
           <p className="text-xs text-green-600 mt-1">{formatDate(action.completedAt)}</p>
         </div>
@@ -132,11 +147,13 @@ export function ActionItemCard({
       {/* Reminder/Escalation Info */}
       {action.reminderSentAt && (
         <div className="text-xs text-gray-500 mb-2">
-          Reminder sent: {formatDate(action.reminderSentAt)}
+          {t('disputes.action.reminderSent', { date: formatDate(action.reminderSentAt) })}
         </div>
       )}
       {action.escalatedAt && (
-        <div className="text-xs text-red-600 mb-2">Escalated: {formatDate(action.escalatedAt)}</div>
+        <div className="text-xs text-red-600 mb-2">
+          {t('disputes.action.escalatedOn', { date: formatDate(action.escalatedAt) })}
+        </div>
       )}
 
       {/* Actions */}
@@ -147,7 +164,7 @@ export function ActionItemCard({
             onClick={() => onView(action.id)}
             className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
           >
-            View
+            {t('disputes.view')}
           </button>
         )}
 
@@ -158,7 +175,7 @@ export function ActionItemCard({
             onClick={() => onStart(action.id)}
             className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
-            Start
+            {t('disputes.action.start')}
           </button>
         )}
         {isAssignee &&
@@ -169,7 +186,7 @@ export function ActionItemCard({
               onClick={() => onComplete(action.id)}
               className="px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
             >
-              Complete
+              {t('disputes.action.complete')}
             </button>
           )}
 
@@ -182,7 +199,7 @@ export function ActionItemCard({
                 onClick={() => onSendReminder(action.id)}
                 className="px-3 py-1.5 text-sm border border-orange-300 text-orange-600 rounded-lg hover:bg-orange-50"
               >
-                Send Reminder
+                {t('disputes.action.sendReminder')}
               </button>
             )}
             {onEscalate && action.status !== 'escalated' && (
@@ -191,7 +208,7 @@ export function ActionItemCard({
                 onClick={() => onEscalate(action.id)}
                 className="px-3 py-1.5 text-sm border border-red-300 text-red-600 rounded-lg hover:bg-red-50"
               >
-                Escalate
+                {t('disputes.action.escalate')}
               </button>
             )}
           </>
@@ -201,4 +218,4 @@ export function ActionItemCard({
   );
 }
 
-export { statusLabels };
+export { statusLabelKeys };

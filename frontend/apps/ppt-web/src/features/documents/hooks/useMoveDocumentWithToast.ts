@@ -11,11 +11,13 @@
 import type { DocumentSummary } from '@ppt/api-client';
 import { useMoveDocument } from '@ppt/api-client';
 import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '../../../components/Toast';
 
 export function useMoveDocumentWithToast() {
   const moveDocument = useMoveDocument();
   const { showToast } = useToast();
+  const { t } = useTranslation();
 
   const executeMoveWithToast = useCallback(
     async (doc: DocumentSummary, folderId: string | null): Promise<boolean> => {
@@ -23,22 +25,22 @@ export function useMoveDocumentWithToast() {
         await moveDocument.mutateAsync({ documentId: doc.id, folderId });
         showToast({
           type: 'success',
-          title: 'Dokument presunutý',
+          title: t('documents.move.successTitle'),
           message: folderId
-            ? `„${doc.title}" bol presunutý do priečinka.`
-            : `„${doc.title}" bol presunutý do koreňa.`,
+            ? t('documents.move.successToFolder', { title: doc.title })
+            : t('documents.move.successToRoot', { title: doc.title }),
         });
         return true;
       } catch (err) {
         showToast({
           type: 'error',
-          title: 'Presun zlyhal',
-          message: err instanceof Error ? err.message : 'Dokument sa nepodarilo presunúť.',
+          title: t('documents.move.failedTitle'),
+          message: err instanceof Error ? err.message : t('documents.move.failedMessage'),
         });
         return false;
       }
     },
-    [moveDocument, showToast]
+    [moveDocument, showToast, t]
   );
 
   return { executeMoveWithToast, isPending: moveDocument.isPending };
