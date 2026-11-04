@@ -7,14 +7,14 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Spinner } from '../../../components/Spinner';
 import {
-  categoryLabels,
+  categoryLabelKeys,
   DisputeCard,
   type DisputeCategory,
   type DisputePriority,
   type DisputeStatus,
   type DisputeSummary,
-  priorityLabels,
-  statusLabels,
+  priorityLabelKeys,
+  statusLabelKeys,
 } from './DisputeCard';
 
 interface DisputeListProps {
@@ -120,9 +120,9 @@ export function DisputeList({
             className="rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">{t('disputes.allStatuses')}</option>
-            {Object.entries(statusLabels).map(([value, label]) => (
+            {Object.entries(statusLabelKeys).map(([value, labelKey]) => (
               <option key={value} value={value}>
-                {label}
+                {t(labelKey)}
               </option>
             ))}
           </select>
@@ -134,9 +134,9 @@ export function DisputeList({
             className="rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">{t('disputes.allPriorities')}</option>
-            {Object.entries(priorityLabels).map(([value, label]) => (
+            {Object.entries(priorityLabelKeys).map(([value, labelKey]) => (
               <option key={value} value={value}>
-                {label}
+                {t(labelKey)}
               </option>
             ))}
           </select>
@@ -148,9 +148,9 @@ export function DisputeList({
             className="rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">{t('disputes.allCategories')}</option>
-            {Object.entries(categoryLabels).map(([value, label]) => (
+            {Object.entries(categoryLabelKeys).map(([value, labelKey]) => (
               <option key={value} value={value}>
-                {label}
+                {t(labelKey)}
               </option>
             ))}
           </select>

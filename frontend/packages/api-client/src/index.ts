@@ -64,6 +64,7 @@ export * from './packages';
 export * from './person-months';
 export * from './portfolio-performance';
 export * from './registry';
+export * from './rentals';
 export * from './reports';
 export {
   exportReport as exportAnalyticsReport,

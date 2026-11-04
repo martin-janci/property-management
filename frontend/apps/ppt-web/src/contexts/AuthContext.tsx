@@ -31,6 +31,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -225,7 +226,11 @@ function decodeJwtPayload(token: string | null | undefined): Record<string, unkn
   try {
     const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
     const padded = b64 + '==='.slice((b64.length + 3) % 4);
-    const json = atob(padded);
+    // JWT payloads are UTF-8; `atob` yields one char per byte, so decode the
+    // bytes explicitly or names with diacritics come out mangled.
+    const binary = atob(padded);
+    const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+    const json = new TextDecoder().decode(bytes);
     return JSON.parse(json) as Record<string, unknown>;
   } catch {
     return null;
@@ -290,6 +295,53 @@ export function deriveActiveRole(
     if (tenants.some((t) => t.role === role)) return role;
   }
   return tenants[0].role;
+}
+
+/**
+ * Build the session user from a login / SSO token response.
+ *
+ * api-server's `POST /auth/login` (and the SSO exchange) return only the token
+ * pair plus `tenants` — there is no embedded `user` object. Reading
+ * `response.user.role` therefore threw "Cannot read properties of undefined"
+ * and made every real (non-mock) sign-in fail. When `user` is absent we derive
+ * it from the access-token claims (`sub`, `email`, `name`) and the active
+ * tenant membership, which also supplies the organization used for the
+ * `X-Tenant-ID` header.
+ */
+export function buildSessionUser(response: {
+  accessToken: string;
+  tenants?: TenantMembership[];
+  user?: AuthUser | null;
+}): AuthUser {
+  const role = response.user?.role ?? deriveActiveRole(response.accessToken, response.tenants);
+  const tenants = response.tenants ?? [];
+  const claims = decodeJwtPayload(response.accessToken) ?? {};
+  const claimTenantId = typeof claims.tenant_id === 'string' ? claims.tenant_id : undefined;
+  const activeTenant =
+    tenants.find((t) => t.tenantId === claimTenantId) ??
+    tenants.find((t) => t.role === role) ??
+    tenants[0];
+
+  if (response.user) {
+    return {
+      ...response.user,
+      ...(role != null ? { role } : {}),
+      organizationId: response.user.organizationId ?? activeTenant?.tenantId,
+      organizationName: response.user.organizationName ?? activeTenant?.tenantName,
+    };
+  }
+
+  const name = typeof claims.name === 'string' ? claims.name.trim() : '';
+  const [firstName, ...rest] = name ? name.split(/\s+/) : [];
+  return {
+    id: typeof claims.sub === 'string' ? claims.sub : '',
+    email: typeof claims.email === 'string' ? claims.email : '',
+    firstName: firstName || undefined,
+    lastName: rest.length > 0 ? rest.join(' ') : undefined,
+    role,
+    organizationId: activeTenant?.tenantId,
+    organizationName: activeTenant?.tenantName,
+  };
 }
 
 // ============================================================================
@@ -357,8 +409,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
   /**
    * Set up the token provider for all API modules.
    * This ensures that all API calls automatically include the auth token.
+   *
+   * A *layout* effect on purpose: React runs passive effects child-first, and
+   * TanStack Query starts a mounted query's fetch from a passive effect. With
+   * `useEffect` here, a hard reload / deep link fired the page's first request
+   * before the provider existed — it went out without `Authorization` (401)
+   * and only the query retry recovered. Layout effects all run before any
+   * passive effect, so the provider is in place for the first request.
    */
-  useEffect(() => {
+  useLayoutEffect(() => {
     // Register the token provider with the generated @ppt/api-client modules.
     setTokenProvider(getAccessToken);
 
@@ -391,8 +450,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Register the active-org provider so the api-client's auth interceptor can
   // send X-Tenant-ID (#1522). Re-registered when the user/org changes so the
-  // provider always reports the current organization.
-  useEffect(() => {
+  // provider always reports the current organization. Layout effect for the
+  // same reason as the token provider above: the pages mounted by the render
+  // that restores `user` fetch from passive effects, which would otherwise
+  // run before this registration and go out without X-Tenant-ID.
+  useLayoutEffect(() => {
     setOrgProvider(() => user?.organizationId ?? null);
     return () => {
       clearOrgProvider();
@@ -532,10 +594,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // Derive role from the JWT `tenant_id` claim (or, failing that, the
       // highest-privilege membership) instead of `tenants[0]`. See #482.
-      const derivedRole =
-        response.user.role ?? deriveActiveRole(response.accessToken, response.tenants);
-      const userWithRole: AuthUser =
-        derivedRole != null ? { ...response.user, role: derivedRole } : response.user;
+      const userWithRole: AuthUser = buildSessionUser(response);
 
       // Store tokens, user, and tenant memberships.
       // Tenants are persisted so that refreshTokenInternal can call
@@ -569,10 +628,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const authApi = getAuthApi();
       const response = await authApi.exchangeSsoCode(request);
 
-      const derivedRole =
-        response.user.role ?? deriveActiveRole(response.accessToken, response.tenants);
-      const userWithRole: AuthUser =
-        derivedRole != null ? { ...response.user, role: derivedRole } : response.user;
+      const userWithRole: AuthUser = buildSessionUser(response);
 
       tokenStorage.setAccessToken(response.accessToken);
       tokenStorage.setRefreshToken(response.refreshToken);

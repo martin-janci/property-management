@@ -34,7 +34,7 @@ import {
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams } from 'react-router-dom';
-import { AuthRequiredGate, useToast } from '../../components';
+import { AuthRequiredGate, ProtectedRoute, useToast } from '../../components';
 import { useAuth } from '../../contexts';
 import type { AlertStateFilter, SensorFormValues, ThresholdFormValues } from '../../features/iot';
 import { useIotWebSocket } from '../../features/iot';
@@ -45,7 +45,7 @@ import {
   IotSensorListPage,
   IotThresholdConfigPage,
 } from '../lazyRoutes';
-import { transformBuildingForUI } from '../shared';
+import { MANAGER_ROLES, transformBuildingForUI } from '../shared';
 
 /** Map a numeric-string form field to a number, or null when blank. */
 function toIntOrNull(value: string): number | null {
@@ -121,7 +121,7 @@ function IotDashboardPageRoute() {
       showToast({
         type: 'error',
         title: t('iot.acknowledgeFailed', { defaultValue: 'Failed to acknowledge alert' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   };
@@ -133,7 +133,7 @@ function IotDashboardPageRoute() {
       showToast({
         type: 'error',
         title: t('iot.resolveFailed', { defaultValue: 'Failed to resolve alert' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   };
@@ -201,7 +201,7 @@ function SensorListPageRoute() {
       showToast({
         type: 'error',
         title: t('iot.sensorDeleteFailed', { defaultValue: 'Failed to delete sensor' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   };
@@ -268,7 +268,7 @@ function RegisterSensorPageRoute() {
       showToast({
         type: 'error',
         title: t('iot.sensorRegisterFailed', { defaultValue: 'Failed to register sensor' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   };
@@ -351,7 +351,7 @@ function EditSensorPageRoute() {
       showToast({
         type: 'error',
         title: t('iot.sensorUpdateFailed', { defaultValue: 'Failed to update sensor' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   };
@@ -421,7 +421,7 @@ function IotAlertsPageRoute() {
       showToast({
         type: 'error',
         title: t('iot.acknowledgeFailed', { defaultValue: 'Failed to acknowledge alert' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   };
@@ -433,7 +433,7 @@ function IotAlertsPageRoute() {
       showToast({
         type: 'error',
         title: t('iot.resolveFailed', { defaultValue: 'Failed to resolve alert' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   };
@@ -537,7 +537,7 @@ function ThresholdConfigPageRoute() {
       showToast({
         type: 'error',
         title: t('iot.thresholdCreateFailed', { defaultValue: 'Failed to create threshold' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
       throw error;
     }
@@ -582,7 +582,7 @@ function ThresholdConfigPageRoute() {
       showToast({
         type: 'error',
         title: t('iot.thresholdDeleteFailed', { defaultValue: 'Failed to delete threshold' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   };
@@ -597,7 +597,7 @@ function ThresholdConfigPageRoute() {
       showToast({
         type: 'error',
         title: t('iot.thresholdUpdateFailed', { defaultValue: 'Failed to update threshold' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   };
@@ -645,12 +645,54 @@ function ThresholdConfigPageRoute() {
 export function iotRoutes() {
   return (
     <>
-      <Route path="/iot" element={<IotDashboardPageRoute />} />
-      <Route path="/iot/alerts" element={<IotAlertsPageRoute />} />
-      <Route path="/iot/sensors" element={<SensorListPageRoute />} />
-      <Route path="/iot/sensors/new" element={<RegisterSensorPageRoute />} />
-      <Route path="/iot/sensors/:sensorId/edit" element={<EditSensorPageRoute />} />
-      <Route path="/iot/sensors/:sensorId/thresholds" element={<ThresholdConfigPageRoute />} />
+      <Route
+        path="/iot"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <IotDashboardPageRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/iot/alerts"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <IotAlertsPageRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/iot/sensors"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <SensorListPageRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/iot/sensors/new"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <RegisterSensorPageRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/iot/sensors/:sensorId/edit"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <EditSensorPageRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/iot/sensors/:sensorId/thresholds"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <ThresholdConfigPageRoute />
+          </ProtectedRoute>
+        }
+      />
     </>
   );
 }

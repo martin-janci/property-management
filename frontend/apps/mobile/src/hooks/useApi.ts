@@ -22,7 +22,7 @@
 import { type UseQueryOptions, useMutation, useQuery } from '@tanstack/react-query';
 import * as SecureStore from 'expo-secure-store';
 import { getApiBaseUrl } from '../config/api';
-import { decodeJwtPayload } from '../utils/jwt';
+import { resolveTenantId } from '../utils/session';
 
 export { getTenantId };
 
@@ -41,9 +41,7 @@ async function getAccessToken(): Promise<string | null> {
 async function getTenantId(): Promise<string | null> {
   const token = await getAccessToken();
   if (!token) return null;
-  const claims = decodeJwtPayload(token);
-  const value = claims?.tenant_id;
-  return typeof value === 'string' ? value : null;
+  return resolveTenantId(token);
 }
 
 interface RequestOptions {

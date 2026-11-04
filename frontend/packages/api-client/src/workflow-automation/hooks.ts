@@ -14,6 +14,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { getOrg } from '../auth/org-provider';
+import { authenticatedFetch } from '../lib/fetch';
 import {
   type ApiAutomationExecutionList,
   type ApiAutomationExecutionStats,
@@ -48,7 +49,7 @@ async function requestJson<T>(
   init: RequestInit | undefined,
   failure: string
 ): Promise<T> {
-  const response = await fetch(url, {
+  const response = await authenticatedFetch(url, {
     ...init,
     headers: {
       ...(init?.body ? { 'Content-Type': 'application/json' } : {}),

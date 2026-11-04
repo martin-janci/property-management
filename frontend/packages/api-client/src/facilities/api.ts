@@ -4,6 +4,7 @@
  * Client functions for facility management and booking.
  */
 
+import { authenticatedFetch } from '../lib/fetch';
 import type {
   AvailabilityQuery,
   AvailableSlot,
@@ -25,11 +26,11 @@ import type {
 
 const API_BASE = '/api/v1';
 
-// NOTE: Authentication headers (Authorization, etc.) are handled at a higher level
-// by the global fetch interceptor or API client wrapper, not in individual API calls.
+// Authorization and X-Tenant-ID come from the shared token/org providers via
+// `authenticatedFetch`, the same as the generated SDK.
 
 async function fetchApi<T>(url: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(url, {
+  const response = await authenticatedFetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -53,6 +54,37 @@ async function fetchApi<T>(url: string, options?: RequestInit): Promise<T> {
 }
 
 // ============================================================================
+// RESPONSE NORMALIZATION
+// ============================================================================
+
+/**
+ * The api-server list endpoints (`GET /buildings/{id}/facilities`,
+ * `/buildings/{id}/bookings/pending`, `/bookings/my`, facility bookings) return
+ * a bare JSON array, while the client types promise `{ items, total }`. Accept
+ * both shapes so pages can always read `response.items`.
+ */
+export function normalizeFacilityList<T>(raw: unknown): { items: T[]; total: number } {
+  if (Array.isArray(raw)) {
+    return { items: raw as T[], total: raw.length };
+  }
+  const obj = (raw ?? {}) as { items?: unknown; total?: unknown };
+  const items = Array.isArray(obj.items) ? (obj.items as T[]) : [];
+  return { items, total: typeof obj.total === 'number' ? obj.total : items.length };
+}
+
+/**
+ * Turn a `YYYY-MM-DD` calendar day into the `[from, to)` RFC 3339 range the
+ * availability endpoint requires. The range covers the whole day in the
+ * browser's local time zone, which is how the booking form interprets times.
+ */
+export function facilityDayRange(date: string): { from: string; to: string } {
+  const [y, m, d] = date.split('-').map((part) => Number.parseInt(part, 10));
+  const start = new Date(y, (m ?? 1) - 1, d ?? 1);
+  const end = new Date(y, (m ?? 1) - 1, (d ?? 1) + 1);
+  return { from: start.toISOString(), to: end.toISOString() };
+}
+
+// ============================================================================
 // FACILITY MANAGEMENT
 // ============================================================================
 
@@ -71,7 +103,11 @@ export async function listFacilities(
   if (params?.limit !== undefined) searchParams.set('limit', String(params.limit));
   if (params?.offset !== undefined) searchParams.set('offset', String(params.offset));
   const query = searchParams.toString();
-  return fetchApi(`${API_BASE}/buildings/${buildingId}/facilities${query ? `?${query}` : ''}`);
+  return normalizeFacilityList(
+    await fetchApi<unknown>(
+      `${API_BASE}/buildings/${buildingId}/facilities${query ? `?${query}` : ''}`
+    )
+  );
 }
 
 /**
@@ -129,8 +165,11 @@ export async function checkAvailability(
   facilityId: string,
   params: AvailabilityQuery
 ): Promise<AvailableSlot[]> {
+  const range =
+    params.from && params.to ? { from: params.from, to: params.to } : facilityDayRange(params.date);
   const searchParams = new URLSearchParams();
-  searchParams.set('date', params.date);
+  searchParams.set('from', range.from);
+  searchParams.set('to', range.to);
   return fetchApi(
     `${API_BASE}/buildings/${buildingId}/facilities/${facilityId}/availability?${searchParams}`
   );
@@ -153,8 +192,10 @@ export async function listFacilityBookings(
   if (params?.to_date) searchParams.set('to_date', params.to_date);
   if (params?.status) searchParams.set('status', params.status);
   const query = searchParams.toString();
-  return fetchApi(
-    `${API_BASE}/buildings/${buildingId}/facilities/${facilityId}/bookings${query ? `?${query}` : ''}`
+  return normalizeFacilityList(
+    await fetchApi<unknown>(
+      `${API_BASE}/buildings/${buildingId}/facilities/${facilityId}/bookings${query ? `?${query}` : ''}`
+    )
   );
 }
 
@@ -181,7 +222,9 @@ export async function getMyBookings(params?: MyBookingsQuery): Promise<BookingLi
   if (params?.limit !== undefined) searchParams.set('limit', String(params.limit));
   if (params?.offset !== undefined) searchParams.set('offset', String(params.offset));
   const query = searchParams.toString();
-  return fetchApi(`${API_BASE}/bookings/my${query ? `?${query}` : ''}`);
+  return normalizeFacilityList(
+    await fetchApi<unknown>(`${API_BASE}/bookings/my${query ? `?${query}` : ''}`)
+  );
 }
 
 /**
@@ -232,8 +275,10 @@ export async function listPendingBookings(
   if (params?.limit !== undefined) searchParams.set('limit', String(params.limit));
   if (params?.offset !== undefined) searchParams.set('offset', String(params.offset));
   const query = searchParams.toString();
-  return fetchApi(
-    `${API_BASE}/buildings/${buildingId}/bookings/pending${query ? `?${query}` : ''}`
+  return normalizeFacilityList(
+    await fetchApi<unknown>(
+      `${API_BASE}/buildings/${buildingId}/bookings/pending${query ? `?${query}` : ''}`
+    )
   );
 }
 
