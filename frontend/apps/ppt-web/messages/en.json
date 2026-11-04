@@ -2477,7 +2477,8 @@
       "checkInsToday": "Check-ins Today",
       "checkOutsToday": "Check-outs Today",
       "registrationRequired": "Guest Registration Required",
-      "registrationRequiredDesc": "{{count}} guest(s) need to be registered with authorities before check-in.",
+      "registrationRequiredDesc_one": "{{count}} guest needs to be registered with the authorities before check-in.",
+      "registrationRequiredDesc_other": "{{count}} guests need to be registered with the authorities before check-in.",
       "registerGuests": "Register Guests",
       "currentGuests": "Currently Staying",
       "upcomingBookings": "Upcoming Bookings",
@@ -2490,7 +2491,8 @@
     },
     "bookings": {
       "title": "Bookings",
-      "showing": "{{count}} booking(s) found",
+      "showing_one": "{{count}} booking found",
+      "showing_other": "{{count}} bookings found",
       "createBooking": "Create Booking",
       "building": "Building",
       "unit": "Unit",
@@ -2502,7 +2504,12 @@
       "clearFilters": "Clear Filters",
       "noBookings": "No bookings found",
       "createFirstBooking": "Create your first booking",
-      "page": "Page {{current}} of {{total}}"
+      "page": "Page {{current}} of {{total}}",
+      "cancelBooking": "Cancel booking",
+      "cancelTitle": "Cancel this booking?",
+      "cancelMessage": "The booking of {{guest}} will be cancelled and its dates released in the calendar. This cannot be undone.",
+      "cancelConfirm": "Cancel booking",
+      "keepBooking": "Keep booking"
     },
     "bookingDetail": {
       "title": "Booking Details",
@@ -2524,10 +2531,40 @@
       "timeline": "Timeline",
       "created": "Booking created",
       "updated": "Last updated",
-      "pendingRegistrations": "{{count}} guest(s) pending registration",
+      "pendingRegistrations_one": "{{count}} guest pending registration",
+      "pendingRegistrations_other": "{{count}} guests pending registration",
       "pendingRegistrationsDesc": "These guests need to be registered with authorities before check-in.",
       "checkInFailed": "Failed to check in",
-      "checkOutFailed": "Failed to check out"
+      "checkOutFailed": "Failed to check out",
+      "cancelFailed": "Failed to cancel booking"
+    },
+    "bookingForm": {
+      "createTitle": "New booking",
+      "editTitle": "Edit booking",
+      "unit": "Unit",
+      "source": "Source",
+      "guestName": "Guest name",
+      "guestEmail": "Email",
+      "guestPhone": "Phone",
+      "guestCount": "Number of guests",
+      "totalPrice": "Total price",
+      "currency": "Currency",
+      "guestNotes": "Note from the guest",
+      "internalNotes": "Internal note",
+      "internalNotesHelp": "Visible only to your team.",
+      "create": "Create booking",
+      "created": "Booking created",
+      "saved": "Booking updated",
+      "saveFailed": "The booking could not be saved. Please try again.",
+      "unavailable": "The unit is not available for these dates – another booking or block overlaps them.",
+      "errors": {
+        "unit": "Select a unit.",
+        "guestName": "Enter the guest's name.",
+        "dates": "Enter both the check-in and check-out date.",
+        "dateOrder": "Check-out must be after check-in.",
+        "guestCount": "Enter at least one guest.",
+        "price": "Enter a valid amount, e.g. 240.50."
+      }
     },
     "status": {
       "pending": "Pending",
@@ -2543,10 +2580,11 @@
       "direct": "Direct",
       "other": "Other"
     },
-    "night": "night",
+    "nightsCount_one": "{{count}} night",
+    "nightsCount_other": "{{count}} nights",
     "nights": "nights",
-    "guestSingular": "guest",
-    "guestPlural": "guests",
+    "guestsCount_one": "{{count}} guest",
+    "guestsCount_other": "{{count}} guests",
     "bookingId": "Booking ID",
     "currentlyStaying": "Currently staying",
     "checkIn": "Check In",
@@ -2615,7 +2653,12 @@
       "syncedSuccessfully": "Synced successfully",
       "syncNow": "Sync Now",
       "disconnect": "Disconnect",
-      "connect": "Connect"
+      "connectPlatform": "Connect {{platform}}",
+      "reconnect": "Reconnect",
+      "justNow": "Just now",
+      "settings": "Settings",
+      "settingsFor": "{{platform}} connection settings",
+      "pendingHint": "Authorize the account in Settings → Integrations to start syncing reservations."
     },
     "connections": {
       "title": "Platform Connections",
@@ -2633,7 +2676,40 @@
       "selectPlatform": "Select Platform",
       "create": "Create Connection",
       "createFailed": "Failed to create connection",
-      "syncFailed": "Failed to sync platform"
+      "syncFailed": "Failed to sync platform",
+      "disconnectTitle": "Disconnect this platform?",
+      "disconnectMessage": "{{platform}} will stop syncing reservations and availability for {{unit}}. Imported bookings are kept and you can reconnect at any time.",
+      "disconnected": "Platform disconnected",
+      "disconnectFailed": "Failed to disconnect platform",
+      "reconnected": "Platform reconnected",
+      "reconnectFailed": "Failed to reconnect platform",
+      "removeConnection": "Remove connection",
+      "removeTitle": "Remove this connection?",
+      "removeMessage": "The {{platform}} connection for {{unit}} and its sync settings will be deleted. Imported bookings are kept.",
+      "removeConfirm": "Remove",
+      "removed": "Connection removed",
+      "removeFailed": "Failed to remove connection",
+      "settings": {
+        "title": "{{platform}} settings",
+        "propertyId": "Listing ID on the platform",
+        "propertyIdHelp": "The ID of this unit's listing on {{platform}}.",
+        "listingUrl": "Listing URL",
+        "invalidUrl": "Enter a full address starting with https://",
+        "syncCalendar": "Sync calendar",
+        "syncCalendarHelp": "Import reservations and keep availability in sync automatically.",
+        "syncInterval": "Sync interval",
+        "intervalMinutes_one": "Every {{count}} minute",
+        "intervalMinutes_other": "Every {{count}} minutes",
+        "intervalHours_one": "Every hour",
+        "intervalHours_other": "Every {{count}} hours",
+        "intervalDays_one": "Once a day",
+        "intervalDays_other": "Every {{count}} days",
+        "blockOtherPlatforms": "Block dates on the other platforms",
+        "blockOtherPlatformsHelp": "A reservation from this platform blocks the same dates on the other connected platforms.",
+        "loadFailed": "The connection settings could not be loaded.",
+        "saveFailed": "The settings could not be saved. Please try again.",
+        "saved": "Connection settings saved"
+      }
     },
     "guest": {
       "personalInfo": "Personal Information",
@@ -2721,12 +2797,21 @@
         "documentTypeRequired": "Document type is required",
         "documentNumberRequired": "Document number is required",
         "invalidEmail": "Please enter a valid email address"
-      }
+      },
+      "deleteTitle": "Delete this guest?",
+      "deleteMessage": "{{name}} will be removed from the booking, including the ID details entered for registration."
+    },
+    "guests": {
+      "registerFailed": "Failed to register guest",
+      "updateFailed": "Failed to update guest",
+      "createFailed": "Failed to add guest",
+      "deleteFailed": "Failed to delete guest"
     },
     "guestRegistration": {
       "title": "Guest Registration",
       "subtitle": "Register guests with authorities for compliance",
-      "pendingCount": "{{count}} guest(s) pending registration",
+      "pendingCount_one": "{{count}} guest pending registration",
+      "pendingCount_other": "{{count}} guests pending registration",
       "pendingDesc": "These guests need to be registered with authorities before check-in.",
       "allRegistered": "All Guests Registered",
       "allRegisteredDesc": "Great job! All your guests have been registered with the authorities.",
