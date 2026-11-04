@@ -13,6 +13,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { clearTokenProvider, setTokenProvider } from '../auth/token-provider';
 import {
   addViolationEvidence,
+  createLeaseAmendment,
   createLeaseTemplate,
   createViolationAppeal,
   getLease,
@@ -20,7 +21,10 @@ import {
   listOrganizationMembers,
   listViolationEvidence,
   recordLeasePayment,
+  renewLease,
   reviewApplication,
+  terminateLease,
+  updateLease,
   updateLeaseTemplate,
   updateViolation,
 } from './api';
@@ -79,6 +83,52 @@ describe('leases api client — request wiring contract', () => {
     const call = lastCall();
     expect(call.method).toBe('POST');
     expect(call.url).toBe(`/api/v1/leases/${ID}/payments`);
+    expect(call.body).toEqual(body);
+  });
+
+  it('updateLease → PUT /api/v1/leases/{id}', async () => {
+    const body = { notes: 'Keys handed over', pets_allowed: true, max_occupants: 3 };
+    await updateLease(ID, body);
+    const call = lastCall();
+    expect(call.method).toBe('PUT');
+    expect(call.url).toBe(`/api/v1/leases/${ID}`);
+    expect(call.body).toEqual(body);
+    expect(call.headers.Authorization).toBe('Bearer test-token');
+  });
+
+  it('terminateLease → POST /api/v1/leases/{id}/terminate', async () => {
+    const body = {
+      termination_reason: 'mutual_agreement' as const,
+      termination_notes: 'Agreed in writing',
+      effective_date: '2026-12-31',
+    };
+    await terminateLease(ID, body);
+    const call = lastCall();
+    expect(call.method).toBe('POST');
+    expect(call.url).toBe(`/api/v1/leases/${ID}/terminate`);
+    expect(call.body).toEqual(body);
+  });
+
+  it('renewLease → POST /api/v1/leases/{id}/renew', async () => {
+    const body = { new_end_date: '2027-12-31', new_monthly_rent: 900, term_months: 12 };
+    await renewLease(ID, body);
+    const call = lastCall();
+    expect(call.method).toBe('POST');
+    expect(call.url).toBe(`/api/v1/leases/${ID}/renew`);
+    expect(call.body).toEqual(body);
+  });
+
+  it('createLeaseAmendment → POST /api/v1/leases/{id}/amendments', async () => {
+    const body = {
+      title: 'Parking space',
+      description: 'Adds one parking space',
+      changes: { parking_spaces: 1 },
+      effective_date: '2026-12-01',
+    };
+    await createLeaseAmendment(ID, body);
+    const call = lastCall();
+    expect(call.method).toBe('POST');
+    expect(call.url).toBe(`/api/v1/leases/${ID}/amendments`);
     expect(call.body).toEqual(body);
   });
 

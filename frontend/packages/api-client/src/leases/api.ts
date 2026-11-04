@@ -15,6 +15,7 @@
 import { authenticatedFetchJson } from '../lib/fetch';
 import type {
   CreateApplicationRequest,
+  CreateLeaseAmendmentRequest,
   CreateLeaseRequest,
   CreateLeaseTemplateRequest,
   CreateViolationAppealRequest,
@@ -24,6 +25,7 @@ import type {
   ExpiringLeasesQuery,
   InitiateScreeningRequest,
   Lease,
+  LeaseAmendment,
   LeasePayment,
   LeaseStatistics,
   LeaseTemplate,
@@ -34,9 +36,12 @@ import type {
   ListLeasesResponse,
   OrganizationMembersResponse,
   RecordLeasePaymentRequest,
+  RenewLeaseRequest,
   ReviewApplicationRequest,
   TenantApplication,
   TenantScreening,
+  TerminateLeaseRequest,
+  UpdateLeaseRequest,
   UpdateLeaseTemplateRequest,
   UpdateViolationRequest,
   Violation,
@@ -94,6 +99,41 @@ export async function getLease(id: string): Promise<LeaseWithDetails> {
 /** Create a lease. */
 export async function createLease(body: CreateLeaseRequest): Promise<Lease> {
   return fetchApi<Lease>(`${LEASES_BASE}`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+/** Update a lease's editable ancillary fields (`PUT /api/v1/leases/{id}`). */
+export async function updateLease(id: string, body: UpdateLeaseRequest): Promise<Lease> {
+  return fetchApi<Lease>(`${LEASES_BASE}/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(body),
+  });
+}
+
+/** Terminate a lease (`POST /api/v1/leases/{id}/terminate`). */
+export async function terminateLease(id: string, body: TerminateLeaseRequest): Promise<Lease> {
+  return fetchApi<Lease>(`${LEASES_BASE}/${id}/terminate`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+/** Renew a lease (`POST /api/v1/leases/{id}/renew`); returns the new draft lease. */
+export async function renewLease(id: string, body: RenewLeaseRequest): Promise<Lease> {
+  return fetchApi<Lease>(`${LEASES_BASE}/${id}/renew`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+/** Add an amendment to a lease (`POST /api/v1/leases/{id}/amendments`). */
+export async function createLeaseAmendment(
+  id: string,
+  body: CreateLeaseAmendmentRequest
+): Promise<LeaseAmendment> {
+  return fetchApi<LeaseAmendment>(`${LEASES_BASE}/${id}/amendments`, {
     method: 'POST',
     body: JSON.stringify(body),
   });

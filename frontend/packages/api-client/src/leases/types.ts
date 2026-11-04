@@ -555,6 +555,68 @@ export interface RecordLeasePaymentRequest {
   paid_at?: string;
 }
 
+/**
+ * Body for `PUT /api/v1/leases/{id}` (`db::models::lease::UpdateLease`). Only
+ * these ancillary fields are editable; rent, dates and parties are fixed once
+ * a lease exists (use renew / amendments instead).
+ */
+export interface UpdateLeaseRequest {
+  landlord_address?: string;
+  tenant_phone?: string;
+  parking_spaces?: number;
+  storage_units?: number;
+  pets_allowed?: boolean;
+  /** Decimal amount. */
+  pet_deposit?: number | string;
+  max_occupants?: number;
+  smoking_allowed?: boolean;
+  notes?: string;
+}
+
+/** Backend `termination_reason` enum values. */
+export type LeaseTerminationReason =
+  | 'end_of_term'
+  | 'mutual_agreement'
+  | 'tenant_breach'
+  | 'landlord_breach'
+  | 'property_sale'
+  | 'renovation'
+  | 'other';
+
+/** Body for `POST /api/v1/leases/{id}/terminate` (`db::models::lease::TerminateLease`). */
+export interface TerminateLeaseRequest {
+  termination_reason: LeaseTerminationReason;
+  termination_notes?: string;
+  /** `YYYY-MM-DD`; the server uses `NOW()` when omitted. */
+  effective_date?: string;
+}
+
+/**
+ * Body for `POST /api/v1/leases/{id}/renew` (`db::models::lease::RenewLease`).
+ * The server creates a new `draft` lease starting the day after the current
+ * end date and marks the current one `renewed`.
+ */
+export interface RenewLeaseRequest {
+  /** `YYYY-MM-DD`. */
+  new_end_date: string;
+  /** Decimal amount; keeps the current rent when omitted. */
+  new_monthly_rent?: number | string;
+  /** Decimal amount; keeps the current deposit when omitted. */
+  new_security_deposit?: number | string;
+  term_months: number;
+  notes?: string;
+}
+
+/** Body for `POST /api/v1/leases/{id}/amendments` (`db::models::lease::CreateAmendment`). */
+export interface CreateLeaseAmendmentRequest {
+  title: string;
+  description?: string;
+  /** Free-form JSON describing the changed terms (required by the server). */
+  changes: Record<string, unknown>;
+  /** `YYYY-MM-DD`. */
+  effective_date: string;
+}
+
 /** Body for `POST /api/v1/leases/templates` (`CreateTemplateRequest`, flattened). */
 export interface CreateLeaseTemplateRequest {
   organization_id: string;
