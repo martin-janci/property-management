@@ -612,4 +612,80 @@ mod tests {
             .await
             .is_ok());
     }
+
+    /// A fake `DatabaseError` carrying an arbitrary SQLSTATE code, so the
+    /// structured create-error classification can be exercised without a live
+    /// Postgres (mirrors the `MockUniqueViolation` fake in `portal_webhooks`).
+    #[derive(Debug)]
+    struct MockDbError {
+        code: &'static str,
+    }
+
+    impl std::fmt::Display for MockDbError {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            // Deliberately does NOT contain the English words the old
+            // substring classifier keyed on ("violates foreign key",
+            // "listing") — a real 23503 must still classify as NotFound.
+            write!(f, "constraint check failed [{}]", self.code)
+        }
+    }
+
+    impl std::error::Error for MockDbError {}
+
+    impl sqlx::error::DatabaseError for MockDbError {
+        fn message(&self) -> &str {
+            "constraint check failed"
+        }
+        fn code(&self) -> Option<std::borrow::Cow<'_, str>> {
+            Some(std::borrow::Cow::Borrowed(self.code))
+        }
+        fn as_error(&self) -> &(dyn std::error::Error + Send + Sync + 'static) {
+            self
+        }
+        fn as_error_mut(&mut self) -> &mut (dyn std::error::Error + Send + Sync + 'static) {
+            self
+        }
+        fn into_error(self: Box<Self>) -> Box<dyn std::error::Error + Send + Sync + 'static> {
+            self
+        }
+        fn kind(&self) -> sqlx::error::ErrorKind {
+            sqlx::error::ErrorKind::Other
+        }
+    }
+
+    /// IG3 regression: a Postgres foreign_key_violation (SQLSTATE 23503) on the
+    /// insert classifies as `ReferencedEntityNotFound` — via the structured
+    /// code, NOT by substring-matching the (locale-dependent) message, which the
+    /// mock deliberately leaves free of the old "violates foreign key" / "listing"
+    /// keywords.
+    #[test]
+    fn fk_violation_classifies_as_referenced_entity_not_found() {
+        let err = SqlxError::Database(Box::new(MockDbError { code: "23503" }));
+        assert!(matches!(
+            InquiriesHandler::classify_create_error(&err),
+            InquiryResult::ReferencedEntityNotFound
+        ));
+    }
+
+    /// A non-FK database error (here a 23505 unique violation) is NOT a
+    /// not-found; it falls through to an opaque `DatabaseError` (→ 500), so the
+    /// classifier never masks an unrelated failure as a 404.
+    #[test]
+    fn non_fk_db_error_classifies_as_database_error() {
+        let err = SqlxError::Database(Box::new(MockDbError { code: "23505" }));
+        assert!(matches!(
+            InquiriesHandler::classify_create_error(&err),
+            InquiryResult::DatabaseError(_)
+        ));
+    }
+
+    /// A non-database error (e.g. the pool is closed) is also an opaque
+    /// `DatabaseError`, never a spurious not-found.
+    #[test]
+    fn non_database_error_classifies_as_database_error() {
+        assert!(matches!(
+            InquiriesHandler::classify_create_error(&SqlxError::PoolClosed),
+            InquiryResult::DatabaseError(_)
+        ));
+    }
 }
