@@ -108,7 +108,11 @@ describe('EventsPage', () => {
     await user.click(await screen.findByRole('button', { name: 'Maybe' }));
     await waitFor(() =>
       expect(h.showToast).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'error', message: 'Failed to RSVP to event' })
+        // Error copy is translated by HTTP status (5xx → generic server error).
+        expect.objectContaining({
+          type: 'error',
+          message: 'An unexpected error occurred. Please try again later.',
+        })
       )
     );
   });

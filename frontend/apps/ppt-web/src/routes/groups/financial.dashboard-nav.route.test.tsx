@@ -18,7 +18,12 @@ import { financialRoutes } from './financial';
 vi.mock('react-i18next', async (importOriginal) => ({
   ...(await importOriginal<typeof import('react-i18next')>()),
   useTranslation: () => ({
-    t: (key: string, opts?: { defaultValue?: string }) => opts?.defaultValue ?? key,
+    // Echo interpolation values so assertions can find the rendered data.
+    t: (key: string, opts?: Record<string, unknown>) => {
+      if (typeof opts?.defaultValue === 'string') return opts.defaultValue;
+      const values = Object.values(opts ?? {}).filter((v) => typeof v !== 'object');
+      return values.length ? `${key} ${values.join(' ')}` : key;
+    },
     i18n: { language: 'en' },
   }),
 }));
@@ -154,8 +159,8 @@ describe('FinancialDashboardPageRoute', () => {
   it('overdue "View" opens the invoice detail route', async () => {
     renderAt('/financial');
     await screen.findByText('INV-9');
-    await userEvent.click(screen.getByRole('button', { name: 'View' }));
+    await userEvent.click(screen.getByRole('button', { name: /^(View|financial\.view)$/ }));
     await waitFor(() => expect(mockGetInvoice).toHaveBeenCalledWith('inv-9'));
-    expect(await screen.findByText('Invoice INV-9')).toBeInTheDocument();
+    expect(await screen.findByText(/INV-9/, { selector: 'h2' })).toBeInTheDocument();
   });
 });

@@ -183,14 +183,14 @@ describe('/financial/invoices/new', () => {
     const user = userEvent.setup();
     renderAt('/financial/invoices/new');
 
-    expect(await screen.findByRole('heading', { name: 'New invoice' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /^New invoice$/i })).toBeInTheDocument();
     const unitSelect = await screen.findByLabelText(/^Unit \*$/);
     expect(screen.getByRole('option', { name: 'Tower A - 101' })).toBeInTheDocument();
 
     await user.selectOptions(unitSelect, 'unit-1');
-    await user.type(screen.getByLabelText(/^Due date/), '2026-12-01');
+    await user.type(screen.getByLabelText(/^Due date/i), '2026-12-01');
     await user.type(screen.getAllByLabelText('Description')[0], 'Monthly service fee');
-    await user.click(screen.getByRole('button', { name: 'Create invoice' }));
+    await user.click(screen.getByRole('button', { name: /^Create invoice$/i }));
 
     await waitFor(() =>
       expect(api.createInvoice).toHaveBeenCalledWith(
@@ -212,12 +212,12 @@ describe('/financial/invoices/:invoiceId', () => {
     renderAt('/financial/invoices/inv-1');
 
     expect(
-      await screen.findByRole('heading', { name: 'Invoice INV-2026-001' })
+      await screen.findByRole('heading', { name: /^Invoice INV-2026-001$/i })
     ).toBeInTheDocument();
     expect(api.getInvoice).toHaveBeenCalledWith('inv-1');
     expect(screen.getByText('Monthly service fee')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Record payment' }));
+    await user.click(screen.getByRole('button', { name: /^Record payment$/i }));
     await waitFor(() =>
       expect(screen.getByTestId('location')).toHaveTextContent(
         '/financial/payments/new?unitId=unit-1'
@@ -238,15 +238,15 @@ describe('/financial/payments/new', () => {
     const user = userEvent.setup();
     renderAt('/financial/payments/new?unitId=unit-1');
 
-    expect(await screen.findByRole('heading', { name: 'Record payment' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /^Record payment$/i })).toBeInTheDocument();
     const unitSelect = (await screen.findByLabelText(/^Unit \*$/)) as HTMLSelectElement;
     expect(unitSelect.value).toBe('unit-1');
     // The unit's open invoice is offered for allocation.
     expect(screen.getByText('INV-2026-001')).toBeInTheDocument();
 
     await user.type(screen.getByLabelText(/^Amount/), '100');
-    await user.selectOptions(screen.getByLabelText(/^Payment method/), 'bank_transfer');
-    await user.click(screen.getByRole('button', { name: 'Record payment' }));
+    await user.selectOptions(screen.getByLabelText(/^Payment method/i), 'bank_transfer');
+    await user.click(screen.getByRole('button', { name: /^Record payment$/i }));
 
     await waitFor(() =>
       expect(api.recordPayment).toHaveBeenCalledWith(

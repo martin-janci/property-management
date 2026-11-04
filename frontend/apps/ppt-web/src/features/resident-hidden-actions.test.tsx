@@ -5,6 +5,7 @@
  * `isManagerRole` users, so owners and tenants get read-only pages instead of
  * buttons that end in 403 or "Access denied".
  */
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
@@ -54,7 +55,13 @@ import { VotingPage } from './voting/pages/VotingPage';
 
 describe('VotingPage', () => {
   it('hides "+ New vote" and "Create the first vote" without onCreateVote', () => {
-    render(<VotingPage onOpenVote={vi.fn()} />);
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter>
+          <VotingPage onOpenVote={vi.fn()} />
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
     expect(screen.queryByRole('button', { name: /new vote/i })).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /create the first vote/i })
@@ -63,7 +70,13 @@ describe('VotingPage', () => {
 
   it('shows the create action when the route passes onCreateVote', () => {
     const onCreateVote = vi.fn();
-    render(<VotingPage onOpenVote={vi.fn()} onCreateVote={onCreateVote} />);
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter>
+          <VotingPage onOpenVote={vi.fn()} onCreateVote={onCreateVote} />
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
     fireEvent.click(screen.getByRole('button', { name: /new vote/i }));
     expect(onCreateVote).toHaveBeenCalledOnce();
   });

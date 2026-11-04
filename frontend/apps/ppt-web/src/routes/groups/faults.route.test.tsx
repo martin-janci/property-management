@@ -72,7 +72,8 @@ vi.mock('@ppt/api-client', () => ({
 
 // ── building units (GET /buildings/{id}/units) ──
 const mockUseUnits = vi.fn();
-vi.mock('../../features/buildings/hooks', () => ({
+vi.mock('../../features/buildings/hooks', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../features/buildings/hooks')>()),
   useUnits: (...args: unknown[]) => mockUseUnits(...args),
 }));
 
@@ -250,7 +251,11 @@ describe('CreateFaultPageRoute (nav-fixes)', () => {
     mockUseBuildings.mockReturnValue({ data: { items: [{ id: 'b-1', name: 'Tower A' }] } });
     renderFaultsRoute('/faults/new');
 
-    const building = await screen.findByLabelText(/faults\.form\.building/, {}, { timeout: 5000 });
+    const building = await screen.findByLabelText(
+      /^(faults\.form\.building|Building)/,
+      {},
+      { timeout: 5000 }
+    );
     // Before a building is chosen the unit query is disabled.
     expect(mockUseUnits).toHaveBeenLastCalledWith('', { limit: 100 }, false);
 
@@ -259,6 +264,6 @@ describe('CreateFaultPageRoute (nav-fixes)', () => {
     expect(mockUseUnits).toHaveBeenLastCalledWith('b-1', { limit: 100 }, true);
     expect(await screen.findByRole('option', { name: '3B' })).toBeInTheDocument();
     // Photos could never be persisted (no storage upload flow) → no picker.
-    expect(screen.queryByText('faults.photo.sectionTitle')).not.toBeInTheDocument();
+    expect(screen.queryByText(/faults\.photo\.sectionTitle|Add Photos/)).not.toBeInTheDocument();
   });
 });

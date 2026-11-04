@@ -45,7 +45,9 @@ vi.mock('../../components', async (importOriginal) => {
   return { ...actual, useToast: () => ({ showToast: vi.fn() }) };
 });
 
-vi.mock('@ppt/api-client', () => ({
+vi.mock('@ppt/api-client', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@ppt/api-client')>()),
+  getToken: () => 'test-token',
   useFaults: () => ({
     data: {
       faults: [

@@ -82,7 +82,7 @@ describe('useCommunityBuilding', () => {
     await waitFor(() =>
       expect(api.find('GET', '/api/v1/community/buildings/b-2/groups')).toHaveLength(1)
     );
-    expect(api.find('GET', '/api/v1/buildings')[0].search).toBe('?pageSize=100');
+    expect(api.find('GET', '/api/v1/buildings')[0].search).toBe('?limit=100');
 
     await user.selectOptions(select, BUILDING_ID);
     await waitFor(() =>

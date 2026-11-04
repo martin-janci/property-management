@@ -45,7 +45,7 @@ describe('BuildingDetailPage quick links', () => {
       'href',
       '/buildings/b-1/facilities'
     );
-    expect(screen.getByRole('link', { name: 'Person-months' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'buildings.detail.personMonths' })).toHaveAttribute(
       'href',
       '/buildings/b-1/person-months'
     );

@@ -160,9 +160,11 @@ describe('CreateGroupPage', () => {
     await user.type(await screen.findByLabelText(/Group Name/), 'Runners');
     await user.click(screen.getByRole('button', { name: 'Create Group' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Caller is not a member');
+    // Error copy is translated by HTTP status (403 → permission denied).
+    const denied = 'You do not have permission to perform this action.';
+    expect(await screen.findByRole('alert')).toHaveTextContent(denied);
     expect(h.showToast).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'error', message: 'Caller is not a member' })
+      expect.objectContaining({ type: 'error', message: denied })
     );
     expect(screen.getByTestId('location')).toHaveTextContent('/community/groups/new');
     expect(screen.getByLabelText(/Group Name/)).toHaveValue('Runners');
