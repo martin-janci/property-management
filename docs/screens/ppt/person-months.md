@@ -70,6 +70,7 @@ Reachable from the building detail page via a "Person-months" quick link.
   units that already have an entry.
 
 ## Agent Log
+- 2026-11-04 — agent: bulk entry (`/buildings/:buildingId/person-months/bulk`): counts not edited fall back to the unit's value, so units that load after mount no longer fail "must be 0 or more"; month names come from `Intl.DateTimeFormat` (R3 #23). Status unchanged.
 - 2026-07-13 — agent: gap-screens-normalize-frontmatter — normalized story-id-style epic ref(s) Epic-3-5 → Epic-3 (strip story suffix); /screens validate clean.
 - 2026-06-22 — FrontendEngineer: created on route+api-client wiring (BIT-190).
 - 2026-07-09 — agent: linked UC-10 (Person-Months, docs/use-cases.md) in useCases frontmatter (gap-screens-link-uc-10).

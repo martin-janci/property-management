@@ -5,6 +5,7 @@
  */
 
 import { bearerAuthHeader } from '../auth';
+import { authenticatedFetch } from '../lib/fetch';
 import type {
   AddMediationNoteRequest,
   AssignMediatorRequest,
@@ -45,7 +46,7 @@ function buildQueryString(params: object): string {
 
 // Helper for API requests
 async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(url, {
+  const response = await authenticatedFetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -68,7 +69,7 @@ async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T>
 
 // Helper for multipart form data requests (file uploads)
 async function apiFormDataRequest<T>(url: string, formData: FormData): Promise<T> {
-  const response = await fetch(url, {
+  const response = await authenticatedFetch(url, {
     method: 'POST',
     body: formData,
     headers: {

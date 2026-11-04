@@ -54,19 +54,19 @@ describe('AcknowledgmentStats', () => {
     render(<AcknowledgmentStats stats={stats({ pendingCount: 1 })} />);
 
     expect(screen.getByText('1')).toBeInTheDocument();
-    expect(screen.getByText(/user haven't read yet/)).toBeInTheDocument();
+    expect(screen.getByText(/user hasn't read it yet/)).toBeInTheDocument();
   });
 
   it('shows the pending banner with plural wording for multiple pending users', () => {
     render(<AcknowledgmentStats stats={stats({ pendingCount: 3 })} />);
 
-    expect(screen.getByText(/users haven't read yet/)).toBeInTheDocument();
+    expect(screen.getByText(/users haven't read it yet/)).toBeInTheDocument();
   });
 
   it('hides the pending banner when nobody is pending', () => {
     render(<AcknowledgmentStats stats={stats({ pendingCount: 0 })} />);
 
-    expect(screen.queryByText(/haven't read yet/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/read it yet/)).not.toBeInTheDocument();
   });
 
   it('forwards a custom className to the root element', () => {

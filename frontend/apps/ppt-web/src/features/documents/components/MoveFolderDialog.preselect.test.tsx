@@ -56,10 +56,10 @@ describe('MoveFolderDialog pre-select', () => {
     expect(selected).toBeInTheDocument();
 
     // Destination label reflects the pre-selected folder, not "root".
-    expect(screen.queryByText('Koreň (bez priečinka)')).not.toBeInTheDocument();
+    expect(screen.queryByText('Root (no folder)')).not.toBeInTheDocument();
 
     // No net change yet → confirm button disabled.
-    const confirm = screen.getByRole('button', { name: 'Presunúť sem' });
+    const confirm = screen.getByRole('button', { name: 'Move here' });
     expect(confirm).toBeDisabled();
   });
 
@@ -74,7 +74,7 @@ describe('MoveFolderDialog pre-select', () => {
     );
 
     const rootOption = screen.getByRole('button', {
-      name: /Všetky dokumenty \(bez priečinka\)/,
+      name: /All documents \(no folder\)/,
     });
     expect(rootOption).toHaveAttribute('aria-pressed', 'true');
   });

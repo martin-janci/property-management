@@ -127,7 +127,7 @@ function PdfRenderer({ documentId, isPdf }: { documentId: string; isPdf: boolean
           <line x1="12" y1="8" x2="12" y2="12" />
           <line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
-        <p>Nahled dokumentu nie je dostupny.</p>
+        <p>{t('documents.preview.documentUnavailable')}</p>
       </div>
     );
   }
@@ -147,14 +147,14 @@ function PdfRenderer({ documentId, isPdf }: { documentId: string; isPdf: boolean
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
           <polyline points="14 2 14 8 20 8" />
         </svg>
-        <p>Nahled nie je dostupny pre tento typ suboru.</p>
+        <p>{t('documents.preview.typeUnavailable')}</p>
         <a
           href={urlData.url}
           target="_blank"
           rel="noopener noreferrer"
           className="pdf-download-link"
         >
-          Stiahnut subor
+          {t('documents.preview.downloadFile')}
         </a>
       </div>
     );
@@ -185,7 +185,7 @@ function PdfRenderer({ documentId, isPdf }: { documentId: string; isPdf: boolean
           </button>
           <span className="pdf-page-indicator" aria-live="polite">
             <strong>{pageNumber}</strong>
-            {' z '}
+            {` ${t('documents.preview.pageOf')} `}
             <strong>{numPages || '...'}</strong>
           </span>
           <button
@@ -266,7 +266,7 @@ function PdfRenderer({ documentId, isPdf }: { documentId: string; isPdf: boolean
 
       {docError && (
         <div className="pdf-state pdf-error" role="alert">
-          <p>Chyba pri nacitani PDF: {docError}</p>
+          <p>{t('documents.preview.pdfError', { error: docError })}</p>
         </div>
       )}
 
@@ -300,11 +300,12 @@ function PdfPlaceholder({
   loading?: boolean;
   small?: boolean;
 }) {
+  const { t } = useTranslation();
   return (
     <div
       className={`pdf-placeholder${small ? ' pdf-placeholder--small' : ''}`}
       aria-busy={loading}
-      aria-label={loading ? 'Nacitava sa nahled...' : 'Nahled dokumentu'}
+      aria-label={loading ? t('documents.preview.loading') : t('documents.preview.documentPreview')}
     >
       <div className="pdf-placeholder-page">
         {loading && <div className="pdf-shimmer" />}

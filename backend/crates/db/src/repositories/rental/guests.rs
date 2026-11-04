@@ -3,7 +3,8 @@
 use super::RentalRepository;
 use super::GUEST_COLUMNS;
 use crate::models::rental::{
-    guest_status, BookingWithGuests, CreateGuest, RentalGuest, UpdateGuest,
+    guest_status, BookingWithGuests, CreateGuest, GuestListItem, GuestListQuery, RentalGuest,
+    UpdateGuest,
 };
 use sqlx::Error as SqlxError;
 use uuid::Uuid;
@@ -260,6 +261,55 @@ impl RentalRepository {
         .await?;
 
         Ok(guests)
+    }
+
+    /// List an organization's guests together with their booking context.
+    ///
+    /// SECURITY (#804): every row is scoped by `g.organization_id = $1`, and the
+    /// booking join additionally requires the booking to belong to the same org,
+    /// so a guest can never surface another tenant's booking/unit data.
+    pub async fn list_guests_for_org(
+        &self,
+        org_id: Uuid,
+        query: GuestListQuery,
+    ) -> Result<Vec<GuestListItem>, SqlxError> {
+        let limit = query.limit.unwrap_or(200).clamp(1, 500);
+
+        let rows = sqlx::query_as::<_, GuestListItem>(
+            r#"
+            SELECT
+                g.id, g.organization_id, g.booking_id,
+                g.first_name, g.last_name, g.date_of_birth, g.nationality,
+                g.id_type, g.id_number, g.id_issuing_country, g.id_expiry_date,
+                g.id_document_url, g.email, g.phone,
+                g.address_street, g.address_city, g.address_postal_code, g.address_country,
+                g.status::text AS status, g.registered_at, g.reported_at, g.report_reference,
+                g.is_primary, g.created_at, g.updated_at,
+                b.guest_name AS booking_guest_name,
+                b.unit_id,
+                u.designation AS unit_name,
+                b.check_in,
+                b.check_out,
+                b.status::text AS booking_status
+            FROM rental_guests g
+            JOIN rental_bookings b
+                ON b.id = g.booking_id AND b.organization_id = g.organization_id
+            JOIN units u ON u.id = b.unit_id
+            WHERE g.organization_id = $1
+                AND ($2::text IS NULL OR g.status::text = $2)
+                AND ($3::uuid IS NULL OR g.booking_id = $3)
+            ORDER BY b.check_in, b.id, g.is_primary DESC, g.created_at
+            LIMIT $4
+            "#,
+        )
+        .bind(org_id)
+        .bind(query.status.as_deref())
+        .bind(query.booking_id)
+        .bind(limit)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows)
     }
 
     /// Get booking with guests.

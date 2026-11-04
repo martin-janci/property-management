@@ -18,6 +18,7 @@ import {
   MyUnitPage,
   PendingBookingsPage,
 } from '../lazyRoutes';
+import { MANAGER_ROLES } from '../shared';
 
 /** Route wrapper for buildings list (Epic 3, Story 3.1) — gap-sweep */
 function BuildingsPageRoute() {
@@ -83,7 +84,7 @@ export function buildingRoutes() {
       <Route
         path="/buildings/:buildingId/facilities/new"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <CreateFacilityPage />
           </ProtectedRoute>
         }
@@ -91,7 +92,7 @@ export function buildingRoutes() {
       <Route
         path="/buildings/:buildingId/facilities/:facilityId/edit"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <EditFacilityPage />
           </ProtectedRoute>
         }
@@ -107,7 +108,7 @@ export function buildingRoutes() {
       <Route
         path="/buildings/:buildingId/facilities/pending"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <PendingBookingsPage />
           </ProtectedRoute>
         }

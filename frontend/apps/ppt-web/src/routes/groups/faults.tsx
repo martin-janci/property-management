@@ -30,7 +30,7 @@ import {
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { useToast } from '../../components';
+import { ProtectedRoute, useToast } from '../../components';
 import { useAuth } from '../../contexts';
 import type {
   FaultDetail,
@@ -49,7 +49,7 @@ import {
   FaultReportsPage,
   FaultsPage,
 } from '../lazyRoutes';
-import { isManagerRole } from '../shared';
+import { isManagerRole, MANAGER_ROLES } from '../shared';
 
 /**
  * Map API FaultStatus (snake_case values) → UI FaultStatus.
@@ -246,7 +246,7 @@ function FaultsPageRoute() {
       showToast({
         type: 'error',
         title: t('faults.failedToLoad', { defaultValue: 'Failed to load faults' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   }, [error, showToast, t]);
@@ -376,10 +376,7 @@ function CreateFaultPageRoute() {
           showToast({
             type: 'error',
             title: t('faults.reportFailed', { defaultValue: 'Failed to report fault' }),
-            message:
-              err instanceof Error
-                ? err.message
-                : t('common.pleaseTryAgain', { defaultValue: 'Please try again.' }),
+            error: err,
           });
         }
       }}
@@ -417,7 +414,7 @@ function FaultDetailPageRoute() {
       showToast({
         type: 'error',
         title: t('faults.failedToLoad', { defaultValue: 'Failed to load fault' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   }, [error, showToast, t]);
@@ -520,10 +517,7 @@ function EditFaultPageRoute() {
           showToast({
             type: 'error',
             title: t('faults.updateFailed', { defaultValue: 'Failed to update fault' }),
-            message:
-              err instanceof Error
-                ? err.message
-                : t('common.pleaseTryAgain', { defaultValue: 'Please try again.' }),
+            error: err,
           });
         }
       }}
@@ -581,7 +575,14 @@ export function faultRoutes() {
     <>
       <Route path="/faults" element={<FaultsPageRoute />} />
       <Route path="/faults/new" element={<CreateFaultPageRoute />} />
-      <Route path="/faults/reports" element={<FaultReportsPageRoute />} />
+      <Route
+        path="/faults/reports"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <FaultReportsPageRoute />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/faults/:faultId" element={<FaultDetailPageRoute />} />
       <Route path="/faults/:faultId/edit" element={<EditFaultPageRoute />} />
     </>

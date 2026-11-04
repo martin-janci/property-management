@@ -30,7 +30,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams } from 'react-router-dom';
-import { useToast } from '../../components';
+import { ProtectedRoute, useToast } from '../../components';
 import { useAuth } from '../../contexts';
 import {
   AnnouncementsPage,
@@ -38,7 +38,7 @@ import {
   EditAnnouncementPage,
   ViewAnnouncementPage,
 } from '../lazyRoutes';
-import { isManagerRole } from '../shared';
+import { isManagerRole, MANAGER_ROLES } from '../shared';
 
 /**
  * Route wrapper for announcements list page (UC-06, gap-79-1).
@@ -272,7 +272,7 @@ export function ViewAnnouncementPageInner({ announcementId }: { announcementId: 
     if (error) {
       showToast({
         type: 'error',
-        title: t('announcements.failedToLoad', { defaultValue: 'Failed to load announcement' }),
+        title: t('announcements.failedToLoadOne', { defaultValue: 'Failed to load announcement' }),
         message: error instanceof Error ? error.message : t('auth.unexpectedError'),
       });
     }
@@ -547,7 +547,7 @@ function EditAnnouncementPageInner({ announcementId }: { announcementId: string 
     if (error) {
       showToast({
         type: 'error',
-        title: t('announcements.failedToLoad', { defaultValue: 'Failed to load announcement' }),
+        title: t('announcements.failedToLoadOne', { defaultValue: 'Failed to load announcement' }),
         message: error instanceof Error ? error.message : t('auth.unexpectedError'),
       });
     }
@@ -605,9 +605,23 @@ export function announcementRoutes() {
   return (
     <>
       <Route path="/announcements" element={<AnnouncementsPageRoute />} />
-      <Route path="/announcements/new" element={<CreateAnnouncementPageRoute />} />
+      <Route
+        path="/announcements/new"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <CreateAnnouncementPageRoute />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/announcements/:announcementId" element={<ViewAnnouncementPageRoute />} />
-      <Route path="/announcements/:announcementId/edit" element={<EditAnnouncementPageRoute />} />
+      <Route
+        path="/announcements/:announcementId/edit"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <EditAnnouncementPageRoute />
+          </ProtectedRoute>
+        }
+      />
     </>
   );
 }

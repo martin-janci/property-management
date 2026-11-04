@@ -337,7 +337,7 @@ export function settingsRoutes() {
       <Route
         path="/automations/rules"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <AutomationRulesPage />
           </ProtectedRoute>
         }
@@ -345,7 +345,7 @@ export function settingsRoutes() {
       <Route
         path="/automations/rules/new"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <CreateRulePage />
           </ProtectedRoute>
         }
@@ -353,7 +353,7 @@ export function settingsRoutes() {
       <Route
         path="/automations/rules/:id/edit"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <EditRulePage />
           </ProtectedRoute>
         }
@@ -361,7 +361,7 @@ export function settingsRoutes() {
       <Route
         path="/automations/templates"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <TemplateLibraryPage />
           </ProtectedRoute>
         }
@@ -369,7 +369,7 @@ export function settingsRoutes() {
       <Route
         path="/automations/executions"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <ExecutionMonitoringPage />
           </ProtectedRoute>
         }
