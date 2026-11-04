@@ -18,7 +18,7 @@ use serde_json::{json, Value};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::common::{seed_org, TestApp, TestConfig, TestResponse};
+use crate::common::{seed_membership, seed_org, TestApp, TestConfig, TestResponse};
 
 #[derive(Serialize)]
 struct TestClaims {
@@ -85,6 +85,9 @@ async fn setup(pool: PgPool, tag: &str) -> Ctx {
         &format!("{tag}-b-{}@disputes-hp.test", Uuid::new_v4()),
     )
     .await;
+    // Disputes resolve org + role from the active membership (TenantAuthUser).
+    seed_membership(&pool, org_id, user_id, "manager").await;
+    seed_membership(&pool, org_id, respondent_id, "tenant").await;
     let token = mint_token(user_id, org_id);
     Ctx {
         app,
@@ -563,8 +566,7 @@ async fn dispute_sessions_happy_path(pool: PgPool) {
 /// which only lifted the marker once BIT-440 cleared). It must be
 /// de-quarantined together with the rest of the BIT-440 suite when that
 /// ticket clears. The endpoint's *executing* coverage now lives in
-/// `dispute_kpis_rejects_inverted_window` below, which is a plain
-/// `#[tokio::test]` outside BIT-440 scope.
+/// `dispute_kpis_rejects_inverted_window` below, which is not quarantined.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 #[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440 (de-quarantine tracked by #2575 when BIT-440 clears)"]
 async fn dispute_kpis_happy_path(pool: PgPool) {
@@ -659,20 +661,18 @@ async fn dispute_kpis_happy_path(pool: PgPool) {
 /// *before* the repository is consulted, so a caller gets an explicit error
 /// instead of a degenerate zero-count `DisputeKpis` with a `200`.
 ///
-/// This is deliberately a plain `#[tokio::test]`, not `#[sqlx::test]`: the
-/// validation branch returns before any DB access (`require_org` reads the JWT
-/// claim, then the ordering check fires), so it needs no live Postgres and is
-/// therefore NOT subject to the BIT-440 dev-hostage quarantine that gates the
-/// `#[sqlx::test]` contract case above. It runs on every CI/dev `cargo test`,
-/// giving the endpoint executing coverage of its validation contract. The
-/// lazy pool never connects — the same pattern the `push_fanout.rs` /
-/// `voice_commands.rs` pure-path unit tests use.
-#[tokio::test]
-async fn dispute_kpis_rejects_inverted_window() {
-    let pool = sqlx::PgPool::connect_lazy("postgres://never-used:never@127.0.0.1:1/never")
-        .expect("connect_lazy builds without connecting");
-    let app = TestApp::new(pool).await;
-    let token = mint_token(Uuid::new_v4(), Uuid::new_v4());
+/// The org and role now come from the caller's membership row
+/// (`TenantAuthUser`), so this needs a live Postgres with a seeded member; it
+/// only seeds an org + member and never touches the dispute tables.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn dispute_kpis_rejects_inverted_window(pool: PgPool) {
+    let Ctx {
+        app,
+        user_id,
+        org_id,
+        ..
+    } = setup(pool, "kpi-window").await;
+    let token = mint_token(user_id, org_id);
 
     // Z-suffixed RFC3339 avoids `+00:00` query encoding (mirrors the happy path).
     let later = (chrono::Utc::now() + chrono::Duration::days(1))

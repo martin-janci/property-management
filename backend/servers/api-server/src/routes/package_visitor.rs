@@ -4,7 +4,7 @@
 //! and access code verification.
 
 use crate::state::AppState;
-use api_core::{AuthUser, TenantExtractor};
+use api_core::{AuthUser, TenantAuthUser, TenantExtractor};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -136,7 +136,7 @@ pub struct VisitorStatisticsResponse {
 async fn create_package(
     State(state): State<AppState>,
     tenant: TenantExtractor,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Json(data): Json<CreatePackage>,
 ) -> Result<(StatusCode, Json<PackageActionResponse>), (StatusCode, Json<ErrorResponse>)> {
     let package = state
@@ -312,7 +312,7 @@ async fn update_package(
 async fn receive_package(
     State(state): State<AppState>,
     tenant: TenantExtractor,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<ReceivePackage>,
 ) -> Result<Json<PackageActionResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -368,7 +368,7 @@ async fn receive_package(
 async fn pickup_package(
     State(state): State<AppState>,
     tenant: TenantExtractor,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<PickupPackage>,
 ) -> Result<Json<PackageActionResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -504,7 +504,7 @@ async fn get_package_statistics(
 async fn create_visitor(
     State(state): State<AppState>,
     tenant: TenantExtractor,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Json(data): Json<CreateVisitor>,
 ) -> Result<(StatusCode, Json<VisitorActionResponse>), (StatusCode, Json<ErrorResponse>)> {
     let visitor = state
@@ -684,7 +684,7 @@ async fn update_visitor(
 async fn check_in_visitor(
     State(state): State<AppState>,
     tenant: TenantExtractor,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<CheckInVisitor>,
 ) -> Result<Json<VisitorActionResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -740,7 +740,7 @@ async fn check_in_visitor(
 async fn check_out_visitor(
     State(state): State<AppState>,
     tenant: TenantExtractor,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<CheckOutVisitor>,
 ) -> Result<Json<VisitorActionResponse>, (StatusCode, Json<ErrorResponse>)> {

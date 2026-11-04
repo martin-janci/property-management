@@ -38,7 +38,7 @@ use serde::Serialize;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::common::{TestApp, TestConfig};
+use crate::common::{seed_membership, TestApp, TestConfig};
 
 // ---------------------------------------------------------------------------
 // JWT minting (matches api_core::extractors::auth::Claims)
@@ -204,6 +204,7 @@ async fn get_violation_same_org_succeeds(pool: PgPool) {
     let org_a = seed_org(&pool, "same-a").await;
     let violation_id = seed_violation(&pool, org_a, "VIO-SAME-0001").await;
 
+    seed_membership(&pool, org_a, user, "manager").await;
     let token = access_token(user, org_a);
     let req = app
         .get(&format!("/api/v1/violations/{violation_id}"))
@@ -236,6 +237,7 @@ async fn get_violation_cross_org_is_not_found(pool: PgPool) {
     let violation_id = seed_violation(&pool, org_a, "VIO-X-0001").await;
 
     // Org B token targeting Org A's violation.
+    seed_membership(&pool, org_b, user_b, "manager").await;
     let token = access_token(user_b, org_b);
     let req = app
         .get(&format!("/api/v1/violations/{violation_id}"))
@@ -265,6 +267,7 @@ async fn get_rule_same_org_succeeds(pool: PgPool) {
     let org_a = seed_org(&pool, "rule-same-a").await;
     let rule_id = seed_rule(&pool, org_a, user).await;
 
+    seed_membership(&pool, org_a, user, "manager").await;
     let token = access_token(user, org_a);
     let req = app
         .get(&format!("/api/v1/violations/rules/{rule_id}"))
@@ -291,6 +294,7 @@ async fn get_rule_cross_org_is_not_found(pool: PgPool) {
     let org_b = seed_org(&pool, "rule-x-b").await;
     let rule_id = seed_rule(&pool, org_a, owner).await;
 
+    seed_membership(&pool, org_b, attacker, "manager").await;
     let token = access_token(attacker, org_b);
     let req = app
         .get(&format!("/api/v1/violations/rules/{rule_id}"))
@@ -321,6 +325,7 @@ async fn get_action_same_org_succeeds(pool: PgPool) {
     let violation_id = seed_violation(&pool, org_a, "VIO-ACT-SAME-0001").await;
     let action_id = seed_action(&pool, org_a, violation_id, user).await;
 
+    seed_membership(&pool, org_a, user, "manager").await;
     let token = access_token(user, org_a);
     let req = app
         .get(&format!(
@@ -352,6 +357,7 @@ async fn get_action_cross_org_is_not_found(pool: PgPool) {
     let violation_id = seed_violation(&pool, org_a, "VIO-ACT-X-0001").await;
     let action_id = seed_action(&pool, org_a, violation_id, owner).await;
 
+    seed_membership(&pool, org_b, attacker, "manager").await;
     let token = access_token(attacker, org_b);
     let req = app
         .get(&format!(
@@ -385,6 +391,7 @@ async fn get_appeal_same_org_succeeds(pool: PgPool) {
     let action_id = seed_action(&pool, org_a, violation_id, user).await;
     let appeal_id = seed_appeal(&pool, org_a, violation_id, action_id, user).await;
 
+    seed_membership(&pool, org_a, user, "manager").await;
     let token = access_token(user, org_a);
     let req = app
         .get(&format!("/api/v1/violations/appeals/{appeal_id}"))
@@ -413,6 +420,7 @@ async fn get_appeal_cross_org_is_not_found(pool: PgPool) {
     let action_id = seed_action(&pool, org_a, violation_id, owner).await;
     let appeal_id = seed_appeal(&pool, org_a, violation_id, action_id, owner).await;
 
+    seed_membership(&pool, org_b, attacker, "manager").await;
     let token = access_token(attacker, org_b);
     let req = app
         .get(&format!("/api/v1/violations/appeals/{appeal_id}"))

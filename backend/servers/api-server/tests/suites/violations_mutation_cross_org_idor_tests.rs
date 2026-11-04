@@ -43,7 +43,7 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::common::{TestApp, TestConfig, TestResponse};
+use crate::common::{seed_membership, TestApp, TestConfig, TestResponse};
 
 // ---------------------------------------------------------------------------
 // JWT minting (matches api_core::extractors::auth::Claims)
@@ -223,6 +223,7 @@ async fn arrange(app: &TestApp, slug: &str) -> (OrgAFixture, String) {
     let attacker = seed_user(&app.pool, &format!("attacker-{slug}@vio-mut-idor.test")).await;
 
     let fx = seed_org_a(&app.pool, org_a, owner).await;
+    seed_membership(&app.pool, org_b, attacker, "manager").await;
     let token = manager_token(attacker, org_b);
     (fx, token)
 }

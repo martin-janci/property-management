@@ -1,7 +1,7 @@
 //! Story 67.4: Content Moderation Dashboard endpoints.
 
 use crate::state::AppState;
-use api_core::extractors::AuthUser;
+use api_core::extractors::{AuthUser, TenantAuthUser};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -119,7 +119,7 @@ pub struct ModerationQueueQuery {
 /// Get moderation queue.
 pub(super) async fn get_moderation_queue(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(params): Query<ModerationQueueQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
     require_moderator_role(&user)?;
@@ -196,7 +196,7 @@ pub struct ModerationQueueStatsResponse {
 /// Get moderation queue statistics.
 pub(super) async fn get_moderation_stats(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
 ) -> Result<Json<ModerationQueueStatsResponse>, (StatusCode, String)> {
     require_moderator_role(&user)?;
 
@@ -244,7 +244,7 @@ pub(super) async fn get_moderation_stats(
 /// Get a specific moderation case.
 pub(super) async fn get_moderation_case(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
     require_moderator_role(&user)?;
@@ -292,7 +292,7 @@ pub struct AssignCaseRequest {
 /// Assign a moderation case.
 pub(super) async fn assign_moderation_case(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<AssignCaseRequest>,
 ) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
@@ -359,7 +359,7 @@ pub(super) async fn assign_moderation_case(
 /// `RowNotFound`) surfaces as a `404 Not Found`, other repo errors as 500.
 pub(super) async fn unassign_moderation_case(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
     require_moderator_role(&user)?;
@@ -409,7 +409,7 @@ pub struct TakeModerationActionRequest {
 /// Take action on a moderation case.
 pub(super) async fn take_moderation_action(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<TakeModerationActionRequest>,
 ) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
@@ -576,7 +576,7 @@ pub struct DecideAppealRequest {
 /// Decide on an appeal.
 pub(super) async fn decide_appeal(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<DecideAppealRequest>,
 ) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
@@ -714,7 +714,7 @@ pub struct ActionTemplateResponse {
 /// Get available action templates.
 pub(super) async fn get_action_templates(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
 ) -> Result<Json<Vec<ActionTemplateResponse>>, (StatusCode, String)> {
     require_moderator_role(&user)?;
 

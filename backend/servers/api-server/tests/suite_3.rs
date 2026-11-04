@@ -65,3 +65,5 @@ mod enhanced_screening_cross_org_idor_tests;
 mod equipment_cross_tenant_idor_tests;
 #[path = "suites/esg_reporting_cross_org_idor_tests.rs"]
 mod esg_reporting_cross_org_idor_tests;
+#[path = "suites/login_token_role_scope_tests.rs"]
+mod login_token_role_scope_tests;

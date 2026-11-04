@@ -1,7 +1,7 @@
 //! Violation Tracking & Enforcement routes for Epic 142.
 
 use crate::state::AppState;
-use api_core::extractors::AuthUser;
+use api_core::extractors::{AuthUser, TenantAuthUser};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -74,6 +74,9 @@ fn map_mutation_err(
 /// Guest, …) is rejected with 403. Self-service actions a resident legitimately
 /// performs — filing an appeal (`create_appeal`) and commenting (`add_comment`)
 /// — are intentionally NOT gated here.
+///
+/// Handlers take `TenantAuthUser`, so `user.role` is the caller's membership
+/// role in the request's org (login JWTs carry no role claim).
 fn require_manager(user: &AuthUser) -> ApiResult<()> {
     if user.role.map(|r| r.is_manager()).unwrap_or(false) {
         Ok(())
@@ -145,7 +148,7 @@ pub fn router() -> Router<AppState> {
 
 async fn create_rule(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Json(req): Json<CreateCommunityRule>,
 ) -> ApiResult<Json<db::models::violations::CommunityRule>> {
     require_manager(&user)?;
@@ -164,7 +167,7 @@ async fn create_rule(
 
 async fn get_rule(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(rule_id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::violations::CommunityRule>> {
     let org_id = user
@@ -188,7 +191,7 @@ struct ListRulesQuery {
 
 async fn list_rules(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(query): Query<ListRulesQuery>,
 ) -> ApiResult<Json<Vec<db::models::violations::CommunityRule>>> {
     let org_id = user
@@ -209,7 +212,7 @@ async fn list_rules(
 
 async fn update_rule(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(rule_id): Path<Uuid>,
     Json(req): Json<UpdateCommunityRule>,
 ) -> ApiResult<Json<db::models::violations::CommunityRule>> {
@@ -229,7 +232,7 @@ async fn update_rule(
 
 async fn delete_rule(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(rule_id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
     require_manager(&user)?;
@@ -257,7 +260,7 @@ async fn delete_rule(
 
 async fn create_violation(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Json(req): Json<CreateViolation>,
 ) -> ApiResult<Json<db::models::violations::Violation>> {
     require_manager(&user)?;
@@ -276,7 +279,7 @@ async fn create_violation(
 
 async fn get_violation(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(violation_id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::violations::Violation>> {
     let org_id = user
@@ -294,7 +297,7 @@ async fn get_violation(
 
 async fn list_violations(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(query): Query<ViolationQuery>,
 ) -> ApiResult<Json<Vec<db::models::violations::ViolationSummary>>> {
     let org_id = user
@@ -311,7 +314,7 @@ async fn list_violations(
 
 async fn update_violation(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(violation_id): Path<Uuid>,
     Json(req): Json<UpdateViolation>,
 ) -> ApiResult<Json<db::models::violations::Violation>> {
@@ -336,7 +339,7 @@ struct AssignRequest {
 
 async fn assign_violation(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(violation_id): Path<Uuid>,
     Json(req): Json<AssignRequest>,
 ) -> ApiResult<Json<db::models::violations::Violation>> {
@@ -389,7 +392,7 @@ async fn assign_violation(
 
 async fn add_evidence(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(violation_id): Path<Uuid>,
     Json(req): Json<CreateViolationEvidence>,
 ) -> ApiResult<Json<db::models::violations::ViolationEvidence>> {
@@ -410,7 +413,7 @@ async fn add_evidence(
 
 async fn list_evidence(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(violation_id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<db::models::violations::ViolationEvidence>>> {
     let org_id = user
@@ -427,7 +430,7 @@ async fn list_evidence(
 
 async fn delete_evidence(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path((_violation_id, evidence_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResult<StatusCode> {
     require_manager(&user)?;
@@ -455,7 +458,7 @@ async fn delete_evidence(
 
 async fn create_action(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(violation_id): Path<Uuid>,
     Json(req): Json<CreateEnforcementAction>,
 ) -> ApiResult<Json<db::models::violations::EnforcementAction>> {
@@ -475,7 +478,7 @@ async fn create_action(
 
 async fn get_action(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path((_violation_id, action_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResult<Json<db::models::violations::EnforcementAction>> {
     let org_id = user
@@ -493,7 +496,7 @@ async fn get_action(
 
 async fn list_actions(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(violation_id): Path<Uuid>,
     Query(mut query): Query<EnforcementQuery>,
 ) -> ApiResult<Json<Vec<db::models::violations::EnforcementAction>>> {
@@ -512,7 +515,7 @@ async fn list_actions(
 
 async fn update_action(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path((_violation_id, action_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateEnforcementAction>,
 ) -> ApiResult<Json<db::models::violations::EnforcementAction>> {
@@ -537,7 +540,7 @@ struct SendNoticeRequest {
 
 async fn mark_action_sent(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path((_violation_id, action_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<SendNoticeRequest>,
 ) -> ApiResult<Json<db::models::violations::EnforcementAction>> {
@@ -557,7 +560,7 @@ async fn mark_action_sent(
 
 async fn record_payment(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path((_violation_id, action_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<RecordFinePayment>,
 ) -> ApiResult<Json<db::models::violations::FinePayment>> {
@@ -577,7 +580,7 @@ async fn record_payment(
 
 async fn list_payments(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path((_violation_id, action_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResult<Json<Vec<db::models::violations::FinePayment>>> {
     let org_id = user
@@ -598,7 +601,7 @@ async fn list_payments(
 
 async fn create_appeal(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(violation_id): Path<Uuid>,
     Json(req): Json<CreateViolationAppeal>,
 ) -> ApiResult<Json<db::models::violations::ViolationAppeal>> {
@@ -616,7 +619,7 @@ async fn create_appeal(
 
 async fn get_appeal(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(appeal_id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::violations::ViolationAppeal>> {
     let org_id = user
@@ -634,7 +637,7 @@ async fn get_appeal(
 
 async fn list_appeals(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(query): Query<AppealQuery>,
 ) -> ApiResult<Json<Vec<db::models::violations::ViolationAppeal>>> {
     let org_id = user
@@ -651,7 +654,7 @@ async fn list_appeals(
 
 async fn update_appeal(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(appeal_id): Path<Uuid>,
     Json(req): Json<UpdateViolationAppeal>,
 ) -> ApiResult<Json<db::models::violations::ViolationAppeal>> {
@@ -678,7 +681,7 @@ struct DecideAppealRequest {
 
 async fn decide_appeal(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(appeal_id): Path<Uuid>,
     Json(req): Json<DecideAppealRequest>,
 ) -> ApiResult<Json<db::models::violations::ViolationAppeal>> {
@@ -709,7 +712,7 @@ async fn decide_appeal(
 
 async fn add_comment(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(violation_id): Path<Uuid>,
     Json(req): Json<CreateViolationComment>,
 ) -> ApiResult<Json<db::models::violations::ViolationComment>> {
@@ -735,7 +738,7 @@ struct ListCommentsQuery {
 
 async fn list_comments(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(violation_id): Path<Uuid>,
     Query(query): Query<ListCommentsQuery>,
 ) -> ApiResult<Json<Vec<db::models::violations::ViolationComment>>> {
@@ -765,7 +768,7 @@ async fn list_comments(
 
 async fn get_dashboard(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
 ) -> ApiResult<Json<db::models::violations::ViolationDashboard>> {
     let org_id = user
         .tenant_id
@@ -787,7 +790,7 @@ struct ViolatorHistoryQuery {
 
 async fn get_violator_history(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(query): Query<ViolatorHistoryQuery>,
 ) -> ApiResult<Json<db::models::violations::ViolatorHistory>> {
     let org_id = user
@@ -810,7 +813,7 @@ struct StatisticsQuery {
 
 async fn get_statistics(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(query): Query<StatisticsQuery>,
 ) -> ApiResult<Json<Option<db::models::violations::ViolationStatistics>>> {
     let org_id = user
