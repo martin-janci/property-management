@@ -13,8 +13,8 @@ use db::models::{ExpiringContract, UpdateVendorContract, VendorContract};
 use uuid::Uuid;
 
 use super::shared::{
-    db_error, load_contract_for_user, not_found, CreateContractRequest, ExpiringQuery,
-    ListContractsQuery,
+    db_error, load_contract_for_user, not_found, require_manager, CreateContractRequest,
+    ExpiringQuery, ListContractsQuery,
 };
 use crate::state::AppState;
 
@@ -23,6 +23,7 @@ pub(super) async fn create_contract(
     mut rls: RlsConnection,
     Json(payload): Json<CreateContractRequest>,
 ) -> Result<(StatusCode, Json<VendorContract>), (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .vendor_repo
@@ -82,6 +83,7 @@ pub(super) async fn update_contract(
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateVendorContract>,
 ) -> Result<Json<VendorContract>, (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = async {
         load_contract_for_user(&state, &mut rls, id).await?;
@@ -102,6 +104,7 @@ pub(super) async fn delete_contract(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = async {
         load_contract_for_user(&state, &mut rls, id).await?;
