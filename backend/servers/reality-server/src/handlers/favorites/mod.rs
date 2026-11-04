@@ -66,11 +66,14 @@ impl FavoritesHandler {
             .add_favorite(user_id, listing_id, notes)
             .await
             .map_err(|e| {
-                let error_str = e.to_string();
-                if error_str.contains("violates foreign key") {
+                // A foreign-key violation means the referenced listing is gone.
+                // Classify by the typed sqlx error / SQLSTATE, not message text.
+                if crate::util::errors::classify_db_error(&e)
+                    == crate::util::errors::DbErrorClass::ForeignKeyViolation
+                {
                     FavoriteResult::ListingNotFound
                 } else {
-                    FavoriteResult::DatabaseError(error_str)
+                    FavoriteResult::DatabaseError(e.to_string())
                 }
             })
     }
@@ -133,11 +136,15 @@ impl FavoritesHandler {
             .update_favorite(user_id, listing_id, update)
             .await
             .map_err(|e| {
-                let error_str = e.to_string();
-                if error_str.contains("no rows") {
+                // `fetch_one` on the UPDATE yields `RowNotFound` when the user
+                // has no such favorite. Classify by the sqlx variant, not the
+                // "no rows" message text.
+                if crate::util::errors::classify_db_error(&e)
+                    == crate::util::errors::DbErrorClass::NotFound
+                {
                     FavoriteResult::FavoriteNotFound
                 } else {
-                    FavoriteResult::DatabaseError(error_str)
+                    FavoriteResult::DatabaseError(e.to_string())
                 }
             })
     }
