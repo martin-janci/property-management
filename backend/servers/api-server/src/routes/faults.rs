@@ -772,10 +772,15 @@ async fn update_fault(
     let tenant_id = require_tenant_id(&principal)?;
 
     // Check fault exists and can be edited
-    let existing = match state.fault_repo.find_by_id_rls(&mut **rls.conn(), id).await {
-        // SECURITY: `find_by_id_rls` filters on `id` only and the faults RLS
-        // policy is not FORCEd, so a foreign org's fault is collapsed to 404 here.
-        Ok(Some(f)) if f.organization_id == tenant_id => f,
+    // SECURITY (#3307): the org filter lives in SQL (`find_by_id_for_org_rls`,
+    // WHERE id = $1 AND organization_id = $2) so a foreign org's fault can never
+    // be read here — the isolation no longer rests on a hand-written match arm.
+    let existing = match state
+        .fault_repo
+        .find_by_id_for_org_rls(&mut **rls.conn(), id, tenant_id)
+        .await
+    {
+        Ok(Some(f)) => f,
         Ok(_) => {
             rls.release().await;
             return Err((
@@ -872,10 +877,15 @@ async fn triage_fault(
     require_manager(&state, principal.user_id, tenant_id).await?;
 
     // Check fault exists
-    let existing = match state.fault_repo.find_by_id_rls(&mut **rls.conn(), id).await {
-        // SECURITY: `find_by_id_rls` filters on `id` only and the faults RLS
-        // policy is not FORCEd, so a foreign org's fault is collapsed to 404 here.
-        Ok(Some(f)) if f.organization_id == tenant_id => f,
+    // SECURITY (#3307): the org filter lives in SQL (`find_by_id_for_org_rls`,
+    // WHERE id = $1 AND organization_id = $2) so a foreign org's fault can never
+    // be read here — the isolation no longer rests on a hand-written match arm.
+    let existing = match state
+        .fault_repo
+        .find_by_id_for_org_rls(&mut **rls.conn(), id, tenant_id)
+        .await
+    {
+        Ok(Some(f)) => f,
         Ok(_) => {
             rls.release().await;
             return Err((
@@ -1068,10 +1078,15 @@ async fn update_status(
     require_manager(&state, principal.user_id, tenant_id).await?;
 
     // Get current fault to obtain current status
-    let existing = match state.fault_repo.find_by_id_rls(&mut **rls.conn(), id).await {
-        // SECURITY: `find_by_id_rls` filters on `id` only and the faults RLS
-        // policy is not FORCEd, so a foreign org's fault is collapsed to 404 here.
-        Ok(Some(f)) if f.organization_id == tenant_id => f,
+    // SECURITY (#3307): the org filter lives in SQL (`find_by_id_for_org_rls`,
+    // WHERE id = $1 AND organization_id = $2) so a foreign org's fault can never
+    // be read here — the isolation no longer rests on a hand-written match arm.
+    let existing = match state
+        .fault_repo
+        .find_by_id_for_org_rls(&mut **rls.conn(), id, tenant_id)
+        .await
+    {
+        Ok(Some(f)) => f,
         Ok(_) => {
             rls.release().await;
             return Err((
