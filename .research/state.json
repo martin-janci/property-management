@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-11-04T18:35:00Z",
-  "last_run_ms": 900000,
-  "last_pr_seen": 3291,
-  "last_issue_seen": 3304,
-  "last_commit_sha": "b61a77779f35d2537171a4a90e6267defe563fe8",
+  "last_run_iso": "2026-11-05T03:17:05Z",
+  "last_run_ms": 60000,
+  "last_pr_seen": 3317,
+  "last_issue_seen": 3315,
+  "last_commit_sha": "8753804fba7f8d053ef1da9d4b03666b89f3c722",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -676,6 +676,21 @@
       "runs_seen": 1,
       "last_seen": "2026-11-04",
       "recent_churn": 432
+    },
+    "backend/servers/reality-server/src/util/errors.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-05",
+      "recent_churn": 187
+    },
+    "backend/servers/api-server/src/routes/suspend_cascade.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-05",
+      "recent_churn": 166
+    },
+    "backend/servers/api-server/tests/suites/auth_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-05",
+      "recent_churn": 138
     }
   },
   "seen_signals": [
@@ -729,6 +744,7 @@
     "churn-hotspot-backend/servers/api-server/src/routes/organizations.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/platform_admin.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
+    "churn-hotspot-backend/servers/api-server/src/routes/suspend_cascade.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/violations.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
     "churn-hotspot-backend/servers/api-server/src/services/actions/api_call.rs",
@@ -746,6 +762,7 @@
     "churn-hotspot-backend/servers/api-server/tests/oauth_integration_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/org_property_authz_backfill_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/platform_admin_authz_batch2_tests.rs",
+    "churn-hotspot-backend/servers/api-server/tests/suites/auth_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/suites/marketplace_award_quote_idor_tests.rs",
@@ -757,6 +774,7 @@
     "churn-hotspot-backend/servers/reality-server/src/routes/price_map.rs",
     "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs",
     "churn-hotspot-backend/servers/reality-server/src/services/search_alert_drainer.rs",
+    "churn-hotspot-backend/servers/reality-server/src/util/errors.rs",
     "churn-hotspot-docker/nginx/admin-web.nginx.conf.template",
     "churn-hotspot-docker/nginx/ppt-web.nginx.conf.template",
     "churn-hotspot-docs/repo-map.md",
@@ -1000,6 +1018,8 @@
     "code-review-ppt-web-ui-invoice-feature-no-i18n",
     "code-review-ppt-web-ui-invoice-qty-price-nan",
     "code-review-ppt-web-ui-invoice-vat-rate-payload-drift",
+    "code-review-ppt-web-ui-lang-switcher-aria",
+    "code-review-ppt-web-ui-marketplace-no-i18n",
     "code-review-ppt-web-ui-mediation-page-no-error-state",
     "code-review-ppt-web-ui-mediation-ref-number-full-uuid",
     "code-review-ppt-web-ui-meters-dates-no-locale",
@@ -1010,6 +1030,7 @@
     "code-review-ppt-web-ui-portfolio-dashboard-dead-buttons",
     "code-review-ppt-web-ui-portfolio-dashboard-no-i18n",
     "code-review-ppt-web-ui-propinput-json-coerce",
+    "code-review-ppt-web-ui-registry-no-i18n",
     "code-review-ppt-web-ui-registry-rules-save-silent-fail",
     "code-review-ppt-web-ui-role-gate-fail-open",
     "code-review-ppt-web-ui-savedirty-stale-closure",
@@ -1264,6 +1285,10 @@
     "screen-map-drift-pr-3242-ppt",
     "screen-map-drift-pr-3244-ppt",
     "screen-map-drift-pr-3254-ppt",
+    "screen-map-drift-pr-3293-reality",
+    "screen-map-drift-pr-3313-reality",
+    "screen-map-drift-pr-3317-ppt",
+    "screen-map-drift-pr-3317-reality",
     "screen-map-drift-pr-460-reality",
     "screen-map-drift-pr-464-ppt",
     "screen-map-drift-pr-547-ppt",
@@ -1357,15 +1382,15 @@
     "api-handlers": "2026-11-04",
     "api-core": "2026-11-04",
     "reality-server": "2026-11-04",
-    "ppt-web-ui": "2026-11-02",
+    "ppt-web-ui": "2026-11-05",
     "ppt-web-core": "2026-11-04",
     "reality-web": "2026-11-03",
     "mobile-rn": "2026-11-03",
     "mobile-native-kmp": "2026-11-04"
   },
   "stats": {
-    "runs": 112,
-    "vectors_created": 509,
+    "runs": 113,
+    "vectors_created": 519,
     "plans_created": 35,
     "quiet_days": 8,
     "auto_fix_count": 0

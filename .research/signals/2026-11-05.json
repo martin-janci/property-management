@@ -1,0 +1,298 @@
+{
+  "generator": "routine",
+  "generated_at": "2026-11-05",
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-marketplace-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "The entire marketplace feature module ships user-facing English string literals with NO react-i18next integration, inside an app that ships sk/cs/de/en locales. 8 of 9 user-facing marketplace files have zero useTranslation import and zero t() calls; QuoteComparisonTable.tsx has only 1. This is a whole-feature i18n gap, not a single missed string.",
+        "frontend/apps/ppt-web/src/features/marketplace/components/ProviderSearchFilters.tsx:110,148,216,226 \u2014 hardcoded placeholders `Search providers, services...`, `City or Postal Code`, `Min`, `Max`. 0 useTranslation.",
+        "frontend/apps/ppt-web/src/features/marketplace/components/RfqForm.tsx:189,208 \u2014 hardcoded textarea placeholders; plus 16 hardcoded service-category option labels at L38-53 (`Plumbing`, `Electrical`, `HVAC`, `Cleaning`, `Carpentry`, ...). 0 useTranslation.",
+        "frontend/apps/ppt-web/src/features/marketplace/components/ProviderProfileForm.tsx:273,439,646 \u2014 hardcoded descriptive placeholders. 0 useTranslation. Also ReviewForm.tsx:197,211,285 and VerificationForm.tsx \u2014 0 useTranslation.",
+        "frontend/apps/ppt-web/src/features/marketplace/pages/{MarketplacePage,ProviderDetailPage,RfqListPage}.tsx \u2014 0 useTranslation / 0 t() in the page shells themselves.",
+        "Fix vector: add useTranslation() to each marketplace component/page and move literals (placeholders, option labels, headings) to marketplace.* locale keys across sk/cs/de/en bundles. Cloud-verifiable (ppt-web, biome + typecheck). Confidence medium: literals + absence of useTranslation certain by static read; pages reachable from the shipped /marketplace routes. Severity LOW (+1) i18n gap per the skill's score-delta table (breadth is feature-wide, but the table caps an i18n gap at low).",
+        "expert: frontend+completeness"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "The registry feature's pet/vehicle registration forms and lists render user-facing English literals with NO react-i18next integration, in a 4-locale app. PetRegistrationForm, VehicleRegistrationForm, PetRegistrationList, VehicleRegistrationList have 0 useTranslation / 0 t(); RegistryRulesForm and ReviewRegistrationModal only partially use t() (1 call each) while leaving placeholders hardcoded.",
+        "frontend/apps/ppt-web/src/features/registry/components/PetRegistrationForm.tsx:120,135,154,177,193,214,231 \u2014 hardcoded placeholders `Enter pet name`, `Enter breed (optional)`, `Enter age`, `Enter weight`, `Any additional information about your pet`, `Dr. Jane Smith`, `Phone or email`. 0 useTranslation.",
+        "frontend/apps/ppt-web/src/features/registry/components/VehicleRegistrationForm.tsx:94,109,124,161 \u2014 hardcoded placeholders `ABC-123`, `Toyota, BMW, etc.`, `Corolla, X5, etc.`, `Black, White, Red, etc.`. 0 useTranslation.",
+        "frontend/apps/ppt-web/src/features/registry/components/PetRegistrationList.tsx:112 \u2014 hardcoded search placeholder `Search by name, breed, owner...`. 0 useTranslation. frontend/apps/ppt-web/src/features/registry/components/ReviewRegistrationModal.tsx:193 \u2014 hardcoded rejection-reason placeholder despite the modal elsewhere importing useTranslation (partial i18n).",
+        "Fix vector: add useTranslation() to the registry form/list components and move all placeholders to registry.* keys across sk/cs/de/en. Cloud-verifiable (ppt-web, biome + typecheck). Confidence medium: static-read certain; components reachable from the shipped /registry routes. Severity LOW (+1) i18n gap.",
+        "expert: frontend+completeness"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-lang-switcher-aria",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/LanguageSwitcher.tsx:19 \u2014 the shared language-switcher <select> carries a hardcoded English screen-reader label `aria-label=\"Select language\"`. The component already imports and uses useTranslation (it is otherwise i18n-aware), so the untranslated a11y label is an oversight, not a missing capability. Ironic and high-visibility: a non-English user navigating by screen reader hears an English label on the very control that switches language.",
+        "Fix vector: replace the literal with t('common.languageSwitcher.ariaLabel') (or similar) and add the key to the sk/cs/de/en bundles. Cloud-verifiable (ppt-web, biome + typecheck). Confidence medium: certain by static read; the component is mounted in the app shell on every authenticated screen. Severity LOW (+1) i18n/a11y gap.",
+        "expert: frontend+completeness"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/util/errors.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-numstat",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Top-3 churn this run: backend/servers/reality-server/src/util/errors.rs added+deleted 187 lines since 2026-11-04T18:35:00Z (post churn-exclusion filter)."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/util/errors.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/suspend_cascade.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-numstat",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Top-3 churn this run: backend/servers/api-server/src/routes/suspend_cascade.rs added+deleted 166 lines since 2026-11-04T18:35:00Z (post churn-exclusion filter)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/suspend_cascade.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/auth_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-numstat",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Top-3 churn this run: backend/servers/api-server/tests/suites/auth_tests.rs added+deleted 138 lines since 2026-11-04T18:35:00Z (post churn-exclusion filter)."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/auth_tests.rs"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3293-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3293",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "title": "Screen-map drift: PR #3293 i18n'd reality-web realtor/[id] page without updating docs/screens/reality/realtor-detail.md",
+      "evidence": [
+        "PR #3293 touched reality-product route file(s) but did not update docs/screens/reality/*.md: frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx, frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.test.tsx",
+        "Best-effort heuristic \u2014 some of these are test-only or API-route changes that don't warrant a screen-doc update. Treat as review candidate."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.test.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3313-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3313",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "title": "Screen-map drift: PR #3313 added regression tests for reality-web realtor/[id] without updating docs/screens/reality/realtor-detail.md",
+      "evidence": [
+        "PR #3313 touched reality-product route file(s) but did not update docs/screens/reality/*.md: frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.test.tsx",
+        "Best-effort heuristic \u2014 some of these are test-only or API-route changes that don't warrant a screen-doc update. Treat as review candidate."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.test.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3317-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3317",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "title": "Screen-map drift: PR #3317 biome-cleaned ppt-web ai-dashboards route test without updating docs/screens/ppt/*.md",
+      "evidence": [
+        "PR #3317 touched ppt-product route file(s) but did not update docs/screens/ppt/*.md: frontend/apps/ppt-web/src/routes/groups/ai-dashboards.role-gate.route.test.tsx",
+        "Best-effort heuristic \u2014 some of these are test-only or API-route changes that don't warrant a screen-doc update. Treat as review candidate."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/ai-dashboards.role-gate.route.test.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3317-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3317",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "title": "Screen-map drift: PR #3317 biome-cleaned reality-web favorites/report/layout-revalidate route files without updating docs/screens/reality/*.md",
+      "evidence": [
+        "PR #3317 touched reality-product route file(s) but did not update docs/screens/reality/*.md: frontend/apps/reality-web/src/app/[locale]/favorites/page.test.tsx, frontend/apps/reality-web/src/app/[locale]/report/page.test.tsx, frontend/apps/reality-web/src/app/api/layout-revalidate/route.test.ts, frontend/apps/reality-web/src/app/api/layout-revalidate/route.ts",
+        "Best-effort heuristic \u2014 some of these are test-only or API-route changes that don't warrant a screen-doc update. Treat as review candidate."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/favorites/page.test.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/report/page.test.tsx",
+        "frontend/apps/reality-web/src/app/api/layout-revalidate/route.test.ts",
+        "frontend/apps/reality-web/src/app/api/layout-revalidate/route.ts"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no eligible candidate \u2014 no signal met confidence=high + score>=3 + allowlist (drift signals are medium-confidence)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches '# <today>'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "cursors/seen_signals/hotspot_history advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal id double-counted with score_delta != 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no item.score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "every open item >14d lost >=1 point OR moved to dropped",
+      "observed": "true (no open items older than 14d this run)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans have adversarial-pass annotation",
+      "observed": "N/A \u2014 0 new plans",
+      "expected": "N/A"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans, metadata+headings present",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged diff only touches .research/",
+      "observed": "0 non-.research files",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md matches regenerated view",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "failed phases cursor consistency",
+      "observed": "N/A \u2014 no failed phases",
+      "expected": "N/A"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "promoted plans converge (no silent delete)",
+      "observed": "0 missing",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "plans/_archive/ count >= HEAD count",
+      "observed": "equal",
+      "expected": ">=HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md matches regenerated view",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps + idempotency + certainty bar",
+      "observed": "0 actions (no eligible candidate)",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid",
+      "observed": "action-list/risks parse, project-state non-empty, pm_cursor in 0..7",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no literal Telegram token in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}
