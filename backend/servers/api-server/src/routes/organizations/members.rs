@@ -61,16 +61,49 @@ fn ensure_role_permissions_assignable(
     }
 }
 
+/// SECURITY: does `raw` name a platform role (`SuperAdmin` / `PlatformAdmin`)
+/// under *any* lenient formatting?
+///
+/// Unlike [`role_type_level`] — which resolves a caller's authority exactly the
+/// way the tenant extractors do, via the strict snake_case
+/// [`TenantRole::from_role_type`] (#3304) — the platform-role *write* gate must
+/// fail safe toward rejection: `raw` is caller-controlled and is persisted
+/// verbatim into `organization_members.role_type`, so a loosely formatted
+/// platform string ("SuperAdmin", "Super Admin", "platform-admin") must be
+/// refused even though the extractor would parse it to Guest. Matching only the
+/// canonical snake_case here would silently loosen the gate (regression caught
+/// on the follow-up to PR #3291).
+///
+/// The accepted spellings are derived from the enum itself (serde snake_case +
+/// `Display`), so they cannot drift as variants change; only the two-element
+/// platform set is named explicitly.
+fn names_platform_role(raw: &str) -> bool {
+    let normalize = |s: &str| {
+        s.chars()
+            .filter(|c| c.is_ascii_alphanumeric())
+            .map(|c| c.to_ascii_lowercase())
+            .collect::<String>()
+    };
+    let wanted = normalize(raw);
+    if wanted.is_empty() {
+        return false;
+    }
+    [TenantRole::SuperAdmin, TenantRole::PlatformAdmin]
+        .into_iter()
+        .any(|role| {
+            let snake = serde_json::to_value(role)
+                .ok()
+                .and_then(|v| v.as_str().map(&normalize));
+            snake.as_deref() == Some(wanted.as_str()) || normalize(&role.to_string()) == wanted
+        })
+}
+
 /// SECURITY: `role_type` is what the tenant extractors use as the caller's
 /// authoritative org role, so a member-management permission must not let the
 /// caller mint a role above their own. Platform roles are never assignable via
 /// org membership.
 fn ensure_role_type_assignable(caller_role_type: &str, requested: &str) -> Result<(), ApiError> {
-    let requested_role = TenantRole::from_role_type(requested);
-    if matches!(
-        requested_role,
-        Some(TenantRole::SuperAdmin | TenantRole::PlatformAdmin)
-    ) {
+    if names_platform_role(requested) {
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
@@ -981,5 +1014,65 @@ mod tests {
                 "role_type_level disagreed with extractor for {raw:?}"
             );
         }
+    }
+
+    /// The platform-role WRITE gate must reject a platform role under *any*
+    /// lenient formatting — not just the canonical snake_case. `requested` is
+    /// caller-controlled and persisted verbatim, so resolving it with the
+    /// strict extractor parser alone ("SuperAdmin" -> None -> Guest-level ->
+    /// assignable) silently loosened the gate; `members_cannot_escalate_role_type`
+    /// pins this (#3304 follow-up to PR #3291).
+    #[test]
+    fn platform_roles_are_unassignable_in_any_formatting() {
+        for raw in [
+            "super_admin",
+            "SuperAdmin",
+            "Super Admin",
+            "super-admin",
+            "SUPER_ADMIN",
+            "platform_admin",
+            "PlatformAdmin",
+            "Platform Admin",
+            "platform-admin",
+        ] {
+            assert!(
+                names_platform_role(raw),
+                "expected {raw:?} to be detected as a platform role"
+            );
+            // Even an org_admin (the highest org-assignable role) must not be
+            // able to mint a platform role through org membership.
+            assert!(
+                ensure_role_type_assignable("org_admin", raw).is_err(),
+                "org_admin must not be able to assign {raw:?}"
+            );
+        }
+    }
+
+    /// Non-platform `role_type` values — including the non-canonical default
+    /// "member", custom/unknown strings, and empty input — must NOT be caught
+    /// by the platform-role gate: they resolve to Guest-level authority (the
+    /// same as the extractor) and stay assignable at or below the caller's
+    /// level. Rejecting them would break ordinary member management.
+    #[test]
+    fn non_platform_role_types_stay_assignable() {
+        for raw in [
+            "member",
+            "owner",
+            "tenant",
+            "resident",
+            "custom_caretaker",
+            "",
+        ] {
+            assert!(
+                !names_platform_role(raw),
+                "{raw:?} must not be treated as a platform role"
+            );
+        }
+        // A manager can assign at or below their own authority level.
+        assert!(ensure_role_type_assignable("manager", "member").is_ok());
+        assert!(ensure_role_type_assignable("manager", "owner").is_ok());
+        assert!(ensure_role_type_assignable("manager", "tenant").is_ok());
+        // ...but not a role that outranks them.
+        assert!(ensure_role_type_assignable("manager", "org_admin").is_err());
     }
 }
