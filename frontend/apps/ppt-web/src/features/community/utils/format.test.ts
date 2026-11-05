@@ -61,4 +61,16 @@ describe('personLabel', () => {
   it('falls back to the neighbor label when no name is available', () => {
     expect(personLabel('u2', 'u1', t, false)).toBe('community.hub.neighbor');
   });
+
+  it('prefers a resolved display name over the neighbor fallback', () => {
+    expect(personLabel('u2', 'u1', t, false, 'Jana Novákova')).toBe('Jana Novákova');
+  });
+
+  it('ignores a blank resolved name and still falls back', () => {
+    expect(personLabel('u2', 'u1', t, false, '   ')).toBe('community.hub.neighbor');
+  });
+
+  it('keeps anonymity even when a resolved name is supplied', () => {
+    expect(personLabel('u2', 'u1', t, true, 'Jana Novákova')).toBe('community.hub.anonymous');
+  });
 });

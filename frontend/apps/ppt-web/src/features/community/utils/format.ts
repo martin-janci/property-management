@@ -40,26 +40,46 @@ export function formatMoney(
   locale: string
 ): string | null {
   if (amount === null || amount === '') return null;
-  const value = Number(amount);
-  if (!Number.isFinite(value)) return null;
+  // Validate the string is numeric, but do NOT keep the coerced double: a
+  // server `Decimal` can exceed Number.MAX_SAFE_INTEGER, so round-tripping it
+  // through IEEE-754 would lose precision (issue #3310). We format the exact
+  // decimal string instead.
+  if (!Number.isFinite(Number(amount))) return null;
+  const code = currency || 'EUR';
   try {
+    // Intl.NumberFormat#format accepts a string/BigInt at runtime (ES2020+) and
+    // formats it at full decimal precision — unlike a Number() round-trip. The
+    // TS lib types the parameter as `number | bigint`, hence the narrow cast.
     return new Intl.NumberFormat(locale, {
       style: 'currency',
-      currency: currency || 'EUR',
-    }).format(value);
+      currency: code,
+    }).format(amount as unknown as number);
   } catch {
-    return `${value.toFixed(2)} ${currency || 'EUR'}`;
+    // Unknown currency code etc. — fall back to the raw decimal (still no
+    // float round-trip).
+    return `${amount} ${code}`;
   }
 }
 
-/** Display name for a community author / seller (the API exposes ids only). */
+/**
+ * Display name for a community author / seller.
+ *
+ * Prefers a `resolvedName` when the caller has one (e.g. from an author
+ * projection embedded in the DTO or a batch user-lookup), honouring the
+ * `isAnonymous` flag first and the current viewer second. Falls back to the
+ * generic "neighbor" label only when a name is genuinely unavailable — which
+ * is still the case wherever the API exposes ids only (see issue #3310).
+ */
 export function personLabel(
   personId: string,
   currentUserId: string | undefined,
   t: TFunction,
-  isAnonymous = false
+  isAnonymous = false,
+  resolvedName?: string | null
 ): string {
   if (isAnonymous) return t('community.hub.anonymous');
   if (currentUserId && personId === currentUserId) return t('community.hub.you');
+  const name = resolvedName?.trim();
+  if (name) return name;
   return t('community.hub.neighbor');
 }
