@@ -29,7 +29,7 @@
       "branch": "auto-impl/code-review-reality-server-inquiry-dead-88581ba0",
       "status": "review",
       "claimed_at": "2026-11-04T16:32:16Z",
-      "last_updated": "2026-11-05T20:42:52Z",
+      "last_updated": "2026-11-05T22:37:48Z",
       "status_changed_at": "2026-11-04T18:25:01Z",
       "pr_number": 3301,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3301",
@@ -41,7 +41,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": 0,
+      "rebase_attempts": 1,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-11-05T08:26:00Z"
@@ -179,5 +179,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-05T12:31:59Z"
+  "generated": "2026-11-05T22:37:48Z"
 }
