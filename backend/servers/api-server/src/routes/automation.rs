@@ -479,6 +479,7 @@ pub async fn get_rule_logs(
     responses(
         (status = 200, description = "Executions retrieved", body = AutomationExecutionList),
         (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Manager role required"),
         (status = 404, description = "Organization not found"),
         (status = 500, description = "Internal server error")
     ),
@@ -492,6 +493,7 @@ pub async fn list_executions(
     Query(query): Query<ExecutionsQuery>,
 ) -> ApiResult<Json<AutomationExecutionList>> {
     enforce_org_match(&principal, path.org_id)?;
+    require_manager(&state, &principal, path.org_id).await?;
 
     let filter = AutomationExecutionFilter {
         since: query.since,
@@ -518,6 +520,7 @@ pub async fn list_executions(
     responses(
         (status = 200, description = "Stats retrieved", body = AutomationExecutionStats),
         (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Manager role required"),
         (status = 404, description = "Organization not found"),
         (status = 500, description = "Internal server error")
     ),
@@ -531,6 +534,7 @@ pub async fn execution_stats(
     Query(query): Query<ExecutionStatsQuery>,
 ) -> ApiResult<Json<AutomationExecutionStats>> {
     enforce_org_match(&principal, path.org_id)?;
+    require_manager(&state, &principal, path.org_id).await?;
 
     let filter = AutomationExecutionFilter {
         since: query.since,
