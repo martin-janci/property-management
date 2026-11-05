@@ -935,3 +935,77 @@ pub async fn remove_organization_member(
         message: "Member removed successfully".to_string(),
     }))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// How the tenant extractors resolve a stored `role_type` to an authority
+    /// level: `common::TenantRole::from_role_type`, unknown/legacy -> Guest.
+    fn extractor_level(raw: &str) -> u8 {
+        common::TenantRole::from_role_type(raw)
+            .unwrap_or(TenantRole::Guest)
+            .level()
+    }
+
+    const ALL_ROLES: [TenantRole; 12] = [
+        TenantRole::SuperAdmin,
+        TenantRole::PlatformAdmin,
+        TenantRole::OrgAdmin,
+        TenantRole::Manager,
+        TenantRole::TechnicalManager,
+        TenantRole::Owner,
+        TenantRole::OwnerDelegate,
+        TenantRole::PropertyManager,
+        TenantRole::RealEstateAgent,
+        TenantRole::Tenant,
+        TenantRole::Resident,
+        TenantRole::Guest,
+    ];
+
+    /// The escalation gate's `role_type_level` must resolve a stored
+    /// `role_type` exactly the way the tenant extractors do, for every role in
+    /// the `TenantRole` set — otherwise the authority-level comparison can
+    /// disagree with the role the extractor actually grants the caller
+    /// (#3304, follow-up to PR #3291).
+    #[test]
+    fn role_type_level_agrees_with_extractor_for_full_role_set() {
+        for role in ALL_ROLES {
+            let canonical = serde_json::to_value(role)
+                .unwrap()
+                .as_str()
+                .expect("TenantRole serializes to a string")
+                .to_owned();
+            assert_eq!(
+                role_type_level(&canonical),
+                extractor_level(&canonical),
+                "role_type_level disagreed with extractor for {canonical:?}"
+            );
+            assert_eq!(role_type_level(&canonical), role.level());
+        }
+    }
+
+    /// Loosely-formatted strings that are NOT the canonical snake_case
+    /// `role_type` must resolve identically in the gate and the extractor. A
+    /// second, more tolerant parser used to rank some of these as privileged
+    /// (e.g. "Super Admin" -> SuperAdmin) while the extractor treated them as
+    /// unknown -> Guest: the privilege-escalation divergence of #3304.
+    #[test]
+    fn non_canonical_role_strings_degrade_like_the_extractor() {
+        for raw in [
+            "Super Admin",
+            "super-admin",
+            "ORG_ADMIN",
+            "Manager",
+            "member",
+            "",
+            "not_a_role",
+        ] {
+            assert_eq!(
+                role_type_level(raw),
+                extractor_level(raw),
+                "role_type_level disagreed with extractor for {raw:?}"
+            );
+        }
+    }
+}
