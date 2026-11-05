@@ -57,6 +57,7 @@ Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, e
 
 ## Agent Log
 
+- 2026-11-05 — agent: screen-map-drift-pr-3242-ppt — reconcile i18n drift from PR #3242 (`fix(ppt-web): localize financial, buildings and my-unit pages`, merged 2026-11-04). `PaymentManagementPage` + `PaymentForm`/`RecentPaymentsList`/`ReconciliationTable` moved hardcoded English into `financial.*` i18n keys across en/sk/cs/de/pl/hu; payment-status/method enums map to keys with a raw-value fallback; the raw `common.startDate`/`common.endDate` filter labels were replaced with real keys; money/dates format via `i18n.language`. No frontmatter change — docs-only.
 - 2026-11-04 — agent: r3-nav-roles — "Record payment" only for managers (`onNavigateToRecord` omitted for residents) (audit r3 #14).
 - 2026-08-04 — agent: screen-map-drift-pr-2649-ppt — reconciled this screen-map
   with PR #2649 (surface rentals/financial mutation failures via error toast).

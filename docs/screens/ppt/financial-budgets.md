@@ -55,6 +55,7 @@ Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, e
 - 2026-07-09 — linked UC-40 (Budget & Planning) to this screen; the use case covers annual budgets, budget-vs-actual, capex planning, budget approval voting, reporting, forecasting, reserve-fund management, and budget history — all served by the Budget Management page.
 
 ## Agent Log
+- 2026-11-05 — agent: screen-map-drift-pr-3242-ppt — reconcile i18n drift from PR #3242 (`fix(ppt-web): localize financial, buildings and my-unit pages`, merged 2026-11-04). `BudgetManagementPage` + `BudgetOverview`/`BudgetCard`/`BudgetForm` moved their remaining hardcoded English into `financial.*` i18n keys across en/sk/cs/de/pl/hu; budget-status enum maps to keys with a raw-value fallback; money/dates format via `i18n.language`. No frontmatter change — docs-only.
 - 2026-05-18 — agent: created stub for unmapped route.
 - 2026-07-09 — agent: linked UC-40 to useCases frontmatter (gap-screens-link-uc-40).
 - 2026-11-04 — agent: hid budget create/detail buttons (no route, no budgets api-client).
