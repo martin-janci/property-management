@@ -241,21 +241,22 @@ export function useUpdateLeaseTemplate() {
 }
 
 /**
- * Record a payment against a scheduled lease payment (see
- * {@link api.recordLeasePayment} for the path quirk). Invalidates the owning
- * lease detail plus lists/statistics.
+ * Record a payment against a scheduled lease payment via
+ * `POST /leases/{leaseId}/payments/{paymentId}`. Invalidates the owning lease
+ * detail plus lists/statistics.
  */
 export function useRecordLeasePayment() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
+      leaseId,
       paymentId,
       body,
     }: {
+      leaseId: string;
       paymentId: string;
-      leaseId?: string;
       body: RecordLeasePaymentRequest;
-    }) => api.recordLeasePayment(paymentId, body),
+    }) => api.recordLeasePayment(leaseId, paymentId, body),
     onSuccess: (payment, { leaseId }) => {
       queryClient.invalidateQueries({
         queryKey: leaseKeys.detail(leaseId ?? payment.lease_id),

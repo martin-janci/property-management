@@ -31,6 +31,7 @@ import {
 
 const ID = '11111111-1111-1111-1111-111111111111';
 const ORG = '22222222-2222-2222-2222-222222222222';
+const PAYMENT_ID = '33333333-3333-3333-3333-333333333333';
 
 function okJson(body: unknown): Response {
   return { ok: true, status: 200, json: async () => body } as Response;
@@ -72,17 +73,17 @@ describe('leases api client — request wiring contract', () => {
     expect(headers.Authorization).toBe('Bearer test-token');
   });
 
-  it('recordLeasePayment → POST /api/v1/leases/{payment_id}/payments', async () => {
+  it('recordLeasePayment → POST /api/v1/leases/{leaseId}/payments/{paymentId}', async () => {
     const body = {
       paid_amount: 850,
       payment_method: 'bank_transfer',
       payment_reference: 'VS123',
       paid_at: '2026-11-01T00:00:00Z',
     };
-    await recordLeasePayment(ID, body);
+    await recordLeasePayment(ID, PAYMENT_ID, body);
     const call = lastCall();
     expect(call.method).toBe('POST');
-    expect(call.url).toBe(`/api/v1/leases/${ID}/payments`);
+    expect(call.url).toBe(`/api/v1/leases/${ID}/payments/${PAYMENT_ID}`);
     expect(call.body).toEqual(body);
   });
 
