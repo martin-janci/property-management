@@ -89,8 +89,9 @@ pub(super) async fn list_attachments(
     security(("bearer_auth" = [])),
     responses(
         (status = 201, description = "Attachment added", body = AnnouncementAttachment),
+        (status = 400, description = "file_key outside the organization's storage namespace", body = ErrorResponse),
         (status = 403, description = "Forbidden - requires manager role", body = ErrorResponse),
-        (status = 404, description = "Announcement not found", body = ErrorResponse),
+        (status = 404, description = "Announcement not found, or file_key in another organization's namespace", body = ErrorResponse),
     ),
     tag = "Announcements"
 )]
@@ -116,6 +117,10 @@ pub(super) async fn add_attachment(
 
     // Org scope: 404 unless the announcement belongs to the caller's org.
     load_announcement_in_org(&state, &mut rls, tenant.tenant_id, id).await?;
+    if let Err(e) = validate_attachment_file_key(&req.file_key, tenant.tenant_id) {
+        rls.release().await;
+        return Err(e);
+    }
     let data = CreateAnnouncementAttachment {
         announcement_id: id,
         file_key: req.file_key,
@@ -144,6 +149,43 @@ pub(super) async fn add_attachment(
                 )),
             ))
         }
+    }
+}
+
+/// SECURITY: an attachment's `file_key` must lie in the caller's org storage
+/// namespace — `{org_id}/…`, the shape every upload / presign producer mints
+/// via `integrations::generate_storage_key` (same contract as
+/// `documents::core::validate_file_key_org_scope`). Otherwise a manager could
+/// attach any bucket object (another org's file) to an announcement and have
+/// residents fetch it.
+///
+/// A key inside another org's namespace (`{other_org_uuid}/…`) answers 404 —
+/// the object does not exist for this caller; any other key that lacks the
+/// org prefix (or contains `..`) is a malformed request, 400.
+pub(super) fn validate_attachment_file_key(
+    file_key: &str,
+    org_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    if crate::routes::documents::core::validate_file_key_org_scope(file_key, org_id).is_ok() {
+        return Ok(());
+    }
+    let foreign_org_namespace = !file_key.contains("..")
+        && file_key
+            .split_once('/')
+            .is_some_and(|(head, _)| Uuid::parse_str(head).is_ok_and(|other| other != org_id));
+    if foreign_org_namespace {
+        Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "File not found")),
+        ))
+    } else {
+        Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "INVALID_FILE_KEY",
+                "file_key must reference an object uploaded for this organization",
+            )),
+        ))
     }
 }
 
@@ -401,5 +443,36 @@ pub(super) async fn get_acknowledgments(
                 )),
             ))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::validate_attachment_file_key;
+    use axum::http::StatusCode;
+    use uuid::Uuid;
+
+    #[test]
+    fn attachment_file_key_must_be_in_org_namespace() {
+        let org = Uuid::new_v4();
+        let other = Uuid::new_v4();
+        assert!(validate_attachment_file_key(&format!("{org}/2026/11/x_a.pdf"), org).is_ok());
+
+        let status = |k: &str| validate_attachment_file_key(k, org).unwrap_err().0;
+        assert_eq!(
+            status(&format!("{other}/2026/11/x_a.pdf")),
+            StatusCode::NOT_FOUND
+        );
+        assert_eq!(status("org/files/doc.pdf"), StatusCode::BAD_REQUEST);
+        assert_eq!(status("messages/t/a.pdf"), StatusCode::BAD_REQUEST);
+        assert_eq!(status(&format!("{org}")), StatusCode::BAD_REQUEST);
+        assert_eq!(
+            status(&format!("{org}/../{other}/a.pdf")),
+            StatusCode::BAD_REQUEST
+        );
+        assert_eq!(
+            status(&format!("{other}/../a.pdf")),
+            StatusCode::BAD_REQUEST
+        );
     }
 }
