@@ -1234,7 +1234,7 @@ async fn check_eligibility(
     let org_id = rls.tenant_id();
     let eligibility = state
         .vote_repo
-        .check_eligibility_for_org(id, user_id, org_id, &mut **rls.conn())
+        .check_eligibility_for_org(id, user_id, org_id, &mut *rls.conn())
         .await
         .map_err(|e| {
             (
