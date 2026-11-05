@@ -1127,6 +1127,8 @@ async fn get_package_settings(
     responses(
         (status = 200, description = "Package settings updated", body = PackageSettingsResponse),
         (status = 401, description = "Not authenticated"),
+        (status = 403, description = "Staff role required"),
+        (status = 404, description = "Building not found"),
     ),
     security(("bearer_auth" = [])),
     tag = "Packages"
@@ -1150,6 +1152,12 @@ async fn update_package_settings(
                     "UPDATE_FAILED",
                     "Failed to update package settings",
                 )),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
             )
         })?;
 
@@ -1214,6 +1222,8 @@ async fn get_visitor_settings(
     responses(
         (status = 200, description = "Visitor settings updated", body = VisitorSettingsResponse),
         (status = 401, description = "Not authenticated"),
+        (status = 403, description = "Staff role required"),
+        (status = 404, description = "Building not found"),
     ),
     security(("bearer_auth" = [])),
     tag = "Visitors"
@@ -1237,6 +1247,12 @@ async fn update_visitor_settings(
                     "UPDATE_FAILED",
                     "Failed to update visitor settings",
                 )),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
             )
         })?;
 
