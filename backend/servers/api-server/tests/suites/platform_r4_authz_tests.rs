@@ -809,11 +809,14 @@ async fn rls_manager_mutations_succeed_for_managers(pool: PgPool) {
     let resp = call(&app, "GET", "/api/v1/ai/sentiment/alerts", &mgr, org, None).await;
     expect(&resp, StatusCode::OK, "manager lists sentiment alerts");
 
+    // Data-residency configuration is admin-only (round 5: reads for
+    // members, writes for admins), so this write runs as the org admin.
+    let admin = member(&pool, org, "org_admin").await;
     let resp = call(
         &app,
         "POST",
         "/api/v1/data-residency/config",
-        &mgr,
+        &admin,
         org,
         Some(json!({
             "primary_region": "eu_central",
@@ -824,7 +827,7 @@ async fn rls_manager_mutations_succeed_for_managers(pool: PgPool) {
         })),
     )
     .await;
-    expect(&resp, StatusCode::OK, "manager configures data residency");
+    expect(&resp, StatusCode::OK, "org admin configures data residency");
 
     let resp = call(&app, "GET", "/api/v1/data-residency/audit", &mgr, org, None).await;
     expect(&resp, StatusCode::OK, "manager reads residency audit");
