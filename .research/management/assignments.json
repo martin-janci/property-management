@@ -159,18 +159,18 @@
     {
       "task_id": "gh-issue-3306",
       "branch": "auto-impl/gh-issue-3306-44e1ab32",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-05T00:31:13Z",
-      "last_updated": "2026-11-05T00:31:13Z",
-      "status_changed_at": "2026-11-05T00:31:13Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-05T01:23:04Z",
+      "status_changed_at": "2026-11-05T01:23:04Z",
+      "pr_number": 3320,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3320",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3320 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=consolidated 4 R4 require_manager(rls) gates (board_meetings, ai/equipment, building_certifications, predictive_maintenance) onto rls_authz; left subscriptions(has_role) + board-member fallback intentionally; fmt+clippy green; 18 cargo-test fails are DB-less sqlx::test env, none in changed files - CI backend.yml authoritative",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -201,5 +201,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-05T00:51:58Z"
+  "generated": "2026-11-05T01:23:04Z"
 }
