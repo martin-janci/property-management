@@ -901,3 +901,35 @@ async fn facilities_and_person_months_error_paths(pool: PgPool) {
         .await;
     assert_eq!(resp.status, StatusCode::OK, "{}", resp.text());
 }
+
+/// Without any org context (login token, no X-Tenant-ID — what the web
+/// client sends), role-targeted tours still use the user's active DB
+/// memberships.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn onboarding_without_org_context_uses_db_memberships(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org = seed_org(&pool, "r5-onb-none").await;
+    let (token, _) = member(&app, org, "manager").await;
+    let tour_id = format!("r5-nohdr-{}", &Uuid::new_v4().simple().to_string()[..12]);
+    sqlx::query(
+        "INSERT INTO onboarding_tours (tour_id, name, target_roles) VALUES ($1, 'Mgr', ARRAY['manager'])",
+    )
+    .bind(&tour_id)
+    .execute(&pool)
+    .await
+    .unwrap();
+
+    let resp = app
+        .execute(app.get("/api/v1/onboarding/tours").bearer(&token).build())
+        .await;
+    assert_eq!(resp.status, StatusCode::OK, "{}", resp.text());
+    let tours = resp.json_value();
+    let tours = tours.as_array().expect("tours array");
+    assert!(!tours.is_empty(), "tour list must not be empty");
+    assert!(
+        tours
+            .iter()
+            .any(|t| t["tour"]["tour_id"] == tour_id.as_str()),
+        "manager without tenant header must get the manager-targeted tour"
+    );
+}

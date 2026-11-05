@@ -61,14 +61,15 @@ pub struct CompleteStepRequest {
 /// Extract user from token.
 ///
 /// Roles used for role-targeted tours come from the caller's active
-/// membership in the **current** organization only (the `X-Tenant-ID` header
-/// the clients send, or the token's `org_id` claim; they must agree). Roles a
-/// user holds in other organizations, and the token's `roles` claim, are
-/// never merged in — a manager elsewhere is not a manager here. Each matching
+/// membership in the **current** organization when one is given (the
+/// `X-Tenant-ID` header or the token's `org_id` claim; they must agree) — a
+/// manager elsewhere is not a manager here. Without an org context (login
+/// tokens carry no org claim and the onboarding client sends no header) the
+/// user's active memberships across orgs are used. The token's `roles` claim
+/// is never consulted. Each matching
 /// membership contributes its `role_type`, its role name and the display
 /// name of the canonical role (e.g. "Manager"), which is how
-/// `onboarding_tours.target_roles` is written. Without an org context the
-/// role list is empty (only untargeted tours apply).
+/// `onboarding_tours.target_roles` is written.
 async fn extract_user_token(
     headers: &axum::http::HeaderMap,
     state: &AppState,
@@ -128,9 +129,10 @@ async fn extract_user_token(
             ));
         }
     }
-    let Some(org_id) = header_org.or(claim_org) else {
-        return Ok((user_id, Vec::new()));
-    };
+    // With an org context, only that org's membership counts. Without one
+    // (login tokens carry no org claim and the onboarding client sends no
+    // X-Tenant-ID), fall back to all of the user's active memberships.
+    let org_scope = header_org.or(claim_org);
 
     let mut roles = Vec::new();
     let memberships = state
@@ -146,7 +148,7 @@ async fn extract_user_token(
         })?;
     for m in memberships
         .into_iter()
-        .filter(|m| m.status == "active" && m.organization_id == org_id)
+        .filter(|m| m.status == "active" && org_scope.is_none_or(|org| m.organization_id == org))
     {
         if let Some(role) = common::TenantRole::from_role_type(&m.role_type) {
             roles.push(role.to_string());
