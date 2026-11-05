@@ -98,6 +98,7 @@ prose but scoped it out of the 8A.1 map, so the sitemap ID had no screen-map
 
 <!-- newest entries on top -->
 
+- 2026-11-05 — agent: screen-map-drift-pr-3244-ppt — reconcile i18n drift from PR #3244. `AdvancedNotificationSettingsPage` and its four section components (`CategoryPreferenceCard` / `DigestPreferences` / `GroupingSettings` / `QuietHoursConfig`) moved hardcoded English into react-i18next across all 6 locales — tab labels, per-category/channel copy, digest cadence, quiet-hours + day labels and grouping copy. i18n only — no route/component/endpoint/status change.
 - 2026-11-03 — agent: rewired the advanced-notification api-client onto the
   granular endpoints (fixes 405s on load); trimmed QuietHoursConfig /
   DigestPreferences controls the backend cannot store.

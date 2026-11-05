@@ -93,4 +93,5 @@ dedicated manager reporting surface.
 
 <!-- newest entries on top -->
 
+- 2026-11-05 — agent: screen-map-drift-pr-3244-ppt — reconcile i18n drift from PR #3244. `FaultReportsPage` + `FaultBreakdownChart` localized (`faults.*`): KPI labels, chart titles, by-status/category/priority bucket labels and the empty/error/forbidden copy now resolve via react-i18next, with dates/numbers formatted using the active language. i18n only — no route/component/endpoint/status change.
 - 2026-06-22 — agent: BIT-186 (FrontendEngineer) — created from scratch for Story 4.7. New `/faults/reports` route + `FaultReportsPage` + `FaultBreakdownChart` + CSV/PDF export; extended `useFaultStatistics` to accept building + date-range filters; manager-only gating mirrors `isManagerRole`; drill-down into the pre-filtered faults list. ppt-web buildStatus shipped / apiStatus complete; mobile n/a. Tests added for page + chart; typecheck + biome green.
