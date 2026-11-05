@@ -3476,7 +3476,8 @@
               "label": "Kikapcsolva",
               "description": "Az értesítések azonnal érkeznek, nem összesítve"
             }
-          }
+          },
+          "allCategoriesNote": "Az összefoglaló minden kategória értesítéseit tartalmazza."
         },
         "quietHours": {
           "title": "Csendes órák",
@@ -3491,7 +3492,8 @@
           "dayInactive": "{{day}} – inaktív",
           "timezone": "Időzóna",
           "allowEmergency": "Vészhelyzeti értesítések engedélyezése",
-          "allowEmergencyHelp": "A kritikus riasztások a csendes órákban is megérkeznek"
+          "allowEmergencyHelp": "A kritikus riasztások a csendes órákban is megérkeznek",
+          "heldNote": "A csendes órákban érkező push értesítéseket visszatartjuk, és a csendes időszak végén kézbesítjük."
         },
         "grouping": {
           "title": "Intelligens csoportosítás",
@@ -4855,6 +4857,30 @@
       "retrySuccessMessage": "A végrehajtás újrapróbálásra lett ütemezve.",
       "retryErrorTitle": "Az újrapróbálás sikertelen",
       "retryErrorMessage": "A végrehajtást nem sikerült újrapróbálni."
+    },
+    "templates": {
+      "weekly_maintenance_report": {
+        "name": "Heti karbantartási jelentés",
+        "description": "Hetente összefoglalót küld a kezelőknek a nyitott karbantartási kérésekről"
+      },
+      "overdue_payment_reminder": {
+        "name": "Késedelmes fizetési emlékeztető",
+        "description": "Emlékeztetőt küld, ha a fizetés 7 napja lejárt"
+      },
+      "high_priority_fault_escalation": {
+        "name": "Magas prioritású hibák eszkalálása",
+        "description": "Automatikusan kiosztja a magas prioritású hibákat és értesíti a kezelőt"
+      },
+      "monthly_statement_generation": {
+        "name": "Havi elszámolás",
+        "description": "Minden hónap 1. napján elkészíti és elküldi a havi elszámolást"
+      },
+      "actionTypes": {
+        "generate_report": "Jelentés készítése",
+        "send_email": "E-mail küldése",
+        "send_notification": "Értesítés küldése",
+        "assign_fault": "Hiba kiosztása"
+      }
     }
   },
   "registry": {

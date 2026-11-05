@@ -31,7 +31,11 @@ impl AuditLogRepository {
     pub async fn create(&self, data: CreateAuditLog) -> Result<AuditLog, SqlxError> {
         // Pre-generate the id + timestamp so we can hash before INSERT.
         let id = Uuid::new_v4();
-        let created_at = chrono::Utc::now();
+        // Postgres TIMESTAMPTZ stores microseconds. Hash the value exactly as
+        // it will be stored, or `verify_integrity` (which re-hashes the
+        // stored `created_at`) reports every nanosecond-precision row as
+        // tampered.
+        let created_at = chrono::SubsecRound::trunc_subsecs(chrono::Utc::now(), 6);
 
         // SERIALIZABLE so the (read latest hash → write new row) sequence
         // is consistent: two concurrent writers can't both read the same

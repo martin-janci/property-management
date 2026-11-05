@@ -7,6 +7,7 @@
 
 import type { AutomationTemplate } from '@ppt/api-client';
 import { useTranslation } from 'react-i18next';
+import { templateActionLabel, templateDescription, templateName } from '../templateText';
 
 interface TemplatePreviewModalProps {
   template: AutomationTemplate;
@@ -57,7 +58,7 @@ export function TemplatePreviewModal({ template, onClose, onUse }: TemplatePrevi
               <span className="text-4xl">{categoryIcon}</span>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-xl font-bold text-gray-900">{template.name}</h2>
+                  <h2 className="text-xl font-bold text-gray-900">{templateName(t, template)}</h2>
                   <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${categoryColor}`}>
                     {categoryLabel}
                   </span>
@@ -67,7 +68,7 @@ export function TemplatePreviewModal({ template, onClose, onUse }: TemplatePrevi
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-gray-500 mt-1">{template.description}</p>
+                <p className="text-sm text-gray-500 mt-1">{templateDescription(t, template)}</p>
               </div>
             </div>
             <button
@@ -187,7 +188,7 @@ export function TemplatePreviewModal({ template, onClose, onUse }: TemplatePrevi
                     <span className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-xs font-medium">
                       {index + 1}
                     </span>
-                    <p className="text-sm text-gray-700">{action}</p>
+                    <p className="text-sm text-gray-700">{templateActionLabel(t, action)}</p>
                   </div>
                 ))
               ) : (

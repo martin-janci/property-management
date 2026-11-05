@@ -31,6 +31,8 @@ mod api_ecosystem_public_conn_routing_tests;
 mod api_ecosystem_rls_repo_tests;
 #[path = "suites/auth_policy_tests.rs"]
 mod auth_policy_tests;
+#[path = "suites/automation_template_slug_tests.rs"]
+mod automation_template_slug_tests;
 #[path = "suites/background_jobs_stuck_retry_budget_tests.rs"]
 mod background_jobs_stuck_retry_budget_tests;
 #[path = "suites/board_meetings_list_join_tests.rs"]

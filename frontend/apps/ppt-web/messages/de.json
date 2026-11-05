@@ -4007,7 +4007,8 @@
               "label": "Deaktiviert",
               "description": "Benachrichtigungen sofort statt gesammelt erhalten"
             }
-          }
+          },
+          "allCategoriesNote": "Die Zusammenfassung enthält Benachrichtigungen aus allen Kategorien."
         },
         "quietHours": {
           "title": "Ruhezeiten",
@@ -4022,7 +4023,8 @@
           "dayInactive": "{{day}} – inaktiv",
           "timezone": "Zeitzone",
           "allowEmergency": "Notfallbenachrichtigungen zulassen",
-          "allowEmergencyHelp": "Kritische Warnungen werden auch während der Ruhezeiten zugestellt"
+          "allowEmergencyHelp": "Kritische Warnungen werden auch während der Ruhezeiten zugestellt",
+          "heldNote": "Push-Benachrichtigungen, die während der Ruhezeit eingehen, werden zurückgehalten und nach deren Ende zugestellt."
         },
         "grouping": {
           "title": "Intelligente Gruppierung",
@@ -5386,6 +5388,30 @@
       "retrySuccessMessage": "Die Ausführung wurde zur Wiederholung eingereiht.",
       "retryErrorTitle": "Wiederholung fehlgeschlagen",
       "retryErrorMessage": "Die Ausführung konnte nicht wiederholt werden."
+    },
+    "templates": {
+      "weekly_maintenance_report": {
+        "name": "Wöchentlicher Wartungsbericht",
+        "description": "Sendet den Verwaltern wöchentlich eine Übersicht offener Wartungsanfragen"
+      },
+      "overdue_payment_reminder": {
+        "name": "Erinnerung an überfällige Zahlung",
+        "description": "Sendet eine Erinnerung, wenn eine Zahlung 7 Tage überfällig ist"
+      },
+      "high_priority_fault_escalation": {
+        "name": "Eskalation von Störungen mit hoher Priorität",
+        "description": "Weist Störungen mit hoher Priorität automatisch zu und benachrichtigt den Verwalter"
+      },
+      "monthly_statement_generation": {
+        "name": "Monatliche Abrechnung",
+        "description": "Erstellt und versendet die monatliche Abrechnung jeweils am 1. des Monats"
+      },
+      "actionTypes": {
+        "generate_report": "Bericht erstellen",
+        "send_email": "E-Mail senden",
+        "send_notification": "Benachrichtigung senden",
+        "assign_fault": "Störung zuweisen"
+      }
     }
   },
   "registry": {

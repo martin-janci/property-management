@@ -64,6 +64,7 @@ export interface ApiAutomationRuleWrite {
 
 export interface ApiAutomationTemplate {
   id: string;
+  slug?: string | null;
   name: string;
   description?: string | null;
   category: string;
@@ -299,6 +300,7 @@ export function templateFromApi(template: ApiAutomationTemplate): AutomationTemp
 
   return {
     id: template.id,
+    ...(template.slug ? { slug: template.slug } : {}),
     name: template.name,
     description: template.description ?? '',
     category: categoryFromApi(template.category),

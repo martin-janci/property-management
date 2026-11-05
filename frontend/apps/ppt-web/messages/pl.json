@@ -3548,7 +3548,8 @@
               "label": "Wyłączone",
               "description": "Otrzymuj powiadomienia od razu zamiast w podsumowaniach"
             }
-          }
+          },
+          "allCategoriesNote": "Podsumowanie obejmuje powiadomienia ze wszystkich kategorii."
         },
         "quietHours": {
           "title": "Godziny ciszy",
@@ -3563,7 +3564,8 @@
           "dayInactive": "{{day}} – nieaktywny",
           "timezone": "Strefa czasowa",
           "allowEmergency": "Zezwalaj na powiadomienia alarmowe",
-          "allowEmergencyHelp": "Krytyczne alerty będą docierać także w godzinach ciszy"
+          "allowEmergencyHelp": "Krytyczne alerty będą docierać także w godzinach ciszy",
+          "heldNote": "Powiadomienia push, które nadejdą w godzinach ciszy, zostaną wstrzymane i dostarczone po ich zakończeniu."
         },
         "grouping": {
           "title": "Inteligentne grupowanie",
@@ -4855,7 +4857,9 @@
       "categoryCommunications": "Komunikacja",
       "categoryDocuments": "Dokumenty",
       "categoryMaintenance": "Konserwacja",
-      "categoryGeneral": "Ogólne"
+      "categoryGeneral": "Ogólne",
+      "actions_few": "{{count}} akcje",
+      "actions_many": "{{count}} akcji"
     },
     "templatePreview": {
       "popular": "Popularne",
@@ -4941,6 +4945,30 @@
       "retrySuccessMessage": "Wykonanie zostało skolejkowane do ponowienia.",
       "retryErrorTitle": "Ponowienie nie powiodło się",
       "retryErrorMessage": "Nie udało się ponowić wykonania."
+    },
+    "templates": {
+      "weekly_maintenance_report": {
+        "name": "Tygodniowy raport konserwacji",
+        "description": "Co tydzień wysyła zarządcom podsumowanie otwartych zgłoszeń konserwacyjnych"
+      },
+      "overdue_payment_reminder": {
+        "name": "Przypomnienie o zaległej płatności",
+        "description": "Wysyła przypomnienie, gdy płatność jest opóźniona o 7 dni"
+      },
+      "high_priority_fault_escalation": {
+        "name": "Eskalacja usterek o wysokim priorytecie",
+        "description": "Automatycznie przydziela usterki o wysokim priorytecie i powiadamia zarządcę"
+      },
+      "monthly_statement_generation": {
+        "name": "Miesięczne rozliczenie",
+        "description": "Generuje i wysyła miesięczne rozliczenie 1. dnia każdego miesiąca"
+      },
+      "actionTypes": {
+        "generate_report": "Wygeneruj raport",
+        "send_email": "Wyślij e-mail",
+        "send_notification": "Wyślij powiadomienie",
+        "assign_fault": "Przydziel usterkę"
+      }
     }
   },
   "registry": {

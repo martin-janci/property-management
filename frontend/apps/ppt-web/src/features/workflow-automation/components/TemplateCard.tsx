@@ -7,6 +7,7 @@
 
 import type { AutomationTemplate } from '@ppt/api-client';
 import { useTranslation } from 'react-i18next';
+import { templateDescription, templateName } from '../templateText';
 
 interface TemplateCardProps {
   template: AutomationTemplate;
@@ -60,7 +61,7 @@ export function TemplateCard({ template, onUse, onPreview }: TemplateCardProps) 
         <span className="text-3xl">{categoryIcon}</span>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <h3 className="text-base font-semibold text-gray-900">{template.name}</h3>
+            <h3 className="text-base font-semibold text-gray-900">{templateName(t, template)}</h3>
             <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${categoryColor}`}>
               {categoryLabel}
             </span>
@@ -70,7 +71,7 @@ export function TemplateCard({ template, onUse, onPreview }: TemplateCardProps) 
               </span>
             )}
           </div>
-          <p className="text-sm text-gray-500 line-clamp-2">{template.description}</p>
+          <p className="text-sm text-gray-500 line-clamp-2">{templateDescription(t, template)}</p>
         </div>
       </div>
 

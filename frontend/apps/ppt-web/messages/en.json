@@ -5921,7 +5921,8 @@
               "label": "Disabled",
               "description": "Receive notifications immediately instead of in digests"
             }
-          }
+          },
+          "allCategoriesNote": "The digest summarises notifications from all categories."
         },
         "quietHours": {
           "title": "Quiet Hours",
@@ -5936,7 +5937,8 @@
           "dayInactive": "{{day}} - inactive",
           "timezone": "Timezone",
           "allowEmergency": "Allow Emergency Notifications",
-          "allowEmergencyHelp": "Critical alerts will still come through during quiet hours"
+          "allowEmergencyHelp": "Critical alerts will still come through during quiet hours",
+          "heldNote": "Push notifications that arrive during quiet hours are held and delivered once the quiet period ends."
         },
         "grouping": {
           "title": "Smart Grouping",
@@ -7349,6 +7351,30 @@
       "retrySuccessMessage": "The execution was queued for retry.",
       "retryErrorTitle": "Retry failed",
       "retryErrorMessage": "The execution could not be retried."
+    },
+    "templates": {
+      "weekly_maintenance_report": {
+        "name": "Weekly Maintenance Report",
+        "description": "Send weekly summary of open maintenance requests to managers"
+      },
+      "overdue_payment_reminder": {
+        "name": "Overdue Payment Reminder",
+        "description": "Send reminder when payment is overdue by 7 days"
+      },
+      "high_priority_fault_escalation": {
+        "name": "High Priority Fault Escalation",
+        "description": "Auto-assign high priority faults and notify manager"
+      },
+      "monthly_statement_generation": {
+        "name": "Monthly Statement Generation",
+        "description": "Generate and send monthly statements on the 1st"
+      },
+      "actionTypes": {
+        "generate_report": "Generate report",
+        "send_email": "Send email",
+        "send_notification": "Send notification",
+        "assign_fault": "Assign fault"
+      }
     }
   },
   "registry": {
