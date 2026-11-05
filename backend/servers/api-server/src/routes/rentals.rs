@@ -4,7 +4,7 @@
 
 use crate::services::id_ocr::{GuestIdExtraction, IdOcrError};
 use crate::state::AppState;
-use api_core::extractors::TenantExtractor;
+use api_core::extractors::ValidatedTenantExtractor;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -192,7 +192,7 @@ fn report_err(e: sqlx::Error, ctx: &str) -> (axum::http::StatusCode, String) {
 )]
 pub async fn get_statistics(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
 ) -> Result<Json<RentalStatistics>, (axum::http::StatusCode, String)> {
     let stats = state
         .rental_repo
@@ -220,7 +220,7 @@ pub async fn get_statistics(
 )]
 pub async fn get_sync_status(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
 ) -> Result<Json<Vec<PlatformSyncStatus>>, (axum::http::StatusCode, String)> {
     let status = state
         .rental_repo
@@ -252,7 +252,7 @@ pub async fn get_sync_status(
 )]
 pub async fn list_connections(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
 ) -> Result<Json<Vec<PlatformConnectionSummary>>, (axum::http::StatusCode, String)> {
     let connections = state
         .rental_repo
@@ -282,7 +282,7 @@ pub async fn list_connections(
 )]
 pub async fn create_connection(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Json(data): Json<CreatePlatformConnection>,
 ) -> Result<Json<RentalPlatformConnection>, (axum::http::StatusCode, String)> {
     require_rental_manager(&state, &tenant).await?;
@@ -318,7 +318,7 @@ pub async fn create_connection(
 )]
 pub async fn get_connection(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<PlatformConnectionDetail>, (axum::http::StatusCode, String)> {
     // SECURITY (#887 / #804): scope the lookup to the authenticated tenant so a
@@ -359,7 +359,7 @@ pub async fn get_connection(
 )]
 pub async fn update_connection(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdatePlatformConnection>,
 ) -> Result<Json<PlatformConnectionDetail>, (axum::http::StatusCode, String)> {
@@ -399,7 +399,7 @@ pub async fn update_connection(
 )]
 pub async fn delete_connection(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
     require_rental_manager(&state, &tenant).await?;
@@ -438,7 +438,7 @@ pub async fn delete_connection(
 )]
 pub async fn get_unit_connections(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(unit_id): Path<Uuid>,
 ) -> Result<Json<Vec<ConnectionStatus>>, (axum::http::StatusCode, String)> {
     // SECURITY (#887 / #804): scope to the authenticated tenant so a caller
@@ -483,7 +483,7 @@ pub async fn get_unit_connections(
 )]
 pub async fn list_bookings(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Query(query): Query<BookingListQuery>,
 ) -> Result<Json<BookingsResponse>, (axum::http::StatusCode, String)> {
     // SECURITY (#1766): bookings carry guest identity PII (id_number,
@@ -527,7 +527,7 @@ pub async fn list_bookings(
 )]
 pub async fn create_booking(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Json(data): Json<CreateBooking>,
 ) -> Result<Json<RentalBooking>, (axum::http::StatusCode, String)> {
     require_rental_manager(&state, &tenant).await?;
@@ -582,7 +582,7 @@ pub async fn create_booking(
 )]
 pub async fn get_booking(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RentalBooking>, (axum::http::StatusCode, String)> {
     // SECURITY (#1766): gate guest-PII-bearing booking reads to managers
@@ -628,7 +628,7 @@ pub async fn get_booking(
 )]
 pub async fn update_booking(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateBooking>,
 ) -> Result<Json<RentalBooking>, (axum::http::StatusCode, String)> {
@@ -669,7 +669,7 @@ pub async fn update_booking(
 )]
 pub async fn update_booking_status(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateBookingStatus>,
 ) -> Result<Json<RentalBooking>, (axum::http::StatusCode, String)> {
@@ -709,7 +709,7 @@ pub async fn update_booking_status(
 )]
 pub async fn get_booking_with_guests(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<BookingWithGuests>, (axum::http::StatusCode, String)> {
     // SECURITY (#1766): this is the primary guest-PII read (booking + every
@@ -768,7 +768,7 @@ pub struct CalendarQuery {
 )]
 pub async fn get_calendar(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(unit_id): Path<Uuid>,
     Query(query): Query<CalendarQuery>,
 ) -> Result<Json<Vec<CalendarEvent>>, (axum::http::StatusCode, String)> {
@@ -822,7 +822,7 @@ pub struct AvailabilityResponse {
 )]
 pub async fn check_availability(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(unit_id): Path<Uuid>,
     Query(query): Query<AvailabilityQuery>,
 ) -> Result<Json<AvailabilityResponse>, (axum::http::StatusCode, String)> {
@@ -860,7 +860,7 @@ pub async fn check_availability(
 )]
 pub async fn create_calendar_block(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Json(data): Json<CreateCalendarBlock>,
 ) -> Result<Json<CalendarBlock>, (axum::http::StatusCode, String)> {
     require_rental_manager(&state, &tenant).await?;
@@ -896,7 +896,7 @@ pub async fn create_calendar_block(
 )]
 pub async fn delete_calendar_block(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
     require_rental_manager(&state, &tenant).await?;
@@ -945,7 +945,7 @@ pub async fn delete_calendar_block(
 )]
 pub async fn list_guests(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Query(query): Query<GuestListQuery>,
 ) -> Result<Json<Vec<GuestListItem>>, (axum::http::StatusCode, String)> {
     // SECURITY (#1766): guest rows carry identity PII; gate to managers like
@@ -997,7 +997,7 @@ pub async fn list_guests(
 )]
 pub async fn create_guest(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Json(data): Json<CreateGuest>,
 ) -> Result<Json<RentalGuest>, (axum::http::StatusCode, String)> {
     require_rental_manager(&state, &tenant).await?;
@@ -1029,7 +1029,7 @@ pub async fn create_guest(
 )]
 pub async fn get_guest(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RentalGuest>, (axum::http::StatusCode, String)> {
     // SECURITY (#1766): the guest read-path returns identity PII (id_number,
@@ -1076,7 +1076,7 @@ pub async fn get_guest(
 )]
 pub async fn update_guest(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateGuest>,
 ) -> Result<Json<RentalGuest>, (axum::http::StatusCode, String)> {
@@ -1123,7 +1123,7 @@ pub async fn update_guest(
 )]
 pub async fn delete_guest(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
     require_rental_manager(&state, &tenant).await?;
@@ -1257,7 +1257,7 @@ fn map_multipart_err(
 )]
 pub async fn upload_guest_id_document(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
     mut multipart: Multipart,
 ) -> Result<(StatusCode, Json<RentalGuestIdDocument>), (StatusCode, Json<ErrorResponse>)> {
@@ -1471,7 +1471,7 @@ pub async fn upload_guest_id_document(
 )]
 pub async fn extract_guest_id_document(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<GuestIdExtraction>, (StatusCode, Json<ErrorResponse>)> {
     let org_id = tenant.tenant_id;
@@ -1588,7 +1588,7 @@ pub async fn extract_guest_id_document(
 )]
 pub async fn register_guest(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RentalGuest>, (axum::http::StatusCode, String)> {
     require_rental_manager(&state, &tenant).await?;
@@ -1637,7 +1637,7 @@ fn default_days_ahead() -> i32 {
 )]
 pub async fn get_checkin_reminders(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Query(query): Query<CheckInRemindersQuery>,
 ) -> Result<Json<Vec<db::models::CheckInReminder>>, (axum::http::StatusCode, String)> {
     require_rental_manager(&state, &tenant).await?;
@@ -1687,7 +1687,7 @@ fn default_reports_limit() -> i32 {
 )]
 pub async fn list_reports(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Query(query): Query<ListReportsQuery>,
 ) -> Result<Json<Vec<ReportSummary>>, (axum::http::StatusCode, String)> {
     require_rental_manager(&state, &tenant).await?;
@@ -1726,7 +1726,7 @@ pub struct ReportPreviewRequest {
 )]
 pub async fn generate_report_preview(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Json(data): Json<ReportPreviewRequest>,
 ) -> Result<Json<ReportPreview>, (axum::http::StatusCode, String)> {
     require_rental_manager(&state, &tenant).await?;
@@ -1757,7 +1757,7 @@ pub async fn generate_report_preview(
 )]
 pub async fn create_report(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Json(data): Json<GenerateReport>,
 ) -> Result<Json<RentalGuestReport>, (axum::http::StatusCode, String)> {
     require_rental_manager(&state, &tenant).await?;
@@ -1784,7 +1784,7 @@ pub async fn create_report(
 )]
 pub async fn get_report(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RentalGuestReport>, (axum::http::StatusCode, String)> {
     require_rental_manager(&state, &tenant).await?;
@@ -1824,7 +1824,7 @@ pub async fn get_report(
 )]
 pub async fn submit_report(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RentalGuestReport>, (axum::http::StatusCode, String)> {
     require_rental_manager(&state, &tenant).await?;
@@ -1866,7 +1866,7 @@ pub async fn submit_report(
 )]
 pub async fn create_ical_feed(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Json(data): Json<CreateICalFeed>,
 ) -> Result<Json<ICalFeed>, (axum::http::StatusCode, String)> {
     require_rental_manager(&state, &tenant).await?;
@@ -1903,7 +1903,7 @@ pub async fn create_ical_feed(
 )]
 pub async fn update_ical_feed(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateICalFeed>,
 ) -> Result<Json<ICalFeed>, (axum::http::StatusCode, String)> {
@@ -1943,7 +1943,7 @@ pub async fn update_ical_feed(
 )]
 pub async fn delete_ical_feed(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
     require_rental_manager(&state, &tenant).await?;
@@ -1982,7 +1982,7 @@ pub async fn delete_ical_feed(
 )]
 pub async fn get_unit_ical_feeds(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(unit_id): Path<Uuid>,
 ) -> Result<Json<Vec<ICalFeed>>, (axum::http::StatusCode, String)> {
     // SECURITY (#804): scope to the authenticated tenant so a caller cannot
