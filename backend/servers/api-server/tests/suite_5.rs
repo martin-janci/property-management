@@ -75,3 +75,5 @@ mod mfa_brute_force_rate_limit_tests;
 mod mfa_disable_rls_scope_tests;
 #[path = "suites/round3_payload_tests.rs"]
 mod round3_payload_tests;
+#[path = "suites/round5_sec_b_authz_tests.rs"]
+mod round5_sec_b_authz_tests;
