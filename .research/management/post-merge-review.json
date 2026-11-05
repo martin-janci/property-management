@@ -1,9 +1,31 @@
 {
-  "generated": "2026-11-04T18:44:47Z",
+  "generated": "2026-11-05T20:43:15Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-11-05T20:43:15Z",
+      "prs_scanned": 15,
+      "clean": [
+        3321,
+        3325,
+        3323,
+        3324,
+        3319,
+        3320,
+        3318,
+        3322,
+        3327,
+        3328,
+        3326,
+        3293,
+        3280,
+        3317,
+        3316
+      ],
+      "with_issues": []
+    },
     {
       "run_at": "2026-11-04T18:44:47Z",
       "prs_scanned": 15,
@@ -707,46 +729,6 @@
         3060,
         3062
       ]
-    },
-    {
-      "run_at": "2026-10-10T14:26:51Z",
-      "prs_scanned": 7,
-      "clean": [
-        3059,
-        3058,
-        3054,
-        3053,
-        3049,
-        3055,
-        3056
-      ],
-      "with_issues": [],
-      "skipped_already_reviewed": [
-        3043,
-        3046,
-        3045,
-        3047,
-        3048,
-        3050,
-        3051,
-        3044,
-        3032,
-        3034,
-        3031,
-        3033,
-        3026,
-        3025,
-        3020,
-        3036,
-        2967,
-        2969,
-        3023,
-        3027,
-        3018,
-        3019,
-        3021
-      ],
-      "note": "Dispatcher Phase 2.5 post-merge review. repo=martin-janci/property-management, window=14d (merged>=2026-09-26), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI write path proxy-403'd). 7 unreviewed PRs in window, all CLEAN -> 0 follow-up issues. Code PRs: #3049 (documents route gating \u2014 removed 'default-org' sentinel, gate via AuthRequiredGate, pass real organizationId; new documents.route.test.tsx pins contract) and #3056 (gh-issue-3052: /sell wizard Publish \u2014 map area->sizeSqm + collect required postalCode across 6 locales, edit page + ListingForm + ListingDraft updated, publish test asserts sizeSqm/postalCode sent & no 'area' key). #3056 closes #3052, which was itself opened by the prior (2026-10-09) post-merge run on PR #3044 \u2014 the HIGH (missing postalCode) + MED (area/sizeSqm dropped) findings are now resolved. 5 screen-map-drift PRs are docs-only (docs/screens/**/*.md) reconciliations: #3059 (ppt toast i18n/#3036), #3058 (reality report-listing/#3019 + fabricated-quote correction), #3054 (ppt community-group-detail/#3034), #3053 (reality sell/#3022), #3055 (reality profile/#3033) \u2014 all accurate. Minor non-actionable: sell.md (#3053) Notes still list the area/sizeSqm+postalCode gaps as open follow-ups though #3056 already fixed them \u2014 docs staleness owned by the /screens drift system, not a code finding. Single-writer: DISPATCHER_OWNED_COMMIT=1, wrote JSON + marker, deferred commit/push to orchestrator Phase 6."
     }
   ]
 }
