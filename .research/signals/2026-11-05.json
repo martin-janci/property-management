@@ -163,6 +163,22 @@
         "frontend/apps/reality-web/src/app/api/layout-revalidate/route.test.ts",
         "frontend/apps/reality-web/src/app/api/layout-revalidate/route.ts"
       ]
+    },
+    {
+      "id": "code-review-reality-web-share-cmp-unchecked-json",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:47 \u2014 the shared-comparison loader casts the listings endpoint body straight to the wire type with an unchecked cast: `return response.json() as Promise<ListingSummary>;`. No shape validation. This bypasses the boundary-validation standard the rest of reality-web deliberately established: lib/realtor-api.ts parseJsonBody() rejects a non-object/array/null 200 with a typed RealtorApiError, and app/[locale]/listings/[slug]/page.tsx funnels the SAME `/api/v1/listings/{id}` endpoint through parseListingDetail() before use. Only this client fetch trusts the wire shape blindly.",
+        "Impact: a well-formed-JSON-but-wrong-shape 200 (e.g. `{}`, a primitive, or a partial/proxy body missing required fields) passes the `if (result.value)` truthiness check (L58-60), is pushed into comparison state via addToComparison() and persisted to localStorage, then rendered by ComparisonView where nested field derefs can throw and crash the in-session shared comparison. (A malformed-JSON body or a non-ok status is already handled: `.json()` throws into Promise.allSettled and the id is dropped; the wrong-shape-but-valid-JSON case is the gap. localStorage self-heals on reload because comparison-context's isStoredListing() filters it, but the in-session render still breaks.)",
+        "Fix vector: validate the body at this boundary before addToComparison \u2014 reuse the same pattern as parseJsonBody (reject non-object / array / missing string `id`) or a shared listing-summary normalizer, instead of the raw `as Promise<ListingSummary>` cast. Cloud-verifiable (reality-web, biome + typecheck). Confidence medium: the unchecked cast and the missing guard are certain by static read; reachable from any shared /compare?ids=... URL (Epic 51 Story 51.3). Severity LOW (+1): requires a malformed-but-valid-JSON 200 from the listings endpoint (low likelihood) and reload self-heals.",
+        "expert: frontend"
+      ],
+      "expert": "frontend"
     }
   ],
   "auto_fix_actions": [],
