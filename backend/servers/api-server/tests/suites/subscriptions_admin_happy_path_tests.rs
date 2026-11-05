@@ -4,10 +4,10 @@
 //!
 //! Auth model: both handlers take a `RlsConnection` (resolved from the
 //! `X-Tenant-ID` header + an active `organization_members` row) AND additionally
-//! call `require_super_admin`, which decodes the bearer token and checks the
-//! `roles` claim for a super-admin role. So a working caller needs BOTH a seeded
-//! org membership (for the RLS extractor) AND a token carrying the `super_admin`
-//! role (for the platform-admin gate). We mint that token directly via
+//! call `require_super_admin`, which decodes the bearer token and checks that
+//! the caller is a DB platform principal (`users.principal_kind = 'platform'`).
+//! So a working caller needs BOTH a seeded org membership (for the RLS
+//! extractor) AND a platform principal row (for the platform-admin gate). We mint that token directly via
 //! `JwtService::generate_access_token` with `roles = ["super_admin"]`, mirroring
 //! the recipe in `admin_platform_happy_path_tests.rs`.
 //!
@@ -23,11 +23,13 @@ use uuid::Uuid;
 use crate::common::{seed_membership, seed_org, TestApp, TestConfig};
 use api_server::services::JwtService;
 
-/// Seed a regular active user and return its id.
+/// Seed an active **platform** principal and return its id. The subscription
+/// admin gate resolves platform status from `users.principal_kind`, not from
+/// the token's `roles` claim.
 async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
-        r#"INSERT INTO users (email, password_hash, name, status, email_verified_at)
-           VALUES ($1, 'hash', 'Subs Admin', 'active', NOW()) RETURNING id"#,
+        r#"INSERT INTO users (email, password_hash, name, status, email_verified_at, principal_kind)
+           VALUES ($1, 'hash', 'Subs Admin', 'active', NOW(), 'platform') RETURNING id"#,
     )
     .bind(email)
     .fetch_one(pool)

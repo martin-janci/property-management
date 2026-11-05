@@ -34,9 +34,10 @@ use db::models::{
     CancelSubscriptionRequest, ChangePlanRequest, CouponRedemption, CreateOrganizationSubscription,
     CreateSubscriptionCoupon, CreateSubscriptionPaymentMethod, CreateSubscriptionPlan,
     CreateUsageRecord, InvoiceLineItem, InvoiceQueryParams, InvoiceWithDetails,
-    OrganizationSubscription, RedeemCouponRequest, SubscriptionCoupon, SubscriptionInvoice,
-    SubscriptionPaymentMethod, SubscriptionPlan, SubscriptionStatistics, SubscriptionWithPlan,
-    UpdateOrganizationSubscription, UpdateSubscriptionCoupon, UpdateSubscriptionPlan, UsageSummary,
+    OrganizationSubscription, PrincipalKind, RedeemCouponRequest, SubscriptionCoupon,
+    SubscriptionInvoice, SubscriptionPaymentMethod, SubscriptionPlan, SubscriptionStatistics,
+    SubscriptionWithPlan, UpdateOrganizationSubscription, UpdateSubscriptionCoupon,
+    UpdateSubscriptionPlan, UsageSummary,
 };
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
@@ -47,28 +48,14 @@ use crate::state::AppState;
 
 // ==================== Authorization Helpers ====================
 
-/// Super admin role names for platform-level operations.
-const SUPER_ADMIN_ROLES: &[&str] = &[
-    "SuperAdministrator",
-    "super_admin",
-    "superadmin",
-    "platform_admin",
-];
-
-/// Check if the user has super admin role.
-fn has_super_admin_role(roles: &Option<Vec<String>>) -> bool {
-    match roles {
-        Some(user_roles) => user_roles.iter().any(|r| {
-            SUPER_ADMIN_ROLES
-                .iter()
-                .any(|admin| r.eq_ignore_ascii_case(admin))
-        }),
-        None => false,
-    }
-}
-
-/// Require super admin role for platform-level operations.
-fn require_super_admin(
+/// Require a platform (super admin) principal for platform-level operations.
+///
+/// The bearer token only establishes *who* the caller is. Whether they are a
+/// platform operator is resolved from the trusted `users.principal_kind`
+/// column (same source as `RequestPrincipal::is_platform`), never from the
+/// JWT `roles` claim, which a tenant token can carry and the DB does not
+/// back.
+async fn require_super_admin(
     headers: &HeaderMap,
     state: &AppState,
 ) -> Result<Uuid, (StatusCode, Json<ErrorResponse>)> {
@@ -114,11 +101,22 @@ fn require_super_admin(
         )
     })?;
 
-    if !has_super_admin_role(&claims.roles) {
+    let is_platform = state
+        .user_repo
+        .find_by_id_and_kind(user_id, PrincipalKind::Platform)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "platform principal lookup failed");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .is_some();
+
+    if !is_platform {
         tracing::warn!(
             user_id = %user_id,
-            email = %claims.email,
-            roles = ?claims.roles,
             "Unauthorized subscription admin access attempt"
         );
         return Err((
@@ -403,7 +401,7 @@ async fn create_plan(
     Json(data): Json<CreateSubscriptionPlan>,
 ) -> Result<(StatusCode, Json<SubscriptionPlan>), (StatusCode, Json<ErrorResponse>)> {
     // Require super admin role for plan management
-    let _admin_id = require_super_admin(&headers, &state)?;
+    let _admin_id = require_super_admin(&headers, &state).await?;
 
     let plan = state
         .subscription_repo
@@ -535,7 +533,7 @@ async fn update_plan(
     Json(data): Json<UpdateSubscriptionPlan>,
 ) -> Result<Json<SubscriptionPlan>, (StatusCode, Json<ErrorResponse>)> {
     // Require super admin role for plan management
-    let _admin_id = require_super_admin(&headers, &state)?;
+    let _admin_id = require_super_admin(&headers, &state).await?;
 
     let plan = state
         .subscription_repo
@@ -568,7 +566,7 @@ async fn delete_plan(
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
     // Require super admin role for plan management
-    let _admin_id = require_super_admin(&headers, &state)?;
+    let _admin_id = require_super_admin(&headers, &state).await?;
 
     let deleted = state
         .subscription_repo
@@ -846,7 +844,7 @@ async fn list_all_subscriptions(
     Query(query): Query<ListSubscriptionsQuery>,
 ) -> Result<Json<Vec<SubscriptionWithPlan>>, (StatusCode, Json<ErrorResponse>)> {
     // Require super admin role for admin dashboard
-    let _admin_id = require_super_admin(&headers, &state)?;
+    let _admin_id = require_super_admin(&headers, &state).await?;
 
     let subscriptions = state
         .subscription_repo
@@ -1143,7 +1141,7 @@ async fn mark_invoice_paid(
     // Settling or voiding a platform billing invoice is a platform-operator
     // action; organization members (even org admins) must not be able to mark
     // their own invoice paid.
-    if let Err(e) = require_super_admin(&headers, &state) {
+    if let Err(e) = require_super_admin(&headers, &state).await {
         rls.release().await;
         return Err(e);
     }
@@ -1179,7 +1177,7 @@ async fn void_invoice(
     // Settling or voiding a platform billing invoice is a platform-operator
     // action; organization members (even org admins) must not be able to mark
     // their own invoice paid.
-    if let Err(e) = require_super_admin(&headers, &state) {
+    if let Err(e) = require_super_admin(&headers, &state).await {
         rls.release().await;
         return Err(e);
     }
@@ -1213,7 +1211,7 @@ async fn list_all_invoices(
     Query(query): Query<ListAllInvoicesQuery>,
 ) -> Result<Json<Vec<InvoiceWithDetails>>, (StatusCode, Json<ErrorResponse>)> {
     // Require super admin role for admin dashboard
-    let _admin_id = require_super_admin(&headers, &state)?;
+    let _admin_id = require_super_admin(&headers, &state).await?;
 
     let invoices = state
         .subscription_repo
@@ -1365,7 +1363,7 @@ async fn create_coupon(
     Json(data): Json<CreateSubscriptionCoupon>,
 ) -> Result<(StatusCode, Json<SubscriptionCoupon>), (StatusCode, Json<ErrorResponse>)> {
     // Require super admin role for coupon management
-    let _admin_id = require_super_admin(&headers, &state)?;
+    let _admin_id = require_super_admin(&headers, &state).await?;
 
     let coupon = state
         .subscription_repo
@@ -1427,7 +1425,7 @@ async fn update_coupon(
     Json(data): Json<UpdateSubscriptionCoupon>,
 ) -> Result<Json<SubscriptionCoupon>, (StatusCode, Json<ErrorResponse>)> {
     // Require super admin role for coupon management
-    let _admin_id = require_super_admin(&headers, &state)?;
+    let _admin_id = require_super_admin(&headers, &state).await?;
 
     let coupon = state
         .subscription_repo
@@ -1525,7 +1523,7 @@ async fn get_statistics(
     mut rls: RlsConnection,
 ) -> Result<Json<SubscriptionStatistics>, (StatusCode, Json<ErrorResponse>)> {
     // Require super admin role for statistics dashboard
-    let _admin_id = require_super_admin(&headers, &state)?;
+    let _admin_id = require_super_admin(&headers, &state).await?;
 
     let stats = state
         .subscription_repo
