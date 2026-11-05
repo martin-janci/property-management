@@ -163,4 +163,39 @@ mod tests {
             err.message()
         );
     }
+
+    /// The `Enumerate` arm of `message()` was previously only exercised in
+    /// production. It must advise a retry without leaking the internal error
+    /// string (that detail belongs in `Display`, see below).
+    #[test]
+    fn enumerate_message_advises_retry_without_internal_detail() {
+        let err = SuspendCascadeError::Enumerate("db connection reset".to_string());
+        let msg = err.message();
+        assert!(msg.contains("retry the suspension"), "message was: {msg}");
+        assert!(
+            !msg.contains("db connection reset"),
+            "operator message must not leak the internal error string: {msg}"
+        );
+    }
+
+    /// `Display` is the diagnostic/logging surface and — unlike `message()` —
+    /// should carry the internal detail. Neither arm was covered before.
+    #[test]
+    fn display_carries_internal_detail() {
+        let enumerate = SuspendCascadeError::Enumerate("db connection reset".to_string());
+        let shown = enumerate.to_string();
+        assert!(
+            shown.contains("db connection reset"),
+            "Display must surface the enumeration error: {shown}"
+        );
+
+        let partial = SuspendCascadeError::PartialRevoke {
+            total: 5,
+            failed: vec![Uuid::from_u128(1), Uuid::from_u128(2)],
+        };
+        assert!(
+            partial.to_string().contains("2/5"),
+            "Display was: {partial}"
+        );
+    }
 }
