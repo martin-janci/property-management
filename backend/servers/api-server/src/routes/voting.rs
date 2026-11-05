@@ -1012,16 +1012,22 @@ async fn list_questions(
 ) -> Result<Json<Vec<VoteQuestion>>, (StatusCode, Json<ErrorResponse>)> {
     vote_in_org(&state, &mut rls, id).await?;
 
-    // Note: get_questions() doesn't have an RLS version yet
-    let questions = state.vote_repo.get_questions(id).await.map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new(
-                "DATABASE_ERROR",
-                format!("Failed to list questions: {}", e),
-            )),
-        )
-    })?;
+    // Org-scoped read on the RLS connection (#3308): the query folds in the
+    // vote's organization_id, so it can't leak another org's questions.
+    let org_id = rls.tenant_id();
+    let questions = state
+        .vote_repo
+        .get_questions_for_org(id, org_id, &mut **rls.conn())
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    format!("Failed to list questions: {}", e),
+                )),
+            )
+        })?;
 
     rls.release().await;
     Ok(Json(questions))
@@ -1222,10 +1228,13 @@ async fn check_eligibility(
 ) -> Result<Json<VoteEligibility>, (StatusCode, Json<ErrorResponse>)> {
     vote_in_org(&state, &mut rls, id).await?;
 
-    // Note: check_eligibility() doesn't have an RLS version yet
+    // Org-scoped read on the RLS connection (#3308): loads the vote and runs
+    // the eligible-units query on the caller's connection, scoped to the org.
+    let user_id = rls.user_id();
+    let org_id = rls.tenant_id();
     let eligibility = state
         .vote_repo
-        .check_eligibility(id, rls.user_id())
+        .check_eligibility_for_org(id, user_id, org_id, &mut **rls.conn())
         .await
         .map_err(|e| {
             (
@@ -1459,10 +1468,12 @@ async fn get_my_response(
         }
     }
 
-    // Note: get_user_response() doesn't have an RLS version yet
+    // Org-scoped read on the RLS connection (#3308): the query folds in the
+    // vote's organization_id so another org's ballot can't be read.
+    let org_id = rls.tenant_id();
     let response = state
         .vote_repo
-        .get_user_response(id, params.unit_id)
+        .get_user_response_for_org(id, params.unit_id, org_id, &mut **rls.conn())
         .await
         .map_err(|e| {
             (
@@ -1553,10 +1564,12 @@ async fn list_comments(
 ) -> Result<Json<Vec<VoteCommentWithUser>>, (StatusCode, Json<ErrorResponse>)> {
     vote_in_org(&state, &mut rls, id).await?;
 
-    // Note: list_comments() doesn't have an RLS version yet
+    // Org-scoped read on the RLS connection (#3308): the query folds in the
+    // vote's organization_id, so it can't leak another org's comments.
+    let org_id = rls.tenant_id();
     let comments = state
         .vote_repo
-        .list_comments(id, false)
+        .list_comments_for_org(id, org_id, false, &mut **rls.conn())
         .await
         .map_err(|e| {
             (
@@ -1599,10 +1612,14 @@ async fn list_replies(
         .await;
     ensure_child_of_vote(&mut rls, belongs, "Comment not found").await?;
 
-    // Note: list_replies() doesn't have an RLS version yet
+    // Org-scoped read on the RLS connection (#3308): the query folds in the
+    // owning vote's organization_id and the parent's vote_id. The
+    // comment_belongs_to_vote pre-check above is kept for its distinct
+    // "Comment not found" 404 (vs. an empty-but-200 reply list).
+    let org_id = rls.tenant_id();
     let replies = state
         .vote_repo
-        .list_replies(comment_id, false)
+        .list_replies_for_org(comment_id, id, org_id, false, &mut **rls.conn())
         .await
         .map_err(|e| {
             (
