@@ -445,7 +445,7 @@ impl AutomationRepository {
         sqlx::query_as::<_, WorkflowAutomationTemplate>(
             r#"
             SELECT
-                id, name, description, category, trigger_type::text AS trigger_type,
+                id, slug, name, description, category, trigger_type::text AS trigger_type,
                 trigger_config_template, actions_template, is_system, created_at
             FROM workflow_automation_templates ORDER BY category, name
             "#,
@@ -462,7 +462,7 @@ impl AutomationRepository {
         sqlx::query_as::<_, WorkflowAutomationTemplate>(
             r#"
             SELECT
-                id, name, description, category, trigger_type::text AS trigger_type,
+                id, slug, name, description, category, trigger_type::text AS trigger_type,
                 trigger_config_template, actions_template, is_system, created_at
             FROM workflow_automation_templates WHERE id = $1
             "#,

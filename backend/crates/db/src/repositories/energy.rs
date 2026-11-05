@@ -337,7 +337,7 @@ impl EnergyRepository {
         // Get building area for per-sqm calculation
         let (floor_area,): (Option<Decimal>,) = sqlx::query_as(
             r#"
-            SELECT SUM(floor_area)
+            SELECT SUM(size_sqm)
             FROM units
             WHERE building_id = $1
             "#,
@@ -817,12 +817,15 @@ impl EnergyRepository {
         period_end: NaiveDate,
     ) -> Result<Decimal, sqlx::Error> {
         let (floor_area,): (Option<Decimal>,) =
-            sqlx::query_as("SELECT SUM(floor_area) FROM units WHERE building_id = $1")
+            sqlx::query_as("SELECT SUM(size_sqm) FROM units WHERE building_id = $1")
                 .bind(building_id)
                 .fetch_one(&self.pool)
                 .await?;
 
-        let area = floor_area.unwrap_or(Decimal::from(1));
+        // Guard against a zero/NULL area: Decimal division by zero panics.
+        let area = floor_area
+            .filter(|a| *a > Decimal::ZERO)
+            .unwrap_or(Decimal::ONE);
 
         match metric_type {
             BenchmarkMetricType::ElectricityPerSqm => {

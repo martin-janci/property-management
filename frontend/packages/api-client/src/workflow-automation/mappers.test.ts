@@ -75,6 +75,7 @@ describe('workflow-automation mappers', () => {
   it('maps templates, including category and previews', () => {
     const template = templateFromApi({
       id: 't1',
+      slug: 'overdue_payment_reminder',
       name: 'Overdue Payment Reminder',
       description: 'Remind',
       category: 'financial',
@@ -84,11 +85,28 @@ describe('workflow-automation mappers', () => {
       is_system: true,
       created_at: '2026-01-01T00:00:00Z',
     });
+    expect(template.slug).toBe('overdue_payment_reminder');
     expect(template.category).toBe('payments');
     expect(template.triggerType).toBe('condition_based');
     expect(template.conditionsPreview).toEqual(['invoice.days_overdue >= 7']);
     expect(template.actionsPreview).toEqual(['send_notification', 'send_email']);
     expect(template.actionsCount).toBe(2);
+  });
+
+  it('omits the slug for custom templates', () => {
+    const template = templateFromApi({
+      id: 't2',
+      slug: null,
+      name: 'My template',
+      category: 'general',
+      trigger_type: 'manual',
+      trigger_config_template: {},
+      actions_template: [],
+      is_system: false,
+      created_at: '2026-01-01T00:00:00Z',
+    });
+    expect(template.slug).toBeUndefined();
+    expect(template.name).toBe('My template');
   });
 
   it('maps executions and their status vocabulary', () => {

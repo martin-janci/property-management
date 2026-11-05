@@ -4083,7 +4083,8 @@
               "label": "Vypnuto",
               "description": "Oznámení dostáváte okamžitě, ne v souhrnech"
             }
-          }
+          },
+          "allCategoriesNote": "Souhrn obsahuje oznámení ze všech kategorií."
         },
         "quietHours": {
           "title": "Tiché hodiny",
@@ -4098,7 +4099,8 @@
           "dayInactive": "{{day}} – neaktivní",
           "timezone": "Časové pásmo",
           "allowEmergency": "Povolit nouzová oznámení",
-          "allowEmergencyHelp": "Kritická upozornění vám přijdou i během tichých hodin"
+          "allowEmergencyHelp": "Kritická upozornění vám přijdou i během tichých hodin",
+          "heldNote": "Push oznámení, která přijdou během tichých hodin, se podrží a doručí se po skončení tichého období."
         },
         "grouping": {
           "title": "Inteligentní seskupování",
@@ -5503,7 +5505,8 @@
       "categoryCommunications": "Komunikace",
       "categoryDocuments": "Dokumenty",
       "categoryMaintenance": "Údržba",
-      "categoryGeneral": "Obecné"
+      "categoryGeneral": "Obecné",
+      "actions_few": "{{count}} akce"
     },
     "templatePreview": {
       "popular": "Oblíbené",
@@ -5589,6 +5592,30 @@
       "retrySuccessMessage": "Spuštění bylo zařazeno k opakování.",
       "retryErrorTitle": "Opakování se nezdařilo",
       "retryErrorMessage": "Spuštění se nepodařilo zopakovat."
+    },
+    "templates": {
+      "weekly_maintenance_report": {
+        "name": "Týdenní přehled údržby",
+        "description": "Každý týden pošle správcům přehled otevřených požadavků na údržbu"
+      },
+      "overdue_payment_reminder": {
+        "name": "Upomínka opožděné platby",
+        "description": "Pošle upomínku, když je platba 7 dní po splatnosti"
+      },
+      "high_priority_fault_escalation": {
+        "name": "Eskalace závad s vysokou prioritou",
+        "description": "Automaticky přidělí závady s vysokou prioritou a upozorní správce"
+      },
+      "monthly_statement_generation": {
+        "name": "Měsíční vyúčtování",
+        "description": "Vygeneruje a odešle měsíční vyúčtování vždy 1. den v měsíci"
+      },
+      "actionTypes": {
+        "generate_report": "Vygenerovat přehled",
+        "send_email": "Odeslat e-mail",
+        "send_notification": "Odeslat oznámení",
+        "assign_fault": "Přidělit závadu"
+      }
     }
   },
   "registry": {

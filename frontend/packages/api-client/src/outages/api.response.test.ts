@@ -171,16 +171,16 @@ describe('outage statistics, dashboard and unread count', () => {
     vi.mocked(fetch).mockResolvedValueOnce(
       okJson({ statistics: { total: 9, planned: 3, ongoing: 2, resolved: 3, cancelled: 1 } })
     );
-    expect(await getOutageStatistics()).toMatchObject({
-      totalOutages: 9,
-      plannedOutages: 3,
-      activeOutages: 2,
-      resolvedOutages: 3,
-      cancelledOutages: 1,
+    expect(await getOutageStatistics()).toEqual({
+      total: 9,
+      planned: 3,
+      ongoing: 2,
+      resolved: 3,
+      cancelled: 1,
     });
   });
 
-  it('maps the dashboard counters and upcoming list', async () => {
+  it('maps the dashboard counters, commodity breakdown and upcoming list', async () => {
     vi.mocked(fetch).mockResolvedValueOnce(
       okJson({
         dashboard: {
@@ -196,14 +196,17 @@ describe('outage statistics, dashboard and unread count', () => {
       })
     );
     const dashboard = await getOutageDashboard();
-    expect(dashboard.upcomingOutages[0]?.scheduledStart).toBe('2026-11-05T08:00:00Z');
-    expect(dashboard.currentOutages).toEqual([]);
-    expect(dashboard.statistics).toMatchObject({
-      totalOutages: 5,
-      plannedOutages: 3,
-      activeOutages: 2,
-      outagesByCommodity: { water: 4, gas: 1 },
+    expect(dashboard).toMatchObject({
+      activeCount: 5,
+      plannedCount: 3,
+      ongoingCount: 2,
+      byCommodity: [
+        { commodity: 'water', count: 4 },
+        { commodity: 'gas', count: 1 },
+      ],
     });
+    expect(dashboard.upcoming).toHaveLength(1);
+    expect(dashboard.upcoming[0]?.scheduledStart).toBe('2026-11-05T08:00:00Z');
   });
 
   it('maps unread_count', async () => {

@@ -637,6 +637,23 @@ async fn person_months_resident_cannot_write_manager_can(pool: PgPool) {
     expect(&resp, StatusCode::OK, "resident list person months");
     let resp = call(&app, "POST", &base, &w.mgr_a, Some(body)).await;
     expect(&resp, StatusCode::OK, "manager upsert person month");
+
+    // Bulk entry is building-wide data entry: residents get 403 (role from
+    // DB membership), managers succeed.
+    let bulk = format!("/api/v1/buildings/{}/person-months/bulk", w.bld_a);
+    let bulk_body = json!({
+        "year": 2026,
+        "month": 3,
+        "entries": [{ "unit_id": w.unit_a, "count": 4 }]
+    });
+    let resp = call(&app, "POST", &bulk, &w.res_a, Some(bulk_body.clone())).await;
+    expect(
+        &resp,
+        StatusCode::FORBIDDEN,
+        "resident bulk upsert person months",
+    );
+    let resp = call(&app, "POST", &bulk, &w.mgr_a, Some(bulk_body)).await;
+    expect(&resp, StatusCode::OK, "manager bulk upsert person months");
 }
 
 // ---------------------------------------------------------------------------

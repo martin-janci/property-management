@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../../components';
 import { TemplateCard } from '../components/TemplateCard';
 import { TemplatePreviewModal } from '../components/TemplatePreviewModal';
+import { templateName } from '../templateText';
 
 /** A selectable template category, including the "all" pseudo-category used by the filter. */
 type CategoryFilter = TemplateCategory | 'all';
@@ -65,7 +66,7 @@ export function TemplateLibraryPage() {
     try {
       const result = await createFromTemplate.mutateAsync({
         templateId: template.id,
-        name: template.name,
+        name: templateName(t, template),
       });
       if (result?.id) {
         navigate(`/automations/rules/${result.id}/edit`);

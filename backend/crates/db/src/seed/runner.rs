@@ -238,6 +238,12 @@ impl SeedRunner {
         let mut inquiries_created = 0;
         let mut favorites_created = 0;
 
+        // 6b. Publish the baseline layouts ppt-web requests on load.
+        factories
+            .ensure_default_layouts()
+            .await
+            .map_err(|e| SeedError::Database(e.to_string()))?;
+
         // 7. Create sample data if requested
         if self.config.include_sample_data {
             // Track user IDs by email for unit assignments and references

@@ -14,6 +14,7 @@ import type {
   OutageActionResponse,
   OutageBuilding,
   OutageCommodity,
+  OutageCommodityCount,
   OutageDashboard,
   OutageListQuery,
   OutageSeverity,
@@ -262,52 +263,30 @@ export function normalizeOutageList(input: unknown): PaginatedOutages {
 export function normalizeOutageStatistics(input: unknown): OutageStatistics {
   const raw = asRecord(input);
   return {
-    totalOutages: pickOutageNumber(raw, 'totalOutages', 'total'),
-    activeOutages: pickOutageNumber(raw, 'activeOutages', 'ongoing'),
-    plannedOutages: pickOutageNumber(raw, 'plannedOutages', 'planned'),
-    resolvedOutages: pickOutageNumber(raw, 'resolvedOutages', 'resolved'),
-    cancelledOutages: pickOutageNumber(raw, 'cancelledOutages', 'cancelled'),
-    outagesByCommodity: asRecord(raw.outagesByCommodity) as OutageStatistics['outagesByCommodity'],
-    outagesBySeverity: asRecord(raw.outagesBySeverity) as OutageStatistics['outagesBySeverity'],
-    averageResolutionHours: pickOutageField<number>(
-      raw,
-      'averageResolutionHours',
-      'average_resolution_hours'
-    ),
+    total: pickOutageNumber(raw, 'total'),
+    planned: pickOutageNumber(raw, 'planned'),
+    ongoing: pickOutageNumber(raw, 'ongoing'),
+    resolved: pickOutageNumber(raw, 'resolved'),
+    cancelled: pickOutageNumber(raw, 'cancelled'),
   };
 }
 
 export function normalizeOutageDashboard(input: unknown): OutageDashboard {
   const raw = asRecord(input);
-  const list = (value: unknown) => (Array.isArray(value) ? value.map(normalizeOutageSummary) : []);
-  const byCommodity: Record<string, number> = {};
-  const rawByCommodity = raw.by_commodity ?? raw.outagesByCommodity;
-  if (Array.isArray(rawByCommodity)) {
-    for (const entry of rawByCommodity) {
-      const e = asRecord(entry);
-      byCommodity[String(e.commodity)] = pickOutageNumber(e, 'count');
-    }
-  } else {
-    Object.assign(byCommodity, asRecord(rawByCommodity));
-  }
-  const ongoing = pickOutageNumber(raw, 'ongoing_count', 'ongoingCount');
-  const planned = pickOutageNumber(raw, 'planned_count', 'plannedCount');
-  const statistics = raw.statistics
-    ? normalizeOutageStatistics(raw.statistics)
-    : {
-        totalOutages: pickOutageNumber(raw, 'active_count', 'activeCount') || ongoing + planned,
-        activeOutages: ongoing,
-        plannedOutages: planned,
-        resolvedOutages: 0,
-        cancelledOutages: 0,
-        outagesByCommodity: byCommodity as OutageStatistics['outagesByCommodity'],
-        outagesBySeverity: {} as OutageStatistics['outagesBySeverity'],
-      };
+  const rawByCommodity = raw.by_commodity ?? raw.byCommodity;
+  const upcoming = raw.upcoming;
   return {
-    currentOutages: list(raw.currentOutages ?? raw.current_outages),
-    upcomingOutages: list(raw.upcomingOutages ?? raw.upcoming),
-    recentlyResolved: list(raw.recentlyResolved ?? raw.recently_resolved),
-    statistics,
+    activeCount: pickOutageNumber(raw, 'active_count', 'activeCount'),
+    plannedCount: pickOutageNumber(raw, 'planned_count', 'plannedCount'),
+    ongoingCount: pickOutageNumber(raw, 'ongoing_count', 'ongoingCount'),
+    byCommodity: (Array.isArray(rawByCommodity) ? rawByCommodity : []).map((entry) => {
+      const e = asRecord(entry);
+      return {
+        commodity: String(e.commodity ?? '') as OutageCommodityCount['commodity'],
+        count: pickOutageNumber(e, 'count'),
+      };
+    }),
+    upcoming: (Array.isArray(upcoming) ? upcoming : []).map(normalizeOutageSummary),
   };
 }
 
