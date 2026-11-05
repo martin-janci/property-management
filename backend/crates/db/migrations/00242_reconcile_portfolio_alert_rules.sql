@@ -1,6 +1,8 @@
 -- Reconcile portfolio_alert_rules / portfolio_alerts with the
 -- PortfolioAnalyticsRepository queries and the `PortfolioAlertRule` /
--- `PortfolioAlert` models (same strategy as 00236-00238).
+-- `PortfolioAlert` models (same strategy as 00236-00238). `PortfolioAlert`
+-- decodes the legacy nullable columns (rule_id, metric_name, threshold_value,
+-- message) as Option, since rule_id is nulled when its rule is deleted.
 --
 -- Migration 00091 created these tables with a different design
 -- (condition_type, threshold_operator, notification_channels, recipients,
@@ -30,8 +32,17 @@ ALTER TABLE portfolio_alert_rules ALTER COLUMN condition_type SET DEFAULT 'thres
 
 -- Legacy rows: carry the old operator over and give threshold_value a value so
 -- the non-Option `threshold_value: Decimal` field decodes.
+-- Legacy operators were stored as words (00091: 'gt', 'lt', 'gte', 'lte',
+-- 'eq'); the model uses the symbols.
 UPDATE portfolio_alert_rules
-   SET operator = threshold_operator
+   SET operator = CASE lower(threshold_operator)
+                      WHEN 'gt'  THEN '>'
+                      WHEN 'lt'  THEN '<'
+                      WHEN 'gte' THEN '>='
+                      WHEN 'lte' THEN '<='
+                      WHEN 'eq'  THEN '='
+                      ELSE threshold_operator
+                  END
  WHERE threshold_operator IS NOT NULL AND operator = '<';
 UPDATE portfolio_alert_rules SET threshold_value = 0 WHERE threshold_value IS NULL;
 ALTER TABLE portfolio_alert_rules ALTER COLUMN threshold_value SET DEFAULT 0;
@@ -39,6 +50,10 @@ ALTER TABLE portfolio_alert_rules ALTER COLUMN threshold_value SET NOT NULL;
 
 CREATE INDEX IF NOT EXISTS idx_portfolio_alert_rules_org ON portfolio_alert_rules (organization_id);
 CREATE INDEX IF NOT EXISTS idx_portfolio_alert_rules_building ON portfolio_alert_rules (building_id);
+
+-- `alert_type` (00091) is NOT NULL but the model has no such field; default
+-- it so alerts can be raised from the model's columns.
+ALTER TABLE portfolio_alerts ALTER COLUMN alert_type SET DEFAULT 'threshold';
 
 ALTER TABLE portfolio_alerts
     ADD COLUMN IF NOT EXISTS current_value      DECIMAL(15, 4) NOT NULL DEFAULT 0,

@@ -165,6 +165,14 @@ impl SeedRunner {
         // Create RAII guard for RLS context cleanup on error paths
         let mut rls_guard = RlsContextGuard::new(&self.pool);
 
+        // 1b. Publish the baseline layouts ppt-web requests on load. Idempotent
+        // and non-destructive, so it runs before the already-seeded early
+        // return: databases seeded before this existed get the layout too.
+        factories
+            .ensure_default_layouts()
+            .await
+            .map_err(|e| SeedError::Database(e.to_string()))?;
+
         // 2. Optionally cleanup existing seed data
         let cleanup_stats = if self.config.force {
             let stats = factories
@@ -237,12 +245,6 @@ impl SeedRunner {
         let mut portal_users_created = 0;
         let mut inquiries_created = 0;
         let mut favorites_created = 0;
-
-        // 6b. Publish the baseline layouts ppt-web requests on load.
-        factories
-            .ensure_default_layouts()
-            .await
-            .map_err(|e| SeedError::Database(e.to_string()))?;
 
         // 7. Create sample data if requested
         if self.config.include_sample_data {

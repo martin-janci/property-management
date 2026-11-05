@@ -51,6 +51,19 @@ impl<'a> SeedFactories<'a> {
                 email_verified_at, locale
             )
             VALUES ($1, $2, $3, $4, 'active', NOW(), $5)
+            -- Reuse a user `--force` retained (referenced by append-only
+            -- audit tables). Only a user with no remaining memberships is
+            -- reused, so a real member account is never taken over.
+            ON CONFLICT (email) DO UPDATE SET
+                password_hash = EXCLUDED.password_hash,
+                name = EXCLUDED.name,
+                phone = EXCLUDED.phone,
+                status = 'active',
+                locale = EXCLUDED.locale,
+                updated_at = NOW()
+            WHERE NOT EXISTS (
+                SELECT 1 FROM organization_members om WHERE om.user_id = users.id
+            )
             RETURNING id
             "#,
         )
@@ -79,6 +92,12 @@ impl<'a> SeedFactories<'a> {
             r#"
             INSERT INTO organizations (name, slug, contact_email, status, settings)
             VALUES ($1, $2, $3, 'active', '{}'::jsonb)
+            -- Reuse an organization `--force` retained (audit rows reference
+            -- it). Only an org with the same seed contact email is reused.
+            ON CONFLICT (slug) DO UPDATE SET
+                name = EXCLUDED.name,
+                status = 'active'
+            WHERE organizations.contact_email = EXCLUDED.contact_email
             RETURNING id
             "#,
         )
@@ -422,6 +441,13 @@ impl<'a> SeedFactories<'a> {
                 locale, created_at, updated_at
             )
             VALUES ($1, $2, $3, 'public', 'active', NOW(), 'sk', NOW(), NOW())
+            -- Reuse a portal user `--force` retained (see `create_user`).
+            ON CONFLICT (email) DO UPDATE SET
+                password_hash = EXCLUDED.password_hash,
+                name = EXCLUDED.name,
+                status = 'active',
+                updated_at = NOW()
+            WHERE users.principal_kind = 'public'
             RETURNING id
             "#,
         )
@@ -918,22 +944,39 @@ impl<'a> SeedFactories<'a> {
         // all changes are rolled back to maintain consistency
         let mut tx = self.pool.begin().await?;
 
-        // `audit_logs` is append-only: `trg_audit_logs_no_update` (migration
-        // 00138) rejects every UPDATE. Its `user_id` / `org_id` foreign keys are
-        // `ON DELETE SET NULL`, so deleting a seed user or organization that
-        // has audit rows issues an UPDATE the trigger rejects, and `--force`
-        // aborted. Disable that one trigger for this transaction only:
-        //   * `ALTER TABLE` needs table ownership, so this is not a bypass
-        //     available to application roles (the owner can already drop it);
-        //   * it takes an ACCESS EXCLUSIVE lock on `audit_logs` until commit,
-        //     so no other session can write while the trigger is off;
-        //   * DDL is transactional, so a failure rolls the disable back, and
-        //     the trigger is re-enabled before commit.
-        // The audit rows themselves are kept (their FKs become NULL); the
-        // DELETE trigger and the hash-immutability trigger stay active.
-        sqlx::query("ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_update")
-            .execute(&mut *tx)
-            .await?;
+        // Append-only tables (`audit_logs`, `layout_change_events`,
+        // `support_tooling_events`) reject UPDATE/DELETE. Their user / org
+        // foreign keys are `ON DELETE SET NULL` or `CASCADE`, so deleting a seed
+        // user or organization they reference would mutate an immutable row
+        // (and `audit_logs.user_id` is part of the integrity hash). Such users
+        // and organizations are therefore RETAINED: everything the seed hangs
+        // off them is still removed, and the re-seed reuses the rows
+        // (`create_user` / `create_organization` upsert them).
+        let retained_users: Vec<Uuid> = sqlx::query_scalar(
+            r#"
+            SELECT u.id FROM users u
+            WHERE (u.email LIKE $1 OR u.email LIKE $2)
+              AND (
+                EXISTS (SELECT 1 FROM audit_logs a WHERE a.user_id = u.id)
+                OR EXISTS (SELECT 1 FROM layout_change_events l WHERE l.published_by = u.id)
+                OR EXISTS (SELECT 1 FROM support_tooling_events s WHERE s.admin_user_id = u.id)
+              )
+            "#,
+        )
+        .bind(&pattern)
+        .bind(&portal_pattern)
+        .fetch_all(&mut *tx)
+        .await?;
+        let retained_orgs: Vec<Uuid> = sqlx::query_scalar(
+            r#"
+            SELECT o.id FROM organizations o
+            WHERE o.contact_email LIKE $1
+              AND EXISTS (SELECT 1 FROM audit_logs a WHERE a.org_id = o.id)
+            "#,
+        )
+        .bind(&pattern)
+        .fetch_all(&mut *tx)
+        .await?;
 
         // Delete in dependency order to avoid foreign key violations
 
@@ -1012,6 +1055,21 @@ impl<'a> SeedFactories<'a> {
             .await?;
             buildings_deleted += buildings_result.rows_affected();
 
+            if retained_orgs.contains(org_id) {
+                // The org row stays (append-only audit rows reference it), so
+                // its roles stay too and the content that would have cascaded
+                // from the org delete is removed explicitly.
+                sqlx::query("DELETE FROM announcements WHERE organization_id = $1")
+                    .bind(org_id)
+                    .execute(&mut *tx)
+                    .await?;
+                sqlx::query("DELETE FROM listings WHERE organization_id = $1")
+                    .bind(org_id)
+                    .execute(&mut *tx)
+                    .await?;
+                continue;
+            }
+
             // Delete roles in this org
             sqlx::query(
                 r#"
@@ -1026,10 +1084,11 @@ impl<'a> SeedFactories<'a> {
         // 7. Delete seed organizations (announcements cascade)
         let orgs_result = sqlx::query(
             r#"
-            DELETE FROM organizations WHERE contact_email LIKE $1
+            DELETE FROM organizations WHERE contact_email LIKE $1 AND NOT (id = ANY($2))
             "#,
         )
         .bind(&pattern)
+        .bind(&retained_orgs)
         .execute(&mut *tx)
         .await?;
 
@@ -1051,17 +1110,15 @@ impl<'a> SeedFactories<'a> {
         //    (portal users are now rows in `users` with principal_kind='public').
         let users_result = sqlx::query(
             r#"
-            DELETE FROM users WHERE email LIKE $1 OR email LIKE $2
+            DELETE FROM users
+            WHERE (email LIKE $1 OR email LIKE $2) AND NOT (id = ANY($3))
             "#,
         )
         .bind(&pattern)
         .bind(&portal_pattern)
+        .bind(&retained_users)
         .execute(&mut *tx)
         .await?;
-
-        sqlx::query("ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_update")
-            .execute(&mut *tx)
-            .await?;
 
         // Commit the transaction - all deletions succeed or none do
         tx.commit().await?;
