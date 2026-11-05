@@ -39,6 +39,8 @@ mod push_delivery_receipt_tests;
 mod push_fanout_stale_token_isolation_tests;
 #[path = "suites/push_token_tests.rs"]
 mod push_token_tests;
+#[path = "suites/r5_sec_a_authz_tests.rs"]
+mod r5_sec_a_authz_tests;
 #[path = "suites/rag_index_embedding_write_tests.rs"]
 mod rag_index_embedding_write_tests;
 #[path = "suites/rag_migrate_pgvector_tests.rs"]

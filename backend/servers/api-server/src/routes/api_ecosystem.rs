@@ -1698,10 +1698,14 @@ async fn revoke_developer_api_key(
     auth: AuthUser,
     Path(path): Path<DeveloperKeyPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY: the key must belong to the developer in the path, and that
+    // developer account to the caller (operators excepted). A key the caller
+    // does not own is indistinguishable from a missing one (404).
+    let owner = (!operator.0).then_some(auth.user_id);
     let mut conn = rls_conn(&state, &auth, operator).await?;
     let revoked = state
         .api_ecosystem_repo
-        .revoke_api_key(&mut **conn, path.key_id, auth.user_id)
+        .revoke_api_key(&mut **conn, path.id, path.key_id, owner, auth.user_id)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -1724,19 +1728,20 @@ async fn rotate_developer_api_key(
     // below is multi-statement (revoke old + insert new in one transaction) and
     // runs on this dedicated RLS-scoped connection carrying the caller's user
     // context, so the owner policy backstops the `auth.user_id` scoping below.
+    //
+    // SECURITY: the key must belong to the developer in the path, and that
+    // developer account to the caller (operators excepted); otherwise 404.
+    let owner = (!operator.0).then_some(auth.user_id);
     let mut conn = rls_conn(&state, &auth, operator).await?;
 
     // Fetch existing key to determine sandbox status for the new key prefix
-    let existing_keys = state
+    let is_sandbox = state
         .api_ecosystem_repo
-        .list_developer_api_keys(&mut **conn, path.id)
+        .find_owned_developer_api_key(&mut **conn, path.id, path.key_id, owner)
         .await
-        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
-    let old_key = existing_keys
-        .iter()
-        .find(|k| k.id == path.key_id)
-        .ok_or_else(|| not_found("API key", path.key_id))?;
-    let is_sandbox = old_key.is_sandbox;
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+        .ok_or_else(|| not_found("API key", path.key_id))?
+        .is_sandbox;
 
     let key = format!(
         "ppt_{}_{}",
@@ -1748,7 +1753,15 @@ async fn rotate_developer_api_key(
 
     let api_key = state
         .api_ecosystem_repo
-        .rotate_developer_api_key(&mut conn, path.key_id, auth.user_id, &key_prefix, &key_hash)
+        .rotate_developer_api_key(
+            &mut conn,
+            path.id,
+            path.key_id,
+            owner,
+            auth.user_id,
+            &key_prefix,
+            &key_hash,
+        )
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
         .ok_or_else(|| not_found("API key", path.key_id))?;

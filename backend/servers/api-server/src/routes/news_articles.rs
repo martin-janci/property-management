@@ -949,9 +949,10 @@ async fn delete_media(
     .await?;
 
     // SECURITY (issue #2314): scoped by the parent article's org so a caller
-    // cannot delete another org's media item by UUID.
+    // cannot delete another org's media item by UUID — and by the article in
+    // the path, so an author of article A cannot delete article B's media.
     let deleted = repo
-        .delete_media(media_id, tenant.tenant_id)
+        .delete_media(id, media_id, tenant.tenant_id)
         .await
         .map_err(|e| internal_error(&format!("Failed to delete media: {}", e)))?;
 
