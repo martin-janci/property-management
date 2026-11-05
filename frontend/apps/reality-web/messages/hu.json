@@ -399,19 +399,6 @@
       "description": "A Reality Portal a vezető ingatlan-hirdetési platform Szlovákiában, Csehországban és azon túl.",
       "title": "A Reality Portalról"
     },
-    "contact": {
-      "description": "Támogatással vagy üzleti kérdésekkel forduljon hozzánk a következő címen:",
-      "email": "info@rlt.sk",
-      "title": "Kapcsolatfelvétel"
-    },
-    "privacy": {
-      "description": "Elkötelezettünk vagyunk személyes adatainak védelme mellett a GDPR és az alkalmazandó jogszabályok szerint. A teljes adatvédelmi nyilatkozat hamarosan itt kerül közzétételre.",
-      "title": "Adatvédelmi irányelvek"
-    },
-    "terms": {
-      "description": "A Reality Portal használatával elfogadja általános szerződési feltételeinket. A teljes felhasználási feltételek hamarosan közzétételre kerülnek.",
-      "title": "Felhasználási feltételek"
-    },
     "agentProfile": {
       "about": "Az ügynökről",
       "activeListings": "Aktív hirdetések",
@@ -454,6 +441,11 @@
       },
       "title": "Karrier",
       "h1": "Let's build a real estate market that makes sense."
+    },
+    "contact": {
+      "description": "Támogatással vagy üzleti kérdésekkel forduljon hozzánk a következő címen:",
+      "email": "info@rlt.sk",
+      "title": "Kapcsolatfelvétel"
     },
     "cookies": {
       "reopen": "Cookie beállítások újranyitása",
@@ -598,6 +590,10 @@
       "subtitle": "Pozsony – áttekintés",
       "title": "Ártérkép",
       "h1": "Price map"
+    },
+    "privacy": {
+      "description": "Elkötelezettünk vagyunk személyes adatainak védelme mellett a GDPR és az alkalmazandó jogszabályok szerint. A teljes adatvédelmi nyilatkozat hamarosan itt kerül közzétételre.",
+      "title": "Adatvédelmi irányelvek"
     },
     "profile": {
       "tabs": {
@@ -770,6 +766,10 @@
         "termsRequired": "You must agree to the terms of use to publish",
         "roomsPositive": "Number of rooms must be greater than 0"
       }
+    },
+    "terms": {
+      "description": "A Reality Portal használatával elfogadja általános szerződési feltételeinket. A teljes felhasználási feltételek hamarosan közzétételre kerülnek.",
+      "title": "Felhasználási feltételek"
     },
     "listings": {
       "title": "Összes ingatlan",

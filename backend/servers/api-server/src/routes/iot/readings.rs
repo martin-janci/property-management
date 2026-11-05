@@ -3,7 +3,7 @@
 //! via [`super::realtime`].
 
 use super::realtime::{publish_sensor_event, EVENT_READINGS_BATCH, EVENT_READING_CREATED};
-use super::shared::{db_error, ensure_in_org, insert_child_error, IotManager, IotScope};
+use super::shared::{db_error, ensure_in_org, not_found, IotManager, IotScope};
 use crate::state::AppState;
 use api_core::extractors::RlsConnection;
 use axum::{
@@ -39,17 +39,21 @@ pub(super) async fn add_reading(
     Path(id): Path<Uuid>,
     Json(mut req): Json<CreateSensorReading>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    ensure_in_org(&state, &mut rls, IotScope::Sensor(id)).await?;
     req.sensor_id = id;
-    // Capture the validated org before releasing the RLS connection so the
-    // realtime fanout targets the caller's tenant and never a client-supplied
-    // value (same authority as the SQL filter — see module RLS note).
+    // The validated org is both the realtime-fanout target and the scope folded
+    // into the INSERT, so the sensor-in-org check and the insert happen in one
+    // statement — no separate SELECT EXISTS round-trip or TOCTOU window on this
+    // hot single-ingest path (issue #3305). Authority is `rls.tenant_id()`, the
+    // validated tenant, never a client-supplied value (see module RLS note).
     let org_id = rls.tenant_id();
-    let result = state.sensor_repo.create_reading(rls.conn(), req).await;
+    let result = state
+        .sensor_repo
+        .create_reading(rls.conn(), org_id, req)
+        .await;
     rls.release().await;
 
     match result {
-        Ok(reading) => {
+        Ok(Some(reading)) => {
             // Story 14.3: push the new reading to org subscribers in real time.
             publish_sensor_event(
                 state.pubsub_service.as_ref(),
@@ -60,11 +64,8 @@ pub(super) async fn add_reading(
             .await;
             Ok((StatusCode::CREATED, Json(serde_json::json!(reading))))
         }
-        Err(e) => Err(insert_child_error(
-            "Failed to add reading",
-            "Sensor not found",
-            e,
-        )),
+        Ok(None) => Err(not_found("Sensor not found")),
+        Err(e) => Err(db_error("Failed to add reading", e)),
     }
 }
 
@@ -75,16 +76,17 @@ pub(super) async fn add_batch_readings(
     Path(id): Path<Uuid>,
     Json(req): Json<BatchSensorReadings>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    ensure_in_org(&state, &mut rls, IotScope::Sensor(id)).await?;
+    // Fold the sensor-in-org guard into the bulk insert (issue #3305): a
+    // cross-org or missing sensor writes zero rows and is reported as `None`.
     let org_id = rls.tenant_id();
     let result = state
         .sensor_repo
-        .create_batch_readings(rls.conn(), id, req.readings)
+        .create_batch_readings(rls.conn(), id, org_id, req.readings)
         .await;
     rls.release().await;
 
     match result {
-        Ok(count) => {
+        Ok(Some(count)) => {
             // Story 14.3: one batch event carries the sensor and inserted count
             // so subscribers can refetch the affected series without a per-row
             // fanout.
@@ -100,11 +102,8 @@ pub(super) async fn add_batch_readings(
                 Json(serde_json::json!({ "inserted": count })),
             ))
         }
-        Err(e) => Err(insert_child_error(
-            "Failed to add batch readings",
-            "Sensor not found",
-            e,
-        )),
+        Ok(None) => Err(not_found("Sensor not found")),
+        Err(e) => Err(db_error("Failed to add batch readings", e)),
     }
 }
 

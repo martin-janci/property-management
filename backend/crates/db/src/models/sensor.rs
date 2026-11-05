@@ -183,7 +183,12 @@ pub struct SensorReading {
     pub value: f64,
     pub unit: String,
     pub quality: Option<String>,
-    #[sqlx(json)]
+    // `raw_data` is a nullable JSONB column. Plain `#[sqlx(json)]` decodes via
+    // `Json<T>`, which rejects a SQL NULL ("unexpected null"); `json(nullable)`
+    // maps NULL -> None and decodes the JSON otherwise (same pattern as
+    // `llm_document.rs`). A reading ingested without `raw_data` stores NULL and
+    // must decode back through `RETURNING *`.
+    #[sqlx(json(nullable))]
     pub raw_data: Option<serde_json::Value>,
     pub timestamp: DateTime<Utc>,
 }

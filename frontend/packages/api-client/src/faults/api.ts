@@ -17,6 +17,7 @@ import type {
   FaultStatistics,
   FaultSummary,
   FaultTimelineEntry,
+  MyFaultsQuery,
   ResolveFaultRequest,
   TriageFaultRequest,
   UpdateFaultRequest,
@@ -74,6 +75,23 @@ export async function listFaults(query: FaultListQuery = {}): Promise<FaultListR
     limit: query.limit,
   });
   return fetchApi<FaultListResponse>(`${API_BASE}${queryString}`);
+}
+
+/**
+ * List the faults reported by the currently authenticated user.
+ *
+ * Hits `GET /api/v1/faults/my`, where the reporter filter is applied
+ * server-side (from the request principal) *before* `limit`. This is the
+ * correct primitive for "my faults" surfaces: it returns the user's own
+ * most-recent faults rather than filtering a capped, org-wide list on the
+ * client (which can hide a resident's faults behind newer third-party ones).
+ */
+export async function listMyFaults(query: MyFaultsQuery = {}): Promise<FaultListResponse> {
+  const queryString = buildQueryString({
+    limit: query.limit,
+    offset: query.offset,
+  });
+  return fetchApi<FaultListResponse>(`${API_BASE}/my${queryString}`);
 }
 
 /** Get fault by ID with full details */

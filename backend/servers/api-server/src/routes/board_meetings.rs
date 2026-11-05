@@ -99,21 +99,16 @@ fn bad_request(code: &str, message: &str) -> (StatusCode, Json<ErrorResponse>) {
     )
 }
 
-/// Board administration (members, meetings, agenda, voting windows, minutes,
-/// attendance, action items, documents) is a manager action. The role comes
-/// from the DB membership resolved by `RlsConnection`, never from the JWT.
-/// Releases `rls` on rejection.
-async fn require_manager(rls: &mut RlsConnection) -> ApiResult<()> {
-    if rls.role().is_manager() {
-        return Ok(());
-    }
-    rls.release().await;
-    Err(forbidden("Manager role required"))
-}
-
 /// Proposing / seconding motions and completing action items is open to
 /// managers and active board members of the caller's org. Releases `rls` on
 /// rejection.
+///
+/// The manager predicate is `TenantRole::is_manager` — the same definition the
+/// shared [`crate::routes::rls_authz::require_manager_rls`] gate uses (#3306).
+/// It is checked inline here rather than via that helper because a non-manager
+/// is not yet rejected (they may still be a board member), so the connection
+/// must stay open for the board-member fallback below; the shared helper
+/// releases `rls` on a non-manager and would close it prematurely.
 async fn require_manager_or_board_member(
     state: &AppState,
     rls: &mut RlsConnection,
@@ -303,7 +298,7 @@ async fn create_board_member(
     mut rls: RlsConnection,
     Json(input): Json<CreateBoardMember>,
 ) -> ApiResult<Json<db::models::board_meetings::BoardMember>> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let out = async {
@@ -347,7 +342,7 @@ async fn update_board_member(
     Path(id): Path<Uuid>,
     Json(input): Json<UpdateBoardMember>,
 ) -> ApiResult<Json<db::models::board_meetings::BoardMember>> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .board_meeting_repo
@@ -366,7 +361,7 @@ async fn delete_board_member(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .board_meeting_repo
@@ -429,7 +424,7 @@ async fn create_meeting(
     mut rls: RlsConnection,
     Json(input): Json<CreateBoardMeeting>,
 ) -> ApiResult<Json<db::models::board_meetings::BoardMeeting>> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let out = state
@@ -467,7 +462,7 @@ async fn update_meeting(
     Path(id): Path<Uuid>,
     Json(input): Json<UpdateBoardMeeting>,
 ) -> ApiResult<Json<db::models::board_meetings::BoardMeeting>> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .board_meeting_repo
@@ -486,7 +481,7 @@ async fn delete_meeting(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .board_meeting_repo
@@ -510,7 +505,7 @@ async fn start_meeting(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::board_meetings::BoardMeeting>> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .board_meeting_repo
@@ -529,7 +524,7 @@ async fn end_meeting(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::board_meetings::BoardMeeting>> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .board_meeting_repo
@@ -548,7 +543,7 @@ async fn cancel_meeting(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::board_meetings::BoardMeeting>> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .board_meeting_repo
@@ -589,7 +584,7 @@ async fn add_agenda_item(
     Path(meeting_id): Path<Uuid>,
     Json(mut input): Json<CreateAgendaItem>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingAgendaItem>> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     input.meeting_id = meeting_id;
     let user_id = rls.user_id();
     let out = async {
@@ -631,7 +626,7 @@ async fn update_agenda_item(
     Path(id): Path<Uuid>,
     Json(input): Json<UpdateAgendaItem>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingAgendaItem>> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .board_meeting_repo
@@ -656,7 +651,7 @@ async fn complete_agenda_item(
     Path(id): Path<Uuid>,
     Json(input): Json<CompleteAgendaItemRequest>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingAgendaItem>> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .board_meeting_repo
@@ -675,7 +670,7 @@ async fn delete_agenda_item(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .board_meeting_repo
@@ -782,7 +777,7 @@ async fn update_motion(
     Path(id): Path<Uuid>,
     Json(input): Json<UpdateMotion>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingMotion>> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .board_meeting_repo
@@ -821,7 +816,7 @@ async fn start_motion_voting(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingMotion>> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .board_meeting_repo
@@ -840,7 +835,7 @@ async fn end_motion_voting(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingMotion>> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .board_meeting_repo
@@ -897,7 +892,7 @@ async fn delete_motion(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .board_meeting_repo
@@ -943,7 +938,7 @@ async fn record_attendance(
     Path(meeting_id): Path<Uuid>,
     Json(mut input): Json<RecordAttendance>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingAttendance>> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     input.meeting_id = meeting_id;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
@@ -1009,7 +1004,7 @@ async fn create_minutes(
     Path(meeting_id): Path<Uuid>,
     Json(mut input): Json<CreateMinutes>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingMinutes>> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     input.meeting_id = meeting_id;
     let user_id = rls.user_id();
     let out = async {
@@ -1033,7 +1028,7 @@ async fn update_minutes(
     Path(id): Path<Uuid>,
     Json(input): Json<UpdateMinutes>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingMinutes>> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .board_meeting_repo
@@ -1058,7 +1053,7 @@ async fn approve_minutes(
     Path(id): Path<Uuid>,
     Json(input): Json<ApproveMinutesRequest>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingMinutes>> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let out = state
@@ -1123,7 +1118,7 @@ async fn create_action_item(
     Path(meeting_id): Path<Uuid>,
     Json(mut input): Json<CreateActionItem>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingActionItem>> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     input.meeting_id = meeting_id;
     let user_id = rls.user_id();
     let out = async {
@@ -1178,7 +1173,7 @@ async fn update_action_item(
     Path(id): Path<Uuid>,
     Json(input): Json<UpdateActionItem>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingActionItem>> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = async {
         if let Some(assignee) = input.assigned_to {
@@ -1228,7 +1223,7 @@ async fn delete_action_item(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .board_meeting_repo
@@ -1274,7 +1269,7 @@ async fn upload_document(
     Path(meeting_id): Path<Uuid>,
     Json(mut input): Json<UploadMeetingDocument>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingDocument>> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     input.meeting_id = meeting_id;
     let user_id = rls.user_id();
     let out = async {
@@ -1297,7 +1292,7 @@ async fn delete_document(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .board_meeting_repo

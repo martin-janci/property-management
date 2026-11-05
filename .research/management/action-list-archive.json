@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-11-05T00:31:33Z",
+  "archived_at": "2026-11-05T20:45:27Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -21231,6 +21231,110 @@
         "merged_pr": 3317,
         "merged_at": "2026-11-04T20:39:37Z",
         "at": "2026-11-04T22:28:58Z"
+      }
+    },
+    {
+      "id": "gh-issue-3311",
+      "action": "Follow-up: POST /leases/{id}/payments path param is a lease id by the route but a payment id in the handler; client works around it (PR #3268) (Closes #3311)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3311) | dev-reconcile 2026-11-05T20:39:21Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T20:32:18Z",
+      "issue_ref": {
+        "number": 3311,
+        "url": "https://github.com/martin-janci/property-management/issues/3311",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "3a30e1f702dd539501a75e73b8a17a6da37de2bf",
+        "subject": "gh-issue-3311: record lease payments via honest /leases/{leaseId}/payments/{paymentId} route (#3324)",
+        "at": "2026-11-05T20:39:21Z"
+      }
+    },
+    {
+      "id": "gh-issue-3312",
+      "action": "Follow-up: resolution-term responsiblePartyId resolved via the user-id map, not nameByParty like votes (PR #3264) (Closes #3312)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3312) | dev-reconcile 2026-11-05T20:39:21Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T20:32:18Z",
+      "issue_ref": {
+        "number": 3312,
+        "url": "https://github.com/martin-janci/property-management/issues/3312",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "476475bc08df1e80fc3fcc8355f7d104cc3c2e00",
+        "subject": "gh-issue-3312: resolve resolution-term responsiblePartyId via the party-id map (#3323)",
+        "at": "2026-11-05T20:39:21Z"
+      }
+    },
+    {
+      "id": "gh-issue-3314",
+      "action": "Follow-up: org-wide automation execution list/stats endpoints are not manager-gated (any member can read them) (PR #3253) (Closes #3314)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3314) | dev-reconcile 2026-11-05T20:39:21Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T20:32:18Z",
+      "issue_ref": {
+        "number": 3314,
+        "url": "https://github.com/martin-janci/property-management/issues/3314",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "28056da5bfa09b2e2479324c8b286c83f0391843",
+        "subject": "gh-issue-3314: manager-gate automation execution list/stats endpoints (#3325)",
+        "at": "2026-11-05T20:39:21Z"
+      }
+    },
+    {
+      "id": "gh-issue-3315",
+      "action": "Follow-up: RecentActivity filters \"faults you reported\" client-side over a capped 20-row org-wide fetch (PR #3252) (Closes #3315)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3315) | dev-reconcile 2026-11-05T20:39:21Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T20:32:18Z",
+      "issue_ref": {
+        "number": 3315,
+        "url": "https://github.com/martin-janci/property-management/issues/3315",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "89fb59e5accfe736a42e1f9c6eec0cacd5a356e6",
+        "subject": "gh-issue-3315: scope RecentActivity faults to reporter server-side (#3321)",
+        "at": "2026-11-05T20:39:21Z"
       }
     },
     {
