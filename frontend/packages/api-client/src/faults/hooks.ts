@@ -14,6 +14,7 @@ import type {
   FaultListQuery,
   FaultListResponse,
   FaultStatistics,
+  MyFaultsQuery,
   ResolveFaultRequest,
   TriageFaultRequest,
   UpdateFaultRequest,
@@ -27,6 +28,8 @@ export const faultKeys = {
   all: ['faults'] as const,
   lists: () => [...faultKeys.all, 'list'] as const,
   list: (query: FaultListQuery) => [...faultKeys.lists(), query] as const,
+  myLists: () => [...faultKeys.all, 'my-list'] as const,
+  myList: (query: MyFaultsQuery) => [...faultKeys.myLists(), query] as const,
   details: () => [...faultKeys.all, 'detail'] as const,
   detail: (id: string) => [...faultKeys.details(), id] as const,
   timeline: (id: string) => [...faultKeys.all, 'timeline', id] as const,
@@ -55,6 +58,20 @@ export function useFaults(query: FaultListQuery = {}) {
   return useQuery<FaultListResponse>({
     queryKey: faultKeys.list(query),
     queryFn: () => api.listFaults(query),
+  });
+}
+
+/**
+ * List the authenticated user's own reported faults (`GET /api/v1/faults/my`).
+ *
+ * The reporter filter is applied server-side before `limit`, so this returns
+ * the user's most-recent faults without over-fetching other residents' rows
+ * or hiding the user's faults behind newer third-party ones.
+ */
+export function useMyFaults(query: MyFaultsQuery = {}) {
+  return useQuery<FaultListResponse>({
+    queryKey: faultKeys.myList(query),
+    queryFn: () => api.listMyFaults(query),
   });
 }
 
