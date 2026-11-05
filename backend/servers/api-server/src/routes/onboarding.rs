@@ -61,10 +61,14 @@ pub struct CompleteStepRequest {
 /// Extract user from token.
 ///
 /// Roles used for role-targeted tours come from the caller's active
-/// organization memberships in the database (login tokens carry no `roles`
-/// claim): each membership contributes its `role_type`, its role name and the
-/// display name of the canonical role (e.g. "Manager"), which is how
-/// `onboarding_tours.target_roles` is written.
+/// membership in the **current** organization only (the `X-Tenant-ID` header
+/// the clients send, or the token's `org_id` claim; they must agree). Roles a
+/// user holds in other organizations, and the token's `roles` claim, are
+/// never merged in — a manager elsewhere is not a manager here. Each matching
+/// membership contributes its `role_type`, its role name and the display
+/// name of the canonical role (e.g. "Manager"), which is how
+/// `onboarding_tours.target_roles` is written. Without an org context the
+/// role list is empty (only untargeted tours apply).
 async fn extract_user_token(
     headers: &axum::http::HeaderMap,
     state: &AppState,
@@ -111,7 +115,24 @@ async fn extract_user_token(
         )
     })?;
 
-    let mut roles = claims.roles.unwrap_or_default();
+    let header_org: Option<Uuid> = headers
+        .get("X-Tenant-ID")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.parse().ok());
+    let claim_org: Option<Uuid> = claims.org_id.as_ref().and_then(|id| id.parse().ok());
+    if let (Some(h), Some(c)) = (header_org, claim_org) {
+        if h != c {
+            return Err((
+                StatusCode::FORBIDDEN,
+                Json(ErrorResponse::new("TENANT_MISMATCH", "Tenant mismatch")),
+            ));
+        }
+    }
+    let Some(org_id) = header_org.or(claim_org) else {
+        return Ok((user_id, Vec::new()));
+    };
+
+    let mut roles = Vec::new();
     let memberships = state
         .org_member_repo
         .get_user_memberships(user_id)
@@ -123,7 +144,10 @@ async fn extract_user_token(
                 Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
             )
         })?;
-    for m in memberships.into_iter().filter(|m| m.status == "active") {
+    for m in memberships
+        .into_iter()
+        .filter(|m| m.status == "active" && m.organization_id == org_id)
+    {
         if let Some(role) = common::TenantRole::from_role_type(&m.role_type) {
             roles.push(role.to_string());
         }
