@@ -12,7 +12,6 @@ use axum::{
     Json, Router,
 };
 use common::errors::ErrorResponse;
-use common::TenantRole;
 use db::models::{
     Building, BuildingStatistics, BuildingSummary, CreateBuilding, CreateUnit, Unit, UnitOwnerInfo,
     UnitSummary, UnitWithOwners, UpdateBuilding, UpdateUnit,
@@ -454,7 +453,7 @@ async fn require_building_manager(
     rls: &mut RlsConnection,
     message: &'static str,
 ) -> Result<(), BuildingApiError> {
-    if rls.is_super_admin() || rls.has_role(TenantRole::Manager) {
+    if rls.role().is_manager() {
         return Ok(());
     }
     rls.release().await;
@@ -556,7 +555,7 @@ pub async fn create_building(
 
     // Creating a building is a manager action (closes #799). RLS enforces org
     // isolation but not role level, so gate explicitly.
-    if !rls.is_super_admin() && !rls.has_role(TenantRole::Manager) {
+    if !rls.role().is_manager() {
         rls.release().await;
         return Err((
             StatusCode::FORBIDDEN,
@@ -740,7 +739,7 @@ pub async fn bulk_import_buildings(
     }
 
     // Bulk-importing buildings is a manager action (closes #799).
-    if !rls.is_super_admin() && !rls.has_role(TenantRole::Manager) {
+    if !rls.role().is_manager() {
         rls.release().await;
         return Err((
             StatusCode::FORBIDDEN,
@@ -1030,7 +1029,7 @@ pub async fn archive_building(
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
     // Archiving a building is a manager action (closes #799).
-    if !rls.is_super_admin() && !rls.has_role(TenantRole::Manager) {
+    if !rls.role().is_manager() {
         rls.release().await;
         return Err((
             StatusCode::FORBIDDEN,
