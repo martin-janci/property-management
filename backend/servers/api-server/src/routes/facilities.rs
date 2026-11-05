@@ -32,7 +32,7 @@ type FacilityApiError = (StatusCode, Json<ErrorResponse>);
 /// FORCE'd, so the org predicate is explicit) — other orgs get 404 so existence
 /// is not leaked. When `require_manager` is set, the caller's DB membership role
 /// must be manager-level.
-async fn authorize_building(
+async fn authorize_building_inner(
     state: &AppState,
     rls: &mut RlsConnection,
     user_id: Uuid,
@@ -93,6 +93,22 @@ async fn authorize_building(
     Ok(())
 }
 
+/// [`authorize_building_inner`], releasing the RLS connection on failure so an error
+/// response never leaves the tenant context bound to a pooled connection.
+async fn authorize_building(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    user_id: Uuid,
+    building_id: Uuid,
+    require_manager: bool,
+) -> Result<(), FacilityApiError> {
+    let res = authorize_building_inner(state, rls, user_id, building_id, require_manager).await;
+    if res.is_err() {
+        rls.release().await;
+    }
+    res
+}
+
 /// Load a facility and ensure it belongs to `building_id` (404 otherwise).
 async fn facility_in_building(
     state: &AppState,
@@ -125,7 +141,7 @@ async fn facility_in_building(
 /// Authorize a manager action on a booking: the booking's facility must be in
 /// a building of the caller's tenant (404 otherwise) and the caller's DB
 /// membership role must be manager-level (403 otherwise).
-async fn authorize_booking_manager(
+async fn authorize_booking_manager_inner(
     state: &AppState,
     rls: &mut RlsConnection,
     booking_id: Uuid,
@@ -185,6 +201,20 @@ async fn authorize_booking_manager(
         ));
     }
     Ok(())
+}
+
+/// [`authorize_booking_manager_inner`], releasing the RLS connection on failure so an error
+/// response never leaves the tenant context bound to a pooled connection.
+async fn authorize_booking_manager(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    booking_id: Uuid,
+) -> Result<(), FacilityApiError> {
+    let res = authorize_booking_manager_inner(state, rls, booking_id).await;
+    if res.is_err() {
+        rls.release().await;
+    }
+    res
 }
 
 /// Create facilities router.
@@ -490,6 +520,8 @@ pub async fn list_facilities(
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
     // Verify the building is in the caller's organization and they may act on it
     authorize_building(&state, &mut rls, auth.user_id, building_id, false).await?;
+    // Authorization is the last use of the RLS connection here.
+    rls.release().await;
 
     let facilities = state
         .facility_repo
@@ -530,6 +562,8 @@ pub async fn create_facility(
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
     // Verify the building is in the caller's organization and they may act on it
     authorize_building(&state, &mut rls, auth.user_id, building_id, true).await?;
+    // Authorization is the last use of the RLS connection here.
+    rls.release().await;
 
     // Validate name
     if req.name.trim().is_empty() {
@@ -615,6 +649,8 @@ pub async fn get_facility(
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
     // Verify the building is in the caller's organization and they may act on it
     authorize_building(&state, &mut rls, auth.user_id, building_id, false).await?;
+    // Authorization is the last use of the RLS connection here.
+    rls.release().await;
 
     let facility = state
         .facility_repo
@@ -675,6 +711,8 @@ pub async fn update_facility(
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
     // Verify the building is in the caller's organization and they may act on it
     authorize_building(&state, &mut rls, auth.user_id, building_id, true).await?;
+    // Authorization is the last use of the RLS connection here.
+    rls.release().await;
 
     // The facility must belong to the path building (nested-id scoping).
     facility_in_building(&state, id, building_id).await?;
@@ -758,6 +796,8 @@ pub async fn delete_facility(
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
     // Verify the building is in the caller's organization and they may act on it
     authorize_building(&state, &mut rls, auth.user_id, building_id, true).await?;
+    // Authorization is the last use of the RLS connection here.
+    rls.release().await;
 
     // The facility must belong to the path building (nested-id scoping).
     facility_in_building(&state, id, building_id).await?;
@@ -809,6 +849,8 @@ pub async fn list_facility_bookings(
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
     // Verify the building is in the caller's organization and they may act on it
     authorize_building(&state, &mut rls, auth.user_id, building_id, false).await?;
+    // Authorization is the last use of the RLS connection here.
+    rls.release().await;
 
     // The facility must belong to the path building (nested-id scoping).
     facility_in_building(&state, facility_id, building_id).await?;
@@ -865,21 +907,25 @@ pub async fn create_booking(
     authorize_building(&state, &mut rls, auth.user_id, building_id, false).await?;
 
     // The facility must belong to the path building (nested-id scoping).
-    facility_in_building(&state, facility_id, building_id).await?;
+    if let Err(e) = facility_in_building(&state, facility_id, building_id).await {
+        rls.release().await;
+        return Err(e);
+    }
 
     // A unit referenced by the booking must be in the same building.
     if let Some(unit_id) = req.unit_id {
         let unit_ok = state
             .unit_repo
             .belongs_to_building_rls(&mut **rls.conn(), unit_id, building_id)
-            .await
-            .map_err(|e| {
-                tracing::error!(error = %e, "Failed to verify unit");
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ErrorResponse::new("DB_ERROR", "Database error")),
-                )
-            })?;
+            .await;
+        rls.release().await;
+        let unit_ok = unit_ok.map_err(|e| {
+            tracing::error!(error = %e, "Failed to verify unit");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?;
         if !unit_ok {
             return Err((
                 StatusCode::BAD_REQUEST,
@@ -890,6 +936,9 @@ pub async fn create_booking(
             ));
         }
     }
+
+    // The unit check above is the last use of the RLS connection.
+    rls.release().await;
 
     // Validate time range
     if req.end_time <= req.start_time {
@@ -993,6 +1042,8 @@ pub async fn check_availability(
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
     // Verify the building is in the caller's organization and they may act on it
     authorize_building(&state, &mut rls, auth.user_id, building_id, false).await?;
+    // Authorization is the last use of the RLS connection here.
+    rls.release().await;
 
     // The facility must belong to the path building (nested-id scoping).
     facility_in_building(&state, facility_id, building_id).await?;
@@ -1329,6 +1380,8 @@ pub async fn list_pending_bookings(
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
     // Verify the building is in the caller's organization and they may act on it
     authorize_building(&state, &mut rls, auth.user_id, building_id, false).await?;
+    // Authorization is the last use of the RLS connection here.
+    rls.release().await;
 
     let bookings = state
         .facility_repo
@@ -1368,6 +1421,8 @@ pub async fn approve_booking(
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
     authorize_booking_manager(&state, &mut rls, id).await?;
+    // Authorization is the last use of the RLS connection here.
+    rls.release().await;
 
     let booking = state
         .facility_repo
@@ -1422,6 +1477,8 @@ pub async fn reject_booking(
     Json(req): Json<RejectBookingRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
     authorize_booking_manager(&state, &mut rls, id).await?;
+    // Authorization is the last use of the RLS connection here.
+    rls.release().await;
 
     let booking = state
         .facility_repo
