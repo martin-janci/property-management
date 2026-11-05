@@ -139,15 +139,15 @@
       "branch": "auto-impl/gh-issue-3309-be0c4288",
       "status": "review",
       "claimed_at": "2026-11-04T22:33:36Z",
-      "last_updated": "2026-11-05T00:31:13Z",
+      "last_updated": "2026-11-05T00:39:17Z",
       "status_changed_at": "2026-11-05T00:31:13Z",
       "pr_number": 3318,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3318",
       "merged_at": null,
       "specialist": null,
       "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve note=approved-via-comment-self-approve-blocked (CI 39 green; blocked on #3215 self-approval)",
+      "last_reviewed_oid": "9317b9bf30ac45cd3a3883902bcb42b251160000",
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
@@ -201,5 +201,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-04T22:44:31Z"
+  "generated": "2026-11-05T00:39:17Z"
 }

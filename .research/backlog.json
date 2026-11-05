@@ -14814,7 +14814,7 @@
       "vector": "security",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-11-03 ppt-web-core (dispatcher Tier-1d)"
       ],
@@ -14827,7 +14827,12 @@
       ],
       "created_at": "2026-11-04",
       "updated_at": "2026-11-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-05T00:25:03Z",
+        "assignment_status": "merged",
+        "pr_number": 3280
+      }
     },
     {
       "id": "code-review-reality-server-db-error-string-status-map",

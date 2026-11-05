@@ -152,23 +152,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-core-ws-jwt-in-url",
-      "action": "SECURITY: ppt-web WebSocket sends JWT as URL query parameter — token leaks into access logs",
-      "owner_role": "pm-security",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-04T04:24:45Z (score=2 conf=medium vector=security)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-04T04:24:45Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "security"
-      }
-    },
-    {
       "id": "gh-issue-3283",
       "action": "Follow-up: realtor public profile page renders hardcoded Slovak UI on a 6-language portal (PR #3225) (Closes #3283)",
       "owner_role": "pm-tech-lead",
@@ -252,7 +235,7 @@
       "action": "Follow-up: consolidate per-file require_manager(rls) helpers onto the shared rls_authz::require_manager_rls (PR #3287) (Closes #3306)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3306)",
       "deadline": null,
       "dependency": null,
@@ -335,7 +318,7 @@
       "action": "Follow-up: community feed shows every author as \"Neighbor\" (API returns ids only); formatMoney coerces Decimal via Number() (PR #3269) (Closes #3310)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3310)",
       "deadline": null,
       "dependency": null,
