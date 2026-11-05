@@ -425,6 +425,7 @@ async fn add_maintenance_photo(
     Path(log_id): Path<Uuid>,
     Json(req): Json<AddPhotoRequest>,
 ) -> Response {
+    authorize!(require_manager(&mut rls).await);
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
 
