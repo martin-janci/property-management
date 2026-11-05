@@ -263,6 +263,46 @@ impl EquipmentRepository {
         .await
     }
 
+    /// Check that the optional `fault_id` / `performed_by` references of a
+    /// maintenance record belong to `org_id` (fault in the org; performer an
+    /// active member of the org). Returns the name of the first reference
+    /// that does not, or `None` when all given references are in-org.
+    pub async fn maintenance_refs_outside_org<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+        fault_id: Option<Uuid>,
+        performed_by: Option<Uuid>,
+    ) -> Result<Option<&'static str>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let (fault_ok, performer_ok): (bool, bool) = sqlx::query_as(
+            r#"
+            SELECT
+                ($2::uuid IS NULL OR EXISTS (
+                    SELECT 1 FROM faults f WHERE f.id = $2 AND f.organization_id = $1
+                )),
+                ($3::uuid IS NULL OR EXISTS (
+                    SELECT 1 FROM organization_members m
+                    WHERE m.user_id = $3 AND m.organization_id = $1 AND m.status = 'active'
+                ))
+            "#,
+        )
+        .bind(org_id)
+        .bind(fault_id)
+        .bind(performed_by)
+        .fetch_one(executor)
+        .await?;
+        Ok(if !fault_ok {
+            Some("fault")
+        } else if !performer_ok {
+            Some("performer")
+        } else {
+            None
+        })
+    }
+
     /// Get maintenance record by ID — tenant-scoped.
     ///
     /// `org_id` must originate from the verified request principal.
