@@ -302,6 +302,18 @@ export interface FaultListQuery {
   limit?: number;
 }
 
+/**
+ * Query parameters for `GET /api/v1/faults/my`.
+ *
+ * The reporter is taken from the request principal server-side, so the only
+ * knobs are the page window. `limit` caps the authenticated user's *own*
+ * faults (not an org-wide list).
+ */
+export interface MyFaultsQuery {
+  limit?: number;
+  offset?: number;
+}
+
 /** Fault list response */
 export interface FaultListResponse {
   faults: FaultSummary[];

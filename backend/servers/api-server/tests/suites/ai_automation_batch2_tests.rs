@@ -181,6 +181,106 @@ async fn test_get_automation_rule_not_found(pool: PgPool) {
     );
 }
 
+// ---------------------------------------------------------------------------
+// Automation — Org-wide execution monitoring role gate (follow-up #3314)
+// ---------------------------------------------------------------------------
+//
+// `list_executions` / `execution_stats` are org-scoped (NOT owner-scoped) reads
+// that expose org-wide automation internals (`trigger_data`, `actions_executed`,
+// `error_message`, per-rule names/types). PR #3253 shipped them gated only on
+// `enforce_org_match` (org membership). The sibling mutation handlers added
+// `require_manager` in #3287; these reads were not retrofitted. The pair below
+// pins both sides of the manager boundary: a below-Manager `resident` must get
+// 403, a `manager` must pass. If the gate is ever dropped, the resident test
+// fails (where a bare membership check would keep returning 200).
+
+/// Helper: register + log in a user and make them an active member of a fresh
+/// org with the given `organization_members.role_type`, plus an active
+/// `user_memberships` row (required for `RequestPrincipal.effective_org`).
+/// Returns `(token, org_id)`.
+async fn authed_member_with_role(
+    app: &TestApp,
+    user: &TestUser,
+    slug: &str,
+    role_type: &str,
+) -> (String, Uuid) {
+    let (token, _refresh) = create_authenticated_user(app, user).await;
+    let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
+        .bind(&user.email)
+        .fetch_one(&app.pool)
+        .await
+        .expect("resolve user id");
+    let org_id = seed_org(&app.pool, slug).await;
+    // `organization_members.role_type` drives `require_manager`.
+    seed_membership(&app.pool, org_id, user_id, role_type).await;
+    // `user_memberships` drives `RequestPrincipal.effective_org`.
+    seed_user_membership(&app.pool, user_id, org_id).await;
+    (token, org_id)
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_list_executions_forbidden_for_resident(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::default();
+    let (token, org_id) =
+        authed_member_with_role(&app, &user, "auto-exec-resident", "resident").await;
+
+    let uri = format!("/api/v1/automation/organizations/{org_id}/executions");
+    let resp = app
+        .execute(inject_tenant(
+            authed(&token, Method::GET, &uri, None, org_id),
+            org_id,
+        ))
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "a below-Manager resident must be refused org-wide execution list"
+    );
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_execution_stats_forbidden_for_resident(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::default();
+    let (token, org_id) =
+        authed_member_with_role(&app, &user, "auto-stats-resident", "resident").await;
+
+    let uri = format!("/api/v1/automation/organizations/{org_id}/executions/stats");
+    let resp = app
+        .execute(inject_tenant(
+            authed(&token, Method::GET, &uri, None, org_id),
+            org_id,
+        ))
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "a below-Manager resident must be refused org-wide execution stats"
+    );
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_list_executions_allowed_for_manager(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::default();
+    let (token, org_id) =
+        authed_member_with_role(&app, &user, "auto-exec-manager", "manager").await;
+
+    let uri = format!("/api/v1/automation/organizations/{org_id}/executions");
+    let resp = app
+        .execute(inject_tenant(
+            authed(&token, Method::GET, &uri, None, org_id),
+            org_id,
+        ))
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "a Manager-role member must be allowed the org-wide execution list"
+    );
+}
+
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_list_automation_templates_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;

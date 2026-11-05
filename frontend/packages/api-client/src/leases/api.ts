@@ -197,18 +197,18 @@ export async function updateLeaseTemplate(
 /**
  * Record a payment against an existing scheduled lease payment row.
  *
- * NOTE: the backend registers this as `POST /api/v1/leases/{id}/payments`, but
- * its handler (`routes/leases.rs::record_payment`) extracts the single `{id}`
- * path segment as the **payment** id and runs `UPDATE lease_payments … WHERE
- * id = $1`. Sending the lease id there would always 500 (row not found), so the
- * client deliberately puts the payment id in that segment to match the live
- * server.
+ * Uses `POST /api/v1/leases/{leaseId}/payments/{paymentId}`, where both path
+ * segments are honest: the backend scopes the `UPDATE` by payment id *and*
+ * verifies the payment belongs to the lease (and the caller's org). The old
+ * `POST /api/v1/leases/{id}/payments` route (where `{id}` was really the
+ * payment id) is deprecated server-side; do not use it.
  */
 export async function recordLeasePayment(
+  leaseId: string,
   paymentId: string,
   body: RecordLeasePaymentRequest
 ): Promise<LeasePayment> {
-  return fetchApi<LeasePayment>(`${LEASES_BASE}/${paymentId}/payments`, {
+  return fetchApi<LeasePayment>(`${LEASES_BASE}/${leaseId}/payments/${paymentId}`, {
     method: 'POST',
     body: JSON.stringify(body),
   });

@@ -114,8 +114,11 @@ export function mapDisputeDetailForUi(input: DisputeDetailUiInput): DisputeDetai
         id: term.id,
         description: term.description,
         responsiblePartyId: term.responsiblePartyId,
+        // responsiblePartyId references a dispute_parties row id (same referent
+        // as a vote's partyId — issue #3312), so resolve it via the party-id
+        // map, not the user-id map.
         responsiblePartyName: term.responsiblePartyId
-          ? userName(term.responsiblePartyId)
+          ? (nameByParty.get(term.responsiblePartyId) ?? unknownName)
           : undefined,
         deadline: term.deadline,
         completed: term.completed,

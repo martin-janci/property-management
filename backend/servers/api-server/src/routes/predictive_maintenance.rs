@@ -93,12 +93,16 @@ fn db_error(e: impl std::fmt::Display) -> Response {
 /// Require a manager-tier role (resolved from DB membership by
 /// `RlsConnection`) for equipment / maintenance / alert mutations. Releases the
 /// connection on failure.
+///
+/// Delegates the `is_manager`/release-on-reject contract to the shared
+/// [`crate::routes::rls_authz::require_manager_rls`] gate (#3306) so the manager
+/// definition lives in one place; this wrapper only adapts the shared
+/// `(StatusCode, Json<ErrorResponse>)` rejection to this module's `Response`
+/// error type.
 async fn require_manager(rls: &mut RlsConnection) -> Result<(), Response> {
-    if rls.role().is_manager() {
-        return Ok(());
-    }
-    rls.release().await;
-    Err((StatusCode::FORBIDDEN, "Manager role required").into_response())
+    crate::routes::rls_authz::require_manager_rls(rls)
+        .await
+        .map_err(IntoResponse::into_response)
 }
 
 /// Ensure `building_id` belongs to the caller's org (404 otherwise). The

@@ -123,6 +123,29 @@ struct CommentWithUserRow {
     pub reply_count: i64,
 }
 
+/// Map a joined comment+user row to the API shape. Shared by the org-scoped
+/// comment/reply reads (#3308).
+fn comment_row_to_with_user(row: CommentWithUserRow) -> VoteCommentWithUser {
+    VoteCommentWithUser {
+        comment: VoteComment {
+            id: row.id,
+            vote_id: row.vote_id,
+            user_id: row.user_id,
+            parent_id: row.parent_id,
+            content: row.content,
+            hidden: row.hidden,
+            hidden_by: row.hidden_by,
+            hidden_at: row.hidden_at,
+            hidden_reason: row.hidden_reason,
+            ai_consent: row.ai_consent,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+        },
+        user_name: row.user_name,
+        reply_count: row.reply_count,
+    }
+}
+
 /// Row struct for eligible unit.
 #[derive(Debug, FromRow)]
 struct EligibleUnitRow {
@@ -236,6 +259,267 @@ impl VoteRepository {
         .bind(organization_id)
         .fetch_optional(executor)
         .await
+    }
+
+    /// Org-scoped / RLS-aware variant of [`get_questions`](Self::get_questions).
+    ///
+    /// Runs on the caller's `RlsConnection` executor and folds the owning
+    /// vote's `organization_id` into the query (join to `votes`), so a vote
+    /// from another org yields no questions even if a handler forgets the
+    /// `vote_in_org` pre-check. Replaces the pool-bypass read flagged in #3308.
+    pub async fn get_questions_for_org<'e, E>(
+        &self,
+        vote_id: Uuid,
+        organization_id: Uuid,
+        executor: E,
+    ) -> Result<Vec<VoteQuestion>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, VoteQuestion>(
+            r#"
+            SELECT q.id, q.vote_id, q.question_text, q.description, q.question_type::text AS question_type, q.options, q.display_order, q.is_required, q.created_at, q.updated_at
+            FROM vote_questions q
+            JOIN votes v ON v.id = q.vote_id
+            WHERE q.vote_id = $1 AND v.organization_id = $2
+            ORDER BY q.display_order
+            "#,
+        )
+        .bind(vote_id)
+        .bind(organization_id)
+        .fetch_all(executor)
+        .await
+    }
+
+    /// Org-scoped / RLS-aware variant of
+    /// [`get_user_response`](Self::get_user_response). Folds the owning vote's
+    /// `organization_id` into the query so a response under a vote from another
+    /// org is never returned. See #3308.
+    pub async fn get_user_response_for_org<'e, E>(
+        &self,
+        vote_id: Uuid,
+        unit_id: Uuid,
+        organization_id: Uuid,
+        executor: E,
+    ) -> Result<Option<VoteResponse>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, VoteResponse>(
+            r#"
+            SELECT r.* FROM vote_responses r
+            JOIN votes v ON v.id = r.vote_id
+            WHERE r.vote_id = $1 AND r.unit_id = $2 AND v.organization_id = $3
+            "#,
+        )
+        .bind(vote_id)
+        .bind(unit_id)
+        .bind(organization_id)
+        .fetch_optional(executor)
+        .await
+    }
+
+    /// Org-scoped / RLS-aware variant of
+    /// [`list_comments`](Self::list_comments). Folds the owning vote's
+    /// `organization_id` into the query (join to `votes`). See #3308.
+    pub async fn list_comments_for_org<'e, E>(
+        &self,
+        vote_id: Uuid,
+        organization_id: Uuid,
+        include_hidden: bool,
+        executor: E,
+    ) -> Result<Vec<VoteCommentWithUser>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let hidden_filter = if include_hidden {
+            ""
+        } else {
+            "AND c.hidden = false"
+        };
+
+        let sql = format!(
+            r#"
+            SELECT
+                c.id, c.vote_id, c.user_id, c.parent_id, c.content, c.hidden,
+                c.hidden_by, c.hidden_at, c.hidden_reason, c.ai_consent,
+                c.created_at, c.updated_at,
+                u.name as user_name,
+                (SELECT COUNT(*) FROM vote_comments WHERE parent_id = c.id {}) as reply_count
+            FROM vote_comments c
+            JOIN users u ON c.user_id = u.id
+            JOIN votes v ON v.id = c.vote_id
+            WHERE c.vote_id = $1 AND v.organization_id = $2 AND c.parent_id IS NULL {}
+            ORDER BY c.created_at
+            "#,
+            hidden_filter, hidden_filter
+        );
+
+        let rows = sqlx::query_as::<_, CommentWithUserRow>(sqlx::AssertSqlSafe(sql))
+            .bind(vote_id)
+            .bind(organization_id)
+            .fetch_all(executor)
+            .await?;
+
+        Ok(rows.into_iter().map(comment_row_to_with_user).collect())
+    }
+
+    /// Org-scoped / RLS-aware variant of
+    /// [`list_replies`](Self::list_replies). Folds the owning vote's
+    /// `organization_id` (join to `votes`) AND the parent comment's `vote_id`
+    /// into the query, so a reply only surfaces when its thread belongs to the
+    /// caller's vote and org. See #3308.
+    pub async fn list_replies_for_org<'e, E>(
+        &self,
+        parent_id: Uuid,
+        vote_id: Uuid,
+        organization_id: Uuid,
+        include_hidden: bool,
+        executor: E,
+    ) -> Result<Vec<VoteCommentWithUser>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let hidden_filter = if include_hidden {
+            ""
+        } else {
+            "AND c.hidden = false"
+        };
+
+        let sql = format!(
+            r#"
+            SELECT
+                c.id, c.vote_id, c.user_id, c.parent_id, c.content, c.hidden,
+                c.hidden_by, c.hidden_at, c.hidden_reason, c.ai_consent,
+                c.created_at, c.updated_at,
+                u.name as user_name,
+                (SELECT COUNT(*) FROM vote_comments WHERE parent_id = c.id {}) as reply_count
+            FROM vote_comments c
+            JOIN users u ON c.user_id = u.id
+            JOIN votes v ON v.id = c.vote_id
+            WHERE c.parent_id = $1 AND c.vote_id = $2 AND v.organization_id = $3 {}
+            ORDER BY c.created_at
+            "#,
+            hidden_filter, hidden_filter
+        );
+
+        let rows = sqlx::query_as::<_, CommentWithUserRow>(sqlx::AssertSqlSafe(sql))
+            .bind(parent_id)
+            .bind(vote_id)
+            .bind(organization_id)
+            .fetch_all(executor)
+            .await?;
+
+        Ok(rows.into_iter().map(comment_row_to_with_user).collect())
+    }
+
+    /// Org-scoped / RLS-aware variant of
+    /// [`check_eligibility`](Self::check_eligibility). Loads the vote with
+    /// `find_poll_by_id_for_org` and runs the eligible-units query on the same
+    /// caller connection, so the whole check is tenant-scoped (no pool bypass,
+    /// no deprecated `find_by_id`). A vote from another org resolves to
+    /// `RowNotFound`. See #3308.
+    pub async fn check_eligibility_for_org(
+        &self,
+        vote_id: Uuid,
+        user_id: Uuid,
+        organization_id: Uuid,
+        conn: &mut sqlx::PgConnection,
+    ) -> Result<VoteEligibility, SqlxError> {
+        let vote = self
+            .find_poll_by_id_for_org(vote_id, organization_id, &mut *conn)
+            .await?
+            .ok_or(SqlxError::RowNotFound)?;
+
+        let eligible_units = sqlx::query_as::<_, EligibleUnitRow>(
+            r#"
+            WITH user_units AS (
+                -- Owned units
+                SELECT
+                    u.id as unit_id,
+                    u.designation as unit_designation,
+                    u.ownership_share,
+                    true as is_owner,
+                    false as is_delegated,
+                    NULL::uuid as delegation_id
+                FROM units u
+                JOIN unit_residents ur ON u.id = ur.unit_id
+                WHERE u.building_id = $1
+                  AND ur.user_id = $2
+                  AND ur.resident_type = 'owner'
+                  AND ur.end_date IS NULL
+
+                UNION ALL
+
+                -- Delegated units (if delegation allowed)
+                SELECT
+                    u.id as unit_id,
+                    u.designation as unit_designation,
+                    u.ownership_share,
+                    false as is_owner,
+                    true as is_delegated,
+                    d.id as delegation_id
+                FROM units u
+                JOIN delegations d ON u.id = d.unit_id
+                WHERE u.building_id = $1
+                  AND d.delegate_user_id = $2
+                  AND d.status = 'active'
+                  AND (d.scopes && ARRAY['voting','all']::delegation_scope[])
+                  AND (d.end_date IS NULL OR d.end_date >= CURRENT_DATE)
+                  AND $3 = true
+            )
+            SELECT
+                uu.unit_id,
+                uu.unit_designation,
+                uu.ownership_share,
+                uu.is_owner,
+                uu.is_delegated,
+                uu.delegation_id,
+                EXISTS (
+                    SELECT 1 FROM vote_responses vr
+                    WHERE vr.vote_id = $4 AND vr.unit_id = uu.unit_id
+                ) as already_voted
+            FROM user_units uu
+            "#,
+        )
+        .bind(vote.building_id)
+        .bind(user_id)
+        .bind(vote.allow_delegation)
+        .bind(vote_id)
+        .fetch_all(&mut *conn)
+        .await?;
+
+        let units: Vec<EligibleUnit> = eligible_units
+            .into_iter()
+            .map(|row| EligibleUnit {
+                unit_id: row.unit_id,
+                unit_designation: row.unit_designation,
+                ownership_share: row.ownership_share,
+                is_owner: row.is_owner,
+                is_delegated: row.is_delegated,
+                delegation_id: row.delegation_id,
+                already_voted: row.already_voted,
+            })
+            .collect();
+
+        let can_vote = vote.can_vote() && units.iter().any(|u| !u.already_voted);
+        let reason = if !vote.can_vote() {
+            Some("Vote is not currently accepting ballots".to_string())
+        } else if units.is_empty() {
+            Some("User is not eligible to vote in this building".to_string())
+        } else if units.iter().all(|u| u.already_voted) {
+            Some("All eligible units have already voted".to_string())
+        } else {
+            None
+        };
+
+        Ok(VoteEligibility {
+            vote_id,
+            user_id,
+            eligible_units: units,
+            can_vote,
+            reason,
+        })
     }
 
     /// Whether question `question_id` belongs to vote `vote_id`.

@@ -54,29 +54,12 @@ pub fn equipment_router() -> Router<AppState> {
         .route("/needing-maintenance", get(list_needing_maintenance))
 }
 
-/// Require a manager-tier role (resolved from DB membership by
-/// `RlsConnection`) for equipment and maintenance mutations. Releases the
-/// connection on failure.
-async fn require_manager(rls: &mut RlsConnection) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
-    if rls.role().is_manager() {
-        return Ok(());
-    }
-    rls.release().await;
-    Err((
-        StatusCode::FORBIDDEN,
-        Json(ErrorResponse::new(
-            "INSUFFICIENT_ROLE",
-            "Manager role required",
-        )),
-    ))
-}
-
 async fn create_equipment(
     State(state): State<AppState>,
     mut rls: RlsConnection,
     Json(req): Json<CreateEquipment>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     // SECURITY: owning org is the validated RLS tenant, never the body.
     let organization_id = rls.tenant_id();
     let out = match state
@@ -155,7 +138,7 @@ async fn update_equipment(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateEquipment>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let tenant_id = rls.tenant_id();
     let out = match state
         .equipment_repo
@@ -184,7 +167,7 @@ async fn delete_equipment(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let tenant_id = rls.tenant_id();
     let out = match state
         .equipment_repo
@@ -278,7 +261,7 @@ async fn create_maintenance(
     Path(id): Path<Uuid>,
     Json(req): Json<CreateMaintenance>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     // The path equipment and the body equipment must agree.
     if req.equipment_id != id {
         rls.release().await;
@@ -323,7 +306,7 @@ async fn update_maintenance(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMaintenance>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     ensure_maintenance_refs(&state, &mut rls, None, req.performed_by).await?;
     let tenant_id = rls.tenant_id();
     let out = match state
@@ -391,7 +374,7 @@ async fn acknowledge_prediction(
     Path(id): Path<Uuid>,
     Json(req): Json<AcknowledgePredictionRequest>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    require_manager(&mut rls).await?;
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     // SECURITY: org + user come from the validated RLS connection so a caller in
     // org B cannot acknowledge predictions belonging to org A. We return 404 for
     // both "not found" and "wrong tenant" to prevent cross-tenant ID enumeration.
