@@ -916,7 +916,16 @@ async fn registry_scope_and_roles(pool: PgPool) {
         expect(&resp, StatusCode::FORBIDDEN, &format!("resident {m} {uri}"));
     }
 
-    // Residents still own their own registrations.
+    // Residents still own their own registrations. Round 5: a non-manager may
+    // only register on a unit they live in / own, so link res_a to unit_a.
+    sqlx::query(
+        "INSERT INTO unit_residents (unit_id, user_id, resident_type) VALUES ($1, $2, 'tenant')",
+    )
+    .bind(w.unit_a)
+    .bind(w.res_a.user_id)
+    .execute(&pool)
+    .await
+    .expect("link resident to unit");
     let resp = create_pet(&app, &w.res_a, w.unit_a).await;
     expect(&resp, StatusCode::CREATED, "resident create own pet");
     let own: Uuid = resp.json_value()["registration"]["id"]

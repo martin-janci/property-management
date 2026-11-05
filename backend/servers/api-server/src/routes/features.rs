@@ -2,6 +2,7 @@
 //!
 //! Routes for feature resolution, preferences, and usage analytics.
 
+use api_core::middleware::host_tenant::ResolvedTenant;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -77,11 +78,15 @@ pub struct PreferenceResponse {
 /// The user comes from the validated access token. The organization comes
 /// from the `X-Tenant-ID` header (what the web/mobile clients send — login
 /// tokens carry no org claim) or, for tokens minted for one org, the `org_id`
-/// claim; if both are present they must agree. SECURITY: the caller must be an
-/// active member of that organization (checked in the database), and the role
-/// is the membership `role_type`, never a token claim.
+/// claim; if both are present they must agree. When `host_tenant_middleware`
+/// pinned the request to an organization (`ResolvedTenant`), that org wins
+/// and a header or claim naming a different org is a 403 — the same rule
+/// `ValidatedTenantExtractor` applies. SECURITY: the caller must be an active
+/// member of that organization (checked in the database), and the role is the
+/// membership `role_type`, never a token claim.
 async fn extract_user_context(
     headers: &axum::http::HeaderMap,
+    resolved: Option<axum::Extension<ResolvedTenant>>,
     state: &AppState,
 ) -> Result<UserContext, (StatusCode, Json<ErrorResponse>)> {
     let auth_header = headers
@@ -143,7 +148,20 @@ async fn extract_user_context(
             ));
         }
     }
-    let org_id = header_org.or(claim_org).ok_or_else(|| {
+    // The platform host carries a nil placeholder id, not an organization.
+    let host_org = resolved
+        .map(|axum::Extension(r)| r)
+        .filter(|r| !r.is_platform_host())
+        .map(|r| r.organization_id);
+    if let Some(host) = host_org {
+        if header_org.is_some_and(|h| h != host) || claim_org.is_some_and(|c| c != host) {
+            return Err((
+                StatusCode::FORBIDDEN,
+                Json(ErrorResponse::new("TENANT_MISMATCH", "Tenant mismatch")),
+            ));
+        }
+    }
+    let org_id = host_org.or(header_org).or(claim_org).ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
@@ -224,9 +242,10 @@ struct UserContext {
 async fn get_resolved_features(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
+    resolved: Option<axum::Extension<ResolvedTenant>>,
     Query(query): Query<ResolvedFeaturesQuery>,
 ) -> Result<Json<ResolvedFeaturesResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let ctx = extract_user_context(&headers, &state).await?;
+    let ctx = extract_user_context(&headers, resolved, &state).await?;
 
     let service = FeatureService::new(state.db.clone());
 
@@ -270,9 +289,10 @@ async fn get_resolved_features(
 async fn check_feature(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
+    resolved: Option<axum::Extension<ResolvedTenant>>,
     Path(key): Path<String>,
 ) -> Result<Json<FeatureCheckResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let ctx = extract_user_context(&headers, &state).await?;
+    let ctx = extract_user_context(&headers, resolved, &state).await?;
 
     let service = FeatureService::new(state.db.clone());
 
@@ -311,10 +331,11 @@ async fn check_feature(
 async fn get_upgrade_options(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
+    resolved: Option<axum::Extension<ResolvedTenant>>,
     Path(key): Path<String>,
 ) -> Result<Json<UpgradeOptionsResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Verify authentication
-    let _ = extract_user_context(&headers, &state).await?;
+    let _ = extract_user_context(&headers, resolved, &state).await?;
 
     let service = FeatureService::new(state.db.clone());
 
@@ -353,10 +374,11 @@ async fn get_upgrade_options(
 async fn set_feature_preference(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
+    resolved: Option<axum::Extension<ResolvedTenant>>,
     Path(key): Path<String>,
     Json(body): Json<SetFeaturePreference>,
 ) -> Result<Json<PreferenceResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let ctx = extract_user_context(&headers, &state).await?;
+    let ctx = extract_user_context(&headers, resolved, &state).await?;
 
     let service = FeatureService::new(state.db.clone());
 
@@ -457,9 +479,10 @@ async fn set_feature_preference(
 async fn log_feature_event(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
+    resolved: Option<axum::Extension<ResolvedTenant>>,
     Json(body): Json<LogFeatureEvent>,
 ) -> Result<Json<LogEventResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let ctx = extract_user_context(&headers, &state).await?;
+    let ctx = extract_user_context(&headers, resolved, &state).await?;
 
     let service = FeatureService::new(state.db.clone());
 
@@ -506,12 +529,13 @@ async fn log_feature_event(
 async fn get_feature_stats(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
+    resolved: Option<axum::Extension<ResolvedTenant>>,
     Path(feature_id): Path<Uuid>,
     Query(query): Query<FeatureStatsQuery>,
 ) -> Result<Json<FeatureStatsResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Usage analytics are a manager view, and only of the caller's own org:
     // the shared feature_usage_events table holds every tenant's events.
-    let ctx = extract_user_context(&headers, &state).await?;
+    let ctx = extract_user_context(&headers, resolved, &state).await?;
     if !ctx.is_manager {
         return Err((
             StatusCode::FORBIDDEN,

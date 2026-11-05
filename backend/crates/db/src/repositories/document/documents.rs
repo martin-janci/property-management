@@ -119,6 +119,27 @@ impl DocumentRepository {
         Ok(row.get("exists"))
     }
 
+    /// Whether document `id` belongs to organization `org_id` (explicit org
+    /// predicate on top of RLS). `documents` is FORCE-RLS: run it on a
+    /// request-context connection.
+    pub async fn exists_in_org_rls<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+        id: Uuid,
+    ) -> Result<bool, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_scalar(
+            "SELECT EXISTS(SELECT 1 FROM documents WHERE id = $1 AND organization_id = $2)",
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_one(executor)
+        .await
+    }
+
     /// Find document by ID with RLS context.
     pub async fn find_by_id_rls<'e, E>(
         &self,

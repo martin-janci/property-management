@@ -222,6 +222,39 @@ async fn list_maintenance(
     out
 }
 
+/// Reject a maintenance `fault_id` / `performed_by` outside the caller's org
+/// with 404. Releases the connection on failure.
+async fn ensure_maintenance_refs(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    fault_id: Option<Uuid>,
+    performed_by: Option<Uuid>,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let tenant_id = rls.tenant_id();
+    let res = state
+        .equipment_repo
+        .maintenance_refs_outside_org(&mut **rls.conn(), tenant_id, fault_id, performed_by)
+        .await;
+    let msg = match res {
+        Ok(None) => return Ok(()),
+        Ok(Some("fault")) => "Fault not found",
+        Ok(Some(_)) => "Performer not found",
+        Err(e) => {
+            tracing::error!("Failed to validate maintenance refs: {}", e);
+            rls.release().await;
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to validate")),
+            ));
+        }
+    };
+    rls.release().await;
+    Err((
+        StatusCode::NOT_FOUND,
+        Json(ErrorResponse::new("NOT_FOUND", msg)),
+    ))
+}
+
 async fn create_maintenance(
     State(state): State<AppState>,
     mut rls: RlsConnection,
@@ -240,6 +273,7 @@ async fn create_maintenance(
             )),
         ));
     }
+    ensure_maintenance_refs(&state, &mut rls, req.fault_id, req.performed_by).await?;
     // SECURITY: org is the validated RLS tenant. The repository INSERT is guarded
     // by a sub-select that ensures req.equipment_id belongs to this tenant; a
     // foreign equipment_id yields RowNotFound → 404.
@@ -273,6 +307,7 @@ async fn update_maintenance(
     Json(req): Json<UpdateMaintenance>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
     crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
+    ensure_maintenance_refs(&state, &mut rls, None, req.performed_by).await?;
     let tenant_id = rls.tenant_id();
     let out = match state
         .equipment_repo

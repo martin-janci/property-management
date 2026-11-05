@@ -38,6 +38,19 @@ pub async fn require_manager_rls_plain(
         .map_err(|(status, _)| (status, "Manager-level access required".to_string()))
 }
 
+/// Require an admin-class org role (org admin or a platform admin). On
+/// rejection the RLS connection is released and `403` is returned.
+pub async fn require_admin_rls_plain(rls: &mut RlsConnection) -> Result<(), (StatusCode, String)> {
+    if rls.role().is_admin() {
+        return Ok(());
+    }
+    rls.release().await;
+    Err((
+        StatusCode::FORBIDDEN,
+        "Admin-level access required".to_string(),
+    ))
+}
+
 /// Optional platform-operator override for owner-or-operator routes.
 ///
 /// Some routes serve both the resource owner and platform operators (e.g. a

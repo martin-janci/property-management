@@ -67,6 +67,21 @@ impl RegistryRepository {
         .await
     }
 
+    /// Returns `true` iff parking spot `id` belongs to `tenant_id`.
+    pub async fn parking_spot_in_tenant(
+        &self,
+        tenant_id: Uuid,
+        id: Uuid,
+    ) -> Result<bool, sqlx::Error> {
+        sqlx::query_scalar(
+            "SELECT EXISTS(SELECT 1 FROM parking_spots WHERE id = $1 AND tenant_id = $2)",
+        )
+        .bind(id)
+        .bind(tenant_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
     // ========================================================================
     // Pet Registration Operations
     // ========================================================================

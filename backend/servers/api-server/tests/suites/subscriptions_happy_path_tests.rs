@@ -11,7 +11,10 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::common::{create_authenticated_user_with_org, TestApp, TestConfig, TestUser};
+use crate::common::{
+    create_authenticated_user_with_org, seed_membership, seed_platform_user, TestApp, TestConfig,
+    TestUser,
+};
 
 #[derive(Serialize)]
 struct TestClaims {
@@ -63,7 +66,18 @@ async fn subscriptions_endpoints_happy_path(pool: PgPool) {
         .await
         .expect("resolve user id");
 
-    let admin_tok = admin_token(user_id, org_id);
+    // `require_super_admin` resolves platform status from the DB
+    // (`users.principal_kind = 'platform'`), not the token's `roles` claim, so
+    // the admin calls run as a seeded platform principal (also an org member
+    // so `RlsConnection` resolves the tenant).
+    let _ = user_id;
+    let platform_id = seed_platform_user(
+        &app.pool,
+        &format!("subs-platform-{}@test.test", Uuid::new_v4()),
+    )
+    .await;
+    seed_membership(&app.pool, org_id, platform_id, "org_admin").await;
+    let admin_tok = admin_token(platform_id, org_id);
     let admin_session = app.session(admin_tok, org_id);
 
     // ========================================================================

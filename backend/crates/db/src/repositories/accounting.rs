@@ -584,4 +584,174 @@ impl AccountingRepository {
         .fetch_optional(executor)
         .await
     }
+
+    // --- Tenant-scoped by-id lookups ---
+    //
+    // The `_rls` variants above rely on RLS alone. A connection whose role
+    // bypasses RLS (owner / superuser) would see every tenant's rows, so the
+    // api-server uses these variants, which carry an explicit `tenant_id`
+    // predicate: a foreign id yields `None` / empty / `false` (404 upstream).
+
+    /// Find a contact by id, only within `tenant_id`.
+    pub async fn find_contact_for_tenant<'e, E>(
+        &self,
+        executor: E,
+        tenant_id: Uuid,
+        id: Uuid,
+    ) -> Result<Option<Contact>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, Contact>("SELECT * FROM contact WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(tenant_id)
+            .fetch_optional(executor)
+            .await
+    }
+
+    /// Find an invoice by id, only within `tenant_id`.
+    pub async fn find_invoice_for_tenant<'e, E>(
+        &self,
+        executor: E,
+        tenant_id: Uuid,
+        id: Uuid,
+    ) -> Result<Option<Invoice>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, Invoice>("SELECT * FROM invoice WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(tenant_id)
+            .fetch_optional(executor)
+            .await
+    }
+
+    /// List the items of an invoice of `tenant_id`. A foreign invoice id
+    /// yields an empty list.
+    pub async fn find_invoice_items_for_tenant<'e, E>(
+        &self,
+        executor: E,
+        tenant_id: Uuid,
+        invoice_id: Uuid,
+    ) -> Result<Vec<InvoiceItem>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, InvoiceItem>(
+            r#"
+            SELECT ii.* FROM invoice_item ii
+            JOIN invoice i ON i.id = ii.invoice_id
+            WHERE ii.invoice_id = $1 AND i.tenant_id = $2
+            ORDER BY ii.id ASC
+            "#,
+        )
+        .bind(invoice_id)
+        .bind(tenant_id)
+        .fetch_all(executor)
+        .await
+    }
+
+    /// Update an invoice of `tenant_id`. A foreign id yields `None`.
+    pub async fn update_invoice_for_tenant<'e, E>(
+        &self,
+        executor: E,
+        tenant_id: Uuid,
+        id: Uuid,
+        data: UpdateInvoice,
+    ) -> Result<Option<Invoice>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, Invoice>(
+            r#"
+            UPDATE invoice
+            SET
+                contact_id = COALESCE($1, contact_id),
+                number = COALESCE($2, number),
+                issue_date = COALESCE($3, issue_date),
+                due_date = COALESCE($4, due_date),
+                taxable_supply_date = CASE WHEN $5 IS NULL THEN taxable_supply_date ELSE $6 END,
+                currency = COALESCE($7, currency),
+                variable_symbol = CASE WHEN $8 IS NULL THEN variable_symbol ELSE $9 END,
+                status = COALESCE($10, status),
+                paid_amount = COALESCE($11, paid_amount),
+                updated_at = NOW()
+            WHERE id = $12 AND tenant_id = $13
+            RETURNING *
+            "#,
+        )
+        .bind(data.contact_id)
+        .bind(data.number)
+        .bind(data.issue_date)
+        .bind(data.due_date)
+        .bind(data.taxable_supply_date.is_some())
+        .bind(data.taxable_supply_date.flatten())
+        .bind(data.currency)
+        .bind(data.variable_symbol.is_some())
+        .bind(data.variable_symbol.flatten())
+        .bind(data.status)
+        .bind(data.paid_amount)
+        .bind(id)
+        .bind(tenant_id)
+        .fetch_optional(executor)
+        .await
+    }
+
+    /// Delete an invoice of `tenant_id`. Returns `false` when no row of that
+    /// tenant matched (missing or foreign id).
+    pub async fn delete_invoice_for_tenant<'e, E>(
+        &self,
+        executor: E,
+        tenant_id: Uuid,
+        id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let res = sqlx::query("DELETE FROM invoice WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(tenant_id)
+            .execute(executor)
+            .await?;
+        Ok(res.rows_affected() > 0)
+    }
+
+    /// Find a payment match by id, only within `tenant_id`.
+    pub async fn find_payment_match_for_tenant<'e, E>(
+        &self,
+        executor: E,
+        tenant_id: Uuid,
+        id: Uuid,
+    ) -> Result<Option<PaymentMatch>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, PaymentMatch>(
+            "SELECT * FROM payment_match WHERE id = $1 AND tenant_id = $2",
+        )
+        .bind(id)
+        .bind(tenant_id)
+        .fetch_optional(executor)
+        .await
+    }
+
+    /// List the payment matches of a statement line of `tenant_id`. A foreign
+    /// line id yields an empty list.
+    pub async fn list_payment_matches_by_line_for_tenant<'e, E>(
+        &self,
+        executor: E,
+        tenant_id: Uuid,
+        line_id: Uuid,
+    ) -> Result<Vec<PaymentMatch>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, PaymentMatch>(
+            "SELECT * FROM payment_match WHERE statement_line_id = $1 AND tenant_id = $2",
+        )
+        .bind(line_id)
+        .bind(tenant_id)
+        .fetch_all(executor)
+        .await
+    }
 }
