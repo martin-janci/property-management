@@ -18,44 +18,18 @@ use common::TenantRole;
 
 type ApiError = (StatusCode, Json<ErrorResponse>);
 
-/// Parse an `organization_members.role_type` value the way the tenant
-/// extractors do: case-insensitive, with or without `_`/`-`/space separators.
-/// `None` for a custom/unknown value (the extractors treat those as Guest).
-fn parse_role_type(raw: &str) -> Option<TenantRole> {
-    let norm = |s: &str| {
-        s.chars()
-            .filter(|c| c.is_ascii_alphanumeric())
-            .map(|c| c.to_ascii_lowercase())
-            .collect::<String>()
-    };
-    let wanted = norm(raw);
-    [
-        TenantRole::SuperAdmin,
-        TenantRole::PlatformAdmin,
-        TenantRole::OrgAdmin,
-        TenantRole::Manager,
-        TenantRole::TechnicalManager,
-        TenantRole::Owner,
-        TenantRole::OwnerDelegate,
-        TenantRole::PropertyManager,
-        TenantRole::RealEstateAgent,
-        TenantRole::Tenant,
-        TenantRole::Resident,
-        TenantRole::Guest,
-    ]
-    .into_iter()
-    .find(|role| {
-        serde_json::to_value(role)
-            .ok()
-            .and_then(|v| v.as_str().map(norm))
-            .is_some_and(|s| s == wanted)
-    })
-}
-
-/// Authorization level of a stored `role_type` (unknown values rank as Guest,
-/// matching `ValidatedTenantExtractor`).
+/// Authorization level of a stored `role_type`, resolved the same way the
+/// tenant extractors do — via [`common::TenantRole::from_role_type`] (the
+/// canonical snake_case parser shared with JWT-claim/DB resolution). Unknown
+/// or legacy values rank as Guest, matching `ValidatedTenantExtractor`.
+///
+/// Deriving the level from the extractor's parser (rather than a second
+/// hand-rolled normalizer) keeps the escalation gate from ever disagreeing
+/// with the role the extractor actually grants the caller (#3304).
 fn role_type_level(raw: &str) -> u8 {
-    parse_role_type(raw).unwrap_or(TenantRole::Guest).level()
+    TenantRole::from_role_type(raw)
+        .unwrap_or(TenantRole::Guest)
+        .level()
 }
 
 /// SECURITY: a member-management permission must not let the caller hand out
@@ -92,7 +66,7 @@ fn ensure_role_permissions_assignable(
 /// caller mint a role above their own. Platform roles are never assignable via
 /// org membership.
 fn ensure_role_type_assignable(caller_role_type: &str, requested: &str) -> Result<(), ApiError> {
-    let requested_role = parse_role_type(requested);
+    let requested_role = TenantRole::from_role_type(requested);
     if matches!(
         requested_role,
         Some(TenantRole::SuperAdmin | TenantRole::PlatformAdmin)
