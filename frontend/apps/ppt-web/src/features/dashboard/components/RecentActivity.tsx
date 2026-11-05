@@ -5,14 +5,18 @@
  * the signed-in user reported. There is no dedicated activity-feed endpoint, so
  * the two existing list endpoints are merged client-side and sorted by date.
  *
+ * The user's faults come from `GET /api/v1/faults/my` (via {@link useMyFaults}),
+ * which filters by reporter server-side *before* applying the limit. Filtering a
+ * capped org-wide list on the client would hide the user's own faults whenever
+ * they rank below newer third-party ones (#3315).
+ *
  * @module features/dashboard/components/RecentActivity
  */
 
-import { useFaults } from '@ppt/api-client';
+import { useMyFaults } from '@ppt/api-client';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../../../contexts';
 import { useResidentAnnouncements } from '../hooks/useResidentAnnouncements';
 
 const MAX_ITEMS = 5;
@@ -48,11 +52,12 @@ export function formatRelativeTime(iso: string, locale: string, now: number = Da
 
 export function RecentActivity() {
   const { t, i18n } = useTranslation();
-  const { user } = useAuth();
 
-  // Resident-visible endpoint; the manager list 403s for owners and tenants.
+  // Resident-visible endpoints; the manager fault list 403s for owners and
+  // tenants. `useMyFaults` scopes to the signed-in reporter server-side, so the
+  // limit caps the user's own faults rather than an org-wide list (#3315).
   const announcements = useResidentAnnouncements(MAX_ITEMS);
-  const faults = useFaults({ limit: 20 });
+  const faults = useMyFaults({ limit: MAX_ITEMS });
 
   const entries = useMemo<ActivityEntry[]>(() => {
     const items: ActivityEntry[] = [];
@@ -67,7 +72,6 @@ export function RecentActivity() {
       });
     }
     for (const f of faults.data?.faults ?? []) {
-      if (!user || f.reporter_id !== user.id) continue;
       items.push({
         id: `fault-${f.id}`,
         icon: '🔧',
@@ -79,7 +83,7 @@ export function RecentActivity() {
     return items
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
       .slice(0, MAX_ITEMS);
-  }, [announcements.data, faults.data, user, t]);
+  }, [announcements.data, faults.data, t]);
 
   const isLoading = announcements.isLoading || faults.isLoading;
   const isError = announcements.isError && faults.isError;
