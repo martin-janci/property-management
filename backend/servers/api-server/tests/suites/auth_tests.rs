@@ -18,8 +18,8 @@ use serde_json::{json, Value};
 use sqlx::PgPool;
 
 use crate::common::{
-    cleanup_test_user, create_authenticated_user, create_authenticated_user_with_org,
-    verify_user_email, TestApp, TestUser,
+    create_authenticated_user, create_authenticated_user_with_org, verify_user_email, TestApp,
+    TestUser,
 };
 
 /// Test helper to create a JSON request
@@ -66,9 +66,6 @@ mod registration {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
 
-        // Clean up any existing test user
-        cleanup_test_user(&pool, &user.email).await;
-
         let request = app
             .post("/api/v1/auth/register")
             .json(user.registration_body())
@@ -80,18 +77,12 @@ mod registration {
         response.assert_json_field("message");
         // #956: `RegisterResponse` carries only a generic `message`; there is
         // deliberately no `user_id` field (anti-enumeration).
-
-        // Cleanup
-        cleanup_test_user(&pool, &user.email).await;
     }
 
     #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_register_duplicate_email(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
-
-        // Clean up any existing test user
-        cleanup_test_user(&pool, &user.email).await;
 
         // Register first time
         let request1 = app
@@ -114,9 +105,6 @@ mod registration {
         // enumeration — no 409 / EMAIL_EXISTS is surfaced to the caller.
         response.assert_status(StatusCode::CREATED);
         response.assert_json_field("message");
-
-        // Cleanup
-        cleanup_test_user(&pool, &user.email).await;
     }
 
     #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -188,7 +176,6 @@ mod login {
         let user = TestUser::new();
 
         // Register and verify user
-        cleanup_test_user(&pool, &user.email).await;
         let reg_request = app
             .post("/api/v1/auth/register")
             .json(user.registration_body())
@@ -211,9 +198,6 @@ mod login {
 
         let json = response.json_value();
         assert_eq!(json["tokenType"].as_str().unwrap(), "Bearer");
-
-        // Cleanup
-        cleanup_test_user(&pool, &user.email).await;
     }
 
     #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -222,7 +206,6 @@ mod login {
         let user = TestUser::new();
 
         // Register and verify user
-        cleanup_test_user(&pool, &user.email).await;
         let reg_request = app
             .post("/api/v1/auth/register")
             .json(user.registration_body())
@@ -242,9 +225,6 @@ mod login {
         response.assert_status(StatusCode::UNAUTHORIZED);
         let json = response.json_value();
         assert_eq!(json["code"].as_str().unwrap(), "INVALID_CREDENTIALS");
-
-        // Cleanup
-        cleanup_test_user(&pool, &user.email).await;
     }
 
     #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -271,7 +251,6 @@ mod login {
         let user = TestUser::new();
 
         // Register but don't verify
-        cleanup_test_user(&pool, &user.email).await;
         let reg_request = app
             .post("/api/v1/auth/register")
             .json(user.registration_body())
@@ -290,9 +269,6 @@ mod login {
         response.assert_status(StatusCode::UNAUTHORIZED);
         let json = response.json_value();
         assert_eq!(json["code"].as_str().unwrap(), "EMAIL_NOT_VERIFIED");
-
-        // Cleanup
-        cleanup_test_user(&pool, &user.email).await;
     }
 }
 
@@ -310,7 +286,6 @@ mod token_refresh {
         let user = TestUser::new();
 
         // Register, verify, and login
-        cleanup_test_user(&pool, &user.email).await;
         let (_, refresh_token) = create_authenticated_user(&app, &user).await;
 
         // Refresh token
@@ -324,9 +299,6 @@ mod token_refresh {
         response.assert_status(StatusCode::OK);
         response.assert_json_field("accessToken");
         response.assert_json_field("expiresIn");
-
-        // Cleanup
-        cleanup_test_user(&pool, &user.email).await;
     }
 
     #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -372,7 +344,6 @@ mod token_refresh {
     async fn empty_cookie_does_not_shadow_body_token_on_refresh(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
-        cleanup_test_user(&pool, &user.email).await;
 
         let (_access, refresh_token) = create_authenticated_user(&app, &user).await;
 
@@ -403,8 +374,6 @@ mod token_refresh {
             new_refresh, refresh_token,
             "refresh must rotate the token, not echo the input"
         );
-
-        cleanup_test_user(&pool, &user.email).await;
     }
 
     /// Regression for #676: `/auth/refresh` must return a **fresh** tenant
@@ -433,7 +402,6 @@ mod token_refresh {
         let user = TestUser::new();
 
         // Register, verify, and login.
-        cleanup_test_user(&pool, &user.email).await;
         let (_, refresh_token) = create_authenticated_user(&app, &user).await;
 
         // Look up the user's id so we can seed memberships against it.
@@ -558,9 +526,6 @@ mod token_refresh {
             !post_ids.contains(&org_b.to_string()),
             "post-revoke refresh MUST drop org B (revoked server-side); got {post_ids:?}"
         );
-
-        // Cleanup
-        cleanup_test_user(&pool, &user.email).await;
     }
 }
 
@@ -578,7 +543,6 @@ mod logout {
         let user = TestUser::new();
 
         // Register, verify, and login
-        cleanup_test_user(&pool, &user.email).await;
         let (access_token, refresh_token) = create_authenticated_user(&app, &user).await;
 
         // Logout
@@ -590,9 +554,6 @@ mod logout {
         let response = app.execute(request).await;
 
         response.assert_status(StatusCode::OK);
-
-        // Cleanup
-        cleanup_test_user(&pool, &user.email).await;
     }
 
     #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -625,7 +586,6 @@ mod logout {
     async fn empty_cookie_does_not_shadow_body_token_on_logout(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
-        cleanup_test_user(&pool, &user.email).await;
 
         let (_access, refresh_token) = create_authenticated_user(&app, &user).await;
 
@@ -650,8 +610,6 @@ mod logout {
         app.execute(post)
             .await
             .assert_status(StatusCode::UNAUTHORIZED);
-
-        cleanup_test_user(&pool, &user.email).await;
     }
 }
 
@@ -669,7 +627,6 @@ mod password_reset {
         let user = TestUser::new();
 
         // Register and verify user
-        cleanup_test_user(&pool, &user.email).await;
         let reg_request = app
             .post("/api/v1/auth/register")
             .json(user.registration_body())
@@ -687,9 +644,6 @@ mod password_reset {
 
         // Should return 200 (even for nonexistent emails to prevent enumeration)
         response.assert_status(StatusCode::OK);
-
-        // Cleanup
-        cleanup_test_user(&pool, &user.email).await;
     }
 
     #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -836,7 +790,6 @@ mod mfa {
         // Register, verify, and login. MFA endpoints use `RlsConnection`, which
         // requires an `X-Tenant-ID` header + an active `organization_members`
         // row, so provision an org and stamp the tenant header on the request.
-        cleanup_test_user(&pool, &user.email).await;
         let (access_token, org_id) = create_authenticated_user_with_org(&app, &user, "mfa").await;
 
         // Enable MFA
@@ -853,9 +806,6 @@ mod mfa {
         // `MfaSetupResponse` carries only `secret` + `qrUri`; recovery codes are
         // issued by `/mfa/verify`, not `/mfa/setup`.
         response.assert_json_field("qrUri");
-
-        // Cleanup
-        cleanup_test_user(&pool, &user.email).await;
     }
 
     #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -864,7 +814,6 @@ mod mfa {
         let user = TestUser::new();
 
         // Register, verify, and login
-        cleanup_test_user(&pool, &user.email).await;
         let (access_token, _) = create_authenticated_user(&app, &user).await;
 
         // Setup MFA first
@@ -881,9 +830,6 @@ mod mfa {
         let response = app.execute(request).await;
 
         response.assert_status(StatusCode::BAD_REQUEST);
-
-        // Cleanup
-        cleanup_test_user(&pool, &user.email).await;
     }
 
     #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -916,7 +862,6 @@ mod sessions {
         let user = TestUser::new();
 
         // Register, verify, and login
-        cleanup_test_user(&pool, &user.email).await;
         let (access_token, _) = create_authenticated_user(&app, &user).await;
 
         // List sessions
@@ -929,9 +874,6 @@ mod sessions {
         let json = response.json_value();
         let sessions = json["sessions"].as_array().unwrap();
         assert!(!sessions.is_empty(), "Should have at least one session");
-
-        // Cleanup
-        cleanup_test_user(&pool, &user.email).await;
     }
 
     #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -940,7 +882,6 @@ mod sessions {
         let user = TestUser::new();
 
         // Register, verify, and login
-        cleanup_test_user(&pool, &user.email).await;
         let (access_token, _) = create_authenticated_user(&app, &user).await;
 
         // Revoke all sessions
@@ -961,9 +902,6 @@ mod sessions {
         let verify_response = app.execute(verify_request).await;
 
         assert_eq!(verify_response.status, StatusCode::OK);
-
-        // Cleanup
-        cleanup_test_user(&pool, &user.email).await;
     }
 
     // ------------------------------------------------------------------
@@ -1010,7 +948,6 @@ mod sessions {
     async fn revoke_all_sessions_preserves_cookie_caller(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
-        cleanup_test_user(&pool, &user.email).await;
 
         // Session 1 is the caller; session 2 is another device.
         let (access1, refresh1) = create_authenticated_user(&app, &user).await;
@@ -1057,8 +994,6 @@ mod sessions {
             StatusCode::UNAUTHORIZED,
             "the other device must be signed out"
         );
-
-        cleanup_test_user(&pool, &user.email).await;
     }
 
     /// Header-based caller (mobile RN / legacy ppt-web): behavior is unchanged
@@ -1068,7 +1003,6 @@ mod sessions {
     async fn revoke_all_sessions_preserves_header_caller(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
-        cleanup_test_user(&pool, &user.email).await;
 
         let (access1, refresh1) = create_authenticated_user(&app, &user).await;
         let (_access2, _refresh2) = login_again(&app, &user).await;
@@ -1083,8 +1017,6 @@ mod sessions {
 
         let count = resp.json_value()["revokedCount"].as_u64().unwrap();
         assert_eq!(count, 1, "header caller must revoke only the other session");
-
-        cleanup_test_user(&pool, &user.email).await;
     }
 
     /// No cookie and no header: neither source resolves a current session, so
@@ -1094,7 +1026,6 @@ mod sessions {
     async fn revoke_all_sessions_without_token_revokes_everything(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
-        cleanup_test_user(&pool, &user.email).await;
 
         let (access1, _refresh1) = create_authenticated_user(&app, &user).await;
         let (_access2, _refresh2) = login_again(&app, &user).await;
@@ -1111,8 +1042,6 @@ mod sessions {
             count, 2,
             "with no current session, all sessions are revoked"
         );
-
-        cleanup_test_user(&pool, &user.email).await;
     }
 
     /// Cookie-based caller: list-sessions must mark exactly one row
@@ -1122,7 +1051,6 @@ mod sessions {
     async fn list_sessions_marks_cookie_caller_current(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
-        cleanup_test_user(&pool, &user.email).await;
 
         let (access1, refresh1) = create_authenticated_user(&app, &user).await;
         let (_access2, _refresh2) = login_again(&app, &user).await;
@@ -1167,8 +1095,6 @@ mod sessions {
             session1_id.to_string(),
             "the current row must be the caller's own (session 1), not the other device"
         );
-
-        cleanup_test_user(&pool, &user.email).await;
     }
 
     /// Header-based caller (mobile RN / legacy ppt-web): list-sessions must mark
@@ -1181,7 +1107,6 @@ mod sessions {
     async fn list_sessions_marks_header_caller_current(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
-        cleanup_test_user(&pool, &user.email).await;
 
         let (access1, refresh1) = create_authenticated_user(&app, &user).await;
         let (_access2, _refresh2) = login_again(&app, &user).await;
@@ -1222,8 +1147,6 @@ mod sessions {
             session1_id.to_string(),
             "the current row must be the caller's own (session 1) via the header fallback"
         );
-
-        cleanup_test_user(&pool, &user.email).await;
     }
 }
 
