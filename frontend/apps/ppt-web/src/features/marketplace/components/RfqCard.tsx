@@ -3,6 +3,7 @@
  * Epic 68: Service Provider Marketplace (Story 68.3)
  */
 
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import type { ServiceCategory } from './ProviderCard';
 
@@ -33,15 +34,6 @@ interface RfqCardProps {
   onCancel?: (id: string) => void;
 }
 
-const statusLabels: Record<RfqStatus, string> = {
-  draft: 'Draft',
-  sent: 'Sent',
-  quotes_received: 'Quotes Received',
-  awarded: 'Awarded',
-  cancelled: 'Cancelled',
-  expired: 'Expired',
-};
-
 const statusColors: Record<RfqStatus, string> = {
   draft: 'bg-gray-100 text-gray-800',
   sent: 'bg-blue-100 text-blue-800',
@@ -51,27 +43,8 @@ const statusColors: Record<RfqStatus, string> = {
   expired: 'bg-orange-100 text-orange-800',
 };
 
-const categoryLabels: Record<ServiceCategory, string> = {
-  plumbing: 'Plumbing',
-  electrical: 'Electrical',
-  hvac: 'HVAC',
-  cleaning: 'Cleaning',
-  landscaping: 'Landscaping',
-  security: 'Security',
-  painting: 'Painting',
-  roofing: 'Roofing',
-  carpentry: 'Carpentry',
-  locksmith: 'Locksmith',
-  pest_control: 'Pest Control',
-  general_maintenance: 'General Maintenance',
-  elevator_maintenance: 'Elevator Maintenance',
-  fire_safety: 'Fire Safety',
-  waste_management: 'Waste Management',
-  other: 'Other',
-};
-
-function formatBudget(min?: number, max?: number, currency = 'EUR'): string {
-  if (!min && !max) return 'No budget specified';
+function formatBudget(t: TFunction, min?: number, max?: number, currency = 'EUR'): string {
+  if (!min && !max) return t('marketplace.rfqCard.noBudget');
 
   const formatter = new Intl.NumberFormat('en-EU', {
     style: 'currency',
@@ -81,16 +54,19 @@ function formatBudget(min?: number, max?: number, currency = 'EUR'): string {
   });
 
   if (min && max) {
-    return `${formatter.format(min)} - ${formatter.format(max)}`;
+    return t('marketplace.rfqCard.budgetRange', {
+      min: formatter.format(min),
+      max: formatter.format(max),
+    });
   }
   if (min) {
-    return `From ${formatter.format(min)}`;
+    return t('marketplace.rfqCard.budgetFrom', { min: formatter.format(min) });
   }
-  return `Up to ${formatter.format(max!)}`;
+  return t('marketplace.rfqCard.budgetUpTo', { max: formatter.format(max!) });
 }
 
-function formatDate(dateString?: string): string {
-  if (!dateString) return 'Not specified';
+function formatDate(t: TFunction, dateString?: string): string {
+  if (!dateString) return t('marketplace.rfqCard.notSpecified');
   return new Date(dateString).toLocaleDateString('en-EU', {
     month: 'short',
     day: 'numeric',
@@ -98,8 +74,8 @@ function formatDate(dateString?: string): string {
   });
 }
 
-function getDeadlineStatus(deadline?: string): { text: string; urgent: boolean } {
-  if (!deadline) return { text: 'No deadline', urgent: false };
+function getDeadlineStatus(t: TFunction, deadline?: string): { text: string; urgent: boolean } {
+  if (!deadline) return { text: t('marketplace.rfqCard.noDeadline'), urgent: false };
 
   const deadlineDate = new Date(deadline);
   const now = new Date();
@@ -107,18 +83,18 @@ function getDeadlineStatus(deadline?: string): { text: string; urgent: boolean }
   const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
   if (diffDays < 0) {
-    return { text: 'Expired', urgent: true };
+    return { text: t('marketplace.rfqCard.expired'), urgent: true };
   }
   if (diffDays === 0) {
-    return { text: 'Due today', urgent: true };
+    return { text: t('marketplace.rfqCard.dueToday'), urgent: true };
   }
   if (diffDays === 1) {
-    return { text: 'Due tomorrow', urgent: true };
+    return { text: t('marketplace.rfqCard.dueTomorrow'), urgent: true };
   }
   if (diffDays <= 3) {
-    return { text: `${diffDays} days left`, urgent: true };
+    return { text: t('marketplace.rfqCard.daysLeft', { count: diffDays }), urgent: true };
   }
-  return { text: `${diffDays} days left`, urgent: false };
+  return { text: t('marketplace.rfqCard.daysLeft', { count: diffDays }), urgent: false };
 }
 
 export function RfqCard({ rfq, onView, onEdit, onCompareQuotes, onCancel }: RfqCardProps) {
@@ -126,7 +102,7 @@ export function RfqCard({ rfq, onView, onEdit, onCompareQuotes, onCancel }: RfqC
   const canEdit = rfq.status === 'draft';
   const canCompare = rfq.quotesCount > 0;
   const canCancel = rfq.status === 'draft' || rfq.status === 'sent';
-  const deadlineStatus = getDeadlineStatus(rfq.quoteDeadline);
+  const deadlineStatus = getDeadlineStatus(t, rfq.quoteDeadline);
 
   return (
     <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
@@ -134,14 +110,14 @@ export function RfqCard({ rfq, onView, onEdit, onCompareQuotes, onCancel }: RfqC
         <div className="flex-1">
           <div className="flex items-center gap-2">
             {rfq.isUrgent && (
-              <span className="text-red-500" title="Urgent">
+              <span className="text-red-500" title={t('marketplace.rfqCard.urgent')}>
                 <svg
                   className="w-5 h-5"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                   aria-label={t('aria.urgent')}
                 >
-                  <title>Urgent</title>
+                  <title>{t('marketplace.rfqCard.urgent')}</title>
                   <path
                     fillRule="evenodd"
                     d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
@@ -155,27 +131,29 @@ export function RfqCard({ rfq, onView, onEdit, onCompareQuotes, onCancel }: RfqC
           <p className="mt-1 text-sm text-gray-600 line-clamp-2">{rfq.description}</p>
         </div>
         <span className={`px-2 py-1 text-xs font-medium rounded ${statusColors[rfq.status]}`}>
-          {statusLabels[rfq.status]}
+          {t(`marketplace.rfqStatus.${rfq.status}`)}
         </span>
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
         <div>
-          <span className="text-gray-500">Category:</span>{' '}
-          <span className="font-medium text-gray-900">{categoryLabels[rfq.serviceCategory]}</span>
-        </div>
-        <div>
-          <span className="text-gray-500">Budget:</span>{' '}
+          <span className="text-gray-500">{t('marketplace.rfqCard.category')}</span>{' '}
           <span className="font-medium text-gray-900">
-            {formatBudget(rfq.budgetMin, rfq.budgetMax, rfq.currency)}
+            {t(`marketplace.serviceCategory.${rfq.serviceCategory}`)}
           </span>
         </div>
         <div>
-          <span className="text-gray-500">Start Date:</span>{' '}
-          <span className="font-medium text-gray-900">{formatDate(rfq.preferredStartDate)}</span>
+          <span className="text-gray-500">{t('marketplace.rfqCard.budget')}</span>{' '}
+          <span className="font-medium text-gray-900">
+            {formatBudget(t, rfq.budgetMin, rfq.budgetMax, rfq.currency)}
+          </span>
         </div>
         <div>
-          <span className="text-gray-500">Quote Deadline:</span>{' '}
+          <span className="text-gray-500">{t('marketplace.rfqCard.startDate')}</span>{' '}
+          <span className="font-medium text-gray-900">{formatDate(t, rfq.preferredStartDate)}</span>
+        </div>
+        <div>
+          <span className="text-gray-500">{t('marketplace.rfqCard.quoteDeadline')}</span>{' '}
           <span
             className={`font-medium ${deadlineStatus.urgent ? 'text-red-600' : 'text-gray-900'}`}
           >
@@ -193,7 +171,7 @@ export function RfqCard({ rfq, onView, onEdit, onCompareQuotes, onCancel }: RfqC
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <title>Providers invited</title>
+            <title>{t('marketplace.rfqCard.providersInvited')}</title>
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -201,7 +179,9 @@ export function RfqCard({ rfq, onView, onEdit, onCompareQuotes, onCancel }: RfqC
               d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
             />
           </svg>
-          <span className="text-sm text-gray-600">{rfq.invitedProvidersCount} invited</span>
+          <span className="text-sm text-gray-600">
+            {t('marketplace.rfqCard.invited', { count: rfq.invitedProvidersCount })}
+          </span>
         </div>
         <div className="flex items-center gap-1">
           <svg
@@ -210,7 +190,7 @@ export function RfqCard({ rfq, onView, onEdit, onCompareQuotes, onCancel }: RfqC
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <title>Quotes received</title>
+            <title>{t('marketplace.rfqCard.quotesReceived')}</title>
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -219,12 +199,16 @@ export function RfqCard({ rfq, onView, onEdit, onCompareQuotes, onCancel }: RfqC
             />
           </svg>
           <span className="text-sm text-gray-600">
-            {rfq.quotesCount} quote{rfq.quotesCount !== 1 ? 's' : ''} received
+            {rfq.quotesCount === 1
+              ? t('marketplace.rfqCard.quotesCountOne', { count: rfq.quotesCount })
+              : t('marketplace.rfqCard.quotesCountOther', { count: rfq.quotesCount })}
           </span>
         </div>
       </div>
 
-      <p className="mt-2 text-xs text-gray-400">Created: {formatDate(rfq.createdAt)}</p>
+      <p className="mt-2 text-xs text-gray-400">
+        {t('marketplace.rfqCard.created', { date: formatDate(t, rfq.createdAt) })}
+      </p>
 
       {/* Actions */}
       <div className="mt-4 flex items-center gap-3 pt-4 border-t">
@@ -233,7 +217,7 @@ export function RfqCard({ rfq, onView, onEdit, onCompareQuotes, onCancel }: RfqC
           onClick={() => onView?.(rfq.id)}
           className="text-sm font-medium text-blue-600 hover:text-blue-800"
         >
-          View Details
+          {t('marketplace.common.viewDetails')}
         </button>
         {canEdit && (
           <button
@@ -241,7 +225,7 @@ export function RfqCard({ rfq, onView, onEdit, onCompareQuotes, onCancel }: RfqC
             onClick={() => onEdit?.(rfq.id)}
             className="text-sm font-medium text-gray-600 hover:text-gray-800"
           >
-            Edit
+            {t('marketplace.rfqCard.edit')}
           </button>
         )}
         {canCompare && (
@@ -250,7 +234,7 @@ export function RfqCard({ rfq, onView, onEdit, onCompareQuotes, onCancel }: RfqC
             onClick={() => onCompareQuotes?.(rfq.id)}
             className="text-sm font-medium text-green-600 hover:text-green-800"
           >
-            Compare Quotes
+            {t('marketplace.rfqCard.compareQuotes')}
           </button>
         )}
         {canCancel && (
@@ -259,7 +243,7 @@ export function RfqCard({ rfq, onView, onEdit, onCompareQuotes, onCancel }: RfqC
             onClick={() => onCancel?.(rfq.id)}
             className="text-sm font-medium text-red-600 hover:text-red-800"
           >
-            Cancel
+            {t('marketplace.common.cancel')}
           </button>
         )}
       </div>
