@@ -1,24 +1,23 @@
-# PPT Roadmap — upkeep 2026-10-26
+# PPT Roadmap — upkeep 2026-11-06
 
-_Rebuilt from `coverage.json` (49/49 stories done across 13 epics) + current `action-list.json` + sprint-status.yaml. 4-day lag since 2026-10-22 run._
+_Rebuilt from `coverage.json` (49/49 stories done across 13 epics) + current `action-list.json` + sprint-status.yaml. 24h lag since 2026-11-05 run._
 
 ## State of the project
 
-- **Stories: 49/49 done** across 13 epics. No status flips this run; `last_checked` refreshed on all 3 epic-8a stories (cursor re-check — negative).
-- Delta vs 2026-10-22 upkeep: **3 PRs merged** — all reality-web (realtor-api shape validation, safe-error log redaction, agency i18n price fix). None map to coverage stories.
-- **New blocker: #3168 cargo-deny** — 3 new RUSTSEC advisories on dev gate every backend merge. Second cargo-deny gate in a month after #3124 (resolved 2026-10-19) — dependency hygiene is becoming a recurring merge-queue tax.
-- **New tier-1 security gap: #3164** — violations `add_evidence` sub-route ungated; same shape as historical dispute `add_evidence` gap (#2483). Suggests `add_evidence`-pattern sub-routes are systemically under-tested.
-- Screen coverage: 0 orphan screens · 0 validation errors · 3 known missing UC links (UC-33.1/33.2/33.3 already queued elsewhere).
-- Open PRs this window: 3 drafts (#3161 push_fanout FCM eviction, #3165 migration_import test coverage, #3167 unassign moderation case).
+- **Stories: 49/49 done** across 13 epics. No status flips this run; `last_checked` refreshed on all 3 epic-10a stories (cursor idx 0 → 1 — negative).
+- Delta vs 2026-11-05 upkeep: **21 PRs merged** — the biggest tenant-isolation + follow-up remediation wave to date. Round-5 authz A/B (#3331, #3332), Round-5 functional (#3330, migrations 00241/00242/00243), pet/vehicle tenant scoping (#3338), 10× post-merge-review follow-ups (gh-issue-3304..3315), suspend_cascade coverage (#3339), screen-map-drift reconciliations (#3334–#3337, #3340).
+- Screen coverage: 0 orphan screens · 0 validation errors · drift carried over (3 known missing UC links already queued elsewhere).
+- **Three 'Still open' items from #3332 body** captured as new action-list rows this run: accounting-server by-id RLS retirement, webhook headers auth-smuggling hardening, onboarding ResolvedTenant application.
+- Open PRs this window: 18 (6 non-dependabot: #3333 screen-map-drift-pr-3293-reality; #3301 inquiry FK; #3294 draft ws-jwt; #2559, #2555 stalled feats from July).
 
 ## Epic status (short)
 
-- **Epic 6 — Announcements & Communication:** 6/6 done in coverage; sprint-status.yaml drift.
+- **Epic 6 — Announcements & Communication:** 6/6 done.
 - **Epic 7A — Basic Document Management:** 5/5 done.
-- **Epic 8A — Basic Notification Preferences:** 3/3 done. **Re-checked this run (cursor idx 11).** No merged PR in the 2026-10-23..2026-10-26 window touched notification-preference surfaces; `last_checked = 2026-10-26` stamped on all 3 stories.
-- **Epic 10A — OAuth Provider Foundation:** 3/3 done.
-- **Epic 10B — Platform Administration:** 7/7 done.
-- **Epic 80 — Dispute Resolution:** 3/3 done in coverage (sprint-status still shows partial).
+- **Epic 8A — Basic Notification Preferences:** 3/3 done.
+- **Epic 10A — OAuth Provider Foundation:** 3/3 done. **Re-checked this run (cursor idx 0).** No merged PR in the 2026-11-05..2026-11-06 window touched OAuth surfaces; `last_checked = 2026-11-06` stamped on all 3 stories.
+- **Epic 10B — Platform Administration:** 7/7 done. Round-5 authz A/B + 10 post-merge follow-ups hardened tenant isolation across this epic's surface.
+- **Epic 80 — Dispute Resolution:** 3/3 done.
 - **Epic 81 — Reports:** 2/2 done.
 - **Epic 82 — iOS Reality Portal (SwiftUI):** 5/5 done.
 - **Epic 83 — Portal Integrations:** 3/3 done.
@@ -29,48 +28,20 @@ _Rebuilt from `coverage.json` (49/49 stories done across 13 epics) + current `ac
 
 ## Ranked plan
 
-### merge-queue unblock (highest leverage, score 10)
+### Phase (post-MVP hardening — all 4 named sprint epics complete)
 
-- [high] **Resolve #3168 cargo-deny advisories** (3 new RUSTSEC advisories on dev) — bump the offending transitive crate(s) or add bounded cargo-deny exceptions with a deadline — gates every backend merge today — owner: **pm-security**
-- [high] Unblock mobile-native/KMP builds in cloud runner (**#2652**) — 5+ KMP items structurally unclaimable — owner: **pm-devops** (carried)
-
-### tier-1 security (score 8-9)
-
-- [high] **Gate violations add_evidence sub-resource (#3164)** with a tenant-scoped authz check; add cross-tenant integration test on the `community_cross_tenant_idor_tests.rs` pattern — owner: **pm-backend**
-- [medium] Sweep remaining `add_*` sub-routes (announcements/attachments, documents/signatures, mediation/evidence) for the same ungated pattern — one-shot audit before shipping the #3164 fix — owner: **pm-backend**
-
-### backend reliability (score 6-7)
-
-- [medium] Diagnose + resolve #3131 merge-pipeline deadlock — long-stale; likely sqlx transaction scope or advisory-lock contention — owner: **pm-backend** (carried)
-- [medium] Follow-up on draft PR #3167 (unassign moderation case 404, fixes #3163) — owner: **pm-backend**
-- [low] Push_fanout FCM eviction (draft PR #3161) — review-ready; carried `repeated-churn-push_fanout` item is addressed by this PR landing — owner: **pm-backend**
-
-### refactor-with-security-overtones (score 6)
-
-- [medium] #3006 — unify triplicated auth-header + MFA-retry in @ppt/api-client fetch primitives — owner: **pm-tech-lead** (carried)
-
-### quality / RN lint (score 4-5, carried)
-
-- [medium] Resolve mobile RN jest-expo version rot (**#2951**) — owner: **pm-devops**
-
-### KMP code-review backlog (score 2-3, all blocked on #2652)
-
-- CreateListingScreen onSubmit stub
-- InquiriesResponse page_size vs reality-server `limit` mismatch
-- Ktor HttpClient has no HttpTimeout
-- getPortfolioAnalytics() 100-cap + unbounded fan-out
-
-### carried follow-ups (score 2-3)
-
-- Portfolio/owner analytics drift (gh #3104)
-- NewsScreen category badge i18n defaultValue fallback (gh #3116)
-- Violations/appeal_number COUNT(*)+1 race (local repro welcome)
-- screen-map drift for PR #2994 (ppt-web route refactor)
-- Un-quarantine dispute KPIs test + window_start<=window_end validation
-- Reconcile sprint-status.yaml drift vs coverage.json
+- [high] Retire the accounting-server RLS-only by-id methods (invoice/contact/match) — move to tenant-id-predicated variants · owner: pm-scrum-master (dispatches to rust-backend) · why: closes #3332 'Still open' item 1; parity with the rest of api-server; silent cross-tenant read is the easiest IDOR surface left.
+- [high] Harden EnhancedWebhookSubscription.headers against auth-header smuggling — reject or strip Authorization/Cookie/X-API-Key on write; omit from read-response schema · owner: pm-scrum-master · why: closes #3332 'Still open' item 2; outbound-webhook exfil vector.
+- [high] Apply the ResolvedTenant rule to onboarding — role selection must not consult the X-Tenant header · owner: pm-scrum-master · why: closes #3332 'Still open' item 3; the only remaining role-pick surface not on the ResolvedTenant contract.
+- [high] Add regression tests for accounting-server by-id endpoints — cross-tenant id → 404 · owner: pm-qa · depends_on: accounting-server by-id retirement · why: pm-qa DoD policy — fix PR requires failing-on-main test.
+- [high] Add webhook-headers auth-smuggling regression test — create/update rejects or strips auth header names; schema omits them · owner: pm-qa · depends_on: webhook headers fix · why: pm-qa DoD policy.
+- [high] Add onboarding ResolvedTenant regression test — POST /onboarding with foreign X-Tenant → 403 · owner: pm-qa · depends_on: onboarding ResolvedTenant application · why: pm-qa DoD policy.
+- [medium] Design-decide audit_logs ON DELETE SET NULL FK + append-only trigger conflict — ADR covering CASCADE vs NO ACTION vs extend-ACCESS-EXCLUSIVE-escape-hatch · owner: pm-scrum-master → pm-tech-lead · why: #3330 flagged landmine; seed-force handled, normal-op delete path not.
+- [medium] Automate Round-5 regression suite at CI level — mark check-rls-enforcement.sh --strict + round5_sec_b_authz_tests + suite_7 property_cluster_org_scope as required on dev · owner: pm-scrum-master → pm-devops · why: lock in the hardening work; prevent regressions.
+- [medium] Add i18n regression for mobile RN Alert.alert hardcoded strings — DocumentDetailScreen/WidgetSettingsScreen/FeedbackScreen · owner: pm-qa · depends_on: pm-frontend · why: 4-locale app; 73-day-old lint-gate risk re-raised.
 
 ### Screen-map drift
 
-_Nothing new this run — carried: 3 missing UC links (UC-33.1/33.2/33.3), 1 ppt-web route refactor without screen-map update (PR #2994)._
+- (no new drift this run; the ppt-web/reality-web route changes in merged PRs were paired with doc updates.)
 
-Buffer: **17/36 open** · candidates ranked but unqueued: ~0 (coverage is all `done` — refill depends on the dispatcher's external backlog scan, not this upkeep run). Buffer below floor by 19 and below half (18) by 1 — a dispatcher backlog scan is overdue to replenish, but a `scan` on this skill is explicitly out of scope for an incremental run.
+Buffer: 29/36 open · 10 new candidates queued this run.

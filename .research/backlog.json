@@ -14910,20 +14910,22 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #3237"
+        "PR #3237",
+        "PR #3334"
       ],
       "evidence": [
         "PR #3237 (feat/grouped, role-aware app shell + landing) edited App.tsx + routes/groups/core.tsx. No docs/screens/ppt/*.md touched. Shell navigation structure changed substantially \u2014 screen-map likely drifted.",
-        "Best-effort heuristic: landing + shell reorganization is a real behavioral change, review candidate for actual doc sync."
+        "Best-effort heuristic: landing + shell reorganization is a real behavioral change, review candidate for actual doc sync.",
+        "resolved: PR #3334 merged 2026-11-06"
       ],
       "files": [
         "frontend/apps/ppt-web/src/App.tsx",
         "frontend/apps/ppt-web/src/routes/groups/core.tsx"
       ],
       "created_at": "2026-11-04",
-      "updated_at": "2026-11-04",
+      "updated_at": "2026-11-06",
       "plan": null
     },
     {
@@ -14932,19 +14934,21 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #3242"
+        "PR #3242",
+        "PR #3336"
       ],
       "evidence": [
         "PR #3242 (fix/localize financial, buildings, my-unit) edited routes/groups/financial.tsx. No docs/screens/ppt/*.md touched. Pure i18n \u2014 heuristic fires but drift low-impact.",
-        "Best-effort heuristic caveat applies."
+        "Best-effort heuristic caveat applies.",
+        "resolved: PR #3336 merged 2026-11-06"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/financial.tsx"
       ],
       "created_at": "2026-11-04",
-      "updated_at": "2026-11-04",
+      "updated_at": "2026-11-06",
       "plan": null
     },
     {
@@ -14953,19 +14957,21 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #3244"
+        "PR #3244",
+        "PR #3337"
       ],
       "evidence": [
         "PR #3244 (fix/localize faults, news, settings, error pages) edited routes/groups/outages.tsx. No docs/screens/ppt/*.md touched. Mostly i18n \u2014 heuristic fires but low-impact.",
-        "Best-effort heuristic caveat applies."
+        "Best-effort heuristic caveat applies.",
+        "resolved: PR #3337 merged 2026-11-06"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/outages.tsx"
       ],
       "created_at": "2026-11-04",
-      "updated_at": "2026-11-04",
+      "updated_at": "2026-11-06",
       "plan": null
     },
     {
@@ -14974,19 +14980,21 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #3254"
+        "PR #3254",
+        "PR #3335"
       ],
       "evidence": [
         "PR #3254 (fix/wire rentals pages to the real rentals API) rewrote routes/groups/rentals.tsx from /rentals/* SDK to /bookings/* + /statistics + /connections. Real behavioral change \u2014 screen-map doc needs sync.",
-        "docs/screens/ppt/rentals-dashboard.md was not touched by this PR; PR #3257 did touch it but for a different flow (calendar/tax-report) \u2014 the bookings rewire is separately undocumented."
+        "docs/screens/ppt/rentals-dashboard.md was not touched by this PR; PR #3257 did touch it but for a different flow (calendar/tax-report) \u2014 the bookings rewire is separately undocumented.",
+        "resolved: PR #3335 merged 2026-11-06"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/rentals.tsx"
       ],
       "created_at": "2026-11-04",
-      "updated_at": "2026-11-04",
+      "updated_at": "2026-11-06",
       "plan": null
     },
     {
@@ -15116,18 +15124,20 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "git-log-numstat"
+        "git-log-numstat",
+        "PR #3339"
       ],
       "evidence": [
-        "Top-3 churn this run: backend/servers/api-server/src/routes/suspend_cascade.rs added+deleted 166 lines since 2026-11-04T18:35:00Z (post churn-exclusion filter)."
+        "Top-3 churn this run: backend/servers/api-server/src/routes/suspend_cascade.rs added+deleted 166 lines since 2026-11-04T18:35:00Z (post churn-exclusion filter).",
+        "resolved: PR #3339 merged 2026-11-06"
       ],
       "files": [
         "backend/servers/api-server/src/routes/suspend_cascade.rs"
       ],
       "created_at": "2026-11-05",
-      "updated_at": "2026-11-05",
+      "updated_at": "2026-11-06",
       "plan": null,
       "type": "churn-hotspot",
       "source": "git-log-numstat",
@@ -15190,19 +15200,21 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #3313"
+        "PR #3313",
+        "PR #3340"
       ],
       "evidence": [
         "PR #3313 touched reality-product route file(s) but did not update docs/screens/reality/*.md: frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.test.tsx",
-        "Best-effort heuristic \u2014 some of these are test-only or API-route changes that don't warrant a screen-doc update. Treat as review candidate."
+        "Best-effort heuristic \u2014 some of these are test-only or API-route changes that don't warrant a screen-doc update. Treat as review candidate.",
+        "resolved: PR #3340 merged 2026-11-06"
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.test.tsx"
       ],
       "created_at": "2026-11-05",
-      "updated_at": "2026-11-05",
+      "updated_at": "2026-11-06",
       "plan": null,
       "type": "screen-map-drift",
       "source": "PR #3313",
@@ -15290,6 +15302,170 @@
       "source": "rotating-expert-review",
       "score_delta": 1,
       "candidate_vector": "bug"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/tests/suite_4.rs",
+      "title": "Churn hotspot: backend/crates/db/tests/suite_4.rs \u2014 monitor for instability",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git log 8753804..origin/dev"
+      ],
+      "evidence": [
+        "backend/crates/db/tests/suite_4.rs changed in 3 commits since 2026-11-05 (PRs #3330, #3332, dispatcher follow-ups)"
+      ],
+      "files": [
+        "backend/crates/db/tests/suite_4.rs"
+      ],
+      "created_at": "2026-11-06",
+      "updated_at": "2026-11-06",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/property_cluster_org_scope_tests.rs",
+      "title": "Churn hotspot: backend/servers/api-server/tests/suites/property_cluster_org_scope_tests.rs \u2014 monitor for instability",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git log 8753804..origin/dev"
+      ],
+      "evidence": [
+        "backend/servers/api-server/tests/suites/property_cluster_org_scope_tests.rs changed in 2 commits (PRs #3330, #3332)"
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/property_cluster_org_scope_tests.rs"
+      ],
+      "created_at": "2026-11-06",
+      "updated_at": "2026-11-06",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suite_7.rs",
+      "title": "Churn hotspot: backend/servers/api-server/tests/suite_7.rs \u2014 monitor for instability",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git log 8753804..origin/dev"
+      ],
+      "evidence": [
+        "backend/servers/api-server/tests/suite_7.rs changed in 2 commits (PRs #3330, #3332)"
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suite_7.rs"
+      ],
+      "created_at": "2026-11-06",
+      "updated_at": "2026-11-06",
+      "plan": null
+    },
+    {
+      "id": "dep-update-noise-pr-3195",
+      "title": "Dependabot PR #3195 closed-unmerged (superseded by #3329)",
+      "vector": "dep-update",
+      "confidence": "high",
+      "score": 0,
+      "status": "open",
+      "sources": [
+        "PR #3195"
+      ],
+      "evidence": [
+        "Dependabot npm-minor-patch PR #3195 closed unmerged on 2026-11-05T10:23:19Z \u2014 superseded by #3329"
+      ],
+      "files": [],
+      "created_at": "2026-11-06",
+      "updated_at": "2026-11-06",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-alert-i18n-gap",
+      "title": "mobile-rn: Alert.alert hardcoded English in a multi-locale app (4 call sites)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/documents/DocumentDetailScreen.tsx:118 \u2014 Alert.alert('Could not open document', 'The file viewer is unavailable on this device.')",
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx:66,79 \u2014 Alert.alert('Widget Added' | 'Widgets Updated', ...) hardcoded English in a multi-locale app (sk/cs/de/en)",
+        "frontend/apps/mobile/src/screens/help/FeedbackScreen.tsx:216 \u2014 Alert.alert('Diagnostic Report', ...)"
+      ],
+      "files": [],
+      "created_at": "2026-11-06",
+      "updated_at": "2026-11-06",
+      "plan": null
+    },
+    {
+      "id": "security-accounting-server-rls-only-by-id",
+      "title": "accounting-server by-id handlers use RLS-only methods \u2014 no tenant-id predicate, cross-tenant 2xx/500 risk",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "PR #3332 body \u2014 'Still open' item 1"
+      ],
+      "evidence": [
+        "PR #3332 explicitly notes: 'accounting-server still uses the RLS-only by-id methods' \u2014 the rest of api-server was migrated this run; accounting left behind",
+        "The migrated shape (#3332) adds `tenant_id` predicate to by-id lookups so cross-org id returns 404; accounting still returns 2xx/500 on cross-tenant id",
+        "Pattern: three endpoint classes affected \u2014 invoice, contact, match"
+      ],
+      "files": [
+        "backend/servers/accounting-server/"
+      ],
+      "created_at": "2026-11-06",
+      "updated_at": "2026-11-06",
+      "plan": null
+    },
+    {
+      "id": "security-webhook-subscription-headers-auth-smuggling",
+      "title": "EnhancedWebhookSubscription.headers can carry auth headers \u2014 serialized in schema, potential exfil",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "PR #3332 body \u2014 'Still open' item 2"
+      ],
+      "evidence": [
+        "PR #3332 explicitly notes: '`EnhancedWebhookSubscription.headers` can carry auth headers' \u2014 write-path accepts arbitrary header names; read-path serializes them",
+        "Risk shape: a tenant-admin could set an `Authorization`-class header name with a stolen bearer token value on a webhook subscription and exfiltrate to an attacker-controlled endpoint",
+        "Fix shape: reject or strip known auth header names on write (Authorization, Cookie, X-API-Key, X-Auth-Token); omit from read-response schema"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/webhook_subscriptions.rs"
+      ],
+      "created_at": "2026-11-06",
+      "updated_at": "2026-11-06",
+      "plan": "plans/security-webhook-subscription-headers-auth-smuggling.md"
+    },
+    {
+      "id": "security-onboarding-resolved-tenant-rule-missing",
+      "title": "onboarding doesn't apply the ResolvedTenant rule \u2014 role selection influenced by foreign X-Tenant",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "PR #3332 body \u2014 'Still open' item 3"
+      ],
+      "evidence": [
+        "PR #3332 explicitly notes: 'onboarding doesn't apply the `ResolvedTenant` rule' \u2014 features.rs and the rest of #3332 now respects ResolvedTenant (403 on foreign org header)",
+        "Onboarding's role selection still consults membership lookup directly; a request with X-Tenant: <foreign org> can influence which roles are offered",
+        "Fix shape: route role selection through ResolvedTenant; return 403 when ResolvedTenant disagrees with the X-Tenant header"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/onboarding.rs"
+      ],
+      "created_at": "2026-11-06",
+      "updated_at": "2026-11-06",
+      "plan": "plans/security-onboarding-resolved-tenant-rule-missing.md"
     }
   ]
 }

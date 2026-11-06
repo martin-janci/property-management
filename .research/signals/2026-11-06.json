@@ -1,0 +1,84 @@
+{
+  "generated": "2026-11-06T03:20:00Z",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/crates/db/tests/suite_4.rs",
+      "type": "churn-hotspot",
+      "source": "git log 8753804..origin/dev",
+      "score_delta": 1,
+      "evidence": "backend/crates/db/tests/suite_4.rs changed in 3 commits since 2026-11-05 (PRs #3330, #3332, dispatcher follow-ups)",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/crates/db/tests/suite_4.rs"
+      ],
+      "sources": [
+        "git log 8753804..origin/dev"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/property_cluster_org_scope_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git log 8753804..origin/dev",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/tests/suites/property_cluster_org_scope_tests.rs changed in 2 commits (PRs #3330, #3332)",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/servers/api-server/tests/suites/property_cluster_org_scope_tests.rs"
+      ],
+      "sources": [
+        "git log 8753804..origin/dev"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suite_7.rs",
+      "type": "churn-hotspot",
+      "source": "git log 8753804..origin/dev",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/tests/suite_7.rs changed in 2 commits (PRs #3330, #3332)",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/servers/api-server/tests/suite_7.rs"
+      ],
+      "sources": [
+        "git log 8753804..origin/dev"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-3195",
+      "type": "dep-update-noise",
+      "source": "PR #3195",
+      "score_delta": 0,
+      "evidence": "Dependabot npm-minor-patch PR #3195 closed unmerged on 2026-11-05T10:23:19Z \u2014 superseded by #3329",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": [],
+      "sources": [
+        "PR #3195"
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-alert-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/mobile/src/screens/documents/DocumentDetailScreen.tsx:118 \u2014 Alert.alert('Could not open document', 'The file viewer is unavailable on this device.')",
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx:66,79 \u2014 Alert.alert('Widget Added' | 'Widgets Updated', ...) hardcoded English in a multi-locale app (sk/cs/de/en)",
+        "frontend/apps/mobile/src/screens/help/FeedbackScreen.tsx:216 \u2014 Alert.alert('Diagnostic Report', ...)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [],
+      "sources": [
+        "rotating-expert-review"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": []
+}
