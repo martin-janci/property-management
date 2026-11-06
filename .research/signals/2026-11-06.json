@@ -35,119 +35,119 @@
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f && head -1 grep",
+      "command": "test -f briefs/2026-11-06.md",
       "observed": "exit 0",
       "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "jq --slurpfile prev ...",
-      "observed": "true",
+      "command": "state advances",
+      "observed": "last_pr_seen 3340→3349, last_commit_sha advanced",
       "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "jq ids unique",
+      "command": "jq unique ids",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "jq signals dedup",
-      "observed": "true",
+      "command": "re-emit rule",
+      "observed": "true (only churn-hotspot signals re-emitted, cumulative-type carve-out)",
       "expected": "true"
     },
     {
       "goal": "G5",
       "passed": true,
-      "command": "jq score<=8 + decay check",
-      "observed": "true (no decay candidates)",
+      "command": "score cap + decay",
+      "observed": "true (no score > 8; oldest open is 2026-10-25 at 12d, no decay needed)",
       "expected": "true"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "n/a — no plans promoted",
-      "observed": "0 new plans",
-      "expected": "annotated"
+      "command": "new plans have adversarial pass",
+      "observed": "n/a — 0 new plans this run",
+      "expected": "true"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "plan count ≤ 2",
-      "observed": "0",
-      "expected": "≤2"
+      "command": "≤2 new plans",
+      "observed": "0 new plans",
+      "expected": "true"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "git diff --cached --name-only outside .research/",
+      "command": "only .research/ paths",
       "observed": "0",
       "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "grep secrets/hostnames",
+      "command": "no secrets",
       "observed": "0",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "diff backlog.md regen",
-      "observed": "identical",
-      "expected": "identical"
+      "command": "backlog.md byte-identity",
+      "observed": "diff empty",
+      "expected": "diff empty"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "n/a — no phase failed",
-      "observed": "none",
-      "expected": "annotated if any"
+      "command": "phase failure honesty",
+      "observed": "no phases failed; all cursors advanced consistently",
+      "expected": "true"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "all prior plan slugs present",
-      "observed": "0 missing",
-      "expected": "0 missing"
+      "command": "plan promotions converge",
+      "observed": "all prior plans retained in plans/ or _archive/",
+      "expected": "true"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "archive count NOW>=HEAD",
-      "observed": "22>=22",
-      "expected": "NOW>=HEAD"
+      "command": "archive only grows",
+      "observed": "22 == 22",
+      "expected": "true"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "diff IDEAS_TRIAGE.md regen",
-      "observed": "identical",
-      "expected": "identical"
+      "command": "IDEAS_TRIAGE.md byte-identity",
+      "observed": "diff empty",
+      "expected": "diff empty"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto_fix_actions caps",
-      "observed": "0 actions",
-      "expected": "≤3/≤1-each"
+      "command": "auto_fix discipline",
+      "observed": "0 auto_fix_actions",
+      "expected": "true"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "n/a — Phase 1.6 skipped (pm_cursor unchanged)",
-      "observed": "no-op",
-      "expected": "no-op"
+      "command": "management artifacts valid",
+      "observed": "action-list ok, risks ok, project-state ok, pm_cursor 3, coverage_cursor 0 (Phase 1.6 skipped this run)",
+      "expected": "true"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "grep telegram token",
+      "command": "no telegram secret",
       "observed": "0",
       "expected": "0"
     }

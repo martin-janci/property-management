@@ -15015,9 +15015,10 @@
       "vector": "refactor",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review 2026-11-05 ppt-web-ui (dispatcher Tier-1d)"
+        "rotating-expert-review 2026-11-05 ppt-web-ui (dispatcher Tier-1d)",
+        "PR #3347"
       ],
       "evidence": [
         "The entire marketplace feature module ships user-facing English string literals with NO react-i18next integration, inside an app that ships sk/cs/de/en locales. 8 of 9 user-facing marketplace files have zero useTranslation import and zero t() calls; QuoteComparisonTable.tsx has only 1. This is a whole-feature i18n gap, not a single missed string.",
@@ -15026,7 +15027,8 @@
         "frontend/apps/ppt-web/src/features/marketplace/components/ProviderProfileForm.tsx:273,439,646 — hardcoded descriptive placeholders. 0 useTranslation. Also ReviewForm.tsx:197,211,285 and VerificationForm.tsx — 0 useTranslation.",
         "frontend/apps/ppt-web/src/features/marketplace/pages/{MarketplacePage,ProviderDetailPage,RfqListPage}.tsx — 0 useTranslation / 0 t() in the page shells themselves.",
         "Fix vector: add useTranslation() to each marketplace component/page and move literals (placeholders, option labels, headings) to marketplace.* locale keys across sk/cs/de/en bundles. Cloud-verifiable (ppt-web, biome + typecheck). Confidence medium: literals + absence of useTranslation certain by static read; pages reachable from the shipped /marketplace routes. Severity LOW (+1) i18n gap per the skill's score-delta table (breadth is feature-wide, but the table caps an i18n gap at low).",
-        "expert: frontend+completeness"
+        "expert: frontend+completeness",
+        "resolved: PR #3347 merged 2026-11-06 — route ppt-web marketplace UI through react-i18next"
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/marketplace/components/ProviderSearchFilters.tsx",
@@ -15035,7 +15037,7 @@
         "frontend/apps/ppt-web/src/features/marketplace/pages/MarketplacePage.tsx"
       ],
       "created_at": "2026-11-05",
-      "updated_at": "2026-11-05",
+      "updated_at": "2026-11-06",
       "plan": null,
       "segment": "ppt-web-ui",
       "expert": "frontend",
@@ -15084,20 +15086,22 @@
       "vector": "refactor",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review 2026-11-05 ppt-web-ui (dispatcher Tier-1d)"
+        "rotating-expert-review 2026-11-05 ppt-web-ui (dispatcher Tier-1d)",
+        "PR #3343"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/components/LanguageSwitcher.tsx:19 — the shared language-switcher <select> carries a hardcoded English screen-reader label `aria-label=\"Select language\"`. The component already imports and uses useTranslation (it is otherwise i18n-aware), so the untranslated a11y label is an oversight, not a missing capability. Ironic and high-visibility: a non-English user navigating by screen reader hears an English label on the very control that switches language.",
         "Fix vector: replace the literal with t('common.languageSwitcher.ariaLabel') (or similar) and add the key to the sk/cs/de/en bundles. Cloud-verifiable (ppt-web, biome + typecheck). Confidence medium: certain by static read; the component is mounted in the app shell on every authenticated screen. Severity LOW (+1) i18n/a11y gap.",
-        "expert: frontend+completeness"
+        "expert: frontend+completeness",
+        "resolved: PR #3343 merged 2026-11-06 — route LanguageSwitcher aria-label through i18n"
       ],
       "files": [
         "frontend/apps/ppt-web/src/components/LanguageSwitcher.tsx"
       ],
       "created_at": "2026-11-05",
-      "updated_at": "2026-11-05",
+      "updated_at": "2026-11-06",
       "plan": null,
       "segment": "ppt-web-ui",
       "expert": "frontend",
@@ -15112,18 +15116,20 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "git-log-numstat"
+        "git-log-numstat",
+        "PR #3345"
       ],
       "evidence": [
-        "Top-3 churn this run: backend/servers/reality-server/src/util/errors.rs added+deleted 187 lines since 2026-11-04T18:35:00Z (post churn-exclusion filter)."
+        "Top-3 churn this run: backend/servers/reality-server/src/util/errors.rs added+deleted 187 lines since 2026-11-04T18:35:00Z (post churn-exclusion filter).",
+        "resolved: PR #3345 merged 2026-11-06 — consolidate DB-error class→status mapping into db_error_or"
       ],
       "files": [
         "backend/servers/reality-server/src/util/errors.rs"
       ],
       "created_at": "2026-11-05",
-      "updated_at": "2026-11-05",
+      "updated_at": "2026-11-06",
       "plan": null,
       "type": "churn-hotspot",
       "source": "git-log-numstat",
@@ -15250,19 +15256,21 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #3317"
+        "PR #3317",
+        "PR #3342"
       ],
       "evidence": [
         "PR #3317 touched ppt-product route file(s) but did not update docs/screens/ppt/*.md: frontend/apps/ppt-web/src/routes/groups/ai-dashboards.role-gate.route.test.tsx",
-        "Best-effort heuristic — some of these are test-only or API-route changes that don't warrant a screen-doc update. Treat as review candidate."
+        "Best-effort heuristic — some of these are test-only or API-route changes that don't warrant a screen-doc update. Treat as review candidate.",
+        "resolved: PR #3342 merged 2026-11-06 — screen-map-drift-pr-3317-ppt: reconcile ai-dashboards screen-map"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/ai-dashboards.role-gate.route.test.tsx"
       ],
       "created_at": "2026-11-05",
-      "updated_at": "2026-11-05",
+      "updated_at": "2026-11-06",
       "plan": null,
       "type": "screen-map-drift",
       "source": "PR #3317",
@@ -15275,13 +15283,15 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #3317"
+        "PR #3317",
+        "PR #3349"
       ],
       "evidence": [
         "PR #3317 touched reality-product route file(s) but did not update docs/screens/reality/*.md: frontend/apps/reality-web/src/app/[locale]/favorites/page.test.tsx, frontend/apps/reality-web/src/app/[locale]/report/page.test.tsx, frontend/apps/reality-web/src/app/api/layout-revalidate/route.test.ts, frontend/apps/reality-web/src/app/api/layout-revalidate/route.ts",
-        "Best-effort heuristic — some of these are test-only or API-route changes that don't warrant a screen-doc update. Treat as review candidate."
+        "Best-effort heuristic — some of these are test-only or API-route changes that don't warrant a screen-doc update. Treat as review candidate.",
+        "resolved: PR #3349 merged 2026-11-06 — reconcile reality screen-maps with PR #3317 biome cleanup"
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/favorites/page.test.tsx",
@@ -15290,7 +15300,7 @@
         "frontend/apps/reality-web/src/app/api/layout-revalidate/route.ts"
       ],
       "created_at": "2026-11-05",
-      "updated_at": "2026-11-05",
+      "updated_at": "2026-11-06",
       "plan": null,
       "type": "screen-map-drift",
       "source": "PR #3317",
