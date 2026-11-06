@@ -86,6 +86,52 @@ pub fn db_constraint(e: &sqlx::Error) -> Option<&str> {
     e.as_database_error().and_then(|db| db.constraint())
 }
 
+/// Map a database error to a client-facing `(StatusCode, String)`, surfacing a
+/// specific status for ONE anticipated error class and falling through to the
+/// generic logged 500 ([`db_error`]) for everything else.
+///
+/// Every handler that wants to turn one `sqlx::Error` class into a meaningful
+/// HTTP status (a unique violation into `400`, a `RowNotFound` into `404`, …)
+/// otherwise repeats the same shape:
+///
+/// ```ignore
+/// .map_err(|e| {
+///     if classify_db_error(&e) == DbErrorClass::NotFound {
+///         (StatusCode::NOT_FOUND, "Profile not found".to_string())
+///     } else {
+///         db_error("update realtor profile", e)
+///     }
+/// })
+/// ```
+///
+/// which collapses to a single call:
+///
+/// ```ignore
+/// .map_err(|e| {
+///     db_error_or(&e, "update realtor profile",
+///         DbErrorClass::NotFound, StatusCode::NOT_FOUND, "Profile not found")
+/// })
+/// ```
+///
+/// When `e`'s class matches `expected`, returns `(status, message)`. Otherwise
+/// the full error is logged server-side and the caller gets the generic
+/// `(500, "Internal server error")`, so — exactly as with [`db_error`] — no raw
+/// driver text ever reaches the internet-facing client. `message` is a fixed,
+/// caller-chosen string and is only returned on the matching branch; it is
+/// never derived from the error.
+pub fn db_error_or(
+    e: &sqlx::Error,
+    ctx: &str,
+    expected: DbErrorClass,
+    status: StatusCode,
+    message: &str,
+) -> (StatusCode, String) {
+    if classify_db_error(e) == expected {
+        return (status, message.to_string());
+    }
+    db_error(ctx, e)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -275,5 +321,84 @@ mod tests {
             Some("listing_inquiries_realtor_id_fkey")
         );
         assert_eq!(db_constraint(&sqlx::Error::RowNotFound), None);
+    }
+
+    /// On a matching class, `db_error_or` returns the caller's specific status
+    /// and fixed message verbatim — this is the only branch that surfaces any
+    /// caller-chosen text.
+    #[test]
+    fn db_error_or_returns_specific_status_on_matching_class() {
+        let (status, body) = db_error_or(
+            &sqlx::Error::RowNotFound,
+            "update realtor profile",
+            DbErrorClass::NotFound,
+            StatusCode::NOT_FOUND,
+            "Profile not found",
+        );
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body, "Profile not found");
+
+        let unique = db_err(MockKind::Unique, "23505", Some("agencies_slug_key"));
+        let (status, body) = db_error_or(
+            &unique,
+            "create agency",
+            DbErrorClass::UniqueViolation,
+            StatusCode::BAD_REQUEST,
+            "Agency with this name or slug already exists",
+        );
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert_eq!(body, "Agency with this name or slug already exists");
+    }
+
+    /// On a non-matching class, `db_error_or` falls through to the generic
+    /// logged 500 — never the caller's specific message, and never any fragment
+    /// of the source error. This keeps the [`db_error`] security contract even
+    /// when the expected class doesn't match (e.g. a genuine infra failure on a
+    /// handler that was only anticipating `NotFound`).
+    #[test]
+    fn db_error_or_falls_through_to_generic_500_on_mismatch() {
+        // A real driver error (unique violation carrying a constraint name)
+        // reaching a handler that only expected RowNotFound.
+        let unique = db_err(
+            MockKind::Unique,
+            "23505",
+            Some("realtor_profiles_user_id_key"),
+        );
+        let (status, body) = db_error_or(
+            &unique,
+            "update realtor profile",
+            DbErrorClass::NotFound,
+            StatusCode::NOT_FOUND,
+            "Profile not found",
+        );
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(body, "Internal server error");
+        // Neither the caller's own message nor any error detail may leak.
+        for needle in [
+            "Profile not found",
+            "realtor_profiles_user_id_key",
+            "constraint",
+            "23505",
+        ] {
+            assert!(
+                !body.contains(needle),
+                "generic fall-through leaked `{needle}` in `{body}`"
+            );
+        }
+    }
+
+    /// `RowNotFound` against an `expected` of `Other` must still fall through to
+    /// the generic 500 — the match is on the exact class, not "any non-Other".
+    #[test]
+    fn db_error_or_matches_exact_class_only() {
+        let (status, body) = db_error_or(
+            &sqlx::Error::RowNotFound,
+            "get thing",
+            DbErrorClass::UniqueViolation,
+            StatusCode::BAD_REQUEST,
+            "duplicate",
+        );
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(body, "Internal server error");
     }
 }
