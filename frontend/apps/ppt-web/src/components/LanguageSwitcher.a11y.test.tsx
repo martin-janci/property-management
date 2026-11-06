@@ -20,7 +20,7 @@ vi.mock('react-i18next', () => ({
       language: 'en',
       changeLanguage: vi.fn(),
     },
-    t: (key: string) => key,
+    t: (key: string) => (key === 'aria.selectLanguage' ? 'Select language' : key),
   }),
 }));
 

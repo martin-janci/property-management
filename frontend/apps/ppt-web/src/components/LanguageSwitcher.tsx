@@ -3,7 +3,7 @@ import { type Locale, localeFlags, localeNames, locales } from '../i18n';
 import './LanguageSwitcher.css';
 
 export function LanguageSwitcher() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const currentLocale = i18n.language as Locale;
 
   const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -16,7 +16,7 @@ export function LanguageSwitcher() {
       value={currentLocale}
       onChange={handleChange}
       className="language-switcher"
-      aria-label="Select language"
+      aria-label={t('aria.selectLanguage')}
     >
       {locales.map((locale) => (
         <option key={locale} value={locale}>
