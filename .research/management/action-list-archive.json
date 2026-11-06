@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-11-05T20:45:27Z",
+  "archived_at": "2026-11-06T04:30:25Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1557,6 +1557,30 @@
         "vector": "refactor"
       },
       "dev_reconciled": "merged via PR #2871 (squash f21aaebc) 2026-08-28T12:29:07Z"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/suspend_cascade.rs",
+      "action": "Churn hotspot (new): backend/servers/api-server/src/routes/suspend_cascade.rs is a top-3 churn file this run — watch for instability",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-05T08:30:13Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-11-06T04:23:37Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-05T08:30:13Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3339,
+        "merged_at": "2026-11-06T02:31:30Z",
+        "at": "2026-11-06T04:23:37Z"
+      }
     },
     {
       "id": "churn-hotspot-backend/servers/api-server/src/routes/violations.rs",
@@ -24280,6 +24304,126 @@
         "merged_pr": 3271,
         "merged_at": "2026-11-04T06:35:09Z",
         "at": "2026-11-04T06:37:23Z"
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3237-ppt",
+      "action": "Screen-map drift: PR #3237 restructured ppt-web app shell + landing without docs/screens/ppt/*.md update",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-04T20:32:55Z (score=2 conf=medium vector=test-gap) | gc1-reconcile 2026-11-06T04:23:37Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T20:32:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3334,
+        "merged_at": "2026-11-06T02:32:51Z",
+        "at": "2026-11-06T04:23:37Z"
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3242-ppt",
+      "action": "Screen-map drift: PR #3242 localized financial/buildings/my-unit routes without docs/screens/ppt update",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-04T20:32:55Z (score=2 conf=medium vector=test-gap) | gc1-reconcile 2026-11-06T04:23:37Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T20:32:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3336,
+        "merged_at": "2026-11-06T02:32:55Z",
+        "at": "2026-11-06T04:23:37Z"
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3244-ppt",
+      "action": "Screen-map drift: PR #3244 localized faults/news/settings/error pages without docs/screens/ppt update",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-04T20:32:55Z (score=2 conf=medium vector=test-gap) | gc1-reconcile 2026-11-06T04:23:37Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T20:32:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3337,
+        "merged_at": "2026-11-06T02:32:59Z",
+        "at": "2026-11-06T04:23:37Z"
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3254-ppt",
+      "action": "Screen-map drift: PR #3254 rewired ppt-web rentals routes to /bookings/* without docs/screens/ppt update",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-04T20:32:55Z (score=2 conf=medium vector=test-gap) | gc1-reconcile 2026-11-06T04:23:37Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T20:32:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3335,
+        "merged_at": "2026-11-06T02:33:02Z",
+        "at": "2026-11-06T04:23:37Z"
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3313-reality",
+      "action": "Screen-map drift: PR #3313 added regression tests for reality-web realtor/[id] without updating docs/screens/reality/realtor-detail.md",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-05T08:30:13Z (score=2 conf=medium vector=test-gap) | gc1-reconcile 2026-11-06T04:23:37Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-05T08:30:13Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3340,
+        "merged_at": "2026-11-06T02:33:11Z",
+        "at": "2026-11-06T04:23:37Z"
       }
     },
     {
