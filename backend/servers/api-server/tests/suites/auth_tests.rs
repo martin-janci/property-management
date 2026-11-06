@@ -706,9 +706,8 @@ mod change_password {
 
     #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn change_password_then_login_with_new_password(pool: PgPool) {
-        let app = TestApp::new(pool.clone()).await;
+        let app = TestApp::new(pool).await;
         let user = TestUser::new();
-        cleanup_test_user(&pool, &user.email).await;
         let (access_token, _) = create_authenticated_user(&app, &user).await;
 
         let body = json!({
@@ -730,15 +729,12 @@ mod change_password {
             json!({ "email": user.email, "password": "BrandNewPassword456!" }),
         );
         app.execute(login).await.assert_status(StatusCode::OK);
-
-        cleanup_test_user(&pool, &user.email).await;
     }
 
     #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn change_password_rejects_wrong_current_password(pool: PgPool) {
-        let app = TestApp::new(pool.clone()).await;
+        let app = TestApp::new(pool).await;
         let user = TestUser::new();
-        cleanup_test_user(&pool, &user.email).await;
         let (access_token, _) = create_authenticated_user(&app, &user).await;
 
         let body = json!({
@@ -757,13 +753,11 @@ mod change_password {
             response.json_value()["code"].as_str().unwrap(),
             "INVALID_CREDENTIALS"
         );
-
-        cleanup_test_user(&pool, &user.email).await;
     }
 
     #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn change_password_requires_auth(pool: PgPool) {
-        let app = TestApp::new(pool.clone()).await;
+        let app = TestApp::new(pool).await;
         let body = json!({
             "currentPassword": "SecurePassword123!",
             "newPassword": "BrandNewPassword456!"
