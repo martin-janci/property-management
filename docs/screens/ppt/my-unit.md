@@ -70,8 +70,10 @@ leaks; ended residencies excluded; 401 when unauthenticated).
 
 ### Specific (recent)
 - 2026-06-22 — created with the surface in PR #1701 (Story 3.6).
+- 2026-11-05 — i18n (PR #3242): all `MyUnitPage` copy localized under `buildings.myUnit.*` (sk/cs/de/pl/hu); dates respect `i18n.language`.
 
 ## Agent Log
+- 2026-11-05 — agent: screen-map-drift-pr-3242-ppt — reconcile i18n drift from PR #3242 (`fix(ppt-web): localize financial, buildings and my-unit pages`, merged 2026-11-04). `MyUnitPage` moved hardcoded English (headings, unit/residency labels, loading/error/empty states, unit switcher) into `buildings.myUnit.*` i18n keys across en/sk/cs/de/pl/hu; dates format via `i18n.language`. No route/component/status change — docs-only.
 - 2026-06-22 — FrontendEngineer: added screen-map for the new `/my-unit` resident surface (BIT-192).
 
 ## Agent Log

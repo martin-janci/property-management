@@ -39,6 +39,7 @@ to a browser download.
   via TanStack Query (one query per active tab) against the Story 11.7 endpoints.
 
 ## Agent Log
+- 2026-11-05 — agent: screen-map-drift-pr-3242-ppt — reconcile i18n drift from PR #3242 (`fix(ppt-web): localize financial, buildings and my-unit pages`, merged 2026-11-04). `FinancialReportsPage` + `ARAgingTable`/`BalanceSheetView`/`CashFlowView`/`IncomeStatementView`/`BuildingFilter`/`DateRangeFilter` moved hardcoded English into `financial.*` i18n keys across en/sk/cs/de/pl/hu; money/dates format via `i18n.language` + Intl (currency stays EUR). No frontmatter change — docs-only.
 - 2026-07-13 — agent: gap-screens-normalize-frontmatter — normalized story-id-style epic ref(s) Epic-11-7 → Epic-11 (strip story suffix); /screens validate clean.
 - 2026-06-22 — FrontendEngineer: created screen + screen-map for Story 11.7 FE
   follow-up (BIT-222). Backend endpoints live on dev (PRs #1717 + #1723).
