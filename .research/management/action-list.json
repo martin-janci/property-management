@@ -587,7 +587,67 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "pm-qa-round5-authz-suites-ci-execution-proof-2026-11-06",
+      "action": "Confirm in CI logs that suite_5 and suite_7 execute the round5_sec_b, r5_sec_a and registry_read_scope tests with non-zero pass counts and a DB-backed job; spot-check each file for cross-tenant/wrong-role negative assertions (401/403/404), not just happy-path 200s",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "pm-backend",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-06",
+      "first_open_at": "2026-11-06T00:30:00Z"
+    },
+    {
+      "id": "pm-qa-screen-map-check-required-status-drift-prs-2026-11-06",
+      "action": "Hold draft screen-map auto-fix PRs #3333-#3337 until screen-map.yml (/screens validate) is green on each; block auto-approve until check is required-status on dev",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "pm-devops",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-06",
+      "first_open_at": "2026-11-06T00:30:00Z"
+    },
+    {
+      "id": "pm-qa-ready-kmp-plans-assign-implementers-2026-11-06",
+      "action": "Assign implementers to the two ready mobile-native-kmp plans (inquiries-response-contract, create-listing-not-wired); each plan needs a named acceptance test (contract or unit)",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "pm-frontend",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-06",
+      "first_open_at": "2026-11-06T00:30:00Z"
+    },
+    {
+      "id": "pm-qa-churn-hotspot-tests-seed-flakiness-review-2026-11-06",
+      "action": "Review churn-hotspot test PR #3339 (suspend_cascade) for flakiness / seed isolation — same class of bug as earlier document_folder shared-UUID issue; look for hardcoded IDs or ordering dependence in the new suspend_cascade suite",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "pm-backend",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-06",
+      "first_open_at": "2026-11-06T00:30:00Z"
+    },
+    {
+      "id": "pm-qa-authz-fix-negative-test-gate-2026-11-06",
+      "action": "Add a QA gate requiring every authz-fix PR to include a negative test that fails without the fix; spot-check by reverting the fix in a branch for one of the round-5 PRs (#3330, #3331, #3332, #3338) and confirming a test fails",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-06",
+      "first_open_at": "2026-11-06T00:30:00Z"
     }
   ],
-  "generated": "2026-10-28T11:00:00Z"
+  "generated": "2026-11-06T00:30:00Z"
 }

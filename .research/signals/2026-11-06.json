@@ -1,0 +1,83 @@
+{
+  "generated": "2026-11-06T00:35:00Z",
+  "since_iso": "2026-11-05T03:17:05Z",
+  "trigger_payload": "buffer-low: claimable=15/72 — refill planner",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/round5_sec_b_authz_tests.rs",
+      "type": "churn-hotspot",
+      "source": "commit 3580232 (PR #3332 round-5 authz B)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "churn-hotspot 2026-11-06: 935 lines added — first-seen. New test file added by PR #3332 (round-5 authz B — accounting, buildings, certifications, registry, maintenance, platform checks)."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/r5_sec_a_authz_tests.rs",
+      "type": "churn-hotspot",
+      "source": "commit b39f5ba (PR #3331 round-5 authz A)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "churn-hotspot 2026-11-06: 377 lines added — first-seen. New test file added by PR #3331 (round-5 authz A)."
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/tests/suites/energy_schema_tests.rs",
+      "type": "churn-hotspot",
+      "source": "commit 1d16bbe (PR #3330 round-5 functional fixes)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "churn-hotspot 2026-11-06: 331 lines added — first-seen. New test file added by PR #3330 (round-5 functional fixes)."
+    },
+    {
+      "id": "code-review-reality-server-sso-cb-db-err-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-11-05 reality-server (dispatcher Tier-1d, inherited)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/reality-server/src/routes/sso.rs:331-340 — upsert_sso_user() map_err returns (INTERNAL_SERVER_ERROR, Json(SsoError::new(\"user_create_failed\", &e.to_string()))); the raw user-service/DB (sqlx) error string is serialized into the public JSON response body."
+    },
+    {
+      "id": "code-review-reality-server-sso-cb-upstream-err-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-11-05 reality-server (dispatcher Tier-1d, inherited)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/reality-server/src/routes/sso.rs:310-318 — exchange_code_for_tokens() map_err returns Json(SsoError::new(\"token_exchange_failed\", &e.to_string())), echoing the raw upstream PM OAuth HTTP/reqwest error."
+    },
+    {
+      "id": "code-review-reality-web-pricealerts-raw-err-log",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-11-05 reality-web (dispatcher Tier-1d, inherited)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx:98 and :108 — catch blocks on authenticated mutations log the RAW rejection carrier via console.error(...), bypassing lib/safe-error.ts toSafeLogMessage()."
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met confidence=high + score>=3 + allowlist",
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-11-06.md && head -1 matches '# 2026-11-06'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "jq compare state.json staged vs HEAD", "observed": "true", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))'", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "jq re-emit non-cumulative with score_delta != 0", "observed": "true", "expected": "true" },
+    { "goal": "G5-cap", "passed": true, "command": "jq '[.items[] | select(.score > 8)] | length == 0'", "observed": "true", "expected": "true" },
+    { "goal": "G5-decay", "passed": true, "command": "no open items with updated_at older than 14 days", "observed": "0 stale open items", "expected": "0 stale open items" },
+    { "goal": "G6", "passed": true, "command": "every new plan has adversarial pass note — vacuously true (0 new plans)", "observed": "0 new plans", "expected": "n/a (0 new plans)" },
+    { "goal": "G7-count", "passed": true, "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -c .md", "observed": "0", "expected": "<= 2" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "git diff --cached grep secret patterns", "observed": "0 matches", "expected": "0 matches" },
+    { "goal": "G10", "passed": true, "command": "regenerate backlog.md and diff -q against staged", "observed": "byte-identical", "expected": "byte-identical" },
+    { "goal": "G11", "passed": true, "command": "no phases failed; all cursors advanced appropriately", "observed": "no failed phases", "expected": "no failed phases" },
+    { "goal": "G12", "passed": true, "command": "every prior-run plan slug present in plans/ or plans/_archive/", "observed": "all present", "expected": "all present" },
+    { "goal": "G13", "passed": true, "command": "archive count now >= HEAD count", "observed": "22 >= 22", "expected": ">=" },
+    { "goal": "G14", "passed": true, "command": "regenerate IDEAS_TRIAGE.md and diff -q against staged", "observed": "byte-identical", "expected": "byte-identical" },
+    { "goal": "G15", "passed": true, "command": "jq auto_fix_actions length + action_type counts", "observed": "0 actions, all caps obeyed", "expected": "<=1 per type, <=3 total" },
+    { "goal": "G16", "passed": true, "command": "management artifacts valid; coverage_cursor advanced with pm_cursor", "observed": "EPICS=13 CC 0->1 PM 3->4", "expected": "exit 0" },
+    { "goal": "G17", "passed": true, "command": "git diff --cached grep telegram token patterns on added lines", "observed": "0 matches", "expected": "0 matches" }
+  ]
+}
