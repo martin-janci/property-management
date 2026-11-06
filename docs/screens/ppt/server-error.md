@@ -34,4 +34,8 @@ Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, e
 - 2026-05-18 — audit: stub created from `frontend/apps/ppt-web/src/App.tsx:543`.
 
 ## Agent Log
+
+<!-- newest entries on top -->
+
+- 2026-11-05 — agent: screen-map-drift-pr-3244-ppt — reconcile i18n drift from PR #3244 (`fix(ppt-web): localize faults, news, settings and error pages`). `ServerErrorPage` copy localized across all 6 locales — `errors.somethingWentWrong`, `errors.pages.serverError.description`, and actions `errors.pages.{tryAgain,backToDashboard}`. i18n only — still shipped; frontmatter unchanged.
 - 2026-05-18 — agent: created stub for unmapped route.

@@ -43,4 +43,5 @@ Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, e
 
 <!-- newest entries on top -->
 
+- 2026-11-05 — agent: screen-map-drift-pr-3244-ppt — reconcile i18n drift from PR #3244. `EditFaultPage` moved hardcoded English copy into react-i18next (`faults.*`) across all 6 locales, extending the PR #2647 missing-param fallback i18n already logged below. i18n only — no route/component/endpoint/status change.
 - 2026-11-04 — agent: unit dropdown filled from the fault's building units (GET /buildings/{id}/units)

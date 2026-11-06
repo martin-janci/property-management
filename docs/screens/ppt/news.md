@@ -89,6 +89,7 @@ UC-13 long-form publishing. Distinct from `ppt/announcements` — articles are e
 
 <!-- newest entries on top -->
 
+- 2026-11-05 — agent: screen-map-drift-pr-3244-ppt — reconcile i18n drift from PR #3244 (`fix(ppt-web): localize faults, news, settings and error pages`). `NewsListPage` + `NewsArticleCard` localized (`news.*`): list title, search placeholder, status/filter options, loading copy and the confirm/delete/publish/archive/pin error toasts now resolve via react-i18next across all 6 locales. Also a functional fix in the same PR: the list now reads the `{ articles, count, total }` API envelope (tolerating a bare array) instead of `data.map(...)` — the previous code threw "data.map is not a function" on `/news`. apiStatus stays `partial`; frontmatter unchanged.
 - 2026-11-04 — agent: r3-nav-roles — Create Article and card write actions (edit/publish/archive/delete/pin) only for `isManagerRole` users (audit r3 #14).
 - 2026-11-04 — agent: r3-nav-roles follow-up — `/news/:id/edit` is now gated to `MANAGER_ROLES` like `/news/new` (audit r3 #14).
 - 2026-11-04 — agent: destructive-action confirm now uses the in-app ConfirmationDialog (useConfirmDialog) instead of window.confirm()
