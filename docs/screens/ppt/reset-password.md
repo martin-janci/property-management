@@ -9,7 +9,7 @@ implementations:
     component: ResetPasswordPage
     buildStatus: shipped
     redesignStatus: not-started
-    apiStatus: stub
+    apiStatus: complete
 endpoints: []
 relatedScreens:
   - id: ppt/forgot-password
@@ -34,3 +34,4 @@ Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, e
 
 ## Agent Log
 - 2026-05-18 — agent: created stub for unmapped route.
+- 2026-11-06 — agent: client now calls the real routes (POST /auth/reset-password; new POST /auth/password/change); apiStatus stub→complete.

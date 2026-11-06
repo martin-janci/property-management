@@ -172,6 +172,12 @@ impl OrganizationMemberRepository {
     // ========================================================================
 
     /// Add a member to an organization.
+    ///
+    /// Removing a member is a soft delete (`status = 'removed'`), and
+    /// `(organization_id, user_id)` is unique, so re-adding a removed member
+    /// reactivates that row instead of inserting a new one. A row that is not
+    /// `removed` is left alone, and the call then fails with `RowNotFound`
+    /// (callers check membership first and answer 409).
     pub async fn create(
         &self,
         data: CreateOrganizationMember,
@@ -189,6 +195,15 @@ impl OrganizationMemberRepository {
             INSERT INTO organization_members
                 (organization_id, user_id, role_id, role_type, status, invited_by, invited_at, joined_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            ON CONFLICT (organization_id, user_id) DO UPDATE SET
+                role_id = EXCLUDED.role_id,
+                role_type = EXCLUDED.role_type,
+                status = EXCLUDED.status,
+                invited_by = EXCLUDED.invited_by,
+                invited_at = EXCLUDED.invited_at,
+                joined_at = EXCLUDED.joined_at,
+                updated_at = NOW()
+            WHERE organization_members.status = 'removed'
             RETURNING *
             "#,
         )

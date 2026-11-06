@@ -468,6 +468,31 @@ async fn organizations_mutation_happy_path(pool: PgPool) {
     .await
     .assert_status(StatusCode::OK);
 
+    // Re-add the same user by e-mail (no user id needed).
+    app.execute(
+        sess.post(&format!("/api/v1/organizations/{org}/members"))
+            .json(json!({ "email": other.email, "role_id": seeded_role }))
+            .build(),
+    )
+    .await
+    .assert_status(StatusCode::CREATED);
+
+    // Neither user_id nor email -> 400; unknown e-mail -> 404.
+    app.execute(
+        sess.post(&format!("/api/v1/organizations/{org}/members"))
+            .json(json!({ "role_id": seeded_role }))
+            .build(),
+    )
+    .await
+    .assert_status(StatusCode::BAD_REQUEST);
+    app.execute(
+        sess.post(&format!("/api/v1/organizations/{org}/members"))
+            .json(json!({ "email": "nobody-here@example.invalid", "role_id": seeded_role }))
+            .build(),
+    )
+    .await
+    .assert_status(StatusCode::NOT_FOUND);
+
     app.execute(
         sess.delete(&format!("/api/v1/organizations/{org}/roles/{role_id}"))
             .build(),

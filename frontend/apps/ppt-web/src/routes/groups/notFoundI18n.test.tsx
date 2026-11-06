@@ -34,6 +34,7 @@ vi.mock('../../components', () => ({
 vi.mock('../lazyRoutes', () => ({
   BookFacilityPage: () => <div />,
   BuildingDetailPage: () => <div data-testid="building-detail-page" />,
+  BuildingFormPage: () => <div />,
   BuildingsPage: () => <div />,
   CreateFacilityPage: () => <div />,
   EditFacilityPage: () => <div />,

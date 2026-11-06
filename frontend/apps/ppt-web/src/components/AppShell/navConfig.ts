@@ -67,6 +67,12 @@ export const NAV_SECTIONS: NavSection[] = [
         end: true,
       },
       { to: '/emergency', labelKey: 'nav.emergency', defaultLabel: 'Emergency contacts' },
+      {
+        to: '/settings/members',
+        labelKey: 'nav.members',
+        defaultLabel: 'People & roles',
+        audience: 'manager',
+      },
     ],
   },
   {

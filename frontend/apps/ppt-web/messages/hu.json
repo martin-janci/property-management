@@ -395,7 +395,8 @@
     "meters": "Mérőórák",
     "outages": "Szolgáltatáskiesések",
     "neighbors": "Szomszédok",
-    "leases": "Bérleti szerződések"
+    "leases": "Bérleti szerződések",
+    "members": "Személyek és szerepkörök"
   },
   "auth": {
     "signIn": "Bejelentkezés",
@@ -578,7 +579,22 @@
     "callbackMissingParams": "Érvénytelen visszahívási URL: hiányzik a code vagy a state paraméter.",
     "stateValidationFailed": "A hitelesítés sikertelen (a state paraméter nem egyezik). Jelentkezzen be újra.",
     "ssoCallbackFailed": "Az SSO-bejelentkezés sikertelen. Próbálja újra.",
-    "ssoProviderError": "Az identitásszolgáltató hibát adott vissza."
+    "ssoProviderError": "Az identitásszolgáltató hibát adott vissza.",
+    "verifyEmail": {
+      "verifyingTitle": "E-mail-cím ellenőrzése…",
+      "verifyingSubtitle": "Ez csak egy pillanat.",
+      "successTitle": "E-mail-cím megerősítve",
+      "successSubtitle": "A fiókja aktív. Most már bejelentkezhet.",
+      "signIn": "Bejelentkezés",
+      "failedTitle": "A megerősítés nem sikerült",
+      "expired": "A megerősítő hivatkozás lejárt. Adja meg e-mail-címét, és küldünk egy újat.",
+      "invalid": "A megerősítő hivatkozás érvénytelen vagy már felhasználták. Ha nem tud bejelentkezni, kérjen új hivatkozást.",
+      "error": "Nem sikerült megerősíteni az e-mail-címet. Próbálja újra, vagy kérjen új hivatkozást.",
+      "resend": "Új hivatkozás küldése",
+      "resending": "Küldés…",
+      "resendSent": "Ha ehhez a címhez nem megerősített fiók tartozik, az új hivatkozás úton van.",
+      "resendFailed": "A hivatkozást nem sikerült elküldeni. Próbálja később."
+    }
   },
   "home": {
     "title": "Házkezelés papírmunka nélkül",
@@ -1155,6 +1171,55 @@
         "tenant": "Bérlő",
         "family_member": "Családtag",
         "subtenant": "Albérlő"
+      }
+    },
+    "form": {
+      "createTitle": "Új épület",
+      "editTitle": "Épület szerkesztése",
+      "name": "Név",
+      "street": "Utca és házszám",
+      "postalCode": "Irányítószám",
+      "city": "Település",
+      "country": "Országkód",
+      "floorCount": "Szintek száma",
+      "totalEntrances": "Bejáratok száma",
+      "yearBuilt": "Építés éve",
+      "description": "Leírás",
+      "saving": "Mentés…",
+      "saveFailed": "Az épületet nem sikerült menteni. Ellenőrizze a mezőket, és próbálja újra.",
+      "errors": {
+        "streetRequired": "Az utca megadása kötelező.",
+        "cityRequired": "A település megadása kötelező.",
+        "postalCodeRequired": "Az irányítószám megadása kötelező.",
+        "floorsInvalid": "A szintek száma legalább 1 egész szám legyen.",
+        "entrancesInvalid": "A bejáratok száma legalább 1 egész szám legyen.",
+        "yearInvalid": "Adjon meg érvényes évet."
+      }
+    },
+    "residents": {
+      "manage": "Lakók",
+      "title": "{{unit}} egység lakói",
+      "empty": "Ehhez az egységhez még senki sincs rendelve.",
+      "primary": "fő kapcsolattartó",
+      "end": "Lakhatás lezárása",
+      "addTitle": "Lakó hozzáadása",
+      "person": "Személy",
+      "choosePerson": "Válasszon tagot…",
+      "typeLabel": "Kapcsolat",
+      "primaryLabel": "Az egység fő kapcsolattartója",
+      "notListed": "Nincs a listában? Először adja hozzá a szervezethez.",
+      "add": "Hozzáadás",
+      "adding": "Hozzáadás…",
+      "type": {
+        "owner": "Tulajdonos",
+        "tenant": "Bérlő",
+        "family_member": "Háztartástag",
+        "subtenant": "Albérlő"
+      },
+      "errors": {
+        "loadFailed": "A lakókat nem sikerült betölteni.",
+        "addFailed": "A lakót nem sikerült hozzáadni.",
+        "duplicate": "Ez a személy már az egység lakója."
       }
     }
   },
@@ -6683,6 +6748,35 @@
       "label": "MI-elemzések",
       "sentiment": "Lakói hangulat",
       "predictiveMaintenance": "Prediktív karbantartás"
+    }
+  },
+  "members": {
+    "title": "Személyek és szerepkörök",
+    "subtitle": "A szervezet tagjai és szerepköreik.",
+    "addTitle": "Tag hozzáadása",
+    "email": "E-mail",
+    "emailPlaceholder": "nev@pelda.hu",
+    "role": "Szerepkör",
+    "add": "Tag hozzáadása",
+    "adding": "Hozzáadás…",
+    "addHint": "A személynek már rendelkeznie kell fiókkal (a bejelentkezési oldalon regisztrálhat). Ezután itt adhatja hozzá e-mail alapján.",
+    "name": "Név",
+    "actions": "Műveletek",
+    "changeRoleFor": "{{name}} szerepkörének módosítása",
+    "remove": "Eltávolítás",
+    "removeTitle": "Eltávolítja a tagot?",
+    "removeMessage": "{{name}} elveszíti a hozzáférést a szervezethez.",
+    "empty": "A szervezetnek még nincsenek tagjai.",
+    "added": "Tag hozzáadva.",
+    "roleChanged": "Szerepkör módosítva.",
+    "removed": "Tag eltávolítva.",
+    "errors": {
+      "userNotFound": "Ehhez az e-mailhez nem tartozik fiók. Kérje meg a személyt, hogy előbb regisztráljon.",
+      "alreadyMember": "Ez a személy már tag.",
+      "forbidden": "Ennél a tagnál ezt a módosítást nem végezheti el.",
+      "invalid": "Ellenőrizze a megadott adatokat.",
+      "generic": "A módosítást nem sikerült menteni. Próbálja újra.",
+      "loadFailed": "A tagokat nem sikerült betölteni."
     }
   }
 }

@@ -134,6 +134,7 @@ export function fromApiBuilding(raw: unknown): Building {
     },
     type: (str(r.type) ?? str(r.building_type) ?? 'residential') as Building['type'],
     floorCount: num(r.total_floors) ?? num(r.floorCount) ?? 0,
+    totalEntrances: num(r.total_entrances) ?? num(r.totalEntrances),
     unitCount: num(r.unit_count) ?? num(r.unitCount) ?? 0,
     yearBuilt: num(r.year_built) ?? num(r.yearBuilt),
     totalAreaM2: num(r.total_area_m2) ?? num(r.totalAreaM2),
@@ -147,6 +148,48 @@ export function fromApiBuilding(raw: unknown): Building {
   };
   const { latitude: _lat, longitude: _lng, ...rest } = normalizeBuilding(building);
   return rest as Building;
+}
+
+/**
+ * Map the client create request onto api-server's `CreateBuildingRequest`
+ * (flat snake_case: street/city/postal_code/…, total_floors). The server has
+ * no `type`, `location`, `total_area_m2` or manager columns on create.
+ */
+export function toApiCreateBuilding(
+  data: CreateBuildingRequest,
+  fallbackOrgId?: string
+): Record<string, unknown> {
+  return dropUndefined({
+    organization_id: data.organizationId ?? fallbackOrgId,
+    name: data.name,
+    street: data.address.street,
+    city: data.address.city,
+    postal_code: data.address.postalCode,
+    country: data.address.country || undefined,
+    description: data.description,
+    year_built: data.yearBuilt,
+    total_floors: data.floorCount,
+    total_entrances: data.totalEntrances,
+  });
+}
+
+/** Map the client update request onto api-server's `UpdateBuildingRequest` (PUT, all optional). */
+export function toApiUpdateBuilding(data: UpdateBuildingRequest): Record<string, unknown> {
+  return dropUndefined({
+    name: data.name,
+    street: data.address?.street,
+    city: data.address?.city,
+    postal_code: data.address?.postalCode,
+    country: data.address?.country,
+    description: data.description,
+    year_built: data.yearBuilt,
+    total_floors: data.floorCount,
+    total_entrances: data.totalEntrances,
+  });
+}
+
+function dropUndefined(obj: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined));
 }
 
 /**
@@ -280,7 +323,7 @@ export const createBuildingsApi = (config: ApiConfig) => {
       const response = await fetch(baseUrl, {
         method: 'POST',
         headers,
-        body: JSON.stringify(data),
+        body: JSON.stringify(toApiCreateBuilding(data, config.tenantId ?? getOrg() ?? undefined)),
       });
       return fromApiBuilding(await handleResponse<unknown>(response));
     },
@@ -297,10 +340,11 @@ export const createBuildingsApi = (config: ApiConfig) => {
      * Update a building.
      */
     update: async (id: string, data: UpdateBuildingRequest): Promise<Building> => {
+      // api-server mounts PUT /buildings/{id} (there is no PATCH route).
       const response = await fetch(`${baseUrl}/${id}`, {
-        method: 'PATCH',
+        method: 'PUT',
         headers,
-        body: JSON.stringify(data),
+        body: JSON.stringify(toApiUpdateBuilding(data)),
       });
       return fromApiBuilding(await handleResponse<unknown>(response));
     },

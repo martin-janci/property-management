@@ -395,7 +395,8 @@
     "meters": "Liczniki",
     "outages": "Przerwy w dostawach",
     "neighbors": "Sąsiedzi",
-    "leases": "Umowy najmu"
+    "leases": "Umowy najmu",
+    "members": "Osoby i role"
   },
   "auth": {
     "signIn": "Zaloguj się",
@@ -580,7 +581,22 @@
     "callbackMissingParams": "Nieprawidłowy adres zwrotny: brak parametru code lub state.",
     "stateValidationFailed": "Uwierzytelnianie nie powiodło się (niezgodność parametru state). Zaloguj się ponownie.",
     "ssoCallbackFailed": "Logowanie przez SSO nie powiodło się. Spróbuj ponownie.",
-    "ssoProviderError": "Dostawca tożsamości zwrócił błąd."
+    "ssoProviderError": "Dostawca tożsamości zwrócił błąd.",
+    "verifyEmail": {
+      "verifyingTitle": "Weryfikujemy Twój e-mail…",
+      "verifyingSubtitle": "To potrwa tylko chwilę.",
+      "successTitle": "E-mail zweryfikowany",
+      "successSubtitle": "Twoje konto jest aktywne. Możesz się teraz zalogować.",
+      "signIn": "Zaloguj się",
+      "failedTitle": "Weryfikacja nie powiodła się",
+      "expired": "Link weryfikacyjny wygasł. Podaj swój e-mail, a wyślemy nowy.",
+      "invalid": "Link weryfikacyjny jest nieprawidłowy lub został już użyty. Jeśli nie możesz się zalogować, poproś o nowy link.",
+      "error": "Nie udało się zweryfikować e-maila. Spróbuj ponownie lub poproś o nowy link.",
+      "resend": "Wyślij nowy link",
+      "resending": "Wysyłanie…",
+      "resendSent": "Jeśli dla tego adresu istnieje niezweryfikowane konto, nowy link jest w drodze.",
+      "resendFailed": "Nie udało się wysłać linku. Spróbuj później."
+    }
   },
   "home": {
     "title": "Zarządzanie budynkiem bez papierologii",
@@ -1163,6 +1179,55 @@
         "tenant": "Najemca",
         "family_member": "Członek rodziny",
         "subtenant": "Podnajemca"
+      }
+    },
+    "form": {
+      "createTitle": "Nowy budynek",
+      "editTitle": "Edytuj budynek",
+      "name": "Nazwa",
+      "street": "Ulica i numer",
+      "postalCode": "Kod pocztowy",
+      "city": "Miasto",
+      "country": "Kod kraju",
+      "floorCount": "Liczba kondygnacji",
+      "totalEntrances": "Liczba wejść",
+      "yearBuilt": "Rok budowy",
+      "description": "Opis",
+      "saving": "Zapisywanie…",
+      "saveFailed": "Nie udało się zapisać budynku. Sprawdź pola i spróbuj ponownie.",
+      "errors": {
+        "streetRequired": "Ulica jest wymagana.",
+        "cityRequired": "Miasto jest wymagane.",
+        "postalCodeRequired": "Kod pocztowy jest wymagany.",
+        "floorsInvalid": "Liczba kondygnacji musi być liczbą całkowitą, co najmniej 1.",
+        "entrancesInvalid": "Liczba wejść musi być liczbą całkowitą, co najmniej 1.",
+        "yearInvalid": "Podaj prawidłowy rok."
+      }
+    },
+    "residents": {
+      "manage": "Mieszkańcy",
+      "title": "Mieszkańcy lokalu {{unit}}",
+      "empty": "Do tego lokalu nikt nie jest jeszcze przypisany.",
+      "primary": "główny kontakt",
+      "end": "Zakończ zamieszkanie",
+      "addTitle": "Dodaj mieszkańca",
+      "person": "Osoba",
+      "choosePerson": "Wybierz członka…",
+      "typeLabel": "Relacja",
+      "primaryLabel": "Główny kontakt lokalu",
+      "notListed": "Brak osoby na liście? Najpierw dodaj ją do organizacji.",
+      "add": "Dodaj",
+      "adding": "Dodawanie…",
+      "type": {
+        "owner": "Właściciel",
+        "tenant": "Najemca",
+        "family_member": "Członek gospodarstwa",
+        "subtenant": "Podnajemca"
+      },
+      "errors": {
+        "loadFailed": "Nie udało się wczytać mieszkańców.",
+        "addFailed": "Nie udało się dodać mieszkańca.",
+        "duplicate": "Ta osoba jest już mieszkańcem lokalu."
       }
     }
   },
@@ -6825,6 +6890,35 @@
       "label": "Analizy AI",
       "sentiment": "Nastroje mieszkańców",
       "predictiveMaintenance": "Konserwacja predykcyjna"
+    }
+  },
+  "members": {
+    "title": "Osoby i role",
+    "subtitle": "Członkowie Twojej organizacji i ich role.",
+    "addTitle": "Dodaj członka",
+    "email": "E-mail",
+    "emailPlaceholder": "imie@przyklad.pl",
+    "role": "Rola",
+    "add": "Dodaj członka",
+    "adding": "Dodawanie…",
+    "addHint": "Osoba musi już mieć konto (rejestruje się na stronie logowania). Następnie dodasz ją tutaj po e-mailu.",
+    "name": "Imię i nazwisko",
+    "actions": "Akcje",
+    "changeRoleFor": "Zmień rolę dla {{name}}",
+    "remove": "Usuń",
+    "removeTitle": "Usunąć członka?",
+    "removeMessage": "{{name}} straci dostęp do tej organizacji.",
+    "empty": "Organizacja nie ma jeszcze członków.",
+    "added": "Członek dodany.",
+    "roleChanged": "Rola zmieniona.",
+    "removed": "Członek usunięty.",
+    "errors": {
+      "userNotFound": "Dla tego e-maila nie istnieje konto. Poproś osobę, aby najpierw się zarejestrowała.",
+      "alreadyMember": "Ta osoba jest już członkiem.",
+      "forbidden": "Nie możesz wprowadzić tej zmiany dla tego członka.",
+      "invalid": "Sprawdź wprowadzone dane.",
+      "generic": "Nie udało się zapisać zmiany. Spróbuj ponownie.",
+      "loadFailed": "Nie udało się wczytać członków."
     }
   }
 }

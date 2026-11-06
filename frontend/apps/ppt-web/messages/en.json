@@ -409,7 +409,8 @@
     "automations": "Automations",
     "iot": "Smart building",
     "rentals": "Short-term rentals",
-    "sessions": "Active sessions"
+    "sessions": "Active sessions",
+    "members": "People & roles"
   },
   "auth": {
     "signIn": "Sign In",
@@ -592,7 +593,22 @@
     "callbackMissingParams": "Invalid callback URL: missing code or state parameters.",
     "stateValidationFailed": "Authentication failed: state parameter mismatch. Please try signing in again.",
     "ssoCallbackFailed": "SSO login failed. Please try again.",
-    "ssoProviderError": "The identity provider returned an error."
+    "ssoProviderError": "The identity provider returned an error.",
+    "verifyEmail": {
+      "verifyingTitle": "Verifying your e-mail…",
+      "verifyingSubtitle": "This takes just a moment.",
+      "successTitle": "E-mail verified",
+      "successSubtitle": "Your account is active. You can sign in now.",
+      "signIn": "Sign in",
+      "failedTitle": "Verification failed",
+      "expired": "This verification link has expired. Enter your e-mail and we will send a new one.",
+      "invalid": "This verification link is invalid or has already been used. If you cannot sign in, request a new link.",
+      "error": "We could not verify your e-mail. Try again or request a new link.",
+      "resend": "Send a new link",
+      "resending": "Sending…",
+      "resendSent": "If an unverified account exists for this address, a new link is on its way.",
+      "resendFailed": "The link could not be sent. Try again later."
+    }
   },
   "home": {
     "title": "Property management without the paperwork",
@@ -1213,6 +1229,55 @@
         "tenant": "Tenant",
         "family_member": "Family member",
         "subtenant": "Subtenant"
+      }
+    },
+    "form": {
+      "createTitle": "New building",
+      "editTitle": "Edit building",
+      "name": "Name",
+      "street": "Street and number",
+      "postalCode": "Postal code",
+      "city": "City",
+      "country": "Country code",
+      "floorCount": "Floors",
+      "totalEntrances": "Entrances",
+      "yearBuilt": "Year built",
+      "description": "Description",
+      "saving": "Saving…",
+      "saveFailed": "The building could not be saved. Check the fields and try again.",
+      "errors": {
+        "streetRequired": "Street is required.",
+        "cityRequired": "City is required.",
+        "postalCodeRequired": "Postal code is required.",
+        "floorsInvalid": "Floors must be a whole number of at least 1.",
+        "entrancesInvalid": "Entrances must be a whole number of at least 1.",
+        "yearInvalid": "Enter a valid year."
+      }
+    },
+    "residents": {
+      "manage": "Residents",
+      "title": "Residents of unit {{unit}}",
+      "empty": "No residents are assigned to this unit yet.",
+      "primary": "primary contact",
+      "end": "End residency",
+      "addTitle": "Add resident",
+      "person": "Person",
+      "choosePerson": "Choose a member…",
+      "typeLabel": "Relationship",
+      "primaryLabel": "Primary contact for the unit",
+      "notListed": "Person not listed? Add them to the organization first.",
+      "add": "Add",
+      "adding": "Adding…",
+      "type": {
+        "owner": "Owner",
+        "tenant": "Tenant",
+        "family_member": "Family member",
+        "subtenant": "Subtenant"
+      },
+      "errors": {
+        "loadFailed": "Residents could not be loaded.",
+        "addFailed": "The resident could not be added.",
+        "duplicate": "This person is already a resident of the unit."
       }
     }
   },
@@ -7960,6 +8025,35 @@
       "label": "AI insights",
       "sentiment": "Resident sentiment",
       "predictiveMaintenance": "Predictive maintenance"
+    }
+  },
+  "members": {
+    "title": "People & roles",
+    "subtitle": "Members of your organization and the role each one has.",
+    "addTitle": "Add a member",
+    "email": "E-mail",
+    "emailPlaceholder": "name@example.com",
+    "role": "Role",
+    "add": "Add member",
+    "adding": "Adding…",
+    "addHint": "The person must already have an account (they can register on the sign-in page). Then add them here by e-mail.",
+    "name": "Name",
+    "actions": "Actions",
+    "changeRoleFor": "Change role for {{name}}",
+    "remove": "Remove",
+    "removeTitle": "Remove member?",
+    "removeMessage": "{{name}} will lose access to this organization.",
+    "empty": "The organization has no members yet.",
+    "added": "Member added.",
+    "roleChanged": "Role changed.",
+    "removed": "Member removed.",
+    "errors": {
+      "userNotFound": "No account exists for this e-mail. Ask the person to register first.",
+      "alreadyMember": "This person is already a member.",
+      "forbidden": "You are not allowed to do this for this member.",
+      "invalid": "Check the entered details.",
+      "generic": "The change could not be saved. Try again.",
+      "loadFailed": "Members could not be loaded."
     }
   }
 }

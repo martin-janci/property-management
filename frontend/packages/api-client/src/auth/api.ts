@@ -154,7 +154,7 @@ export const createAuthApi = (config: ApiConfig) => {
      * @param request - Password reset request with email
      */
     requestPasswordReset: async (request: RequestPasswordResetRequest): Promise<void> => {
-      const response = await fetch(`${baseUrl}/password-reset/request`, {
+      const response = await fetch(`${baseUrl}/forgot-password`, {
         method: 'POST',
         headers: buildHeaders(config),
         body: JSON.stringify(request),
@@ -171,7 +171,7 @@ export const createAuthApi = (config: ApiConfig) => {
      * @param request - Password reset confirmation with token and new password
      */
     resetPassword: async (request: ResetPasswordRequest): Promise<void> => {
-      const response = await fetch(`${baseUrl}/password-reset/confirm`, {
+      const response = await fetch(`${baseUrl}/reset-password`, {
         method: 'POST',
         headers: buildHeaders(config),
         body: JSON.stringify(request),
@@ -205,9 +205,27 @@ export const createAuthApi = (config: ApiConfig) => {
      * @param token - Email verification token
      */
     verifyEmail: async (token: string): Promise<void> => {
+      // The server exposes verification as GET (the emailed link is a plain URL).
       const response = await fetch(`${baseUrl}/verify-email?token=${encodeURIComponent(token)}`, {
+        method: 'GET',
+        headers: buildHeaders(config),
+      });
+      if (!response.ok) {
+        const error = await handleResponse<never>(response);
+        throw error;
+      }
+    },
+
+    /**
+     * Re-send the email-verification link.
+     *
+     * @param email - Address the account was registered with
+     */
+    resendVerification: async (email: string): Promise<void> => {
+      const response = await fetch(`${baseUrl}/resend-verification`, {
         method: 'POST',
         headers: buildHeaders(config),
+        body: JSON.stringify({ email }),
       });
       if (!response.ok) {
         const error = await handleResponse<never>(response);
