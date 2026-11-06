@@ -395,7 +395,8 @@
     "meters": "Zähler",
     "outages": "Störungen",
     "neighbors": "Nachbarn",
-    "leases": "Mietverträge"
+    "leases": "Mietverträge",
+    "members": "Personen & Rollen"
   },
   "auth": {
     "signIn": "Anmelden",
@@ -578,7 +579,22 @@
     "callbackMissingParams": "Ungültige Rückruf-URL: Parameter code oder state fehlt.",
     "stateValidationFailed": "Authentifizierung fehlgeschlagen (state-Parameter stimmt nicht überein). Bitte melden Sie sich erneut an.",
     "ssoCallbackFailed": "SSO-Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.",
-    "ssoProviderError": "Der Identitätsanbieter hat einen Fehler zurückgegeben."
+    "ssoProviderError": "Der Identitätsanbieter hat einen Fehler zurückgegeben.",
+    "verifyEmail": {
+      "verifyingTitle": "Ihre E-Mail wird bestätigt…",
+      "verifyingSubtitle": "Das dauert nur einen Moment.",
+      "successTitle": "E-Mail bestätigt",
+      "successSubtitle": "Ihr Konto ist aktiv. Sie können sich jetzt anmelden.",
+      "signIn": "Anmelden",
+      "failedTitle": "Bestätigung fehlgeschlagen",
+      "expired": "Dieser Bestätigungslink ist abgelaufen. Geben Sie Ihre E-Mail ein, wir senden Ihnen einen neuen.",
+      "invalid": "Dieser Bestätigungslink ist ungültig oder wurde bereits verwendet. Fordern Sie bei Bedarf einen neuen Link an.",
+      "error": "Ihre E-Mail konnte nicht bestätigt werden. Versuchen Sie es erneut oder fordern Sie einen neuen Link an.",
+      "resend": "Neuen Link senden",
+      "resending": "Wird gesendet…",
+      "resendSent": "Falls für diese Adresse ein unbestätigtes Konto existiert, ist ein neuer Link unterwegs.",
+      "resendFailed": "Der Link konnte nicht gesendet werden. Versuchen Sie es später erneut."
+    }
   },
   "home": {
     "title": "Hausverwaltung ohne Papierkram",
@@ -1155,6 +1171,55 @@
         "tenant": "Mieter",
         "family_member": "Familienangehöriger",
         "subtenant": "Untermieter"
+      }
+    },
+    "form": {
+      "createTitle": "Neues Gebäude",
+      "editTitle": "Gebäude bearbeiten",
+      "name": "Name",
+      "street": "Straße und Hausnummer",
+      "postalCode": "Postleitzahl",
+      "city": "Ort",
+      "country": "Ländercode",
+      "floorCount": "Stockwerke",
+      "totalEntrances": "Eingänge",
+      "yearBuilt": "Baujahr",
+      "description": "Beschreibung",
+      "saving": "Wird gespeichert…",
+      "saveFailed": "Das Gebäude konnte nicht gespeichert werden. Prüfen Sie die Felder und versuchen Sie es erneut.",
+      "errors": {
+        "streetRequired": "Straße ist erforderlich.",
+        "cityRequired": "Ort ist erforderlich.",
+        "postalCodeRequired": "Postleitzahl ist erforderlich.",
+        "floorsInvalid": "Stockwerke muss eine ganze Zahl ab 1 sein.",
+        "entrancesInvalid": "Eingänge muss eine ganze Zahl ab 1 sein.",
+        "yearInvalid": "Geben Sie ein gültiges Jahr ein."
+      }
+    },
+    "residents": {
+      "manage": "Bewohner",
+      "title": "Bewohner der Einheit {{unit}}",
+      "empty": "Dieser Einheit ist noch niemand zugeordnet.",
+      "primary": "Hauptkontakt",
+      "end": "Wohnverhältnis beenden",
+      "addTitle": "Bewohner hinzufügen",
+      "person": "Person",
+      "choosePerson": "Mitglied wählen…",
+      "typeLabel": "Beziehung",
+      "primaryLabel": "Hauptkontakt der Einheit",
+      "notListed": "Person fehlt? Fügen Sie sie zuerst der Organisation hinzu.",
+      "add": "Hinzufügen",
+      "adding": "Wird hinzugefügt…",
+      "type": {
+        "owner": "Eigentümer",
+        "tenant": "Mieter",
+        "family_member": "Haushaltsmitglied",
+        "subtenant": "Untermieter"
+      },
+      "errors": {
+        "loadFailed": "Bewohner konnten nicht geladen werden.",
+        "addFailed": "Bewohner konnte nicht hinzugefügt werden.",
+        "duplicate": "Diese Person ist bereits Bewohner der Einheit."
       }
     }
   },
@@ -6683,6 +6748,35 @@
       "label": "KI-Einblicke",
       "sentiment": "Bewohnerstimmung",
       "predictiveMaintenance": "Vorausschauende Wartung"
+    }
+  },
+  "members": {
+    "title": "Personen & Rollen",
+    "subtitle": "Mitglieder Ihrer Organisation und ihre Rollen.",
+    "addTitle": "Mitglied hinzufügen",
+    "email": "E-Mail",
+    "emailPlaceholder": "name@beispiel.de",
+    "role": "Rolle",
+    "add": "Mitglied hinzufügen",
+    "adding": "Wird hinzugefügt…",
+    "addHint": "Die Person braucht bereits ein Konto (Registrierung auf der Anmeldeseite). Danach fügen Sie sie hier per E-Mail hinzu.",
+    "name": "Name",
+    "actions": "Aktionen",
+    "changeRoleFor": "Rolle für {{name}} ändern",
+    "remove": "Entfernen",
+    "removeTitle": "Mitglied entfernen?",
+    "removeMessage": "{{name}} verliert den Zugriff auf diese Organisation.",
+    "empty": "Die Organisation hat noch keine Mitglieder.",
+    "added": "Mitglied hinzugefügt.",
+    "roleChanged": "Rolle geändert.",
+    "removed": "Mitglied entfernt.",
+    "errors": {
+      "userNotFound": "Für diese E-Mail gibt es kein Konto. Bitten Sie die Person, sich zuerst zu registrieren.",
+      "alreadyMember": "Diese Person ist bereits Mitglied.",
+      "forbidden": "Diese Änderung ist für dieses Mitglied nicht erlaubt.",
+      "invalid": "Prüfen Sie die Eingaben.",
+      "generic": "Die Änderung konnte nicht gespeichert werden. Versuchen Sie es erneut.",
+      "loadFailed": "Mitglieder konnten nicht geladen werden."
     }
   }
 }

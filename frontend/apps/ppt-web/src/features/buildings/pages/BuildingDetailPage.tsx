@@ -10,6 +10,8 @@ import type { BuildingStatus } from '@ppt/api-client';
 import { isSafeImageUrl } from '@ppt/shared';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../../contexts';
+import { isManagerRole } from '../../../routes/shared';
 import { BuildingLocationMap, UnitsSection } from '../components';
 import { useBuilding, useBuildingCommonAreas, useBuildingFloors } from '../hooks';
 
@@ -33,6 +35,8 @@ const COMMON_AREAS_API_AVAILABLE = false;
 
 export function BuildingDetailPage({ buildingId }: BuildingDetailPageProps) {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const canManage = isManagerRole(user?.role);
   const {
     data: building,
     isLoading: buildingLoading,
@@ -140,6 +144,14 @@ export function BuildingDetailPage({ buildingId }: BuildingDetailPageProps) {
 
           {/* Quick links to building-scoped features */}
           <div className="mt-4 flex flex-wrap gap-3">
+            {canManage && (
+              <Link
+                to={`/buildings/${buildingId}/edit`}
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+              >
+                {t('buildings.form.editTitle')}
+              </Link>
+            )}
             <Link
               to={`/buildings/${buildingId}/person-months`}
               className="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-md hover:bg-blue-100"

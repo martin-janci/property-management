@@ -14,6 +14,10 @@ const commonAreasResult = vi.hoisted(() => ({
 }));
 const commonAreasCalls = vi.hoisted(() => [] as Array<[string, boolean | undefined]>);
 
+vi.mock('../../../contexts', () => ({
+  useAuth: () => ({ user: { role: 'manager', organizationId: 'org-1' } }),
+}));
+
 vi.mock('../hooks', () => ({
   useBuilding: () => ({
     data: {

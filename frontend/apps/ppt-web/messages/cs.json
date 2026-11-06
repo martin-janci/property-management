@@ -409,7 +409,8 @@
     "meters": "Měřiče",
     "outages": "Odstávky",
     "neighbors": "Sousedé",
-    "leases": "Nájmy"
+    "leases": "Nájmy",
+    "members": "Lidé a role"
   },
   "auth": {
     "signIn": "Přihlásit se",
@@ -594,7 +595,22 @@
     "callbackMissingParams": "Neplatná návratová adresa: chybí parametr code nebo state.",
     "stateValidationFailed": "Ověření se nezdařilo (neshoda parametru state). Přihlaste se znovu.",
     "ssoCallbackFailed": "Přihlášení přes SSO se nezdařilo. Zkuste to znovu.",
-    "ssoProviderError": "Poskytovatel identity vrátil chybu."
+    "ssoProviderError": "Poskytovatel identity vrátil chybu.",
+    "verifyEmail": {
+      "verifyingTitle": "Ověřujeme váš e-mail…",
+      "verifyingSubtitle": "Potrvá to jen chvilku.",
+      "successTitle": "E-mail je ověřen",
+      "successSubtitle": "Váš účet je aktivní. Nyní se můžete přihlásit.",
+      "signIn": "Přihlásit se",
+      "failedTitle": "Ověření se nezdařilo",
+      "expired": "Platnost ověřovacího odkazu vypršela. Zadejte svůj e-mail a pošleme vám nový.",
+      "invalid": "Ověřovací odkaz je neplatný nebo už byl použit. Pokud se nemůžete přihlásit, vyžádejte si nový odkaz.",
+      "error": "E-mail se nepodařilo ověřit. Zkuste to znovu nebo si vyžádejte nový odkaz.",
+      "resend": "Poslat nový odkaz",
+      "resending": "Odesílá se…",
+      "resendSent": "Pokud pro tuto adresu existuje neověřený účet, nový odkaz je na cestě.",
+      "resendFailed": "Odkaz se nepodařilo odeslat. Zkuste to později."
+    }
   },
   "home": {
     "title": "Správa domu bez papírování",
@@ -1221,6 +1237,55 @@
         "tenant": "Nájemník",
         "family_member": "Člen domácnosti",
         "subtenant": "Podnájemník"
+      }
+    },
+    "form": {
+      "createTitle": "Nová budova",
+      "editTitle": "Upravit budovu",
+      "name": "Název",
+      "street": "Ulice a číslo",
+      "postalCode": "PSČ",
+      "city": "Město",
+      "country": "Kód země",
+      "floorCount": "Počet podlaží",
+      "totalEntrances": "Počet vchodů",
+      "yearBuilt": "Rok výstavby",
+      "description": "Popis",
+      "saving": "Ukládá se…",
+      "saveFailed": "Budovu se nepodařilo uložit. Zkontrolujte pole a zkuste to znovu.",
+      "errors": {
+        "streetRequired": "Ulice je povinná.",
+        "cityRequired": "Město je povinné.",
+        "postalCodeRequired": "PSČ je povinné.",
+        "floorsInvalid": "Počet podlaží musí být celé číslo, alespoň 1.",
+        "entrancesInvalid": "Počet vchodů musí být celé číslo, alespoň 1.",
+        "yearInvalid": "Zadejte platný rok."
+      }
+    },
+    "residents": {
+      "manage": "Obyvatelé",
+      "title": "Obyvatelé jednotky {{unit}}",
+      "empty": "K jednotce zatím není nikdo přiřazen.",
+      "primary": "hlavní kontakt",
+      "end": "Ukončit pobyt",
+      "addTitle": "Přidat obyvatele",
+      "person": "Osoba",
+      "choosePerson": "Vyberte člena…",
+      "typeLabel": "Vztah k jednotce",
+      "primaryLabel": "Hlavní kontakt jednotky",
+      "notListed": "Osoba v seznamu chybí? Nejprve ji přidejte do organizace.",
+      "add": "Přidat",
+      "adding": "Přidává se…",
+      "type": {
+        "owner": "Vlastník",
+        "tenant": "Nájemník",
+        "family_member": "Člen domácnosti",
+        "subtenant": "Podnájemník"
+      },
+      "errors": {
+        "loadFailed": "Obyvatele se nepodařilo načíst.",
+        "addFailed": "Obyvatele se nepodařilo přidat.",
+        "duplicate": "Tato osoba už je obyvatelem jednotky."
       }
     }
   },
@@ -8123,6 +8188,35 @@
       "label": "AI přehledy",
       "sentiment": "Nálada obyvatel",
       "predictiveMaintenance": "Prediktivní údržba"
+    }
+  },
+  "members": {
+    "title": "Lidé a role",
+    "subtitle": "Členové vaší organizace a jejich role.",
+    "addTitle": "Přidat člena",
+    "email": "E-mail",
+    "emailPlaceholder": "jmeno@priklad.cz",
+    "role": "Role",
+    "add": "Přidat člena",
+    "adding": "Přidává se…",
+    "addHint": "Osoba už musí mít účet (zaregistruje se na přihlašovací stránce). Potom ji zde přidáte podle e-mailu.",
+    "name": "Jméno",
+    "actions": "Akce",
+    "changeRoleFor": "Změnit roli pro {{name}}",
+    "remove": "Odebrat",
+    "removeTitle": "Odebrat člena?",
+    "removeMessage": "{{name}} ztratí přístup k této organizaci.",
+    "empty": "Organizace zatím nemá žádné členy.",
+    "added": "Člen byl přidán.",
+    "roleChanged": "Role byla změněna.",
+    "removed": "Člen byl odebrán.",
+    "errors": {
+      "userNotFound": "Pro tento e-mail neexistuje účet. Požádejte osobu, aby se nejprve zaregistrovala.",
+      "alreadyMember": "Tato osoba už je členem.",
+      "forbidden": "Pro tohoto člena tuto změnu provést nemůžete.",
+      "invalid": "Zkontrolujte zadané údaje.",
+      "generic": "Změnu se nepodařilo uložit. Zkuste to znovu.",
+      "loadFailed": "Členy se nepodařilo načíst."
     }
   }
 }

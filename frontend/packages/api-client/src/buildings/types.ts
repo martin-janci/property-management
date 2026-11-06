@@ -66,6 +66,7 @@ export interface Building {
   location?: GeoLocation;
   type: BuildingType;
   floorCount: number;
+  totalEntrances?: number;
   unitCount: number;
   yearBuilt?: number;
   totalAreaM2?: number;
@@ -137,11 +138,15 @@ export interface BuildingDocument {
 
 /** Create building request */
 export interface CreateBuildingRequest {
+  /** Owning organization; defaults to the client's tenant / active org. */
+  organizationId?: string;
   name: string;
   address: Address;
   location?: GeoLocation;
-  type: BuildingType;
+  /** Not stored by api-server yet; kept for forward compatibility. */
+  type?: BuildingType;
   floorCount: number;
+  totalEntrances?: number;
   yearBuilt?: number;
   totalAreaM2?: number;
   description?: string;
@@ -152,10 +157,11 @@ export interface CreateBuildingRequest {
 /** Update building request */
 export interface UpdateBuildingRequest {
   name?: string;
-  address?: Address;
+  address?: Partial<Address>;
   location?: GeoLocation;
   type?: BuildingType;
   floorCount?: number;
+  totalEntrances?: number;
   yearBuilt?: number;
   totalAreaM2?: number;
   description?: string;

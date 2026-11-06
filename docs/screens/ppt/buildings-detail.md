@@ -85,3 +85,4 @@ Endpoints (not yet registered in `@ppt/sitemap`, so listed here in prose):
 <!-- newest entries on top -->
 
 - 2026-11-04 — agent: added Facilities quick link → /buildings/:id/facilities (previously no inbound link)
+- 2026-11-06 — agent: manager-only "Edit building" link (→ /buildings/:id/edit) and per-unit Residents dialog (owners/tenants via /units/{u}/residents).
