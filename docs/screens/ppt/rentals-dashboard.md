@@ -61,6 +61,14 @@ server never implemented):
 ## Notes
 
 ### Specific (recent)
+- 2026-11-05 — **routes are `/rentals/*`, not `/bookings/*` — do not "fix" this.**
+  The rentals UI routes live under `/rentals` (dashboard, `/connections`,
+  `/bookings`, `/bookings/:bookingId`, `/calendar`, `/guests`, `/reports`) and
+  have not moved. A drift ticket (PR #3254) once claimed a `/rentals`→`/bookings/*`
+  route rewire; that is a false positive — PR #3254 only wired the pages to the
+  real `/api/v1/rentals` **API**, where `/api/v1/rentals/bookings` is the backend
+  sub-path. Do not rename the route ids in this screen-map to a top-level
+  `/bookings/*`; no such ppt-web route exists.
 - 2026-11-04 — **connections actions, booking create/edit, full rentals i18n.**
   `/rentals/connections`: Disconnect asks in the app `ConfirmationDialog`, then
   `PUT /rentals/connections/{id}` `{is_active:false}` (connection + settings
@@ -136,6 +144,22 @@ server never implemented):
   unmapped in the sitemap + screen-map tree — a follow-up drift item.
 
 ## Agent Log
+- 2026-11-05 — agent: screen-map-drift-pr-3254-ppt — investigated the drift
+  ticket claiming PR #3254 "rewired ppt-web rentals routes to `/bookings/*`".
+  **Confirmed the rewire did not happen.** PR #3254
+  ("fix(ppt-web): wire rentals pages to the real rentals API", merged to `dev`)
+  wired the rentals pages + hand-written api-client to the real
+  `/api/v1/rentals` routes (`backend/servers/api-server/src/routes/rentals.rs`,
+  `frontend/packages/api-client/src/rentals/`); that work is already captured in
+  the 2026-11-04 / 2026-11-05 Notes entries. The React Router UI routes are
+  unchanged — still `/rentals`, `/rentals/connections`, `/rentals/bookings`,
+  `/rentals/bookings/:bookingId`, `/rentals/calendar`, `/rentals/guests`,
+  `/rentals/reports` (verified against the `<Route path=…>` table in
+  `frontend/apps/ppt-web/src/routes/groups/rentals.tsx`). The `/bookings` strings
+  in the diff are the `/api/v1/rentals/bookings` API sub-path, not a UI-route
+  rewire — a false-positive drift signal. No route-id, related-screen, or
+  frontmatter changes were warranted; the screen-map already matches the code.
+  `/screens validate` clean (170 maps, 0 errors, 0 warnings).
 - 2026-11-04 — agent: wired connection disconnect/reconnect/settings/remove
   (`GET|PUT|DELETE /rentals/connections/{id}`) with confirm dialogs, booking
   create/edit dialogs (`POST|PUT /rentals/bookings`), guest add/edit dialogs and
