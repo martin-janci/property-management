@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { ProviderSummary } from '../components/ProviderCard';
 import {
   ProviderProfileForm,
@@ -63,6 +64,7 @@ export function ProviderProfilePage({
   onSubmitVerification,
   onRespondToReview,
 }: ProviderProfilePageProps) {
+  const { t } = useTranslation();
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
   const [selectedReviewId, setSelectedReviewId] = useState<string | null>(null);
 
@@ -154,7 +156,7 @@ export function ProviderProfilePage({
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <title>Back</title>
+            <title>{t('marketplace.common.back')}</title>
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -162,7 +164,7 @@ export function ProviderProfilePage({
               d="M15 19l-7-7 7-7"
             />
           </svg>
-          Back to Dashboard
+          {t('marketplace.providerProfilePage.backToDashboard')}
         </button>
         <ResponseForm
           reviewId={selectedReviewId}
@@ -181,13 +183,15 @@ export function ProviderProfilePage({
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Provider Dashboard</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          {t('marketplace.providerProfilePage.dashboard')}
+        </h1>
         <button
           type="button"
           onClick={() => setCurrentView('edit-profile')}
           className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
-          Edit Profile
+          {t('marketplace.providerProfilePage.editProfile')}
         </button>
       </div>
 
@@ -208,7 +212,7 @@ export function ProviderProfilePage({
                 stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <title>Company</title>
+                <title>{t('marketplace.common.company')}</title>
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -223,7 +227,7 @@ export function ProviderProfilePage({
               <h2 className="text-xl font-semibold text-gray-900">{profile.companyName}</h2>
               {profile.isVerified && (
                 <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                  <title>Verified</title>
+                  <title>{t('marketplace.common.verified')}</title>
                   <path
                     fillRule="evenodd"
                     d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -248,32 +252,42 @@ export function ProviderProfilePage({
           <p className="text-3xl font-bold text-gray-900">
             {ratingBreakdown.averageOverall.toFixed(1)}
           </p>
-          <p className="text-sm text-gray-500">Average Rating</p>
+          <p className="text-sm text-gray-500">
+            {t('marketplace.providerProfilePage.averageRating')}
+          </p>
         </div>
         <div className="bg-white rounded-lg shadow p-4 text-center">
           <p className="text-3xl font-bold text-gray-900">{ratingBreakdown.totalReviews}</p>
-          <p className="text-sm text-gray-500">Total Reviews</p>
+          <p className="text-sm text-gray-500">
+            {t('marketplace.providerProfilePage.totalReviews')}
+          </p>
         </div>
         <div className="bg-white rounded-lg shadow p-4 text-center">
           <p className="text-3xl font-bold text-gray-900">{profile.totalJobsCompleted || 0}</p>
-          <p className="text-sm text-gray-500">Jobs Completed</p>
+          <p className="text-sm text-gray-500">
+            {t('marketplace.providerProfilePage.jobsCompleted')}
+          </p>
         </div>
         <div className="bg-white rounded-lg shadow p-4 text-center">
           <p className="text-3xl font-bold text-blue-600">{pendingReviews}</p>
-          <p className="text-sm text-gray-500">Pending Responses</p>
+          <p className="text-sm text-gray-500">
+            {t('marketplace.providerProfilePage.pendingResponses')}
+          </p>
         </div>
       </div>
 
       {/* Verifications Section */}
       <div className="bg-white rounded-lg shadow p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium text-gray-900">Verifications</h3>
+          <h3 className="text-lg font-medium text-gray-900">
+            {t('marketplace.providerProfilePage.verifications')}
+          </h3>
           <button
             type="button"
             onClick={() => setCurrentView('add-verification')}
             className="text-sm font-medium text-blue-600 hover:text-blue-800"
           >
-            Add Verification
+            {t('marketplace.providerProfilePage.addVerification')}
           </button>
         </div>
         <VerificationList verifications={verifications} />
@@ -286,7 +300,9 @@ export function ProviderProfilePage({
 
       {/* Recent Reviews */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Reviews</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">
+          {t('marketplace.providerProfilePage.recentReviews')}
+        </h3>
         <ReviewList reviews={reviews} isProviderView onRespond={handleRespondToReview} />
       </div>
     </div>

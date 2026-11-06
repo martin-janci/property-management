@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { ProviderSummary } from '../components/ProviderCard';
 import { RatingBreakdown, type RatingBreakdownData } from '../components/RatingBreakdown';
 import { RatingStars } from '../components/RatingStars';
@@ -53,14 +54,20 @@ export function ProviderDetailPage({
   onMarkHelpful,
   onReportReview,
 }: ProviderDetailPageProps) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
 
   const tabs: { id: TabType; label: string }[] = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'services', label: 'Services' },
-    { id: 'portfolio', label: 'Portfolio' },
-    { id: 'reviews', label: `Reviews (${ratingBreakdown.totalReviews})` },
-    { id: 'verifications', label: 'Verifications' },
+    { id: 'overview', label: t('marketplace.providerDetailPage.tabOverview') },
+    { id: 'services', label: t('marketplace.providerDetailPage.tabServices') },
+    { id: 'portfolio', label: t('marketplace.providerDetailPage.tabPortfolio') },
+    {
+      id: 'reviews',
+      label: t('marketplace.providerDetailPage.tabReviews', {
+        count: ratingBreakdown.totalReviews,
+      }),
+    },
+    { id: 'verifications', label: t('marketplace.providerDetailPage.tabVerifications') },
   ];
 
   if (isLoading) {
@@ -88,10 +95,10 @@ export function ProviderDetailPage({
         className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <title>Back</title>
+          <title>{t('marketplace.common.back')}</title>
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
-        Back to Marketplace
+        {t('marketplace.providerDetailPage.backToMarketplace')}
       </button>
 
       {/* Header */}
@@ -113,7 +120,7 @@ export function ProviderDetailPage({
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <title>Company placeholder</title>
+                  <title>{t('marketplace.common.companyPlaceholder')}</title>
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -133,7 +140,7 @@ export function ProviderDetailPage({
                   <h1 className="text-2xl font-bold text-gray-900">{provider.companyName}</h1>
                   {provider.isVerified && (
                     <svg className="w-6 h-6 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                      <title>Verified</title>
+                      <title>{t('marketplace.common.verified')}</title>
                       <path
                         fillRule="evenodd"
                         d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -146,7 +153,7 @@ export function ProviderDetailPage({
               </div>
               {provider.emergencyAvailable && (
                 <span className="inline-flex items-center px-3 py-1 rounded text-sm font-medium bg-red-100 text-red-800">
-                  24/7 Emergency
+                  {t('marketplace.providerCard.emergency247')}
                 </span>
               )}
             </div>
@@ -154,10 +161,16 @@ export function ProviderDetailPage({
             {/* Rating */}
             <div className="mt-4 flex items-center gap-4">
               <RatingStars rating={provider.averageRating || 0} size="lg" showValue />
-              <span className="text-gray-500">({ratingBreakdown.totalReviews} reviews)</span>
+              <span className="text-gray-500">
+                {t('marketplace.providerDetailPage.reviewsCount', {
+                  count: ratingBreakdown.totalReviews,
+                })}
+              </span>
               {provider.totalJobsCompleted && (
                 <span className="text-gray-500">
-                  | {provider.totalJobsCompleted} jobs completed
+                  {t('marketplace.providerDetailPage.jobsCompleted', {
+                    count: provider.totalJobsCompleted,
+                  })}
                 </span>
               )}
             </div>
@@ -180,14 +193,14 @@ export function ProviderDetailPage({
               onClick={onRequestQuote}
               className="w-full px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
-              Request Quote
+              {t('marketplace.common.requestQuote')}
             </button>
             <button
               type="button"
               onClick={onContact}
               className="w-full px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
-              Contact
+              {t('marketplace.common.contact')}
             </button>
           </div>
         </div>
@@ -219,23 +232,31 @@ export function ProviderDetailPage({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Quick Info */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Contact Information</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                {t('marketplace.providerDetailPage.contactInformation')}
+              </h3>
               <dl className="space-y-3">
                 {provider.contactEmail && (
                   <div>
-                    <dt className="text-sm text-gray-500">Email</dt>
+                    <dt className="text-sm text-gray-500">
+                      {t('marketplace.providerDetailPage.email')}
+                    </dt>
                     <dd className="text-gray-900">{provider.contactEmail}</dd>
                   </div>
                 )}
                 {provider.contactPhone && (
                   <div>
-                    <dt className="text-sm text-gray-500">Phone</dt>
+                    <dt className="text-sm text-gray-500">
+                      {t('marketplace.providerDetailPage.phone')}
+                    </dt>
                     <dd className="text-gray-900">{provider.contactPhone}</dd>
                   </div>
                 )}
                 {provider.website && (
                   <div>
-                    <dt className="text-sm text-gray-500">Website</dt>
+                    <dt className="text-sm text-gray-500">
+                      {t('marketplace.providerDetailPage.website')}
+                    </dt>
                     <dd>
                       <a
                         href={provider.website}
@@ -250,7 +271,9 @@ export function ProviderDetailPage({
                 )}
                 {provider.address && (
                   <div>
-                    <dt className="text-sm text-gray-500">Address</dt>
+                    <dt className="text-sm text-gray-500">
+                      {t('marketplace.providerDetailPage.address')}
+                    </dt>
                     <dd className="text-gray-900">{provider.address}</dd>
                   </div>
                 )}
@@ -259,25 +282,39 @@ export function ProviderDetailPage({
 
             {/* Coverage */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Coverage Area</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                {t('marketplace.providerDetailPage.coverageArea')}
+              </h3>
               <dl className="space-y-3">
                 {provider.coverageRadiusKm && (
                   <div>
-                    <dt className="text-sm text-gray-500">Service Radius</dt>
-                    <dd className="text-gray-900">{provider.coverageRadiusKm} km</dd>
+                    <dt className="text-sm text-gray-500">
+                      {t('marketplace.providerDetailPage.serviceRadius')}
+                    </dt>
+                    <dd className="text-gray-900">
+                      {t('marketplace.providerDetailPage.radiusKm', {
+                        count: provider.coverageRadiusKm,
+                      })}
+                    </dd>
                   </div>
                 )}
                 {provider.coverageRegions && provider.coverageRegions.length > 0 && (
                   <div>
-                    <dt className="text-sm text-gray-500">Regions Served</dt>
+                    <dt className="text-sm text-gray-500">
+                      {t('marketplace.providerDetailPage.regionsServed')}
+                    </dt>
                     <dd className="text-gray-900">{provider.coverageRegions.join(', ')}</dd>
                   </div>
                 )}
                 {provider.responseTimeHours && (
                   <div>
-                    <dt className="text-sm text-gray-500">Response Time</dt>
+                    <dt className="text-sm text-gray-500">
+                      {t('marketplace.providerDetailPage.responseTime')}
+                    </dt>
                     <dd className="text-gray-900">
-                      Typically responds within {provider.responseTimeHours} hours
+                      {t('marketplace.providerDetailPage.respondsWithinHours', {
+                        count: provider.responseTimeHours,
+                      })}
                     </dd>
                   </div>
                 )}
@@ -293,20 +330,24 @@ export function ProviderDetailPage({
 
         {activeTab === 'services' && (
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Services Offered</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              {t('marketplace.providerDetailPage.servicesOffered')}
+            </h3>
             <div className="flex flex-wrap gap-2 mb-6">
               {provider.serviceCategories.map((cat) => (
                 <span
                   key={cat}
                   className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
                 >
-                  {cat.replace('_', ' ').charAt(0).toUpperCase() + cat.slice(1).replace('_', ' ')}
+                  {t(`marketplace.serviceCategory.${cat}`)}
                 </span>
               ))}
             </div>
             {provider.serviceDescription && (
               <div>
-                <h4 className="font-medium text-gray-900 mb-2">Description</h4>
+                <h4 className="font-medium text-gray-900 mb-2">
+                  {t('marketplace.providerDetailPage.descriptionHeading')}
+                </h4>
                 <p className="text-gray-600">{provider.serviceDescription}</p>
               </div>
             )}
@@ -315,7 +356,9 @@ export function ProviderDetailPage({
 
         {activeTab === 'portfolio' && (
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Portfolio</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              {t('marketplace.providerDetailPage.portfolio')}
+            </h3>
             {provider.portfolioDescription && (
               <p className="text-gray-600 mb-6">{provider.portfolioDescription}</p>
             )}
@@ -331,7 +374,9 @@ export function ProviderDetailPage({
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 text-center py-8">No portfolio images available</p>
+              <p className="text-gray-500 text-center py-8">
+                {t('marketplace.providerDetailPage.noPortfolioImages')}
+              </p>
             )}
           </div>
         )}
@@ -345,7 +390,9 @@ export function ProviderDetailPage({
 
         {activeTab === 'verifications' && (
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Verifications & Credentials</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              {t('marketplace.providerDetailPage.verificationsCredentials')}
+            </h3>
             <VerificationList verifications={verifications} />
           </div>
         )}

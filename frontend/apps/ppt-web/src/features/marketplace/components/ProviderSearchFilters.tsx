@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { BadgeType, ServiceCategory } from './ProviderCard';
 
 export interface SearchFilters {
@@ -29,37 +30,32 @@ interface ProviderSearchFiltersProps {
   isLoading?: boolean;
 }
 
-const categories: { value: ServiceCategory; label: string }[] = [
-  { value: 'plumbing', label: 'Plumbing' },
-  { value: 'electrical', label: 'Electrical' },
-  { value: 'hvac', label: 'HVAC' },
-  { value: 'cleaning', label: 'Cleaning' },
-  { value: 'landscaping', label: 'Landscaping' },
-  { value: 'security', label: 'Security' },
-  { value: 'painting', label: 'Painting' },
-  { value: 'roofing', label: 'Roofing' },
-  { value: 'carpentry', label: 'Carpentry' },
-  { value: 'locksmith', label: 'Locksmith' },
-  { value: 'pest_control', label: 'Pest Control' },
-  { value: 'general_maintenance', label: 'General Maintenance' },
-  { value: 'elevator_maintenance', label: 'Elevator Maintenance' },
-  { value: 'fire_safety', label: 'Fire Safety' },
-  { value: 'waste_management', label: 'Waste Management' },
-  { value: 'other', label: 'Other' },
+const categoryValues: ServiceCategory[] = [
+  'plumbing',
+  'electrical',
+  'hvac',
+  'cleaning',
+  'landscaping',
+  'security',
+  'painting',
+  'roofing',
+  'carpentry',
+  'locksmith',
+  'pest_control',
+  'general_maintenance',
+  'elevator_maintenance',
+  'fire_safety',
+  'waste_management',
+  'other',
 ];
 
-const ratingOptions = [
-  { value: 4.5, label: '4.5+ stars' },
-  { value: 4, label: '4+ stars' },
-  { value: 3.5, label: '3.5+ stars' },
-  { value: 3, label: '3+ stars' },
-];
+const ratingOptions = [4.5, 4, 3.5, 3];
 
-const sortOptions = [
-  { value: 'rating', label: 'Highest Rated' },
-  { value: 'reviews', label: 'Most Reviews' },
-  { value: 'jobs_completed', label: 'Most Jobs' },
-  { value: 'hourly_rate', label: 'Hourly Rate' },
+const sortOptions: { value: NonNullable<SearchFilters['sortBy']>; labelKey: string }[] = [
+  { value: 'rating', labelKey: 'marketplace.searchFilters.sortRating' },
+  { value: 'reviews', labelKey: 'marketplace.searchFilters.sortReviews' },
+  { value: 'jobs_completed', labelKey: 'marketplace.searchFilters.sortJobs' },
+  { value: 'hourly_rate', labelKey: 'marketplace.searchFilters.sortHourlyRate' },
 ];
 
 export function ProviderSearchFilters({
@@ -69,6 +65,7 @@ export function ProviderSearchFilters({
   onReset,
   isLoading,
 }: ProviderSearchFiltersProps) {
+  const { t } = useTranslation();
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const updateFilter = <K extends keyof SearchFilters>(key: K, value: SearchFilters[K]) => {
@@ -87,7 +84,7 @@ export function ProviderSearchFilters({
         {/* Search Query */}
         <div className="flex-1">
           <label htmlFor="search-query" className="sr-only">
-            Search providers
+            {t('marketplace.searchFilters.searchProvidersLabel')}
           </label>
           <div className="relative">
             <svg
@@ -96,7 +93,7 @@ export function ProviderSearchFilters({
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <title>Search icon</title>
+              <title>{t('marketplace.searchFilters.searchIcon')}</title>
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -107,7 +104,7 @@ export function ProviderSearchFilters({
             <input
               id="search-query"
               type="text"
-              placeholder="Search providers, services..."
+              placeholder={t('marketplace.searchFilters.searchPlaceholder')}
               value={filters.query || ''}
               onChange={(e) => updateFilter('query', e.target.value || undefined)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -118,7 +115,7 @@ export function ProviderSearchFilters({
         {/* Category */}
         <div className="md:w-48">
           <label htmlFor="category" className="sr-only">
-            Service Category
+            {t('marketplace.searchFilters.serviceCategoryLabel')}
           </label>
           <select
             id="category"
@@ -128,10 +125,10 @@ export function ProviderSearchFilters({
             }
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
-            <option value="">All Categories</option>
-            {categories.map((cat) => (
-              <option key={cat.value} value={cat.value}>
-                {cat.label}
+            <option value="">{t('marketplace.searchFilters.allCategories')}</option>
+            {categoryValues.map((cat) => (
+              <option key={cat} value={cat}>
+                {t(`marketplace.serviceCategory.${cat}`)}
               </option>
             ))}
           </select>
@@ -140,12 +137,12 @@ export function ProviderSearchFilters({
         {/* Location */}
         <div className="md:w-48">
           <label htmlFor="location" className="sr-only">
-            Location
+            {t('marketplace.searchFilters.locationLabel')}
           </label>
           <input
             id="location"
             type="text"
-            placeholder="City or Postal Code"
+            placeholder={t('marketplace.searchFilters.locationPlaceholder')}
             value={filters.location || ''}
             onChange={(e) => updateFilter('location', e.target.value || undefined)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -158,7 +155,9 @@ export function ProviderSearchFilters({
           disabled={isLoading}
           className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
         >
-          {isLoading ? 'Searching...' : 'Search'}
+          {isLoading
+            ? t('marketplace.searchFilters.searching')
+            : t('marketplace.searchFilters.search')}
         </button>
       </div>
 
@@ -174,10 +173,12 @@ export function ProviderSearchFilters({
           stroke="currentColor"
           viewBox="0 0 24 24"
         >
-          <title>Toggle filters</title>
+          <title>{t('marketplace.searchFilters.toggleFilters')}</title>
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
-        {showAdvanced ? 'Hide' : 'Show'} Advanced Filters
+        {showAdvanced
+          ? t('marketplace.searchFilters.hideAdvanced')
+          : t('marketplace.searchFilters.showAdvanced')}
       </button>
 
       {/* Advanced Filters */}
@@ -186,7 +187,7 @@ export function ProviderSearchFilters({
           {/* Minimum Rating */}
           <div>
             <label htmlFor="min-rating" className="block text-sm font-medium text-gray-700 mb-1">
-              Minimum Rating
+              {t('marketplace.searchFilters.minimumRating')}
             </label>
             <select
               id="min-rating"
@@ -196,10 +197,10 @@ export function ProviderSearchFilters({
               }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="">Any Rating</option>
+              <option value="">{t('marketplace.searchFilters.anyRating')}</option>
               {ratingOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
+                <option key={opt} value={opt}>
+                  {t('marketplace.searchFilters.starsPlus', { rating: opt })}
                 </option>
               ))}
             </select>
@@ -208,12 +209,12 @@ export function ProviderSearchFilters({
           {/* Price Range */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Hourly Rate (EUR)
+              {t('marketplace.searchFilters.hourlyRateEur')}
             </label>
             <div className="flex items-center gap-2">
               <input
                 type="number"
-                placeholder="Min"
+                placeholder={t('marketplace.searchFilters.minPlaceholder')}
                 value={filters.minHourlyRate || ''}
                 onChange={(e) =>
                   updateFilter('minHourlyRate', e.target.value ? Number(e.target.value) : undefined)
@@ -223,7 +224,7 @@ export function ProviderSearchFilters({
               <span className="text-gray-500">-</span>
               <input
                 type="number"
-                placeholder="Max"
+                placeholder={t('marketplace.searchFilters.maxPlaceholder')}
                 value={filters.maxHourlyRate || ''}
                 onChange={(e) =>
                   updateFilter('maxHourlyRate', e.target.value ? Number(e.target.value) : undefined)
@@ -236,7 +237,7 @@ export function ProviderSearchFilters({
           {/* Sort By */}
           <div>
             <label htmlFor="sort-by" className="block text-sm font-medium text-gray-700 mb-1">
-              Sort By
+              {t('marketplace.searchFilters.sortByLabel')}
             </label>
             <select
               id="sort-by"
@@ -246,10 +247,10 @@ export function ProviderSearchFilters({
               }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="">Relevance</option>
+              <option value="">{t('marketplace.searchFilters.relevance')}</option>
               {sortOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>
-                  {opt.label}
+                  {t(opt.labelKey)}
                 </option>
               ))}
             </select>
@@ -257,7 +258,9 @@ export function ProviderSearchFilters({
 
           {/* Checkboxes */}
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Options</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t('marketplace.searchFilters.options')}
+            </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -265,7 +268,9 @@ export function ProviderSearchFilters({
                 onChange={(e) => updateFilter('verifiedOnly', e.target.checked || undefined)}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
-              <span className="text-sm text-gray-700">Verified Only</span>
+              <span className="text-sm text-gray-700">
+                {t('marketplace.searchFilters.verifiedOnly')}
+              </span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -274,7 +279,9 @@ export function ProviderSearchFilters({
                 onChange={(e) => updateFilter('emergencyOnly', e.target.checked || undefined)}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
-              <span className="text-sm text-gray-700">Emergency Available</span>
+              <span className="text-sm text-gray-700">
+                {t('marketplace.searchFilters.emergencyAvailable')}
+              </span>
             </label>
           </div>
         </div>
@@ -287,14 +294,17 @@ export function ProviderSearchFilters({
         filters.verifiedOnly ||
         filters.emergencyOnly) && (
         <div className="mt-4 pt-4 border-t flex items-center gap-2 flex-wrap">
-          <span className="text-sm text-gray-500">Active filters:</span>
+          <span className="text-sm text-gray-500">
+            {t('marketplace.searchFilters.activeFilters')}
+          </span>
           {filters.category && (
             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-              {categories.find((c) => c.value === filters.category)?.label}
+              {t(`marketplace.serviceCategory.${filters.category}`)}
               <button
                 type="button"
                 onClick={() => updateFilter('category', undefined)}
                 className="ml-1 hover:text-blue-600"
+                aria-label={t('marketplace.common.remove')}
               >
                 x
               </button>
@@ -307,6 +317,7 @@ export function ProviderSearchFilters({
                 type="button"
                 onClick={() => updateFilter('location', undefined)}
                 className="ml-1 hover:text-blue-600"
+                aria-label={t('marketplace.common.remove')}
               >
                 x
               </button>
@@ -314,11 +325,12 @@ export function ProviderSearchFilters({
           )}
           {filters.minRating && (
             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-              {filters.minRating}+ stars
+              {t('marketplace.searchFilters.starsPlus', { rating: filters.minRating })}
               <button
                 type="button"
                 onClick={() => updateFilter('minRating', undefined)}
                 className="ml-1 hover:text-yellow-600"
+                aria-label={t('marketplace.common.remove')}
               >
                 x
               </button>
@@ -326,11 +338,12 @@ export function ProviderSearchFilters({
           )}
           {filters.verifiedOnly && (
             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-              Verified
+              {t('marketplace.common.verified')}
               <button
                 type="button"
                 onClick={() => updateFilter('verifiedOnly', undefined)}
                 className="ml-1 hover:text-green-600"
+                aria-label={t('marketplace.common.remove')}
               >
                 x
               </button>
@@ -338,11 +351,12 @@ export function ProviderSearchFilters({
           )}
           {filters.emergencyOnly && (
             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-              Emergency
+              {t('marketplace.searchFilters.emergency')}
               <button
                 type="button"
                 onClick={() => updateFilter('emergencyOnly', undefined)}
                 className="ml-1 hover:text-red-600"
+                aria-label={t('marketplace.common.remove')}
               >
                 x
               </button>
@@ -353,7 +367,7 @@ export function ProviderSearchFilters({
             onClick={onReset}
             className="text-sm text-gray-500 hover:text-gray-700 underline"
           >
-            Clear all
+            {t('marketplace.common.clearAll')}
           </button>
         </div>
       )}
