@@ -485,6 +485,26 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "gh-issue-3341",
+      "action": "Follow-up: payment_webhook_dead_letters RLS \"manage\" policy grants resolve to all org members, not just managers (PR #3300) (Closes #3341)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-11-06T06:25:46Z (#3341)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-06T06:25:46Z",
+      "issue_ref": {
+        "number": 3341,
+        "url": "https://github.com/martin-janci/property-management/issues/3341",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     }
   ],
   "generated": "2026-10-28T11:00:00Z"
