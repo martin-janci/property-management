@@ -292,8 +292,13 @@ pub async fn list_organization_members(
 /// Add member request.
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct AddMemberRequest {
-    /// User ID to add
-    pub user_id: Uuid,
+    /// User ID to add. Either `user_id` or `email` is required.
+    #[serde(default)]
+    pub user_id: Option<Uuid>,
+    /// E-mail of an existing account to add (alternative to `user_id`, so a
+    /// manager can add a resident who has registered without knowing their id).
+    #[serde(default)]
+    pub email: Option<String>,
     /// Role ID to assign
     pub role_id: Uuid,
     /// Role type (e.g., "member", "admin", "owner")
@@ -407,9 +412,22 @@ pub async fn add_organization_member(
         ));
     }
 
-    // Verify user exists
-    match state.user_repo.find_by_id(req.user_id).await {
-        Ok(Some(_)) => {}
+    // Resolve the target user by id or by e-mail.
+    let lookup = match (req.user_id, req.email.as_deref().map(str::trim)) {
+        (Some(uid), _) => state.user_repo.find_by_id(uid).await,
+        (None, Some(email)) if !email.is_empty() => state.user_repo.find_by_email(email).await,
+        _ => {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse::new(
+                    "VALIDATION_ERROR",
+                    "Either user_id or email is required",
+                )),
+            ));
+        }
+    };
+    let target_user_id = match lookup {
+        Ok(Some(user)) => user.id,
         Ok(None) => {
             return Err((
                 StatusCode::NOT_FOUND,
@@ -423,7 +441,7 @@ pub async fn add_organization_member(
                 Json(ErrorResponse::new("DATABASE_ERROR", "Failed to find user")),
             ));
         }
-    }
+    };
 
     // Verify role exists and belongs to this organization
     let assigned_role = match state.role_repo.find_by_id(req.role_id).await {
@@ -456,7 +474,7 @@ pub async fn add_organization_member(
     // Check if user is already a member
     match state
         .org_member_repo
-        .find_by_org_and_user(id, req.user_id)
+        .find_by_org_and_user(id, target_user_id)
         .await
     {
         Ok(Some(_)) => {
@@ -488,7 +506,7 @@ pub async fn add_organization_member(
     use db::models::CreateOrganizationMember;
     let create_member = CreateOrganizationMember {
         organization_id: id,
-        user_id: req.user_id,
+        user_id: target_user_id,
         role_id: Some(req.role_id),
         role_type,
         invited_by: Some(admin_user_id),
@@ -504,7 +522,7 @@ pub async fn add_organization_member(
 
     tracing::info!(
         org_id = %id,
-        user_id = %req.user_id,
+        user_id = %target_user_id,
         role_id = %req.role_id,
         added_by = %admin_user_id,
         "Member added to organization"

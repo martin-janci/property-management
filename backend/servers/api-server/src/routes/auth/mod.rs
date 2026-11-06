@@ -115,6 +115,7 @@ pub fn router() -> Router<AppState> {
         .route("/logout", post(logout))
         .route("/forgot-password", post(forgot_password))
         .route("/reset-password", post(reset_password))
+        .route("/password/change", post(change_password))
         // Session management (Story 1.5)
         .route("/sessions", get(list_sessions))
         .route("/sessions/revoke", post(revoke_session))

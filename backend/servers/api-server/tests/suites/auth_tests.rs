@@ -743,6 +743,84 @@ mod password_reset {
 }
 
 // =============================================================================
+// Change Password Tests (authenticated)
+// =============================================================================
+
+#[cfg(test)]
+mod change_password {
+    use super::*;
+
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn change_password_then_login_with_new_password(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let user = TestUser::new();
+        cleanup_test_user(&pool, &user.email).await;
+        let (access_token, _) = create_authenticated_user(&app, &user).await;
+
+        let body = json!({
+            "currentPassword": user.password,
+            "newPassword": "BrandNewPassword456!"
+        });
+        let request = auth_json_request(
+            Method::POST,
+            "/api/v1/auth/password/change",
+            &access_token,
+            body,
+        );
+        let response = app.execute(request).await;
+        response.assert_status(StatusCode::OK);
+
+        let login = json_request(
+            Method::POST,
+            "/api/v1/auth/login",
+            json!({ "email": user.email, "password": "BrandNewPassword456!" }),
+        );
+        app.execute(login).await.assert_status(StatusCode::OK);
+
+        cleanup_test_user(&pool, &user.email).await;
+    }
+
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn change_password_rejects_wrong_current_password(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let user = TestUser::new();
+        cleanup_test_user(&pool, &user.email).await;
+        let (access_token, _) = create_authenticated_user(&app, &user).await;
+
+        let body = json!({
+            "currentPassword": "NotMyPassword123!",
+            "newPassword": "BrandNewPassword456!"
+        });
+        let request = auth_json_request(
+            Method::POST,
+            "/api/v1/auth/password/change",
+            &access_token,
+            body,
+        );
+        let response = app.execute(request).await;
+        response.assert_status(StatusCode::UNAUTHORIZED);
+        assert_eq!(
+            response.json_value()["code"].as_str().unwrap(),
+            "INVALID_CREDENTIALS"
+        );
+
+        cleanup_test_user(&pool, &user.email).await;
+    }
+
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn change_password_requires_auth(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let body = json!({
+            "currentPassword": "SecurePassword123!",
+            "newPassword": "BrandNewPassword456!"
+        });
+        let request = json_request(Method::POST, "/api/v1/auth/password/change", body);
+        let response = app.execute(request).await;
+        response.assert_status(StatusCode::UNAUTHORIZED);
+    }
+}
+
+// =============================================================================
 // MFA Tests
 // =============================================================================
 
