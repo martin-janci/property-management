@@ -15015,7 +15015,7 @@
       "vector": "refactor",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-11-05 ppt-web-ui (dispatcher Tier-1d)"
       ],
@@ -15042,7 +15042,12 @@
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "score_delta": 1,
-      "candidate_vector": "refactor"
+      "candidate_vector": "refactor",
+      "reconciled": {
+        "at": "2026-11-06T14:25:26Z",
+        "assignment_status": "merged",
+        "pr_number": 3347
+      }
     },
     {
       "id": "code-review-ppt-web-ui-registry-no-i18n",
@@ -15084,7 +15089,7 @@
       "vector": "refactor",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-11-05 ppt-web-ui (dispatcher Tier-1d)"
       ],
@@ -15104,7 +15109,12 @@
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "score_delta": 1,
-      "candidate_vector": "refactor"
+      "candidate_vector": "refactor",
+      "reconciled": {
+        "at": "2026-11-06T14:25:26Z",
+        "assignment_status": "merged",
+        "pr_number": 3343
+      }
     },
     {
       "id": "churn-hotspot-backend/servers/reality-server/src/util/errors.rs",
@@ -15112,7 +15122,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "git-log-numstat"
       ],
@@ -15128,7 +15138,12 @@
       "type": "churn-hotspot",
       "source": "git-log-numstat",
       "score_delta": 1,
-      "candidate_vector": "refactor"
+      "candidate_vector": "refactor",
+      "reconciled": {
+        "at": "2026-11-06T14:25:26Z",
+        "assignment_status": "merged",
+        "pr_number": 3345
+      }
     },
     {
       "id": "churn-hotspot-backend/servers/api-server/src/routes/suspend_cascade.rs",
@@ -15250,7 +15265,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3317"
       ],
@@ -15267,7 +15282,12 @@
       "type": "screen-map-drift",
       "source": "PR #3317",
       "score_delta": 2,
-      "candidate_vector": "test-gap"
+      "candidate_vector": "test-gap",
+      "reconciled": {
+        "at": "2026-11-06T14:25:26Z",
+        "assignment_status": "merged",
+        "pr_number": 3342
+      }
     },
     {
       "id": "screen-map-drift-pr-3317-reality",
@@ -15275,7 +15295,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3317"
       ],
@@ -15295,7 +15315,12 @@
       "type": "screen-map-drift",
       "source": "PR #3317",
       "score_delta": 2,
-      "candidate_vector": "test-gap"
+      "candidate_vector": "test-gap",
+      "reconciled": {
+        "at": "2026-11-06T14:25:26Z",
+        "assignment_status": "merged",
+        "pr_number": 3349
+      }
     },
     {
       "id": "code-review-reality-web-share-cmp-unchecked-json",

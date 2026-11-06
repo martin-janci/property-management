@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-11-06T10:30:50Z",
+  "archived_at": "2026-11-06T14:34:19Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1886,6 +1886,30 @@
         "merged_pr": 2905,
         "merged_at": "2026-08-31T18:25:46Z",
         "at": "2026-08-31T18:29:45Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/util/errors.rs",
+      "action": "Churn hotspot (new): backend/servers/reality-server/src/util/errors.rs is a top-3 churn file this run — watch for instability",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-05T08:30:13Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-11-06T14:25:26Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-05T08:30:13Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3345,
+        "merged_at": "2026-11-06T12:34:52Z",
+        "at": "2026-11-06T14:25:26Z"
       }
     },
     {
@@ -8277,6 +8301,54 @@
         "commit": "894239a54dfc9060934e86b3cc6c5c73c3304c9e",
         "subject": "code-review-ppt-web-ui-invoice-vat-rate-payload-drift: normalize submitted invoice item.vatRate to UI-derived rate (#3202)",
         "at": "2026-10-31T18:30:02Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-lang-switcher-aria",
+      "action": "ppt-web LanguageSwitcher has hardcoded English aria-label on the control a non-English screen-reader user would use to find their language",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-05T08:30:13Z (score=1 conf=medium vector=refactor) | gc1-reconcile 2026-11-06T14:25:26Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-05T08:30:13Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3343,
+        "merged_at": "2026-11-06T12:35:13Z",
+        "at": "2026-11-06T14:25:26Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-marketplace-no-i18n",
+      "action": "ppt-web marketplace feature ships hardcoded English (placeholders, 16 service-category labels) in a 4-locale app — 0 useTranslation across 8 of 9 files",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-05T08:30:13Z (score=1 conf=medium vector=refactor) | gc1-reconcile 2026-11-06T14:25:26Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-05T08:30:13Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3347,
+        "merged_at": "2026-11-06T12:35:36Z",
+        "at": "2026-11-06T14:25:26Z"
       }
     },
     {
@@ -21386,6 +21458,33 @@
       }
     },
     {
+      "id": "gh-issue-3341",
+      "action": "Follow-up: payment_webhook_dead_letters RLS \"manage\" policy grants resolve to all org members, not just managers (PR #3300) (Closes #3341)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-11-06T06:25:46Z (#3341) | gc1-reconcile 2026-11-06T14:25:26Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-06T06:25:46Z",
+      "issue_ref": {
+        "number": 3341,
+        "url": "https://github.com/martin-janci/property-management/issues/3341",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3346,
+        "merged_at": "2026-11-06T12:35:25Z",
+        "at": "2026-11-06T14:25:26Z"
+      }
+    },
+    {
       "id": "integrations-webhook-hardening-audit-2026-07-23",
       "action": "Audit all webhook handlers (booking, airbnb, esignature, layout) for timestamp/replay/idempotency parity — #2485 shows layout webhook lacks it; treat as cross-cutting review",
       "owner_role": "pm-integration",
@@ -24448,6 +24547,54 @@
         "merged_pr": 3340,
         "merged_at": "2026-11-06T02:33:11Z",
         "at": "2026-11-06T04:23:37Z"
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3317-ppt",
+      "action": "Screen-map drift: PR #3317 biome-cleaned ppt-web ai-dashboards route test without updating docs/screens/ppt/*.md",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-05T08:30:13Z (score=2 conf=medium vector=test-gap) | gc1-reconcile 2026-11-06T14:25:26Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-05T08:30:13Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3342,
+        "merged_at": "2026-11-06T12:35:02Z",
+        "at": "2026-11-06T14:25:26Z"
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3317-reality",
+      "action": "Screen-map drift: PR #3317 biome-cleaned reality-web favorites/report/layout-revalidate route files without updating docs/screens/reality/*.md",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-05T08:30:13Z (score=2 conf=medium vector=test-gap) | gc1-reconcile 2026-11-06T14:25:26Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-05T08:30:13Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3349,
+        "merged_at": "2026-11-06T12:34:35Z",
+        "at": "2026-11-06T14:25:26Z"
       }
     },
     {
