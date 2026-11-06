@@ -5543,6 +5543,135 @@
       "deleteVehicle": "Usunąć tę rejestrację pojazdu?",
       "approveVehicle": "Zatwierdzić tę rejestrację pojazdu?",
       "approve": "Zatwierdź"
+    },
+    "status": {
+      "all": "Wszystkie statusy",
+      "pending": "Oczekujące",
+      "approved": "Zatwierdzone",
+      "rejected": "Odrzucone",
+      "expired": "Wygasłe"
+    },
+    "actions": {
+      "view": "Zobacz",
+      "review": "Zweryfikuj",
+      "edit": "Edytuj",
+      "delete": "Usuń",
+      "create": "Utwórz",
+      "search": "Szukaj",
+      "noRegistrations": "Brak rejestracji"
+    },
+    "pagination": {
+      "showing": "Wyświetlanie {{from}} do {{to}} z {{total}}",
+      "page": "Strona {{page}} z {{totalPages}}",
+      "previous": "Poprzednia",
+      "next": "Następna"
+    },
+    "pet": {
+      "types": {
+        "dog": "Pies",
+        "cat": "Kot",
+        "bird": "Ptak",
+        "fish": "Ryba",
+        "reptile": "Gad",
+        "rodent": "Gryzoń",
+        "other": "Inne"
+      },
+      "sizes": {
+        "small": "Mały (< 10 kg)",
+        "medium": "Średni (10-25 kg)",
+        "large": "Duży (25-45 kg)",
+        "extra_large": "Bardzo duży (> 45 kg)"
+      },
+      "form": {
+        "petType": "Rodzaj zwierzęcia",
+        "petSize": "Wielkość zwierzęcia",
+        "name": "Imię zwierzęcia",
+        "namePlaceholder": "Wprowadź imię zwierzęcia",
+        "breed": "Rasa",
+        "breedPlaceholder": "Wprowadź rasę (opcjonalnie)",
+        "age": "Wiek (lata)",
+        "agePlaceholder": "Wprowadź wiek",
+        "weight": "Waga (kg)",
+        "weightPlaceholder": "Wprowadź wagę",
+        "description": "Opis",
+        "descriptionPlaceholder": "Dodatkowe informacje o Twoim zwierzęciu",
+        "veterinarianSection": "Informacje o weterynarzu",
+        "veterinarianName": "Imię i nazwisko weterynarza",
+        "veterinarianNamePlaceholder": "Dr Jan Kowalski",
+        "veterinarianContact": "Kontakt do weterynarza",
+        "veterinarianContactPlaceholder": "Telefon lub e-mail",
+        "documentsSection": "Dokumenty",
+        "vaccinationRecordUrl": "URL książeczki szczepień",
+        "registrationDocumentUrl": "URL dokumentu rejestracyjnego",
+        "photoUrl": "URL zdjęcia zwierzęcia",
+        "urlPlaceholder": "https://...",
+        "cancel": "Anuluj",
+        "submit": "Wyślij rejestrację",
+        "submitting": "Wysyłanie..."
+      },
+      "list": {
+        "title": "Rejestracje zwierząt",
+        "register": "Zarejestruj zwierzę",
+        "searchPlaceholder": "Szukaj według imienia, rasy, właściciela...",
+        "emptyTitle": "Nie znaleziono rejestracji zwierząt",
+        "emptyBody": "Rozpocznij od zarejestrowania zwierzęcia.",
+        "emptyAction": "Zarejestruj swoje pierwsze zwierzę",
+        "colPet": "Zwierzę",
+        "colOwner": "Właściciel",
+        "colUnit": "Lokal",
+        "colStatus": "Status",
+        "colSubmitted": "Zgłoszono",
+        "colActions": "Akcje"
+      }
+    },
+    "vehicle": {
+      "types": {
+        "car": "Samochód",
+        "motorcycle": "Motocykl",
+        "bicycle": "Rower",
+        "scooter": "Hulajnoga",
+        "other": "Inne"
+      },
+      "form": {
+        "vehicleType": "Typ pojazdu",
+        "licensePlate": "Tablica rejestracyjna",
+        "licensePlatePlaceholder": "ABC-123",
+        "make": "Marka",
+        "makePlaceholder": "Toyota, BMW itp.",
+        "model": "Model",
+        "modelPlaceholder": "Corolla, X5 itp.",
+        "year": "Rok",
+        "color": "Kolor",
+        "colorPlaceholder": "Czarny, biały, czerwony itp.",
+        "parkingSpot": "Miejsce parkingowe",
+        "noParkingSpot": "Nie przypisano miejsca parkingowego",
+        "level": "Poziom {{level}}",
+        "zone": "Strefa {{zone}}",
+        "noAvailableSpots": "Brak dostępnych miejsc parkingowych",
+        "documentsSection": "Dokumenty",
+        "registrationDocumentUrl": "URL dokumentu rejestracyjnego",
+        "photoUrl": "URL zdjęcia pojazdu",
+        "urlPlaceholder": "https://...",
+        "cancel": "Anuluj",
+        "submit": "Wyślij rejestrację",
+        "submitting": "Wysyłanie..."
+      },
+      "list": {
+        "title": "Rejestracje pojazdów",
+        "register": "Zarejestruj pojazd",
+        "searchPlaceholder": "Szukaj według tablicy, marki, modelu...",
+        "emptyTitle": "Nie znaleziono rejestracji pojazdów",
+        "emptyBody": "Rozpocznij od zarejestrowania pojazdu.",
+        "emptyAction": "Zarejestruj swój pierwszy pojazd",
+        "colVehicle": "Pojazd",
+        "colLicensePlate": "Tablica rejestracyjna",
+        "colOwner": "Właściciel",
+        "colParkingSpot": "Miejsce parkingowe",
+        "colStatus": "Status",
+        "colSubmitted": "Zgłoszono",
+        "colActions": "Akcje",
+        "notAssigned": "Nie przypisano"
+      }
     }
   },
   "community": {

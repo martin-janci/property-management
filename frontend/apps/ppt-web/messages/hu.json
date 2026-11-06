@@ -5455,6 +5455,135 @@
       "deleteVehicle": "Törli ezt a járműregisztrációt?",
       "approveVehicle": "Jóváhagyja ezt a járműregisztrációt?",
       "approve": "Jóváhagyás"
+    },
+    "status": {
+      "all": "Összes állapot",
+      "pending": "Függőben",
+      "approved": "Jóváhagyva",
+      "rejected": "Elutasítva",
+      "expired": "Lejárt"
+    },
+    "actions": {
+      "view": "Megtekintés",
+      "review": "Elbírálás",
+      "edit": "Szerkesztés",
+      "delete": "Törlés",
+      "create": "Létrehozás",
+      "search": "Keresés",
+      "noRegistrations": "Nincsenek regisztrációk"
+    },
+    "pagination": {
+      "showing": "{{total}} elemből {{from}}–{{to}} megjelenítése",
+      "page": "{{page}}. oldal / {{totalPages}}",
+      "previous": "Előző",
+      "next": "Következő"
+    },
+    "pet": {
+      "types": {
+        "dog": "Kutya",
+        "cat": "Macska",
+        "bird": "Madár",
+        "fish": "Hal",
+        "reptile": "Hüllő",
+        "rodent": "Rágcsáló",
+        "other": "Egyéb"
+      },
+      "sizes": {
+        "small": "Kicsi (< 10 kg)",
+        "medium": "Közepes (10-25 kg)",
+        "large": "Nagy (25-45 kg)",
+        "extra_large": "Nagyon nagy (> 45 kg)"
+      },
+      "form": {
+        "petType": "Állat típusa",
+        "petSize": "Állat mérete",
+        "name": "Állat neve",
+        "namePlaceholder": "Adja meg az állat nevét",
+        "breed": "Fajta",
+        "breedPlaceholder": "Adja meg a fajtát (opcionális)",
+        "age": "Kor (év)",
+        "agePlaceholder": "Adja meg a kort",
+        "weight": "Testtömeg (kg)",
+        "weightPlaceholder": "Adja meg a testtömeget",
+        "description": "Leírás",
+        "descriptionPlaceholder": "További információ az állatáról",
+        "veterinarianSection": "Állatorvosi adatok",
+        "veterinarianName": "Állatorvos neve",
+        "veterinarianNamePlaceholder": "Dr. Kovács Anna",
+        "veterinarianContact": "Állatorvos elérhetősége",
+        "veterinarianContactPlaceholder": "Telefon vagy e-mail",
+        "documentsSection": "Dokumentumok",
+        "vaccinationRecordUrl": "Oltási könyv URL-je",
+        "registrationDocumentUrl": "Regisztrációs dokumentum URL-je",
+        "photoUrl": "Állat fényképének URL-je",
+        "urlPlaceholder": "https://...",
+        "cancel": "Mégse",
+        "submit": "Regisztráció elküldése",
+        "submitting": "Küldés..."
+      },
+      "list": {
+        "title": "Állatregisztrációk",
+        "register": "Állat regisztrálása",
+        "searchPlaceholder": "Keresés név, fajta, tulajdonos szerint...",
+        "emptyTitle": "Nem található állatregisztráció",
+        "emptyBody": "Kezdje egy állat regisztrálásával.",
+        "emptyAction": "Regisztrálja első állatát",
+        "colPet": "Állat",
+        "colOwner": "Tulajdonos",
+        "colUnit": "Lakás",
+        "colStatus": "Állapot",
+        "colSubmitted": "Beküldve",
+        "colActions": "Műveletek"
+      }
+    },
+    "vehicle": {
+      "types": {
+        "car": "Autó",
+        "motorcycle": "Motorkerékpár",
+        "bicycle": "Kerékpár",
+        "scooter": "Robogó",
+        "other": "Egyéb"
+      },
+      "form": {
+        "vehicleType": "Jármű típusa",
+        "licensePlate": "Rendszám",
+        "licensePlatePlaceholder": "ABC-123",
+        "make": "Gyártmány",
+        "makePlaceholder": "Toyota, BMW stb.",
+        "model": "Modell",
+        "modelPlaceholder": "Corolla, X5 stb.",
+        "year": "Évjárat",
+        "color": "Szín",
+        "colorPlaceholder": "Fekete, fehér, piros stb.",
+        "parkingSpot": "Parkolóhely",
+        "noParkingSpot": "Nincs hozzárendelt parkolóhely",
+        "level": "{{level}}. szint",
+        "zone": "{{zone}}. zóna",
+        "noAvailableSpots": "Nincs szabad parkolóhely",
+        "documentsSection": "Dokumentumok",
+        "registrationDocumentUrl": "Regisztrációs dokumentum URL-je",
+        "photoUrl": "Jármű fényképének URL-je",
+        "urlPlaceholder": "https://...",
+        "cancel": "Mégse",
+        "submit": "Regisztráció elküldése",
+        "submitting": "Küldés..."
+      },
+      "list": {
+        "title": "Járműregisztrációk",
+        "register": "Jármű regisztrálása",
+        "searchPlaceholder": "Keresés rendszám, gyártmány, modell szerint...",
+        "emptyTitle": "Nem található járműregisztráció",
+        "emptyBody": "Kezdje egy jármű regisztrálásával.",
+        "emptyAction": "Regisztrálja első járművét",
+        "colVehicle": "Jármű",
+        "colLicensePlate": "Rendszám",
+        "colOwner": "Tulajdonos",
+        "colParkingSpot": "Parkolóhely",
+        "colStatus": "Állapot",
+        "colSubmitted": "Beküldve",
+        "colActions": "Műveletek",
+        "notAssigned": "Nincs hozzárendelve"
+      }
     }
   },
   "community": {

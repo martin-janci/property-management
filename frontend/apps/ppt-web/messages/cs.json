@@ -6190,6 +6190,135 @@
       "deleteVehicle": "Smazat tuto registraci vozidla?",
       "approveVehicle": "Schválit tuto registraci vozidla?",
       "approve": "Schválit"
+    },
+    "status": {
+      "all": "Všechny stavy",
+      "pending": "Čeká na schválení",
+      "approved": "Schváleno",
+      "rejected": "Zamítnuto",
+      "expired": "Vypršelo"
+    },
+    "actions": {
+      "view": "Zobrazit",
+      "review": "Posoudit",
+      "edit": "Upravit",
+      "delete": "Odstranit",
+      "create": "Vytvořit",
+      "search": "Hledat",
+      "noRegistrations": "Žádné registrace"
+    },
+    "pagination": {
+      "showing": "Zobrazuje se {{from}} až {{to}} z {{total}}",
+      "page": "Stránka {{page}} z {{totalPages}}",
+      "previous": "Předchozí",
+      "next": "Další"
+    },
+    "pet": {
+      "types": {
+        "dog": "Pes",
+        "cat": "Kočka",
+        "bird": "Pták",
+        "fish": "Ryba",
+        "reptile": "Plaz",
+        "rodent": "Hlodavec",
+        "other": "Jiné"
+      },
+      "sizes": {
+        "small": "Malý (< 10 kg)",
+        "medium": "Střední (10-25 kg)",
+        "large": "Velký (25-45 kg)",
+        "extra_large": "Velmi velký (> 45 kg)"
+      },
+      "form": {
+        "petType": "Druh zvířete",
+        "petSize": "Velikost zvířete",
+        "name": "Jméno zvířete",
+        "namePlaceholder": "Zadejte jméno zvířete",
+        "breed": "Plemeno",
+        "breedPlaceholder": "Zadejte plemeno (volitelné)",
+        "age": "Věk (roky)",
+        "agePlaceholder": "Zadejte věk",
+        "weight": "Hmotnost (kg)",
+        "weightPlaceholder": "Zadejte hmotnost",
+        "description": "Popis",
+        "descriptionPlaceholder": "Jakékoli další informace o vašem zvířeti",
+        "veterinarianSection": "Informace o veterináři",
+        "veterinarianName": "Jméno veterináře",
+        "veterinarianNamePlaceholder": "Dr. Jana Nováková",
+        "veterinarianContact": "Kontakt na veterináře",
+        "veterinarianContactPlaceholder": "Telefon nebo e-mail",
+        "documentsSection": "Dokumenty",
+        "vaccinationRecordUrl": "URL očkovacího průkazu",
+        "registrationDocumentUrl": "URL registračního dokumentu",
+        "photoUrl": "URL fotografie zvířete",
+        "urlPlaceholder": "https://...",
+        "cancel": "Zrušit",
+        "submit": "Odeslat registraci",
+        "submitting": "Odesílá se..."
+      },
+      "list": {
+        "title": "Registrace zvířat",
+        "register": "Registrovat zvíře",
+        "searchPlaceholder": "Hledat podle jména, plemene, vlastníka...",
+        "emptyTitle": "Nebyly nalezeny žádné registrace zvířat",
+        "emptyBody": "Začněte registrací zvířete.",
+        "emptyAction": "Zaregistrujte své první zvíře",
+        "colPet": "Zvíře",
+        "colOwner": "Vlastník",
+        "colUnit": "Jednotka",
+        "colStatus": "Stav",
+        "colSubmitted": "Odesláno",
+        "colActions": "Akce"
+      }
+    },
+    "vehicle": {
+      "types": {
+        "car": "Auto",
+        "motorcycle": "Motocykl",
+        "bicycle": "Kolo",
+        "scooter": "Koloběžka",
+        "other": "Jiné"
+      },
+      "form": {
+        "vehicleType": "Typ vozidla",
+        "licensePlate": "SPZ",
+        "licensePlatePlaceholder": "ABC-123",
+        "make": "Značka",
+        "makePlaceholder": "Toyota, BMW, atd.",
+        "model": "Model",
+        "modelPlaceholder": "Corolla, X5, atd.",
+        "year": "Rok",
+        "color": "Barva",
+        "colorPlaceholder": "Černá, bílá, červená, atd.",
+        "parkingSpot": "Parkovací místo",
+        "noParkingSpot": "Nepřiřazené parkovací místo",
+        "level": "Podlaží {{level}}",
+        "zone": "Zóna {{zone}}",
+        "noAvailableSpots": "Žádná volná parkovací místa",
+        "documentsSection": "Dokumenty",
+        "registrationDocumentUrl": "URL registračního dokumentu",
+        "photoUrl": "URL fotografie vozidla",
+        "urlPlaceholder": "https://...",
+        "cancel": "Zrušit",
+        "submit": "Odeslat registraci",
+        "submitting": "Odesílá se..."
+      },
+      "list": {
+        "title": "Registrace vozidel",
+        "register": "Registrovat vozidlo",
+        "searchPlaceholder": "Hledat podle SPZ, značky, modelu...",
+        "emptyTitle": "Nebyly nalezeny žádné registrace vozidel",
+        "emptyBody": "Začněte registrací vozidla.",
+        "emptyAction": "Zaregistrujte své první vozidlo",
+        "colVehicle": "Vozidlo",
+        "colLicensePlate": "SPZ",
+        "colOwner": "Vlastník",
+        "colParkingSpot": "Parkovací místo",
+        "colStatus": "Stav",
+        "colSubmitted": "Odesláno",
+        "colActions": "Akce",
+        "notAssigned": "Nepřiřazeno"
+      }
     }
   },
   "community": {
