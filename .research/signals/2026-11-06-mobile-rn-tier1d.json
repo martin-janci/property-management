@@ -1,0 +1,62 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-06",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "oldest-unreviewed (dispatcher-tier1d-demand-driven; claimable backlog starved of landable work). CHURN_FILES not supplied by dispatcher this slice, so SKILL Step 1 priority 2 applies. review_cursor (from .research/state.json) sorted ascending: mobile-rn 2026-11-03, api-handlers/api-core/reality-server/ppt-web-core/mobile-native-kmp 2026-11-04, ppt-web-ui 2026-11-05, reality-web 2026-11-06. Two exclusions applied: (a) already-covered-this-cycle — sibling tier1d slices this same run already wrote 2026-11-06-reality-server-tier1d.json and 2026-11-06-reality-web-tier1d.json, so reality-server and reality-web are skipped to avoid a duplicate same-day file; (b) saturation check (open code-review-finding in backlog.json by segment): mobile-native-kmp=2, reality-server=1, ppt-web-ui=1, reality-web=1, mobile-rn=0 — none at the >=3 skip floor. Oldest non-covered, non-saturated segment is mobile-rn (2026-11-03, 0 open findings) => selected. Segment root resolved to frontend/apps/mobile/src/ (skill map lists frontend/mobile/src/; actual repo layout nests apps/ under frontend/). 214 TS/TSX files > 40, so narrowed per Step token-budget rule to largest files (ReportFaultScreen 952L, VoteDetailScreen 780L, useOfflineSupport 759L, useApi.ts) plus churn-history mobile file (AnnouncementsScreen) plus grep hit-lists. Frontend expert primary + Tester secondary per Step 2; both run inline by the dispatcher agent (token discipline) rather than spawned. Static analysis only — no compile, no test run.",
+  "experts_used": [
+    "frontend",
+    "tester"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-vote-cast-no-idempotency",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/voting/VoteDetailScreen.tsx:143-146 + 251-276 — the ballot-cast mutation POSTs /api/v1/voting/{voteId}/cast with CastVoteVariables = { unit_id, delegation_id, answers } and carries NO idempotency key. On a network drop AFTER the server has committed the ballot but BEFORE the response is received, castMutation fires onError (L269) and shows the 'Couldn't submit ballot' Alert (L270-273); the user then taps Submit again (the confirm Alert re-fires the same mutate at L251), POSTing a second cast for the same unit.",
+        "Contrast with the sibling write path in the SAME segment that got this right: frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx:355-360/374 deliberately generates and reuses a stable idempotencyKeyRef across every retry/replay ('the idempotent backend create never produces a duplicate, even if the request below half-fails') and even threads idempotency_key into the offline-queue payload. Vote casting — a strictly one-ballot-per-unit, cannot-be-undone action (confirm copy at L242-243 says 'This action cannot be undone') — has weaker replay protection than fault reporting.",
+        "Realistic worst case depends on backend dedup (POST /voting/{id}/cast handler is in api-handlers, out of this segment, so not statically confirmed here): if the server enforces a unique (vote, unit) ballot it rejects the retry with a 4xx and the user sees a confusing second error on a ballot that actually recorded; if it does NOT dedup, the retry double-votes. Either outcome is a user-facing correctness defect on an irreversible action.",
+        "Fix: mirror ReportFaultScreen — generate an idempotency key once per ballot (useRef), include it in CastVoteVariables / an Idempotency-Key header, and reuse it across retries; confirm the /cast handler honours it. Confidence medium: the missing-key observation and the confusing-retry UX are certain from the call site; the double-vote outcome is conditional on backend behaviour not readable in this segment.",
+        "expert: frontend"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-report-fault-category-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx:409-421 — getCategoryLabel() returns a hardcoded English label map { plumbing:'Plumbing', electrical:'Electrical', structural:'Structural', hvac:'HVAC', elevator:'Elevator', security:'Security', other:'Other' }, with the author's own comment 'these would ideally come from translations'. It is rendered in the category picker at L506 ({getCategoryLabel(cat.labelKey)}), so the fault-category buttons always display English regardless of the selected locale while every surrounding string on the screen uses t(...) (header L444, priority L516, building states L461-466, etc.).",
+        "This is the exact pattern the team already accepted and fixed elsewhere in this segment: backlog finding code-review-mobile-rn-hardcoded-empty-error-i18n drove the FaultsListScreen i18n cleanup (see frontend/apps/mobile/src/screens/faults/FaultsListScreen.i18n.test.tsx, which asserts the OLD hardcoded English literals are gone). ReportFaultScreen's category labels are the sibling leftover of the same defect in the same feature folder.",
+        "Fix: replace the inline map with t('faults.category.<key>') keys and add them to the mobile locale bundles (frontend/apps/mobile/src/locales/*). Low severity (user-facing text renders English for non-EN users, no data impact), scored +1 to match the precedent i18n findings in this segment.",
+        "expert: frontend"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-notifications-mock-inbox",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/notifications/NotificationsScreen.tsx:37-116 — the notification inbox (UC-01.4) is backed by a hardcoded MOCK_NOTIFICATIONS array (useState<AppNotification[]>(MOCK_NOTIFICATIONS) at L116); mark-as-read and refresh only mutate local state, so the screen shows fabricated entries ('nf1' …) rather than the user's real notifications. The file header (L6-11) documents this as intentional: the api-server exposes only a WebSocket sync endpoint (GET /api/v1/users/me/notifications/ws) plus preference/critical routes — there is no REST list endpoint to page the inbox — and this is 'tracked as a backend follow-up'.",
+        "Confirmed by grep: of the mobile screens, only NotificationsScreen and person-months/PersonMonthsScreen (also documented UC-10 mock, blocked on a resident-scoped person-months endpoint + per-entry status column) remain mock-backed; 43 other screen files use the real useApiQuery/useApiMutation/apiRequest path. So this is a genuine, isolated completeness gap, not pervasive scaffolding.",
+        "This is a landable backlog signal because the blocker is a missing backend contract, not frontend work alone: the actionable task is to add GET /api/v1/users/me/notifications (REST list/paging) on api-server and then wire NotificationsScreen (and analogously the person-months read endpoint for PersonMonthsScreen). Until then residents see no real notification history in the native inbox. Low severity / +1 (feature-completeness, user-facing but documented and tracked).",
+        "expert: completeness/tester"
+      ],
+      "expert": "completeness"
+    }
+  ]
+}

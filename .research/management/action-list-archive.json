@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-11-06T14:34:19Z",
+  "archived_at": "2026-11-06T14:44:32Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1541,6 +1541,40 @@
       }
     },
     {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/registry.rs",
+      "action": "[DROPPED: observational churn signal; implementer found no actionable, IG3-verifiable change] Churn hotspot (new): backend/crates/db/src/repositories/registry.rs is a top-3 churn file this run — watch for instability",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-11-06T08:26:55Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-06T08:26:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/tests/suite_4.rs",
+      "action": "[DROPPED: observational churn signal; implementer found no actionable, IG3-verifiable change] Churn hotspot (new): backend/crates/db/tests/suite_4.rs is a top-3 churn file this run — watch for instability",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-11-06T08:26:55Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-06T08:26:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
       "id": "churn-hotspot-backend/servers/api-server/src/routes/aml_dsa/moderation.rs",
       "action": "Churn hotspot: aml_dsa/moderation.rs — 2 touches (#2856 server-side overdue filter, #2860 truncation notice) — same file surfaced 2 unvalidated-input findings in Tier-1d",
       "owner_role": "pm-tech-lead",
@@ -1557,6 +1591,23 @@
         "vector": "refactor"
       },
       "dev_reconciled": "merged via PR #2871 (squash f21aaebc) 2026-08-28T12:29:07Z"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/registry.rs",
+      "action": "[DROPPED: observational churn signal; implementer found no actionable, IG3-verifiable change] Churn hotspot (new): backend/servers/api-server/src/routes/registry.rs is a top-3 churn file this run — watch for instability",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-11-06T08:26:55Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-06T08:26:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
     },
     {
       "id": "churn-hotspot-backend/servers/api-server/src/routes/suspend_cascade.rs",
