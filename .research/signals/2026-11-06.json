@@ -1,0 +1,155 @@
+{
+  "date": "2026-11-06",
+  "since_iso": "2026-11-05T03:17:05Z",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/crates/db/tests/suite_4.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-numstat",
+      "score_delta": 1,
+      "evidence": "3 touches in the merge window (PRs #3330/#3331/#3332 round-5 authz+functional-fix sweep hit the db integration-suite harness)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/registry.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-numstat",
+      "score_delta": 1,
+      "evidence": "2 touches in the merge window (PRs #3332 round-5 authz B and #3338 pet/vehicle registration org-scope fix) — paired with route-layer churn",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/registry.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-numstat",
+      "score_delta": 1,
+      "evidence": "2 touches in the merge window (PRs #3332 round-5 authz B, #3338 pet/vehicle registration org-scope fix)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f && head -1 grep",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev ...",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signals dedup",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score<=8 + decay check",
+      "observed": "true (no decay candidates)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "n/a — no plans promoted",
+      "observed": "0 new plans",
+      "expected": "annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "plan count ≤ 2",
+      "observed": "0",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets/hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "n/a — no phase failed",
+      "observed": "none",
+      "expected": "annotated if any"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all prior plan slugs present",
+      "observed": "0 missing",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count NOW>=HEAD",
+      "observed": "22>=22",
+      "expected": "NOW>=HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps",
+      "observed": "0 actions",
+      "expected": "≤3/≤1-each"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "n/a — Phase 1.6 skipped (pm_cursor unchanged)",
+      "observed": "no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram token",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
