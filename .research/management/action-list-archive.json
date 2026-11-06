@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-11-06T04:30:25Z",
+  "archived_at": "2026-11-06T10:30:50Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1673,6 +1673,30 @@
         "merged_pr": 2912,
         "merged_at": "2026-09-01T12:27:25Z",
         "at": "2026-09-01T20:38:46Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/auth_tests.rs",
+      "action": "Churn hotspot (new): backend/servers/api-server/tests/suites/auth_tests.rs is a top-3 churn file this run — watch for instability",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-05T08:30:13Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-11-06T10:24:48Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-05T08:30:13Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3344,
+        "merged_at": "2026-11-06T08:31:44Z",
+        "at": "2026-11-06T10:24:48Z"
       }
     },
     {

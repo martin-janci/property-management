@@ -15165,7 +15165,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "git-log-numstat"
       ],
@@ -15181,7 +15181,12 @@
       "type": "churn-hotspot",
       "source": "git-log-numstat",
       "score_delta": 1,
-      "candidate_vector": "refactor"
+      "candidate_vector": "refactor",
+      "reconciled": {
+        "at": "2026-11-06T10:24:49Z",
+        "assignment_status": "merged",
+        "pr_number": 3344
+      }
     },
     {
       "id": "screen-map-drift-pr-3293-reality",

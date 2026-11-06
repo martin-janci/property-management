@@ -385,23 +385,6 @@
       }
     },
     {
-      "id": "churn-hotspot-backend/servers/api-server/tests/suites/auth_tests.rs",
-      "action": "Churn hotspot (new): backend/servers/api-server/tests/suites/auth_tests.rs is a top-3 churn file this run — watch for instability",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-05T08:30:13Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-05T08:30:13Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
       "id": "churn-hotspot-backend/servers/reality-server/src/util/errors.rs",
       "action": "Churn hotspot (new): backend/servers/reality-server/src/util/errors.rs is a top-3 churn file this run — watch for instability",
       "owner_role": "pm-tech-lead",
