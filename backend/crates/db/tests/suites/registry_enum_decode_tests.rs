@@ -133,7 +133,7 @@ async fn registry_reads_decode_enums_and_resolve_designation(pool: PgPool) {
     assert_eq!(pet_by_id.status, registry_status::PENDING);
 
     let pet_details = repo
-        .get_pet_registration_with_details(org, pet.id)
+        .get_pet_registration_with_details(org, pet.id, None)
         .await
         .expect("pet with-details query")
         .expect("pet exists");
@@ -144,7 +144,7 @@ async fn registry_reads_decode_enums_and_resolve_designation(pool: PgPool) {
     );
 
     let (pet_list, pet_total) = repo
-        .list_pet_registrations(org, PetRegistrationQuery::default())
+        .list_pet_registrations(org, PetRegistrationQuery::default(), None)
         .await
         .expect("list pet registrations decodes enums + designation");
     assert_eq!(pet_total, 1);
@@ -219,14 +219,14 @@ async fn registry_reads_decode_enums_and_resolve_designation(pool: PgPool) {
     assert_eq!(vehicle.status, registry_status::PENDING);
 
     let vehicle_details = repo
-        .get_vehicle_registration_with_details(org, vehicle.id)
+        .get_vehicle_registration_with_details(org, vehicle.id, None)
         .await
         .expect("vehicle with-details query")
         .expect("vehicle exists");
     assert_eq!(vehicle_details.unit_number.as_deref(), Some("A-101"));
 
     let (vehicle_list, vehicle_total) = repo
-        .list_vehicle_registrations(org, VehicleRegistrationQuery::default())
+        .list_vehicle_registrations(org, VehicleRegistrationQuery::default(), None)
         .await
         .expect("list vehicle registrations decodes enums + designation");
     assert_eq!(vehicle_total, 1);
@@ -324,7 +324,7 @@ async fn vehicle_list_does_not_leak_cross_tenant_parking_spot(pool: PgPool) {
     let repo = RegistryRepository::new(pool.clone());
 
     let (list, total) = repo
-        .list_vehicle_registrations(org_a, VehicleRegistrationQuery::default())
+        .list_vehicle_registrations(org_a, VehicleRegistrationQuery::default(), None)
         .await
         .expect("list vehicle registrations");
 

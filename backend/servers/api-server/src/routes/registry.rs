@@ -123,6 +123,19 @@ fn require_manager(tenant: &ValidatedTenantExtractor) -> Result<(), RegistryApiE
     }
 }
 
+/// Read scope for pet/vehicle registrations. Managers (DB role) see every
+/// registration in the organization; everyone else only sees registrations on
+/// units they are linked to (active owner or current resident). The filter is
+/// applied in the repository query, and a registration outside the caller's
+/// units reads as 404.
+fn linked_user_filter(tenant: &ValidatedTenantExtractor) -> Option<Uuid> {
+    if tenant.role.is_manager() {
+        None
+    } else {
+        Some(tenant.user_id)
+    }
+}
+
 fn registry_db_error(e: sqlx::Error) -> RegistryApiError {
     tracing::error!("Registry authorization lookup failed: {:?}", e);
     (
@@ -397,7 +410,7 @@ async fn get_pet_registration(
 ) -> Result<Json<PetRegistrationDetailResponse>, (StatusCode, Json<ErrorResponse>)> {
     let registration = state
         .registry_repo
-        .get_pet_registration_with_details(tenant.tenant_id, id)
+        .get_pet_registration_with_details(tenant.tenant_id, id, linked_user_filter(&tenant))
         .await
         .map_err(|e| {
             tracing::error!("Failed to get pet registration: {:?}", e);
@@ -449,7 +462,7 @@ async fn list_pet_registrations(
 ) -> Result<Json<PetRegistrationListResponse>, (StatusCode, Json<ErrorResponse>)> {
     let (registrations, total) = state
         .registry_repo
-        .list_pet_registrations(tenant.tenant_id, query)
+        .list_pet_registrations(tenant.tenant_id, query, linked_user_filter(&tenant))
         .await
         .map_err(|e| {
             tracing::error!("Failed to list pet registrations: {:?}", e);
@@ -716,7 +729,7 @@ async fn get_vehicle_registration(
 ) -> Result<Json<VehicleRegistrationDetailResponse>, (StatusCode, Json<ErrorResponse>)> {
     let registration = state
         .registry_repo
-        .get_vehicle_registration_with_details(tenant.tenant_id, id)
+        .get_vehicle_registration_with_details(tenant.tenant_id, id, linked_user_filter(&tenant))
         .await
         .map_err(|e| {
             tracing::error!("Failed to get vehicle registration: {:?}", e);
@@ -768,7 +781,7 @@ async fn list_vehicle_registrations(
 ) -> Result<Json<VehicleRegistrationListResponse>, (StatusCode, Json<ErrorResponse>)> {
     let (registrations, total) = state
         .registry_repo
-        .list_vehicle_registrations(tenant.tenant_id, query)
+        .list_vehicle_registrations(tenant.tenant_id, query, linked_user_filter(&tenant))
         .await
         .map_err(|e| {
             tracing::error!("Failed to list vehicle registrations: {:?}", e);

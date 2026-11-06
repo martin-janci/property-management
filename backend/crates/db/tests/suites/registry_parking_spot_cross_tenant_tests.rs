@@ -124,7 +124,7 @@ async fn details_does_not_leak_cross_tenant_parking_spot(pool: PgPool) {
     let repo = RegistryRepository::new(pool.clone());
 
     let details = repo
-        .get_vehicle_registration_with_details(org_a, reg_id)
+        .get_vehicle_registration_with_details(org_a, reg_id, None)
         .await
         .expect("query details")
         .expect("registration exists for its own tenant");
@@ -153,7 +153,7 @@ async fn details_returns_same_tenant_parking_spot(pool: PgPool) {
     let repo = RegistryRepository::new(pool.clone());
 
     let details = repo
-        .get_vehicle_registration_with_details(org_a, reg_id)
+        .get_vehicle_registration_with_details(org_a, reg_id, None)
         .await
         .expect("query details")
         .expect("registration exists");

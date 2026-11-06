@@ -49,6 +49,8 @@ mod rag_migrate_pgvector_tests;
 mod regional_compliance_tests;
 #[path = "suites/registry_backfill_tests.rs"]
 mod registry_backfill_tests;
+#[path = "suites/registry_read_scope_tests.rs"]
+mod registry_read_scope_tests;
 #[path = "suites/rental_connection_token_leak_tests.rs"]
 mod rental_connection_token_leak_tests;
 #[path = "suites/rental_guest_id_document_tests.rs"]
