@@ -181,18 +181,18 @@
     {
       "task_id": "screen-map-drift-pr-3317-reality",
       "branch": "auto-impl/screen-map-drift-pr-3317-reality-0c7d83ff",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-06T10:30:37Z",
-      "last_updated": "2026-11-06T10:30:37Z",
-      "status_changed_at": "2026-11-06T10:30:37Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-06T10:43:43Z",
+      "status_changed_at": "2026-11-06T10:43:43Z",
+      "pr_number": 3349,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3349",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "generic",
+      "implementer_summary": "pr=3349 status=done specialist=generic scope_drift=true code_reuse_warn=none note=docs-only reconcile of favorites/report-listing/listing-detail reality screen-maps for PR #3317 biome lint cleanup; /screens validate 173 maps 0 err 0 warn; VERIFY OK; draft PR #3349",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -201,5 +201,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-06T08:34:34Z"
+  "generated": "2026-11-06T10:43:43Z"
 }
