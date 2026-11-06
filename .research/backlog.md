@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-11-06 06:56 UTC by routine</sub>
+<sub>Last regenerated: 2026-11-06 10:51 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -263,12 +263,15 @@
 | 1 | refactor | Churn hotspot (new): backend/crates/db/tests/suite_4.rs is a top-3 churn file this run — watch for instability | `backend/crates/db/tests/suite_4.rs` | git-log-numstat | 2026-11-06 | open | — |
 | 1 | refactor | Churn hotspot (new): backend/crates/db/src/repositories/registry.rs is a top-3 churn file this run — watch for instability | `backend/crates/db/src/repositories/registry.rs` | git-log-numstat | 2026-11-06 | open | — |
 | 1 | refactor | Churn hotspot (new): backend/servers/api-server/src/routes/registry.rs is a top-3 churn file this run — watch for instability | `backend/servers/api-server/src/routes/registry.rs` | git-log-numstat | 2026-11-06 | open | — |
+| 1 | refactor | Churn hotspot (new): frontend/apps/ppt-web/src/features/members/pages/OrganizationMembersPage.tsx is a top-3 churn file in the mid-day refill window | `frontend/apps/ppt-web/src/features/members/pages/OrganizationMembersPage.tsx` | git-log-numstat (refill run, since 2026-11-06T06:56:33Z) | 2026-11-06 | open | — |
+| 1 | refactor | Churn hotspot (new): frontend/apps/ppt-web/src/features/buildings/pages/BuildingFormPage.tsx is a top-3 churn file in the mid-day refill window | `frontend/apps/ppt-web/src/features/buildings/pages/BuildingFormPage.tsx` | git-log-numstat (refill run, since 2026-11-06T06:56:33Z) | 2026-11-06 | open | — |
+| 1 | refactor | Churn hotspot (new): frontend/apps/ppt-web/src/features/buildings/components/UnitResidentsDialog.tsx is a top-3 churn file in the mid-day refill window | `frontend/apps/ppt-web/src/features/buildings/components/UnitResidentsDialog.tsx` | git-log-numstat (refill run, since 2026-11-06T06:56:33Z) | 2026-11-06 | open | — |
 | 1 | refactor | ppt-web marketplace feature ships hardcoded English (placeholders, 16 service-category labels) in a 4-locale app — 0 useTranslation across 8 of 9 files | `frontend/apps/ppt-web/src/features/marketplace/components/ProviderSearchFilters.tsx (+3)` | rotating-expert-review 2026-11-05 ppt-web-ui (dispatcher Tier-1d) | 2026-11-05 | open | — |
 | 1 | refactor | ppt-web registry feature (pet/vehicle forms + lists) ships hardcoded English placeholders in a 4-locale app — 0 useTranslation on 4 files | `frontend/apps/ppt-web/src/features/registry/components/PetRegistrationForm.tsx (+3)` | rotating-expert-review 2026-11-05 ppt-web-ui (dispatcher Tier-1d) | 2026-11-05 | open | — |
 | 1 | refactor | ppt-web LanguageSwitcher has hardcoded English aria-label on the control a non-English screen-reader user would use to find their language | `frontend/apps/ppt-web/src/components/LanguageSwitcher.tsx` | rotating-expert-review 2026-11-05 ppt-web-ui (dispatcher Tier-1d) | 2026-11-05 | open | — |
 | 1 | refactor | Churn hotspot (new): backend/servers/reality-server/src/util/errors.rs is a top-3 churn file this run — watch for instability | `backend/servers/reality-server/src/util/errors.rs` | git-log-numstat | 2026-11-05 | open | — |
 | 1 | refactor | Churn hotspot (new): backend/servers/api-server/src/routes/suspend_cascade.rs is a top-3 churn file this run — watch for instability | `backend/servers/api-server/src/routes/suspend_cascade.rs` | git-log-numstat | 2026-11-05 | done | — |
-| 1 | refactor | Churn hotspot (new): backend/servers/api-server/tests/suites/auth_tests.rs is a top-3 churn file this run — watch for instability | `backend/servers/api-server/tests/suites/auth_tests.rs` | git-log-numstat | 2026-11-05 | open | — |
+| 1 | refactor | Churn hotspot (new): backend/servers/api-server/tests/suites/auth_tests.rs is a top-3 churn file this run — watch for instability | `backend/servers/api-server/tests/suites/auth_tests.rs` | git-log-numstat | 2026-11-05 | done | — |
 | 1 | bug | reality-web shared-comparison loader casts the listings API body with an unchecked `as Promise<ListingSummary>` — no shape validation, unlike the rest of reality-web's boundary guards (parseJsonBody / parseListingDetail) | `frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx` | rotating-expert-review 2026-11-05 reality-web (dispatcher Tier-1d) | 2026-11-05 | open | — |
 | 1 | dx | stalled review: PR #3108 gh-issue-3104 fix owner-analytics portfolio summary 500 (schema drift) (11d open, draft) | — | PR #3108 (+1) | 2026-11-04 | done | — |
 | 1 | dx | stalled review: PR #3075 code-review-api-handlers-violations-number-count-race serialize numbering (15d open, draft) | — | PR #3075 (+1) | 2026-11-04 | done | — |

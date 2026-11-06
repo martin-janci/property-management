@@ -1,155 +1,55 @@
 {
   "date": "2026-11-06",
-  "since_iso": "2026-11-05T03:17:05Z",
+  "since_iso": "2026-11-06T06:56:33Z",
+  "note": "Mid-day refill rerun (trigger payload: 'buffer-low: claimable=12/72 — refill planner'). This file reflects this run's narrow-window observations only; the earlier run's signals for 2026-11-06 were already incorporated into state.seen_signals via the 06:59Z routine commit.",
   "signals": [
     {
-      "id": "churn-hotspot-backend/crates/db/tests/suite_4.rs",
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/members/pages/OrganizationMembersPage.tsx",
       "type": "churn-hotspot",
       "source": "git-log-numstat",
       "score_delta": 1,
-      "evidence": "3 touches in the merge window (PRs #3330/#3331/#3332 round-5 authz+functional-fix sweep hit the db integration-suite harness)",
+      "evidence": "Top churn 255 lines in refill window (2026-11-06T06:56:33Z → 10:51:54Z) — new file added by PR #3348 (epic-1 P0 gaps: org members page). First-ever appearance; instability signal is weak, flagged for audit only.",
       "confidence": "high",
       "candidate_vector": "refactor"
     },
     {
-      "id": "churn-hotspot-backend/crates/db/src/repositories/registry.rs",
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/buildings/pages/BuildingFormPage.tsx",
       "type": "churn-hotspot",
       "source": "git-log-numstat",
       "score_delta": 1,
-      "evidence": "2 touches in the merge window (PRs #3332 round-5 authz B and #3338 pet/vehicle registration org-scope fix) — paired with route-layer churn",
+      "evidence": "Top churn 245 lines in refill window — new file added by PR #3348 (epic-1 P0 gaps: building form). First-ever appearance.",
       "confidence": "high",
       "candidate_vector": "refactor"
     },
     {
-      "id": "churn-hotspot-backend/servers/api-server/src/routes/registry.rs",
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/buildings/components/UnitResidentsDialog.tsx",
       "type": "churn-hotspot",
       "source": "git-log-numstat",
       "score_delta": 1,
-      "evidence": "2 touches in the merge window (PRs #3332 round-5 authz B, #3338 pet/vehicle registration org-scope fix)",
+      "evidence": "Top churn 235 lines in refill window — new file added by PR #3348 (epic-1 P0 gaps: unit residents dialog). First-ever appearance.",
       "confidence": "high",
       "candidate_vector": "refactor"
     }
   ],
   "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate: no signal in this refill window met confidence=high + score≥3 + allowlist (churn-hotspot is analytical-only, not allowlisted for auto-fix)",
   "goal_checks": [
-    {
-      "goal": "G1",
-      "passed": true,
-      "command": "test -f && head -1 grep",
-      "observed": "exit 0",
-      "expected": "exit 0"
-    },
-    {
-      "goal": "G2",
-      "passed": true,
-      "command": "jq --slurpfile prev ...",
-      "observed": "true",
-      "expected": "true"
-    },
-    {
-      "goal": "G3",
-      "passed": true,
-      "command": "jq ids unique",
-      "observed": "true",
-      "expected": "true"
-    },
-    {
-      "goal": "G4",
-      "passed": true,
-      "command": "jq signals dedup",
-      "observed": "true",
-      "expected": "true"
-    },
-    {
-      "goal": "G5",
-      "passed": true,
-      "command": "jq score<=8 + decay check",
-      "observed": "true (no decay candidates)",
-      "expected": "true"
-    },
-    {
-      "goal": "G6",
-      "passed": true,
-      "command": "n/a — no plans promoted",
-      "observed": "0 new plans",
-      "expected": "annotated"
-    },
-    {
-      "goal": "G7",
-      "passed": true,
-      "command": "plan count ≤ 2",
-      "observed": "0",
-      "expected": "≤2"
-    },
-    {
-      "goal": "G8",
-      "passed": true,
-      "command": "git diff --cached --name-only outside .research/",
-      "observed": "0",
-      "expected": "0"
-    },
-    {
-      "goal": "G9",
-      "passed": true,
-      "command": "grep secrets/hostnames",
-      "observed": "0",
-      "expected": "0"
-    },
-    {
-      "goal": "G10",
-      "passed": true,
-      "command": "diff backlog.md regen",
-      "observed": "identical",
-      "expected": "identical"
-    },
-    {
-      "goal": "G11",
-      "passed": true,
-      "command": "n/a — no phase failed",
-      "observed": "none",
-      "expected": "annotated if any"
-    },
-    {
-      "goal": "G12",
-      "passed": true,
-      "command": "all prior plan slugs present",
-      "observed": "0 missing",
-      "expected": "0 missing"
-    },
-    {
-      "goal": "G13",
-      "passed": true,
-      "command": "archive count NOW>=HEAD",
-      "observed": "22>=22",
-      "expected": "NOW>=HEAD"
-    },
-    {
-      "goal": "G14",
-      "passed": true,
-      "command": "diff IDEAS_TRIAGE.md regen",
-      "observed": "identical",
-      "expected": "identical"
-    },
-    {
-      "goal": "G15",
-      "passed": true,
-      "command": "auto_fix_actions caps",
-      "observed": "0 actions",
-      "expected": "≤3/≤1-each"
-    },
-    {
-      "goal": "G16",
-      "passed": true,
-      "command": "n/a — Phase 1.6 skipped (pm_cursor unchanged)",
-      "observed": "no-op",
-      "expected": "no-op"
-    },
-    {
-      "goal": "G17",
-      "passed": true,
-      "command": "grep telegram token",
-      "observed": "0",
-      "expected": "0"
-    }
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-11-06.md && head -1 matches '# 2026-11-06'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "jq compare state vs HEAD state.json", "observed": "cursors advanced (last_pr_seen 3340→3348, last_commit_sha updated, 3 new seen_signals)", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq backlog ids unique", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "jq signal dedup vs prior seen_signals", "observed": "the 3 new churn signal IDs are not in prior seen_signals", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "jq score cap + decay check", "observed": "max score 6 ≤ 8; no decay candidates (oldest open updated_at is 2026-10-25, 12d — inside 14d window)", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "n/a — no plans promoted this run", "observed": "0 new plans", "expected": "annotated if any" },
+    { "goal": "G7", "passed": true, "command": "plan count ≤ 2", "observed": "0", "expected": "≤2" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only outside .research/", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "grep secrets/hostnames in staged diff", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff -q backlog.md regen", "observed": "identical", "expected": "identical" },
+    { "goal": "G11", "passed": true, "command": "n/a — no phase failed this run", "observed": "none", "expected": "annotated if any" },
+    { "goal": "G12", "passed": true, "command": "all prior plan slugs present in plans/ or plans/_archive/", "observed": "0 missing", "expected": "0 missing" },
+    { "goal": "G13", "passed": true, "command": "archive count NOW>=HEAD", "observed": "22>=22", "expected": "NOW>=HEAD" },
+    { "goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md regen", "observed": "identical", "expected": "identical" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions caps", "observed": "0 actions", "expected": "≤3/≤1-each" },
+    { "goal": "G16", "passed": true, "command": "n/a — Phase 1.6 skipped (pm_cursor unchanged; refill rerun does not re-run PM analysis)", "observed": "no-op", "expected": "no-op" },
+    { "goal": "G17", "passed": true, "command": "grep telegram token in staged diff", "observed": "0", "expected": "0" }
   ]
 }

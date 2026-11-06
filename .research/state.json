@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-11-06T06:56:33Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 3340,
+  "last_run_iso": "2026-11-06T10:51:54Z",
+  "last_run_ms": 32000,
+  "last_pr_seen": 3348,
   "last_issue_seen": 3341,
-  "last_commit_sha": "6253788e51f147d4f644669dcecd9d8bd30d8235",
+  "last_commit_sha": "1178da0f85f90ec8c67957946c9f573aebb9a245",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -706,6 +706,21 @@
       "runs_seen": 1,
       "last_seen": "2026-11-06",
       "recent_churn": 2
+    },
+    "frontend/apps/ppt-web/src/features/members/pages/OrganizationMembersPage.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-06",
+      "recent_churn": 255
+    },
+    "frontend/apps/ppt-web/src/features/buildings/pages/BuildingFormPage.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-06",
+      "recent_churn": 245
+    },
+    "frontend/apps/ppt-web/src/features/buildings/components/UnitResidentsDialog.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-06",
+      "recent_churn": 235
     }
   },
   "seen_signals": [
@@ -1393,7 +1408,10 @@
     "untriaged-issue-952",
     "churn-hotspot-backend/crates/db/tests/suite_4.rs",
     "churn-hotspot-backend/crates/db/src/repositories/registry.rs",
-    "churn-hotspot-backend/servers/api-server/src/routes/registry.rs"
+    "churn-hotspot-backend/servers/api-server/src/routes/registry.rs",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/members/pages/OrganizationMembersPage.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/buildings/pages/BuildingFormPage.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/buildings/components/UnitResidentsDialog.tsx"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1407,8 +1425,8 @@
     "mobile-native-kmp": "2026-11-04"
   },
   "stats": {
-    "runs": 114,
-    "vectors_created": 522,
+    "runs": 115,
+    "vectors_created": 525,
     "plans_created": 35,
     "quiet_days": 8,
     "auto_fix_count": 0

@@ -15385,6 +15385,78 @@
       "created_at": "2026-11-06",
       "updated_at": "2026-11-06",
       "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/members/pages/OrganizationMembersPage.tsx",
+      "title": "Churn hotspot (new): frontend/apps/ppt-web/src/features/members/pages/OrganizationMembersPage.tsx is a top-3 churn file in the mid-day refill window",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log-numstat (refill run, since 2026-11-06T06:56:33Z)"
+      ],
+      "evidence": [
+        "Top churn 255 lines in refill window — new file added by PR #3348 (epic-1 P0 gaps: org members page)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/members/pages/OrganizationMembersPage.tsx"
+      ],
+      "created_at": "2026-11-06",
+      "updated_at": "2026-11-06",
+      "plan": null,
+      "type": "churn-hotspot",
+      "source": "git-log-numstat",
+      "score_delta": 1,
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/buildings/pages/BuildingFormPage.tsx",
+      "title": "Churn hotspot (new): frontend/apps/ppt-web/src/features/buildings/pages/BuildingFormPage.tsx is a top-3 churn file in the mid-day refill window",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log-numstat (refill run, since 2026-11-06T06:56:33Z)"
+      ],
+      "evidence": [
+        "Top churn 245 lines in refill window — new file added by PR #3348 (epic-1 P0 gaps: building form)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/buildings/pages/BuildingFormPage.tsx"
+      ],
+      "created_at": "2026-11-06",
+      "updated_at": "2026-11-06",
+      "plan": null,
+      "type": "churn-hotspot",
+      "source": "git-log-numstat",
+      "score_delta": 1,
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/buildings/components/UnitResidentsDialog.tsx",
+      "title": "Churn hotspot (new): frontend/apps/ppt-web/src/features/buildings/components/UnitResidentsDialog.tsx is a top-3 churn file in the mid-day refill window",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log-numstat (refill run, since 2026-11-06T06:56:33Z)"
+      ],
+      "evidence": [
+        "Top churn 235 lines in refill window — new file added by PR #3348 (epic-1 P0 gaps: unit residents dialog)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/buildings/components/UnitResidentsDialog.tsx"
+      ],
+      "created_at": "2026-11-06",
+      "updated_at": "2026-11-06",
+      "plan": null,
+      "type": "churn-hotspot",
+      "source": "git-log-numstat",
+      "score_delta": 1,
+      "candidate_vector": "refactor"
     }
   ]
 }
