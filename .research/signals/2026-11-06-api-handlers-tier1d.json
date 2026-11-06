@@ -1,0 +1,43 @@
+{
+    "generator": "dev-review",
+    "generated_at": "2026-11-06",
+    "segment_reviewed": "api-handlers",
+    "selection_reason": "churn-aligned (dispatcher-tier1d-demand-driven): state.json hotspot_history top churn files are all backend/servers/api-server/src/routes/*.rs (integrations, organizations, documents, ai, platform_admin) which map to the api-handlers segment. Also tied-oldest in review_cursor (2026-11-04) and NOT covered by today's burst (today already produced mobile-rn, reality-server, reality-web). Cloud-verifiable backend segment (not KMP), preferred per caller. Saturation check: api-handlers has 0 open code-review-finding items in backlog.json.",
+    "experts_used": [
+        "rust",
+        "security"
+    ],
+    "findings_count": 2,
+    "signals": [
+        {
+            "id": "code-review-listings-rs-raw-db-error-leak",
+            "type": "code-review-finding",
+            "source": "rotating-expert-review",
+            "segment": "api-handlers",
+            "score_delta": 2,
+            "confidence": "medium",
+            "candidate_vector": "security",
+            "evidence": [
+                "backend/servers/api-server/src/routes/listings.rs — ~36 call sites interpolate the raw sqlx/repository error `e` directly into the client-facing response body via `format!(\"Failed to ... {}\", e)` (e.g. lines 140, 188, 214, 278, 310, 321, 347, 376, 429, 453, 799, 855, 914, 1012). Because these handlers return `(axum::http::StatusCode, String)` the formatted string is sent verbatim as the HTTP body, leaking internal DB detail (table/column/constraint names, SQL error text) to API clients — an information-disclosure smell.",
+                "Sibling route files in the same churned segment use the structured, redacting convention instead: unit_residents.rs and automation.rs return `ApiResult<T>` with `ErrorResponse::new(\"DB_ERROR\", \"Database error\")` / the `db_error(...)` helper (40 and 20 refs respectively), which logs `%e` server-side via tracing but returns only a generic code+message to the client. listings.rs diverges from this house pattern.",
+                "Fix: route listings.rs error branches through the api-core `ErrorResponse`/`db_error` helper so the raw `e` is logged server-side only and the client receives a generic code+message. Confidence medium: confirmed statically (error type is `String`, 21 handler signatures at lines 37/131/165/302/343/368/419/477/538/638/... return `(StatusCode, String)`); not runtime-confirmed which specific sqlx errors surface."
+            ],
+            "expert": "security"
+        },
+        {
+            "id": "code-review-listings-rs-unstructured-error-body",
+            "type": "code-review-finding",
+            "source": "rotating-expert-review",
+            "segment": "api-handlers",
+            "score_delta": 1,
+            "confidence": "medium",
+            "candidate_vector": "bug",
+            "evidence": [
+                "backend/servers/api-server/src/routes/listings.rs — 21 handlers (lines 37, 131, 165, 302, 343, 368, 419, 477, 538, 638, ... through 1012) return `Result<T, (axum::http::StatusCode, String)>`, emitting plaintext String error bodies. The rest of api-server returns the JSON `ErrorResponse { code, message }` contract (via `ApiResult`), which is what the OpenAPI spec and the generated TS/Kotlin clients expect for error responses.",
+                "Impact: clients cannot parse a stable error `code` from listings endpoints, and error bodies are text/plain rather than the documented application/json ErrorResponse schema — an API-contract inconsistency that makes error handling on these endpoints diverge from every other route group. This is the same root cause as code-review-listings-rs-raw-db-error-leak but is separately landable: migrating listings.rs handlers to `ApiResult` + `ErrorResponse` fixes both the raw-error leak and the contract divergence.",
+                "Fix: migrate the 21 listings.rs handlers from `(StatusCode, String)` to `ApiResult<T>` with `ErrorResponse`/`db_error`/`not_found` helpers, matching unit_residents.rs and automation.rs. Static-analysis only; no runtime reproduction."
+            ],
+            "expert": "rust"
+        }
+    ]
+}
