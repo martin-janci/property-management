@@ -145,16 +145,13 @@ pub async fn add_favorite(
             // (The old `contains("maximum")`/`contains("limit")` branch was
             // dead: this route never enforces a per-user cap — the limit check
             // lives in the `FavoritesHandler`, not the repository.)
-            if crate::util::errors::classify_db_error(&e)
-                == crate::util::errors::DbErrorClass::NotFound
-            {
-                (
-                    axum::http::StatusCode::NOT_FOUND,
-                    "Listing not found".to_string(),
-                )
-            } else {
-                crate::util::errors::db_error("add favorite", e)
-            }
+            crate::util::errors::db_error_or(
+                &e,
+                "add favorite",
+                crate::util::errors::DbErrorClass::NotFound,
+                axum::http::StatusCode::NOT_FOUND,
+                "Listing not found",
+            )
         })?;
 
     Ok((axum::http::StatusCode::CREATED, Json(favorite)))
@@ -194,16 +191,13 @@ pub async fn update_favorite(
             // `fetch_one` yields `RowNotFound` when the user has no such
             // favorite — surface that as 404 rather than a 500. Classify by the
             // sqlx variant, not the "no rows" message text.
-            if crate::util::errors::classify_db_error(&e)
-                == crate::util::errors::DbErrorClass::NotFound
-            {
-                (
-                    axum::http::StatusCode::NOT_FOUND,
-                    "Favorite not found".to_string(),
-                )
-            } else {
-                crate::util::errors::db_error("update favorite", e)
-            }
+            crate::util::errors::db_error_or(
+                &e,
+                "update favorite",
+                crate::util::errors::DbErrorClass::NotFound,
+                axum::http::StatusCode::NOT_FOUND,
+                "Favorite not found",
+            )
         })?;
 
     Ok(Json(favorite))

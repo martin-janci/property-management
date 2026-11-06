@@ -96,16 +96,13 @@ pub async fn create_agency(
             // A unique-constraint violation on name/slug means the agency
             // already exists. Classify by the typed SQLSTATE (23505), not the
             // message text.
-            if crate::util::errors::classify_db_error(&e)
-                == crate::util::errors::DbErrorClass::UniqueViolation
-            {
-                (
-                    axum::http::StatusCode::BAD_REQUEST,
-                    "Agency with this name or slug already exists".to_string(),
-                )
-            } else {
-                crate::util::errors::db_error("create agency", e)
-            }
+            crate::util::errors::db_error_or(
+                &e,
+                "create agency",
+                crate::util::errors::DbErrorClass::UniqueViolation,
+                axum::http::StatusCode::BAD_REQUEST,
+                "Agency with this name or slug already exists",
+            )
         })?;
 
     Ok((
@@ -440,16 +437,13 @@ pub async fn create_invitation(
             // `check_agency_membership`, so the repository never returns a
             // permission error — the old `contains("permission")` branch was
             // dead.) Classify by the typed sqlx error, not message text.
-            if crate::util::errors::classify_db_error(&e)
-                == crate::util::errors::DbErrorClass::ForeignKeyViolation
-            {
-                (
-                    axum::http::StatusCode::NOT_FOUND,
-                    "Agency not found".to_string(),
-                )
-            } else {
-                crate::util::errors::db_error("create invitation", e)
-            }
+            crate::util::errors::db_error_or(
+                &e,
+                "create invitation",
+                crate::util::errors::DbErrorClass::ForeignKeyViolation,
+                axum::http::StatusCode::NOT_FOUND,
+                "Agency not found",
+            )
         })?;
 
     Ok((axum::http::StatusCode::CREATED, Json(invitation)))
@@ -514,16 +508,13 @@ pub async fn accept_invitation(
             // `contains("expired")`/`contains("invalid")`/`contains("not
             // found")` checks never matched `RowNotFound`'s "no rows …" text,
             // so this path silently 500'd.
-            if crate::util::errors::classify_db_error(&e)
-                == crate::util::errors::DbErrorClass::NotFound
-            {
-                (
-                    axum::http::StatusCode::BAD_REQUEST,
-                    "Invalid invitation token".to_string(),
-                )
-            } else {
-                crate::util::errors::db_error("accept invitation", e)
-            }
+            crate::util::errors::db_error_or(
+                &e,
+                "accept invitation",
+                crate::util::errors::DbErrorClass::NotFound,
+                axum::http::StatusCode::BAD_REQUEST,
+                "Invalid invitation token",
+            )
         })?;
 
     Ok(Json(member))

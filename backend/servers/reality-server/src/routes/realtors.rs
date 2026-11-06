@@ -135,16 +135,13 @@ pub async fn create_profile(
             // A unique-constraint violation (e.g. duplicate license number)
             // means the profile conflicts with an existing one. Classify by the
             // typed SQLSTATE (23505), not the message text.
-            if crate::util::errors::classify_db_error(&e)
-                == crate::util::errors::DbErrorClass::UniqueViolation
-            {
-                (
-                    axum::http::StatusCode::BAD_REQUEST,
-                    "Profile already exists".to_string(),
-                )
-            } else {
-                crate::util::errors::db_error("create realtor profile", e)
-            }
+            crate::util::errors::db_error_or(
+                &e,
+                "create realtor profile",
+                crate::util::errors::DbErrorClass::UniqueViolation,
+                axum::http::StatusCode::BAD_REQUEST,
+                "Profile already exists",
+            )
         })?;
 
     Ok((
@@ -179,16 +176,13 @@ pub async fn update_profile(
             // no profile yet. Classify by the sqlx variant, not message text —
             // the old `contains("not found")` never matched `RowNotFound`'s
             // "no rows returned …" text, so this path silently 500'd.
-            if crate::util::errors::classify_db_error(&e)
-                == crate::util::errors::DbErrorClass::NotFound
-            {
-                (
-                    axum::http::StatusCode::NOT_FOUND,
-                    "Profile not found".to_string(),
-                )
-            } else {
-                crate::util::errors::db_error("update realtor profile", e)
-            }
+            crate::util::errors::db_error_or(
+                &e,
+                "update realtor profile",
+                crate::util::errors::DbErrorClass::NotFound,
+                axum::http::StatusCode::NOT_FOUND,
+                "Profile not found",
+            )
         })?;
 
     Ok(Json(ProfileResponse { profile }))
