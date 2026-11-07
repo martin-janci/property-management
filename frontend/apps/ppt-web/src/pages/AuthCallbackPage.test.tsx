@@ -208,9 +208,11 @@ describe('AuthCallbackPage — SSO /auth/callback flow (Story 79.2)', () => {
     expect(arg.state).toBe(STATE_NONCE);
     expect(arg.redirectUri).toContain('/auth/callback');
 
-    // Tokens + user + tenants persisted to localStorage (the storage flow).
+    // Access token + user + tenants persisted to localStorage; the refresh
+    // token is kept out of localStorage (XSS hardening) — it lives in memory +
+    // the HttpOnly cookie the backend set on the SSO exchange.
     expect(localStorage.getItem(ACCESS_TOKEN_KEY)).toBe(resp.accessToken);
-    expect(localStorage.getItem(REFRESH_TOKEN_KEY)).toBe(resp.refreshToken);
+    expect(localStorage.getItem(REFRESH_TOKEN_KEY)).toBeNull();
     const storedUser = JSON.parse(localStorage.getItem(USER_KEY) as string);
     expect(storedUser.id).toBe('u-sso-1');
     // Role derived from the single tenant membership.
@@ -242,8 +244,9 @@ describe('AuthCallbackPage — SSO /auth/callback flow (Story 79.2)', () => {
     expect(sessionStorage.getItem('auth_return_url')).toBeNull();
   });
 
-  it('persists a refresh token that a later mount uses to rotate the access token', async () => {
-    // 1. Complete the SSO callback so a refresh token is stored.
+  it('rotates the access token on a later cold-boot mount via the HttpOnly cookie', async () => {
+    // 1. Complete the SSO callback. The refresh token is held in memory (and in
+    //    the HttpOnly cookie the backend set), never in localStorage.
     setSsoState(STATE_NONCE);
     exchangeSsoCodeSpy.mockResolvedValue(
       makeLoginResponse({ accessToken: 'access-v1', refreshToken: 'refresh-v1' })
@@ -253,13 +256,15 @@ describe('AuthCallbackPage — SSO /auth/callback flow (Story 79.2)', () => {
     await waitFor(() => {
       expect(screen.getByText('Dashboard page')).toBeInTheDocument();
     });
-    expect(localStorage.getItem(REFRESH_TOKEN_KEY)).toBe('refresh-v1');
+    expect(localStorage.getItem(REFRESH_TOKEN_KEY)).toBeNull();
     first.unmount();
 
-    // 2. A fresh AuthProvider mount with only a refresh token (no user/access)
-    //    must call the API to rotate the token — the refresh-flow integration.
+    // 2. Simulate a cold boot: the access token is gone but the stored user
+    //    remains (and the HttpOnly cookie would be replayed by the browser). A
+    //    fresh AuthProvider mount must silently refresh. The in-memory token is
+    //    reset on the new mount, so the request body carries no token and the
+    //    backend reads it from the cookie — asserted here as an empty body.
     localStorage.removeItem(ACCESS_TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
     refreshTokenSpy.mockResolvedValue({
       accessToken: 'access-v2',
       refreshToken: 'refresh-v2',
@@ -278,12 +283,13 @@ describe('AuthCallbackPage — SSO /auth/callback flow (Story 79.2)', () => {
     );
 
     await waitFor(() => {
-      expect(refreshTokenSpy).toHaveBeenCalledWith({ refreshToken: 'refresh-v1' });
+      expect(refreshTokenSpy).toHaveBeenCalledWith({ refreshToken: '' });
     });
     await waitFor(() => {
       expect(localStorage.getItem(ACCESS_TOKEN_KEY)).toBe('access-v2');
     });
-    expect(localStorage.getItem(REFRESH_TOKEN_KEY)).toBe('refresh-v2');
+    // The rotated refresh token is likewise not persisted to localStorage.
+    expect(localStorage.getItem(REFRESH_TOKEN_KEY)).toBeNull();
   });
 
   it('rejects a state-nonce mismatch without any network call and consumes the nonce', async () => {

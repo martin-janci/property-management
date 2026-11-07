@@ -9,12 +9,13 @@
  * getApiClient() consumer (sentiment, predictive-maintenance, …) stayed stuck
  * on an expired access token with no logout / redirect and no refresh attempt.
  *
- * This test seeds an authenticated session that has NO refresh token (so the
- * recovery path is a straight logout with no network), renders <AuthProvider>,
- * then makes a getApiClient() request return 401. It asserts the session is
- * torn down (isAuthenticated → false). It fails on the unfixed code (the 401
- * is inert and the session stays authed) and passes once AuthProvider wires
- * onUnauthorized.
+ * This test seeds an authenticated session whose cookie-based refresh is
+ * rejected (the refresh token is no longer kept in localStorage, so recovery
+ * routes through a silent refresh that the mocked api-client fails), renders
+ * <AuthProvider>, then makes a getApiClient() request return 401. It asserts
+ * the session is torn down (isAuthenticated → false). It fails on the unfixed
+ * code (the 401 is inert and the session stays authed) and passes once
+ * AuthProvider wires onUnauthorized.
  */
 /// <reference types="vitest/globals" />
 
@@ -23,21 +24,44 @@
 // (wired via `setupFiles` in vitest.config.ts), so this file no longer needs
 // its own shim — it just reads/writes `localStorage` directly.
 
+import type { AuthApi, RefreshTokenResponse } from '@ppt/api-client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, waitFor } from '@testing-library/react';
 import type { AxiosAdapter, AxiosResponse } from 'axios';
 import { AxiosError } from 'axios';
 import type React from 'react';
 import { useEffect } from 'react';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getApiClient, resetApiClient } from '../lib/api';
 import { AuthProvider, useAuth } from './AuthContext';
+
+// Recovery now routes through a cookie-based silent refresh (the refresh token
+// is no longer in localStorage). Mock the api-client boundary so that refresh
+// is rejected — i.e. there is no valid HttpOnly cookie to recover with — which
+// drives the handler to tear the session down.
+const refreshTokenSpy = vi.fn<(req: { refreshToken: string }) => Promise<RefreshTokenResponse>>();
+const fakeAuthApi: Partial<AuthApi> = {
+  refreshToken: refreshTokenSpy as unknown as AuthApi['refreshToken'],
+};
+vi.mock('@ppt/api-client', async () => {
+  const actual = await vi.importActual<typeof import('@ppt/api-client')>('@ppt/api-client');
+  return {
+    ...actual,
+    createAuthApi: vi.fn(() => fakeAuthApi),
+    setTokenProvider: vi.fn(),
+    clearTokenProvider: vi.fn(),
+  };
+});
 
 const ACCESS_TOKEN_KEY = 'ppt_access_token';
 const USER_KEY = 'ppt_user';
 const ACCESS_TOKEN = 'expired-access-token';
 
-/** Seed an authed session that has NO refresh token → recovery is a logout. */
+/**
+ * Seed an authed session whose cookie-based refresh will be rejected → recovery
+ * resolves to a logout. The refresh token itself is not in localStorage; the
+ * stored user is what signals a (here, unrecoverable) session.
+ */
 function seedAuthedSessionWithoutRefresh() {
   localStorage.setItem(ACCESS_TOKEN_KEY, ACCESS_TOKEN);
   localStorage.setItem(
@@ -77,6 +101,8 @@ function AuthProbe({
 describe('AuthContext — wires getApiClient() onUnauthorized (401) handler', () => {
   beforeEach(() => {
     resetApiClient();
+    refreshTokenSpy.mockReset();
+    refreshTokenSpy.mockRejectedValue(new Error('no_refresh_cookie'));
     seedAuthedSessionWithoutRefresh();
   });
 
@@ -112,12 +138,14 @@ describe('AuthContext — wires getApiClient() onUnauthorized (401) handler', ()
 
     await expect(instance.get('/widgets')).rejects.toMatchObject({ status: 401 });
 
-    // Core assertion: the wired onUnauthorized handler ran and, with no refresh
-    // token to recover with, logged the user out. On the unfixed code the 401
-    // branch was dead and the session would stay authed.
+    // Core assertion: the wired onUnauthorized handler ran, attempted a silent
+    // refresh, and — with no valid cookie to recover with — tore the session
+    // down. On the unfixed code the 401 branch was dead and the session would
+    // stay authed.
     await waitFor(() => {
       expect(ctxRef.current?.isAuthenticated).toBe(false);
     });
+    expect(refreshTokenSpy).toHaveBeenCalled();
     expect(localStorage.getItem(ACCESS_TOKEN_KEY)).toBeNull();
   });
 });

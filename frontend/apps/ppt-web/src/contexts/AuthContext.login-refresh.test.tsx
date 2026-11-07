@@ -219,9 +219,11 @@ describe('AuthContext.login — email/password flow (Story 79.2)', () => {
     expect(loginSpy).toHaveBeenCalledTimes(1);
     expect(loginSpy).toHaveBeenCalledWith({ email: 'manager@example.com', password: 'pw' });
 
-    // Tokens + user + tenants persisted to localStorage.
+    // Access token + user + tenants persisted to localStorage; the refresh
+    // token is deliberately kept out of localStorage (XSS hardening) — it lives
+    // in memory + the HttpOnly cookie.
     expect(localStorage.getItem(ACCESS_TOKEN_KEY)).toBe(resp.accessToken);
-    expect(localStorage.getItem(REFRESH_TOKEN_KEY)).toBe(resp.refreshToken);
+    expect(localStorage.getItem(REFRESH_TOKEN_KEY)).toBeNull();
     const storedUser = JSON.parse(localStorage.getItem(USER_KEY) as string);
     expect(storedUser.id).toBe('u-login-1');
     // Role derived from the single tenant membership.
@@ -322,8 +324,10 @@ describe('AuthContext.refreshToken — revoked/expired refresh token (Story 79.2
   });
 
   function seedAuthedSession() {
+    // Opaque (non-JWT) access token so boot trusts it without a refresh; the
+    // refresh token is NOT in localStorage — a later refresh() relies on the
+    // HttpOnly cookie, mocked here at the api-client boundary.
     localStorage.setItem(ACCESS_TOKEN_KEY, 'stale-access');
-    localStorage.setItem(REFRESH_TOKEN_KEY, 'revoked-refresh');
     localStorage.setItem(USER_KEY, JSON.stringify({ id: 'u-1', email: 'a@b.c', role: 'manager' }));
     localStorage.setItem(
       TENANTS_KEY,
@@ -365,9 +369,11 @@ describe('AuthContext.refreshToken — revoked/expired refresh token (Story 79.2
     });
     expect(screen.queryByText('Dashboard page')).not.toBeInTheDocument();
 
-    // The rejected refresh was attempted exactly once — no retry storm.
+    // The rejected refresh was attempted exactly once — no retry storm. After a
+    // boot the in-memory token is empty, so the body carries no token and the
+    // backend reads it from the HttpOnly cookie.
     expect(refreshTokenSpy).toHaveBeenCalledTimes(1);
-    expect(refreshTokenSpy).toHaveBeenCalledWith({ refreshToken: 'revoked-refresh' });
+    expect(refreshTokenSpy).toHaveBeenCalledWith({ refreshToken: '' });
   });
 
   it('coalesces concurrent refreshToken() calls into a single network request', async () => {
@@ -390,7 +396,8 @@ describe('AuthContext.refreshToken — revoked/expired refresh token (Story 79.2
 
     expect(refreshTokenSpy).toHaveBeenCalledTimes(1);
     expect(localStorage.getItem(ACCESS_TOKEN_KEY)).toBe('fresh-access');
-    expect(localStorage.getItem(REFRESH_TOKEN_KEY)).toBe('fresh-refresh');
+    // The rotated refresh token is not persisted to localStorage.
+    expect(localStorage.getItem(REFRESH_TOKEN_KEY)).toBeNull();
     // Session remains authenticated after a successful rotation.
     expect(ctxRef.current?.isAuthenticated).toBe(true);
   });
