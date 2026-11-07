@@ -7935,6 +7935,15 @@
     }
   },
   "registry": {
+    "page": {
+      "title": "Building Registries",
+      "subtitle": "Manage pet and vehicle registrations for your building",
+      "tabs": {
+        "pets": "Pets",
+        "vehicles": "Vehicles"
+      },
+      "loadError": "Failed to load registrations. Please try again later."
+    },
     "rules": {
       "toast": {
         "saved": "Registry rules saved",

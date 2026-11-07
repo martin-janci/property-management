@@ -6175,6 +6175,15 @@
     }
   },
   "registry": {
+    "page": {
+      "title": "Registre budovy",
+      "subtitle": "Spravujte registrácie zvierat a vozidiel pre vašu budovu",
+      "tabs": {
+        "pets": "Zvieratá",
+        "vehicles": "Vozidlá"
+      },
+      "loadError": "Nepodarilo sa načítať registrácie. Skúste to znova neskôr."
+    },
     "rules": {
       "toast": {
         "saved": "Pravidlá registra uložené",

@@ -5972,6 +5972,15 @@
     }
   },
   "registry": {
+    "page": {
+      "title": "Gebäuderegister",
+      "subtitle": "Verwalten Sie Tier- und Fahrzeugregistrierungen für Ihr Gebäude",
+      "tabs": {
+        "pets": "Tiere",
+        "vehicles": "Fahrzeuge"
+      },
+      "loadError": "Registrierungen konnten nicht geladen werden. Bitte versuchen Sie es später erneut."
+    },
     "rules": {
       "toast": {
         "saved": "Registry rules saved",
