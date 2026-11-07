@@ -6319,6 +6319,24 @@
         "colActions": "Akce",
         "notAssigned": "Nepřiřazeno"
       }
+    },
+    "toast": {
+      "petDeleted": "Registrace zvířete odstraněna",
+      "petDeletedBody": "Registrace zvířete byla odstraněna.",
+      "petDeleteFailed": "Nepodařilo se odstranit registraci zvířete",
+      "petDeleteFailedBody": "Registraci zvířete se nepodařilo odstranit. Zkuste to znovu.",
+      "petReviewed": "Registrace zvířete schválena",
+      "petReviewedBody": "Registrace zvířete byla schválena.",
+      "petReviewFailed": "Nepodařilo se schválit registraci zvířete",
+      "petReviewFailedBody": "Registraci zvířete se nepodařilo schválit. Zkuste to znovu.",
+      "vehicleDeleted": "Registrace vozidla odstraněna",
+      "vehicleDeletedBody": "Registrace vozidla byla odstraněna.",
+      "vehicleDeleteFailed": "Nepodařilo se odstranit registraci vozidla",
+      "vehicleDeleteFailedBody": "Registraci vozidla se nepodařilo odstranit. Zkuste to znovu.",
+      "vehicleReviewed": "Registrace vozidla schválena",
+      "vehicleReviewedBody": "Registrace vozidla byla schválena.",
+      "vehicleReviewFailed": "Nepodařilo se schválit registraci vozidla",
+      "vehicleReviewFailedBody": "Registraci vozidla se nepodařilo schválit. Zkuste to znovu."
     }
   },
   "community": {

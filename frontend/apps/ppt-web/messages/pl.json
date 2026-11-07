@@ -5672,6 +5672,24 @@
         "colActions": "Akcje",
         "notAssigned": "Nie przypisano"
       }
+    },
+    "toast": {
+      "petDeleted": "Pet registration deleted",
+      "petDeletedBody": "The pet registration has been removed.",
+      "petDeleteFailed": "Failed to delete pet registration",
+      "petDeleteFailedBody": "The pet registration could not be deleted. Please try again.",
+      "petReviewed": "Pet registration approved",
+      "petReviewedBody": "The pet registration has been approved.",
+      "petReviewFailed": "Failed to approve pet registration",
+      "petReviewFailedBody": "The pet registration could not be approved. Please try again.",
+      "vehicleDeleted": "Vehicle registration deleted",
+      "vehicleDeletedBody": "The vehicle registration has been removed.",
+      "vehicleDeleteFailed": "Failed to delete vehicle registration",
+      "vehicleDeleteFailedBody": "The vehicle registration could not be deleted. Please try again.",
+      "vehicleReviewed": "Vehicle registration approved",
+      "vehicleReviewedBody": "The vehicle registration has been approved.",
+      "vehicleReviewFailed": "Failed to approve vehicle registration",
+      "vehicleReviewFailedBody": "The vehicle registration could not be approved. Please try again."
     }
   },
   "community": {
