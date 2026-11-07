@@ -532,6 +532,26 @@ pub async fn change_password(
         ));
     }
 
+    // A password change is a security event: any pre-existing session (incl. a
+    // potential attacker's, which is the usual reason a signed-in user changes
+    // their password) must be invalidated. Mirror `reset_password`'s teardown,
+    // but preserve the caller's OWN current session so the user is not
+    // immediately logged out of the tab they changed their password from —
+    // resolving the current session cookie-first / header-fallback the same way
+    // `revoke_all_sessions` does. Header/cookie-less callers (access-token only)
+    // resolve to `None`, which revokes every session — the safe default.
+    let except_id = resolve_current_session_id(&state, &headers, user.id).await;
+    if let Err(e) = state
+        .session_repo
+        .revoke_all_user_tokens(user.id, except_id)
+        .await
+    {
+        // Log-and-continue, consistent with `reset_password`: the password was
+        // already changed successfully, so surfacing a 500 here would mislead
+        // the caller into thinking the change failed.
+        tracing::error!(error = %e, user_id = %user.id, "Failed to revoke sessions after password change");
+    }
+
     tracing::info!(user_id = %user.id, "Password changed by user");
 
     Ok(Json(ChangePasswordResponse {
