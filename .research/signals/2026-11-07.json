@@ -1,0 +1,189 @@
+{
+  "date": "2026-11-07",
+  "signals": [
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/registry/components/PetRegistrationForm.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #3351",
+      "score_delta": 1,
+      "evidence": "Top-3 raw churn this run: 83 lines (38+/45-) in a single ppt-web registry refactor; first-time hotspot, runs_seen=1",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/registry/components/VehicleRegistrationList.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #3351",
+      "score_delta": 1,
+      "evidence": "Top-3 raw churn this run: 83 lines (40+/43-) in a single ppt-web registry refactor; first-time hotspot, runs_seen=1",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/registry/components/PetRegistrationList.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #3351",
+      "score_delta": 1,
+      "evidence": "Top-3 raw churn this run: 79 lines (38+/41-) in a single ppt-web registry refactor; first-time hotspot, runs_seen=1",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-mobile-rn-document-detail-i18n-gap",
+      "type": "code-review-finding",
+      "source": "frontend/apps/mobile/src/screens/documents/DocumentDetailScreen.tsx:118",
+      "score_delta": 1,
+      "evidence": "DocumentDetailScreen.tsx:118/131/135 hardcode English ('Could not open document' alert, '← Documents' back link, 'Document' fallback title) despite the file already using useTranslation for neighbouring strings",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-mobile-rn-widget-settings-i18n-gap",
+      "type": "code-review-finding",
+      "source": "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx:66",
+      "score_delta": 1,
+      "evidence": "WidgetSettingsScreen.tsx:66/79 hardcode English Alert.alert copy ('Widget Added', 'Widgets Updated') plus a 'Widget Settings' header, while the same file calls t('common.loading') — leaks English into sk/cs/de widget-settings UI",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-mobile-rn-widget-bridge-no-tests",
+      "type": "code-review-finding",
+      "source": "frontend/apps/mobile/src/widgets/WidgetBridge.ts:1",
+      "score_delta": 1,
+      "evidence": "Epic 49 Story 49.1 widgets module (WidgetBridge.ts 287 LOC, WidgetDataProvider.ts 383 LOC, WidgetSettingsScreen.tsx) ships without any *.test.ts(x) — glob confirms no matching test files under frontend/apps/mobile",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate: no signal met confidence=high + score>=3 + allowlist this run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f brief + grep header",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state.json diff vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq seen-signal dedupe with cumulative carve-out",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq select(.score > 8)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "no open items older than 14d",
+      "observed": "0",
+      "expected": "n/a (trivially pass)"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans this run <= 2 and all gates",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets grep on staged .research/ diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regenerated-backlog.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phases failed; cursors advanced",
+      "observed": "all phases succeeded",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior plan slug present in plans/ or plans/_archive/",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD count",
+      "observed": "22 >= 22",
+      "expected": ">= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regenerated-triage.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "jq auto_fix caps (per-type <=1, total <=3, idempotency)",
+      "observed": "true (0 actions)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "mgmt artifacts valid; pm_cursor in [0,7]; GC7 coverage_cursor in [0,#epics) + advanced when pm advanced",
+      "observed": "pm=4 cc=1 of 13 epics, both advanced",
+      "expected": "valid + GC7 pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token grep on staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

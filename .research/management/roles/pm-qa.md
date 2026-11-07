@@ -1,50 +1,73 @@
-# pm-qa — QA / Test lens (2026-08-25)
+# pm-qa — QA / Test lens (2026-11-07)
 
-_Rotation idx 3 of 8. Read-only static analysis of sprint-status + merged PRs + open issues. Previous run: 2026-06-15 (71 days stale)._
+_Rotation idx 3 of 8. Read-only static analysis. Previous run: 2026-08-25 (74 days stale — mobile lint-gates decision still unresolved)._
 
 ## Role JSON
 
 ```json
 {
   "role": "pm-qa",
-  "summary": "13 PRs merged in this window fixed real defects but 7 of them lack the test that would guard against re-regression — the auto-fix loop is now producing enough follow-up-issue-and-close activity that a QA test-shadow discipline is the next lever. The atomic-claim concurrency test (#2834 / #2831 closure) and the booking-connect authz test (#2821) are the two high-priority gaps this run.",
+  "summary": "Quiet merge window (2 small front-end code-review PRs, 0 new issues, 0 open), but #3350 is the first dispatcher PR in this window to ship the canonical two-commit TDD split \u2014 a template the other two follow-up queues (five open gh-issue-33xx and the mobile-rn fake-submit cluster) should adopt before merge. Test-shadow debt is NOT growing this run; the lint-gate and screen-map-drift carryovers remain the main QA debt.",
   "next_actions": [
-    {"action": "Add >1-replica concurrency integration test for quiet-hours drain atomic claim (#2834 / closed #2831) — assert at-most-once delivery under 2 racing api-server replicas contending on the same held-notification batch", "priority": "high", "dependency": "rust-backend", "definition_of_done": "Integration test spins up 2 api-server replicas against shared Postgres + Redis, both drain the same held-notification set, assertion: exactly-one send per (user, channel, notification_id)."},
-    {"action": "Add authz regression test for direct-connect OTA credential writes (#2821) — assert non-manager role is rejected at the booking-connect endpoint (was hijackable before this window)", "priority": "high", "dependency": "rust-backend", "definition_of_done": "Test attempts direct-connect credential write as (tenant, staff, admin-of-other-org) roles; asserts 403; asserts manager succeeds."},
-    {"action": "Add regression test for VoteDetailScreen conditional-hooks fix (#2835) — snapshot render with the empty/loading branch that triggered the rules-of-hooks violation", "priority": "medium", "dependency": "pm-frontend", "definition_of_done": "Jest-expo test renders VoteDetailScreen in the loading-then-loaded transition; asserts no React warning; snapshot stable."},
-    {"action": "Add fuzz/property test for CSV export sanitizer (#2827 / closed #2822) — CR × LF × CRLF × formula-injection prefixes × every export column type", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "proptest crossing {CR, LF, CRLF, NUL, U+2028, U+2029} × {=, +, -, @, tab} × column-type; asserts no raw newline, no formula prefix escape, header preserved."},
-    {"action": "Add unit + integration test for voice OAuth token encryption round-trip after centralization (#2838) — cover Alexa + Google + fallback provider; assert no plaintext at rest", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "Test encrypts token → writes DB row → reads back → decrypts → equality; additional assertion: DB byte-inspection does not contain plaintext token substring."},
-    {"action": "Add ppt-web test asserting AML EDD/Review dialog state resets per assessment (#2833 / closed #2832) — open dialog on assessment A, cancel, open on assessment B, assert reason/notes cleared", "priority": "medium", "dependency": "pm-frontend", "definition_of_done": "Vitest render test opens dialog with assessment A, types reason/notes, cancels, opens with assessment B; asserts inputs empty."}
+    {
+      "action": "Extend reality-web parseListingSummary coverage \u2014 add negative-case tests for the two surviving holes (summary with null/non-object `address`, array body, HTML error page 200) atop #3350's TDD seed; same pattern should land for parseListingDetail too",
+      "priority": "medium",
+      "dependency": "none",
+      "definition_of_done": "reality-web vitest adds 3 negative cases (null address / array body / HTML 200) on parseListingSummary; parseListingDetail gets the same negative sweep; both tests pre-#3350 fail."
+    },
+    {
+      "action": "Add a localeNamespaceParity-style assertion for the new registry.{status,actions,pagination,pet,vehicle} leaf trees across en/sk/cs (top-level parity locales) after PR #3351 \u2014 de/pl/hu may legitimately fall back to en but the tri-locale tree should not drift leaf-wise once landed",
+      "priority": "low",
+      "dependency": "none",
+      "definition_of_done": "localeNamespaceParity suite extended with a registry sub-tree assertion over en/sk/cs; de/pl/hu excluded by design (documented); test fails if any leaf drifts."
+    },
+    {
+      "action": "Formalize the IG3 failing-on-main regression-test gate for dispatcher-spawned PRs \u2014 PR #3350 modelled it (two-commit TDD split: `test:` commit fails on unfixed handler, `fix:` turns it green) but no CI diff-guard enforces it yet; adopt a CI job that rejects an `auto-impl/*` PR whose test commit does not fail on `base_ref`",
+      "priority": "medium",
+      "dependency": "none",
+      "definition_of_done": "CI job rejects any auto-impl/* PR whose designated test commit passes on base_ref; green on current dev."
+    },
+    {
+      "action": "Sweep the five open from-merged-review follow-ups (#3304-#3310) for screen-map drift \u2014 none reference docs/screens/ updates; add a dispatcher pre-merge gate that flags any PR touching frontend routes without a screen-map Agent Log entry (companion to carried screen-map-drift-pr-3293-reality)",
+      "priority": "low",
+      "dependency": "none",
+      "definition_of_done": "Dispatcher pre-merge gate warns on frontend-route diff without a docs/screens/ Agent Log entry in the same PR; applied retroactively to #3304-#3310."
+    }
   ],
   "risks": [
-    {"risk": "3 of this window's mobile-rn PRs (#2835 conditional hooks / #2836 hardcoded en / #2837 hardcoded en) fixed defects that eslint-plugin-react-hooks + a no-hardcoded-strings rule would catch statically — every future mobile-rn PR risks reintroducing them", "probability": "high", "impact": "medium", "mitigation": "Adopt eslint-plugin-react-hooks + i18next-hardcoded-strings ESLint config in frontend/apps/mobile; gate CI on it."},
-    {"risk": "PR #2834 (atomic claim for quiet-hours drain) closes #2831 but no test exercises the >1 api-server-replica race — the exact scenario the fix was written for is unverified", "probability": "medium", "impact": "high", "mitigation": "Add integration test with 2 racing api-server replicas contending on the same held-notification batch; assert at-most-once delivery."},
-    {"risk": "PR #2838 centralized voice OAuth token encryption but there is no round-trip test asserting no plaintext at rest — a future field-rename or key-derivation change could silently store plaintext", "probability": "medium", "impact": "high", "mitigation": "Add unit + integration test covering encrypt(token) → DB row → decrypt(row) → token equality across Alexa/Google/fallback; assert stored bytes are not the plaintext token."},
-    {"risk": "PR #2827 neutralizes CR/LF in the CSV export sanitizer but the test suite likely only covers the reported inputs — formula-injection prefixes (= + - @) combined with CR/LF are the classic bypass class and remain unfuzzed", "probability": "medium", "impact": "medium", "mitigation": "Add a property/fuzz test crossing {CR, LF, CRLF, NUL, U+2028, U+2029} × {=, +, -, @, tab} × every export column type."},
-    {"risk": "Auto-fix loop closed 7/7 in-window follow-ups but the same-window close creates the illusion the fixes are proven — 5 of the 7 shipped without a regression test. The loop's compensating-transaction property masks a growing test-shadow debt.", "probability": "high", "impact": "medium", "mitigation": "Adopt a policy: any dispatcher-spawned fix PR requires a failing-on-main test file in the same PR before it can enter the merge queue; enforce via CI diff-guard."}
+    {
+      "risk": "Carried: dispatcher-spawned fix PRs still ship without the failing-on-main regression test enforced in CI \u2014 #3350's two-commit TDD split models the pattern but is author-discipline, not mechanized. Next drift window could reintroduce a fix-without-test even post-#3350.",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Adopt a CI diff-guard on auto-impl/* branches: the first commit's test file must fail on merge-base; the final commit's test files must all pass."
+    },
+    {
+      "risk": "Screen-map drift is accumulating silently \u2014 #3293 (reality-web realtor/[id] i18n) landed without a screen-map update (carried); the five fresh gh-issue-3304..3310 follow-ups all touch frontend routes and none reference docs/screens/. The 'Rules for agents' section D cadence is not being observed.",
+      "probability": "high",
+      "impact": "low",
+      "mitigation": "Dispatcher-side pre-merge gate on any frontend-route-touching PR; warn-only for one sprint, then block."
+    },
+    {
+      "risk": "pm-qa rotation was 74 days stale (last run 2026-08-25 \u2192 2026-11-07) \u2014 the lint-gates decision (eslint-plugin-react-hooks + i18next/no-literal-string on frontend/apps/mobile) is now 74 days unresolved; the carried mobile-rn fake-submit cluster is still open. Rotation cadence itself is a delivery risk.",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Keep pm-qa on the 8-day rotation (every ~8 daily runs) \u2014 no missed slots. Consider bumping to twice-a-rotation on run weeks that merge >5 frontend PRs."
+    }
   ],
   "open_questions": [
-    "Should the mobile-rn ESLint gate (react-hooks + no-hardcoded-strings) be blocking on first adoption or warn-only for one sprint to let the existing violations be fixed batch-wise?",
-    "Is there an existing PPT test harness for spinning up 2 api-server replicas against shared Postgres+Redis, or does the atomic-claim concurrency test need new fixture infra?",
-    "Do we have canonical fuzz-corpus discipline for sanitizers (CSV, XSS, HTML), or is each sanitizer testing its own inputs today?",
-    "The 'test-shadow' pattern (fix PR without regression test) — is the pm-qa Definition-of-Done gate advisory or blocking? DEC-001-style formalization needed?"
+    "Should the IG3 test-first gate be a hard CI-block on auto-impl/* branches, or should implementer specialists keep it as DoD-only (the current state)?",
+    "For a pure i18n refactor like PR #3351 (no behaviour change), is 'IG3 N/A' acceptable or should we require a before/after render-snapshot diff test per locale?",
+    "Who owns the screen-map pre-merge gate \u2014 pm-qa (where it logically sits) or the dispatcher reviewer (where it would enforce)?"
   ],
   "decisions_needed": [
-    "Should any dispatcher-spawned fix PR require a failing-on-main test file in the same PR before it can enter the merge queue (enforced via CI diff-guard)? — owner: pm-tech-lead + pm-qa",
-    "Frontend mobile lint gate rollout — blocking on first adoption vs warn-only for one sprint? — owner: pm-frontend + pm-qa",
-    "Fuzz-corpus discipline for shared sanitizers (CSV, XSS, HTML, JSON) — do we ship a shared proptest corpus crate under backend/crates/? — owner: pm-tech-lead"
+    "IG3 CI diff-guard \u2014 adopt as blocking on `auto-impl/*` branches? \u2014 owner: pm-tech-lead + pm-qa",
+    "Screen-map pre-merge gate (frontend-route touching PR requires same-PR docs/screens Agent Log entry) \u2014 adopt? \u2014 owner: pm-qa"
   ]
 }
 ```
 
 ## Notes
 
-- Rotation idx 3 of 8; next pm-qa run ~ 2026-09-25 (assuming ~30-day-per-role cadence).
-- Six pm-qa next_actions appended to `action-list.json` with `source = "pm-qa 2026-08-25"`; four risks and one carried risk-flavor appended to `risks.json`.
-- Coverage epic-80 (rotation idx 5) re-checked — all 3 stories still `done`; last_checked stamped 2026-08-25. No PR in this window touched dispute routes.
-- Merged-PR observations that shaped this run:
-  - #2835 fixed a React `rules-of-hooks` violation in mobile-rn VoteDetailScreen — a `eslint-plugin-react-hooks` lint gate on frontend/apps/mobile would have caught this before code review.
-  - #2836 / #2837 shipped hardcoded English strings in mobile-rn — same lint story, different rule (`i18next/no-literal-string`).
-  - #2834 atomic-claim fix for quiet-hours drain — closes #2831 but is the exact scenario a >1-replica concurrency test should own.
-  - #2838 centralized voice OAuth token encryption — should ship with a round-trip test as a matter of hygiene.
-- Auto-review loop closed 7/7 in-window; net test-shadow debt grew by ~5 fixes-without-tests (raised as pm-qa risk this run).
+- Delta vs 2026-08-25 run: 2 merged PRs this window (both frontend), 0 new issues, 0 touched open PRs. **Zero test-shadow additions** (PR #3350 lands a proper two-commit TDD split; PR #3351 is pure i18n-refactor with existing parity suites).
+- Carried-forward items from 2026-08-25: mobile-rn lint-gates adoption (now action `pm-frontend-mobile-rn-lint-gates-adopt-2026-10-28`, still open), fuzz-corpus discipline (not progressed), >1-replica concurrency harness (not progressed).
+- New: #3350 demonstrates the canonical dispatcher TDD contract — codify it in CI before the pattern decays.

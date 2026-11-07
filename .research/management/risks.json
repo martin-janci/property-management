@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-10-28T11:00:00Z",
+  "generated": "2026-11-07T11:00:00Z",
   "items": [
     {
       "id": "pm-devops-swagger-ui-egress-blocking-security-2026-10-01",
@@ -283,6 +283,28 @@
       "owner_role": "pm-scrum-master",
       "trigger": "Any pm-* role crosses 90 days stale",
       "status": "open"
+    },
+    {
+      "id": "pm-qa-dispatcher-ig3-test-first-unmechanized-2026-11-07",
+      "risk": "Carried: dispatcher-spawned fix PRs still ship without the failing-on-main regression test enforced in CI \u2014 #3350's two-commit TDD split models the pattern but is author-discipline, not mechanized. Next drift window could reintroduce a fix-without-test even post-#3350.",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Adopt a CI diff-guard on auto-impl/* branches: the first commit's test file must fail on merge-base; the final commit's test files must all pass.",
+      "owner_role": "pm-qa",
+      "trigger": "Any auto-impl/* PR merged in a run whose test commit passes on base_ref (i.e., test did not fail-on-main before the fix).",
+      "status": "open",
+      "source": "pm-qa 2026-11-07"
+    },
+    {
+      "id": "pm-qa-screen-map-drift-silent-accumulation-2026-11-07",
+      "risk": "Screen-map drift is accumulating silently \u2014 #3293 (reality-web realtor/[id] i18n) landed without a screen-map update (carried); the five fresh gh-issue-3304..3310 follow-ups all touch frontend routes and none reference docs/screens/. The 'Rules for agents' section D cadence is not being observed.",
+      "probability": "high",
+      "impact": "low",
+      "mitigation": "Dispatcher-side pre-merge gate on any frontend-route-touching PR; warn-only for one sprint, then block.",
+      "owner_role": "pm-qa",
+      "trigger": "Weekly tally: >=3 merged frontend-route PRs in one run window without any accompanying docs/screens/ edits.",
+      "status": "open",
+      "source": "pm-qa 2026-11-07"
     }
   ]
 }

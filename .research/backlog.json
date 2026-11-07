@@ -15435,6 +15435,128 @@
         "assignment_status": "failed",
         "pr_number": null
       }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/registry/components/PetRegistrationForm.tsx",
+      "title": "Churn hotspot (new): frontend/apps/ppt-web/src/features/registry/components/PetRegistrationForm.tsx is a top-3 churn file this run — watch for instability",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3351"
+      ],
+      "evidence": [
+        "PR #3351 i18n refactor touched 83 lines (38+/45-) — first-run hotspot"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/components/PetRegistrationForm.tsx"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/registry/components/VehicleRegistrationList.tsx",
+      "title": "Churn hotspot (new): frontend/apps/ppt-web/src/features/registry/components/VehicleRegistrationList.tsx is a top-3 churn file this run — watch for instability",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3351"
+      ],
+      "evidence": [
+        "PR #3351 i18n refactor touched 83 lines (40+/43-) — first-run hotspot"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/components/VehicleRegistrationList.tsx"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/registry/components/PetRegistrationList.tsx",
+      "title": "Churn hotspot (new): frontend/apps/ppt-web/src/features/registry/components/PetRegistrationList.tsx is a top-3 churn file this run — watch for instability",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3351"
+      ],
+      "evidence": [
+        "PR #3351 i18n refactor touched 79 lines (38+/41-) — first-run hotspot"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/components/PetRegistrationList.tsx"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-document-detail-i18n-gap",
+      "title": "mobile-rn DocumentDetailScreen hardcodes English ('Could not open document' alert, '← Documents', 'Document' fallback) despite neighbouring useTranslation usage",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-07 mobile-rn (frontend expert)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/documents/DocumentDetailScreen.tsx:118/131/135 — hardcoded English strings leak into sk/cs/de/en"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/documents/DocumentDetailScreen.tsx"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-widget-settings-i18n-gap",
+      "title": "mobile-rn WidgetSettingsScreen hardcodes English Alert copy ('Widget Added', 'Widgets Updated') + 'Widget Settings' header while same file calls t('common.loading')",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-07 mobile-rn (frontend expert)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx:66/79 — hardcoded Alert.alert English copy; 'Widget Settings' header at :89 untranslated"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-widget-bridge-no-tests",
+      "title": "mobile-rn Epic 49 Story 49.1 widgets module (WidgetBridge.ts 287 LOC + WidgetDataProvider.ts 383 LOC + WidgetSettingsScreen) ships zero *.test.ts(x) — native-interop shipped untested",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-07 mobile-rn (tester expert)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/WidgetBridge.ts — 287 LOC native-interop module with no co-located test; WidgetDataProvider.ts (383 LOC) and WidgetSettingsScreen.tsx likewise untested"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/widgets/WidgetBridge.ts",
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts",
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": null
     }
   ]
 }
