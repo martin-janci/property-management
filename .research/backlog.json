@@ -15435,6 +15435,26 @@
         "assignment_status": "failed",
         "pr_number": null
       }
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suite_7.rs",
+      "title": "Churn hotspot (new): backend/servers/api-server/tests/suite_7.rs is a top-3 churn file this run — watch for instability",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log-numstat"
+      ],
+      "evidence": [
+        "3 commits touching this aggregator integration-test module in the last 14 days; emitted as churn-hotspot signal 2026-11-07"
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suite_7.rs"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": null
     }
   ]
 }

@@ -1,0 +1,68 @@
+{
+  "date": "2026-11-07",
+  "trigger": "buffer-low: claimable=9/72 — refill planner",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/auth_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-numstat 14d",
+      "score_delta": 0,
+      "evidence": [
+        "top-3 churn 2026-11-07: 3 commits touching this test module in last 14d; already resolved by PR #3344 (2026-11-06) which dropped redundant cleanup_test_user scaffolding. Re-emit for history without re-scoring."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": ["backend/servers/api-server/tests/suites/auth_tests.rs"]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suite_7.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-numstat 14d",
+      "score_delta": 1,
+      "evidence": [
+        "top-3 churn 2026-11-07: 3 commits touching this aggregator suite in last 14d; aggregator for sqlx integration tests across features"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": ["backend/servers/api-server/tests/suite_7.rs"]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate",
+  "goal_checks": [
+    {"goal": "G1", "passed": true, "command": "test -f briefs/2026-11-07.md && head -1 matches", "observed": "exit 0", "expected": "exit 0"},
+    {"goal": "G2", "passed": true, "command": "state advances vs HEAD", "observed": "true", "expected": "true"},
+    {"goal": "G3", "passed": true, "command": "backlog ids unique", "observed": "true", "expected": "true"},
+    {"goal": "G4", "passed": true, "command": "signal double-count check", "observed": "true", "expected": "true"},
+    {"goal": "G5", "passed": true, "command": "score cap + decay", "observed": "no items over 8; no 14d-stale open items need decay (oldest open updated_at is 2026-10-25, 13d)", "expected": "true"},
+    {"goal": "G6", "passed": true, "command": "promoted plans adversarial-pass annotation", "observed": "no plans promoted this run", "expected": "true (vacuous)"},
+    {"goal": "G7", "passed": true, "command": "plan cap/gates", "observed": "0 new plans", "expected": "<=2"},
+    {"goal": "G8", "passed": true, "command": "git diff --cached | only .research/", "observed": "only .research/", "expected": "only .research/"},
+    {"goal": "G9", "passed": true, "command": "no secrets/private hostnames in staged diff", "observed": "0 matches", "expected": "0"},
+    {"goal": "G10", "passed": true, "command": "backlog.md byte-identity vs regen", "observed": "match", "expected": "match"},
+    {"goal": "G11", "passed": true, "command": "phase-failure honesty", "observed": "no phase failures recorded", "expected": "true"},
+    {"goal": "G12", "passed": true, "command": "plan promotions converge", "observed": "all prior-run plans still present in plans/ or plans/_archive/", "expected": "true"},
+    {"goal": "G13", "passed": true, "command": "archive only grows", "observed": "count unchanged (no archiving this run)", "expected": ">= HEAD count"},
+    {"goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md byte-identity vs regen", "observed": "match", "expected": "match"},
+    {"goal": "G15", "passed": true, "command": "auto-fix discipline", "observed": "no auto-fix actions", "expected": "true (vacuous)"},
+    {"goal": "G16", "passed": true, "command": "management artifacts valid (Phase 1.6 skipped)", "observed": "Phase 1.6 skipped — no-op gate", "expected": "no-op"},
+    {"goal": "G17", "passed": true, "command": "no Telegram token leaks", "observed": "0 matches", "expected": "0"}
+  ],
+  "phases_failed": [],
+  "phases_skipped": [
+    {"phase": "1.5", "reason": "cloud-session budget — expert review skill invocation deferred; review_cursor unchanged; oldest segment is mobile-rn (2026-11-03)"},
+    {"phase": "1.6", "reason": "cloud-session budget — PM role analysis skill deferred; pm_cursor.next_index unchanged (next: pm-qa)"}
+  ],
+  "observation_summary": {
+    "merged_prs_since_last_run": [3350, 3351],
+    "open_prs_touched": [3353],
+    "issues_touched": [3352],
+    "commits_on_dev_since_cursor": 17,
+    "lag_hours": 23,
+    "churn_top3_filtered": [
+      "backend/servers/api-server/tests/suites/auth_tests.rs",
+      "backend/servers/api-server/tests/suite_7.rs",
+      "frontend/packages/api-client/src/index.ts (excluded — generated/)"
+    ]
+  }
+}

@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-11-06T14:58:01Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 3349,
-  "last_issue_seen": 3341,
-  "last_commit_sha": "6729d7648660d665f9ef2dc4cfd25584aae95d7e",
+  "last_run_iso": "2026-11-07T14:30:19Z",
+  "last_run_ms": 15000,
+  "last_pr_seen": 3351,
+  "last_issue_seen": 3352,
+  "last_commit_sha": "07ba480e65646f1d8d5dc997bb86056a2d128d82",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -688,9 +688,9 @@
       "recent_churn": 166
     },
     "backend/servers/api-server/tests/suites/auth_tests.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-11-05",
-      "recent_churn": 138
+      "runs_seen": 2,
+      "last_seen": "2026-11-07",
+      "recent_churn": 3
     },
     "backend/crates/db/tests/suite_4.rs": {
       "runs_seen": 1,
@@ -706,6 +706,11 @@
       "runs_seen": 1,
       "last_seen": "2026-11-06",
       "recent_churn": 2
+    },
+    "backend/servers/api-server/tests/suite_7.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-07",
+      "recent_churn": 3
     }
   },
   "seen_signals": [
@@ -740,7 +745,9 @@
     "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs",
     "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
     "churn-hotspot-backend/Cargo.toml",
+    "churn-hotspot-backend/crates/db/src/repositories/registry.rs",
     "churn-hotspot-backend/crates/db/src/repositories/rental.rs",
+    "churn-hotspot-backend/crates/db/tests/suite_4.rs",
     "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
     "churn-hotspot-backend/deny.toml",
     "churn-hotspot-backend/servers/api-server/src/main.rs",
@@ -758,6 +765,7 @@
     "churn-hotspot-backend/servers/api-server/src/routes/oauth.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/organizations.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/platform_admin.rs",
+    "churn-hotspot-backend/servers/api-server/src/routes/registry.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/suspend_cascade.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/violations.rs",
@@ -777,6 +785,7 @@
     "churn-hotspot-backend/servers/api-server/tests/oauth_integration_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/org_property_authz_backfill_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/platform_admin_authz_batch2_tests.rs",
+    "churn-hotspot-backend/servers/api-server/tests/suite_7.rs",
     "churn-hotspot-backend/servers/api-server/tests/suites/auth_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs",
@@ -1390,10 +1399,7 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952",
-    "churn-hotspot-backend/crates/db/tests/suite_4.rs",
-    "churn-hotspot-backend/crates/db/src/repositories/registry.rs",
-    "churn-hotspot-backend/servers/api-server/src/routes/registry.rs"
+    "untriaged-issue-952"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1407,8 +1413,8 @@
     "mobile-native-kmp": "2026-11-04"
   },
   "stats": {
-    "runs": 115,
-    "vectors_created": 522,
+    "runs": 116,
+    "vectors_created": 523,
     "plans_created": 35,
     "quiet_days": 8,
     "auto_fix_count": 0
