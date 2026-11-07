@@ -73,7 +73,7 @@
       "branch": "auto-impl/gh-issue-3352-a5bd2994",
       "status": "review",
       "claimed_at": "2026-11-07T08:30:09Z",
-      "last_updated": "2026-11-07T14:33:21Z",
+      "last_updated": "2026-11-07T16:34:21Z",
       "status_changed_at": "2026-11-07T09:20:38Z",
       "pr_number": 3353,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3353",
@@ -88,22 +88,22 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": "2026-11-07T12:31:00Z"
+      "merge_attempted_at": "2026-11-07T16:34:21Z"
     },
     {
       "task_id": "code-review-ppt-web-ui-registry-page-no-auth",
       "branch": "auto-impl/code-review-ppt-web-ui-registry-page-no-879fea88",
       "status": "review",
       "claimed_at": "2026-11-07T14:29:16Z",
-      "last_updated": "2026-11-07T14:41:38Z",
+      "last_updated": "2026-11-07T16:38:21Z",
       "status_changed_at": "2026-11-07T14:41:38Z",
       "pr_number": 3354,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3354",
       "merged_at": null,
       "specialist": "react-web",
       "implementer_summary": "pr=3354 status=done specialist=react-web scope_drift=false code_reuse_warn=useR@favorites(false-pos) note=registry pages build client via useRegistryApi() getToken()+useMemo (token carried+rotates); IG3 test/fix split proves fail-before-fix; verify green 11078 tests; draft PR #3354",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve note=registry-hook-matches-canonical-useBuildings-pattern-ci-green-posted-as-COMMENT-self-approve-blocked",
+      "last_reviewed_oid": "dcb8cf921b26a85aef1e27e9574e1ee10a8b3a71",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
@@ -157,5 +157,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-07T14:41:38Z"
+  "generated": "2026-11-07T16:39:14Z"
 }
