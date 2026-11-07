@@ -5441,6 +5441,15 @@
     }
   },
   "registry": {
+    "page": {
+      "title": "Épület nyilvántartásai",
+      "subtitle": "Kezelje az épülethez tartozó állat- és járműregisztrációkat",
+      "tabs": {
+        "pets": "Állatok",
+        "vehicles": "Járművek"
+      },
+      "loadError": "A regisztrációk betöltése nem sikerült. Kérjük, próbálja újra később."
+    },
     "rules": {
       "toast": {
         "saved": "Registry rules saved",

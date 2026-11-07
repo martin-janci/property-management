@@ -25,10 +25,13 @@ const ALL: Record<string, Json> = { en, sk, cs, de, pl, hu };
 const PAGE_KEYS = ['title', 'subtitle', 'tabs.pets', 'tabs.vehicles', 'loadError'] as const;
 
 const leaf = (bundle: Json, path: string): unknown =>
-  path.split('.').reduce<unknown>((acc, part) => {
-    if (acc && typeof acc === 'object') return (acc as Json)[part];
-    return undefined;
-  }, (bundle.registry as Json)?.page);
+  path.split('.').reduce<unknown>(
+    (acc, part) => {
+      if (acc && typeof acc === 'object') return (acc as Json)[part];
+      return undefined;
+    },
+    (bundle.registry as Json)?.page
+  );
 
 describe('registry page i18n', () => {
   for (const [lang, bundle] of Object.entries(ALL)) {

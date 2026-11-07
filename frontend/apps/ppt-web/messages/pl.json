@@ -5529,6 +5529,15 @@
     }
   },
   "registry": {
+    "page": {
+      "title": "Rejestry budynku",
+      "subtitle": "Zarządzaj rejestracjami zwierząt i pojazdów dla swojego budynku",
+      "tabs": {
+        "pets": "Zwierzęta",
+        "vehicles": "Pojazdy"
+      },
+      "loadError": "Nie udało się załadować rejestracji. Spróbuj ponownie później."
+    },
     "rules": {
       "toast": {
         "saved": "Registry rules saved",

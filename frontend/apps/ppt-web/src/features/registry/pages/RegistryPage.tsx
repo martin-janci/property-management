@@ -246,8 +246,8 @@ export function RegistryPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Building Registries</h1>
-        <p className="mt-2 text-gray-600">Manage pet and vehicle registrations for your building</p>
+        <h1 className="text-3xl font-bold text-gray-900">{t('registry.page.title')}</h1>
+        <p className="mt-2 text-gray-600">{t('registry.page.subtitle')}</p>
       </div>
 
       {/* Tabs */}
@@ -264,7 +264,7 @@ export function RegistryPage() {
           >
             <div className="flex items-center gap-2">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <title>Pets</title>
+                <title>{t('registry.page.tabs.pets')}</title>
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -272,7 +272,7 @@ export function RegistryPage() {
                   d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              Pets
+              {t('registry.page.tabs.pets')}
               {petsData?.total ? (
                 <span className="ml-1 px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-full">
                   {petsData.total}
@@ -291,7 +291,7 @@ export function RegistryPage() {
           >
             <div className="flex items-center gap-2">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <title>Vehicles</title>
+                <title>{t('registry.page.tabs.vehicles')}</title>
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -299,7 +299,7 @@ export function RegistryPage() {
                   d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
                 />
               </svg>
-              Vehicles
+              {t('registry.page.tabs.vehicles')}
               {vehiclesData?.total ? (
                 <span className="ml-1 px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-full">
                   {vehiclesData.total}
@@ -313,9 +313,7 @@ export function RegistryPage() {
       {/* Error display */}
       {(petsError || vehiclesError) && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-700">
-            Failed to load registrations. Please try again later.
-          </p>
+          <p className="text-sm text-red-700">{t('registry.page.loadError')}</p>
         </div>
       )}
 
