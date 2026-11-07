@@ -403,6 +403,42 @@
           "from-merged-review"
         ]
       }
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-page-no-auth",
+      "action": "ppt-web RegistryPage.tsx (L19-23) and RegistryRulesPage.tsx (L21) build the API client at module scope with no accessToken/tenantId (stub) — all registry requests ship without a Bearer token/tenant context (401/non-functional) and the module-scope singleton never rotates the token. Rebuild per the canonical useBuildings.ts getToken()+useMemo pattern. Add/adjust a test.",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-tier1d-devreview 2026-11-07T12:31:00Z (signals/2026-11-07-ppt-web-ui-tier1d.json)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-07T12:31:00Z"
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-mutation-silent-fail",
+      "action": "ppt-web RegistryPage.tsx delete/review mutation handlers (L102-142, L171-211) swallow failures with only console.error — no toast/error surface, so a failed destructive action looks successful. Surface mutation errors to the user (toast/inline error). Add/adjust a test.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1d-devreview 2026-11-07T12:31:00Z (signals/2026-11-07-ppt-web-ui-tier1d.json)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-07T12:31:00Z"
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-page-i18n-gap",
+      "action": "ppt-web RegistryPage.tsx (L249-250,275,302,317-318) hardcodes English (title, subtitle, Pets/Vehicles tabs, load-error) while the rest of the file uses t() — ships untranslated for sk/cs/de/pl/hu. Route the remaining strings through next i18n and add the keys for all locales.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1d-devreview 2026-11-07T12:31:00Z (signals/2026-11-07-ppt-web-ui-tier1d.json)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-07T12:31:00Z"
     }
   ],
   "generated": "2026-10-28T11:00:00Z"
