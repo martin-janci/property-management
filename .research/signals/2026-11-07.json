@@ -1,0 +1,202 @@
+{
+  "signals": [
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/cs.json",
+      "type": "churn-hotspot",
+      "source": "PR #3351, PR #3355",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/messages/cs.json — 138 lines across #3351 (registry forms i18n) and #3355 (RegistryPage i18n gap) — additive locale parity, not instability"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/de.json",
+      "type": "churn-hotspot",
+      "source": "PR #3351, PR #3355",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/messages/de.json — 138 lines across #3351 + #3355 — i18n parity churn"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
+      "type": "churn-hotspot",
+      "source": "PR #3351, PR #3355",
+      "score_delta": 0,
+      "evidence": [
+        "frontend/apps/ppt-web/messages/en.json — 138 lines across #3351 + #3355 — i18n parity churn",
+        "cumulative re-emit (already in seen_signals from 2026-07-16 i18n expansion); score_delta=0 per dedup rule"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-rules-form-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/components/RegistryRulesForm.tsx — zero useTranslation imports; 8 hardcoded English strings at lines 78 (\"Pet Rules\"), 134 (\"No limit\" ×3 total at 134/228/278), 163 (\"Banned breeds\"), 176 (\"Enter breed name and press Enter\"), 238 (\"Vehicle Rules\"), 295 (\"Any additional registry rules or notes...\") — ships untranslated for sk/cs/de/pl/hu while the enclosing RegistryRulesPage was just i18n'd in PR #3351/#3355",
+        "Same pattern as already-merged #3351 (registry components) and #3355 (RegistryPage chrome); mechanical refactor with existing locale parity test harness (localeNamespaceParity.test.ts, deadNamespaceI18n)"
+      ],
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/components/RegistryRulesForm.tsx"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-review-registration-modal-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/components/ReviewRegistrationModal.tsx imports useTranslation (partial i18n coverage) but still hardcodes 6 English strings: L77 (\"Choose action:\"), L90 (\"Approve\"), L111 (\"Reject\"), L136 (\"Info\"), L193 placeholder (\"Please provide a reason for rejecting this registration...\"), L195 (\"This will be sent to the owner.\")",
+        "Modal shown to building managers approving/rejecting pet+vehicle registrations — ships English in those strings for sk/cs/de/pl/hu users"
+      ],
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/components/ReviewRegistrationModal.tsx"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state changed vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative re-emit with score_delta>0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5a",
+      "passed": true,
+      "command": "no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5b",
+      "passed": true,
+      "command": "no open items > 14 days",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "all new plans annotated in brief",
+      "observed": "2/2 OK",
+      "expected": "all OK"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count+metadata+headings+mode+files-exist",
+      "observed": "2 new plans, all pass",
+      "expected": "≤2 all pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "no files outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secret patterns",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans converge",
+      "observed": "0 missing",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count ≥ HEAD",
+      "observed": "22 ≥ 22",
+      "expected": "≥"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "triage byte-identical",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "0 actions",
+      "expected": "≤3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management valid + GC7",
+      "observed": "cc 0→1, pm 3→4 advanced",
+      "expected": "valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "date": "2026-11-07"
+}

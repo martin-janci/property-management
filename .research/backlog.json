@@ -15435,6 +15435,94 @@
         "assignment_status": "failed",
         "pr_number": null
       }
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-rules-form-no-i18n",
+      "title": "Wire RegistryRulesForm through react-i18next (zero useTranslation; 8 hardcoded strings)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review 2026-11-07",
+        "PR #3351 (precedent)",
+        "PR #3355 (precedent)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/components/RegistryRulesForm.tsx — zero useTranslation imports; 8 hardcoded English strings (\"Pet Rules\" L78, \"No limit\" L134/228/278, \"Banned breeds\" L163, \"Enter breed name and press Enter\" L176, \"Vehicle Rules\" L238, \"Any additional registry rules or notes...\" L295)",
+        "RegistryRulesPage (parent) was i18n-wired in #3351/#3355; this child form was missed",
+        "Mechanical refactor with existing locale parity test (localeNamespaceParity.test.ts, deadNamespaceI18n)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/components/RegistryRulesForm.tsx"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": "plans/code-review-ppt-web-ui-registry-rules-form-no-i18n.md"
+    },
+    {
+      "id": "code-review-ppt-web-ui-review-registration-modal-i18n-gap",
+      "title": "Close i18n gap in ReviewRegistrationModal (6 hardcoded strings despite useTranslation import)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review 2026-11-07",
+        "PR #3355 (precedent)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/components/ReviewRegistrationModal.tsx imports useTranslation but hardcodes 6 strings: L77 \"Choose action:\", L90 \"Approve\", L111 \"Reject\", L136 \"Info\", L193 placeholder \"Please provide a reason for rejecting this registration...\", L195 \"This will be sent to the owner.\"",
+        "Modal shown to managers approving/rejecting pet+vehicle registrations — ships English for sk/cs/de/pl/hu users"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/components/ReviewRegistrationModal.tsx"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": "plans/code-review-ppt-web-ui-review-registration-modal-i18n-gap.md"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/cs.json",
+      "title": "Churn hotspot: ppt-web messages/cs.json — 138 lines across #3351 + #3355",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3351",
+        "PR #3355"
+      ],
+      "evidence": [
+        "i18n parity churn tied to registry feature expansion — additive, not instability. Scored +1 per routine spec; will decay if no further churn."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/messages/cs.json"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/de.json",
+      "title": "Churn hotspot: ppt-web messages/de.json — 138 lines across #3351 + #3355",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3351",
+        "PR #3355"
+      ],
+      "evidence": [
+        "i18n parity churn tied to registry feature expansion — additive, not instability."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/messages/de.json"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": null
     }
   ]
 }

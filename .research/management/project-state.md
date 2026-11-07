@@ -1,6 +1,8 @@
 # PPT Project State
 
-_Generated: 2026-10-28 — routine Phase 1.6 incremental upkeep. Role focus: **pm-frontend** (83-day stale rotation slot; pm-cursor idx 2 → 3). Coverage `scan_kind=upkeep`; coverage_cursor idx 12 → 0 (epic-9 TOTP re-checked, story 9-1 still done, no PRs touched 2FA). pm-scrum-master always-on._
+_Generated: 2026-11-07 — routine Phase 1.6 incremental upkeep (minimal, cloud). Role focus: **pm-qa** (74-day stale rotation slot; pm-cursor idx 3 → 4). Coverage `scan_kind=upkeep`; coverage_cursor idx 0 → 1 (epic-10a OAuth re-checked, no OAuth-surface PRs in window; PR #3353 session-revocation on change_password is auth-adjacent but doesn't change OAuth contract). pm-scrum-master always-on. Run initiated by buffer-low payload (claimable=6/72; mobile-native-gated + dep-blocked) — Phase 1.5 added 2 non-mobile ppt-web-ui findings for refill._
+
+_Note (2026-11-07):_ _this is a minimal upkeep pass — the detailed pm-role analyses below are carried verbatim from the 2026-10-28 pass; next full Phase 1.6 (role subagent spawn) will refresh them._
 
 ## Delta since last routine run (2026-10-26)
 
