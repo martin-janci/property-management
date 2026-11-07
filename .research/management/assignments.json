@@ -5,7 +5,7 @@
       "branch": "auto-impl/code-review-ppt-web-core-refresh-token-l-cc7d8fc2",
       "status": "quarantined",
       "claimed_at": "2026-11-04T08:35:28Z",
-      "last_updated": "2026-11-07T14:33:21Z",
+      "last_updated": "2026-11-07T20:31:24Z",
       "status_changed_at": "2026-11-04T18:44:37Z",
       "pr_number": 3294,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3294",
@@ -29,7 +29,7 @@
       "branch": "auto-impl/code-review-reality-server-inquiry-dead-88581ba0",
       "status": "review",
       "claimed_at": "2026-11-04T16:32:16Z",
-      "last_updated": "2026-11-07T18:37:29Z",
+      "last_updated": "2026-11-07T20:31:24Z",
       "status_changed_at": "2026-11-04T18:25:01Z",
       "pr_number": 3301,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3301",
@@ -51,7 +51,7 @@
       "branch": "auto-impl/screen-map-drift-pr-3293-reality-eddd3a6c",
       "status": "review",
       "claimed_at": "2026-11-05T22:29:23Z",
-      "last_updated": "2026-11-07T18:37:29Z",
+      "last_updated": "2026-11-07T20:31:24Z",
       "status_changed_at": "2026-11-06T00:26:46Z",
       "pr_number": 3333,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3333",
@@ -73,7 +73,7 @@
       "branch": "auto-impl/code-review-ppt-web-ui-registry-mutation-97253c1f",
       "status": "review",
       "claimed_at": "2026-11-07T16:28:48Z",
-      "last_updated": "2026-11-07T18:37:29Z",
+      "last_updated": "2026-11-07T20:31:24Z",
       "status_changed_at": "2026-11-07T16:47:10Z",
       "pr_number": 3356,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3356",
@@ -91,5 +91,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-07T18:37:29Z"
+  "generated": "2026-11-07T20:31:24Z"
 }
