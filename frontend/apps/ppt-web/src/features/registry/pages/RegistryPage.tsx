@@ -9,6 +9,7 @@ import type { RegistryStatus } from '@ppt/api-client';
 import { createRegistryApi, createRegistryHooks } from '@ppt/api-client';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useToast } from '../../../components';
 import { useConfirmDialog } from '../../../components/useConfirmDialog';
 import { PetRegistrationList } from '../components/PetRegistrationList';
 import { VehicleRegistrationList } from '../components/VehicleRegistrationList';
@@ -24,6 +25,7 @@ const registryApi = createRegistryApi({
 
 export function RegistryPage() {
   const { t } = useTranslation();
+  const { showToast } = useToast();
   const { confirm, confirmDialog } = useConfirmDialog();
   const [activeTab, setActiveTab] = useState<'pets' | 'vehicles'>('pets');
 
@@ -110,12 +112,26 @@ export function RegistryPage() {
       ) {
         try {
           await deletePetMutation.mutateAsync(id);
+          showToast({
+            type: 'success',
+            title: t('registry.toast.petDeleted'),
+            message: t('registry.toast.petDeletedBody'),
+          });
         } catch (error) {
+          // Keep the console trace for diagnostics, but always surface the
+          // failure via a persistent error toast (with the server's message
+          // when we have one) so a failed delete can never look like a success.
           console.error('Failed to delete pet registration:', error);
+          showToast({
+            type: 'error',
+            title: t('registry.toast.petDeleteFailed'),
+            message:
+              error instanceof Error ? error.message : t('registry.toast.petDeleteFailedBody'),
+          });
         }
       }
     },
-    [deletePetMutation, confirm, t]
+    [deletePetMutation, confirm, showToast, t]
   );
 
   const handlePetReview = useCallback(
@@ -133,12 +149,26 @@ export function RegistryPage() {
             id,
             data: { approve: true },
           });
+          showToast({
+            type: 'success',
+            title: t('registry.toast.petReviewed'),
+            message: t('registry.toast.petReviewedBody'),
+          });
         } catch (error) {
+          // Keep the console trace for diagnostics, but always surface the
+          // failure via a persistent error toast (with the server's message
+          // when we have one) so a failed review can never look like a success.
           console.error('Failed to review pet registration:', error);
+          showToast({
+            type: 'error',
+            title: t('registry.toast.petReviewFailed'),
+            message:
+              error instanceof Error ? error.message : t('registry.toast.petReviewFailedBody'),
+          });
         }
       }
     },
-    [reviewPetMutation, confirm, t]
+    [reviewPetMutation, confirm, showToast, t]
   );
 
   const handlePetCreate = useCallback(() => {
@@ -179,12 +209,26 @@ export function RegistryPage() {
       ) {
         try {
           await deleteVehicleMutation.mutateAsync(id);
+          showToast({
+            type: 'success',
+            title: t('registry.toast.vehicleDeleted'),
+            message: t('registry.toast.vehicleDeletedBody'),
+          });
         } catch (error) {
+          // Keep the console trace for diagnostics, but always surface the
+          // failure via a persistent error toast (with the server's message
+          // when we have one) so a failed delete can never look like a success.
           console.error('Failed to delete vehicle registration:', error);
+          showToast({
+            type: 'error',
+            title: t('registry.toast.vehicleDeleteFailed'),
+            message:
+              error instanceof Error ? error.message : t('registry.toast.vehicleDeleteFailedBody'),
+          });
         }
       }
     },
-    [deleteVehicleMutation, confirm, t]
+    [deleteVehicleMutation, confirm, showToast, t]
   );
 
   const handleVehicleReview = useCallback(
@@ -202,12 +246,26 @@ export function RegistryPage() {
             id,
             data: { approve: true },
           });
+          showToast({
+            type: 'success',
+            title: t('registry.toast.vehicleReviewed'),
+            message: t('registry.toast.vehicleReviewedBody'),
+          });
         } catch (error) {
+          // Keep the console trace for diagnostics, but always surface the
+          // failure via a persistent error toast (with the server's message
+          // when we have one) so a failed review can never look like a success.
           console.error('Failed to review vehicle registration:', error);
+          showToast({
+            type: 'error',
+            title: t('registry.toast.vehicleReviewFailed'),
+            message:
+              error instanceof Error ? error.message : t('registry.toast.vehicleReviewFailedBody'),
+          });
         }
       }
     },
-    [reviewVehicleMutation, confirm, t]
+    [reviewVehicleMutation, confirm, showToast, t]
   );
 
   const handleVehicleCreate = useCallback(() => {
