@@ -23,6 +23,7 @@ const mutateAsync = vi.fn();
 
 vi.mock('@ppt/api-client', () => ({
   createRegistryApi: vi.fn(() => ({})),
+  getToken: vi.fn(() => 'test-token'),
   createRegistryHooks: vi.fn(() => ({
     useRegistryRules: vi.fn(() => ({
       data: {
