@@ -1,0 +1,42 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-07",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "oldest-unreviewed (dispatcher-tier1d demand-driven; review_cursor mobile-rn 2026-11-03 is oldest; non-KMP, LANDABLE React Native segment). This is the 3rd mobile-rn pass today (after 2026-11-07-mobile-rn-tier1d.json and -2.json); justified because both findings below are DISTINCT and uncovered by the five earlier mobile-rn findings (widget apiRequest swallow, NFC untested, widget cache JSON parse, session role-cast bypass, i18n hardcoded strings). Saturation check: mobile-rn has 0 open code-review-finding rows in backlog.json - not saturated. The 2026-11-04 landable tier {api-core, reality-server, ppt-web-core} remains untouched today and should be preferred on the next run; mobile-native-kmp excluded (AGP egress-blocked, unlandable). Reviewed the voice/ subsystem (Epic 49 voice assistant) and the push-notification hook; adjacent files (useApi.ts, FaultsListScreen, DocumentsScreen, usePushNotifications token path) were read and found clean (proper error branches, __DEV__-gated logging that never logs the raw push token, all FlatLists carry ListEmptyComponent).",
+  "experts_used": [
+    "frontend",
+    "tester"
+  ],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-voiceassistant-error-deadend",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/voice/VoiceAssistant.ts:79-101 - startListening() guards with `if (this.state !== 'idle') return;` (L80-82). On a native failure it sets `this.updateState('error')` (L85 and L98) and rethrows/throws. There is NO code path anywhere in the class that transitions state from 'error' back to 'idle': the only resets to 'idle' are stopListening() (L115, reachable only from 'listening' per its own L107-109 guard) and processRecognitionResult() (L147, reachable only after entering 'processing'). So after a single failed startListening() the assistant is permanently stuck in 'error' and every subsequent startListening() early-returns at L80 - the voice feature is bricked until the VoiceAssistant instance is recreated.",
+        "frontend/apps/mobile/src/voice/VoiceAssistant.ts:106-116 - same dead-end class for a transient stop failure: stopListening() awaits NativeSpeech.stopListening() (L112) with no try/catch, so if it rejects the state is left at 'listening' and never reaches L115 ('idle'); startListening() then permanently early-returns.",
+        "Confirmed by grep: the class exposes no reset()/recover()/cancel() method and no consumer resets the state externally (no setState on 'error' outside the class). Impact: user-facing hands-free feature (Epic 49 Story 49.2 - report fault / announcements / voting by voice) becomes silently unusable after the first permission denial or native-module error, with no recovery short of app restart. Landable frontend-only fix: in startListening() allow retry from 'error' (treat 'error' like 'idle', or add an explicit reset-to-idle on failure), and wrap stopListening()'s native call in try/catch that still returns the state to 'idle'."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-push-isregistered-premature",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/usePushNotifications.ts:223-234 - setIsRegistered(true) is called at L223 BEFORE the backend registration await sendTokenToBackend(nativeToken.data) at L227. The surrounding try/catch (L230-234) only does setError(message) on failure and does not roll back isRegistered. So if the backend token-registration POST fails (network, 401, 5xx), the device reports isRegistered === true while the backend never stored the token - the UI/state believes push is active but the device will receive no server pushes, and nothing retries the backend registration.",
+        "Impact: silent push-delivery gap - a device shows as registered but is not reachable by the push-fanout pipeline (backend push_fanout). Lower severity (+1) because local notification permission really was granted and the error is surfaced via setError, but the isRegistered flag is misleading for any consumer that gates on it. Landable frontend-only fix: move setIsRegistered(true) to after sendTokenToBackend() resolves, or set it false / retry in the catch so the flag reflects backend state."
+      ]
+    }
+  ]
+}
