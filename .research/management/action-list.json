@@ -3,7 +3,7 @@
   "items": [
     {
       "id": "pm-devops-unblock-mobile-native-cloud-builds",
-      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) — still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
+      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) \u2014 still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
       "owner_role": "pm-devops",
       "priority": "high",
       "dependency": "none",
@@ -23,7 +23,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-create-listing-not-wired",
-      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded",
+      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub \u2014 form data discarded",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -40,7 +40,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-inquiries-response-contract",
-      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call",
+      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` \u2014 MissingFieldException on every real /inquiries + /realtors/inquiries call",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -91,7 +91,7 @@
     },
     {
       "id": "pm-frontend-mobile-rn-lint-gates-adopt-2026-10-28",
-      "action": "Adopt eslint-plugin-react-hooks + i18next/no-literal-string in frontend/apps/mobile (blocking, warn-only for one sprint) — closes the chronic class-of-defect behind the carried mobile-rn lint-gap risk (ranked-ballot + i18n fallback bugs still open 83 days later)",
+      "action": "Adopt eslint-plugin-react-hooks + i18next/no-literal-string in frontend/apps/mobile (blocking, warn-only for one sprint) \u2014 closes the chronic class-of-defect behind the carried mobile-rn lint-gap risk (ranked-ballot + i18n fallback bugs still open 83 days later)",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "pm-qa",
@@ -105,7 +105,7 @@
     },
     {
       "id": "pm-scrum-master-violations-xtenant-404-contract-sweep-2026-10-28",
-      "action": "Sweep remaining violations mutation handlers for the 403-vs-404 cross-tenant contract (#3187 revealed assign still returns 403) — pattern audit across moderation.rs/aml_dsa.rs after PR #3183 fixed most but not assign",
+      "action": "Sweep remaining violations mutation handlers for the 403-vs-404 cross-tenant contract (#3187 revealed assign still returns 403) \u2014 pattern audit across moderation.rs/aml_dsa.rs after PR #3183 fixed most but not assign",
       "owner_role": "pm-scrum-master",
       "priority": "high",
       "dependency": "pm-security",
@@ -119,7 +119,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-sso-error-body-unguarded",
-      "action": "KMP realtor SSO error-body parsing is unguarded — crashes on non-JSON response",
+      "action": "KMP realtor SSO error-body parsing is unguarded \u2014 crashes on non-JSON response",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -136,7 +136,7 @@
     },
     {
       "id": "code-review-ppt-web-core-refresh-token-localstorage",
-      "action": "SECURITY: ppt-web refresh-token persisted in localStorage — XSS-reachable",
+      "action": "SECURITY: ppt-web refresh-token persisted in localStorage \u2014 XSS-reachable",
       "owner_role": "pm-security",
       "priority": "low",
       "status": "open",
@@ -352,10 +352,10 @@
     },
     {
       "id": "code-review-ppt-web-ui-registry-no-i18n",
-      "action": "ppt-web registry feature (pet/vehicle forms + lists) ships hardcoded English placeholders in a 4-locale app — 0 useTranslation on 4 files",
+      "action": "ppt-web registry feature (pet/vehicle forms + lists) ships hardcoded English placeholders in a 4-locale app \u2014 0 useTranslation on 4 files",
       "owner_role": "pm-tech-lead",
       "priority": "low",
-      "status": "in-progress",
+      "status": "done",
       "source": "dispatcher-backlog-refill 2026-11-05T08:30:13Z (score=1 conf=medium vector=refactor)",
       "deadline": null,
       "dependency": null,
@@ -365,14 +365,20 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
+      },
+      "last_updated": "2026-11-07T11:00:00Z",
+      "resolved_by": {
+        "pr": 3351,
+        "merged_at": "2026-11-07",
+        "has_test": false
       }
     },
     {
       "id": "code-review-reality-web-share-cmp-unchecked-json",
-      "action": "reality-web shared-comparison loader casts the listings API body with an unchecked `as Promise<ListingSummary>` — no shape validation, unlike the rest of reality-web's boundary guards (parseJsonBody / parseListingDetail)",
+      "action": "reality-web shared-comparison loader casts the listings API body with an unchecked `as Promise<ListingSummary>` \u2014 no shape validation, unlike the rest of reality-web's boundary guards (parseJsonBody / parseListingDetail)",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "in-progress",
+      "status": "done",
       "source": "dispatcher-backlog-refill 2026-11-05T22:25:45Z (score=1 conf=medium vector=bug)",
       "deadline": null,
       "dependency": null,
@@ -382,8 +388,88 @@
         "plan": null,
         "score": 1,
         "vector": "bug"
+      },
+      "last_updated": "2026-11-07T11:00:00Z",
+      "resolved_by": {
+        "pr": 3350,
+        "merged_at": "2026-11-07",
+        "has_test": true
       }
+    },
+    {
+      "id": "pm-qa-test-shadow-regression-registry-i18n-2026-11-07",
+      "action": "Backfill a Vitest i18n regression test for the PR #3351 ppt-web registry pet/vehicle components \u2014 asserts each useTranslation key resolves across all 6 locales and no hardcoded English remains in the 4 touched files (closes the test-shadow debt pm-qa flagged on 2026-08-25; #3351 landed without a test file)",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "pm-frontend",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-07",
+      "first_open_at": "2026-11-07T11:00:00Z"
+    },
+    {
+      "id": "pm-qa-planner-buffer-gating-release-risk-2026-11-07",
+      "action": "Escalate planner buffer-low (6/72 claimable, all remaining open work is mobile-native-gated on #2652) as a release-readiness risk \u2014 QA cannot exercise mobile-native regressions while cloud builds are structurally blocked; publish a QA-visible release-blocker view distinct from the planner's buffer-health view",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "pm-devops",
+      "depends_on": [
+        "pm-devops-unblock-mobile-native-cloud-builds"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-07",
+      "first_open_at": "2026-11-07T11:00:00Z"
+    },
+    {
+      "id": "pm-qa-ci-blocker-3187-still-open-release-gate-2026-11-07",
+      "action": "Confirm #3187 cross-tenant assign-404 contract test status on dev CI \u2014 10 days since surfacing (2026-10-28), still listed as carried blocker; verify whether backend assign_violation fix landed or the test was adjusted, and close/escalate accordingly",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "pm-security",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-07",
+      "first_open_at": "2026-11-07T11:00:00Z"
+    },
+    {
+      "id": "pm-qa-test-diff-guard-policy-rollout-2026-11-07",
+      "action": "Convert the pm-qa 2026-08-25 decision proposal (CI diff-guard requiring failing-on-main test for dispatcher-spawned fix PRs) into a concrete action \u2014 draft the CI check rule, name the enforcement workflow (frontend.yml / backend.yml hook), and quantify the cost (false-positive rate on existing merges from the last 30 days)",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "pm-tech-lead",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-07",
+      "first_open_at": "2026-11-07T11:00:00Z"
+    },
+    {
+      "id": "pm-qa-announcement-fanout-sqlx-integration-test-2026-11-07",
+      "action": "Replace the pure-Rust fan-out predicate re-model test (#2484) with a sqlx integration test exercising the real RLS policy \u2014 carried risk pm-qa-announcement-fanout-test-fidelity-2026-07-23, now 107 days unresolved while the announcements surface churns",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "pm-backend",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-07",
+      "first_open_at": "2026-11-07T11:00:00Z"
+    },
+    {
+      "id": "pm-scrum-master-planner-refill-backend-frontend-reality-2026-11-07",
+      "action": "Request an off-rotation dispatcher Tier-1b backlog scan scoped to backend + frontend + reality vectors to break the mobile-native gating (planner reports claimable=6/72, below floor 36) \u2014 the mobile-native-gated open items are blocked on #2652; need a parallel non-mobile queue so the dispatcher's 3-implementer pool doesn't starve",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "pm-devops",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-07",
+      "first_open_at": "2026-11-07T11:00:00Z"
     }
   ],
-  "generated": "2026-10-28T11:00:00Z"
+  "generated": "2026-11-07T11:00:00Z"
 }

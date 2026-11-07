@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-28T11:00:00Z",
+  "generated": "2026-11-07T11:00:00Z",
   "scan_kind": "upkeep",
   "screen_gaps": {
     "orphan_epics": [],
@@ -897,14 +897,15 @@
         "PR #2465 (2026-07-22): OAuth handler test backfill \u2014 additional regression coverage on authorize/token endpoints",
         "Re-check 2026-07-23 (cursor idx 0): OAuth surface stable; oauth.rs unchanged in 07-21\u219207-23 window aside from test backfill (#2465); admin-web OAuthClientsPage/OAuthGrantsPage screen-maps still shipped.",
         "2026-10-01 upkeep: PR #2993 (reality-web SSO locale) touched the SSO consumer locale pipeline, not the authorization server; evidence of ongoing SSO integration \u2014 status unchanged (done).",
-        "2026-10-19 upkeep: PR #3121 (reality-web auth-context transient-logout cushion) hardens SSO consumer side on transient 401 from reality-server /auth/refresh \u2014 defensive, no backend contract change; backlog signal `code-review-reality-web-auth-ctx-transient-logout` moved to done."
+        "2026-10-19 upkeep: PR #3121 (reality-web auth-context transient-logout cushion) hardens SSO consumer side on transient 401 from reality-server /auth/refresh \u2014 defensive, no backend contract change; backlog signal `code-review-reality-web-auth-ctx-transient-logout` moved to done.",
+        "2026-11-07 upkeep: cursor idx 0 re-check \u2014 epic-10a OAuth surface unchanged in 2026-11-06..2026-11-07 window; #3350 (reality-web share-cmp schema validation) + #3351 (ppt-web registry i18n) touch frontend UI only, not OAuth routes/handlers; status stays done."
       ],
       "gaps": [
         "Sprint-status still lists 10a-1 as ready-for-dev despite gates #481/#487 closed \u2014 reconcile gate note",
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-10a",
-      "last_checked": "2026-10-19",
+      "last_checked": "2026-11-07",
       "screen_refs": []
     },
     {
@@ -924,13 +925,14 @@
         "Issue #482 CLOSED: ProtectedRoute.test.tsx covers deny-missing-role/allow-correct/deny-wrong",
         "screen-map admin-oauth-clients buildStatus=shipped apiStatus=complete",
         "PR #2465 (2026-07-22): OAuth handler backfill covers client-facing endpoints",
-        "Re-check 2026-07-23 (cursor idx 0): OAuth surface stable; oauth.rs unchanged in 07-21\u219207-23 window aside from test backfill (#2465); admin-web OAuthClientsPage/OAuthGrantsPage screen-maps still shipped."
+        "Re-check 2026-07-23 (cursor idx 0): OAuth surface stable; oauth.rs unchanged in 07-21\u219207-23 window aside from test backfill (#2465); admin-web OAuthClientsPage/OAuthGrantsPage screen-maps still shipped.",
+        "2026-11-07 upkeep: cursor idx 0 re-check \u2014 epic-10a OAuth surface unchanged in 2026-11-06..2026-11-07 window; #3350 (reality-web share-cmp schema validation) + #3351 (ppt-web registry i18n) touch frontend UI only, not OAuth routes/handlers; status stays done."
       ],
       "gaps": [
         "Sprint-status still lists 10a-2 as ready-for-dev despite gate #482 closed \u2014 reconcile gate note"
       ],
       "epic": "epic-10a",
-      "last_checked": "2026-07-23",
+      "last_checked": "2026-11-07",
       "screen_refs": [
         {
           "screen_id": "ppt/admin-oauth-clients",
@@ -957,13 +959,14 @@
         "oauth_token_introspection_rotation_test.rs",
         "Issue #481 CLOSED 2026-05-26",
         "PR #2465 (2026-07-22): OAuth token-management endpoint tests refreshed",
-        "Re-check 2026-07-23 (cursor idx 0): OAuth surface stable; oauth.rs unchanged in 07-21\u219207-23 window aside from test backfill (#2465); admin-web OAuthClientsPage/OAuthGrantsPage screen-maps still shipped."
+        "Re-check 2026-07-23 (cursor idx 0): OAuth surface stable; oauth.rs unchanged in 07-21\u219207-23 window aside from test backfill (#2465); admin-web OAuthClientsPage/OAuthGrantsPage screen-maps still shipped.",
+        "2026-11-07 upkeep: cursor idx 0 re-check \u2014 epic-10a OAuth surface unchanged in 2026-11-06..2026-11-07 window; #3350 (reality-web share-cmp schema validation) + #3351 (ppt-web registry i18n) touch frontend UI only, not OAuth routes/handlers; status stays done."
       ],
       "gaps": [
         "Sprint-status still lists 10a-3 as ready-for-dev despite gate #481 closed \u2014 reconcile gate note"
       ],
       "epic": "epic-10a",
-      "last_checked": "2026-07-23",
+      "last_checked": "2026-11-07",
       "screen_refs": [
         {
           "screen_id": "ppt/settings-oauth-grants",
@@ -1353,5 +1356,5 @@
       "screen_refs": []
     }
   ],
-  "last_upkeep_note": "2026-10-28: cursor idx 12 \u2192 epic-9 re-check (9-1 TOTP still done, no PRs in window touched 2FA); PR #3183 (violations xtenant IDOR regression + 404 fix) lands against 10b/moderation surface \u2014 all 10b stories remain done, no flip. cursor advances 12 \u2192 0 (epic-10a next run)."
+  "last_upkeep_note": "2026-11-07: cursor idx 0 \u2192 epic-10a re-check (10a-1/2/3 OAuth still done, no PRs in window touched OAuth surfaces); 2 PRs merged (#3350 reality-web share-cmp schema validation [has test], #3351 ppt-web registry i18n [no test]) \u2014 neither maps to a coverage story (both are refactor/debt items tracked in action-list, not story-delivery). cursor advances 0 \u2192 1 (epic-10b next run)."
 }

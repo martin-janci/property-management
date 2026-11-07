@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-10-28T11:00:00Z",
+  "generated": "2026-11-07T11:00:00Z",
   "items": [
     {
       "id": "pm-devops-swagger-ui-egress-blocking-security-2026-10-01",
@@ -282,6 +282,26 @@
       "mitigation": "Add a staleness-bias to pm_cursor rotation: when any role is >60 days stale, prefer it over the current index. Alternately, run full-rotation sweeps on 10-day cadence instead of relying on daily rotation only",
       "owner_role": "pm-scrum-master",
       "trigger": "Any pm-* role crosses 90 days stale",
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-test-shadow-pattern-persistent-2026-11-07",
+      "risk": "Test-shadow pattern persists: PR #3351 (ppt-web registry i18n, 4 files + 6 locales) landed WITHOUT a regression test \u2014 same class pm-qa flagged on 2026-08-25 (5/7 fix PRs shipped testless). #3350 (reality-web share-cmp schema validation) shipped with a test; the ratio is 1 of 2 this window, same mix as the 2026-08-25 observation. Enforcement decision still unformalized 74 days later.",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Formalize the 2026-08-25 decision proposal into a CI diff-guard: dispatcher-spawned fix PRs require a failing-on-main test file in the same PR (enforced via frontend.yml / backend.yml check).",
+      "owner_role": "pm-qa",
+      "trigger": "Any dispatcher-authored PR merged without a *.test.* / *_test.rs / tests/ file in the diff.",
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-planner-starvation-mobile-native-gating-2026-11-07",
+      "risk": "Planner buffer at 6/72 claimable \u2014 all remaining open non-dep-blocked work is mobile-native-gated on #2652 (KMP cloud builds unavailable). The dispatcher's 3-implementer pool (12 runs/day = 36 slots) will starve while mobile-native queue is structurally unclaimable. QA-visible as release-readiness risk: cannot regression-test mobile-native paths that can't be built in CI.",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Pm-scrum-master requested off-rotation Tier-1b backlog scan scoped to backend+frontend+reality vectors to establish a non-mobile parallel queue (action pm-scrum-master-planner-refill-...); pm-devops to break #2652 on the parallel track.",
+      "owner_role": "pm-qa",
+      "trigger": "claimable buffer stays <18 (half-floor) across two consecutive dispatcher cycles.",
       "status": "open"
     }
   ]

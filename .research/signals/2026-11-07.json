@@ -1,0 +1,163 @@
+{
+  "date": "2026-11-07",
+  "run_iso": "2026-11-07T04:41:47Z",
+  "signals": [
+    {
+      "id": "code-review-api-core-notification-service-push-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-11-07 api-core",
+      "score_delta": 3,
+      "severity": "high",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/services/notification.rs:348",
+        "backend/servers/api-server/src/services/scheduler/mod.rs:491"
+      ],
+      "evidence": "NotificationService::send_to_user's NotificationChannel::Push branch (services/notification.rs:348-356) only calls tracing::info! with an 'integration pending' comment and never dispatches to FCM/APNs — yet every scheduler-triggered notifier (notify_announcement_published L453-457, notify_vote_started L488-492, notify_vote_closed, notify_meter_reading_due, notify_payment_due) lists NotificationChannel::Push and the scheduler invokes them (scheduler/mod.rs:491, :986, :1066, :1152; scheduler/votes.rs:96, :256, :486), so all scheduled-announcement / vote-lifecycle / meter / payment push notifications silently drop in production while the request-time path (routes/announcements/lifecycle.rs:138, routes/voting.rs:739, etc.) correctly uses state.notification_pipeline which fans out to the PushFanoutWorker.",
+      "title": "Scheduler push notifications silently dropped by NotificationService stub",
+      "suggested_fix_sketch": "Replace the NotificationService usage in Scheduler with the already-wired state.notification_pipeline (NotificationPipeline::broadcast / dispatch_to_users), which routes NotificationChannel::Push through CombinedPushAdapter and the PushFanoutWorker — matching how the request-time paths already dispatch.",
+      "severity_upgrade_note": "reviewer called it medium (+2); routine upgraded to high (+3) because it is a silent-failure correctness bug affecting ALL scheduled push paths (announcements, votes, meters, payments), not a perf/UX smell"
+    },
+    {
+      "id": "code-review-api-core-feature-service-n-plus-1",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-11-07 api-core",
+      "score_delta": 2,
+      "severity": "medium",
+      "confidence": "high",
+      "candidate_vector": "perf",
+      "files": [
+        "backend/servers/api-server/src/services/feature_service.rs:93",
+        "backend/servers/api-server/src/services/feature_service.rs:170",
+        "backend/servers/api-server/src/services/feature_service.rs:221"
+      ],
+      "evidence": "FeatureService::resolve_features_for_user (services/feature_service.rs:73-166) loops over every flag returned by flag_repo.list_all() and inside the loop issues per-flag DB round trips: analytics_repo.get_user_type_access (L95-98, single-row SELECT from user_type_feature_access), analytics_repo.get_descriptor (L101, single-row SELECT from feature_descriptors), plus resolve_feature_state (L170-218) which calls flag_repo.is_enabled_for_context then has_specific_override (L221-285) running 2-3 additional EXISTS queries against feature_flag_overrides per flag — so each flag costs 3-6 queries and the authenticated hot path GET /api/v1/features/resolved (routes/features.rs:242-273) scales as O(flags) × 3-6 instead of a constant number of batched joins.",
+      "title": "O(flags) DB round trips in FeatureService::resolve_features_for_user",
+      "suggested_fix_sketch": "Replace the per-flag lookups with batched fetches at the top of the function: one SELECT returning all user_type_feature_access rows for the user_type, one for all feature_descriptors, and a single SELECT from feature_flag_overrides filtered by (user_id, org_id, role_id) grouped by flag_id — then resolve from in-memory maps."
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate: no signal this run matched the Phase 5 allowlist (screen-map-drift, screen-map-orphan, fixme-in-merged-code, lockfile-drift, stalled-review) with confidence=high AND backlog score>=3",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md + header",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "[.items[].id] unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no re-scored signal id",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap <=8; decay OK (no open items past 14d cutoff)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "brief lists adversarial pass for each new plan",
+      "observed": "1 of 1 new plans annotated",
+      "expected": "all annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "plan readiness (4 meta + 11 headings + ticks + mode + files resolve)",
+      "observed": "1 new plan, all checks pass",
+      "expected": "all pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached | grep -v ^\\.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/hostname grep on staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md == regen(backlog.json)",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists failed phases + no cursor advance",
+      "observed": "none failed",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all prior-run plan slugs still in plans/ or _archive/",
+      "observed": "no missing slugs",
+      "expected": "no missing slugs"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive-count >= HEAD archive-count",
+      "observed": "22 >= 22",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md == regen(backlog.json, vector=triage)",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency + kill-switch",
+      "observed": "auto_fix_actions=[] (no Phase 5 candidate)",
+      "expected": "caps + no re-process"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + pm_cursor + coverage_cursor advanced",
+      "observed": "CC 0->1, PM 3->4, 13 epics",
+      "expected": "in range + advanced"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no literal Telegram token value in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
