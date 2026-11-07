@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-11-06T14:58:01Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 3349,
+  "last_run_iso": "2026-11-07T02:40:00Z",
+  "last_run_ms": 5000,
+  "last_pr_seen": 3351,
   "last_issue_seen": 3341,
-  "last_commit_sha": "6729d7648660d665f9ef2dc4cfd25584aae95d7e",
+  "last_commit_sha": "a3826809",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -1393,7 +1393,10 @@
     "untriaged-issue-952",
     "churn-hotspot-backend/crates/db/tests/suite_4.rs",
     "churn-hotspot-backend/crates/db/src/repositories/registry.rs",
-    "churn-hotspot-backend/servers/api-server/src/routes/registry.rs"
+    "churn-hotspot-backend/servers/api-server/src/routes/registry.rs",
+    "code-review-mobile-rn-widget-apirequest-swallow",
+    "code-review-mobile-rn-nfc-controller-untested",
+    "code-review-mobile-rn-widget-cache-json-parse"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1407,8 +1410,8 @@
     "mobile-native-kmp": "2026-11-04"
   },
   "stats": {
-    "runs": 115,
-    "vectors_created": 522,
+    "runs": 116,
+    "vectors_created": 525,
     "plans_created": 35,
     "quiet_days": 8,
     "auto_fix_count": 0
@@ -1424,12 +1427,12 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 3,
+    "next_index": 4,
     "role_last_run": {
       "pm-tech-lead": "2026-10-22",
       "pm-backend": "2026-10-26",
       "pm-frontend": "2026-10-28",
-      "pm-qa": "2026-08-25",
+      "pm-qa": "2026-11-07",
       "pm-devops": "2026-08-31",
       "pm-security": "2026-10-01",
       "pm-data": "2026-10-16",
@@ -1437,6 +1440,6 @@
     }
   },
   "coverage_cursor": {
-    "next_index": 0
+    "next_index": 1
   }
 }

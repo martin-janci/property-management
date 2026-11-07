@@ -1,0 +1,204 @@
+{
+  "generated_at": "2026-11-07T02:40:00Z",
+  "run": {
+    "since_iso": "2026-11-06T14:58:01Z",
+    "last_pr_seen_at_start": 3349,
+    "last_issue_seen_at_start": 3341,
+    "last_commit_sha_at_start": "6729d7648660d665f9ef2dc4cfd25584aae95d7e",
+    "lag_hours": 12,
+    "trigger_payload": "buffer-low: claimable=6/72 honest-claimable=0 (all remaining backlog mobile-native-gated or dep-poisoned); coverage exhausted — refill planner"
+  },
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-widget-apirequest-swallow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-11-07 mobile-rn (dispatcher Tier-1d, ingested by routine Phase 2)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:373-380 — private apiRequest<T>() wraps the whole fetch in try/catch and, on ANY error (rejected fetch = offline/timeout/DNS, or a thrown `API request failed: <status>` for a non-2xx), returns `{} as T` instead of re-throwing.",
+        "Consequence: updateAllWidgets() (lines 136-160) wraps fetchWidgetData() in try/catch to classify each widget as success/failure, but because apiRequest never throws, the failure path is dead code — a failed backend fetch resolves to an empty payload, is treated as `success: true`, cached, and overwrites previously-valid cached widget data.",
+        "Fix vector: make apiRequest throw (remove the `{} as T` fallback); or move the fallback decision into fetchWidgetData with an explicit mock-mode flag."
+      ],
+      "ingested_from": ".research/signals/2026-11-07-mobile-rn-tier1d.json"
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-controller-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-11-07 mobile-rn (dispatcher Tier-1d, ingested by routine Phase 2)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts (478 lines) — security-sensitive physical building-access controller has NO sibling or repo-wide test file.",
+        "Latent correctness concern: handleTap() only flips a granted result to denied inside `if (NativeNFC) { ... }`. When NativeNFC is null, the transmit step is skipped but validationResult.granted stays true, so the code logs 'granted' and calls updateCredentialUsage() even though no credential was transmitted.",
+        "Fix vector: add NFCAccessController.test.ts covering validateAccess() grant/deny/expiry branches, the NativeNFC-null path, and logAccessAttempt() status mapping."
+      ],
+      "ingested_from": ".research/signals/2026-11-07-mobile-rn-tier1d.json"
+    },
+    {
+      "id": "code-review-mobile-rn-widget-cache-json-parse",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-11-07 mobile-rn (dispatcher Tier-1d, ingested by routine Phase 2)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:351 (getAllCachedData) and :94 (getAllWidgetConfigs) — both do `return stored ? JSON.parse(stored) : {}` / `: []` with NO try/catch. A corrupted blob throws SyntaxError that propagates up and breaks every widget read until storage is cleared.",
+        "Inconsistency: sibling persistence modules in the same app DO guard JSON.parse (TourManager.ts:289-294, NFCCredentialManager.ts:226/353/366, HelpCenter.ts:199).",
+        "Fix vector: wrap both JSON.parse calls in try/catch, log warn, return empty default on parse failure — matching the sibling modules."
+      ],
+      "ingested_from": ".research/signals/2026-11-07-mobile-rn-tier1d.json"
+    }
+  ],
+  "resolutions": [
+    {
+      "backlog_id": "code-review-reality-web-share-cmp-unchecked-json",
+      "resolved_by_pr": 3350,
+      "method": "pr-body-match + evidence-gone",
+      "evidence": "PR #3350 title contains the backlog id verbatim; parseListingSummary now validates at the boundary, raw `as Promise<ListingSummary>` cast removed."
+    },
+    {
+      "backlog_id": "code-review-ppt-web-ui-registry-no-i18n",
+      "resolved_by_pr": 3351,
+      "method": "pr-body-match + evidence-gone",
+      "evidence": "PR #3351 title contains the backlog id verbatim; all 4 registry components now use useTranslation(), 0 hardcoded placeholders remain."
+    }
+  ],
+  "phase_1_5_skipped_reason": "Dispatcher Tier-1d already covered mobile-rn earlier today (2026-11-07) with 3 findings; a 3rd expert pass would waste budget without widening coverage. Oldest-unreviewed segment (mobile-rn 2026-11-03) effectively re-covered via the ingested tier1d signals.",
+  "phase_1_6_roles": [
+    "pm-scrum-master",
+    "pm-qa"
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist (no screen-map-drift, screen-map-orphan, fixme-in-merged-code, lockfile-drift, or stalled-review within idempotency window this run)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/$today.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq cursor-change-detect vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog id uniqueness",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signal-dedup vs prev seen_signals",
+      "observed": "true (3 new ids: widget-apirequest-swallow/nfc-controller-untested/widget-cache-json-parse — all absent from prior seen_signals)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5a",
+      "passed": true,
+      "command": "jq score > 8 check",
+      "observed": "true (0 over cap)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5b",
+      "passed": true,
+      "command": "decay check (open items with updated_at <= 2026-10-24)",
+      "observed": "0 decay candidates (oldest open is 2026-10-25 = 13 days, inside window)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans require brief adversarial pass annotation",
+      "observed": "0 new plans this run",
+      "expected": "N/A"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new-plan count cap <= 2",
+      "observed": "0 new plans",
+      "expected": "<= 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0 lines",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/private-hostname grep on staged diff (baseline docs excluded)",
+      "observed": "0 hits",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md vs regenerated",
+      "observed": "identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty (cursors advanced when not failed)",
+      "observed": "no phases failed; last_pr_seen 3349→3351, last_commit_sha advanced",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all prior-run plans still in plans/ or plans/_archive/",
+      "observed": "0 missing",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count monotonicity",
+      "observed": "now=22 head=22 >=",
+      "expected": ">= 0"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md vs regenerated",
+      "observed": "identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions count caps",
+      "observed": "auto_fix_actions=[] (kill-switch not set; no candidate met confidence=high + score>=3 + allowlist)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + GC7 coverage_cursor liveness",
+      "observed": "action-list.items/risks.items/project-state.md OK; pm_cursor 3→4, coverage_cursor 0→1 (both advanced, epics=13)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram-token grep on staged diff (baseline docs excluded)",
+      "observed": "0 hits",
+      "expected": "0"
+    }
+  ]
+}

@@ -120,3 +120,14 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-10-28, pm-frontend):** eslint-plugin-react-hooks + i18next/no-literal-string in `frontend/apps/mobile` — carried from 2026-08-25, now 64 days unresolved; the exact defects it predicts keep landing (VoteDetail dead i18n fallback, ranked ballot). Proposal: enable both, warn-only for one sprint, blocking from the next. Owner: pm-frontend + pm-qa.
 - **NEW (2026-10-28, pm-frontend):** Per-form MSW/Mirage e2e-smoke gate before merge — three "wire-the-button-but-not-the-POST" bugs (ReportFault, reality-web /sell, VoteDetail ranked) in 7 days. Scope question: every form Submit-handler, or only critical paths (fault reporting, selling, voting)? Owner: pm-qa + pm-tech-lead.
 - **NEW (2026-10-28, pm-scrum-master):** Staleness-bias in `pm_cursor` rotation — pm-frontend came up 83 days stale while 12 UI findings accumulated. Proposal: if any pm-* role is >60 days stale, prefer it over the current rotation index on the next run. Owner: pm-scrum-master.
+
+---
+
+## Decisions logged 2026-11-07 (Phase 1.6 — pm-scrum-master + pm-qa)
+
+- **NEW (2026-11-07, pm-scrum-master):** Close the current sprint "Epic 6, 7A, 8A & 10A" (4/4 done, 49/49 stories done) and define the next sprint — goal, epics or improvement themes. The candidate pipeline is exhausted; without a new sprint the routine will idle. Owner: pm-product.
+- **NEW (2026-11-07, pm-scrum-master):** Pause or throttle the dispatcher while `honest_claimable=0` — the 6 claimable rows are all mobile-native-gated or dep-poisoned, so the dispatcher runs produce 0-claim/0-review ticks that only churn `.research/`. Owner: pm-tech-lead.
+- **NEW (2026-11-07, pm-scrum-master):** Decide whether mobile-native-gated backlog items are deferred to after the KMP cloud-build unblock, or have their gates fixed up-front (e.g. desktop builds + emulator smoke tests in cloud). Owner: pm-devops.
+- **NEW (2026-11-07, pm-qa):** Make a failing-first test file mandatory for dispatcher-spawned fix PRs, enforced by a CI diff-guard. The auto-review loop keeps shipping fixes without a regression test (test-shadow debt). Owner: pm-tech-lead + pm-qa. (Carry-over from 2026-08-25 — re-raised; still undecided after 74 days.)
+- **NEW (2026-11-07, pm-qa):** Finalise mobile-rn lint-gate rollout mode — warn-only for one sprint vs blocking from day one — now 83 days unresolved with recurring class-of-defect PRs. Owner: pm-frontend + pm-qa.
+- **NEW (2026-11-07, pm-qa):** Fund a shared two-org IDOR test helper + sub-resource authz sweep as a standing QA gate. The `add_evidence` IDOR has now appeared in two modules (disputes + violations); without a shared helper the next sub-resource lands the same defect. Owner: pm-backend + pm-security.

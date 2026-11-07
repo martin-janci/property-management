@@ -383,7 +383,139 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "pm-scrum-master-full-coverage-scan-and-new-sprint-2026-11-07",
+      "action": "Run a full coverage scan (scan_kind=full) and plan a new sprint — current sprint 'Epic 6, 7A, 8A & 10A' is 4/4 done and 49/49 stories are done in coverage, so the candidate pipeline is exhausted",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-07"
+    },
+    {
+      "id": "pm-scrum-master-unblock-three-stalled-dispatcher-claims-2026-11-07",
+      "action": "Unblock the 3 stalled dispatcher claims (quarantined PR #3294 refresh-token-localstorage security, PR #3301 inquiry dead-FK classify review, PR #3333 screen-map drift review) — each to be reviewed and merged or released",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-07"
+    },
+    {
+      "id": "pm-scrum-master-reverify-carried-blockers-2026-11-07",
+      "action": "Re-verify carried blockers #3187 (failing dev test), #3168 (cargo-deny advisories), #3131 (merge pipeline deadlock) against live gh state — project-state.md was dated 2026-10-28",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-07"
+    },
+    {
+      "id": "pm-scrum-master-replenish-backlog-dep-poison-triage-2026-11-07",
+      "action": "Re-triage the 72 backlog items to classify dep-poisoned vs mobile-native-gated; decide whether to unpoison, defer, or drop. Target honest-claimable >= 10 or document a dispatcher pause",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-07"
+    },
+    {
+      "id": "pm-scrum-master-resolve-mobile-native-gate-rollup-2026-11-07",
+      "action": "Resolve the mobile-native gate rollup — close #2652 KMP cloud builds and #2951 RN jest-expo, or re-scope the gated items to be non-gated",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-07"
+    },
+    {
+      "id": "pm-scrum-master-pr-3351-registry-i18n-parity-check-2026-11-07",
+      "action": "Spot-check PR #3351 (registry i18n): confirm 6 locale files have key parity and the screen-map entries for registry screens were updated per the repo protocol; /screens validate passes",
+      "owner_role": "pm-scrum-master",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-07"
+    },
+    {
+      "id": "pm-qa-violations-add-evidence-xtenant-regression-2026-11-07",
+      "action": "Write a cross-tenant regression test for violations add_evidence (#3164) that drives the real route as a user from another org and expects 403/404; cover dispute add_evidence (#2483/#2490) in the same sweep using the #3338-#3340 inquiry-idor pattern",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-07"
+    },
+    {
+      "id": "pm-qa-portfolio-analytics-xtenant-failing-first-test-2026-11-07",
+      "action": "Add a failing-first test for portfolio_analytics cross-tenant IDOR (#2946) — seed two orgs and assert org A's metrics never include org B's properties",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-07"
+    },
+    {
+      "id": "pm-qa-announcement-fanout-rls-integration-test-2026-11-07",
+      "action": "Add an integration test that exercises the real announcement fan-out RLS and targeting SQL (replacing the pure-Rust re-model #2484) — include a cross-tenant target_ids case asserting zero fan-out to foreign orgs",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-07"
+    },
+    {
+      "id": "pm-qa-android-sso-csrf-and-mobile-layout-cache-tests-2026-11-07",
+      "action": "Add a happy-path callback test for the Android SSO CSRF state fix (#2574) and a mobile layout-cache test (#2486) asserting the cache key includes tenant_id and is purged on logout",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-07"
+    },
+    {
+      "id": "pm-qa-unquarantine-dispute-kpi-test-2026-11-07",
+      "action": "Un-quarantine the dispute KPI test (#2575) and add window_start <= window_end negative cases (equal, inverted, missing bounds) plus a shape-assertion for the response",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-07"
+    },
+    {
+      "id": "pm-qa-mobile-rn-lint-gate-warn-only-plus-submit-smoke-2026-11-07",
+      "action": "Land eslint-plugin-react-hooks and no-literal-string gates on frontend/apps/mobile as warn-only; add submit-wiring smoke tests for mobile-rn ranked-ballot and other fake-submit screens asserting the mock API is called with the expected payload",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-07"
     }
   ],
-  "generated": "2026-10-28T11:00:00Z"
+  "generated": "2026-11-07T02:40:00Z"
 }

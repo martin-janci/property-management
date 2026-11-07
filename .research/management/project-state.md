@@ -1,27 +1,27 @@
 # PPT Project State
 
-_Generated: 2026-10-28 — routine Phase 1.6 incremental upkeep. Role focus: **pm-frontend** (83-day stale rotation slot; pm-cursor idx 2 → 3). Coverage `scan_kind=upkeep`; coverage_cursor idx 12 → 0 (epic-9 TOTP re-checked, story 9-1 still done, no PRs touched 2FA). pm-scrum-master always-on._
+_Generated: 2026-11-07 — routine Phase 1.6 role-rotation (pm_cursor idx 3 → 4). Role focus: **pm-qa** (74-day stale rotation slot). Coverage `scan_kind=upkeep`; coverage_cursor idx 0 → 1 (epic-10a re-checked; all 49/49 stories remain `done` — candidate pipeline exhausted). pm-scrum-master always-on._
 
-## Delta since last routine run (2026-10-26)
+## Delta since last routine run (2026-11-06 14:58 UTC)
 
-- **1 PR merged** (#3183) — **cross-tenant IDOR regression suite + 404 fix for violation mutations**.
-  - `violations.rs` (routes + repo) hardened: cross-tenant mutations now 404 instead of 2xx/500; new regression suite `violations_mutation_cross_org_idor_tests` (14 cases, Org B Manager token on Org A seed) locks in the contract.
-  - Does NOT map to a specific coverage story (violations is a sub-feature of epic-10b Platform Administration, which is already 7/7 done); no coverage-status flip.
-  - Does NOT close the open `pm-backend-violations-add-evidence-authz-gap-3164` action — that's a role/authz gating gap on the `add_evidence` sub-route, distinct from cross-tenant 404 contract.
-- **1 new critical issue: #3187** — `Failing test on dev blocks backend CI: cross_org_assign_violation_is_not_found (assign returns 403, expects 404)`. Surfaced by the test suite PR #3183 added — `assign` mutation still returns the role-gate 403 instead of 404 cross-tenant. Already queued as `gh-issue-3187` (high, owner pm-security). **Blocks backend CI on dev.**
-- **6 open drafts** (#3184–#3189) — all dispatcher-authored, awaiting review/CI (gated on #3187 if backend-merge path).
-- **Carried blockers unchanged**: #3168 (cargo-deny RUSTSEC advisories), #2652 (KMP cloud builds), #2951 (RN jest-expo), #3164 (violations add_evidence authz), #3131 (merge pipeline deadlock).
+- **2 PRs merged** (#3350, #3351) — both dispatcher-landed code-review follow-ups:
+  - **#3350** code-review-reality-web-share-cmp-unchecked-json (+112/-1, 3 files) — validates shared-comparison listing bodies at the API boundary, closes the raw `as Promise<ListingSummary>` cast with a new `listingSummarySchema.ts` parser. Backlog row `code-review-reality-web-share-cmp-unchecked-json` → `done` this run (resolution check passed: evidence-gone + PR verbatim ID match).
+  - **#3351** code-review-ppt-web-ui-registry-no-i18n (+921/-160, 10 files = 6 locale JSONs + 4 registry components) — wires PetRegistrationForm/List + VehicleRegistrationForm/List through react-i18next, 0 remaining hardcoded placeholders. Backlog row `code-review-ppt-web-ui-registry-no-i18n` → `done` this run.
+- **0 open PRs touched** since cursor. **0 new/updated issues.** **0 closed-not-merged PRs.**
+- **Dispatcher buffer-low alert (trigger payload):** `claimable=6/72 honest-claimable=0 (all remaining backlog mobile-native-gated or dep-poisoned); coverage exhausted — refill planner`. Confirmed by this run: no open backlog item meets the score≥3 readiness gate; the lone open `security` row (`code-review-ppt-web-core-refresh-token-localstorage`, score 2) is `confidence: medium`, so the fast-track does not fire.
+- **Carried blockers unverified** since 2026-10-28: #3187 (failing dev test), #3168 (cargo-deny advisories), #3131 (merge pipeline deadlock), #2652 (KMP cloud builds), #2951 (RN jest-expo). This run's action list queues a re-verify as high-priority.
 
 ## Executive summary
 
-- **Delivery: 49/49 stories done across 13 epics in coverage.** No status flips this run; `last_checked` refreshed on epic-9 (idx 12, TOTP 2FA — story 9-1 still done, nothing in the window touched 2FA surfaces).
-- **1 PR merged** — a test-hardening + bug-fix on an already-shipped surface; good signal that the compliance/moderation surface is tightening but surfaced a brand-new blocker (`assign` cross-tenant 404 contract).
-- **pm-frontend rotation came up 83 days stale** — last run 2026-08-06. The backlog has accumulated **12 open frontend/mobile code-review findings** in that window, including three "wire-the-button-but-not-the-POST" bugs (ReportFault setTimeout, reality-web /sell no-persist, VoteDetail ranked ballot) that reveal a chronic UI-pattern defect class. Six pm-frontend next_actions queued (three high, three medium); one new risk (`pm-frontend-mobile-rn-fake-submit-pattern-cluster-2026-10-28`, high/high) and one meta-risk on the rotation itself.
-- **New blocker on dev CI**: #3187 fails cross-tenant-assign-404 — needs either the backend fix in `assign_violation` or the test's role shape adjusted to admit 403-when-manager-role-wrong-tenant.
+- **Delivery: 49/49 stories done across 13 epics in coverage; sprint 'Epic 6, 7A, 8A & 10A' is 4/4 done.** Candidate pipeline exhausted — the next step is a full coverage scan + new sprint, not more backlog pulls.
+- **2 PRs merged** — both are dispatcher-driven cleanup of carried backlog rows. No new feature scope landed.
+- **pm-qa rotation came up 74 days stale** (last run 2026-08-25). The backlog of QA observations surfaces six high-priority test gaps: cross-tenant regression for violations `add_evidence` (#3164), portfolio_analytics cross-tenant IDOR (#2946), announcement fan-out RLS integration test (replacing pure-Rust re-model #2484), Android SSO CSRF callback (#2574) + mobile layout-cache (#2486), dispute KPI test unquarantine (#2575), and the mobile-rn lint gate + submit-wiring smoke tests.
+- **Carried risk: 83-day-old mobile-rn lint gap** (eslint-plugin-react-hooks + i18next/no-literal-string) still unmitigated — the fake-submit cluster (ReportFault / reality-web /sell / VoteDetail ranked ballot) points at the same defect class. Blocking vs warn-only adoption remains the open decision.
+- **Action-list refilled**: 11 → 23 open (12 new items from pm-scrum-master + pm-qa). Buffer still below the 36-task target; reaching it requires the full coverage scan the SM action queued.
 
 ## Sprint progress
 
-Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth"** · **epics_done = 4/4** at sprint level (all four named sprint epics are status: done in sprint-status.yaml after the 2026-10-26 reconciliation). Coverage holds 13 epics all at done.
+Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth"** · **epics_done = 4/4** at sprint level (all four named sprint epics are `done` in sprint-status.yaml). Coverage holds 13 epics, all 49/49 stories done.
 
 | Epic | Sprint status | Coverage status | Shipped PRs this window |
 |---|---|---|---|
@@ -29,42 +29,37 @@ Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notificati
 | 7A — Basic Document Management | done (5/5) | 5/5 done | — |
 | 8A — Basic Notification Preferences | done (3/3) | 3/3 done | — |
 | 10A — OAuth Provider Foundation | done (3/3) | 3/3 done | — |
-| 10B — Platform Administration | done (7/7) | 7/7 done | #3183 (violations xtenant IDOR regression — moderation surface) |
+| 10B — Platform Administration | done (7/7) | 7/7 done | — |
 | 80 — Dispute Resolution | done (3/3) | 3/3 done | — |
-| 9 — 2FA/TOTP | done (1/1) | 1/1 done · **last_checked 2026-10-28 (cursor re-check)** | — |
+| 9 — 2FA/TOTP | done (1/1) | 1/1 done | — |
 | 79/82/83/84/85 (extended) | — | all done | — |
+| 10A (re-checked this run) | done (3/3) | 3/3 done · **last_checked 2026-11-07 (cursor re-check)** | — |
 
-## Shipped since last run (1 PR merged)
+## Shipped since last run (2 PRs merged)
 
-- **#3183** — code-review-api-handlers-violations-no-xtenant-idor-tests: cross-tenant IDOR regression suite + 404 fix for violation mutations (merged 2026-10-27). Surfaced the new #3187 blocker as a side-effect — the new test caught `assign` returning 403 instead of 404 cross-tenant.
+- **#3350** — code-review-reality-web-share-cmp-unchecked-json: validate shared-comparison listing bodies at the API boundary (merged 2026-11-07, +112/-1). Closes the raw-cast gap at `components/comparison/ComparisonUrlHandler.tsx:47`.
+- **#3351** — code-review-ppt-web-ui-registry-no-i18n: wire registry pet/vehicle forms + lists through react-i18next (merged 2026-11-07, +921/-160). All four registry components now `useTranslation()`, 0 hardcoded placeholders.
 
-## Blockers (1 new critical, 5 carried)
+## What's next (top 5 from action list)
 
-- **#3187 (NEW, high)** — Failing test on dev blocks backend CI: `cross_org_assign_violation_is_not_found` (assign returns 403, expects 404). Owner: pm-security.
-- **#3168** — cargo-deny RUSTSEC advisories gate every backend PR merge (carried, high). Owner: pm-security.
-- **#3164** — violations `add_evidence` sub-resource ungated (carried, high). Owner: pm-backend.
-- **#3131** — merge pipeline deadlocked (carried, medium). Owner: pm-backend.
-- **#2652** — mobile-native/KMP cloud builds blocked (carried, high). Owner: pm-devops.
-- **#2951** — mobile RN jest-expo version rot (carried, medium). Owner: pm-devops.
+1. **[high · pm-scrum-master]** Run a full coverage scan + plan a new sprint — sprint is 4/4 done, 49/49 stories done, candidate pipeline exhausted. Local-only (scan mode); SM-flagged as the primary unblock for the buffer-low condition.
+2. **[high · pm-scrum-master]** Unblock the 3 stalled dispatcher claims (quarantined PR #3294 security, PR #3301 review, PR #3333 review).
+3. **[high · pm-scrum-master]** Re-verify carried blockers #3187/#3168/#3131 against live gh state.
+4. **[high · pm-qa]** Cross-tenant regression test for violations `add_evidence` (#3164), covering dispute `add_evidence` (#2483/#2490) in the same sweep.
+5. **[high · pm-qa]** Failing-first test for portfolio_analytics cross-tenant IDOR (#2946).
 
-## What's next (top 5 from the roadmap)
+## Blockers
 
-1. **Fix #3187 cross-tenant assign-404 contract** (either backend `assign_violation` returns 404 on cross-tenant, or the test's role shape is adjusted) — owner: pm-security — **gates backend CI on dev**.
-2. **Wire `ReportFaultScreen.tsx` handleSubmit to real `/api/v1/faults` POST** (currently `setTimeout(1500)` fake-submit — fault reports silently discarded) — owner: pm-frontend — user-visible data-loss bug.
-3. **Wire reality-web `/sell` wizard Publish to reality-server POST** (every seller submission silently discarded today) — owner: pm-frontend — same pattern as #2, same user-impact.
-4. **Audit ppt-web logout AUTHED_QUERY_KEY_ROOTS allow-list** (TanStack caches leak across users on a shared workstation) — owner: pm-frontend — tenant-isolation defect.
-5. **Resolve #3168 cargo-deny RUSTSEC advisories** (carried) — owner: pm-security.
+| Item | Reason | Owner |
+|---|---|---|
+| Dispatcher claim `code-review-ppt-web-core-refresh-token-localstorage` (PR #3294) | Quarantined security finding; quarantine reason not provided in state | pm-security |
+| Dispatcher claims PR #3301 (reality-server inquiry dead-FK classify) and PR #3333 (screen-map drift) | Both in review and awaiting merge >7 days | pm-backend |
+| Mobile-native-gated backlog (#2652 KMP cloud builds, #2951 RN jest-expo) | Carried from 2026-10-28; gates most of the remaining backlog so honest-claimable=0. **Not re-verified this run.** | pm-devops |
+| #3187 / #3168 / #3131 (failing dev test, cargo-deny advisories, merge-pipeline deadlock) | Carried from 2026-10-28; current status unverified | pm-security |
 
-## Role focus today: pm-frontend (+ pm-scrum-master always-on)
+## Role focus today
 
-- **pm-frontend** (83-day stale rotation): The dormant period masked a growing cluster of UI-layer defects (12 code-review backlog items; three "wire-but-no-POST" bugs; dead i18n fallbacks still landing 2+ months after the lint-gap risk was raised). Six next_actions queued (three high, three medium); one new high/high risk (`fake-submit-pattern-cluster`) and one meta-risk on the rotation cadence. The 2026-08-25 lint-gates decision (eslint-plugin-react-hooks + i18next/no-literal-string in `frontend/apps/mobile`) is now 64 days unresolved — queued as a `medium`-priority action.
-- **pm-scrum-master**: Mild single-PR window (test-hardening) but the merge surfaced the new #3187 CI-blocker — so the window is **not** quiet. One next_action queued (`violations-xtenant-404-contract-sweep`) to turn #3187 into a one-shot pattern-fix across moderation.rs / aml_dsa.rs instead of per-mutation whack-a-mole.
+**Roles run:** `pm-scrum-master` (always-on), `pm-qa` (rotating; last run 2026-08-25). Per-role one-line summary:
 
-## Coverage (upkeep this run — 2026-10-28)
-
-- **`coverage.json` refreshed via mechanical upkeep** — `scan_kind=upkeep`, `generated=2026-10-28T11:00:00Z`, no re-scan.
-- **Epic re-check: epic-9 2FA/TOTP (cursor idx 12)** — story 9-1 still `done`; no merged PR in the 2026-10-27..2026-10-28 window touched TOTP/MFA surfaces. `last_checked = 2026-10-28` stamped.
-- **Merged-PR evidence check:** #3183 touches `violations.rs` + repo (part of epic-10b/moderation); 10b stories all remain `done` — no evidence addition since no story tracks the violations sub-feature granularly.
-- **`coverage_cursor` advances 12 → 0** (epic-9 → epic-10a next run).
-- **`pm_cursor` advances 2 → 3** (pm-frontend → pm-qa next). role_last_run["pm-frontend"] = 2026-10-28.
-- **Composition unchanged: 49 done · 0 partial · 0 not-started** across 13 epics. Missing UC links: 3 (UC-33.1/33.2/33.3, already queued elsewhere).
+- **pm-scrum-master** — Sprint is complete; candidate pipeline exhausted; 3 claims stalled >7 days. Primary ask: full coverage scan + new sprint + re-verify the carried-blocker trio.
+- **pm-qa** — Test fidelity + test-shadow debt are the open QA risk. Six test gaps flagged (cross-tenant IDOR regressions × 3, Android SSO CSRF, dispute KPI un-quarantine, mobile-rn lint + submit-smoke). Mobile-rn lint gap remains 83 days unmitigated.

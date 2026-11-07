@@ -15055,9 +15055,10 @@
       "vector": "refactor",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review 2026-11-05 ppt-web-ui (dispatcher Tier-1d)"
+        "rotating-expert-review 2026-11-05 ppt-web-ui (dispatcher Tier-1d)",
+        "PR #3351"
       ],
       "evidence": [
         "The registry feature's pet/vehicle registration forms and lists render user-facing English literals with NO react-i18next integration, in a 4-locale app. PetRegistrationForm, VehicleRegistrationForm, PetRegistrationList, VehicleRegistrationList have 0 useTranslation / 0 t(); RegistryRulesForm and ReviewRegistrationModal only partially use t() (1 call each) while leaving placeholders hardcoded.",
@@ -15065,7 +15066,8 @@
         "frontend/apps/ppt-web/src/features/registry/components/VehicleRegistrationForm.tsx:94,109,124,161 — hardcoded placeholders `ABC-123`, `Toyota, BMW, etc.`, `Corolla, X5, etc.`, `Black, White, Red, etc.`. 0 useTranslation.",
         "frontend/apps/ppt-web/src/features/registry/components/PetRegistrationList.tsx:112 — hardcoded search placeholder `Search by name, breed, owner...`. 0 useTranslation. frontend/apps/ppt-web/src/features/registry/components/ReviewRegistrationModal.tsx:193 — hardcoded rejection-reason placeholder despite the modal elsewhere importing useTranslation (partial i18n).",
         "Fix vector: add useTranslation() to the registry form/list components and move all placeholders to registry.* keys across sk/cs/de/en. Cloud-verifiable (ppt-web, biome + typecheck). Confidence medium: static-read certain; components reachable from the shipped /registry routes. Severity LOW (+1) i18n gap.",
-        "expert: frontend+completeness"
+        "expert: frontend+completeness",
+        "resolved: PR #3351 merged 2026-11-07 — wire registry pet/vehicle forms + lists through react-i18next; evidence-gone verified (all 4 files have useTranslation, 0 hardcoded placeholders)"
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/registry/components/PetRegistrationForm.tsx",
@@ -15074,7 +15076,7 @@
         "frontend/apps/ppt-web/src/features/registry/components/VehicleRegistrationList.tsx"
       ],
       "created_at": "2026-11-05",
-      "updated_at": "2026-11-05",
+      "updated_at": "2026-11-07",
       "plan": null,
       "segment": "ppt-web-ui",
       "expert": "frontend",
@@ -15328,21 +15330,23 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review 2026-11-05 reality-web (dispatcher Tier-1d)"
+        "rotating-expert-review 2026-11-05 reality-web (dispatcher Tier-1d)",
+        "PR #3350"
       ],
       "evidence": [
         "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:47 — the shared-comparison loader casts the listings endpoint body straight to the wire type with an unchecked cast: `return response.json() as Promise<ListingSummary>;`. No shape validation. This bypasses the boundary-validation standard the rest of reality-web deliberately established: lib/realtor-api.ts parseJsonBody() rejects a non-object/array/null 200 with a typed RealtorApiError, and app/[locale]/listings/[slug]/page.tsx funnels the SAME `/api/v1/listings/{id}` endpoint through parseListingDetail() before use. Only this client fetch trusts the wire shape blindly.",
         "Impact: a well-formed-JSON-but-wrong-shape 200 (e.g. `{}`, a primitive, or a partial/proxy body missing required fields) passes the `if (result.value)` truthiness check (L58-60), is pushed into comparison state via addToComparison() and persisted to localStorage, then rendered by ComparisonView where nested field derefs can throw and crash the in-session shared comparison. (A malformed-JSON body or a non-ok status is already handled: `.json()` throws into Promise.allSettled and the id is dropped; the wrong-shape-but-valid-JSON case is the gap. localStorage self-heals on reload because comparison-context's isStoredListing() filters it, but the in-session render still breaks.)",
         "Fix vector: validate the body at this boundary before addToComparison — reuse the same pattern as parseJsonBody (reject non-object / array / missing string `id`) or a shared listing-summary normalizer, instead of the raw `as Promise<ListingSummary>` cast. Cloud-verifiable (reality-web, biome + typecheck). Confidence medium: the unchecked cast and the missing guard are certain by static read; reachable from any shared /compare?ids=... URL (Epic 51 Story 51.3). Severity LOW (+1): requires a malformed-but-valid-JSON 200 from the listings endpoint (low likelihood) and reload self-heals.",
-        "expert: frontend"
+        "expert: frontend",
+        "resolved: PR #3350 merged 2026-11-07 — validate shared-comparison listing bodies at the API boundary; evidence-gone verified (parseListingSummary in place, raw cast removed)"
       ],
       "files": [
         "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx"
       ],
       "created_at": "2026-11-05",
-      "updated_at": "2026-11-05",
+      "updated_at": "2026-11-07",
       "plan": null,
       "segment": "reality-web",
       "expert": "frontend",
@@ -15425,6 +15429,75 @@
         "assignment_status": "failed",
         "pr_number": null
       }
+    },
+    {
+      "id": "code-review-mobile-rn-widget-apirequest-swallow",
+      "title": "mobile-rn WidgetDataProvider.apiRequest swallows errors — empty payload overwrites good widget cache during backend outage",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-07 mobile-rn (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:373-380 — private apiRequest<T>() wraps the whole fetch in try/catch and, on ANY error (rejected fetch = offline/timeout/DNS, or a thrown `API request failed: <status>` for a non-2xx), returns `{} as T` instead of re-throwing. The empty-object cast masks the failure from every caller.",
+        "Consequence: updateAllWidgets() (lines 136-160) deliberately wraps fetchWidgetData() in try/catch to classify each widget as `success: true/false` and only cache successful results. Because apiRequest never throws, the failure path is dead code — a failed backend fetch resolves to an empty payload, is treated as `success: true`, and gets written to AsyncStorage via cacheWidgetData(), OVERWRITING previously-valid cached widget data with empty data during a backend outage. Home-screen widgets then render blank/zeroed instead of showing stale-but-correct data or an error state.",
+        "Fix vector: make apiRequest throw (remove the `{} as T` fallback) so updateAllWidgets' existing success/failure handling engages and good cache is preserved on failure; or move the fallback decision into fetchWidgetData with an explicit mock-mode flag. Cloud-verifiable (frontend workspace: biome + typecheck + jest-expo; module currently has NO test file). Confidence medium: swallow + success-misclassification certain by static read; exact UI blanking depends on which widgets are configured.",
+        "expert: frontend"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-controller-untested",
+      "title": "mobile-rn NFCAccessController untested — security-sensitive 478-line controller has no test file",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-07 mobile-rn (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts (478 lines) — security-sensitive physical building-access controller (grant/deny decisions, credential-expiry checks, denial-reason mapping, offline validation, access-attempt logging) has NO sibling or repo-wide test file. `rg -l NFCAccessController frontend/apps/mobile/src -g '*.test.*'` returns nothing, while the peer NFCCredentialManager.ts IS covered by NFCCredentialManager.test.ts.",
+        "Latent correctness concern that tests would pin: handleTap() (lines 163-225) only flips a granted result to denied inside `if (NativeNFC) { ... }`. When NativeNFC is null (native module unavailable), the transmit step is skipped but `validationResult.granted` stays true, so the code logs the attempt as 'granted' and calls updateCredentialUsage() even though no credential was physically transmitted to the reader. Reachability is uncertain (handleTap is invoked from the native module, which implies NFC present), hence medium confidence and a test-gap framing rather than a confirmed bug.",
+        "Fix vector: add NFCAccessController.test.ts covering validateAccess() grant/deny/expiry branches, the NativeNFC-null path, and logAccessAttempt() status mapping. Cloud-verifiable (jest-expo, no device needed — native modules are mockable like NFCCredentialManager.test.ts does). Severity LOW (+1): missing tests for a module per the skill's score-delta table.",
+        "expert: tester"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-widget-cache-json-parse",
+      "title": "mobile-rn WidgetDataProvider JSON.parse unguarded — corrupted AsyncStorage blob breaks every widget read until cleared",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-07 mobile-rn (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:351 (getAllCachedData) and :94 (getAllWidgetConfigs) — both do `return stored ? JSON.parse(stored) : {}` / `: []` with NO try/catch around JSON.parse on the AsyncStorage value. A corrupted or partially-written WIDGET_DATA_KEY / config blob throws SyntaxError, which propagates up through getCachedWidgetData/updateAllWidgets and breaks every widget read until storage is cleared.",
+        "Inconsistency: sibling persistence modules in the same app DO guard storage parsing in try/catch and fall back to defaults — e.g. onboarding/TourManager.ts:289-294 ('Invalid onboarding state schema, using defaults'), nfc/NFCCredentialManager.ts:226/353/366 ('Stored ... corrupted; discarding'), onboarding/HelpCenter.ts:199. WidgetDataProvider is the outlier.",
+        "Fix vector: wrap both JSON.parse calls in try/catch, log a warn, and return the empty default on parse failure (matching TourManager/NFCCredentialManager). Cloud-verifiable (frontend: biome + typecheck + jest-expo). Severity LOW (+1): resilience smell on a rarely-hit corruption path.",
+        "expert: frontend"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": null
     }
   ]
 }
