@@ -29,7 +29,7 @@
       "branch": "auto-impl/code-review-reality-server-inquiry-dead-88581ba0",
       "status": "review",
       "claimed_at": "2026-11-04T16:32:16Z",
-      "last_updated": "2026-11-07T08:35:30Z",
+      "last_updated": "2026-11-07T10:30:24Z",
       "status_changed_at": "2026-11-04T18:25:01Z",
       "pr_number": 3301,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3301",
@@ -51,7 +51,7 @@
       "branch": "auto-impl/screen-map-drift-pr-3293-reality-eddd3a6c",
       "status": "review",
       "claimed_at": "2026-11-05T22:29:23Z",
-      "last_updated": "2026-11-07T08:35:30Z",
+      "last_updated": "2026-11-07T10:30:24Z",
       "status_changed_at": "2026-11-06T00:26:46Z",
       "pr_number": 3333,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3333",
@@ -73,23 +73,23 @@
       "branch": "auto-impl/gh-issue-3352-a5bd2994",
       "status": "review",
       "claimed_at": "2026-11-07T08:30:09Z",
-      "last_updated": "2026-11-07T09:20:38Z",
+      "last_updated": "2026-11-07T10:32:04Z",
       "status_changed_at": "2026-11-07T09:20:38Z",
       "pr_number": 3353,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3353",
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": "pr=3353 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=change_password now revokes other sessions (revoke_all_user_tokens w/ except=current via resolve_current_session_id), preserving caller session; regression test in sibling suite_2 file; fmt+clippy+test-compile green, DB sqlx::test run deferred to CI (no local Postgres/Docker)",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve note=session-revocation-on-change_password-mirrors-reset_password-correctly-scope-drift-justified-CI-green-posted-as-comment-3215",
+      "last_reviewed_oid": "263f7286d4929258965bc7246e4047844c6c65a7",
       "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-11-07T10:32:04Z"
     }
   ],
-  "generated": "2026-11-07T09:20:38Z"
+  "generated": "2026-11-07T10:30:24Z"
 }
