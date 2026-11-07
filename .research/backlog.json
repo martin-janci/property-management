@@ -15055,7 +15055,7 @@
       "vector": "refactor",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-11-05 ppt-web-ui (dispatcher Tier-1d)"
       ],
@@ -15081,7 +15081,12 @@
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "score_delta": 1,
-      "candidate_vector": "refactor"
+      "candidate_vector": "refactor",
+      "reconciled": {
+        "at": "2026-11-07T02:24:17Z",
+        "assignment_status": "merged",
+        "pr_number": 3351
+      }
     },
     {
       "id": "code-review-ppt-web-ui-lang-switcher-aria",
@@ -15328,7 +15333,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-11-05 reality-web (dispatcher Tier-1d)"
       ],
@@ -15349,7 +15354,12 @@
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "score_delta": 1,
-      "candidate_vector": "bug"
+      "candidate_vector": "bug",
+      "reconciled": {
+        "at": "2026-11-07T02:24:17Z",
+        "assignment_status": "merged",
+        "pr_number": 3350
+      }
     },
     {
       "id": "churn-hotspot-backend/crates/db/tests/suite_4.rs",
