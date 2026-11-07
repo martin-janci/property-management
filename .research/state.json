@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-11-06T14:58:01Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 3349,
-  "last_issue_seen": 3341,
-  "last_commit_sha": "6729d7648660d665f9ef2dc4cfd25584aae95d7e",
+  "last_run_iso": "2026-11-07T06:37:00Z",
+  "last_run_ms": 180000,
+  "last_pr_seen": 3351,
+  "last_issue_seen": 3352,
+  "last_commit_sha": "f3930582ead731490be91ff5a57c2a4052fdec21",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -706,6 +706,21 @@
       "runs_seen": 1,
       "last_seen": "2026-11-06",
       "recent_churn": 2
+    },
+    "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-07",
+      "recent_churn": 1
+    },
+    "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.test.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-07",
+      "recent_churn": 1
+    },
+    "frontend/apps/reality-web/src/components/comparison/listingSummarySchema.ts": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-07",
+      "recent_churn": 1
     }
   },
   "seen_signals": [
@@ -740,7 +755,9 @@
     "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs",
     "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
     "churn-hotspot-backend/Cargo.toml",
+    "churn-hotspot-backend/crates/db/src/repositories/registry.rs",
     "churn-hotspot-backend/crates/db/src/repositories/rental.rs",
+    "churn-hotspot-backend/crates/db/tests/suite_4.rs",
     "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
     "churn-hotspot-backend/deny.toml",
     "churn-hotspot-backend/servers/api-server/src/main.rs",
@@ -758,6 +775,7 @@
     "churn-hotspot-backend/servers/api-server/src/routes/oauth.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/organizations.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/platform_admin.rs",
+    "churn-hotspot-backend/servers/api-server/src/routes/registry.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/suspend_cascade.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/violations.rs",
@@ -844,6 +862,9 @@
     "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx",
     "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
     "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
+    "churn-hotspot-frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.test.tsx",
+    "churn-hotspot-frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx",
+    "churn-hotspot-frontend/apps/reality-web/src/components/comparison/listingSummarySchema.ts",
     "churn-hotspot-frontend/apps/reality-web/src/components/home/FeaturedListings.tsx",
     "churn-hotspot-frontend/apps/reality-web/src/components/import/SyncSchedule.tsx",
     "churn-hotspot-frontend/apps/reality-web/src/lib/realtor-api.ts",
@@ -901,6 +922,7 @@
     "code-review-api-handlers-assign-violation-no-member-check",
     "code-review-api-handlers-booking-connect-non-manager-hijack",
     "code-review-api-handlers-capabilities-list-cross-org",
+    "code-review-api-handlers-change-password-session-revoke",
     "code-review-api-handlers-community-cross-tenant-idor",
     "code-review-api-handlers-community-unauthenticated-reads",
     "code-review-api-handlers-compliance-raw-db-error-leak",
@@ -919,6 +941,7 @@
     "code-review-api-handlers-ocr-photo-url-silent-loss",
     "code-review-api-handlers-refresh-empty-cookie-shadows-body",
     "code-review-api-handlers-refresh-rotation-nonatomic",
+    "code-review-api-handlers-rentals-raw-db-error-leak",
     "code-review-api-handlers-report-content-unbounded",
     "code-review-api-handlers-reset-token-invalidate-ignored",
     "code-review-api-handlers-revoke-all-sessions-cookie-blindness",
@@ -927,6 +950,7 @@
     "code-review-api-handlers-stripe-webhook-drops-settlement",
     "code-review-api-handlers-suspend-cascade-silent-skip",
     "code-review-api-handlers-templates-list-swallows-db-error",
+    "code-review-api-handlers-tenant-lifecycle-path-leak",
     "code-review-api-handlers-unbounded-pagination-limit",
     "code-review-api-handlers-user-audit-logs-total-page-len",
     "code-review-api-handlers-violations-no-xtenant-idor-tests",
@@ -964,6 +988,7 @@
     "code-review-mobile-rn-hardcoded-locale",
     "code-review-mobile-rn-meter-reading-no-numeric-validation",
     "code-review-mobile-rn-news-personmonths-badge-untranslated",
+    "code-review-mobile-rn-nfc-controller-untested",
     "code-review-mobile-rn-offline-permanent-4xx-silent-drop",
     "code-review-mobile-rn-offline-sync-false-complete",
     "code-review-mobile-rn-offline-terminal-drop-dataloss",
@@ -977,6 +1002,8 @@
     "code-review-mobile-rn-thread-send-silent-fail",
     "code-review-mobile-rn-vote-list-cast",
     "code-review-mobile-rn-vote-xform-untested",
+    "code-review-mobile-rn-widget-apirequest-swallow",
+    "code-review-mobile-rn-widget-cache-json-parse",
     "code-review-ppt-web-core-aml-checks-hardcoded-false",
     "code-review-ppt-web-core-aml-risk-factors-unguarded-map",
     "code-review-ppt-web-core-api-default-export-orphan",
@@ -1390,26 +1417,23 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952",
-    "churn-hotspot-backend/crates/db/tests/suite_4.rs",
-    "churn-hotspot-backend/crates/db/src/repositories/registry.rs",
-    "churn-hotspot-backend/servers/api-server/src/routes/registry.rs"
+    "untriaged-issue-952"
   ],
   "auto_fix_history": {},
   "review_cursor": {
-    "api-handlers": "2026-11-04",
+    "api-handlers": "2026-11-07",
     "api-core": "2026-11-04",
     "reality-server": "2026-11-04",
     "ppt-web-ui": "2026-11-05",
     "ppt-web-core": "2026-11-04",
     "reality-web": "2026-11-06",
-    "mobile-rn": "2026-11-03",
+    "mobile-rn": "2026-11-07",
     "mobile-native-kmp": "2026-11-04"
   },
   "stats": {
-    "runs": 115,
-    "vectors_created": 522,
-    "plans_created": 35,
+    "runs": 116,
+    "vectors_created": 531,
+    "plans_created": 36,
     "quiet_days": 8,
     "auto_fix_count": 0
   },

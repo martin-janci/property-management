@@ -1,0 +1,157 @@
+{
+  "generated_at": "2026-11-07T07:00:00Z",
+  "generator": "daily-research-routine",
+  "signals": [
+    {
+      "id": "code-review-api-handlers-change-password-session-revoke",
+      "type": "code-review-finding",
+      "source": "issue-3352",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "segment": "api-handlers",
+      "evidence": [
+        "backend/servers/api-server/src/routes/auth/password_reset.rs: change_password handler (defined at L396, body ends L540) updates the password hash but never calls session_repo.revoke_all_user_tokens(user.id, _).",
+        "Sibling reset_password handler in the same file calls state.session_repo.revoke_all_user_tokens(user.id, None) at L345 after persisting the new hash, with comment '// Revoke all refresh tokens for security (force re-login)'.",
+        "Impact: after a deliberate password change via POST /api/v1/auth/password/change, every previously-issued refresh token / session on every other device remains valid, defeating the main security purpose of a signed-in password change.",
+        "Issue #3352 surfaced this via ppt-review-merged (post-merge review of PR #3348). Repository method session.rs:191 `pub async fn revoke_all_user_tokens(user_id, except)` already exists and is used by reset_password, suspend_cascade, sessions revoke endpoints.",
+        "Fix: mirror reset_password's call after user_repo.update_password succeeds; regression test in backend/servers/api-server/tests/suites/auth_tests.rs — refresh with a pre-change refresh token must 401."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-rentals-raw-db-error-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review-tier1d",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "api-handlers",
+      "expert": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/rentals.rs:166-177 report_err() maps non-RowNotFound to (INTERNAL_SERVER_ERROR, format!(\"{ctx}: {e}\")) — raw sqlx::Error Display interpolated into client-facing body.",
+        "Used by generate_report_preview (L1742) and create_report (L1768), manager-facing POST /api/v1/rentals/reports*.",
+        "Additional raw-{e} leaks: list reports L1700-1702, upload_guest_id_document L1278, L1404 (record ID doc), L1445 (link doc), L1491 (lookup ID doc), map_multipart_err L1232.",
+        "Same class as the already-fixed listings.rs leak (signals 2026-11-06-api-handlers-tier1d code-review-listings-rs-raw-db-error-leak). Landable backend-only change: log via tracing::error! and return a generic stable code, matching registry.rs:139-145 registry_db_error.",
+        "Signal sourced from .research/signals/2026-11-07-api-handlers-tier1d.json."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-tenant-lifecycle-path-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review-tier1d",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "api-handlers",
+      "expert": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/admin_tenant_lifecycle.rs:189-194,206,237,244 — tenant restore/export endpoints return raw internal error strings: format!(\"multipart: {e}\"), \"read field: {e}\", format!(\"write tmp: {e}\"), and L237 format!(\"manifest load failed at {path:?}: {e}\") leaking the server-side manifest filesystem path. internal() at L244 returns TenantOpsError::to_string() to the caller.",
+        "Impact: info disclosure of server filesystem layout (temp dir, manifest path) and internal error detail; platform-admin-gated endpoints (RequestPrincipal) → narrow exposure → low severity (+1).",
+        "Fix: log detail, return generic (status, \"restore failed\"/\"export failed\") consistent with segment's generic-error pattern.",
+        "Signal sourced from .research/signals/2026-11-07-api-handlers-tier1d.json."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-widget-apirequest-swallow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review-tier1d",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "mobile-rn",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:373-380 — private apiRequest<T>() wraps the whole fetch in try/catch and, on ANY error, returns `{} as T` instead of re-throwing. Empty-object cast masks the failure from every caller.",
+        "Consequence: updateAllWidgets() L136-160 relies on exceptions to classify widget success/failure; because apiRequest never throws, the failure path is dead code — a failed backend fetch resolves to an empty payload, is treated as success, and gets written to AsyncStorage via cacheWidgetData, OVERWRITING previously-valid cached widget data during a backend outage.",
+        "Fix vector: remove the `{} as T` fallback so updateAllWidgets' existing success/failure handling engages and good cache is preserved on failure.",
+        "Cloud-verifiable (frontend workspace: biome + typecheck + jest-expo). Module has NO test file yet. Signal sourced from .research/signals/2026-11-07-mobile-rn-tier1d.json."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-widget-cache-json-parse",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review-tier1d",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "mobile-rn",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:351 (getAllCachedData) and :94 (getAllWidgetConfigs) — both do `return stored ? JSON.parse(stored) : {}` with NO try/catch around JSON.parse on the AsyncStorage value. A corrupted/partial blob throws SyntaxError that propagates up through getCachedWidgetData/updateAllWidgets.",
+        "Sibling persistence modules DO guard parsing in try/catch: onboarding/TourManager.ts:289-294, nfc/NFCCredentialManager.ts:226/353/366, onboarding/HelpCenter.ts:199. WidgetDataProvider is the outlier.",
+        "Fix: wrap both parse calls in try/catch, log warn, return empty default (matching TourManager/NFCCredentialManager).",
+        "Signal sourced from .research/signals/2026-11-07-mobile-rn-tier1d.json."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-controller-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review-tier1d",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "segment": "mobile-rn",
+      "expert": "tester",
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts (478 lines) — security-sensitive physical building-access controller (grant/deny, credential-expiry, denial-reason mapping, offline validation, access-attempt logging) has NO sibling or repo-wide test file. Peer NFCCredentialManager.ts IS covered by NFCCredentialManager.test.ts.",
+        "Latent concern a test would pin: handleTap() L163-225 only flips a granted result to denied inside `if (NativeNFC) { ... }`. When NativeNFC is null, transmit is skipped but validationResult.granted stays true, so the code logs the attempt as 'granted' and calls updateCredentialUsage() without any credential being transmitted.",
+        "Fix: add NFCAccessController.test.ts covering validateAccess grant/deny/expiry, the NativeNFC-null path, and logAccessAttempt status mapping. Cloud-verifiable (jest-expo, mockable native module).",
+        "Signal sourced from .research/signals/2026-11-07-mobile-rn-tier1d.json."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #3350",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Touched once this run (PR #3350 merged 2026-11-07) — swapped unchecked `as Promise<ListingSummary>` cast for parseListingSummary() boundary guard. First appearance in hotspot_history."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.test.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #3350",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Touched once this run (PR #3350 merged 2026-11-07) — added a regression test that fails without the fix. First appearance in hotspot_history."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/components/comparison/listingSummarySchema.ts",
+      "type": "churn-hotspot",
+      "source": "PR #3350",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "New file introduced this run (PR #3350 merged 2026-11-07) — parseListingSummary shape normalizer for reality-web shared-comparison loader. First appearance in hotspot_history."
+      ]
+    }
+  ],
+  "goal_checks": [
+    { "goal": "G1", "passed": true,  "command": "test -f briefs/2026-11-07.md && head -1 matches '# 2026-11-07'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true,  "command": "jq slurpfile prev state.json", "observed": "true", "expected": "true" },
+    { "goal": "G3", "passed": true,  "command": "unique ids", "observed": "596 unique of 596", "expected": "no duplicates" },
+    { "goal": "G4", "passed": true,  "command": "non-cumulative re-emit score == 0", "observed": "true", "expected": "true" },
+    { "goal": "G5", "passed": true,  "command": "score cap + decay", "observed": "no items > 8; no open items older than 14d required decay", "expected": "true" },
+    { "goal": "G6", "passed": true,  "command": "adversarial pass annotated in brief", "observed": "code-review-api-handlers-change-password-session-revoke.md: adversarial pass: passed", "expected": "annotation present" },
+    { "goal": "G7", "passed": true,  "command": "≤2 new plans, 15 required sections, mode declared, files on disk", "observed": "1 new plan, 4 metadata + 11 headings + Mode: cloud-ok + 2 capability ticks + 3/3 files exist", "expected": "all gates pass" },
+    { "goal": "G8", "passed": true,  "command": "staged diff only .research/", "observed": "0 non-.research/ paths", "expected": "0" },
+    { "goal": "G9", "passed": true,  "command": "secret/hostname grep on staged diff (baseline docs excluded)", "observed": "0 matches", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "regenerate backlog.md and diff -q vs staged", "observed": "byte-identical", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "brief lists failed phases", "observed": "Phases that failed: none", "expected": "listed" },
+    { "goal": "G12", "passed": true, "command": "prior-run plan slugs still present in plans/ or plans/_archive/", "observed": "all 18 prior plans accounted for", "expected": "no silent deletions" },
+    { "goal": "G13", "passed": true, "command": "archive only grows", "observed": "22 >= 22", "expected": "≥" },
+    { "goal": "G14", "passed": true, "command": "regenerate IDEAS_TRIAGE.md and diff -q vs staged", "observed": "byte-identical", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto-fix caps + idempotency", "observed": "auto_fix_actions=[] (no allowlist match)", "expected": "caps honored" },
+    { "goal": "G16", "passed": true, "command": "Phase 1.6 skipped — gate no-op; pm_cursor.next_index in 0..7", "observed": "pm_cursor.next_index=3, coverage_cursor.next_index=0", "expected": "no-op" },
+    { "goal": "G17", "passed": true, "command": "no Telegram token value in staged diff", "observed": "0 matches", "expected": "0" }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched the Phase 5 allowlist this run (screen-map-drift, screen-map-orphan, fixme-in-merged-code, dep-update-noise, stalled-review); all new signals are code-review-finding or churn-hotspot"
+}

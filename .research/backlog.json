@@ -15435,6 +15435,201 @@
         "assignment_status": "failed",
         "pr_number": null
       }
+    },
+    {
+      "id": "code-review-api-handlers-change-password-session-revoke",
+      "title": "SECURITY: change_password handler doesn't revoke other sessions after password change",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "Issue #3352",
+        "PR #3348"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/auth/password_reset.rs: change_password handler L396-540 updates password hash via user_repo.update_password() but never calls session_repo.revoke_all_user_tokens() — sibling reset_password L345 does.",
+        "Impact: after POST /api/v1/auth/password/change, all previously-issued refresh tokens/sessions remain valid; the main security purpose of a password change (kicking out an attacker who still holds a session) is defeated.",
+        "Issue #3352 surfaced this via ppt-review-merged post-merge review of PR #3348 (2026-11-06 onboarding P0s). session.rs:191 revoke_all_user_tokens(user_id, except) already exists.",
+        "Fix: mirror reset_password's call after user_repo.update_password succeeds; regression test in backend/servers/api-server/tests/suites/auth_tests.rs — refresh with pre-change refresh token must 401."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/auth/password_reset.rs",
+        "backend/servers/api-server/tests/suites/auth_tests.rs",
+        "backend/crates/db/src/repositories/session.rs"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": "plans/code-review-api-handlers-change-password-session-revoke.md"
+    },
+    {
+      "id": "code-review-api-handlers-rentals-raw-db-error-leak",
+      "title": "rentals.rs leaks raw sqlx::Error strings to managers via INTERNAL_SERVER_ERROR body",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        ".research/signals/2026-11-07-api-handlers-tier1d.json"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/rentals.rs:166-177 report_err() interpolates raw sqlx::Error Display into (INTERNAL_SERVER_ERROR, format!(\"{ctx}: {e}\")); used by generate_report_preview (L1742) and create_report (L1768).",
+        "Additional leaks: list reports L1700-1702, upload_guest_id_document L1278, L1404, L1445, L1491, map_multipart_err L1232.",
+        "Same class as the already-fixed listings.rs leak. Landable backend-only fix: log via tracing::error! and return a generic stable code (matches registry.rs:139-145 registry_db_error pattern)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/rentals.rs"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-tenant-lifecycle-path-leak",
+      "title": "admin_tenant_lifecycle restore/export endpoints leak manifest filesystem path in error responses",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        ".research/signals/2026-11-07-api-handlers-tier1d.json"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/admin_tenant_lifecycle.rs:189-194,206,237,244 — returns format!(\"multipart: {e}\"), \"read field: {e}\", format!(\"write tmp: {e}\"); L237 format!(\"manifest load failed at {path:?}: {e}\") leaks server-side manifest path; internal() L244 returns TenantOpsError::to_string() to caller.",
+        "Platform-admin-gated (RequestPrincipal) → narrow exposure → low severity (+1). Fix: log detail, return generic (status, 'restore failed'/'export failed')."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/admin_tenant_lifecycle.rs"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-widget-apirequest-swallow",
+      "title": "WidgetDataProvider.apiRequest swallows every error and returns `{} as T`, overwriting good cache during backend outages",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        ".research/signals/2026-11-07-mobile-rn-tier1d.json"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:373-380 — apiRequest<T>() wraps fetch in try/catch and on ANY error returns `{} as T` instead of re-throwing, masking failure from callers.",
+        "updateAllWidgets() L136-160 relies on exceptions to classify widget success/failure; because apiRequest never throws, failures resolve to empty payload, get treated as success, and cacheWidgetData writes empty over valid cache during backend outage.",
+        "Fix vector: remove `{} as T` fallback so updateAllWidgets' existing success/failure handling engages. Module has NO test file — cloud-verifiable via biome + typecheck + jest-expo."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-widget-cache-json-parse",
+      "title": "WidgetDataProvider JSON.parse of AsyncStorage blobs is unguarded — corrupted storage breaks every widget read",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        ".research/signals/2026-11-07-mobile-rn-tier1d.json"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:351 (getAllCachedData) and :94 (getAllWidgetConfigs) do `return stored ? JSON.parse(stored) : {}` with NO try/catch. A corrupted/partial WIDGET_DATA_KEY throws SyntaxError that propagates through getCachedWidgetData/updateAllWidgets.",
+        "Sibling persistence modules DO guard parsing in try/catch: TourManager.ts:289-294, NFCCredentialManager.ts:226/353/366, HelpCenter.ts:199. WidgetDataProvider is the outlier.",
+        "Fix: wrap both parse calls in try/catch, log warn, return empty default."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-controller-untested",
+      "title": "NFCAccessController (478 lines of physical-access logic) has no test file; NativeNFC-null path mis-logs ungranted taps as 'granted'",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        ".research/signals/2026-11-07-mobile-rn-tier1d.json"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts (478 lines) — grant/deny decisions, credential-expiry, offline validation, access logging — has NO sibling or repo-wide test file. Peer NFCCredentialManager.ts has NFCCredentialManager.test.ts.",
+        "Latent concern a test would pin: handleTap() L163-225 only flips granted→denied inside `if (NativeNFC) { ... }`. When NativeNFC is null, transmit is skipped but validationResult.granted stays true, so the attempt is logged 'granted' and updateCredentialUsage() is called without transmission.",
+        "Fix: add NFCAccessController.test.ts covering grant/deny/expiry, the NativeNFC-null path, and logAccessAttempt status mapping."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-reality-web-comparison-url-handler-tsx",
+      "title": "Watch reality-web ComparisonUrlHandler.tsx churn — post-fix follow-up candidate",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3350"
+      ],
+      "evidence": [
+        "Touched once this run (PR #3350 2026-11-07) — unchecked `as Promise<ListingSummary>` cast swapped for parseListingSummary() guard. First appearance in hotspot_history."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-reality-web-comparison-url-handler-test-tsx",
+      "title": "Watch reality-web ComparisonUrlHandler.test.tsx churn — new regression test suite",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3350"
+      ],
+      "evidence": [
+        "Touched once this run (PR #3350 2026-11-07) — added regression test that fails without the fix. First appearance in hotspot_history."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.test.tsx"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-reality-web-comparison-listing-summary-schema-ts",
+      "title": "Watch reality-web listingSummarySchema.ts churn — new boundary guard",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3350"
+      ],
+      "evidence": [
+        "New file (PR #3350 2026-11-07) — parseListingSummary shape normalizer for shared-comparison loader. First appearance in hotspot_history."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/listingSummarySchema.ts"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": null
     }
   ]
 }
