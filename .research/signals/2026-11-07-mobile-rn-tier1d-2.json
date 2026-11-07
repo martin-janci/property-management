@@ -1,0 +1,42 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-07",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "oldest-unreviewed + landable-frontend (dispatcher Phase 2.6 tier1d demand-driven, second landable pass). Buffer is starved of landable work (open pool dominated by mobile-native/KMP, unbuildable in the cloud runner), so this run deliberately targets a cloud-landable segment. review_cursor had mobile-rn as oldest (2026-11-03); it already received a tier1d pass earlier today (signals/2026-11-07-mobile-rn-tier1d.json: WidgetDataProvider + NFCAccessController) and one on 2026-11-06 (AuthContext). To avoid duplication these findings target DIFFERENT files surfaced by the frontend `as unknown as` / i18n grep hit-lists: utils/session.ts (auth user mapping) and the screens/ i18n gap. mobile-native-kmp excluded (unlandable). Backend landable segments were spot-checked and found clean this pass: api-handlers (push routes, messaging attachment IDOR guard, portal_webhooks fail-closed all hardened + already reviewed today), api-core/services (push_fanout.rs select_dispatch_targets + FcmError stale-token logic correct; scheduler/offline paths have regression tests), ppt-web-core (lib/api.ts 401 single-flight replay + lib/websocket.ts reconnect both heavily hardened). Saturation check: mobile-rn has 0 open code-review-finding rows in backlog.json (reality-server=1, mobile-native-kmp=2) — not saturated. Static analysis only: files read + grep, no compile/test execution.",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-session-role-cast-bypass",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/utils/session.ts:114 — buildSessionUser() builds the signed-in user from a login response by casting the server-embedded object straight through: `const user = { ...embedded } as unknown as SessionUser;`. Only `str(embedded.id)` is checked (L113); every other field (role/email/firstName/lastName) is trusted as-is across the API trust boundary.",
+        "frontend/apps/mobile/src/utils/session.ts:16,29 — SessionUser.role is the strict union `AppRole = 'owner' | 'tenant' | 'resident' | 'manager' | 'admin'`. The embedded path does NOT normalize role, whereas the claims-fallback path does: L128 `role: toAppRole(str(claims.role) ?? active?.role)`. toAppRole (L72) maps backend roles `property_manager`/`technical_manager` -> 'manager', `owner_delegate` -> 'owner', default -> 'resident'.",
+        "Consequence: when the server embeds a raw backend role string in `data.user.role`, user.role keeps an un-mapped value that is not a valid AppRole, so role-gated UI (e.g. `role === 'manager'`) silently misclassifies the user and shows the wrong navigation/permissions. The two code paths that build the same SessionUser disagree on role normalization. Fix vector (cloud-landable, TS-only): run the embedded role through toAppRole() and validate string fields instead of a blanket `as unknown as` cast; add a session.test.ts case for an embedded backend-role payload."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-i18n-hardcoded-screen-strings",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx — imports useTranslation and uses t('common.loading') (L92) but hardcodes user-facing English in the same file: 'Widget Settings' (L89,105,126), 'Widgets Not Available' (L109), 'Available Widgets' (L131), 'Active Widgets' (L163), 'Remove' (L181), plus Alert.alert copy 'Widget Added' (L66), 'Widgets Updated' / 'All widgets have been refreshed.' (L79). Clear in-file i18n inconsistency.",
+        "Same gap across sibling screens that also import useTranslation yet hardcode header titles: screens/faults/FaultsListScreen.tsx:158 'Faults', screens/buildings/BuildingsScreen.tsx:118 'Buildings', screens/meters/MetersScreen.tsx:148 'Meters', screens/notifications/NotificationsScreen.tsx:138 'Notifications' + :166 'Mark all as read', screens/messages/MessagesScreen.tsx:114 'Messages', screens/announcements/AnnouncementsScreen.tsx:209 'Announcements'. ~27 hardcoded <Text> literal strings across screens/ (grep of `<Text ...>Capitalized words</Text>` excluding t()).",
+        "App ships react-i18next with locales for sk/cs/de/en (frontend/apps/mobile/src/i18n + locales/), so these strings are untranslated for non-English users. Fix vector (cloud-landable, TS + locale JSON): extract to t() keys and add them to the locale bundles."
+      ]
+    }
+  ]
+}

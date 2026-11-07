@@ -1,9 +1,33 @@
 {
-  "generated": "2026-11-06T04:31:36Z",
+  "generated": "2026-11-07T06:28:00Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-11-07T06:28:00Z",
+      "prs_scanned": 10,
+      "clean": [
+        3351,
+        3350,
+        3349,
+        3347,
+        3346,
+        3345,
+        3344,
+        3343,
+        3342
+      ],
+      "with_issues": [
+        {
+          "pr": 3348,
+          "issue": 3352,
+          "findings": 1,
+          "specialist": "pm-rust",
+          "note": "authenticated change_password updates the password hash but never revokes refresh tokens/sessions; reset_password does (force re-login). Pre-change sessions (incl. an attacker's) survive a deliberate password change."
+        }
+      ]
+    },
     {
       "run_at": "2026-11-06T04:31:36Z",
       "prs_scanned": 15,
@@ -626,68 +650,6 @@
         2976,
         3071
       ]
-    },
-    {
-      "run_at": "2026-10-12T18:28:40Z",
-      "prs_scanned": 0,
-      "clean": [],
-      "with_issues": [],
-      "skipped_already_reviewed": [
-        3062,
-        3060,
-        3061,
-        3063,
-        3064,
-        3065,
-        3066,
-        3067,
-        3068,
-        2977,
-        3056,
-        3055,
-        3049,
-        3053,
-        3054,
-        3058,
-        3059,
-        3043,
-        3046,
-        3045,
-        3047,
-        3048,
-        3050,
-        3051,
-        3044,
-        3032,
-        3034,
-        3031,
-        3033,
-        3026,
-        3025,
-        3020,
-        3036,
-        2967,
-        2969,
-        3023,
-        3027,
-        3018,
-        3019,
-        3021,
-        3022,
-        2744,
-        3005,
-        3015,
-        3014,
-        3013,
-        3010,
-        3011,
-        3009,
-        3001,
-        3002,
-        3004
-      ],
-      "note": "Dispatcher Phase 2.5 post-merge review. repo=martin-janci/property-management, window=14d (merged>=2026-09-28), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI GraphQL proxy-blocked, gh api write paths 403'd). DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to the orchestrator's Phase 6 (no git add/commit/push; no branch checkout; did NOT touch assignments.json/action-list.json/archives; review-only). Enumeration via list_pull_requests(state=closed, base=dev, sort=updated desc, perPage=50, pages 1-2); merged detected by non-null merged_at. ZERO net-new PRs to review: every one of the 52 in-window merges (merged_at>=2026-09-28) already carries post-merge-reviewed from prior runs. Most-recent in-window merges confirmed labeled: #3063/#3064/#3065/#3066/#3067/#3068 @10-11, #3062/#3060/#3061 @10-10, #2977 (needs-human-review + post-merge-reviewed) @10-11, #3056/#3055/#3049/#3053/#3054 @10-09, #3058/#3059 @10-10, #3043/#3046/#3045/#3047/#3048/#3044/#3036 @10-08, #3050/#3051 @10-09, #3032/#3034/#3031/#3033 @10-08, #3026/#3025/#3020 @10-07, #3023/#3027 @10-05, #3018/#3019/#3021/#3022 @10-05, #2744/#3005 @10-03, #3015/#3014/#3013 @10-02, #3010/#3011/#3009 @10-01, #3001/#3002/#3004 @09-30; #2967/#2969 @10-05. Top-of-list dependabot PRs (#3030,#3008,#2975,#2973,#2974,#2965,#2964,#2963,#2959,#2939) are closed-unmerged (no merged_at), not merges into dev. 09-27-and-earlier merges predate the 14d window. Nothing net-new to review; no reviewer subagents spawned; no follow-up issues opened; no labels applied; no breadcrumb comments. No-op pass (hard rule: never re-review a post-merge-reviewed PR).",
-      "focus_prs": []
     }
   ]
 }
