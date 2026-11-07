@@ -1,0 +1,43 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-07",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "churn-aligned (dispatcher-tier1d-demand-driven). review_cursor: mobile-rn was oldest (2026-11-03) but was already reviewed earlier today (signals/2026-11-07-mobile-rn-tier1d.json, 3 findings), so the next-oldest landable tier is the 2026-11-04 group {api-handlers, api-core, reality-server, ppt-web-core}. Churn tiebreak: the top segment-mappable churned code file in the last 10 days is backend/servers/api-server/src/routes/registry.rs (x3), which maps to api-handlers; api-handlers is also the security-critical fallback. mobile-native-kmp excluded (unlandable per issue #2652 AGP egress block). Saturation check: api-handlers has 0 open code-review-finding rows in backlog.json (reality-server=1, mobile-native-kmp=2) - not saturated. Churn hotspot registry.rs was read and found clean (proper ValidatedTenantExtractor authz helpers, generic client errors, no unwrap/todo); findings below are in adjacent routes files surfaced by the Rust/Security grep hit-list.",
+  "experts_used": [
+    "rust",
+    "security"
+  ],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-api-handlers-rentals-raw-db-error-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/rentals.rs:166-177 — report_err() maps the non-RowNotFound branch to (INTERNAL_SERVER_ERROR, format!(\"{ctx}: {e}\")), interpolating the raw sqlx::Error straight into the client-facing response body. Used by generate_report_preview (L1742) and create_report (L1768), both manager-facing POST endpoints under /api/v1/rentals/reports*.",
+        "backend/servers/api-server/src/routes/rentals.rs:1700-1702 — list reports handler returns (INTERNAL_SERVER_ERROR, format!(\"Failed to list reports: {}\", e)) with the raw sqlx error in the body.",
+        "backend/servers/api-server/src/routes/rentals.rs:1278 — upload_guest_id_document returns ErrorResponse::new(\"DATABASE_ERROR\", format!(\"Failed to look up guest: {e}\")); further raw-{e} leaks in the same multipart flow at L1404 (record ID document), L1445 (link document to guest), L1491 (look up ID document), and L1232 (map_multipart_err BAD_REQUEST body).",
+        "Impact: raw sqlx::Error Display exposes DB internals (SQLSTATE codes, table/column names, constraint names, and in some variants connection/pool detail) to any authenticated manager caller. Same leak class the dispatcher already shipped a fix for in listings.rs (signals/2026-11-06-api-handlers-tier1d.json code-review-listings-rs-raw-db-error-leak) but this is a distinct file (rentals.rs) requiring its own fix. Landable backend-only change: log e via tracing::error! and return a generic stable message/code, matching the safe pattern already used in registry.rs:139-145 (registry_db_error)."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-tenant-lifecycle-path-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/admin_tenant_lifecycle.rs:189-194,206,237,244 — the tenant restore/export endpoints return raw internal error strings in the client body: multipart errors format!(\"multipart: {e}\")/\"read field: {e}\", filesystem errors format!(\"write tmp: {e}\"), and crucially L237 format!(\"manifest load failed at {path:?}: {e}\") leaks the server-side manifest filesystem path, and internal() (L244) returns tenant_ops::TenantOpsError::to_string() to the caller.",
+        "Impact: information disclosure of server filesystem layout (temp dir, manifest path) and internal error detail. Lower severity than rentals.rs because these are platform-admin-gated (RequestPrincipal) endpoints, so exposure is narrow — scored low (+1). Fix: log the detail and return a generic (StatusCode, \"restore failed\"/\"export failed\") message, consistent with the generic-error pattern used elsewhere in the segment."
+      ]
+    }
+  ]
+}
