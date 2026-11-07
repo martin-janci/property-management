@@ -11,6 +11,7 @@ import type {
   VehicleType,
 } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface VehicleRegistrationFormProps {
   initialData?: UpdateVehicleRegistrationRequest;
@@ -20,13 +21,7 @@ interface VehicleRegistrationFormProps {
   isSubmitting?: boolean;
 }
 
-const vehicleTypes: { value: VehicleType; label: string }[] = [
-  { value: 'car', label: 'Car' },
-  { value: 'motorcycle', label: 'Motorcycle' },
-  { value: 'bicycle', label: 'Bicycle' },
-  { value: 'scooter', label: 'Scooter' },
-  { value: 'other', label: 'Other' },
-];
+const vehicleTypes: VehicleType[] = ['car', 'motorcycle', 'bicycle', 'scooter', 'other'];
 
 export function VehicleRegistrationForm({
   initialData,
@@ -35,6 +30,7 @@ export function VehicleRegistrationForm({
   onCancel,
   isSubmitting,
 }: VehicleRegistrationFormProps) {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<CreateVehicleRegistrationRequest>({
     vehicleType: initialData?.vehicleType || 'car',
     make: initialData?.make || '',
@@ -60,7 +56,7 @@ export function VehicleRegistrationForm({
         {/* Vehicle Type */}
         <div>
           <label htmlFor="vehicleType" className="block text-sm font-medium text-gray-700 mb-1">
-            Vehicle Type *
+            {t('registry.vehicle.form.vehicleType')} *
           </label>
           <select
             id="vehicleType"
@@ -72,8 +68,8 @@ export function VehicleRegistrationForm({
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             {vehicleTypes.map((type) => (
-              <option key={type.value} value={type.value}>
-                {type.label}
+              <option key={type} value={type}>
+                {t(`registry.vehicle.types.${type}`)}
               </option>
             ))}
           </select>
@@ -82,7 +78,7 @@ export function VehicleRegistrationForm({
         {/* License Plate */}
         <div>
           <label htmlFor="licensePlate" className="block text-sm font-medium text-gray-700 mb-1">
-            License Plate *
+            {t('registry.vehicle.form.licensePlate')} *
           </label>
           <input
             id="licensePlate"
@@ -91,14 +87,14 @@ export function VehicleRegistrationForm({
             value={formData.licensePlate}
             onChange={(e) => setFormData({ ...formData, licensePlate: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
-            placeholder="ABC-123"
+            placeholder={t('registry.vehicle.form.licensePlatePlaceholder')}
           />
         </div>
 
         {/* Make */}
         <div>
           <label htmlFor="make" className="block text-sm font-medium text-gray-700 mb-1">
-            Make
+            {t('registry.vehicle.form.make')}
           </label>
           <input
             id="make"
@@ -106,14 +102,14 @@ export function VehicleRegistrationForm({
             value={formData.make || ''}
             onChange={(e) => setFormData({ ...formData, make: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Toyota, BMW, etc."
+            placeholder={t('registry.vehicle.form.makePlaceholder')}
           />
         </div>
 
         {/* Model */}
         <div>
           <label htmlFor="model" className="block text-sm font-medium text-gray-700 mb-1">
-            Model
+            {t('registry.vehicle.form.model')}
           </label>
           <input
             id="model"
@@ -121,14 +117,14 @@ export function VehicleRegistrationForm({
             value={formData.model || ''}
             onChange={(e) => setFormData({ ...formData, model: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Corolla, X5, etc."
+            placeholder={t('registry.vehicle.form.modelPlaceholder')}
           />
         </div>
 
         {/* Year */}
         <div>
           <label htmlFor="year" className="block text-sm font-medium text-gray-700 mb-1">
-            Year
+            {t('registry.vehicle.form.year')}
           </label>
           <input
             id="year"
@@ -150,7 +146,7 @@ export function VehicleRegistrationForm({
         {/* Color */}
         <div>
           <label htmlFor="color" className="block text-sm font-medium text-gray-700 mb-1">
-            Color
+            {t('registry.vehicle.form.color')}
           </label>
           <input
             id="color"
@@ -158,14 +154,14 @@ export function VehicleRegistrationForm({
             value={formData.color || ''}
             onChange={(e) => setFormData({ ...formData, color: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Black, White, Red, etc."
+            placeholder={t('registry.vehicle.form.colorPlaceholder')}
           />
         </div>
 
         {/* Parking Spot */}
         <div className="md:col-span-2">
           <label htmlFor="parkingSpotId" className="block text-sm font-medium text-gray-700 mb-1">
-            Parking Spot
+            {t('registry.vehicle.form.parkingSpot')}
           </label>
           <select
             id="parkingSpotId"
@@ -173,31 +169,35 @@ export function VehicleRegistrationForm({
             onChange={(e) => setFormData({ ...formData, parkingSpotId: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="">No parking spot assigned</option>
+            <option value="">{t('registry.vehicle.form.noParkingSpot')}</option>
             {availableSpots.map((spot) => (
               <option key={spot.id} value={spot.id}>
                 {spot.spotNumber}
-                {spot.level && ` - Level ${spot.level}`}
-                {spot.zone && ` - Zone ${spot.zone}`}
+                {spot.level && ` - ${t('registry.vehicle.form.level', { level: spot.level })}`}
+                {spot.zone && ` - ${t('registry.vehicle.form.zone', { zone: spot.zone })}`}
               </option>
             ))}
           </select>
           {availableSpots.length === 0 && (
-            <p className="mt-1 text-sm text-gray-500">No available parking spots</p>
+            <p className="mt-1 text-sm text-gray-500">
+              {t('registry.vehicle.form.noAvailableSpots')}
+            </p>
           )}
         </div>
       </div>
 
       {/* Documents */}
       <div className="border-t pt-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Documents</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">
+          {t('registry.vehicle.form.documentsSection')}
+        </h3>
         <div className="space-y-4">
           <div>
             <label
               htmlFor="registrationDocumentUrl"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Registration Document URL
+              {t('registry.vehicle.form.registrationDocumentUrl')}
             </label>
             <input
               id="registrationDocumentUrl"
@@ -207,13 +207,13 @@ export function VehicleRegistrationForm({
                 setFormData({ ...formData, registrationDocumentUrl: e.target.value })
               }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="https://..."
+              placeholder={t('registry.vehicle.form.urlPlaceholder')}
             />
           </div>
 
           <div>
             <label htmlFor="photoUrl" className="block text-sm font-medium text-gray-700 mb-1">
-              Vehicle Photo URL
+              {t('registry.vehicle.form.photoUrl')}
             </label>
             <input
               id="photoUrl"
@@ -221,7 +221,7 @@ export function VehicleRegistrationForm({
               value={formData.photoUrl || ''}
               onChange={(e) => setFormData({ ...formData, photoUrl: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="https://..."
+              placeholder={t('registry.vehicle.form.urlPlaceholder')}
             />
           </div>
         </div>
@@ -235,7 +235,7 @@ export function VehicleRegistrationForm({
           disabled={isSubmitting}
           className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
         >
-          Cancel
+          {t('registry.vehicle.form.cancel')}
         </button>
         <button
           type="submit"
@@ -245,7 +245,7 @@ export function VehicleRegistrationForm({
           {isSubmitting && (
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
           )}
-          {isSubmitting ? 'Submitting...' : 'Submit Registration'}
+          {isSubmitting ? t('registry.vehicle.form.submitting') : t('registry.vehicle.form.submit')}
         </button>
       </div>
     </form>

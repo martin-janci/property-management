@@ -7949,6 +7949,135 @@
       "deleteVehicle": "Delete this vehicle registration?",
       "approveVehicle": "Approve this vehicle registration?",
       "approve": "Approve"
+    },
+    "status": {
+      "all": "All Statuses",
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "expired": "Expired"
+    },
+    "actions": {
+      "view": "View",
+      "review": "Review",
+      "edit": "Edit",
+      "delete": "Delete",
+      "create": "Create",
+      "search": "Search",
+      "noRegistrations": "No registrations"
+    },
+    "pagination": {
+      "showing": "Showing {{from}} to {{to}} of {{total}}",
+      "page": "Page {{page}} of {{totalPages}}",
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "pet": {
+      "types": {
+        "dog": "Dog",
+        "cat": "Cat",
+        "bird": "Bird",
+        "fish": "Fish",
+        "reptile": "Reptile",
+        "rodent": "Rodent",
+        "other": "Other"
+      },
+      "sizes": {
+        "small": "Small (< 10 kg)",
+        "medium": "Medium (10-25 kg)",
+        "large": "Large (25-45 kg)",
+        "extra_large": "Extra Large (> 45 kg)"
+      },
+      "form": {
+        "petType": "Pet Type",
+        "petSize": "Pet Size",
+        "name": "Pet Name",
+        "namePlaceholder": "Enter pet name",
+        "breed": "Breed",
+        "breedPlaceholder": "Enter breed (optional)",
+        "age": "Age (years)",
+        "agePlaceholder": "Enter age",
+        "weight": "Weight (kg)",
+        "weightPlaceholder": "Enter weight",
+        "description": "Description",
+        "descriptionPlaceholder": "Any additional information about your pet",
+        "veterinarianSection": "Veterinarian Information",
+        "veterinarianName": "Veterinarian Name",
+        "veterinarianNamePlaceholder": "Dr. Jane Smith",
+        "veterinarianContact": "Veterinarian Contact",
+        "veterinarianContactPlaceholder": "Phone or email",
+        "documentsSection": "Documents",
+        "vaccinationRecordUrl": "Vaccination Record URL",
+        "registrationDocumentUrl": "Registration Document URL",
+        "photoUrl": "Pet Photo URL",
+        "urlPlaceholder": "https://...",
+        "cancel": "Cancel",
+        "submit": "Submit Registration",
+        "submitting": "Submitting..."
+      },
+      "list": {
+        "title": "Pet Registrations",
+        "register": "Register Pet",
+        "searchPlaceholder": "Search by name, breed, owner...",
+        "emptyTitle": "No pet registrations found",
+        "emptyBody": "Get started by registering a pet.",
+        "emptyAction": "Register your first pet",
+        "colPet": "Pet",
+        "colOwner": "Owner",
+        "colUnit": "Unit",
+        "colStatus": "Status",
+        "colSubmitted": "Submitted",
+        "colActions": "Actions"
+      }
+    },
+    "vehicle": {
+      "types": {
+        "car": "Car",
+        "motorcycle": "Motorcycle",
+        "bicycle": "Bicycle",
+        "scooter": "Scooter",
+        "other": "Other"
+      },
+      "form": {
+        "vehicleType": "Vehicle Type",
+        "licensePlate": "License Plate",
+        "licensePlatePlaceholder": "ABC-123",
+        "make": "Make",
+        "makePlaceholder": "Toyota, BMW, etc.",
+        "model": "Model",
+        "modelPlaceholder": "Corolla, X5, etc.",
+        "year": "Year",
+        "color": "Color",
+        "colorPlaceholder": "Black, White, Red, etc.",
+        "parkingSpot": "Parking Spot",
+        "noParkingSpot": "No parking spot assigned",
+        "level": "Level {{level}}",
+        "zone": "Zone {{zone}}",
+        "noAvailableSpots": "No available parking spots",
+        "documentsSection": "Documents",
+        "registrationDocumentUrl": "Registration Document URL",
+        "photoUrl": "Vehicle Photo URL",
+        "urlPlaceholder": "https://...",
+        "cancel": "Cancel",
+        "submit": "Submit Registration",
+        "submitting": "Submitting..."
+      },
+      "list": {
+        "title": "Vehicle Registrations",
+        "register": "Register Vehicle",
+        "searchPlaceholder": "Search by license plate, make, model...",
+        "emptyTitle": "No vehicle registrations found",
+        "emptyBody": "Get started by registering a vehicle.",
+        "emptyAction": "Register your first vehicle",
+        "colVehicle": "Vehicle",
+        "colLicensePlate": "License Plate",
+        "colOwner": "Owner",
+        "colParkingSpot": "Parking Spot",
+        "colStatus": "Status",
+        "colSubmitted": "Submitted",
+        "colActions": "Actions",
+        "notAssigned": "Not assigned"
+      }
     }
   },
   "community": {
