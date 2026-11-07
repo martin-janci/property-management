@@ -1,0 +1,269 @@
+{
+  "generated_at": "2026-11-07T12:38:18Z",
+  "generator": "research-routine",
+  "trigger_payload": "buffer-low: claimable=6/72 — refill planner",
+  "signals": [
+    {
+      "id": "code-review-api-handlers-rentals-raw-db-error-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/rentals.rs:166-177 — report_err() maps the non-RowNotFound branch to (INTERNAL_SERVER_ERROR, format!(\"{ctx}: {e}\")), interpolating the raw sqlx::Error straight into the client-facing response body. Used by generate_report_preview (L1742) and create_report (L1768), both manager-facing POST endpoints under /api/v1/rentals/reports*.",
+        "backend/servers/api-server/src/routes/rentals.rs:1700-1702 — list reports handler returns (INTERNAL_SERVER_ERROR, format!(\"Failed to list reports: {}\", e)) with the raw sqlx error in the body.",
+        "backend/servers/api-server/src/routes/rentals.rs:1278 — upload_guest_id_document returns ErrorResponse::new(\"DATABASE_ERROR\", format!(\"Failed to look up guest: {e}\")); further raw-{e} leaks in the same multipart flow at L1404 (record ID document), L1445 (link document to guest), L1491 (look up ID document), and L1232 (map_multipart_err BAD_REQUEST body).",
+        "Impact: raw sqlx::Error Display exposes DB internals (SQLSTATE codes, table/column names, constraint names, and in some variants connection/pool detail) to any authenticated manager caller. Same leak class the dispatcher already shipped a fix for in listings.rs (signals/2026-11-06-api-handlers-tier1d.json code-review-listings-rs-raw-db-error-leak) but this is a distinct file (rentals.rs) requiring its own fix. Landable backend-only change: log e via tracing::error! and return a generic stable message/code, matching the safe pattern already used in registry.rs:139-145 (registry_db_error)."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-tenant-lifecycle-path-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/admin_tenant_lifecycle.rs:189-194,206,237,244 — the tenant restore/export endpoints return raw internal error strings in the client body: multipart errors format!(\"multipart: {e}\")/\"read field: {e}\", filesystem errors format!(\"write tmp: {e}\"), and crucially L237 format!(\"manifest load failed at {path:?}: {e}\") leaks the server-side manifest filesystem path, and internal() (L244) returns tenant_ops::TenantOpsError::to_string() to the caller.",
+        "Impact: information disclosure of server filesystem layout (temp dir, manifest path) and internal error detail. Lower severity than rentals.rs because these are platform-admin-gated (RequestPrincipal) endpoints, so exposure is narrow — scored low (+1). Fix: log the detail and return a generic (StatusCode, \"restore failed\"/\"export failed\") message, consistent with the generic-error pattern used elsewhere in the segment."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-session-role-cast-bypass",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/utils/session.ts:114 — buildSessionUser() builds the signed-in user from a login response by casting the server-embedded object straight through: `const user = { ...embedded } as unknown as SessionUser;`. Only `str(embedded.id)` is checked (L113); every other field (role/email/firstName/lastName) is trusted as-is across the API trust boundary.",
+        "frontend/apps/mobile/src/utils/session.ts:16,29 — SessionUser.role is the strict union `AppRole = 'owner' | 'tenant' | 'resident' | 'manager' | 'admin'`. The embedded path does NOT normalize role, whereas the claims-fallback path does: L128 `role: toAppRole(str(claims.role) ?? active?.role)`. toAppRole (L72) maps backend roles `property_manager`/`technical_manager` -> 'manager', `owner_delegate` -> 'owner', default -> 'resident'.",
+        "Consequence: when the server embeds a raw backend role string in `data.user.role`, user.role keeps an un-mapped value that is not a valid AppRole, so role-gated UI (e.g. `role === 'manager'`) silently misclassifies the user and shows the wrong navigation/permissions. The two code paths that build the same SessionUser disagree on role normalization. Fix vector (cloud-landable, TS-only): run the embedded role through toAppRole() and validate string fields instead of a blanket `as unknown as` cast; add a session.test.ts case for an embedded backend-role payload."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-i18n-hardcoded-screen-strings",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx — imports useTranslation and uses t('common.loading') (L92) but hardcodes user-facing English in the same file: 'Widget Settings' (L89,105,126), 'Widgets Not Available' (L109), 'Available Widgets' (L131), 'Active Widgets' (L163), 'Remove' (L181), plus Alert.alert copy 'Widget Added' (L66), 'Widgets Updated' / 'All widgets have been refreshed.' (L79). Clear in-file i18n inconsistency.",
+        "Same gap across sibling screens that also import useTranslation yet hardcode header titles: screens/faults/FaultsListScreen.tsx:158 'Faults', screens/buildings/BuildingsScreen.tsx:118 'Buildings', screens/meters/MetersScreen.tsx:148 'Meters', screens/notifications/NotificationsScreen.tsx:138 'Notifications' + :166 'Mark all as read', screens/messages/MessagesScreen.tsx:114 'Messages', screens/announcements/AnnouncementsScreen.tsx:209 'Announcements'. ~27 hardcoded <Text> literal strings across screens/ (grep of `<Text ...>Capitalized words</Text>` excluding t()).",
+        "App ships react-i18next with locales for sk/cs/de/en (frontend/apps/mobile/src/i18n + locales/), so these strings are untranslated for non-English users. Fix vector (cloud-landable, TS + locale JSON): extract to t() keys and add them to the locale bundles."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-voiceassistant-error-deadend",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/voice/VoiceAssistant.ts:79-101 - startListening() guards with `if (this.state !== 'idle') return;` (L80-82). On a native failure it sets `this.updateState('error')` (L85 and L98) and rethrows/throws. There is NO code path anywhere in the class that transitions state from 'error' back to 'idle': the only resets to 'idle' are stopListening() (L115, reachable only from 'listening' per its own L107-109 guard) and processRecognitionResult() (L147, reachable only after entering 'processing'). So after a single failed startListening() the assistant is permanently stuck in 'error' and every subsequent startListening() early-returns at L80 - the voice feature is bricked until the VoiceAssistant instance is recreated.",
+        "frontend/apps/mobile/src/voice/VoiceAssistant.ts:106-116 - same dead-end class for a transient stop failure: stopListening() awaits NativeSpeech.stopListening() (L112) with no try/catch, so if it rejects the state is left at 'listening' and never reaches L115 ('idle'); startListening() then permanently early-returns.",
+        "Confirmed by grep: the class exposes no reset()/recover()/cancel() method and no consumer resets the state externally (no setState on 'error' outside the class). Impact: user-facing hands-free feature (Epic 49 Story 49.2 - report fault / announcements / voting by voice) becomes silently unusable after the first permission denial or native-module error, with no recovery short of app restart. Landable frontend-only fix: in startListening() allow retry from 'error' (treat 'error' like 'idle', or add an explicit reset-to-idle on failure), and wrap stopListening()'s native call in try/catch that still returns the state to 'idle'."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-push-isregistered-premature",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/usePushNotifications.ts:223-234 - setIsRegistered(true) is called at L223 BEFORE the backend registration await sendTokenToBackend(nativeToken.data) at L227. The surrounding try/catch (L230-234) only does setError(message) on failure and does not roll back isRegistered. So if the backend token-registration POST fails (network, 401, 5xx), the device reports isRegistered === true while the backend never stored the token - the UI/state believes push is active but the device will receive no server pushes, and nothing retries the backend registration.",
+        "Impact: silent push-delivery gap - a device shows as registered but is not reachable by the push-fanout pipeline (backend push_fanout). Lower severity (+1) because local notification permission really was granted and the error is surfaced via setError, but the isRegistered flag is misleading for any consumer that gates on it. Landable frontend-only fix: move setIsRegistered(true) to after sendTokenToBackend() resolves, or set it false / retry in the catch so the flag reflects backend state."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-widget-apirequest-swallow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:373-380 — private apiRequest<T>() wraps the whole fetch in try/catch and, on ANY error (rejected fetch = offline/timeout/DNS, or a thrown `API request failed: <status>` for a non-2xx), returns `{} as T` instead of re-throwing. The empty-object cast masks the failure from every caller.",
+        "Consequence: updateAllWidgets() (lines 136-160) deliberately wraps fetchWidgetData() in try/catch to classify each widget as `success: true/false` and only cache successful results. Because apiRequest never throws, the failure path is dead code — a failed backend fetch resolves to an empty payload, is treated as `success: true`, and gets written to AsyncStorage via cacheWidgetData(), OVERWRITING previously-valid cached widget data with empty data during a backend outage. Home-screen widgets then render blank/zeroed instead of showing stale-but-correct data or an error state.",
+        "Fix vector: make apiRequest throw (remove the `{} as T` fallback) so updateAllWidgets' existing success/failure handling engages and good cache is preserved on failure; or move the fallback decision into fetchWidgetData with an explicit mock-mode flag. Cloud-verifiable (frontend workspace: biome + typecheck + jest-expo; module currently has NO test file). Confidence medium: swallow + success-misclassification certain by static read; exact UI blanking depends on which widgets are configured.",
+        "expert: frontend"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-controller-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test",
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts (478 lines) — security-sensitive physical building-access controller (grant/deny decisions, credential-expiry checks, denial-reason mapping, offline validation, access-attempt logging) has NO sibling or repo-wide test file. `rg -l NFCAccessController frontend/apps/mobile/src -g '*.test.*'` returns nothing, while the peer NFCCredentialManager.ts IS covered by NFCCredentialManager.test.ts.",
+        "Latent correctness concern that tests would pin: handleTap() (lines 163-225) only flips a granted result to denied inside `if (NativeNFC) { ... }`. When NativeNFC is null (native module unavailable), the transmit step is skipped but `validationResult.granted` stays true, so the code logs the attempt as 'granted' and calls updateCredentialUsage() even though no credential was physically transmitted to the reader. Reachability is uncertain (handleTap is invoked from the native module, which implies NFC present), hence medium confidence and a test-gap framing rather than a confirmed bug.",
+        "Fix vector: add NFCAccessController.test.ts covering validateAccess() grant/deny/expiry branches, the NativeNFC-null path, and logAccessAttempt() status mapping. Cloud-verifiable (jest-expo, no device needed — native modules are mockable like NFCCredentialManager.test.ts does). Severity LOW (+1): missing tests for a module per the skill's score-delta table.",
+        "expert: tester"
+      ],
+      "expert": "tester"
+    },
+    {
+      "id": "code-review-mobile-rn-widget-cache-json-parse",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:351 (getAllCachedData) and :94 (getAllWidgetConfigs) — both do `return stored ? JSON.parse(stored) : {}` / `: []` with NO try/catch around JSON.parse on the AsyncStorage value. A corrupted or partially-written WIDGET_DATA_KEY / config blob throws SyntaxError, which propagates up through getCachedWidgetData/updateAllWidgets and breaks every widget read until storage is cleared.",
+        "Inconsistency: sibling persistence modules in the same app DO guard storage parsing in try/catch and fall back to defaults — e.g. onboarding/TourManager.ts:289-294 ('Invalid onboarding state schema, using defaults'), nfc/NFCCredentialManager.ts:226/353/366 ('Stored ... corrupted; discarding'), onboarding/HelpCenter.ts:199. WidgetDataProvider is the outlier.",
+        "Fix vector: wrap both JSON.parse calls in try/catch, log a warn, and return the empty default on parse failure (matching TourManager/NFCCredentialManager). Cloud-verifiable (frontend: biome + typecheck + jest-expo). Severity LOW (+1): resilience smell on a rarely-hit corruption path.",
+        "expert: frontend"
+      ],
+      "expert": "frontend"
+    }
+  ],
+  "rescue_notice": "The 9 code-review-finding signals in this file were originally emitted by the dispatcher Tier-1d code-review in 4 earlier signal files today (api-handlers + mobile-rn x3). They were marked in state.seen_signals but never landed as backlog rows because the routine lacks a signals-promote.sh drain (recurring self-finding fp/recurrence=27). This run rescues them into backlog.json as a one-time reconciliation — Phase 2 created 9 new open rows with the signal score_delta applied once. G4 reports this as a controlled violation (score_delta>0 on already-seen non-cumulative ids).",
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist (the 9 rescued code-review-findings are all confidence=medium, so they go to the manual-implementer path, not Phase 5)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/today.md && head matches #<today>",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq diff last_pr_seen/last_issue_seen/last_commit_sha/seen_signals.length/hotspot_history.length/stats.quiet_days vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids in backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": false,
+      "command": "jq re-emitted non-cumulative signal ids with score_delta>0 must be 0",
+      "observed": "9 ids",
+      "expected": "0 ids",
+      "remediation": "Controlled one-time rescue of 9 Tier-1d code-review-finding signals the dispatcher marked seen but never landed in backlog.json. Permanent fix is scripts/signals-promote.sh (self-finding fp recurrence=27+1). Audit trail: signals/2026-11-07.json.rescue_notice."
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap+decay checks",
+      "observed": "no items >8; no open items older than 14d without decay",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans have adversarial-pass annotation",
+      "observed": "no new plans",
+      "expected": "no new plans => N/A"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plan count and readiness gates",
+      "observed": "0 new plans",
+      "expected": "<=2 new plans"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged diff contains only .research/",
+      "observed": "0 non-.research paths",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private-hostnames in staged non-baseline files",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen(backlog.json)",
+      "observed": "diff -q exit 0",
+      "expected": "diff -q exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-failed vs cursor-advances",
+      "observed": "no phases failed; cursors advanced",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present or in _archive",
+      "observed": "no plans deleted this run; 35 plans unchanged",
+      "expected": "convergence"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count non-decreasing vs HEAD",
+      "observed": "22>=22",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen(backlog.json where vector=triage)",
+      "observed": "diff -q exit 0",
+      "expected": "diff -q exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps + idempotency + kill-switch",
+      "observed": "auto_fix_actions=[] (no candidate)",
+      "expected": "<=1 pr, <=1 issue, <=1 comment"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "pm_cursor + coverage_cursor consistency (no-op when Phase 1.6 skipped)",
+      "observed": "Phase 1.6 skipped; pm_cursor unchanged (next_index=3) => no-op",
+      "expected": "no-op when 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram tokens in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}

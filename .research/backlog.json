@@ -15435,6 +15435,208 @@
         "assignment_status": "failed",
         "pr_number": null
       }
+    },
+    {
+      "id": "code-review-api-handlers-rentals-raw-db-error-leak",
+      "title": "SECURITY: rentals.rs report handlers leak raw sqlx::Error (SQLSTATE + table/constraint names) in 500 bodies",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-11-07 api-handlers)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/rentals.rs:166-177 — report_err() maps the non-RowNotFound branch to (INTERNAL_SERVER_ERROR, format!(\"{ctx}: {e}\")), interpolating the raw sqlx::Error straight into the client-facing response body. Used by generate_report_preview (L1742) and create_report (L1768), both manager-facing POST endpoints under /api/v1/rentals/reports*.",
+        "backend/servers/api-server/src/routes/rentals.rs:1700-1702 — list reports handler returns (INTERNAL_SERVER_ERROR, format!(\"Failed to list reports: {}\", e)) with the raw sqlx error in the body.",
+        "backend/servers/api-server/src/routes/rentals.rs:1278 / 1404 / 1445 / 1491 / 1232 — upload_guest_id_document and multipart flow leak raw `{e}` in DATABASE_ERROR / BAD_REQUEST bodies.",
+        "Rescued from .research/signals/2026-11-07-api-handlers-tier1d.json — dispatcher emitted the signal and marked it in seen_signals but never materialised a backlog row (recurring self-finding fp/recurrence=27, missing signals-promote.sh drain)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/rentals.rs"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-tenant-lifecycle-path-leak",
+      "title": "Info-leak: admin_tenant_lifecycle.rs restore/export error bodies expose server tmpdir and manifest paths",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-11-07 api-handlers)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/admin_tenant_lifecycle.rs:189-194,206,237,244 — tenant restore/export endpoints return raw internal error strings in the client body: multipart `multipart: {e}`, filesystem `write tmp: {e}`, and L237 `manifest load failed at {path:?}: {e}` (leaks server-side manifest filesystem path). internal() (L244) returns TenantOpsError::to_string().",
+        "Platform-admin-gated (RequestPrincipal) endpoints, so exposure is narrow — scored low (+1). Fix: log the detail and return a generic (StatusCode, \"restore failed\"/\"export failed\") message.",
+        "Rescued from .research/signals/2026-11-07-api-handlers-tier1d.json (recurring self-finding fp/recurrence=27)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/admin_tenant_lifecycle.rs"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-session-role-cast-bypass",
+      "title": "mobile-rn buildSessionUser() casts server role string straight to client enum — role mismatch on first login",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-11-07 mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/utils/session.ts:114 — buildSessionUser() builds the signed-in user from a login response by casting the server-provided role string directly to the client enum (as UserRole), skipping validation. A new/renamed backend role lands silently as an invalid enum.",
+        "Impact: gates keyed on UserRole (admin/manager screens, residents-only tabs) can misbehave after a backend role rename without a client bump.",
+        "Rescued from .research/signals/2026-11-07-mobile-rn-tier1d-2.json (recurring self-finding fp/recurrence=27)."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/utils/session.ts"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-i18n-hardcoded-screen-strings",
+      "title": "mobile-rn WidgetSettingsScreen mixes t() with hardcoded English labels — partial i18n",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-11-07 mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx — imports useTranslation and uses t('common.loading') for one string while leaving the rest of the labels as hardcoded English literals. Partial translation diverges user-visible text per language.",
+        "Pattern to follow: ppt-web/registry components (PR #3351, 2026-11-07) migrated the same shape to full i18n through react-i18next.",
+        "Rescued from .research/signals/2026-11-07-mobile-rn-tier1d-2.json."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-voiceassistant-error-deadend",
+      "title": "mobile-rn VoiceAssistant.startListening() silently aborts on non-idle state — user gets no feedback",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-11-07 mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/voice/VoiceAssistant.ts:79-101 — startListening() guards with `if (this.state !== 'idle') return;` and the subsequent catch for session start errors falls through to a bare `return` with no surfaced state update. UI stays showing microphone-off while nothing is happening, no toast/listener event.",
+        "Pairs with the existing watchdog work; this is the user-facing error-reporting gap.",
+        "Rescued from .research/signals/2026-11-07-mobile-rn-tier1d-3.json."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/voice/VoiceAssistant.ts"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-push-isregistered-premature",
+      "title": "mobile-rn usePushNotifications sets isRegistered=true before backend confirms — stale on failure",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-11-07 mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/usePushNotifications.ts:223-234 — setIsRegistered(true) is called BEFORE the backend register-token call completes (and before its outcome is checked). A failing backend call leaves the UI showing registered-for-push while the token was never persisted server-side.",
+        "Fix shape: flip the state only in the success branch of the register request, and surface the backend failure via the shared toast/analytics path.",
+        "Rescued from .research/signals/2026-11-07-mobile-rn-tier1d-3.json."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/hooks/usePushNotifications.ts"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-widget-apirequest-swallow",
+      "title": "mobile-rn WidgetDataProvider.apiRequest swallows every error in bare try/catch — widgets silently stuck",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-11-07 mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:373-380 — private apiRequest<T>() wraps the whole fetch in try/catch and on any caught error returns a cached/default payload without a log, telemetry event or re-throw. A persistently failing upstream shows the widget as loaded with stale data forever.",
+        "Pair with the cache JSON.parse unhandled-throw row below — both sit on the same file and have overlapping symptoms.",
+        "Proposed fix: at minimum log the caught error via the mobile error-reporting hook and expose an isStale flag on the widget consumer.",
+        "Rescued from .research/signals/2026-11-07-mobile-rn-tier1d.json."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-controller-untested",
+      "title": "NFC access controller (~478 LOC, physical-access-security) ships with zero unit tests",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-11-07 mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts (478 lines) — security-sensitive physical building-access controller (reads NFC tag, resolves to credential, calls backend to grant door open) with no co-located *.test.ts spec. Nothing under __tests__ covers it either.",
+        "Impact: regressions in tag-parse / credential-resolve / expiry checks ship unnoticed; this is a safety-critical flow (unlocks real doors).",
+        "Fix shape: add jest-expo suite covering (a) happy-path tag-to-open-door call, (b) expired tag rejected without hitting backend, (c) backend-denies maps to the correct user-visible error.",
+        "Rescued from .research/signals/2026-11-07-mobile-rn-tier1d.json."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-widget-cache-json-parse",
+      "title": "mobile-rn WidgetDataProvider caches do raw JSON.parse without try/catch — unhandled throw on corrupt cache",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-11-07 mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:351 (getAllCachedData) and :94 (getAllWidgetConfigs) — both do `return JSON.parse(raw)` directly on an AsyncStorage/SecureStore value with no try/catch. A corrupt or partially-written cache throws out of a sync path that callers don't handle.",
+        "Classic mobile cold-start crash after an app update swaps cache schema or storage interrupts writes.",
+        "Fix shape: wrap each JSON.parse in try/catch, log via error-reporting hook, and return [] / {} as the graceful fallback.",
+        "Rescued from .research/signals/2026-11-07-mobile-rn-tier1d.json."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts"
+      ],
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "plan": null
     }
   ]
 }
