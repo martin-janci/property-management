@@ -71,18 +71,18 @@
     {
       "task_id": "gh-issue-3352",
       "branch": "auto-impl/gh-issue-3352-a5bd2994",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-07T08:30:09Z",
-      "last_updated": "2026-11-07T08:30:09Z",
-      "status_changed_at": "2026-11-07T08:30:09Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-07T09:20:38Z",
+      "status_changed_at": "2026-11-07T09:20:38Z",
+      "pr_number": 3353,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3353",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3353 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=change_password now revokes other sessions (revoke_all_user_tokens w/ except=current via resolve_current_session_id), preserving caller session; regression test in sibling suite_2 file; fmt+clippy+test-compile green, DB sqlx::test run deferred to CI (no local Postgres/Docker)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -91,5 +91,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-07T08:35:51Z"
+  "generated": "2026-11-07T09:20:38Z"
 }
