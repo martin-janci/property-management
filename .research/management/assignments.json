@@ -29,7 +29,7 @@
       "branch": "auto-impl/code-review-reality-server-inquiry-dead-88581ba0",
       "status": "review",
       "claimed_at": "2026-11-04T16:32:16Z",
-      "last_updated": "2026-11-07T20:31:24Z",
+      "last_updated": "2026-11-07T22:29:04Z",
       "status_changed_at": "2026-11-04T18:25:01Z",
       "pr_number": 3301,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3301",
@@ -51,7 +51,7 @@
       "branch": "auto-impl/screen-map-drift-pr-3293-reality-eddd3a6c",
       "status": "review",
       "claimed_at": "2026-11-05T22:29:23Z",
-      "last_updated": "2026-11-07T20:31:24Z",
+      "last_updated": "2026-11-07T22:29:04Z",
       "status_changed_at": "2026-11-06T00:26:46Z",
       "pr_number": 3333,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3333",
@@ -73,13 +73,13 @@
       "branch": "auto-impl/code-review-ppt-web-ui-registry-mutation-97253c1f",
       "status": "review",
       "claimed_at": "2026-11-07T16:28:48Z",
-      "last_updated": "2026-11-07T20:31:24Z",
+      "last_updated": "2026-11-07T22:29:04Z",
       "status_changed_at": "2026-11-07T16:47:10Z",
       "pr_number": 3356,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3356",
       "merged_at": null,
       "specialist": "react-web",
-      "implementer_summary": "pr=3356 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=RegistryPage pet/vehicle delete+review now toast success/error via useToast; added registry.toast i18n keys to all 6 locales; new RegistryPage.test.tsx 6 tests two-commit split; VERIFY OK 91b2d5f, 11082 tests pass",
+      "implementer_summary": "pr=3356 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=RegistryPage pet/vehicle delete+review now toast success/error via useToast; added registry.toast i18n keys to all 6 locales; new RegistryPage.test.tsx 6 tests two-commit split; VERIFY OK 91b2d5f, 11082 tests pass [dispatcher 2026-11-07T22:29:04Z] approved+CI-green but UNMERGEABLE in cloud: add/add conflict on RegistryPage.test.tsx vs merged #3354 (non-mechanical union-merge needed) AND no GitHub approval obtainable (self-approval wedge #3215, reviewer posted verdict=approve as COMMENT). Needs human rebase+approval.",
       "reviewer_summary": "verdict=approve note=clean-toast-fix-mirrors-RegistryRulesPage-convention-add-add-conflict-3354-RegistryPage.test.tsx-rebase-time-only",
       "last_reviewed_oid": "cd4841a86f88b1970c538e25f949e1496f0c5121",
       "scope_drift": false,
@@ -91,5 +91,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-07T20:31:24Z"
+  "generated": "2026-11-07T22:29:04Z"
 }
