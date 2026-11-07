@@ -8473,6 +8473,50 @@
       "merge_attempted_at": "2026-11-06T22:30:09Z"
     },
     {
+      "task_id": "code-review-ppt-web-ui-registry-page-i18n-gap",
+      "branch": "auto-impl/code-review-ppt-web-ui-registry-page-i18-677d378c",
+      "status": "merged",
+      "claimed_at": "2026-11-07T16:28:48Z",
+      "last_updated": "2026-11-07T18:37:29Z",
+      "status_changed_at": "2026-11-07T18:37:29Z",
+      "pr_number": 3355,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3355",
+      "merged_at": "2026-11-07T18:37:29Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3355 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=routed RegistryPage title/subtitle/pets+vehicles tabs/load-error through t(registry.page.*); added keys to all 6 locales; IG3 test:+fix: split; VERIFY OK 2ca0901",
+      "reviewer_summary": "verdict=approve note=clean-ppt-web-i18n-fix-all-6-locales-ci-green",
+      "last_reviewed_oid": "bab40d0e276ea813ec89a6a442170d3f4bb16445",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-registry-page-no-auth",
+      "branch": "auto-impl/code-review-ppt-web-ui-registry-page-no-879fea88",
+      "status": "merged",
+      "claimed_at": "2026-11-07T14:29:16Z",
+      "last_updated": "2026-11-07T18:37:29Z",
+      "status_changed_at": "2026-11-07T18:37:29Z",
+      "pr_number": 3354,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3354",
+      "merged_at": "2026-11-07T18:37:29Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3354 status=done specialist=react-web scope_drift=false code_reuse_warn=useR@favorites(false-pos) note=registry pages build client via useRegistryApi() getToken()+useMemo (token carried+rotates); IG3 test/fix split proves fail-before-fix; verify green 11078 tests; draft PR #3354",
+      "reviewer_summary": "verdict=approve note=registry-hook-matches-canonical-useBuildings-pattern-ci-green-posted-as-COMMENT-self-approve-blocked",
+      "last_reviewed_oid": "dcb8cf921b26a85aef1e27e9574e1ee10a8b3a71",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-ui-registry-rules-save-silent-fail",
       "branch": "auto-impl/code-review-ppt-web-ui-registry-rules-sa-813d957c",
       "status": "merged",
@@ -19834,6 +19878,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-3352",
+      "branch": "auto-impl/gh-issue-3352-a5bd2994",
+      "status": "merged",
+      "claimed_at": "2026-11-07T08:30:09Z",
+      "last_updated": "2026-11-07T18:37:29Z",
+      "status_changed_at": "2026-11-07T18:37:29Z",
+      "pr_number": 3353,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3353",
+      "merged_at": "2026-11-07T18:37:29Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3353 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=change_password now revokes other sessions (revoke_all_user_tokens w/ except=current via resolve_current_session_id), preserving caller session; regression test in sibling suite_2 file; fmt+clippy+test-compile green, DB sqlx::test run deferred to CI (no local Postgres/Docker)",
+      "reviewer_summary": "verdict=approve note=session-revocation-on-change_password-mirrors-reset_password-correctly-scope-drift-justified-CI-green-posted-as-comment-3215",
+      "last_reviewed_oid": "263f7286d4929258965bc7246e4047844c6c65a7",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-07T16:34:21Z"
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -23485,5 +23551,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-07T00:30:31Z"
+  "archived_at": "2026-11-07T18:37:36Z"
 }

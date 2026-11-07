@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-11-06T14:44:32Z",
+  "archived_at": "2026-11-07T18:37:36Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -8579,6 +8579,24 @@
         "commit": "2ef5672fdc073e6f68ea07aedfeaf07c758e660d",
         "subject": "code-review-ppt-web-ui-protectedroute-i18n: i18n ProtectedRoute strings (#2737)",
         "at": "2026-08-12T06:06:45Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-page-no-auth",
+      "action": "ppt-web RegistryPage.tsx (L19-23) and RegistryRulesPage.tsx (L21) build the API client at module scope with no accessToken/tenantId (stub) — all registry requests ship without a Bearer token/tenant context (401/non-functional) and the module-scope singleton never rotates the token. Rebuild per the canonical useBuildings.ts getToken()+useMemo pattern. Add/adjust a test.",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-tier1d-devreview 2026-11-07T12:31:00Z (signals/2026-11-07-ppt-web-ui-tier1d.json) | dev-reconcile 2026-11-07T18:32:59Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-07T12:31:00Z",
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "85eaeb1b6a6a686a4d72059f1b1ff1f519748e10",
+        "subject": "code-review-ppt-web-ui-registry-page-no-auth: send auth context on registry requests (#3354)",
+        "at": "2026-11-07T18:32:59Z"
       }
     },
     {
@@ -21533,6 +21551,32 @@
         "merged_pr": 3346,
         "merged_at": "2026-11-06T12:35:25Z",
         "at": "2026-11-06T14:25:26Z"
+      }
+    },
+    {
+      "id": "gh-issue-3352",
+      "action": "Follow-up: change_password does not revoke other sessions after a password change (PR #3348) (Closes #3352)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-11-07T08:25:44Z (#3352) | dev-reconcile 2026-11-07T18:32:59Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-07T08:25:44Z",
+      "issue_ref": {
+        "number": 3352,
+        "url": "https://github.com/martin-janci/property-management/issues/3352",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "ae36fcc803ee004722a3392b06aa8279bb891c00",
+        "subject": "gh-issue-3352: revoke other sessions on authenticated password change (#3353)",
+        "at": "2026-11-07T18:32:59Z"
       }
     },
     {
