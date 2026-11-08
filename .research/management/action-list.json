@@ -407,7 +407,40 @@
       "dependency": null,
       "depends_on": [],
       "first_open_at": "2026-11-07T12:31:00Z"
+    },
+    {
+      "id": "pm-qa-harden-rentals-connections-flake-2026-11-08",
+      "action": "Harden ppt-web rentals.connections.test.tsx confirmation-dialog findByRole flake (surfaced on PR #3356 verify under parallel pool load)",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-08"
+    },
+    {
+      "id": "pm-qa-password-change-session-revocation-matrix-2026-11-08",
+      "action": "Add integration test matrix for POST /api/v1/auth/password/change session-revocation (PR #3353): current session kept, other refresh tokens revoked, redis session eviction",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-08"
+    },
+    {
+      "id": "pm-scrum-master-unblock-dispatcher-stall-3357-2026-11-08",
+      "action": "Unblock dispatcher pipeline — 3 approved PRs stuck on non-mechanical conflicts; triage Tier-1d retirement decision (gh-issue-3357)",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-08"
     }
   ],
-  "generated": "2026-10-28T11:00:00Z"
+  "generated": "2026-11-08T03:12:54Z"
 }

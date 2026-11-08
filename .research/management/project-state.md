@@ -1,70 +1,69 @@
 # PPT Project State
 
-_Generated: 2026-10-28 — routine Phase 1.6 incremental upkeep. Role focus: **pm-frontend** (83-day stale rotation slot; pm-cursor idx 2 → 3). Coverage `scan_kind=upkeep`; coverage_cursor idx 12 → 0 (epic-9 TOTP re-checked, story 9-1 still done, no PRs touched 2FA). pm-scrum-master always-on._
+_Generated: 2026-11-08 — routine Phase 1.6 incremental upkeep. Role focus: **pm-qa** (74-day stale rotation slot; pm-cursor idx 3 → 4). Coverage `scan_kind=upkeep`; coverage_cursor idx 0 → 1 (epic-10a re-checked — all 3 OAuth stories still done; PR #3353 session-revocation evidence appended to 10a-3). pm-scrum-master always-on._
 
-## Delta since last routine run (2026-10-26)
+## Delta since last routine run (2026-11-06)
 
-- **1 PR merged** (#3183) — **cross-tenant IDOR regression suite + 404 fix for violation mutations**.
-  - `violations.rs` (routes + repo) hardened: cross-tenant mutations now 404 instead of 2xx/500; new regression suite `violations_mutation_cross_org_idor_tests` (14 cases, Org B Manager token on Org A seed) locks in the contract.
-  - Does NOT map to a specific coverage story (violations is a sub-feature of epic-10b Platform Administration, which is already 7/7 done); no coverage-status flip.
-  - Does NOT close the open `pm-backend-violations-add-evidence-authz-gap-3164` action — that's a role/authz gating gap on the `add_evidence` sub-route, distinct from cross-tenant 404 contract.
-- **1 new critical issue: #3187** — `Failing test on dev blocks backend CI: cross_org_assign_violation_is_not_found (assign returns 403, expects 404)`. Surfaced by the test suite PR #3183 added — `assign` mutation still returns the role-gate 403 instead of 404 cross-tenant. Already queued as `gh-issue-3187` (high, owner pm-security). **Blocks backend CI on dev.**
-- **6 open drafts** (#3184–#3189) — all dispatcher-authored, awaiting review/CI (gated on #3187 if backend-merge path).
-- **Carried blockers unchanged**: #3168 (cargo-deny RUSTSEC advisories), #2652 (KMP cloud builds), #2951 (RN jest-expo), #3164 (violations add_evidence authz), #3131 (merge pipeline deadlock).
+- **5 PRs merged** to dev:
+  - **#3353** — `gh-issue-3352: revoke other sessions on authenticated password change` (api-server auth/password-change path; security hardening). Closes #3352.
+  - **#3354** — `code-review-ppt-web-ui-registry-page-no-auth: send auth context on registry requests` — registry client rebuilt per canonical `useBuildings.ts` getToken+useMemo pattern.
+  - **#3355** — `code-review-ppt-web-ui-registry-page-i18n-gap: translate RegistryPage chrome` — title/subtitle/tabs/load-error routed through `t()`.
+  - **#3351** — `code-review-ppt-web-ui-registry-no-i18n: wire registry pet/vehicle forms + lists through react-i18next` — 4 registry components fully i18n'd across all 6 locales.
+  - **#3350** — `code-review-reality-web-share-cmp-unchecked-json: validate shared-comparison listing bodies at the API boundary` — unchecked cast replaced with parseJsonBody-style shape validation.
+- **1 new issue: #3357** — `dispatcher: pipeline fully stalled — 3 approved PRs blocked on non-mechanical conflicts + Tier-1d signals are a dead-end`. Already queued as `pm-scrum-master-unblock-dispatcher-stall-3357-2026-11-08` (high). **Blocks dispatcher flow.**
+- **1 open draft: #3356** — `code-review-ppt-web-ui-registry-mutation-silent-fail: surface RegistryPage delete/review mutation errors` — Registry destructive handlers now use useToast (success + persistent error); 6 new regression tests. Verify green. Ready to mark ready-for-review.
+- **Carried blockers unchanged**: #2652 (KMP cloud builds), #2951 (RN jest-expo), plus (new this run) #3357 dispatcher stall.
 
 ## Executive summary
 
-- **Delivery: 49/49 stories done across 13 epics in coverage.** No status flips this run; `last_checked` refreshed on epic-9 (idx 12, TOTP 2FA — story 9-1 still done, nothing in the window touched 2FA surfaces).
-- **1 PR merged** — a test-hardening + bug-fix on an already-shipped surface; good signal that the compliance/moderation surface is tightening but surfaced a brand-new blocker (`assign` cross-tenant 404 contract).
-- **pm-frontend rotation came up 83 days stale** — last run 2026-08-06. The backlog has accumulated **12 open frontend/mobile code-review findings** in that window, including three "wire-the-button-but-not-the-POST" bugs (ReportFault setTimeout, reality-web /sell no-persist, VoteDetail ranked ballot) that reveal a chronic UI-pattern defect class. Six pm-frontend next_actions queued (three high, three medium); one new risk (`pm-frontend-mobile-rn-fake-submit-pattern-cluster-2026-10-28`, high/high) and one meta-risk on the rotation itself.
-- **New blocker on dev CI**: #3187 fails cross-tenant-assign-404 — needs either the backend fix in `assign_violation` or the test's role shape adjusted to admit 403-when-manager-role-wrong-tenant.
+- **Delivery: 49/49 stories done across 13 epics in coverage.** No status flips this run; evidence refreshed on epic-10a (cursor re-check — PR #3353 session-revocation strengthens 10a-3 OAuth Token Management surface, though 10a-3 was already shipped).
+- **5 PRs merged** — four code-review-driven cleanups (registry i18n/auth-context + reality-web JSON shape) plus one security hardening (session revocation on password change). Pattern: the code-review signal pipeline is working on `done` surfaces, not new sprint stories.
+- **pm-qa rotation came up 74 days stale** — last run 2026-08-25. Two risks surfaced: the swallow-mutation-error anti-pattern (pre-PR #3356 made delete/review look like success) and the sibling `BookFacilityPage.tsx` silent availability-fetch failure (Phase 1.5 finding). Three pm-qa next_actions queued (one high, two medium).
+- **New blocker on dispatcher**: #3357 fully stalled on 3 approved PRs + Tier-1d dead-end — needs human triage.
 
 ## Sprint progress
 
-Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth"** · **epics_done = 4/4** at sprint level (all four named sprint epics are status: done in sprint-status.yaml after the 2026-10-26 reconciliation). Coverage holds 13 epics all at done.
+Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth"** · **epics_done = 4/4** at sprint level (all four named sprint epics are status: done in sprint-status.yaml). Coverage holds 13 epics all at done.
 
 | Epic | Sprint status | Coverage status | Shipped PRs this window |
 |---|---|---|---|
 | 6 — Announcements & Communication | done (6/6) | 6/6 done | — |
 | 7A — Basic Document Management | done (5/5) | 5/5 done | — |
 | 8A — Basic Notification Preferences | done (3/3) | 3/3 done | — |
-| 10A — OAuth Provider Foundation | done (3/3) | 3/3 done | — |
-| 10B — Platform Administration | done (7/7) | 7/7 done | #3183 (violations xtenant IDOR regression — moderation surface) |
+| 10A — OAuth Provider Foundation | done (3/3) | 3/3 done · **last_checked 2026-11-08 (cursor re-check, 10a-3 evidence appended)** | #3353 (session-revocation on password change — strengthens 10a-3) |
+| 10B — Platform Administration | done (7/7) | 7/7 done | — |
 | 80 — Dispute Resolution | done (3/3) | 3/3 done | — |
-| 9 — 2FA/TOTP | done (1/1) | 1/1 done · **last_checked 2026-10-28 (cursor re-check)** | — |
-| 79/82/83/84/85 (extended) | — | all done | — |
+| 9 — 2FA/TOTP | done (1/1) | 1/1 done | — |
+| 79/82/83/84/85 (extended) | — | all done | #3350 (reality-web), #3351/3354/3355 (ppt-web registry) |
 
-## Shipped since last run (1 PR merged)
+## Shipped since last run (5 PRs merged)
 
-- **#3183** — code-review-api-handlers-violations-no-xtenant-idor-tests: cross-tenant IDOR regression suite + 404 fix for violation mutations (merged 2026-10-27). Surfaced the new #3187 blocker as a side-effect — the new test caught `assign` returning 403 instead of 404 cross-tenant.
+- **#3353** — revoke other sessions on authenticated password change (closes #3352). Security hardening on `POST /api/v1/auth/password/change` — other refresh tokens now invalidated, current session kept valid.
+- **#3354** — registry client now reads `getToken()`+`useMemo` per canonical `useBuildings.ts` pattern — Bearer/tenantId now ship with every registry request; module-scope stub removed.
+- **#3355** — RegistryPage title/subtitle/tabs/load-error routed through `t()`; added `registry.page.*` keys across 6 locales.
+- **#3351** — Four registry components (PetRegistrationForm, VehicleRegistrationForm, PetRegistrationList, VehicleRegistrationList) wired through `useTranslation`; all strings in 6 locales.
+- **#3350** — reality-web shared-comparison loader replaced unchecked `as Promise<ListingSummary>` cast with `parseJsonBody`-style boundary validation; malformed API bodies now rejected.
 
-## Blockers (1 new critical, 5 carried)
+## What's next (top 5, replaces sprint-only view)
 
-- **#3187 (NEW, high)** — Failing test on dev blocks backend CI: `cross_org_assign_violation_is_not_found` (assign returns 403, expects 404). Owner: pm-security.
-- **#3168** — cargo-deny RUSTSEC advisories gate every backend PR merge (carried, high). Owner: pm-security.
-- **#3164** — violations `add_evidence` sub-resource ungated (carried, high). Owner: pm-backend.
-- **#3131** — merge pipeline deadlocked (carried, medium). Owner: pm-backend.
-- **#2652** — mobile-native/KMP cloud builds blocked (carried, high). Owner: pm-devops.
-- **#2951** — mobile RN jest-expo version rot (carried, medium). Owner: pm-devops.
+1. **[high]** Unblock dispatcher pipeline (gh-issue-3357) — 3 approved PRs on non-mechanical conflicts + Tier-1d dead-end. Owner: pm-scrum-master.
+2. **[high]** Chase unblock of mobile-native KMP (#2652) + mobile-rn jest-expo (#2951) — RN regression coverage is dark. Owner: pm-devops.
+3. **[medium]** Land PR #3356 (RegistryPage mutation error surfacing) — close out the registry triage cluster. Owner: pm-frontend.
+4. **[medium]** Add integration test matrix for POST /auth/password/change session-revocation (PR #3353 follow-up). Owner: pm-qa.
+5. **[medium]** Harden `rentals.connections.test.tsx` confirmation-dialog findByRole flake (surfaced on #3356 verify). Owner: pm-qa.
 
-## What's next (top 5 from the roadmap)
+## Blockers
 
-1. **Fix #3187 cross-tenant assign-404 contract** (either backend `assign_violation` returns 404 on cross-tenant, or the test's role shape is adjusted) — owner: pm-security — **gates backend CI on dev**.
-2. **Wire `ReportFaultScreen.tsx` handleSubmit to real `/api/v1/faults` POST** (currently `setTimeout(1500)` fake-submit — fault reports silently discarded) — owner: pm-frontend — user-visible data-loss bug.
-3. **Wire reality-web `/sell` wizard Publish to reality-server POST** (every seller submission silently discarded today) — owner: pm-frontend — same pattern as #2, same user-impact.
-4. **Audit ppt-web logout AUTHED_QUERY_KEY_ROOTS allow-list** (TanStack caches leak across users on a shared workstation) — owner: pm-frontend — tenant-isolation defect.
-5. **Resolve #3168 cargo-deny RUSTSEC advisories** (carried) — owner: pm-security.
+- **#3357** — Dispatcher pipeline fully stalled (new today, age 0d). Owner: pm-scrum-master.
+- **#2652** — mobile-native KMP cloud builds blocked (age 50d+). Owner: pm-devops.
+- **#2951** — RN jest-expo infrastructure (age 80d+). Owner: pm-devops.
 
-## Role focus today: pm-frontend (+ pm-scrum-master always-on)
+## Role focus today: pm-qa, pm-scrum-master
 
-- **pm-frontend** (83-day stale rotation): The dormant period masked a growing cluster of UI-layer defects (12 code-review backlog items; three "wire-but-no-POST" bugs; dead i18n fallbacks still landing 2+ months after the lint-gap risk was raised). Six next_actions queued (three high, three medium); one new high/high risk (`fake-submit-pattern-cluster`) and one meta-risk on the rotation cadence. The 2026-08-25 lint-gates decision (eslint-plugin-react-hooks + i18next/no-literal-string in `frontend/apps/mobile`) is now 64 days unresolved — queued as a `medium`-priority action.
-- **pm-scrum-master**: Mild single-PR window (test-hardening) but the merge surfaced the new #3187 CI-blocker — so the window is **not** quiet. One next_action queued (`violations-xtenant-404-contract-sweep`) to turn #3187 into a one-shot pattern-fix across moderation.rs / aml_dsa.rs instead of per-mutation whack-a-mole.
+### pm-qa — one-line summary
 
-## Coverage (upkeep this run — 2026-10-28)
+QA posture solid — all 5 merged PRs shipped with tests. Flagged the swallow-mutation-error anti-pattern (PR #3356 fixes four handlers; grep-sweep recommended for other ppt-web features) and the `BookFacilityPage.tsx:49-55` silent availability-fetch failure (Phase 1.5 finding). Mobile RN/KMP CI blockers still dark.
 
-- **`coverage.json` refreshed via mechanical upkeep** — `scan_kind=upkeep`, `generated=2026-10-28T11:00:00Z`, no re-scan.
-- **Epic re-check: epic-9 2FA/TOTP (cursor idx 12)** — story 9-1 still `done`; no merged PR in the 2026-10-27..2026-10-28 window touched TOTP/MFA surfaces. `last_checked = 2026-10-28` stamped.
-- **Merged-PR evidence check:** #3183 touches `violations.rs` + repo (part of epic-10b/moderation); 10b stories all remain `done` — no evidence addition since no story tracks the violations sub-feature granularly.
-- **`coverage_cursor` advances 12 → 0** (epic-9 → epic-10a next run).
-- **`pm_cursor` advances 2 → 3** (pm-frontend → pm-qa next). role_last_run["pm-frontend"] = 2026-10-28.
-- **Composition unchanged: 49 done · 0 partial · 0 not-started** across 13 epics. Missing UC links: 3 (UC-33.1/33.2/33.3, already queued elsewhere).
+### pm-scrum-master — one-line summary
+
+5 PRs merged; delivery continues on code-review surfaces (not sprint stories). New blocker #3357 (dispatcher stall) — needs human intervention on the 3 approved PRs + a decision on Tier-1d retirement.

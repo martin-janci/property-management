@@ -13145,7 +13145,7 @@
       "title": "Shared Ktor HttpClient has no HttpTimeout - mobile API calls can hang indefinitely",
       "vector": "bug",
       "confidence": "medium",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "rotating-expert-review [mobile-native-kmp]"
@@ -13153,13 +13153,14 @@
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37-43 - the single shared HttpClient installs only ContentNegotiation and Logging(NONE) and sets a default contentType; it never installs the HttpTimeout plugin (no requestTimeoutMillis / connectTimeoutMillis / socketTimeoutMillis).",
         "This client backs every repository (ApiClient, ListingRepository, PortalListingsRepository, InquiryRepository, NotificationRepository, FavoritesRepository, etc.). The Android (OkHttp/HttpURLConnection) path has no implicit request timeout, so a stalled connection leaves suspend calls hanging and the Compose UI stuck on a spinner with no error path.",
-        "Fix: install(HttpTimeout) with sane request/connect/socket timeouts in HttpClientProvider so stalled requests surface as a catchable exception (already handled by the try/catch -> Result.failure pattern in every repository)."
+        "Fix: install(HttpTimeout) with sane request/connect/socket timeouts in HttpClientProvider so stalled requests surface as a catchable exception (already handled by the try/catch -> Result.failure pattern in every repository).",
+        "decayed 2026-11-08: no new signals in 14d"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt"
       ],
       "created_at": "2026-10-25",
-      "updated_at": "2026-10-25",
+      "updated_at": "2026-11-08",
       "plan": null,
       "type": "code-review-finding",
       "source": "rotating-expert-review",
@@ -13173,22 +13174,23 @@
       "title": "Reality mobile MyListings + portfolio analytics silently cap at 100 listings (no pagination)",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "rotating-expert-review [mobile-native-kmp]"
       ],
       "evidence": [
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:471-472 - MyListings loads portalListingsRepository.listMyListings(limit = 100) once with no offset paging UI; a realtor with >100 listings never sees rows beyond the first 100.",
         "mobile-native/shared/.../realtor/PortalListingsRepository.kt:111-124 getPortfolioAnalytics() also fans out over listMyListings(limit = 100).listings only, so portfolio totals (views/inquiries/favorites/trends) silently undercount for realtors with >100 listings.",
-        "Fix: page listMyListings via offset until the server returns fewer than `limit` rows (or add explicit pagination), and aggregate analytics over the full set rather than the first page."
+        "Fix: page listMyListings via offset until the server returns fewer than `limit` rows (or add explicit pagination), and aggregate analytics over the full set rather than the first page.",
+        "decayed: no new signals in 14 days (dropped 2026-11-08)"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt",
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt"
       ],
       "created_at": "2026-10-25",
-      "updated_at": "2026-10-25",
+      "updated_at": "2026-11-08",
       "plan": null,
       "type": "code-review-finding",
       "source": "rotating-expert-review",
@@ -15435,6 +15437,106 @@
         "assignment_status": "failed",
         "pr_number": null
       }
+    },
+    {
+      "id": "code-review-ppt-web-ui-book-facility-silent-avail",
+      "title": "BookFacilityPage fetchAvailability catch swallows error — users submit against stale slots",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-08 ppt-web-ui"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx:49-55 — fetchAvailability catch swallows the error (console.error only); no setError / useToast surface, so when the availability request fails the previously-loaded slots stay visible and the user submits a booking against stale availability. Sibling load catch at L35-36 uses setError for the facility fetch, so the pattern already exists."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx"
+      ],
+      "created_at": "2026-11-08",
+      "updated_at": "2026-11-08",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-assign-alert",
+      "title": "ContentModerationPage assignCase onError uses alert() while siblings use showToast — inconsistent UX",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-08 ppt-web-ui"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:143 — assignCase onError uses alert(t('moderation.prompts.assignError')); the decision mutations in the same file (L167+) already use showToast() with error-title/message. Inconsistent UX and a legacy-dialog smell; migrate to showToast for parity."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx"
+      ],
+      "created_at": "2026-11-08",
+      "updated_at": "2026-11-08",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx",
+      "title": "Churn hotspot (new): frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx is a top-3 churn file this run — watch for instability",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log-numstat"
+      ],
+      "evidence": [
+        "Churn hotspot (new): frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx is a top-3 churn file this run (2 commits since 2026-11-06, registry i18n + auth-context cluster PR #3354+#3355) — watch for instability."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx"
+      ],
+      "created_at": "2026-11-08",
+      "updated_at": "2026-11-08",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-frontend/apps/ppt-web/messages/sk.json",
+      "title": "Repeated-churn: ppt-web messages/sk.json top-3 churn across 2 runs — watch i18n bundle stability",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log-numstat"
+      ],
+      "evidence": [
+        "Repeated-churn: frontend/apps/ppt-web/messages/sk.json has now hit top-3 churn in 2 routine runs (2026-11-04, 2026-11-08) driven by registry/marketplace i18n bulk-updates — may indicate the i18n bundle is becoming unstable and warrants per-feature namespace splitting."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/messages/sk.json"
+      ],
+      "created_at": "2026-11-08",
+      "updated_at": "2026-11-08",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-frontend/apps/ppt-web/messages/en.json",
+      "title": "Repeated-churn: ppt-web messages/en.json top-3 churn across 2 runs — large accumulated churn, watch i18n bundle stability",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log-numstat"
+      ],
+      "evidence": [
+        "Repeated-churn: frontend/apps/ppt-web/messages/en.json has now hit top-3 churn in 2 routine runs (2026-07-16, 2026-11-08) — same bulk i18n churn pattern as sk.json; cumulative recent_churn ~4358 lines."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/messages/en.json"
+      ],
+      "created_at": "2026-11-08",
+      "updated_at": "2026-11-08",
+      "plan": null
     }
   ]
 }

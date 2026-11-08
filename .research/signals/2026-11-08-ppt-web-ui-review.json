@@ -1,0 +1,34 @@
+{
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "churn-aligned (RegistryPage + messages/*.json all under ppt-web-ui)",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-book-facility-silent-avail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx:49-55 — fetchAvailability catch swallows the error (console.error only); no setError / useToast surface, so when the availability request fails the previously-loaded slots stay visible and the user submits a booking against stale availability. Sibling load catch at L35-36 uses setError for the facility fetch, so the pattern already exists."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-assign-alert",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:143 — assignCase onError uses alert(t('moderation.prompts.assignError')); the decision mutations in the same file (L167+) already use showToast() with error-title/message. Inconsistent UX and a legacy-dialog smell; migrate to showToast for parity."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

@@ -1,22 +1,20 @@
-# PPT Roadmap — upkeep 2026-10-26
+# PPT Roadmap — upkeep 2026-11-08
 
-_Rebuilt from `coverage.json` (49/49 stories done across 13 epics) + current `action-list.json` + sprint-status.yaml. 4-day lag since 2026-10-22 run._
+_Rebuilt from `coverage.json` (49/49 stories done across 13 epics) + current `action-list.json` + sprint-status.yaml. 2-day lag since 2026-11-06 run._
 
 ## State of the project
 
-- **Stories: 49/49 done** across 13 epics. No status flips this run; `last_checked` refreshed on all 3 epic-8a stories (cursor re-check — negative).
-- Delta vs 2026-10-22 upkeep: **3 PRs merged** — all reality-web (realtor-api shape validation, safe-error log redaction, agency i18n price fix). None map to coverage stories.
-- **New blocker: #3168 cargo-deny** — 3 new RUSTSEC advisories on dev gate every backend merge. Second cargo-deny gate in a month after #3124 (resolved 2026-10-19) — dependency hygiene is becoming a recurring merge-queue tax.
-- **New tier-1 security gap: #3164** — violations `add_evidence` sub-route ungated; same shape as historical dispute `add_evidence` gap (#2483). Suggests `add_evidence`-pattern sub-routes are systemically under-tested.
-- Screen coverage: 0 orphan screens · 0 validation errors · 3 known missing UC links (UC-33.1/33.2/33.3 already queued elsewhere).
-- Open PRs this window: 3 drafts (#3161 push_fanout FCM eviction, #3165 migration_import test coverage, #3167 unassign moderation case).
+- **Stories: 49/49 done** across 13 epics. No status flips this run; `last_checked` refreshed on all 3 epic-10a stories (cursor idx 0, re-check — negative); PR #3353 session-revocation evidence appended to 10a-3-oauth-token-management.
+- Delta vs 2026-11-06: **5 PRs merged** — #3350 (reality-web shared-comparison JSON shape), #3351/3354/3355 (ppt-web registry i18n + auth-context + chrome i18n), #3353 (api-server session revocation on password change — closes #3352).
+- **New blocker: #3357** — dispatcher pipeline fully stalled on 3 approved PRs (non-mechanical conflicts) + Tier-1d signals dead-end. Queued as `pm-scrum-master-unblock-dispatcher-stall-3357-2026-11-08` (high).
+- Open PRs this window: 1 draft (#3356 — RegistryPage mutation error surfacing; verify green, ready for review).
 
 ## Epic status (short)
 
 - **Epic 6 — Announcements & Communication:** 6/6 done in coverage; sprint-status.yaml drift.
 - **Epic 7A — Basic Document Management:** 5/5 done.
-- **Epic 8A — Basic Notification Preferences:** 3/3 done. **Re-checked this run (cursor idx 11).** No merged PR in the 2026-10-23..2026-10-26 window touched notification-preference surfaces; `last_checked = 2026-10-26` stamped on all 3 stories.
-- **Epic 10A — OAuth Provider Foundation:** 3/3 done.
+- **Epic 8A — Basic Notification Preferences:** 3/3 done.
+- **Epic 10A — OAuth Provider Foundation:** 3/3 done. **Re-checked this run (cursor idx 0 → 1).** PR #3353 session-revocation evidence appended to 10a-3; `last_checked = 2026-11-08` stamped on all 3 stories.
 - **Epic 10B — Platform Administration:** 7/7 done.
 - **Epic 80 — Dispute Resolution:** 3/3 done in coverage (sprint-status still shows partial).
 - **Epic 81 — Reports:** 2/2 done.
@@ -73,4 +71,4 @@ _Rebuilt from `coverage.json` (49/49 stories done across 13 epics) + current `ac
 
 _Nothing new this run — carried: 3 missing UC links (UC-33.1/33.2/33.3), 1 ppt-web route refactor without screen-map update (PR #2994)._
 
-Buffer: **17/36 open** · candidates ranked but unqueued: ~0 (coverage is all `done` — refill depends on the dispatcher's external backlog scan, not this upkeep run). Buffer below floor by 19 and below half (18) by 1 — a dispatcher backlog scan is overdue to replenish, but a `scan` on this skill is explicitly out of scope for an incremental run.
+⚠ Buffer below half — consider running scan to refresh coverage. Buffer: **14/36 open** · candidates ranked but unqueued: ~0 (coverage all `done` — refill depends on the dispatcher's external backlog scan, not this upkeep run). Buffer below floor by 22 and below half (18) by 4.

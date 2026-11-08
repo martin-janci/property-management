@@ -1,0 +1,237 @@
+{
+  "run_iso": "2026-11-08T03:21:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-11-08",
+      "type": "lag_warning",
+      "source": "routine lag-check",
+      "score_delta": 0,
+      "evidence": [
+        "routine lag: 36h 8m since last run (2026-11-06T14:58:01Z); threshold is 36h"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx",
+      "type": "churn-hotspot",
+      "source": "git-log-numstat",
+      "score_delta": 1,
+      "evidence": [
+        "top-3 churn this run — 2 commits since 2026-11-06 (PR #3354 auth-context + PR #3355 chrome i18n)",
+        "no prior hotspot_history entry — new hotspot"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/sk.json",
+      "type": "churn-hotspot",
+      "source": "git-log-numstat",
+      "score_delta": 0,
+      "evidence": [
+        "re-emit — top-3 churn this run; prior runs_seen=1 (last_seen 2026-11-04); new runs_seen=2"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "reemit": true
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
+      "type": "churn-hotspot",
+      "source": "git-log-numstat",
+      "score_delta": 0,
+      "evidence": [
+        "re-emit — top-3 churn this run; prior runs_seen=1 (last_seen 2026-07-16, recent_churn=3926); new runs_seen=2"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "reemit": true
+    },
+    {
+      "id": "repeated-churn-frontend/apps/ppt-web/messages/sk.json",
+      "type": "repeated-churn",
+      "source": "hotspot-history",
+      "score_delta": 1,
+      "evidence": [
+        "runs_seen reached 2 on 2026-11-08 (prior 2026-11-04). bulk i18n updates driving repeated top-3 churn."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-frontend/apps/ppt-web/messages/en.json",
+      "type": "repeated-churn",
+      "source": "hotspot-history",
+      "score_delta": 1,
+      "evidence": [
+        "runs_seen reached 2 on 2026-11-08 (prior 2026-07-16, recent_churn=3926). i18n bundle instability watch."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-ppt-web-ui-book-facility-silent-avail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx:49-55 — fetchAvailability catch swallows the error (console.error only); no setError / useToast surface, so when the availability request fails the previously-loaded slots stay visible and the user submits a booking against stale availability. Sibling load catch at L35-36 uses setError for the facility fetch, so the pattern already exists."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-assign-alert",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:143 — assignCase onError uses alert(t('moderation.prompts.assignError')); the decision mutations in the same file (L167+) already use showToast() with error-title/message. Inconsistent UX and a legacy-dialog smell; migrate to showToast for parity."
+      ],
+      "expert": "frontend"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && first line matches '# YYYY-MM-DD'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev <(git show HEAD:state.json) '...cursor/seen/hotspot changed...'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq -s --slurpfile prev ...no non-cum re-score...",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq '[.items[] | select(.score > 8)] | length == 0'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "open+updated_at<=today-14 lost >=1 or dropped",
+      "observed": "all qualifying items decayed",
+      "expected": "pass"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans have adversarial-pass annotation",
+      "observed": "no new plans this run",
+      "expected": "pass"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "<=2 new plans",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/private-hostnames scan on diff",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-that-failed matches state advancements",
+      "observed": "no phase failed; all cursors advanced",
+      "expected": "pass"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan slug still in plans/ or plans/_archive/",
+      "observed": "all 35+ plans accounted",
+      "expected": "pass"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now >= count at HEAD",
+      "observed": "22 >= 22",
+      "expected": ">=0"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length == 0",
+      "observed": "0 actions",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + cursor liveness",
+      "observed": "action-list/risks parse; project-state non-empty; pm_cursor=4; coverage_cursor=1 (advanced from 0)",
+      "expected": "pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram-token value in diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "phase_results": {
+    "phase_1_observe": "ok",
+    "phase_1_5_review": "ok (segment=ppt-web-ui, 2 findings)",
+    "phase_1_6_pm": "ok (role=pm-qa, coverage upkeep: epic re-checked idx 0→1)",
+    "phase_2_decide": "ok (0 bumps, 5 new items, 2 decayed)",
+    "phase_3_promote": "no-op (no open item meets score>=3)",
+    "phase_5_autofix": "no-candidate"
+  }
+}
