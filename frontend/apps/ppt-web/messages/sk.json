@@ -6192,6 +6192,24 @@
         "saveFailedBody": "Vaše zmeny sa nepodarilo uložiť. Skúste to znova."
       }
     },
+    "toast": {
+      "petDeleted": "Registrácia zvieraťa odstránená",
+      "petDeletedBody": "Registrácia zvieraťa bola odstránená.",
+      "petDeleteFailed": "Nepodarilo sa odstrániť registráciu zvieraťa",
+      "petDeleteFailedBody": "Registráciu zvieraťa sa nepodarilo odstrániť. Skúste to znova.",
+      "petReviewed": "Registrácia zvieraťa schválená",
+      "petReviewedBody": "Registrácia zvieraťa bola schválená.",
+      "petReviewFailed": "Nepodarilo sa posúdiť registráciu zvieraťa",
+      "petReviewFailedBody": "Registráciu zvieraťa sa nepodarilo posúdiť. Skúste to znova.",
+      "vehicleDeleted": "Registrácia vozidla odstránená",
+      "vehicleDeletedBody": "Registrácia vozidla bola odstránená.",
+      "vehicleDeleteFailed": "Nepodarilo sa odstrániť registráciu vozidla",
+      "vehicleDeleteFailedBody": "Registráciu vozidla sa nepodarilo odstrániť. Skúste to znova.",
+      "vehicleReviewed": "Registrácia vozidla schválená",
+      "vehicleReviewedBody": "Registrácia vozidla bola schválená.",
+      "vehicleReviewFailed": "Nepodarilo sa posúdiť registráciu vozidla",
+      "vehicleReviewFailedBody": "Registráciu vozidla sa nepodarilo posúdiť. Skúste to znova."
+    },
     "confirm": {
       "deletePet": "Vymazať túto registráciu zvieraťa?",
       "approvePet": "Schváliť túto registráciu zvieraťa?",
