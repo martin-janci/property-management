@@ -1,0 +1,263 @@
+{
+  "generated_at": "2026-11-08T22:35:00Z",
+  "signals": [
+    {
+      "id": "code-review-api-handlers-delegation-xorg-delegate",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-08 api-handlers)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "expert": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/delegations.rs:183-205 \u2014 create_delegation validates delegate_user_id via find_by_id (non-RLS) with no org-membership check; confirmed by direct code read this run (confidence upgraded medium -> high).",
+        "backend/servers/api-server/src/routes/delegations.rs:432 \u2014 accept_delegation only checks delegate_user_id == auth.user_id."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-unit-residents-add-xorg-user",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-08 api-handlers)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "expert": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/unit_residents.rs:418-438 \u2014 add_resident validates user_id via find_by_id only; no org-membership check; confirmed by direct code read this run (confidence upgraded medium -> high).",
+        "backend/servers/api-server/src/routes/unit_residents.rs:452-463 \u2014 resident row created with receives_notifications/receives_mail flags propagated, so cross-org attach begins streaming unit comms."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-signatures-raw-db-err-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-08 api-handlers)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "expert": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/signatures.rs:116-119 \u2014 ErrorResponse::new('DATABASE_ERROR', e.to_string()) leaks raw sqlx::Error Display to client; confirmed by direct code read (L110-120); same pattern at L184-189, 199-205, 231-237, 357-363, 371-378, 703-712."
+      ]
+    },
+    {
+      "id": "code-review-api-core-workflow-exec-unbounded-spawn",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-08 api-core)",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "workflow_executor.rs:280-311 \u2014 execute_workflow tokio::spawns detached WorkflowExecutorTask::run with no Semaphore permit; task acquires RLS DB connection on run.",
+        "workflow_executor.rs:186,198 \u2014 max_concurrent_executions config field never read for a Semaphore anywhere in the backend \u2014 dead config.",
+        "workflow_executor.rs:315-380 \u2014 handle_event iterates list_by_trigger_type and spawns per workflow with no batch bound."
+      ]
+    },
+    {
+      "id": "code-review-api-core-accounting-date-proximity-todo",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-08 api-core)",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "accounting.rs:216 \u2014 `// TODO: Date proximity` marks unimplemented scoring factor in run_payment_matcher.",
+        "Weakens auto-reconciliation per FR-16.8 for recurring monthly invoices sharing variable-symbol + amount."
+      ]
+    },
+    {
+      "id": "code-review-api-core-accounting-decimal-literal-parse",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-08 api-core)",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "rust",
+      "evidence": [
+        "accounting.rs:155,193,200,202,212 \u2014 Decimal::from_str on literal weights (0.5, 0.8, 0.15, 0.05) parsed per (line x invoice) loop iteration with .unwrap().",
+        "Replace with rust_decimal::dec! macro or module-level consts/LazyLock; already imports rust_decimal."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-page-silent-mutation-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-08 ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "RegistryPage.tsx:103-108,123-131,172-177,191-201 \u2014 mutation handlers catch -> console.error only; no toast/error surface.",
+        "Sibling RegistryRulesPage.tsx:47-57 already fixed with showToast; RegistryPage.tsx never got same treatment."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-page-hard-navigation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-08 ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "RegistryPage.tsx:87,91,137,156,160,206 \u2014 window.location.href used for intra-SPA navigation; six call sites.",
+        "Contrast RegistryRulesPage.tsx:9,62 using useNavigate()."
+      ]
+    },
+    {
+      "id": "lag-warning-2026-11-08",
+      "type": "lag_warning",
+      "source": "routine-pipeline",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "last_run_iso=2026-11-06T14:58:01Z; ~55h gap (>36h threshold). Dispatcher buffer-low trigger fired this run \u2014 session is the routine standing in for a missed/skipped tick."
+      ]
+    },
+    {
+      "id": "resolved-pr-3358-screen-map-drift-reality",
+      "type": "resolution",
+      "source": "PR #3358",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "PR #3358 merged 2026-11-08T20:32:19Z \u2014 reland of screen-map-drift-pr-3293-reality after dev history rewrite dropped #3333 base. docs/screens/reality/realtor-detail.md updated; backlog row screen-map-drift-pr-3293-reality moved open -> done this run."
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f brief + head -1 grep",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile compare prev state",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique id count",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal re-emits with delta != 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score > 8 == 0 + decay applied",
+      "observed": "true",
+      "expected": "true",
+      "remediation": "two 2026-10-25 mobile-native rows decayed by 1 this run"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep brief for plan + adversarial pass",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "plan metadata + 11 headings + >=1 cap tick + Mode + files exist",
+      "observed": "2 plans, all sections present, files on disk",
+      "expected": "<=2 plans + all checks"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/private-host grep on staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md vs regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-failed cursor consistency",
+      "observed": "no phases failed",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan slug still present",
+      "observed": "all present (active or archived)",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive file count >= HEAD count",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE vs regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap + idempotency",
+      "observed": "no auto-fix actions this run",
+      "expected": "0 actions"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run",
+      "observed": "no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no literal Telegram token in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 only screen-map-drift was resolvable and PR #3358 already landed the fix; no other allowlist-matching signal with confidence=high + score>=3 + fresh signal id surfaced this run."
+}

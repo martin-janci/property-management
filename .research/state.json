@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-11-06T14:58:01Z",
+  "last_run_iso": "2026-11-08T22:35:00Z",
   "last_run_ms": 0,
-  "last_pr_seen": 3349,
-  "last_issue_seen": 3341,
-  "last_commit_sha": "6729d7648660d665f9ef2dc4cfd25584aae95d7e",
+  "last_pr_seen": 3359,
+  "last_issue_seen": 3357,
+  "last_commit_sha": "f2d32c8093f233c2e3c80b0c5d12a34776eb8d8b",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -1393,12 +1393,22 @@
     "untriaged-issue-952",
     "churn-hotspot-backend/crates/db/tests/suite_4.rs",
     "churn-hotspot-backend/crates/db/src/repositories/registry.rs",
-    "churn-hotspot-backend/servers/api-server/src/routes/registry.rs"
+    "churn-hotspot-backend/servers/api-server/src/routes/registry.rs",
+    "code-review-api-handlers-delegation-xorg-delegate",
+    "code-review-api-handlers-unit-residents-add-xorg-user",
+    "code-review-api-handlers-signatures-raw-db-err-leak",
+    "code-review-api-core-workflow-exec-unbounded-spawn",
+    "code-review-api-core-accounting-date-proximity-todo",
+    "code-review-api-core-accounting-decimal-literal-parse",
+    "code-review-ppt-web-ui-registry-page-silent-mutation-errors",
+    "code-review-ppt-web-ui-registry-page-hard-navigation",
+    "lag-warning-2026-11-08",
+    "resolved-pr-3358-screen-map-drift-reality"
   ],
   "auto_fix_history": {},
   "review_cursor": {
-    "api-handlers": "2026-11-04",
-    "api-core": "2026-11-04",
+    "api-handlers": "2026-11-08",
+    "api-core": "2026-11-08",
     "reality-server": "2026-11-04",
     "ppt-web-ui": "2026-11-08",
     "ppt-web-core": "2026-11-04",
@@ -1407,9 +1417,9 @@
     "mobile-native-kmp": "2026-11-04"
   },
   "stats": {
-    "runs": 115,
-    "vectors_created": 522,
-    "plans_created": 35,
+    "runs": 116,
+    "vectors_created": 530,
+    "plans_created": 37,
     "quiet_days": 8,
     "auto_fix_count": 0
   },
