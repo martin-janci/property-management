@@ -13145,7 +13145,7 @@
       "title": "Shared Ktor HttpClient has no HttpTimeout - mobile API calls can hang indefinitely",
       "vector": "bug",
       "confidence": "medium",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "rotating-expert-review [mobile-native-kmp]"
@@ -13153,7 +13153,8 @@
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37-43 - the single shared HttpClient installs only ContentNegotiation and Logging(NONE) and sets a default contentType; it never installs the HttpTimeout plugin (no requestTimeoutMillis / connectTimeoutMillis / socketTimeoutMillis).",
         "This client backs every repository (ApiClient, ListingRepository, PortalListingsRepository, InquiryRepository, NotificationRepository, FavoritesRepository, etc.). The Android (OkHttp/HttpURLConnection) path has no implicit request timeout, so a stalled connection leaves suspend calls hanging and the Compose UI stuck on a spinner with no error path.",
-        "Fix: install(HttpTimeout) with sane request/connect/socket timeouts in HttpClientProvider so stalled requests surface as a catchable exception (already handled by the try/catch -> Result.failure pattern in every repository)."
+        "Fix: install(HttpTimeout) with sane request/connect/socket timeouts in HttpClientProvider so stalled requests surface as a catchable exception (already handled by the try/catch -> Result.failure pattern in every repository).",
+        "decayed: no new signals in 14 days (updated_at=2026-10-25, routine ran on 2026-11-08). Item remains structurally real; the mobile-native cloud-build gate is holding it back, not evidence staleness — operator can bump score manually when the gate opens."
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt"
@@ -13173,15 +13174,16 @@
       "title": "Reality mobile MyListings + portfolio analytics silently cap at 100 listings (no pagination)",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "rotating-expert-review [mobile-native-kmp]"
       ],
       "evidence": [
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:471-472 - MyListings loads portalListingsRepository.listMyListings(limit = 100) once with no offset paging UI; a realtor with >100 listings never sees rows beyond the first 100.",
         "mobile-native/shared/.../realtor/PortalListingsRepository.kt:111-124 getPortfolioAnalytics() also fans out over listMyListings(limit = 100).listings only, so portfolio totals (views/inquiries/favorites/trends) silently undercount for realtors with >100 listings.",
-        "Fix: page listMyListings via offset until the server returns fewer than `limit` rows (or add explicit pagination), and aggregate analytics over the full set rather than the first page."
+        "Fix: page listMyListings via offset until the server returns fewer than `limit` rows (or add explicit pagination), and aggregate analytics over the full set rather than the first page.",
+        "decayed: no new signals in 14 days — dropped mechanically. Mobile-native-cloud-build gate has been holding mobile-native-kmp items back since 2026-10-25; the defect itself is still real (silent 100-row cap) but stays in the audit trail via this dropped entry. Re-raise manually if a cloud-build path opens."
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt",
@@ -14879,23 +14881,25 @@
       "id": "code-review-reality-server-inquiry-dead-fk-classify",
       "title": "InquiriesHandler splits ListingNotFound vs RealtorNotFound by error substring, but both collapse to the same 404 at the route - dead, brittle classification",
       "vector": "refactor",
-      "confidence": "medium",
-      "score": 1,
+      "confidence": "high",
+      "score": 2,
       "status": "open",
       "sources": [
-        "rotating-expert-review [reality-server]"
+        "rotating-expert-review [reality-server]",
+        "PR #3301"
       ],
       "evidence": [
         "backend/servers/reality-server/src/handlers/inquiries/mod.rs:339-345 - on a FK violation the handler does a nested if error_str.contains(\"listing\") to return InquiryResult::ListingNotFound vs RealtorNotFound.",
         "backend/servers/reality-server/src/routes/inquiries.rs:158-161 - inquiry_result_to_id maps ListingNotFound | RealtorNotFound to the identical (404, \"Listing not found\") response, so the handler's listing/realtor distinction is never observable to clients.",
-        "Net effect: extra complexity layered on a brittle substring match (same class as the db-error-string finding) that produces no behavioral difference. Collapse the two branches into one Not-Found outcome, or drop the nested contains(\"listing\") check."
+        "Net effect: extra complexity layered on a brittle substring match (same class as the db-error-string finding) that produces no behavioral difference. Collapse the two branches into one Not-Found outcome, or drop the nested contains(\"listing\") check.",
+        "PR #3301 (dispatcher-opened implementation attempt) closed unmerged 2026-11-08T06:34:27Z — orphaned from dev: no common ancestor with current dev (base commit eac70d1c2 no longer reachable after a history rewrite on dev). Rust conflict in reality-server/handlers/inquiries blocks mechanical rebase. See issue #3357 for root-cause + remediation."
       ],
       "files": [
         "backend/servers/reality-server/src/handlers/inquiries/mod.rs",
         "backend/servers/reality-server/src/routes/inquiries.rs"
       ],
       "created_at": "2026-11-04",
-      "updated_at": "2026-11-04",
+      "updated_at": "2026-11-08",
       "plan": null,
       "type": "code-review-finding",
       "source": "rotating-expert-review",
@@ -15212,22 +15216,25 @@
       "id": "screen-map-drift-pr-3293-reality",
       "title": "Screen-map drift: PR #3293 i18n'd reality-web realtor/[id] page without updating docs/screens/reality/realtor-detail.md",
       "vector": "test-gap",
-      "confidence": "medium",
-      "score": 2,
+      "confidence": "high",
+      "score": 3,
       "status": "open",
       "sources": [
-        "PR #3293"
+        "PR #3293",
+        "PR #3333",
+        "PR #3358"
       ],
       "evidence": [
         "PR #3293 touched reality-product route file(s) but did not update docs/screens/reality/*.md: frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx, frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.test.tsx",
-        "Best-effort heuristic — some of these are test-only or API-route changes that don't warrant a screen-doc update. Treat as review candidate."
+        "Best-effort heuristic — some of these are test-only or API-route changes that don't warrant a screen-doc update. Treat as review candidate.",
+        "PR #3333 (dispatcher re-land attempt, docs-only) closed unmerged 2026-11-08T06:34:29Z — orphaned from dev (same root cause as #3301). Re-landed as new draft PR #3358 opened 2026-11-08T06:33:45Z on current dev. Action-list row remains open; stem-uniqueness gate blocks any routine promotion while #3358 is live."
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx",
         "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.test.tsx"
       ],
       "created_at": "2026-11-05",
-      "updated_at": "2026-11-05",
+      "updated_at": "2026-11-08",
       "plan": null,
       "type": "screen-map-drift",
       "source": "PR #3293",
@@ -15435,6 +15442,50 @@
         "assignment_status": "failed",
         "pr_number": null
       }
+    },
+    {
+      "id": "code-review-api-handlers-mfa-disable-no-rate-limit",
+      "title": "SECURITY: disable_mfa handler has no per-user rate limiter — authenticated attacker can brute-force the 10^6 TOTP space to disable MFA",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-11-08 (api-handlers segment)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/mfa.rs:591-803 — pub async fn disable_mfa accepts a TOTP code or recovery code and returns 400 INVALID_CODE on mismatch (line 700-709). No per-user rate limiter is invoked anywhere in the handler, unlike sibling verify_mfa_setup (line 329 calls setup_verify_attempt_allowed) and verify_recovery_code (line 1126 calls recovery_attempt_allowed).",
+        "Repro: attacker with a valid access token calls POST /api/v1/auth/mfa/disable with incrementing 6-digit codes — ~10^6 unthrottled attempts suffice to disable MFA, a full MFA bypass on success. Mirror the setup_verify_attempt_allowed pattern (user-keyed LazyLock<UserRateLimiter> + reset on success) in disable_mfa.",
+        "Plan drafted this run with cloud-ok mode; tests extend backend/servers/api-server/tests/suites/mfa_brute_force_rate_limit_tests.rs."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/mfa.rs"
+      ],
+      "created_at": "2026-11-08",
+      "updated_at": "2026-11-08",
+      "plan": "plans/code-review-api-handlers-mfa-disable-no-rate-limit.md"
+    },
+    {
+      "id": "code-review-api-handlers-mfa-regen-codes-no-rate-limit",
+      "title": "SECURITY: regenerate_backup_codes handler has no per-user rate limiter — authenticated attacker can brute-force TOTP, rotating recovery codes under their control",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-11-08 (api-handlers segment)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/mfa.rs:912-1062 — pub async fn regenerate_backup_codes verifies a TOTP code (line 981-993) and rotates all recovery codes on success (line 1019-1032, regenerate_backup_codes_rls), invalidating the user current codes. No per-user rate limiter is applied — asymmetric with verify_mfa_setup and verify_recovery_code in the same file.",
+        "Repro: attacker with a stolen access token brute-forces the 6-digit TOTP against POST /api/v1/auth/mfa/backup-codes/regenerate; a hit both bypasses MFA (new codes under attacker control) AND locks the legitimate user out of their printed recovery codes. Apply the same per-user sliding-window throttle used by setup_verify_attempt_allowed.",
+        "Plan drafted this run with cloud-ok mode; tests extend backend/servers/api-server/tests/suites/mfa_brute_force_rate_limit_tests.rs."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/mfa.rs"
+      ],
+      "created_at": "2026-11-08",
+      "updated_at": "2026-11-08",
+      "plan": "plans/code-review-api-handlers-mfa-regen-codes-no-rate-limit.md"
     }
   ]
 }

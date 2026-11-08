@@ -1,0 +1,194 @@
+{
+  "run": "2026-11-08",
+  "signals": [
+    {
+      "id": "lag-warning-2026-11-08",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-11-06T14:58:01Z",
+      "score_delta": 0,
+      "evidence": [
+        "Routine missed a run — 39h (1d 15h) since last run (threshold 36h). Prior routine commit 2026-11-06 14:58Z; dispatcher commits since then are on the planning branch, not the routine. Issue #3357 (filed 2026-11-08 02:36Z) documents a pipeline-level stall that overlapped the gap."
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "closed-not-merged-pr-3301",
+      "type": "closed-not-merged-pr",
+      "source": "PR #3301",
+      "score_delta": 1,
+      "evidence": [
+        "PR #3301 (`code-review-reality-server-inquiry-dead-fk-classify`) closed unmerged 2026-11-08T06:34:27Z — orphaned from dev (no common ancestor; base commit eac70d1c2 no longer reachable). Rust conflict in reality-server/handlers/inquiries blocks mechanical rebase. See issue #3357 §1 for full remediation playbook (re-implement on current dev; dispatcher auto-rebase cannot resolve)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "closed-not-merged-pr-3333",
+      "type": "closed-not-merged-pr",
+      "source": "PR #3333",
+      "score_delta": 1,
+      "evidence": [
+        "PR #3333 (`screen-map-drift-pr-3293-reality`, docs-only) closed unmerged 2026-11-08T06:34:29Z — orphaned from dev (same root cause as #3301). Re-landed as new draft PR #3358 opened 2026-11-08T06:33:45Z."
+      ],
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "closed-not-merged-pr-3356",
+      "type": "closed-not-merged-pr",
+      "source": "PR #3356",
+      "score_delta": 1,
+      "evidence": [
+        "PR #3356 (`code-review-ppt-web-ui-registry-mutation-silent-fail`) closed unmerged 2026-11-08T06:34:31Z — add/add conflict in frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.test.tsx (dev's auth-context suite from merged #3354 vs this PR's toast-suite; incompatible module mocks) plus overlapping edits in RegistryPage.tsx. Remediation (per #3357 §1): split the two test suites into separate files and re-apply the toast handler change on top of #3354's auth change. Action-list row `code-review-ppt-web-ui-registry-mutation-silent-fail` is `in-progress`; no backlog duplicate created — Phase 1.6 pm-qa re-opened the implementer path."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-handlers-mfa-disable-no-rate-limit",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 code review 2026-11-08 (segment: api-handlers)",
+      "score_delta": 3,
+      "evidence": [
+        "backend/servers/api-server/src/routes/mfa.rs:591-803 — pub async fn disable_mfa accepts a TOTP code or recovery code and returns 400 INVALID_CODE on mismatch (line 700-709). No per-user rate limiter is invoked anywhere in the handler, unlike sibling verify_mfa_setup (line 329 calls setup_verify_attempt_allowed) and verify_recovery_code (line 1126 calls recovery_attempt_allowed). Repro: attacker with a valid access token calls POST /api/v1/auth/mfa/disable with incrementing 6-digit codes — ~10^6 unthrottled attempts suffice to disable MFA, a full MFA bypass on success. Mirror the setup_verify_attempt_allowed pattern (user-keyed LazyLock<UserRateLimiter> + reset on success) in disable_mfa."
+      ],
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-api-handlers-mfa-regen-codes-no-rate-limit",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 code review 2026-11-08 (segment: api-handlers)",
+      "score_delta": 3,
+      "evidence": [
+        "backend/servers/api-server/src/routes/mfa.rs:912-1062 — pub async fn regenerate_backup_codes verifies a TOTP code (line 981-993) and rotates all recovery codes on success (line 1019-1032, regenerate_backup_codes_rls), invalidating the user's current codes. No per-user rate limiter is applied — asymmetric with verify_mfa_setup and verify_recovery_code in the same file. Repro: attacker with a stolen access token brute-forces the 6-digit TOTP against POST /api/v1/auth/mfa/backup-codes/regenerate; a hit both bypasses MFA (new codes under attacker control) AND locks the legitimate user out of their printed recovery codes. Apply the same per-user sliding-window throttle used by setup_verify_attempt_allowed."
+      ],
+      "confidence": "high",
+      "candidate_vector": "security"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — only screen-map-drift / screen-map-orphan / fixme-in-merged-code / dep-update-noise (lockfile-drift) / stalled-review are Phase 5 allowlisted; the two high-confidence security findings this run are code-review-finding type (multi-line Rust change; not a mechanically-verifiable safe shape).",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-11-08.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile state vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] uniqueness",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative seen-signal re-emit score_delta==0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap<=8 AND every open updated_at<=today-14 lost >=1 or moved to dropped",
+      "observed": "http-client 2->1 (open), my-listings 1->0 (dropped)",
+      "expected": "pass"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep plans/<slug>.md AND adversarial pass: on same line",
+      "observed": "2 matches",
+      "expected": ">=2 for 2 new plans"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "2 new plans, 4 metadata + 11 headings each, >=1 capability ticked, Mode line, Files exist",
+      "observed": "both plans pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached | grep secrets pattern",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists failed phases + cursors held",
+      "observed": "no phases failed; no cursor rollback",
+      "expected": "pass"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs still present in plans/ or plans/_archive/",
+      "observed": "all present",
+      "expected": "pass"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "staged _archive count >= HEAD _archive count",
+      "observed": "22 >= 22",
+      "expected": ">=HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps",
+      "observed": "true (empty array)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts parse + pm_cursor in [0,7] + coverage_cursor advanced",
+      "observed": "EPICS=13, CC 0->1, PM 3->4",
+      "expected": "pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "git diff --cached grep telegram token pattern",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

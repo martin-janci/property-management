@@ -1,7 +1,62 @@
 {
   "version": 1,
-  "generated": "2026-10-28T11:00:00Z",
+  "generated": "2026-11-08T00:00:00Z",
   "items": [
+    {
+      "id": "pm-qa-tier1d-signals-dead-pipeline-2026-11-08",
+      "risk": "Tier-1d code-review signals are a dead-end pipeline — 7 signal files written 2026-11-07 to .research/signals/*-tier1d.json are never ingested by the dispatcher (per #3357). Every ppt-dev-review Phase 1.5 pass since the pipeline broke has produced write-only output; silent test-coverage debt + wasted-compute loop",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Add a CI/cron guard that fails when any *-tier1d.json is >48h old and not referenced in action-list.json or a plan; and either wire the dispatcher's Phase 2 ingestion loop to read tier-1d signals, or stop emitting them. Pick one direction — the current write-and-forget state is the worst outcome",
+      "owner_role": "pm-qa",
+      "trigger": "Any *-tier1d.json dated >48h ago not referenced in action-list.json; or dispatcher Phase 2 ingestion loop silently skipping the signals/ directory",
+      "status": "open",
+      "source": "pm-qa 2026-11-08"
+    },
+    {
+      "id": "pm-qa-dispatcher-pipeline-stalled-3357-2026-11-08",
+      "risk": "Dispatcher pipeline fully stalled (#3357) — 3 approved PRs blocked on non-mechanical merge conflicts + Tier-1d dead-end; pre-run state is 0 claimed / 0 merged. QA angle: without merged PRs test-shadow growth rate drops to zero, but so does real coverage growth — a frozen pipeline is NOT a QA win because latent defects queue behind it",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Operator-unblock the 2 UNRESOLVED depends_on sentinels (pm-qa/pm-security role-token poison) and/or refresh the planner with non-mobile-native vectors per #3357 recommendations",
+      "owner_role": "pm-scrum-master",
+      "trigger": "3+ consecutive dispatcher runs reporting claimed=0 AND merged=0",
+      "status": "open",
+      "source": "pm-qa 2026-11-08 (reacting to #3357)"
+    },
+    {
+      "id": "pm-qa-pr3353-other-session-revoke-regression-gap-2026-11-08",
+      "risk": "PR #3353 (session revocation on change_password) ships without an explicit test asserting OTHER-session revocation leaves the CURRENT session intact — classic 'did not log me out of my own browser tab' regression; without the test, a future refactor that over-revokes will ship undetected",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Add the multi-session regression (queued as pm-qa-pr3353-multi-session-revocation-regression-2026-11-08); plus browser-side e2e posting /auth/change-password then calling an authed endpoint and asserting 200 with the current cookie",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open",
+      "source": "pm-qa 2026-11-08"
+    },
+    {
+      "id": "pm-qa-dispatcher-cleanup-orphan-items-silent-2026-11-08",
+      "risk": "Closed-not-merged PRs from dispatcher cleanup (#3301, #3333, #3356 this run) are a QA observability gap — the backlog signal 'this bug has a fix in flight' flips to 'this bug has NO fix in flight' silently, and action-list items land stuck in `in-progress` forever unless the PM cycle re-opens them",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Add a pm-cycle step scanning assignments.json for status=review rows whose PR is closed-not-merged, and flip the matching action-list item back to open (or to done if the fix shipped elsewhere). Done manually this run for code-review-ppt-web-ui-registry-mutation-silent-fail",
+      "owner_role": "pm-qa",
+      "trigger": "Any assignments.json status=review row whose referenced PR is closed-not-merged and whose action-list item is still in-progress after 48h",
+      "status": "open",
+      "source": "pm-qa 2026-11-08"
+    },
+    {
+      "id": "pm-qa-registry-mutation-silent-fail-unfixed-2026-11-08",
+      "risk": "PR #3356 (fix for RegistryPage mutation silent-fail) was closed-not-merged by dispatcher cleanup — the mutation-error-surface bug is unfixed in dev while sibling i18n/auth fixes (#3351/#3354/#3355) landed around it. UX: a failed destructive action looks successful to the user",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Re-opened action-list item + require next PR to ship with a Vitest case asserting the error-toast appears on a mocked 500 from POST /registry/*",
+      "owner_role": "pm-frontend",
+      "trigger": null,
+      "status": "open",
+      "source": "pm-qa 2026-11-08"
+    },
     {
       "id": "pm-devops-swagger-ui-egress-blocking-security-2026-10-01",
       "risk": "utoipa-swagger-ui egress 403 (#2966) renders api-server structurally unbuildable in the cloud runner \u2014 every backend-touching dispatcher task is CLOUD-BUILD-BLOCKED, including all 3 open cross-tenant IDOR retries (#2944/#2945/#2946). Security fixes are not landing because the toolchain can't compile, not because the fix is hard",

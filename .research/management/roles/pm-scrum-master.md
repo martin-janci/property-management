@@ -1,47 +1,57 @@
-# pm-scrum-master — 2026-10-19
+# pm-scrum-master — Delivery synthesis (2026-11-08)
 
-_Always-on synthesis run. 3-day lag since 2026-10-16 — on schedule._
+_Always-on role. Read-only static analysis of sprint-status + merged PRs + open issues + .research backlog. Previous run: 2026-10-28._
 
-## Summary
+## Role JSON
 
-Mild delivery window: **2 PRs merged** (both dispatcher-authored code-review follow-ups on existing surfaces), **1 draft PR open** (#3123 api-core TOTP RNG), **1 critical new issue** (#3124 cargo-deny RUSTSEC-2026-0368/0369 on zip 8.6.0 via rust_xlsxwriter). The merge gate is now doubly locked: #2966 (swagger-ui egress) still blocks builds, #3124 blocks merges even on green builds.
+```json
+{
+  "role": "pm-scrum-master",
+  "summary": "5 PRs merged this window — all small follow-ups (security session revocation, registry i18n + auth-context, boundary validation) against already-shipped surfaces. The dominant signal is NOT the merged slate but issue #3357: dispatcher pipeline is fully stalled at 0 claimed / 0 merged pre-run, with 3 approved PRs blocked on non-mechanical conflicts and 7 Tier-1d code-review signals orphaned 2026-11-07. No feature-level forward motion is possible until #3357 unblocks.",
+  "shipped_since_last_run": [
+    "#3350 — bug: validate shared-comparison listing bodies at API boundary (reality-web)",
+    "#3351 — i18n: wire registry pet/vehicle forms + lists through react-i18next",
+    "#3353 — security: revoke other sessions on authenticated password change (closes #3352)",
+    "#3354 — bug: send auth context on registry requests (RegistryPage/RegistryRulesPage auth)",
+    "#3355 — i18n: translate RegistryPage chrome"
+  ],
+  "sprint_progress": {
+    "sprint": "Epic 6, 7A, 8A & 10A - Announcements, Documents, Notifications & OAuth",
+    "epics_done": 13,
+    "epics_total": 13
+  },
+  "blockers": [
+    {"item": "#3357 dispatcher pipeline fully stalled", "reason": "0 claimed / 0 merged pre-run; 3 approved PRs blocked on non-mechanical conflicts; Tier-1d signals are a dead-end integration (7 orphaned signals from 2026-11-07)", "owner_role": "pm-scrum-master"},
+    {"item": "#3187 cross_org_assign_violation_is_not_found", "reason": "Backend CI test on dev fails (assign returns 403, expects 404); gates backend-merge path", "owner_role": "pm-security"},
+    {"item": "#3168 cargo-deny RUSTSEC advisories", "reason": "3 advisories on dev gate every backend PR merge", "owner_role": "pm-security"},
+    {"item": "#3164 violations add_evidence ungated", "reason": "Cross-tenant evidence attach — same shape as historical #2483 dispute add_evidence", "owner_role": "pm-backend"},
+    {"item": "#2652 KMP cloud builds blocked", "reason": "5+ mobile-native action-list items structurally unclaimable", "owner_role": "pm-devops"}
+  ],
+  "next_actions": [
+    {"action": "Operator-unblock #3357: planner refresh with non-mobile-native vectors OR clear the 2 UNRESOLVED depends_on sentinels (pm-qa/pm-security role-token poison) in action-list.json", "priority": "high", "dependency": "none", "definition_of_done": "Dispatcher reports claimable>0 on next run and at least one PR moves from review to merged"},
+    {"action": "Decide tier-1d signal pipeline direction — wire the dispatcher's ingestion loop to read .research/signals/*-tier1d.json OR stop emitting the files from ppt-dev-review Phase 1.5", "priority": "high", "dependency": "pm-tech-lead", "definition_of_done": "Either signals surface in action-list.json within 24h of being written, or ppt-dev-review stops writing them and the signals/ directory is garbage-collected"},
+    {"action": "Re-open the orphaned-fix action-list items from this run's dispatcher cleanup (#3301/#3333/#3356) and verify none are stuck in-progress without a live PR", "priority": "medium", "dependency": "none", "definition_of_done": "Every action-list item with status in {in-progress, review} either points at an open PR or is flipped back to open"},
+    {"action": "Continue the violations xtenant-404 contract sweep (post-#3187) across moderation.rs / aml_dsa.rs — turn the one-shot test failure into a pattern audit", "priority": "high", "dependency": "pm-security", "definition_of_done": "Every mutation handler on cross-tenant input returns 404 (not 403); one integration test file covers the pattern"}
+  ],
+  "risks": [
+    {"risk": "Pipeline stall (#3357) becomes chronic if neither unblock vector is taken", "probability": "high", "impact": "high", "mitigation": "Operator action on either (a) planner refresh or (b) UNRESOLVED sentinel clearance — pick one this week"},
+    {"risk": "Closed-not-merged PRs from dispatcher cleanup leave action-list items silently stuck in-progress — 3 orphans this run alone", "probability": "medium", "impact": "medium", "mitigation": "Make orphan-recovery a procedural pm cycle step (decisions.md entry this run)"}
+  ],
+  "open_questions": [
+    "Is #3357 something the operator must address, or can the dispatcher recover autonomously given a planner refresh?",
+    "Should the 3 approved-but-blocked PRs in #3357 be rebased by hand or by a dedicated rebaser subagent run?"
+  ],
+  "decisions_needed": [
+    "Tier-1d signal pipeline: wire ingestion OR stop emitting — pick one — owner: pm-tech-lead + pm-devops",
+    "Dispatcher-authored fix PRs: require failing-on-main test as merge-queue gate (CI diff-guard)? — owner: pm-tech-lead + pm-qa (carried from 2026-08-25, 75 days)",
+    "Orphan-recovery procedural step: make this a formal pm-cycle sub-step, not a manual one-off — owner: pm-scrum-master"
+  ]
+}
+```
 
-## Shipped since last run (2 PRs)
+## Notes
 
-- **#3121** reality-web auth-context transient-logout cushion — SSO consumer side; resolves `code-review-reality-web-auth-ctx-transient-logout` (+159/-2 with tests).
-- **#3122** ppt-web-core useAmlDashboard AML flags — compliance view; resolves `code-review-ppt-web-core-aml-checks-hardcoded-false` + `code-review-ppt-web-core-aml-risk-factors-unguarded-map` (+117/-6 with tests).
-
-## Sprint progress
-
-- **Sprint:** _Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth_
-- **Epics done:** 3/5 at sprint level (8A done, 10A done, cross-cutting unknowns ignored); coverage-level all 13 epics complete at 49/49 done.
-
-## Next actions (top 3)
-
-| # | Priority | Dependency | Action | Definition of done |
-|---|---|---|---|---|
-| 1 | high | none | Resolve #3124 cargo-deny advisories (RUSTSEC-2026-0368/0369 on zip 8.6.0 via rust_xlsxwriter) — unblock every backend PR merge | cargo-deny passes on dev HEAD |
-| 2 | high | none | Carry on #2966 utoipa-swagger-ui egress unblock — gates backend cloud builds; now compounded by #3124 blocking merges on green builds | backend.yml green end-to-end in cloud runner |
-| 3 | high | #2966 + #3124 | Land the 3 open IDOR retries (#2946/#2944/#2945) once the twin merge-gate clears | three merged PRs with cross-tenant repro tests |
-
-## Risks
-
-| Risk | P | I | Mitigation |
-|---|---|---|---|
-| **#3124 cargo-deny RUSTSEC-2026-0368/0369:** every backend PR merge is now gated on the advisory check; compounds with #2966 which already blocks builds. Builds green PRs cannot merge. | high | high | Either bump rust_xlsxwriter to a version with safe zip transitive dep, OR add a bounded cargo-deny exception for RUSTSEC-2026-0368/0369 with a deadline captured in dispatcher backlog and surfaced in CI gate description. |
-
-(All other risks carried from 2026-10-16 roster — see `risks.md`.)
-
-## Blockers
-
-- **all backend PR merges** → #3124 cargo-deny FAILED (RUSTSEC-2026-0368/0369 zip 8.6.0 via rust_xlsxwriter) — owner: pm-security.
-- **backend cloud builds** → #2966 utoipa-swagger-ui egress 403 — owner: pm-devops.
-- **KMP cloud builds** → #2652 — owner: pm-devops.
-
-## Open questions
-
-(none this run — the merge-gate is unambiguous and the fix path is a known pattern.)
-
-## Decisions needed
-
-- Pin `rust_xlsxwriter` at a version with safe zip transitive dep, OR exempt RUSTSEC-2026-0368/0369 in `cargo-deny.toml` with a deadline captured in dispatcher — owner: pm-security.
+- This run is NOT quiet: 5 PRs merged + 1 new dominant blocker surfaced (#3357) + 2 new high/high risks added + 6 new pm-qa next_actions queued.
+- Role focus today: **pm-qa** (rotation idx 3 of 8, 75 days stale since 2026-08-25). Six next_actions, five risks, three decisions.
+- Coverage upkeep: epic-10a re-checked (OAuth Provider Foundation, all 3 stories still done). Cursor advances 0 → 1 (epic-10b next run).
+- `pm_cursor` advances 3 → 4 (pm-qa → pm-devops next). `role_last_run["pm-qa"] = 2026-11-08`.

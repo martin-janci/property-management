@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-11-06T14:58:01Z",
+  "last_run_iso": "2026-11-08T06:53:09Z",
   "last_run_ms": 0,
-  "last_pr_seen": 3349,
-  "last_issue_seen": 3341,
-  "last_commit_sha": "6729d7648660d665f9ef2dc4cfd25584aae95d7e",
+  "last_pr_seen": 3355,
+  "last_issue_seen": 3357,
+  "last_commit_sha": "049b9f63",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -1393,11 +1393,17 @@
     "untriaged-issue-952",
     "churn-hotspot-backend/crates/db/tests/suite_4.rs",
     "churn-hotspot-backend/crates/db/src/repositories/registry.rs",
-    "churn-hotspot-backend/servers/api-server/src/routes/registry.rs"
+    "churn-hotspot-backend/servers/api-server/src/routes/registry.rs",
+    "lag-warning-2026-11-08",
+    "closed-not-merged-pr-3301",
+    "closed-not-merged-pr-3333",
+    "closed-not-merged-pr-3356",
+    "code-review-api-handlers-mfa-disable-no-rate-limit",
+    "code-review-api-handlers-mfa-regen-codes-no-rate-limit"
   ],
   "auto_fix_history": {},
   "review_cursor": {
-    "api-handlers": "2026-11-04",
+    "api-handlers": "2026-11-08",
     "api-core": "2026-11-04",
     "reality-server": "2026-11-04",
     "ppt-web-ui": "2026-11-05",
@@ -1407,9 +1413,9 @@
     "mobile-native-kmp": "2026-11-04"
   },
   "stats": {
-    "runs": 115,
-    "vectors_created": 522,
-    "plans_created": 35,
+    "runs": 116,
+    "vectors_created": 524,
+    "plans_created": 37,
     "quiet_days": 8,
     "auto_fix_count": 0
   },
@@ -1424,12 +1430,12 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 3,
+    "next_index": 4,
     "role_last_run": {
       "pm-tech-lead": "2026-10-22",
       "pm-backend": "2026-10-26",
       "pm-frontend": "2026-10-28",
-      "pm-qa": "2026-08-25",
+      "pm-qa": "2026-11-08",
       "pm-devops": "2026-08-31",
       "pm-security": "2026-10-01",
       "pm-data": "2026-10-16",
@@ -1437,6 +1443,6 @@
     }
   },
   "coverage_cursor": {
-    "next_index": 0
+    "next_index": 1
   }
 }
