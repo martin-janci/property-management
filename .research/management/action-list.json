@@ -317,23 +317,6 @@
       }
     },
     {
-      "id": "screen-map-drift-pr-3293-reality",
-      "action": "Screen-map drift: PR #3293 i18n'd reality-web realtor/[id] page without updating docs/screens/reality/realtor-detail.md",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-05T08:30:13Z (score=2 conf=medium vector=test-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-05T08:30:13Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "test-gap"
-      }
-    },
-    {
       "id": "code-review-ppt-web-ui-registry-no-i18n",
       "action": "ppt-web registry feature (pet/vehicle forms + lists) ships hardcoded English placeholders in a 4-locale app — 0 useTranslation on 4 files",
       "owner_role": "pm-tech-lead",
