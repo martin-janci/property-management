@@ -3,7 +3,7 @@
   "items": [
     {
       "id": "pm-devops-unblock-mobile-native-cloud-builds",
-      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) — still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
+      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) \u2014 still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
       "owner_role": "pm-devops",
       "priority": "high",
       "dependency": "none",
@@ -23,7 +23,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-create-listing-not-wired",
-      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded",
+      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub \u2014 form data discarded",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -40,7 +40,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-inquiries-response-contract",
-      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call",
+      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` \u2014 MissingFieldException on every real /inquiries + /realtors/inquiries call",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -91,7 +91,7 @@
     },
     {
       "id": "pm-frontend-mobile-rn-lint-gates-adopt-2026-10-28",
-      "action": "Adopt eslint-plugin-react-hooks + i18next/no-literal-string in frontend/apps/mobile (blocking, warn-only for one sprint) — closes the chronic class-of-defect behind the carried mobile-rn lint-gap risk (ranked-ballot + i18n fallback bugs still open 83 days later)",
+      "action": "Adopt eslint-plugin-react-hooks + i18next/no-literal-string in frontend/apps/mobile (blocking, warn-only for one sprint) \u2014 closes the chronic class-of-defect behind the carried mobile-rn lint-gap risk (ranked-ballot + i18n fallback bugs still open 83 days later)",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "pm-qa",
@@ -105,7 +105,7 @@
     },
     {
       "id": "pm-scrum-master-violations-xtenant-404-contract-sweep-2026-10-28",
-      "action": "Sweep remaining violations mutation handlers for the 403-vs-404 cross-tenant contract (#3187 revealed assign still returns 403) — pattern audit across moderation.rs/aml_dsa.rs after PR #3183 fixed most but not assign",
+      "action": "Sweep remaining violations mutation handlers for the 403-vs-404 cross-tenant contract (#3187 revealed assign still returns 403) \u2014 pattern audit across moderation.rs/aml_dsa.rs after PR #3183 fixed most but not assign",
       "owner_role": "pm-scrum-master",
       "priority": "high",
       "dependency": "pm-security",
@@ -119,7 +119,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-sso-error-body-unguarded",
-      "action": "KMP realtor SSO error-body parsing is unguarded — crashes on non-JSON response",
+      "action": "KMP realtor SSO error-body parsing is unguarded \u2014 crashes on non-JSON response",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -136,7 +136,7 @@
     },
     {
       "id": "code-review-ppt-web-core-refresh-token-localstorage",
-      "action": "SECURITY: ppt-web refresh-token persisted in localStorage — XSS-reachable",
+      "action": "SECURITY: ppt-web refresh-token persisted in localStorage \u2014 XSS-reachable",
       "owner_role": "pm-security",
       "priority": "low",
       "status": "open",
@@ -335,10 +335,10 @@
     },
     {
       "id": "code-review-ppt-web-ui-registry-no-i18n",
-      "action": "ppt-web registry feature (pet/vehicle forms + lists) ships hardcoded English placeholders in a 4-locale app — 0 useTranslation on 4 files",
+      "action": "ppt-web registry feature (pet/vehicle forms + lists) ships hardcoded English placeholders in a 4-locale app \u2014 0 useTranslation on 4 files",
       "owner_role": "pm-tech-lead",
       "priority": "low",
-      "status": "in-progress",
+      "status": "done",
       "source": "dispatcher-backlog-refill 2026-11-05T08:30:13Z (score=1 conf=medium vector=refactor)",
       "deadline": null,
       "dependency": null,
@@ -348,14 +348,16 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
-      }
+      },
+      "resolved_by": "PR #3351 (wire registry pet/vehicle forms + lists through react-i18next)",
+      "resolved_at": "2026-11-08"
     },
     {
       "id": "code-review-reality-web-share-cmp-unchecked-json",
-      "action": "reality-web shared-comparison loader casts the listings API body with an unchecked `as Promise<ListingSummary>` — no shape validation, unlike the rest of reality-web's boundary guards (parseJsonBody / parseListingDetail)",
+      "action": "reality-web shared-comparison loader casts the listings API body with an unchecked `as Promise<ListingSummary>` \u2014 no shape validation, unlike the rest of reality-web's boundary guards (parseJsonBody / parseListingDetail)",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "in-progress",
+      "status": "done",
       "source": "dispatcher-backlog-refill 2026-11-05T22:25:45Z (score=1 conf=medium vector=bug)",
       "deadline": null,
       "dependency": null,
@@ -365,32 +367,139 @@
         "plan": null,
         "score": 1,
         "vector": "bug"
-      }
+      },
+      "resolved_by": "PR #3350 (validate shared-comparison listing bodies at the API boundary)",
+      "resolved_at": "2026-11-08"
     },
     {
       "id": "code-review-ppt-web-ui-registry-mutation-silent-fail",
-      "action": "ppt-web RegistryPage.tsx delete/review mutation handlers (L102-142, L171-211) swallow failures with only console.error — no toast/error surface, so a failed destructive action looks successful. Surface mutation errors to the user (toast/inline error). Add/adjust a test.",
+      "action": "ppt-web RegistryPage.tsx delete/review mutation handlers (L102-142, L171-211) swallow failures with only console.error \u2014 no toast/error surface, so a failed destructive action looks successful. Surface mutation errors to the user (toast/inline error). Add/adjust a test.",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "in-progress",
+      "status": "done",
       "source": "dispatcher-tier1d-devreview 2026-11-07T12:31:00Z (signals/2026-11-07-ppt-web-ui-tier1d.json)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-11-07T12:31:00Z"
+      "first_open_at": "2026-11-07T12:31:00Z",
+      "resolved_by": "PR #3359 (surface registry destructive-action outcomes via toast (re-land of closed #3356))",
+      "resolved_at": "2026-11-08"
     },
     {
       "id": "code-review-ppt-web-ui-registry-page-i18n-gap",
-      "action": "ppt-web RegistryPage.tsx (L249-250,275,302,317-318) hardcodes English (title, subtitle, Pets/Vehicles tabs, load-error) while the rest of the file uses t() — ships untranslated for sk/cs/de/pl/hu. Route the remaining strings through next i18n and add the keys for all locales.",
+      "action": "ppt-web RegistryPage.tsx (L249-250,275,302,317-318) hardcodes English (title, subtitle, Pets/Vehicles tabs, load-error) while the rest of the file uses t() \u2014 ships untranslated for sk/cs/de/pl/hu. Route the remaining strings through next i18n and add the keys for all locales.",
       "owner_role": "pm-frontend",
       "priority": "low",
-      "status": "in-progress",
+      "status": "done",
       "source": "dispatcher-tier1d-devreview 2026-11-07T12:31:00Z (signals/2026-11-07-ppt-web-ui-tier1d.json)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-11-07T12:31:00Z"
+      "first_open_at": "2026-11-07T12:31:00Z",
+      "resolved_by": "PR #3355 (translate RegistryPage chrome)",
+      "resolved_at": "2026-11-08"
+    },
+    {
+      "id": "pm-scrum-master-reland-orphaned-prs-2026-11-08",
+      "action": "Resolve #3357: re-land the dropped work from #3301, #3333 and #3356 onto the rewritten dev. Start with #3358 (draft of #3333), rebase or recreate the other two.",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-08"
+    },
+    {
+      "id": "pm-scrum-master-mint-non-gated-vectors-from-mobile-rn-findings-2026-11-08",
+      "action": "Mint non-gated planned vectors from this run's mobile-rn review findings (auth-screens-no-tests, notifications-screen-no-i18n, screen-chrome-partial-i18n) + add a ppt-web RegistryPage churn-hotspot vector to lift dispatcher buffer above 0.",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-08"
+    },
+    {
+      "id": "pm-scrum-master-coverage-scan-screen-map-drift-refresh-2026-11-08",
+      "action": "Run a local coverage scan and a screen-map drift pass to refill the buffer; triage stalled PR #2555 and #2559 (keep/rebase/close) now that dev was rewritten.",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-08"
+    },
+    {
+      "id": "pm-qa-reland-orphaned-prs-2026-11-08",
+      "action": "Re-land the three orphaned PRs (#3301/#3333/#3356) as fresh branches from current dev \u2014 do not cherry-pick onto stale bases; run `just verify` + full CI per touched package before merge.",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-08"
+    },
+    {
+      "id": "pm-qa-semantic-drift-check-after-reland-2026-11-08",
+      "action": "For each re-landed PR, list the tests the original PR added and confirm they still exist and run after conflict resolution; re-run the originals' targeted tests by name.",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "pm-qa-reland-orphaned-prs-2026-11-08",
+      "depends_on": [
+        "pm-qa-reland-orphaned-prs-2026-11-08"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-08"
+    },
+    {
+      "id": "pm-qa-tier1d-signal-generator-ac-2026-11-08",
+      "action": "Define and test acceptance criteria for the Tier-1d signal generator dead-end fix (#3357 item 2): signal emitted, signal consumed, explicit failure path (log/metric/retry) in place of silent drop; include one negative test where the consumer is absent.",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-08"
+    },
+    {
+      "id": "pm-qa-mobile-auth-screen-test-suites-2026-11-08",
+      "action": "Write test suites for the four mobile-rn auth screens (LoginScreen/TwoFactorScreen first). Cover validation errors, submit loading/disabled, API error + lockout, 2FA invalid/expired, backup-code path, navigation on success, accessibility. Replace App-level null mocks with real-screen renders.",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-08"
+    },
+    {
+      "id": "pm-qa-pipeline-health-regression-guard-2026-11-08",
+      "action": "Add a pipeline-health regression guard: a CI/scheduled check that flags approved PRs unmergeable >N hours and flags dev-history rewrites that orphan open PR bases; document the force-push rule for dev.",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-08"
+    },
+    {
+      "id": "pm-qa-fresh-non-gated-test-hardening-vectors-2026-11-08",
+      "action": "Supply fresh non-gated planned test-hardening vectors for the dispatcher buffer: mobile auth-screen tests (split per-screen), mobile announcement comment-thread read/post UI, mobile document-detail preview frame, ppt-web document-permission authoring UI tests.",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-08"
     }
   ],
-  "generated": "2026-10-28T11:00:00Z"
+  "generated": "2026-11-08T18:35:00Z"
 }

@@ -1,50 +1,42 @@
-# pm-qa — QA / Test lens (2026-08-25)
+# pm-qa — 2026-11-08
 
-_Rotation idx 3 of 8. Read-only static analysis of sprint-status + merged PRs + open issues. Previous run: 2026-06-15 (71 days stale)._
+<sub>Rotating role for this run (pm_cursor.next_index was 3). Static review only (no `gh` queries; context fed by orchestrator).</sub>
 
-## Role JSON
+## Summary
 
-```json
-{
-  "role": "pm-qa",
-  "summary": "13 PRs merged in this window fixed real defects but 7 of them lack the test that would guard against re-regression — the auto-fix loop is now producing enough follow-up-issue-and-close activity that a QA test-shadow discipline is the next lever. The atomic-claim concurrency test (#2834 / #2831 closure) and the booking-connect authz test (#2821) are the two high-priority gaps this run.",
-  "next_actions": [
-    {"action": "Add >1-replica concurrency integration test for quiet-hours drain atomic claim (#2834 / closed #2831) — assert at-most-once delivery under 2 racing api-server replicas contending on the same held-notification batch", "priority": "high", "dependency": "rust-backend", "definition_of_done": "Integration test spins up 2 api-server replicas against shared Postgres + Redis, both drain the same held-notification set, assertion: exactly-one send per (user, channel, notification_id)."},
-    {"action": "Add authz regression test for direct-connect OTA credential writes (#2821) — assert non-manager role is rejected at the booking-connect endpoint (was hijackable before this window)", "priority": "high", "dependency": "rust-backend", "definition_of_done": "Test attempts direct-connect credential write as (tenant, staff, admin-of-other-org) roles; asserts 403; asserts manager succeeds."},
-    {"action": "Add regression test for VoteDetailScreen conditional-hooks fix (#2835) — snapshot render with the empty/loading branch that triggered the rules-of-hooks violation", "priority": "medium", "dependency": "pm-frontend", "definition_of_done": "Jest-expo test renders VoteDetailScreen in the loading-then-loaded transition; asserts no React warning; snapshot stable."},
-    {"action": "Add fuzz/property test for CSV export sanitizer (#2827 / closed #2822) — CR × LF × CRLF × formula-injection prefixes × every export column type", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "proptest crossing {CR, LF, CRLF, NUL, U+2028, U+2029} × {=, +, -, @, tab} × column-type; asserts no raw newline, no formula prefix escape, header preserved."},
-    {"action": "Add unit + integration test for voice OAuth token encryption round-trip after centralization (#2838) — cover Alexa + Google + fallback provider; assert no plaintext at rest", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "Test encrypts token → writes DB row → reads back → decrypts → equality; additional assertion: DB byte-inspection does not contain plaintext token substring."},
-    {"action": "Add ppt-web test asserting AML EDD/Review dialog state resets per assessment (#2833 / closed #2832) — open dialog on assessment A, cancel, open on assessment B, assert reason/notes cleared", "priority": "medium", "dependency": "pm-frontend", "definition_of_done": "Vitest render test opens dialog with assessment A, types reason/notes, cancels, opens with assessment B; asserts inputs empty."}
-  ],
-  "risks": [
-    {"risk": "3 of this window's mobile-rn PRs (#2835 conditional hooks / #2836 hardcoded en / #2837 hardcoded en) fixed defects that eslint-plugin-react-hooks + a no-hardcoded-strings rule would catch statically — every future mobile-rn PR risks reintroducing them", "probability": "high", "impact": "medium", "mitigation": "Adopt eslint-plugin-react-hooks + i18next-hardcoded-strings ESLint config in frontend/apps/mobile; gate CI on it."},
-    {"risk": "PR #2834 (atomic claim for quiet-hours drain) closes #2831 but no test exercises the >1 api-server-replica race — the exact scenario the fix was written for is unverified", "probability": "medium", "impact": "high", "mitigation": "Add integration test with 2 racing api-server replicas contending on the same held-notification batch; assert at-most-once delivery."},
-    {"risk": "PR #2838 centralized voice OAuth token encryption but there is no round-trip test asserting no plaintext at rest — a future field-rename or key-derivation change could silently store plaintext", "probability": "medium", "impact": "high", "mitigation": "Add unit + integration test covering encrypt(token) → DB row → decrypt(row) → token equality across Alexa/Google/fallback; assert stored bytes are not the plaintext token."},
-    {"risk": "PR #2827 neutralizes CR/LF in the CSV export sanitizer but the test suite likely only covers the reported inputs — formula-injection prefixes (= + - @) combined with CR/LF are the classic bypass class and remain unfuzzed", "probability": "medium", "impact": "medium", "mitigation": "Add a property/fuzz test crossing {CR, LF, CRLF, NUL, U+2028, U+2029} × {=, +, -, @, tab} × every export column type."},
-    {"risk": "Auto-fix loop closed 7/7 in-window follow-ups but the same-window close creates the illusion the fixes are proven — 5 of the 7 shipped without a regression test. The loop's compensating-transaction property masks a growing test-shadow debt.", "probability": "high", "impact": "medium", "mitigation": "Adopt a policy: any dispatcher-spawned fix PR requires a failing-on-main test file in the same PR before it can enter the merge queue; enforce via CI diff-guard."}
-  ],
-  "open_questions": [
-    "Should the mobile-rn ESLint gate (react-hooks + no-hardcoded-strings) be blocking on first adoption or warn-only for one sprint to let the existing violations be fixed batch-wise?",
-    "Is there an existing PPT test harness for spinning up 2 api-server replicas against shared Postgres+Redis, or does the atomic-claim concurrency test need new fixture infra?",
-    "Do we have canonical fuzz-corpus discipline for sanitizers (CSV, XSS, HTML), or is each sanitizer testing its own inputs today?",
-    "The 'test-shadow' pattern (fix PR without regression test) — is the pm-qa Definition-of-Done gate advisory or blocking? DEC-001-style formalization needed?"
-  ],
-  "decisions_needed": [
-    "Should any dispatcher-spawned fix PR require a failing-on-main test file in the same PR before it can enter the merge queue (enforced via CI diff-guard)? — owner: pm-tech-lead + pm-qa",
-    "Frontend mobile lint gate rollout — blocking on first adoption vs warn-only for one sprint? — owner: pm-frontend + pm-qa",
-    "Fuzz-corpus discipline for shared sanitizers (CSV, XSS, HTML, JSON) — do we ship a shared proptest corpus crate under backend/crates/? — owner: pm-tech-lead"
-  ]
-}
-```
+The sprint-status.yaml sprint (Epics 6/7A/8A/10A) is fully done, so pipeline-stall remediation and the orphaned-PR re-lands sit outside any tracked story. The mobile auth screens have no dedicated tests — no test files alongside `LoginScreen.tsx`, `RegisterScreen.tsx`, `ForgotPasswordScreen.tsx`, or `TwoFactorScreen.tsx` in `frontend/apps/mobile/src/screens/auth/`. Release readiness is conditional until the re-lands have regression evidence.
 
-## Notes
+## Next actions
 
-- Rotation idx 3 of 8; next pm-qa run ~ 2026-09-25 (assuming ~30-day-per-role cadence).
-- Six pm-qa next_actions appended to `action-list.json` with `source = "pm-qa 2026-08-25"`; four risks and one carried risk-flavor appended to `risks.json`.
-- Coverage epic-80 (rotation idx 5) re-checked — all 3 stories still `done`; last_checked stamped 2026-08-25. No PR in this window touched dispute routes.
-- Merged-PR observations that shaped this run:
-  - #2835 fixed a React `rules-of-hooks` violation in mobile-rn VoteDetailScreen — a `eslint-plugin-react-hooks` lint gate on frontend/apps/mobile would have caught this before code review.
-  - #2836 / #2837 shipped hardcoded English strings in mobile-rn — same lint story, different rule (`i18next/no-literal-string`).
-  - #2834 atomic-claim fix for quiet-hours drain — closes #2831 but is the exact scenario a >1-replica concurrency test should own.
-  - #2838 centralized voice OAuth token encryption — should ship with a round-trip test as a matter of hygiene.
-- Auto-review loop closed 7/7 in-window; net test-shadow debt grew by ~5 fixes-without-tests (raised as pm-qa risk this run).
+| Priority | Action | Dependency | Definition of done |
+|----------|--------|------------|--------------------|
+| high | Re-land the three orphaned PRs (#3301 / #3333 / #3356) as fresh branches from current dev. Do not cherry-pick onto stale bases. Run `just verify` + full CI suites for each touched package (`backend.yml`, `frontend.yml`) before merging. | implementer / pm-dev | Each PR is rebased or re-authored on current dev, CI is green, and the diff against the original approved intent is reviewed line by line, since the conflicts were non-mechanical. |
+| high | Add a post-re-land semantic-drift check. For each PR, list the tests the original PR added and confirm they still exist and run after conflict resolution. Check that no test was dropped or silently `#[ignore]`d / skipped. Re-run the originals' targeted tests by name. | pm-qa / implementer | A table of original test names against post-merge status shows 100% present and passing. |
+| high | Define and test acceptance criteria for the Tier-1d signal generator dead-end fix. Cover: signal emitted, signal consumed, and an explicit failure path (logged error, retry or alert) in place of silent drop. Add one negative test where the consumer is absent and the signal must surface as an error or metric. | pm-dev / implementer | The fix has tests for the happy path and the no-consumer path, and a stalled signal produces an observable artifact such as a log line, metric or issue. |
+| high | Write test suites for the four mobile auth screens. Start with `LoginScreen` and `TwoFactorScreen` (highest risk, security-critical). Cases: validation errors, submit loading and disabled state, API error and lockout/rate-limit message, 2FA invalid or expired code, backup-code path, navigation on success, and accessibility labels. Replace the App-level null mocks with a real-screen render using mocked auth context. | mobile-rn specialist | Four `*.test.tsx` files exist under `frontend/apps/mobile/src/screens/auth/` (or the repo's existing test location) and pass in jest-expo. Each covers happy, validation and API-error paths, with 2FA covering invalid code and backup code. |
+| medium | Add a pipeline-health regression guard. A CI or scheduled check should flag approved PRs unmergeable for more than N hours, and flag `dev` history rewrites that orphan open PR bases. Document the force-push rule for `dev`. | devops / pm-dev | A check or runbook exists. A simulated stuck approved PR raises a visible alert. |
+| medium | Supply fresh non-gated planned test-hardening vectors for the dispatcher buffer. Candidates: mobile auth-screen tests (split into 4 per-screen items), mobile announcement comment-thread read/post UI (follow-up named in the 6-3 note), mobile document-detail preview frame (7a-4 follow-up), and ppt-web document permission authoring UI tests (7a-3 note). | pm-dev / orchestrator | At least 6 non-mobile-native-gated items are queued with ACs and test types. |
+
+## Risks
+
+| Probability | Impact | Risk | Mitigation |
+|-------------|--------|------|------------|
+| medium | high | Non-mechanical conflict resolution in the re-lands silently drops or alters behavior or tests from the approved PRs, so approval no longer reflects what ships. | Require re-review of the re-landed diffs, check the original-vs-post-merge test inventory, and avoid auto-approve on re-landed PRs. |
+| medium | high | The Tier-1d silent dead-end keeps the stall invisible after the PR fix. The failure could recur with no signal. | Add an explicit failure path and observability (log, metric or issue) with a test, and verify it before closing #3357. |
+| medium | high | The four mobile auth screens (login, registration, password reset, 2FA; 979 LoC) have no tests, so a regression in the mobile auth flow could ship unnoticed. The auth flow is security-sensitive, and TwoFactorScreen depends on the MFA backend (epic 9). | Prioritize `LoginScreen` and `TwoFactorScreen` tests. Also add a contract check against the generated api-client types. |
+| medium | medium | A dev history rewrite can orphan more open PR bases, and the pipeline can stall again. | Announce and gate dev rewrites, then rebase open PRs afterward or auto-comment on them. |
+| high | medium | The sprint-status.yaml sprint is stale (every epic done, started 2025-12-21, test_hardening_batch still in-progress). QA cannot give a reliable release signal from it, and test_hardening_batch items such as #480 (WebSocket JWT in query param, marked high severity) still show open in the file. | Reconcile test_hardening_batch item statuses against actual GitHub state and add a current sprint covering the stall remediation. |
+
+## Open questions
+
+- Which exact PRs and files do #3301 / #3333 / #3356 touch (backend, frontend or mobile)? That decides the required regression suites, and I did not verify this.
+- Is test_hardening_batch item #480 (WebSocket token logged in query param, severity high) actually still open? sprint-status.yaml shows `status: open`, but the other batch gates were closed in May.
+- What is the intended behavior of the Tier-1d signal generator when no consumer exists: retry, alert or drop? This is needed to write the ACs.
+- Where do mobile jest tests live (colocated or `__tests__`)? I found no existing test file next to the four auth screens, and I did not check for a separate directory.
+- Is release readiness being assessed for a pending `dev → main` cut? If so, which version and which of the re-land PRs are in scope?
+
+## Decisions needed
+
+- Decide whether the re-landed PRs need a fresh human or agent review pass or whether the original approvals stand after non-mechanical conflict resolution — owner: pm-dev / orchestrator.
+- Decide whether the Tier-1d fix and the mobile auth tests block the next `dev → main` release — owner: pm-dev.
+- Decide on a policy for `dev` history rewrites (allowed or not, and with what notice to open PRs) — owner: devops / orchestrator.

@@ -1,0 +1,200 @@
+{
+  "run_at": "2026-11-08T18:35:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-11-08",
+      "type": "lag_warning",
+      "source": "routine-2026-11-08",
+      "score_delta": 0,
+      "evidence": [
+        "Routine last ran 2026-11-06T14:58Z; lag \u2248 51h (>36h threshold) \u2014 surfaced for brief 'Since last run' section."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "pipeline-stall-orphaned-dev-rewrite-2026-11-08",
+      "type": "closed-not-merged-pr",
+      "source": "issue #3357 + PRs #3301/#3333/#3356 closed 2026-11-08",
+      "score_delta": 1,
+      "evidence": [
+        "PRs #3301, #3333, #3356 all closed unmerged at 2026-11-08T06:34Z after dev-history rewrite orphaned their bases. #3358 (draft re-land of #3333) and #3359 (re-land of #3356 intent) in-flight; #3301 awaits a fresh author pass per issue #3357."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx",
+      "type": "churn-hotspot",
+      "source": "churn-analysis-2026-11-08",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx touched by 3 merged PRs this window (#3354 auth-context, #3355 i18n chrome, #3359 toast surfacing) \u2014 top unique source-file churn."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-mobile-rn-auth-screens-no-tests",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review-2026-11-08",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/mobile/src/screens/auth/ \u2014 LoginScreen.tsx (306L), RegisterScreen.tsx (293L), ForgotPasswordScreen.tsx (188L), TwoFactorScreen.tsx (161L): 979 LoC of production auth flow with zero dedicated test files; only mocked as `() => null` in App.authgate.test.tsx. A silent regression (e.g. 2FA code field not submitted, forgot-password Alert.alert swallowing an error) is undetectable."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "expert": "tester"
+    },
+    {
+      "id": "code-review-mobile-rn-notifications-screen-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review-2026-11-08",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/mobile/src/screens/notifications/NotificationsScreen.tsx \u2014 zero useTranslation imports. All chrome hardcoded English: headerTitle 'Notifications' (:138), 'unread' suffix (:139), 'Mark all as read' (:166), filter labels (:73-78), empty-state (:173-174). No `notifications` key in src/locales/en.json. sk/cs/de/hu/pl users see English only."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-screen-chrome-partial-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review-2026-11-08",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "evidence": [
+        "Multiple mobile-rn screens use t() for errors/loading but hardcode chrome: BuildingsScreen.tsx (:118-119), MetersScreen.tsx (:148-149,:202), FaultsListScreen.tsx (:158,:240,:172), WidgetSettingsScreen.tsx (:89-181 + Alert.alert('Widget Added'/'Widgets Updated',\u2026) at :66,:79). Pattern-wide chrome gap."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "frontend"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched certainty bar + allowlist",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f brief + head -1 match",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq diff of state.json vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative signals not double-counted",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay applied",
+      "observed": "cap=true; 1 decayed, 1 dropped",
+      "expected": "cap=true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass per new plan",
+      "observed": "0 new plans \u2014 n/a",
+      "expected": "annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plan count <= 2",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged files only .research/",
+      "observed": "0 non-.research/",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/hostnames in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regeneration",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists failed phases",
+      "observed": "none",
+      "expected": "listed"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present or archived",
+      "observed": "0 missing",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "21 >= 21",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regeneration",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix cap + idempotency",
+      "observed": "0 actions, skipped=no candidate matched certainty bar + allowlist",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + pm_cursor + coverage_cursor advanced",
+      "observed": "action-list.items ok; risks.items ok; project-state non-empty; pm_cursor 3->4; coverage_cursor 0->1",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token value in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-10-28T11:00:00Z",
+  "generated": "2026-11-08T18:35:00Z",
   "items": [
     {
       "id": "pm-devops-swagger-ui-egress-blocking-security-2026-10-01",
@@ -282,6 +282,76 @@
       "mitigation": "Add a staleness-bias to pm_cursor rotation: when any role is >60 days stale, prefer it over the current index. Alternately, run full-rotation sweeps on 10-day cadence instead of relying on daily rotation only",
       "owner_role": "pm-scrum-master",
       "trigger": "Any pm-* role crosses 90 days stale",
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-dev-force-push-orphaned-prs",
+      "risk": "Rewriting dev again would orphan more PR bases and stall the dispatcher again.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Agree a no-force-push rule for dev; make the dispatcher auto-rebase or re-open PRs whose bases are orphaned.",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-buffer-starvation-mobile-native-gated",
+      "risk": "Pipeline starves because 49/49 coverage is done and remaining work is mobile-native-gated or UNRESOLVED-dep-blocked.",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Generate non-gated vectors from review findings (mobile-rn i18n/tests + KMP bugs); run a scan.",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-password-change-session-revocation-regression",
+      "risk": "The security fix in #3353 (revoke other sessions on password change) could regress mobile/web session handling.",
+      "probability": "low",
+      "impact": "medium",
+      "mitigation": "Check that web+mobile clients handle a 401 after password change cleanly; add an e2e case.",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-non-mechanical-conflict-resolution-drift",
+      "risk": "Non-mechanical conflict resolution in the re-lands silently drops or alters behavior/tests from the approved PRs, so approval no longer reflects what ships.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Require re-review of re-landed diffs; verify original-vs-post-merge test inventory; avoid auto-approve on re-landed PRs.",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-tier1d-silent-dead-end-recurrence",
+      "risk": "The Tier-1d silent dead-end keeps the stall invisible after the PR fix; the failure could recur with no signal.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Add an explicit failure path and observability (log/metric/issue) with a test; verify before closing #3357.",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-mobile-auth-screens-untested-regression",
+      "risk": "The four mobile auth screens (login/registration/password reset/2FA, 979 LoC) have no tests, so a regression in the security-sensitive flow could ship unnoticed.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Prioritize LoginScreen + TwoFactorScreen tests; add a contract check against the generated api-client types.",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-sprint-status-stale-inaccurate-release-signal",
+      "risk": "sprint-status.yaml sprint is stale (every epic done, started 2025-12-21, test_hardening_batch still in-progress). QA cannot give a reliable release signal from it.",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Reconcile test_hardening_batch item statuses against actual GitHub state; add a current sprint covering the stall remediation.",
+      "owner_role": "pm-qa",
+      "trigger": null,
       "status": "open"
     }
   ]

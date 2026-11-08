@@ -120,3 +120,14 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-10-28, pm-frontend):** eslint-plugin-react-hooks + i18next/no-literal-string in `frontend/apps/mobile` — carried from 2026-08-25, now 64 days unresolved; the exact defects it predicts keep landing (VoteDetail dead i18n fallback, ranked ballot). Proposal: enable both, warn-only for one sprint, blocking from the next. Owner: pm-frontend + pm-qa.
 - **NEW (2026-10-28, pm-frontend):** Per-form MSW/Mirage e2e-smoke gate before merge — three "wire-the-button-but-not-the-POST" bugs (ReportFault, reality-web /sell, VoteDetail ranked) in 7 days. Scope question: every form Submit-handler, or only critical paths (fault reporting, selling, voting)? Owner: pm-qa + pm-tech-lead.
 - **NEW (2026-10-28, pm-scrum-master):** Staleness-bias in `pm_cursor` rotation — pm-frontend came up 83 days stale while 12 UI findings accumulated. Proposal: if any pm-* role is >60 days stale, prefer it over the current rotation index on the next run. Owner: pm-scrum-master.
+
+---
+
+## Decisions logged 2026-11-08 (Phase 1.6 — pm-scrum-master + pm-qa)
+
+- **NEW (2026-11-08, pm-scrum-master):** Re-land vs drop for the 3 orphaned PRs (#3301 reality-server inquiry FK classify / #3333 reality screen-map drift / #3356 ppt-web registry mutation surfacing) after the `dev` history rewrite. #3358 is already a draft re-land of #3333; #3359 already re-landed #3356's intent; #3301's reality-server work likely needs a fresh author pass since the Rust conflict was non-mechanical. Owner: pm-tech-lead / human maintainer.
+- **NEW (2026-11-08, pm-scrum-master):** Policy on rewriting `dev` (force-push) and automatic recovery of orphaned PR bases. Without a rule, the dispatcher pipeline will stall again every time `dev` is rewritten (#3357 pattern). Owner: human maintainer.
+- **NEW (2026-11-08, pm-scrum-master):** Accept vs fix the refresh-token-in-localStorage risk, and which fix to use (httpOnly cookie vs in-memory access-token with pollable refresh). Backlog item `code-review-ppt-web-core-refresh-token-localstorage` is score 2 / confidence medium — fast-track verification is pending. Owner: pm-security.
+- **NEW (2026-11-08, pm-scrum-master):** Whether to un-gate or schedule mobile-native work so the buffer is not permanently below target. 6/8 open items are KMP/AGP-egress-blocked in the cloud runner. Owner: pm-product-owner / pm-devops.
+- **NEW (2026-11-08, pm-qa):** Whether the re-landed PRs need a fresh human/agent review pass or whether the original approvals stand after non-mechanical conflict resolution. Conflicts were non-mechanical, so approval provenance is questionable. Owner: pm-dev / orchestrator.
+- **NEW (2026-11-08, pm-qa):** Whether the Tier-1d fix (observability for the signal generator) and the mobile-rn auth-screens tests block the next `dev → main` release. Owner: pm-dev.

@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-11-06T14:58:01Z",
+  "last_run_iso": "2026-11-08T18:35:00Z",
   "last_run_ms": 0,
-  "last_pr_seen": 3349,
-  "last_issue_seen": 3341,
-  "last_commit_sha": "6729d7648660d665f9ef2dc4cfd25584aae95d7e",
+  "last_pr_seen": 3359,
+  "last_issue_seen": 3357,
+  "last_commit_sha": "ccfe98f8fa539fcd6fad9d53bfc04fc8b1052c5f",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -706,6 +706,11 @@
       "runs_seen": 1,
       "last_seen": "2026-11-06",
       "recent_churn": 2
+    },
+    "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-08",
+      "recent_churn": 3
     }
   },
   "seen_signals": [
@@ -740,7 +745,9 @@
     "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs",
     "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
     "churn-hotspot-backend/Cargo.toml",
+    "churn-hotspot-backend/crates/db/src/repositories/registry.rs",
     "churn-hotspot-backend/crates/db/src/repositories/rental.rs",
+    "churn-hotspot-backend/crates/db/tests/suite_4.rs",
     "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
     "churn-hotspot-backend/deny.toml",
     "churn-hotspot-backend/servers/api-server/src/main.rs",
@@ -758,6 +765,7 @@
     "churn-hotspot-backend/servers/api-server/src/routes/oauth.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/organizations.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/platform_admin.rs",
+    "churn-hotspot-backend/servers/api-server/src/routes/registry.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/suspend_cascade.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/violations.rs",
@@ -833,6 +841,7 @@
     "churn-hotspot-frontend/apps/ppt-web/src/features/documents/components/MoveFolderDialog.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.reconnect.test.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.test.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/i18n/protectedRouteI18n.test.ts",
@@ -955,6 +964,7 @@
     "code-review-mobile-native-kmp-sso-error-body-unguarded",
     "code-review-mobile-native-kmp-viewings-load-silent-empty",
     "code-review-mobile-rn-auth-restore-stale-token",
+    "code-review-mobile-rn-auth-screens-no-tests",
     "code-review-mobile-rn-biometric-prompt-i18n",
     "code-review-mobile-rn-deeplink-init-unhandled",
     "code-review-mobile-rn-deeplink-url-listener-leak",
@@ -964,6 +974,7 @@
     "code-review-mobile-rn-hardcoded-locale",
     "code-review-mobile-rn-meter-reading-no-numeric-validation",
     "code-review-mobile-rn-news-personmonths-badge-untranslated",
+    "code-review-mobile-rn-notifications-screen-no-i18n",
     "code-review-mobile-rn-offline-permanent-4xx-silent-drop",
     "code-review-mobile-rn-offline-sync-false-complete",
     "code-review-mobile-rn-offline-terminal-drop-dataloss",
@@ -973,6 +984,7 @@
     "code-review-mobile-rn-outages-transforms-untested",
     "code-review-mobile-rn-push-debug-console-log",
     "code-review-mobile-rn-report-fault-fake-submit",
+    "code-review-mobile-rn-screen-chrome-partial-i18n",
     "code-review-mobile-rn-screens-mock-data",
     "code-review-mobile-rn-thread-send-silent-fail",
     "code-review-mobile-rn-vote-list-cast",
@@ -1237,10 +1249,12 @@
     "lag-warning-2026-10-25",
     "lag-warning-2026-11-01",
     "lag-warning-2026-11-04",
+    "lag-warning-2026-11-08",
     "lag-warning-supplement-2026-08-31",
     "merged-review-followup-issue-2366",
     "merged-review-followup-issue-2575",
     "merged-review-followup-issue-2612",
+    "pipeline-stall-orphaned-dev-rewrite-2026-11-08",
     "refire-buffer-low-2026-08-25-0850",
     "repeated-churn-backend-crates-integrations-src-booking-mod-rs",
     "repeated-churn-backend-servers-api-server-src-routes-auth-rs",
@@ -1390,10 +1404,7 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952",
-    "churn-hotspot-backend/crates/db/tests/suite_4.rs",
-    "churn-hotspot-backend/crates/db/src/repositories/registry.rs",
-    "churn-hotspot-backend/servers/api-server/src/routes/registry.rs"
+    "untriaged-issue-952"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1403,12 +1414,12 @@
     "ppt-web-ui": "2026-11-08",
     "ppt-web-core": "2026-11-04",
     "reality-web": "2026-11-06",
-    "mobile-rn": "2026-11-03",
+    "mobile-rn": "2026-11-08",
     "mobile-native-kmp": "2026-11-04"
   },
   "stats": {
-    "runs": 115,
-    "vectors_created": 522,
+    "runs": 116,
+    "vectors_created": 527,
     "plans_created": 35,
     "quiet_days": 8,
     "auto_fix_count": 0
@@ -1424,12 +1435,12 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 3,
+    "next_index": 4,
     "role_last_run": {
       "pm-tech-lead": "2026-10-22",
       "pm-backend": "2026-10-26",
       "pm-frontend": "2026-10-28",
-      "pm-qa": "2026-08-25",
+      "pm-qa": "2026-11-08",
       "pm-devops": "2026-08-31",
       "pm-security": "2026-10-01",
       "pm-data": "2026-10-16",
@@ -1437,6 +1448,6 @@
     }
   },
   "coverage_cursor": {
-    "next_index": 0
+    "next_index": 1
   }
 }
