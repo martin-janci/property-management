@@ -8451,6 +8451,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "code-review-ppt-web-ui-registry-mutation-silent-fail",
+      "branch": "auto-impl/code-review-ppt-web-ui-registry-mutation-97253c1f",
+      "status": "failed",
+      "claimed_at": "2026-11-07T16:28:48Z",
+      "last_updated": "2026-11-08T06:38:27Z",
+      "status_changed_at": "2026-11-08T06:38:27Z",
+      "pr_number": 3356,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3356",
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=3356 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=RegistryPage pet/vehicle delete+review now toast success/error via useToast; added registry.toast i18n keys to all 6 locales; new RegistryPage.test.tsx 6 tests two-commit split; VERIFY OK 91b2d5f, 11082 tests pass [dispatcher 2026-11-07T22:29:04Z] approved+CI-green but UNMERGEABLE in cloud: add/add conflict on RegistryPage.test.tsx vs merged #3354 (non-mechanical union-merge needed) AND no GitHub approval obtainable (self-approval wedge #3215, reviewer posted verdict=approve as COMMENT). Needs human rebase+approval. [dispatcher 2026-11-08] server-side rebase (MCP update-branch) failed: real conflict vs dev (registry i18n #3355/#3351/#3354 landed on RegistryPage.tsx + messages/*.json). rebase_attempts=1. Needs implementer conflict-resolution. [PR #3356 closed: add/add conflict with merged #3354 (RegistryPage.test.tsx + RegistryPage.tsx overlap); re-implementation respawned as code-review-ppt-web-ui-registry-mutation-reland]",
+      "reviewer_summary": "verdict=approve note=clean-toast-fix-mirrors-RegistryRulesPage-convention-add-add-conflict-3354-RegistryPage.test.tsx-rebase-time-only",
+      "last_reviewed_oid": "cd4841a86f88b1970c538e25f949e1496f0c5121",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 1,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-ui-registry-no-i18n",
       "branch": "auto-impl/code-review-ppt-web-ui-registry-no-i18n-911d7b22",
       "status": "merged",
@@ -9010,6 +9032,28 @@
       "reclaim_attempts": 1,
       "fix_rounds": 2,
       "merge_attempted_at": "2026-08-07T14:24:13Z"
+    },
+    {
+      "task_id": "code-review-reality-server-inquiry-dead-fk-classify",
+      "branch": "auto-impl/code-review-reality-server-inquiry-dead-88581ba0",
+      "status": "failed",
+      "claimed_at": "2026-11-04T16:32:16Z",
+      "last_updated": "2026-11-08T06:38:27Z",
+      "status_changed_at": "2026-11-08T06:38:27Z",
+      "pr_number": 3301,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3301",
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "[dispatcher 2026-11-06] branch has UNRELATED HISTORY to dev (no merge-base; 388 ahead / 56 behind) — not mechanically rebasable via Phase 5.6; needs human rebase or fresh re-implementation. FK-classify code change was reviewer-approved. [dispatcher 2026-11-07 08:35] server-side branch-update rebase failed (merge conflict base<->head); rebase_attempts=3 EXHAUSTED. Approved + CI-green but unmergeable in cloud: real conflict with current dev + local rebase-push is proxy-403. Needs HUMAN rebase (see #3215). [dispatcher 2026-11-08] NOT re-attempted: branch has unrelated history to dev (no merge-base, 388 ahead/56 behind) — mechanically unresolvable; needs branch recreation from fresh dev base. rebase_attempts stays 1. [superseded by merged dev work: structured FK classification already on dev via crate::util::errors::{classify_db_error,db_constraint,DbErrorClass}; PR #3301 closed, no re-land]",
+      "reviewer_summary": "verdict=approve note=structured SQLSTATE 23503 FK classify; clean tests+reuse; posted as COMMENT (self-approval blocked)",
+      "last_reviewed_oid": "4ba555bc6894682bad39ae6f440f340f5c0dedb9",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 1,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-07T18:37:29Z"
     },
     {
       "task_id": "code-review-reality-server-inquiry-detail-empty-messages",
@@ -23551,5 +23595,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-07T18:37:36Z"
+  "archived_at": "2026-11-08T06:38:34Z"
 }
