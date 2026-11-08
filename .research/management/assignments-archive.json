@@ -8451,6 +8451,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "code-review-ppt-web-ui-registry-mutation-reland",
+      "branch": "auto-impl/code-review-ppt-web-ui-registry-mutation-a22518bb",
+      "status": "merged",
+      "claimed_at": "2026-11-08T06:38:27Z",
+      "last_updated": "2026-11-08T10:34:58Z",
+      "status_changed_at": "2026-11-08T10:34:58Z",
+      "pr_number": 3359,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3359",
+      "merged_at": "2026-11-08T10:28:53Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3359 status=done specialist=react-web scope_drift=false code_reuse_warn=useT@reality-favorites(spurious) note=RegistryPage 4 destructive handlers toast (success + persistent error w/ server msg); registry.toast.* in 6 bundles; new RegistryPage.toast.test.tsx (8 tests, IG3 split); #3354 auth suite untouched via additive useToastOptional(); verify OK 314abc10, 11093 tests pass; clean re-land of closed #3356",
+      "reviewer_summary": "verdict=approve head_oid=97ac29abc5f9bf4189dab25dde94e3a2aaa109c1 note=useToastOptional provider-tolerant (no #3354 break, no masking); error toasts persistent (ERROR_DURATION=0) carry error.message; i18n nested under registry ns, 6 bundles parity; ppt-web scope only; reuse-warn spurious; CI green",
+      "last_reviewed_oid": "97ac29abc5f9bf4189dab25dde94e3a2aaa109c1",
+      "scope_drift": false,
+      "code_reuse_warn": "useT@reality-favorites(spurious)",
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-08T10:34:58Z"
+    },
+    {
       "task_id": "code-review-ppt-web-ui-registry-mutation-silent-fail",
       "branch": "auto-impl/code-review-ppt-web-ui-registry-mutation-97253c1f",
       "status": "failed",
@@ -23595,5 +23617,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-08T06:38:34Z"
+  "archived_at": "2026-11-08T10:38:56Z"
 }

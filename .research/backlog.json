@@ -14881,7 +14881,7 @@
       "vector": "refactor",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "rotating-expert-review [reality-server]"
       ],
@@ -14902,7 +14902,12 @@
       "segment": "reality-server",
       "score_delta": 1,
       "candidate_vector": "refactor",
-      "expert": "rust"
+      "expert": "rust",
+      "reconciled": {
+        "at": "2026-11-08T10:24:13Z",
+        "assignment_status": "failed",
+        "pr_number": 3301
+      }
     },
     {
       "id": "screen-map-drift-pr-3237-ppt",
