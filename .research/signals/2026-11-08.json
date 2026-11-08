@@ -1,0 +1,207 @@
+{
+  "run_date": "2026-11-08",
+  "signals": [
+    {
+      "id": "lag-warning-2026-11-08",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-11-06T14:58:01Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "Routine last ran 2026-11-06 14:58 UTC \u2014 ~44h ago (>36h threshold)."
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.toast.test.tsx",
+      "type": "churn-hotspot",
+      "source": "git-log-numstat 2026-11-06..2026-11-08",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "top-3 raw churn 2026-11-08 (197 lines; 1 touch; test file added by PR #3359 reland)"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/cs.json",
+      "type": "churn-hotspot",
+      "source": "git-log-numstat 2026-11-06..2026-11-08",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "top-3 raw churn 2026-11-08 (156 lines; 3 touches; i18n fan-out from registry i18n work)"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/de.json",
+      "type": "churn-hotspot",
+      "source": "git-log-numstat 2026-11-06..2026-11-08",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "top-3 raw churn 2026-11-08 (156 lines; 3 touches; i18n fan-out from registry i18n work)"
+    },
+    {
+      "id": "closed-not-merged-pr-3356",
+      "type": "closed-not-merged-pr",
+      "source": "PR #3356",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "Author closed #3356 unmerged 2026-11-08 06:34Z; superseded by reland #3359 (merged 2026-11-08 10:28Z)."
+    },
+    {
+      "id": "closed-not-merged-pr-3301",
+      "type": "closed-not-merged-pr",
+      "source": "PR #3301",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "Closed unmerged 2026-11-08 06:34Z (stale; decision needed on structured FK classification path)."
+    },
+    {
+      "id": "closed-not-merged-pr-3333",
+      "type": "closed-not-merged-pr",
+      "source": "PR #3333",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "Closed unmerged 2026-11-08 06:34Z; replacement #3358 in-flight (draft)."
+    },
+    {
+      "id": "dep-update-noise-pr-2866",
+      "type": "dep-update-noise",
+      "source": "PR #2866",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "dependabot(actions): bump actions/setup-java from 5 to 6 \u2014 stalled since 2026-09-27 (41d)."
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate: no signal this run matched Phase 5 allowlist + confidence=high + score>=3",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq non-cumulative not double-counted",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq max score",
+      "observed": "max=6 (\u22648)",
+      "expected": "\u22648"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "manual: 2 items decayed per rule",
+      "observed": "http-client-no-timeout 2\u21921, my-listings-pagination-cap 1\u21920\u2192dropped",
+      "expected": "decay applied"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run \u2192 vacuous",
+      "observed": "0 new plans",
+      "expected": "each new plan has adversarial-pass annotation"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "\u22642 new plans",
+      "observed": "0",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep for secrets/private-hosts in diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md vs fresh regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "Phases that failed listed in brief; cursors not advanced for failed",
+      "observed": "Phase 1.5+1.6 marked skipped; review_cursor & pm_cursor unchanged vs HEAD",
+      "expected": "listed + cursors held"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior plan slug still in plans/ or _archive/",
+      "observed": "all prior slugs present",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count staged \u2265 archive count at HEAD",
+      "observed": "22 \u2265 22",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs fresh regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + kill-switch honored",
+      "observed": "auto_fix_actions=[]; kill-switch unset but no candidate met bar",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts parse + pm_cursor in [0,7]",
+      "observed": "all parse, pm_cursor.next_index=3",
+      "expected": "true (no-op this run \u2014 Phase 1.6 skipped)"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep Telegram token value",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

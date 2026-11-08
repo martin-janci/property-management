@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-11-06T14:58:01Z",
+  "last_run_iso": "2026-11-08T12:35:00Z",
   "last_run_ms": 0,
-  "last_pr_seen": 3349,
-  "last_issue_seen": 3341,
-  "last_commit_sha": "6729d7648660d665f9ef2dc4cfd25584aae95d7e",
+  "last_pr_seen": 3359,
+  "last_issue_seen": 3357,
+  "last_commit_sha": "1a1a9d8d4aa3ef810d0b1d843a13b655239d078f",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -706,6 +706,21 @@
       "runs_seen": 1,
       "last_seen": "2026-11-06",
       "recent_churn": 2
+    },
+    "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.toast.test.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-08",
+      "recent_churn": 197
+    },
+    "frontend/apps/ppt-web/messages/cs.json": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-08",
+      "recent_churn": 156
+    },
+    "frontend/apps/ppt-web/messages/de.json": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-08",
+      "recent_churn": 156
     }
   },
   "seen_signals": [
@@ -1393,7 +1408,15 @@
     "untriaged-issue-952",
     "churn-hotspot-backend/crates/db/tests/suite_4.rs",
     "churn-hotspot-backend/crates/db/src/repositories/registry.rs",
-    "churn-hotspot-backend/servers/api-server/src/routes/registry.rs"
+    "churn-hotspot-backend/servers/api-server/src/routes/registry.rs",
+    "lag-warning-2026-11-08",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.toast.test.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/messages/cs.json",
+    "churn-hotspot-frontend/apps/ppt-web/messages/de.json",
+    "closed-not-merged-pr-3356",
+    "closed-not-merged-pr-3301",
+    "closed-not-merged-pr-3333",
+    "dep-update-noise-pr-2866"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1407,8 +1430,8 @@
     "mobile-native-kmp": "2026-11-04"
   },
   "stats": {
-    "runs": 115,
-    "vectors_created": 522,
+    "runs": 116,
+    "vectors_created": 528,
     "plans_created": 35,
     "quiet_days": 8,
     "auto_fix_count": 0
