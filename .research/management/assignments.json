@@ -23,29 +23,7 @@
       "merge_attempted_at": null,
       "quarantined_at": "2026-11-04T18:44:37Z",
       "quarantine_reason": "blocked on #3299: pre-existing frontend/apps/mobile biome debt reddens frontend.yml (Lint & Format Check -> frontend/E2E skipped/failed); PR code sound, no change warranted (reviewer confirmed). Rebased onto origin/dev (clean) at round 1 to check if debt was fixed upstream — apps/mobile + biome config byte-identical on dev, still red. Backend required gates (check+test) green. Un-quarantine (status->review) once #3299 clears the debt or scopes the lint gate per-package."
-    },
-    {
-      "task_id": "screen-map-drift-pr-3293-reality",
-      "branch": "auto-impl/screen-map-drift-pr-3293-reality-reland",
-      "status": "review",
-      "claimed_at": "2026-11-05T22:29:23Z",
-      "last_updated": "2026-11-08T14:30:10Z",
-      "status_changed_at": "2026-11-08T10:37:50Z",
-      "pr_number": 3358,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/3358",
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": " [dispatcher 2026-11-07] API branch-update (server-side rebase) failed: real (non-mechanical) merge conflict between base and head; not auto-resolvable, local-rebase+push blocked by proxy — needs human rebase. rebase_attempts=2. [dispatcher 2026-11-07 08:35] server-side branch-update rebase failed (merge conflict base<->head); rebase_attempts=3 EXHAUSTED. Approved + CI-green but unmergeable in cloud: real conflict with current dev + local rebase-push is proxy-403. Needs HUMAN rebase (see #3215). [dispatcher 2026-11-08] server-side rebase (MCP update-branch) failed again: real conflict in docs/screens/reality/realtor-detail.md. rebase_attempts=2. [orphaned #3333 closed; re-landed clean on current dev as PR #3358 (cherry-pick + docs-merge with #3313 reconcile)]",
-      "reviewer_summary": "verdict=approve head_oid=e44808ff33db854c046b52b63f9273ca07ed1a33 note=docs-only reland; scope_drift reverted to baseline, only net-new PR#3293 i18n note remains; /screens validate green; self-approve API-blocked (author==bot token) [dispatcher 2026-11-08: merge auto-denied by harness classifier (Merge Without Review) — needs HUMAN approve+merge, see #3215]",
-      "last_reviewed_oid": "e44808ff33db854c046b52b63f9273ca07ed1a33",
-      "scope_drift": true,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 2,
-      "reclaim_attempts": 0,
-      "fix_rounds": 1,
-      "merge_attempted_at": "2026-11-08T14:30:10Z"
     }
   ],
-  "generated": "2026-11-08T18:28:44Z"
+  "generated": "2026-11-08T20:33:24Z"
 }
