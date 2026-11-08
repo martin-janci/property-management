@@ -321,8 +321,8 @@
       "action": "Screen-map drift: PR #3293 i18n'd reality-web realtor/[id] page without updating docs/screens/reality/realtor-detail.md",
       "owner_role": "pm-qa",
       "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-05T08:30:13Z (score=2 conf=medium vector=test-gap)",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-05T08:30:13Z (score=2 conf=medium vector=test-gap) · resolved 2026-11-08 by PR #3358",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -390,7 +390,95 @@
       "dependency": null,
       "depends_on": [],
       "first_open_at": "2026-11-07T12:31:00Z"
+    },
+    {
+      "id": "pm-scrum-master-reland-pr-3301-reality-server-fk-classify",
+      "action": "Re-land #3301 (reality-server inquiry FK classification via SQLSTATE 23503) as a fresh branch off current dev — closed unmerged, orphaned base; cherry-pick the net change or re-implement two-commit IG3",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-08"
+    },
+    {
+      "id": "pm-scrum-master-resolve-3357-dispatcher-pipeline-stall",
+      "action": "Resolve issue #3357 dispatcher pipeline stall — operator rebases or retires orphaned branches and fixes the Tier-1d signals dead-end (the .research/signals/*.json files are not ingested by any refill tier)",
+      "owner_role": "pm-devops",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-08"
+    },
+    {
+      "id": "pm-scrum-master-seed-nongated-web-realityserver-vectors",
+      "action": "Seed fresh non-gated backlog vectors: reality-server and ppt-web code-review sweeps, refresh-token localStorage security fix, post-registry-rework audit on other ppt-web pages — target >=10 new claimable items to unstarve the 6/72 buffer",
+      "owner_role": "pm-tech-lead",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-08"
+    },
+    {
+      "id": "pm-qa-create-web-reality-server-coverage-vectors",
+      "action": "Create web-only + reality-server coverage-gap vectors: shipped-without-sibling-test screens (ppt-web, reality-web), reality-server listing search filter edges, i18n (sk/cs/de/en) fallback, favorite_alert_worker idempotency, pagination bounds — >=8 items with target test file paths, no mobile-native dependency",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-08"
+    },
+    {
+      "id": "pm-qa-deflake-rentals-connections-test",
+      "action": "Quarantine and deflake frontend/apps/ppt-web/src/routes/groups/rentals.connections.test.tsx (flake noted in PR #3356 body — confirmation-dialog findByRole timeout under parallel load). Reproduce in a repeat loop, replace waitFor timing with deterministic awaits, or mark test.skip with a tracked issue",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-08"
+    },
+    {
+      "id": "pm-qa-reconcile-8a-3-sprint-status-gate",
+      "action": "Reconcile sprint-status 8a-3 status against the test-hardening batch gate rule: its gate issues #480 and #484 are now CLOSED, so either confirm 8a-3 remains done (expected) or revert to review. Also fix duplicate 80-2 entry in sprint-status.yaml",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-08"
+    },
+    {
+      "id": "pm-qa-review-pr-assertion-quality-2026-11-08",
+      "action": "Review the 7 merged PRs this cycle for assertion quality (sample 2 of 7): verify #3353 session-revocation asserts revoked-token rejection across refresh/introspect/WS, and that registry tests assert behaviour vs render snapshots",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-08"
+    },
+    {
+      "id": "pm-qa-define-cloud-testable-substitute-mobile-native",
+      "action": "Define a cloud-testable substitute for mobile-native-gated items: OpenAPI schema diff on generated Kotlin client, reality-server API contract fixtures, mock-server harness. Produce a one-page test-layer matrix; re-tag >=3 gated backlog items as partially testable",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-08"
     }
   ],
-  "generated": "2026-10-28T11:00:00Z"
+  "generated": "2026-11-08T20:47:52Z"
 }

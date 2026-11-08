@@ -1,0 +1,221 @@
+{
+  "date": "2026-11-08",
+  "since_iso": "2026-11-06T14:58:01Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-11-08",
+      "type": "lag_warning",
+      "source": "routine-lag-check",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "last_run_iso=2026-11-06T14:58:01Z → 53h since last run (>36h threshold); routine skipped at least one daily slot"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx",
+      "type": "churn-hotspot",
+      "source": "commit-log-2026-11-06..2026-11-08",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "3 commits in the 2-day window (PRs #3351 i18n, #3354 auth, #3355 chrome-i18n, #3359 toast re-land) — full-page rework"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
+      "type": "churn-hotspot",
+      "source": "commit-log-2026-11-06..2026-11-08",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "3 commits in the 2-day window — en/sk/cs/de/pl/hu all co-churning for registry.* keys (expected during feature re-work, but hotspot threshold reached)"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-3301",
+      "type": "closed-not-merged-pr",
+      "source": "pr-3301",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "PR #3301 (code-review-reality-server-inquiry-dead-fk-classify) closed 2026-11-08T06:34:29Z unmerged — orphaned from dev after dev history was rewritten (base commit no longer reachable). Not yet re-landed.",
+        "Per issue #3357, operator action needed: re-implement on current dev or cherry-pick the net change. Change itself (structured FK classification via SQLSTATE 23503) remains valuable.",
+        "files touched by original: backend/servers/reality-server/src/handlers/inquiries/mod.rs, backend/servers/reality-server/src/routes/inquiries.rs"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-3333",
+      "type": "closed-not-merged-pr",
+      "source": "pr-3333",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "PR #3333 (screen-map-drift-pr-3293-reality) closed 2026-11-08T06:34:27Z unmerged — orphaned from dev (same cause as #3301).",
+        "ALREADY RESOLVED: re-landed as merged PR #3358. No follow-up action needed."
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-3356",
+      "type": "closed-not-merged-pr",
+      "source": "pr-3356",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "PR #3356 (code-review-ppt-web-ui-registry-mutation-silent-fail) closed 2026-11-08T06:34:31Z unmerged — add/add conflict in RegistryPage.test.tsx vs merged #3354.",
+        "ALREADY RESOLVED: re-landed as merged PR #3359 (toast suite split into separate file per #3357's recommendation)."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-phone-validator-utf8-panic",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/reality-server/src/handlers/inquiries/mod.rs:262-281 is_valid_phone mixes byte-length (`cleaned.len()` in the 9..=15 gate) with char-oriented validation (`.chars().all(is_ascii_digit)`); the two units can disagree on multi-byte payloads.",
+        "The fork-claimed PANIC on `cleaned[1..]` does NOT reproduce under static re-reading: the leading-char filter at line 275 admits only `+` or an ASCII digit (both 1-byte UTF-8), so byte 1 is always at a char boundary and the slice is safe.",
+        "Real issues that remain: (a) length gate is byte-based, not char-based — a multi-byte payload with 9 bytes but 3 chars passes the lower bound but fails the per-char digit check (returns false — benign but surprising); (b) no unit tests for `is_valid_phone` anywhere under backend/servers/reality-server/; (c) reached from 3 unauth public POSTs (`send_contact_message`, `request_viewing`, listing-report) so the test-gap matters.",
+        "Suggested fix: switch length gate to `cleaned.chars().count()` and add 3 unit tests (`+` prefix / digit prefix / unicode non-digit rejection). No security fix needed — the function is already correct on hostile input, just under-tested and byte-vs-char-confused."
+      ],
+      "expert": "rust-but-verified-by-routine"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/YYYY-MM-DD.md && head -1 matches '# YYYY-MM-DD'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state staged vs HEAD: cursors/signals/hotspots advanced",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "[.items[].id] | length == unique | length",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal double-count with score_delta>0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "[.items[] | select(.score>8)] | length == 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "open items older than 14d → either -1 or dropped",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "N/A — no new plans this run",
+      "observed": "0 new plans",
+      "expected": "all new plans annotated in brief"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "N/A — no new plans this run",
+      "observed": "0 new plans",
+      "expected": "≤2 new plans, all meet readiness"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep for secrets in staged diff (excl. 4 baseline docs)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs fresh regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists phases that failed; cursors not advanced for failed phases",
+      "observed": "no phase failed",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior plan slug present in plans/ or plans/_archive/",
+      "observed": "0 missing",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count this run >= HEAD archive count",
+      "observed": "22 >= 22",
+      "expected": "≥ HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs fresh regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length checks",
+      "observed": "0 actions, kill-switch unset but no candidate",
+      "expected": "≤1 PR + ≤1 issue + ≤1 comment, high confidence, score≥3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts parse + pm_cursor advanced + coverage_cursor advanced",
+      "observed": "EPICS=13 CC: 0→1, PM: 3→4",
+      "expected": "both advanced when pm_cursor moved"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}
