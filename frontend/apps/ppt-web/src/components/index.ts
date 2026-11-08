@@ -15,4 +15,4 @@ export { ProtectedRoute } from './ProtectedRoute';
 export type { SpinnerColor, SpinnerProps, SpinnerSize } from './Spinner';
 export { Spinner } from './Spinner';
 export type { Toast, ToastAction, ToastType } from './Toast';
-export { ToastProvider, useToast } from './Toast';
+export { ToastProvider, useToast, useToastOptional } from './Toast';

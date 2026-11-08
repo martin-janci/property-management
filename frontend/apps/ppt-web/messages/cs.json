@@ -6193,6 +6193,24 @@
         "saveFailedBody": "Your changes could not be saved. Please try again."
       }
     },
+    "toast": {
+      "petDeleted": "Registrace zvířete odstraněna",
+      "petDeletedBody": "Registrace zvířete byla odstraněna.",
+      "petDeleteFailed": "Nepodařilo se odstranit registraci zvířete",
+      "petDeleteFailedBody": "Registraci zvířete se nepodařilo odstranit. Zkuste to znovu.",
+      "petReviewed": "Registrace zvířete schválena",
+      "petReviewedBody": "Registrace zvířete byla schválena.",
+      "petReviewFailed": "Nepodařilo se posoudit registraci zvířete",
+      "petReviewFailedBody": "Registraci zvířete se nepodařilo posoudit. Zkuste to znovu.",
+      "vehicleDeleted": "Registrace vozidla odstraněna",
+      "vehicleDeletedBody": "Registrace vozidla byla odstraněna.",
+      "vehicleDeleteFailed": "Nepodařilo se odstranit registraci vozidla",
+      "vehicleDeleteFailedBody": "Registraci vozidla se nepodařilo odstranit. Zkuste to znovu.",
+      "vehicleReviewed": "Registrace vozidla schválena",
+      "vehicleReviewedBody": "Registrace vozidla byla schválena.",
+      "vehicleReviewFailed": "Nepodařilo se posoudit registraci vozidla",
+      "vehicleReviewFailedBody": "Registraci vozidla se nepodařilo posoudit. Zkuste to znovu."
+    },
     "confirm": {
       "deletePet": "Smazat tuto registraci zvířete?",
       "approvePet": "Schválit tuto registraci zvířete?",

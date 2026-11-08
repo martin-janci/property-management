@@ -7952,6 +7952,24 @@
         "saveFailedBody": "Your changes could not be saved. Please try again."
       }
     },
+    "toast": {
+      "petDeleted": "Pet registration deleted",
+      "petDeletedBody": "The pet registration has been removed.",
+      "petDeleteFailed": "Failed to delete pet registration",
+      "petDeleteFailedBody": "The pet registration could not be deleted. Please try again.",
+      "petReviewed": "Pet registration approved",
+      "petReviewedBody": "The pet registration has been approved.",
+      "petReviewFailed": "Failed to review pet registration",
+      "petReviewFailedBody": "The pet registration could not be reviewed. Please try again.",
+      "vehicleDeleted": "Vehicle registration deleted",
+      "vehicleDeletedBody": "The vehicle registration has been removed.",
+      "vehicleDeleteFailed": "Failed to delete vehicle registration",
+      "vehicleDeleteFailedBody": "The vehicle registration could not be deleted. Please try again.",
+      "vehicleReviewed": "Vehicle registration approved",
+      "vehicleReviewedBody": "The vehicle registration has been approved.",
+      "vehicleReviewFailed": "Failed to review vehicle registration",
+      "vehicleReviewFailedBody": "The vehicle registration could not be reviewed. Please try again."
+    },
     "confirm": {
       "deletePet": "Delete this pet registration?",
       "approvePet": "Approve this pet registration?",
