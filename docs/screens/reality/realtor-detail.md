@@ -6,7 +6,7 @@ sitemapRefs: {}
 implementations:
   reality-web:
     route: "/realtor/[id]"
-    component: AgentProfilePage
+    component: RealtorDetailPage
     buildStatus: shipped
     redesignStatus: not-started
     apiStatus: partial
@@ -14,8 +14,6 @@ endpoints: []
 relatedScreens:
   - id: reality/realtor
     rel: parent
-  - id: reality/agent-profile
-    rel: sibling
 sharedComponents: []
 diagrams: []
 useCases: []
@@ -42,6 +40,6 @@ Note: differs from `reality/agent-profile` (the realtor's own profile view) — 
 - 2026-05-18 — audit: stub created from `frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx`.
 
 ## Agent Log
+- 2026-11-08 — agent: fix-round 1 (PR #3358) — reverted the out-of-scope frontmatter component-rename + `reality/agent-profile` sibling back to dev's validated baseline (`component: RealtorDetailPage`, no sibling), realigning the body note so frontmatter and prose agree again; trimmed the out-of-scope rename/sibling content and kept only the net-new next-intl i18n note (PR #3293 — chrome routed through `useTranslations('pages.agentProfile')` + `useLocale` across sk/cs/de/en/pl/hu, per-locale coverage guard). Docs-only; `/screens validate` clean.
 - 2026-11-06 — agent: reconciled screen-map with merged PR #3313 (regression tests for realtor/[id] contact-channel honesty). Documented the real-data fetch + honest mailto/tel hand-off (originally landed in PR #3225) and the three new gating tests; flipped `apiStatus: stub → partial`; `endpoints:` kept empty (not in `@ppt/sitemap`). Docs-only; `/screens validate` clean.
-- 2026-11-05 — agent: reflected PR #3293 — page i18n'd via next-intl across six locales (sk/cs/de/en/pl/hu); documented the i18n of all user-visible chrome and the per-locale coverage guard.
 - 2026-05-18 — agent: created stub for unmapped route.
