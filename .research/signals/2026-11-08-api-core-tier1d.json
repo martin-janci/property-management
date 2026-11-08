@@ -1,0 +1,55 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-08",
+  "segment_reviewed": "api-core",
+  "selection_reason": "oldest-unreviewed (dispatcher-tier1d-demand-driven, claim buffer starved below floor). review_cursor group at 2026-11-04 = {api-handlers, api-core, reality-server, ppt-web-core, mobile-native-kmp}. mobile-native-kmp excluded per caller steer (structurally unlandable in the cloud runner, AGP egress-blocked). api-handlers and ppt-web-ui were already reviewed TODAY (signals/2026-11-08-api-handlers-tier1d.json, 2026-11-08-ppt-web-ui-tier1d.json); among the remaining oldest-tier landable segments {api-core, reality-server, ppt-web-core} none was touched today. Picked api-core (backend Rust, cloud-verifiable, static-only). Saturation check: 0 open code-review-finding rows for api-core in backlog.json (< 3 cap) — not saturated. No CHURN_FILES passed as explicit input; 14-day churn is concentrated in ppt-web UI (features/registry, features/marketplace) which maps to ppt-web-ui (reviewed today), not api-core. Static Rust sweep of backend/servers/api-server/src/ excluding routes/: unwrap/expect are overwhelmingly in #[cfg(test)] modules; the handful of prod unwrap/expect are guarded-by-construction (bin/features.rs strip_prefix after starts_with; accounting.rs Decimal::from_str on constant literals) or standard-unrecoverable boot-time (main.rs:559 JwtService, totp.rs:76/94/109 + main.rs JWT/TOTP key panics are startup config fail-fast; auth.rs:97 / oauth.rs:918 expect on OS rng). No unsafe; no todo!/unimplemented! in prod (only one `// TODO` comment, flagged below). Hardened areas confirmed clean and NOT re-flagged: client_ip.rs (trusted-proxy X-Forwarded-For/CF-Connecting-IP resolution, #2789), services/actions/api_call.rs (TOCTOU-aware SsrfGuardResolver + redirect allowlist), scheduler/mod.rs (per-job error isolation + metrics-mutex poison recovery via unwrap_or_else(|e| e.into_inner())), document_generation.rs truncate_head_tail (floor/ceil char-boundary safe, multibyte test), observability.rs (sensitive-header redaction list), accounting matcher (tenant-scoped list_contacts_for_tenant, rust_decimal no-float). All three findings below are DISTINCT from yesterday's 2026-11-07-api-core-tier1d.json accounting findings (nonatomic-statement-ingest, matcher-ignores-currency) and from the existing payment-matcher-multi-suggest backlog row.",
+  "experts_used": [
+    "rust"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-api-core-workflow-exec-unbounded-spawn",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:280-311 — execute_workflow() unconditionally `tokio::spawn`s a detached WorkflowExecutorTask::run per workflow with NO concurrency gate: no Semaphore permit is acquired before the spawn and none is held inside the task. The spawned task immediately calls acquire_with_rls (via run -> rls_conn) to grab a DB connection.",
+        "backend/servers/api-server/src/services/workflow_executor.rs:186,198 — the config exposes `pub max_concurrent_executions: usize` (default 10), documented as the execution concurrency cap, but a repo-wide grep (`Semaphore|acquire_owned|permit|max_concurrent_executions`) across backend/servers/api-server/src finds the field is referenced ONLY at its definition and default — it is never read to build a Semaphore or otherwise enforced. The cap is dead config.",
+        "backend/servers/api-server/src/services/workflow_executor.rs:315-380 — handle_event() loops over every workflow returned by list_by_trigger_type for an event and calls execute_workflow (one detached spawn each) with no batch bound. Impact: a burst of matching trigger events (or one event matching many workflows) spawns unbounded concurrent executions, each acquiring an RLS DB connection — a resource-exhaustion / pool-starvation path, and the documented `max_concurrent_executions` limit silently does nothing. Landable backend-only fix: build a `tokio::sync::Semaphore::new(config.max_concurrent_executions)` once in the executor, `acquire_owned()` a permit before `tokio::spawn`, and move the permit into the task so it is held for the execution lifetime (or bound handle_event's per-event fan-out). Reachability of the spawn is certain (handle_event -> execute_workflow -> tokio::spawn); kept at medium because triggering actual pool exhaustion depends on event/workflow volume at runtime, which static analysis cannot execute."
+      ]
+    },
+    {
+      "id": "code-review-api-core-accounting-date-proximity-todo",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:216 — `// TODO: Date proximity` marks an unimplemented scoring factor in run_payment_matcher's per-invoice confidence loop (accounting.rs:182-226). The matcher accumulates variable-symbol (0.8), amount (0.15 exact / 0.05 partial) and counterparty-IBAN (0.05) signals and compares against the 0.5 auto-suggest threshold, but the intended date-proximity corroboration (statement-line date vs invoice due/issue date) is never computed.",
+        "backend/servers/api-server/src/services/accounting.rs:198-214,228-234 — because the date signal is absent, the tie-breaker set for VS-sharing invoices relies solely on amount + IBAN. For a tenant's recurring monthly invoices that share a variable symbol and amount (the common case for rent), nothing date-aware promotes the invoice whose period actually matches the payment date, so genuinely-equal-scoring candidates are all surfaced for manual resolution. Impact: weaker auto-reconciliation than FR-16.8 designs for -> more manual bank-line matching work. Landable backend-only fix: implement the date-proximity branch (e.g. small positive weight when |line.value_date - invoice.due_date| is within a window), keeping the clamped-to-1.0 confidence invariant at accounting.rs:221. Low severity (quality/completeness, not a crash)."
+      ]
+    },
+    {
+      "id": "code-review-api-core-accounting-decimal-literal-parse",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:155,193,200,202,212 — run_payment_matcher parses constant decimal weights with `Decimal::from_str(\"0.5\").unwrap()` (threshold) and `Decimal::from_str(\"0.8\"|\"0.15\"|\"0.05\").unwrap()` (confidence weights). The weight parses at 193/200/202/212 sit inside the `for invoice in &open_invoices` loop (accounting.rs:182-226), so a known-valid literal is re-parsed on every (line x invoice) pair.",
+        "backend/servers/api-server/src/services/accounting.rs:1 — the file already imports rust_decimal. Replacing these with the compile-time `rust_decimal::dec!` macro (or module-level consts / LazyLock) removes the per-iteration runtime parse and the five `.unwrap()`s on statically-known-valid input (lint noise / panic-on-impossible). Pure refactor/efficiency cleanup, no behaviour change; landable backend-only. Low severity."
+      ]
+    }
+  ]
+}
