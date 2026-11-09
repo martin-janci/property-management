@@ -15445,6 +15445,62 @@
         "assignment_status": "failed",
         "pr_number": null
       }
+    },
+    {
+      "id": "code-review-api-handlers-tenant-export-outdir-path",
+      "title": "SECURITY: admin tenant-export handler writes to a client-supplied out_dir with no validation — arbitrary-directory write via RLS-bypassing export pool",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [api-handlers]"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/admin_tenant_lifecycle.rs:90-113 — export_handler reads a caller-supplied out_dir: Option<String> straight from the request body (ExportRequest.out_dir, struct at L65-69) and passes it, unvalidated, as PathBuf::from(out_dir) into export_tenant(&state.db, org_id, &manifest, &out_dir) (L102). export_tenant writes the per-tenant logical export (tarball + row dumps) to that directory. The state.db pool used here is the RLS-bypassing service-role pool (tenant-ops export reads every tenant table for the org), so the write target is fully attacker-chosen with no sandbox/allowlist/canonicalization check and no containment to an export root.",
+        "Impact: a platform principal holding Capability::TenantExport (the route's require_capability gate, L50-53) can direct the server to write exported tenant data — and create/overwrite a .tar.gz — at ANY absolute path on the server filesystem (e.g. /var/www, a Caddy-served static dir, another service's config dir, or over an existing file via the tarball path). This is an arbitrary-directory write / path-control primitive on a privileged admin surface; it can be used to stage tenant PII into a web-reachable location or to clobber files. The blast radius is limited to actors with the TenantExport capability + recent MFA, hence medium rather than high.",
+        "Contrast: the sibling org-settings background export (routes/organizations/settings.rs:839) deliberately ignores any caller path and uses std::env::temp_dir().join(format!(\"ppt-org-export-{}\", Uuid::new_v4())); the restore_handler in the SAME file (admin_tenant_lifecycle.rs:203-204) also uses temp_dir() + a random UUID. export_handler is the lone handler that trusts a client path. Landable backend-only fix: drop the out_dir request field (or confine it to a configured export root with canonicalize() + a starts_with(export_root) check that rejects traversal), and default to temp_dir().join(Uuid) exactly like restore_handler and the org-settings export. Confidence medium: static review only, path flow code-verified end-to-end but no runtime write-outside-root was executed."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/admin_tenant_lifecycle.rs"
+      ],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "expert": "security"
+    },
+    {
+      "id": "code-review-api-handlers-health-alerts-page-size-uncapped",
+      "title": "platform-admin health-alerts pagination: page_size used as SQL LIMIT with no clamp despite documented 'max 100' — unbounded query (DoS)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [api-handlers]"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/platform_admin/ops.rs:176-192 — get_health_alerts computes offset = (query.page.saturating_sub(1)) as i64 * query.page_size as i64 and calls health_monitoring_repo.get_alerts(query.page_size as i64, offset) using query.page_size directly as the SQL LIMIT. AlertsQuery.page_size (struct L44-54) is a u32 whose doc comment literally says 'Page size (max 100)', but nothing clamps it — there is no .clamp(1, 100)/.min(100) before the cast, so the documented cap is unenforced and a caller can request page_size=4294967295, turning the LIMIT effectively unbounded (full-table scan of metric_alerts).",
+        "Impact: a SuperAdmin caller (route is RequireCapability + extract_super_admin_token-gated, L177/L182) can issue an unbounded alerts query, a self-inflicted DoS / memory-pressure vector on the platform-admin surface; low severity because it requires the SuperAdmin capability. The divergence is the real smell: sibling list handlers in the same tree DO clamp — admin/users_lifecycle.rs:273 (page_size.clamp(1, 100)), migration.rs:144 (per_page.clamp(1, 100)) — so this is an inconsistent, documented-but-unenforced cap rather than a deliberate choice.",
+        "Landable backend-only fix: clamp before use, e.g. let page_size = query.page_size.clamp(1, 100); and reuse it for both the offset math and the get_alerts LIMIT, matching the existing clamp(1, 100) convention in users_lifecycle.rs / migration.rs. Confidence medium: static review only; the unbounded LIMIT path is code-verified but not runtime-exercised."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/platform_admin/ops.rs"
+      ],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "expert": "rust"
     }
   ]
 }
