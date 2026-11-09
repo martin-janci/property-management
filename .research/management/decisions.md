@@ -120,3 +120,11 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-10-28, pm-frontend):** eslint-plugin-react-hooks + i18next/no-literal-string in `frontend/apps/mobile` — carried from 2026-08-25, now 64 days unresolved; the exact defects it predicts keep landing (VoteDetail dead i18n fallback, ranked ballot). Proposal: enable both, warn-only for one sprint, blocking from the next. Owner: pm-frontend + pm-qa.
 - **NEW (2026-10-28, pm-frontend):** Per-form MSW/Mirage e2e-smoke gate before merge — three "wire-the-button-but-not-the-POST" bugs (ReportFault, reality-web /sell, VoteDetail ranked) in 7 days. Scope question: every form Submit-handler, or only critical paths (fault reporting, selling, voting)? Owner: pm-qa + pm-tech-lead.
 - **NEW (2026-10-28, pm-scrum-master):** Staleness-bias in `pm_cursor` rotation — pm-frontend came up 83 days stale while 12 UI findings accumulated. Proposal: if any pm-* role is >60 days stale, prefer it over the current rotation index on the next run. Owner: pm-scrum-master.
+
+---
+
+## Decisions logged 2026-11-09 (Phase 1.6 — pm-scrum-master + pm-qa)
+
+- **NEW (2026-11-09, pm-scrum-master):** Formal timeline decision for `pm-devops-unblock-mobile-native-cloud-builds` keystone (#2652) — ship by date (within 7 days) or explicit deprioritisation + drop the 4 gated KMP backlog rows to `deferred`. The keystone has been carried as "high priority" across multiple roadmaps without landing and is now the dominant structural tax on dispatcher buffer depth (4 KMP backlog rows + 1 action-list row gated). Owner: pm-devops.
+- **NEW (2026-11-09, pm-tech-lead decision requested, surfaced by pm-qa):** Churn-policy for frontend files hitting ≥4 PRs in a rolling week — do we require a surface-level integration test before the next mutation PR lands? Trigger today: `RegistryPage.tsx` 4 PRs in 3 days, each with narrow PR-shaped unit tests but no cross-mutation coverage. Owner: pm-tech-lead.
+- **NEW (2026-11-09, pm-qa):** Confidence upgrade for `code-review-ppt-web-core-refresh-token-localstorage` — the underlying finding is a structural fact (localStorage write is observable at source), not a hypothesis. Current `confidence: medium` blocks the security fast-track (needs `high`) and keeps a known real exposure parked at score 2. Owner: pm-security to adjudicate.

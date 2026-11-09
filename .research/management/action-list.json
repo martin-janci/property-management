@@ -94,9 +94,9 @@
       "action": "Adopt eslint-plugin-react-hooks + i18next/no-literal-string in frontend/apps/mobile (blocking, warn-only for one sprint) — closes the chronic class-of-defect behind the carried mobile-rn lint-gap risk (ranked-ballot + i18n fallback bugs still open 83 days later)",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "dependency": "pm-qa",
+      "dependency": "pm-devops-unblock-mobile-native-cloud-builds",
       "depends_on": [
-        "UNRESOLVED:pm-qa"
+        "pm-devops-unblock-mobile-native-cloud-builds"
       ],
       "status": "open",
       "deadline": null,
@@ -373,7 +373,55 @@
       "dependency": null,
       "depends_on": [],
       "first_open_at": "2026-11-07T12:31:00Z"
+    },
+    {
+      "id": "pm-qa-registry-integration-test-2026-11-09",
+      "action": "Add a RegistryPage integration test covering all four pet/vehicle mutation paths in one file — current coverage is PR-shaped, not surface-shaped, and the file has seen 4 PRs in 3 days",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-09"
+    },
+    {
+      "id": "pm-qa-dispatcher-orphan-base-self-test-2026-11-09",
+      "action": "Add dispatcher-self-test T31 that hard-fails when an assignment base commit is not an ancestor of origin/dev (issue #3357 class — three PRs were silently orphaned on 2026-11-08)",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-09"
+    },
+    {
+      "id": "pm-scrum-master-clear-unresolved-sentinels-2026-11-09",
+      "action": "Resolve or escalate the two 12-day-stale UNRESOLVED: sentinels in action-list (pm-scrum-master-violations-xtenant-404-contract-sweep-2026-10-28 still carries UNRESOLVED:pm-security). Dispatcher claim-gate correctly skips them but they hide real planning work.",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "pm-security",
+      "depends_on": [
+        "UNRESOLVED:pm-security owes adoption or deferral"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-09"
+    },
+    {
+      "id": "pm-scrum-master-mobile-native-keystone-decision-2026-11-09",
+      "action": "Formal decision on pm-devops-unblock-mobile-native-cloud-builds keystone (#2652) — either commit to a ship date within 7 days or explicitly deprioritise + drop the 4 gated KMP rows to deferred. Has been high-priority across multiple roadmaps without landing.",
+      "owner_role": "pm-devops",
+      "priority": "high",
+      "dependency": "pm-devops-unblock-mobile-native-cloud-builds",
+      "depends_on": [
+        "pm-devops-unblock-mobile-native-cloud-builds"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-09"
     }
   ],
-  "generated": "2026-10-28T11:00:00Z"
+  "generated": "2026-11-09T00:39:10Z"
 }

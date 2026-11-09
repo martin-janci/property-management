@@ -13145,7 +13145,7 @@
       "title": "Shared Ktor HttpClient has no HttpTimeout - mobile API calls can hang indefinitely",
       "vector": "bug",
       "confidence": "medium",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "rotating-expert-review [mobile-native-kmp]"
@@ -13153,13 +13153,14 @@
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37-43 - the single shared HttpClient installs only ContentNegotiation and Logging(NONE) and sets a default contentType; it never installs the HttpTimeout plugin (no requestTimeoutMillis / connectTimeoutMillis / socketTimeoutMillis).",
         "This client backs every repository (ApiClient, ListingRepository, PortalListingsRepository, InquiryRepository, NotificationRepository, FavoritesRepository, etc.). The Android (OkHttp/HttpURLConnection) path has no implicit request timeout, so a stalled connection leaves suspend calls hanging and the Compose UI stuck on a spinner with no error path.",
-        "Fix: install(HttpTimeout) with sane request/connect/socket timeouts in HttpClientProvider so stalled requests surface as a catchable exception (already handled by the try/catch -> Result.failure pattern in every repository)."
+        "Fix: install(HttpTimeout) with sane request/connect/socket timeouts in HttpClientProvider so stalled requests surface as a catchable exception (already handled by the try/catch -> Result.failure pattern in every repository).",
+        "decayed 2026-11-09: no new signals in 14d (was updated_at=2026-10-25)"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt"
       ],
       "created_at": "2026-10-25",
-      "updated_at": "2026-10-25",
+      "updated_at": "2026-11-09",
       "plan": null,
       "type": "code-review-finding",
       "source": "rotating-expert-review",
@@ -13173,22 +13174,24 @@
       "title": "Reality mobile MyListings + portfolio analytics silently cap at 100 listings (no pagination)",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "rotating-expert-review [mobile-native-kmp]"
       ],
       "evidence": [
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:471-472 - MyListings loads portalListingsRepository.listMyListings(limit = 100) once with no offset paging UI; a realtor with >100 listings never sees rows beyond the first 100.",
         "mobile-native/shared/.../realtor/PortalListingsRepository.kt:111-124 getPortfolioAnalytics() also fans out over listMyListings(limit = 100).listings only, so portfolio totals (views/inquiries/favorites/trends) silently undercount for realtors with >100 listings.",
-        "Fix: page listMyListings via offset until the server returns fewer than `limit` rows (or add explicit pagination), and aggregate analytics over the full set rather than the first page."
+        "Fix: page listMyListings via offset until the server returns fewer than `limit` rows (or add explicit pagination), and aggregate analytics over the full set rather than the first page.",
+        "decayed 2026-11-09: no new signals in 14d (was updated_at=2026-10-25)",
+        "decayed to 0 — status flipped to dropped"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt",
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt"
       ],
       "created_at": "2026-10-25",
-      "updated_at": "2026-10-25",
+      "updated_at": "2026-11-09",
       "plan": null,
       "type": "code-review-finding",
       "source": "rotating-expert-review",
@@ -14791,21 +14794,24 @@
       "id": "code-review-ppt-web-core-refresh-token-localstorage",
       "title": "SECURITY: ppt-web refresh-token persisted in localStorage — XSS-reachable",
       "vector": "security",
-      "confidence": "medium",
+      "confidence": "high",
       "score": 2,
       "status": "open",
       "sources": [
-        "rotating-expert-review 2026-11-03 ppt-web-core (dispatcher Tier-1d)"
+        "rotating-expert-review 2026-11-03 ppt-web-core (dispatcher Tier-1d)",
+        "direct-verify 2026-11-09"
       ],
       "evidence": [
         "See .research/signals/2026-11-03-ppt-web-core-tier1d.json for full finding. Catch-up for 2026-11-03 skipped run.",
-        "Security-sensitive but confidence=medium — security fast-track requires confidence=high, so stays at score 2 without auto-promotion."
+        "Security-sensitive but confidence=medium — security fast-track requires confidence=high, so stays at score 2 without auto-promotion.",
+        "direct-verify 2026-11-09: confirmed `localStorage.setItem(REFRESH_TOKEN_KEY, token)` at frontend/packages/shared/src/auth.ts:221 (and :197 for access token) — classic XSS-reachable refresh-token anti-pattern. Confidence upgraded medium→high.",
+        "promotion blocked: stem-collision with quarantined assignment PR #3294 (dispatcher assignments.json row with same task_id in `quarantined` status) — security fast-track (score 2 + security + high) would otherwise fire. Operator: resolve quarantine or drop #3294 to unblock."
       ],
       "files": [
         "frontend/apps/ppt-web/src/"
       ],
       "created_at": "2026-11-04",
-      "updated_at": "2026-11-04",
+      "updated_at": "2026-11-09",
       "plan": null
     },
     {
@@ -15219,20 +15225,22 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #3293"
+        "PR #3293",
+        "PR #3358"
       ],
       "evidence": [
         "PR #3293 touched reality-product route file(s) but did not update docs/screens/reality/*.md: frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx, frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.test.tsx",
-        "Best-effort heuristic — some of these are test-only or API-route changes that don't warrant a screen-doc update. Treat as review candidate."
+        "Best-effort heuristic — some of these are test-only or API-route changes that don't warrant a screen-doc update. Treat as review candidate.",
+        "resolved: PR #3358 merged 2026-11-08 — screen-map doc docs/screens/reality/realtor-detail.md updated in-step with the i18n PR #3293 route changes (re-landed on current dev per issue #3357)"
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx",
         "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.test.tsx"
       ],
       "created_at": "2026-11-05",
-      "updated_at": "2026-11-05",
+      "updated_at": "2026-11-09",
       "plan": null,
       "type": "screen-map-drift",
       "source": "PR #3293",
@@ -15440,6 +15448,157 @@
         "assignment_status": "failed",
         "pr_number": null
       }
+    },
+    {
+      "id": "code-review-reality-server-sso-oauth-json-unbounded",
+      "title": "reality-server SSO: response.json() at sso.rs:763/780 parses PM OAuth token+userinfo with no size cap — DoS + partial-deserialize risk at auth-adjacent boundary",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review 2026-11-09 reality-server",
+        "PR #3350 (same pattern fixed on reality-web)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:763 — `Ok(response.json().await?)` in exchange_code_for_tokens (verified via direct Read 2026-11-09)",
+        "backend/servers/reality-server/src/routes/sso.rs:780 — identical pattern in get_user_info returning SsoUserInfo",
+        "PR #3350 merged 2026-11-07 — reality-web share-comparison body now parsed via listingSummarySchema + parseListingSummary; same trust-boundary class, reference pattern for the fix",
+        "Severity upgraded to High: auth-adjacent (PM OAuth) + unbounded body consumption + partial-deserialize into SsoUserInfo used by claim_or_create_portal_user_from_pm"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": "plans/code-review-reality-server-sso-oauth-json-unbounded.md"
+    },
+    {
+      "id": "code-review-reality-server-public-listing-resolve-dup",
+      "title": "reality-server: 4 copies of SECURITY H4/H5 active-listing gate (inquiries.rs:347, :519, compare.rs:223, reports.rs:276) — collapse into util helper",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-09 reality-server"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/inquiries.rs:348 — `SELECT created_by FROM listings WHERE id = $1 AND status = active` (verified via Grep 2026-11-09)",
+        "backend/servers/reality-server/src/routes/inquiries.rs:520 — identical query + error handling in send_viewing_request",
+        "backend/servers/reality-server/src/routes/compare.rs:224 — `SELECT EXISTS(SELECT 1 FROM listings WHERE id = $1 AND status = active)` (SECURITY H4 comment)",
+        "backend/servers/reality-server/src/routes/reports.rs:277 — identical EXISTS form (SECURITY H5 comment)",
+        "4 hand-rolled copies of a security-annotated active-listing gate: if a new status (soft-delete, pending-publish) is added, one callsite is likely missed → draft/archived data leaks via the overlooked endpoint"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/inquiries.rs",
+        "backend/servers/reality-server/src/routes/compare.rs",
+        "backend/servers/reality-server/src/routes/reports.rs"
+      ],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx",
+      "title": "ppt-web RegistryPage.tsx — 4 commits in 3 days (PRs #3354, #3355, #3359): auth-context + i18n + toast-feedback rework",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log 2026-11-06..2026-11-09"
+      ],
+      "evidence": [
+        "4 commits in 3-day window via PR #3354 (auth context), #3355 (i18n), #3359 (toast feedback) — highest-churned code file this run; runs_seen=1 so no repeated-churn stack yet"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx"
+      ],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx",
+      "title": "reality-web ComparisonUrlHandler.tsx — 2 touches in window (PR #3350): schema-validation fix + new listingSummarySchema.ts sibling",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log 2026-11-06..2026-11-09",
+        "PR #3350"
+      ],
+      "evidence": [
+        "2 commits in window via PR #3350 — unchecked JSON cast fix with regression test (runs_seen=1); informational, not a defect"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx"
+      ],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": null
+    },
+    {
+      "id": "closed-not-merged-pr-3301",
+      "title": "PR #3301 (code-review-reality-server-inquiry-dead-fk-classify) closed unmerged — orphaned from dev; superseded by merged #3302 per issue #3357",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "PR #3301",
+        "PR #3302",
+        "Issue #3357"
+      ],
+      "evidence": [
+        "Closed 2026-11-08 — intentional dispatcher rebase cleanup per issue #3357; equivalent work landed as merged PR #3302 on current dev"
+      ],
+      "files": [],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": null
+    },
+    {
+      "id": "closed-not-merged-pr-3333",
+      "title": "PR #3333 (screen-map-drift-pr-3293-reality) closed unmerged — orphaned from dev; re-landed as merged #3358 per issue #3357",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "PR #3333",
+        "PR #3358",
+        "Issue #3357"
+      ],
+      "evidence": [
+        "Closed 2026-11-08 — intentional dispatcher rebase cleanup per issue #3357; equivalent docs-only change re-landed as merged PR #3358"
+      ],
+      "files": [],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": null
+    },
+    {
+      "id": "closed-not-merged-pr-3356",
+      "title": "PR #3356 (code-review-ppt-web-ui-registry-mutation-silent-fail) closed unmerged — add/add conflict with #3354; re-landed as merged #3359 per issue #3357",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "PR #3356",
+        "PR #3359",
+        "Issue #3357"
+      ],
+      "evidence": [
+        "Closed 2026-11-08 — intentional dispatcher reland (test-suite conflict with #3354) per issue #3357; equivalent work landed as merged PR #3359"
+      ],
+      "files": [],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": null
     }
   ]
 }

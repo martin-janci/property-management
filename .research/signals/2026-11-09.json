@@ -1,0 +1,131 @@
+{
+  "date": "2026-11-09",
+  "since_iso": "2026-11-06T14:58:01Z",
+  "lag_hours": 57,
+  "trigger_payload": "buffer-low: claimable=6/72 — all open items gated(mobile-native)/dep-blocked; refill planner with landable backend/frontend work",
+  "signals": [
+    {
+      "id": "lag-warning-2026-11-09",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": "57h since 2026-11-06T14:58:01Z — past the 36h threshold; routine missed ~2 daily slots. Dispatcher kept ticking on its own loop in the meantime (last commit cf7ebf3 2026-11-08).",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx",
+      "type": "churn-hotspot",
+      "source": "git-log 2026-11-06..2026-11-09",
+      "score_delta": 1,
+      "evidence": "4 commits in 3-day window via PR #3354 (auth context), #3355 (i18n), #3359 (toast feedback) — highest-churned code file this run; runs_seen_after_this=1",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx",
+      "type": "churn-hotspot",
+      "source": "git-log 2026-11-06..2026-11-09",
+      "score_delta": 1,
+      "evidence": "2 commits in window via PR #3350 — unchecked JSON cast fix + regression test (runs_seen_after_this=1); informational rather than defect",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "closed-not-merged-pr-3301",
+      "type": "closed-not-merged-pr",
+      "source": "PR #3301",
+      "score_delta": 1,
+      "evidence": "Closed 2026-11-08 — orphaned from dev (base commit eac70d1c2 no longer reachable) per issue #3357; superseded by merged #3302 on current dev. Intentional dispatcher rebase cleanup, not a regression.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-3333",
+      "type": "closed-not-merged-pr",
+      "source": "PR #3333",
+      "score_delta": 1,
+      "evidence": "Closed 2026-11-08 — orphaned from dev per issue #3357; re-landed as merged PR #3358 (docs-only). Intentional cleanup.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-3356",
+      "type": "closed-not-merged-pr",
+      "source": "PR #3356",
+      "score_delta": 1,
+      "evidence": "Closed 2026-11-08 — add/add conflict with #3354's test suite per issue #3357; re-landed as merged PR #3359. Intentional cleanup.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "code-review-reality-server-sso-oauth-json-unbounded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-11-09 reality-server",
+      "segment": "reality-server",
+      "score_delta": 3,
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:763 — `Ok(response.json().await?)` in exchange_code_for_tokens parses PM OAuth token body with no size cap (verified via direct Read 2026-11-09)",
+        "backend/servers/reality-server/src/routes/sso.rs:780 — same pattern in get_user_info returning SsoUserInfo",
+        "PR #3350 (merged 2026-11-07) landed the parallel fix on reality-web (parseListingSummary + listingSummarySchema) — reference pattern for the fix shape",
+        "Severity: High (+3) — unbounded body consumption at auth-adjacent boundary + partial-deserialize into SsoUserInfo used by claim_or_create_portal_user_from_pm. DoS + user-record integrity surface"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-public-listing-resolve-dup",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-11-09 reality-server",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/reality-server/src/routes/inquiries.rs:348 + :520 — identical `SELECT created_by FROM listings WHERE id = $1 AND status = 'active'` (verified via Grep 2026-11-09)",
+        "backend/servers/reality-server/src/routes/compare.rs:224 — `SELECT EXISTS(SELECT 1 FROM listings WHERE id = $1 AND status = 'active')` (SECURITY H4 comment)",
+        "backend/servers/reality-server/src/routes/reports.rs:277 — identical EXISTS form (SECURITY H5 comment)",
+        "4 hand-rolled copies of a security-annotated active-listing gate — a `util::listings::resolve_active_public_listing(conn, id)` helper would collapse the duplication and make the SECURITY H4/H5 gate single-site",
+        "Severity: Low (+1) — latent maintenance risk, not currently exploited"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-ppt-web-core-refresh-token-localstorage",
+      "type": "code-review-finding",
+      "source": "direct-verify 2026-11-09 (re-emit with score_delta=0 to drive confidence upgrade medium→high)",
+      "segment": "ppt-web-core",
+      "score_delta": 0,
+      "evidence": [
+        "Direct verification via Read 2026-11-09: `localStorage.setItem(REFRESH_TOKEN_KEY, token)` at frontend/packages/shared/src/auth.ts:221, `localStorage.setItem(ACCESS_TOKEN_KEY, ...)` at :197. Both tokens persisted in localStorage — classic XSS-reachable refresh-token anti-pattern.",
+        "Re-emit with score_delta=0 (G4-safe for non-cumulative type when score does not advance); drives confidence medium→high per Phase 2 'higher of' rule. 2026-11-06 brief flagged this exact confidence gap as the gate for the security fast-track.",
+        "Promotion still blocked: stem-collision with quarantined assignment PR #3294 (dispatcher assignments.json carries task_id `code-review-ppt-web-core-refresh-token-localstorage` in `quarantined`). Operator needs to resolve the quarantine or drop #3294 to unblock."
+      ],
+      "confidence": "high",
+      "candidate_vector": "security",
+      "expert": "self"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — the only Phase 5 allowlisted signal types this run would be stalled-review (none fired) or dep-update-noise lockfile-drift (none). screen-map-drift (PR #3293-reality) already resolved by PR #3358. The two Phase 1.5 reality-server findings are code changes, not on the allowlist (Phase 5 does not touch arbitrary Rust).",
+  "goal_checks": [
+    { "goal": "G1", "passed": true,  "command": "test -f .research/briefs/2026-11-09.md && head -1 .research/briefs/2026-11-09.md | grep -q '^# 2026-11-09$'", "observed": "exit 0 (post-commit)", "expected": "exit 0" },
+    { "goal": "G2", "passed": true,  "command": "state advanced vs HEAD (last_pr_seen 3349→3359, last_issue_seen 3341→3357, last_commit_sha advanced, seen_signals grew, hotspot_history keys grew, pm_cursor advanced 3→4, coverage_cursor advanced 0→1)", "observed": "true", "expected": "true" },
+    { "goal": "G3", "passed": true,  "command": "jq '[.items[].id] | (length == (unique | length))' .research/backlog.json", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true,  "command": "no non-cumulative re-emit with score_delta>0 vs HEAD.seen_signals", "observed": "code-review-ppt-web-core-refresh-token-localstorage re-emits with score_delta=0 (allowed); all other signal ids new", "expected": "true" },
+    { "goal": "G5",  "passed": true,  "command": "jq '[.items[] | select(.score > 8)] | length == 0' .research/backlog.json AND decay applied to open items >14d old", "observed": "true; decayed 2 open mobile-native-kmp rows (http-client-no-timeout 2→1, my-listings-pagination-cap 1→0→dropped)", "expected": "true" },
+    { "goal": "G6", "passed": true,  "command": "new plan files have adversarial-pass annotation in brief", "observed": "1 new plan (plans/code-review-reality-server-sso-oauth-json-unbounded.md); brief annotates 'adversarial pass: passed'", "expected": "true" },
+    { "goal": "G7", "passed": true,  "command": "≤2 new plans, each with 4 metadata + 11 headings + ticked capability + Mode line + resolvable Files", "observed": "1 new plan, 15 sections present, C1+C6 ticked, Mode: cloud-ok, Files resolve (backend/servers/reality-server/src/routes/sso.rs exists)", "expected": "true" },
+    { "goal": "G8", "passed": true,  "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true,  "command": "secrets/hostname scan on staged diff excluding baseline docs", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff -q .research/backlog.md /tmp/backlog.regen.md", "observed": "identical (regenerated this run)", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "no failed phases; cursors advanced for every successful phase", "observed": "all phases succeeded", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "prior-run plans still exist in plans/ or plans/_archive/", "observed": "17 plans at HEAD all still present", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive count this run >= HEAD", "observed": "21 at HEAD, 21 this run (no archive moves)", "expected": "exit 0" },
+    { "goal": "G14", "passed": true, "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md", "observed": "identical (regenerated this run)", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix cap + idempotency + certainty + verify-all + kill-switch", "observed": "no auto_fix actions; no new auto_fix_history entries", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts valid + pm_cursor in [0,7] + coverage_cursor advanced when pm_cursor did", "observed": "action-list.json/risks.json parse; project-state.md non-empty; pm_cursor.next_index=4 ∈ [0,7]; coverage_cursor.next_index=1 advanced from HEAD.0 (pm_cursor also advanced 3→4)", "expected": "exit 0" },
+    { "goal": "G17", "passed": true, "command": "no Telegram token value in staged diff", "observed": "0", "expected": "0" }
+  ]
+}
