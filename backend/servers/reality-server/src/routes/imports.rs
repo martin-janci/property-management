@@ -13,6 +13,7 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
+use common::url_validation::validate_external_url;
 use db::{
     models::{
         CreateFeedSubscription, CreatePortalImportJob, PortalImportJob, PortalImportJobWithStats,
@@ -150,6 +151,16 @@ pub async fn create_import_job(
     principal: PortalPrincipal,
     Json(data): Json<CreatePortalImportJob>,
 ) -> Result<(axum::http::StatusCode, Json<ImportJobResponse>), (axum::http::StatusCode, String)> {
+    // SECURITY: reject SSRF-prone source URLs at submission time (parity with
+    // `agency_imports`). A domain that passes this static check can still
+    // resolve to a private IP (DNS rebinding) — the import worker must
+    // re-validate the resolved IP at fetch time.
+    if let Some(url) = data.source_url.as_deref() {
+        if let Err(err) = validate_external_url(url) {
+            return Err((axum::http::StatusCode::BAD_REQUEST, err.to_string()));
+        }
+    }
+
     let job = state
         .reality_portal_repo
         .create_import_job(principal.user_id, data)
@@ -212,6 +223,16 @@ pub async fn update_import_job(
     Path(id): Path<Uuid>,
     Json(data): Json<UpdatePortalImportJob>,
 ) -> Result<Json<ImportJobResponse>, (axum::http::StatusCode, String)> {
+    // SECURITY: reject SSRF-prone source URLs at submission time (parity with
+    // `agency_imports` and `create_import_job`). A domain that passes this
+    // static check can still resolve to a private IP (DNS rebinding) — the
+    // import worker must re-validate the resolved IP at fetch time.
+    if let Some(url) = data.source_url.as_deref() {
+        if let Err(err) = validate_external_url(url) {
+            return Err((axum::http::StatusCode::BAD_REQUEST, err.to_string()));
+        }
+    }
+
     let job = state
         .reality_portal_repo
         .update_import_job(id, principal.user_id, data)

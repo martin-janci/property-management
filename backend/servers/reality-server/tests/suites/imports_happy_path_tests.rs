@@ -122,6 +122,29 @@ async fn create_import_job_returns_201(pool: PgPool) {
     assert_eq!(status, 201, "create_import_job must return 201 Created");
 }
 
+// Security: create_import_job must reject SSRF-prone `source_url` values
+// (parity with agency_imports). `http://169.254.169.254/` is the AWS
+// metadata endpoint — rejected by the literal-IP range check regardless of
+// scheme/dev-mode. The handler returns 400 before any row is inserted.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn create_import_job_rejects_ssrf_source_url(pool: PgPool) {
+    let user = seed_user(&pool, "create-job-ssrf").await;
+    let token = mint_token(user);
+    let app = imports_router(pool);
+    let status = send_json(
+        &app,
+        Method::POST,
+        "/api/v1/imports/jobs",
+        Some(&token),
+        json!({ "source_type": "url", "source_url": "http://169.254.169.254/latest/meta-data/" }),
+    )
+    .await;
+    assert_eq!(
+        status, 400,
+        "create_import_job must reject SSRF source_url with 400, got {status}"
+    );
+}
+
 // ── get_import_job (GET /jobs/{id}) ──────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -153,6 +176,30 @@ async fn update_import_job_returns_2xx(pool: PgPool) {
     )
     .await;
     assert!(status.is_success(), "expected 2xx, got {status}");
+}
+
+// Security: update_import_job must reject SSRF-prone `source_url` values
+// (parity with create_import_job / agency_imports). Returns 400 before the
+// repo update runs.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn update_import_job_rejects_ssrf_source_url(pool: PgPool) {
+    let user = seed_user(&pool, "update-job-ssrf").await;
+    let job_id = seed_import_job(&pool, user).await;
+    let token = mint_token(user);
+    let app = imports_router(pool);
+    let path = format!("/api/v1/imports/jobs/{job_id}");
+    let status = send_json(
+        &app,
+        Method::PUT,
+        &path,
+        Some(&token),
+        json!({ "source_url": "http://169.254.169.254/latest/meta-data/" }),
+    )
+    .await;
+    assert_eq!(
+        status, 400,
+        "update_import_job must reject SSRF source_url with 400, got {status}"
+    );
 }
 
 // ── list_feeds (GET /feeds) ──────────────────────────────────────────────────
