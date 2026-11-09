@@ -84,6 +84,7 @@ pub struct ImportJobResponse {
 #[derive(Debug, Deserialize, IntoParams, ToSchema)]
 pub struct ImportJobsQuery {
     pub status: Option<String>,
+    /// Page size (default 20, clamped to `1..=100` before reaching SQL).
     pub limit: Option<i32>,
     pub offset: Option<i32>,
 }
@@ -117,12 +118,18 @@ pub async fn list_import_jobs(
     principal: PortalPrincipal,
     Query(query): Query<ImportJobsQuery>,
 ) -> Result<Json<ImportJobsResponse>, (axum::http::StatusCode, String)> {
+    // Clamp the caller-supplied `limit` before it reaches SQL: a negative value
+    // binds into `LIMIT $3` as `LIMIT -1`, which Postgres rejects (surfacing as a
+    // 500), and an arbitrarily large value is a resource-exhaustion vector. Mirror
+    // the `1..=100` convention used by the sibling portal list handlers
+    // (see `routes::portal_listings`).
+    let limit = query.limit.unwrap_or(20).clamp(1, 100);
     let jobs = state
         .reality_portal_repo
         .list_import_jobs(
             principal.user_id,
             query.status,
-            query.limit.unwrap_or(20),
+            limit,
             crate::util::clamp_offset_i32(query.offset),
         )
         .await
