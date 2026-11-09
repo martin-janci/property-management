@@ -12,11 +12,42 @@
 //! feed CRUD endpoints are deferred — see the BIT-344 report.
 
 use crate::common::{make_app_state, mint_token, send, send_json};
-use axum::{http::Method, Router};
+use axum::{
+    body::Body,
+    http::{header, Method, Request},
+    Router,
+};
 use reality_server::routes;
 use serde_json::json;
 use sqlx::PgPool;
+use tower::ServiceExt;
 use uuid::Uuid;
+
+/// GET helper that returns the decoded JSON body (the shared `send` helper
+/// only surfaces the status code).
+async fn get_json(router: &Router, path: &str, token: &str) -> serde_json::Value {
+    let response = router
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri(path)
+                .header(header::AUTHORIZATION, format!("Bearer {token}"))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert!(
+        response.status().is_success(),
+        "expected 2xx, got {}",
+        response.status()
+    );
+    let bytes = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    serde_json::from_slice(&bytes).unwrap()
+}
 
 fn imports_router(pool: PgPool) -> Router {
     let state = make_app_state(pool);
@@ -84,6 +115,30 @@ async fn list_import_jobs_returns_2xx(pool: PgPool) {
     let app = imports_router(pool);
     let status = send(&app, Method::GET, "/api/v1/imports/jobs", Some(&token)).await;
     assert!(status.is_success(), "expected 2xx, got {status}");
+}
+
+// Regression: `total` must be the full count of matching rows, not the length
+// of the returned page. Before the fix the handler set `total = jobs.len()`,
+// so a `limit`ed page reported `total == page_len`, breaking client paging.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn list_import_jobs_total_is_full_count_not_page_len(pool: PgPool) {
+    let user = seed_user(&pool, "list-jobs-total").await;
+    // Three owned jobs, but we only ask for a page of two.
+    seed_import_job(&pool, user).await;
+    seed_import_job(&pool, user).await;
+    seed_import_job(&pool, user).await;
+    let token = mint_token(user);
+    let app = imports_router(pool);
+
+    let body = get_json(&app, "/api/v1/imports/jobs?limit=2", &token).await;
+
+    let page_len = body["jobs"].as_array().expect("jobs array").len();
+    let total = body["total"].as_i64().expect("total i64");
+    assert_eq!(page_len, 2, "page should honour limit=2");
+    assert_eq!(
+        total, 3,
+        "total must be the full match count (3), not the page length ({page_len})"
+    );
 }
 
 // ── create_import_job (POST /jobs) ───────────────────────────────────────────
