@@ -15452,7 +15452,7 @@
       "vector": "security",
       "confidence": "high",
       "score": 3,
-      "status": "ready",
+      "status": "done",
       "sources": [
         "code-review-api-handlers-2026-11-09"
       ],
@@ -15465,7 +15465,12 @@
       ],
       "created_at": "2026-11-09",
       "updated_at": "2026-11-09",
-      "plan": "plans/code-review-api-handlers-budgets-db-error-leak.md"
+      "plan": "plans/code-review-api-handlers-budgets-db-error-leak.md",
+      "reconciled": {
+        "at": "2026-11-09T16:24:47Z",
+        "assignment_status": "merged",
+        "pr_number": 3362
+      }
     },
     {
       "id": "code-review-api-handlers-messaging-db-error-leak",
@@ -15473,7 +15478,7 @@
       "vector": "security",
       "confidence": "high",
       "score": 2,
-      "status": "ready",
+      "status": "done",
       "sources": [
         "code-review-api-handlers-2026-11-09"
       ],
@@ -15486,7 +15491,12 @@
       ],
       "created_at": "2026-11-09",
       "updated_at": "2026-11-09",
-      "plan": "plans/code-review-api-handlers-messaging-db-error-leak.md"
+      "plan": "plans/code-review-api-handlers-messaging-db-error-leak.md",
+      "reconciled": {
+        "at": "2026-11-09T16:24:47Z",
+        "assignment_status": "merged",
+        "pr_number": 3363
+      }
     },
     {
       "id": "churn-hotspot-ppt-web-registry-page",
@@ -15494,7 +15504,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3354",
         "PR #3355",
@@ -15508,7 +15518,12 @@
       ],
       "created_at": "2026-11-09",
       "updated_at": "2026-11-09",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-09T16:24:47Z",
+        "assignment_status": "merged",
+        "pr_number": 3365
+      }
     },
     {
       "id": "code-review-api-handlers-tenant-export-outdir-path",
@@ -15516,7 +15531,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [api-handlers]"
       ],
@@ -15536,7 +15551,12 @@
       "segment": "api-handlers",
       "score_delta": 2,
       "candidate_vector": "bug",
-      "expert": "security"
+      "expert": "security",
+      "reconciled": {
+        "at": "2026-11-09T16:24:47Z",
+        "assignment_status": "merged",
+        "pr_number": 3364
+      }
     },
     {
       "id": "code-review-api-handlers-health-alerts-page-size-uncapped",
@@ -15544,7 +15564,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [api-handlers]"
       ],
@@ -15564,7 +15584,12 @@
       "segment": "api-handlers",
       "score_delta": 1,
       "candidate_vector": "bug",
-      "expert": "rust"
+      "expert": "rust",
+      "reconciled": {
+        "at": "2026-11-09T16:24:47Z",
+        "assignment_status": "merged",
+        "pr_number": 3361
+      }
     },
     {
       "id": "code-review-reality-server-imports-limit-unclamped",

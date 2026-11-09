@@ -207,20 +207,54 @@
       "source": "pm-analysis 2026-11-09"
     },
     {
-      "id": "churn-hotspot-ppt-web-registry-page",
-      "action": "Watch RegistryPage.tsx churn — 3 touches across #3354/#3355/#3359 (auth context + i18n + toasts)",
-      "owner_role": "pm-tech-lead",
+      "id": "code-review-reality-server-imports-limit-unclamped",
+      "action": "reality-server imports.rs list_import_jobs passes user `limit` to SQL unclamped - negative LIMIT 500s, huge LIMIT is unbounded",
+      "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-09T12:31:43Z (score=1 conf=high vector=refactor)",
+      "source": "dispatcher-backlog-refill 2026-11-09T16:25:51Z (score=2 conf=medium vector=bug)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-11-09T12:31:43Z",
+      "first_open_at": "2026-11-09T16:25:51Z",
       "backlog_ref": {
         "plan": null,
-        "score": 1,
-        "vector": "refactor"
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-reality-server-imports-source-url-no-validation",
+      "action": "reality-server imports.rs create/update_import_job store user `source_url` without validate_external_url (SSRF parity gap vs agency_imports)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-09T16:25:51Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-09T16:25:51Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-reality-server-imports-total-page-len",
+      "action": "reality-server list_import_jobs reports `total` as page length, breaking client pagination",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-09T16:25:51Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-09T16:25:51Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
       }
     }
   ],

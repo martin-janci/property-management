@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-08T22:29:28Z",
+  "archived_at": "2026-11-09T16:31:41Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2888,6 +2888,30 @@
         "merged_pr": 3316,
         "merged_at": "2026-11-04T20:39:29Z",
         "at": "2026-11-04T22:28:58Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-ppt-web-registry-page",
+      "action": "Watch RegistryPage.tsx churn — 3 touches across #3354/#3355/#3359 (auth context + i18n + toasts)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-09T12:31:43Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-11-09T16:24:47Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-09T12:31:43Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3365,
+        "merged_at": "2026-11-09T14:39:27Z",
+        "at": "2026-11-09T16:24:47Z"
       }
     },
     {
@@ -8582,6 +8606,56 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-registry-mutation-silent-fail",
+      "action": "ppt-web RegistryPage.tsx delete/review mutation handlers (L102-142, L171-211) swallow failures with only console.error — no toast/error surface, so a failed destructive action looks successful. Surface mutation errors to the user (toast/inline error). Add/adjust a test.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1d-devreview 2026-11-07T12:31:00Z (signals/2026-11-07-ppt-web-ui-tier1d.json)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-07T12:31:00Z",
+      "resolved_at": "2026-11-09",
+      "resolution_evidence": "Merged as PR #3359 (reland) on 2026-11-08",
+      "archived_at": "2026-11-09"
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-no-i18n",
+      "action": "ppt-web registry feature (pet/vehicle forms + lists) ships hardcoded English placeholders in a 4-locale app — 0 useTranslation on 4 files",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-05T08:30:13Z (score=1 conf=medium vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-05T08:30:13Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "resolved_at": "2026-11-09",
+      "resolution_evidence": "Merged as PR #3351 on 2026-11-07",
+      "archived_at": "2026-11-09"
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-page-i18n-gap",
+      "action": "ppt-web RegistryPage.tsx (L249-250,275,302,317-318) hardcodes English (title, subtitle, Pets/Vehicles tabs, load-error) while the rest of the file uses t() — ships untranslated for sk/cs/de/pl/hu. Route the remaining strings through next i18n and add the keys for all locales.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-tier1d-devreview 2026-11-07T12:31:00Z (signals/2026-11-07-ppt-web-ui-tier1d.json)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-07T12:31:00Z",
+      "resolved_at": "2026-11-09",
+      "resolution_evidence": "Merged as PR #3355 on 2026-11-07",
+      "archived_at": "2026-11-09"
+    },
+    {
       "id": "code-review-ppt-web-ui-registry-page-no-auth",
       "action": "ppt-web RegistryPage.tsx (L19-23) and RegistryRulesPage.tsx (L21) build the API client at module scope with no accessToken/tenantId (stub) — all registry requests ship without a Bearer token/tenant context (401/non-functional) and the module-scope singleton never rotates the token. Rebuild per the canonical useBuildings.ts getToken()+useMemo pattern. Add/adjust a test.",
       "owner_role": "pm-frontend",
@@ -10605,6 +10679,26 @@
         "subject": "code-review-reality-web-sell-wizard-no-persist: wire /sell wizard Publish to createListing (#3013)",
         "at": "2026-10-02T20:28:19Z"
       }
+    },
+    {
+      "id": "code-review-reality-web-share-cmp-unchecked-json",
+      "action": "reality-web shared-comparison loader casts the listings API body with an unchecked `as Promise<ListingSummary>` — no shape validation, unlike the rest of reality-web's boundary guards (parseJsonBody / parseListingDetail)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-05T22:25:45Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-05T22:25:45Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "resolved_at": "2026-11-09",
+      "resolution_evidence": "Merged as PR #3350 on 2026-11-07",
+      "archived_at": "2026-11-09"
     },
     {
       "id": "code-review-reality-web-share-comparison-404",
@@ -21391,6 +21485,29 @@
       }
     },
     {
+      "id": "gh-issue-3283",
+      "action": "Follow-up: realtor public profile page renders hardcoded Slovak UI on a 6-language portal (PR #3225) (Closes #3283)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-11-04T14:28:32Z (#3283)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T14:28:32Z",
+      "issue_ref": {
+        "number": 3283,
+        "url": "https://github.com/martin-janci/property-management/issues/3283",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "resolved_at": "2026-11-09",
+      "resolution_evidence": "Closed via sprint PR; issue state=closed as of 2026-11-09",
+      "archived_at": "2026-11-09"
+    },
+    {
       "id": "gh-issue-3284",
       "action": "Follow-up: add a durable dead-letter path for Stripe paid-webhook/missing-invoice instead of relying only on Stripe retries (PR #3273) (Closes #3284)",
       "owner_role": "pm-tech-lead",
@@ -21443,6 +21560,172 @@
         "merged_at": "2026-11-04T20:39:37Z",
         "at": "2026-11-04T22:28:58Z"
       }
+    },
+    {
+      "id": "gh-issue-3304",
+      "action": "Follow-up: member-role escalation gate reimplements role parsing instead of reusing common::TenantRole::from_role_type (PR #3291) (Closes #3304)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3304)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T20:32:18Z",
+      "issue_ref": {
+        "number": 3304,
+        "url": "https://github.com/martin-janci/property-management/issues/3304",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "last_updated": "2026-11-04T22:33:36Z",
+      "resolved_at": "2026-11-09",
+      "resolution_evidence": "Closed; issue state=closed as of 2026-11-09",
+      "archived_at": "2026-11-09"
+    },
+    {
+      "id": "gh-issue-3305",
+      "action": "Follow-up: fold IoT org-scope check into the insert on the hot add_reading path instead of a separate SELECT EXISTS (PR #3289) (Closes #3305)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3305)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T20:32:18Z",
+      "issue_ref": {
+        "number": 3305,
+        "url": "https://github.com/martin-janci/property-management/issues/3305",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "last_updated": "2026-11-04T22:33:36Z",
+      "resolved_at": "2026-11-09",
+      "resolution_evidence": "Closed; issue state=closed as of 2026-11-09",
+      "archived_at": "2026-11-09"
+    },
+    {
+      "id": "gh-issue-3306",
+      "action": "Follow-up: consolidate per-file require_manager(rls) helpers onto the shared rls_authz::require_manager_rls (PR #3287) (Closes #3306)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3306)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T20:32:18Z",
+      "issue_ref": {
+        "number": 3306,
+        "url": "https://github.com/martin-janci/property-management/issues/3306",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "resolved_at": "2026-11-09",
+      "resolution_evidence": "Closed; issue state=closed as of 2026-11-09",
+      "archived_at": "2026-11-09"
+    },
+    {
+      "id": "gh-issue-3307",
+      "action": "Follow-up: fault update/triage/status handlers manually guard org on an id-only query instead of using find_by_id_for_org (PR #3286) (Closes #3307)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3307)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T20:32:18Z",
+      "issue_ref": {
+        "number": 3307,
+        "url": "https://github.com/martin-janci/property-management/issues/3307",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "last_updated": "2026-11-04T22:33:36Z",
+      "resolved_at": "2026-11-09",
+      "resolution_evidence": "Closed; issue state=closed as of 2026-11-09",
+      "archived_at": "2026-11-09"
+    },
+    {
+      "id": "gh-issue-3308",
+      "action": "Follow-up: add RLS-aware repo variants for vote sub-resource reads instead of pool-bypass + manual vote_in_org guard (PR #3281) (Closes #3308)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3308)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T20:32:18Z",
+      "issue_ref": {
+        "number": 3308,
+        "url": "https://github.com/martin-janci/property-management/issues/3308",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "last_updated": "2026-11-04T22:33:36Z",
+      "resolved_at": "2026-11-09",
+      "resolution_evidence": "Closed; issue state=closed as of 2026-11-09",
+      "archived_at": "2026-11-09"
+    },
+    {
+      "id": "gh-issue-3309",
+      "action": "Follow-up: cs.json/sk.json were reordered (~9k-line churn) instead of appended; enforce stable key order for messages/*.json (PR #3260) (Closes #3309)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3309)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T20:32:18Z",
+      "issue_ref": {
+        "number": 3309,
+        "url": "https://github.com/martin-janci/property-management/issues/3309",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "last_updated": "2026-11-04T22:33:36Z",
+      "resolved_at": "2026-11-09",
+      "resolution_evidence": "Closed; issue state=closed as of 2026-11-09",
+      "archived_at": "2026-11-09"
+    },
+    {
+      "id": "gh-issue-3310",
+      "action": "Follow-up: community feed shows every author as \"Neighbor\" (API returns ids only); formatMoney coerces Decimal via Number() (PR #3269) (Closes #3310)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3310)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T20:32:18Z",
+      "issue_ref": {
+        "number": 3310,
+        "url": "https://github.com/martin-janci/property-management/issues/3310",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "resolved_at": "2026-11-09",
+      "resolution_evidence": "Closed; issue state=closed as of 2026-11-09",
+      "archived_at": "2026-11-09"
     },
     {
       "id": "gh-issue-3311",
@@ -25808,265 +26091,6 @@
         "by": "dispatcher-verify-noop",
         "evidence": "reclaim respawn confirmed already shipped on dev; pr=none status=done"
       }
-    },
-    {
-      "id": "gh-issue-3283",
-      "action": "Follow-up: realtor public profile page renders hardcoded Slovak UI on a 6-language portal (PR #3225) (Closes #3283)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "done",
-      "source": "dispatcher-issue-ingest 2026-11-04T14:28:32Z (#3283)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-04T14:28:32Z",
-      "issue_ref": {
-        "number": 3283,
-        "url": "https://github.com/martin-janci/property-management/issues/3283",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      },
-      "resolved_at": "2026-11-09",
-      "resolution_evidence": "Closed via sprint PR; issue state=closed as of 2026-11-09",
-      "archived_at": "2026-11-09"
-    },
-    {
-      "id": "gh-issue-3304",
-      "action": "Follow-up: member-role escalation gate reimplements role parsing instead of reusing common::TenantRole::from_role_type (PR #3291) (Closes #3304)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "done",
-      "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3304)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-04T20:32:18Z",
-      "issue_ref": {
-        "number": 3304,
-        "url": "https://github.com/martin-janci/property-management/issues/3304",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      },
-      "last_updated": "2026-11-04T22:33:36Z",
-      "resolved_at": "2026-11-09",
-      "resolution_evidence": "Closed; issue state=closed as of 2026-11-09",
-      "archived_at": "2026-11-09"
-    },
-    {
-      "id": "gh-issue-3305",
-      "action": "Follow-up: fold IoT org-scope check into the insert on the hot add_reading path instead of a separate SELECT EXISTS (PR #3289) (Closes #3305)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "done",
-      "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3305)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-04T20:32:18Z",
-      "issue_ref": {
-        "number": 3305,
-        "url": "https://github.com/martin-janci/property-management/issues/3305",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      },
-      "last_updated": "2026-11-04T22:33:36Z",
-      "resolved_at": "2026-11-09",
-      "resolution_evidence": "Closed; issue state=closed as of 2026-11-09",
-      "archived_at": "2026-11-09"
-    },
-    {
-      "id": "gh-issue-3306",
-      "action": "Follow-up: consolidate per-file require_manager(rls) helpers onto the shared rls_authz::require_manager_rls (PR #3287) (Closes #3306)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "done",
-      "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3306)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-04T20:32:18Z",
-      "issue_ref": {
-        "number": 3306,
-        "url": "https://github.com/martin-janci/property-management/issues/3306",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      },
-      "resolved_at": "2026-11-09",
-      "resolution_evidence": "Closed; issue state=closed as of 2026-11-09",
-      "archived_at": "2026-11-09"
-    },
-    {
-      "id": "gh-issue-3307",
-      "action": "Follow-up: fault update/triage/status handlers manually guard org on an id-only query instead of using find_by_id_for_org (PR #3286) (Closes #3307)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "done",
-      "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3307)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-04T20:32:18Z",
-      "issue_ref": {
-        "number": 3307,
-        "url": "https://github.com/martin-janci/property-management/issues/3307",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      },
-      "last_updated": "2026-11-04T22:33:36Z",
-      "resolved_at": "2026-11-09",
-      "resolution_evidence": "Closed; issue state=closed as of 2026-11-09",
-      "archived_at": "2026-11-09"
-    },
-    {
-      "id": "gh-issue-3308",
-      "action": "Follow-up: add RLS-aware repo variants for vote sub-resource reads instead of pool-bypass + manual vote_in_org guard (PR #3281) (Closes #3308)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "done",
-      "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3308)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-04T20:32:18Z",
-      "issue_ref": {
-        "number": 3308,
-        "url": "https://github.com/martin-janci/property-management/issues/3308",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      },
-      "last_updated": "2026-11-04T22:33:36Z",
-      "resolved_at": "2026-11-09",
-      "resolution_evidence": "Closed; issue state=closed as of 2026-11-09",
-      "archived_at": "2026-11-09"
-    },
-    {
-      "id": "gh-issue-3309",
-      "action": "Follow-up: cs.json/sk.json were reordered (~9k-line churn) instead of appended; enforce stable key order for messages/*.json (PR #3260) (Closes #3309)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "done",
-      "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3309)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-04T20:32:18Z",
-      "issue_ref": {
-        "number": 3309,
-        "url": "https://github.com/martin-janci/property-management/issues/3309",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      },
-      "last_updated": "2026-11-04T22:33:36Z",
-      "resolved_at": "2026-11-09",
-      "resolution_evidence": "Closed; issue state=closed as of 2026-11-09",
-      "archived_at": "2026-11-09"
-    },
-    {
-      "id": "gh-issue-3310",
-      "action": "Follow-up: community feed shows every author as \"Neighbor\" (API returns ids only); formatMoney coerces Decimal via Number() (PR #3269) (Closes #3310)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "done",
-      "source": "dispatcher-issue-ingest 2026-11-04T20:32:18Z (#3310)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-04T20:32:18Z",
-      "issue_ref": {
-        "number": 3310,
-        "url": "https://github.com/martin-janci/property-management/issues/3310",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      },
-      "resolved_at": "2026-11-09",
-      "resolution_evidence": "Closed; issue state=closed as of 2026-11-09",
-      "archived_at": "2026-11-09"
-    },
-    {
-      "id": "code-review-ppt-web-ui-registry-no-i18n",
-      "action": "ppt-web registry feature (pet/vehicle forms + lists) ships hardcoded English placeholders in a 4-locale app — 0 useTranslation on 4 files",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "done",
-      "source": "dispatcher-backlog-refill 2026-11-05T08:30:13Z (score=1 conf=medium vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-05T08:30:13Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      },
-      "resolved_at": "2026-11-09",
-      "resolution_evidence": "Merged as PR #3351 on 2026-11-07",
-      "archived_at": "2026-11-09"
-    },
-    {
-      "id": "code-review-reality-web-share-cmp-unchecked-json",
-      "action": "reality-web shared-comparison loader casts the listings API body with an unchecked `as Promise<ListingSummary>` — no shape validation, unlike the rest of reality-web's boundary guards (parseJsonBody / parseListingDetail)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "done",
-      "source": "dispatcher-backlog-refill 2026-11-05T22:25:45Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-05T22:25:45Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      },
-      "resolved_at": "2026-11-09",
-      "resolution_evidence": "Merged as PR #3350 on 2026-11-07",
-      "archived_at": "2026-11-09"
-    },
-    {
-      "id": "code-review-ppt-web-ui-registry-mutation-silent-fail",
-      "action": "ppt-web RegistryPage.tsx delete/review mutation handlers (L102-142, L171-211) swallow failures with only console.error — no toast/error surface, so a failed destructive action looks successful. Surface mutation errors to the user (toast/inline error). Add/adjust a test.",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "done",
-      "source": "dispatcher-tier1d-devreview 2026-11-07T12:31:00Z (signals/2026-11-07-ppt-web-ui-tier1d.json)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-07T12:31:00Z",
-      "resolved_at": "2026-11-09",
-      "resolution_evidence": "Merged as PR #3359 (reland) on 2026-11-08",
-      "archived_at": "2026-11-09"
-    },
-    {
-      "id": "code-review-ppt-web-ui-registry-page-i18n-gap",
-      "action": "ppt-web RegistryPage.tsx (L249-250,275,302,317-318) hardcodes English (title, subtitle, Pets/Vehicles tabs, load-error) while the rest of the file uses t() — ships untranslated for sk/cs/de/pl/hu. Route the remaining strings through next i18n and add the keys for all locales.",
-      "owner_role": "pm-frontend",
-      "priority": "low",
-      "status": "done",
-      "source": "dispatcher-tier1d-devreview 2026-11-07T12:31:00Z (signals/2026-11-07-ppt-web-ui-tier1d.json)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-07T12:31:00Z",
-      "resolved_at": "2026-11-09",
-      "resolution_evidence": "Merged as PR #3355 on 2026-11-07",
-      "archived_at": "2026-11-09"
     }
   ]
 }
