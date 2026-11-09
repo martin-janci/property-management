@@ -38,6 +38,26 @@ const MAX_ATTACHMENT_SIZE_BYTES: i64 = 25 * 1024 * 1024;
 const MESSAGE_PREVIEW_LEN: usize = 120;
 
 // ============================================================================
+// Error mapping
+// ============================================================================
+
+/// Map a data-layer error to a sanitized client response.
+///
+/// Messaging handlers must never surface raw SQLx / DB errors to the caller:
+/// their `Display` output leaks table and column names, SQL fragments, and
+/// connection details. Log the full error server-side (`tracing::error!`) for
+/// operators and return an opaque 500 with the stable `DB_ERROR` code —
+/// mirroring how sibling api-server routes sanitize DB failures (e.g.
+/// `compliance`, `buildings`).
+fn db_error(e: impl std::fmt::Display) -> (StatusCode, Json<ErrorResponse>) {
+    tracing::error!(error = %e, "messaging database query failed");
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(ErrorResponse::new("DB_ERROR", "Database error")),
+    )
+}
+
+// ============================================================================
 // Response Types
 // ============================================================================
 
@@ -295,24 +315,12 @@ async fn list_threads(
             archived,
         )
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to list threads: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     let total = repo
         .count_threads_rls(&mut **rls.conn(), user_id, tenant_id, search, archived)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to count threads: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
 
@@ -368,12 +376,7 @@ async fn start_thread(
             .bind(&recipients)
             .fetch_all(&mut **rls.conn())
             .await
-            .map_err(|e| {
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-                )
-            })?;
+            .map_err(db_error)?;
 
     if existing.len() != recipients.len() {
         rls.release().await;
@@ -395,12 +398,7 @@ async fn start_thread(
     .bind(&recipients)
     .fetch_all(&mut **rls.conn())
     .await
-    .map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-        )
-    })?;
+    .map_err(db_error)?;
 
     if same_tenant.len() != recipients.len() {
         rls.release().await;
@@ -421,13 +419,7 @@ async fn start_thread(
     let blocked = repo
         .blocked_among_rls(&mut **rls.conn(), user_id, &recipients)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to check block status: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     if !blocked.is_empty() {
         rls.release().await;
@@ -456,13 +448,7 @@ async fn start_thread(
             },
         )
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to create thread: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     // Send initial message if provided
     if let Some(content) = body.initial_message {
@@ -487,13 +473,7 @@ async fn start_thread(
                 },
             )
             .await
-            .map_err(|e| {
-                tracing::error!("Failed to send initial message: {:?}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-                )
-            })?;
+            .map_err(db_error)?;
 
         // A new inbound message un-hides the thread for any participant who had
         // previously soft-deleted it (BIT-182), generalized to N recipients for
@@ -515,22 +495,12 @@ async fn start_thread(
     let messages = repo
         .get_thread_messages_rls(&mut **rls.conn(), thread.id, Some(50), None)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     let message_count = repo
         .count_thread_messages_rls(&mut **rls.conn(), thread.id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     // Get all other participants' info ([BIT-206]).
     let participants = get_participants(&mut rls, &thread, user_id).await?;
@@ -574,12 +544,7 @@ async fn get_thread(
     let thread = repo
         .get_thread_rls(&mut **rls.conn(), id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     let thread = thread.ok_or_else(|| {
         (
@@ -616,22 +581,12 @@ async fn get_thread(
     let messages = repo
         .get_thread_messages_rls(&mut **rls.conn(), id, query.limit, query.offset)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     let message_count = repo
         .count_thread_messages_rls(&mut **rls.conn(), id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     // Get all other participants' info ([BIT-206]).
     let participants = get_participants(&mut rls, &thread, user_id).await?;
@@ -666,12 +621,7 @@ async fn authorize_thread_participant(
     let thread = repo
         .get_thread_rls(&mut **rls.conn(), thread_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
+        .map_err(db_error)?
         .ok_or_else(|| {
             (
                 StatusCode::NOT_FOUND,
@@ -736,13 +686,7 @@ async fn delete_thread(
 
     repo.hide_thread_for_user(&mut **rls.conn(), id, user_id)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to hide thread for user: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
 
@@ -783,13 +727,7 @@ async fn archive_thread(
 
     repo.archive_thread_for_user(&mut **rls.conn(), id, user_id)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to archive thread for user: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
 
@@ -828,13 +766,7 @@ async fn unarchive_thread(
 
     repo.unarchive_thread_for_user(&mut **rls.conn(), id, user_id)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to un-archive thread for user: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
 
@@ -897,12 +829,7 @@ async fn send_message(
     let thread = repo
         .get_thread_rls(&mut **rls.conn(), id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     let thread = thread.ok_or_else(|| {
         (
@@ -948,12 +875,7 @@ async fn send_message(
         let is_blocked = repo
             .is_blocked_rls(&mut **rls.conn(), user_id, rid)
             .await
-            .map_err(|e| {
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-                )
-            })?;
+            .map_err(db_error)?;
 
         if is_blocked {
             rls.release().await;
@@ -978,13 +900,7 @@ async fn send_message(
             },
         )
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to send message: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     // A new inbound message un-hides the thread for any other participant who
     // had previously soft-deleted it (BIT-182), generalized to N participants
@@ -1042,12 +958,7 @@ pub async fn delete_message(
     let thread = repo
         .get_thread_rls(&mut **rls.conn(), id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     let thread = thread.ok_or_else(|| {
         (
@@ -1089,12 +1000,7 @@ pub async fn delete_message(
     .bind(message_id)
     .fetch_optional(&mut **rls.conn())
     .await
-    .map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-        )
-    })?;
+    .map_err(db_error)?;
 
     let (msg_thread_id, msg_sender_id) = target.ok_or_else(|| {
         (
@@ -1116,13 +1022,7 @@ pub async fn delete_message(
 
     repo.delete_message_rls(&mut **rls.conn(), message_id, user_id)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to delete message: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
 
@@ -1158,12 +1058,7 @@ async fn mark_thread_read(
     let thread = repo
         .get_thread_rls(&mut **rls.conn(), id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     let thread = thread.ok_or_else(|| {
         (
@@ -1199,12 +1094,7 @@ async fn mark_thread_read(
     let marked = repo
         .mark_thread_read_rls(rls.conn(), id, user_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
 
@@ -1237,12 +1127,7 @@ async fn list_blocked_users(
     let blocked_users = repo
         .list_blocked_users_rls(&mut **rls.conn(), user_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
 
@@ -1299,13 +1184,7 @@ async fn block_user(
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new("ALREADY_BLOCKED", msg)),
         ),
-        _ => {
-            tracing::error!("Failed to block user: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        }
+        _ => db_error(e),
     })?;
 
     rls.release().await;
@@ -1338,13 +1217,7 @@ async fn unblock_user(
 
     repo.unblock_user_rls(&mut **rls.conn(), user_id, user_id_to_unblock)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to unblock user: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
 
@@ -1378,12 +1251,7 @@ async fn get_unread_count(
     let unread_count = repo
         .count_unread_rls(&mut **rls.conn(), user_id, tenant_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
 
@@ -1620,12 +1488,7 @@ async fn list_message_attachments(
     let attachments = repo
         .get_message_attachments_rls(&mut **rls.conn(), message_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
 
@@ -1813,12 +1676,7 @@ async fn require_thread_participant(
     let thread = repo
         .get_thread_rls(&mut **rls.conn(), thread_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     let thread = match thread {
         Some(t) => t,
@@ -1866,12 +1724,7 @@ async fn require_message_in_thread(
         .bind(message_id)
         .fetch_optional(&mut **rls.conn())
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     match row {
         Some((msg_thread_id,)) if msg_thread_id == thread_id => Ok(()),
@@ -1897,12 +1750,7 @@ async fn require_owned_message_in_thread(
             .bind(message_id)
             .fetch_optional(&mut **rls.conn())
             .await
-            .map_err(|e| {
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-                )
-            })?;
+            .map_err(db_error)?;
 
     let (msg_thread_id, msg_sender_id) = row.ok_or_else(|| {
         (
@@ -1972,12 +1820,7 @@ async fn get_participants(
     .bind(&other_ids)
     .fetch_all(&mut **rls.conn())
     .await
-    .map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-        )
-    })?;
+    .map_err(db_error)?;
 
     Ok(rows
         .into_iter()
@@ -2099,6 +1942,49 @@ mod tests {
         assert_eq!(
             normalize_thread_search(Some("  van der  ")),
             Some("van der")
+        );
+    }
+
+    #[test]
+    fn no_handler_leaks_raw_db_error_to_client() {
+        // Regression: messaging handlers previously bubbled `e.to_string()`
+        // straight to the client as the `DB_ERROR` body, leaking table/column
+        // names, SQL fragments, and connection details. Every fallible DB call
+        // must route through `db_error()` so raw driver text never reaches
+        // clients. Guard the whole source file so a future handler can't
+        // reintroduce the leak.
+        let src = include_str!("messaging.rs");
+        for (idx, line) in src.lines().enumerate() {
+            // Ignore comments (including the doc paragraphs above) so only real
+            // code lines are checked.
+            if line.trim_start().starts_with("//") {
+                continue;
+            }
+            assert!(
+                !line.contains("\"DB_ERROR\", e.to_string()"),
+                "line {}: raw DB error leaked to client — route it through \
+                 db_error() instead: {}",
+                idx + 1,
+                line.trim()
+            );
+        }
+    }
+
+    #[test]
+    fn db_error_returns_opaque_response() {
+        // The sanitizer must keep the stable `DB_ERROR` code + 500 status but
+        // drop the raw driver detail (table/column names, SQL fragments) from
+        // the client-facing body.
+        let raw = sqlx::Error::ColumnNotFound("message_threads.participant_ids".to_string());
+        let (status, Json(body)) = db_error(raw);
+
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(body.code, "DB_ERROR");
+        assert_eq!(body.message, "Database error");
+        assert!(
+            !body.message.contains("participant_ids") && !body.message.contains("message_threads"),
+            "sanitized body must not contain DB identifiers, got: {}",
+            body.message
         );
     }
 }
