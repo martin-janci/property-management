@@ -7,7 +7,8 @@
       "score_delta": 0,
       "confidence": "high",
       "candidate_vector": null,
-      "evidence": "routine last ran 2026-11-06 14:58 UTC — ~64h lag (> 36h threshold); cloud cron likely mis-fired or paused for ~2.5 days"
+      "evidence": "routine last ran 2026-11-06 14:58 UTC — ~64h lag (> 36h threshold); cloud cron likely mis-fired or paused for ~2.5 days",
+      "rerun_note": "re-emit on same-day rerun: score already applied in morning commit (G4 non-cumulative carve-out)"
     },
     {
       "id": "churn-hotspot-frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx",
@@ -53,7 +54,7 @@
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "api-handlers",
-      "score_delta": 3,
+      "score_delta": 0,
       "confidence": "high",
       "candidate_vector": "security",
       "evidence": [
@@ -62,14 +63,15 @@
       "file": "backend/servers/api-server/src/routes/budgets.rs",
       "line": 468,
       "severity": "high",
-      "expert": "security"
+      "expert": "security",
+      "rerun_note": "re-emit on same-day rerun: score already applied in morning commit (G4 non-cumulative carve-out)"
     },
     {
       "id": "code-review-api-handlers-messaging-db-error-leak",
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "api-handlers",
-      "score_delta": 2,
+      "score_delta": 0,
       "confidence": "high",
       "candidate_vector": "security",
       "evidence": [
@@ -78,7 +80,17 @@
       "file": "backend/servers/api-server/src/routes/messaging.rs",
       "line": 302,
       "severity": "medium",
-      "expert": "security"
+      "expert": "security",
+      "rerun_note": "re-emit on same-day rerun: score already applied in morning commit (G4 non-cumulative carve-out)"
+    },
+    {
+      "id": "buffer-refill-blocked-quarantined-pr-3294-2026-11-09",
+      "type": "stalled-review",
+      "source": "PR #3294",
+      "score_delta": 0,
+      "evidence": "PR #3294 (code-review-ppt-web-core-refresh-token-localstorage) has been in DRAFT state 5 days (opened 2026-11-04 14:53Z). The sole cloud-landable security fast-track candidate (score=2 conf=high) stem-collides with its quarantined assignments.json row, so Phase 3 cannot promote a duplicate plan. Buffer refill is structurally blocked until a human marks the draft ready-for-review or closes it; dispatcher assignments show status=quarantined.",
+      "confidence": "high",
+      "candidate_vector": "process"
     }
   ],
   "auto_fix_actions": [],
@@ -87,162 +99,120 @@
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f briefs/<today>.md; head -1 matches '# <today>'",
-      "observed": "exists, H1 matches",
+      "command": "test -f briefs/<today>.md && head -1 matches # <today>",
+      "observed": "brief exists, header matches",
       "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "jq compare staged state.json vs HEAD cursors/seen_signals/hotspot_history/stats.quiet_days",
-      "observed": "true (cursors advanced: last_pr_seen 3349→3359, last_commit_sha 6729d7..→3e7b58, seen_signals +4, hotspot_history +1 new + 2 bumped, pm_cursor 3→4, coverage_cursor 0→1)",
+      "command": "state.json advanced vs HEAD",
+      "observed": "last_pr_seen 3359->3370, last_commit_sha advanced, seen_signals grew 689->690, stats.runs 116->117",
       "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json",
-      "observed": "true (590 items, all unique)",
+      "command": "backlog.json ids unique",
+      "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "signal ids not in prior seen_signals OR type is in cumulative set",
-      "observed": "6 new signals: lag + 3 churn-hotspot (en+sk re-emit, score_delta 0 per cumulative carve-out; RegistryPage new) + 2 code-review-finding — none re-counted with score_delta != 0",
+      "command": "non-cumulative re-emit score_delta==0 for ids already in seen_signals",
+      "observed": "lag-warning + 2 code-review-finding re-emits zeroed; churn-hotspot carve-out kept original delta; new buffer-refill-blocked signal is fresh",
       "expected": "true"
     },
     {
-      "goal": "G5-cap",
+      "goal": "G5",
       "passed": true,
-      "command": "jq '[.items[] | select(.score > 8)] | length == 0' backlog.json",
-      "observed": "true (max score = 6)",
+      "command": "score cap <=8; open items >14d decayed or dropped this run",
+      "observed": "max score 6; 2 overdue KMP items decayed this run (http-client-no-timeout 2->1; my-listings-pagination-cap 1->0 dropped)",
       "expected": "true"
-    },
-    {
-      "goal": "G5-decay",
-      "passed": true,
-      "command": "open items with updated_at > today-14 decayed -1 or dropped",
-      "observed": "2 items decayed: http-client-no-timeout 2→1 (open), my-listings-pagination-cap 1→0 (dropped)",
-      "expected": "every stale open item lost ≥1 or moved to dropped"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "each new plan has 'adversarial pass:' annotation in brief",
-      "observed": "both new plans annotated 'adversarial pass: passed' under *Plans promoted*",
-      "expected": "annotation present"
+      "command": "every new plan has adversarial pass annotation",
+      "observed": "0 new plans this run (vacuously true)",
+      "expected": "true"
     },
     {
-      "goal": "G7-count",
+      "goal": "G7",
       "passed": true,
-      "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -v '/_archive/' | grep -c '.md$'",
-      "observed": "2 new plan files",
-      "expected": "<= 2"
-    },
-    {
-      "goal": "G7-metadata",
-      "passed": true,
-      "command": "4 metadata fields present (Vector, Score, Source, Confidence)",
-      "observed": "both plans: 1/1/1/1",
-      "expected": "all 4 per plan"
-    },
-    {
-      "goal": "G7-headings",
-      "passed": true,
-      "command": "11 '##' headings present",
-      "observed": "both plans: Hypothesis/Evidence/Files/Required capabilities/Repro steps/Suggested approach/Alternatives considered/Root-cause trace/Test plan/Out of scope/After-merge all present",
-      "expected": "all 11 per plan"
-    },
-    {
-      "goal": "G7-capability",
-      "passed": true,
-      "command": "at least one '- [x]' per plan",
-      "observed": "both plans: 2 ticks (C1, C6)",
-      "expected": "≥1"
-    },
-    {
-      "goal": "G7-mode",
-      "passed": true,
-      "command": "'Mode: local-only|cloud-ok' line per plan",
-      "observed": "both plans: Mode: cloud-ok",
-      "expected": "declared"
-    },
-    {
-      "goal": "G7-files-exist",
-      "passed": true,
-      "command": "every ## Files bullet resolves on disk",
-      "observed": "budgets.rs exists, messaging.rs exists",
-      "expected": "all paths resolve"
+      "command": "<=2 new plans, metadata+headings complete, files exist",
+      "observed": "0 new plans this run (vacuously true)",
+      "expected": "<=2"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
-      "observed": "0 (only .research/* staged)",
+      "command": "staged paths only under .research/",
+      "observed": "0 outside",
       "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "grep for secret/internal-host patterns in staged non-baseline files (see routine-prompt.md Goal G9)",
-      "observed": "0 hits outside baseline exemptions",
+      "command": "no secrets/private hostnames in staged diff (excluding baseline docs)",
+      "observed": "0 matches",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "diff -q backlog.md <regenerated>",
-      "observed": "byte-identical",
+      "command": "backlog.md byte-identical to regen from backlog.json",
+      "observed": "diff empty",
       "expected": "exit 0"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "all phase-failure brief entries match un-advanced cursors",
-      "observed": "no phases failed; no 'phases that failed' entries",
+      "command": "brief Phases-that-failed matches state cursors",
+      "observed": "no phases failed; all cursors advanced",
       "expected": "consistent"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "prior plan slugs all appear in plans/ or plans/_archive/",
-      "observed": "no prior plans removed this run",
-      "expected": "convergence"
+      "command": "every prior plan slug present in plans/ or plans/_archive/",
+      "observed": "19 slugs, 0 missing",
+      "expected": "0 missing"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "archive count this run >= archive count at HEAD",
-      "observed": "21 == 21 (no new archive this run)",
-      "expected": "≥"
+      "command": "_archive grows (count >= HEAD)",
+      "observed": "now=24 head=22 (+2 from this run)",
+      "expected": "ge"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "diff -q IDEAS_TRIAGE.md <regenerated>",
-      "observed": "byte-identical",
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "diff empty",
       "expected": "exit 0"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto_fix_actions ≤ 3 + ≤1 of each type + idempotency vs history",
-      "observed": "auto_fix_actions=[] (no candidate)",
+      "command": "auto-fix caps + idempotency",
+      "observed": "0 actions this run; no history entries touched",
       "expected": "true"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "action-list.json + risks.json parse; project-state.md non-empty; pm_cursor in 0..7; coverage_cursor in [0, #epics); advancements consistent",
-      "observed": "pm_cursor.next_index=4 (0..7), coverage_cursor.next_index=1 (advanced from 0, 13 epics), both files parse",
-      "expected": "exit 0"
+      "command": "management artifacts valid; pm_cursor in 0..7; coverage_cursor sane",
+      "observed": "pm_cursor.next_index=4 unchanged (Phase 1.6 did not run this rerun); coverage_cursor.next_index=1; GC7 vacuous pass",
+      "expected": "consistent"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "grep for Telegram bot-token patterns in staged added lines (excluding baseline docs)",
-      "observed": "0 hits",
+      "command": "no Telegram token in staged added lines",
+      "observed": "0 matches",
       "expected": "0"
     }
   ]

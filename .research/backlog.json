@@ -13145,7 +13145,7 @@
       "title": "Shared Ktor HttpClient has no HttpTimeout - mobile API calls can hang indefinitely",
       "vector": "bug",
       "confidence": "medium",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "rotating-expert-review [mobile-native-kmp]"
@@ -13153,13 +13153,14 @@
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37-43 - the single shared HttpClient installs only ContentNegotiation and Logging(NONE) and sets a default contentType; it never installs the HttpTimeout plugin (no requestTimeoutMillis / connectTimeoutMillis / socketTimeoutMillis).",
         "This client backs every repository (ApiClient, ListingRepository, PortalListingsRepository, InquiryRepository, NotificationRepository, FavoritesRepository, etc.). The Android (OkHttp/HttpURLConnection) path has no implicit request timeout, so a stalled connection leaves suspend calls hanging and the Compose UI stuck on a spinner with no error path.",
-        "Fix: install(HttpTimeout) with sane request/connect/socket timeouts in HttpClientProvider so stalled requests surface as a catchable exception (already handled by the try/catch -> Result.failure pattern in every repository)."
+        "Fix: install(HttpTimeout) with sane request/connect/socket timeouts in HttpClientProvider so stalled requests surface as a catchable exception (already handled by the try/catch -> Result.failure pattern in every repository).",
+        "decayed: no new signal in 14d (updated 2026-10-25); score 2->1 applied on 2026-11-09 afternoon rerun (morning brief claimed but did not commit)"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt"
       ],
       "created_at": "2026-10-25",
-      "updated_at": "2026-10-25",
+      "updated_at": "2026-11-09",
       "plan": null,
       "type": "code-review-finding",
       "source": "rotating-expert-review",
@@ -13173,22 +13174,23 @@
       "title": "Reality mobile MyListings + portfolio analytics silently cap at 100 listings (no pagination)",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "rotating-expert-review [mobile-native-kmp]"
       ],
       "evidence": [
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:471-472 - MyListings loads portalListingsRepository.listMyListings(limit = 100) once with no offset paging UI; a realtor with >100 listings never sees rows beyond the first 100.",
         "mobile-native/shared/.../realtor/PortalListingsRepository.kt:111-124 getPortfolioAnalytics() also fans out over listMyListings(limit = 100).listings only, so portfolio totals (views/inquiries/favorites/trends) silently undercount for realtors with >100 listings.",
-        "Fix: page listMyListings via offset until the server returns fewer than `limit` rows (or add explicit pagination), and aggregate analytics over the full set rather than the first page."
+        "Fix: page listMyListings via offset until the server returns fewer than `limit` rows (or add explicit pagination), and aggregate analytics over the full set rather than the first page.",
+        "decayed: no new signal in 14d (updated 2026-10-25); score 1->0 -> dropped on 2026-11-09 afternoon rerun (morning brief claimed but did not commit)"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt",
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt"
       ],
       "created_at": "2026-10-25",
-      "updated_at": "2026-10-25",
+      "updated_at": "2026-11-09",
       "plan": null,
       "type": "code-review-finding",
       "source": "rotating-expert-review",
@@ -15455,18 +15457,20 @@
       "score": 3,
       "status": "done",
       "sources": [
+        "PR #3362",
         "code-review-api-handlers-2026-11-09"
       ],
       "evidence": [
         "backend/servers/api-server/src/routes/budgets.rs:468,505,542,583,624,694,735,776,1105,1142,1179,1236,1270,1307,1339,1367,1404,1441,1481,1521,1561,1598,1630,1667,1704,1741 — 26 handler error branches send Json(ErrorResponse::new(\"DB_ERROR\", e.to_string())) to clients. Raw sqlx text (SQL fragments, table/column names, pool/TLS state) reaches PM manager API clients. Grep confirmed count=26.",
-        "Expert: security. Severity: high. Fix shape: log the detail (tracing::error! already present), return a static message. Same class as existing reality-server db-error-leak-to-client plan but on api-server."
+        "Expert: security. Severity: high. Fix shape: log the detail (tracing::error! already present), return a static message. Same class as existing reality-server db-error-leak-to-client plan but on api-server.",
+        "resolved: PR #3362 merged 2026-11-09 14:29 — stop leaking raw sqlx errors from budgets handlers; plan archived to plans/_archive/"
       ],
       "files": [
         "backend/servers/api-server/src/routes/budgets.rs"
       ],
       "created_at": "2026-11-09",
       "updated_at": "2026-11-09",
-      "plan": "plans/code-review-api-handlers-budgets-db-error-leak.md",
+      "plan": "plans/_archive/code-review-api-handlers-budgets-db-error-leak.md",
       "reconciled": {
         "at": "2026-11-09T16:24:47Z",
         "assignment_status": "merged",
@@ -15481,18 +15485,20 @@
       "score": 2,
       "status": "done",
       "sources": [
+        "PR #3363",
         "code-review-api-handlers-2026-11-09"
       ],
       "evidence": [
         "backend/servers/api-server/src/routes/messaging.rs — 33 handler error branches send Json(ErrorResponse::new(\"DB_ERROR\", e.to_string())); highest leak concentration in the api-server tree. First site line 302. Grep confirmed count=33.",
-        "Expert: security. Severity: medium. Security fast-track eligible (vector=security + confidence=high + score>=2). Same remediation shape as sibling budgets.rs plan."
+        "Expert: security. Severity: medium. Security fast-track eligible (vector=security + confidence=high + score>=2). Same remediation shape as sibling budgets.rs plan.",
+        "resolved: PR #3363 merged 2026-11-09 14:29 — sanitize DB errors in messaging handlers; plan archived to plans/_archive/"
       ],
       "files": [
         "backend/servers/api-server/src/routes/messaging.rs"
       ],
       "created_at": "2026-11-09",
       "updated_at": "2026-11-09",
-      "plan": "plans/code-review-api-handlers-messaging-db-error-leak.md",
+      "plan": "plans/_archive/code-review-api-handlers-messaging-db-error-leak.md",
       "reconciled": {
         "at": "2026-11-09T16:24:47Z",
         "assignment_status": "merged",
@@ -15509,10 +15515,12 @@
       "sources": [
         "PR #3354",
         "PR #3355",
-        "PR #3359"
+        "PR #3359",
+        "PR #3365"
       ],
       "evidence": [
-        "RegistryPage.tsx touched 3x in this routine window across registry feature consolidation (auth, i18n, toast surfacing). Informational — concentrated intentional feature work, not regression."
+        "RegistryPage.tsx touched 3x in this routine window across registry feature consolidation (auth, i18n, toast surfacing). Informational — concentrated intentional feature work, not regression.",
+        "resolved: PR #3365 merged 2026-11-09 14:39 — lock registry action toast + confirm i18n keys (churn consolidation)"
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx"
@@ -15534,12 +15542,14 @@
       "score": 2,
       "status": "done",
       "sources": [
+        "PR #3364",
         "rotating-expert-review [api-handlers]"
       ],
       "evidence": [
         "backend/servers/api-server/src/routes/admin_tenant_lifecycle.rs:90-113 — export_handler reads a caller-supplied out_dir: Option<String> straight from the request body (ExportRequest.out_dir, struct at L65-69) and passes it, unvalidated, as PathBuf::from(out_dir) into export_tenant(&state.db, org_id, &manifest, &out_dir) (L102). export_tenant writes the per-tenant logical export (tarball + row dumps) to that directory. The state.db pool used here is the RLS-bypassing service-role pool (tenant-ops export reads every tenant table for the org), so the write target is fully attacker-chosen with no sandbox/allowlist/canonicalization check and no containment to an export root.",
         "Impact: a platform principal holding Capability::TenantExport (the route's require_capability gate, L50-53) can direct the server to write exported tenant data — and create/overwrite a .tar.gz — at ANY absolute path on the server filesystem (e.g. /var/www, a Caddy-served static dir, another service's config dir, or over an existing file via the tarball path). This is an arbitrary-directory write / path-control primitive on a privileged admin surface; it can be used to stage tenant PII into a web-reachable location or to clobber files. The blast radius is limited to actors with the TenantExport capability + recent MFA, hence medium rather than high.",
-        "Contrast: the sibling org-settings background export (routes/organizations/settings.rs:839) deliberately ignores any caller path and uses std::env::temp_dir().join(format!(\"ppt-org-export-{}\", Uuid::new_v4())); the restore_handler in the SAME file (admin_tenant_lifecycle.rs:203-204) also uses temp_dir() + a random UUID. export_handler is the lone handler that trusts a client path. Landable backend-only fix: drop the out_dir request field (or confine it to a configured export root with canonicalize() + a starts_with(export_root) check that rejects traversal), and default to temp_dir().join(Uuid) exactly like restore_handler and the org-settings export. Confidence medium: static review only, path flow code-verified end-to-end but no runtime write-outside-root was executed."
+        "Contrast: the sibling org-settings background export (routes/organizations/settings.rs:839) deliberately ignores any caller path and uses std::env::temp_dir().join(format!(\"ppt-org-export-{}\", Uuid::new_v4())); the restore_handler in the SAME file (admin_tenant_lifecycle.rs:203-204) also uses temp_dir() + a random UUID. export_handler is the lone handler that trusts a client path. Landable backend-only fix: drop the out_dir request field (or confine it to a configured export root with canonicalize() + a starts_with(export_root) check that rejects traversal), and default to temp_dir().join(Uuid) exactly like restore_handler and the org-settings export. Confidence medium: static review only, path flow code-verified end-to-end but no runtime write-outside-root was executed.",
+        "resolved: PR #3364 merged 2026-11-09 14:29 — confine tenant-export out_dir to the export root"
       ],
       "files": [
         "backend/servers/api-server/src/routes/admin_tenant_lifecycle.rs"
@@ -15567,12 +15577,14 @@
       "score": 1,
       "status": "done",
       "sources": [
+        "PR #3361",
         "rotating-expert-review [api-handlers]"
       ],
       "evidence": [
         "backend/servers/api-server/src/routes/platform_admin/ops.rs:176-192 — get_health_alerts computes offset = (query.page.saturating_sub(1)) as i64 * query.page_size as i64 and calls health_monitoring_repo.get_alerts(query.page_size as i64, offset) using query.page_size directly as the SQL LIMIT. AlertsQuery.page_size (struct L44-54) is a u32 whose doc comment literally says 'Page size (max 100)', but nothing clamps it — there is no .clamp(1, 100)/.min(100) before the cast, so the documented cap is unenforced and a caller can request page_size=4294967295, turning the LIMIT effectively unbounded (full-table scan of metric_alerts).",
         "Impact: a SuperAdmin caller (route is RequireCapability + extract_super_admin_token-gated, L177/L182) can issue an unbounded alerts query, a self-inflicted DoS / memory-pressure vector on the platform-admin surface; low severity because it requires the SuperAdmin capability. The divergence is the real smell: sibling list handlers in the same tree DO clamp — admin/users_lifecycle.rs:273 (page_size.clamp(1, 100)), migration.rs:144 (per_page.clamp(1, 100)) — so this is an inconsistent, documented-but-unenforced cap rather than a deliberate choice.",
-        "Landable backend-only fix: clamp before use, e.g. let page_size = query.page_size.clamp(1, 100); and reuse it for both the offset math and the get_alerts LIMIT, matching the existing clamp(1, 100) convention in users_lifecycle.rs / migration.rs. Confidence medium: static review only; the unbounded LIMIT path is code-verified but not runtime-exercised."
+        "Landable backend-only fix: clamp before use, e.g. let page_size = query.page_size.clamp(1, 100); and reuse it for both the offset math and the get_alerts LIMIT, matching the existing clamp(1, 100) convention in users_lifecycle.rs / migration.rs. Confidence medium: static review only; the unbounded LIMIT path is code-verified but not runtime-exercised.",
+        "resolved: PR #3361 merged 2026-11-09 14:29 — clamp health-alerts page_size to documented max"
       ],
       "files": [
         "backend/servers/api-server/src/routes/platform_admin/ops.rs"
@@ -15600,12 +15612,14 @@
       "score": 2,
       "status": "done",
       "sources": [
+        "PR #3368",
         "rotating-expert-review [reality-server]"
       ],
       "evidence": [
         "backend/servers/reality-server/src/routes/imports.rs:125 - list_import_jobs passes `query.limit.unwrap_or(20)` straight into reality_portal_repo.list_import_jobs() with no `.clamp(...)`, while the sibling `offset` on :126 IS bounded via `crate::util::clamp_offset_i32`. ImportJobsQuery.limit is `Option<i32>` (routes/imports.rs:85-89), fully request-controlled.",
         "Every other list endpoint in the segment clamps the limit: agencies.rs:128 `.clamp(1,200)`, inquiries.rs:597 & :649 `.clamp(1,100)`, portal_listings.rs:452, realtors.rs:207, saved_searches.rs:327, and listings.rs clamp_pagination(). util/mod.rs ships clamp_offset/clamp_offset_i32 but no clamp_limit helper, so this endpoint slipped the pattern.",
-        "Impact: `?limit=-1` reaches Postgres as `LIMIT -1` -> query error surfaced as HTTP 500 (the exact failure listings.rs:22-27 documents having fixed); `?limit=2000000000` requests an unbounded result set (latency/memory pressure, bounded only by the caller's own row count). Fix: clamp to `.clamp(1,100)` like the sibling routes, or add a util::clamp_limit helper."
+        "Impact: `?limit=-1` reaches Postgres as `LIMIT -1` -> query error surfaced as HTTP 500 (the exact failure listings.rs:22-27 documents having fixed); `?limit=2000000000` requests an unbounded result set (latency/memory pressure, bounded only by the caller's own row count). Fix: clamp to `.clamp(1,100)` like the sibling routes, or add a util::clamp_limit helper.",
+        "resolved: PR #3368 merged 2026-11-09 22:28 — clamp list_import_jobs limit to 1..=100"
       ],
       "files": [
         "backend/servers/reality-server/src/routes/imports.rs"
@@ -15633,12 +15647,14 @@
       "score": 2,
       "status": "done",
       "sources": [
+        "PR #3367",
         "rotating-expert-review [reality-server]"
       ],
       "evidence": [
         "backend/servers/reality-server/src/routes/imports.rs:148-163 (create_import_job) and :209-227 (update_import_job) persist `CreatePortalImportJob.source_url` / `UpdateImportJob.source_url` (both `Option<String>`, defined backend/crates/db/src/models/reality_portal.rs:693-705) directly through the repo with NO URL validation.",
         "The sibling agency-feed path validates the same concept: agency_imports.rs:14 imports `common::url_validation::validate_external_url` and calls it on both create (:238) and update (:290) of `feed_url`, returning 400 on failure. imports.rs never imports or calls it - a repo-wide grep shows the only two validate_external_url call sites in reality-server are both in agency_imports.rs.",
-        "source_url is a remote feed endpoint fetched server-side by the import pipeline; without validate_external_url (which rejects localhost/private/link-local/non-http targets) an authenticated portal user can point an import job at internal services -> SSRF. Fix: mirror agency_imports and validate source_url on create and update before persisting. (The fetch itself lives outside this segment, so reachability is unconfirmed by static analysis - hence medium confidence.)"
+        "source_url is a remote feed endpoint fetched server-side by the import pipeline; without validate_external_url (which rejects localhost/private/link-local/non-http targets) an authenticated portal user can point an import job at internal services -> SSRF. Fix: mirror agency_imports and validate source_url on create and update before persisting. (The fetch itself lives outside this segment, so reachability is unconfirmed by static analysis - hence medium confidence.)",
+        "resolved: PR #3367 merged 2026-11-09 22:28 — validate import source_url (SSRF parity)"
       ],
       "files": [
         "backend/servers/reality-server/src/routes/imports.rs"
