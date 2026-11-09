@@ -163,28 +163,6 @@
       "source": "pm-analysis 2026-11-09"
     },
     {
-      "id": "pm-scrum-master-triage-3357-dispatcher-stall-2026-11-09",
-      "action": "Triage #3357 — rebase the 3 blocked PRs OR adjust Tier-1d signal sourcing to stop emitting dead-end vectors",
-      "owner_role": "pm-scrum-master",
-      "priority": "high",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-09"
-    },
-    {
-      "id": "pm-scrum-master-upgrade-refresh-token-confidence-2026-11-09",
-      "action": "Open the diff for code-review-ppt-web-core-refresh-token-localstorage and upgrade signal confidence from medium to high (or drop) — currently blocks security fast-track at score=2+confidence=medium",
-      "owner_role": "pm-scrum-master",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-09"
-    },
-    {
       "id": "pm-qa-confirm-non-kmp-medium-confidence-2026-11-09",
       "action": "QA audit: non-mobile-native backlog items with confidence=medium need a one-shot verification step before Phase 3 can promote them",
       "owner_role": "pm-qa",
@@ -194,40 +172,6 @@
       "status": "open",
       "deadline": null,
       "source": "pm-analysis 2026-11-09"
-    },
-    {
-      "id": "code-review-reality-server-imports-limit-unclamped",
-      "action": "reality-server imports.rs list_import_jobs passes user `limit` to SQL unclamped - negative LIMIT 500s, huge LIMIT is unbounded",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-09T16:25:51Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-09T16:25:51Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-reality-server-imports-source-url-no-validation",
-      "action": "reality-server imports.rs create/update_import_job store user `source_url` without validate_external_url (SSRF parity gap vs agency_imports)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-09T16:25:51Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-09T16:25:51Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
     },
     {
       "id": "code-review-reality-server-imports-total-page-len",
