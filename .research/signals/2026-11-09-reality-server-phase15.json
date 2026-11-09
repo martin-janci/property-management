@@ -1,0 +1,57 @@
+{
+  "generator": "ppt-dev-review",
+  "generated_at": "2026-11-09",
+  "segment_reviewed": {
+    "segment": "reality-server",
+    "reason": "oldest-unreviewed (tied at 2026-11-04 with api-handlers, api-core, ppt-web-core). Picked reality-server because its last Tier-1d cycle was 2026-11-07 while the three peers each got a Tier-1d pass on 2026-11-08; no CHURN_FILES passed (dispatcher-only commits). Saturation check: backlog has 1 open code-review-finding on reality-server (`code-review-reality-server-readiness-internal-detail-public`), below the 3-cap. Static sweep: no non-test `unwrap()`/`expect()` on DB/HTTP paths (extractors/auth.rs:63 is guarded by `starts_with`; handlers/inquiries/mod.rs:274 by `is_empty`; price_map/sso test unwraps live under `#[cfg(test)]`); no `unsafe`, `todo!()`, or `unimplemented!()`; no sensitive-field logging (password/token/secret/api_key) — password reset uses `email_log_hash`; CORS allowlist is explicit (main.rs:80-120, no AllowAny/mirror_request); PKCE flow + redirect allowlist cover `//`/`/\\` + non-http schemes; dynamic SQL in listings.rs:700 is annotated AssertSqlSafe with static literals, user input bound. The three novel findings below focus on an SSO cross-user session echo, a spec/impl drift on the public view-tracking endpoint, and an eviction-order comment/impl mismatch in the token-validation cache."
+  },
+  "experts_used": ["rust"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-reality-server-sync-session-no-owner-crosscheck",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:1209-1211 — `sync_session` calls `state.session_service.refresh_session(portal_session).await` and on `Ok(_info)` returns `(portal_session.clone(), true)`. The `_info` (SessionInfo { user_id, email, name, expires_at } — see state.rs:293-317) is discarded; nothing checks that `_info.user_id == user_info.user_id` (where `user_info` was derived from `request.pm_token` via `get_user_info` at sso.rs:1199).",
+        "backend/servers/reality-server/src/routes/sso.rs:1156-1272 — the handler accepts a `SyncSessionRequest { pm_token, portal_session }` where both fields are supplied by the caller. When PM introspection says `active=true` AND the caller supplies ANY portal_session string that happens to be a live hash in `portal_sessions` for some OTHER user B, `refresh_session` returns Ok for B's session; the handler echoes B's session_token back as the 'synced' session for the pm_token's user A. No ownership cross-check gates this; the only consistency check is the `PM token inactive -> invalidate` branch at sso.rs:1179-1196.",
+        "Impact: correctness/confused-deputy. If a caller presents a pm_token for user A plus a portal_session for a different user B, the response says `{synced: true, session_token: <B's session>, refreshed: true, status: 'active'}`. A client that trusts 'this is now user A's session' will then issue B-authenticated requests while rendering A's identity — a cross-user identity mismatch the API makes no effort to detect. Marginal attack value is low (the caller must already hold B's live session), but the missing defense-in-depth check is landable: either look up the session's user_id and reject on mismatch (401) or always mint a fresh session for `user_info.user_id` and ignore the caller-supplied one. Backend-only, cloud-landable."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-record-view-spec-drift-404",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/listings.rs:856-877 — `POST /api/v1/listings/{id}/view` is wired via `record_view`; its `#[utoipa::path]` responses declare `(status = 204, 'View recorded')` AND `(status = 404, 'Listing not found')`, and the doc-comment explicitly says 'only return a hard error when the listing genuinely doesn't exist'. The body, however, is: `if let Err(e) = state.reality_portal_repo.track_view(id, \"website\").await { tracing::warn!(...); } Ok(axum::http::StatusCode::NO_CONTENT)` — no existence check, no 404 branch anywhere in the function. Calling it with a random UUID is indistinguishable from calling it with a real listing id; both return 204.",
+        "backend/servers/reality-server/src/routes/listings.rs:63 — the route is registered as `.route(\"/{id}/view\", axum::routing::post(record_view))`, so the discrepancy is user-visible: the generated OpenAPI/TS client expects a 404 variant that production never emits, and any client-side logic that gates on 404-vs-204 (e.g. 'did the user just click a stale link?') is silently dead code.",
+        "Impact: pure spec/impl drift — the fix is either (a) delete the 404 entry from the utoipa `responses(...)` + doc-comment to match the current always-204 behaviour, or (b) add a pre-check (`SELECT 1 FROM listings WHERE id=$1 AND status='active'`) before `track_view` and return 404 when it misses, matching the documented contract and giving monitors a signal that invalid IDs are being probed. Backend-only, cloud-landable. Confidence HIGH because the call path is trivial and the spec text is right beside the handler."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-token-cache-eviction-not-lru",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/reality-server/src/state.rs:696-707 — in `TokenValidationCache::set`, after sweeping expired entries the fallback branch is guarded by `if cache.len() >= self.max_entries` and the comment reads `// If still full after eviction, remove oldest entries`. The implementation is `let keys_to_remove: Vec<String> = cache.iter().take(entries_to_remove).map(|(k,_)| k.clone()).collect();` — `cache` is a `HashMap<String, CachedTokenValidation>` (state.rs:622) and `HashMap::iter()` yields entries in an unspecified, hash-seed-dependent order. The effective eviction policy is therefore arbitrary, not LRU/oldest.",
+        "backend/servers/reality-server/src/state.rs:710-718 — nothing in `CachedTokenValidation { active, sub, scope, expires_at }` records insertion or last-access time, so any claim of 'oldest' cannot be satisfied without a schema change; the comment is strictly wrong today.",
+        "Impact: correctness smell on the hot SSO token-introspection cache (`AppState.token_cache`, used by every PM-token-bearing portal request via sso.rs:824-872). Under sustained cache saturation (10000 live PM tokens in the 60s TTL window — state.rs:633), a freshly-cached hit can be evicted ahead of one that has 1s left to live, forcing an unnecessary extra round-trip to PM `/oauth/introspect` and a `tracing::debug!(\"SSO token validation cache miss, calling PM API\")` (sso.rs:835). Not a security issue (no privilege change, both paths re-check PM). Backend-only, cloud-landable: either align the comment ('remove arbitrary entries to make room') or record `inserted_at` on `CachedTokenValidation` and sort before evicting."
+      ]
+    }
+  ]
+}

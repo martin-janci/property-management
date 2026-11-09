@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-10-28T11:00:00Z",
+  "generated": "2026-11-09T12:00:00Z",
   "items": [
     {
       "id": "pm-devops-swagger-ui-egress-blocking-security-2026-10-01",
@@ -282,6 +282,46 @@
       "mitigation": "Add a staleness-bias to pm_cursor rotation: when any role is >60 days stale, prefer it over the current index. Alternately, run full-rotation sweeps on 10-day cadence instead of relying on daily rotation only",
       "owner_role": "pm-scrum-master",
       "trigger": "Any pm-* role crosses 90 days stale",
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-raw-db-error-leak-class-2026-11-09",
+      "risk": "Raw sqlx::Error Display leaking into client response bodies is a recurring class \u2014 6 open findings this run across listings.rs, rentals.rs, signatures.rs, tenant_lifecycle.rs, reality-server /readiness, SSO callback. The repo already shipped one fix in PR #2559-era listings.rs cleanup; the pattern is re-growing because no contract test enforces the shape of the error body.",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Ship the pm-qa-raw-sqlx-error-leak-contract-test (regex on response body across integration tests) BEFORE the implementers close the individual code-review rows \u2014 otherwise the next tier-1d sweep will re-find the same shape in a fresh handler.",
+      "owner_role": "pm-qa",
+      "trigger": "Next backend tier-1d sweep surfaces \u22653 new raw-DB-error-leak findings in handlers that did not exist today",
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-xorg-authz-regression-coverage-2026-11-09",
+      "risk": "Two fresh cross-org authz findings (delegation create_delegation, unit add_resident) are structurally identical to the 2026-06 inquiry mark_as_read IDOR class (PR #497). History says the next PR will ship the handler fix WITHOUT a regression test (that was the gap that forced PR #507 + #548 follow-ups).",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Attach a cross-org regression test fixture to each pm-security candidate before dispatcher claims them \u2014 the fixture must assert 403/404 on org-B-manager-token-on-org-A-seed call. Same pattern as 2026-10-26 violations xorg sweep (PR #3183).",
+      "owner_role": "pm-qa",
+      "trigger": "An xorg-fix PR lands on dev with zero added rows in crates/db/tests or routes/*_cross_org_* test files",
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-tier1d-signal-ingest-stall-2026-11-09",
+      "risk": "Issue #3357 root cause: 2026-11-04..08 tier1d signals were written to disk but never ingested into action-list.json \u2014 the dispatcher consumed the buffer to 6 claimable tasks while 19+ unqueued backend/web signals sat untouched. No alarm fired because there was no invariant linking signals -> actionable rows.",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Add the dispatcher self-test T26 (planned under pm-qa-dispatcher-3357-watchdog-test): every .research/signals/*-tier1d.json whose status is \"open\" must have either a backlog row with matching id OR an action-list row with matching id OR be explicitly waived. Non-mobile-native signals are HARD FAIL.",
+      "owner_role": "pm-qa",
+      "trigger": "action-list open_count < 20 while unqueued tier1d signals from the past 72h \u2265 10",
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-i18n-leak-class-2026-11-09",
+      "risk": "i18n-leak findings are recurring: features/portfolio-performance, features/forms, RegistryRulesForm all ship with zero useTranslation imports in an app that targets sk/cs/de/en. 2026-11-04 marketplace + lang-switcher findings were just closed; the next feature folder will arrive with the same gap.",
+      "probability": "high",
+      "impact": "low",
+      "mitigation": "Add the pm-qa-ppt-web-i18n-golden-test (biome/vitest rule) to lint every new features/*/{components,pages}/*.tsx for untranslated string literals \u2014 fails CI before merge.",
+      "owner_role": "pm-qa",
+      "trigger": "Next tier-1d ppt-web-ui sweep surfaces another untranslated feature folder",
       "status": "open"
     }
   ]

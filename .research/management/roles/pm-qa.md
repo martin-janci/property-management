@@ -1,50 +1,63 @@
-# pm-qa — QA / Test lens (2026-08-25)
+# pm-qa — QA / Test lens (2026-11-09)
 
-_Rotation idx 3 of 8. Read-only static analysis of sprint-status + merged PRs + open issues. Previous run: 2026-06-15 (71 days stale)._
+_Rotation idx 3 of 8. Previous run: 2026-08-25 (76 days stale). Read-only static analysis of sprint-status + merged PRs + fresh tier-1d signals + open issues._
+
+## Window at a glance
+
+- **7 PRs merged** 2026-11-06..09 (see Scrum Master). QA-adjacent lens:
+  - **#3350 reality-web share-cmp guard** — merged with a Vitest fixture that stubs a malformed JSON payload; **good test shadow** (contract test shape worth replicating for other unchecked JSON parse sites).
+  - **#3351/#3355/#3359 registry triad** — all three closed i18n + silent-mutation code-review rows; **test gap**: none of the three added a Biome/vitest guard against untranslated literals; the next feature folder will re-introduce the gap.
+  - **#3353 password-change session revocation** — closes #3352 but; **test gap check**: need to confirm the regression test exercises the revocation-on-password-change path with an active parallel session (classic refresh-token-after-pw-change race).
+  - **#3354 registry auth context fix** — pure wiring; no test added.
+  - **#3358 screen-map drift re-land** — docs-only; n/a.
+- **4 new xorg / isolation findings** from 2026-11-08 tier-1d (delegation, unit residents, signatures DB-error leak) — all follow the 2026-06 inquiry mark_as_read IDOR class; **none shipped with a test fixture yet** (per tier-1d signal file).
+
+## Release-readiness view
+
+- No release cut in this window; dev branch holds all 7 merges. CI blocker `gh-issue-3187` (cross_org_assign_violation_is_not_found) STILL present — the epic-10b violations surface is "done" in coverage but a test asserting 404 vs the implementation's 403 is red on main backend CI. **Release blocker if a release were cut today.**
+
+## Test-shadow gap tally (this run)
+
+| Finding / fix | Test gap | Consequence |
+|---|---|---|
+| `delegation-xorg-delegate` (2026-11-08) | No cross-org fixture added yet | Re-regression risk; same shape as 2026-06 #497 class |
+| `unit-residents-add-xorg-user` (2026-11-08) | No cross-org fixture added yet | Same |
+| `listings-rs-raw-db-error-leak` (2026-11-05, 36 call sites) | No contract test on error-body shape | Pattern re-grew across rentals/signatures/reality-server |
+| `ppt-web-ui-portfolio-perf-i18n` + `-forms-feature-i18n` | No vitest/biome golden test on untranslated literals | Next feature folder will re-ship untranslated |
+| `#3187` cross_org_assign_violation_is_not_found | Test asserts 404; prod returns 403 | Backend CI red on dev |
 
 ## Role JSON
 
 ```json
 {
   "role": "pm-qa",
-  "summary": "13 PRs merged in this window fixed real defects but 7 of them lack the test that would guard against re-regression — the auto-fix loop is now producing enough follow-up-issue-and-close activity that a QA test-shadow discipline is the next lever. The atomic-claim concurrency test (#2834 / #2831 closure) and the booking-connect authz test (#2821) are the two high-priority gaps this run.",
+  "summary": "Test-shadow discipline is drifting again: 7 merges landed with 0 added CI assertions that would prevent the recurring classes (raw-DB-error-leak, xorg-authz, i18n-leak). Four new test-infra gaps are queued (high/medium) to lay invariants down BEFORE the implementers land the individual fixes. Backend CI on dev is still red on #3187 (release-blocker if a cut happened).",
   "next_actions": [
-    {"action": "Add >1-replica concurrency integration test for quiet-hours drain atomic claim (#2834 / closed #2831) — assert at-most-once delivery under 2 racing api-server replicas contending on the same held-notification batch", "priority": "high", "dependency": "rust-backend", "definition_of_done": "Integration test spins up 2 api-server replicas against shared Postgres + Redis, both drain the same held-notification set, assertion: exactly-one send per (user, channel, notification_id)."},
-    {"action": "Add authz regression test for direct-connect OTA credential writes (#2821) — assert non-manager role is rejected at the booking-connect endpoint (was hijackable before this window)", "priority": "high", "dependency": "rust-backend", "definition_of_done": "Test attempts direct-connect credential write as (tenant, staff, admin-of-other-org) roles; asserts 403; asserts manager succeeds."},
-    {"action": "Add regression test for VoteDetailScreen conditional-hooks fix (#2835) — snapshot render with the empty/loading branch that triggered the rules-of-hooks violation", "priority": "medium", "dependency": "pm-frontend", "definition_of_done": "Jest-expo test renders VoteDetailScreen in the loading-then-loaded transition; asserts no React warning; snapshot stable."},
-    {"action": "Add fuzz/property test for CSV export sanitizer (#2827 / closed #2822) — CR × LF × CRLF × formula-injection prefixes × every export column type", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "proptest crossing {CR, LF, CRLF, NUL, U+2028, U+2029} × {=, +, -, @, tab} × column-type; asserts no raw newline, no formula prefix escape, header preserved."},
-    {"action": "Add unit + integration test for voice OAuth token encryption round-trip after centralization (#2838) — cover Alexa + Google + fallback provider; assert no plaintext at rest", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "Test encrypts token → writes DB row → reads back → decrypts → equality; additional assertion: DB byte-inspection does not contain plaintext token substring."},
-    {"action": "Add ppt-web test asserting AML EDD/Review dialog state resets per assessment (#2833 / closed #2832) — open dialog on assessment A, cancel, open on assessment B, assert reason/notes cleared", "priority": "medium", "dependency": "pm-frontend", "definition_of_done": "Vitest render test opens dialog with assessment A, types reason/notes, cancels, opens with assessment B; asserts inputs empty."}
+    {"action": "Add cross-org regression test fixture for delegation + unit_residents xorg findings BEFORE their fix PRs claim (same pattern as 2026-10-26 violations xorg sweep, PR #3183)", "priority": "high", "dependency": "none", "definition_of_done": "two test files added under crates/db/tests or backend/servers/api-server/tests/suites exercising org-B-manager-token-on-org-A-seed; both assert 403/404"},
+    {"action": "Add dispatcher self-test T26 asserting every open tier-1d signal file maps to a backlog row OR action-list row (watchdog for #3357 root cause)", "priority": "high", "dependency": "gh-issue-3357", "definition_of_done": ".research/dispatcher-self-test.sh T26 passes on the current repo; CI job enforces on PRs touching .research/signals/"},
+    {"action": "Add contract test on error-body shape that fails if any handler interpolates raw sqlx::Error Display (regex on response body across integration tests)", "priority": "medium", "dependency": "none", "definition_of_done": "test exists under backend/servers/api-server/tests/suites; today's 6 open findings resolve the test by fixing the handler, not by excluding it"},
+    {"action": "Add frontend golden test (biome rule + vitest) that fails on untranslated user-facing string literals in features/* folders (portfolio-performance, forms, registry-rules-form)", "priority": "medium", "dependency": "none", "definition_of_done": "rule in frontend/apps/ppt-web/biome.json + test under frontend/packages/i18n or similar; fails on the three listed folders until swept"},
+    {"action": "Fix gh-issue-3187: decide between (a) backend assign_violation returning 404 cross-tenant to match the test, or (b) relaxing test to accept 403 when role-gate fires first. #3183 regression suite expects 404 — the 403 is probably the real bug.", "priority": "high", "dependency": "pm-security", "definition_of_done": "backend CI on dev goes green"},
+    {"action": "Audit #3353 password-change session revocation PR for a parallel-session regression test (refresh-token-after-pw-change race)", "priority": "low", "dependency": "none", "definition_of_done": "test exists; if absent, open a follow-up row"}
   ],
   "risks": [
-    {"risk": "3 of this window's mobile-rn PRs (#2835 conditional hooks / #2836 hardcoded en / #2837 hardcoded en) fixed defects that eslint-plugin-react-hooks + a no-hardcoded-strings rule would catch statically — every future mobile-rn PR risks reintroducing them", "probability": "high", "impact": "medium", "mitigation": "Adopt eslint-plugin-react-hooks + i18next-hardcoded-strings ESLint config in frontend/apps/mobile; gate CI on it."},
-    {"risk": "PR #2834 (atomic claim for quiet-hours drain) closes #2831 but no test exercises the >1 api-server-replica race — the exact scenario the fix was written for is unverified", "probability": "medium", "impact": "high", "mitigation": "Add integration test with 2 racing api-server replicas contending on the same held-notification batch; assert at-most-once delivery."},
-    {"risk": "PR #2838 centralized voice OAuth token encryption but there is no round-trip test asserting no plaintext at rest — a future field-rename or key-derivation change could silently store plaintext", "probability": "medium", "impact": "high", "mitigation": "Add unit + integration test covering encrypt(token) → DB row → decrypt(row) → token equality across Alexa/Google/fallback; assert stored bytes are not the plaintext token."},
-    {"risk": "PR #2827 neutralizes CR/LF in the CSV export sanitizer but the test suite likely only covers the reported inputs — formula-injection prefixes (= + - @) combined with CR/LF are the classic bypass class and remain unfuzzed", "probability": "medium", "impact": "medium", "mitigation": "Add a property/fuzz test crossing {CR, LF, CRLF, NUL, U+2028, U+2029} × {=, +, -, @, tab} × every export column type."},
-    {"risk": "Auto-fix loop closed 7/7 in-window follow-ups but the same-window close creates the illusion the fixes are proven — 5 of the 7 shipped without a regression test. The loop's compensating-transaction property masks a growing test-shadow debt.", "probability": "high", "impact": "medium", "mitigation": "Adopt a policy: any dispatcher-spawned fix PR requires a failing-on-main test file in the same PR before it can enter the merge queue; enforce via CI diff-guard."}
+    {"risk": "Raw sqlx::Error Display leak is a recurring CLASS (6 open findings this run) — one-off handler fixes won't stop it without a contract test", "probability": "high", "impact": "medium", "mitigation": "Ship the pm-qa-raw-sqlx-error-leak-contract-test BEFORE individual implementer rows claim"},
+    {"risk": "xorg authz findings tend to ship fix WITHOUT regression test (PR #497 pattern) — the next PR will too unless the fixture is pre-attached", "probability": "high", "impact": "high", "mitigation": "Pre-attach cross-org fixtures to pm-security candidate rows before dispatcher claim"},
+    {"risk": "Tier-1d signal ingest stall (#3357) means test-shadow findings themselves can go missing — QA follow-ups vanish along with implementer work", "probability": "high", "impact": "high", "mitigation": "Self-test T26 above"},
+    {"risk": "i18n-leak class recurring across features/* folders — manual review is leaking it through", "probability": "high", "impact": "low", "mitigation": "Biome/vitest golden test above"},
+    {"risk": "#3187 unresolved for >2 weeks (surfaced 2026-10-26) — backend CI on dev is red; any accidental release cut is blocked", "probability": "medium", "impact": "high", "mitigation": "Force a decision between test adjustment vs handler fix THIS SPRINT"}
   ],
   "open_questions": [
-    "Should the mobile-rn ESLint gate (react-hooks + no-hardcoded-strings) be blocking on first adoption or warn-only for one sprint to let the existing violations be fixed batch-wise?",
-    "Is there an existing PPT test harness for spinning up 2 api-server replicas against shared Postgres+Redis, or does the atomic-claim concurrency test need new fixture infra?",
-    "Do we have canonical fuzz-corpus discipline for sanitizers (CSV, XSS, HTML), or is each sanitizer testing its own inputs today?",
-    "The 'test-shadow' pattern (fix PR without regression test) — is the pm-qa Definition-of-Done gate advisory or blocking? DEC-001-style formalization needed?"
+    "Does the password-change revocation PR (#3353) exercise the parallel-session race, or only the single-session happy path?",
+    "Is the cross_org_assign_violation 404-vs-403 contract (#3187) reconciled in epics catalog, or is it a test-only disagreement?"
   ],
   "decisions_needed": [
-    "Should any dispatcher-spawned fix PR require a failing-on-main test file in the same PR before it can enter the merge queue (enforced via CI diff-guard)? — owner: pm-tech-lead + pm-qa",
-    "Frontend mobile lint gate rollout — blocking on first adoption vs warn-only for one sprint? — owner: pm-frontend + pm-qa",
-    "Fuzz-corpus discipline for shared sanitizers (CSV, XSS, HTML, JSON) — do we ship a shared proptest corpus crate under backend/crates/? — owner: pm-tech-lead"
+    "Error-body shape: adopt a single ErrorResponse envelope across all backend handlers (per listings-rs-unstructured-error-body) — owner: pm-tech-lead",
+    "Cross-tenant contract: 403 (role-gate first) vs 404 (RLS first) — must pick one and enforce in a shared test macro — owner: pm-security"
   ]
 }
 ```
 
-## Notes
+## Notes for the dispatcher
 
-- Rotation idx 3 of 8; next pm-qa run ~ 2026-09-25 (assuming ~30-day-per-role cadence).
-- Six pm-qa next_actions appended to `action-list.json` with `source = "pm-qa 2026-08-25"`; four risks and one carried risk-flavor appended to `risks.json`.
-- Coverage epic-80 (rotation idx 5) re-checked — all 3 stories still `done`; last_checked stamped 2026-08-25. No PR in this window touched dispute routes.
-- Merged-PR observations that shaped this run:
-  - #2835 fixed a React `rules-of-hooks` violation in mobile-rn VoteDetailScreen — a `eslint-plugin-react-hooks` lint gate on frontend/apps/mobile would have caught this before code review.
-  - #2836 / #2837 shipped hardcoded English strings in mobile-rn — same lint story, different rule (`i18next/no-literal-string`).
-  - #2834 atomic-claim fix for quiet-hours drain — closes #2831 but is the exact scenario a >1-replica concurrency test should own.
-  - #2838 centralized voice OAuth token encryption — should ship with a round-trip test as a matter of hygiene.
-- Auto-review loop closed 7/7 in-window; net test-shadow debt grew by ~5 fixes-without-tests (raised as pm-qa risk this run).
+The 4 `pm-qa-*-2026-11-09` action-list rows are the carrier for the infra-level test gates; they SHOULD claim first in the pm-qa rotation window because they unlock the fix rows (which otherwise ship without their regression test, per the pattern above).

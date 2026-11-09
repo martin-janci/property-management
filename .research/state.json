@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-11-06T14:58:01Z",
+  "last_run_iso": "2026-11-09T04:42:48Z",
   "last_run_ms": 0,
-  "last_pr_seen": 3349,
-  "last_issue_seen": 3341,
-  "last_commit_sha": "6729d7648660d665f9ef2dc4cfd25584aae95d7e",
+  "last_pr_seen": 3359,
+  "last_issue_seen": 3357,
+  "last_commit_sha": "c8e03d3a0a94594b856bec8c2056d87acc3ee0be",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -706,6 +706,16 @@
       "runs_seen": 1,
       "last_seen": "2026-11-06",
       "recent_churn": 2
+    },
+    "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-09",
+      "recent_churn": 4
+    },
+    "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-09",
+      "recent_churn": 2
     }
   },
   "seen_signals": [
@@ -1393,13 +1403,49 @@
     "untriaged-issue-952",
     "churn-hotspot-backend/crates/db/tests/suite_4.rs",
     "churn-hotspot-backend/crates/db/src/repositories/registry.rs",
-    "churn-hotspot-backend/servers/api-server/src/routes/registry.rs"
+    "churn-hotspot-backend/servers/api-server/src/routes/registry.rs",
+    "lag-warning-2026-11-09",
+    "churn-hotspot-frontend-apps-ppt-web-src-features-registry-pages-RegistryPage-tsx",
+    "churn-hotspot-frontend-apps-reality-web-src-components-comparison-ComparisonUrlHandler-tsx",
+    "buffer-low-2026-11-09-payload",
+    "code-review-api-core-accounting-nonatomic-statement-ingest",
+    "code-review-api-core-accounting-matcher-ignores-currency",
+    "code-review-api-handlers-rentals-raw-db-error-leak",
+    "code-review-api-handlers-tenant-lifecycle-path-leak",
+    "code-review-mobile-rn-session-role-cast-bypass",
+    "code-review-mobile-rn-i18n-hardcoded-screen-strings",
+    "code-review-mobile-rn-voiceassistant-error-deadend",
+    "code-review-mobile-rn-push-isregistered-premature",
+    "code-review-mobile-rn-widget-apirequest-swallow",
+    "code-review-mobile-rn-nfc-controller-untested",
+    "code-review-mobile-rn-widget-cache-json-parse",
+    "code-review-ppt-web-core-privacy-route-unguarded",
+    "code-review-ppt-web-core-errorhandler-i18n-leak",
+    "code-review-ppt-web-ui-registry-rules-form-i18n",
+    "code-review-ppt-web-ui-portfolio-perf-i18n",
+    "code-review-ppt-web-ui-forms-feature-i18n",
+    "code-review-reality-server-readiness-raw-db-error-leak",
+    "code-review-reality-server-readiness-internal-detail-public",
+    "code-review-api-core-workflow-exec-unbounded-spawn",
+    "code-review-api-core-accounting-date-proximity-todo",
+    "code-review-api-core-accounting-decimal-literal-parse",
+    "code-review-api-handlers-delegation-xorg-delegate",
+    "code-review-api-handlers-unit-residents-add-xorg-user",
+    "code-review-api-handlers-signatures-raw-db-err-leak",
+    "code-review-ppt-web-ui-registry-page-silent-mutation-errors",
+    "code-review-ppt-web-ui-registry-page-hard-navigation",
+    "issue-resolution-3352-by-pr-3353",
+    "untriaged-issue-3357",
+    "screen-map-drift-pr-3293-reality-resolved-by-3358",
+    "code-review-reality-server-sync-session-no-owner-crosscheck",
+    "code-review-reality-server-record-view-spec-drift-404",
+    "code-review-reality-server-token-cache-eviction-not-lru"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-11-04",
     "api-core": "2026-11-04",
-    "reality-server": "2026-11-04",
+    "reality-server": "2026-11-09",
     "ppt-web-ui": "2026-11-08",
     "ppt-web-core": "2026-11-04",
     "reality-web": "2026-11-06",
@@ -1407,9 +1453,9 @@
     "mobile-native-kmp": "2026-11-04"
   },
   "stats": {
-    "runs": 115,
-    "vectors_created": 522,
-    "plans_created": 35,
+    "runs": 116,
+    "vectors_created": 551,
+    "plans_created": 37,
     "quiet_days": 8,
     "auto_fix_count": 0
   },
@@ -1424,12 +1470,12 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 3,
+    "next_index": 4,
     "role_last_run": {
       "pm-tech-lead": "2026-10-22",
       "pm-backend": "2026-10-26",
       "pm-frontend": "2026-10-28",
-      "pm-qa": "2026-08-25",
+      "pm-qa": "2026-11-09",
       "pm-devops": "2026-08-31",
       "pm-security": "2026-10-01",
       "pm-data": "2026-10-16",
@@ -1437,6 +1483,6 @@
     }
   },
   "coverage_cursor": {
-    "next_index": 0
+    "next_index": 1
   }
 }
