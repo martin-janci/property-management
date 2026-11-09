@@ -373,7 +373,21 @@
       "dependency": null,
       "depends_on": [],
       "first_open_at": "2026-11-07T12:31:00Z"
+    },
+    {
+      "id": "pm-qa-approved-pr-abandoned-reland-test-parity-2026-11-09",
+      "action": "Add a dispatcher invariant / PR-template check: when a task is a RE-LAND of an abandoned approved PR (source closed via dispatcher pipeline-stall per #3357), the re-land PR must inherit (or re-author) the abandoned PR's test delta. 2026-11-06..09 window shipped 7 merges (6/7 with tests, 86%), but 3 approved PRs were closed-no-merge (#3301/#3333/#3356) — risk that re-lands silently drop regression coverage. QA gate: diff --stat on `tests/` between abandoned PR and reland PR must be non-strictly-decreasing.",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "status": "open",
+      "source": "pm-analysis 2026-11-09",
+      "deadline": null,
+      "dependency": "#3357",
+      "depends_on": [
+        "gh-issue-3357"
+      ],
+      "first_open_at": "2026-11-09T03:00:00Z"
     }
   ],
-  "generated": "2026-10-28T11:00:00Z"
+  "generated": "2026-11-09T03:00:00Z"
 }

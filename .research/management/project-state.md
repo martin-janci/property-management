@@ -1,6 +1,40 @@
 # PPT Project State
 
-_Generated: 2026-10-28 — routine Phase 1.6 incremental upkeep. Role focus: **pm-frontend** (83-day stale rotation slot; pm-cursor idx 2 → 3). Coverage `scan_kind=upkeep`; coverage_cursor idx 12 → 0 (epic-9 TOTP re-checked, story 9-1 still done, no PRs touched 2FA). pm-scrum-master always-on._
+_Generated: 2026-11-09 — routine Phase 1.6 incremental upkeep (routine ran 2d late; previous: 2026-11-06). Role focus: **pm-qa** (pm-cursor idx 3 → 4; pm-qa last ran 2026-08-25, 76 days stale). Coverage `scan_kind=upkeep`; coverage_cursor idx 0 → 1. pm-scrum-master always-on._
+
+## Delta since last routine run (2026-11-06)
+
+- **7 PRs merged** (#3350, #3351, #3353, #3354, #3355, #3358, #3359). Test discipline: **6/7 shipped with test additions** (86 %); the lone exception is #3351 (pure i18n wiring of registry pet/vehicle forms + lists — no logic change, acceptable). #3358 is docs-only (screen-map re-land).
+  - #3350 — reality-web shared-comparison body validation at API boundary (+47 lines Vitest).
+  - #3351 — ppt-web registry pet/vehicle forms + lists through react-i18next (no tests, i18n-only).
+  - #3353 — revoke other sessions on password change (gh-issue-3352) (+81 lines backend suite; new `change_password_session_revocation_tests`).
+  - #3354 — send auth context on registry requests (+77 lines frontend Vitest).
+  - #3355 — translate RegistryPage chrome (+68 lines i18n Vitest).
+  - #3358 — screen-map drift re-land of PR #3293 (realtor-detail i18n).
+  - #3359 — surface registry destructive-action outcomes via toast (RE-LAND of closed-no-merge #3356; +197 lines toast Vitest).
+- **3 PRs closed-no-merge** (#3356, #3301, #3333) — all were dispatcher-approved but orphaned from `dev` (non-mechanical conflicts). #3356 re-landed as #3359; #3333 re-landed as #3358; **#3301 (reality-server inquiry-dead-fk-classify) is abandoned with no re-land, so that finding is now un-shipped**.
+- **New blocker issue #3357** (labels: follow-up, blocked) — "dispatcher: pipeline fully stalled — 3 approved PRs blocked on non-mechanical conflicts + Tier-1d signals are a dead-end". Dispatcher cannot self-heal orphaned branches; Tier-1d dev-review signal queue is exhausted.
+- **1 assignment quarantined**: `code-review-ppt-web-core-refresh-token-localstorage` (#3294) — blocked on #3299 apps/mobile biome debt, not on its own diff. No change this window.
+- **Carried blockers unchanged**: #3168 (cargo-deny RUSTSEC), #2652 (KMP cloud builds), #2951 (RN jest-expo), #3187 (cross-tenant assign 404 contract), #3299 (apps/mobile biome debt), #2966 (utoipa-swagger-ui egress 403).
+
+## pm-qa deep-dive (role focus)
+
+- **Test-delta discipline is strong** in the window (86 % of PRs ship tests; only the pure-i18n PR is bare). Both of the two frontend re-lands (#3358 + docs, #3359 + 197 Vitest lines) actually added test coverage — the re-land pattern has worked twice.
+- **But #3357 reveals a release-readiness hole**: the dispatcher closes approved PRs when branches orphan; nothing guarantees that a subsequent re-land inherits the original PR's test additions. In this window it did (lucky — same author, Tier-1d signals still intact). The invariant is not enforced.
+- **#3301 is the warning sign**: abandoned without a re-land (Tier-1d signals "a dead-end" per #3357), so the fix for reality-server inquiry dead-FK classification is **regressed to not-shipped** even though an approved PR with an engineering-ready diff existed. No regression test exists upstream either.
+- **Backend test additions this window are concentrated in session-revocation** (#3353) — a security surface. Good coverage of the specific contract (other sessions revoked on authenticated password change), stacked onto `suite_2.rs`. No fuzz / property tests; no cross-tenant case (worth noting given the still-open #3187 contract issue).
+- **Frontend tests this window are heavy on UI-chrome / i18n** (3 of 4 frontend tests are RTL i18n assertions). The toast test in #3359 is the only one asserting a user-observable error path.
+
+## Executive summary
+
+- Delivery is moving (7 merges, 2 days), but pipeline health is fragile: 3 approved PRs were silently closed in the same window per #3357. Net shipped findings: 5 approved tasks landed; 1 is abandoned (#3301).
+- Test discipline is healthy; the **real regression surface is the abandonment path**, not author behaviour. One pm-qa action + one pm-qa risk filed to codify re-land test-parity (ids: `pm-qa-approved-pr-abandoned-reland-test-parity-2026-11-09`, `pm-qa-dispatcher-stall-approved-pr-abandonment-2026-11-09`).
+- pm-qa is still 76 d stale behind pm-devops (now 70 d stale, next-up). Continue rotating; the staleness-bias risk raised 2026-10-28 (`pm-frontend-rotation-stale-83-days`) remains unmitigated.
+
+---
+_Prior run (2026-10-28) below._
+
+
 
 ## Delta since last routine run (2026-10-26)
 

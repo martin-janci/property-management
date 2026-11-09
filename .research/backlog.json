@@ -13145,7 +13145,7 @@
       "title": "Shared Ktor HttpClient has no HttpTimeout - mobile API calls can hang indefinitely",
       "vector": "bug",
       "confidence": "medium",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "rotating-expert-review [mobile-native-kmp]"
@@ -13153,13 +13153,14 @@
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37-43 - the single shared HttpClient installs only ContentNegotiation and Logging(NONE) and sets a default contentType; it never installs the HttpTimeout plugin (no requestTimeoutMillis / connectTimeoutMillis / socketTimeoutMillis).",
         "This client backs every repository (ApiClient, ListingRepository, PortalListingsRepository, InquiryRepository, NotificationRepository, FavoritesRepository, etc.). The Android (OkHttp/HttpURLConnection) path has no implicit request timeout, so a stalled connection leaves suspend calls hanging and the Compose UI stuck on a spinner with no error path.",
-        "Fix: install(HttpTimeout) with sane request/connect/socket timeouts in HttpClientProvider so stalled requests surface as a catchable exception (already handled by the try/catch -> Result.failure pattern in every repository)."
+        "Fix: install(HttpTimeout) with sane request/connect/socket timeouts in HttpClientProvider so stalled requests surface as a catchable exception (already handled by the try/catch -> Result.failure pattern in every repository).",
+        "decayed: no new signals in 14 days (updated_at 2026-10-25 -> 2026-11-09)"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt"
       ],
       "created_at": "2026-10-25",
-      "updated_at": "2026-10-25",
+      "updated_at": "2026-11-09",
       "plan": null,
       "type": "code-review-finding",
       "source": "rotating-expert-review",
@@ -13173,22 +13174,23 @@
       "title": "Reality mobile MyListings + portfolio analytics silently cap at 100 listings (no pagination)",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "rotating-expert-review [mobile-native-kmp]"
       ],
       "evidence": [
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:471-472 - MyListings loads portalListingsRepository.listMyListings(limit = 100) once with no offset paging UI; a realtor with >100 listings never sees rows beyond the first 100.",
         "mobile-native/shared/.../realtor/PortalListingsRepository.kt:111-124 getPortfolioAnalytics() also fans out over listMyListings(limit = 100).listings only, so portfolio totals (views/inquiries/favorites/trends) silently undercount for realtors with >100 listings.",
-        "Fix: page listMyListings via offset until the server returns fewer than `limit` rows (or add explicit pagination), and aggregate analytics over the full set rather than the first page."
+        "Fix: page listMyListings via offset until the server returns fewer than `limit` rows (or add explicit pagination), and aggregate analytics over the full set rather than the first page.",
+        "decayed: no new signals in 14 days (score 1 -> 0 -> dropped)"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt",
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt"
       ],
       "created_at": "2026-10-25",
-      "updated_at": "2026-10-25",
+      "updated_at": "2026-11-09",
       "plan": null,
       "type": "code-review-finding",
       "source": "rotating-expert-review",
@@ -15219,20 +15221,22 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #3293"
+        "PR #3293",
+        "PR #3358"
       ],
       "evidence": [
         "PR #3293 touched reality-product route file(s) but did not update docs/screens/reality/*.md: frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx, frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.test.tsx",
-        "Best-effort heuristic — some of these are test-only or API-route changes that don't warrant a screen-doc update. Treat as review candidate."
+        "Best-effort heuristic — some of these are test-only or API-route changes that don't warrant a screen-doc update. Treat as review candidate.",
+        "resolved: PR #3358 — screen-map-drift-pr-3293-reality: reflect realtor-detail i18n in screen-map (re-land on current dev); code patterns not independently verified"
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx",
         "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.test.tsx"
       ],
       "created_at": "2026-11-05",
-      "updated_at": "2026-11-05",
+      "updated_at": "2026-11-09",
       "plan": null,
       "type": "screen-map-drift",
       "source": "PR #3293",
@@ -15440,6 +15444,187 @@
         "assignment_status": "failed",
         "pr_number": null
       }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx",
+      "title": "Churn hotspot (new): frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx is a top-3 churn file this run — watch for instability",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-radar 2026-11-09 — PRs #3354, #3355, #3359"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx touched 4 commits since last run — PRs #3354, #3355, #3359 iterated on this file across auth-context + i18n + toast changes"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx"
+      ],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx",
+      "title": "Churn hotspot (new): frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx is a top-3 churn file this run",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-radar 2026-11-09 — PR #3350"
+      ],
+      "evidence": [
+        "ComparisonUrlHandler.tsx touched in 2 commits since last run — PR #3350 added listing-body validation at the API boundary"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx"
+      ],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx",
+      "title": "Churn hotspot (new): frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx is a top-3 churn file this run",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-radar 2026-11-09 — PR #3354"
+      ],
+      "evidence": [
+        "RegistryRulesPage.tsx touched in 2 commits since last run — PR #3354 added the page and tests alongside the RegistryPage auth-context work"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx"
+      ],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": null
+    },
+    {
+      "id": "closed-not-merged-pr-3356",
+      "title": "PR #3356 closed unmerged — code-review-ppt-web-ui-registry-mutation-silent-fail (superseded by #3359 reland)",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "PR #3356",
+        "PR #3359"
+      ],
+      "evidence": [
+        "PR #3356 closed unmerged on 2026-11-08; superseded by #3359 which merged 2026-11-08 — followup landed"
+      ],
+      "files": [],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": null
+    },
+    {
+      "id": "closed-not-merged-pr-3333",
+      "title": "PR #3333 closed unmerged — screen-map-drift-pr-3293-reality (superseded by #3358 reland)",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "PR #3333",
+        "PR #3358"
+      ],
+      "evidence": [
+        "PR #3333 closed unmerged on 2026-11-08; superseded by #3358 which merged 2026-11-08 — followup landed"
+      ],
+      "files": [],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": null
+    },
+    {
+      "id": "closed-not-merged-pr-3301",
+      "title": "PR #3301 closed unmerged — code-review-reality-server-inquiry-dead-fk-classify (abandoned)",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3301"
+      ],
+      "evidence": [
+        "PR #3301 (code-review-reality-server-inquiry-dead-fk-classify) closed unmerged on 2026-11-08 after being long-stale; no reland PR — original finding may still be open"
+      ],
+      "files": [],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-rules-i18n-gap",
+      "title": "RegistryRulesPage ships hardcoded English in a 6-locale app — sibling file missed by PR #3355 i18n sweep",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-09 ppt-web-ui"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx:90 — error-state heading hardcoded despite useTranslation imported",
+        "RegistryRulesPage.tsx:94-152 — page title, subtitle, info-panel, 4 bullet items, Go Back button all hardcoded; PR #3355 i18n fix hit RegistryPage.tsx only"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx"
+      ],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-page-hard-nav",
+      "title": "RegistryPage navigation uses window.location.href inside react-router SPA — full-reload UX, loses TanStack cache and toast provider",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-09 ppt-web-ui"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:92,96,170,189,193,267 — six nav handlers assign window.location.href inside an SPA",
+        "Each click triggers full reload, discards TanStack Query cache, unmounts ToastProvider losing pending success toasts",
+        "Sibling RegistryRulesPage.tsx:9 already uses useNavigate() — the correct primitive"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx"
+      ],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-useismanager-stub",
+      "title": "SECURITY (UX): FacilitiesPage useIsManager() stub returns true for everyone — residents see manager-only Create/Edit affordances",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-09 ppt-web-ui"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx:36-41 — useIsManager() placeholder unconditionally returns true",
+        "In-file comment acknowledges stub pending AuthContext wiring; backend enforces but UX advertises permissions viewer does not hold",
+        "Reference AuthContext at frontend/apps/mobile/src/contexts/AuthContext.tsx — port it or gate the buttons behind existing role selector"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx"
+      ],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": null
     }
   ]
 }

@@ -1,0 +1,251 @@
+{
+  "generated": "2026-11-09T03:12:23Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-11-09",
+      "type": "lag_warning",
+      "source": "routine-timing",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": [
+        "routine last ran 2026-11-06T14:58:01Z — 2d 12h ago; exceeds 36h threshold"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since=2026-11-06",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx touched 4 commits since last run — PRs #3354, #3355, #3359 all iterated on this file"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since=2026-11-06",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx touched 2 commits since last run — PR #3350 validated shared-comparison listing bodies"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since=2026-11-06",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx touched 2 commits since last run — PR #3354 added it (RegistryRulesPage.test.tsx also added)"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-3356",
+      "type": "closed-not-merged-pr",
+      "source": "PR #3356",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": [
+        "PR #3356 (code-review-ppt-web-ui-registry-mutation-silent-fail) closed unmerged on 2026-11-08 — replaced by #3359 reland"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-3301",
+      "type": "closed-not-merged-pr",
+      "source": "PR #3301",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": [
+        "PR #3301 (code-review-reality-server-inquiry-dead-fk-classify) closed unmerged on 2026-11-08 — long-stale and abandoned"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-3333",
+      "type": "closed-not-merged-pr",
+      "source": "PR #3333",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": [
+        "PR #3333 (screen-map-drift-pr-3293-reality) closed unmerged on 2026-11-08 — replaced by #3358 reland"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-rules-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx:90 — error-state heading hardcoded; sk/cs/de users see English in error path despite useTranslation imported",
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx:94-152 — page title, subtitle, info-panel heading, 4 bullet items, Go Back button all hardcoded; i18n PR #3355 fixed sibling RegistryPage.tsx only",
+        "rotating-expert-review 2026-11-09 ppt-web-ui segment"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-page-hard-nav",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:92,96,170,189,193,267 — six create/view/edit navigation handlers assign window.location.href inside a react-router SPA; each click triggers full page reload, discards TanStack Query cache, unmounts ToastProvider losing pending success toasts",
+        "Sibling RegistryRulesPage.tsx:9 already uses useNavigate() — the correct primitive",
+        "rotating-expert-review 2026-11-09 ppt-web-ui segment"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-useismanager-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx:36-41 — useIsManager() placeholder unconditionally returns true; every signed-in user including residents is shown manager-only Create/Edit affordances",
+        "In-file comment acknowledges stub pending AuthContext wiring; backend enforces but UX advertises permissions viewer does not hold",
+        "Reference AuthContext at frontend/apps/mobile/src/contexts/AuthContext.tsx",
+        "rotating-expert-review 2026-11-09 ppt-web-ui segment"
+      ],
+      "expert": "frontend"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "[ids] unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal double-counted",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score<=8 cap + decay applied to 2 stale open items",
+      "observed": "true (http-client: 2→1; my-listings: 1→0 dropped)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run → trivially pass",
+      "observed": "0 new plans",
+      "expected": "all tagged"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans + section checks",
+      "observed": "0 new plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md diff against regen",
+      "observed": "files identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phases failed",
+      "observed": "all phases OK",
+      "expected": "all phases OK"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present",
+      "observed": "no plans added or deleted",
+      "expected": "same set"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count staged ≥ HEAD",
+      "observed": "22 ≥ 22",
+      "expected": "≥"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md diff against regen",
+      "observed": "files identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions ≤3 (0 ok)",
+      "observed": "0 actions",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm_cursor + GC7",
+      "observed": "pm=3→4, cc=0→1, 13 epics",
+      "expected": "all valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token value",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist this run"
+}
