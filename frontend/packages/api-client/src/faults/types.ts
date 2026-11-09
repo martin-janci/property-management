@@ -135,13 +135,34 @@ export interface FaultComment {
 export interface FaultAttachment {
   id: string;
   fault_id: string;
-  file_url: string;
-  file_name: string;
-  file_type: string;
-  file_size: number;
+  /** Storage file name (the object key's basename). */
+  filename: string;
+  /** Name of the file as uploaded by the user. */
+  original_filename: string;
+  content_type: string;
+  size_bytes: number;
+  /**
+   * Readable URL. The server stores a storage key and returns a short-lived
+   * presigned GET URL here (backend `FaultAttachment`, `routes/faults.rs`).
+   */
+  storage_url: string;
+  thumbnail_url?: string;
   uploaded_by: string;
-  uploaded_by_name?: string;
+  description?: string;
+  width?: number;
+  height?: number;
   created_at: string;
+}
+
+/** Body of `POST /api/v1/faults/{id}/attachments` (backend `AddAttachmentRequest`). */
+export interface AddFaultAttachmentRequest {
+  filename: string;
+  original_filename: string;
+  content_type: string;
+  size_bytes: number;
+  /** Storage key from `POST /api/v1/documents/upload-url` (must be in the caller's org). */
+  storage_url: string;
+  description?: string;
 }
 
 /**

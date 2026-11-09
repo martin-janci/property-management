@@ -1071,7 +1071,14 @@
     },
     "confirmDelete": "Vymazať túto poruchu? Túto akciu nie je možné vrátiť späť.",
     "deleted": "Porucha bola vymazaná",
-    "deleteFailed": "Nepodarilo sa vymazať poruchu"
+    "deleteFailed": "Nepodarilo sa vymazať poruchu",
+    "withdraw": "Stiahnuť hlásenie",
+    "withdrawConfirm": "Stiahnuť toto hlásenie poruchy? Bude uzavreté.",
+    "withdrawn": "Hlásenie bolo stiahnuté",
+    "withdrawFailed": "Hlásenie sa nepodarilo stiahnuť",
+    "uploadingPhoto": "Nahráva sa…",
+    "photoUploadFailed": "Fotku sa nepodarilo nahrať",
+    "photosNotAttached": "{{failed}} z {{total}} fotiek sa nepodarilo priložiť. Môžete ich pridať v detaile poruchy."
   },
   "buildings": {
     "title": "Budovy",

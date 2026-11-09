@@ -1071,7 +1071,14 @@
     },
     "confirmDelete": "Smazat tuto závadu? Tuto akci nelze vrátit zpět.",
     "deleted": "Závada byla smazána",
-    "deleteFailed": "Nepodařilo se smazat závadu"
+    "deleteFailed": "Nepodařilo se smazat závadu",
+    "withdraw": "Stáhnout hlášení",
+    "withdrawConfirm": "Stáhnout toto hlášení poruchy? Bude uzavřeno.",
+    "withdrawn": "Hlášení bylo staženo",
+    "withdrawFailed": "Hlášení se nepodařilo stáhnout",
+    "uploadingPhoto": "Nahrává se…",
+    "photoUploadFailed": "Fotku se nepodařilo nahrát",
+    "photosNotAttached": "{{failed}} z {{total}} fotek se nepodařilo přiložit. Můžete je přidat v detailu poruchy."
   },
   "buildings": {
     "title": "Budovy",

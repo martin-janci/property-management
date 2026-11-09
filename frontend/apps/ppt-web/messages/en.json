@@ -1069,7 +1069,14 @@
     },
     "confirmDelete": "Delete this fault? This action cannot be undone.",
     "deleted": "Fault deleted",
-    "deleteFailed": "Failed to delete fault"
+    "deleteFailed": "Failed to delete fault",
+    "withdraw": "Withdraw report",
+    "withdrawConfirm": "Withdraw this fault report? It will be closed.",
+    "withdrawn": "Report withdrawn",
+    "withdrawFailed": "Could not withdraw the report",
+    "uploadingPhoto": "Uploading…",
+    "photoUploadFailed": "Photo upload failed",
+    "photosNotAttached": "{{failed}} of {{total}} photos could not be attached. You can add them on the fault detail."
   },
   "buildings": {
     "title": "Buildings",
