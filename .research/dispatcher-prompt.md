@@ -1053,6 +1053,31 @@ export BUFFER_FLOOR BUFFER_TARGET BUFFER_CEIL
   `Generator:` line. If the 24h post-merge gate in Phase 2.5 already ran a
   review-merged pass THIS run, spawn the dev-review slice instead (never two
   review-merged passes in one run).
+
+  **Tier 1d ingest — promote the signal sink (issue #3357 part 2).** The
+  **even** (`ppt-dev-review`) branch writes its findings to
+  `.research/signals/<date>-<segment>-tier1d.json` — but NO refill tier read
+  that sink, so every finding was orphaned and never became a claimable
+  action-list item (the buffer stayed pinned at `claimable < floor` with
+  `0 claimed` despite Tier-1d firing every run). Close the loop: right after the
+  dev-review generator returns (and also opportunistically every run, since the
+  sink accumulates), run the promotion step so fresh signals enter the claim
+  pool THIS run — deduped against action-list / assignments / backlog.json and
+  **mobile-native-gated** so structurally-unlandable KMP dead-ends
+  (`code-review-mobile-native-kmp-*`, AGP egress-blocked in cloud — issue #2652)
+  are never minted as claim rows (`mobile-rn` React Native findings still
+  promote). It mirrors `backlog-refill.sh`: buffer-gated, additive, fail-closed,
+  per-run capped (`SIGNALS_PROMOTE_CAP`, default 12), newest-signal-first.
+
+  ```bash
+  bash .research/signals-promote.sh --apply
+  ```
+
+  Include `action-list.json` in the Phase 6 commit when it promoted any row;
+  surface the count on the Phase 7 `Generator:` line (e.g.
+  `signals-promoted=<n>`). The `review-merged` **odd** branch still routes
+  through the EVERY-CYCLE issue-ingest above (GitHub issues), unchanged. Smoke
+  test: `.research/test-signals-promote.sh`.
 - **Tier 2 (upstream kick):** if `open_claimable_count` still `< BUFFER_FLOOR/2` (default 18 — deep-starvation last resort, scaled with the floor so it stays proportional to throughput; raised from a hardcoded 12 alongside `BUFFER_FLOOR` 18→36 so Tier-2 doesn't leave a wide dead band below the Tier-1 floor) OR coverage missing → `curl POST $DISPATCHER_URL` with `Bearer $DISPATCHER_TOKEN`, the `anthropic-version` header, a `{"text": …}` body, and `--max-time 10`. **Capture the response code AND first 200 chars of body** (NEW — issue #5: HTTP 400 from the planner used to vanish into fire-and-forget; now we see it. The body/header shape is fixed per issue #1151 / #1380 — see the comment below):
 
   ```bash

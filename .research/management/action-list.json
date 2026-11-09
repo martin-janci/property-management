@@ -185,17 +185,6 @@
       "source": "pm-analysis 2026-11-09"
     },
     {
-      "id": "pm-qa-dispatcher-self-test-quarantined-recovery-2026-11-09",
-      "action": "Add a dispatcher-self-test.sh test case that covers the quarantined-row recovery path so #3357-class stalls fail CI instead of silently queueing",
-      "owner_role": "pm-qa",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-09"
-    },
-    {
       "id": "pm-qa-confirm-non-kmp-medium-confidence-2026-11-09",
       "action": "QA audit: non-mobile-native backlog items with confidence=medium need a one-shot verification step before Phase 3 can promote them",
       "owner_role": "pm-qa",

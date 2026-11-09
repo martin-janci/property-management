@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-09T16:31:41Z",
+  "archived_at": "2026-11-09T20:39:36Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -22441,6 +22441,24 @@
         "merged_pr": 2846,
         "merged_at": "2026-08-25T12:34:00Z",
         "at": "2026-08-25T16:28:24Z"
+      }
+    },
+    {
+      "id": "pm-qa-dispatcher-self-test-quarantined-recovery-2026-11-09",
+      "action": "Add a dispatcher-self-test.sh test case that covers the quarantined-row recovery path so #3357-class stalls fail CI instead of silently queueing",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "dropped",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-09 | gc1-reconcile 2026-11-09T20:26:36Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-09T20:26:36Z"
       }
     },
     {
