@@ -844,6 +844,24 @@ if [ -x "$MNGATE" ]; then
 fi
 echo
 
+# --- T32b: Tier-1d signal-sink promotion wiring (issue #3357 part 2) --------
+#   The Tier-1d generator writes findings to .research/signals/*tier1d*.json.
+#   Before the fix NO tier read that sink, so every finding was orphaned and the
+#   buffer stayed starved with 0 claimed. signals-promote.sh is the reader that
+#   closes the loop — deduped + mobile-native-gated. Assert the helper, its
+#   smoke test, and the prompt wiring are all present so the sink can't silently
+#   go orphaned again.
+echo "T32b Tier-1d signal-sink promotion: helper present + smoke test + prompt wiring (#3357)"
+SPROMOTE="${SPROMOTE:-.research/signals-promote.sh}"
+if [ -x "$SPROMOTE" ]; then note "signals-promote.sh present + executable"
+else fail "signals-promote.sh missing or not executable ($SPROMOTE)"; fi
+if [ -x ".research/test-signals-promote.sh" ]; then note "test-signals-promote.sh present + executable"
+else fail "test-signals-promote.sh missing or not executable"; fi
+if [ -f "$PROMPT" ]; then
+  grep -q 'signals-promote.sh' "$PROMPT" && note "prompt wires Tier-1d signals-promote step" || fail "prompt missing signals-promote wiring"
+fi
+echo
+
 # --- T33: quarantined-row recovery path (issue #3357) ----------------------
 # Covers the quarantine SEMI-TERMINAL recovery path end-to-end, deterministic
 # and offline via an inline fixture (no network, no coupling to live state) so a

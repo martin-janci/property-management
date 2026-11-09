@@ -11,7 +11,9 @@ on:
       - ".research/issue-ingest.sh"
       - ".research/mcp-push-size-guard.sh"
       - ".research/mobile-native-gate.sh"
+      - ".research/signals-promote.sh"
       - ".research/test-backlog-refill.sh"
+      - ".research/test-signals-promote.sh"
       - ".research/test-backlog-reconcile.sh"
       - ".research/test-retry-remint.sh"
       - ".research/test-issue-ingest.sh"
@@ -53,6 +55,8 @@ jobs:
         run: bash .research/test-mcp-push-size-guard.sh
       - name: mobile-native-gate behavioral smoke test
         run: bash .research/test-mobile-native-gate.sh
+      - name: signals-promote behavioral smoke test
+        run: bash .research/test-signals-promote.sh
       - name: goal-check (enforcing)
         env:
           GOAL_CHECK_ENFORCE: "1"
