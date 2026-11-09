@@ -2954,6 +2954,28 @@
       "first_open_at": null
     },
     {
+      "task_id": "churn-hotspot-ppt-web-registry-page",
+      "branch": "auto-impl/churn-hotspot-ppt-web-registry-page-53fc0bdf",
+      "status": "merged",
+      "claimed_at": "2026-11-09T12:33:35Z",
+      "last_updated": "2026-11-09T14:39:27Z",
+      "status_changed_at": "2026-11-09T14:39:27Z",
+      "pr_number": 3365,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3365",
+      "merged_at": "2026-11-09T14:39:27Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3365 done: added registryActionsI18n.test.ts locking registry.toast.*/registry.confirm.* leaf keys into en/sk/cs trio (untested gap from #3354/#3359 churn); verify green; auth/toast-error/invalidation investigated, no prod bug",
+      "reviewer_summary": "verdict=approve head_oid=4854450bcb049d30c6c0624f2320b543df947675 note=non-vacuous-i18n-guard-21-keys-verified-ci-green-posted-as-comment-self-approval-blocked",
+      "last_reviewed_oid": "4854450bcb049d30c6c0624f2320b543df947675",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-09T14:39:05Z"
+    },
+    {
       "task_id": "churn-hotspot-protected-route-i18n-test",
       "branch": "auto-impl/churn-hotspot-protected-route-i18n-test-fa83da10",
       "status": "merged",
@@ -4171,6 +4193,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-api-handlers-budgets-db-error-leak",
+      "branch": "auto-impl/code-review-api-handlers-budgets-db-erro-c07dff6b",
+      "status": "merged",
+      "claimed_at": "2026-11-09T08:29:51Z",
+      "last_updated": "2026-11-09T14:32:16Z",
+      "status_changed_at": "2026-11-09T14:32:16Z",
+      "pr_number": 3362,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3362",
+      "merged_at": "2026-11-09T14:32:16Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3362 done: routed 26 budgets.rs DB_ERROR branches through existing db_error() helper; +no-leak test; fmt+clippy clean. scope_drift expected (security finding in budget route).",
+      "reviewer_summary": "verdict=approve head_oid=bf2c3f2256117b0f37b5c7bc9755934e2d86a9d5 note=26 budgets.rs DB_ERROR leaks routed via existing db_error(); scope-drift justified; CI green",
+      "last_reviewed_oid": "bf2c3f2256117b0f37b5c7bc9755934e2d86a9d5",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-09T12:39:42Z"
+    },
+    {
       "task_id": "code-review-api-handlers-capabilities-list-cross-org",
       "branch": "auto-impl/code-review-api-handlers-capabilities-li-978c2898",
       "status": "failed",
@@ -4435,6 +4479,28 @@
       "merge_attempted_at": "2026-08-06T22:13:48Z"
     },
     {
+      "task_id": "code-review-api-handlers-health-alerts-page-size-uncapped",
+      "branch": "auto-impl/code-review-api-handlers-health-alerts-p-d0d96c8f",
+      "status": "merged",
+      "claimed_at": "2026-11-09T08:29:51Z",
+      "last_updated": "2026-11-09T14:32:16Z",
+      "status_changed_at": "2026-11-09T14:32:16Z",
+      "pr_number": 3361,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3361",
+      "merged_at": "2026-11-09T14:32:16Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3361 done: clamp health-alerts page_size to [1,100] in ops.rs (matches tenants.rs/audit.rs); +IG3 test (101 alerts->100); fmt+clippy clean; sqlx leg in backend.yml CI.",
+      "reviewer_summary": "verdict=approve head_oid=c113a7bbe408513657e2c131980498f8c029811d note=clamp(1,100) mirrors tenants.rs:108/audit.rs:102; IG3 101->100; CI green",
+      "last_reviewed_oid": "c113a7bbe408513657e2c131980498f8c029811d",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-09T12:39:42Z"
+    },
+    {
       "task_id": "code-review-api-handlers-impersonation-active-raw-xff-audit",
       "branch": "auto-impl/code-review-api-handlers-impersonation-a-0fade50b",
       "status": "merged",
@@ -4522,6 +4588,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-08-13T10:39:13Z"
+    },
+    {
+      "task_id": "code-review-api-handlers-messaging-db-error-leak",
+      "branch": "auto-impl/code-review-api-handlers-messaging-db-er-ac2e52c8",
+      "status": "merged",
+      "claimed_at": "2026-11-09T08:29:51Z",
+      "last_updated": "2026-11-09T14:32:16Z",
+      "status_changed_at": "2026-11-09T14:32:16Z",
+      "pr_number": 3363,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3363",
+      "merged_at": "2026-11-09T14:32:16Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3363 done: routed 33 messaging.rs DB_ERROR leaks through module-local db_error() helper; fmt+clippy clean, 6 messaging+697 tests pass; scope_drift expected.",
+      "reviewer_summary": "verdict=approve head_oid=e8d7120b33f8b2554128578dac0c856c7d061348 note=33 messaging.rs DB_ERROR leaks rerouted; block_user ALREADY_BLOCKED arm preserved; CI green",
+      "last_reviewed_oid": "e8d7120b33f8b2554128578dac0c856c7d061348",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-09T12:39:42Z"
     },
     {
       "task_id": "code-review-api-handlers-mfa-audit-discard",
@@ -4922,6 +5010,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-api-handlers-tenant-export-outdir-path",
+      "branch": "auto-impl/code-review-api-handlers-tenant-export-o-cf16cb5c",
+      "status": "merged",
+      "claimed_at": "2026-11-09T08:29:51Z",
+      "last_updated": "2026-11-09T14:32:16Z",
+      "status_changed_at": "2026-11-09T14:32:16Z",
+      "pr_number": 3364,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3364",
+      "merged_at": "2026-11-09T14:32:16Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3364 done: confine tenant-export out_dir to export root (rejects abs/traversal); +confinement test; fmt+clippy+701 tests green; 18 sqlx/DNS fails pre-existing env (run in backend.yml).",
+      "reviewer_summary": "verdict=approve head_oid=68279d9e3483d84b9e288f1706c9994701ad0059 note=path-traversal hardening; all vectors rejected lexically; reimpl of validate_storage_path justified; CI green",
+      "last_reviewed_oid": "68279d9e3483d84b9e288f1706c9994701ad0059",
+      "scope_drift": false,
+      "code_reuse_warn": "mirrors aml_dsa::validate_storage_path (reimplemented, not reused)",
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-09T12:39:42Z"
     },
     {
       "task_id": "code-review-api-handlers-unbounded-pagination-limit",
@@ -20374,6 +20484,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "pm-qa-dispatcher-self-test-quarantined-recovery",
+      "branch": "auto-impl/pm-qa-dispatcher-self-test-quarantined-r-6da149c4",
+      "status": "merged",
+      "claimed_at": "2026-11-09T08:29:51Z",
+      "last_updated": "2026-11-09T14:32:16Z",
+      "status_changed_at": "2026-11-09T14:32:16Z",
+      "pr_number": 3360,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3360",
+      "merged_at": "2026-11-09T14:32:16Z",
+      "specialist": "generic",
+      "implementer_summary": "pr=3360 done: added T33 quarantined-row recovery test to dispatcher-self-test.sh; self-test PASS incl new case.",
+      "reviewer_summary": "verdict=approve head_oid=79fecb7409aadeaafe5bd0abd3e090cda93a1e1e note=T33 deterministic/offline mktemp fixture; non-vacuous; no mgmt-state write; CI green",
+      "last_reviewed_oid": "79fecb7409aadeaafe5bd0abd3e090cda93a1e1e",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-09T12:39:42Z"
+    },
+    {
       "task_id": "pm-qa-mobile-rn-vote-detail-conditional-hooks-regression-test",
       "branch": "auto-impl/pm-qa-mobile-rn-vote-detail-conditional-a63d8a7d",
       "status": "merged",
@@ -23639,5 +23771,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-08T20:33:29Z"
+  "archived_at": "2026-11-09T14:40:11Z"
 }

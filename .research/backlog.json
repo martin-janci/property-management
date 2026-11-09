@@ -15565,6 +15565,90 @@
       "score_delta": 1,
       "candidate_vector": "bug",
       "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-imports-limit-unclamped",
+      "title": "reality-server imports.rs list_import_jobs passes user `limit` to SQL unclamped - negative LIMIT 500s, huge LIMIT is unbounded",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [reality-server]"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:125 - list_import_jobs passes `query.limit.unwrap_or(20)` straight into reality_portal_repo.list_import_jobs() with no `.clamp(...)`, while the sibling `offset` on :126 IS bounded via `crate::util::clamp_offset_i32`. ImportJobsQuery.limit is `Option<i32>` (routes/imports.rs:85-89), fully request-controlled.",
+        "Every other list endpoint in the segment clamps the limit: agencies.rs:128 `.clamp(1,200)`, inquiries.rs:597 & :649 `.clamp(1,100)`, portal_listings.rs:452, realtors.rs:207, saved_searches.rs:327, and listings.rs clamp_pagination(). util/mod.rs ships clamp_offset/clamp_offset_i32 but no clamp_limit helper, so this endpoint slipped the pattern.",
+        "Impact: `?limit=-1` reaches Postgres as `LIMIT -1` -> query error surfaced as HTTP 500 (the exact failure listings.rs:22-27 documents having fixed); `?limit=2000000000` requests an unbounded result set (latency/memory pressure, bounded only by the caller's own row count). Fix: clamp to `.clamp(1,100)` like the sibling routes, or add a util::clamp_limit helper."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/imports.rs"
+      ],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-imports-source-url-no-validation",
+      "title": "reality-server imports.rs create/update_import_job store user `source_url` without validate_external_url (SSRF parity gap vs agency_imports)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [reality-server]"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:148-163 (create_import_job) and :209-227 (update_import_job) persist `CreatePortalImportJob.source_url` / `UpdateImportJob.source_url` (both `Option<String>`, defined backend/crates/db/src/models/reality_portal.rs:693-705) directly through the repo with NO URL validation.",
+        "The sibling agency-feed path validates the same concept: agency_imports.rs:14 imports `common::url_validation::validate_external_url` and calls it on both create (:238) and update (:290) of `feed_url`, returning 400 on failure. imports.rs never imports or calls it - a repo-wide grep shows the only two validate_external_url call sites in reality-server are both in agency_imports.rs.",
+        "source_url is a remote feed endpoint fetched server-side by the import pipeline; without validate_external_url (which rejects localhost/private/link-local/non-http targets) an authenticated portal user can point an import job at internal services -> SSRF. Fix: mirror agency_imports and validate source_url on create and update before persisting. (The fetch itself lives outside this segment, so reachability is unconfirmed by static analysis - hence medium confidence.)"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/imports.rs"
+      ],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-imports-total-page-len",
+      "title": "reality-server list_import_jobs reports `total` as page length, breaking client pagination",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [reality-server]"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:131 sets `let total = jobs.len() as i64;` for ImportJobsResponse.total (`i64`, :95) on the paginated list_import_jobs handler (it applies limit/offset at :125-126). So `total` equals the current page size, never the real row count.",
+        "The segment's convention is a separate COUNT query: inquiries.rs:602-620 carries the explicit comment that clients compute total/limit for pagination and that returning inquiries.len() would be wrong, then uses tokio::try_join! to fetch a real count; agencies.rs:131 returns `(agencies, total)` from the repo. list_import_jobs was missed. (Note: list_feeds:325 also uses len() but is NOT paginated, so its total is correct and is out of scope.)",
+        "Impact: a client paginating import jobs sees total == page size, so ceil(total/limit) is always 1 and pages beyond the first are unreachable in the UI. Fix: add a COUNT(*) scoped to principal.user_id (mirroring inquiries.rs) instead of jobs.len()."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/imports.rs"
+      ],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "expert": "rust"
     }
   ]
 }
