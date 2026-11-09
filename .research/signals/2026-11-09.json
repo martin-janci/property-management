@@ -1,0 +1,199 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-11-09",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-11-06T14:58:01Z",
+      "score_delta": 0,
+      "evidence": "Routine has not run in ~60h (~2d 12h) since 2026-11-06T14:58Z — above the 36h threshold; dispatcher kept ticking but the research routine did not.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-11-09",
+      "type": "stale_routine_alert",
+      "source": "state.last_run_iso=2026-11-06T14:58:01Z",
+      "score_delta": 0,
+      "evidence": "last_run_iso is 2 days old (≥3 only marginally). Dispatcher ran fine; routine firing cadence may need a re-check against the cloud cron.",
+      "confidence": "medium",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx",
+      "type": "churn-hotspot",
+      "source": "4 commits since 2026-11-06T14:58:01Z (PRs #3351, #3354, #3355, #3359 — registry i18n + auth-context + toast reland series)",
+      "score_delta": 1,
+      "evidence": "Top churn file this run: 4 touches across the registry review-finding reland series. First time as a hotspot.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
+      "type": "churn-hotspot",
+      "source": "4 commits since 2026-11-06T14:58:01Z (registry i18n PRs #3351, #3354, #3355, #3359)",
+      "score_delta": 0,
+      "evidence": "Re-emit (cumulative carve-out, G4). All 6 locale JSON files (cs/de/en/hu/pl/sk) churn identically on every registry PR — benign translation sync, not instability. No score re-applied.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "pipeline-stall-blocker-digest-2026-11-09",
+      "type": "pipeline-stall-blocker",
+      "source": "issue #3357, dispatcher payload buffer-low=6/72",
+      "score_delta": 0,
+      "evidence": "Payload: buffer-low: claimable=6/72 coverage-missing. Issue #3357 names three structural blockers: (1) mobile-native AGP egress #2652 (6 of the 8 open action-list rows are cloud-unlandable), (2) two UNRESOLVED: sentinel dependencies in pm-frontend-mobile-rn-lint-gates-adopt + pm-scrum-master-violations-xtenant-404-contract-sweep, (3) Tier-1d generator writes .research/signals/*-tier1d.json but no refill tier reads that path — findings are orphaned. Routine surfaces for operator; auto-fix path not applicable.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "resolution-screen-map-drift-pr-3293-reality",
+      "type": "resolution",
+      "source": "PR #3358",
+      "score_delta": 0,
+      "evidence": "Verbatim-ID match in PR #3358 title. Backlog item flipped open → done.",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "decay-code-review-mobile-native-kmp-http-client-no-timeout",
+      "type": "decay",
+      "source": "backlog.updated_at=2026-10-25 → 14+d",
+      "score_delta": -1,
+      "evidence": "Open item unchanged for 15 days; score 2 → 1. Bug still real but blocked on mobile-native cloud execution (issue #3357).",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "decay-code-review-mobile-native-kmp-my-listings-pagination-cap",
+      "type": "decay",
+      "source": "backlog.updated_at=2026-10-25 → 14+d",
+      "score_delta": -1,
+      "evidence": "Open item unchanged for 15 days; score 1 → 0 → dropped. Reinstate by hand when mobile-native execution path reopens.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-11-09.md && head -1 .research/briefs/2026-11-09.md | grep -q '^# 2026-11-09$'",
+      "observed": "will be verified after Phase 4 brief write",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev HEAD:state.json ... state advanced",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "cumulative carve-out check",
+      "observed": "only churn-hotspot/en.json re-emitted with score_delta=0; others are new ids",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "no score > 8; both decay-eligible items processed; status=dropped for score=0",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans → no adversarial check needed",
+      "observed": "0 new plans",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans + readiness",
+      "observed": "0 new plans",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/'",
+      "observed": "will verify at commit",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets + private hostnames scan",
+      "observed": "will verify at commit",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md $(regen)",
+      "observed": "regen identity PASS verified inline",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no phases failed; Phase 1.5/1.6 skipped by design, cursors untouched",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present or archived",
+      "observed": "no plan deletions this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive-only-grows",
+      "observed": "no archive touches this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md $(regen)",
+      "observed": "regen identity PASS verified inline",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps + idempotency",
+      "observed": "auto_fix_actions=[], no candidate met high-confidence bar",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm_cursor",
+      "observed": "Phase 1.6 skipped this run → gate is a no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token in staged diff",
+      "observed": "will verify at commit",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met confidence=high + score>=3 + allowlist (see Auto-fix in brief)"
+}

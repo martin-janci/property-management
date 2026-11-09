@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-11-06T14:58:01Z",
+  "last_run_iso": "2026-11-09T02:35:00Z",
   "last_run_ms": 0,
-  "last_pr_seen": 3349,
-  "last_issue_seen": 3341,
-  "last_commit_sha": "6729d7648660d665f9ef2dc4cfd25584aae95d7e",
+  "last_pr_seen": 3359,
+  "last_issue_seen": 3357,
+  "last_commit_sha": "c5d7ca5",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -348,9 +348,9 @@
       "recent_churn": 151
     },
     "frontend/apps/ppt-web/messages/en.json": {
-      "runs_seen": 1,
-      "last_seen": "2026-07-16",
-      "recent_churn": 3926
+      "runs_seen": 2,
+      "last_seen": "2026-11-09",
+      "recent_churn": 4
     },
     "frontend/packages/sitemap/src/json/sitemap.json": {
       "runs_seen": 1,
@@ -706,6 +706,11 @@
       "runs_seen": 1,
       "last_seen": "2026-11-06",
       "recent_churn": 2
+    },
+    "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-09",
+      "recent_churn": 4
     }
   },
   "seen_signals": [
@@ -740,7 +745,9 @@
     "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs",
     "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
     "churn-hotspot-backend/Cargo.toml",
+    "churn-hotspot-backend/crates/db/src/repositories/registry.rs",
     "churn-hotspot-backend/crates/db/src/repositories/rental.rs",
+    "churn-hotspot-backend/crates/db/tests/suite_4.rs",
     "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
     "churn-hotspot-backend/deny.toml",
     "churn-hotspot-backend/servers/api-server/src/main.rs",
@@ -758,6 +765,7 @@
     "churn-hotspot-backend/servers/api-server/src/routes/oauth.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/organizations.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/platform_admin.rs",
+    "churn-hotspot-backend/servers/api-server/src/routes/registry.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/suspend_cascade.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/violations.rs",
@@ -833,6 +841,7 @@
     "churn-hotspot-frontend/apps/ppt-web/src/features/documents/components/MoveFolderDialog.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.reconnect.test.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.test.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/i18n/protectedRouteI18n.test.ts",
@@ -1237,10 +1246,12 @@
     "lag-warning-2026-10-25",
     "lag-warning-2026-11-01",
     "lag-warning-2026-11-04",
+    "lag-warning-2026-11-09",
     "lag-warning-supplement-2026-08-31",
     "merged-review-followup-issue-2366",
     "merged-review-followup-issue-2575",
     "merged-review-followup-issue-2612",
+    "pipeline-stall-blocker-digest-2026-11-09",
     "refire-buffer-low-2026-08-25-0850",
     "repeated-churn-backend-crates-integrations-src-booking-mod-rs",
     "repeated-churn-backend-servers-api-server-src-routes-auth-rs",
@@ -1315,6 +1326,7 @@
     "stale-routine-alert-2026-10-01",
     "stale-routine-alert-2026-10-08",
     "stale-routine-alert-2026-10-15",
+    "stale-routine-alert-2026-11-09",
     "stalled-review-pr-1179",
     "stalled-review-pr-2555",
     "stalled-review-pr-2558",
@@ -1390,10 +1402,7 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952",
-    "churn-hotspot-backend/crates/db/tests/suite_4.rs",
-    "churn-hotspot-backend/crates/db/src/repositories/registry.rs",
-    "churn-hotspot-backend/servers/api-server/src/routes/registry.rs"
+    "untriaged-issue-952"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1407,8 +1416,8 @@
     "mobile-native-kmp": "2026-11-04"
   },
   "stats": {
-    "runs": 115,
-    "vectors_created": 522,
+    "runs": 116,
+    "vectors_created": 523,
     "plans_created": 35,
     "quiet_days": 8,
     "auto_fix_count": 0
