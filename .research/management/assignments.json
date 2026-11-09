@@ -25,5 +25,5 @@
       "quarantine_reason": "blocked on #3299: pre-existing frontend/apps/mobile biome debt reddens frontend.yml (Lint & Format Check -> frontend/E2E skipped/failed); PR code sound, no change warranted (reviewer confirmed). Rebased onto origin/dev (clean) at round 1 to check if debt was fixed upstream — apps/mobile + biome config byte-identical on dev, still red. Backend required gates (check+test) green. Un-quarantine (status->review) once #3299 clears the debt or scopes the lint gate per-package."
     }
   ],
-  "generated": "2026-11-09T00:27:47Z"
+  "generated": "2026-11-09T02:30:55Z"
 }
