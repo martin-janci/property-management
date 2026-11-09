@@ -137,18 +137,18 @@
     {
       "task_id": "churn-hotspot-ppt-web-registry-page",
       "branch": "auto-impl/churn-hotspot-ppt-web-registry-page-53fc0bdf",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-09T12:33:35Z",
-      "last_updated": "2026-11-09T12:33:35Z",
-      "status_changed_at": "2026-11-09T12:33:35Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-09T12:47:53Z",
+      "status_changed_at": "2026-11-09T12:47:53Z",
+      "pr_number": 3365,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3365",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=3365 done: added registryActionsI18n.test.ts locking registry.toast.*/registry.confirm.* leaf keys into en/sk/cs trio (untested gap from #3354/#3359 churn); verify green; auth/toast-error/invalidation investigated, no prod bug",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -157,5 +157,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-09T12:42:10Z"
+  "generated": "2026-11-09T12:47:53Z"
 }
