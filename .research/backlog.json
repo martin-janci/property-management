@@ -15219,7 +15219,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3293"
       ],
@@ -15237,7 +15237,12 @@
       "type": "screen-map-drift",
       "source": "PR #3293",
       "score_delta": 2,
-      "candidate_vector": "test-gap"
+      "candidate_vector": "test-gap",
+      "reconciled": {
+        "at": "2026-11-09T04:25:02Z",
+        "assignment_status": "merged",
+        "pr_number": 3358
+      }
     },
     {
       "id": "screen-map-drift-pr-3313-reality",
