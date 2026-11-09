@@ -15447,6 +15447,70 @@
       }
     },
     {
+      "id": "code-review-api-handlers-budgets-db-error-leak",
+      "title": "api-server budgets.rs leaks raw sqlx errors to clients — 26 handler error branches send e.to_string() as DB_ERROR",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "code-review-api-handlers-2026-11-09"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/budgets.rs:468,505,542,583,624,694,735,776,1105,1142,1179,1236,1270,1307,1339,1367,1404,1441,1481,1521,1561,1598,1630,1667,1704,1741 — 26 handler error branches send Json(ErrorResponse::new(\"DB_ERROR\", e.to_string())) to clients. Raw sqlx text (SQL fragments, table/column names, pool/TLS state) reaches PM manager API clients. Grep confirmed count=26.",
+        "Expert: security. Severity: high. Fix shape: log the detail (tracing::error! already present), return a static message. Same class as existing reality-server db-error-leak-to-client plan but on api-server."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/budgets.rs"
+      ],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": "plans/code-review-api-handlers-budgets-db-error-leak.md"
+    },
+    {
+      "id": "code-review-api-handlers-messaging-db-error-leak",
+      "title": "api-server messaging.rs leaks raw sqlx errors to clients — 33 handler error branches send e.to_string() as DB_ERROR",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "code-review-api-handlers-2026-11-09"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/messaging.rs — 33 handler error branches send Json(ErrorResponse::new(\"DB_ERROR\", e.to_string())); highest leak concentration in the api-server tree. First site line 302. Grep confirmed count=33.",
+        "Expert: security. Severity: medium. Security fast-track eligible (vector=security + confidence=high + score>=2). Same remediation shape as sibling budgets.rs plan."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/messaging.rs"
+      ],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": "plans/code-review-api-handlers-messaging-db-error-leak.md"
+    },
+    {
+      "id": "churn-hotspot-ppt-web-registry-page",
+      "title": "Watch RegistryPage.tsx churn — 3 touches across #3354/#3355/#3359 (auth context + i18n + toasts)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3354",
+        "PR #3355",
+        "PR #3359"
+      ],
+      "evidence": [
+        "RegistryPage.tsx touched 3x in this routine window across registry feature consolidation (auth, i18n, toast surfacing). Informational — concentrated intentional feature work, not regression."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx"
+      ],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": null
+    },
+    {
       "id": "code-review-api-handlers-tenant-export-outdir-path",
       "title": "SECURITY: admin tenant-export handler writes to a client-supplied out_dir with no validation — arbitrary-directory write via RLS-bypassing export pool",
       "vector": "bug",

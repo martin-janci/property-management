@@ -120,3 +120,12 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-10-28, pm-frontend):** eslint-plugin-react-hooks + i18next/no-literal-string in `frontend/apps/mobile` — carried from 2026-08-25, now 64 days unresolved; the exact defects it predicts keep landing (VoteDetail dead i18n fallback, ranked ballot). Proposal: enable both, warn-only for one sprint, blocking from the next. Owner: pm-frontend + pm-qa.
 - **NEW (2026-10-28, pm-frontend):** Per-form MSW/Mirage e2e-smoke gate before merge — three "wire-the-button-but-not-the-POST" bugs (ReportFault, reality-web /sell, VoteDetail ranked) in 7 days. Scope question: every form Submit-handler, or only critical paths (fault reporting, selling, voting)? Owner: pm-qa + pm-tech-lead.
 - **NEW (2026-10-28, pm-scrum-master):** Staleness-bias in `pm_cursor` rotation — pm-frontend came up 83 days stale while 12 UI findings accumulated. Proposal: if any pm-* role is >60 days stale, prefer it over the current rotation index on the next run. Owner: pm-scrum-master.
+
+---
+
+## Decisions logged 2026-11-09 (Phase 1.6 — pm-scrum-master + pm-qa)
+
+- **NEW (2026-11-09, pm-scrum-master):** Prioritize non-mobile-native Phase 1.5 segment selection this run to refill the collapsed planner buffer (6/72 claimable). Churn-alignment can be overridden when buffer-low fires. Owner: pm-scrum-master.
+- **NEW (2026-11-09, pm-scrum-master):** Promote-with-confidence-upgrade for `code-review-ppt-web-core-refresh-token-localstorage` — the only non-mobile-native open row today has confidence=medium which blocks the security fast-track. Either open the diff and upgrade to high, or drop. Owner: pm-security.
+- **NEW (2026-11-09, pm-qa):** Carried from 2026-08-25 — adopt eslint-plugin-react-hooks + i18next/no-literal-string in frontend/apps/mobile, 76 days unresolved. The exact defect class keeps shipping (registry hardcoded strings landed this window, caught only by post-merge review). Owner: pm-frontend + pm-qa.
+- **NEW (2026-11-09, pm-qa):** Add a dispatcher-self-test.sh regression that covers quarantined-row recovery so #3357-class stalls fail CI instead of silently queueing for weeks. Owner: pm-devops + pm-qa.

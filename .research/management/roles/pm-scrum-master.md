@@ -1,47 +1,45 @@
-# pm-scrum-master — 2026-10-19
-
-_Always-on synthesis run. 3-day lag since 2026-10-16 — on schedule._
+# pm-scrum-master — 2026-11-09
 
 ## Summary
 
-Mild delivery window: **2 PRs merged** (both dispatcher-authored code-review follow-ups on existing surfaces), **1 draft PR open** (#3123 api-core TOTP RNG), **1 critical new issue** (#3124 cargo-deny RUSTSEC-2026-0368/0369 on zip 8.6.0 via rust_xlsxwriter). The merge gate is now doubly locked: #2966 (swagger-ui egress) still blocks builds, #3124 blocks merges even on green builds.
+7 PRs merged in the last ~64h (code-review relands + session-revocation fix) — all shipped with regression tests, zero test-shadow debt added. Sprint stays at 4/4 epics done, coverage still 49/49 stories; the real risk this window is dispatcher pipeline health: #3357 flags 3 approved PRs blocked on non-mechanical conflicts + Tier-1d signal exhaustion, and the planner buffer has collapsed to 6/72 claimable.
 
-## Shipped since last run (2 PRs)
+## Shipped since last run
 
-- **#3121** reality-web auth-context transient-logout cushion — SSO consumer side; resolves `code-review-reality-web-auth-ctx-transient-logout` (+159/-2 with tests).
-- **#3122** ppt-web-core useAmlDashboard AML flags — compliance view; resolves `code-review-ppt-web-core-aml-checks-hardcoded-false` + `code-review-ppt-web-core-aml-risk-factors-unguarded-map` (+117/-6 with tests).
+- #3351 code-review-ppt-web-ui-registry-no-i18n
+- #3350 code-review-reality-web-share-cmp-unchecked-json
+- #3353 gh-issue-3352 (revoke other sessions on password change)
+- #3354 code-review-ppt-web-ui-registry-page-no-auth
+- #3355 code-review-ppt-web-ui-registry-page-i18n-gap
+- #3359 code-review-ppt-web-ui-registry-mutation-reland
+- #3358 screen-map-drift-pr-3293-reality
 
 ## Sprint progress
 
-- **Sprint:** _Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth_
-- **Epics done:** 3/5 at sprint level (8A done, 10A done, cross-cutting unknowns ignored); coverage-level all 13 epics complete at 49/49 done.
-
-## Next actions (top 3)
-
-| # | Priority | Dependency | Action | Definition of done |
-|---|---|---|---|---|
-| 1 | high | none | Resolve #3124 cargo-deny advisories (RUSTSEC-2026-0368/0369 on zip 8.6.0 via rust_xlsxwriter) — unblock every backend PR merge | cargo-deny passes on dev HEAD |
-| 2 | high | none | Carry on #2966 utoipa-swagger-ui egress unblock — gates backend cloud builds; now compounded by #3124 blocking merges on green builds | backend.yml green end-to-end in cloud runner |
-| 3 | high | #2966 + #3124 | Land the 3 open IDOR retries (#2946/#2944/#2945) once the twin merge-gate clears | three merged PRs with cross-tenant repro tests |
-
-## Risks
-
-| Risk | P | I | Mitigation |
-|---|---|---|---|
-| **#3124 cargo-deny RUSTSEC-2026-0368/0369:** every backend PR merge is now gated on the advisory check; compounds with #2966 which already blocks builds. Builds green PRs cannot merge. | high | high | Either bump rust_xlsxwriter to a version with safe zip transitive dep, OR add a bounded cargo-deny exception for RUSTSEC-2026-0368/0369 with a deadline captured in dispatcher backlog and surfaced in CI gate description. |
-
-(All other risks carried from 2026-10-16 roster — see `risks.md`.)
+- Sprint: Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth
+- epics_done = 4/4 (sprint level), coverage 49/49 stories
 
 ## Blockers
 
-- **all backend PR merges** → #3124 cargo-deny FAILED (RUSTSEC-2026-0368/0369 zip 8.6.0 via rust_xlsxwriter) — owner: pm-security.
-- **backend cloud builds** → #2966 utoipa-swagger-ui egress 403 — owner: pm-devops.
-- **KMP cloud builds** → #2652 — owner: pm-devops.
+- **#3357 dispatcher stalled pipeline** — operator action required; dispatcher cannot self-heal. 3 approved PRs blocked on non-mechanical conflicts + Tier-1d signals are a dead-end. Owner: pm-devops.
+- **mobile-native-kmp cloud starvation** — issue #2652 is now CLOSED, but the structural gap (5+ backlog items unclaimable in cloud without local KMP toolchain) persists. Owner: pm-devops.
+
+## Next actions
+
+1. **[high]** Promote a non-mobile-native code-review vector from the next Phase 1.5 segment (ppt-web-core / reality-server oldest = 2026-11-04) to refill the planner buffer. Dep: pm-tech-lead.
+2. **[high]** Triage #3357 — rebase the 3 blocked PRs OR adjust Tier-1d signal sourcing. Dep: pm-devops.
+3. **[medium]** Open the diff for code-review-ppt-web-core-refresh-token-localstorage and upgrade confidence to high (or drop). Dep: pm-security.
+4. **[medium]** Mark 12 action-list items done this run (8 gh-issue-* follow-ups + 4 code-review items).
+
+## Risks
+
+- **Dispatcher pipeline starvation (high/high)** — ~10 consecutive runs at 0-claimed/0-merged until this burst; buffer at 6/72. Mitigation: refill with non-mobile-native vectors this run.
 
 ## Open questions
 
-(none this run — the merge-gate is unambiguous and the fix path is a known pattern.)
+- Should pm-cursor rotation staleness-bias (carried decision 2026-10-28) be enforced this run?
+- Can the quarantined assignment (PR #3294) be force-dropped if Phase 3.5 concludes the vector is unlanded?
 
 ## Decisions needed
 
-- Pin `rust_xlsxwriter` at a version with safe zip transitive dep, OR exempt RUSTSEC-2026-0368/0369 in `cargo-deny.toml` with a deadline captured in dispatcher — owner: pm-security.
+- Promotion policy for score=2 + confidence=medium security vectors — owner: pm-security.
