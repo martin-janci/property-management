@@ -12,7 +12,10 @@
 //! feed CRUD endpoints are deferred — see the BIT-344 report.
 
 use crate::common::{make_app_state, mint_token, send, send_json};
-use axum::{http::Method, Router};
+use axum::{
+    http::{Method, StatusCode},
+    Router,
+};
 use reality_server::routes;
 use serde_json::json;
 use sqlx::PgPool;
@@ -84,6 +87,93 @@ async fn list_import_jobs_returns_2xx(pool: PgPool) {
     let app = imports_router(pool);
     let status = send(&app, Method::GET, "/api/v1/imports/jobs", Some(&token)).await;
     assert!(status.is_success(), "expected 2xx, got {status}");
+}
+
+// ── list_import_jobs `limit` clamping (regression) ───────────────────────────
+//
+// The handler must clamp the caller-supplied `limit` to `1..=100` before it
+// reaches SQL. Before the fix the raw value bound straight into `LIMIT $3`:
+// a negative `limit` reached Postgres as `LIMIT -1`, which it rejects (bubbling
+// up as a 500), and an arbitrarily large `limit` was handed through unbounded.
+
+/// Oneshot a GET and return `(status, parsed JSON body)`. Local to this suite
+/// because the shared `send` helper only surfaces the status code.
+async fn get_json(router: &Router, path: &str, token: &str) -> (StatusCode, serde_json::Value) {
+    use axum::body::Body;
+    use axum::http::{header, Request};
+    use tower::ServiceExt;
+
+    let req = Request::builder()
+        .method(Method::GET)
+        .uri(path)
+        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+        .body(Body::empty())
+        .unwrap();
+    let response = router.clone().oneshot(req).await.unwrap();
+    let status = response.status();
+    let bytes = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    let json = serde_json::from_slice(&bytes).unwrap_or(serde_json::Value::Null);
+    (status, json)
+}
+
+/// Bulk-seed `n` owned import jobs for `user_id` in a single statement.
+async fn seed_import_jobs(pool: &PgPool, user_id: Uuid, n: i32) {
+    sqlx::query(
+        "INSERT INTO portal_import_jobs (user_id, source_type) \
+         SELECT $1, 'csv' FROM generate_series(1, $2)",
+    )
+    .bind(user_id)
+    .bind(n)
+    .execute(pool)
+    .await
+    .unwrap_or_else(|e| panic!("seed_import_jobs({n}): {e}"));
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn list_import_jobs_negative_limit_is_clamped_not_500(pool: PgPool) {
+    let user = seed_user(&pool, "neg-limit").await;
+    let token = mint_token(user);
+    let app = imports_router(pool);
+    // `limit=-1` reaches SQL as `LIMIT -1` without clamping → Postgres 500.
+    // After clamping it floors to 1 and the request succeeds.
+    let status = send(
+        &app,
+        Method::GET,
+        "/api/v1/imports/jobs?limit=-1",
+        Some(&token),
+    )
+    .await;
+    assert_ne!(
+        status,
+        StatusCode::INTERNAL_SERVER_ERROR,
+        "negative limit must be clamped, not passed to SQL (got 500)"
+    );
+    assert!(
+        status.is_success(),
+        "expected 2xx after clamp, got {status}"
+    );
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn list_import_jobs_over_max_limit_is_capped_at_100(pool: PgPool) {
+    let user = seed_user(&pool, "max-limit").await;
+    seed_import_jobs(&pool, user, 101).await;
+    let token = mint_token(user);
+    let app = imports_router(pool);
+    // An unbounded `limit` would return all 101 rows; clamping caps it at 100.
+    let (status, body) = get_json(&app, "/api/v1/imports/jobs?limit=100000", &token).await;
+    assert!(status.is_success(), "expected 2xx, got {status}");
+    let jobs = body["jobs"]
+        .as_array()
+        .expect("jobs array in response body");
+    assert_eq!(
+        jobs.len(),
+        100,
+        "over-max limit must be capped at 100, got {}",
+        jobs.len()
+    );
 }
 
 // ── create_import_job (POST /jobs) ───────────────────────────────────────────
