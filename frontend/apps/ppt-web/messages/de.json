@@ -396,7 +396,8 @@
     "outages": "Störungen",
     "neighbors": "Nachbarn",
     "leases": "Mietverträge",
-    "members": "Personen & Rollen"
+    "members": "Personen & Rollen",
+    "oauthGrants": "Verbundene Apps"
   },
   "auth": {
     "signIn": "Anmelden",

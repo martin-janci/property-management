@@ -396,7 +396,8 @@
     "outages": "Przerwy w dostawach",
     "neighbors": "Sąsiedzi",
     "leases": "Umowy najmu",
-    "members": "Osoby i role"
+    "members": "Osoby i role",
+    "oauthGrants": "Połączone aplikacje"
   },
   "auth": {
     "signIn": "Zaloguj się",

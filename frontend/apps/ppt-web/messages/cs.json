@@ -410,7 +410,8 @@
     "outages": "Odstávky",
     "neighbors": "Sousedé",
     "leases": "Nájmy",
-    "members": "Lidé a role"
+    "members": "Lidé a role",
+    "oauthGrants": "Propojené aplikace"
   },
   "auth": {
     "signIn": "Přihlásit se",
@@ -7097,7 +7098,30 @@
       "guest": "Host",
       "real_estate_agent": "Realitní makléř"
     },
-    "publicNavigation": "Navigace webu"
+    "publicNavigation": "Navigace webu",
+    "inbox": {
+      "title": "Oznámení",
+      "unreadMarker": "Nepřečtené:",
+      "count_one": "{{count}} oznámení",
+      "count_few": "{{count}} oznámení",
+      "count_many": "{{count}} oznámení",
+      "count_other": "{{count}} oznámení",
+      "markRead": "Označit jako přečtené",
+      "remove": "Odstranit",
+      "unreadSummary_one": "{{count}} nepřečtené",
+      "unreadSummary_few": "{{count}} nepřečtená",
+      "unreadSummary_many": "{{count}} nepřečtených",
+      "unreadSummary_other": "{{count}} nepřečtených",
+      "showRead": "Zobrazit přečtené",
+      "markAllRead": "Označit vše jako přečtené",
+      "failedToLoad": "Oznámení se nepodařilo načíst",
+      "emptyAll": "Nemáte žádná oznámení.",
+      "empty": "Vše máte přečtené.",
+      "bellUnread_one": "Oznámení ({{count}} nepřečtené)",
+      "bellUnread_few": "Oznámení ({{count}} nepřečtená)",
+      "bellUnread_many": "Oznámení ({{count}} nepřečtených)",
+      "bellUnread_other": "Oznámení ({{count}} nepřečtených)"
+    }
   },
   "news": {
     "title": "Novinky",

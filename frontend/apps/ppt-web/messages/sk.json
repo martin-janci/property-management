@@ -410,7 +410,8 @@
     "meters": "Merače",
     "outages": "Odstávky",
     "neighbors": "Susedia",
-    "members": "Ľudia a roly"
+    "members": "Ľudia a roly",
+    "oauthGrants": "Prepojené aplikácie"
   },
   "auth": {
     "signIn": "Prihlásiť sa",
@@ -7096,7 +7097,30 @@
       "guest": "Hosť",
       "real_estate_agent": "Realitný maklér"
     },
-    "publicNavigation": "Navigácia stránky"
+    "publicNavigation": "Navigácia stránky",
+    "inbox": {
+      "title": "Upozornenia",
+      "unreadMarker": "Neprečítané:",
+      "count_one": "{{count}} upozornenie",
+      "count_few": "{{count}} upozornenia",
+      "count_many": "{{count}} upozornení",
+      "count_other": "{{count}} upozornení",
+      "markRead": "Označiť ako prečítané",
+      "remove": "Odstrániť",
+      "unreadSummary_one": "{{count}} neprečítané",
+      "unreadSummary_few": "{{count}} neprečítané",
+      "unreadSummary_many": "{{count}} neprečítaných",
+      "unreadSummary_other": "{{count}} neprečítaných",
+      "showRead": "Zobraziť prečítané",
+      "markAllRead": "Označiť všetko ako prečítané",
+      "failedToLoad": "Upozornenia sa nepodarilo načítať",
+      "emptyAll": "Nemáte žiadne upozornenia.",
+      "empty": "Všetko máte prečítané.",
+      "bellUnread_one": "Upozornenia ({{count}} neprečítané)",
+      "bellUnread_few": "Upozornenia ({{count}} neprečítané)",
+      "bellUnread_many": "Upozornenia ({{count}} neprečítaných)",
+      "bellUnread_other": "Upozornenia ({{count}} neprečítaných)"
+    }
   },
   "news": {
     "title": "Novinky",

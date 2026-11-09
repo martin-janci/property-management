@@ -358,7 +358,7 @@ impl NotificationService {
                     // Create in-app notification using granular notification repository
                     if let Err(e) = self
                         .granular_notification_repo
-                        .add_notification_to_group(
+                        .add_notification_to_group_for_user(
                             user_id,
                             "notification",
                             entity_id.unwrap_or(Uuid::new_v4()),
