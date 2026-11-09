@@ -1424,3 +1424,87 @@ async fn ecosystem_operator_routes_require_capability(pool: PgPool) {
         "developer: create marketplace",
     );
 }
+
+/// Gap audit R7 (round-4 leftover): peers below admin level cannot manage each
+/// other, a manager cannot remove an org admin, and the last org admin can be
+/// neither demoted nor removed.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn members_peer_and_last_admin_guards(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org = seed_org(&pool, "mem-peer").await;
+    let role = wildcard_role(&pool, org).await;
+    let mgr = permissioned_member(&pool, org, "manager", role).await;
+    let peer = permissioned_member(&pool, org, "manager", role).await;
+    let admin = permissioned_member(&pool, org, "org_admin", role).await;
+
+    // Manager → manager peer: role change and removal are rejected.
+    let resp = call(
+        &app,
+        "PUT",
+        &format!("/api/v1/organizations/{org}/members/{}", peer.id),
+        &mgr,
+        org,
+        Some(json!({ "role_id": role, "role_type": "resident" })),
+    )
+    .await;
+    expect(&resp, StatusCode::FORBIDDEN, "demote a peer manager");
+    assert_eq!(role_type_of(&pool, org, peer.id).await, "manager");
+    let resp = call(
+        &app,
+        "DELETE",
+        &format!("/api/v1/organizations/{org}/members/{}", peer.id),
+        &mgr,
+        org,
+        None,
+    )
+    .await;
+    expect(&resp, StatusCode::FORBIDDEN, "remove a peer manager");
+
+    // Manager → org admin removal is rejected (used to need only users:delete).
+    let resp = call(
+        &app,
+        "DELETE",
+        &format!("/api/v1/organizations/{org}/members/{}", admin.id),
+        &mgr,
+        org,
+        None,
+    )
+    .await;
+    expect(&resp, StatusCode::FORBIDDEN, "manager removes org admin");
+
+    // The only admin cannot leave the org.
+    let resp = call(
+        &app,
+        "DELETE",
+        &format!("/api/v1/organizations/{org}/members/{}", admin.id),
+        &admin,
+        org,
+        None,
+    )
+    .await;
+    expect(&resp, StatusCode::CONFLICT, "last admin leaves");
+
+    // With a second admin, the first may hand over and be demoted by the peer.
+    let admin2 = permissioned_member(&pool, org, "org_admin", role).await;
+    let resp = call(
+        &app,
+        "PUT",
+        &format!("/api/v1/organizations/{org}/members/{}", admin.id),
+        &admin2,
+        org,
+        Some(json!({ "role_id": role, "role_type": "manager" })),
+    )
+    .await;
+    expect(&resp, StatusCode::OK, "admin demotes peer admin");
+    // ...but now admin2 is the last admin and cannot be demoted by anyone.
+    let resp = call(
+        &app,
+        "DELETE",
+        &format!("/api/v1/organizations/{org}/members/{}", admin2.id),
+        &admin2,
+        org,
+        None,
+    )
+    .await;
+    expect(&resp, StatusCode::CONFLICT, "new last admin leaves");
+}
