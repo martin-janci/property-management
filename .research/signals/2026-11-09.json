@@ -13,7 +13,7 @@
       "id": "churn-hotspot-frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx",
       "type": "churn-hotspot",
       "source": "commits in window 2026-11-06..2026-11-09",
-      "score_delta": 1,
+      "score_delta": 0,
       "confidence": "high",
       "candidate_vector": "refactor",
       "evidence": "RegistryPage.tsx touched 3x across PRs #3354, #3355, #3359 (registry feature consolidation + i18n + toasts) — concentrated change surface, but feature-focused not regression",
@@ -26,7 +26,7 @@
       "id": "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
       "type": "churn-hotspot",
       "source": "commits in window 2026-11-06..2026-11-09",
-      "score_delta": 1,
+      "score_delta": 0,
       "confidence": "high",
       "candidate_vector": "refactor",
       "evidence": "en.json touched 3x across PRs #3351, #3355, #3359 for registry i18n; ties in sk/de/cs/hu/pl at churn=3 — localised feature churn",
@@ -39,7 +39,7 @@
       "id": "churn-hotspot-frontend/apps/ppt-web/messages/sk.json",
       "type": "churn-hotspot",
       "source": "commits in window 2026-11-06..2026-11-09",
-      "score_delta": 1,
+      "score_delta": 0,
       "confidence": "high",
       "candidate_vector": "refactor",
       "evidence": "sk.json touched 3x in registry i18n; prior hotspot last_seen=2026-11-04 (runs_seen=1→2 next run would qualify for repeated-churn)",
@@ -53,7 +53,7 @@
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "api-handlers",
-      "score_delta": 3,
+      "score_delta": 0,
       "confidence": "high",
       "candidate_vector": "security",
       "evidence": [
@@ -69,7 +69,7 @@
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "api-handlers",
-      "score_delta": 2,
+      "score_delta": 0,
       "confidence": "high",
       "candidate_vector": "security",
       "evidence": [
@@ -79,6 +79,33 @@
       "line": 302,
       "severity": "medium",
       "expert": "security"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/messaging.rs",
+      "type": "churn-hotspot",
+      "source": "incremental run 2026-11-09 16:34 UTC",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "PR #3363 merged +96/-210 across backend/servers/api-server/src/routes/messaging.rs sanitizing DB errors across 33 handler branches — first-run hotspot (no prior hotspot_history)."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/budgets.rs",
+      "type": "churn-hotspot",
+      "source": "incremental run 2026-11-09 16:34 UTC",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "PR #3362 merged +60/-156 across backend/servers/api-server/src/routes/budgets.rs sanitizing DB errors across 26 handler branches — first-run hotspot."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/admin_tenant_lifecycle.rs",
+      "type": "churn-hotspot",
+      "source": "incremental run 2026-11-09 16:34 UTC",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "PR #3364 merged +117/-6 across backend/servers/api-server/src/routes/admin_tenant_lifecycle.rs confining tenant-export out_dir to the export root — first-run hotspot."
     }
   ],
   "auto_fix_actions": [],
@@ -245,5 +272,128 @@
       "observed": "0 hits",
       "expected": "0"
     }
-  ]
+  ],
+  "run_rerun": {
+    "mode": "same-day incremental re-run",
+    "triggered_by": "buffer-low: claimable=14/72 refill planner (dispatcher 2026-11-09)",
+    "additional_merged_prs": [
+      "#3360",
+      "#3361",
+      "#3362",
+      "#3363",
+      "#3364",
+      "#3365"
+    ],
+    "backlog_mutations": {
+      "resolved_open_to_done": [
+        "code-review-api-handlers-tenant-export-outdir-path (PR #3364)",
+        "code-review-api-handlers-health-alerts-page-size-uncapped (PR #3361)",
+        "churn-hotspot-ppt-web-registry-page (PR #3365)"
+      ],
+      "resolved_ready_to_done": [
+        "code-review-api-handlers-budgets-db-error-leak (PR #3362)",
+        "code-review-api-handlers-messaging-db-error-leak (PR #3363)"
+      ],
+      "decayed_open": [
+        "code-review-mobile-native-kmp-http-client-no-timeout (2→1)"
+      ],
+      "dropped_from_decay": [
+        "code-review-mobile-native-kmp-my-listings-pagination-cap (1→0 dropped)"
+      ],
+      "new_churn_rows": 3,
+      "archived_plans": [
+        "plans/code-review-api-handlers-budgets-db-error-leak.md",
+        "plans/code-review-api-handlers-messaging-db-error-leak.md"
+      ]
+    },
+    "regenerated_at": "2026-11-09T16:35:00Z"
+  },
+  "goal_checks_rerun": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "observed": "brief exists, first-line matches 2026-11-09"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "observed": "last_pr_seen 3359→3365, last_commit_sha advanced, seen_signals.length +3, hotspots.length +3"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "observed": "598 items, all ids unique"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "observed": "re-emitted morning signals have score_delta=0; 3 new churn-hotspot IDs not in prev seen"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "observed": "max score=6; 2 decays applied + 1 drop"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "observed": "no new plans this run (vacuous)"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "observed": "0 new plans ≤ 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "observed": "only .research/ paths staged (8 files)"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "observed": "no secrets/hostnames in staged diff"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "observed": "backlog.md byte-identical to regen"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "observed": "no placeholder-rot in brief"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "observed": "prior-run plans still present: 2 moved to _archive/, rest intact"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "observed": "archive count 22→24 (+2 budgets, messaging)"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "observed": "IDEAS_TRIAGE.md byte-identical to regen"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "observed": "auto_fix_actions empty (no candidate); no auto-fix branches pushed"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "observed": "Phase 1.6 skipped this re-run (pm_cursor unchanged vs HEAD) → gate is a no-op; management artifacts valid as of morning run"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "observed": "no Telegram token value in staged diff"
+    }
+  ],
+  "rerun_completed_at": "2026-11-09T16:37:46Z"
 }
