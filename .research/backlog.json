@@ -14791,7 +14791,7 @@
       "id": "code-review-ppt-web-core-refresh-token-localstorage",
       "title": "SECURITY: ppt-web refresh-token persisted in localStorage — XSS-reachable",
       "vector": "security",
-      "confidence": "medium",
+      "confidence": "high",
       "score": 2,
       "status": "open",
       "sources": [
@@ -14799,13 +14799,14 @@
       ],
       "evidence": [
         "See .research/signals/2026-11-03-ppt-web-core-tier1d.json for full finding. Catch-up for 2026-11-03 skipped run.",
-        "Security-sensitive but confidence=medium — security fast-track requires confidence=high, so stays at score 2 without auto-promotion."
+        "Confidence upgraded medium→high 2026-11-09 (pm-scrum-master review). Finding confirmed real: the refresh token is still persisted in localStorage on dev (frontend/apps/ppt-web/src/contexts/AuthContext.tsx REFRESH_TOKEN_KEY='ppt_refresh_token'; setRefreshToken writes it, refreshTokenInternal reads it back into the request body — any XSS on the origin can exfiltrate a long-lived renewable credential). The original review's sole reservation for medium — 'did not runtime-verify the backend sets/prefers the httpOnly cookie for the SPA caller' — is now resolved: the backend already prefers the HttpOnly/Secure/SameSite refresh cookie over the body token (resolve_refresh_token in routes/auth/mod.rs), and draft PR #3294 lands the migration (in-memory + httpOnly cookie) with an IG3 fails-before-fix regression test that proves the token was written to and readable from localStorage; 7634 ppt-web tests pass.",
+        "Security vector, confidence=high, score>=2 — now eligible for the security fast-track (score threshold drops 3→2)."
       ],
       "files": [
         "frontend/apps/ppt-web/src/"
       ],
       "created_at": "2026-11-04",
-      "updated_at": "2026-11-04",
+      "updated_at": "2026-11-09",
       "plan": null
     },
     {
