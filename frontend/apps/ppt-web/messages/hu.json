@@ -1557,7 +1557,7 @@
       "dateRange": "Időszak",
       "dateTo": "–",
       "hasSummary": "Van MI-összefoglaló",
-      "error": "Hiba a dokumentumok keresésekor: {{error}}",
+      "error": "Hiba történt a dokumentumok keresése közben. Kérjük, próbálja újra.",
       "found_one": "{{count}} dokumentum található ({{ms}} ms)",
       "found_other": "{{count}} dokumentum található ({{ms}} ms)",
       "noResults": "Nincs a(z) „{{query}}” keresésnek megfelelő dokumentum",
