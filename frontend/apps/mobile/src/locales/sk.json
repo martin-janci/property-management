@@ -628,7 +628,12 @@
     "emptyTitle": "Zatiaľ žiadni susedia",
     "noMatches": "Žiadne zhody",
     "emptyText": "Obyvatelia, ktorí sa prihlásia do zoznamu, sa zobrazia tu.",
-    "noMatchesText": "Skúste iné meno alebo číslo bytu."
+    "noMatchesText": "Skúste iné meno alebo číslo bytu.",
+    "title": "Susedia",
+    "subtitle": "{{count}} obyvateľov v budove {{building}}",
+    "subtitleGeneric": "{{count}} obyvateľov vo vašej budove",
+    "searchPlaceholder": "Hľadať podľa mena alebo bytu…",
+    "owner": "Vlastník"
   },
   "voice": {
     "confirmations": {

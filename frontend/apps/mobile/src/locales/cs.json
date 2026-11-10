@@ -628,7 +628,12 @@
     "emptyTitle": "Zatím žádní sousedé",
     "noMatches": "Žádné shody",
     "emptyText": "Obyvatelé, kteří se přihlásí do seznamu, se zobrazí zde.",
-    "noMatchesText": "Zkuste jiné jméno nebo číslo bytu."
+    "noMatchesText": "Zkuste jiné jméno nebo číslo bytu.",
+    "title": "Sousedé",
+    "subtitle": "{{count}} obyvatel v budově {{building}}",
+    "subtitleGeneric": "{{count}} obyvatel ve vaší budově",
+    "searchPlaceholder": "Hledat podle jména nebo bytu…",
+    "owner": "Vlastník"
   },
   "voice": {
     "confirmations": {

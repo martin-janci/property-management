@@ -631,7 +631,12 @@
     "emptyTitle": "No neighbours yet",
     "noMatches": "No matches",
     "emptyText": "Residents who opt into the directory will appear here.",
-    "noMatchesText": "Try a different name or apartment number."
+    "noMatchesText": "Try a different name or apartment number.",
+    "title": "Neighbours",
+    "subtitle": "{{count}} residents in {{building}}",
+    "subtitleGeneric": "{{count}} residents in your building",
+    "searchPlaceholder": "Search by name or apartment…",
+    "owner": "Owner"
   },
   "voice": {
     "confirmations": {

@@ -586,7 +586,12 @@
     "emptyTitle": "Noch keine Nachbarn",
     "noMatches": "Keine Treffer",
     "emptyText": "Bewohner, die sich für das Verzeichnis anmelden, erscheinen hier.",
-    "noMatchesText": "Versuchen Sie einen anderen Namen oder eine andere Wohnungsnummer."
+    "noMatchesText": "Versuchen Sie einen anderen Namen oder eine andere Wohnungsnummer.",
+    "title": "Nachbarn",
+    "subtitle": "{{count}} Bewohner in {{building}}",
+    "subtitleGeneric": "{{count}} Bewohner in Ihrem Gebäude",
+    "searchPlaceholder": "Nach Name oder Wohnung suchen…",
+    "owner": "Eigentümer"
   },
   "voice": {
     "confirmations": {
