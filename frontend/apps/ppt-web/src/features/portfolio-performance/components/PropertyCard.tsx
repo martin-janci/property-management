@@ -73,9 +73,13 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
     }
   };
 
+  const interactive = typeof onClick === 'function';
+
   return (
     <div
-      className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
+      className={`bg-white rounded-lg shadow-md p-6 transition-shadow ${
+        interactive ? 'cursor-pointer hover:shadow-lg' : ''
+      }`}
       onClick={onClick}
     >
       <div className="flex justify-between items-start mb-4">

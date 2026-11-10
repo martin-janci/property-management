@@ -7,7 +7,11 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as api from './api';
-import type { ListPortfolioAlertsParams, MetricsSummaryParams } from './types';
+import type {
+  CalculateMetricsRequest,
+  ListPortfolioAlertsParams,
+  MetricsSummaryParams,
+} from './types';
 
 export const portfolioPerformanceKeys = {
   all: ['portfolio-performance'] as const,
@@ -61,6 +65,23 @@ export function usePortfolioMetricsSummary(portfolioId: string, params: MetricsS
     queryKey: portfolioPerformanceKeys.metricsSummary(portfolioId, params),
     queryFn: () => api.getMetricsSummary(portfolioId, params),
     enabled: !!portfolioId && !!params.period_start && !!params.period_end,
+  });
+}
+
+/**
+ * Recalculate and persist financial metrics for a portfolio (or a single
+ * property within it). On success the dashboard summary, property cards and
+ * metrics summary are invalidated so the page reflects the fresh numbers.
+ */
+export function useCalculateMetrics(portfolioId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (req: CalculateMetricsRequest) => api.calculateMetrics(portfolioId, req),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: portfolioPerformanceKeys.portfolio(portfolioId),
+      });
+    },
   });
 }
 

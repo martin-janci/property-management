@@ -5,6 +5,7 @@ import {
   type MetricsSummary,
   type PerformanceAlert as PerformanceAlertDto,
   type PropertyPerformanceCard,
+  useCalculateMetrics,
   useCashFlowTrend,
   useDashboardSummary,
   useMarkAlertRead,
@@ -142,7 +143,29 @@ export const PortfolioDashboardPage: React.FC<PortfolioDashboardPageProps> = ({ 
   const metricsQuery = usePortfolioMetricsSummary(portfolioId, ytdRange());
   const markRead = useMarkAlertRead(portfolioId);
   const resolve = useResolveAlert(portfolioId);
+  const calculateMetrics = useCalculateMetrics(portfolioId);
   const { showToast } = useToast();
+
+  const handleCalculateMetrics = () => {
+    const { period_start, period_end } = ytdRange();
+    calculateMetrics.mutate(
+      { period_type: 'ytd', period_start, period_end },
+      {
+        onSuccess: () =>
+          showToast({
+            type: 'success',
+            title: 'Metrics recalculated',
+            message: 'Portfolio performance metrics have been refreshed.',
+          }),
+        onError: (err) =>
+          showToast({
+            type: 'error',
+            title: 'Could not calculate metrics',
+            message: getErrorMessage(err),
+          }),
+      }
+    );
+  };
 
   const handleMarkRead = (alertId: string) =>
     markRead.mutate(alertId, {
@@ -212,15 +235,20 @@ export const PortfolioDashboardPage: React.FC<PortfolioDashboardPageProps> = ({ 
         <div className="flex space-x-3">
           <button
             type="button"
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            disabled
+            title="Report export is not yet available"
+            aria-disabled="true"
+            className="px-4 py-2 text-sm font-medium text-gray-400 bg-white border border-gray-200 rounded-md cursor-not-allowed"
           >
             Export Report
           </button>
           <button
             type="button"
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+            onClick={handleCalculateMetrics}
+            disabled={calculateMetrics.isPending}
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Calculate Metrics
+            {calculateMetrics.isPending ? 'Calculating…' : 'Calculate Metrics'}
           </button>
         </div>
       </div>
@@ -272,7 +300,13 @@ export const PortfolioDashboardPage: React.FC<PortfolioDashboardPageProps> = ({ 
       <div>
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Property Performance</h2>
-          <button type="button" className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+          <button
+            type="button"
+            disabled
+            title="A dedicated properties view is not yet available"
+            aria-disabled="true"
+            className="text-sm text-gray-400 font-medium cursor-not-allowed"
+          >
             View All Properties
           </button>
         </div>
@@ -285,13 +319,7 @@ export const PortfolioDashboardPage: React.FC<PortfolioDashboardPageProps> = ({ 
         ) : (
           <div className="grid grid-cols-3 gap-4">
             {propertyCards.map((property: PropertyPerformanceCard) => (
-              <PropertyCard
-                key={property.property_id}
-                {...mapPropertyCard(property)}
-                onClick={() => {
-                  // TODO: navigate to property detail route
-                }}
-              />
+              <PropertyCard key={property.property_id} {...mapPropertyCard(property)} />
             ))}
           </div>
         )}
