@@ -174,24 +174,6 @@
       "source": "pm-analysis 2026-11-09"
     },
     {
-      "id": "code-review-reality-web-date-locale-ignored",
-      "action": "reality web date locale ignored",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-10T00:26:46Z (tier1d reality-web score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-10T00:26:46Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-10-25T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-reality-web-analytics-no-i18n",
       "action": "reality web analytics no i18n",
       "owner_role": "pm-backend",
@@ -207,96 +189,6 @@
         "score": 1,
         "vector": "bug",
         "generated": "2026-10-25T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-reality-web-realtor-agency-i18n-gap",
-      "action": "reality web realtor agency i18n gap",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-10T02:25:23Z (tier1d reality-web score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-10T02:25:23Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-10-22T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-core-ws-votes-dead-invalidation",
-      "action": "ppt web core ws votes dead invalidation",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-10T02:25:23Z (tier1d ppt-web-core score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-10T02:25:23Z",
-      "signal_ref": {
-        "segment": "ppt-web-core",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-10-21T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-documents-toast-hardcoded-mixed-locale",
-      "action": "ppt web ui documents toast hardcoded mixed locale",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-10T02:25:23Z (tier1d ppt-web-ui score=1 vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-10T02:25:23Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
-        "vector": "refactor",
-        "generated": "2026-10-21T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-mobile-rn-nfc-timerestrict-midnight-day",
-      "action": "mobile-rn NFCAccessController: midnight-crossing access-point time restriction checks the tap-day against restriction.days, so a window like Mon 23:00–01:00 wrongly denies Tue 00:00–01:00 and spuriously grants Mon 00:00–01:00",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-10T02:25:23Z (tier1d mobile-rn score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-10T02:25:23Z",
-      "signal_ref": {
-        "segment": "mobile-rn",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-10-19T08:36:48Z"
-      }
-    },
-    {
-      "id": "code-review-mobile-rn-nfc-accesscontroller-untested",
-      "action": "mobile-rn NFCAccessController (478-line physical door-access authorization engine) has no test file — revocation/expiry/time-window/access-point logic is untested while sibling NFCCredentialManager ships 401 lines of tests",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-10T04:27:16Z (tier1d mobile-rn score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-10T04:27:16Z",
-      "signal_ref": {
-        "segment": "mobile-rn",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-10-19T08:36:48Z"
       }
     },
     {
@@ -693,23 +585,6 @@
         "score": 1,
         "vector": "bug",
         "generated": "2026-10-15T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-reality-server-imports-total-page-len",
-      "action": "reality-server list_import_jobs reports `total` as page length, breaking client pagination",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-10T14:27:54Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-10T14:27:54Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
       }
     },
     {
