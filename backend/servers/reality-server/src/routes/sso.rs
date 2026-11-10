@@ -239,19 +239,26 @@ pub struct SsoCallbackQuery {
 }
 
 /// Map an internal failure from an SSO-callback persistence step into a
-/// client response.
+/// sanitized client response.
 ///
-/// `code` is the stable machine-readable error code kept in the body; `e` is
-/// the underlying error from the failing step (DB upsert, session creation).
+/// SECURITY: the underlying error (`e`) from these steps routinely carries
+/// sqlx/Postgres detail — table, column and constraint names, driver
+/// messages. That is internal schema information and must never reach an
+/// unauthenticated SSO caller. We log it server-side (so operators can still
+/// diagnose the failure) and return only the fixed, generic `client_message`
+/// in the body. Mirrors the log-then-generic convention used elsewhere in the
+/// reality-server routes (e.g. `users.rs`, `inactive_pm_token_response`).
+///
+/// `code` is the stable machine-readable error code kept in the body.
 fn sso_callback_internal_error(
     code: &'static str,
     client_message: &'static str,
     e: &dyn std::fmt::Display,
 ) -> (StatusCode, Json<SsoError>) {
-    let _ = client_message;
+    tracing::error!(error = %e, code, "SSO callback persistence step failed");
     (
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(SsoError::new(code, &e.to_string())),
+        Json(SsoError::new(code, client_message)),
     )
 }
 
@@ -350,11 +357,7 @@ pub async fn sso_callback(
         .upsert_sso_user(&user_info)
         .await
         .map_err(|e| {
-            sso_callback_internal_error(
-                "user_create_failed",
-                "Failed to create or update user",
-                &e,
-            )
+            sso_callback_internal_error("user_create_failed", "Failed to create or update user", &e)
         })?;
 
     // Create portal session
@@ -363,11 +366,7 @@ pub async fn sso_callback(
         .create_session(portal_user.id, &tokens)
         .await
         .map_err(|e| {
-            sso_callback_internal_error(
-                "session_create_failed",
-                "Failed to create session",
-                &e,
-            )
+            sso_callback_internal_error("session_create_failed", "Failed to create session", &e)
         })?;
 
     // Build redirect URL with session cookie.
