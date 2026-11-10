@@ -216,3 +216,81 @@ describe('realtor-api request helper', () => {
     await expect(getListing('lst_1')).resolves.toEqual({ id: 'lst_1', title: 'Byt' });
   });
 });
+
+// Nested-collection shape validation. `parseJsonBody` guards the *outer* body
+// (non-null, non-array object), but it is generic and cannot know which fields
+// are arrays — so a 200 whose `listings`/`reviews` field is wrong-typed
+// (`{ listings: null }`, `{ reviews: {} }`) still passes the outer guard and was
+// handed back trusting the array shape. The first `.length`/`.map` in a consumer
+// (`profile` page, `realtor/[id]`, agency listings) then throws deep in render.
+// The list helpers must coerce the collection field to `[]` at the boundary so a
+// malformed response degrades to the empty-state instead of crashing.
+describe('realtor-api list helpers coerce malformed array fields', () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it('listMyListings coerces a non-array `listings` field to []', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ listings: null, total: 0 }),
+    });
+    const res = await listMyListings();
+    expect(Array.isArray(res.listings)).toBe(true);
+    expect(res.listings).toEqual([]);
+  });
+
+  it('listMyListings coerces an object `listings` field to []', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ listings: {}, total: 0 }),
+    });
+    const res = await listMyListings();
+    expect(Array.isArray(res.listings)).toBe(true);
+  });
+
+  it('listMyListings passes a well-formed array through unchanged', async () => {
+    const listings = [{ id: 'l1', title: 'Byt' }];
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ listings, total: 1 }),
+    });
+    const res = await listMyListings();
+    expect(res.listings).toEqual(listings);
+    expect(res.total).toBe(1);
+  });
+
+  it('getRealtorReviews coerces a non-array `reviews` field to []', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ reviews: {}, total: 0 }),
+    });
+    const res = await getRealtorReviews('r1');
+    expect(Array.isArray(res.reviews)).toBe(true);
+    expect(res.reviews).toEqual([]);
+  });
+
+  it('getRealtorReviews passes a well-formed array through unchanged', async () => {
+    const reviews = [{ id: 'rev1', rating: 5 }];
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ reviews, total: 1, avg_rating: 5 }),
+    });
+    const res = await getRealtorReviews('r1');
+    expect(res.reviews).toEqual(reviews);
+    expect(res.total).toBe(1);
+  });
+});
