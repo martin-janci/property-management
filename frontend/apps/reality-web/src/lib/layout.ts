@@ -6,11 +6,9 @@
  * failure (network error, non-2xx, malformed body) returns the default
  * (spec §4 — fail-safe default).
  *
- * ADAPT (duplication note): `resolveApiBase` / `inferApiBaseFromHost` are
- * replicated verbatim from `src/app/[locale]/listings/[slug]/page.tsx`.
- * That file's helpers are module-private (not exported).  If they are ever
- * exported from a shared location, remove the copies here and import instead.
  */
+
+import { resolveApiBase } from './server-api-base';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -49,31 +47,6 @@ export const DEFAULT_LISTING_DETAIL_LAYOUT: ResolvedScreen = {
     { type: 'agent-contact.v1', presentation: 'visible' },
   ],
 };
-
-// ---------------------------------------------------------------------------
-// API-base resolution (replicated from listings/[slug]/page.tsx — see ADAPT)
-// ---------------------------------------------------------------------------
-
-function inferApiBaseFromHost(host: string): string | null {
-  const bareHost = host.split(':')[0]?.toLowerCase();
-  if (!bareHost) return null;
-  if (bareHost === 'rlt.sk' || bareHost.endsWith('.rlt.sk')) {
-    if (bareHost === 'staging.rlt.sk' || bareHost.endsWith('.staging.rlt.sk')) {
-      return 'https://api.staging.rlt.sk';
-    }
-    return 'https://api.rlt.sk';
-  }
-  return null;
-}
-
-function resolveApiBase(host: string | null): string {
-  if (process.env.API_INTERNAL_URL) return process.env.API_INTERNAL_URL;
-  if (host) {
-    const inferred = inferApiBaseFromHost(host);
-    if (inferred) return inferred;
-  }
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
-}
 
 // ---------------------------------------------------------------------------
 // getResolvedLayout

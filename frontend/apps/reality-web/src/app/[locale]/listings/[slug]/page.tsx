@@ -14,33 +14,10 @@ import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { ListingDetailContent } from '@/components/listings';
 import { getResolvedLayout } from '@/lib/layout';
+import { resolveApiBase } from '@/lib/server-api-base';
 import { buildListingJsonLd } from './jsonLd';
 import { parseListingDetail } from './listingSchema';
 import { buildListingMetadata } from './metadata';
-
-function inferApiBaseFromHost(host: string): string | null {
-  const bareHost = host.split(':')[0]?.toLowerCase();
-  if (!bareHost) return null;
-  if (bareHost === 'rlt.sk' || bareHost.endsWith('.rlt.sk')) {
-    if (bareHost === 'staging.rlt.sk' || bareHost.endsWith('.staging.rlt.sk')) {
-      return 'https://api.staging.rlt.sk';
-    }
-    return 'https://api.rlt.sk';
-  }
-  return null;
-}
-
-function resolveApiBase(host: string): string {
-  // SSR path: prefer an internal URL (Docker network) when set, then host
-  // inference for known *.rlt.sk topology, then the public env, then a
-  // dev-only localhost fallback. Inference comes before NEXT_PUBLIC_API_URL
-  // so a baked-in/misconfigured `http://localhost:8081` can't take down
-  // SSR on staging or prod.
-  if (process.env.API_INTERNAL_URL) return process.env.API_INTERNAL_URL;
-  const inferred = inferApiBaseFromHost(host);
-  if (inferred) return inferred;
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
-}
 
 interface PageProps {
   params: Promise<{ slug: string }>;
