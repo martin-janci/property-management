@@ -20,6 +20,11 @@ vi.mock('../../contexts', async (importOriginal) => {
   return { ...actual, useAuth: () => authState.current };
 });
 
+vi.mock('../../components', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../components')>();
+  return { ...actual, useToast: () => ({ showToast: vi.fn(), removeToast: vi.fn() }) };
+});
+
 const query = { data: undefined, isLoading: false };
 const mutation = { mutate: vi.fn(), isPending: false, variables: undefined };
 
