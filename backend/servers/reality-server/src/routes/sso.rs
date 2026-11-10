@@ -1714,8 +1714,55 @@ mod sync_session_invalidation_tests {
 
 #[cfg(test)]
 mod sso_callback_error_sanitization_tests {
-    use super::sso_callback_internal_error;
+    use super::{sso_callback_internal_error, sso_callback_sanitized_error};
     use axum::http::StatusCode;
+
+    /// Security regression (code-review finding
+    /// `code-review-reality-server-sso-cb-upstream-err-leak`): the two upstream
+    /// calls in `sso_callback` — the PM OAuth token exchange and the PM userinfo
+    /// fetch — must NOT surface the raw upstream/provider error to the client.
+    ///
+    /// Before the fix the handler built
+    /// `SsoError::new("token_exchange_failed", &e.to_string())`, where `e`
+    /// wraps the verbatim provider response body (see
+    /// `exchange_code_for_tokens` / `get_user_info`). That body routinely
+    /// carries provider-internal detail — OAuth client ids, internal endpoint
+    /// paths, misconfiguration hints — none of which may reach an
+    /// unauthenticated SSO caller. The sanitized mapping must log the full
+    /// detail server-side and return ONLY the fixed, generic `client_message`.
+    #[test]
+    fn upstream_provider_error_is_not_leaked_to_client_body() {
+        // Representative upstream error text carrying provider-internal detail,
+        // exactly as `exchange_code_for_tokens` would wrap a PM OAuth 4xx body.
+        let raw = "Token exchange failed: {\"error\":\"invalid_client\",\
+                   \"error_description\":\"client secret for client_id \
+                   reality-portal-prod rejected by issuer https://pm-oauth.internal/token\"}";
+
+        let (status, body) = sso_callback_sanitized_error(
+            StatusCode::BAD_REQUEST,
+            "token_exchange_failed",
+            "Could not complete sign-in with the identity provider",
+            &raw,
+        );
+
+        // Status is preserved (upstream failures stay a 400 for the client)...
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert_eq!(body.0.error, "token_exchange_failed");
+        // ...the generic client message is returned verbatim...
+        assert_eq!(
+            body.0.error_description.as_deref(),
+            Some("Could not complete sign-in with the identity provider"),
+        );
+        // ...and no fragment of the raw upstream error reaches the client body.
+        let serialized = serde_json::to_string(&body.0).expect("serialize SsoError");
+        assert!(
+            !serialized.contains("invalid_client")
+                && !serialized.contains("client secret")
+                && !serialized.contains("reality-portal-prod")
+                && !serialized.contains("pm-oauth.internal"),
+            "raw upstream/provider error detail leaked into client body: {serialized}"
+        );
+    }
 
     /// Security regression: a DB/sqlx error surfaced by an SSO-callback
     /// persistence step (user upsert, session creation) must be mapped to a
