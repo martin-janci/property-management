@@ -170,10 +170,11 @@ class SsoService {
                     )
                 Result.success(payload)
             } else {
-                val message =
-                    runCatching { response.body<SsoError>() }
-                        .map { it.errorDescription ?: it.error }
-                        .getOrElse { "Sign in failed (HTTP ${response.status.value})" }
+                val message = runCatching {
+                    response.body<SsoError>()
+                }
+                    .map { it.errorDescription ?: it.error }
+                    .getOrElse { "Sign in failed (HTTP ${response.status.value})" }
                 _authState.value = AuthState.Error(message)
                 Result.failure(SsoException("login_failed", message))
             }
@@ -198,10 +199,11 @@ class SsoService {
             if (response.status.isSuccess()) {
                 Result.success(Unit)
             } else {
-                val message =
-                    runCatching { response.body<SsoError>() }
-                        .map { it.errorDescription ?: it.error }
-                        .getOrElse { "Registration failed (HTTP ${response.status.value})" }
+                val message = runCatching {
+                    response.body<SsoError>()
+                }
+                    .map { it.errorDescription ?: it.error }
+                    .getOrElse { "Registration failed (HTTP ${response.status.value})" }
                 Result.failure(SsoException("register_failed", message))
             }
         } catch (e: Exception) {
@@ -229,7 +231,7 @@ class SsoService {
                     SsoException(
                         "password_reset_failed",
                         "Server rejected the password reset request: ${response.status}",
-                    )
+                    ),
                 )
             }
         } catch (e: Exception) {
@@ -253,9 +255,10 @@ class SsoService {
             if (response.status.isSuccess()) {
                 Result.success(Unit)
             } else {
-                val message =
-                    runCatching { response.bodyAsText() }
-                        .getOrDefault("Reset failed: ${response.status}")
+                val message = runCatching {
+                    response.bodyAsText()
+                }
+                    .getOrDefault("Reset failed: ${response.status}")
                 Result.failure(SsoException("password_reset_failed", message))
             }
         } catch (e: Exception) {
@@ -293,10 +296,11 @@ class SsoService {
                 }
                 Result.success(ssoUser)
             } else {
-                val message =
-                    runCatching { response.body<SsoError>() }
-                        .map { it.errorDescription ?: it.error }
-                        .getOrElse { "Profile update failed (HTTP ${response.status.value})" }
+                val message = runCatching {
+                    response.body<SsoError>()
+                }
+                    .map { it.errorDescription ?: it.error }
+                    .getOrElse { "Profile update failed (HTTP ${response.status.value})" }
                 Result.failure(SsoException("update_failed", message))
             }
         } catch (e: Exception) {

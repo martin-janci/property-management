@@ -133,7 +133,7 @@ fun ListingDetailScreen(
                                 context.startActivity(
                                     Intent(Intent.ACTION_DIAL).apply {
                                         data = Uri.parse("tel:$phone")
-                                    }
+                                    },
                                 )
                             }
                         },

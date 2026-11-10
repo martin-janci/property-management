@@ -11,7 +11,7 @@ import { useAgencyListings, useMyAgency, useRealtors } from '@ppt/reality-api-cl
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { formatPrice } from '@/lib/format';
+import { formatDate, formatPrice } from '@/lib/format';
 import {
   AgencyLoadError,
   isNotFoundError,
@@ -400,7 +400,7 @@ function ListingRow({ listing }: { listing: AgencyListing }) {
       <td>{listing.realtorName}</td>
       <td>{listing.views}</td>
       <td>{listing.inquiries}</td>
-      <td className="date-cell">{new Date(listing.updatedAt).toLocaleDateString()}</td>
+      <td className="date-cell">{formatDate(listing.updatedAt, locale)}</td>
       <td>
         <div className="actions">
           <Link href={`/listings/${listing.slug}`} className="action-link">

@@ -19,7 +19,7 @@ import {
 import { useRealtorErrorMessage } from '@/lib/realtor-error';
 
 function EditListingContent() {
-  const t = useTranslations('realtor');
+  const t = useTranslations('pages.realtorListingEdit');
   const describeError = useRealtorErrorMessage();
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -69,33 +69,33 @@ function EditListingContent() {
   };
 
   if (!id) {
-    return <p className="state">{t('errorMissingListingId')}</p>;
+    return <p className="state">{t('missingId')}</p>;
   }
 
   return (
     <div className="container">
       <header className="head">
-        <h1 className="title">Edit listing</h1>
-        <p className="subtitle">Update the details of your listing.</p>
+        <h1 className="title">{t('title')}</h1>
+        <p className="subtitle">{t('subtitle')}</p>
         <button type="button" className="back" onClick={() => router.push('/realtor/listings')}>
-          ← Back to listings
+          {t('back')}
         </button>
       </header>
 
-      {isLoading && <p className="state">Loading listing…</p>}
+      {isLoading && <p className="state">{t('loading')}</p>}
       {loadError != null && (
         <p className="state error">{describeError(loadError, 'errorLoadListing')}</p>
       )}
       {savedAt && (
         <p className="success" role="status">
-          Listing saved.
+          {t('saved')}
         </p>
       )}
 
       {listing && (
         <ListingForm
           initialValue={listing}
-          submitLabel="Save changes"
+          submitLabel={t('submit')}
           isSubmitting={isSubmitting}
           generalError={submitError}
           onSubmit={handleSubmit}

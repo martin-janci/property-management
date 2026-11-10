@@ -324,7 +324,7 @@ private fun InquiryRow(inquiry: Inquiry, onClick: () -> Unit) {
         modifier =
             Modifier.fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surface)
-                .clickable(onClick = onClick)
+                .clickable(onClick = onClick),
     ) {
         if (isUnread) {
             Box(
@@ -334,7 +334,7 @@ private fun InquiryRow(inquiry: Inquiry, onClick: () -> Unit) {
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(topEnd = 3.dp, bottomEnd = 3.dp))
                         .background(MaterialTheme.colorScheme.primary)
-                        .align(Alignment.CenterStart)
+                        .align(Alignment.CenterStart),
             )
         }
         Row(
@@ -365,7 +365,7 @@ private fun InquiryRow(inquiry: Inquiry, onClick: () -> Unit) {
                                             colors = listOf(Brand800, Brand500),
                                             start = Offset(0f, 0f),
                                             end = Offset(size.width, size.height),
-                                        )
+                                        ),
                                 )
                             }
                             .align(Alignment.TopStart),
@@ -587,7 +587,7 @@ private fun ViewingCard(viewing: ViewingRequest, onClick: () -> Unit, onCancel: 
                     },
                     colors =
                         ButtonDefaults.textButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
+                            contentColor = MaterialTheme.colorScheme.error,
                         ),
                 ) {
                     Text(stringResource(R.string.viewing_cancel_confirm))

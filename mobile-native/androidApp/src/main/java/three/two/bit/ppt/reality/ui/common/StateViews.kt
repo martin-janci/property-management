@@ -144,7 +144,7 @@ fun SkeletonBlock(modifier: Modifier = Modifier, height: Dp = 16.dp, cornerRadiu
                 .fillMaxWidth()
                 .height(height)
                 .clip(RoundedCornerShape(cornerRadius))
-                .background(color)
+                .background(color),
     )
 }
 

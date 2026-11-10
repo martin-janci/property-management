@@ -9,10 +9,11 @@
 import type { Inquiry, InquiryStatus } from '@ppt/reality-api-client';
 import { useCancelInquiry, useMyInquiries } from '@ppt/reality-api-client';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
+import { formatDate } from '@/lib/format';
 import { inquiryTypeLabel } from '@/lib/inquiry-type';
 
 // Status labels are resolved via next-intl (`pages.inquiries.status.<status>`);
@@ -40,6 +41,7 @@ const statusConfig: Record<InquiryStatus, { color: string; bg: string }> = {
 function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
   const t = useTranslations('pages.inquiries');
   const tError = useTranslations('error');
+  const locale = useLocale();
   const cancelInquiry = useCancelInquiry();
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
@@ -65,8 +67,7 @@ function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
               {inquiry.listingTitle}
             </Link>
             <p className="inquiry-date">
-              {new Date(inquiry.createdAt).toLocaleDateString()} •{' '}
-              {inquiryTypeLabel(t, inquiry.type)}
+              {formatDate(inquiry.createdAt, locale)} • {inquiryTypeLabel(t, inquiry.type)}
             </p>
           </div>
         </div>
@@ -96,7 +97,7 @@ function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
             </svg>
             <span>
               {t('viewingScheduled', {
-                date: new Date(inquiry.scheduledViewing.date).toLocaleDateString(),
+                date: formatDate(inquiry.scheduledViewing.date, locale),
                 time: inquiry.scheduledViewing.timeSlot,
               })}
             </span>
@@ -108,7 +109,7 @@ function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
             <p className="response-label">{t('agentResponse')}</p>
             <p className="response-text">{inquiry.agentResponse}</p>
             {inquiry.respondedAt && (
-              <p className="response-date">{new Date(inquiry.respondedAt).toLocaleDateString()}</p>
+              <p className="response-date">{formatDate(inquiry.respondedAt, locale)}</p>
             )}
           </div>
         )}

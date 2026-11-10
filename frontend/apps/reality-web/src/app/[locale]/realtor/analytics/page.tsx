@@ -6,6 +6,7 @@
  * Displays headline performance metrics for the signed-in realtor.
  */
 
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
@@ -29,6 +30,7 @@ function StatCard({ label, value }: { label: string; value: string }) {
 }
 
 function AnalyticsContent() {
+  const t = useTranslations('pages.realtorAnalytics');
   const [analytics, setAnalytics] = useState<RealtorAnalytics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>();
@@ -42,8 +44,7 @@ function AnalyticsContent() {
         if (!cancelled) setAnalytics(value);
       })
       .catch((err) => {
-        if (!cancelled)
-          setError(err instanceof RealtorApiError ? err.message : 'Could not load analytics.');
+        if (!cancelled) setError(err instanceof RealtorApiError ? err.message : t('error'));
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);
@@ -51,28 +52,28 @@ function AnalyticsContent() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [t]);
 
   return (
     <div className="container">
       <header className="head">
         <div>
-          <h1 className="title">Analytics</h1>
-          <p className="subtitle">All-time performance of your listings.</p>
+          <h1 className="title">{t('title')}</h1>
+          <p className="subtitle">{t('subtitle')}</p>
         </div>
       </header>
 
-      {isLoading && <p className="state">Loading metrics…</p>}
+      {isLoading && <p className="state">{t('loading')}</p>}
       {error && <p className="state error">{error}</p>}
 
       {analytics && (
         <div className="grid">
-          <StatCard label="Total listings" value={analytics.totalListings.toLocaleString()} />
-          <StatCard label="Active listings" value={analytics.activeListings.toLocaleString()} />
-          <StatCard label="Total views" value={analytics.totalViews.toLocaleString()} />
-          <StatCard label="Inquiries" value={analytics.totalInquiries.toLocaleString()} />
+          <StatCard label={t('totalListings')} value={analytics.totalListings.toLocaleString()} />
+          <StatCard label={t('activeListings')} value={analytics.activeListings.toLocaleString()} />
+          <StatCard label={t('totalViews')} value={analytics.totalViews.toLocaleString()} />
+          <StatCard label={t('inquiries')} value={analytics.totalInquiries.toLocaleString()} />
           <StatCard
-            label="Conversion rate"
+            label={t('conversionRate')}
             value={`${(analytics.conversionRate * 100).toFixed(1)}%`}
           />
         </div>

@@ -545,7 +545,7 @@ private fun FavoriteEntryCard(
                 }
             }
             Column(
-                modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 8.dp, bottom = 10.dp)
+                modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 8.dp, bottom = 10.dp),
             ) {
                 Text(
                     text = FormatUtils.formatPrice(price, currency),
@@ -619,7 +619,7 @@ private fun FavoritePropertyCard(
                 }
             }
             Column(
-                modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 8.dp, bottom = 10.dp)
+                modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 8.dp, bottom = 10.dp),
             ) {
                 Text(
                     text = FormatUtils.formatPrice(listing.price, listing.currency),
@@ -769,7 +769,7 @@ private fun SavedSearchCard(
                     },
                     colors =
                         ButtonDefaults.textButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
+                            contentColor = MaterialTheme.colorScheme.error,
                         ),
                 ) {
                     Text(stringResource(R.string.delete))

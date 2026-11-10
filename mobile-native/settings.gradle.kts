@@ -18,7 +18,7 @@ if (javaMajor < 17 || javaMajor > 21) {
         |   export JAVA_HOME=${'$'}(/usr/libexec/java_home -v 17)
         |
         """
-            .trimMargin()
+            .trimMargin(),
     )
 }
 

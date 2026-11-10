@@ -65,10 +65,10 @@ fun ResetPasswordScreen(
                 },
                 colors =
                     TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface
+                        containerColor = MaterialTheme.colorScheme.surface,
                     ),
             )
-        }
+        },
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             if (token.isBlank()) {
@@ -116,7 +116,7 @@ fun ResetPasswordScreen(
             }
 
             Column(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 24.dp)
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 24.dp),
             ) {
                 Text(
                     text = stringResource(R.string.auth_reset_body),
@@ -246,7 +246,7 @@ private fun StrengthBars(password: String) {
                     Modifier.weight(1f)
                         .height(4.dp)
                         .clip(RoundedCornerShape(2.dp))
-                        .background(fillColor)
+                        .background(fillColor),
             )
         }
     }

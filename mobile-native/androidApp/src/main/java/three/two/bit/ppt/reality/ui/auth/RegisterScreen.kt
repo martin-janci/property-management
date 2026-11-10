@@ -76,17 +76,17 @@ fun RegisterScreen(
                 },
                 colors =
                     TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface
+                        containerColor = MaterialTheme.colorScheme.surface,
                     ),
             )
-        }
+        },
     ) { padding ->
         Column(
             modifier =
                 Modifier.fillMaxSize()
                     .padding(padding)
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp, vertical = 24.dp)
+                    .padding(horizontal = 20.dp, vertical = 24.dp),
         ) {
             if (submitted) {
                 Text(
@@ -313,7 +313,7 @@ private fun PasswordStrengthBars(strength: Int) {
                     Modifier.weight(1f)
                         .height(4.dp)
                         .clip(RoundedCornerShape(2.dp))
-                        .background(fillColor)
+                        .background(fillColor),
             )
         }
     }
