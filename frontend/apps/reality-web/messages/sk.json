@@ -1318,5 +1318,20 @@
     "errorAreaNegative": "Plocha nesmie byť záporná",
     "errorRoomsInvalid": "Počet izieb musí byť platné číslo",
     "errorRoomsNegative": "Počet izieb nesmie byť záporný"
+  },
+  "realtorAnalytics": {
+    "title": "Analytika",
+    "subtitle": "Výkonnosť vašich ponúk v čase.",
+    "loading": "Načítavajú sa metriky…",
+    "loadError": "Nepodarilo sa načítať analytiku.",
+    "period7d": "Posledných 7 dní",
+    "period30d": "Posledných 30 dní",
+    "period90d": "Posledných 90 dní",
+    "period1y": "Posledný rok",
+    "totalListings": "Celkový počet ponúk",
+    "activeListings": "Aktívne ponuky",
+    "totalViews": "Celkový počet zobrazení",
+    "inquiries": "Dopyty",
+    "conversionRate": "Miera konverzie"
   }
 }
