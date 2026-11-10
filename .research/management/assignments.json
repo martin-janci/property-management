@@ -93,18 +93,18 @@
     {
       "task_id": "code-review-api-handlers-db-error-leak",
       "branch": "auto-impl/code-review-api-handlers-db-error-leak-213e33fd",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-10T00:30:05Z",
-      "last_updated": "2026-11-10T04:30:25Z",
-      "status_changed_at": "2026-11-10T04:30:25Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-10T05:11:22Z",
+      "status_changed_at": "2026-11-10T05:11:22Z",
+      "pr_number": 3379,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3379",
       "merged_at": null,
       "specialist": null,
-      "implementer_summary": " [sandbox-reclaim respawn #1 @2026-11-10T04:30:25Z]",
+      "implementer_summary": "pr=3379 status=done rust-backend; oauth admin handlers e.to_string()->client_message() sanitize (4 handlers, 2 files); IG3 test pair; scope_drift=true advisory (oauth routes not in owner-areas map, security-owned)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -213,5 +213,5 @@
       "first_open_at": "2026-11-10T02:29:11Z"
     }
   ],
-  "generated": "2026-11-10T04:57:37Z"
+  "generated": "2026-11-10T05:11:22Z"
 }
