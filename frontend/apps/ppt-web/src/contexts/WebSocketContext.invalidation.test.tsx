@@ -167,6 +167,26 @@ describe('WebSocketContext — realtime event → query-key mapping', () => {
     expect(onEntityEvent.mock.calls[0][1]).toEqual(['notifications', 'system']);
   });
 
+  // Regression (#votes-dead-invalidation): the `votes` category used to map to
+  // the legacy `['votes']` query root, but the live voting queries are keyed
+  // under `['voting']` (`votingKeys.all` in `@ppt/api-client`). A
+  // `notification.created` votes frame therefore invalidated a dead root and
+  // the on-screen vote lists/details stayed stale on push. The map must target
+  // the live `voting` root so the real queries refetch.
+  it('invalidates the live voting root on a notification.created votes frame', () => {
+    const onEntityEvent = vi.fn();
+    const socket = mountProvider(onEntityEvent);
+
+    socket.simulateServerEvent('notification.created', { category: 'votes' });
+
+    expect(onEntityEvent).toHaveBeenCalledTimes(1);
+    const [eventType, queryKeys] = onEntityEvent.mock.calls[0];
+    expect(eventType).toBe('notification.created');
+    // Must be the live api-client root `voting`, NOT the dead `votes` root.
+    expect(queryKeys).toEqual(['notifications', 'voting']);
+    expect(categoryToQueryKeys.votes).toEqual(['voting']);
+  });
+
   it('covers every NotificationCategory the api-server can emit', () => {
     // Mirror of `common::notifications::NotificationCategory` (serialized
     // snake_case). Keep in lock-step with the backend enum — a missing key
