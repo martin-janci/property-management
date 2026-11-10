@@ -15680,20 +15680,22 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review [reality-server]"
+        "rotating-expert-review [reality-server]",
+        "PR #3371"
       ],
       "evidence": [
         "backend/servers/reality-server/src/routes/imports.rs:131 sets `let total = jobs.len() as i64;` for ImportJobsResponse.total (`i64`, :95) on the paginated list_import_jobs handler (it applies limit/offset at :125-126). So `total` equals the current page size, never the real row count.",
         "The segment's convention is a separate COUNT query: inquiries.rs:602-620 carries the explicit comment that clients compute total/limit for pagination and that returning inquiries.len() would be wrong, then uses tokio::try_join! to fetch a real count; agencies.rs:131 returns `(agencies, total)` from the repo. list_import_jobs was missed. (Note: list_feeds:325 also uses len() but is NOT paginated, so its total is correct and is out of scope.)",
-        "Impact: a client paginating import jobs sees total == page size, so ceil(total/limit) is always 1 and pages beyond the first are unreachable in the UI. Fix: add a COUNT(*) scoped to principal.user_id (mirroring inquiries.rs) instead of jobs.len()."
+        "Impact: a client paginating import jobs sees total == page size, so ceil(total/limit) is always 1 and pages beyond the first are unreachable in the UI. Fix: add a COUNT(*) scoped to principal.user_id (mirroring inquiries.rs) instead of jobs.len().",
+        "resolved: PR #3371 merged 2026-11-10 — fix import-jobs total to report full count, not page length; grep-verified `let total = jobs.len() as i64` no longer in routes/imports.rs, count_import_jobs now called at :144."
       ],
       "files": [
         "backend/servers/reality-server/src/routes/imports.rs"
       ],
       "created_at": "2026-11-09",
-      "updated_at": "2026-11-09",
+      "updated_at": "2026-11-10",
       "plan": null,
       "type": "code-review-finding",
       "source": "rotating-expert-review",
@@ -15701,6 +15703,94 @@
       "score_delta": 2,
       "candidate_vector": "bug",
       "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-agency-imports-total-page-len",
+      "title": "reality-server list_import_history reports `total` as page length after LIMIT 100 — clients cannot page past 100 jobs",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review reality-server 2026-11-10"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agency_imports.rs:183 — list_import_history sets `let total = rows.len() as i64` after a LIMIT 100 query over portal_import_jobs; same page-length-as-total bug fixed by PR #3371 in sibling routes/imports.rs. Clients cannot page past the first 100 jobs.",
+        "Fix pattern mirrors PR #3371 — add `count_import_history(agency_id) → i64` in `crates/db/src/repositories/reality_portal/imports.rs` (SELECT COUNT(*) FROM portal_import_jobs WHERE agency_id = $1) and set total from it."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/agency_imports.rs",
+        "backend/crates/db/src/repositories/reality_portal/imports.rs"
+      ],
+      "created_at": "2026-11-10",
+      "updated_at": "2026-11-10",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "expert": "rust"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/reality_portal/imports.rs",
+      "title": "Churn hotspot: reality_portal/imports.rs — 22 lines via PR #3371 (first hotspot appearance)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "commits 2026-11-09T22:53Z..dev (PR #3371)"
+      ],
+      "evidence": [
+        "22 lines churned via PR #3371 — added `count_import_jobs(user_id, status)` repository method"
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/reality_portal/imports.rs"
+      ],
+      "created_at": "2026-11-10",
+      "updated_at": "2026-11-10",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/imports.rs",
+      "title": "Churn hotspot: reality-server routes/imports.rs — 11 lines via PR #3371 (first hotspot appearance)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "commits 2026-11-09T22:53Z..dev (PR #3371)"
+      ],
+      "evidence": [
+        "11 lines churned via PR #3371 — list_import_jobs now uses COUNT instead of page length for total"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/imports.rs"
+      ],
+      "created_at": "2026-11-10",
+      "updated_at": "2026-11-10",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/tests/suites/imports_happy_path_tests.rs",
+      "title": "Churn hotspot: reality-server imports_happy_path_tests.rs — 24 lines via PR #3371 (regression test added)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "commits 2026-11-09T22:53Z..dev (PR #3371)"
+      ],
+      "evidence": [
+        "24 lines churned via PR #3371 — new test list_import_jobs_total_is_full_count_not_page_len"
+      ],
+      "files": [
+        "backend/servers/reality-server/tests/suites/imports_happy_path_tests.rs"
+      ],
+      "created_at": "2026-11-10",
+      "updated_at": "2026-11-10",
+      "plan": null
     }
   ]
 }

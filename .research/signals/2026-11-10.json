@@ -1,0 +1,198 @@
+{
+  "generated": "2026-11-10T03:20:48Z",
+  "routine_run": 118,
+  "since_iso": "2026-11-09T22:53:00Z",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/reality_portal/imports.rs",
+      "type": "churn-hotspot",
+      "source": "commits 2026-11-09T22:53Z..dev (PR #3371)",
+      "score_delta": 1,
+      "evidence": [
+        "22 lines churned via PR #3371 — added count_import_jobs(user_id, status) repository method"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/reality_portal/imports.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/imports.rs",
+      "type": "churn-hotspot",
+      "source": "commits 2026-11-09T22:53Z..dev (PR #3371)",
+      "score_delta": 1,
+      "evidence": [
+        "11 lines churned via PR #3371 — list_import_jobs now uses COUNT instead of page length for total"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/reality-server/src/routes/imports.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/tests/suites/imports_happy_path_tests.rs",
+      "type": "churn-hotspot",
+      "source": "commits 2026-11-09T22:53Z..dev (PR #3371)",
+      "score_delta": 1,
+      "evidence": [
+        "24 lines churned via PR #3371 — new test list_import_jobs_total_is_full_count_not_page_len"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/reality-server/tests/suites/imports_happy_path_tests.rs"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-agency-imports-total-page-len",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "selection_reason": "churn-aligned",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agency_imports.rs:183 — list_import_history sets `let total = rows.len() as i64` after a LIMIT 100 query over portal_import_jobs; same page-length-as-total bug fixed by PR #3371 in sibling routes/imports.rs. Clients cannot page past the first 100 jobs.",
+        "Fix pattern mirrors PR #3371 — add count_import_history(agency_id) → i64 in crates/db/src/repositories/reality_portal/imports.rs (SELECT COUNT(*) FROM portal_import_jobs WHERE agency_id = $1) and set total from it."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/reality-server/src/routes/agency_imports.rs",
+        "backend/crates/db/src/repositories/reality_portal/imports.rs"
+      ],
+      "expert": "rust"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal of eligible allowlist type (screen-map-drift, screen-map-orphan, fixme-in-merged-code, dep-update-noise lockfile-drift, stalled-review) this run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-11-10.md && head -1 matches today",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev vs now",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative re-emit with score_delta != 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "no open items older than 14d stayed",
+      "observed": "0 stale open items",
+      "expected": "0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "all new plans have adversarial pass line",
+      "observed": "0 new plans — trivial",
+      "expected": "trivial"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans each with 15 sections",
+      "observed": "0 new plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ in staged",
+      "observed": "0 outside",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secret pattern in staged diff",
+      "observed": "0 leaks",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-failed honesty",
+      "observed": "none failed",
+      "expected": "match"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan slugs converge",
+      "observed": "0 missing",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "24 ≥ 24",
+      "expected": "≥ HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix action caps",
+      "observed": "0 actions",
+      "expected": "≤3 caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "pm artifacts + cursor liveness",
+      "observed": "cc 1→2, pm 4→5, epics=13",
+      "expected": "valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token in added lines",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}

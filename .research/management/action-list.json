@@ -604,7 +604,55 @@
         "vector": "bug",
         "generated": "2026-10-19T08:36:48Z"
       }
+    },
+    {
+      "id": "pm-scrum-master-triage-3357-dispatcher-stall-2026-11-10",
+      "action": "Triage #3357: rebase the 3 blocked PRs OR adjust Tier-1d signal sourcing to stop emitting dead-end vectors",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-10",
+      "first_open_at": "2026-11-10T03:12:00Z"
+    },
+    {
+      "id": "pm-scrum-master-monitor-drafts-3372-3377-2026-11-10",
+      "action": "Monitor the 6 new draft PRs (#3372-#3377) through CI and review; retire any that fail Band-C gates early",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-10",
+      "first_open_at": "2026-11-10T03:12:00Z"
+    },
+    {
+      "id": "pm-devops-retitle-mobile-native-action-2026-11-10",
+      "action": "Update pm-devops-unblock-mobile-native-cloud-builds action text: drop #2652 reference (issue is closed), re-anchor to structural claim-starvation evidence directly, and open a fresh issue if the gap deserves one",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-10",
+      "first_open_at": "2026-11-10T03:12:00Z"
+    },
+    {
+      "id": "pm-devops-verify-deploy-server-dormant-2026-11-10",
+      "action": "Verify deploy-server.yml remains dormant (last run 2026-09-27 ~44d ago); confirm no stale artifact or expired credential would silently break on next invocation",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-10",
+      "first_open_at": "2026-11-10T03:12:00Z"
     }
   ],
-  "generated": "2026-11-09T06:45:00Z"
+  "generated": "2026-11-10T03:12:00Z"
 }

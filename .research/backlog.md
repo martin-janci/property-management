@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-11-09 22:58 UTC by routine</sub>
+<sub>Last regenerated: 2026-11-10 03:20 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -47,12 +47,13 @@
 | 3 | security | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-25 (+2) | 2026-05-25 | done | plans/_archive/security-equipment-idor.md |
 | 3 | security | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | `backend/servers/api-server/src/routes/signatures.rs (+2)` | issue #439 (+3) | 2026-05-25 | done | plans/_archive/security-ssrf-outbound-url-validation.md |
 | 3 | security | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-23 (+2) | 2026-05-25 | done | plans/_archive/security-voice-device-idor.md |
+| 2 | bug | reality-server list_import_jobs reports `total` as page length, breaking client pagination | `backend/servers/reality-server/src/routes/imports.rs` | rotating-expert-review [reality-server] (+1) | 2026-11-10 | done | — |
+| 2 | bug | reality-server list_import_history reports `total` as page length after LIMIT 100 — clients cannot page past 100 jobs | `backend/servers/reality-server/src/routes/agency_imports.rs (+1)` | rotating-expert-review reality-server 2026-11-10 | 2026-11-10 | open | — |
 | 2 | security | SECURITY: ppt-web refresh-token persisted in localStorage — XSS-reachable | `frontend/apps/ppt-web/src/` | rotating-expert-review 2026-11-03 ppt-web-core (dispatcher Tier-1d) | 2026-11-09 | open | — |
 | 2 | security | api-server messaging.rs leaks raw sqlx errors to clients — 33 handler error branches send e.to_string() as DB_ERROR | `backend/servers/api-server/src/routes/messaging.rs` | PR #3363 (+1) | 2026-11-09 | done | plans/_archive/code-review-api-handlers-messaging-db-error-leak.md |
 | 2 | bug | SECURITY: admin tenant-export handler writes to a client-supplied out_dir with no validation — arbitrary-directory write via RLS-bypassing export pool | `backend/servers/api-server/src/routes/admin_tenant_lifecycle.rs` | PR #3364 (+1) | 2026-11-09 | done | — |
 | 2 | bug | reality-server imports.rs list_import_jobs passes user `limit` to SQL unclamped - negative LIMIT 500s, huge LIMIT is unbounded | `backend/servers/reality-server/src/routes/imports.rs` | PR #3368 (+1) | 2026-11-09 | done | — |
 | 2 | bug | reality-server imports.rs create/update_import_job store user `source_url` without validate_external_url (SSRF parity gap vs agency_imports) | `backend/servers/reality-server/src/routes/imports.rs` | PR #3367 (+1) | 2026-11-09 | done | — |
-| 2 | bug | reality-server list_import_jobs reports `total` as page length, breaking client pagination | `backend/servers/reality-server/src/routes/imports.rs` | rotating-expert-review [reality-server] | 2026-11-09 | open | — |
 | 2 | test-gap | Screen-map drift: PR #3293 i18n'd reality-web realtor/[id] page without updating docs/screens/reality/realtor-detail.md | `frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx (+1)` | PR #3293 | 2026-11-05 | done | — |
 | 2 | test-gap | Screen-map drift: PR #3313 added regression tests for reality-web realtor/[id] without updating docs/screens/reality/realtor-detail.md | `frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.test.tsx` | PR #3313 | 2026-11-05 | done | — |
 | 2 | test-gap | Screen-map drift: PR #3317 biome-cleaned ppt-web ai-dashboards route test without updating docs/screens/ppt/*.md | `frontend/apps/ppt-web/src/routes/groups/ai-dashboards.role-gate.route.test.tsx` | PR #3317 | 2026-11-05 | done | — |
@@ -265,6 +266,9 @@
 | 2 | test-gap | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | `frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx` | PR #460 | 2026-05-25 | closed | — |
 | 2 | refactor | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | `backend/servers/api-server/src/handlers/auth/mod.rs (+2)` | code-review api-handlers 2026-05-23 (+1) | 2026-05-24 | done | — |
 | 2 | security | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | `backend/servers/api-server/src/handlers/voting/mod.rs (+4)` | issue #160 (+2) | 2026-05-23 | done | — |
+| 1 | refactor | Churn hotspot: reality_portal/imports.rs — 22 lines via PR #3371 (first hotspot appearance) | `backend/crates/db/src/repositories/reality_portal/imports.rs` | commits 2026-11-09T22:53Z..dev (PR #3371) | 2026-11-10 | open | — |
+| 1 | refactor | Churn hotspot: reality-server routes/imports.rs — 11 lines via PR #3371 (first hotspot appearance) | `backend/servers/reality-server/src/routes/imports.rs` | commits 2026-11-09T22:53Z..dev (PR #3371) | 2026-11-10 | open | — |
+| 1 | refactor | Churn hotspot: reality-server imports_happy_path_tests.rs — 24 lines via PR #3371 (regression test added) | `backend/servers/reality-server/tests/suites/imports_happy_path_tests.rs` | commits 2026-11-09T22:53Z..dev (PR #3371) | 2026-11-10 | open | — |
 | 1 | bug | Shared Ktor HttpClient has no HttpTimeout - mobile API calls can hang indefinitely | `mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt` | rotating-expert-review [mobile-native-kmp] | 2026-11-09 | open | — |
 | 1 | refactor | Watch RegistryPage.tsx churn — 3 touches across #3354/#3355/#3359 (auth context + i18n + toasts) | `frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx` | PR #3354 (+3) | 2026-11-09 | done | — |
 | 1 | bug | platform-admin health-alerts pagination: page_size used as SQL LIMIT with no clamp despite documented 'max 100' — unbounded query (DoS) | `backend/servers/api-server/src/routes/platform_admin/ops.rs` | PR #3361 (+1) | 2026-11-09 | done | — |

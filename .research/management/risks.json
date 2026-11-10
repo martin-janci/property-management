@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-11-09T06:45:00Z",
+  "generated": "2026-11-10T03:12:00Z",
   "items": [
     {
       "id": "pm-devops-swagger-ui-egress-blocking-security-2026-10-01",
@@ -290,6 +290,26 @@
       "probability": "high",
       "impact": "high",
       "mitigation": "Phase 3 priority: promote non-mobile-native code-review-finding vectors this run; escalate #3357 to operator; monitor dispatcher claim rate over next 48h",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-devops-deploy-server-dormant-2026-11-10",
+      "risk": "deploy-server.yml has not run in ~44 days; token/cred rotations may have silently broken it",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "dry-run or scheduled smoke-check; keep rollback branch warm",
+      "owner_role": "pm-devops",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-stale-issue-ref-2026-11-10",
+      "risk": "Action-list referencing closed issue #2652 masks that the real structural gap persists",
+      "probability": "high",
+      "impact": "low",
+      "mitigation": "retitle the action to cite structural gap directly; keep issue_ref for provenance",
       "owner_role": "pm-scrum-master",
       "trigger": null,
       "status": "open"
