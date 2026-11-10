@@ -10,6 +10,7 @@ import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Footer, Header } from '@/components/ui';
+import { Link } from '@/i18n/routing';
 import { REPORT_PROBLEMS, type ReportProblem } from './_mock';
 
 // TODO: replace problem cards with @ppt/ui-kit/RadioCards once available
@@ -21,20 +22,6 @@ import { REPORT_PROBLEMS, type ReportProblem } from './_mock';
 // listing") passes `?listing=<uuid>`; otherwise we fish a UUID out of the
 // free-text reference the reporter pasted.
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
-
-// Status copy. This page ships its user-facing text hardcoded in Slovak
-// (only the title/subtitle go through next-intl today), so the submit
-// states follow the same pattern until the page is fully i18n-extracted.
-const MSG = {
-  submitting: 'Odosiela sa…',
-  referenceLabel: 'Referenčné číslo',
-  referenceHint: 'Uveďte ho pri ďalšej komunikácii — pomôže nám vaše hlásenie rýchlo dohľadať.',
-  errorNoListing:
-    'Nevedeli sme určiť, ktorého inzerátu sa hlásenie týka. Otvorte nahlásenie z detailu inzerátu alebo vložte odkaz či ID inzerátu vyššie.',
-  errorRateLimit: 'Priveľa nahlásení z tohto zariadenia. Skúste to o chvíľu znova.',
-  errorNotFound: 'Inzerát sa nenašiel. Skontrolujte odkaz alebo ID a skúste to znova.',
-  errorGeneric: 'Nahlásenie sa nepodarilo odoslať. Skúste to prosím znova.',
-} as const;
 
 export default function ReportPage() {
   const t = useTranslations('pages.report');
@@ -82,7 +69,7 @@ export default function ReportPage() {
 
     const listingId = resolveListingId();
     if (!listingId) {
-      setFormError(MSG.errorNoListing);
+      setFormError(t('errorNoListing'));
       return;
     }
 
@@ -110,9 +97,9 @@ export default function ReportPage() {
       setSubmitted(true);
     } catch (err) {
       const status = err instanceof SubmitReportError ? err.status : 0;
-      if (status === 429) setFormError(MSG.errorRateLimit);
-      else if (status === 404) setFormError(MSG.errorNotFound);
-      else setFormError(MSG.errorGeneric);
+      if (status === 429) setFormError(t('errorRateLimit'));
+      else if (status === 404) setFormError(t('errorNotFound'));
+      else setFormError(t('errorGeneric'));
     }
   };
 
@@ -147,7 +134,7 @@ export default function ReportPage() {
                 marginBottom: 12,
               }}
             >
-              Nahlásenie bolo odoslané
+              {t('successTitle')}
             </h1>
             <p
               style={{
@@ -157,8 +144,7 @@ export default function ReportPage() {
                 lineHeight: 1.7,
               }}
             >
-              Váš podnet sme prijali. Náš tím ho preverí do 24 hodín. Ďakujeme, že pomáhate
-              udržiavať portál bezpečným.
+              {t('successBody')}
             </p>
             {reportId && (
               <div
@@ -179,7 +165,7 @@ export default function ReportPage() {
                     marginBottom: 4,
                   }}
                 >
-                  {MSG.referenceLabel}
+                  {t('referenceLabel')}
                 </div>
                 <code
                   data-testid="report-reference-id"
@@ -200,12 +186,12 @@ export default function ReportPage() {
                     lineHeight: 1.5,
                   }}
                 >
-                  {MSG.referenceHint}
+                  {t('referenceHint')}
                 </p>
               </div>
             )}
             <div>
-              <a
+              <Link
                 href="/listings"
                 style={{
                   display: 'inline-block',
@@ -217,8 +203,8 @@ export default function ReportPage() {
                   textDecoration: 'none',
                 }}
               >
-                Späť na ponuky
-              </a>
+                {t('backToListings')}
+              </Link>
             </div>
           </div>
         </main>
@@ -278,21 +264,22 @@ export default function ReportPage() {
                 marginBottom: 14,
               }}
             >
-              Dôvod nahlásenia <span style={{ color: 'var(--ppt-color-danger, #ef4444)' }}>*</span>
+              {t('problemLegend')}{' '}
+              <span style={{ color: 'var(--ppt-color-danger, #ef4444)' }}>*</span>
             </legend>
             {/* TODO: replace with @ppt/ui-kit/RadioCards once available */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {REPORT_PROBLEMS.map((opt) => (
+              {REPORT_PROBLEMS.map((value) => (
                 <label
-                  key={opt.value}
+                  key={value}
                   style={{
                     display: 'flex',
                     gap: 14,
                     padding: '14px 16px',
                     borderRadius: 10,
-                    border: `2px solid ${problem === opt.value ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-border-default, #e5e7eb)'}`,
+                    border: `2px solid ${problem === value ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-border-default, #e5e7eb)'}`,
                     background:
-                      problem === opt.value
+                      problem === value
                         ? 'var(--ppt-color-primary-light, #dbeafe)'
                         : 'var(--ppt-bg-surface)',
                     cursor: 'pointer',
@@ -302,19 +289,19 @@ export default function ReportPage() {
                   <input
                     type="radio"
                     name="problem"
-                    value={opt.value}
-                    checked={problem === opt.value}
-                    onChange={() => setProblem(opt.value)}
+                    value={value}
+                    checked={problem === value}
+                    onChange={() => setProblem(value)}
                     style={{ marginTop: 3, accentColor: 'var(--ppt-color-primary, #2563eb)' }}
                   />
                   <div>
                     <div
                       style={{ fontWeight: 600, color: 'var(--ppt-fg-primary)', marginBottom: 3 }}
                     >
-                      {opt.label}
+                      {t(`problems.${value}.label`)}
                     </div>
                     <div style={{ fontSize: '0.875rem', color: 'var(--ppt-fg-secondary)' }}>
-                      {opt.description}
+                      {t(`problems.${value}.description`)}
                     </div>
                   </div>
                 </label>
@@ -332,11 +319,11 @@ export default function ReportPage() {
                 marginBottom: 6,
               }}
             >
-              Odkaz na inzerát (URL alebo ID)
+              {t('listingRefLabel')}
             </label>
             <input
               type="text"
-              placeholder="napr. https://rlt.sk/listings/ba-byt-3i alebo #12345"
+              placeholder={t('listingRefPlaceholder')}
               value={listingRef}
               onChange={(e) => setListingRef(e.target.value)}
               style={inputStyle}
@@ -353,12 +340,13 @@ export default function ReportPage() {
                 marginBottom: 6,
               }}
             >
-              Popis problému <span style={{ color: 'var(--ppt-color-danger, #ef4444)' }}>*</span>
+              {t('descriptionLabel')}{' '}
+              <span style={{ color: 'var(--ppt-color-danger, #ef4444)' }}>*</span>
             </label>
             <textarea
               rows={5}
               required
-              placeholder="Opíšte, prečo nahlasujete tento inzerát. Čím viac detailov uvediete, tým rýchlejšie to preveríme."
+              placeholder={t('descriptionPlaceholder')}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               style={{ ...inputStyle, resize: 'vertical' }}
@@ -384,7 +372,7 @@ export default function ReportPage() {
                 marginBottom: 6,
               }}
             >
-              Prílohy (čoskoro)
+              {t('attachmentsLabel')}
             </label>
             {/* TODO(#3017): replace with @ppt/ui-kit/FileUpload wired to a
                 presigned upload once available. */}
@@ -405,13 +393,12 @@ export default function ReportPage() {
               }}
             >
               <span style={{ fontSize: '1.25rem' }}>📎</span>
-              Pridávanie príloh bude čoskoro dostupné
+              {t('attachmentsComingSoon')}
             </div>
             <p
               style={{ fontSize: '0.8125rem', color: 'var(--ppt-fg-muted, #9ca3af)', marginTop: 6 }}
             >
-              Nahrávanie screenshotov zatiaľ nie je dostupné — prosím, opíšte dôkazy v popise
-              vyššie. Pripravujeme ho.
+              {t('attachmentsHint')}
             </p>
           </div>
 
@@ -432,12 +419,16 @@ export default function ReportPage() {
             <span
               style={{ fontSize: '0.875rem', color: 'var(--ppt-fg-secondary)', lineHeight: 1.5 }}
             >
-              Súhlasím so spracovaním osobných údajov za účelom preverenia môjho nahlásenia v súlade
-              s{' '}
-              <a href="/privacy" style={{ color: 'var(--ppt-color-primary, #2563eb)' }}>
-                Zásadami ochrany súkromia
-              </a>
-              . <span style={{ color: 'var(--ppt-color-danger, #ef4444)' }}>*</span>
+              {t.rich('gdpr.label', {
+                // next-intl's locale-aware Link preserves the active locale
+                // prefix so a SK user lands on /sk/privacy, not /privacy.
+                privacyLink: (chunks) => (
+                  <Link href="/privacy" style={{ color: 'var(--ppt-color-primary, #2563eb)' }}>
+                    {chunks}
+                  </Link>
+                ),
+              })}{' '}
+              <span style={{ color: 'var(--ppt-color-danger, #ef4444)' }}>*</span>
             </span>
           </label>
 
@@ -480,7 +471,7 @@ export default function ReportPage() {
                   fontSize: '1rem',
                 }}
               >
-                {submitReport.isPending ? MSG.submitting : 'Odoslať nahlásenie'}
+                {submitReport.isPending ? t('submitting') : t('submit')}
               </button>
             );
           })()}

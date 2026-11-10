@@ -9,10 +9,28 @@
 
 import { getApiBase } from './env';
 
+/**
+ * Stable, locale-independent discriminator for a {@link RealtorApiError}.
+ *
+ * The `message` carried by the error is developer-facing (logs, tests) and
+ * intentionally English. User-facing surfaces must translate off this `code`
+ * instead of rendering `message` — see `useRealtorErrorMessage` in
+ * `./realtor-error`. The one exception is a real server-provided message
+ * (`serverMessage`), which the backend owns and localizes itself.
+ */
+export type RealtorApiErrorCode = 'network' | 'malformed' | 'http';
+
 export class RealtorApiError extends Error {
   constructor(
     message: string,
-    public readonly status: number
+    public readonly status: number,
+    public readonly code: RealtorApiErrorCode = 'http',
+    /**
+     * The message the server returned in its JSON error body, when present.
+     * Only set for `code === 'http'` responses that carried a `message` field;
+     * `undefined` means the UI should fall back to a translated generic string.
+     */
+    public readonly serverMessage?: string
   ) {
     super(message);
     this.name = 'RealtorApiError';
@@ -32,17 +50,24 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       headers: { 'Content-Type': 'application/json', ...(callerHeaders ?? {}) },
     });
   } catch {
-    throw new RealtorApiError('Network error. Please try again.', 0);
+    throw new RealtorApiError('Network error. Please try again.', 0, 'network');
   }
   if (!response.ok) {
-    let message = `Request failed (${response.status})`;
+    let serverMessage: string | undefined;
     try {
       const data = await response.json();
-      if (typeof data?.message === 'string') message = data.message;
+      if (typeof data?.message === 'string') serverMessage = data.message;
     } catch {
       // ignore non-JSON
     }
-    throw new RealtorApiError(message, response.status);
+    // `message` stays developer-facing; the UI translates off `code` and only
+    // shows `serverMessage` (backend-owned copy) when the server provided one.
+    throw new RealtorApiError(
+      serverMessage ?? `Request failed (${response.status})`,
+      response.status,
+      'http',
+      serverMessage
+    );
   }
   if (response.status === 204) return undefined as T;
   return parseJsonBody<T>(response);
@@ -70,10 +95,10 @@ async function parseJsonBody<T>(response: Response): Promise<T> {
   try {
     body = await response.json();
   } catch {
-    throw new RealtorApiError('Malformed response from server.', response.status);
+    throw new RealtorApiError('Malformed response from server.', response.status, 'malformed');
   }
   if (!body || typeof body !== 'object' || Array.isArray(body)) {
-    throw new RealtorApiError('Malformed response from server.', response.status);
+    throw new RealtorApiError('Malformed response from server.', response.status, 'malformed');
   }
   return body as T;
 }

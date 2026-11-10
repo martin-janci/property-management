@@ -31,6 +31,8 @@ vi.mock('../../contexts', () => ({
 
 // The connection pill needs the WebSocket provider; it is not under test here.
 vi.mock('../ConnectionStatus', () => ({ ConnectionStatus: () => null }));
+// The bell polls the inbox API (needs a QueryClient); covered by its own test.
+vi.mock('../NotificationBell', () => ({ NotificationBell: () => null }));
 
 /** Links that only managers may see (each route is manager-gated). */
 const MANAGER_ONLY = [

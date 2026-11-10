@@ -13,6 +13,7 @@ import {
 } from '@ppt/api-client';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { ChannelToggle, DisableAllWarningDialog } from './components';
 
 export function NotificationSettingsPage() {
@@ -95,7 +96,12 @@ export function NotificationSettingsPage() {
   return (
     <div className="max-w-2xl mx-auto p-6">
       <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('settings.notifications.title')}</h1>
-      <p className="text-gray-600 mb-6">{t('settings.notifications.subtitle')}</p>
+      <p className="text-gray-600 mb-2">{t('settings.notifications.subtitle')}</p>
+      <p className="mb-6 text-sm">
+        <Link to="/settings/notifications/advanced" className="text-blue-600 hover:underline">
+          {t('settings.notifications.advanced.title')}
+        </Link>
+      </p>
 
       {/* Update error alert */}
       {updateError && (

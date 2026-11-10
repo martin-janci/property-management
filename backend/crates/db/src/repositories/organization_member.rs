@@ -511,4 +511,32 @@ impl OrganizationMemberRepository {
         .fetch_one(&self.pool)
         .await
     }
+
+    /// Count active admin-level members (org admin and above) of `org_id`
+    /// other than `user_id`. Used to refuse demoting or removing the last
+    /// organization admin, which would leave the org without anyone able to
+    /// manage members.
+    pub async fn count_other_active_admins(
+        &self,
+        org_id: Uuid,
+        user_id: Uuid,
+    ) -> Result<i64, SqlxError> {
+        sqlx::query_scalar::<_, i64>(
+            r#"
+            SELECT COUNT(*) FROM organization_members
+            WHERE organization_id = $1
+              AND user_id <> $2
+              AND status = 'active'
+              AND LOWER(role_type) IN (
+                  'super_admin', 'superadmin',
+                  'platform_admin', 'platformadmin',
+                  'org_admin', 'orgadmin'
+              )
+            "#,
+        )
+        .bind(org_id)
+        .bind(user_id)
+        .fetch_one(&self.pool)
+        .await
+    }
 }

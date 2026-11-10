@@ -181,18 +181,21 @@ export function NeighborsScreen(_props: NeighborsScreenProps) {
   return (
     <View style={s.container}>
       <View style={s.header}>
-        <Text style={s.headerTitle}>Neighbours</Text>
+        <Text style={s.headerTitle}>{t('neighbors.title')}</Text>
         <Text style={s.headerSubtitle}>
           {buildingName
-            ? `${visibleNeighbors.length} residents in ${buildingName}`
-            : `${visibleNeighbors.length} residents in your building`}
+            ? t('neighbors.subtitle', {
+                count: visibleNeighbors.length,
+                building: buildingName,
+              })
+            : t('neighbors.subtitleGeneric', { count: visibleNeighbors.length })}
         </Text>
       </View>
 
       <View style={s.searchContainer}>
         <TextInput
           style={s.searchInput}
-          placeholder="Search by name or apartment…"
+          placeholder={t('neighbors.searchPlaceholder')}
           value={search}
           onChangeText={setSearch}
         />
@@ -230,7 +233,7 @@ export function NeighborsScreen(_props: NeighborsScreenProps) {
                 <Text style={s.cardTitle}>{neighbor.display_name}</Text>
                 <Text style={s.cardMeta}>
                   {neighbor.unit_label}
-                  {neighbor.resident_type === 'owner' ? ' · Owner' : ''}
+                  {neighbor.resident_type === 'owner' ? ` · ${t('neighbors.owner')}` : ''}
                 </Text>
                 {neighbor.phone && <Text style={styles.contact}>📞 {neighbor.phone}</Text>}
                 {neighbor.email && <Text style={styles.contact}>✉️ {neighbor.email}</Text>}

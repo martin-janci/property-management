@@ -13,7 +13,7 @@ import type {
   ActionItem as ActionItemType,
   ActionQueueFilters,
 } from '../hooks/useActionQueue';
-import { isActionQueueMockEnabled, useActionQueue } from '../hooks/useActionQueue';
+import { isActionQueueAvailable, useActionQueue } from '../hooks/useActionQueue';
 import { ActionFilters } from './ActionFilters';
 import { ActionItem } from './ActionItem';
 import { KeyboardShortcutsHelp } from './KeyboardShortcutsHelp';
@@ -30,8 +30,16 @@ interface ActionQueueProps {
  * declarations — the latter only exist per building/unit). Items without a
  * route render without a "view" link instead of navigating to a 404.
  */
-export function actionItemRoute(item: Pick<ActionItemType, 'entityType' | 'entityId'>) {
+export function actionItemRoute(
+  item: Pick<ActionItemType, 'entityType' | 'entityId'> & Pick<Partial<ActionItemType>, 'metadata'>
+) {
   switch (item.entityType) {
+    case 'booking': {
+      const buildingId = item.metadata?.buildingId;
+      return typeof buildingId === 'string'
+        ? `/buildings/${buildingId}/facilities/pending`
+        : undefined;
+    }
     case 'fault':
       return `/faults/${item.entityId}`;
     case 'vote':
@@ -56,13 +64,13 @@ function withoutDeadViewAction(item: ActionItemType): ActionItemType {
 /**
  * Action queue widget.
  *
- * There is no `/api/v1/action-queue` backend yet and no client-side fallback
- * that composes the queue from real endpoints, so outside the DEV mock mode
- * the hook always resolves empty. Rendering that as "all caught up" would be
- * a false statement to real users, so the widget renders nothing instead.
+ * The manager queue is composed on the client from real endpoints (new
+ * faults, pending facility bookings). Roles without a real source would only
+ * ever see an empty queue, and "all caught up" would be a false statement, so
+ * the widget renders nothing for them outside the DEV mock.
  */
 export function ActionQueue(props: ActionQueueProps) {
-  if (!isActionQueueMockEnabled()) return null;
+  if (!isActionQueueAvailable(props.userRole)) return null;
   return <ActionQueueContent {...props} />;
 }
 

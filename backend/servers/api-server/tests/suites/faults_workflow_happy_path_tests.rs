@@ -111,7 +111,8 @@ async fn add_attachment(app: &TestApp, token: &str, org_id: Uuid, fault_id: Uuid
             "original_filename": "leak.jpg",
             "content_type": "image/jpeg",
             "size_bytes": 1024,
-            "storage_url": "https://storage.example.com/leak.jpg",
+            // Storage key minted for this org by POST /documents/upload-url.
+            "storage_url": format!("{org_id}/2026/11/abc_leak.jpg"),
             "thumbnail_url": null,
             "description": "Photo of the leak",
             "width": 800,

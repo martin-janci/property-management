@@ -396,7 +396,8 @@
     "outages": "Szolgáltatáskiesések",
     "neighbors": "Szomszédok",
     "leases": "Bérleti szerződések",
-    "members": "Személyek és szerepkörök"
+    "members": "Személyek és szerepkörök",
+    "oauthGrants": "Csatlakoztatott alkalmazások"
   },
   "auth": {
     "signIn": "Bejelentkezés",
