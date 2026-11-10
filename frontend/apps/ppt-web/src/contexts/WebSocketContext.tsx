@@ -69,7 +69,11 @@ export const eventToQueryKeys: Record<string, string[]> = {
 export const categoryToQueryKeys: Record<string, string[]> = {
   announcements: ['announcements'],
   faults: ['faults'],
-  votes: ['votes'],
+  // The live vote queries are keyed under the `voting` root (`votingKeys.all`
+  // in `@ppt/api-client`), NOT the legacy local `queryKeys.votes` factory root
+  // (`votes`). Keying this on `['votes']` invalidated a root no active query
+  // uses, so a votes push left the on-screen vote lists/details stale.
+  votes: ['voting'],
   messages: ['messages'],
   community: ['community'],
   financial: ['financial'],
