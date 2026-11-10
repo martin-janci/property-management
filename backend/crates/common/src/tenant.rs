@@ -159,6 +159,66 @@ impl TenantRole {
     pub fn from_role_type(role_type: &str) -> Option<Self> {
         serde_json::from_value(serde_json::Value::String(role_type.to_owned())).ok()
     }
+
+    /// Every [`TenantRole`] variant, for exhaustive iteration. Kept in lockstep
+    /// with the enum by the `all_variants_listed_in_all` test, so helpers that
+    /// derive a subset of roles (e.g. [`admin_role_types`](Self::admin_role_types))
+    /// can never silently miss a newly added variant.
+    pub const ALL: [TenantRole; 12] = [
+        TenantRole::SuperAdmin,
+        TenantRole::PlatformAdmin,
+        TenantRole::OrgAdmin,
+        TenantRole::Manager,
+        TenantRole::TechnicalManager,
+        TenantRole::Owner,
+        TenantRole::OwnerDelegate,
+        TenantRole::Tenant,
+        TenantRole::Resident,
+        TenantRole::PropertyManager,
+        TenantRole::RealEstateAgent,
+        TenantRole::Guest,
+    ];
+
+    /// Canonical snake_case `role_type` string for this role — the exact value
+    /// stored in `organization_members.role_type`, serialized in JWT claims, and
+    /// parsed back by [`from_role_type`](Self::from_role_type). Mirrors the serde
+    /// `rename_all = "snake_case"` representation (pinned by the
+    /// `as_role_type_matches_serde` test).
+    pub fn as_role_type(&self) -> &'static str {
+        match self {
+            TenantRole::SuperAdmin => "super_admin",
+            TenantRole::PlatformAdmin => "platform_admin",
+            TenantRole::OrgAdmin => "org_admin",
+            TenantRole::Manager => "manager",
+            TenantRole::TechnicalManager => "technical_manager",
+            TenantRole::Owner => "owner",
+            TenantRole::OwnerDelegate => "owner_delegate",
+            TenantRole::Tenant => "tenant",
+            TenantRole::Resident => "resident",
+            TenantRole::PropertyManager => "property_manager",
+            TenantRole::RealEstateAgent => "real_estate_agent",
+            TenantRole::Guest => "guest",
+        }
+    }
+
+    /// Canonical `role_type` strings for every admin-level role (`OrgAdmin` and
+    /// above), derived from [`level`](Self::level) so the set stays in lockstep
+    /// with the role taxonomy.
+    ///
+    /// This is the single source of truth for "who counts as an admin" in the
+    /// last-admin guard: both the guard's applicability check (via
+    /// `role_type_level`/[`from_role_type`]) and the backing SQL count bind this
+    /// same set, so they can never drift into disagreement. Previously the SQL
+    /// count carried its own hand-rolled `IN (...)` list of role_type spellings
+    /// that could silently fall out of sync with `TenantRole` (#3397).
+    pub fn admin_role_types() -> Vec<&'static str> {
+        let min = TenantRole::OrgAdmin.level();
+        TenantRole::ALL
+            .iter()
+            .filter(|role| role.level() >= min)
+            .map(TenantRole::as_role_type)
+            .collect()
+    }
 }
 
 impl std::fmt::Display for TenantRole {
@@ -402,6 +462,86 @@ mod tests {
         assert_eq!(TenantRole::from_role_type("Manager"), None);
         assert_eq!(TenantRole::from_role_type("not_a_role"), None);
         assert_eq!(TenantRole::from_role_type(""), None);
+    }
+
+    // ---- Admin role_type set derivation (last-admin guard, #3397) ----
+
+    #[test]
+    fn all_variants_listed_in_all() {
+        // `TenantRole::ALL` must enumerate every variant, or any helper that
+        // iterates it (e.g. admin_role_types) silently misses a role. Prove it
+        // by round-tripping each listed variant through its canonical string.
+        for role in TenantRole::ALL {
+            assert_eq!(
+                TenantRole::from_role_type(role.as_role_type()),
+                Some(role),
+                "ALL entry {role:?} must round-trip through as_role_type/from_role_type"
+            );
+        }
+        assert_eq!(
+            TenantRole::ALL.len(),
+            12,
+            "ALL must list every TenantRole variant"
+        );
+    }
+
+    #[test]
+    fn as_role_type_matches_serde() {
+        // The hand-written string must equal the serde snake_case form, since
+        // DB rows and JWT claims use the serde representation.
+        for role in TenantRole::ALL {
+            let serde_str = serde_json::to_value(role).unwrap();
+            assert_eq!(
+                role.as_role_type(),
+                serde_str.as_str().unwrap(),
+                "as_role_type for {role:?} must match its serde snake_case string"
+            );
+        }
+    }
+
+    #[test]
+    fn admin_role_types_covers_every_admin_level_role() {
+        use std::collections::HashSet;
+
+        let counted: HashSet<&str> = TenantRole::admin_role_types().into_iter().collect();
+        let admin_level = TenantRole::OrgAdmin.level();
+
+        // The last-admin guard's applicability check treats a member as an admin
+        // iff role_type_level(role_type) >= OrgAdmin (via from_role_type). The
+        // set the backing SQL count binds MUST be exactly that set, or the two
+        // disagree and a legitimate demote/remove can hit a spurious 409
+        // LAST_ADMIN (#3397).
+        for role in TenantRole::ALL {
+            if role.level() >= admin_level {
+                assert!(
+                    counted.contains(role.as_role_type()),
+                    "admin-level role {role:?} ({}) missing from admin_role_types()",
+                    role.as_role_type()
+                );
+            } else {
+                assert!(
+                    !counted.contains(role.as_role_type()),
+                    "non-admin role {role:?} ({}) must not be in admin_role_types()",
+                    role.as_role_type()
+                );
+            }
+        }
+
+        // Every counted string must itself parse back to an admin-level role
+        // through the SAME strict parser the guard's applicability check uses.
+        for rt in &counted {
+            let parsed = TenantRole::from_role_type(rt).unwrap_or(TenantRole::Guest);
+            assert!(
+                parsed.level() >= admin_level,
+                "counted role_type {rt:?} is not admin-level via from_role_type"
+            );
+        }
+
+        // Pin today's concrete set so an accidental level change is noticed.
+        assert_eq!(
+            counted,
+            HashSet::from(["super_admin", "platform_admin", "org_admin"]),
+        );
     }
 
     #[test]
