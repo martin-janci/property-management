@@ -14,6 +14,8 @@ import {
   useResolveAlert,
 } from '@ppt/api-client';
 import type React from 'react';
+import { useToast } from '../../../components';
+import { getErrorMessage } from '../../../lib/api';
 import {
   CashFlowChart,
   FinancialMetricsTable,
@@ -140,6 +142,27 @@ export const PortfolioDashboardPage: React.FC<PortfolioDashboardPageProps> = ({ 
   const metricsQuery = usePortfolioMetricsSummary(portfolioId, ytdRange());
   const markRead = useMarkAlertRead(portfolioId);
   const resolve = useResolveAlert(portfolioId);
+  const { showToast } = useToast();
+
+  const handleMarkRead = (alertId: string) =>
+    markRead.mutate(alertId, {
+      onError: (err) =>
+        showToast({
+          type: 'error',
+          title: 'Could not mark alert as read',
+          message: getErrorMessage(err),
+        }),
+    });
+
+  const handleResolve = (alertId: string) =>
+    resolve.mutate(alertId, {
+      onError: (err) =>
+        showToast({
+          type: 'error',
+          title: 'Could not resolve alert',
+          message: getErrorMessage(err),
+        }),
+    });
 
   // The summary is the primary resource — gate the page shell on it.
   if (summaryQuery.isLoading) {
@@ -223,8 +246,8 @@ export const PortfolioDashboardPage: React.FC<PortfolioDashboardPageProps> = ({ 
               isRead={alert.is_read}
               isResolved={alert.is_resolved}
               createdAt={alert.created_at}
-              onMarkRead={() => markRead.mutate(alert.id)}
-              onResolve={() => resolve.mutate(alert.id)}
+              onMarkRead={() => handleMarkRead(alert.id)}
+              onResolve={() => handleResolve(alert.id)}
             />
           ))}
         </div>
