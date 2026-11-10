@@ -1249,6 +1249,8 @@
       "deleteWithDocuments": "Törlés a dokumentumokkal együtt",
       "count_one": "{{count}} mappa",
       "count_other": "{{count}} mappa",
+      "documentCount_one": "{{count}} dokumentum",
+      "documentCount_other": "{{count}} dokumentum",
       "newFolder": "Új mappa",
       "allDocuments": "Minden dokumentum",
       "loadError": "Nem sikerült betölteni a mappákat.",

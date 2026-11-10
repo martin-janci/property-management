@@ -1314,6 +1314,8 @@
       "deleteWithDocuments": "Delete including documents",
       "count_one": "{{count}} folder",
       "count_other": "{{count}} folders",
+      "documentCount_one": "{{count}} document",
+      "documentCount_other": "{{count}} documents",
       "newFolder": "New folder",
       "allDocuments": "All documents",
       "loadError": "Failed to load folders.",
