@@ -155,3 +155,78 @@ fn security_headers_layer_is_wired_into_both_router_paths() {
          security headers."
     );
 }
+
+/// CORS-policy parity guard (code-review finding: api-core CORS prod/test
+/// divergence).
+///
+/// Background: the CORS *policy* (allowed methods / headers / credentials /
+/// max-age) was defined in TWO places — `main.rs::cors_layer` (the production
+/// binary) and an inline `CorsLayer::new()...` chain in
+/// `lib.rs::create_router` (the path every integration test exercises via
+/// `TestApp`). The two drifted: the test-side policy allowed an extra
+/// `x-tenant-id` request header that the production policy did NOT, so the
+/// integration tests never exercised the real production CORS policy. This is
+/// the same single-source-of-truth drift #867 fixed for the route table and
+/// #954 for the security-headers layer.
+///
+/// Both paths now build their CORS layer from ONE shared builder,
+/// `api_server::cors_layer(origins)` (origins stay path-specific — the binary
+/// reads `CORS_ALLOWED_ORIGINS`, the test path uses the defaults — but the
+/// policy is identical). This guard fails the build if either path
+/// re-introduces an inline `CorsLayer`, or if the shared policy re-admits the
+/// divergent `x-tenant-id` header. Pure source check — no DB, no runtime — so
+/// it runs in every `cargo test`.
+#[test]
+fn cors_policy_is_single_source_of_truth() {
+    let main_src = read_src("main.rs");
+    let lib_src = read_src("lib.rs");
+
+    // The test-side router MUST delegate to the shared builder, not inline its
+    // own policy.
+    let cr_start = lib_src
+        .find("pub fn create_router")
+        .expect("create_router must exist in lib.rs");
+    let create_router_body = &lib_src[cr_start..];
+    assert!(
+        !create_router_body.contains("CorsLayer::new()"),
+        "lib.rs::create_router must NOT inline a `CorsLayer` — build CORS from \
+         the shared `cors_layer()` so the integration-test path exercises the \
+         SAME policy as production. The inline policy diverged (it allowed an \
+         extra `x-tenant-id` request header production does not)."
+    );
+    assert!(
+        create_router_body.contains("cors_layer("),
+        "lib.rs::create_router must build CORS from the shared `cors_layer()` \
+         builder (single source of truth)."
+    );
+
+    // The production binary MUST build CORS from the same shared builder.
+    assert!(
+        !main_src.contains("CorsLayer::new()"),
+        "main.rs must NOT inline a `CorsLayer` — build CORS from the shared \
+         `api_server::cors_layer()` so it cannot drift from the test path."
+    );
+    assert!(
+        main_src.contains("api_server::cors_layer("),
+        "main.rs must build CORS from the shared `api_server::cors_layer()` builder."
+    );
+
+    // The shared policy must match production and must NOT re-admit the header
+    // that caused the original test/prod divergence. Scope the check to the
+    // shared `cors_layer()` builder body (not the whole file — the doc comments
+    // legitimately name the header while explaining the regression).
+    let cl_start = lib_src
+        .find("pub fn cors_layer(")
+        .expect("the shared `cors_layer()` builder must exist in lib.rs");
+    let after = &lib_src[cl_start..];
+    let cl_end = after
+        .find("\npub fn ")
+        .expect("another `pub fn` must follow `cors_layer()` in lib.rs");
+    let cors_layer_body = &after[..cl_end];
+    assert!(
+        !cors_layer_body.contains("x-tenant-id"),
+        "the shared CORS policy must match production and must NOT allow the \
+         `x-tenant-id` request header — that extra header was the test-only \
+         divergence this guard exists to prevent."
+    );
+}
