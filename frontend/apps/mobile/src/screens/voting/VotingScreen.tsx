@@ -188,8 +188,15 @@ export function formatTimeRemaining(
   t: TranslateFn,
   now: Date = new Date()
 ): string {
-  const end = new Date(endsAt);
-  const diff = end.getTime() - now.getTime();
+  const endMs = new Date(endsAt).getTime();
+  // The list endpoint can carry a missing/empty `end_at`, and `toUiVote` copies
+  // it verbatim into `endsAt`. `new Date('').getTime()` is NaN, so an unguarded
+  // `diff` is NaN: the `diff <= 0` "ended" check is false and every Math.floor
+  // branch below yields NaN, rendering the literal "NaN" (e.g. "NaN minutes
+  // left") on the card. Collapse an empty/unparseable date to '' so the caller
+  // omits the countdown — mirroring how `formatVoteDate` handles bad input.
+  if (!endsAt || Number.isNaN(endMs)) return '';
+  const diff = endMs - now.getTime();
 
   if (diff <= 0) return t('voting.ended');
 
