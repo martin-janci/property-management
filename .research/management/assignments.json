@@ -27,18 +27,18 @@
     {
       "task_id": "code-review-reality-server-sso-cb-upstream-err-leak",
       "branch": "auto-impl/code-review-reality-server-sso-cb-upstre-a4aa67b7",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-10T08:30:57Z",
-      "last_updated": "2026-11-10T08:30:57Z",
-      "status_changed_at": "2026-11-10T08:30:57Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-10T09:15:51Z",
+      "status_changed_at": "2026-11-10T09:15:51Z",
+      "pr_number": 3384,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3384",
       "merged_at": null,
       "specialist": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=3384 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=sanitized token_exchange_failed+user_info_failed in reality-server sso_callback via shared log-then-generic helper; only sso.rs touched; verify green (71 tests); IG3 two-commit red/green; follow-up: sibling SSO POST handlers still leak e.to_string()",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -135,5 +135,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-10T09:08:44Z"
+  "generated": "2026-11-10T09:15:51Z"
 }
