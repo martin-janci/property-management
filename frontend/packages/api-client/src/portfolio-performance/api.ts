@@ -12,11 +12,13 @@
 import { client } from '../generated/client.gen';
 import { authenticatedFetchJson } from '../lib/fetch';
 import type {
+  CalculateMetricsRequest,
   CashFlowTrendPoint,
   DashboardSummary,
   ListPortfolioAlertsParams,
   MetricsSummaryParams,
   PerformanceAlert,
+  PortfolioFinancialMetrics,
   PortfolioMetricsSummary,
   PropertyPerformanceCard,
 } from './types';
@@ -78,6 +80,16 @@ export function getMetricsSummary(
       period_start: params.period_start,
       period_end: params.period_end,
     })}`
+  );
+}
+
+export function calculateMetrics(
+  portfolioId: string,
+  req: CalculateMetricsRequest
+): Promise<PortfolioFinancialMetrics> {
+  return authenticatedFetchJson<PortfolioFinancialMetrics>(
+    `${baseUrl()}${API_BASE}/portfolios/${portfolioId}/metrics/calculate`,
+    { method: 'POST', body: JSON.stringify(req) }
   );
 }
 

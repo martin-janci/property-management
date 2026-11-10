@@ -118,3 +118,43 @@ export interface MetricsSummaryParams {
   period_start: string;
   period_end: string;
 }
+
+/** `metric_period` enum (serialized snake_case by the api-server). */
+export type MetricPeriod = 'monthly' | 'quarterly' | 'annual' | 'ytd' | 'since_inception';
+
+/** POST /portfolios/{id}/metrics/calculate body (`CalculateMetricsRequest`). */
+export interface CalculateMetricsRequest {
+  /** Omit (or `null`) to calculate portfolio-level metrics. */
+  property_id?: string | null;
+  period_type: MetricPeriod;
+  period_start: string;
+  period_end: string;
+  // Optional override values (decimals serialized as strings).
+  property_value?: string | null;
+  total_investment?: string | null;
+  discount_rate?: string | null;
+}
+
+/**
+ * POST /portfolios/{id}/metrics/calculate response (`PortfolioFinancialMetrics`).
+ *
+ * Decimal fields arrive as strings (see module header). Only the subset the
+ * dashboard needs is typed strictly; the rest are left optional.
+ */
+export interface PortfolioFinancialMetrics {
+  id: string;
+  portfolio_id: string;
+  property_id: string | null;
+  period_type: MetricPeriod;
+  period_start: string;
+  period_end: string;
+  net_operating_income: string;
+  cap_rate: string | null;
+  cash_on_cash_return: string | null;
+  irr: string | null;
+  dscr: string | null;
+  equity_multiple: string | null;
+  currency: string;
+  calculated_at: string;
+  created_at: string;
+}
