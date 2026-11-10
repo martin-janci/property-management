@@ -622,7 +622,12 @@
     "emptyTitle": "Még nincsenek szomszédok",
     "noMatches": "Nincs találat",
     "emptyText": "A névjegyzékbe jelentkező lakók itt jelennek meg.",
-    "noMatchesText": "Próbáljon meg más nevet vagy lakásszámot."
+    "noMatchesText": "Próbáljon meg más nevet vagy lakásszámot.",
+    "title": "Szomszédok",
+    "subtitle": "{{count}} lakó itt: {{building}}",
+    "subtitleGeneric": "{{count}} lakó az Ön épületében",
+    "searchPlaceholder": "Keresés név vagy lakás szerint…",
+    "owner": "Tulajdonos"
   },
   "voice": {
     "confirmations": {

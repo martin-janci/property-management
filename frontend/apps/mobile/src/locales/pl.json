@@ -626,7 +626,12 @@
     "emptyTitle": "Brak sąsiadów",
     "noMatches": "Brak wyników",
     "emptyText": "Mieszkańcy, którzy dołączą do katalogu, pojawią się tutaj.",
-    "noMatchesText": "Spróbuj innego imienia lub numeru mieszkania."
+    "noMatchesText": "Spróbuj innego imienia lub numeru mieszkania.",
+    "title": "Sąsiedzi",
+    "subtitle": "{{count}} mieszkańców w budynku {{building}}",
+    "subtitleGeneric": "{{count}} mieszkańców w Twoim budynku",
+    "searchPlaceholder": "Szukaj według imienia lub mieszkania…",
+    "owner": "Właściciel"
   },
   "voice": {
     "confirmations": {
