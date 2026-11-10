@@ -17,7 +17,10 @@ import type React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PortfolioDashboardPage } from './PortfolioDashboardPage';
 
-const h = vi.hoisted(() => ({ showToast: vi.fn() }));
+const h = vi.hoisted(() => ({
+  showToast: vi.fn(),
+  calculateMetricsFn: vi.fn(() => Promise.resolve({})),
+}));
 
 const unreadAlert = {
   id: 'alert-1',
@@ -70,6 +73,7 @@ vi.mock('@ppt/api-client', () => ({
     useMutation({ mutationFn: () => Promise.reject(new Error('mark read boom')) }),
   useResolveAlert: () =>
     useMutation({ mutationFn: () => Promise.reject(new Error('resolve boom')) }),
+  useCalculateMetrics: () => useMutation({ mutationFn: () => h.calculateMetricsFn() }),
 }));
 
 vi.mock('../../../components', async (importOriginal) => ({
@@ -91,6 +95,8 @@ function renderPage() {
 
 beforeEach(() => {
   h.showToast.mockReset();
+  h.calculateMetricsFn.mockReset();
+  h.calculateMetricsFn.mockResolvedValue({});
 });
 
 describe('PortfolioDashboardPage alert mutations', () => {
@@ -114,5 +120,38 @@ describe('PortfolioDashboardPage alert mutations', () => {
     await waitFor(() =>
       expect(h.showToast).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }))
     );
+  });
+});
+
+describe('PortfolioDashboardPage header/property controls', () => {
+  it('wires the Calculate Metrics button to the calculate mutation and surfaces success', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole('button', { name: 'Calculate Metrics' }));
+
+    await waitFor(() => expect(h.calculateMetricsFn).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(h.showToast).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }))
+    );
+  });
+
+  it('surfaces an error toast when calculating metrics fails', async () => {
+    h.calculateMetricsFn.mockRejectedValueOnce(new Error('calc boom'));
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole('button', { name: 'Calculate Metrics' }));
+
+    await waitFor(() =>
+      expect(h.showToast).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }))
+    );
+  });
+
+  it('renders the not-yet-implemented controls as disabled rather than dead buttons', () => {
+    renderPage();
+
+    expect(screen.getByRole('button', { name: 'Export Report' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'View All Properties' })).toBeDisabled();
   });
 });
