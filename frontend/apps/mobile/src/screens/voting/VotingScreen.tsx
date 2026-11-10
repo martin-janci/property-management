@@ -173,6 +173,36 @@ export function quorumProgressPercent(current: number, required: number): number
   return Math.min((current / required) * 100, 100);
 }
 
+/** The subset of react-i18next's `t` that {@link formatTimeRemaining} needs — a
+ *  translation key plus numeric interpolation params. Narrowing to this lets the
+ *  countdown logic be unit-tested with a plain stub instead of a full i18n
+ *  instance. */
+type TranslateFn = (key: string, params?: Record<string, number>) => string;
+
+/** Build the human-readable "time left" label for a vote's end date.
+ *
+ *  Exported (and `now` is injectable) so the countdown branches can be
+ *  unit-tested deterministically without rendering the screen. */
+export function formatTimeRemaining(
+  endsAt: string,
+  t: TranslateFn,
+  now: Date = new Date()
+): string {
+  const end = new Date(endsAt);
+  const diff = end.getTime() - now.getTime();
+
+  if (diff <= 0) return t('voting.ended');
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+  if (days > 0) return t('voting.timeLeftDaysHours', { days, hours });
+  if (hours > 0) return t('voting.timeLeftHours', { hours });
+
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  return t('voting.timeLeftMinutes', { minutes });
+}
+
 interface VotingScreenProps {
   onNavigate?: (screen: string, params?: Record<string, unknown>) => void;
 }
@@ -216,22 +246,8 @@ export function VotingScreen({ onNavigate }: VotingScreenProps) {
   const formatDateRange = (startsAt: string, endsAt: string): string =>
     formatVoteDateRange(startsAt, endsAt, i18n.language);
 
-  const getTimeRemaining = (endsAt: string): string => {
-    const end = new Date(endsAt);
-    const now = new Date();
-    const diff = end.getTime() - now.getTime();
-
-    if (diff <= 0) return t('voting.ended');
-
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-
-    if (days > 0) return t('voting.timeLeftDaysHours', { days, hours });
-    if (hours > 0) return t('voting.timeLeftHours', { hours });
-
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    return t('voting.timeLeftMinutes', { minutes });
-  };
+  const getTimeRemaining = (endsAt: string): string =>
+    formatTimeRemaining(endsAt, (key, params) => t(key, params));
 
   // The list endpoint only returns summaries — so tapping a card opens the
   // detail screen that loads questions/options/eligibility and runs the
