@@ -737,3 +737,58 @@ async fn metrics_endpoint() -> impl axum::response::IntoResponse {
         metrics,
     )
 }
+
+#[cfg(test)]
+mod cors_default_origins_tests {
+    use super::{default_cors_origins, DEV_CORS_ORIGINS, PROD_CORS_ORIGINS};
+
+    fn as_strings(origins: &[http::HeaderValue]) -> Vec<String> {
+        origins
+            .iter()
+            .map(|v| v.to_str().unwrap().to_string())
+            .collect()
+    }
+
+    /// The whole point of this fix: in a non-development (production)
+    /// configuration the default CORS allow-list must NOT contain any plaintext
+    /// `http://localhost:*` origin. Before the fix, `parse_default_origins()`
+    /// unconditionally trusted the four localhost dev origins — combined with
+    /// `allow_credentials(true)` this silently trusted dev origins on a prod
+    /// edge whenever `CORS_ALLOWED_ORIGINS` was unset.
+    #[test]
+    fn production_default_origins_exclude_localhost() {
+        let origins = as_strings(&default_cors_origins(false));
+        assert!(
+            !origins.iter().any(|o| o.contains("localhost")),
+            "production default CORS origins must not include any localhost \
+             origin, got: {origins:?}"
+        );
+        // Production domains are still trusted by default.
+        for prod in PROD_CORS_ORIGINS {
+            assert!(
+                origins.iter().any(|o| o == prod),
+                "production default CORS origins must include {prod}, got: {origins:?}"
+            );
+        }
+    }
+
+    /// In development the localhost dev origins are added back so local
+    /// cross-origin development keeps working without setting
+    /// `CORS_ALLOWED_ORIGINS`.
+    #[test]
+    fn development_default_origins_include_localhost() {
+        let origins = as_strings(&default_cors_origins(true));
+        for dev in DEV_CORS_ORIGINS {
+            assert!(
+                origins.iter().any(|o| o == dev),
+                "development default CORS origins must include {dev}, got: {origins:?}"
+            );
+        }
+        for prod in PROD_CORS_ORIGINS {
+            assert!(
+                origins.iter().any(|o| o == prod),
+                "development default CORS origins must still include {prod}, got: {origins:?}"
+            );
+        }
+    }
+}
