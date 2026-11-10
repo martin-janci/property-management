@@ -930,6 +930,72 @@
       "contact": "Kapcsolat",
       "visitWebsite": "Weboldal megtekintése",
       "license": "Engedély: {number}"
+    },
+    "realtorHub": {
+      "title": "Ügynöki munkaterület",
+      "greeting": "Üdvözöljük.",
+      "greetingNamed": "Üdvözöljük, {name}.",
+      "listingsSummary": "{count} aktív hirdetése van.",
+      "profileTitle": "Profil",
+      "profileDesc": "Nyilvános ügynöki profil és bemutatkozás.",
+      "listingsTitle": "Hirdetéseim",
+      "listingsDesc": "Az Ön által kezelt hirdetések.",
+      "createTitle": "Hirdetés létrehozása",
+      "createDesc": "Tegyen közzé új ingatlant a portálon.",
+      "analyticsTitle": "Elemzések",
+      "analyticsDesc": "Hirdetéseinek megtekintései, érdeklődései és konverziói."
+    },
+    "realtorProfile": {
+      "loading": "Profil betöltése…",
+      "loadError": "A profil betöltése sikertelen.",
+      "title": "Ügynöki profil",
+      "subtitle": "A vásárlók és bérlők ezeket az adatokat látják a hirdetéseinél.",
+      "nameRequired": "A név megadása kötelező",
+      "saveError": "A profil mentése sikertelen.",
+      "saved": "A profil frissült.",
+      "labelName": "Név",
+      "labelEmail": "E-mail",
+      "emailHint": "Az e-mail módosításához forduljon az ügyfélszolgálathoz.",
+      "labelPhone": "Telefon",
+      "labelTitle": "Beosztás",
+      "labelBio": "Bemutatkozás",
+      "labelLicense": "Engedélyszám",
+      "labelSpecializations": "Szakterületek",
+      "specializationsHint": "Vesszővel elválasztott lista, pl. Lakások, Üzlethelyiségek.",
+      "save": "Módosítások mentése",
+      "saving": "Mentés…"
+    },
+    "realtorAnalytics": {
+      "title": "Elemzések",
+      "subtitle": "Hirdetéseinek teljesítménye az idő során.",
+      "period7d": "Utolsó 7 nap",
+      "period30d": "Utolsó 30 nap",
+      "period90d": "Utolsó 90 nap",
+      "period1y": "Utolsó év",
+      "loading": "Mutatók betöltése…",
+      "error": "Az elemzések betöltése sikertelen.",
+      "totalListings": "Összes hirdetés",
+      "activeListings": "Aktív hirdetések",
+      "totalViews": "Összes megtekintés",
+      "inquiries": "Érdeklődések",
+      "conversionRate": "Konverziós arány"
+    },
+    "realtorListingCreate": {
+      "title": "Hirdetés létrehozása",
+      "subtitle": "Tegyen közzé új ingatlant a Reality Portal oldalon.",
+      "submit": "Hirdetés közzététele",
+      "error": "A hirdetés létrehozása sikertelen. Kérjük, próbálja újra."
+    },
+    "realtorListingEdit": {
+      "missingId": "Hiányzó hirdetésazonosító.",
+      "title": "Hirdetés szerkesztése",
+      "subtitle": "Frissítse hirdetésének adatait.",
+      "back": "← Vissza a hirdetésekhez",
+      "loading": "Hirdetés betöltése…",
+      "loadError": "A hirdetés betöltése sikertelen.",
+      "saved": "A hirdetés mentve.",
+      "submit": "Módosítások mentése",
+      "submitError": "A hirdetés mentése sikertelen."
     }
   },
   "search": {

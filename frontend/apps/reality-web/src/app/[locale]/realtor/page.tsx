@@ -9,43 +9,34 @@
 
 import { useMyListings } from '@ppt/reality-api-client';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
 import { useAuth } from '@/lib/auth-context';
 
 const SECTIONS: ReadonlyArray<{
   href: string;
-  title: string;
-  description: string;
+  titleKey: 'profileTitle' | 'listingsTitle' | 'createTitle' | 'analyticsTitle';
+  descKey: 'profileDesc' | 'listingsDesc' | 'createDesc' | 'analyticsDesc';
 }> = [
-  { href: '/realtor/profile', title: 'Profile', description: 'Public realtor profile and bio.' },
-  {
-    href: '/realtor/listings',
-    title: 'My listings',
-    description: 'Listings you manage.',
-  },
-  {
-    href: '/realtor/listings/new',
-    title: 'Create listing',
-    description: 'Publish a new property to the portal.',
-  },
-  {
-    href: '/realtor/analytics',
-    title: 'Analytics',
-    description: 'Views, inquiries and conversions for your listings.',
-  },
+  { href: '/realtor/profile', titleKey: 'profileTitle', descKey: 'profileDesc' },
+  { href: '/realtor/listings', titleKey: 'listingsTitle', descKey: 'listingsDesc' },
+  { href: '/realtor/listings/new', titleKey: 'createTitle', descKey: 'createDesc' },
+  { href: '/realtor/analytics', titleKey: 'analyticsTitle', descKey: 'analyticsDesc' },
 ];
 
 function RealtorContent() {
+  const t = useTranslations('pages.realtorHub');
   const { user } = useAuth();
   const { data: listings } = useMyListings({ limit: 1 });
 
   return (
     <div className="container">
       <header className="hero">
-        <h1 className="title">Realtor workspace</h1>
+        <h1 className="title">{t('title')}</h1>
         <p className="subtitle">
-          Welcome{user ? `, ${user.name}` : ''}. You have {listings?.total ?? 0} active listings.
+          {user ? t('greetingNamed', { name: user.name }) : t('greeting')}{' '}
+          {t('listingsSummary', { count: listings?.total ?? 0 })}
         </p>
       </header>
 
@@ -53,8 +44,8 @@ function RealtorContent() {
         {SECTIONS.map((section) => (
           <li key={section.href}>
             <Link href={section.href} className="card">
-              <h2 className="card-title">{section.title}</h2>
-              <p className="card-desc">{section.description}</p>
+              <h2 className="card-title">{t(section.titleKey)}</h2>
+              <p className="card-desc">{t(section.descKey)}</p>
             </Link>
           </li>
         ))}

@@ -5,6 +5,7 @@
  */
 
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { ListingForm } from '@/components/realtor/ListingForm';
@@ -12,6 +13,7 @@ import { Footer, Header } from '@/components/ui';
 import { createListing, type ListingDraft, RealtorApiError } from '@/lib/realtor-api';
 
 function CreateListingContent() {
+  const t = useTranslations('pages.realtorListingCreate');
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string>();
@@ -23,9 +25,7 @@ function CreateListingContent() {
       const created = await createListing(draft);
       router.replace(`/realtor/listings/${created.id}/edit`);
     } catch (err) {
-      setError(
-        err instanceof RealtorApiError ? err.message : 'Could not create listing. Please try again.'
-      );
+      setError(err instanceof RealtorApiError ? err.message : t('error'));
     } finally {
       setIsSubmitting(false);
     }
@@ -34,11 +34,11 @@ function CreateListingContent() {
   return (
     <div className="container">
       <header className="head">
-        <h1 className="title">Create listing</h1>
-        <p className="subtitle">Publish a new property to Reality Portal.</p>
+        <h1 className="title">{t('title')}</h1>
+        <p className="subtitle">{t('subtitle')}</p>
       </header>
       <ListingForm
-        submitLabel="Publish listing"
+        submitLabel={t('submit')}
         isSubmitting={isSubmitting}
         generalError={error}
         onSubmit={handleSubmit}

@@ -937,6 +937,72 @@
       "contact": "Contact",
       "visitWebsite": "Visit website",
       "license": "License: {number}"
+    },
+    "realtorHub": {
+      "title": "Realtor workspace",
+      "greeting": "Welcome.",
+      "greetingNamed": "Welcome, {name}.",
+      "listingsSummary": "You have {count} active listings.",
+      "profileTitle": "Profile",
+      "profileDesc": "Public realtor profile and bio.",
+      "listingsTitle": "My listings",
+      "listingsDesc": "Listings you manage.",
+      "createTitle": "Create listing",
+      "createDesc": "Publish a new property to the portal.",
+      "analyticsTitle": "Analytics",
+      "analyticsDesc": "Views, inquiries and conversions for your listings."
+    },
+    "realtorProfile": {
+      "loading": "Loading profile…",
+      "loadError": "Could not load profile.",
+      "title": "Realtor profile",
+      "subtitle": "Buyers and renters see this information on your listings.",
+      "nameRequired": "Name is required",
+      "saveError": "Could not save profile.",
+      "saved": "Profile updated.",
+      "labelName": "Name",
+      "labelEmail": "Email",
+      "emailHint": "Contact support to change the email on this account.",
+      "labelPhone": "Phone",
+      "labelTitle": "Job title",
+      "labelBio": "Bio",
+      "labelLicense": "License number",
+      "labelSpecializations": "Specializations",
+      "specializationsHint": "Comma-separated list, e.g. Apartments, Commercial.",
+      "save": "Save changes",
+      "saving": "Saving…"
+    },
+    "realtorAnalytics": {
+      "title": "Analytics",
+      "subtitle": "Performance of your listings over time.",
+      "period7d": "Last 7 days",
+      "period30d": "Last 30 days",
+      "period90d": "Last 90 days",
+      "period1y": "Last year",
+      "loading": "Loading metrics…",
+      "error": "Could not load analytics.",
+      "totalListings": "Total listings",
+      "activeListings": "Active listings",
+      "totalViews": "Total views",
+      "inquiries": "Inquiries",
+      "conversionRate": "Conversion rate"
+    },
+    "realtorListingCreate": {
+      "title": "Create listing",
+      "subtitle": "Publish a new property to Reality Portal.",
+      "submit": "Publish listing",
+      "error": "Could not create listing. Please try again."
+    },
+    "realtorListingEdit": {
+      "missingId": "Missing listing id.",
+      "title": "Edit listing",
+      "subtitle": "Update the details of your listing.",
+      "back": "← Back to listings",
+      "loading": "Loading listing…",
+      "loadError": "Could not load listing.",
+      "saved": "Listing saved.",
+      "submit": "Save changes",
+      "submitError": "Could not save listing."
     }
   },
   "search": {

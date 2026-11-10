@@ -930,6 +930,72 @@
       "contact": "Kontakt",
       "visitWebsite": "Odwiedź stronę",
       "license": "Licencja: {number}"
+    },
+    "realtorHub": {
+      "title": "Przestrzeń robocza agenta",
+      "greeting": "Witamy.",
+      "greetingNamed": "Witaj, {name}.",
+      "listingsSummary": "Masz {count} aktywnych ogłoszeń.",
+      "profileTitle": "Profil",
+      "profileDesc": "Publiczny profil agenta i opis.",
+      "listingsTitle": "Moje ogłoszenia",
+      "listingsDesc": "Ogłoszenia, którymi zarządzasz.",
+      "createTitle": "Utwórz ogłoszenie",
+      "createDesc": "Opublikuj nową nieruchomość w portalu.",
+      "analyticsTitle": "Analityka",
+      "analyticsDesc": "Wyświetlenia, zapytania i konwersje Twoich ogłoszeń."
+    },
+    "realtorProfile": {
+      "loading": "Ładowanie profilu…",
+      "loadError": "Nie udało się załadować profilu.",
+      "title": "Profil agenta",
+      "subtitle": "Kupujący i najemcy widzą te informacje przy Twoich ogłoszeniach.",
+      "nameRequired": "Imię jest wymagane",
+      "saveError": "Nie udało się zapisać profilu.",
+      "saved": "Profil zaktualizowany.",
+      "labelName": "Imię",
+      "labelEmail": "E-mail",
+      "emailHint": "Skontaktuj się z pomocą techniczną, aby zmienić e-mail tego konta.",
+      "labelPhone": "Telefon",
+      "labelTitle": "Stanowisko",
+      "labelBio": "Biografia",
+      "labelLicense": "Numer licencji",
+      "labelSpecializations": "Specjalizacje",
+      "specializationsHint": "Lista oddzielona przecinkami, np. Mieszkania, Komercyjne.",
+      "save": "Zapisz zmiany",
+      "saving": "Zapisywanie…"
+    },
+    "realtorAnalytics": {
+      "title": "Analityka",
+      "subtitle": "Skuteczność Twoich ogłoszeń w czasie.",
+      "period7d": "Ostatnie 7 dni",
+      "period30d": "Ostatnie 30 dni",
+      "period90d": "Ostatnie 90 dni",
+      "period1y": "Ostatni rok",
+      "loading": "Ładowanie danych…",
+      "error": "Nie udało się załadować analityki.",
+      "totalListings": "Łączna liczba ogłoszeń",
+      "activeListings": "Aktywne ogłoszenia",
+      "totalViews": "Łączna liczba wyświetleń",
+      "inquiries": "Zapytania",
+      "conversionRate": "Współczynnik konwersji"
+    },
+    "realtorListingCreate": {
+      "title": "Utwórz ogłoszenie",
+      "subtitle": "Opublikuj nową nieruchomość w Reality Portal.",
+      "submit": "Opublikuj ogłoszenie",
+      "error": "Nie udało się utworzyć ogłoszenia. Spróbuj ponownie."
+    },
+    "realtorListingEdit": {
+      "missingId": "Brak identyfikatora ogłoszenia.",
+      "title": "Edytuj ogłoszenie",
+      "subtitle": "Zaktualizuj szczegóły swojego ogłoszenia.",
+      "back": "← Powrót do ogłoszeń",
+      "loading": "Ładowanie ogłoszenia…",
+      "loadError": "Nie udało się załadować ogłoszenia.",
+      "saved": "Ogłoszenie zapisane.",
+      "submit": "Zapisz zmiany",
+      "submitError": "Nie udało się zapisać ogłoszenia."
     }
   },
   "search": {

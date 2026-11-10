@@ -5,6 +5,7 @@
  */
 
 import { useParams, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { ListingForm } from '@/components/realtor/ListingForm';
@@ -18,6 +19,7 @@ import {
 } from '@/lib/realtor-api';
 
 function EditListingContent() {
+  const t = useTranslations('pages.realtorListingEdit');
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const id = params?.id ?? '';
@@ -38,8 +40,7 @@ function EditListingContent() {
         if (!cancelled) setListing(value);
       })
       .catch((err) => {
-        if (!cancelled)
-          setLoadError(err instanceof RealtorApiError ? err.message : 'Could not load listing.');
+        if (!cancelled) setLoadError(err instanceof RealtorApiError ? err.message : t('loadError'));
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);
@@ -47,7 +48,7 @@ function EditListingContent() {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, t]);
 
   const handleSubmit = async (draft: ListingDraft) => {
     if (!id) return;
@@ -58,38 +59,38 @@ function EditListingContent() {
       setListing(updated);
       setSavedAt(Date.now());
     } catch (err) {
-      setSubmitError(err instanceof RealtorApiError ? err.message : 'Could not save listing.');
+      setSubmitError(err instanceof RealtorApiError ? err.message : t('submitError'));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   if (!id) {
-    return <p className="state">Missing listing id.</p>;
+    return <p className="state">{t('missingId')}</p>;
   }
 
   return (
     <div className="container">
       <header className="head">
-        <h1 className="title">Edit listing</h1>
-        <p className="subtitle">Update the details of your listing.</p>
+        <h1 className="title">{t('title')}</h1>
+        <p className="subtitle">{t('subtitle')}</p>
         <button type="button" className="back" onClick={() => router.push('/realtor/listings')}>
-          ← Back to listings
+          {t('back')}
         </button>
       </header>
 
-      {isLoading && <p className="state">Loading listing…</p>}
+      {isLoading && <p className="state">{t('loading')}</p>}
       {loadError && <p className="state error">{loadError}</p>}
       {savedAt && (
         <p className="success" role="status">
-          Listing saved.
+          {t('saved')}
         </p>
       )}
 
       {listing && (
         <ListingForm
           initialValue={listing}
-          submitLabel="Save changes"
+          submitLabel={t('submit')}
           isSubmitting={isSubmitting}
           generalError={submitError}
           onSubmit={handleSubmit}
