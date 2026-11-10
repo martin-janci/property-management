@@ -97,7 +97,7 @@ fun ProfileEditScreen(
                 },
                 colors =
                     TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface
+                        containerColor = MaterialTheme.colorScheme.surface,
                     ),
             )
         },
@@ -170,7 +170,7 @@ fun ProfileEditScreen(
                                         colors = listOf(Brand800, Brand500),
                                         start = Offset(0f, 0f),
                                         end = Offset(size.width, size.height),
-                                    )
+                                    ),
                             )
                         },
                     contentAlignment = Alignment.Center,
@@ -374,7 +374,7 @@ private fun LanguageCard(
                             Modifier.padding(4.dp)
                                 .fillMaxSize()
                                 .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primary)
+                                .background(MaterialTheme.colorScheme.primary),
                     )
                 }
             }

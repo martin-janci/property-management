@@ -80,7 +80,7 @@ fun CreateListingScreen(
                 },
                 colors =
                     TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface
+                        containerColor = MaterialTheme.colorScheme.surface,
                     ),
             )
         },
@@ -114,7 +114,7 @@ fun CreateListingScreen(
                                     price = priceNum,
                                     currency = currency,
                                     transactionType = transactionType,
-                                )
+                                ),
                             )
                         isSubmitting = false
                         result.fold(
@@ -131,12 +131,13 @@ fun CreateListingScreen(
         },
     ) { padding ->
         Column(
-            modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())
+            modifier =
+                Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()),
         ) {
             ProgressHeader()
 
             Column(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp)
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp),
             ) {
                 generalError?.let {
                     ErrorBanner(it)

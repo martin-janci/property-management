@@ -59,10 +59,10 @@ fun ForgotPasswordScreen(
                 },
                 colors =
                     TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface
+                        containerColor = MaterialTheme.colorScheme.surface,
                     ),
             )
-        }
+        },
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             if (submitted) {
@@ -93,7 +93,7 @@ fun ForgotPasswordScreen(
             }
 
             Column(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 24.dp)
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 24.dp),
             ) {
                 Text(
                     text = stringResource(R.string.auth_forgot_body),

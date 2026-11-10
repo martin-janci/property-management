@@ -166,7 +166,7 @@ fun RealityNavHost(
                     onAccountClick = { tabNavigate(Screen.Account.route) },
                 )
             }
-        }
+        },
     ) { innerPadding ->
         NavHost(
             navController = navController,
@@ -296,7 +296,7 @@ fun RealityNavHost(
                     onSsoLoginClick = {
                         runCatching {
                             context.startActivity(
-                                Intent(Intent.ACTION_VIEW, Uri.parse(SsoInitiation.begin()))
+                                Intent(Intent.ACTION_VIEW, Uri.parse(SsoInitiation.begin())),
                             )
                         }
                     },
@@ -333,7 +333,7 @@ fun RealityNavHost(
                         navArgument("token") {
                             type = NavType.StringType
                             defaultValue = ""
-                        }
+                        },
                     ),
             ) { backStackEntry ->
                 val token = backStackEntry.arguments?.getString("token") ?: ""
@@ -424,7 +424,7 @@ fun RealityNavHost(
                 // a dedicated realtor-side detail screen is a separate task.
                 var inquiries by remember {
                     mutableStateOf<List<three.two.bit.ppt.reality.ui.agency.AgencyInquiry>>(
-                        emptyList()
+                        emptyList(),
                     )
                 }
                 var isLoading by remember { mutableStateOf(true) }

@@ -63,10 +63,10 @@ fun TwoFactorScreen(onBackClick: () -> Unit, onDone: () -> Unit) {
                 },
                 colors =
                     TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface
+                        containerColor = MaterialTheme.colorScheme.surface,
                     ),
             )
-        }
+        },
     ) { padding ->
         Column(
             modifier = Modifier.fillMaxSize().padding(padding),
@@ -131,7 +131,7 @@ fun TwoFactorScreen(onBackClick: () -> Unit, onDone: () -> Unit) {
                         indication = null,
                     ) {
                         focusRequester.requestFocus()
-                    }
+                    },
             ) {
                 BasicTextField(
                     value = code,
@@ -177,7 +177,8 @@ fun TwoFactorScreen(onBackClick: () -> Unit, onDone: () -> Unit) {
             }
             val invalidCodeMsg = stringResource(R.string.auth_validation_2fa_invalid)
             Box(
-                modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 32.dp)
+                modifier =
+                    Modifier.padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 32.dp),
             ) {
                 Button(
                     onClick = {

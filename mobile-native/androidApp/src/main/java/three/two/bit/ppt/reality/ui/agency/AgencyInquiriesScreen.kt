@@ -194,7 +194,7 @@ private fun InquiryRow(inquiry: AgencyInquiry, onClick: () -> Unit) {
         modifier =
             Modifier.fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surface)
-                .clickable(onClick = onClick)
+                .clickable(onClick = onClick),
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
@@ -218,7 +218,7 @@ private fun InquiryRow(inquiry: AgencyInquiry, onClick: () -> Unit) {
                                     colors = listOf(Brand800, Brand500),
                                     start = Offset(0f, 0f),
                                     end = Offset(size.width, size.height),
-                                )
+                                ),
                         )
                     },
                 contentAlignment = Alignment.Center,

@@ -629,7 +629,7 @@ private fun FilterSheet(
 
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 24.dp)
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 24.dp),
         ) {
             Text(
                 text = stringResource(R.string.filters),
@@ -1053,7 +1053,8 @@ fun ListingCard(
 
             // Body — price + location row, title, meta
             Column(
-                modifier = Modifier.padding(start = 14.dp, end = 14.dp, top = 12.dp, bottom = 14.dp)
+                modifier =
+                    Modifier.padding(start = 14.dp, end = 14.dp, top = 12.dp, bottom = 14.dp),
             ) {
                 Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.fillMaxWidth()) {
                     Text(

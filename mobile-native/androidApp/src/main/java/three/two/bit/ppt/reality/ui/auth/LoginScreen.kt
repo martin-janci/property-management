@@ -73,7 +73,7 @@ fun LoginScreen(
             Column(
                 modifier =
                     Modifier.fillMaxWidth()
-                        .padding(start = 20.dp, end = 20.dp, top = 32.dp, bottom = 24.dp)
+                        .padding(start = 20.dp, end = 20.dp, top = 32.dp, bottom = 24.dp),
             ) {
                 generalError?.let {
                     ErrorBanner(it)

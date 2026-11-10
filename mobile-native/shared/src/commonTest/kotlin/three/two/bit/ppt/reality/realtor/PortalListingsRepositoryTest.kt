@@ -49,7 +49,7 @@ class PortalListingsRepositoryTest {
 
     /** A MockEngine that routes by path so aggregation across list + analytics can be exercised. */
     private fun repoWithRouter(
-        route: (path: String) -> Pair<HttpStatusCode, String>
+        route: (path: String) -> Pair<HttpStatusCode, String>,
     ): PortalListingsRepository {
         val engine = MockEngine { request ->
             val (status, body) = route(request.url.fullPath)

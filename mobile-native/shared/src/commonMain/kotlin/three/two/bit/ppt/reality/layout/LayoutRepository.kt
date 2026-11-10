@@ -46,7 +46,7 @@ class LayoutRepository(
 
             if (!response.status.isSuccess()) {
                 println(
-                    "LayoutRepository: falling back to default layout: HTTP ${response.status.value}"
+                    "LayoutRepository: falling back to default layout: HTTP ${response.status.value}",
                 )
                 return DEFAULT_LISTING_DETAIL_LAYOUT
             }
@@ -56,7 +56,7 @@ class LayoutRepository(
             if (layout.screen != DEFAULT_LISTING_DETAIL_LAYOUT.screen) {
                 println(
                     "LayoutRepository: falling back to default layout: " +
-                        "unexpected screen echo '${layout.screen}'"
+                        "unexpected screen echo '${layout.screen}'",
                 )
                 DEFAULT_LISTING_DETAIL_LAYOUT
             } else {

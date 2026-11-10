@@ -216,14 +216,14 @@ private fun HomeTopBar(
                             .offset(x = (-2).dp, y = 2.dp)
                             .size(10.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.background)
+                            .background(MaterialTheme.colorScheme.background),
                 ) {
                     Box(
                         modifier =
                             Modifier.padding(2.dp)
                                 .fillMaxSize()
                                 .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.error)
+                                .background(MaterialTheme.colorScheme.error),
                     )
                 }
             }
@@ -281,10 +281,10 @@ private fun HeroCard(onSearchClick: () -> Unit, onTabClick: (ListingType?) -> Un
                                 colors = listOf(Brand800, Brand500),
                                 start = Offset(0f, 0f),
                                 end = Offset(size.width, size.height),
-                            )
+                            ),
                     )
                 }
-                .padding(18.dp)
+                .padding(18.dp),
     ) {
         Column {
             Text(
@@ -484,7 +484,11 @@ private fun listingMeta(listing: ListingSummary): String {
     val parts = buildList {
         listing.rooms?.let {
             add(
-                androidx.compose.ui.res.pluralStringResource(R.plurals.listing_rooms_plural, it, it)
+                androidx.compose.ui.res.pluralStringResource(
+                    R.plurals.listing_rooms_plural,
+                    it,
+                    it,
+                ),
             )
         }
         listing.areaSqm?.toInt()?.let { add(stringResource(R.string.area_m2, it)) }
@@ -504,7 +508,7 @@ private fun FeaturedSkeleton() {
                 shape = RoundedCornerShape(16.dp),
                 colors =
                     CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
                     ),
                 content = {},
             )

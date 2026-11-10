@@ -35,14 +35,14 @@ internal fun TabStrip(selected: Int, onSelect: (Int) -> Unit) {
         )
     Row(
         modifier =
-            Modifier.fillMaxWidth().padding(top = 18.dp).horizontalScroll(rememberScrollState())
+            Modifier.fillMaxWidth().padding(top = 18.dp).horizontalScroll(rememberScrollState()),
     ) {
         tabs.forEachIndexed { index, label ->
             val isOn = selected == index
             Column(
                 modifier =
                     Modifier.clickable { onSelect(index) }
-                        .padding(start = if (index == 0) 16.dp else 0.dp, end = 12.dp)
+                        .padding(start = if (index == 0) 16.dp else 0.dp, end = 12.dp),
             ) {
                 Text(
                     text = label,
@@ -57,7 +57,7 @@ internal fun TabStrip(selected: Int, onSelect: (Int) -> Unit) {
                     modifier =
                         Modifier.height(2.dp)
                             .width(if (isOn) 44.dp else 0.dp)
-                            .background(MaterialTheme.colorScheme.primary)
+                            .background(MaterialTheme.colorScheme.primary),
                 )
             }
         }
