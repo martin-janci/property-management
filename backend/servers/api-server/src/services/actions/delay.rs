@@ -51,12 +51,18 @@ pub struct DelayConfig {
 
 impl DelayConfig {
     /// Convert the delay to a Duration.
+    ///
+    /// The unit scaling uses saturating multiplication: a maliciously or
+    /// accidentally large `duration` saturates to `u64::MAX` seconds instead
+    /// of overflowing (which panics in debug builds and wraps to a small value
+    /// in release builds, silently slipping past the `MAX_DELAY_SECONDS`
+    /// guard). A saturated value stays large, so the guard still rejects it.
     pub fn to_duration(&self) -> Duration {
         match self.unit {
             TimeUnit::Seconds => Duration::from_secs(self.duration),
-            TimeUnit::Minutes => Duration::from_secs(self.duration * 60),
-            TimeUnit::Hours => Duration::from_secs(self.duration * 3600),
-            TimeUnit::Days => Duration::from_secs(self.duration * 86400),
+            TimeUnit::Minutes => Duration::from_secs(self.duration.saturating_mul(60)),
+            TimeUnit::Hours => Duration::from_secs(self.duration.saturating_mul(3600)),
+            TimeUnit::Days => Duration::from_secs(self.duration.saturating_mul(86400)),
         }
     }
 }
