@@ -253,4 +253,45 @@ mod tests {
         });
         assert!(executor.validate_config(&too_long).is_err());
     }
+
+    #[test]
+    fn test_delay_config_to_duration_saturates_on_overflow() {
+        // A maliciously large duration must not overflow when scaled by the
+        // unit factor. Before the fix `self.duration * 86400` panics in debug
+        // builds and wraps in release builds — the latter silently producing a
+        // tiny value that slips past the MAX_DELAY_SECONDS guard. Saturating
+        // arithmetic keeps the value large so the guard still rejects it.
+        let config = DelayConfig {
+            duration: u64::MAX,
+            unit: TimeUnit::Days,
+            reason: None,
+        };
+        assert_eq!(config.to_duration().as_secs(), u64::MAX);
+
+        let config = DelayConfig {
+            duration: u64::MAX,
+            unit: TimeUnit::Hours,
+            reason: None,
+        };
+        assert_eq!(config.to_duration().as_secs(), u64::MAX);
+
+        let config = DelayConfig {
+            duration: u64::MAX,
+            unit: TimeUnit::Minutes,
+            reason: None,
+        };
+        assert_eq!(config.to_duration().as_secs(), u64::MAX);
+    }
+
+    #[test]
+    fn test_delay_executor_rejects_overflowing_duration() {
+        // An overflowing duration must be rejected as exceeding the maximum,
+        // never accepted via wraparound (or panic) inside validate_config.
+        let executor = DelayExecutor::new();
+        let config = serde_json::json!({
+            "duration": u64::MAX,
+            "unit": "days"
+        });
+        assert!(executor.validate_config(&config).is_err());
+    }
 }
