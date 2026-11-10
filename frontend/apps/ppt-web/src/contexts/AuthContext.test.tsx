@@ -85,8 +85,10 @@ const REFRESH_TOKEN_KEY = 'ppt_refresh_token';
 const USER_KEY = 'ppt_user';
 
 function seedAuthedSession() {
+  // Opaque (non-JWT) access token so boot trusts it without a refresh. The
+  // refresh token is NOT in localStorage — after a reload it lives only in the
+  // HttpOnly cookie, so logout sends an empty body token and relies on it.
   localStorage.setItem(ACCESS_TOKEN_KEY, 'access-token-xyz');
-  localStorage.setItem(REFRESH_TOKEN_KEY, 'refresh-token-xyz');
   localStorage.setItem(
     USER_KEY,
     JSON.stringify({ id: 'u-1', email: 'alice@example.com', name: 'Alice' })
@@ -366,9 +368,11 @@ describe('AuthContext.logout — Issue #712', () => {
     expect(localStorage.getItem(REFRESH_TOKEN_KEY)).toBeNull();
     expect(localStorage.getItem(USER_KEY)).toBeNull();
 
-    // Server-side token revocation is at least attempted.
+    // Server-side token revocation is at least attempted. The in-memory refresh
+    // token is empty after a boot, so the body carries no token — the backend
+    // revokes the session from the HttpOnly cookie instead.
     expect(logoutSpy).toHaveBeenCalledTimes(1);
-    expect(logoutSpy).toHaveBeenCalledWith({ refreshToken: 'refresh-token-xyz' });
+    expect(logoutSpy).toHaveBeenCalledWith({ refreshToken: '' });
   });
 
   it('still completes local logout when server-side revocation fails', async () => {

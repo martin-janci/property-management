@@ -97,7 +97,15 @@ export interface AuthContextValue extends AuthState {
 // API base URL - prefer environment configuration for different environments (dev/staging/prod)
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
 const ACCESS_TOKEN_KEY = 'ppt_access_token';
-const REFRESH_TOKEN_KEY = 'ppt_refresh_token';
+/**
+ * Legacy localStorage key the refresh token used to live under. It is NO LONGER
+ * written (see the security note on `tokenStorage` below): the refresh token is
+ * held in memory for the lifetime of the page and persisted across reloads only
+ * via the backend's HttpOnly `refresh_token` cookie. The key is still referenced
+ * so cold boot can purge any value a previous build left behind — otherwise an
+ * XSS-reachable token would linger in storage after the upgrade.
+ */
+const LEGACY_REFRESH_TOKEN_KEY = 'ppt_refresh_token';
 const USER_KEY = 'ppt_user';
 /**
  * Persisted tenant membership list so refreshTokenInternal can call
@@ -114,8 +122,32 @@ const TENANTS_KEY = 'ppt_tenants';
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 // ============================================================================
-// Token Storage (localStorage for MVP, httpOnly cookies later)
+// Token Storage
 // ============================================================================
+
+/**
+ * In-memory holder for the refresh token.
+ *
+ * SECURITY: the refresh token is deliberately NOT persisted to `localStorage`.
+ * A value in `localStorage` is readable by any script running on the origin, so
+ * an XSS foothold could exfiltrate a long-lived refresh token and mint access
+ * tokens indefinitely. Instead the token lives only in this module variable for
+ * the lifetime of the page, and durable cross-reload persistence is provided by
+ * the backend's HttpOnly `Secure` `refresh_token` cookie (set on login / SSO /
+ * refresh, scoped to `/api/v1/auth`), which JavaScript cannot read. On a cold
+ * boot this variable starts empty and the silent-refresh path relies on that
+ * cookie being replayed by the browser (see `refreshTokenInternal`).
+ */
+let inMemoryRefreshToken: string | null = null;
+
+/** Drop any refresh token a previous (localStorage-based) build persisted. */
+function purgeLegacyRefreshToken(): void {
+  try {
+    localStorage.removeItem(LEGACY_REFRESH_TOKEN_KEY);
+  } catch {
+    // Storage unavailable
+  }
+}
 
 const tokenStorage = {
   getAccessToken: (): string | null => {
@@ -134,20 +166,11 @@ const tokenStorage = {
     }
   },
 
-  getRefreshToken: (): string | null => {
-    try {
-      return localStorage.getItem(REFRESH_TOKEN_KEY);
-    } catch {
-      return null;
-    }
-  },
+  /** The in-memory refresh token, or `null` after a cold boot / logout. */
+  getRefreshToken: (): string | null => inMemoryRefreshToken,
 
   setRefreshToken: (token: string): void => {
-    try {
-      localStorage.setItem(REFRESH_TOKEN_KEY, token);
-    } catch {
-      // Storage unavailable
-    }
+    inMemoryRefreshToken = token;
   },
 
   getUser: (): AuthUser | null => {
@@ -185,9 +208,11 @@ const tokenStorage = {
   },
 
   clear: (): void => {
+    inMemoryRefreshToken = null;
     try {
       localStorage.removeItem(ACCESS_TOKEN_KEY);
-      localStorage.removeItem(REFRESH_TOKEN_KEY);
+      // Also purge the legacy key in case an older build left a token there.
+      localStorage.removeItem(LEGACY_REFRESH_TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
       localStorage.removeItem(TENANTS_KEY);
     } catch {
@@ -465,14 +490,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * Internal token refresh implementation using the API client.
    */
   const refreshTokenInternal = useCallback(async (): Promise<string | null> => {
+    // The refresh token is no longer read from localStorage. After a cold boot
+    // the in-memory copy is empty, but the backend's HttpOnly `refresh_token`
+    // cookie is replayed by the browser on this request, so a refresh can still
+    // succeed. Only bail out when there is no evidence of a prior session at all
+    // (no in-memory token AND no stored user) — otherwise a truly anonymous
+    // visitor would fire a pointless refresh on every page load.
     const refreshTokenValue = tokenStorage.getRefreshToken();
-    if (!refreshTokenValue) {
+    if (!refreshTokenValue && !tokenStorage.getUser()) {
       return null;
     }
 
     try {
       const authApi = getAuthApi();
-      const response = await authApi.refreshToken({ refreshToken: refreshTokenValue });
+      // Send the in-memory token when we still have it (same page load as the
+      // login); otherwise send an empty value and rely on the HttpOnly cookie,
+      // which the backend prefers over the request body anyway.
+      const response = await authApi.refreshToken({ refreshToken: refreshTokenValue ?? '' });
 
       tokenStorage.setAccessToken(response.accessToken);
       tokenStorage.setRefreshToken(response.refreshToken);
@@ -512,42 +546,44 @@ export function AuthProvider({ children }: AuthProviderProps) {
    */
   useEffect(() => {
     const initializeAuth = async () => {
+      // A fresh AuthProvider lifecycle models a fresh page load: on a real
+      // reload this module is re-evaluated and `inMemoryRefreshToken` starts
+      // null. Reset it explicitly so the in-memory token never outlives the
+      // boot that owns it. Also purge any refresh token an older,
+      // localStorage-based build left behind so it can no longer be read by JS.
+      inMemoryRefreshToken = null;
+      purgeLegacyRefreshToken();
+
       try {
         const storedUser = tokenStorage.getUser();
         const accessToken = tokenStorage.getAccessToken();
-        const refreshTokenValue = tokenStorage.getRefreshToken();
 
         if (storedUser && accessToken && !isAccessTokenExpired(accessToken)) {
           // Stored access token is present AND still valid (its `exp` claim is
           // in the future, past the clock-skew buffer). Safe to mark the
           // session authenticated without a network round-trip.
           setUser(storedUser);
-        } else if (refreshTokenValue) {
-          // Cold-boot refresh. Two cases funnel here:
-          //   1. No live access token at all (tab closed past its lifetime, or
-          //      the access token was cleared) — the classic cold boot.
-          //   2. A stored access token that is expired or near-expiry — before
-          //      this guard, initializeAuth marked the session authenticated
-          //      from the stale token (the comment claimed an `exp` check that
-          //      did not exist), so the first authenticated request 401'd and
-          //      only THEN triggered a refresh: an authenticated -> 401 ->
-          //      refresh flicker on every cold boot with an expired token.
-          //      Routing through the silent refresh up front avoids it.
-          //
-          // Either way we go through refreshTokenInternal (the SAME routine the
-          // runtime silent-refresh path uses) rather than calling
-          // authApi.refreshToken inline: it re-derives the role from the fresh
-          // access token + persisted tenant memberships (#574) and owns its own
-          // failure cleanup (clear + de-auth + rethrow).
+        } else if (storedUser) {
+          // Cold-boot refresh. A prior session exists (the user record is still
+          // in storage) but there is no usable access token — either none at
+          // all (tab closed past its lifetime) or one that is expired /
+          // near-expiry. The refresh token itself is no longer in localStorage;
+          // it is carried by the HttpOnly `refresh_token` cookie the browser
+          // replays on the refresh request. Route through refreshTokenInternal
+          // (the SAME routine the runtime silent-refresh path uses) rather than
+          // calling authApi.refreshToken inline: it re-derives the role from the
+          // fresh access token + persisted tenant memberships (#574) and owns
+          // its own failure cleanup (clear + de-auth + rethrow). Doing this up
+          // front also avoids the authenticated -> 401 -> refresh flicker on a
+          // cold boot with an expired access token.
           try {
             await refreshTokenInternal();
           } catch {
             // refreshTokenInternal already cleared storage and reset the user.
           }
         } else if (accessToken) {
-          // An expired/near-expiry access token with NO refresh token can't be
-          // recovered — leave the session anonymous rather than authenticating
-          // on a token the next request would 401 on. Purge the stale tokens.
+          // An access token with no stored user can't be tied to a session —
+          // purge it rather than leave a token the next request would 401 on.
           tokenStorage.clear();
         }
       } catch {
@@ -668,6 +704,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * @see Issue #712 — replaced `queryClient.clear()` with a scoped removal.
    */
   const logout = useCallback(async (): Promise<void> => {
+    // Snapshot the in-memory refresh token (if any) before clearing — it is
+    // sent in the request body as a fallback, though the backend prefers the
+    // HttpOnly `refresh_token` cookie.
     const refreshTokenValue = tokenStorage.getRefreshToken();
 
     // 1 & 2 — Clear local state first for immediate UI feedback.
@@ -681,14 +720,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       queryClient.removeQueries({ queryKey: [root] });
     }
 
-    // 4 — Attempt to invalidate the refresh token on the server.
-    if (refreshTokenValue) {
-      try {
-        const authApi = getAuthApi();
-        await authApi.logout({ refreshToken: refreshTokenValue });
-      } catch {
-        // Ignore errors - we've already cleared local state
-      }
+    // 4 — Always attempt server-side revocation. Since the refresh token is no
+    // longer kept in localStorage, after a reload the in-memory copy is empty —
+    // but the HttpOnly cookie is still present and is what the server revokes
+    // (and clears). Gating this on a non-empty in-memory token would skip
+    // revocation (and leave the cookie live) on every post-reload logout.
+    try {
+      const authApi = getAuthApi();
+      await authApi.logout({ refreshToken: refreshTokenValue ?? '' });
+    } catch {
+      // Ignore errors - we've already cleared local state
     }
   }, [queryClient]);
 
@@ -711,7 +752,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * could not be recovered.
    */
   const handleUnauthorized = useCallback(async (): Promise<string | null> => {
-    if (tokenStorage.getRefreshToken()) {
+    // Attempt a silent refresh whenever a session looks recoverable: either we
+    // still hold the in-memory refresh token (same page load as the login) or a
+    // stored user indicates a prior session whose refresh token is carried by
+    // the HttpOnly cookie. refreshTokenInternal falls back to that cookie when
+    // the in-memory token is empty, and clears the session if it is rejected.
+    if (tokenStorage.getRefreshToken() || tokenStorage.getUser()) {
       try {
         // Single-flight: concurrent 401s share the one in-flight refresh.
         return await refreshToken();
