@@ -190,15 +190,15 @@
     {
       "task_id": "code-review-reality-server-pw-reset-timing-oracle",
       "branch": "auto-impl/code-review-reality-server-pw-reset-timi-71266d7a",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-10T02:29:11Z",
-      "last_updated": "2026-11-10T04:33:05Z",
-      "status_changed_at": "2026-11-10T04:33:05Z",
+      "last_updated": "2026-11-10T04:57:37Z",
+      "status_changed_at": "2026-11-10T04:57:37Z",
       "pr_number": 3378,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3378",
       "merged_at": null,
       "specialist": "rust-backend",
-      "implementer_summary": "pr=3378 done rust-backend; CWE-208 timing fix: shared generate_reset_token helper + black_box on UserNotFound path; clippy/fmt/132 lib tests green; DB defer to CI",
+      "implementer_summary": "pr=3378 done rust-backend; CWE-208 timing fix: shared generate_reset_token helper + black_box on UserNotFound path; clippy/fmt/132 lib tests green; DB defer to CI [fix_round 1: async-dispatch closes CWE-208; pushed 9447d6b]",
       "reviewer_summary": "verdict=changes note=crypto-only compensation leaves 2 found-path DB writes + SMTP send uncompensated; CWE-208 timing oracle not actually closed; needs async-dispatch or fixed-time-budget at route level; CI green; no scope drift; reuse clean",
       "last_reviewed_oid": "0f0423e98b10d4016b18b3132345af21eb603b7d",
       "scope_drift": false,
@@ -213,5 +213,5 @@
       "first_open_at": "2026-11-10T02:29:11Z"
     }
   ],
-  "generated": "2026-11-10T04:33:47Z"
+  "generated": "2026-11-10T04:57:37Z"
 }
