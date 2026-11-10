@@ -300,24 +300,6 @@
       }
     },
     {
-      "id": "code-review-reality-server-compare-add-limit-toctou",
-      "action": "reality server compare add limit toctou",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-10T02:25:23Z (tier1d reality-server score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-10T02:25:23Z",
-      "signal_ref": {
-        "segment": "reality-server",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-10-22T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-reality-web-realtor-agency-i18n-gap",
       "action": "reality web realtor agency i18n gap",
       "owner_role": "pm-backend",
@@ -657,23 +639,6 @@
         "score": 2,
         "vector": "bug",
         "generated": "2026-10-17T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-reality-server-imports-total-page-len",
-      "action": "reality-server list_import_jobs reports `total` as page length, breaking client pagination",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-10T10:24:54Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-10T10:24:54Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
       }
     },
     {
