@@ -129,14 +129,21 @@ pub async fn list_import_jobs(
         .reality_portal_repo
         .list_import_jobs(
             principal.user_id,
-            query.status,
+            query.status.clone(),
             limit,
             crate::util::clamp_offset_i32(query.offset),
         )
         .await
         .map_err(|e| crate::util::errors::db_error("list import jobs", e))?;
 
-    let total = jobs.len() as i64;
+    // `total` must be the full count of matching rows (over the same filter,
+    // ignoring limit/offset) so clients can paginate — not the length of the
+    // current page.
+    let total = state
+        .reality_portal_repo
+        .count_import_jobs(principal.user_id, query.status)
+        .await
+        .map_err(|e| crate::util::errors::db_error("count import jobs", e))?;
 
     Ok(Json(ImportJobsResponse { jobs, total }))
 }

@@ -69,6 +69,28 @@ impl RealityPortalRepository {
         .await
     }
 
+    /// Count import jobs for a user, applying the same `status` filter as
+    /// [`Self::list_import_jobs`] but ignoring `limit`/`offset`. Used to
+    /// populate the paginated response's `total` so clients can page
+    /// correctly instead of seeing the current page length.
+    pub async fn count_import_jobs(
+        &self,
+        user_id: Uuid,
+        status: Option<String>,
+    ) -> Result<i64, SqlxError> {
+        sqlx::query_scalar::<_, i64>(
+            r#"
+            SELECT COUNT(*)
+            FROM portal_import_jobs j
+            WHERE j.user_id = $1 AND ($2::text IS NULL OR j.status = $2)
+            "#,
+        )
+        .bind(user_id)
+        .bind(&status)
+        .fetch_one(&self.pool)
+        .await
+    }
+
     /// Update import job. Scoped to the owning `user_id` so a portal user
     /// cannot mutate another user's job by id (IDOR, PAP-142).
     pub async fn update_import_job(

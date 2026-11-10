@@ -89,6 +89,30 @@ async fn list_import_jobs_returns_2xx(pool: PgPool) {
     assert!(status.is_success(), "expected 2xx, got {status}");
 }
 
+// Regression: `total` must be the full count of matching rows, not the length
+// of the returned page. Before the fix the handler set `total = jobs.len()`,
+// so a `limit`ed page reported `total == page_len`, breaking client paging.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn list_import_jobs_total_is_full_count_not_page_len(pool: PgPool) {
+    let user = seed_user(&pool, "list-jobs-total").await;
+    // Three owned jobs, but we only ask for a page of two.
+    seed_import_job(&pool, user).await;
+    seed_import_job(&pool, user).await;
+    seed_import_job(&pool, user).await;
+    let token = mint_token(user);
+    let app = imports_router(pool);
+
+    let (_status, body) = get_json(&app, "/api/v1/imports/jobs?limit=2", &token).await;
+
+    let page_len = body["jobs"].as_array().expect("jobs array").len();
+    let total = body["total"].as_i64().expect("total i64");
+    assert_eq!(page_len, 2, "page should honour limit=2");
+    assert_eq!(
+        total, 3,
+        "total must be the full match count (3), not the page length ({page_len})"
+    );
+}
+
 // ── list_import_jobs `limit` clamping (regression) ───────────────────────────
 //
 // The handler must clamp the caller-supplied `limit` to `1..=100` before it
