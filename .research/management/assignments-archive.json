@@ -3727,6 +3727,28 @@
       "merge_attempted_at": "2026-07-31T04:16:12Z"
     },
     {
+      "task_id": "code-review-api-core-rls-ctx-mw-dead-xtenant-only",
+      "branch": "auto-impl/code-review-api-core-rls-ctx-mw-dead-xte-c3c11cf5",
+      "status": "merged",
+      "claimed_at": "2026-11-10T20:38:55Z",
+      "last_updated": "2026-11-10T22:41:01Z",
+      "status_changed_at": "2026-11-10T22:41:01Z",
+      "pr_number": 3409,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3409",
+      "merged_at": "2026-11-10T22:41:01Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3409 status=done specialist=rust-backend note=deleted unwired deprecated middleware/rls_context.rs (rls_context_middleware+require_rls_context+RlsContext) + 2 mod.rs re-exports; real RLS untouched, zero call sites, no behavior change; fmt+clippy green; RLS smoke tests deferred to CI backend.yml (DATABASE_URL unset locally)",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-api-core-sched-notify-swallow",
       "branch": "auto-impl/code-review-api-core-sched-notify-swallo-37289744",
       "status": "merged",
@@ -9051,6 +9073,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-ppt-web-ui-portfolio-dashboard-dead-buttons",
+      "branch": "auto-impl/code-review-ppt-web-ui-portfolio-dashboa-c543a940",
+      "status": "merged",
+      "claimed_at": "2026-11-10T20:38:55Z",
+      "last_updated": "2026-11-10T22:41:01Z",
+      "status_changed_at": "2026-11-10T22:41:01Z",
+      "pr_number": 3408,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3408",
+      "merged_at": "2026-11-10T22:41:01Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3408 status=done specialist=react-web code_reuse_warn=useC-falsepos note=wired Calculate Metrics to POST metrics/calculate (useCalculateMetrics hook); disabled Export Report + View All Properties with aria/title affordance; removed PropertyCard no-op onClick; verify green, 11190 ppt-web tests pass",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": "useC-falsepos",
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-ui-portfolio-mock-data",
       "branch": "auto-impl/code-review-ppt-web-ui-portfolio-mock-da-d21eab33",
       "status": "merged",
@@ -11617,6 +11661,28 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-reality-web-ssr-apibase-resolver-triplicated",
+      "branch": "auto-impl/code-review-reality-web-ssr-apibase-reso-3bfd29ac",
+      "status": "merged",
+      "claimed_at": "2026-11-10T20:38:55Z",
+      "last_updated": "2026-11-10T22:41:01Z",
+      "status_changed_at": "2026-11-10T22:41:01Z",
+      "pr_number": 3407,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3407",
+      "merged_at": "2026-11-10T22:41:01Z",
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=3407 status=done specialist=nextjs-web scope_drift=true note=centralized SSR api-base resolver into reality-web/src/lib/server-api-base.ts; 3 sites import it; behavior preserved +characterization test; verify green 477 tests; drift reality-web-only (pm-tech-lead unmapped in owner-areas.json)",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
@@ -24775,5 +24841,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-10T20:46:59Z"
+  "archived_at": "2026-11-10T22:41:01Z"
 }
