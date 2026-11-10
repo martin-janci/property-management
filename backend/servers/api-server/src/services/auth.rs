@@ -44,22 +44,56 @@ impl AuthService {
     /// 2026 production traffic we want a higher memory cost so attackers
     /// can't trivially scale GPU/ASIC verification. Parameters are
     /// overridable via env (PPT_ARGON2_M_COST_KIB, PPT_ARGON2_T_COST,
-    /// PPT_ARGON2_P_COST) for ops tuning on slower hardware.
+    /// PPT_ARGON2_P_COST) for ops tuning on slower hardware, but each
+    /// override is clamped UP to the P1-08 floor below: a misconfiguration
+    /// can only make hashing *more* expensive, never weaken it below policy.
     pub fn new() -> Self {
+        // P1-08 / OWASP Argon2id minimums. Env overrides are clamped up to
+        // these so a below-floor value is silently strengthened rather than
+        // silently accepted (which would hash passwords weaker than this code
+        // documents).
+        const M_COST_FLOOR_KIB: u32 = 19_456;
+        const T_COST_FLOOR: u32 = 2;
+        const P_COST_FLOOR: u32 = 1;
+
         let m_cost: u32 = std::env::var("PPT_ARGON2_M_COST_KIB")
             .ok()
             .and_then(|s| s.parse().ok())
-            .unwrap_or(65_536); // 64 MiB
+            .unwrap_or(65_536) // 64 MiB
+            .max(M_COST_FLOOR_KIB);
         let t_cost: u32 = std::env::var("PPT_ARGON2_T_COST")
             .ok()
             .and_then(|s| s.parse().ok())
-            .unwrap_or(3);
+            .unwrap_or(3)
+            .max(T_COST_FLOOR);
         let p_cost: u32 = std::env::var("PPT_ARGON2_P_COST")
             .ok()
             .and_then(|s| s.parse().ok())
-            .unwrap_or(1);
-        let params = Params::new(m_cost, t_cost, p_cost, None)
-            .expect("argon2 params hard-coded above the library minimum, cannot fail");
+            .unwrap_or(1)
+            .max(P_COST_FLOOR);
+
+        // Params are env-DERIVED, so `Params::new` can still legitimately fail
+        // for an operator combination the argon2 crate rejects (e.g. an extreme
+        // p_cost making m_cost < 8 * p_cost). Handle that explicitly with an
+        // operator-actionable message instead of a stale "cannot fail" expect,
+        // and log the effective params so a clamped-up override is visible.
+        let params = match Params::new(m_cost, t_cost, p_cost, None) {
+            Ok(params) => {
+                tracing::info!(
+                    m_cost_kib = m_cost,
+                    t_cost,
+                    p_cost,
+                    "Argon2id password-hashing parameters resolved (env overrides clamped up to the P1-08 floor)"
+                );
+                params
+            }
+            Err(e) => panic!(
+                "Invalid Argon2id parameters (m_cost={m_cost} KiB, t_cost={t_cost}, \
+                 p_cost={p_cost}) rejected by the argon2 crate: {e}. Check \
+                 PPT_ARGON2_M_COST_KIB / PPT_ARGON2_T_COST / PPT_ARGON2_P_COST — \
+                 argon2 requires m_cost >= 8 * p_cost."
+            ),
+        };
         Self {
             argon2: Argon2::new(Algorithm::Argon2id, Version::V0x13, params),
         }
@@ -149,9 +183,17 @@ impl AuthService {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Mutex;
+
+    /// Serializes every test that constructs an `AuthService` (i.e. reads the
+    /// `PPT_ARGON2_*` env vars) or mutates those env vars. `std::env::set_var`
+    /// races with concurrent `std::env::var` reads across threads, so the whole
+    /// test binary must take this lock around any `AuthService::new()` call.
+    static ENV_LOCK: Mutex<()> = Mutex::new(());
 
     #[test]
     fn test_password_hashing() {
+        let _guard = ENV_LOCK.lock().unwrap();
         let service = AuthService::new();
         let password = "TestPassword123";
         let hash = service.hash_password(password).unwrap();
@@ -163,12 +205,39 @@ mod tests {
 
     #[test]
     fn test_token_generation() {
+        let _guard = ENV_LOCK.lock().unwrap();
         let service = AuthService::new();
         let token1 = service.generate_token();
         let token2 = service.generate_token();
 
         assert_eq!(token1.len(), 64); // 32 bytes = 64 hex chars
         assert_ne!(token1, token2);
+    }
+
+    /// P1-08: an operator env override below the documented OWASP floor must be
+    /// clamped UP, never accepted as-is — otherwise a misconfigured deploy
+    /// silently hashes passwords weaker than policy. Fails before the clamp fix
+    /// (raw `m_cost=1024` is used); passes after (clamped to >= 19456 KiB).
+    #[test]
+    fn env_cost_below_floor_is_clamped_up() {
+        let _guard = ENV_LOCK.lock().unwrap();
+        std::env::set_var("PPT_ARGON2_M_COST_KIB", "1024"); // below the 19456 KiB floor
+        std::env::set_var("PPT_ARGON2_T_COST", "1"); // below the t>=2 floor
+        let service = AuthService::new();
+        std::env::remove_var("PPT_ARGON2_M_COST_KIB");
+        std::env::remove_var("PPT_ARGON2_T_COST");
+
+        let params = service.argon2.params();
+        assert!(
+            params.m_cost() >= 19_456,
+            "m_cost {} was not clamped up to the P1-08 floor (19456 KiB)",
+            params.m_cost()
+        );
+        assert!(
+            params.t_cost() >= 2,
+            "t_cost {} was not clamped up to the P1-08 floor (2)",
+            params.t_cost()
+        );
     }
 
     #[test]
