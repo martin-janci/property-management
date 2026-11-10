@@ -994,3 +994,42 @@ async fn create_audit_entry(
     rls.release().await;
     out
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Security finding (code-review legal.rs db error leak): a raw DB failure
+    /// must not leak table / column / constraint names into the HTTP response
+    /// body. `db_error` logs the full detail server-side (via `tracing::error!`)
+    /// and must hand the client a generic, opaque message.
+    #[test]
+    fn db_error_message_is_sanitized() {
+        // A driver error whose Display carries internal schema detail.
+        let raw = "error returned from database: column \
+                   \"legal_documents.secret_hash\" does not exist";
+        let err = sqlx::Error::Protocol(raw.to_string());
+
+        let (status, body) = db_error("Failed to create legal document", err);
+
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        // The client gets a generic message, never the raw driver Display.
+        assert_eq!(body.0.message, "Internal server error");
+        // Defense in depth: none of the raw schema detail may appear.
+        assert!(
+            !body.0.message.contains("legal_documents"),
+            "leaked table name: {}",
+            body.0.message
+        );
+        assert!(
+            !body.0.message.contains("column"),
+            "leaked driver detail: {}",
+            body.0.message
+        );
+        assert!(
+            !body.0.message.contains("secret_hash"),
+            "leaked column name: {}",
+            body.0.message
+        );
+    }
+}
