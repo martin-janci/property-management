@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { serializeForScript } from '@/lib/serialize-script';
+import { inferApiBaseFromHost, inferSiteUrlFromHost } from '@/lib/server-api-base';
 
 // Always dynamic — this route's whole purpose is to expose runtime env vars.
 export const dynamic = 'force-dynamic';
@@ -14,41 +15,28 @@ export const dynamic = 'force-dynamic';
  *     when starting the reality-web container (shared backend mode).
  *
  * Client code reads window.__ENV__ via src/lib/env.ts with the same
- * host-inference fallback, so this is defence-in-depth.
+ * host-inference fallback, so this is defence-in-depth. The host-inference
+ * primitives themselves live in src/lib/server-api-base.ts, shared with the
+ * listing / resolved-layout SSR fetches.
  *
  * Load with: <script src="/env.js" /> (synchronous, no async/defer)
  * Cache-Control is no-store so each page load gets the current values.
  */
-function inferFromHost(host: string | null): {
-  apiUrl?: string;
-  siteUrl?: string;
-} {
-  if (!host) return {};
-  const bareHost = host.split(':')[0]?.toLowerCase();
-  if (!bareHost) return {};
-  if (bareHost === 'rlt.sk' || bareHost.endsWith('.rlt.sk')) {
-    const isStaging = bareHost === 'staging.rlt.sk' || bareHost.endsWith('.staging.rlt.sk');
-    return {
-      apiUrl: isStaging ? 'https://api.staging.rlt.sk' : 'https://api.rlt.sk',
-      siteUrl: `https://${bareHost}`,
-    };
-  }
-  return {};
-}
-
 export function GET(req: NextRequest) {
   const env: Record<string, string> = {};
-  const inferred = inferFromHost(req.headers.get('host'));
+  const host = req.headers.get('host');
+  const inferredApiUrl = inferApiBaseFromHost(host);
+  const inferredSiteUrl = inferSiteUrlFromHost(host);
 
   if (process.env.NEXT_PUBLIC_API_URL) {
     env.NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
-  } else if (inferred.apiUrl) {
-    env.NEXT_PUBLIC_API_URL = inferred.apiUrl;
+  } else if (inferredApiUrl) {
+    env.NEXT_PUBLIC_API_URL = inferredApiUrl;
   }
   if (process.env.NEXT_PUBLIC_SITE_URL) {
     env.NEXT_PUBLIC_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
-  } else if (inferred.siteUrl) {
-    env.NEXT_PUBLIC_SITE_URL = inferred.siteUrl;
+  } else if (inferredSiteUrl) {
+    env.NEXT_PUBLIC_SITE_URL = inferredSiteUrl;
   }
 
   // Escape '<'/'>'/'&'/U+2028/U+2029 so no value can break out of the script
