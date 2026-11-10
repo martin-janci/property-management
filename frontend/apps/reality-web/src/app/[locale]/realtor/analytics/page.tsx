@@ -6,16 +6,20 @@
  * Displays headline performance metrics for the signed-in realtor.
  */
 
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
 import { getMyRealtorAnalytics, type RealtorAnalytics, RealtorApiError } from '@/lib/realtor-api';
 
-const PERIODS: ReadonlyArray<{ value: string; label: string }> = [
-  { value: '7d', label: 'Last 7 days' },
-  { value: '30d', label: 'Last 30 days' },
-  { value: '90d', label: 'Last 90 days' },
-  { value: '1y', label: 'Last year' },
+const PERIODS: ReadonlyArray<{
+  value: string;
+  labelKey: 'period7d' | 'period30d' | 'period90d' | 'period1y';
+}> = [
+  { value: '7d', labelKey: 'period7d' },
+  { value: '30d', labelKey: 'period30d' },
+  { value: '90d', labelKey: 'period90d' },
+  { value: '1y', labelKey: 'period1y' },
 ];
 
 function StatCard({ label, value }: { label: string; value: string }) {
@@ -36,6 +40,7 @@ function StatCard({ label, value }: { label: string; value: string }) {
 }
 
 function AnalyticsContent() {
+  const t = useTranslations('pages.realtorAnalytics');
   const [period, setPeriod] = useState<string>('30d');
   const [analytics, setAnalytics] = useState<RealtorAnalytics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,8 +55,7 @@ function AnalyticsContent() {
         if (!cancelled) setAnalytics(value);
       })
       .catch((err) => {
-        if (!cancelled)
-          setError(err instanceof RealtorApiError ? err.message : 'Could not load analytics.');
+        if (!cancelled) setError(err instanceof RealtorApiError ? err.message : t('error'));
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);
@@ -59,35 +63,35 @@ function AnalyticsContent() {
     return () => {
       cancelled = true;
     };
-  }, [period]);
+  }, [period, t]);
 
   return (
     <div className="container">
       <header className="head">
         <div>
-          <h1 className="title">Analytics</h1>
-          <p className="subtitle">Performance of your listings over time.</p>
+          <h1 className="title">{t('title')}</h1>
+          <p className="subtitle">{t('subtitle')}</p>
         </div>
         <select value={period} onChange={(e) => setPeriod(e.target.value)} className="period">
           {PERIODS.map((option) => (
             <option key={option.value} value={option.value}>
-              {option.label}
+              {t(option.labelKey)}
             </option>
           ))}
         </select>
       </header>
 
-      {isLoading && <p className="state">Loading metrics…</p>}
+      {isLoading && <p className="state">{t('loading')}</p>}
       {error && <p className="state error">{error}</p>}
 
       {analytics && (
         <div className="grid">
-          <StatCard label="Total listings" value={analytics.totalListings.toLocaleString()} />
-          <StatCard label="Active listings" value={analytics.activeListings.toLocaleString()} />
-          <StatCard label="Total views" value={analytics.totalViews.toLocaleString()} />
-          <StatCard label="Inquiries" value={analytics.totalInquiries.toLocaleString()} />
+          <StatCard label={t('totalListings')} value={analytics.totalListings.toLocaleString()} />
+          <StatCard label={t('activeListings')} value={analytics.activeListings.toLocaleString()} />
+          <StatCard label={t('totalViews')} value={analytics.totalViews.toLocaleString()} />
+          <StatCard label={t('inquiries')} value={analytics.totalInquiries.toLocaleString()} />
           <StatCard
-            label="Conversion rate"
+            label={t('conversionRate')}
             value={`${(analytics.conversionRate * 100).toFixed(1)}%`}
           />
         </div>

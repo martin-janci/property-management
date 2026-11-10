@@ -16,7 +16,7 @@ import {
 import { useRealtorErrorMessage } from '@/lib/realtor-error';
 
 function ProfileFormContent() {
-  const t = useTranslations('realtor');
+  const t = useTranslations('pages.realtorProfile');
   const describeError = useRealtorErrorMessage();
   const [profile, setProfile] = useState<RealtorProfile | null>(null);
   const [name, setName] = useState('');
@@ -66,7 +66,7 @@ function ProfileFormContent() {
     setSaveError(undefined);
     setSavedAt(undefined);
     if (!name.trim()) {
-      setSaveError(t('errorNameRequired'));
+      setSaveError(t('nameRequired'));
       return;
     }
     setIsSaving(true);
@@ -91,14 +91,14 @@ function ProfileFormContent() {
     }
   };
 
-  if (isLoading) return <p className="state">Loading profile…</p>;
+  if (isLoading) return <p className="state">{t('loading')}</p>;
   if (loadError)
     return <p className="state error">{describeError(loadError, 'errorLoadProfile')}</p>;
 
   return (
     <form className="form" onSubmit={handleSubmit} noValidate>
-      <h1 className="title">Realtor profile</h1>
-      <p className="subtitle">Buyers and renters see this information on your listings.</p>
+      <h1 className="title">{t('title')}</h1>
+      <p className="subtitle">{t('subtitle')}</p>
 
       {saveError && (
         <div className="alert" role="alert">
@@ -107,12 +107,12 @@ function ProfileFormContent() {
       )}
       {savedAt && (
         <div className="success" role="status">
-          Profile updated.
+          {t('saved')}
         </div>
       )}
 
       <label className="field">
-        <span className="label">Name</span>
+        <span className="label">{t('labelName')}</span>
         <input
           type="text"
           autoComplete="name"
@@ -124,13 +124,13 @@ function ProfileFormContent() {
       </label>
 
       <label className="field">
-        <span className="label">Email</span>
+        <span className="label">{t('labelEmail')}</span>
         <input type="email" value={profile?.email ?? ''} disabled className="input" />
-        <span className="hint">Contact support to change the email on this account.</span>
+        <span className="hint">{t('emailHint')}</span>
       </label>
 
       <label className="field">
-        <span className="label">Phone</span>
+        <span className="label">{t('labelPhone')}</span>
         <input
           type="tel"
           autoComplete="tel"
@@ -142,7 +142,7 @@ function ProfileFormContent() {
       </label>
 
       <label className="field">
-        <span className="label">Title</span>
+        <span className="label">{t('labelTitle')}</span>
         <input
           type="text"
           value={title}
@@ -153,7 +153,7 @@ function ProfileFormContent() {
       </label>
 
       <label className="field">
-        <span className="label">Bio</span>
+        <span className="label">{t('labelBio')}</span>
         <textarea
           value={bio}
           onChange={(e) => setBio(e.target.value)}
@@ -164,7 +164,7 @@ function ProfileFormContent() {
       </label>
 
       <label className="field">
-        <span className="label">License number</span>
+        <span className="label">{t('labelLicense')}</span>
         <input
           type="text"
           value={licenseNumber}
@@ -175,7 +175,7 @@ function ProfileFormContent() {
       </label>
 
       <label className="field">
-        <span className="label">Specializations</span>
+        <span className="label">{t('labelSpecializations')}</span>
         <input
           type="text"
           value={specializationsText}
@@ -183,11 +183,11 @@ function ProfileFormContent() {
           disabled={isSaving}
           className="input"
         />
-        <span className="hint">Comma-separated list, e.g. Apartments, Commercial.</span>
+        <span className="hint">{t('specializationsHint')}</span>
       </label>
 
       <button type="submit" className="submit" disabled={isSaving}>
-        {isSaving ? 'Saving…' : 'Save changes'}
+        {isSaving ? t('saving') : t('save')}
       </button>
 
       <style jsx>{`

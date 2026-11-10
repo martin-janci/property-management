@@ -985,6 +985,72 @@
       "contact": "Kontakt",
       "visitWebsite": "Website besuchen",
       "license": "Lizenz: {number}"
+    },
+    "realtorHub": {
+      "title": "Maklerbereich",
+      "greeting": "Willkommen.",
+      "greetingNamed": "Willkommen, {name}.",
+      "listingsSummary": "Sie haben {count} aktive Inserate.",
+      "profileTitle": "Profil",
+      "profileDesc": "Öffentliches Maklerprofil und Biografie.",
+      "listingsTitle": "Meine Inserate",
+      "listingsDesc": "Von Ihnen verwaltete Inserate.",
+      "createTitle": "Inserat erstellen",
+      "createDesc": "Veröffentlichen Sie eine neue Immobilie im Portal.",
+      "analyticsTitle": "Analysen",
+      "analyticsDesc": "Aufrufe, Anfragen und Conversions Ihrer Inserate."
+    },
+    "realtorProfile": {
+      "loading": "Profil wird geladen…",
+      "loadError": "Profil konnte nicht geladen werden.",
+      "title": "Maklerprofil",
+      "subtitle": "Käufer und Mieter sehen diese Informationen bei Ihren Inseraten.",
+      "nameRequired": "Name ist erforderlich",
+      "saveError": "Profil konnte nicht gespeichert werden.",
+      "saved": "Profil aktualisiert.",
+      "labelName": "Name",
+      "labelEmail": "E-Mail",
+      "emailHint": "Wenden Sie sich an den Support, um die E-Mail dieses Kontos zu ändern.",
+      "labelPhone": "Telefon",
+      "labelTitle": "Berufsbezeichnung",
+      "labelBio": "Biografie",
+      "labelLicense": "Lizenznummer",
+      "labelSpecializations": "Spezialisierungen",
+      "specializationsHint": "Durch Kommas getrennte Liste, z. B. Wohnungen, Gewerbe.",
+      "save": "Änderungen speichern",
+      "saving": "Wird gespeichert…"
+    },
+    "realtorAnalytics": {
+      "title": "Analysen",
+      "subtitle": "Leistung Ihrer Inserate im Zeitverlauf.",
+      "period7d": "Letzte 7 Tage",
+      "period30d": "Letzte 30 Tage",
+      "period90d": "Letzte 90 Tage",
+      "period1y": "Letztes Jahr",
+      "loading": "Kennzahlen werden geladen…",
+      "error": "Analysen konnten nicht geladen werden.",
+      "totalListings": "Inserate gesamt",
+      "activeListings": "Aktive Inserate",
+      "totalViews": "Aufrufe gesamt",
+      "inquiries": "Anfragen",
+      "conversionRate": "Conversion-Rate"
+    },
+    "realtorListingCreate": {
+      "title": "Inserat erstellen",
+      "subtitle": "Veröffentlichen Sie eine neue Immobilie auf Reality Portal.",
+      "submit": "Inserat veröffentlichen",
+      "error": "Inserat konnte nicht erstellt werden. Bitte versuchen Sie es erneut."
+    },
+    "realtorListingEdit": {
+      "missingId": "Fehlende Inserat-ID.",
+      "title": "Inserat bearbeiten",
+      "subtitle": "Aktualisieren Sie die Details Ihres Inserats.",
+      "back": "← Zurück zu den Inseraten",
+      "loading": "Inserat wird geladen…",
+      "loadError": "Inserat konnte nicht geladen werden.",
+      "saved": "Inserat gespeichert.",
+      "submit": "Änderungen speichern",
+      "submitError": "Inserat konnte nicht gespeichert werden."
     }
   },
   "search": {

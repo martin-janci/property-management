@@ -5,6 +5,7 @@
  */
 
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { ListingForm } from '@/components/realtor/ListingForm';
@@ -13,6 +14,7 @@ import { createListing, type ListingDraft } from '@/lib/realtor-api';
 import { useRealtorErrorMessage } from '@/lib/realtor-error';
 
 function CreateListingContent() {
+  const t = useTranslations('pages.realtorListingCreate');
   const router = useRouter();
   const describeError = useRealtorErrorMessage();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,11 +36,11 @@ function CreateListingContent() {
   return (
     <div className="container">
       <header className="head">
-        <h1 className="title">Create listing</h1>
-        <p className="subtitle">Publish a new property to Reality Portal.</p>
+        <h1 className="title">{t('title')}</h1>
+        <p className="subtitle">{t('subtitle')}</p>
       </header>
       <ListingForm
-        submitLabel="Publish listing"
+        submitLabel={t('submit')}
         isSubmitting={isSubmitting}
         generalError={error}
         onSubmit={handleSubmit}

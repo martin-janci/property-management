@@ -985,6 +985,72 @@
       "contact": "Kontakt",
       "visitWebsite": "Navštívit web",
       "license": "Licence: {number}"
+    },
+    "realtorHub": {
+      "title": "Pracovní prostor makléře",
+      "greeting": "Vítejte.",
+      "greetingNamed": "Vítejte, {name}.",
+      "listingsSummary": "Máte {count} aktivních inzerátů.",
+      "profileTitle": "Profil",
+      "profileDesc": "Veřejný profil makléře a medailonek.",
+      "listingsTitle": "Moje inzeráty",
+      "listingsDesc": "Inzeráty, které spravujete.",
+      "createTitle": "Vytvořit inzerát",
+      "createDesc": "Zveřejněte novou nemovitost na portálu.",
+      "analyticsTitle": "Analytika",
+      "analyticsDesc": "Zobrazení, poptávky a konverze vašich inzerátů."
+    },
+    "realtorProfile": {
+      "loading": "Načítá se profil…",
+      "loadError": "Profil se nepodařilo načíst.",
+      "title": "Profil makléře",
+      "subtitle": "Kupující a nájemci vidí tyto informace u vašich inzerátů.",
+      "nameRequired": "Jméno je povinné",
+      "saveError": "Profil se nepodařilo uložit.",
+      "saved": "Profil byl aktualizován.",
+      "labelName": "Jméno",
+      "labelEmail": "E-mail",
+      "emailHint": "Pro změnu e-mailu tohoto účtu kontaktujte podporu.",
+      "labelPhone": "Telefon",
+      "labelTitle": "Pracovní pozice",
+      "labelBio": "Životopis",
+      "labelLicense": "Číslo licence",
+      "labelSpecializations": "Specializace",
+      "specializationsHint": "Seznam oddělený čárkami, např. Byty, Komerční.",
+      "save": "Uložit změny",
+      "saving": "Ukládá se…"
+    },
+    "realtorAnalytics": {
+      "title": "Analytika",
+      "subtitle": "Výkonnost vašich inzerátů v čase.",
+      "period7d": "Posledních 7 dní",
+      "period30d": "Posledních 30 dní",
+      "period90d": "Posledních 90 dní",
+      "period1y": "Poslední rok",
+      "loading": "Načítají se metriky…",
+      "error": "Analytiku se nepodařilo načíst.",
+      "totalListings": "Celkový počet inzerátů",
+      "activeListings": "Aktivní inzeráty",
+      "totalViews": "Celkový počet zobrazení",
+      "inquiries": "Poptávky",
+      "conversionRate": "Míra konverze"
+    },
+    "realtorListingCreate": {
+      "title": "Vytvořit inzerát",
+      "subtitle": "Zveřejněte novou nemovitost na portálu Reality Portal.",
+      "submit": "Zveřejnit inzerát",
+      "error": "Inzerát se nepodařilo vytvořit. Zkuste to znovu."
+    },
+    "realtorListingEdit": {
+      "missingId": "Chybí identifikátor inzerátu.",
+      "title": "Upravit inzerát",
+      "subtitle": "Aktualizujte údaje svého inzerátu.",
+      "back": "← Zpět na inzeráty",
+      "loading": "Načítá se inzerát…",
+      "loadError": "Inzerát se nepodařilo načíst.",
+      "saved": "Inzerát byl uložen.",
+      "submit": "Uložit změny",
+      "submitError": "Inzerát se nepodařilo uložit."
     }
   },
   "search": {
