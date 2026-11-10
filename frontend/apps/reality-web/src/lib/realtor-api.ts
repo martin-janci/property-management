@@ -78,6 +78,23 @@ async function parseJsonBody<T>(response: Response): Promise<T> {
   return body as T;
 }
 
+/**
+ * Coerce a list-response collection field to a real array.
+ *
+ * `parseJsonBody` guarantees the outer body is a non-null, non-array object, but
+ * it is generic and cannot know which *fields* are supposed to be arrays. A
+ * malformed 200 can still carry a wrong-typed collection (`{ listings: null }`,
+ * `{ reviews: {} }`): truthy but not iterable, so the first `.length` / `.map`
+ * in a consumer (`profile` page, `realtor/[id]`, agency listings) throws deep in
+ * render with no hint the API boundary was the culprit. Coercing the field to
+ * `[]` here degrades to the existing empty-state instead of crashing — the same
+ * "coerce the wrong-typeable collection at the edge" stance as the listing SSR
+ * path's `parseListingDetail` (`photos` → array-or-`[]`).
+ */
+function asArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
+}
+
 export interface RealtorProfile {
   id: string;
   name: string;
@@ -228,9 +245,12 @@ export interface MyListingsResponse {
 }
 
 /** Lists the authenticated caller's own listings (`GET /api/v1/my/listings`). */
-export function listMyListings(status?: string): Promise<MyListingsResponse> {
+export async function listMyListings(status?: string): Promise<MyListingsResponse> {
   const query = status ? `?status=${encodeURIComponent(status)}` : '';
-  return request<MyListingsResponse>(`/api/v1/my/listings${query}`);
+  const res = await request<MyListingsResponse>(`/api/v1/my/listings${query}`);
+  // `listings` is typed as present, but a partial/malformed 200 can carry a
+  // wrong-typed value; coerce so consumers can `.map` / `.length` safely.
+  return { ...res, listings: asArray<MyListing>(res.listings) };
 }
 
 /**
@@ -260,10 +280,16 @@ export interface RealtorReviewsResponse {
 }
 
 /** Lists reviews for a realtor (`GET /api/v1/realtors/{id}/reviews`). */
-export function getRealtorReviews(realtorId: string, limit = 20): Promise<RealtorReviewsResponse> {
-  return request<RealtorReviewsResponse>(
+export async function getRealtorReviews(
+  realtorId: string,
+  limit = 20
+): Promise<RealtorReviewsResponse> {
+  const res = await request<RealtorReviewsResponse>(
     `/api/v1/realtors/${encodeURIComponent(realtorId)}/reviews?limit=${limit}`
   );
+  // `reviews` is typed as present, but a partial/malformed 200 can carry a
+  // wrong-typed value; coerce so consumers can `.map` / `.length` safely.
+  return { ...res, reviews: asArray<RealtorReview>(res.reviews) };
 }
 
 /**
