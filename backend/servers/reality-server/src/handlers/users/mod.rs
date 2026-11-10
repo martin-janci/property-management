@@ -551,7 +551,19 @@ impl UserHandler {
 
         let user = match user {
             Some(u) => u,
-            None => return Ok(PasswordResetRequestResult::UserNotFound),
+            None => {
+                // Time-uniformity (CWE-208): the response is already
+                // enumeration-safe (this path and the Sent path both return
+                // HTTP 200), but without equal work the found-account path is
+                // measurably slower, leaking account existence via latency.
+                // Spend the same CSPRNG+base64+SHA-256 cost the Sent path does
+                // and discard it. We deliberately skip the real path's two DB
+                // writes (invalidate + create) — persisting reset tokens for
+                // non-existent accounts would be its own liability — and
+                // equalise the dominant in-process hashing cost instead.
+                let _ = std::hint::black_box(generate_reset_token());
+                return Ok(PasswordResetRequestResult::UserNotFound);
+            }
         };
 
         // Burn any existing tokens before issuing a new one.
@@ -564,13 +576,7 @@ impl UserHandler {
         // token that we surface to the user via email. A failure of the OS
         // entropy source propagates as an error (the route logs it and keeps
         // the response enumeration-safe) rather than panicking the worker.
-        let mut bytes = [0u8; 32];
-        rand::rngs::SysRng
-            .try_fill_bytes(&mut bytes)
-            .map_err(|e| format!("OS RNG unavailable: {e}"))?;
-        let plaintext_token =
-            base64::Engine::encode(&base64::engine::general_purpose::URL_SAFE_NO_PAD, bytes);
-        let token_hash = sha256_hex(&plaintext_token);
+        let (plaintext_token, token_hash) = generate_reset_token()?;
         let expires_at = Utc::now() + Duration::minutes(PASSWORD_RESET_TTL_MINUTES);
 
         reset_repo
@@ -656,6 +662,33 @@ fn sha256_hex(input: &str) -> String {
     let mut hasher = Sha256::new();
     hasher.update(input.as_bytes());
     hex::encode(hasher.finalize())
+}
+
+/// Generate a fresh password-reset token.
+///
+/// 32 bytes of OS entropy → URL-safe base64 (no padding, ~43 chars) → its
+/// SHA-256 hex digest. Returns `(plaintext_token, token_hash)`: only the hash
+/// is persisted, the plaintext goes into the email link.
+///
+/// Both `request_password_reset` branches call this — the real issuing path
+/// uses the output, the "user not found" path discards it — so the handler
+/// spends identical in-process crypto cost regardless of whether the email
+/// maps to a real account. That equal cost is what keeps the handler
+/// time-uniform and closes the CWE-208 timing side-channel an attacker could
+/// otherwise use to enumerate registered emails.
+///
+/// A failure of the OS entropy source propagates as an error rather than
+/// panicking the worker; the caller surfaces it while keeping the response
+/// enumeration-safe.
+fn generate_reset_token() -> Result<(String, String), String> {
+    let mut bytes = [0u8; 32];
+    rand::rngs::SysRng
+        .try_fill_bytes(&mut bytes)
+        .map_err(|e| format!("OS RNG unavailable: {e}"))?;
+    let plaintext_token =
+        base64::Engine::encode(&base64::engine::general_purpose::URL_SAFE_NO_PAD, bytes);
+    let token_hash = sha256_hex(&plaintext_token);
+    Ok((plaintext_token, token_hash))
 }
 
 #[cfg(test)]
