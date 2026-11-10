@@ -6756,7 +6756,8 @@
       "confirmed": "Zuordnung bestätigt",
       "linkedInvoice": "Verknüpfte Rechnung:",
       "noSuggestions": "Keine aktiven Zuordnungsvorschläge",
-      "actionFailed": "Die Aktion konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut."
+      "actionFailed": "Die Aktion konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut.",
+      "loadFailed": "Die Zahlungszuordnungsdaten konnten nicht geladen werden. Bitte versuchen Sie es erneut."
     },
     "nav": {
       "label": "Buchhaltungsbereiche",

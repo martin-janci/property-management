@@ -8528,7 +8528,8 @@
       "confirmed": "Match confirmed",
       "linkedInvoice": "Linked to invoice:",
       "noSuggestions": "No active match suggestions",
-      "actionFailed": "The action could not be completed. Please try again."
+      "actionFailed": "The action could not be completed. Please try again.",
+      "loadFailed": "Could not load payment-matching data. Please try again."
     },
     "nav": {
       "label": "Accounting sections",
