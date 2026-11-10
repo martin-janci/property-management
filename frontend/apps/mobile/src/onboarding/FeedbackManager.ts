@@ -13,6 +13,26 @@ const FEEDBACK_DRAFTS_KEY = '@ppt/feedback_drafts';
 const PENDING_FEEDBACK_KEY = '@ppt/pending_feedback';
 
 /**
+ * Parse a JSON array read from AsyncStorage, tolerating corrupt or legacy
+ * payloads. A truncated write or a hand-edited/legacy value leaves a non-JSON
+ * (or non-array) string under the storage key; an unguarded `JSON.parse` there
+ * throws a `SyntaxError` that propagates through every caller and bricks the
+ * feedback feature until storage is cleared. Instead, fall back to an empty
+ * list so the reader degrades gracefully and the bad value is overwritten on
+ * the next write.
+ */
+function parseStoredArray<T>(stored: string | null): T[] {
+  if (!stored) return [];
+  try {
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? (parsed as T[]) : [];
+  } catch {
+    // Corrupt/legacy data — drop it and start fresh rather than crashing.
+    return [];
+  }
+}
+
+/**
  * Manages feedback and bug reports.
  */
 export class FeedbackManager {
@@ -136,7 +156,7 @@ export class FeedbackManager {
    */
   async getDrafts(): Promise<Array<Partial<FeedbackSubmission> & { savedAt: string }>> {
     const stored = await AsyncStorage.getItem(FEEDBACK_DRAFTS_KEY);
-    return stored ? JSON.parse(stored) : [];
+    return parseStoredArray<Partial<FeedbackSubmission> & { savedAt: string }>(stored);
   }
 
   /**
@@ -227,7 +247,7 @@ Timestamp: ${appContext.timestamp}
 
   private async getPendingFeedback(): Promise<FeedbackSubmission[]> {
     const stored = await AsyncStorage.getItem(PENDING_FEEDBACK_KEY);
-    return stored ? JSON.parse(stored) : [];
+    return parseStoredArray<FeedbackSubmission>(stored);
   }
 
   private async storePendingFeedback(feedback: FeedbackSubmission): Promise<void> {
