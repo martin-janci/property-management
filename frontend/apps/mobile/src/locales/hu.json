@@ -536,7 +536,7 @@
     "expires": "Lejár",
     "revoke": "Visszavon",
     "revokeTitle": "Megosztás visszavonása",
-    "revokeConfirm": "Biztosan vissza szeretné vonni ezt a megosztást? A cimzett azonnal elveszíti a hozzáférést.",
+    "revokeConfirm": "Biztosan vissza szerelné vonni ezt a megosztást? A cimzett azonnal elveszíti a hozzáférést.",
     "revokeAction": "Visszavon",
     "errorTitle": "Hiba",
     "errorUserIdRequired": "Kerlek add meg a felhasznalo ID-t.",
@@ -601,12 +601,12 @@
     "subtitle": "Tervezett és aktív közműkimaradások.",
     "filters": {
       "all": "Összes",
-      "scheduled": "Útemezett",
+      "scheduled": "Ütemezett",
       "active": "Aktív",
       "resolved": "Megoldott"
     },
     "status": {
-      "scheduled": "Útemezett",
+      "scheduled": "Ütemezett",
       "in_progress": "Folyamatban",
       "resolved": "Megoldott"
     }
