@@ -1248,6 +1248,8 @@
       "deleteWithDocuments": "Einschließlich Dokumenten löschen",
       "count_one": "{{count}} Ordner",
       "count_other": "{{count}} Ordner",
+      "documentCount_one": "{{count}} Dokument",
+      "documentCount_other": "{{count}} Dokumente",
       "newFolder": "Neuer Ordner",
       "allDocuments": "Alle Dokumente",
       "loadError": "Ordner konnten nicht geladen werden.",
