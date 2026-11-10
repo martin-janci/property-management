@@ -114,6 +114,49 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         .collect()
 }
 
+/// Build the api-server CORS layer — the SINGLE source of truth for the CORS
+/// *policy* (allowed methods, headers, credentials, and preflight max-age).
+///
+/// Both the production binary (`main.rs`, via `api_server::cors_layer`) and the
+/// test-side router ([`create_router`]) build their CORS layer from THIS
+/// function, so the two can never silently diverge again. Before this, each
+/// path defined its own inline `CorsLayer::new()...` chain and they drifted:
+/// the test-side policy allowed an extra `x-tenant-id` request header the
+/// production policy did not, so the integration tests never exercised the real
+/// production CORS policy (same drift class as the route-table #867 and
+/// security-headers #954 fixes; guarded by `router_single_source_tests.rs`).
+///
+/// Only the allowed `origins` are path-specific — the binary resolves them from
+/// `CORS_ALLOWED_ORIGINS` (falling back to the defaults) while the test path
+/// passes the defaults — so they are a parameter; every other policy knob is
+/// fixed here.
+///
+/// NOTE: `allow_headers` MUST be an explicit list when paired with
+/// `allow_credentials(true)`. Per the CORS spec, browsers reject the wildcard
+/// with credentials, and tower-http panics at layer construction if the two are
+/// combined.
+pub fn cors_layer(origins: Vec<HeaderValue>) -> CorsLayer {
+    CorsLayer::new()
+        .allow_origin(origins)
+        .allow_methods([
+            http::Method::GET,
+            http::Method::POST,
+            http::Method::PUT,
+            http::Method::PATCH,
+            http::Method::DELETE,
+            http::Method::OPTIONS,
+        ])
+        .allow_headers([
+            http::header::AUTHORIZATION,
+            http::header::CONTENT_TYPE,
+            http::header::ACCEPT,
+            http::header::ORIGIN,
+            http::HeaderName::from_static("x-requested-with"),
+        ])
+        .allow_credentials(true)
+        .max_age(std::time::Duration::from_secs(3600))
+}
+
 /// Build the application route table — the SINGLE source of truth for every
 /// HTTP route the api-server exposes.
 ///
@@ -454,38 +497,15 @@ pub fn create_router(state: AppState) -> Router {
         ))
         // Middleware
         .layer(TraceLayer::new_for_http())
-        // CORS configuration
-        // NOTE: `allow_headers` MUST be an explicit list when paired with
-        // `allow_credentials(true)`. Per the CORS spec, browsers reject the
-        // wildcard with credentials, and tower-http panics at layer
-        // construction if the two are combined.
-        .layer(
-            CorsLayer::new()
-                .allow_origin(parse_default_origins())
-                .allow_methods([
-                    http::Method::GET,
-                    http::Method::POST,
-                    http::Method::PUT,
-                    http::Method::PATCH,
-                    http::Method::DELETE,
-                    http::Method::OPTIONS,
-                ])
-                // SECURITY: `x-tenant-context` was removed from the allowlist
-                // alongside the deletion of `routes::ai::extract_tenant_context`.
-                // Tenancy is now derived from the verified server-side
-                // `RequestPrincipal`; trusting a client-supplied header was the
-                // root cause of the AI router auth-bypass advisory.
-                .allow_headers([
-                    http::header::AUTHORIZATION,
-                    http::header::CONTENT_TYPE,
-                    http::header::ACCEPT,
-                    http::header::ORIGIN,
-                    http::HeaderName::from_static("x-requested-with"),
-                    http::HeaderName::from_static("x-tenant-id"),
-                ])
-                .allow_credentials(true)
-                .max_age(std::time::Duration::from_secs(3600)),
-        )
+        // CORS configuration — built from the shared [`cors_layer`] policy so
+        // the integration-test path exercises the SAME methods/headers/
+        // credentials policy as the production binary (`main.rs`). The test
+        // path uses the default origins; production resolves them from
+        // `CORS_ALLOWED_ORIGINS`. Previously this inlined its own policy that
+        // allowed an extra `x-tenant-id` request header production did not, so
+        // the tests never covered the real production CORS policy (guarded by
+        // `router_single_source_tests.rs::cors_policy_is_single_source_of_truth`).
+        .layer(cors_layer(parse_default_origins()))
         .layer(Extension(state.clone()))
         // Application state
         .with_state(state)

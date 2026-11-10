@@ -14,7 +14,6 @@
 use axum::{extract::DefaultBodyLimit, http, routing::get, Extension};
 use http::HeaderValue;
 use std::net::SocketAddr;
-use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -104,43 +103,6 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         .iter()
         .filter_map(|origin| origin.parse::<HeaderValue>().ok())
         .collect()
-}
-
-/// Build the production CORS layer.
-///
-/// Origins are configurable via the `CORS_ALLOWED_ORIGINS` env var (falling
-/// back to [`DEFAULT_CORS_ORIGINS`]). `allow_headers` MUST be an explicit list
-/// when paired with `allow_credentials(true)`: per the CORS spec browsers
-/// reject the wildcard with credentials, and tower-http panics at layer
-/// construction if the two are combined.
-///
-/// Extracted from `main()` so CORS-policy edits (a recurring churn point) live
-/// in one cohesive function instead of inline in the `main()` middleware chain.
-fn cors_layer() -> CorsLayer {
-    CorsLayer::new()
-        // Allow requests from configured origins (env var or defaults)
-        .allow_origin(get_cors_allowed_origins())
-        // Allow common HTTP methods
-        .allow_methods([
-            http::Method::GET,
-            http::Method::POST,
-            http::Method::PUT,
-            http::Method::PATCH,
-            http::Method::DELETE,
-            http::Method::OPTIONS,
-        ])
-        // Allow common headers
-        .allow_headers([
-            http::header::AUTHORIZATION,
-            http::header::CONTENT_TYPE,
-            http::header::ACCEPT,
-            http::header::ORIGIN,
-            http::HeaderName::from_static("x-requested-with"),
-        ])
-        // Allow credentials (cookies, authorization headers)
-        .allow_credentials(true)
-        // Cache preflight response for 1 hour
-        .max_age(std::time::Duration::from_secs(3600))
 }
 
 /// Assemble the production router: the shared [`route_table`] plus the
@@ -244,8 +206,11 @@ fn apply_middleware(
             host_tenant_config,
             api_core::middleware::host_tenant_middleware,
         ))
-        // CORS configuration - origins configurable via CORS_ALLOWED_ORIGINS env var
-        .layer(cors_layer())
+        // CORS configuration — built from the shared `api_server::cors_layer`
+        // policy (single source of truth) so the production and test-side
+        // routers cannot drift. Origins are configurable via the
+        // `CORS_ALLOWED_ORIGINS` env var (falling back to the defaults).
+        .layer(api_server::cors_layer(get_cors_allowed_origins()))
         .layer(Extension(state.clone()))
         // Application state
         .with_state(state)
