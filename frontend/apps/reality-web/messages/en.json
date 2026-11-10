@@ -1367,6 +1367,21 @@
     "errorRoomsInvalid": "Rooms must be a valid number",
     "errorRoomsNegative": "Rooms must not be negative"
   },
+  "realtorAnalytics": {
+    "title": "Analytics",
+    "subtitle": "Performance of your listings over time.",
+    "loading": "Loading metrics…",
+    "loadError": "Could not load analytics.",
+    "period7d": "Last 7 days",
+    "period30d": "Last 30 days",
+    "period90d": "Last 90 days",
+    "period1y": "Last year",
+    "totalListings": "Total listings",
+    "activeListings": "Active listings",
+    "totalViews": "Total views",
+    "inquiries": "Inquiries",
+    "conversionRate": "Conversion rate"
+  },
   "realtor": {
     "errorNetwork": "Network error. Please try again.",
     "errorMalformed": "The server returned an unexpected response. Please try again.",

@@ -1360,6 +1360,21 @@
     "errorRoomsInvalid": "Liczba pokoi musi być prawidłową liczbą",
     "errorRoomsNegative": "Liczba pokoi nie może być ujemna"
   },
+  "realtorAnalytics": {
+    "title": "Analityka",
+    "subtitle": "Skuteczność Twoich ofert w czasie.",
+    "loading": "Ładowanie metryk…",
+    "loadError": "Nie udało się załadować analityki.",
+    "period7d": "Ostatnie 7 dni",
+    "period30d": "Ostatnie 30 dni",
+    "period90d": "Ostatnie 90 dni",
+    "period1y": "Ostatni rok",
+    "totalListings": "Łączna liczba ofert",
+    "activeListings": "Aktywne oferty",
+    "totalViews": "Łączna liczba wyświetleń",
+    "inquiries": "Zapytania",
+    "conversionRate": "Współczynnik konwersji"
+  },
   "realtor": {
     "errorNetwork": "Błąd sieci. Spróbuj ponownie.",
     "errorMalformed": "Serwer zwrócił nieoczekiwaną odpowiedź. Spróbuj ponownie.",

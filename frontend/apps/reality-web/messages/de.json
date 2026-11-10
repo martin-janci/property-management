@@ -1367,6 +1367,21 @@
     "errorRoomsInvalid": "Zimmeranzahl muss eine gültige Zahl sein",
     "errorRoomsNegative": "Zimmeranzahl darf nicht negativ sein"
   },
+  "realtorAnalytics": {
+    "title": "Analysen",
+    "subtitle": "Leistung Ihrer Inserate im Zeitverlauf.",
+    "loading": "Kennzahlen werden geladen…",
+    "loadError": "Analysen konnten nicht geladen werden.",
+    "period7d": "Letzte 7 Tage",
+    "period30d": "Letzte 30 Tage",
+    "period90d": "Letzte 90 Tage",
+    "period1y": "Letztes Jahr",
+    "totalListings": "Inserate gesamt",
+    "activeListings": "Aktive Inserate",
+    "totalViews": "Aufrufe gesamt",
+    "inquiries": "Anfragen",
+    "conversionRate": "Konversionsrate"
+  },
   "realtor": {
     "errorNetwork": "Netzwerkfehler. Bitte versuchen Sie es erneut.",
     "errorMalformed": "Der Server hat eine unerwartete Antwort zurückgegeben. Bitte versuchen Sie es erneut.",

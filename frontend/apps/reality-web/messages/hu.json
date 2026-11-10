@@ -1360,6 +1360,21 @@
     "errorRoomsInvalid": "A szobák számának érvényes számnak kell lennie",
     "errorRoomsNegative": "A szobák száma nem lehet negatív"
   },
+  "realtorAnalytics": {
+    "title": "Analitika",
+    "subtitle": "Hirdetéseinek teljesítménye az idő során.",
+    "loading": "Mutatók betöltése…",
+    "loadError": "Nem sikerült betölteni az analitikát.",
+    "period7d": "Utolsó 7 nap",
+    "period30d": "Utolsó 30 nap",
+    "period90d": "Utolsó 90 nap",
+    "period1y": "Utolsó év",
+    "totalListings": "Összes hirdetés",
+    "activeListings": "Aktív hirdetések",
+    "totalViews": "Összes megtekintés",
+    "inquiries": "Érdeklődések",
+    "conversionRate": "Konverziós arány"
+  },
   "realtor": {
     "errorNetwork": "Hálózati hiba. Kérjük, próbálja újra.",
     "errorMalformed": "A szerver váratlan választ adott. Kérjük, próbálja újra.",
