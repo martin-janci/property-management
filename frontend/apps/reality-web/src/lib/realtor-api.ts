@@ -136,15 +136,76 @@ export type UpdateRealtorProfileRequest = Partial<
   Pick<RealtorProfile, 'name' | 'phone' | 'title' | 'bio' | 'specializations' | 'licenseNumber'>
 >;
 
-export function getMyRealtorProfile(): Promise<RealtorProfile> {
-  return request<RealtorProfile>('/api/v1/realtors/me');
+/** Signed-in portal user (`GET/PUT /api/v1/users/me`), the source of name and email. */
+interface PortalUserWire {
+  id: string;
+  email: string;
+  name: string;
 }
 
-export function updateMyRealtorProfile(data: UpdateRealtorProfileRequest): Promise<RealtorProfile> {
-  return request<RealtorProfile>('/api/v1/realtors/me', {
-    method: 'PATCH',
-    body: JSON.stringify(data),
+/**
+ * reality-server keeps the realtor profile in `realtor_profiles` (snake_case,
+ * wrapped as `{ profile }`) and the display name / email on the user record.
+ * The account UI works with one flat camelCase object, so merge the two here.
+ */
+function toRealtorProfile(user: PortalUserWire, wire: PublicRealtorProfile): RealtorProfile {
+  return {
+    id: wire.id,
+    name: user.name,
+    email: user.email,
+    phone: wire.phone ?? undefined,
+    title: wire.tagline ?? undefined,
+    bio: wire.bio ?? undefined,
+    photoUrl: wire.photo_url ?? undefined,
+    specializations: asArray<string>(wire.specializations),
+    licenseNumber: wire.license_number ?? undefined,
+  };
+}
+
+/**
+ * Own realtor profile: `GET /api/v1/realtors/profile` joined with
+ * `GET /api/v1/users/me`. Rejects with status 404 when the signed-in user has
+ * no realtor profile yet.
+ */
+export async function getMyRealtorProfile(): Promise<RealtorProfile> {
+  const [user, res] = await Promise.all([
+    request<PortalUserWire>('/api/v1/users/me'),
+    request<ProfileResponse>('/api/v1/realtors/profile'),
+  ]);
+  return toRealtorProfile(user, res.profile);
+}
+
+/**
+ * Save the own realtor profile. The name lives on the user record
+ * (`PUT /api/v1/users/me`); everything else goes to
+ * `PUT /api/v1/realtors/profile`, falling back to `POST` when the user has no
+ * profile row yet (the server answers the PUT with 404 in that case).
+ */
+export async function updateMyRealtorProfile(
+  data: UpdateRealtorProfileRequest
+): Promise<RealtorProfile> {
+  const user =
+    data.name !== undefined
+      ? await request<PortalUserWire>('/api/v1/users/me', {
+          method: 'PUT',
+          body: JSON.stringify({ name: data.name }),
+        })
+      : await request<PortalUserWire>('/api/v1/users/me');
+  const body = JSON.stringify({
+    phone: data.phone,
+    tagline: data.title,
+    bio: data.bio,
+    specializations: data.specializations,
+    license_number: data.licenseNumber,
   });
+  let res: ProfileResponse;
+  try {
+    res = await request<ProfileResponse>('/api/v1/realtors/profile', { method: 'PUT', body });
+  } catch (err) {
+    if (!(err instanceof RealtorApiError) || err.status !== 404) throw err;
+    res = await request<ProfileResponse>('/api/v1/realtors/profile', { method: 'POST', body });
+  }
+  return toRealtorProfile(user, res.profile);
 }
 
 export interface ListingDraft {
@@ -226,9 +287,21 @@ export interface RealtorAnalytics {
   conversionRate: number;
 }
 
-export function getMyRealtorAnalytics(period?: string): Promise<RealtorAnalytics> {
-  const query = period ? `?period=${encodeURIComponent(period)}` : '';
-  return request<RealtorAnalytics>(`/api/v1/realtors/me/stats${query}`);
+/**
+ * Own listing statistics. reality-server has no per-period stats endpoint; the
+ * all-time counters live on the realtor profile (`GET /api/v1/realtors/profile`).
+ */
+export async function getMyRealtorAnalytics(): Promise<RealtorAnalytics> {
+  const { profile } = await request<ProfileResponse>('/api/v1/realtors/profile');
+  const totalViews = profile.total_views ?? 0;
+  const totalInquiries = profile.total_inquiries ?? 0;
+  return {
+    totalListings: profile.total_listings ?? 0,
+    activeListings: profile.active_listings ?? 0,
+    totalViews,
+    totalInquiries,
+    conversionRate: totalViews > 0 ? totalInquiries / totalViews : 0,
+  };
 }
 
 /**

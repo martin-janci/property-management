@@ -11,13 +11,6 @@ import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
 import { getMyRealtorAnalytics, type RealtorAnalytics, RealtorApiError } from '@/lib/realtor-api';
 
-const PERIODS: ReadonlyArray<{ value: string; label: string }> = [
-  { value: '7d', label: 'Last 7 days' },
-  { value: '30d', label: 'Last 30 days' },
-  { value: '90d', label: 'Last 90 days' },
-  { value: '1y', label: 'Last year' },
-];
-
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="stat">
@@ -36,7 +29,6 @@ function StatCard({ label, value }: { label: string; value: string }) {
 }
 
 function AnalyticsContent() {
-  const [period, setPeriod] = useState<string>('30d');
   const [analytics, setAnalytics] = useState<RealtorAnalytics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>();
@@ -45,7 +37,7 @@ function AnalyticsContent() {
     let cancelled = false;
     setIsLoading(true);
     setError(undefined);
-    getMyRealtorAnalytics(period)
+    getMyRealtorAnalytics()
       .then((value) => {
         if (!cancelled) setAnalytics(value);
       })
@@ -59,22 +51,15 @@ function AnalyticsContent() {
     return () => {
       cancelled = true;
     };
-  }, [period]);
+  }, []);
 
   return (
     <div className="container">
       <header className="head">
         <div>
           <h1 className="title">Analytics</h1>
-          <p className="subtitle">Performance of your listings over time.</p>
+          <p className="subtitle">All-time performance of your listings.</p>
         </div>
-        <select value={period} onChange={(e) => setPeriod(e.target.value)} className="period">
-          {PERIODS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
       </header>
 
       {isLoading && <p className="state">Loading metrics…</p>}
@@ -98,10 +83,6 @@ function AnalyticsContent() {
         .head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
         .title { font-size: 2rem; font-weight: 700; color: var(--ppt-fg-primary); margin: 0 0 4px; }
         .subtitle { color: var(--ppt-fg-muted); margin: 0; }
-        .period {
-          padding: 8px 12px; border: 1px solid var(--ppt-border-strong); border-radius: 8px; background: var(--ppt-bg-surface);
-          font-size: 14px; color: var(--ppt-fg-primary);
-        }
         .state { padding: 32px; text-align: center; color: var(--ppt-fg-muted); }
         .error { color: var(--ppt-color-danger-hover); }
         .grid {
