@@ -659,6 +659,33 @@ fn sha256_hex(input: &str) -> String {
 }
 
 #[cfg(test)]
+mod reset_token_timing_tests {
+    //! `request_password_reset` must be time-uniform: the "user found" and
+    //! "user not found" branches both run `generate_reset_token()` so an
+    //! attacker cannot enumerate registered emails from response latency
+    //! (CWE-208). The response is already enumeration-safe (both branches
+    //! return the same HTTP 200), but without equal CPU work the found path
+    //! is measurably slower. This test pins the shared token-generation
+    //! primitive both branches depend on so the compensating work can't
+    //! silently drift away from the real work it is meant to mirror.
+    use super::{generate_reset_token, sha256_hex};
+
+    #[test]
+    fn generate_reset_token_shape_is_stable() {
+        let (token, hash) = generate_reset_token().expect("OS RNG available");
+        // 32 bytes → URL-safe base64 (no padding) → 43 chars.
+        assert_eq!(token.len(), 43, "token should be 43 URL-safe base64 chars");
+        // SHA-256 hex digest is 64 chars and is exactly sha256(token).
+        assert_eq!(hash.len(), 64, "hash should be 64 hex chars");
+        assert_eq!(hash, sha256_hex(&token), "hash must be sha256 of the token");
+        // Successive calls differ — proves the CSPRNG actually ran, which is
+        // the cost the compensating (user-not-found) path must also pay.
+        let (token2, _) = generate_reset_token().expect("OS RNG available");
+        assert_ne!(token, token2, "CSPRNG must produce distinct tokens");
+    }
+}
+
+#[cfg(test)]
 mod password_length_tests {
     //! Password minimum length is counted in Unicode scalars, not UTF-8 bytes,
     //! so an all-accented password of 8 characters is accepted and a 7-char one
