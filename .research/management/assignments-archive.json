@@ -9102,6 +9102,28 @@
       "merge_attempted_at": "2026-08-30T16:36:17Z"
     },
     {
+      "task_id": "code-review-reality-server-compare-add-limit-toctou",
+      "branch": "auto-impl/code-review-reality-server-compare-add-l-ead4c625",
+      "status": "failed",
+      "claimed_at": "2026-11-10T10:21:44Z",
+      "last_updated": "2026-11-10T10:30:00Z",
+      "status_changed_at": "2026-11-10T10:30:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=done specialist=rust-backend scope_drift=false code_reuse_warn=already-implemented note=finding-already-fixed-on-dev (atomic pg_advisory_xact_lock + concurrency regression test already present on dev; no PR warranted; finding stale)",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": "already-implemented",
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-reality-server-create-handlers-return-200-not-201",
       "branch": "auto-impl/code-review-reality-server-create-handle-5b470100",
       "status": "merged",
@@ -24091,5 +24113,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-10T09:10:40Z"
+  "archived_at": "2026-11-10T10:38:04Z"
 }
