@@ -11,10 +11,11 @@
 import type { Inquiry, InquiryStatus } from '@ppt/reality-api-client';
 import { useMyInquiries } from '@ppt/reality-api-client';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
+import { formatDate } from '@/lib/format';
 
 const STATUS_VALUES: ReadonlyArray<InquiryStatus | 'all'> = [
   'all',
@@ -42,6 +43,7 @@ function statusBadgeColor(status: InquiryStatus): string {
 
 function InquiryRow({ inquiry }: { inquiry: Inquiry }) {
   const t = useTranslations('agencyInquiries');
+  const locale = useLocale();
   return (
     <li className="row">
       <div className="row-main">
@@ -58,7 +60,7 @@ function InquiryRow({ inquiry }: { inquiry: Inquiry }) {
         <span className="badge" style={{ background: statusBadgeColor(inquiry.status) }}>
           {t(`status.${inquiry.status}`)}
         </span>
-        <span className="time">{new Date(inquiry.createdAt).toLocaleDateString()}</span>
+        <span className="time">{formatDate(inquiry.createdAt, locale)}</span>
       </div>
       <style jsx>{`
         .row {

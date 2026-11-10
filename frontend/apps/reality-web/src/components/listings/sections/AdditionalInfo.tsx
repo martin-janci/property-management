@@ -1,7 +1,7 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
-import { formatNumber, formatPrice } from '@/lib/format';
+import { formatDate, formatNumber, formatPrice } from '@/lib/format';
 import type { ListingSectionProps } from './registry';
 
 function formatListingPrice(price: number, currency: string, locale: string) {
@@ -36,14 +36,12 @@ export function AdditionalInfo({ listing }: ListingSectionProps) {
         {listing.availableFrom && (
           <div className="info-item">
             <span className="info-label">{t('availableFrom')}</span>
-            <span className="info-value">
-              {new Date(listing.availableFrom).toLocaleDateString()}
-            </span>
+            <span className="info-value">{formatDate(listing.availableFrom, locale)}</span>
           </div>
         )}
         <div className="info-item">
           <span className="info-label">{t('listed')}</span>
-          <span className="info-value">{new Date(listing.createdAt).toLocaleDateString()}</span>
+          <span className="info-value">{formatDate(listing.createdAt, locale)}</span>
         </div>
       </div>
       <style jsx>{`

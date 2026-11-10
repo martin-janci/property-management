@@ -23,8 +23,9 @@ import {
   useSyncFeedSource,
   useUpdateFeedSource,
 } from '@ppt/reality-api-client';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { formatDate, formatDateTime } from '@/lib/format';
 import { toSafeLogMessage } from '@/lib/safe-error';
 
 const DEFAULT_FIELD_MAPPING: FeedFieldMapping = {
@@ -144,6 +145,7 @@ export function FeedImport() {
 function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
   const t = useTranslations('import.feed');
   const tHist = useTranslations('import.schedule.historyStatus');
+  const locale = useLocale();
   const [showHistory, setShowHistory] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const deleteMutation = useDeleteFeedSource(agencyId);
@@ -214,7 +216,7 @@ function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
           </div>
           {feed.lastFetchAt && (
             <div className="stat">
-              <span className="stat-value">{new Date(feed.lastFetchAt).toLocaleDateString()}</span>
+              <span className="stat-value">{formatDate(feed.lastFetchAt, locale)}</span>
               <span className="stat-label">{t('lastSync')}</span>
             </div>
           )}
@@ -270,7 +272,7 @@ function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
             <div className="history-list">
               {history.map((item) => (
                 <div key={item.id} className="history-item">
-                  <span className="history-date">{new Date(item.startedAt).toLocaleString()}</span>
+                  <span className="history-date">{formatDateTime(item.startedAt, locale)}</span>
                   <span className={`history-status ${item.status}`}>{tHist(item.status)}</span>
                   <span className="history-stats">
                     {t('historyStats', {
