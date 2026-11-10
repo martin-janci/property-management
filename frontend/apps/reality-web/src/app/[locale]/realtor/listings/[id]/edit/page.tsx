@@ -51,7 +51,7 @@ function EditListingContent() {
     return () => {
       cancelled = true;
     };
-  }, [id, t]);
+  }, [id]);
 
   const handleSubmit = async (draft: ListingDraft) => {
     if (!id) return;

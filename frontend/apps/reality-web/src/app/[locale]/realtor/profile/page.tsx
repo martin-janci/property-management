@@ -59,7 +59,7 @@ function ProfileFormContent() {
     return () => {
       cancelled = true;
     };
-  }, [t]);
+  }, []);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
