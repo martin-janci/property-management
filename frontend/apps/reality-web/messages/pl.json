@@ -1311,5 +1311,17 @@
     "errorAreaNegative": "Powierzchnia nie może być ujemna",
     "errorRoomsInvalid": "Liczba pokoi musi być prawidłową liczbą",
     "errorRoomsNegative": "Liczba pokoi nie może być ujemna"
+  },
+  "realtor": {
+    "errorNetwork": "Błąd sieci. Spróbuj ponownie.",
+    "errorMalformed": "Serwer zwrócił nieoczekiwaną odpowiedź. Spróbuj ponownie.",
+    "errorRequestFailed": "Żądanie nie powiodło się ({status}). Spróbuj ponownie.",
+    "errorLoadProfile": "Nie udało się wczytać profilu.",
+    "errorSaveProfile": "Nie udało się zapisać profilu.",
+    "errorNameRequired": "Imię jest wymagane.",
+    "errorLoadListing": "Nie udało się wczytać ogłoszenia.",
+    "errorSaveListing": "Nie udało się zapisać ogłoszenia.",
+    "errorCreateListing": "Nie udało się utworzyć ogłoszenia. Spróbuj ponownie.",
+    "errorMissingListingId": "Brak identyfikatora ogłoszenia."
   }
 }

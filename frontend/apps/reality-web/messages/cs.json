@@ -1318,5 +1318,17 @@
     "errorAreaNegative": "Plocha nesmí být záporná",
     "errorRoomsInvalid": "Počet pokojů musí být platné číslo",
     "errorRoomsNegative": "Počet pokojů nesmí být záporný"
+  },
+  "realtor": {
+    "errorNetwork": "Chyba sítě. Zkuste to znovu.",
+    "errorMalformed": "Server vrátil neočekávanou odpověď. Zkuste to znovu.",
+    "errorRequestFailed": "Požadavek selhal ({status}). Zkuste to znovu.",
+    "errorLoadProfile": "Profil se nepodařilo načíst.",
+    "errorSaveProfile": "Profil se nepodařilo uložit.",
+    "errorNameRequired": "Jméno je povinné.",
+    "errorLoadListing": "Inzerát se nepodařilo načíst.",
+    "errorSaveListing": "Inzerát se nepodařilo uložit.",
+    "errorCreateListing": "Inzerát se nepodařilo vytvořit. Zkuste to znovu.",
+    "errorMissingListingId": "Chybí ID inzerátu."
   }
 }
