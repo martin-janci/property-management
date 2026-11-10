@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-10T06:40:12Z",
+  "archived_at": "2026-11-10T09:10:41Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -10520,6 +10520,28 @@
         "merged_pr": 2895,
         "merged_at": "2026-08-30T22:32:15Z",
         "at": "2026-08-30T22:34:19Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-inquiry-type-raw-enum",
+      "action": "[stale-resolved @ 2026-11-10T09:10:40Z: finding already fixed on dev (inquiry-type.ts helper + all locales present, landed c5d7ca5); implementer confirmed no diff needed, no PR] reality web inquiry type raw enum",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-10T02:25:23Z (tier1d reality-web score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T02:25:23Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-25T00:00:00Z"
+      },
+      "stale_resolved": {
+        "at": "2026-11-10T09:10:40Z",
+        "evidence": "already on dev; assignment code-review-reality-web-inquiry-type-raw-enum closed no-op"
       }
     },
     {
