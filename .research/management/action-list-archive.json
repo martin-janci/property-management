@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-10T16:43:36Z",
+  "archived_at": "2026-11-10T18:31:47Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -7687,6 +7687,29 @@
         "merged_pr": 2876,
         "merged_at": "2026-08-30T02:35:22Z",
         "at": "2026-08-30T02:36:47Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-refresh-token-localstorage",
+      "action": "SECURITY: ppt-web refresh-token persisted in localStorage — XSS-reachable",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-04T04:24:45Z (score=2 conf=medium vector=security) | dev-reconcile 2026-11-10T18:25:21Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-04T04:24:45Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "security"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "16be478d40b2c4e706757ecb5d6a50d0748b9204",
+        "subject": "code-review-ppt-web-core-refresh-token-localstorage: move ppt-web refresh token off localStorage (XSS hardening) (#3294)",
+        "at": "2026-11-10T18:25:21Z"
       }
     },
     {
