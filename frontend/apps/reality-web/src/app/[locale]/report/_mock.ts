@@ -5,41 +5,15 @@ import type { ReportProblemType } from '@ppt/reality-api-client';
 // variants — no client-side remapping needed on submit.
 export type ReportProblem = ReportProblemType;
 
-export interface ReportProblemOption {
-  value: ReportProblem;
-  label: string;
-  description: string;
-}
-
-export const REPORT_PROBLEMS: ReportProblemOption[] = [
-  {
-    value: 'fraudulent_listing',
-    label: 'Podozrenie z podvodu',
-    description: 'Podozrivý inzerát, žiadosť o platbu vopred, falošná identita makléra',
-  },
-  {
-    value: 'price_manipulation',
-    label: 'Nesprávna cena',
-    description: 'Cena nezodpovedá skutočnosti alebo je zámer zavádzať',
-  },
-  {
-    value: 'incorrect_information',
-    label: 'Falošné fotografie',
-    description: 'Fotografie nepatria k danej nehnuteľnosti',
-  },
-  {
-    value: 'duplicate_listing',
-    label: 'Duplicitný inzerát',
-    description: 'Rovnaká nehnuteľnosť je inzerovaná viackrát',
-  },
-  {
-    value: 'already_sold',
-    label: 'Predaná / neprenajímaná',
-    description: 'Nehnuteľnosť je už predaná alebo prenajatá, inzerát nebol odstránený',
-  },
-  {
-    value: 'other',
-    label: 'Iný dôvod',
-    description: 'Iná technická chyba alebo pravidlá platformy',
-  },
+// Display order of the problem radio cards. The label/description copy lives in
+// next-intl under `pages.report.problems.<value>.{label,description}`; the page
+// resolves it per-locale via `useTranslations`, so this module holds only the
+// stable wire values and their presentation order.
+export const REPORT_PROBLEMS: ReportProblem[] = [
+  'fraudulent_listing',
+  'price_manipulation',
+  'incorrect_information',
+  'duplicate_listing',
+  'already_sold',
+  'other',
 ];
