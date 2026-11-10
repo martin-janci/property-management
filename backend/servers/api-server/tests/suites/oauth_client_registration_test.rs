@@ -259,11 +259,11 @@ mod capability_isolation {
 
     /// An ordinary, freshly-registered tenant user (non-platform principal) must
     /// be denied on every admin client route — they can neither read nor mutate
-    /// platform OAuth clients. The denial surfaces as 401 because the
-    /// `RequireCapability` extractor re-derives the principal first, and a
-    /// non-platform principal with no resolved tenant fails that step (mapped to
-    /// `AdminError::Unauthenticated`). What matters for isolation is that the
-    /// request never reaches the client surface; we pin the exact 401 status.
+    /// platform OAuth clients. The caller is authenticated, so the
+    /// `RequireCapability` extractor answers an audited 403
+    /// `not_platform_principal` (a 401 would make clients drop a valid
+    /// session). What matters for isolation is that the request never reaches
+    /// the client surface; we pin the exact 403 status.
     #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn non_platform_user_is_denied(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
@@ -275,7 +275,7 @@ mod capability_isolation {
             .await;
         assert_eq!(
             list.status,
-            StatusCode::UNAUTHORIZED,
+            StatusCode::FORBIDDEN,
             "non-platform user must be denied listing clients, got {}: {}",
             list.status,
             list.text()
@@ -291,7 +291,7 @@ mod capability_isolation {
             .await;
         assert_eq!(
             create.status,
-            StatusCode::UNAUTHORIZED,
+            StatusCode::FORBIDDEN,
             "non-platform user must be denied registering a client, got {}: {}",
             create.status,
             create.text()
@@ -301,8 +301,9 @@ mod capability_isolation {
     /// A user that is an active member (org_admin) of an organization is still a
     /// tenant principal, not a platform one — they must NOT be able to manage
     /// platform OAuth clients. This pins the cross-tenant isolation contract:
-    /// org-level admin does not confer platform-admin authority. As above, the
-    /// denial surfaces as 401 from the principal re-derivation step.
+    /// org-level admin does not confer platform-admin authority. The caller is
+    /// authenticated, so the denial is an audited 403 `not_platform_principal`
+    /// (not a 401, which would make clients drop a valid session).
     #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn org_admin_cannot_manage_platform_clients(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
@@ -314,7 +315,7 @@ mod capability_isolation {
             .await;
         assert_eq!(
             resp.status,
-            StatusCode::UNAUTHORIZED,
+            StatusCode::FORBIDDEN,
             "org_admin must not manage platform OAuth clients, got {}: {}",
             resp.status,
             resp.text()

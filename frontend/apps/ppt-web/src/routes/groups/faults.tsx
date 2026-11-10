@@ -12,13 +12,13 @@ import type {
   FaultWithDetails,
 } from '@ppt/api-client';
 import {
+  addAttachment as addFaultAttachment,
   useAddAttachment,
   useAddComment,
   useBuildings,
   useConfirmFault,
   useCreateFault,
   useDeleteAttachment,
-  useDeleteFault,
   useFault,
   useFaultStatistics,
   useFaults,
@@ -26,12 +26,14 @@ import {
   useResolveFault,
   useTriageFault,
   useUpdateFault,
+  useWithdrawFault,
 } from '@ppt/api-client';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ProtectedRoute, useToast } from '../../components';
 import { useAuth } from '../../contexts';
+import { useUnits } from '../../features/buildings/hooks';
 import type {
   FaultDetail,
   FaultReportFilters,
@@ -196,12 +198,13 @@ function mapApiFaultAttachmentToUi(att: FaultAttachment): UiFaultAttachment {
   return {
     id: att.id,
     faultId: att.fault_id,
-    filename: att.file_name,
-    originalFilename: att.file_name,
-    contentType: att.file_type,
-    sizeBytes: att.file_size,
-    storageUrl: att.file_url,
-    description: undefined,
+    filename: att.filename,
+    originalFilename: att.original_filename,
+    contentType: att.content_type,
+    sizeBytes: att.size_bytes,
+    storageUrl: att.storage_url,
+    thumbnailUrl: att.thumbnail_url,
+    description: att.description,
     createdAt: att.created_at,
   };
 }
@@ -211,7 +214,6 @@ function mapApiFaultAttachmentToUi(att: FaultAttachment): UiFaultAttachment {
  *
  * Wired to @ppt/api-client TanStack Query hooks:
  *   useFaults           — list + pagination + filters (with snake_case→camelCase mapping)
- *   useDeleteFault      — DELETE /api/v1/faults/:id (new-status faults only)
  *   useFaultStatistics  — GET /api/v1/faults/statistics (summary bar: total/open/closed)
  *
  * API FaultSummary uses snake_case and a slightly different status enum;
@@ -236,7 +238,6 @@ function FaultsPageRoute() {
   }));
 
   const { data, isLoading, error, refetch } = useFaults(faultQuery);
-  const deleteFault = useDeleteFault();
   // Statistics are building-wide (no building filter at list level yet); fetched
   // unconditionally so the summary bar is always up-to-date alongside the list.
   const { data: statsData } = useFaultStatistics();
@@ -253,35 +254,6 @@ function FaultsPageRoute() {
 
   const faults = (data?.faults ?? []).map(transformApiFaultToUi);
   const total = data?.count ?? 0;
-
-  const handleDelete = async (id: string) => {
-    // Deleting a fault is destructive and irreversible — confirm first, matching
-    // the rest of the app's destructive actions (registry/news/accounting, and
-    // FaultDetailPage's own confirm). #1588 F1.
-    if (
-      !window.confirm(
-        t('faults.confirmDelete', {
-          defaultValue: 'Delete this fault? This action cannot be undone.',
-        })
-      )
-    ) {
-      return;
-    }
-    try {
-      await deleteFault.mutateAsync(id);
-      showToast({
-        type: 'success',
-        title: t('faults.deleted', { defaultValue: 'Fault deleted' }),
-        message: '',
-      });
-    } catch (err) {
-      showToast({
-        type: 'error',
-        title: t('faults.deleteFailed', { defaultValue: 'Failed to delete fault' }),
-        message: err instanceof Error ? err.message : '',
-      });
-    }
-  };
 
   // useCallback so child FaultsPage doesn't re-render on every parent render
   // (#486). Status mapping uses the module-level UI_FAULT_STATUS_TO_API.
@@ -326,16 +298,29 @@ function FaultsPageRoute() {
       onRetry={() => {
         void refetch();
       }}
-      onDelete={handleDelete}
+      // No onDelete on the list: reports are withdrawn by their reporter
+      // from the detail page (POST /faults/{id}/withdraw).
       stats={stats}
       onNavigateToCreate={() => navigate('/faults/new')}
       onNavigateToView={(id) => navigate(`/faults/${id}`)}
-      onNavigateToEdit={(id) => navigate(`/faults/${id}/edit`)}
-      onNavigateToTriage={(id) => navigate(`/faults/${id}`)}
+      // Edit and triage are manager actions (PUT /faults/{id} and triage
+      // return 403 for residents), so the cards only offer them to managers.
+      onNavigateToEdit={isManager ? (id) => navigate(`/faults/${id}/edit`) : undefined}
+      onNavigateToTriage={isManager ? (id) => navigate(`/faults/${id}`) : undefined}
       onNavigateToReports={isManager ? () => navigate('/faults/reports') : undefined}
       onFilterChange={handleFaultsFilterChange}
     />
   );
+}
+
+/**
+ * Units of the building selected in the fault form, in the `{ id, designation }`
+ * shape FaultForm renders (GET /api/v1/buildings/{id}/units). Empty until a
+ * building is chosen.
+ */
+export function useFaultFormUnits(buildingId: string) {
+  const { data } = useUnits(buildingId, { limit: 100 }, !!buildingId);
+  return (data?.units ?? []).map((u) => ({ id: u.id, designation: u.designation }));
 }
 
 function CreateFaultPageRoute() {
@@ -344,19 +329,23 @@ function CreateFaultPageRoute() {
   const { showToast } = useToast();
   const { data: buildingsData } = useBuildings();
   const createFault = useCreateFault();
+  const [buildingId, setBuildingId] = useState('');
+  const units = useFaultFormUnits(buildingId);
 
   const buildings = (buildingsData?.items ?? []).map((b) => ({ id: b.id, name: b.name }));
 
   return (
     <CreateFaultPage
       buildings={buildings}
-      units={[]}
+      units={units}
+      onBuildingChange={setBuildingId}
+      // Photos are uploaded after the fault is created (presigned upload via
+      // addAttachment); a failed photo is reported, the fault still stands.
+      enablePhotoFirst
       isSubmitting={createFault.isPending}
       onSubmit={async (data) => {
         try {
           // Map FaultFormData (camelCase) -> CreateFaultRequest (snake_case).
-          // NOTE: photos (File[]) are not sent here — base64/upload wiring via
-          // useAddAttachment is a separate follow-up (see fault-new screen-map).
           const created = await createFault.mutateAsync({
             building_id: data.buildingId,
             unit_id: data.unitId,
@@ -366,6 +355,23 @@ function CreateFaultPageRoute() {
             category: data.category,
             priority: data.priority,
           });
+          const photos = data.photos ?? [];
+          if (created?.id && photos.length > 0) {
+            const results = await Promise.allSettled(
+              photos.map((file) => addFaultAttachment(created.id, file))
+            );
+            const failed = results.filter((r) => r.status === 'rejected').length;
+            if (failed > 0) {
+              showToast({
+                type: 'warning',
+                title: t('faults.photoUploadFailed'),
+                message: t('faults.photosNotAttached', {
+                  failed,
+                  total: photos.length,
+                }),
+              });
+            }
+          }
           showToast({
             type: 'success',
             title: t('common.created', { defaultValue: 'Created' }),
@@ -406,8 +412,9 @@ function FaultDetailPageRoute() {
   const confirm = useConfirmFault(faultId ?? '');
   const reopen = useReopenFault(faultId ?? '');
   const addComment = useAddComment(faultId ?? '');
-  const addAttachment = useAddAttachment(faultId ?? '');
   const deleteAttachment = useDeleteAttachment(faultId ?? '');
+  const addAttachment = useAddAttachment(faultId ?? '');
+  const withdraw = useWithdrawFault();
 
   useEffect(() => {
     if (error) {
@@ -459,8 +466,32 @@ function FaultDetailPageRoute() {
       onAddComment={(content, isInternal) =>
         addComment.mutate({ content, is_internal: isInternal })
       }
-      onAddAttachment={(file) => addAttachment.mutate(file)}
+      // Presigned upload: documents/upload-url → PUT → POST attachments.
+      onAddAttachment={(file) =>
+        addAttachment.mutate(file, {
+          onError: (err) =>
+            showToast({
+              type: 'error',
+              title: t('faults.photoUploadFailed'),
+              error: err,
+            }),
+        })
+      }
+      isUploadingAttachment={addAttachment.isPending}
       onDeleteAttachment={(id) => deleteAttachment.mutate(id)}
+      onWithdraw={
+        fault.reporterId === user?.id
+          ? () =>
+              withdraw.mutate(faultId, {
+                onSuccess: () => {
+                  showToast({ type: 'success', title: t('faults.withdrawn') });
+                  navigate('/faults');
+                },
+                onError: (err) =>
+                  showToast({ type: 'error', title: t('faults.withdrawFailed'), error: err }),
+              })
+          : undefined
+      }
     />
   );
 }
@@ -473,6 +504,8 @@ function EditFaultPageRoute() {
   const { data, isLoading } = useFault(faultId ?? '');
   const { data: buildingsData } = useBuildings();
   const updateFault = useUpdateFault(faultId ?? '');
+  const [selectedBuildingId, setSelectedBuildingId] = useState<string | undefined>();
+  const units = useFaultFormUnits(selectedBuildingId ?? data?.fault.building_id ?? '');
 
   if (!faultId) {
     return <div>{t('errors.faultNotFound', 'Fault not found')}</div>;
@@ -497,7 +530,8 @@ function EditFaultPageRoute() {
         priority: fault.priority,
       }}
       buildings={buildings}
-      units={[]}
+      units={units}
+      onBuildingChange={setSelectedBuildingId}
       isSubmitting={updateFault.isPending}
       onSubmit={async (formData) => {
         try {
@@ -584,7 +618,14 @@ export function faultRoutes() {
         }
       />
       <Route path="/faults/:faultId" element={<FaultDetailPageRoute />} />
-      <Route path="/faults/:faultId/edit" element={<EditFaultPageRoute />} />
+      <Route
+        path="/faults/:faultId/edit"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <EditFaultPageRoute />
+          </ProtectedRoute>
+        }
+      />
     </>
   );
 }

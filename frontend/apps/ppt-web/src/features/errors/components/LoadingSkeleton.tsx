@@ -7,6 +7,7 @@
  */
 
 import type { CSSProperties } from 'react';
+import { useTranslation } from 'react-i18next';
 import '../styles/errorPages.css';
 
 export interface LoadingSkeletonProps {
@@ -27,8 +28,10 @@ export function LoadingSkeleton({
   cards,
   width = '100%',
   height = '1rem',
-  label = 'Loading…',
+  label: labelProp,
 }: LoadingSkeletonProps) {
+  const { t } = useTranslation();
+  const label = labelProp ?? t('common.loading');
   if (cards != null) {
     return (
       <div role="status" aria-live="polite" aria-label={label} style={{ width: '100%' }}>

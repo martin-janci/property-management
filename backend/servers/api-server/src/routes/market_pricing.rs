@@ -3,7 +3,7 @@
 //! Story 132.2: AI Pricing Model Integration using LLM for intelligent pricing.
 
 use crate::state::AppState;
-use api_core::extractors::{AuthUser, RlsConnection};
+use api_core::extractors::{AuthUser, RlsConnection, TenantAuthUser};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -28,6 +28,21 @@ use utoipa::IntoParams;
 use uuid::Uuid;
 
 type ApiResult<T> = Result<T, (StatusCode, Json<ErrorResponse>)>;
+
+/// Manager-class role, read from the caller's membership (`TenantAuthUser`),
+/// for the mutations of this module.
+fn require_manager(user: &AuthUser) -> ApiResult<()> {
+    if user.role.is_some_and(|r| r.is_manager()) {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::forbidden(
+                "Manager role required for this action",
+            )),
+        ))
+    }
+}
 
 /// Helper to serialize a value to JSON, returning a 500 error on failure.
 fn to_json_value<T: serde::Serialize>(value: T) -> ApiResult<serde_json::Value> {
@@ -97,7 +112,7 @@ pub fn router() -> Router<AppState> {
 
 async fn list_regions(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
         (
@@ -117,9 +132,10 @@ async fn list_regions(
 
 async fn create_region(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Json(req): Json<CreateMarketRegion>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
@@ -138,7 +154,7 @@ async fn create_region(
 
 async fn get_region(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -163,10 +179,11 @@ async fn get_region(
 
 async fn update_region(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMarketRegion>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
@@ -189,9 +206,10 @@ async fn update_region(
 
 async fn delete_region(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
@@ -218,7 +236,7 @@ async fn delete_region(
 
 async fn list_data_points(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(query): Query<MarketDataQuery>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -239,9 +257,10 @@ async fn list_data_points(
 
 async fn add_data_point(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Json(req): Json<CreateMarketDataPoint>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     // Validate region belongs to user's organization
     let org_id = user.tenant_id.ok_or_else(|| {
         (
@@ -284,7 +303,7 @@ pub struct StatisticsParams {
 
 async fn get_statistics(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(region_id): Path<Uuid>,
     Query(params): Query<StatisticsParams>,
 ) -> ApiResult<Json<serde_json::Value>> {
@@ -326,9 +345,10 @@ async fn get_statistics(
 
 async fn generate_statistics(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Json(req): Json<GenerateStatisticsRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     // Validate region belongs to user's organization
     let org_id = user.tenant_id.ok_or_else(|| {
         (
@@ -366,7 +386,7 @@ async fn generate_statistics(
 
 async fn list_recommendations(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
         (
@@ -395,10 +415,11 @@ async fn list_recommendations(
 /// to generate an optimal price recommendation with confidence scoring.
 async fn request_recommendation(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Json(req): Json<RequestPricingRecommendation>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
@@ -834,7 +855,7 @@ fn generate_statistical_pricing(
 
 async fn get_recommendation(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -863,7 +884,7 @@ async fn get_recommendation(
 /// market comparables, and human-readable explanations of pricing influences.
 async fn get_recommendation_details(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
@@ -1088,10 +1109,11 @@ fn format_factor_description(factor_type: &str, impact: f64) -> String {
 
 async fn accept_recommendation(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<AcceptPricingRecommendation>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
@@ -1119,10 +1141,11 @@ async fn accept_recommendation(
 
 async fn reject_recommendation(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<RejectPricingRecommendation>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
@@ -1153,7 +1176,7 @@ async fn reject_recommendation(
 
 async fn get_pricing_history(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(unit_id): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -1178,11 +1201,12 @@ async fn get_pricing_history(
 
 async fn record_price_change(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(unit_id): Path<Uuid>,
     Json(mut req): Json<RecordPriceChange>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     // Validate unit belongs to user's organization
     let org_id = user.tenant_id.ok_or_else(|| {
         (
@@ -1255,7 +1279,7 @@ async fn record_price_change(
 
 async fn get_current_rent(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(unit_id): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
@@ -1332,7 +1356,7 @@ async fn get_current_rent(
 
 async fn list_cmas(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
         (
@@ -1352,9 +1376,10 @@ async fn list_cmas(
 
 async fn create_cma(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Json(req): Json<CreateComparativeMarketAnalysis>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
@@ -1374,7 +1399,7 @@ async fn create_cma(
 
 async fn get_cma(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -1399,10 +1424,11 @@ async fn get_cma(
 
 async fn update_cma(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateComparativeMarketAnalysis>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
@@ -1425,9 +1451,10 @@ async fn update_cma(
 
 async fn delete_cma(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
@@ -1450,7 +1477,7 @@ async fn delete_cma(
 
 async fn get_cma_properties(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
     // Validate CMA belongs to user's organization
@@ -1481,10 +1508,11 @@ async fn get_cma_properties(
 
 async fn add_cma_property(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<AddCmaProperty>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     // Validate CMA belongs to user's organization
     let org_id = user.tenant_id.ok_or_else(|| {
         (
@@ -1521,7 +1549,7 @@ async fn add_cma_property(
 /// including average rent, price per sqm, price ranges, and rental yield ranges.
 async fn get_cma_details(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -1549,9 +1577,10 @@ async fn get_cma_details(
 /// Story 132.4: Allows removing individual properties from a comparative analysis.
 async fn remove_cma_property(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path((cma_id, property_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     // Validate CMA belongs to user's organization
     let org_id = user.tenant_id.ok_or_else(|| {
         (
@@ -1592,9 +1621,10 @@ async fn remove_cma_property(
 /// based on current properties and updates the CMA record.
 async fn recalculate_cma(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     // Validate CMA belongs to user's organization
     let org_id = user.tenant_id.ok_or_else(|| {
         (
@@ -1637,7 +1667,7 @@ pub struct ComparablesParams {
 
 async fn get_comparables(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(params): Query<ComparablesParams>,
 ) -> ApiResult<Json<serde_json::Value>> {
     // Validate region belongs to user's organization
@@ -1693,7 +1723,7 @@ async fn get_comparables(
 /// and vacancy trends. Supports filtering by region, building, and date range.
 async fn get_pricing_dashboard(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(query): Query<PricingDashboardQuery>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -1720,6 +1750,16 @@ async fn get_pricing_dashboard(
 
     // Get market trends (default to 12 months)
     let market_trends = if let Some(region_id) = query.region_id {
+        // The trends query keys only on region_id: confirm the region is ours.
+        let region = s.market_pricing_repo.get_region(region_id, org_id).await;
+        if matches!(region, Ok(None) | Err(_)) {
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::not_found(
+                    "Region not found or not accessible",
+                )),
+            ));
+        }
         s.market_pricing_repo
             .get_market_trends(region_id, 12)
             .await
@@ -1762,7 +1802,7 @@ async fn get_pricing_dashboard(
 /// integration with external tools or for preview before full export support.
 async fn export_pricing_data(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Json(req): Json<ExportPricingDataRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {

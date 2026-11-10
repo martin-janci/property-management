@@ -90,6 +90,81 @@ fn db_error(e: impl std::fmt::Display) -> Response {
     (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
 }
 
+/// Require a manager-tier role (resolved from DB membership by
+/// `RlsConnection`) for equipment / maintenance / alert mutations. Releases the
+/// connection on failure.
+///
+/// Delegates the `is_manager`/release-on-reject contract to the shared
+/// [`crate::routes::rls_authz::require_manager_rls`] gate (#3306) so the manager
+/// definition lives in one place; this wrapper only adapts the shared
+/// `(StatusCode, Json<ErrorResponse>)` rejection to this module's `Response`
+/// error type.
+async fn require_manager(rls: &mut RlsConnection) -> Result<(), Response> {
+    crate::routes::rls_authz::require_manager_rls(rls)
+        .await
+        .map_err(IntoResponse::into_response)
+}
+
+/// Ensure `building_id` belongs to the caller's org (404 otherwise). The
+/// `buildings` FK ignores RLS, so without this an equipment row could point at
+/// another org's building. Releases the connection on failure.
+async fn ensure_building(
+    s: &AppState,
+    rls: &mut RlsConnection,
+    building_id: Uuid,
+) -> Result<(), Response> {
+    let org_id = rls.tenant_id();
+    let found = s
+        .building_repo
+        .belongs_to_organization_rls(&mut **rls.conn(), building_id, org_id)
+        .await;
+    match found {
+        Ok(true) => Ok(()),
+        Ok(false) => {
+            rls.release().await;
+            Err((StatusCode::NOT_FOUND, "Building not found").into_response())
+        }
+        Err(e) => {
+            rls.release().await;
+            Err(db_error(e))
+        }
+    }
+}
+
+/// Ensure the parent equipment belongs to the caller's org (404 otherwise).
+/// Releases the connection on failure.
+async fn ensure_equipment(
+    s: &AppState,
+    rls: &mut RlsConnection,
+    equipment_id: Uuid,
+) -> Result<(), Response> {
+    let org_id = rls.tenant_id();
+    let found = s
+        .predictive_maintenance_repo
+        .get_equipment(&mut **rls.conn(), equipment_id, org_id)
+        .await;
+    match found {
+        Ok(Some(_)) => Ok(()),
+        Ok(None) => {
+            rls.release().await;
+            Err((StatusCode::NOT_FOUND, "Equipment not found").into_response())
+        }
+        Err(e) => {
+            rls.release().await;
+            Err(db_error(e))
+        }
+    }
+}
+
+/// Early-return the error `Response` of an authorization helper.
+macro_rules! authorize {
+    ($e:expr) => {
+        if let Err(resp) = $e {
+            return resp;
+        }
+    };
+}
+
 // ============================================================================
 // EQUIPMENT REGISTRY (Story 134.1)
 // ============================================================================
@@ -100,6 +175,8 @@ async fn create_equipment(
     mut rls: RlsConnection,
     Json(req): Json<CreateEquipment>,
 ) -> Response {
+    authorize!(require_manager(&mut rls).await);
+    authorize!(ensure_building(&s, &mut rls, req.building_id).await);
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let resp = match s
@@ -160,6 +237,7 @@ async fn update_equipment(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateEquipment>,
 ) -> Response {
+    authorize!(require_manager(&mut rls).await);
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let resp = match s
@@ -181,6 +259,7 @@ async fn delete_equipment(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Response {
+    authorize!(require_manager(&mut rls).await);
     let org_id = rls.tenant_id();
     let resp = match s
         .predictive_maintenance_repo
@@ -202,6 +281,8 @@ async fn add_equipment_document(
     Path(id): Path<Uuid>,
     Json(req): Json<CreateEquipmentDocument>,
 ) -> Response {
+    authorize!(require_manager(&mut rls).await);
+    authorize!(ensure_equipment(&s, &mut rls, id).await);
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let resp = match s
@@ -245,6 +326,8 @@ async fn create_maintenance_log(
     mut rls: RlsConnection,
     Json(req): Json<CreateMaintenanceLog>,
 ) -> Response {
+    authorize!(require_manager(&mut rls).await);
+    authorize!(ensure_equipment(&s, &mut rls, req.equipment_id).await);
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let resp = match s
@@ -286,6 +369,7 @@ async fn update_maintenance_log(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMaintenanceLog>,
 ) -> Response {
+    authorize!(require_manager(&mut rls).await);
     let org_id = rls.tenant_id();
     let resp = match s
         .predictive_maintenance_repo
@@ -345,6 +429,7 @@ async fn add_maintenance_photo(
     Path(log_id): Path<Uuid>,
     Json(req): Json<AddPhotoRequest>,
 ) -> Response {
+    authorize!(require_manager(&mut rls).await);
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
 
@@ -436,6 +521,7 @@ async fn run_prediction(
     mut rls: RlsConnection,
     Json(req): Json<RunPredictionRequest>,
 ) -> Response {
+    authorize!(require_manager(&mut rls).await);
     let org_id = rls.tenant_id();
 
     // Run prediction for specified equipment or all
@@ -563,6 +649,7 @@ async fn acknowledge_alert(
     Path(id): Path<Uuid>,
     Json(_req): Json<AcknowledgeAlertRequest>,
 ) -> Response {
+    authorize!(require_manager(&mut rls).await);
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let resp = match s
@@ -585,6 +672,7 @@ async fn resolve_alert(
     Path(id): Path<Uuid>,
     Json(req): Json<ResolveAlertRequest>,
 ) -> Response {
+    authorize!(require_manager(&mut rls).await);
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let resp = match s
@@ -612,6 +700,7 @@ async fn dismiss_alert(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Response {
+    authorize!(require_manager(&mut rls).await);
     let org_id = rls.tenant_id();
     let resp = match s
         .predictive_maintenance_repo
@@ -651,6 +740,7 @@ async fn set_health_threshold(
     mut rls: RlsConnection,
     Json(req): Json<SetHealthThreshold>,
 ) -> Response {
+    authorize!(require_manager(&mut rls).await);
     let org_id = rls.tenant_id();
     let resp = match s
         .predictive_maintenance_repo

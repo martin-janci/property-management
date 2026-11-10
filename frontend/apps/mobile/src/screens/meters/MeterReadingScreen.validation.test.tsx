@@ -86,7 +86,11 @@ describe('MeterReadingScreen numeric-validation guard', () => {
     await waitFor(() => expect(mockAddToQueue).toHaveBeenCalledTimes(1));
     expect(mockAddToQueue).toHaveBeenCalledWith(
       expect.objectContaining({
-        endpoint: '/api/v1/meter-readings',
+        // Backend route is POST /api/v1/meters/readings (api-server lib.rs
+        // nests "/api/v1/meters" + meters.rs "/readings"); the @ppt/api-client
+        // `submitReading` posts to the same path. The old "/api/v1/meter-readings"
+        // did not exist and 404'd on sync.
+        endpoint: '/api/v1/meters/readings',
         body: expect.objectContaining({ reading: '142.4' }),
       })
     );

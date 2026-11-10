@@ -59,6 +59,7 @@ async fn create_equipment(
     mut rls: RlsConnection,
     Json(req): Json<CreateEquipment>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     // SECURITY: owning org is the validated RLS tenant, never the body.
     let organization_id = rls.tenant_id();
     let out = match state
@@ -137,6 +138,7 @@ async fn update_equipment(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateEquipment>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let tenant_id = rls.tenant_id();
     let out = match state
         .equipment_repo
@@ -165,6 +167,7 @@ async fn delete_equipment(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let tenant_id = rls.tenant_id();
     let out = match state
         .equipment_repo
@@ -219,12 +222,58 @@ async fn list_maintenance(
     out
 }
 
+/// Reject a maintenance `fault_id` / `performed_by` outside the caller's org
+/// with 404. Releases the connection on failure.
+async fn ensure_maintenance_refs(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    fault_id: Option<Uuid>,
+    performed_by: Option<Uuid>,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let tenant_id = rls.tenant_id();
+    let res = state
+        .equipment_repo
+        .maintenance_refs_outside_org(&mut **rls.conn(), tenant_id, fault_id, performed_by)
+        .await;
+    let msg = match res {
+        Ok(None) => return Ok(()),
+        Ok(Some("fault")) => "Fault not found",
+        Ok(Some(_)) => "Performer not found",
+        Err(e) => {
+            tracing::error!("Failed to validate maintenance refs: {}", e);
+            rls.release().await;
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to validate")),
+            ));
+        }
+    };
+    rls.release().await;
+    Err((
+        StatusCode::NOT_FOUND,
+        Json(ErrorResponse::new("NOT_FOUND", msg)),
+    ))
+}
+
 async fn create_maintenance(
     State(state): State<AppState>,
     mut rls: RlsConnection,
-    Path(_id): Path<Uuid>,
+    Path(id): Path<Uuid>,
     Json(req): Json<CreateMaintenance>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
+    // The path equipment and the body equipment must agree.
+    if req.equipment_id != id {
+        rls.release().await;
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "EQUIPMENT_MISMATCH",
+                "Path equipment id does not match body equipment_id",
+            )),
+        ));
+    }
+    ensure_maintenance_refs(&state, &mut rls, req.fault_id, req.performed_by).await?;
     // SECURITY: org is the validated RLS tenant. The repository INSERT is guarded
     // by a sub-select that ensures req.equipment_id belongs to this tenant; a
     // foreign equipment_id yields RowNotFound → 404.
@@ -257,6 +306,8 @@ async fn update_maintenance(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMaintenance>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
+    ensure_maintenance_refs(&state, &mut rls, None, req.performed_by).await?;
     let tenant_id = rls.tenant_id();
     let out = match state
         .equipment_repo
@@ -323,6 +374,7 @@ async fn acknowledge_prediction(
     Path(id): Path<Uuid>,
     Json(req): Json<AcknowledgePredictionRequest>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     // SECURITY: org + user come from the validated RLS connection so a caller in
     // org B cannot acknowledge predictions belonging to org A. We return 404 for
     // both "not found" and "wrong tenant" to prevent cross-tenant ID enumeration.

@@ -9,10 +9,28 @@
 
 import { getApiBase } from './env';
 
+/**
+ * Stable, locale-independent discriminator for a {@link RealtorApiError}.
+ *
+ * The `message` carried by the error is developer-facing (logs, tests) and
+ * intentionally English. User-facing surfaces must translate off this `code`
+ * instead of rendering `message` — see `useRealtorErrorMessage` in
+ * `./realtor-error`. The one exception is a real server-provided message
+ * (`serverMessage`), which the backend owns and localizes itself.
+ */
+export type RealtorApiErrorCode = 'network' | 'malformed' | 'http';
+
 export class RealtorApiError extends Error {
   constructor(
     message: string,
-    public readonly status: number
+    public readonly status: number,
+    public readonly code: RealtorApiErrorCode = 'http',
+    /**
+     * The message the server returned in its JSON error body, when present.
+     * Only set for `code === 'http'` responses that carried a `message` field;
+     * `undefined` means the UI should fall back to a translated generic string.
+     */
+    public readonly serverMessage?: string
   ) {
     super(message);
     this.name = 'RealtorApiError';
@@ -32,17 +50,24 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       headers: { 'Content-Type': 'application/json', ...(callerHeaders ?? {}) },
     });
   } catch {
-    throw new RealtorApiError('Network error. Please try again.', 0);
+    throw new RealtorApiError('Network error. Please try again.', 0, 'network');
   }
   if (!response.ok) {
-    let message = `Request failed (${response.status})`;
+    let serverMessage: string | undefined;
     try {
       const data = await response.json();
-      if (typeof data?.message === 'string') message = data.message;
+      if (typeof data?.message === 'string') serverMessage = data.message;
     } catch {
       // ignore non-JSON
     }
-    throw new RealtorApiError(message, response.status);
+    // `message` stays developer-facing; the UI translates off `code` and only
+    // shows `serverMessage` (backend-owned copy) when the server provided one.
+    throw new RealtorApiError(
+      serverMessage ?? `Request failed (${response.status})`,
+      response.status,
+      'http',
+      serverMessage
+    );
   }
   if (response.status === 204) return undefined as T;
   return parseJsonBody<T>(response);
@@ -70,12 +95,29 @@ async function parseJsonBody<T>(response: Response): Promise<T> {
   try {
     body = await response.json();
   } catch {
-    throw new RealtorApiError('Malformed response from server.', response.status);
+    throw new RealtorApiError('Malformed response from server.', response.status, 'malformed');
   }
   if (!body || typeof body !== 'object' || Array.isArray(body)) {
-    throw new RealtorApiError('Malformed response from server.', response.status);
+    throw new RealtorApiError('Malformed response from server.', response.status, 'malformed');
   }
   return body as T;
+}
+
+/**
+ * Coerce a list-response collection field to a real array.
+ *
+ * `parseJsonBody` guarantees the outer body is a non-null, non-array object, but
+ * it is generic and cannot know which *fields* are supposed to be arrays. A
+ * malformed 200 can still carry a wrong-typed collection (`{ listings: null }`,
+ * `{ reviews: {} }`): truthy but not iterable, so the first `.length` / `.map`
+ * in a consumer (`profile` page, `realtor/[id]`, agency listings) throws deep in
+ * render with no hint the API boundary was the culprit. Coercing the field to
+ * `[]` here degrades to the existing empty-state instead of crashing — the same
+ * "coerce the wrong-typeable collection at the edge" stance as the listing SSR
+ * path's `parseListingDetail` (`photos` → array-or-`[]`).
+ */
+function asArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
 }
 
 export interface RealtorProfile {
@@ -228,9 +270,12 @@ export interface MyListingsResponse {
 }
 
 /** Lists the authenticated caller's own listings (`GET /api/v1/my/listings`). */
-export function listMyListings(status?: string): Promise<MyListingsResponse> {
+export async function listMyListings(status?: string): Promise<MyListingsResponse> {
   const query = status ? `?status=${encodeURIComponent(status)}` : '';
-  return request<MyListingsResponse>(`/api/v1/my/listings${query}`);
+  const res = await request<MyListingsResponse>(`/api/v1/my/listings${query}`);
+  // `listings` is typed as present, but a partial/malformed 200 can carry a
+  // wrong-typed value; coerce so consumers can `.map` / `.length` safely.
+  return { ...res, listings: asArray<MyListing>(res.listings) };
 }
 
 /**
@@ -260,10 +305,16 @@ export interface RealtorReviewsResponse {
 }
 
 /** Lists reviews for a realtor (`GET /api/v1/realtors/{id}/reviews`). */
-export function getRealtorReviews(realtorId: string, limit = 20): Promise<RealtorReviewsResponse> {
-  return request<RealtorReviewsResponse>(
+export async function getRealtorReviews(
+  realtorId: string,
+  limit = 20
+): Promise<RealtorReviewsResponse> {
+  const res = await request<RealtorReviewsResponse>(
     `/api/v1/realtors/${encodeURIComponent(realtorId)}/reviews?limit=${limit}`
   );
+  // `reviews` is typed as present, but a partial/malformed 200 can carry a
+  // wrong-typed value; coerce so consumers can `.map` / `.length` safely.
+  return { ...res, reviews: asArray<RealtorReview>(res.reviews) };
 }
 
 /**

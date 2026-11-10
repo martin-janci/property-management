@@ -209,7 +209,8 @@ async fn take_moderation_action_writes_audit_row(pool: PgPool) {
     let user = seed_user(&pool, &format!("mod-{}@aml-audit.test", Uuid::new_v4())).await;
     let case = seed_moderation_case(&pool, org, user).await;
 
-    // Moderation gate requires Manager or higher.
+    // Moderation gate requires Manager or higher, read from the membership.
+    crate::common::seed_membership(&pool, org, user, "manager").await;
     let token = mint_token(user, org, "manager");
     let resp = app
         .execute(authed_json(

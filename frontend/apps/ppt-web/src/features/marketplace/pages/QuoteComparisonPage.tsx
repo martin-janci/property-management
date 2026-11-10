@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { QuoteCard, type QuoteSummary } from '../components/QuoteCard';
 import { QuoteComparisonTable } from '../components/QuoteComparisonTable';
 import type { RfqSummary } from '../components/RfqCard';
@@ -31,6 +32,7 @@ export function QuoteComparisonPage({
   onViewProvider,
   onBack,
 }: QuoteComparisonPageProps) {
+  const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [selectedQuotes, setSelectedQuotes] = useState<string[]>([]);
 
@@ -65,17 +67,19 @@ export function QuoteComparisonPage({
         className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <title>Back</title>
+          <title>{t('marketplace.common.back')}</title>
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
-        Back to RFQs
+        {t('marketplace.quoteComparisonPage.backToRfqs')}
       </button>
 
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Compare Quotes</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {t('marketplace.quoteComparisonPage.compareQuotes')}
+            </h1>
             <p className="mt-1 text-gray-600">{rfq.title}</p>
           </div>
           <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
@@ -89,7 +93,7 @@ export function QuoteComparisonPage({
               }`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <title>Table view</title>
+                <title>{t('marketplace.quoteComparisonPage.tableView')}</title>
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -108,7 +112,7 @@ export function QuoteComparisonPage({
               }`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <title>Card view</title>
+                <title>{t('marketplace.quoteComparisonPage.cardView')}</title>
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -126,15 +130,14 @@ export function QuoteComparisonPage({
         <div className="flex items-center justify-between text-sm">
           <div className="flex items-center gap-6">
             <div>
-              <span className="text-gray-500">Category:</span>{' '}
+              <span className="text-gray-500">{t('marketplace.quoteComparisonPage.category')}</span>{' '}
               <span className="font-medium text-gray-900">
-                {rfq.serviceCategory.replace('_', ' ').charAt(0).toUpperCase() +
-                  rfq.serviceCategory.slice(1).replace('_', ' ')}
+                {t(`marketplace.serviceCategory.${rfq.serviceCategory}`)}
               </span>
             </div>
             {rfq.budgetMin || rfq.budgetMax ? (
               <div>
-                <span className="text-gray-500">Budget:</span>{' '}
+                <span className="text-gray-500">{t('marketplace.quoteComparisonPage.budget')}</span>{' '}
                 <span className="font-medium text-gray-900">
                   {new Intl.NumberFormat('en-EU', {
                     style: 'currency',
@@ -151,13 +154,13 @@ export function QuoteComparisonPage({
               </div>
             ) : null}
             <div>
-              <span className="text-gray-500">Quotes:</span>{' '}
+              <span className="text-gray-500">{t('marketplace.quoteComparisonPage.quotes')}</span>{' '}
               <span className="font-medium text-gray-900">{quotes.length}</span>
             </div>
           </div>
           {rfq.isUrgent && (
             <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800">
-              Urgent
+              {t('marketplace.quoteComparisonPage.urgent')}
             </span>
           )}
         </div>
@@ -168,8 +171,10 @@ export function QuoteComparisonPage({
         <div className="mb-4 flex items-center gap-4">
           <p className="text-sm text-gray-600">
             {selectedQuotes.length > 0
-              ? `Comparing ${selectedQuotes.length} selected quotes`
-              : 'Select quotes to compare, or view all'}
+              ? t('marketplace.quoteComparisonPage.comparingSelected', {
+                  count: selectedQuotes.length,
+                })
+              : t('marketplace.quoteComparisonPage.selectToCompare')}
           </p>
           {selectedQuotes.length > 0 && (
             <button
@@ -177,7 +182,7 @@ export function QuoteComparisonPage({
               onClick={() => setSelectedQuotes([])}
               className="text-sm text-blue-600 hover:text-blue-800"
             >
-              Show all
+              {t('marketplace.quoteComparisonPage.showAll')}
             </button>
           )}
         </div>
@@ -192,7 +197,7 @@ export function QuoteComparisonPage({
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <title>No quotes</title>
+            <title>{t('marketplace.quoteComparisonPage.noQuotes')}</title>
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -200,8 +205,10 @@ export function QuoteComparisonPage({
               d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
             />
           </svg>
-          <h3 className="mt-4 text-lg font-medium text-gray-900">No quotes yet</h3>
-          <p className="mt-2 text-gray-500">Providers have not submitted quotes for this RFQ yet</p>
+          <h3 className="mt-4 text-lg font-medium text-gray-900">
+            {t('marketplace.quoteComparisonPage.noQuotesTitle')}
+          </h3>
+          <p className="mt-2 text-gray-500">{t('marketplace.quoteComparisonPage.noQuotesHint')}</p>
         </div>
       ) : viewMode === 'table' ? (
         /* Table View */
@@ -234,7 +241,9 @@ export function QuoteComparisonPage({
         <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-white rounded-lg shadow p-4 text-center">
             <p className="text-2xl font-bold text-gray-900">{quotes.length}</p>
-            <p className="text-sm text-gray-500">Total Quotes</p>
+            <p className="text-sm text-gray-500">
+              {t('marketplace.quoteComparisonPage.totalQuotes')}
+            </p>
           </div>
           <div className="bg-white rounded-lg shadow p-4 text-center">
             <p className="text-2xl font-bold text-green-600">
@@ -244,7 +253,9 @@ export function QuoteComparisonPage({
                 minimumFractionDigits: 0,
               }).format(Math.min(...quotes.map((q) => q.price)))}
             </p>
-            <p className="text-sm text-gray-500">Lowest Quote</p>
+            <p className="text-sm text-gray-500">
+              {t('marketplace.quoteComparisonPage.lowestQuote')}
+            </p>
           </div>
           <div className="bg-white rounded-lg shadow p-4 text-center">
             <p className="text-2xl font-bold text-gray-900">
@@ -254,7 +265,9 @@ export function QuoteComparisonPage({
                 minimumFractionDigits: 0,
               }).format(Math.max(...quotes.map((q) => q.price)))}
             </p>
-            <p className="text-sm text-gray-500">Highest Quote</p>
+            <p className="text-sm text-gray-500">
+              {t('marketplace.quoteComparisonPage.highestQuote')}
+            </p>
           </div>
           <div className="bg-white rounded-lg shadow p-4 text-center">
             <p className="text-2xl font-bold text-blue-600">
@@ -264,7 +277,9 @@ export function QuoteComparisonPage({
                 minimumFractionDigits: 0,
               }).format(quotes.reduce((sum, q) => sum + q.price, 0) / quotes.length)}
             </p>
-            <p className="text-sm text-gray-500">Average Quote</p>
+            <p className="text-sm text-gray-500">
+              {t('marketplace.quoteComparisonPage.averageQuote')}
+            </p>
           </div>
         </div>
       )}

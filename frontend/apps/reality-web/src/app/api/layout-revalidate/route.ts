@@ -60,7 +60,7 @@ export function layoutTagsFor(screen: string): string[] | null {
   const segment = parts[1];
   // Require non-empty second segment (e.g., reject 'foo/')
   if (!segment) return null;
-  return ['layout:' + segment];
+  return [`layout:${segment}`];
 }
 
 // ---------------------------------------------------------------------------
@@ -212,7 +212,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   // so the timestamp is bound to the signature and cannot be swapped.
   const header = request.headers.get('X-Webhook-Signature') ?? '';
   const signedPayload = `${timestamp}.${rawBody}`;
-  const expected = 'sha256=' + createHmac('sha256', secret).update(signedPayload).digest('base64');
+  const expected = `sha256=${createHmac('sha256', secret).update(signedPayload).digest('base64')}`;
 
   const headerBuf = Buffer.from(header);
   const expectedBuf = Buffer.from(expected);

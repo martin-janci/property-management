@@ -4,3 +4,4 @@ export { QuestionResults } from './QuestionResults';
 export { QuorumTile } from './QuorumTile';
 export { VoteCard } from './VoteCard';
 export { VoteStatusBadge } from './VoteStatusBadge';
+export { VotingBuildingSelect } from './VotingBuildingSelect';

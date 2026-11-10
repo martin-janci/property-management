@@ -1,0 +1,65 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-05",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed (dispatcher-tier1d-demand-driven; claimable buffer starved, 16 < floor 36; coverage exhausted / all stories done). CHURN_FILES not supplied by the dispatcher this slice, so SKILL Step 1 priority 2 applies: review_cursor (from .research/state.json) sorted ascending -> api-handlers 2026-11-04, api-core 2026-11-04, reality-server 2026-11-04, ppt-web-core 2026-11-04, mobile-native-kmp 2026-11-04, reality-web 2026-11-03, mobile-rn 2026-11-03, ppt-web-ui 2026-11-02. Oldest is ppt-web-ui (2026-11-02). Saturation check against open code-review-finding rows in backlog.json for ppt-web-ui: 0 open (<3, not saturated) => selected. Frontend expert primary + Completeness secondary per Step 2. Scope reviewed: frontend/apps/ppt-web/src/pages/ + components/ + features/ (the UI segment root). Churn-hot disputes + documents feature UI (features/disputes, features/documents, flagged in state.json hotspot_history) were read first as warm context but are mature and correctly handled (try/catch + toast on every mediation mutation, loading/error/empty states in MoveFolderDialog, documented intentional empty-catch in FileDisputePage, DOMPurify-sanitized dangerouslySetInnerHTML in ArticleDetailPage/ViewAnnouncementPage, all target=_blank carry rel=noopener noreferrer, all JSON.parse sites try/catch-guarded) -> no findings there. Static analysis only; no compile, no test run. Dedup: distinct from the 2026-10-31/11-01 ppt-web-ui i18n findings (my-unit, neighbors, disputes-cards) and from the only marketplace-tagged backlog row (code-review-ppt-web-ui-verification-badge-expired-as-soon, a badge-expiry bug, done). The two feature-wide i18n gaps (marketplace, registry) and the LanguageSwitcher aria-label gap below are not previously flagged.",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-marketplace-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "The entire marketplace feature module ships user-facing English string literals with NO react-i18next integration, inside an app that ships sk/cs/de/en locales. 8 of 9 user-facing marketplace files have zero useTranslation import and zero t() calls; QuoteComparisonTable.tsx has only 1. This is a whole-feature i18n gap, not a single missed string.",
+        "frontend/apps/ppt-web/src/features/marketplace/components/ProviderSearchFilters.tsx:110,148,216,226 — hardcoded placeholders `Search providers, services...`, `City or Postal Code`, `Min`, `Max`. 0 useTranslation.",
+        "frontend/apps/ppt-web/src/features/marketplace/components/RfqForm.tsx:189,208 — hardcoded textarea placeholders; plus 16 hardcoded service-category option labels at L38-53 (`Plumbing`, `Electrical`, `HVAC`, `Cleaning`, `Carpentry`, ...). 0 useTranslation.",
+        "frontend/apps/ppt-web/src/features/marketplace/components/ProviderProfileForm.tsx:273,439,646 — hardcoded descriptive placeholders. 0 useTranslation. Also ReviewForm.tsx:197,211,285 and VerificationForm.tsx — 0 useTranslation.",
+        "frontend/apps/ppt-web/src/features/marketplace/pages/{MarketplacePage,ProviderDetailPage,RfqListPage}.tsx — 0 useTranslation / 0 t() in the page shells themselves.",
+        "Fix vector: add useTranslation() to each marketplace component/page and move literals (placeholders, option labels, headings) to marketplace.* locale keys across sk/cs/de/en bundles. Cloud-verifiable (ppt-web, biome + typecheck). Confidence medium: literals + absence of useTranslation certain by static read; pages reachable from the shipped /marketplace routes. Severity LOW (+1) i18n gap per the skill's score-delta table (breadth is feature-wide, but the table caps an i18n gap at low).",
+        "expert: frontend+completeness"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "The registry feature's pet/vehicle registration forms and lists render user-facing English literals with NO react-i18next integration, in a 4-locale app. PetRegistrationForm, VehicleRegistrationForm, PetRegistrationList, VehicleRegistrationList have 0 useTranslation / 0 t(); RegistryRulesForm and ReviewRegistrationModal only partially use t() (1 call each) while leaving placeholders hardcoded.",
+        "frontend/apps/ppt-web/src/features/registry/components/PetRegistrationForm.tsx:120,135,154,177,193,214,231 — hardcoded placeholders `Enter pet name`, `Enter breed (optional)`, `Enter age`, `Enter weight`, `Any additional information about your pet`, `Dr. Jane Smith`, `Phone or email`. 0 useTranslation.",
+        "frontend/apps/ppt-web/src/features/registry/components/VehicleRegistrationForm.tsx:94,109,124,161 — hardcoded placeholders `ABC-123`, `Toyota, BMW, etc.`, `Corolla, X5, etc.`, `Black, White, Red, etc.`. 0 useTranslation.",
+        "frontend/apps/ppt-web/src/features/registry/components/PetRegistrationList.tsx:112 — hardcoded search placeholder `Search by name, breed, owner...`. 0 useTranslation. frontend/apps/ppt-web/src/features/registry/components/ReviewRegistrationModal.tsx:193 — hardcoded rejection-reason placeholder despite the modal elsewhere importing useTranslation (partial i18n).",
+        "Fix vector: add useTranslation() to the registry form/list components and move all placeholders to registry.* keys across sk/cs/de/en. Cloud-verifiable (ppt-web, biome + typecheck). Confidence medium: static-read certain; components reachable from the shipped /registry routes. Severity LOW (+1) i18n gap.",
+        "expert: frontend+completeness"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-lang-switcher-aria",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/LanguageSwitcher.tsx:19 — the shared language-switcher <select> carries a hardcoded English screen-reader label `aria-label=\"Select language\"`. The component already imports and uses useTranslation (it is otherwise i18n-aware), so the untranslated a11y label is an oversight, not a missing capability. Ironic and high-visibility: a non-English user navigating by screen reader hears an English label on the very control that switches language.",
+        "Fix vector: replace the literal with t('common.languageSwitcher.ariaLabel') (or similar) and add the key to the sk/cs/de/en bundles. Cloud-verifiable (ppt-web, biome + typecheck). Confidence medium: certain by static read; the component is mounted in the app shell on every authenticated screen. Severity LOW (+1) i18n/a11y gap.",
+        "expert: frontend+completeness"
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

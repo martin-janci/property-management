@@ -114,3 +114,164 @@ describe('createBuildingsApi (factory used by ppt-web hooks)', () => {
     expect(res.items[0].unitCount).toBe(8);
   });
 });
+
+// --- floors / common areas (derived from the units endpoint) ---
+
+const BUILDING_ID = '22222222-2222-2222-2222-222222222222';
+
+function unit(id: string, floor: number) {
+  return {
+    id,
+    building_id: BUILDING_ID,
+    designation: id,
+    floor,
+    unit_type: 'apartment',
+    occupancy_status: 'unknown',
+    status: 'active',
+  };
+}
+
+describe('createBuildingsApi().listFloors', () => {
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    fetchMock.mockReset();
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('derives floors from the units endpoint, paging until total', async () => {
+    const firstPage = Array.from({ length: 100 }, (_, i) => unit(`u${i}`, i % 2 === 0 ? 1 : -1));
+    fetchMock
+      .mockResolvedValueOnce(okJson({ units: firstPage, total: 101, offset: 0, limit: 100 }))
+      .mockResolvedValueOnce(
+        okJson({ units: [unit('u100', 0)], total: 101, offset: 100, limit: 100 })
+      );
+
+    const api = createBuildingsApi({ baseUrl: '' });
+    const floors = await api.listFloors(BUILDING_ID);
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      `/api/v1/buildings/${BUILDING_ID}/units?offset=0&limit=100`
+    );
+    expect(fetchMock.mock.calls[1][0]).toBe(
+      `/api/v1/buildings/${BUILDING_ID}/units?offset=100&limit=100`
+    );
+    expect(floors).toEqual([
+      { id: `${BUILDING_ID}:floor:-1`, buildingId: BUILDING_ID, number: -1, unitCount: 50 },
+      { id: `${BUILDING_ID}:floor:0`, buildingId: BUILDING_ID, number: 0, unitCount: 1 },
+      { id: `${BUILDING_ID}:floor:1`, buildingId: BUILDING_ID, number: 1, unitCount: 50 },
+    ]);
+  });
+
+  it('returns an empty list for a building without units', async () => {
+    fetchMock.mockResolvedValueOnce(okJson({ units: [], total: 0, offset: 0, limit: 100 }));
+
+    const api = createBuildingsApi({ baseUrl: '' });
+    await expect(api.listFloors(BUILDING_ID)).resolves.toEqual([]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('createBuildingsApi().listCommonAreas', () => {
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    fetchMock.mockReset();
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('resolves null on 404 (backend has no common-areas route) instead of throwing', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      json: async () => ({ message: 'Not Found' }),
+    } as Response);
+
+    const api = createBuildingsApi({ baseUrl: '' });
+    await expect(api.listCommonAreas(BUILDING_ID)).resolves.toBeNull();
+    expect(fetchMock.mock.calls[0][0]).toBe(`/api/v1/buildings/${BUILDING_ID}/common-areas`);
+  });
+
+  it('still throws on other errors', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      json: async () => ({ message: 'boom' }),
+    } as Response);
+
+    const api = createBuildingsApi({ baseUrl: '' });
+    await expect(api.listCommonAreas(BUILDING_ID)).rejects.toThrow('boom');
+  });
+});
+
+describe('createBuildingsApi() create / update wire shape', () => {
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    fetchMock.mockReset();
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const serverBuilding = {
+    id: BUILDING_ID,
+    organization_id: 'org-1',
+    street: 'Hlavná 1',
+    city: 'Bratislava',
+    postal_code: '81101',
+    country: 'SK',
+    name: 'Dom A',
+    total_floors: 5,
+    total_entrances: 2,
+    status: 'active',
+  };
+
+  it('POSTs a flat snake_case body with the organization id', async () => {
+    fetchMock.mockResolvedValueOnce(okJson(serverBuilding));
+    const api = createBuildingsApi({ baseUrl: '', tenantId: 'org-1' });
+    const created = await api.create({
+      name: 'Dom A',
+      address: { street: 'Hlavná 1', city: 'Bratislava', postalCode: '81101', country: 'SK' },
+      floorCount: 5,
+      totalEntrances: 2,
+    });
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe('/api/v1/buildings');
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body)).toEqual({
+      organization_id: 'org-1',
+      name: 'Dom A',
+      street: 'Hlavná 1',
+      city: 'Bratislava',
+      postal_code: '81101',
+      country: 'SK',
+      total_floors: 5,
+      total_entrances: 2,
+    });
+    expect(created.totalEntrances).toBe(2);
+  });
+
+  it('updates with PUT (the server has no PATCH route) and only sends set fields', async () => {
+    fetchMock.mockResolvedValueOnce(okJson(serverBuilding));
+    const api = createBuildingsApi({ baseUrl: '' });
+    await api.update(BUILDING_ID, { name: 'Dom B', floorCount: 6 });
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe(`/api/v1/buildings/${BUILDING_ID}`);
+    expect(init.method).toBe('PUT');
+    expect(JSON.parse(init.body)).toEqual({ name: 'Dom B', total_floors: 6 });
+  });
+});

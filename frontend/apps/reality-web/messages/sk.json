@@ -400,12 +400,38 @@
       "title": "O Reality Portáli"
     },
     "agentProfile": {
+      "about": "O makléri",
       "activeListings": "Aktívne ponuky",
       "contact": "Kontaktovať",
+      "contactDetails": "Kontaktné údaje",
+      "defaultName": "Realitný maklér",
+      "experience": "{count} rokov skúseností",
       "languages": "Jazyky",
+      "license": "Licencia: {number}",
+      "loading": "Načítavam…",
+      "mailtoSubject": "Kontakt cez Reality Portal",
+      "memberSince": "Člen od: {date}",
+      "modalAriaLabel": "Kontaktovať makléra",
+      "modalCancel": "Zrušiť",
+      "modalClose": "Zavrieť",
+      "modalEmailHint": "Správa sa otvorí vo vašom e-mailovom klientovi.",
+      "modalNoContact": "Maklér momentálne nezverejnil kontaktné údaje.",
+      "modalPhoneIntro": "Tohto makléra môžete kontaktovať telefonicky:",
+      "modalPlaceholder": "Dobrý deň, mám záujem o Vaše služby...",
+      "modalSendEmail": "Odoslať e-mail",
+      "modalTitle": "Kontaktovať {name}",
+      "noContact": "Maklér nezverejnil kontaktné údaje.",
+      "noReviews": "Zatiaľ žiadne hodnotenia.",
+      "notFoundBody": "Profil tohto makléra nie je dostupný.",
+      "notFoundTitle": "Maklér sa nenašiel",
+      "rating": "Hodnotenie",
+      "reviewVerified": "Overené",
       "reviews": "Hodnotenia",
+      "sendMessage": "Odoslať správu",
       "specializations": "Špecializácia",
-      "verified": "Overený maklér"
+      "totalListings": "Inzeráty celkom",
+      "verified": "Overený maklér",
+      "views": "Zobrazenia"
     },
     "careers": {
       "hero": {
@@ -611,11 +637,59 @@
       }
     },
     "report": {
-      "submit": "Odoslať nahlásenie",
+      "h1": "Nahlásiť inzerát",
       "subtitle": "Pomôžte nám udržať portál dôveryhodný — povedzte nám, čo je v ponuke zlé.",
-      "success": "Nahlásenie bolo odoslané",
       "title": "Nahlásiť inzerát",
-      "h1": "Nahlásiť inzerát"
+      "submit": "Odoslať nahlásenie",
+      "submitting": "Odosiela sa…",
+      "success": "Nahlásenie bolo odoslané",
+      "problemLegend": "Dôvod nahlásenia",
+      "problems": {
+        "fraudulent_listing": {
+          "label": "Podozrenie z podvodu",
+          "description": "Podozrivý inzerát, žiadosť o platbu vopred, falošná identita makléra"
+        },
+        "price_manipulation": {
+          "label": "Nesprávna cena",
+          "description": "Cena nezodpovedá skutočnosti alebo je zámer zavádzať"
+        },
+        "incorrect_information": {
+          "label": "Falošné fotografie",
+          "description": "Fotografie nepatria k danej nehnuteľnosti"
+        },
+        "duplicate_listing": {
+          "label": "Duplicitný inzerát",
+          "description": "Rovnaká nehnuteľnosť je inzerovaná viackrát"
+        },
+        "already_sold": {
+          "label": "Predaná / neprenajímaná",
+          "description": "Nehnuteľnosť je už predaná alebo prenajatá, inzerát nebol odstránený"
+        },
+        "other": {
+          "label": "Iný dôvod",
+          "description": "Iná technická chyba alebo pravidlá platformy"
+        }
+      },
+      "listingRefLabel": "Odkaz na inzerát (URL alebo ID)",
+      "listingRefPlaceholder": "napr. https://rlt.sk/listings/ba-byt-3i alebo #12345",
+      "descriptionLabel": "Popis problému",
+      "descriptionPlaceholder": "Opíšte, prečo nahlasujete tento inzerát. Čím viac detailov uvediete, tým rýchlejšie to preveríme.",
+      "attachmentsLabel": "Prílohy (čoskoro)",
+      "attachmentsComingSoon": "Pridávanie príloh bude čoskoro dostupné",
+      "attachmentsHint": "Nahrávanie screenshotov zatiaľ nie je dostupné — prosím, opíšte dôkazy v popise vyššie. Pripravujeme ho.",
+      "gdpr": {
+        "label": "Súhlasím so spracovaním osobných údajov za účelom preverenia môjho nahlásenia v súlade so {privacyLink}.",
+        "privacyLink": "Zásadami ochrany súkromia"
+      },
+      "successTitle": "Nahlásenie bolo odoslané",
+      "successBody": "Váš podnet sme prijali. Náš tím ho preverí do 24 hodín. Ďakujeme, že pomáhate udržiavať portál bezpečným.",
+      "referenceLabel": "Referenčné číslo",
+      "referenceHint": "Uveďte ho pri ďalšej komunikácii — pomôže nám vaše hlásenie rýchlo dohľadať.",
+      "backToListings": "Späť na ponuky",
+      "errorNoListing": "Nevedeli sme určiť, ktorého inzerátu sa hlásenie týka. Otvorte nahlásenie z detailu inzerátu alebo vložte odkaz či ID inzerátu vyššie.",
+      "errorRateLimit": "Priveľa nahlásení z tohto zariadenia. Skúste to o chvíľu znova.",
+      "errorNotFound": "Inzerát sa nenašiel. Skontrolujte odkaz alebo ID a skúste to znova.",
+      "errorGeneric": "Nahlásenie sa nepodarilo odoslať. Skúste to prosím znova."
     },
     "security": {
       "reportCta": "Nahlásiť ponuku",
@@ -1292,5 +1366,17 @@
     "errorAreaNegative": "Plocha nesmie byť záporná",
     "errorRoomsInvalid": "Počet izieb musí byť platné číslo",
     "errorRoomsNegative": "Počet izieb nesmie byť záporný"
+  },
+  "realtor": {
+    "errorNetwork": "Chyba siete. Skúste to znova.",
+    "errorMalformed": "Server vrátil neočakávanú odpoveď. Skúste to znova.",
+    "errorRequestFailed": "Požiadavka zlyhala ({status}). Skúste to znova.",
+    "errorLoadProfile": "Profil sa nepodarilo načítať.",
+    "errorSaveProfile": "Profil sa nepodarilo uložiť.",
+    "errorNameRequired": "Meno je povinné.",
+    "errorLoadListing": "Inzerát sa nepodarilo načítať.",
+    "errorSaveListing": "Inzerát sa nepodarilo uložiť.",
+    "errorCreateListing": "Inzerát sa nepodarilo vytvoriť. Skúste to znova.",
+    "errorMissingListingId": "Chýba ID inzerátu."
   }
 }

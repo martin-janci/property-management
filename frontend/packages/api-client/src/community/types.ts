@@ -1,312 +1,317 @@
 /**
  * Community Types
  *
- * Type definitions for the Community API (Epic 42).
- * Includes Groups, Posts, Events, and Marketplace.
+ * camelCase mirrors of the api-server Community models
+ * (`backend/crates/db/src/models/community.rs`, served by
+ * `backend/servers/api-server/src/routes/community.rs`, mounted at
+ * `/api/v1/community`). The server speaks snake_case; `api.ts` maps every
+ * payload in both directions, so nothing outside this module ever sees a
+ * snake_case key.
+ *
+ * Only the shapes the server actually serves are modelled here. There is no
+ * server endpoint for: a cross-group feed, group members, editing a group /
+ * post / event / item, deleting a post / event / item, listing comments,
+ * attendees or inquiries, or community stats — so none of those exist in this
+ * client either.
  */
 
 // ============================================
-// Story 42.1: Community Groups
+// Groups
 // ============================================
 
-export type GroupVisibility = 'public' | 'private' | 'hidden';
-export type GroupMemberRole = 'owner' | 'admin' | 'moderator' | 'member';
-export type GroupMemberStatus = 'pending' | 'active' | 'banned';
+/** Postgres enum `community_group_type`. */
+export type CommunityGroupType = 'interest' | 'floor' | 'building' | 'neighborhood' | 'official';
+
+/** Postgres enum `community_group_visibility`. */
+export type CommunityGroupVisibility = 'public' | 'private' | 'secret';
+
+/** Postgres enum `community_member_role`. */
+export type CommunityMemberRole = 'member' | 'moderator' | 'admin' | 'owner';
 
 export interface CommunityGroup {
   id: string;
   buildingId: string;
   name: string;
-  description: string;
-  category: string;
-  visibility: GroupVisibility;
-  coverImageUrl?: string;
+  slug: string;
+  description: string | null;
+  groupType: CommunityGroupType;
+  visibility: CommunityGroupVisibility;
+  coverImageUrl: string | null;
+  icon: string | null;
+  color: string | null;
+  rules: string | null;
+  maxMembers: number | null;
+  autoJoinNewResidents: boolean;
+  requiresApproval: boolean;
+  isOfficial: boolean;
   memberCount: number;
   postCount: number;
-  isOfficial: boolean;
-  createdBy: string;
+  createdBy: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface CommunityGroupSummary {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  visibility: GroupVisibility;
-  coverImageUrl?: string;
-  memberCount: number;
-  isOfficial: boolean;
+/**
+ * A group as returned by the per-building list, flattened: the server nests
+ * the group under `group` next to the caller's membership fields.
+ */
+export interface CommunityGroupWithMembership extends CommunityGroup {
   isMember: boolean;
+  memberRole: CommunityMemberRole | null;
+  joinedAt: string | null;
 }
 
-export interface GroupMember {
-  id: string;
-  groupId: string;
-  userId: string;
-  userName: string;
-  userAvatar?: string;
-  role: GroupMemberRole;
-  status: GroupMemberStatus;
-  joinedAt: string;
-}
-
-export interface CreateGroupRequest {
+export interface CreateCommunityGroupRequest {
   name: string;
-  description: string;
-  category: string;
-  visibility?: GroupVisibility;
-  coverImageUrl?: string;
-}
-
-export interface UpdateGroupRequest {
-  name?: string;
   description?: string;
-  category?: string;
-  visibility?: GroupVisibility;
-  coverImageUrl?: string;
-}
-
-export interface ListGroupsParams {
-  page?: number;
-  pageSize?: number;
-  category?: string;
-  visibility?: GroupVisibility;
-  search?: string;
-  memberOnly?: boolean;
+  groupType?: CommunityGroupType;
+  visibility?: CommunityGroupVisibility;
+  icon?: string;
+  color?: string;
+  rules?: string;
+  maxMembers?: number;
+  autoJoinNewResidents?: boolean;
+  requiresApproval?: boolean;
 }
 
 // ============================================
-// Story 42.2: Community Feed / Posts
+// Posts, reactions, comments
 // ============================================
 
-export type PostType = 'text' | 'image' | 'poll' | 'event' | 'item';
-export type PostVisibility = 'group' | 'building' | 'public';
+/** Postgres enum `community_post_type`. */
+export type CommunityPostType =
+  | 'text'
+  | 'photo'
+  | 'poll'
+  | 'event'
+  | 'marketplace'
+  | 'question'
+  | 'announcement';
 
 export interface CommunityPost {
   id: string;
   groupId: string;
   authorId: string;
-  authorName: string;
-  authorAvatar?: string;
-  type: PostType;
+  postType: CommunityPostType;
+  title: string | null;
   content: string;
   mediaUrls: string[];
-  visibility: PostVisibility;
+  isPinned: boolean;
+  isLocked: boolean;
+  isAnonymous: boolean;
+  viewCount: number;
   likeCount: number;
   commentCount: number;
   shareCount: number;
-  isPinned: boolean;
-  isLikedByUser: boolean;
   createdAt: string;
   updatedAt: string;
+  editedAt: string | null;
 }
 
-export interface PostComment {
+export interface CreateCommunityPostRequest {
+  postType?: CommunityPostType;
+  title?: string;
+  content: string;
+  mediaUrls?: string[];
+  isAnonymous?: boolean;
+}
+
+/** Values accepted by `community_post_reactions.reaction_type`. */
+export type CommunityReactionType = 'like' | 'love' | 'helpful' | 'funny';
+
+export interface CommunityComment {
   id: string;
   postId: string;
+  parentId: string | null;
   authorId: string;
-  authorName: string;
-  authorAvatar?: string;
-  parentId?: string;
   content: string;
+  isAnonymous: boolean;
   likeCount: number;
-  isLikedByUser: boolean;
   createdAt: string;
   updatedAt: string;
-  replies?: PostComment[];
+  editedAt: string | null;
 }
 
-export interface CreatePostRequest {
-  groupId: string;
-  type?: PostType;
-  content: string;
-  mediaUrls?: string[];
-  visibility?: PostVisibility;
-}
-
-export interface UpdatePostRequest {
-  content?: string;
-  mediaUrls?: string[];
-}
-
-export interface CreatePostCommentRequest {
+export interface CreateCommunityCommentRequest {
   content: string;
   parentId?: string;
+  isAnonymous?: boolean;
 }
 
-export interface ListPostsParams {
-  page?: number;
-  pageSize?: number;
-  groupId?: string;
-  authorId?: string;
-  type?: PostType;
-  feed?: 'all' | 'my_groups' | 'building';
+/** `limit` / `offset` paging accepted by the list endpoints (server default limit 20). */
+export interface CommunityPageParams {
+  limit?: number;
+  offset?: number;
 }
 
 // ============================================
-// Story 42.3: Community Events
+// Events
 // ============================================
 
-export type EventStatus = 'draft' | 'published' | 'cancelled' | 'completed';
-export type RsvpStatus = 'going' | 'maybe' | 'not_going';
+/** Postgres enum `community_event_type`. */
+export type CommunityEventType =
+  | 'social'
+  | 'meeting'
+  | 'workshop'
+  | 'volunteer'
+  | 'sports'
+  | 'cultural'
+  | 'other';
+
+/** Postgres enum `event_rsvp_status`. */
+export type CommunityRsvpStatus = 'going' | 'maybe' | 'not_going' | 'waitlist';
 
 export interface CommunityEvent {
   id: string;
-  groupId: string;
+  groupId: string | null;
+  buildingId: string;
+  organizerId: string;
   title: string;
-  description: string;
-  location: string;
-  locationDetails?: string;
-  startDate: string;
-  endDate: string;
+  description: string | null;
+  eventType: CommunityEventType;
+  location: string | null;
+  locationDetails: string | null;
+  isVirtual: boolean;
+  virtualLink: string | null;
+  startTime: string;
+  endTime: string;
   allDay: boolean;
-  coverImageUrl?: string;
-  status: EventStatus;
-  maxAttendees?: number;
-  goingCount: number;
-  maybeCount: number;
-  notGoingCount: number;
-  userRsvp?: RsvpStatus;
-  createdBy: string;
+  coverImageUrl: string | null;
+  maxAttendees: number | null;
+  requiresRsvp: boolean;
+  rsvpDeadline: string | null;
+  /** Decimal, serialized by the server as a string. */
+  costPerPerson: string | null;
+  costCurrency: string | null;
+  isPublic: boolean;
+  /** `scheduled` | `cancelled` | `completed`. */
+  status: string;
+  attendeeCount: number;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface EventAttendee {
+export interface CreateCommunityEventRequest {
+  groupId?: string;
+  title: string;
+  description?: string;
+  eventType?: CommunityEventType;
+  location?: string;
+  locationDetails?: string;
+  isVirtual?: boolean;
+  virtualLink?: string;
+  /** ISO-8601 instant. */
+  startTime: string;
+  /** ISO-8601 instant. */
+  endTime: string;
+  allDay?: boolean;
+  maxAttendees?: number;
+  requiresRsvp?: boolean;
+  rsvpDeadline?: string;
+  /** Decimal as a string, e.g. `"5.00"`. */
+  costPerPerson?: string;
+  isPublic?: boolean;
+}
+
+export interface CommunityEventRsvp {
   id: string;
   eventId: string;
   userId: string;
-  userName: string;
-  userAvatar?: string;
-  rsvpStatus: RsvpStatus;
-  rsvpAt: string;
+  status: CommunityRsvpStatus;
+  guests: number;
+  note: string | null;
+  reminderSent: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface CreateEventRequest {
-  groupId: string;
-  title: string;
-  description: string;
-  location: string;
-  locationDetails?: string;
-  startDate: string;
-  endDate: string;
-  allDay?: boolean;
-  coverImageUrl?: string;
-  maxAttendees?: number;
-}
-
-export interface UpdateEventRequest {
-  title?: string;
-  description?: string;
-  location?: string;
-  locationDetails?: string;
-  startDate?: string;
-  endDate?: string;
-  allDay?: boolean;
-  coverImageUrl?: string;
-  maxAttendees?: number;
-  status?: EventStatus;
-}
-
-export interface RsvpRequest {
-  status: RsvpStatus;
-}
-
-export interface ListEventsParams {
-  page?: number;
-  pageSize?: number;
-  groupId?: string;
-  status?: EventStatus;
-  fromDate?: string;
-  toDate?: string;
-  userRsvp?: RsvpStatus;
+export interface CommunityRsvpRequest {
+  status: CommunityRsvpStatus;
+  guests?: number;
+  note?: string;
 }
 
 // ============================================
-// Story 42.4: Item Marketplace
+// Marketplace
 // ============================================
 
-export type ItemCondition = 'new' | 'like_new' | 'good' | 'fair' | 'poor';
-export type ItemListingType = 'sale' | 'free' | 'wanted' | 'trade';
-export type ItemStatus = 'active' | 'reserved' | 'sold' | 'expired' | 'removed';
+/** Postgres enum `marketplace_category`. */
+export type MarketplaceCategory =
+  | 'furniture'
+  | 'electronics'
+  | 'clothing'
+  | 'sports'
+  | 'books'
+  | 'toys'
+  | 'home_garden'
+  | 'services'
+  | 'free'
+  | 'wanted'
+  | 'other';
+
+/** Postgres enum `item_condition`. */
+export type MarketplaceItemCondition = 'new' | 'like_new' | 'good' | 'fair' | 'for_parts';
 
 export interface MarketplaceItem {
   id: string;
+  buildingId: string;
   sellerId: string;
-  sellerName: string;
-  sellerAvatar?: string;
-  sellerUnit?: string;
   title: string;
-  description: string;
-  category: string;
-  condition: ItemCondition;
-  listingType: ItemListingType;
-  price?: number;
-  currency?: string;
-  imageUrls: string[];
-  status: ItemStatus;
+  description: string | null;
+  category: MarketplaceCategory;
+  condition: MarketplaceItemCondition;
+  /** Decimal, serialized by the server as a string. */
+  price: string | null;
+  currency: string | null;
+  isFree: boolean;
+  isNegotiable: boolean;
+  isTradeAccepted: boolean;
+  photoUrls: string[];
+  location: string | null;
+  pickupDetails: string | null;
   viewCount: number;
-  messageCount: number;
+  inquiryCount: number;
+  /** `active` | `sold` | `reserved` | `expired` | `removed`. */
+  status: string;
+  soldTo: string | null;
+  soldAt: string | null;
+  expiresAt: string | null;
   createdAt: string;
   updatedAt: string;
-  expiresAt?: string;
 }
 
-export interface CreateItemRequest {
+export interface CreateMarketplaceItemRequest {
   title: string;
-  description: string;
-  category: string;
-  condition: ItemCondition;
-  listingType: ItemListingType;
-  price?: number;
-  currency?: string;
-  imageUrls?: string[];
-}
-
-export interface UpdateItemRequest {
-  title?: string;
   description?: string;
-  category?: string;
-  condition?: ItemCondition;
-  listingType?: ItemListingType;
-  price?: number;
-  currency?: string;
-  imageUrls?: string[];
-  status?: ItemStatus;
+  category: MarketplaceCategory;
+  condition: MarketplaceItemCondition;
+  /** Decimal as a string, e.g. `"25.00"`. */
+  price?: string;
+  isFree?: boolean;
+  isNegotiable?: boolean;
+  isTradeAccepted?: boolean;
+  photoUrls?: string[];
+  location?: string;
+  pickupDetails?: string;
 }
 
-export interface ListItemsParams {
-  page?: number;
-  pageSize?: number;
-  category?: string;
-  condition?: ItemCondition;
-  listingType?: ItemListingType;
-  status?: ItemStatus;
-  sellerId?: string;
-  minPrice?: number;
-  maxPrice?: number;
-  search?: string;
+export interface ListMarketplaceItemsParams extends CommunityPageParams {
+  category?: MarketplaceCategory;
 }
 
-export interface ContactSellerRequest {
+export interface MarketplaceInquiry {
+  id: string;
+  itemId: string;
+  buyerId: string;
   message: string;
+  /** Decimal, serialized by the server as a string. */
+  offerPrice: string | null;
+  status: string;
+  createdAt: string;
 }
 
-// ============================================
-// Shared Types
-// ============================================
-
-// Note: PaginatedResponse is re-exported from ../announcements
-// to avoid duplicate exports
-
-export interface CommunityStats {
-  totalGroups: number;
-  totalMembers: number;
-  totalPosts: number;
-  totalEvents: number;
-  totalItems: number;
-  activeListings: number;
-  upcomingEvents: number;
+export interface CreateMarketplaceInquiryRequest {
+  message: string;
+  /** Decimal as a string. */
+  offerPrice?: string;
 }

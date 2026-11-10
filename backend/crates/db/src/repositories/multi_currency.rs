@@ -486,6 +486,34 @@ impl MultiCurrencyRepository {
     }
 
     /// Update last rate update timestamp for organization
+    /// Whether a row referenced by a multi-currency request belongs to
+    /// `org_id`. Used to reject foreign `building_id` / `lease_id` /
+    /// `config_id` values before they are stored under the caller's org.
+    pub async fn reference_in_org(
+        &self,
+        kind: OrgReference,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, AppError> {
+        let sql = match kind {
+            OrgReference::Building => {
+                "SELECT EXISTS(SELECT 1 FROM buildings WHERE id = $1 AND organization_id = $2)"
+            }
+            OrgReference::Lease => {
+                "SELECT EXISTS(SELECT 1 FROM leases WHERE id = $1 AND organization_id = $2)"
+            }
+            OrgReference::ReportConfig => {
+                "SELECT EXISTS(SELECT 1 FROM multi_currency_report_config WHERE id = $1 AND organization_id = $2)"
+            }
+        };
+        sqlx::query_scalar::<_, bool>(sql)
+            .bind(id)
+            .bind(org_id)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| AppError::Database(e.to_string()))
+    }
+
     pub async fn update_last_rate_update(&self, org_id: Uuid) -> Result<(), AppError> {
         sqlx::query(
             r#"
@@ -1184,4 +1212,16 @@ impl MultiCurrencyRepository {
             currency_distribution,
         })
     }
+}
+
+/// Kinds of org-owned rows a multi-currency request may reference; see
+/// [`MultiCurrencyRepository::reference_in_org`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OrgReference {
+    /// `buildings`
+    Building,
+    /// `leases`
+    Lease,
+    /// `multi_currency_report_config`
+    ReportConfig,
 }

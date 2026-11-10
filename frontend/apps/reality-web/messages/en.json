@@ -400,12 +400,38 @@
       "title": "About Reality Portal"
     },
     "agentProfile": {
+      "about": "About the agent",
       "activeListings": "Active listings",
       "contact": "Contact",
+      "contactDetails": "Contact details",
+      "defaultName": "Real estate agent",
+      "experience": "{count} years of experience",
       "languages": "Languages",
+      "license": "License: {number}",
+      "loading": "Loading…",
+      "mailtoSubject": "Contact via Reality Portal",
+      "memberSince": "Member since: {date}",
+      "modalAriaLabel": "Contact agent",
+      "modalCancel": "Cancel",
+      "modalClose": "Close",
+      "modalEmailHint": "The message will open in your email client.",
+      "modalNoContact": "The agent has not published contact details at the moment.",
+      "modalPhoneIntro": "You can contact this agent by phone:",
+      "modalPlaceholder": "Hello, I'm interested in your services...",
+      "modalSendEmail": "Send email",
+      "modalTitle": "Contact {name}",
+      "noContact": "The agent has not published contact details.",
+      "noReviews": "No reviews yet.",
+      "notFoundBody": "This agent's profile is not available.",
+      "notFoundTitle": "Agent not found",
+      "rating": "Rating",
+      "reviewVerified": "Verified",
       "reviews": "Reviews",
+      "sendMessage": "Send message",
       "specializations": "Specializations",
-      "verified": "Verified agent"
+      "totalListings": "Total listings",
+      "verified": "Verified agent",
+      "views": "Views"
     },
     "careers": {
       "hero": {
@@ -611,11 +637,59 @@
       }
     },
     "report": {
-      "submit": "Submit report",
+      "h1": "Report a listing",
       "subtitle": "Help us keep the portal trustworthy — tell us what's wrong.",
-      "success": "Report submitted",
       "title": "Report a listing",
-      "h1": "Report a listing"
+      "submit": "Submit report",
+      "submitting": "Submitting…",
+      "success": "Report submitted",
+      "problemLegend": "Reason for the report",
+      "problems": {
+        "fraudulent_listing": {
+          "label": "Suspected fraud",
+          "description": "Suspicious listing, request for upfront payment, fake agent identity"
+        },
+        "price_manipulation": {
+          "label": "Incorrect price",
+          "description": "The price doesn't match reality or is intended to mislead"
+        },
+        "incorrect_information": {
+          "label": "Fake photos",
+          "description": "The photos don't belong to this property"
+        },
+        "duplicate_listing": {
+          "label": "Duplicate listing",
+          "description": "The same property is advertised multiple times"
+        },
+        "already_sold": {
+          "label": "Sold / no longer available",
+          "description": "The property is already sold or rented and the listing wasn't removed"
+        },
+        "other": {
+          "label": "Other reason",
+          "description": "Another technical error or platform rules violation"
+        }
+      },
+      "listingRefLabel": "Listing link (URL or ID)",
+      "listingRefPlaceholder": "e.g. https://rlt.sk/listings/ba-byt-3i or #12345",
+      "descriptionLabel": "Problem description",
+      "descriptionPlaceholder": "Describe why you're reporting this listing. The more detail you provide, the faster we can review it.",
+      "attachmentsLabel": "Attachments (coming soon)",
+      "attachmentsComingSoon": "Adding attachments will be available soon",
+      "attachmentsHint": "Uploading screenshots isn't available yet — please describe the evidence in the description above. We're working on it.",
+      "gdpr": {
+        "label": "I agree to the processing of personal data for the purpose of reviewing my report in accordance with the {privacyLink}.",
+        "privacyLink": "Privacy Policy"
+      },
+      "successTitle": "Report submitted",
+      "successBody": "We've received your report. Our team will review it within 24 hours. Thank you for helping keep the portal safe.",
+      "referenceLabel": "Reference number",
+      "referenceHint": "Quote it in any further communication — it helps us locate your report quickly.",
+      "backToListings": "Back to listings",
+      "errorNoListing": "We couldn't determine which listing the report concerns. Open the report from a listing's detail page or paste the listing link or ID above.",
+      "errorRateLimit": "Too many reports from this device. Please try again in a moment.",
+      "errorNotFound": "Listing not found. Check the link or ID and try again.",
+      "errorGeneric": "The report couldn't be submitted. Please try again."
     },
     "security": {
       "reportCta": "Report a listing",
@@ -1292,5 +1366,17 @@
     "errorAreaNegative": "Area must not be negative",
     "errorRoomsInvalid": "Rooms must be a valid number",
     "errorRoomsNegative": "Rooms must not be negative"
+  },
+  "realtor": {
+    "errorNetwork": "Network error. Please try again.",
+    "errorMalformed": "The server returned an unexpected response. Please try again.",
+    "errorRequestFailed": "Request failed ({status}). Please try again.",
+    "errorLoadProfile": "Could not load profile.",
+    "errorSaveProfile": "Could not save profile.",
+    "errorNameRequired": "Name is required.",
+    "errorLoadListing": "Could not load listing.",
+    "errorSaveListing": "Could not save listing.",
+    "errorCreateListing": "Could not create listing. Please try again.",
+    "errorMissingListingId": "Missing listing ID."
   }
 }

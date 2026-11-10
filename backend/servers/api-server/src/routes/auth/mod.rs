@@ -115,6 +115,7 @@ pub fn router() -> Router<AppState> {
         .route("/logout", post(logout))
         .route("/forgot-password", post(forgot_password))
         .route("/reset-password", post(reset_password))
+        .route("/password/change", post(change_password))
         // Session management (Story 1.5)
         .route("/sessions", get(list_sessions))
         .route("/sessions/revoke", post(revoke_session))
@@ -1006,12 +1007,6 @@ pub async fn refresh_token(
         ));
     }
 
-    // Token rotation: revoke the old token
-    if let Err(e) = state.session_repo.revoke_token(stored_token.id).await {
-        tracing::error!(error = %e, "Failed to revoke old refresh token");
-        // Continue anyway - better to issue new token than fail
-    }
-
     // Generate new access token, re-embedding principal_kind (Phase 6 C17).
     let access_token = match state.jwt_service.generate_access_token_with_kind(
         user.id,
@@ -1048,7 +1043,19 @@ pub async fn refresh_token(
         }
     };
 
-    // Store new refresh token
+    // Token rotation — atomic revoke-old + issue-new.
+    //
+    // `rotate_refresh_token` revokes the presented token and inserts its
+    // replacement in a single transaction, with the revoke acting as a
+    // compare-and-swap. Previously these were two separate best-effort calls:
+    // the revoke error was swallowed ("continue anyway") and a new token was
+    // stored regardless, so a revoke failure left the OLD refresh token live
+    // alongside the NEW one — two valid tokens from one rotation. Now:
+    //   * revoke fails (zero rows) => `Ok(None)` => this token was already
+    //     rotated/revoked by a concurrent request; we reject instead of
+    //     minting a second token.
+    //   * DB error => `Err` => surface 500 without issuing anything.
+    //   * success => `Ok(Some)` => exactly one new token exists.
     use db::models::CreateRefreshToken;
     let create_token = CreateRefreshToken {
         user_id: user.id,
@@ -1059,13 +1066,32 @@ pub async fn refresh_token(
         device_info: stored_token.device_info.clone(),
     };
 
-    if let Err(e) = state.session_repo.create_refresh_token(create_token).await {
-        tracing::error!(error = %e, "Failed to store new refresh token");
-        return Err(err_response(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "DATABASE_ERROR",
-            "Failed to create session",
-        ));
+    match state
+        .session_repo
+        .rotate_refresh_token(stored_token.id, create_token)
+        .await
+    {
+        Ok(Some(_)) => {}
+        Ok(None) => {
+            tracing::warn!(
+                user_id = %user.id,
+                token_id = %stored_token.id,
+                "Refresh token already revoked at rotation time (concurrent rotation); refusing to issue a second token"
+            );
+            return Err(err_response(
+                StatusCode::UNAUTHORIZED,
+                "TOKEN_REVOKED",
+                "This session has been revoked",
+            ));
+        }
+        Err(e) => {
+            tracing::error!(error = %e, "Failed to rotate refresh token");
+            return Err(err_response(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "DATABASE_ERROR",
+                "Failed to create session",
+            ));
+        }
     }
 
     tracing::info!(user_id = %user.id, "Token refreshed successfully");

@@ -31,11 +31,13 @@
 //! - [`alerts`]       — alert CRUD, resolve/acknowledge & counts
 //! - [`correlations`] — sensor-fault correlation CRUD & lookups
 //! - [`dashboard`]    — organization dashboard aggregate
+//! - [`scope`]        — organization-scope checks for by-id resources
 
 mod alerts;
 mod correlations;
 mod dashboard;
 mod readings;
+mod scope;
 mod sensors;
 mod thresholds;
 

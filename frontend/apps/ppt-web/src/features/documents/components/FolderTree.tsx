@@ -98,7 +98,7 @@ function FolderNode({
           className={`folder-row__toggle${hasChildren ? '' : ' folder-row__toggle--leaf'}`}
           onClick={() => setExpanded((p) => !p)}
           aria-expanded={expanded}
-          aria-label={expanded ? 'Zbaliť priečinok' : 'Rozbaliť priečinok'}
+          aria-label={expanded ? t('documents.folder.collapse') : t('documents.folder.expand')}
           tabIndex={hasChildren ? 0 : -1}
         >
           {hasChildren ? (
@@ -159,7 +159,10 @@ function FolderNode({
 
         {/* Document count badge */}
         {document_count > 0 && (
-          <span className="folder-row__count" aria-label={`${document_count} dokumentov`}>
+          <span
+            className="folder-row__count"
+            aria-label={t('documents.folder.documentCount', { count: document_count })}
+          >
             {document_count}
           </span>
         )}
@@ -460,11 +463,8 @@ export function FolderTree({ buildingId, selectedFolderId, onSelectFolder }: Fol
       } catch (err) {
         showToast({
           type: 'error',
-          title: t('documents.folder.renameError', 'Rename failed'),
-          message:
-            err instanceof Error
-              ? err.message
-              : t('documents.folder.renameErrorMessage', 'Failed to rename folder'),
+          title: t('documents.folder.renameError'),
+          message: err instanceof Error ? err.message : t('documents.folder.renameErrorMessage'),
         });
       }
     },
@@ -484,11 +484,8 @@ export function FolderTree({ buildingId, selectedFolderId, onSelectFolder }: Fol
       } catch (err) {
         showToast({
           type: 'error',
-          title: t('documents.folder.deleteError', 'Delete failed'),
-          message:
-            err instanceof Error
-              ? err.message
-              : t('documents.folder.deleteErrorMessage', 'Failed to delete folder'),
+          title: t('documents.folder.deleteError'),
+          message: err instanceof Error ? err.message : t('documents.folder.deleteErrorMessage'),
         });
       } finally {
         setDeleteTarget(null);
@@ -513,11 +510,8 @@ export function FolderTree({ buildingId, selectedFolderId, onSelectFolder }: Fol
       } catch (err) {
         showToast({
           type: 'error',
-          title: t('documents.folder.createError', 'Create failed'),
-          message:
-            err instanceof Error
-              ? err.message
-              : t('documents.folder.createErrorMessage', 'Failed to create folder'),
+          title: t('documents.folder.createError'),
+          message: err instanceof Error ? err.message : t('documents.folder.createErrorMessage'),
         });
       } finally {
         setNewFolder(null);

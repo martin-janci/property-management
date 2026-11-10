@@ -844,6 +844,155 @@ if [ -x "$MNGATE" ]; then
 fi
 echo
 
+# --- T32b: Tier-1d signal-sink promotion wiring (issue #3357 part 2) --------
+#   The Tier-1d generator writes findings to .research/signals/*tier1d*.json.
+#   Before the fix NO tier read that sink, so every finding was orphaned and the
+#   buffer stayed starved with 0 claimed. signals-promote.sh is the reader that
+#   closes the loop — deduped + mobile-native-gated. Assert the helper, its
+#   smoke test, and the prompt wiring are all present so the sink can't silently
+#   go orphaned again.
+echo "T32b Tier-1d signal-sink promotion: helper present + smoke test + prompt wiring (#3357)"
+SPROMOTE="${SPROMOTE:-.research/signals-promote.sh}"
+if [ -x "$SPROMOTE" ]; then note "signals-promote.sh present + executable"
+else fail "signals-promote.sh missing or not executable ($SPROMOTE)"; fi
+if [ -x ".research/test-signals-promote.sh" ]; then note "test-signals-promote.sh present + executable"
+else fail "test-signals-promote.sh missing or not executable"; fi
+if [ -f "$PROMPT" ]; then
+  grep -q 'signals-promote.sh' "$PROMPT" && note "prompt wires Tier-1d signals-promote step" || fail "prompt missing signals-promote wiring"
+fi
+echo
+
+# --- T33: quarantined-row recovery path (issue #3357) ----------------------
+# Covers the quarantine SEMI-TERMINAL recovery path end-to-end, deterministic
+# and offline via an inline fixture (no network, no coupling to live state) so a
+# #3357-class stall FAILS CI instead of silently queueing. Asserts three things
+# the dispatcher-prompt.md quarantine semantics guarantee:
+#   (a) a `quarantined` row is EXCLUDED from the WIP count AND from claim
+#       selection — its stem lands in active_stems so a suffix-variant slug
+#       (`<id>-v2`) can't be claimed in parallel (Phase 3 dedup + throttle;
+#       dispatcher-prompt.md lines ~197-199 and ~1290-1314);
+#   (b) the operator un-quarantine flip quarantined -> review yields a
+#       SCHEMA-VALID `review` row (T2 core fields + status enum + auto-impl/
+#       branch (T7) + monotonic status_changed_at<=last_updated (T8));
+#   (c) the Phase 2 quarantine-exit SLA (quarantined_at older than
+#       DISPATCHER_QUARANTINE_SLA_DAYS, default 7) drives quarantined -> failed,
+#       a valid TERMINAL transition (state machine line ~188) whose row is
+#       schema-valid and archive-eligible (T18/T19). A row stuck past the SLA
+#       therefore exits to `failed` rather than holding its stem hostage.
+echo "T33 quarantined-row recovery path (issue #3357; inline fixture)"
+T33_SLA_DAYS="${DISPATCHER_QUARANTINE_SLA_DAYS:-7}"
+T33_NOW="2026-07-20T00:00:00Z"            # fixed clock -> deterministic age math
+T33_FIX="$(mktemp "${TMPDIR:-/tmp}/dispatcher-selftest-t33.XXXXXX.json")"
+# Stuck quarantined row: quarantined_at is 19 days before T33_NOW (> default
+# SLA of 7) — the #3357 shape. Satisfies T23 (quarantined_at + fix_rounds>=3).
+cat >"$T33_FIX" <<'T33EOF'
+{
+  "generated": "2026-07-20T00:00:00Z",
+  "assignments": [
+    {
+      "task_id": "q-stuck-3357",
+      "branch": "auto-impl/q-stuck-3357",
+      "status": "quarantined",
+      "claimed_at": "2026-06-01T00:00:00Z",
+      "last_updated": "2026-07-01T00:00:00Z",
+      "status_changed_at": "2026-07-01T00:00:00Z",
+      "quarantined_at": "2026-07-01T00:00:00Z",
+      "quarantine_reason": "fix_rounds=3 exhausted; verdict still changes",
+      "fix_rounds": 3,
+      "pr_number": 3357
+    },
+    {
+      "task_id": "wip-in-progress",
+      "branch": "auto-impl/wip-in-progress",
+      "status": "in-progress",
+      "claimed_at": "2026-07-19T00:00:00Z",
+      "last_updated": "2026-07-19T00:00:00Z",
+      "status_changed_at": "2026-07-19T00:00:00Z"
+    },
+    {
+      "task_id": "wip-review",
+      "branch": "auto-impl/wip-review",
+      "status": "review",
+      "claimed_at": "2026-07-18T00:00:00Z",
+      "last_updated": "2026-07-19T00:00:00Z",
+      "status_changed_at": "2026-07-18T00:00:00Z"
+    }
+  ]
+}
+T33EOF
+
+# (a1) WIP (in-progress|review) must EXCLUDE the quarantined row.
+T33_WIP=$(jq '[.assignments[] | select(.status=="in-progress" or .status=="review")] | length' "$T33_FIX")
+T33_QN=$(jq '[.assignments[] | select(.status=="quarantined")] | length' "$T33_FIX")
+if [ "$T33_WIP" = "2" ] && [ "$T33_QN" = "1" ]; then
+  note "quarantined row excluded from WIP (WIP=$T33_WIP, quarantined=$T33_QN)"
+else
+  fail "WIP count must exclude quarantined (got WIP=$T33_WIP quarantined=$T33_QN; expected 2/1)"
+fi
+
+# (a2) The quarantined stem blocks a suffix-variant claim. active_stems includes
+# quarantined (dispatcher-prompt.md line ~1290); a candidate `q-stuck-3357-v2`
+# shares that stem and must be rejected at claim time.
+T33_STEMS=$(jq -c '
+  def stem: sub("^(auto-impl|impl)/";"") | sub("-(impl|fix|v2|retry|followup|wip)[0-9]*$";"");
+  [.assignments[]
+    | select(.status=="in-progress" or .status=="review" or .status=="quarantined")
+    | (.task_id | stem)] | unique' "$T33_FIX")
+T33_BLOCKED=$(jq -n --argjson stems "$T33_STEMS" '
+  def stem: sub("-(impl|fix|v2|retry|followup|wip)[0-9]*$";"");
+  (("q-stuck-3357-v2" | stem) as $s | ($stems | index($s)) != null)')
+if [ "$T33_BLOCKED" = "true" ]; then
+  note "quarantined stem blocks a suffix-variant claim (q-stuck-3357-v2 excluded)"
+else
+  fail "quarantined stem did NOT block suffix-variant claim (active_stems=$T33_STEMS)"
+fi
+
+# (b) operator un-quarantine: quarantined -> review must produce a schema-valid
+# `review` row (T2 + enum + T7 branch + T8 monotonic ts).
+T33_FLIPPED=$(jq -c '.assignments[] | select(.task_id=="q-stuck-3357")
+  | .status="review" | .status_changed_at=$n | .last_updated=$n' \
+  --arg n "$T33_NOW" "$T33_FIX")
+T33_FLIP_OK=$(jq -n --argjson r "$T33_FLIPPED" '
+  ($r.status == "review")
+  and ($r.status | IN("in-progress","review","merged","failed","done","quarantined"))
+  and ($r.task_id != null and $r.branch != null and $r.status != null
+       and $r.claimed_at != null and $r.last_updated != null and $r.status_changed_at != null)
+  and (($r.branch // "") | startswith("auto-impl/"))
+  and ($r.status_changed_at <= $r.last_updated)')
+if [ "$T33_FLIP_OK" = "true" ]; then
+  note "quarantined -> review operator-flip is schema-valid"
+else
+  fail "quarantined -> review flip produced an invalid row: $T33_FLIPPED"
+fi
+
+# (c) quarantine-exit SLA: quarantined_at older than SLA days -> failed. First
+# confirm the SLA predicate fires for the stuck row, then confirm the resulting
+# `failed` row is schema-valid + terminal (archive-eligible per T18/T19).
+T33_QAT=$(jq -r '.assignments[] | select(.task_id=="q-stuck-3357") | .quarantined_at' "$T33_FIX")
+T33_AGE_DAYS=$(( ( $(date -u -d "$T33_NOW" +%s) - $(date -u -d "$T33_QAT" +%s) ) / 86400 ))
+if [ "$T33_AGE_DAYS" -gt "$T33_SLA_DAYS" ]; then
+  note "quarantine-exit SLA fires (age=${T33_AGE_DAYS}d > ${T33_SLA_DAYS}d)"
+else
+  fail "quarantine-exit SLA did not fire (age=${T33_AGE_DAYS}d, SLA=${T33_SLA_DAYS}d)"
+fi
+T33_FAILED=$(jq -c '.assignments[] | select(.task_id=="q-stuck-3357")
+  | .status="failed" | .status_changed_at=$n | .last_updated=$n' \
+  --arg n "$T33_NOW" "$T33_FIX")
+T33_FAIL_OK=$(jq -n --argjson r "$T33_FAILED" '
+  ($r.status == "failed")
+  and ($r.status | IN("in-progress","review","merged","failed","done","quarantined"))
+  and (["merged","failed","done"] | index($r.status)) != null      # terminal -> archive-eligible
+  and ($r.task_id != null and $r.branch != null
+       and $r.claimed_at != null and $r.last_updated != null and $r.status_changed_at != null)
+  and ($r.status_changed_at <= $r.last_updated)')
+if [ "$T33_FAIL_OK" = "true" ]; then
+  note "quarantine-exit SLA -> failed is schema-valid + terminal"
+else
+  fail "quarantined -> failed SLA transition produced an invalid row: $T33_FAILED"
+fi
+rm -f "$T33_FIX"
+echo
+
 # --- Summary ---------------------------------------------------------------
 if [ "$FAIL" = "0" ]; then
   echo "==> dispatcher-self-test: PASS"

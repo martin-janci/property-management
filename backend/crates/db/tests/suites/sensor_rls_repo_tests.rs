@@ -162,7 +162,7 @@ async fn sensors_force_rls_requires_context_and_blocks_cross_tenant(pool: PgPool
             .expect("set role");
 
         let no_ctx = repo
-            .find_by_id(&mut *conn, sensor_a)
+            .find_by_id(&mut *conn, org_a, sensor_a)
             .await
             .expect("find_by_id (no context)");
         assert!(
@@ -187,7 +187,7 @@ async fn sensors_force_rls_requires_context_and_blocks_cross_tenant(pool: PgPool
             .expect("set role");
 
         let own = repo
-            .find_by_id(&mut *conn, sensor_a)
+            .find_by_id(&mut *conn, org_a, sensor_a)
             .await
             .expect("find_by_id (org-A own)");
         assert_eq!(
@@ -197,7 +197,9 @@ async fn sensors_force_rls_requires_context_and_blocks_cross_tenant(pool: PgPool
         );
 
         let cross = repo
-            .find_by_id(&mut *conn, sensor_b)
+            // Pass org B as the explicit filter so only RLS can hide the row:
+            // this assertion is about the FORCE policy, not the SQL predicate.
+            .find_by_id(&mut *conn, org_b, sensor_b)
             .await
             .expect("find_by_id (org-B cross-tenant)");
         assert!(

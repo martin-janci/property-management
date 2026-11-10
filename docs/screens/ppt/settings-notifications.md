@@ -68,6 +68,10 @@ Source: `backend/servers/api-server/src/routes/notification_preferences.rs`,
   (`/settings/notifications/advanced`, Epic 40) and are out of scope for this screen-map.
 
 ## Agent Log
+
+<!-- newest entries on top -->
+
+- 2026-11-05 — agent: screen-map-drift-pr-3244-ppt — reconcile i18n drift from PR #3244 (`fix(ppt-web): localize faults, news, settings and error pages`). `NotificationSettingsPage`, `ChannelToggle` and `DisableAllWarningDialog` moved hardcoded English into react-i18next across all 6 locales — channel labels/descriptions, the disable-all warning dialog, the load/update error copy and the "last updated" line. i18n only — no route/component/endpoint/status change.
 - 2026-06-28 — agent: 8a-3-notification-preference-sync — verify-first coverage gap. Created
   the missing screen-map for the orphan Epic 8A route `/settings/notifications`; recorded
   AC-1 shipped, AC-2/AC-3 deferred. No code change — feature was already on dev.

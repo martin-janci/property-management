@@ -1,7 +1,7 @@
 //! Document intelligence routes — OCR, classification, search, summarization (Epics 28, 92).
 
 use crate::state::AppState;
-use api_core::{extractors::RlsConnection, AuthUser, TenantExtractor};
+use api_core::{extractors::RlsConnection, AuthUser, ValidatedTenantExtractor};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -60,7 +60,7 @@ pub fn router() -> Router<AppState> {
 async fn reprocess_ocr(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<OcrReprocessResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -139,7 +139,7 @@ async fn reprocess_ocr(
 async fn search_documents(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Json(req): Json<SearchDocumentsRequest>,
 ) -> Result<Json<DocumentSearchResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -214,7 +214,7 @@ async fn search_documents(
 async fn get_classification(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ClassificationResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -281,7 +281,7 @@ async fn get_classification(
 async fn submit_classification_feedback(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<ClassificationFeedbackRequest>,
@@ -316,6 +316,18 @@ async fn submit_classification_feedback(
         return Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse::new("NOT_FOUND", "Document not found")),
+        ));
+    }
+
+    // Feedback can rewrite the document's category, so only the document
+    // creator or a manager (DB-resolved role) may submit it.
+    if document.created_by != auth.user_id && !tenant.role.is_manager() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Only the document creator or managers can submit classification feedback",
+            )),
         ));
     }
 
@@ -378,7 +390,7 @@ async fn submit_classification_feedback(
 async fn get_classification_history(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ClassificationHistoryResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -450,7 +462,7 @@ async fn get_classification_history(
 async fn request_summarization(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<SummarizationResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -529,7 +541,7 @@ async fn request_summarization(
 async fn get_intelligence_stats(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Query(query): Query<IntelligenceStatsQuery>,
 ) -> Result<Json<IntelligenceStatsResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -601,7 +613,7 @@ pub struct MessageResponse {
 async fn ai_summarize_document(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<AiSummarizeRequest>,

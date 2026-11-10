@@ -42,6 +42,17 @@ impl UserRepository {
     }
 
     /// Find user by ID.
+    /// Whether `id` is an active platform principal according to
+    /// `users.principal_kind` (the database, not a token claim).
+    pub async fn is_active_platform_principal(&self, id: Uuid) -> Result<bool, SqlxError> {
+        sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS(SELECT 1 FROM users WHERE id = $1 AND principal_kind = 'platform' AND status = 'active')",
+        )
+        .bind(id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
     pub async fn find_by_id(&self, id: Uuid) -> Result<Option<User>, SqlxError> {
         let user = sqlx::query_as::<_, User>(
             r#"
@@ -651,5 +662,119 @@ impl UserRepository {
         .await?;
 
         Ok(result.rows_affected() > 0)
+    }
+
+    /// Execute GDPR Article 17 erasure for accounts whose grace period has
+    /// elapsed (`scheduled_deletion_at <= NOW()`). Gap audit R6 P1-5: before
+    /// this, `scheduled_deletion_at` was write-only and no account was ever
+    /// erased.
+    ///
+    /// The `users` row is anonymized rather than hard-deleted: dozens of
+    /// business tables (faults, votes, invoices, ...) reference `users(id)`
+    /// with `RESTRICT`, and those records must stay for the owners'
+    /// association. Erasing the personal data on the row and cutting every
+    /// access path has the same effect for the data subject:
+    ///
+    /// * email, name, phone and profile image are overwritten, the password
+    ///   hash is replaced by an unusable marker, status becomes `deleted`;
+    /// * refresh, OAuth, verification, reset and push tokens are revoked or
+    ///   dropped;
+    /// * organization memberships are set to `removed`, platform memberships
+    ///   revoked, and open unit-resident links ended today.
+    ///
+    /// Each account is processed in its own transaction (`FOR UPDATE SKIP
+    /// LOCKED`, so concurrent api-server replicas never double-process).
+    /// Returns the ids that were anonymized.
+    pub async fn anonymize_due_deletions(&self, limit: i64) -> Result<Vec<Uuid>, SqlxError> {
+        let due: Vec<(Uuid,)> = sqlx::query_as(
+            r#"
+            SELECT id FROM users
+            WHERE scheduled_deletion_at IS NOT NULL AND scheduled_deletion_at <= NOW()
+            ORDER BY scheduled_deletion_at
+            LIMIT $1
+            "#,
+        )
+        .bind(limit)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let mut done = Vec::with_capacity(due.len());
+        for (user_id,) in due {
+            if self.anonymize_user(user_id).await? {
+                done.push(user_id);
+            }
+        }
+        Ok(done)
+    }
+
+    /// Anonymize one account whose deletion is due. Returns `false` when the
+    /// row is locked by another worker or the deletion was cancelled in the
+    /// meantime.
+    async fn anonymize_user(&self, user_id: Uuid) -> Result<bool, SqlxError> {
+        let mut tx = self.pool.begin().await?;
+
+        // organization_members, user_memberships and device_push_tokens are
+        // FORCE RLS, and the scheduler has no request context, so run this
+        // transaction under the super-admin policy leg (same as tenant purge).
+        // `set_request_context` writes session GUCs; they are cleared again
+        // before COMMIT, and on any error the ROLLBACK reverts them, so the
+        // elevation never reaches the next borrower of this connection.
+        sqlx::query("SELECT set_request_context(NULL::uuid, NULL::uuid, TRUE)")
+            .execute(&mut *tx)
+            .await?;
+
+        let locked: Option<(Uuid,)> = sqlx::query_as(
+            r#"
+            SELECT id FROM users
+            WHERE id = $1 AND scheduled_deletion_at IS NOT NULL AND scheduled_deletion_at <= NOW()
+            FOR UPDATE SKIP LOCKED
+            "#,
+        )
+        .bind(user_id)
+        .fetch_optional(&mut *tx)
+        .await?;
+        if locked.is_none() {
+            // Dropping `tx` rolls back, which also reverts the context GUCs.
+            return Ok(false);
+        }
+
+        sqlx::query(
+            r#"
+            UPDATE users SET
+                email = 'deleted-' || id::text || '@deleted.invalid',
+                name = 'Deleted user',
+                phone = NULL,
+                profile_image_url = NULL,
+                password_hash = '!erased',
+                status = 'deleted',
+                deleted_at = COALESCE(deleted_at, NOW()),
+                profile_visibility = 'hidden',
+                show_contact_info = false,
+                scheduled_deletion_at = NULL,
+                updated_at = NOW()
+            WHERE id = $1
+            "#,
+        )
+        .bind(user_id)
+        .execute(&mut *tx)
+        .await?;
+
+        for stmt in [
+            "UPDATE refresh_tokens SET revoked_at = NOW() WHERE user_id = $1 AND revoked_at IS NULL",
+            "UPDATE oauth_access_tokens SET revoked_at = NOW() WHERE user_id = $1 AND revoked_at IS NULL",
+            "UPDATE oauth_refresh_tokens SET revoked_at = NOW() WHERE user_id = $1 AND revoked_at IS NULL",
+            "UPDATE user_memberships SET revoked_at = NOW() WHERE user_id = $1 AND revoked_at IS NULL",
+            "UPDATE organization_members SET status = 'removed', updated_at = NOW() WHERE user_id = $1 AND status <> 'removed'",
+            "UPDATE unit_residents SET end_date = GREATEST(start_date, CURRENT_DATE), updated_at = NOW() WHERE user_id = $1 AND (end_date IS NULL OR end_date > CURRENT_DATE)",
+            "DELETE FROM email_verification_tokens WHERE user_id = $1",
+            "DELETE FROM password_reset_tokens WHERE user_id = $1",
+            "DELETE FROM device_push_tokens WHERE user_id = $1",
+        ] {
+            sqlx::query(stmt).bind(user_id).execute(&mut *tx).await?;
+        }
+
+        crate::tenant_context::clear_request_context(&mut *tx).await?;
+        tx.commit().await?;
+        Ok(true)
     }
 }

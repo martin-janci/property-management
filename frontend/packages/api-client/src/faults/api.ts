@@ -2,9 +2,11 @@
  * Fault API client functions (Epic 4: Fault Reporting & Resolution).
  */
 
+import { createUploadUrl, deleteUploadedFile, uploadFileToPresignedUrl } from '../documents/api';
 import { authenticatedFetch } from '../lib/fetch';
 import type {
   AddCommentRequest,
+  AddFaultAttachmentRequest,
   AddWorkNoteRequest,
   AiSuggestionResponse,
   CreateFaultRequest,
@@ -17,6 +19,7 @@ import type {
   FaultStatistics,
   FaultSummary,
   FaultTimelineEntry,
+  MyFaultsQuery,
   ResolveFaultRequest,
   TriageFaultRequest,
   UpdateFaultRequest,
@@ -76,6 +79,23 @@ export async function listFaults(query: FaultListQuery = {}): Promise<FaultListR
   return fetchApi<FaultListResponse>(`${API_BASE}${queryString}`);
 }
 
+/**
+ * List the faults reported by the currently authenticated user.
+ *
+ * Hits `GET /api/v1/faults/my`, where the reporter filter is applied
+ * server-side (from the request principal) *before* `limit`. This is the
+ * correct primitive for "my faults" surfaces: it returns the user's own
+ * most-recent faults rather than filtering a capped, org-wide list on the
+ * client (which can hide a resident's faults behind newer third-party ones).
+ */
+export async function listMyFaults(query: MyFaultsQuery = {}): Promise<FaultListResponse> {
+  const queryString = buildQueryString({
+    limit: query.limit,
+    offset: query.offset,
+  });
+  return fetchApi<FaultListResponse>(`${API_BASE}/my${queryString}`);
+}
+
 /** Get fault by ID with full details */
 export async function getFault(id: string): Promise<FaultDetailResponse> {
   return fetchApi<FaultDetailResponse>(`${API_BASE}/${id}`);
@@ -97,11 +117,12 @@ export async function updateFault(id: string, data: UpdateFaultRequest): Promise
   });
 }
 
-/** Delete a fault */
-export async function deleteFault(id: string): Promise<void> {
-  await fetchApi<void>(`${API_BASE}/${id}`, {
-    method: 'DELETE',
-  });
+/**
+ * Withdraw a fault report that has not been triaged yet (reporter only).
+ * The server closes it with a "withdrawn by reporter" timeline note.
+ */
+export async function withdrawFault(id: string): Promise<void> {
+  await fetchApi<unknown>(`${API_BASE}/${id}/withdraw`, { method: 'POST' });
 }
 
 // ============================================================================
@@ -186,22 +207,39 @@ export async function listAttachments(faultId: string): Promise<FaultAttachment[
   return response.attachments;
 }
 
-/** Add an attachment to a fault */
+/**
+ * Upload a file and attach it to a fault (gap audit R6 P1-10).
+ *
+ * Same presigned flow as documents and the mobile app:
+ *   1. `POST /api/v1/documents/upload-url` → presigned PUT URL + org-scoped key;
+ *   2. PUT the bytes straight to storage;
+ *   3. `POST /api/v1/faults/{id}/attachments` with the key as `storage_url`.
+ * When step 3 fails the uploaded object is deleted again (best effort).
+ */
 export async function addAttachment(faultId: string, file: File): Promise<FaultAttachment> {
-  const formData = new FormData();
-  formData.append('file', file);
-
-  const response = await authenticatedFetch(`${API_BASE}/${faultId}/attachments`, {
-    method: 'POST',
-    body: formData,
+  const presigned = await createUploadUrl({
+    file_name: file.name,
+    mime_type: file.type,
+    size_bytes: file.size,
   });
+  await uploadFileToPresignedUrl(presigned.url, file, presigned.content_type);
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Upload failed' }));
-    throw new Error(error.message || `HTTP ${response.status}`);
+  const body: AddFaultAttachmentRequest = {
+    filename: presigned.file_key.split('/').pop() ?? file.name,
+    original_filename: file.name,
+    content_type: presigned.content_type,
+    size_bytes: file.size,
+    storage_url: presigned.file_key,
+  };
+  try {
+    return await fetchApi<FaultAttachment>(`${API_BASE}/${faultId}/attachments`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  } catch (err) {
+    await deleteUploadedFile(presigned.file_key).catch(() => undefined);
+    throw err;
   }
-
-  return response.json();
 }
 
 /** Delete an attachment from a fault */

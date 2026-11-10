@@ -1,0 +1,28 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-09",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "oldest-unreviewed (dispatcher tier1d, demand-driven; claimable buffer starved below floor=36 and dominated by structurally-unlandable mobile-native/KMP rows). Caller override: emit IMPLEMENTABLE cloud-verifiable vectors on NON-mobile-native code only. review_cursor among cloud-landable segments: api-core=2026-11-04, reality-server=2026-11-04, ppt-web-core=2026-11-04 (three-way tie, oldest), reality-web=2026-11-06, ppt-web-ui=2026-11-08, api-handlers=2026-11-09 (already reviewed earlier today). mobile-rn=2026-11-03 and mobile-native-kmp=2026-11-04 excluded per override (not cloud-verifiable). Tie broken to reality-server to diversify away from the api-handlers/api-core backend-handler work already emitted 2026-11-08/09, and because reality-server is a public-internet-facing surface (unauthenticated search, inquiries, reviews) that rewards a security-leaning read. Saturation check against backlog.json: open code-review-finding rows are mobile-native-kmp=2 and api-handlers=2 only; reality-server has 0 open rows — not saturated. Static review only (no compile/run): Rust + Security grep hit-list — unwrap()/expect() in non-test code, unsafe, todo!/unimplemented!/panic!, format!-into-sqlx (SQL injection), StatusCode::OK-on-error, IDOR/ownership scoping on favorites/saved-searches/compare, x-forwarded-for spoofing in rate-limit buckets, swallowed Results in background drainers, public review/inquiry validation. Discards (all verified benign): extractors/auth.rs:63 strip_prefix().unwrap() is guarded by the preceding starts_with(\"portal_session=\") (infallible); handlers/inquiries/mod.rs:274 chars().next().unwrap() is guarded by the cleaned.is_empty() early-return at L269; routes/listings.rs:700 format!-built SQL carries a documented sqlx::AssertSqlSafe SAFETY proof (two static literals, request input bound as $1/$2); state.rs panic!s are startup config-validation fail-fast on JWT_SECRET; favorites.rs / saved_searches.rs / compare.rs all scope every repo call and raw query by principal.user_id (compare.rs:106-107 even documents the H4 status-leak guard); routes/inquiries.rs:87 client_ip_bucket honours a configured trusted-proxy-hop count and is spoof-resistant (xff tests L991-1026); services/search_alert_drainer.rs:346 discards run_once()'s usize return but run_once logs every error branch internally (L365-368) and the drainer's cross-tenant fan-out is documented service-role-safe; agent_reviews.rs create_review is rating-bounded (1-5, L225), body-capped (MAX_REVIEW_BODY_LEN=5000), self-review-rejected, authenticated, and interaction-gated on a prior responded inquiry. The one finding below is the genuine gap that survived verification; the segment is otherwise notably mature.",
+  "experts_used": [
+    "rust",
+    "security"
+  ],
+  "findings_count": 1,
+  "signals": [
+    {
+      "id": "code-review-reality-server-articles-like-wildcard",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/articles.rs:158 — list_articles builds the article full-text filter as let search_pattern = query.search.as_ref().map(|s| format!(\"%{}%\", s)); and binds it (L190 / L206 .bind(&search_pattern)) into two ILIKE $2 predicates: `(a.title ILIKE $2 OR a.excerpt ILIKE $2)` on the list query and the matching COUNT(*) query. The user-controlled `query.search` string is wrapped in %...% but is NOT escaped for SQL LIKE metacharacters (`%`, `_`, and the `\\` escape char), and no `ESCAPE` clause is attached to the ILIKE.",
+        "Impact (correctness, not injection): because the pattern is a bound parameter there is no SQL-injection exposure, but every `%` or `_` a user types is interpreted as an ILIKE wildcard rather than a literal. Searching `100%` collapses to `%100%%` which matches any title containing `100` followed by anything (the trailing `%` is inert, but a mid-string `%` like `a%b` becomes 'a' <anything> 'b'); searching a bare `_` matches every article whose title/excerpt is non-empty; searching `_` or `%`-heavy strings turns a precise search into a near-match-all, and the inconsistency also skews the COUNT(*) total used for pagination. This is a user-facing search-correctness bug on the public reality-portal articles/blog endpoint (no auth required), low severity.",
+        "Landable backend-only fix: escape the three LIKE metacharacters in the user term before wrapping and declare the escape char, e.g. let escaped = s.replace('\\\\', \"\\\\\\\\\").replace('%', \"\\\\%\").replace('_', \"\\\\_\"); let search_pattern = format!(\"%{}%\", escaped); and change both predicates to `... ILIKE $2 ESCAPE '\\\\'`. Apply to both the list query (routes/articles.rs ~L188) and the COUNT(*) query (~L204) so the result set and the pagination total stay consistent. A shared helper (e.g. in util/) would also cover any sibling LIKE-search path added later. Confidence medium: static review only — the unescaped-wildcard flow is code-verified end-to-end (format! at L158 -> bind at L190/L206 -> ILIKE without ESCAPE), but no runtime query was executed."
+      ]
+    }
+  ]
+}

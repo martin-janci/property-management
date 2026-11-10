@@ -19,7 +19,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { Footer, Header } from '@/components/ui';
 import { getRealtorPublicProfile, getRealtorReviews, RealtorApiError } from '@/lib/realtor-api';
@@ -39,6 +39,7 @@ function formatMonthYear(iso: string | null | undefined, locale: string): string
 }
 
 export default function AgentProfilePage() {
+  const t = useTranslations('pages.agentProfile');
   const locale = useLocale();
   const params = useParams<{ id: string }>();
   const id = params?.id ?? '';
@@ -70,23 +71,23 @@ export default function AgentProfilePage() {
 
   // The public profile contract carries no display name (see realtor-api.ts),
   // so fall back to the tagline or a generic label — never a fabricated name.
-  const displayName = profile?.tagline?.trim() || 'Realitný maklér';
+  const displayName = profile?.tagline?.trim() || t('defaultName');
 
   const showEmail = !!(profile?.show_email && profile?.email_public);
   const showPhone = !!(profile?.show_phone && profile?.phone);
 
   const mailtoHref = useMemo(() => {
     if (!showEmail || !profile?.email_public) return null;
-    const subject = encodeURIComponent('Kontakt cez Reality Portal');
+    const subject = encodeURIComponent(t('mailtoSubject'));
     const body = encodeURIComponent(message);
     return `mailto:${profile.email_public}?subject=${subject}${body ? `&body=${body}` : ''}`;
-  }, [showEmail, profile?.email_public, message]);
+  }, [showEmail, profile?.email_public, message, t]);
 
   if (isLoading) {
     return (
       <div style={PAGE_BG}>
         <Header />
-        <main style={{ flex: 1, padding: 48, textAlign: 'center' }}>Načítavam…</main>
+        <main style={{ flex: 1, padding: 48, textAlign: 'center' }}>{t('loading')}</main>
         <Footer />
       </div>
     );
@@ -101,11 +102,9 @@ export default function AgentProfilePage() {
         <Header />
         <main style={{ flex: 1, padding: 48, textAlign: 'center' }}>
           <h1 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--ppt-fg-primary)' }}>
-            Maklér sa nenašiel
+            {t('notFoundTitle')}
           </h1>
-          <p style={{ color: 'var(--ppt-fg-secondary)', marginTop: 8 }}>
-            Profil tohto makléra nie je dostupný.
-          </p>
+          <p style={{ color: 'var(--ppt-fg-secondary)', marginTop: 8 }}>{t('notFoundBody')}</p>
         </main>
         <Footer />
       </div>
@@ -116,13 +115,13 @@ export default function AgentProfilePage() {
   const languages = profile.languages ?? [];
 
   const stats: { label: string; value: string | number }[] = [
-    { label: 'Aktívne inzeráty', value: profile.active_listings },
-    { label: 'Inzeráty celkom', value: profile.total_listings },
-    { label: 'Zobrazenia', value: profile.total_views },
+    { label: t('activeListings'), value: profile.active_listings },
+    { label: t('totalListings'), value: profile.total_listings },
+    { label: t('views'), value: profile.total_views },
   ];
   if (reviewCount > 0) {
     stats.push({
-      label: 'Hodnotenie',
+      label: t('rating'),
       value: `${avgRating != null ? avgRating.toFixed(1) : '—'} ★ (${reviewCount})`,
     });
   }
@@ -222,7 +221,7 @@ export default function AgentProfilePage() {
                         fontWeight: 600,
                       }}
                     >
-                      ✓ Overený maklér
+                      ✓ {t('verified')}
                     </span>
                   )}
                 </div>
@@ -234,7 +233,7 @@ export default function AgentProfilePage() {
                       fontSize: '0.9375rem',
                     }}
                   >
-                    {profile.experience_years} rokov skúseností
+                    {t('experience', { count: profile.experience_years })}
                   </div>
                 )}
               </div>
@@ -254,7 +253,7 @@ export default function AgentProfilePage() {
                   flexShrink: 0,
                 }}
               >
-                Kontaktovať
+                {t('contact')}
               </button>
             </div>
 
@@ -305,7 +304,7 @@ export default function AgentProfilePage() {
                     marginBottom: 12,
                   }}
                 >
-                  O makléri
+                  {t('about')}
                 </h2>
                 <p style={{ color: 'var(--ppt-fg-secondary)', lineHeight: 1.7 }}>{profile.bio}</p>
               </section>
@@ -321,10 +320,10 @@ export default function AgentProfilePage() {
                   marginBottom: 16,
                 }}
               >
-                Hodnotenia ({reviewCount})
+                {t('reviews')} ({reviewCount})
               </h2>
               {reviews.length === 0 ? (
-                <p style={{ color: 'var(--ppt-fg-secondary)' }}>Zatiaľ žiadne hodnotenia.</p>
+                <p style={{ color: 'var(--ppt-fg-secondary)' }}>{t('noReviews')}</p>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   {reviews.map((review) => (
@@ -358,7 +357,7 @@ export default function AgentProfilePage() {
                                 color: 'var(--ppt-color-success-dark, #047857)',
                               }}
                             >
-                              ✓ Overené
+                              ✓ {t('reviewVerified')}
                             </span>
                           )}
                         </div>
@@ -419,7 +418,7 @@ export default function AgentProfilePage() {
                   margin: '0 0 16px',
                 }}
               >
-                Kontaktné údaje
+                {t('contactDetails')}
               </h2>
               {!showPhone && !showEmail ? (
                 <p
@@ -429,7 +428,7 @@ export default function AgentProfilePage() {
                     marginBottom: 16,
                   }}
                 >
-                  Maklér nezverejnil kontaktné údaje.
+                  {t('noContact')}
                 </p>
               ) : (
                 <div
@@ -477,7 +476,7 @@ export default function AgentProfilePage() {
                     marginBottom: 6,
                   }}
                 >
-                  Licencia: {profile.license_number}
+                  {t('license', { number: profile.license_number })}
                 </div>
               )}
               <div
@@ -487,7 +486,7 @@ export default function AgentProfilePage() {
                   marginBottom: 16,
                 }}
               >
-                Člen od: {formatMonthYear(profile.created_at, locale)}
+                {t('memberSince', { date: formatMonthYear(profile.created_at, locale) })}
               </div>
 
               {specializations.length > 0 && (
@@ -500,7 +499,7 @@ export default function AgentProfilePage() {
                       marginBottom: 6,
                     }}
                   >
-                    Špecializácia
+                    {t('specializations')}
                   </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                     {specializations.map((s) => (
@@ -531,7 +530,7 @@ export default function AgentProfilePage() {
                       marginBottom: 6,
                     }}
                   >
-                    Jazyky
+                    {t('languages')}
                   </div>
                   <div style={{ fontSize: '0.875rem', color: 'var(--ppt-fg-secondary)' }}>
                     {languages.join(' · ')}
@@ -554,7 +553,7 @@ export default function AgentProfilePage() {
                     cursor: 'pointer',
                   }}
                 >
-                  Odoslať správu
+                  {t('sendMessage')}
                 </button>
               )}
             </div>
@@ -569,7 +568,7 @@ export default function AgentProfilePage() {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Kontaktovať makléra"
+          aria-label={t('modalAriaLabel')}
           style={{
             position: 'fixed',
             inset: 0,
@@ -601,14 +600,14 @@ export default function AgentProfilePage() {
                 margin: '0 0 20px',
               }}
             >
-              Kontaktovať {displayName}
+              {t('modalTitle', { name: displayName })}
             </h2>
 
             {showEmail ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <textarea
                   rows={5}
-                  placeholder="Dobrý deň, mám záujem o Vaše služby..."
+                  placeholder={t('modalPlaceholder')}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   style={{
@@ -629,7 +628,7 @@ export default function AgentProfilePage() {
                     margin: 0,
                   }}
                 >
-                  Správa sa otvorí vo vašom e-mailovom klientovi.
+                  {t('modalEmailHint')}
                 </p>
                 <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
                   <button
@@ -644,7 +643,7 @@ export default function AgentProfilePage() {
                       fontWeight: 600,
                     }}
                   >
-                    Zrušiť
+                    {t('modalCancel')}
                   </button>
                   <a
                     href={mailtoHref ?? '#'}
@@ -660,16 +659,14 @@ export default function AgentProfilePage() {
                       textDecoration: 'none',
                     }}
                   >
-                    Odoslať e-mail
+                    {t('modalSendEmail')}
                   </a>
                 </div>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <p style={{ color: 'var(--ppt-fg-secondary)', margin: 0, lineHeight: 1.6 }}>
-                  {showPhone
-                    ? 'Tohto makléra môžete kontaktovať telefonicky:'
-                    : 'Maklér momentálne nezverejnil kontaktné údaje.'}
+                  {showPhone ? t('modalPhoneIntro') : t('modalNoContact')}
                 </p>
                 {showPhone && (
                   <a
@@ -697,7 +694,7 @@ export default function AgentProfilePage() {
                       fontWeight: 600,
                     }}
                   >
-                    Zavrieť
+                    {t('modalClose')}
                   </button>
                 </div>
               </div>

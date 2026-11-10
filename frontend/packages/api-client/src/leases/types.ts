@@ -536,3 +536,215 @@ export interface CreateViolationRequest {
   evidence_description?: string;
   witness_count?: number;
 }
+
+// ============================================================================
+// Action payloads (payments, templates, screening, review, violation actions)
+// ============================================================================
+
+/**
+ * Body for `POST /api/v1/leases/{payment_id}/payments`
+ * (`db::models::lease::RecordPayment`). Marks an existing scheduled payment row
+ * as paid.
+ */
+export interface RecordLeasePaymentRequest {
+  /** Decimal amount actually paid. */
+  paid_amount: number | string;
+  payment_method: string;
+  payment_reference?: string;
+  /** RFC3339 timestamp; the server defaults to `NOW()` when omitted. */
+  paid_at?: string;
+}
+
+/**
+ * Body for `PUT /api/v1/leases/{id}` (`db::models::lease::UpdateLease`). Only
+ * these ancillary fields are editable; rent, dates and parties are fixed once
+ * a lease exists (use renew / amendments instead).
+ */
+export interface UpdateLeaseRequest {
+  landlord_address?: string;
+  tenant_phone?: string;
+  parking_spaces?: number;
+  storage_units?: number;
+  pets_allowed?: boolean;
+  /** Decimal amount. */
+  pet_deposit?: number | string;
+  max_occupants?: number;
+  smoking_allowed?: boolean;
+  notes?: string;
+}
+
+/** Backend `termination_reason` enum values. */
+export type LeaseTerminationReason =
+  | 'end_of_term'
+  | 'mutual_agreement'
+  | 'tenant_breach'
+  | 'landlord_breach'
+  | 'property_sale'
+  | 'renovation'
+  | 'other';
+
+/** Body for `POST /api/v1/leases/{id}/terminate` (`db::models::lease::TerminateLease`). */
+export interface TerminateLeaseRequest {
+  termination_reason: LeaseTerminationReason;
+  termination_notes?: string;
+  /** `YYYY-MM-DD`; the server uses `NOW()` when omitted. */
+  effective_date?: string;
+}
+
+/**
+ * Body for `POST /api/v1/leases/{id}/renew` (`db::models::lease::RenewLease`).
+ * The server creates a new `draft` lease starting the day after the current
+ * end date and marks the current one `renewed`.
+ */
+export interface RenewLeaseRequest {
+  /** `YYYY-MM-DD`. */
+  new_end_date: string;
+  /** Decimal amount; keeps the current rent when omitted. */
+  new_monthly_rent?: number | string;
+  /** Decimal amount; keeps the current deposit when omitted. */
+  new_security_deposit?: number | string;
+  term_months: number;
+  notes?: string;
+}
+
+/** Body for `POST /api/v1/leases/{id}/amendments` (`db::models::lease::CreateAmendment`). */
+export interface CreateLeaseAmendmentRequest {
+  title: string;
+  description?: string;
+  /** Free-form JSON describing the changed terms (required by the server). */
+  changes: Record<string, unknown>;
+  /** `YYYY-MM-DD`. */
+  effective_date: string;
+}
+
+/** Body for `POST /api/v1/leases/templates` (`CreateTemplateRequest`, flattened). */
+export interface CreateLeaseTemplateRequest {
+  organization_id: string;
+  name: string;
+  description?: string;
+  content_html: string;
+  content_variables?: unknown;
+  default_term_months?: number;
+  default_security_deposit_months?: number | string;
+  default_notice_period_days?: number;
+  clauses?: unknown;
+  is_default?: boolean;
+}
+
+/** Body for `PUT /api/v1/leases/templates/{id}` (`UpdateTemplateRequest`, flattened). */
+export interface UpdateLeaseTemplateRequest {
+  organization_id: string;
+  name?: string;
+  description?: string;
+  content_html?: string;
+  content_variables?: unknown;
+  default_term_months?: number;
+  default_security_deposit_months?: number | string;
+  default_notice_period_days?: number;
+  clauses?: unknown;
+  is_default?: boolean;
+  is_active?: boolean;
+}
+
+/** Screening types accepted by the `screening_type` Postgres enum. */
+export type ScreeningType =
+  | 'background_check'
+  | 'credit_check'
+  | 'reference_check'
+  | 'employment_verification'
+  | 'income_verification'
+  | 'rental_history';
+
+/** Body for `POST /api/v1/leases/applications/{id}/screening` (`InitiateScreeningRequest`). */
+export interface InitiateScreeningRequest {
+  organization_id: string;
+  screening_types: ScreeningType[];
+  provider?: string;
+}
+
+/** Body for `POST /api/v1/leases/applications/{id}/review` (`ReviewApplication`). */
+export interface ReviewApplicationRequest {
+  status: 'approved' | 'rejected';
+  decision_notes?: string;
+}
+
+/** Body for `PUT /api/v1/violations/{id}` (`db::models::violations::UpdateViolation`). */
+export interface UpdateViolationRequest {
+  severity?: ViolationSeverity;
+  status?: ViolationStatus;
+  assigned_to?: string;
+  resolution_notes?: string;
+  resolution_type?: string;
+}
+
+/** Body for `POST /api/v1/violations/{id}/appeals` (`CreateViolationAppeal`). */
+export interface CreateViolationAppealRequest {
+  enforcement_action_id?: string;
+  reason: string;
+  requested_outcome?: string;
+  supporting_evidence?: string;
+}
+
+/** `db::models::violations::ViolationAppeal`. Creating one flips the violation to `disputed`. */
+export interface ViolationAppeal {
+  id: string;
+  violation_id: string;
+  enforcement_action_id?: string | null;
+  organization_id: string;
+  appeal_number: string;
+  status: string;
+  reason: string;
+  requested_outcome?: string | null;
+  supporting_evidence?: string | null;
+  appellant_id: string;
+  decision?: string | null;
+  decision_date?: string | null;
+  submitted_at: string;
+  updated_at: string;
+}
+
+/** `db::models::violations::ViolationEvidence`. */
+export interface ViolationEvidence {
+  id: string;
+  violation_id: string;
+  file_name: string;
+  file_type: string;
+  file_size?: number | null;
+  /** Storage key of the uploaded object (from `POST /api/v1/documents/upload-url`). */
+  storage_path?: string | null;
+  description?: string | null;
+  captured_at?: string | null;
+  uploaded_by?: string | null;
+  created_at: string;
+}
+
+/** Body for `POST /api/v1/violations/{id}/evidence` (`CreateViolationEvidence`). */
+export interface CreateViolationEvidenceRequest {
+  file_name: string;
+  file_type: string;
+  file_size?: number;
+  storage_path?: string;
+  description?: string;
+  captured_at?: string;
+}
+
+// ============================================================================
+// Organization members (lease tenant picker)
+// ============================================================================
+
+/** `GET /api/v1/organizations/{id}/members` row (`MemberResponse`). */
+export interface OrganizationMember {
+  user_id: string;
+  name: string;
+  email: string;
+  role_id?: string | null;
+  role_name: string;
+  role_type: string;
+  joined_at?: string | null;
+}
+
+/** `GET /api/v1/organizations/{id}/members` (`ListMembersResponse`). */
+export interface OrganizationMembersResponse {
+  members: OrganizationMember[];
+  total: number;
+}

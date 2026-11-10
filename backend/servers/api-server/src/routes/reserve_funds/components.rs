@@ -7,9 +7,10 @@ use axum::{
     Json, Router,
 };
 use db::models::reserve_funds::{CreateFundComponent, FundComponent, UpdateFundComponent};
+use db::repositories::reserve_funds::FundChildKind;
 use uuid::Uuid;
 
-use super::shared::{insert_child_error, repo_error, ApiResult};
+use super::shared::{insert_child_error, repo_error, require_manager, ApiResult};
 use crate::state::AppState;
 
 /// Component sub-router.
@@ -49,6 +50,7 @@ async fn create_component(
     Path(fund_id): Path<Uuid>,
     Json(req): Json<CreateFundComponent>,
 ) -> ApiResult<Json<FundComponent>> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .reserve_fund_repo
@@ -64,10 +66,27 @@ async fn create_component(
 async fn update_component(
     State(state): State<AppState>,
     mut rls: RlsConnection,
-    Path((_fund_id, component_id)): Path<(Uuid, Uuid)>,
+    Path((fund_id, component_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateFundComponent>,
 ) -> ApiResult<Json<FundComponent>> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
+    // The child must belong to the fund named in the path (and the fund to
+    // the caller's org), not just to some fund of the org.
+    if let Err(e) = state
+        .reserve_fund_repo
+        .ensure_child_in_fund(
+            &mut **rls.conn(),
+            org_id,
+            fund_id,
+            FundChildKind::Component,
+            component_id,
+        )
+        .await
+    {
+        rls.release().await;
+        return Err(repo_error("update component", "Component not found", e));
+    }
     let out = state
         .reserve_fund_repo
         .update_component(&mut **rls.conn(), org_id, component_id, req)

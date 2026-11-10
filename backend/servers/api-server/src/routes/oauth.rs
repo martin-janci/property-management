@@ -721,7 +721,10 @@ pub async fn register_client(
             tracing::error!(error = %e, "Failed to register OAuth client");
             (
                 StatusCode::BAD_REQUEST,
-                Json(ErrorResponse::new("REGISTRATION_FAILED", e.to_string())),
+                Json(ErrorResponse::new(
+                    "REGISTRATION_FAILED",
+                    e.client_message(),
+                )),
             )
         })?;
 
@@ -871,7 +874,7 @@ pub async fn update_client(
             tracing::error!(error = %e, "Failed to update OAuth client");
             (
                 StatusCode::BAD_REQUEST,
-                Json(ErrorResponse::new("UPDATE_FAILED", e.to_string())),
+                Json(ErrorResponse::new("UPDATE_FAILED", e.client_message())),
             )
         })?;
 
@@ -951,7 +954,7 @@ pub async fn revoke_client(
         tracing::error!(error = %e, "Failed to revoke OAuth client");
         (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("REVOKE_FAILED", e.to_string())),
+            Json(ErrorResponse::new("REVOKE_FAILED", e.client_message())),
         )
     })?;
 
@@ -1021,7 +1024,7 @@ pub async fn regenerate_client_secret(
             tracing::error!(error = %e, "Failed to regenerate client secret");
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("REGENERATE_FAILED", e.to_string())),
+                Json(ErrorResponse::new("REGENERATE_FAILED", e.client_message())),
             )
         })?;
 

@@ -32,7 +32,8 @@ interface PersonMonthsPageProps {
   onYearChange: (year: number) => void;
   onMonthChange: (month: number) => void;
   onNavigateToUnit: (unitId: string) => void;
-  onNavigateToEdit: (unitId: string, year: number, month: number) => void;
+  /** Managers only; omitted for residents so the cards are read-only. */
+  onNavigateToEdit?: (unitId: string, year: number, month: number) => void;
   onNavigateToBulkEntry?: () => void;
   onExport?: (format: ExportFormat, year: number, month: number) => void;
   onBack: () => void;
@@ -233,7 +234,11 @@ export function PersonMonthsPage({
                 key={unit.unitId}
                 personMonth={convertToPersonMonth(unit)}
                 onView={() => onNavigateToUnit(unit.unitId)}
-                onEdit={() => onNavigateToEdit(unit.unitId, selectedYear, selectedMonth)}
+                onEdit={
+                  onNavigateToEdit
+                    ? () => onNavigateToEdit(unit.unitId, selectedYear, selectedMonth)
+                    : undefined
+                }
               />
             ))}
           </div>

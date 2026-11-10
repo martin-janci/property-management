@@ -53,6 +53,16 @@ async fn resident(pool: &PgPool, app: &TestApp, slug: &str) -> (String, Uuid) {
     (token, org)
 }
 
+/// Authenticate a technical_manager member of a fresh org. Returns (token, org_id).
+async fn technical_manager(pool: &PgPool, app: &TestApp, slug: &str) -> (String, Uuid) {
+    let org = seed_org(pool, slug).await;
+    let user = TestUser::new();
+    let (token, _r) = create_authenticated_user(app, &user).await;
+    let uid = user_id_for(pool, &user.email).await;
+    seed_membership(pool, org, uid, "technical_manager").await;
+    (token, org)
+}
+
 /// Authenticate a manager member of a fresh org. Returns (token, org_id).
 async fn manager(pool: &PgPool, app: &TestApp, slug: &str) -> (String, Uuid) {
     let org = seed_org(pool, slug).await;
@@ -202,5 +212,31 @@ async fn list_allows_own_org(pool: PgPool) {
         StatusCode::OK,
         "list with matching organization_id must be 200, got {}",
         resp.status
+    );
+}
+
+/// Round-5: building mutations use the shared `TenantRole::is_manager`
+/// semantics, which include `technical_manager` (level 75 < Manager 80, so a
+/// plain `has_role(Manager)` wrongly excluded it).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn technical_manager_can_create_building(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let (token, org) = technical_manager(&pool, &app, "tm-create").await;
+
+    let body = json!({
+        "organization_id": org,
+        "street": "Main 1", "city": "Bratislava", "postal_code": "81101",
+        "country": "SK", "total_floors": 1, "total_entrances": 1, "amenities": []
+    });
+    let resp = app
+        .execute(authed(Method::POST, "/api/v1/buildings", org, &token, body))
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::CREATED,
+        "create as technical_manager must succeed, got {}: {}",
+        resp.status,
+        resp.text()
     );
 }

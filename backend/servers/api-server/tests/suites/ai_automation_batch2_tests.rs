@@ -181,6 +181,106 @@ async fn test_get_automation_rule_not_found(pool: PgPool) {
     );
 }
 
+// ---------------------------------------------------------------------------
+// Automation — Org-wide execution monitoring role gate (follow-up #3314)
+// ---------------------------------------------------------------------------
+//
+// `list_executions` / `execution_stats` are org-scoped (NOT owner-scoped) reads
+// that expose org-wide automation internals (`trigger_data`, `actions_executed`,
+// `error_message`, per-rule names/types). PR #3253 shipped them gated only on
+// `enforce_org_match` (org membership). The sibling mutation handlers added
+// `require_manager` in #3287; these reads were not retrofitted. The pair below
+// pins both sides of the manager boundary: a below-Manager `resident` must get
+// 403, a `manager` must pass. If the gate is ever dropped, the resident test
+// fails (where a bare membership check would keep returning 200).
+
+/// Helper: register + log in a user and make them an active member of a fresh
+/// org with the given `organization_members.role_type`, plus an active
+/// `user_memberships` row (required for `RequestPrincipal.effective_org`).
+/// Returns `(token, org_id)`.
+async fn authed_member_with_role(
+    app: &TestApp,
+    user: &TestUser,
+    slug: &str,
+    role_type: &str,
+) -> (String, Uuid) {
+    let (token, _refresh) = create_authenticated_user(app, user).await;
+    let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
+        .bind(&user.email)
+        .fetch_one(&app.pool)
+        .await
+        .expect("resolve user id");
+    let org_id = seed_org(&app.pool, slug).await;
+    // `organization_members.role_type` drives `require_manager`.
+    seed_membership(&app.pool, org_id, user_id, role_type).await;
+    // `user_memberships` drives `RequestPrincipal.effective_org`.
+    seed_user_membership(&app.pool, user_id, org_id).await;
+    (token, org_id)
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_list_executions_forbidden_for_resident(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::default();
+    let (token, org_id) =
+        authed_member_with_role(&app, &user, "auto-exec-resident", "resident").await;
+
+    let uri = format!("/api/v1/automation/organizations/{org_id}/executions");
+    let resp = app
+        .execute(inject_tenant(
+            authed(&token, Method::GET, &uri, None, org_id),
+            org_id,
+        ))
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "a below-Manager resident must be refused org-wide execution list"
+    );
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_execution_stats_forbidden_for_resident(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::default();
+    let (token, org_id) =
+        authed_member_with_role(&app, &user, "auto-stats-resident", "resident").await;
+
+    let uri = format!("/api/v1/automation/organizations/{org_id}/executions/stats");
+    let resp = app
+        .execute(inject_tenant(
+            authed(&token, Method::GET, &uri, None, org_id),
+            org_id,
+        ))
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "a below-Manager resident must be refused org-wide execution stats"
+    );
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_list_executions_allowed_for_manager(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::default();
+    let (token, org_id) =
+        authed_member_with_role(&app, &user, "auto-exec-manager", "manager").await;
+
+    let uri = format!("/api/v1/automation/organizations/{org_id}/executions");
+    let resp = app
+        .execute(inject_tenant(
+            authed(&token, Method::GET, &uri, None, org_id),
+            org_id,
+        ))
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "a Manager-role member must be allowed the org-wide execution list"
+    );
+}
+
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_list_automation_templates_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -729,4 +829,108 @@ async fn test_list_builtin_workflow_templates_returns_200(pool: PgPool) {
         StatusCode::OK,
         "list builtin workflow templates"
     );
+}
+
+// ---------------------------------------------------------------------------
+// Automation — org-wide executions list + stats
+// ---------------------------------------------------------------------------
+
+async fn seed_rule(pool: &PgPool, org_id: Uuid, name: &str) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO workflow_automation_rules (organization_id, name, trigger_type) \
+         VALUES ($1, $2, 'schedule') RETURNING id",
+    )
+    .bind(org_id)
+    .bind(name)
+    .fetch_one(pool)
+    .await
+    .expect("seed rule")
+}
+
+async fn seed_log(pool: &PgPool, rule_id: Uuid, status: &str, duration_ms: Option<i32>) {
+    sqlx::query(
+        "INSERT INTO workflow_automation_logs (rule_id, status, duration_ms) VALUES ($1, $2, $3)",
+    )
+    .bind(rule_id)
+    .bind(status)
+    .bind(duration_ms)
+    .execute(pool)
+    .await
+    .expect("seed log");
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_list_automation_executions_scoped_to_org(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::default();
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "auto-exec-1").await;
+    let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
+        .bind(&user.email)
+        .fetch_one(&pool)
+        .await
+        .expect("resolve user id");
+    seed_user_membership(&pool, user_id, org_id).await;
+
+    let rule = seed_rule(&pool, org_id, "Mine").await;
+    seed_log(&pool, rule, "success", Some(100)).await;
+    seed_log(&pool, rule, "failed", Some(300)).await;
+    seed_log(&pool, rule, "running", None).await;
+
+    // Another org's execution must never show up.
+    let other_org = seed_org(&pool, "auto-exec-other").await;
+    let other_rule = seed_rule(&pool, other_org, "Theirs").await;
+    seed_log(&pool, other_rule, "success", Some(5)).await;
+
+    let uri = format!("/api/v1/automation/organizations/{org_id}/executions?limit=2");
+    let resp = app
+        .execute(inject_tenant(
+            authed(&token, Method::GET, &uri, None, org_id),
+            org_id,
+        ))
+        .await;
+    assert_eq!(resp.status, StatusCode::OK, "list executions");
+    let body = resp.json_value();
+    assert_eq!(body["total"], 3);
+    let items = body["items"].as_array().expect("items array");
+    assert_eq!(items.len(), 2, "limit applied");
+    assert!(items.iter().all(|i| i["rule_name"] == "Mine"));
+    assert_eq!(items[0]["trigger_type"], "schedule");
+
+    let uri = format!("/api/v1/automation/organizations/{org_id}/executions?status=failed");
+    let resp = app
+        .execute(inject_tenant(
+            authed(&token, Method::GET, &uri, None, org_id),
+            org_id,
+        ))
+        .await;
+    assert_eq!(resp.status, StatusCode::OK, "filtered executions");
+    let body = resp.json_value();
+    assert_eq!(body["total"], 1);
+
+    let uri = format!(
+        "/api/v1/automation/organizations/{org_id}/executions/stats?since=2000-01-01T00:00:00Z"
+    );
+    let resp = app
+        .execute(inject_tenant(
+            authed(&token, Method::GET, &uri, None, org_id),
+            org_id,
+        ))
+        .await;
+    assert_eq!(resp.status, StatusCode::OK, "execution stats");
+    let stats = resp.json_value();
+    assert_eq!(stats["total"], 3);
+    assert_eq!(stats["successful"], 1);
+    assert_eq!(stats["failed"], 1);
+    assert_eq!(stats["pending"], 1);
+    assert_eq!(stats["average_duration_ms"], 200.0);
+
+    // Path org that is not the caller's tenant → 404 (no enumeration).
+    let uri = format!("/api/v1/automation/organizations/{other_org}/executions");
+    let resp = app
+        .execute(inject_tenant(
+            authed(&token, Method::GET, &uri, None, org_id),
+            org_id,
+        ))
+        .await;
+    assert_eq!(resp.status, StatusCode::NOT_FOUND, "cross-org executions");
 }

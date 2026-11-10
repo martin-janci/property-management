@@ -24,6 +24,26 @@ pub struct ForgotPasswordResponse {
     pub message: String,
 }
 
+/// Decide how `forgot_password` reacts to the result of invalidating a user's
+/// outstanding password-reset tokens.
+///
+/// Issuing a fresh reset token while a previous one is still valid leaves
+/// multiple live reset links for the same account, so a DB failure while
+/// invalidating the old tokens must be surfaced (propagated as a 500) rather
+/// than swallowed — matching the error convention of the surrounding handlers
+/// and the sibling `/resend-verification` flow
+/// (`registration::invalidation_outcome`).
+fn invalidation_outcome(result: Result<u64, sqlx::Error>) -> Result<(), AuthError> {
+    result.map(|_| ()).map_err(|e| {
+        tracing::error!(error = %e, "Failed to invalidate old password reset tokens");
+        err_response(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "DATABASE_ERROR",
+            "Failed to process password reset request",
+        )
+    })
+}
+
 /// Forgot password endpoint - initiates password reset.
 #[utoipa::path(
     post,
@@ -59,11 +79,18 @@ pub async fn forgot_password(
     // Try to find user and send email
     match state.user_repo.find_by_email(&req.email).await {
         Ok(Some(user)) if user.status == "active" => {
-            // Invalidate any existing reset tokens for this user
-            let _ = state
-                .password_reset_repo
-                .invalidate_user_tokens(user.id)
-                .await;
+            // Invalidate any existing reset tokens for this user before issuing
+            // a new one. A DB failure here must NOT be swallowed: proceeding
+            // would mint a fresh reset token while leaving the prior token(s)
+            // valid, so the account would have multiple live reset links at
+            // once. Surface it as a 500 so the handler aborts instead of
+            // issuing a new token alongside stale ones.
+            invalidation_outcome(
+                state
+                    .password_reset_repo
+                    .invalidate_user_tokens(user.id)
+                    .await,
+            )?;
 
             // Generate reset token (1 hour expiry)
             let token = state.auth_service.generate_token();
@@ -327,4 +354,238 @@ pub async fn reset_password(
     Ok(Json(ResetPasswordResponse {
         message: "Password has been reset. Please log in with your new password.".to_string(),
     }))
+}
+
+// ==================== Change Password (Story 1.4, authenticated) ====================
+
+/// Change password request (authenticated user).
+#[derive(Debug, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ChangePasswordRequest {
+    /// The user's current password
+    pub current_password: String,
+    /// New password (min 8 characters, 1 uppercase, 1 number)
+    pub new_password: String,
+}
+
+/// Change password response.
+#[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ChangePasswordResponse {
+    /// Success message
+    pub message: String,
+}
+
+/// Change password endpoint for the signed-in user.
+///
+/// ppt-web's `/settings/password` page has always called this route, but it
+/// was never mounted, so every password change 404'd.
+#[utoipa::path(
+    post,
+    path = "/api/v1/auth/password/change",
+    tag = "Authentication",
+    request_body = ChangePasswordRequest,
+    responses(
+        (status = 200, description = "Password changed", body = ChangePasswordResponse),
+        (status = 400, description = "Password does not meet requirements", body = ErrorResponse),
+        (status = 401, description = "Not authenticated or current password wrong", body = ErrorResponse),
+        (status = 422, description = "Password violates org policy", body = ErrorResponse)
+    ),
+    security(("bearer_auth" = []))
+)]
+pub async fn change_password(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+    Json(req): Json<ChangePasswordRequest>,
+) -> Result<Json<ChangePasswordResponse>, AuthError> {
+    let user_id = authenticated_user_id(&state, &headers)?;
+
+    let user = match state.user_repo.find_by_id(user_id).await {
+        Ok(Some(user)) => user,
+        Ok(None) => {
+            return Err(err_response(
+                StatusCode::UNAUTHORIZED,
+                "INVALID_TOKEN",
+                "User account no longer exists",
+            ));
+        }
+        Err(e) => {
+            tracing::error!(error = %e, "Database error finding user");
+            return Err(err_response(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "DATABASE_ERROR",
+                "Failed to change password",
+            ));
+        }
+    };
+
+    if user.status != "active" {
+        return Err(err_response(
+            StatusCode::FORBIDDEN,
+            "ACCOUNT_INACTIVE",
+            "Cannot change password for an inactive account",
+        ));
+    }
+
+    // Verify the current password first. The same generic code as login is
+    // returned so the page maps it to "current password is wrong".
+    match state
+        .auth_service
+        .verify_password(&req.current_password, &user.password_hash)
+    {
+        Ok(true) => {}
+        Ok(false) => {
+            return Err(err_response(
+                StatusCode::UNAUTHORIZED,
+                "INVALID_CREDENTIALS",
+                "Current password is incorrect",
+            ));
+        }
+        Err(e) => {
+            tracing::error!(error = %e, "Password verification error");
+            return Err(err_response(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "INTERNAL_ERROR",
+                "Failed to verify password",
+            ));
+        }
+    }
+
+    if let Err(errors) = AuthService::validate_password(&req.new_password) {
+        let details: Vec<ValidationError> = errors
+            .into_iter()
+            .map(|msg| ValidationError {
+                field: "new_password".to_string(),
+                message: msg.clone(),
+                code: "INVALID_PASSWORD".to_string(),
+            })
+            .collect();
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(
+                ErrorResponse::new("WEAK_PASSWORD", "Password does not meet requirements")
+                    .with_details(details),
+            ),
+        ));
+    }
+
+    // Per-org password policy (same gate as reset_password).
+    let enforcer = crate::services::AuthPolicyEnforcer::new(state.db.clone());
+    if let Err(err) = enforcer
+        .check_password_change(user.id, &req.new_password)
+        .await
+    {
+        match err {
+            crate::services::AuthPolicyError::PasswordPolicy(violations) => {
+                let details: Vec<ValidationError> = violations
+                    .into_iter()
+                    .map(|msg| ValidationError {
+                        field: "new_password".to_string(),
+                        message: msg,
+                        code: "INVALID_PASSWORD".to_string(),
+                    })
+                    .collect();
+                return Err((
+                    StatusCode::UNPROCESSABLE_ENTITY,
+                    Json(
+                        ErrorResponse::new(
+                            "PASSWORD_POLICY_VIOLATION",
+                            "Password does not satisfy org policy",
+                        )
+                        .with_details(details),
+                    ),
+                ));
+            }
+            other => {
+                tracing::error!(error = %other, user_id = %user.id, "Password policy check failed");
+                return Err(err_response(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "AUTH_POLICY_ERROR",
+                    "Failed to validate password",
+                ));
+            }
+        }
+    }
+
+    let password_hash = match state.auth_service.hash_password(&req.new_password) {
+        Ok(hash) => hash,
+        Err(e) => {
+            tracing::error!(error = %e, "Failed to hash new password");
+            return Err(err_response(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "INTERNAL_ERROR",
+                "Failed to process password",
+            ));
+        }
+    };
+
+    if let Err(e) = state
+        .user_repo
+        .update_password(user.id, &password_hash)
+        .await
+    {
+        tracing::error!(error = %e, user_id = %user.id, "Failed to update password");
+        return Err(err_response(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "DATABASE_ERROR",
+            "Failed to update password",
+        ));
+    }
+
+    // A password change is a security event: any pre-existing session (incl. a
+    // potential attacker's, which is the usual reason a signed-in user changes
+    // their password) must be invalidated. Mirror `reset_password`'s teardown,
+    // but preserve the caller's OWN current session so the user is not
+    // immediately logged out of the tab they changed their password from —
+    // resolving the current session cookie-first / header-fallback the same way
+    // `revoke_all_sessions` does. Header/cookie-less callers (access-token only)
+    // resolve to `None`, which revokes every session — the safe default.
+    let except_id = resolve_current_session_id(&state, &headers, user.id).await;
+    if let Err(e) = state
+        .session_repo
+        .revoke_all_user_tokens(user.id, except_id)
+        .await
+    {
+        // Log-and-continue, consistent with `reset_password`: the password was
+        // already changed successfully, so surfacing a 500 here would mislead
+        // the caller into thinking the change failed.
+        tracing::error!(error = %e, user_id = %user.id, "Failed to revoke sessions after password change");
+    }
+
+    tracing::info!(user_id = %user.id, "Password changed by user");
+
+    Ok(Json(ChangePasswordResponse {
+        message: "Password has been changed.".to_string(),
+    }))
+}
+
+#[cfg(test)]
+mod forgot_password_token_tests {
+    use super::invalidation_outcome;
+    use axum::http::StatusCode;
+
+    /// Regression: a DB failure while invalidating a user's existing
+    /// password-reset tokens must NOT be silently swallowed. Before the fix
+    /// `forgot_password` did `let _ = state.password_reset_repo
+    /// .invalidate_user_tokens(..).await`, so a failed invalidation left the
+    /// prior reset token(s) valid while a brand-new token was issued — leaving
+    /// multiple live reset links for one account. The invalidation outcome must
+    /// surface as an error so the handler aborts instead of proceeding as if
+    /// invalidation succeeded.
+    #[test]
+    fn invalidation_db_error_is_surfaced_not_swallowed() {
+        let outcome = invalidation_outcome(Err(sqlx::Error::PoolClosed));
+        assert!(
+            outcome.is_err(),
+            "a DB failure while invalidating old reset tokens must be surfaced, not swallowed"
+        );
+        let (status, _) = outcome.unwrap_err();
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    /// A successful invalidation lets the handler proceed to issue the new token.
+    #[test]
+    fn invalidation_success_proceeds() {
+        assert!(invalidation_outcome(Ok(1)).is_ok());
+    }
 }

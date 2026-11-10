@@ -39,7 +39,7 @@ export function MediationSubmissionsPanel({
   onToastSuccess,
   onToastError,
 }: MediationSubmissionsPanelProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { data: submissions = [], isLoading } = useDisputeSubmissions(disputeId);
   const submitResponse = useSubmitResponse(disputeId);
 
@@ -48,7 +48,7 @@ export function MediationSubmissionsPanel({
   const [isVisibleToAll, setIsVisibleToAll] = useState(true);
 
   const formatDate = (iso: string) =>
-    new Date(iso).toLocaleString(undefined, {
+    new Date(iso).toLocaleString(i18n.language, {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',

@@ -762,11 +762,20 @@ impl ApiEcosystemRepository {
         Ok(keys)
     }
 
-    /// Revoke an API key.
+    /// Revoke an API key belonging to `developer_id`.
+    ///
+    /// SECURITY: the key must belong to `developer_id`, and — unless
+    /// `owner_user_id` is `None` (a platform operator that passed the
+    /// capability gate) — that developer account must be owned by
+    /// `owner_user_id`. Anything else (another developer's key, a key under a
+    /// developer id the caller does not own) affects no rows, so the handler
+    /// answers 404.
     pub async fn revoke_api_key<'e, E>(
         &self,
         executor: E,
+        developer_id: Uuid,
         key_id: Uuid,
+        owner_user_id: Option<Uuid>,
         revoked_by: Uuid,
     ) -> Result<bool, AppError>
     where
@@ -774,20 +783,61 @@ impl ApiEcosystemRepository {
     {
         let result = sqlx::query(
             r#"
-            UPDATE developer_api_keys SET
+            UPDATE developer_api_keys k SET
                 is_active = FALSE,
                 revoked_at = NOW(),
                 revoked_by = $2
-            WHERE id = $1 AND revoked_at IS NULL
+            WHERE k.id = $1
+              AND k.developer_id = $3
+              AND k.revoked_at IS NULL
+              AND EXISTS (
+                  SELECT 1 FROM developer_accounts d
+                  WHERE d.id = k.developer_id
+                    AND ($4::uuid IS NULL OR d.user_id = $4)
+              )
             "#,
         )
         .bind(key_id)
         .bind(revoked_by)
+        .bind(developer_id)
+        .bind(owner_user_id)
         .execute(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
         Ok(result.rows_affected() > 0)
+    }
+
+    /// Fetch an active API key of `developer_id`, applying the same ownership
+    /// rule as [`Self::revoke_api_key`]. `None` when the key is missing,
+    /// revoked, belongs to another developer, or the developer account is not
+    /// owned by `owner_user_id`.
+    pub async fn find_owned_developer_api_key<'e, E>(
+        &self,
+        executor: E,
+        developer_id: Uuid,
+        key_id: Uuid,
+        owner_user_id: Option<Uuid>,
+    ) -> Result<Option<DeveloperApiKey>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, DeveloperApiKey>(
+            r#"
+            SELECT k.* FROM developer_api_keys k
+            JOIN developer_accounts d ON d.id = k.developer_id
+            WHERE k.id = $1
+              AND k.developer_id = $2
+              AND k.revoked_at IS NULL
+              AND ($3::uuid IS NULL OR d.user_id = $3)
+            "#,
+        )
+        .bind(key_id)
+        .bind(developer_id)
+        .bind(owner_user_id)
+        .fetch_optional(executor)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))
     }
 
     // ============================================
@@ -1385,10 +1435,17 @@ impl ApiEcosystemRepository {
     /// Multi-statement: takes `&mut PgConnection` and runs the
     /// revoke-old/insert-new pair inside a transaction so a failure cannot
     /// leave the developer with the old key revoked and no replacement.
+    ///
+    /// SECURITY: same ownership rule as [`Self::revoke_api_key`] — the key
+    /// must belong to `developer_id` and (unless `owner_user_id` is `None`) the
+    /// developer account must be owned by `owner_user_id`; otherwise `None`.
+    #[allow(clippy::too_many_arguments)]
     pub async fn rotate_developer_api_key(
         &self,
         conn: &mut PgConnection,
+        developer_id: Uuid,
         key_id: Uuid,
+        owner_user_id: Option<Uuid>,
         revoked_by: Uuid,
         new_key_prefix: &str,
         new_key_hash: &str,
@@ -1398,11 +1455,22 @@ impl ApiEcosystemRepository {
             .await
             .map_err(|e| AppError::Database(e.to_string()))?;
 
-        // First, get the existing key info
+        // First, get the existing key info (ownership-scoped, row-locked so a
+        // concurrent rotate cannot revoke the same key twice).
         let existing = sqlx::query_as::<_, DeveloperApiKey>(
-            r#"SELECT * FROM developer_api_keys WHERE id = $1 AND revoked_at IS NULL"#,
+            r#"
+            SELECT k.* FROM developer_api_keys k
+            JOIN developer_accounts d ON d.id = k.developer_id
+            WHERE k.id = $1
+              AND k.developer_id = $2
+              AND k.revoked_at IS NULL
+              AND ($3::uuid IS NULL OR d.user_id = $3)
+            FOR UPDATE OF k
+            "#,
         )
         .bind(key_id)
+        .bind(developer_id)
+        .bind(owner_user_id)
         .fetch_optional(&mut *tx)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;

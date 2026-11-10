@@ -6,7 +6,7 @@
  * stay consistent.
  */
 
-import { authenticatedFetch } from '../lib/fetch';
+import { authenticatedFetchJson } from '../lib/fetch';
 import type {
   ConsumptionHistoryResponse,
   ConsumptionQuery,
@@ -38,22 +38,13 @@ function buildQueryString(
   return query ? `?${query}` : '';
 }
 
-/** Generic fetch wrapper with error handling. */
-async function fetchApi<T>(url: string, options?: RequestInit): Promise<T> {
-  const response = await authenticatedFetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Request failed' }));
-    throw new Error(error.message || `HTTP ${response.status}`);
-  }
-
-  return response.json();
+/**
+ * Authenticated JSON fetch (bearer token + MFA retry); throws `ApiError` on
+ * non-2xx. Every meters route is behind `AuthUser`, so a bare `fetch` without
+ * the Authorization header would be rejected with 401.
+ */
+function fetchApi<T>(url: string, options?: RequestInit): Promise<T> {
+  return authenticatedFetchJson<T>(url, options);
 }
 
 // ============================================================================

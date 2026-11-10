@@ -11,7 +11,7 @@ use db::models::reserve_funds::{
 };
 use uuid::Uuid;
 
-use super::shared::{insert_child_error, internal_error, ApiResult};
+use super::shared::{insert_child_error, internal_error, require_manager, ApiResult};
 use crate::state::AppState;
 
 /// Transaction / transfer sub-router.
@@ -51,6 +51,7 @@ async fn record_transaction(
     Path(fund_id): Path<Uuid>,
     Json(req): Json<RecordFundTransaction>,
 ) -> ApiResult<Json<FundTransaction>> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let out = state
@@ -69,6 +70,7 @@ async fn transfer_funds(
     mut rls: RlsConnection,
     Json(req): Json<FundTransferRequest>,
 ) -> ApiResult<Json<(FundTransaction, FundTransaction)>> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let out = state

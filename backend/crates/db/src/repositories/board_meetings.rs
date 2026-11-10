@@ -2020,3 +2020,114 @@ impl BoardMeetingRepository {
         }))
     }
 }
+
+// ============================================================================
+// Nested-id / authorization lookups
+// ============================================================================
+
+impl BoardMeetingRepository {
+    /// The caller's active board-member id in `org_id`, if any.
+    pub async fn find_active_board_member_id<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+        user_id: Uuid,
+    ) -> Result<Option<Uuid>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_scalar::<_, Uuid>(
+            r#"
+            SELECT id FROM board_members
+            WHERE organization_id = $1 AND user_id = $2 AND is_active = true
+            ORDER BY term_start DESC
+            LIMIT 1
+            "#,
+        )
+        .bind(org_id)
+        .bind(user_id)
+        .fetch_optional(executor)
+        .await
+    }
+
+    /// Whether board member `id` belongs to `org_id`.
+    pub async fn board_member_in_org<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS(SELECT 1 FROM board_members WHERE id = $1 AND organization_id = $2)",
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_one(executor)
+        .await
+    }
+
+    /// Whether `user_id` is an active member of `org_id`.
+    pub async fn user_is_org_member<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+        user_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_scalar::<_, bool>(
+            r#"
+            SELECT EXISTS(
+                SELECT 1 FROM organization_members
+                WHERE organization_id = $1 AND user_id = $2 AND status = 'active'
+            )
+            "#,
+        )
+        .bind(org_id)
+        .bind(user_id)
+        .fetch_one(executor)
+        .await
+    }
+
+    /// Whether agenda item `id` belongs to meeting `meeting_id`.
+    pub async fn agenda_item_in_meeting<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        meeting_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS(SELECT 1 FROM meeting_agenda_items WHERE id = $1 AND meeting_id = $2)",
+        )
+        .bind(id)
+        .bind(meeting_id)
+        .fetch_one(executor)
+        .await
+    }
+
+    /// Whether motion `id` belongs to meeting `meeting_id`.
+    pub async fn motion_in_meeting<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        meeting_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS(SELECT 1 FROM meeting_motions WHERE id = $1 AND meeting_id = $2)",
+        )
+        .bind(id)
+        .bind(meeting_id)
+        .fetch_one(executor)
+        .await
+    }
+}

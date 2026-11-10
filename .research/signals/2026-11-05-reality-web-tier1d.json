@@ -1,0 +1,27 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-05",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "oldest-unreviewed (dispatcher-tier1d-demand-driven; buffer claimable < floor). CHURN_FILES not supplied this slice (state.json churn_files=null), so SKILL Step 1 priority 2 applies. review_cursor dates: reality-web and mobile-rn tied at 2026-11-03 (oldest); reality-web wins the tiebreak by SKILL Step-1 segment-map priority order. Saturation check (open code-review-finding in backlog.json by segment): reality-web=0 (not saturated) => selected reality-web. Frontend expert primary only per Step 2 (reality-web has no secondary expert). NOTE: SKILL segment root 'frontend/reality-web/src/' is stale; app lives at 'frontend/apps/reality-web/src/' (pnpm workspace apps/ layout) and was reviewed there. Segment is high quality: SSR listing-detail page (app/[locale]/listings/[slug]/page.tsx) validates+coerces body via parseListingDetail and emits real 404 via notFound(); realtor profile page (app/[locale]/realtor/[id]/page.tsx) is now fully wired to real reality-server endpoints with next-intl + loading/error/not-found states (the 2026-11-01 'backed by mock data' finding is RESOLVED); all dangerouslySetInnerHTML sinks (layout.tsx tenant bootstrap + ORGANIZATION_LD, ListingDetailContent JSON-LD) route through serializeForScript; sanitizeHref enforces an http(s) scheme allowlist after stripping C0+space; both JSON.parse sites (auth-token.ts getSession, api/layout-revalidate HMAC-verified body) are guarded; numeric parsing uses dedicated _number.ts/_price.ts helpers; list pages (ListingGrid) carry distinct error vs empty states; ComparisonUrlHandler degrades per-id via Promise.allSettled. ComparisonView formatPrice Number(value) NaN path is NOT reachable (ListingSummary.price is typed number) => nit, skipped. Only 1 low finding emitted; full coverage accrues over the rotation.",
+  "experts_used": ["frontend"],
+  "findings_count": 1,
+  "signals": [
+    {
+      "id": "code-review-reality-web-pricealerts-raw-err-log",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx:98 and :108 — catch blocks on authenticated mutations log the RAW rejection carrier via `console.error('Failed to mark price alert read:', err)` / `console.error('Failed to mark all price alerts read:', err)`, bypassing lib/safe-error.ts `toSafeLogMessage()`.",
+        "err originates from `markRead.mutateAsync(alertId)` / `markAllRead.mutateAsync()` (useMarkFavoriteAlertRead / useMarkAllFavoriteAlertsRead) — authenticated favorites mutations. lib/safe-error.ts documents that api-client fetch/axios rejections embed the originating request (config.data / request / response.config.data), so `console.error('…', error)` serializes secret-bearing request bodies + Authorization header to the console; toSafeLogMessage() exists specifically to extract only the message string and drop the carrier.",
+        "Convention is established and followed elsewhere: components/import/FeedImport.tsx:529, components/import/CrmConnection.tsx:409, components/agency/RealtorManagement.tsx:579 all correctly log `toSafeLogMessage(error)`. PriceAlerts.tsx (and components/comparison/ComparisonUrlHandler.tsx:64,:80, though that one is a public unauthenticated GET so lower risk) are the two sites that still log the raw object.",
+        "Severity: LOW (+1) as emitted — the leak surfaces only in the browser console AND only if the favorites reality-api-client attaches auth config/body to the thrown rejection (not confirmed statically). It rises to MEDIUM (+2, credential-leak) if that client does attach request config to rejections (plausible, matching safe-error.ts's stated rationale) and if console breadcrumbs are captured by any telemetry. Fix: wrap both err args in toSafeLogMessage(err). Cloud-verifiable (reality-web: biome + typecheck; a unit test asserting the logged string carries no `config`/`authorization` would satisfy IG3).",
+        "expert: frontend"
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

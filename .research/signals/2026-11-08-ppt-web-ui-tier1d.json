@@ -1,0 +1,43 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-08",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "churn-aligned (dispatcher-tier1d-demand-driven, claim buffer starved of LANDABLE work). CHURN_FILES not passed explicitly, so recomputed from git log --since=2026-10-25: the recent churn is overwhelmingly frontend/apps/ppt-web/src/features/{registry,marketplace}/{pages,components}/*.tsx (RegistryPage.tsx x3, RegistryRulesPage.tsx x2, plus the full marketplace feature). Those feature pages/components map to the ppt-web-ui segment per the skill segment map (ppt-web pages+components). Caller steer honored: mobile-native-kmp is excluded (structurally unlandable in cloud); ppt-web-ui is a landable Frontend segment. Saturation check: 0 open code-review-finding rows for ppt-web-ui in backlog.json (only mobile-native-kmp has open rows, =2) — not saturated. De-dupe: the prior ppt-web-ui review (signals/2026-11-07-ppt-web-ui-tier1d.json) already banked i18n gaps for RegistryRulesForm.tsx, portfolio-performance/ and forms/; to avoid noise I dropped an otherwise-valid RegistryRulesPage.tsx hardcoded-string i18n finding (same category, overlapping) and kept only distinct, higher-value findings. Experts: Frontend (primary) + Completeness (secondary). Frontend static sweep of registry + marketplace: the marketplace pages (MarketplacePage, CreateRfqPage, QuoteComparisonPage, etc.) are purely presentational (data via props, good empty-state + i18n + loading skeletons) so no findings there. RegistryRulesPage.tsx correctly surfaces mutation failure via error toast + has loading/error states. The two findings below are both in RegistryPage.tsx (the single most-churned source file this window).",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-registry-page-silent-mutation-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:103-108, 123-131, 172-177, 191-201 — all four write mutation handlers (handlePetDelete, handlePetReview, handleVehicleDelete, handleVehicleReview) wrap mutateAsync in try/catch whose catch body is ONLY `console.error(...)`. On a failed delete or approve/review the confirm dialog closes, nothing is shown to the user, and the list re-renders unchanged — so a failed destructive/approval action is indistinguishable from success to the manager performing it.",
+        "This is the exact regression the sibling page was already fixed and test-guarded against: RegistryRulesPage.tsx:47-57 keeps the console.error for diagnostics but ALSO calls showToast({type:'error', ...}) 'so a failed save can never look like a success', and RegistryRulesPage.test.tsx:1-6 documents that the pre-fix handler 'only called console.error — no user-visible side effect'. RegistryPage.tsx never got the same treatment: it imports neither useToast nor any error-surface (grep of the file shows no useToast/showToast/setError), and the underlying hooks carry no central onError either — frontend/apps/ppt-web/src/features/registry/hooks/useRegistry.ts has zero onError/useToast/toast references, confirming the error is swallowed end-to-end.",
+        "Impact: silent data-mutation failure on a user-facing manager workflow (pet/vehicle registration delete + approve). Landable frontend-only fix: inject useToast() into RegistryPage and replace each `console.error(...)`-only catch with an error toast (mirroring RegistryRulesPage.handleSubmit), preferably surfacing err.message when err instanceof Error; add a RegistryPage.test.tsx asserting the toast fires on mutateAsync rejection, same shape as the existing RegistryRulesPage test. Reachability traced from the rendered PetRegistrationList/VehicleRegistrationList onDelete/onReview props back to these handlers; kept at medium because confirming the invisible-failure UX requires a runtime mutation rejection, which static analysis cannot execute."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-page-hard-navigation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:87, 91, 137, 156, 160, 206 — all six intra-app navigations (view/edit/create for pets and vehicles) are done with `window.location.href = '/registry/...'`, triggering a full browser document reload inside what is a react-router SPA. Every other registry/marketplace page in the churn set uses react-router (RegistryRulesPage.tsx:9,62 uses useNavigate(); the page is reached via a routed <Route>).",
+        "Consequence: each 'View'/'Edit'/'Add' click tears down and re-bootstraps the whole React app — auth context re-init, TanStack Query cache discarded, i18n re-load, and a visible white flash — instead of a client-side route transition. It also makes the navigation untestable with the MemoryRouter used elsewhere and defeats SPA prefetch/state preservation. This is a correctness/UX smell, not just style, because it silently drops in-memory app state (e.g. unsaved filters on sibling screens) on every registry navigation.",
+        "Landable frontend-only fix: replace the window.location.href assignments with a useNavigate() navigate('/registry/...') (RegistryPage already renders inside the router), matching the canonical pattern already used in RegistryRulesPage.tsx. Low severity (+1): no data loss within this page, but it degrades the SPA contract on a high-churn manager screen. Medium confidence: the full-reload behaviour of window.location.href assignment is certain; the user-visible blast radius depends on surrounding app state that static analysis cannot enumerate."
+      ]
+    }
+  ]
+}

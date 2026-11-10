@@ -30,6 +30,12 @@ Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, e
 ## Notes
 
 ### Specific (recent)
+- 2026-11-04 — **`/financial/payments/new` now registered** (`PaymentForm` →
+  `recordPayment`, optional `?unitId=` preselect) in `routes/groups/financial-detail.tsx`,
+  manager-gated. The Recent Payments "view all" link, which navigated to the first
+  payment's `/financial/payments/:id` (no payment-detail screen exists), is hidden:
+  `onNavigateToDetail` is now optional and the route omits it. PaymentForm copy
+  i18n'd (`financial.paymentForm.*`, `financial.paymentMethods.*`).
 - 2026-08-04 — **money-movement mutations now surface failures via error toast, PR #2649.**
   The two reconciliation mutations in `PaymentManagementPageRoute`
   (`groups/financial.tsx`) — `matchMutation` (`allocatePayment`, the "Match"
@@ -50,6 +56,9 @@ Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, e
 - 2026-05-18 — audit: stub created from `frontend/apps/ppt-web/src/App.tsx:530`.
 
 ## Agent Log
+
+- 2026-11-05 — agent: screen-map-drift-pr-3242-ppt — reconcile i18n drift from PR #3242 (`fix(ppt-web): localize financial, buildings and my-unit pages`, merged 2026-11-04). `PaymentManagementPage` + `PaymentForm`/`RecentPaymentsList`/`ReconciliationTable` moved hardcoded English into `financial.*` i18n keys across en/sk/cs/de/pl/hu; payment-status/method enums map to keys with a raw-value fallback; the raw `common.startDate`/`common.endDate` filter labels were replaced with real keys; money/dates format via `i18n.language`. No frontmatter change — docs-only.
+- 2026-11-04 — agent: r3-nav-roles — "Record payment" only for managers (`onNavigateToRecord` omitted for residents) (audit r3 #14).
 - 2026-08-04 — agent: screen-map-drift-pr-2649-ppt — reconciled this screen-map
   with PR #2649 (surface rentals/financial mutation failures via error toast).
   Documented the new `onError` error-toast wiring on the `allocatePayment` /
@@ -60,3 +69,4 @@ Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, e
   warranted. Docs-only reconcile; no frontmatter outcome changed.
 - 2026-05-18 — agent: created stub for unmapped route.
 - 2026-06-22 — agent: confirmed PaymentManagementPageRoute wired (#975.5) to listPayments + listUnallocatedPayments + listInvoices via TanStack Query, with allocatePayment (onMatch) and autoMatchPayments (onAutoMatch) mutations; apiStatus stub -> partial (no building_id filter param; buildings stays []).
+- 2026-11-04 — agent: registered `/financial/payments/new` (attached here), hid the dead payment-detail "view all" link, i18n'd PaymentForm.

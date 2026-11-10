@@ -12,7 +12,6 @@ use axum::{
     Json, Router,
 };
 use common::errors::ErrorResponse;
-use common::TenantRole;
 use db::models::{
     Building, BuildingStatistics, BuildingSummary, CreateBuilding, CreateUnit, Unit, UnitOwnerInfo,
     UnitSummary, UnitWithOwners, UpdateBuilding, UpdateUnit,
@@ -445,6 +444,64 @@ pub struct BulkImportBuildingsResponse {
     pub results: Vec<BulkImportResult>,
 }
 
+/// Error type shared by building/unit handlers.
+type BuildingApiError = (StatusCode, Json<ErrorResponse>);
+
+/// Require a manager-level role (from DB membership) for a building/unit
+/// mutation. Releases the RLS connection on failure.
+async fn require_building_manager(
+    rls: &mut RlsConnection,
+    message: &'static str,
+) -> Result<(), BuildingApiError> {
+    if rls.role().is_manager() {
+        return Ok(());
+    }
+    rls.release().await;
+    Err((
+        StatusCode::FORBIDDEN,
+        Json(ErrorResponse::new("INSUFFICIENT_ROLE", message)),
+    ))
+}
+
+/// Ensure the building (any status) belongs to the caller's organization.
+///
+/// RLS on `buildings` is not FORCE'd and the server connects as the table
+/// owner, so the org predicate must be explicit. Returns 404 for buildings in
+/// other organizations so existence is not leaked. Releases the RLS connection
+/// on failure.
+async fn ensure_building_in_tenant(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    building_id: Uuid,
+) -> Result<(), BuildingApiError> {
+    let org_id = rls.tenant_id();
+    let belongs = state
+        .building_repo
+        .belongs_to_organization_rls(&mut **rls.conn(), building_id, org_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to verify building organization");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        });
+    match belongs {
+        Ok(true) => Ok(()),
+        Ok(false) => {
+            rls.release().await;
+            Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
+            ))
+        }
+        Err(e) => {
+            rls.release().await;
+            Err(e)
+        }
+    }
+}
+
 /// Geocode an address on a building write path, never failing the request.
 ///
 /// Returns `(None, None)` when geocoding is disabled, finds no match, or errors,
@@ -498,7 +555,7 @@ pub async fn create_building(
 
     // Creating a building is a manager action (closes #799). RLS enforces org
     // isolation but not role level, so gate explicitly.
-    if !rls.is_super_admin() && !rls.has_role(TenantRole::Manager) {
+    if !rls.role().is_manager() {
         rls.release().await;
         return Err((
             StatusCode::FORBIDDEN,
@@ -668,8 +725,21 @@ pub async fn bulk_import_buildings(
 
     let user_id = rls.user_id();
 
+    // The target organization must be the authenticated tenant; the owning DB
+    // role bypasses the buildings RLS WITH CHECK, so enforce it explicitly.
+    if req.organization_id != rls.tenant_id() {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "NOT_AUTHORIZED",
+                "You are not a member of this organization",
+            )),
+        ));
+    }
+
     // Bulk-importing buildings is a manager action (closes #799).
-    if !rls.is_super_admin() && !rls.has_role(TenantRole::Manager) {
+    if !rls.role().is_manager() {
         rls.release().await;
         return Err((
             StatusCode::FORBIDDEN,
@@ -818,6 +888,7 @@ pub async fn get_building(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
+    ensure_building_in_tenant(&state, &mut rls, id).await?;
     // RLS policies automatically filter by tenant - user can only see buildings
     // in organizations they belong to
     let building = state
@@ -866,6 +937,8 @@ pub async fn update_building(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateBuildingRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
+    require_building_manager(&mut rls, "Manager role required to update buildings").await?;
+    ensure_building_in_tenant(&state, &mut rls, id).await?;
     // Story 3.1 AC3: re-geocode when any address component changes. We load the
     // current row to fill in unchanged components so the lookup uses the full
     // effective address. Failure leaves coordinates untouched (graceful).
@@ -956,7 +1029,7 @@ pub async fn archive_building(
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
     // Archiving a building is a manager action (closes #799).
-    if !rls.is_super_admin() && !rls.has_role(TenantRole::Manager) {
+    if !rls.role().is_manager() {
         rls.release().await;
         return Err((
             StatusCode::FORBIDDEN,
@@ -966,6 +1039,8 @@ pub async fn archive_building(
             )),
         ));
     }
+
+    ensure_building_in_tenant(&state, &mut rls, id).await?;
 
     // RLS policies automatically enforce tenant isolation and access control
     let building = state
@@ -1017,6 +1092,8 @@ pub async fn restore_building(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
+    require_building_manager(&mut rls, "Manager role required to restore buildings").await?;
+    ensure_building_in_tenant(&state, &mut rls, id).await?;
     // RLS policies handle organization access.
     let building = state
         .building_repo
@@ -1067,6 +1144,7 @@ pub async fn get_building_statistics(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
+    ensure_building_in_tenant(&state, &mut rls, id).await?;
     // RLS policies automatically filter by tenant - verify building exists in scope
     let _building = state
         .building_repo
@@ -1131,6 +1209,7 @@ pub async fn list_units(
     Path(building_id): Path<Uuid>,
     Query(query): Query<ListUnitsQuery>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
+    ensure_building_in_tenant(&state, &mut rls, building_id).await?;
     // RLS policies automatically filter by tenant - verify building exists in scope
     let _building = state
         .building_repo
@@ -1208,6 +1287,8 @@ pub async fn create_unit(
     Path(building_id): Path<Uuid>,
     Json(req): Json<CreateUnitRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
+    require_building_manager(&mut rls, "Manager role required to create units").await?;
+    ensure_building_in_tenant(&state, &mut rls, building_id).await?;
     let user_id = rls.user_id();
 
     // RLS policies automatically filter by tenant - verify building exists in scope
@@ -1337,6 +1418,7 @@ pub async fn get_unit(
     mut rls: RlsConnection,
     Path((building_id, unit_id)): Path<(Uuid, Uuid)>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
+    ensure_building_in_tenant(&state, &mut rls, building_id).await?;
     // RLS policies automatically filter by tenant - verify building exists in scope
     let _building = state
         .building_repo
@@ -1432,6 +1514,8 @@ pub async fn update_unit(
     Path((building_id, unit_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateUnitRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
+    require_building_manager(&mut rls, "Manager role required to update units").await?;
+    ensure_building_in_tenant(&state, &mut rls, building_id).await?;
     let user_id = rls.user_id();
 
     // RLS policies automatically filter by tenant - verify building exists in scope
@@ -1600,6 +1684,8 @@ pub async fn archive_unit(
     mut rls: RlsConnection,
     Path((building_id, unit_id)): Path<(Uuid, Uuid)>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
+    require_building_manager(&mut rls, "Manager role required to archive units").await?;
+    ensure_building_in_tenant(&state, &mut rls, building_id).await?;
     // RLS policies automatically filter by tenant - verify building exists in scope
     let _building = state
         .building_repo
@@ -1697,6 +1783,8 @@ pub async fn restore_unit(
     mut rls: RlsConnection,
     Path((building_id, unit_id)): Path<(Uuid, Uuid)>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
+    require_building_manager(&mut rls, "Manager role required to restore units").await?;
+    ensure_building_in_tenant(&state, &mut rls, building_id).await?;
     // RLS policies automatically filter by tenant - verify building exists in scope
     let _building = state
         .building_repo
@@ -1794,6 +1882,7 @@ pub async fn list_unit_owners(
     mut rls: RlsConnection,
     Path((building_id, unit_id)): Path<(Uuid, Uuid)>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
+    ensure_building_in_tenant(&state, &mut rls, building_id).await?;
     // RLS policies automatically filter by tenant - verify building exists in scope
     let _building = state
         .building_repo
@@ -1885,6 +1974,8 @@ pub async fn assign_unit_owner(
     Path((building_id, unit_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<AssignOwnerRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
+    require_building_manager(&mut rls, "Manager role required to assign unit owners").await?;
+    ensure_building_in_tenant(&state, &mut rls, building_id).await?;
     let user_id = rls.user_id();
 
     // RLS policies automatically filter by tenant - verify building exists in scope
@@ -2107,6 +2198,8 @@ pub async fn update_unit_owner(
     Path((building_id, unit_id, owner_user_id)): Path<(Uuid, Uuid, Uuid)>,
     Json(req): Json<UpdateOwnerRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
+    require_building_manager(&mut rls, "Manager role required to update unit owners").await?;
+    ensure_building_in_tenant(&state, &mut rls, building_id).await?;
     let auth_user_id = rls.user_id();
 
     // RLS policies automatically filter by tenant - verify building exists in scope
@@ -2268,6 +2361,8 @@ pub async fn remove_unit_owner(
     mut rls: RlsConnection,
     Path((building_id, unit_id, owner_user_id)): Path<(Uuid, Uuid, Uuid)>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
+    require_building_manager(&mut rls, "Manager role required to remove unit owners").await?;
+    ensure_building_in_tenant(&state, &mut rls, building_id).await?;
     let auth_user_id = rls.user_id();
 
     // RLS policies automatically filter by tenant - verify building exists in scope

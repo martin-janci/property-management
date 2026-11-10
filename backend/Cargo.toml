@@ -56,12 +56,16 @@ validator = { version = "0.21", features = ["derive"] }
 # Database
 # Entries within each group are kept alphabetically sorted so that Dependabot
 # and manual edits land in a deterministic spot (minimizes merge conflicts).
-rust_decimal = { version = "1.34", features = ["serde", "serde-str"] }
+# Plain `serde` (no `serde-str` / `serde-float`): Decimal still *serializes* as
+# a JSON string ("650.00") but *deserializes* from a JSON string or a JSON
+# number. With `serde-str`, `650` was a 422 ("expected a Decimal") on every
+# money-taking request (invoices, payments, leases). Don't re-add it.
+rust_decimal = { version = "1.34", features = ["serde"] }
 rust_decimal_macros = "1.34"
 sqlx = { version = "0.9", features = ["runtime-tokio", "postgres", "uuid", "chrono", "migrate", "rust_decimal"] }
 
 # Auth
-argon2 = "=0.6.0-rc.8"
+argon2 = "=0.6.0"
 # jsonwebtoken 10 split its crypto backend into a cargo feature; without one it
 # panics at runtime ("Could not determine the CryptoProvider"). `rust_crypto` is
 # the pure-Rust backend (matches the provider jsonwebtoken 9 had built in).

@@ -4,27 +4,29 @@
  * Catch-all route for unrecognised URLs.
  */
 
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { StateView } from '../components/StateView';
 
 export function NotFoundPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   return (
     <StateView
       icon="🧭"
       code="404"
-      title="Page not found"
-      description="The page you're looking for doesn't exist or has moved."
+      title={t('errors.pages.notFound.title')}
+      description={t('errors.pages.notFound.description')}
     >
       <button
         type="button"
         className="state-action state-action--primary"
         onClick={() => navigate(-1)}
       >
-        Go back
+        {t('errors.pages.goBack')}
       </button>
       <Link to="/" className="state-action state-action--secondary">
-        Home
+        {t('nav.home')}
       </Link>
     </StateView>
   );

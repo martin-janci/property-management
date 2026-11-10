@@ -15,6 +15,8 @@ interface LeasesDashboardPageProps {
   onNavigateToLeases: () => void;
   onNavigateToApplications: () => void;
   onNavigateToCreateLease: () => void;
+  onNavigateToTemplates?: () => void;
+  onNavigateToViolations?: () => void;
   onRenewLease?: (id: string) => void;
   onTerminateLease?: (id: string) => void;
 }
@@ -50,20 +52,27 @@ export function LeasesDashboardPage({
   onNavigateToLeases,
   onNavigateToApplications,
   onNavigateToCreateLease,
+  onNavigateToTemplates,
+  onNavigateToViolations,
   onRenewLease,
   onTerminateLease,
 }: LeasesDashboardPageProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat(undefined, {
+    return new Intl.NumberFormat(i18n.language, {
       style: 'currency',
       currency,
     }).format(amount);
   };
 
+  // Locale-aware percent (sk → "0,0 %", en → "0.0%"); `value` is a 0..1 ratio.
   const formatPercentage = (value: number) => {
-    return `${(value * 100).toFixed(1)}%`;
+    return new Intl.NumberFormat(i18n.language, {
+      style: 'percent',
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    }).format(value);
   };
 
   if (isLoading) {
@@ -86,7 +95,25 @@ export function LeasesDashboardPage({
               <h1 className="text-2xl font-bold text-gray-900">{t('leases.dashboard.title')}</h1>
               <p className="mt-1 text-sm text-gray-500">{t('leases.dashboard.subtitle')}</p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
+              {onNavigateToTemplates && (
+                <button
+                  type="button"
+                  onClick={onNavigateToTemplates}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  {t('leases.nav.templates')}
+                </button>
+              )}
+              {onNavigateToViolations && (
+                <button
+                  type="button"
+                  onClick={onNavigateToViolations}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  {t('leases.nav.violations')}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={onNavigateToApplications}
@@ -269,6 +296,7 @@ function ExpirationBucket({
   onRenewLease,
   urgencyLevel,
 }: ExpirationBucketProps) {
+  const { t } = useTranslation();
   const urgencyColors = {
     high: 'border-red-500',
     medium: 'border-orange-500',
@@ -300,14 +328,16 @@ function ExpirationBucket({
                 </div>
                 <div className="flex items-center gap-2">
                   {lease.daysUntilExpiry !== undefined && (
-                    <span className="text-sm text-gray-500">{lease.daysUntilExpiry}d</span>
+                    <span className="text-sm text-gray-500">
+                      {t('leases.dashboard.daysShort', { count: lease.daysUntilExpiry })}
+                    </span>
                   )}
                   <button
                     type="button"
                     onClick={() => onNavigateToLease(lease.id)}
                     className="text-sm text-blue-600 hover:text-blue-800"
                   >
-                    View
+                    {t('common.view')}
                   </button>
                   {onRenewLease && (
                     <button
@@ -315,7 +345,7 @@ function ExpirationBucket({
                       onClick={() => onRenewLease(lease.id)}
                       className="text-sm text-green-600 hover:text-green-800"
                     >
-                      Renew
+                      {t('leases.renew')}
                     </button>
                   )}
                 </div>

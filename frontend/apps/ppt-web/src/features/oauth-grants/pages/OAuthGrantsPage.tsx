@@ -12,7 +12,7 @@ import type React from 'react';
 import { useState } from 'react';
 import { useToast } from '../../../components';
 import './OAuthGrantsPage.css';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 
 /** Internal state for the revoke confirmation dialog. */
 interface ConfirmState {
@@ -21,7 +21,7 @@ interface ConfirmState {
 }
 
 export const OAuthGrantsPage: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { showToast } = useToast();
   const { data: grants, isLoading, isError, error, refetch } = useUserGrants();
   const revokeGrant = useRevokeUserGrant();
@@ -39,14 +39,14 @@ export const OAuthGrantsPage: React.FC = () => {
       await revokeGrant.mutateAsync(clientId);
       showToast({
         type: 'success',
-        title: 'Access revoked',
-        message: `${clientName} can no longer access your account.`,
+        title: t('oauthGrants.revoked'),
+        message: t('oauthGrants.revokedMessage', { name: clientName }),
       });
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Failed to revoke access',
-        message: err instanceof Error ? err.message : 'An unexpected error occurred.',
+        title: t('oauthGrants.revokeFailed'),
+        message: err instanceof Error ? err.message : t('oauthGrants.unexpected'),
       });
     }
   };
@@ -56,9 +56,9 @@ export const OAuthGrantsPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="oauth-grants-container">
-        <h1>Authorized Applications</h1>
+        <h1>{t('oauthGrants.title')}</h1>
         <div className="oauth-grants-loading" role="status" aria-live="polite" aria-busy="true">
-          Loading authorized applications&hellip;
+          {t('oauthGrants.loading')}
         </div>
       </div>
     );
@@ -67,15 +67,11 @@ export const OAuthGrantsPage: React.FC = () => {
   if (isError) {
     return (
       <div className="oauth-grants-container">
-        <h1>Authorized Applications</h1>
+        <h1>{t('oauthGrants.title')}</h1>
         <div className="oauth-grants-error" role="alert">
-          <p>
-            {error instanceof Error
-              ? error.message
-              : 'Failed to load authorized applications. Please try again.'}
-          </p>
+          <p>{error instanceof Error ? error.message : t('oauthGrants.loadFailed')}</p>
           <button type="button" onClick={() => refetch()}>
-            Retry
+            {t('oauthGrants.retry')}
           </button>
         </div>
       </div>
@@ -86,16 +82,12 @@ export const OAuthGrantsPage: React.FC = () => {
 
   return (
     <div className="oauth-grants-container">
-      <h1>Authorized Applications</h1>
-      <p>
-        These third-party applications have been granted access to your account. You can revoke
-        access at any time &mdash; the application will need to request authorization again to
-        regain access.
-      </p>
+      <h1>{t('oauthGrants.title')}</h1>
+      <p>{t('oauthGrants.description')}</p>
 
       {grantList.length === 0 ? (
         <div className="oauth-grants-empty" role="status">
-          You have no authorized third-party applications.
+          {t('oauthGrants.empty')}
         </div>
       ) : (
         <ul className="oauth-grants-list" aria-label={t('aria.authorizedApplications')}>
@@ -108,8 +100,8 @@ export const OAuthGrantsPage: React.FC = () => {
                 )}
                 <div className="oauth-grant-meta">
                   <span className="oauth-grant-date">
-                    <strong>Authorized:</strong>{' '}
-                    {new Date(grant.grantedAt).toLocaleDateString(undefined, {
+                    <strong>{t('oauthGrants.authorized')}</strong>{' '}
+                    {new Date(grant.grantedAt).toLocaleDateString(i18n.language, {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',
@@ -117,10 +109,12 @@ export const OAuthGrantsPage: React.FC = () => {
                   </span>
                   {grant.scopes.length > 0 && (
                     <div className="oauth-grant-scopes">
-                      <strong>Permissions:</strong>
+                      <strong>{t('oauthGrants.permissions')}</strong>
                       <span
                         className="oauth-grant-scope-list"
-                        aria-label={`Scopes: ${grant.scopes.join(', ')}`}
+                        aria-label={t('oauthGrants.scopesLabel', {
+                          scopes: grant.scopes.join(', '),
+                        })}
                       >
                         {grant.scopes.map((scope: string) => (
                           <span key={scope} className="oauth-grant-scope-badge">
@@ -137,9 +131,9 @@ export const OAuthGrantsPage: React.FC = () => {
                 className="oauth-grant-revoke-btn"
                 onClick={() => handleRevokeClick(grant.clientId, grant.clientName)}
                 disabled={revokeGrant.isPending}
-                aria-label={`Revoke access for ${grant.clientName}`}
+                aria-label={t('oauthGrants.revokeFor', { name: grant.clientName })}
               >
-                Revoke access
+                {t('oauthGrants.revoke')}
               </button>
             </li>
           ))}
@@ -155,15 +149,17 @@ export const OAuthGrantsPage: React.FC = () => {
           aria-describedby="revoke-dialog-desc"
         >
           <div className="oauth-grants-confirm-dialog">
-            <h2 id="revoke-dialog-title">Revoke access?</h2>
+            <h2 id="revoke-dialog-title">{t('oauthGrants.confirmTitle')}</h2>
             <p id="revoke-dialog-desc">
-              Revoking access for <strong>{confirmState.clientName}</strong> will invalidate all
-              active tokens. The application will no longer be able to access your account until you
-              grant access again.
+              <Trans
+                i18nKey="oauthGrants.confirmMessage"
+                values={{ name: confirmState.clientName }}
+                components={{ strong: <strong /> }}
+              />
             </p>
             <div className="oauth-grants-confirm-actions">
               <button type="button" className="cancel-btn" onClick={handleCancelRevoke}>
-                Cancel
+                {t('oauthGrants.cancel')}
               </button>
               <button
                 type="button"
@@ -172,7 +168,7 @@ export const OAuthGrantsPage: React.FC = () => {
                 disabled={revokeGrant.isPending}
                 aria-busy={revokeGrant.isPending}
               >
-                {revokeGrant.isPending ? 'Revoking…' : 'Revoke access'}
+                {revokeGrant.isPending ? t('oauthGrants.revoking') : t('oauthGrants.revoke')}
               </button>
             </div>
           </div>

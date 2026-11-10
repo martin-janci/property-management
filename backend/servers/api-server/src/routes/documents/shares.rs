@@ -1,7 +1,7 @@
 //! Document sharing routes (Story 7A.5).
 
 use crate::state::AppState;
-use api_core::{extractors::RlsConnection, AuthUser, TenantExtractor};
+use api_core::{extractors::RlsConnection, AuthUser, ValidatedTenantExtractor};
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -103,7 +103,7 @@ pub fn public_router() -> Router<AppState> {
 async fn list_shares(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ShareListResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -131,6 +131,9 @@ async fn list_shares(
             ));
         }
     };
+
+    // Explicit org guard (FORCE RLS does not bind a BYPASSRLS pool).
+    super::core::validate_document_org_scope(existing.organization_id, tenant.tenant_id)?;
 
     // Only creator or manager can view shares
     if existing.created_by != auth.user_id && !tenant.role.is_manager() {
@@ -185,7 +188,7 @@ async fn list_shares(
 async fn create_share(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<CreateShareRequest>,
@@ -214,6 +217,9 @@ async fn create_share(
             ));
         }
     };
+
+    // Explicit org guard (FORCE RLS does not bind a BYPASSRLS pool).
+    super::core::validate_document_org_scope(existing.organization_id, tenant.tenant_id)?;
 
     // Only creator or manager can create shares
     if existing.created_by != auth.user_id && !tenant.role.is_manager() {
@@ -356,7 +362,7 @@ async fn create_share(
 async fn revoke_share(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path((id, share_id)): Path<(Uuid, Uuid)>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
@@ -384,6 +390,9 @@ async fn revoke_share(
             ));
         }
     };
+
+    // Explicit org guard (FORCE RLS does not bind a BYPASSRLS pool).
+    super::core::validate_document_org_scope(existing.organization_id, tenant.tenant_id)?;
 
     // Only creator or manager can revoke shares
     if existing.created_by != auth.user_id && !tenant.role.is_manager() {

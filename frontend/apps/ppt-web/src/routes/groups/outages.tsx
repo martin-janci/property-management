@@ -28,7 +28,7 @@ import { AuthRequiredGate, ProtectedRoute, useToast } from '../../components';
 import { useAuth } from '../../contexts';
 import type { ListOutagesParams, OutageDetail } from '../../features/outages';
 import { CreateOutagePage, EditOutagePage, OutagesPage, ViewOutagePage } from '../lazyRoutes';
-import { MANAGER_ROLES, transformBuildingForUI } from '../shared';
+import { isManagerRole, MANAGER_ROLES, transformBuildingForUI } from '../shared';
 
 /**
  * Route wrapper for outages list page (UC-12).
@@ -37,6 +37,7 @@ import { MANAGER_ROLES, transformBuildingForUI } from '../shared';
 function OutagesPageRoute() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isManager = isManagerRole(user?.role);
   const [queryParams, setQueryParams] = useState<OutageListQuery>({ limit: 10, offset: 0 });
 
   const { data, isLoading } = useOutages(queryParams);
@@ -66,9 +67,11 @@ function OutagesPageRoute() {
       outages={outages}
       total={total}
       isLoading={isLoading}
-      onNavigateToCreate={handleNavigateToCreate}
+      // Creating and editing outages is manager-only on the server, so
+      // residents get a read-only list.
+      onNavigateToCreate={isManager ? handleNavigateToCreate : undefined}
       onNavigateToView={handleNavigateToView}
-      onNavigateToEdit={handleNavigateToEdit}
+      onNavigateToEdit={isManager ? handleNavigateToEdit : undefined}
       onFilterChange={handleFilterChange}
     />
   );
@@ -157,8 +160,8 @@ function ViewOutagePageRoute() {
   if (!outageId) {
     return (
       <div className="error-page">
-        <h1>{t('errors.outageNotFound')}</h1>
-        <p>{t('errors.outageNotFoundDesc')}</p>
+        <h1>{t('outages.errors.outageNotFound')}</h1>
+        <p>{t('outages.errors.outageNotFoundDesc')}</p>
         <Link to="/outages">{t('common.backToOutages')}</Link>
       </div>
     );
@@ -234,7 +237,7 @@ function ViewOutagePageRoute() {
     cancelReason: outageData.cancelReason,
     createdAt: outageData.createdAt,
     updatedAt: outageData.updatedAt,
-    createdByName: outageData.creatorName ?? outageData.createdBy ?? 'Unknown',
+    createdByName: outageData.creatorName ?? outageData.createdBy ?? t('common.unknown'),
     buildingNames: outageData.buildings?.map((b) => b.name) ?? [],
   };
 
@@ -269,8 +272,8 @@ function EditOutagePageRoute() {
   if (!outageId) {
     return (
       <div className="error-page">
-        <h1>{t('errors.outageNotFound')}</h1>
-        <p>{t('errors.outageNotFoundDesc')}</p>
+        <h1>{t('outages.errors.outageNotFound')}</h1>
+        <p>{t('outages.errors.outageNotFoundDesc')}</p>
         <Link to="/outages">{t('common.backToOutages')}</Link>
       </div>
     );
@@ -345,7 +348,7 @@ function EditOutagePageRoute() {
     cancelReason: outageData.cancelReason,
     createdAt: outageData.createdAt,
     updatedAt: outageData.updatedAt,
-    createdByName: outageData.creatorName ?? outageData.createdBy ?? 'Unknown',
+    createdByName: outageData.creatorName ?? outageData.createdBy ?? t('common.unknown'),
     buildingNames: outageData.buildings?.map((b) => b.name) ?? [],
   };
 

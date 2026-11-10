@@ -14,6 +14,7 @@ import type {
   FaultListQuery,
   FaultListResponse,
   FaultStatistics,
+  MyFaultsQuery,
   ResolveFaultRequest,
   TriageFaultRequest,
   UpdateFaultRequest,
@@ -27,6 +28,8 @@ export const faultKeys = {
   all: ['faults'] as const,
   lists: () => [...faultKeys.all, 'list'] as const,
   list: (query: FaultListQuery) => [...faultKeys.lists(), query] as const,
+  myLists: () => [...faultKeys.all, 'my-list'] as const,
+  myList: (query: MyFaultsQuery) => [...faultKeys.myLists(), query] as const,
   details: () => [...faultKeys.all, 'detail'] as const,
   detail: (id: string) => [...faultKeys.details(), id] as const,
   timeline: (id: string) => [...faultKeys.all, 'timeline', id] as const,
@@ -55,6 +58,20 @@ export function useFaults(query: FaultListQuery = {}) {
   return useQuery<FaultListResponse>({
     queryKey: faultKeys.list(query),
     queryFn: () => api.listFaults(query),
+  });
+}
+
+/**
+ * List the authenticated user's own reported faults (`GET /api/v1/faults/my`).
+ *
+ * The reporter filter is applied server-side before `limit`, so this returns
+ * the user's most-recent faults without over-fetching other residents' rows
+ * or hiding the user's faults behind newer third-party ones.
+ */
+export function useMyFaults(query: MyFaultsQuery = {}) {
+  return useQuery<FaultListResponse>({
+    queryKey: faultKeys.myList(query),
+    queryFn: () => api.listMyFaults(query),
   });
 }
 
@@ -135,17 +152,17 @@ export function useUpdateFault(faultId: string) {
   });
 }
 
-/** Delete a fault */
-export function useDeleteFault() {
+/** Withdraw an untriaged fault report (reporter only). */
+export function useWithdrawFault() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (faultId: string) => api.deleteFault(faultId),
+    mutationFn: (faultId: string) => api.withdrawFault(faultId),
     onSuccess: (_, faultId) => {
-      queryClient.removeQueries({ queryKey: faultKeys.detail(faultId) });
+      queryClient.invalidateQueries({ queryKey: faultKeys.detail(faultId) });
       queryClient.invalidateQueries({ queryKey: faultKeys.lists() });
-      // The Total/Open/Closed stats bar sits above the deletable list, so it
-      // must refresh after a delete too (#1588 F3). Prefix-invalidate every
+      // The Total/Open/Closed stats bar sits above the list, so it must
+      // refresh after a withdrawal too (#1588 F3). Prefix-invalidate every
       // statistics query (any buildingId variant).
       queryClient.invalidateQueries({ queryKey: [...faultKeys.all, 'statistics'] });
     },

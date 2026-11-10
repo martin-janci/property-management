@@ -1,33 +1,26 @@
 /**
- * Regression test for the Home "Open dashboard" CTA role routing
- * (code-review finding `code-review-ppt-web-core-home-cta-role-drift`).
+ * `/` for signed-in users (round-3 audit #15).
  *
- * The CTA used to branch on the literal `user?.role === 'manager'`, so every
- * manager-equivalent role that is NOT the string 'manager' — `org_admin`,
- * `property_manager`, `technical_manager`, `super_admin` — was misrouted to the
- * resident dashboard. It now branches on `isManagerRole(user?.role)`, the same
- * single source of truth (`MANAGER_ROLES`) that gates the manager routes via
- * `<ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>`, so the CTA target and
- * the route guard can no longer drift apart.
+ * `/` is the public landing page. It used to greet signed-in users with a
+ * generic "Vitajte" page and an "Open dashboard" button; it now sends them
+ * straight to their role's dashboard. The target comes from `isManagerRole`
+ * (the same `MANAGER_ROLES` list that gates the manager routes), so every
+ * manager-equivalent role lands on the manager dashboard and everyone else on
+ * the resident dashboard. Anonymous visitors still get the landing page.
  */
-import { fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { describe, expect, it, vi } from 'vitest';
 import { MANAGER_ROLES } from '../shared';
 import { Home } from './core';
 
-const mockNavigate = vi.fn();
-let currentRole: string | undefined = 'manager';
+let currentAuth: { isAuthenticated: boolean; user: { role?: string } | null } = {
+  isAuthenticated: true,
+  user: { role: 'manager' },
+};
 
-// Keep react-router real except for useNavigate, which we assert against.
-vi.mock('react-router-dom', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('react-router-dom')>();
-  return { ...actual, useNavigate: () => mockNavigate };
-});
-
-// Authenticated user whose role varies per test.
 vi.mock('../../contexts', () => ({
-  useAuth: () => ({ isAuthenticated: true, user: { role: currentRole } }),
+  useAuth: () => currentAuth,
 }));
 
 // Home only renders its own markup; stub the heavy sibling imports that
@@ -66,39 +59,43 @@ vi.mock('../lazyRoutes', () => {
     'SessionExpiredPage',
     'TemplateLibraryPage',
     'TwoFactorAuthPage',
+    'OrganizationMembersPage',
+    'VerifyEmailPage',
   ];
   return Object.fromEntries(names.map((name) => [name, stub]));
 });
 
-function renderHomeAsRole(role: string | undefined) {
-  currentRole = role;
-  mockNavigate.mockClear();
+function renderHomeAt(auth: typeof currentAuth) {
+  currentAuth = auth;
   render(
-    <MemoryRouter>
-      <Home />
+    <MemoryRouter initialEntries={['/']}>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/dashboard/manager" element={<div data-testid="manager-dashboard" />} />
+        <Route path="/dashboard/resident" element={<div data-testid="resident-dashboard" />} />
+      </Routes>
     </MemoryRouter>
   );
-  fireEvent.click(screen.getByRole('button', { name: /dashboard/i }));
 }
 
-describe('Home "Open dashboard" CTA routes by manager-role membership', () => {
-  afterEach(() => {
-    vi.clearAllMocks();
+describe('`/` sends signed-in users to their dashboard', () => {
+  it.each([...MANAGER_ROLES])('redirects the manager-equivalent role "%s"', (role) => {
+    renderHomeAt({ isAuthenticated: true, user: { role } });
+    expect(screen.getByTestId('manager-dashboard')).toBeInTheDocument();
   });
 
-  it.each([...MANAGER_ROLES])(
-    'routes the manager-equivalent role "%s" to the manager dashboard',
+  it.each(['owner', 'tenant', 'resident', undefined])(
+    'redirects the non-manager role "%s" to the resident dashboard',
     (role) => {
-      renderHomeAsRole(role);
-      expect(mockNavigate).toHaveBeenCalledWith('/dashboard/manager');
+      renderHomeAt({ isAuthenticated: true, user: role ? { role } : {} });
+      expect(screen.getByTestId('resident-dashboard')).toBeInTheDocument();
     }
   );
 
-  it.each(['resident', 'owner', undefined])(
-    'routes the non-manager role "%s" to the resident dashboard',
-    (role) => {
-      renderHomeAsRole(role);
-      expect(mockNavigate).toHaveBeenCalledWith('/dashboard/resident');
-    }
-  );
+  it('keeps the landing page for anonymous visitors', () => {
+    renderHomeAt({ isAuthenticated: false, user: null });
+    expect(screen.queryByTestId('manager-dashboard')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('resident-dashboard')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
+  });
 });

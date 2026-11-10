@@ -9,6 +9,8 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "messages:normalize": "node scripts/normalize-message-order.mjs",
+    "messages:check": "node scripts/normalize-message-order.mjs --check",
     "test:watch": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",

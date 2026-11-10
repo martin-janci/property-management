@@ -8,6 +8,8 @@
  * div bars) to match the existing reports charts which avoid a charting lib.
  */
 
+import { useTranslation } from 'react-i18next';
+
 export interface FaultBreakdownDatum {
   /** Machine value forwarded to `onSelect` (e.g. the raw status/category key). */
   key: string;
@@ -32,8 +34,9 @@ export function FaultBreakdownChart({
   data,
   barClassName = 'bg-blue-500',
   onSelect,
-  emptyLabel = 'No data available',
+  emptyLabel,
 }: FaultBreakdownChartProps) {
+  const { t } = useTranslation();
   const total = data.reduce((sum, d) => sum + d.count, 0);
   const max = data.reduce((m, d) => (d.count > m ? d.count : m), 0);
 
@@ -42,7 +45,7 @@ export function FaultBreakdownChart({
       <h3 className="text-lg font-medium text-gray-900 mb-4">{title}</h3>
 
       {data.length === 0 || total === 0 ? (
-        <p className="text-sm text-gray-500 py-4">{emptyLabel}</p>
+        <p className="text-sm text-gray-500 py-4">{emptyLabel ?? t('faults.reports.noData')}</p>
       ) : (
         <ul className="space-y-3">
           {data.map((d) => {
@@ -74,7 +77,7 @@ export function FaultBreakdownChart({
                   <button
                     type="button"
                     onClick={() => onSelect(d.key)}
-                    aria-label={`${rowLabel}. View these faults`}
+                    aria-label={t('faults.reports.viewFaultsInBucket', { label: rowLabel })}
                     className="w-full text-left rounded px-1 py-0.5 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     {bar}

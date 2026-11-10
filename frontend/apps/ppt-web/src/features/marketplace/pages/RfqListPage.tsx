@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { RfqCard, type RfqStatus, type RfqSummary } from '../components/RfqCard';
 
 interface RfqListPageProps {
@@ -20,13 +21,13 @@ interface RfqListPageProps {
   hasMore?: boolean;
 }
 
-const statusTabs: { value: RfqStatus | 'all'; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'draft', label: 'Drafts' },
-  { value: 'sent', label: 'Sent' },
-  { value: 'quotes_received', label: 'Quotes Received' },
-  { value: 'awarded', label: 'Awarded' },
-  { value: 'cancelled', label: 'Cancelled' },
+const statusTabs: { value: RfqStatus | 'all'; labelKey: string }[] = [
+  { value: 'all', labelKey: 'marketplace.rfqListPage.tabAll' },
+  { value: 'draft', labelKey: 'marketplace.rfqListPage.tabDrafts' },
+  { value: 'sent', labelKey: 'marketplace.rfqListPage.tabSent' },
+  { value: 'quotes_received', labelKey: 'marketplace.rfqListPage.tabQuotesReceived' },
+  { value: 'awarded', labelKey: 'marketplace.rfqListPage.tabAwarded' },
+  { value: 'cancelled', labelKey: 'marketplace.rfqListPage.tabCancelled' },
 ];
 
 export function RfqListPage({
@@ -42,6 +43,7 @@ export function RfqListPage({
   onLoadMore,
   hasMore,
 }: RfqListPageProps) {
+  const { t } = useTranslation();
   const [activeStatus, setActiveStatus] = useState<RfqStatus | 'all'>('all');
 
   const handleStatusChange = (status: RfqStatus | 'all') => {
@@ -63,17 +65,15 @@ export function RfqListPage({
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Requests for Quote</h1>
-          <p className="mt-1 text-gray-600">
-            Manage your RFQs and compare quotes from service providers
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('marketplace.rfqListPage.title')}</h1>
+          <p className="mt-1 text-gray-600">{t('marketplace.rfqListPage.subtitle')}</p>
         </div>
         <button
           type="button"
           onClick={onCreateRfq}
           className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
-          Create New RFQ
+          {t('marketplace.rfqListPage.createNewRfq')}
         </button>
       </div>
 
@@ -93,7 +93,7 @@ export function RfqListPage({
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                {tab.label}
+                {t(tab.labelKey)}
                 {count > 0 && (
                   <span
                     className={`px-2 py-0.5 text-xs font-medium rounded-full ${
@@ -138,7 +138,7 @@ export function RfqListPage({
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <title>No RFQs</title>
+            <title>{t('marketplace.rfqListPage.noRfqs')}</title>
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -147,12 +147,16 @@ export function RfqListPage({
             />
           </svg>
           <h3 className="mt-4 text-lg font-medium text-gray-900">
-            {activeStatus === 'all' ? 'No RFQs yet' : `No ${activeStatus.replace('_', ' ')} RFQs`}
+            {activeStatus === 'all'
+              ? t('marketplace.rfqListPage.noRfqsTitle')
+              : t('marketplace.rfqListPage.noStatusRfqsTitle', {
+                  status: t(`marketplace.rfqStatus.${activeStatus}`),
+                })}
           </h3>
           <p className="mt-2 text-gray-500">
             {activeStatus === 'all'
-              ? 'Create your first RFQ to start receiving quotes from providers'
-              : 'There are no RFQs with this status'}
+              ? t('marketplace.rfqListPage.noRfqsAllHint')
+              : t('marketplace.rfqListPage.noRfqsStatusHint')}
           </p>
           {activeStatus === 'all' && (
             <button
@@ -160,7 +164,7 @@ export function RfqListPage({
               onClick={onCreateRfq}
               className="mt-4 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700"
             >
-              Create New RFQ
+              {t('marketplace.rfqListPage.createNewRfq')}
             </button>
           )}
         </div>
@@ -188,7 +192,9 @@ export function RfqListPage({
                 disabled={isLoading}
                 className="px-6 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
               >
-                {isLoading ? 'Loading...' : 'Load More'}
+                {isLoading
+                  ? t('marketplace.rfqListPage.loading')
+                  : t('marketplace.rfqListPage.loadMore')}
               </button>
             </div>
           )}
@@ -200,19 +206,19 @@ export function RfqListPage({
         <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-white rounded-lg shadow p-4 text-center">
             <p className="text-2xl font-bold text-gray-900">{totalRfqs}</p>
-            <p className="text-sm text-gray-500">Total RFQs</p>
+            <p className="text-sm text-gray-500">{t('marketplace.rfqListPage.totalRfqs')}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-4 text-center">
             <p className="text-2xl font-bold text-blue-600">{statusCounts.sent || 0}</p>
-            <p className="text-sm text-gray-500">Active RFQs</p>
+            <p className="text-sm text-gray-500">{t('marketplace.rfqListPage.activeRfqs')}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-4 text-center">
             <p className="text-2xl font-bold text-green-600">{statusCounts.quotes_received || 0}</p>
-            <p className="text-sm text-gray-500">With Quotes</p>
+            <p className="text-sm text-gray-500">{t('marketplace.rfqListPage.withQuotes')}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-4 text-center">
             <p className="text-2xl font-bold text-purple-600">{statusCounts.awarded || 0}</p>
-            <p className="text-sm text-gray-500">Awarded</p>
+            <p className="text-sm text-gray-500">{t('marketplace.rfqListPage.awarded')}</p>
           </div>
         </div>
       )}

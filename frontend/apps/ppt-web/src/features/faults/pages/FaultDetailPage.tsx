@@ -5,6 +5,7 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useConfirmDialog } from '../../../components/useConfirmDialog';
 import type { FaultCategory, FaultPriority, FaultStatus } from '../components/FaultCard';
 import { FaultTimeline, type TimelineEntry } from '../components/FaultTimeline';
 import { type TriageData, TriageFaultDialog } from '../components/TriageFaultDialog';
@@ -77,8 +78,16 @@ interface FaultDetailPageProps {
   onConfirm: (rating?: number, feedback?: string) => void;
   onReopen: (reason: string) => void;
   onAddComment: (note: string, isInternal: boolean) => void;
-  onAddAttachment: (file: File) => void;
+  /** Omit to hide the upload control. */
+  onAddAttachment?: (file: File) => void;
+  /** True while an attachment upload is in flight. */
+  isUploadingAttachment?: boolean;
   onDeleteAttachment: (id: string) => void;
+  /**
+   * Withdraw an untriaged report. Pass only when the viewer is the reporter;
+   * the button shows while the fault is still `new`.
+   */
+  onWithdraw?: () => void;
 }
 
 const statusColors: Record<FaultStatus, string> = {
@@ -114,9 +123,12 @@ export function FaultDetailPage({
   onReopen,
   onAddComment,
   onAddAttachment,
+  isUploadingAttachment = false,
   onDeleteAttachment,
+  onWithdraw,
 }: FaultDetailPageProps) {
   const { t } = useTranslation();
+  const { confirm, confirmDialog } = useConfirmDialog();
   const [showTriageDialog, setShowTriageDialog] = useState(false);
   const [showResolveDialog, setShowResolveDialog] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -166,6 +178,7 @@ export function FaultDetailPage({
     ['triaged', 'in_progress', 'waiting_parts', 'scheduled', 'reopened'].includes(fault.status);
   const canConfirm = fault.status === 'resolved';
   const canReopen = fault.status === 'closed';
+  const canWithdraw = fault.status === 'new' && !!onWithdraw;
 
   const handleAddComment = (e: React.FormEvent) => {
     e.preventDefault();
@@ -198,7 +211,7 @@ export function FaultDetailPage({
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      onAddAttachment(file);
+      onAddAttachment?.(file);
     }
   };
 
@@ -212,6 +225,7 @@ export function FaultDetailPage({
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+      {confirmDialog}
       {/* Header */}
       <div className="mb-6">
         <button
@@ -273,6 +287,22 @@ export function FaultDetailPage({
                 {t('common.confirm')}
               </button>
             )}
+            {canWithdraw && (
+              <button
+                type="button"
+                onClick={async () => {
+                  const ok = await confirm({
+                    message: t('faults.withdrawConfirm'),
+                    confirmLabel: t('faults.withdraw'),
+                    variant: 'danger',
+                  });
+                  if (ok) onWithdraw?.();
+                }}
+                className="px-3 py-1.5 text-sm border border-red-300 text-red-700 rounded-lg hover:bg-red-50"
+              >
+                {t('faults.withdraw')}
+              </button>
+            )}
             {canReopen && (
               <button
                 type="button"
@@ -306,15 +336,18 @@ export function FaultDetailPage({
               <h2 className="text-lg font-semibold text-gray-900">
                 {t('faults.attachments')} ({attachments.length})
               </h2>
-              <label className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
-                {t('faults.addPhoto')}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleFileUpload}
-                />
-              </label>
+              {onAddAttachment && (
+                <label className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
+                  {isUploadingAttachment ? t('faults.uploadingPhoto') : t('faults.addPhoto')}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={isUploadingAttachment}
+                    onChange={handleFileUpload}
+                  />
+                </label>
+              )}
             </div>
             {attachments.length === 0 ? (
               <p className="text-gray-500">{t('faults.noAttachments')}</p>

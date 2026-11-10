@@ -24,7 +24,11 @@ import { ProtectedRoute, useToast } from '../../components';
 import { useAuth } from '../../contexts';
 import type { NotificationAnalyticsFilters } from '../../features/notification-analytics';
 import { useNotificationAnalytics } from '../../features/notification-analytics';
-import { NotificationAnalyticsPage, NotificationTriggersPage } from '../lazyRoutes';
+import {
+  NotificationAnalyticsPage,
+  NotificationInboxPage,
+  NotificationTriggersPage,
+} from '../lazyRoutes';
 import { isManagerRole, MANAGER_ROLES } from '../shared';
 
 function NotificationAnalyticsPageRoute() {
@@ -162,6 +166,14 @@ function NotificationTriggersPageRoute() {
 export function notificationAnalyticsRoutes() {
   return (
     <>
+      <Route
+        path="/notifications"
+        element={
+          <ProtectedRoute>
+            <NotificationInboxPage />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/notifications/analytics"
         element={

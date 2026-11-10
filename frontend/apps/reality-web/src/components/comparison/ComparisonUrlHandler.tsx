@@ -12,6 +12,7 @@ import { useEffect, useState } from 'react';
 
 import { useComparison } from '../../lib/comparison-context';
 import { getApiBase } from '../../lib/env';
+import { parseListingSummary } from './listingSummarySchema';
 
 interface ComparisonUrlHandlerProps {
   sharedIds: string[];
@@ -44,7 +45,17 @@ export function ComparisonUrlHandler({ sharedIds }: ComparisonUrlHandlerProps) {
           if (!response.ok) {
             throw new Error(`Failed to load listing ${id} (HTTP ${response.status})`);
           }
-          return response.json() as Promise<ListingSummary>;
+          // Validate the 200 body at the API boundary instead of trusting it
+          // via an unchecked `as Promise<ListingSummary>` cast. A malformed or
+          // partial body (upstream/proxy partial response, a 200 HTML error
+          // page, a null/primitive/array JSON body) is rejected here —
+          // mirroring the listing detail path's `parseListingDetail` guard —
+          // so it never reaches `ComparisonView` to render garbage or throw.
+          const listing = parseListingSummary(await response.json());
+          if (!listing) {
+            throw new Error(`Malformed listing body for ${id}`);
+          }
+          return listing;
         });
 
         // Resolve every id independently so one bad/missing listing degrades

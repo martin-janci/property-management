@@ -92,6 +92,28 @@ PPT manager landing — the daily-use surface for property managers. Action-queu
 
 ### Specific (recent)
 
+- 2026-11-05 — PR #3237 restructured the landing route and the global app shell.
+  **Landing** (`Home`, `routes/groups/core.tsx`): the old 6-card quick-link grid
+  (documents / news / disputes / outages / emergency / accessibility) is gone. An
+  **anonymous** visitor now gets real product marketing — a `home.audiences`
+  section (managers / owners / tenants) and a `home.features` section (faults /
+  voting / communication / finance / meters / documents), localized in all six
+  locales (sk/cs/de/en/pl/hu). The hero tagline keys off auth state
+  (`home.tagline` anonymous vs `home.welcome` authenticated), and the broken
+  `auth.register` CTA label is fixed to `shell.createAccount`. Authenticated users
+  still never see this marketing body — they redirect to their role dashboard (see
+  the 2026-11-04 log entry), so the audiences/features sections render only when
+  signed out. **App shell**: the flat ~20-link `AppNavigation` bar in `App.tsx` is
+  replaced by `<AppShell>` (`components/AppShell/`). Visitors get a public header
+  (brand, language, sign in, create account); authenticated users get a sidebar
+  grouped by job — overview / operations / governance / community / finance /
+  leasing / tools — filtered by manager vs resident `audience` from
+  `components/AppShell/navConfig.ts` (the single source of truth for the sidebar IA),
+  plus a top bar (connection status, language, user menu holding account/settings +
+  sign out) and an off-canvas sidebar under 1024px. The manager-dashboard redesign
+  target below (QuickStats / action-queue / right-rail) is unchanged — it remains
+  the redesign vision captured from `manager-dashboard.html`, not the current
+  anonymous-landing render.
 - Greeting is third-person summary ("3 faults awaiting triage") not "you" — per project README, managers get summaries, residents get "you/your".
 - Eyebrow pulse dot uses `animation: pulse 2s infinite` — must be disabled under `prefers-reduced-motion`.
 - Danger quickstat uses gradient bg `linear-gradient(180deg, #fef2f2, #fee2e2)` and dark-red ink `#991b1b` — rare hard-coded values; the danger token set should expose this triple via `--status-danger-bg-strong/ink-strong`.
@@ -110,6 +132,8 @@ PPT manager landing — the daily-use surface for property managers. Action-queu
 
 <!-- newest entries on top -->
 
+- 2026-11-05 — agent: screen-map-drift-pr-3237 — reconciled with PR #3237 (ppt-web grouped role-aware app shell + real landing page). Landing `Home` (`routes/groups/core.tsx`) dropped the 6-card quick-link grid; anonymous visitors now render `home.audiences` (managers/owners/tenants) + `home.features` (faults/voting/communication/finance/meters/documents) marketing sections in all six locales, the hero tagline branches on auth state (`home.tagline` vs `home.welcome`), and the broken `auth.register` CTA label was fixed to `shell.createAccount`. The flat `AppNavigation` nav bar in `App.tsx` was replaced by `<AppShell>` (`components/AppShell/`): public header for visitors; role-grouped sidebar (overview/operations/governance/community/finance/leasing/tools via `components/AppShell/navConfig.ts`) + top bar (connection status/language/user menu) for authenticated users; off-canvas under 1024px. Documented under Notes > Specific. No frontmatter change (buildStatus `shipped` / redesignStatus `in-progress` / apiStatus `partial` unchanged; the manager-dashboard redesign target is untouched). `/screens validate` clean.
+- 2026-11-04 — agent: r3-nav-roles — signed-in users on `/` now redirect to their role dashboard (`dashboardPathForRole`); the landing page is anonymous-only (audit r3 #15).
 - 2026-10-05 — agent: reconciled with PR #2995 (ppt-web Home CTA role drift fix). The Home "Open dashboard" CTA now routes via `isManagerRole(user?.role)` (MANAGER_ROLES membership) instead of the literal `user?.role === 'manager'`, so `org_admin`/`property_manager`/`technical_manager`/`super_admin` now land on `/dashboard/manager` instead of being misrouted to `/dashboard/resident`. Client-side routing only — no frontmatter change (buildStatus `shipped` / apiStatus `partial` unchanged).
 - 2026-05-09 — agent: design analyzed (ui_kits/ppt-web/manager-dashboard.html); flipped ppt-web redesignStatus → in-progress; attached designSource; populated functionality checklist (5 sections), all 4 states, design-specific notes; linked UC-15/03/02/04/17; declared 6 sharedComponents; added 3 relatedScreens
 - 2026-05-08 — init: created from scan (source: sitemap)

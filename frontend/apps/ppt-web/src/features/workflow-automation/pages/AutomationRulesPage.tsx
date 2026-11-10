@@ -9,12 +9,11 @@ import {
   type AutomationRule,
   useAutomationRules,
   useDeleteAutomationRule,
-  useRunAutomationRule,
   useUpdateAutomationRule,
 } from '@ppt/api-client';
 import { useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { useToast } from '../../../components';
 import { RuleCard } from '../components/RuleCard';
@@ -47,7 +46,6 @@ export function AutomationRulesPage() {
 
   const updateRule = useUpdateAutomationRule();
   const deleteRule = useDeleteAutomationRule();
-  const runRule = useRunAutomationRule();
 
   const handleEdit = (rule: AutomationRule) => {
     navigate(`/automations/rules/${rule.id}/edit`);
@@ -99,23 +97,6 @@ export function AutomationRulesPage() {
     }
   };
 
-  const handleRun = async (rule: AutomationRule) => {
-    try {
-      await runRule.mutateAsync(rule.id);
-      showToast({
-        type: 'success',
-        title: t('automation.rules.runSuccessTitle'),
-        message: t('automation.rules.runSuccessMessage', { name: rule.name }),
-      });
-    } catch (err) {
-      showToast({
-        type: 'error',
-        title: t('automation.rules.runErrorTitle'),
-        message: err instanceof Error ? err.message : t('automation.rules.runErrorMessage'),
-      });
-    }
-  };
-
   const rules = rulesData?.data ?? [];
   const totalRules = rulesData?.total ?? 0;
 
@@ -126,6 +107,14 @@ export function AutomationRulesPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{t('automation.rules.title')}</h1>
           <p className="mt-1 text-sm text-gray-500">{t('automation.rules.subtitle')}</p>
+          <nav className="mt-2 flex gap-4 text-sm" aria-label={t('automation.rules.title')}>
+            <Link to="/automations/templates" className="text-blue-600 hover:underline">
+              {t('automation.templateLibrary.title')}
+            </Link>
+            <Link to="/automations/executions" className="text-blue-600 hover:underline">
+              {t('automation.execution.title')}
+            </Link>
+          </nav>
         </div>
         <button
           type="button"
@@ -296,7 +285,6 @@ export function AutomationRulesPage() {
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onToggle={handleToggle}
-                onRun={handleRun}
               />
             ))}
           </div>

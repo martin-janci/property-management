@@ -93,15 +93,16 @@ pub async fn create_agency(
         .create_agency(principal.user_id, data)
         .await
         .map_err(|e| {
-            let error_str = e.to_string();
-            if error_str.contains("duplicate") || error_str.contains("already exists") {
-                (
-                    axum::http::StatusCode::BAD_REQUEST,
-                    "Agency with this name or slug already exists".to_string(),
-                )
-            } else {
-                crate::util::errors::db_error("create agency", e)
-            }
+            // A unique-constraint violation on name/slug means the agency
+            // already exists. Classify by the typed SQLSTATE (23505), not the
+            // message text.
+            crate::util::errors::db_error_or(
+                &e,
+                "create agency",
+                crate::util::errors::DbErrorClass::UniqueViolation,
+                axum::http::StatusCode::BAD_REQUEST,
+                "Agency with this name or slug already exists",
+            )
         })?;
 
     Ok((
@@ -430,20 +431,19 @@ pub async fn create_invitation(
         .create_invitation(agency_id, principal.user_id, data)
         .await
         .map_err(|e| {
-            let error_str = e.to_string();
-            if error_str.contains("not found") {
-                (
-                    axum::http::StatusCode::NOT_FOUND,
-                    "Agency not found".to_string(),
-                )
-            } else if error_str.contains("permission") || error_str.contains("unauthorized") {
-                (
-                    axum::http::StatusCode::FORBIDDEN,
-                    "Not authorized to create invitations for this agency".to_string(),
-                )
-            } else {
-                crate::util::errors::db_error("create invitation", e)
-            }
+            // `create_invitation` is a plain INSERT whose `agency_id` is a
+            // foreign key, so a missing agency surfaces as a FK violation ->
+            // 404. (Authorization is enforced earlier by
+            // `check_agency_membership`, so the repository never returns a
+            // permission error — the old `contains("permission")` branch was
+            // dead.) Classify by the typed sqlx error, not message text.
+            crate::util::errors::db_error_or(
+                &e,
+                "create invitation",
+                crate::util::errors::DbErrorClass::ForeignKeyViolation,
+                axum::http::StatusCode::NOT_FOUND,
+                "Agency not found",
+            )
         })?;
 
     Ok((axum::http::StatusCode::CREATED, Json(invitation)))
@@ -499,20 +499,22 @@ pub async fn accept_invitation(
         .accept_invitation(&token, principal.user_id)
         .await
         .map_err(|e| {
-            let error_str = e.to_string();
-            if error_str.contains("expired") {
-                (
-                    axum::http::StatusCode::BAD_REQUEST,
-                    "Invitation has expired".to_string(),
-                )
-            } else if error_str.contains("not found") || error_str.contains("invalid") {
-                (
-                    axum::http::StatusCode::BAD_REQUEST,
-                    "Invalid invitation token".to_string(),
-                )
-            } else {
-                crate::util::errors::db_error("accept invitation", e)
-            }
+            // The invitation lookup selects on `token AND accepted_at IS NULL
+            // AND expires_at > NOW()` via `fetch_one`, so an unknown, expired,
+            // or already-accepted token surfaces as `RowNotFound`. All of these
+            // collapse to a single 400 with no oracle beyond what the caller
+            // already holds (see the handler security note above). Classify by
+            // the sqlx variant, not message text — the old
+            // `contains("expired")`/`contains("invalid")`/`contains("not
+            // found")` checks never matched `RowNotFound`'s "no rows …" text,
+            // so this path silently 500'd.
+            crate::util::errors::db_error_or(
+                &e,
+                "accept invitation",
+                crate::util::errors::DbErrorClass::NotFound,
+                axum::http::StatusCode::BAD_REQUEST,
+                "Invalid invitation token",
+            )
         })?;
 
     Ok(Json(member))

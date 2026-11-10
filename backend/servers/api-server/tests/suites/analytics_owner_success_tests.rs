@@ -9,7 +9,7 @@ use serde::Serialize;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::common::{TestApp, TestConfig};
+use crate::common::{seed_membership, TestApp, TestConfig};
 
 // ---------------------------------------------------------------------------
 // JWT mint
@@ -158,6 +158,7 @@ async fn oa_create_valuation_succeeds(pool: PgPool) {
     let user_id = seed_user(&pool, &format!("oa-cv-{}@oa.test", Uuid::new_v4())).await;
     let building_id = seed_building(&pool, org_id).await;
     let unit_id = seed_unit(&pool, building_id).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint(user_id, "oa-cv@oa.test", org_id);
 
     let body = serde_json::json!({
@@ -189,6 +190,7 @@ async fn oa_get_valuation_with_comparables_succeeds(pool: PgPool) {
     let building_id = seed_building(&pool, org_id).await;
     let unit_id = seed_unit(&pool, building_id).await;
     let valuation_id = seed_valuation(&pool, unit_id).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint(user_id, "oa-gvc@oa.test", org_id);
 
     let resp = app
@@ -212,6 +214,7 @@ async fn oa_add_comparable_succeeds(pool: PgPool) {
     let building_id = seed_building(&pool, org_id).await;
     let unit_id = seed_unit(&pool, building_id).await;
     let valuation_id = seed_valuation(&pool, unit_id).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint(user_id, "oa-ac@oa.test", org_id);
 
     let body = serde_json::json!({
@@ -245,6 +248,7 @@ async fn oa_get_value_history_succeeds(pool: PgPool) {
     let user_id = seed_user(&pool, &format!("oa-vh-{}@oa.test", Uuid::new_v4())).await;
     let building_id = seed_building(&pool, org_id).await;
     let unit_id = seed_unit(&pool, building_id).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint(user_id, "oa-vh@oa.test", org_id);
 
     let resp = app
@@ -268,6 +272,7 @@ async fn oa_get_value_trend_succeeds(pool: PgPool) {
     let building_id = seed_building(&pool, org_id).await;
     let unit_id = seed_unit(&pool, building_id).await;
     seed_value_history(&pool, unit_id).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint(user_id, "oa-vt@oa.test", org_id);
 
     let resp = app
@@ -290,6 +295,7 @@ async fn oa_calculate_roi_succeeds(pool: PgPool) {
     let user_id = seed_user(&pool, &format!("oa-cr-{}@oa.test", Uuid::new_v4())).await;
     let building_id = seed_building(&pool, org_id).await;
     let unit_id = seed_unit(&pool, building_id).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint(user_id, "oa-cr@oa.test", org_id);
 
     let body = serde_json::json!({
@@ -319,6 +325,7 @@ async fn oa_get_cash_flow_succeeds(pool: PgPool) {
     let user_id = seed_user(&pool, &format!("oa-cf-{}@oa.test", Uuid::new_v4())).await;
     let building_id = seed_building(&pool, org_id).await;
     let unit_id = seed_unit(&pool, building_id).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint(user_id, "oa-cf@oa.test", org_id);
 
     let resp = app
@@ -340,6 +347,7 @@ async fn oa_get_roi_dashboard_succeeds(pool: PgPool) {
     let user_id = seed_user(&pool, &format!("oa-rd-{}@oa.test", Uuid::new_v4())).await;
     let building_id = seed_building(&pool, org_id).await;
     let unit_id = seed_unit(&pool, building_id).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint(user_id, "oa-rd@oa.test", org_id);
 
     let resp = app
@@ -355,13 +363,11 @@ async fn oa_get_roi_dashboard_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "#3104: GET /owner-analytics/portfolio returns 500 for an org with no seeded \
-            portfolio/units (empty-aggregation path in owner_analytics repo). Needs a source \
-            repro + fix; re-quarantined until the handler tolerates empty portfolios."]
 async fn oa_get_portfolio_summary_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "portfolio").await;
     let user_id = seed_user(&pool, &format!("oa-ps-{}@oa.test", Uuid::new_v4())).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint(user_id, "oa-ps@oa.test", org_id);
 
     let resp = app
@@ -382,6 +388,7 @@ async fn oa_compare_properties_succeeds(pool: PgPool) {
     let user_id = seed_user(&pool, &format!("oa-cp-{}@oa.test", Uuid::new_v4())).await;
     let building_id = seed_building(&pool, org_id).await;
     let unit_id = seed_unit(&pool, building_id).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint(user_id, "oa-cp@oa.test", org_id);
 
     let body = serde_json::json!({ "unit_ids": [unit_id] });
@@ -403,6 +410,7 @@ async fn oa_list_auto_approval_rules_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "list-rules").await;
     let user_id = seed_user(&pool, &format!("oa-lr-{}@oa.test", Uuid::new_v4())).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint(user_id, "oa-lr@oa.test", org_id);
 
     let resp = app
@@ -421,6 +429,7 @@ async fn oa_create_auto_approval_rule_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "create-rule").await;
     let user_id = seed_user(&pool, &format!("oa-car-{}@oa.test", Uuid::new_v4())).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint(user_id, "oa-car@oa.test", org_id);
 
     let body = serde_json::json!({
@@ -448,6 +457,7 @@ async fn oa_update_auto_approval_rule_succeeds(pool: PgPool) {
     let org_id = seed_org(&pool, "update-rule").await;
     let user_id = seed_user(&pool, &format!("oa-ur-{}@oa.test", Uuid::new_v4())).await;
     let rule_id = seed_rule(&pool, org_id, user_id).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint(user_id, "oa-ur@oa.test", org_id);
 
     let body = serde_json::json!({
@@ -473,6 +483,7 @@ async fn oa_delete_auto_approval_rule_succeeds(pool: PgPool) {
     let org_id = seed_org(&pool, "delete-rule").await;
     let user_id = seed_user(&pool, &format!("oa-dr-{}@oa.test", Uuid::new_v4())).await;
     let rule_id = seed_rule(&pool, org_id, user_id).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint(user_id, "oa-dr@oa.test", org_id);
 
     let resp = app
@@ -493,6 +504,7 @@ async fn oa_submit_expense_succeeds(pool: PgPool) {
     let user_id = seed_user(&pool, &format!("oa-se-{}@oa.test", Uuid::new_v4())).await;
     let building_id = seed_building(&pool, org_id).await;
     let unit_id = seed_unit(&pool, building_id).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint(user_id, "oa-se@oa.test", org_id);
 
     let body = serde_json::json!({
@@ -520,6 +532,7 @@ async fn oa_list_expense_requests_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "list-exp").await;
     let user_id = seed_user(&pool, &format!("oa-le-{}@oa.test", Uuid::new_v4())).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint(user_id, "oa-le@oa.test", org_id);
 
     let resp = app
@@ -541,6 +554,7 @@ async fn oa_review_expense_succeeds(pool: PgPool) {
     let building_id = seed_building(&pool, org_id).await;
     let unit_id = seed_unit(&pool, building_id).await;
     let expense_id = seed_expense(&pool, unit_id, user_id).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint(user_id, "oa-re@oa.test", org_id);
 
     let body = serde_json::json!({

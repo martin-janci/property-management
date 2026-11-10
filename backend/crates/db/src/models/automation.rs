@@ -51,6 +51,9 @@ pub struct CreateAutomationRule {
 pub struct UpdateAutomationRule {
     pub name: Option<String>,
     pub description: Option<String>,
+    /// New trigger kind (`schedule`, `event`, `condition`, `manual`).
+    #[serde(default)]
+    pub trigger_type: Option<String>,
     pub trigger_config: Option<serde_json::Value>,
     pub conditions: Option<serde_json::Value>,
     pub actions: Option<serde_json::Value>,
@@ -93,6 +96,50 @@ pub struct AutomationLogSummary {
     pub duration_ms: Option<i32>,
 }
 
+/// Execution log row joined with its rule name (org-wide execution list).
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+pub struct AutomationExecution {
+    pub id: Uuid,
+    pub rule_id: Uuid,
+    pub rule_name: String,
+    pub trigger_type: String,
+    pub trigger_data: Option<serde_json::Value>,
+    pub actions_executed: Option<serde_json::Value>,
+    pub status: String,
+    pub started_at: DateTime<Utc>,
+    pub completed_at: Option<DateTime<Utc>>,
+    pub error_message: Option<String>,
+    pub duration_ms: Option<i32>,
+}
+
+/// Filters for the org-wide execution list / stats.
+#[derive(Debug, Clone, Default)]
+pub struct AutomationExecutionFilter {
+    pub since: Option<DateTime<Utc>>,
+    pub status: Option<String>,
+    pub rule_id: Option<Uuid>,
+}
+
+/// Paginated org-wide execution list.
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct AutomationExecutionList {
+    pub items: Vec<AutomationExecution>,
+    pub total: i64,
+}
+
+/// Aggregate execution statistics for an organization.
+///
+/// `failed` counts `failed` + `partial_failure`; `pending` counts `pending` +
+/// `running`.
+#[derive(Debug, Clone, Default, FromRow, Serialize, Deserialize, ToSchema)]
+pub struct AutomationExecutionStats {
+    pub total: i64,
+    pub successful: i64,
+    pub failed: i64,
+    pub pending: i64,
+    pub average_duration_ms: Option<f64>,
+}
+
 // ============================================
 // Automation Templates
 // ============================================
@@ -101,6 +148,10 @@ pub struct AutomationLogSummary {
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct WorkflowAutomationTemplate {
     pub id: Uuid,
+    /// Stable, locale-independent key of a built-in template (e.g.
+    /// `weekly_maintenance_report`); clients translate by it. NULL for
+    /// custom templates.
+    pub slug: Option<String>,
     pub name: String,
     pub description: Option<String>,
     pub category: String,

@@ -119,5 +119,6 @@ UC-25 accessibility preferences. Per-user, server-synced across devices. The kil
 
 <!-- newest entries on top -->
 
+- 2026-11-05 — agent: screen-map-drift-pr-3244-ppt — reconcile i18n drift from PR #3244 (`fix(ppt-web): localize faults, news, settings and error pages`). `AccessibilitySettingsPage` moved hardcoded copy into react-i18next (`accessibilityPage.*`) across all 6 locales — section/row headings, live-preview labels, save-bar states and the saved/error toasts — with relative-times and color-scheme labels resolved per active language (addresses the "Pred chvíľou/pred 14 minútami need `Intl.RelativeTimeFormat`" Notes item). i18n only — no route/component/endpoint/status change.
 - 2026-05-09 — agent: design analyzed (pages/ppt-accessibility-settings.html — 5 artboards: loaded / loading-saving / saved-toast / empty / error); flipped ppt-web redesignStatus → in-progress; attached designSource; populated functionality checklist (10 sections), all 5 states, design-specific notes including live-preview tile pattern + OS-detection empty state + sticky save-bar 4-variant; linked UC-25; declared 5 sharedComponents; added 1 relatedScreen (privacy-settings sibling)
 - 2026-05-08 — init: created from scan (source: sitemap)

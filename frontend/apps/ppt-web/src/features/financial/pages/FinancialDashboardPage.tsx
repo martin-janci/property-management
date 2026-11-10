@@ -7,6 +7,8 @@
 
 import type { ARReportEntry, ARReportTotals, Invoice, Payment } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import {
   ARAgingTable,
   BuildingFilter,
@@ -51,7 +53,20 @@ interface FinancialDashboardPageProps {
   onViewAllPayments?: () => void;
   onSendReminder?: (invoiceId: string) => void;
   onUnitClick?: (unitId: string) => void;
+  /**
+   * Manager roles see every sub-section. Invoices, budgets and reports are
+   * manager-only routes, so residents only get the payments card.
+   */
+  isManager?: boolean;
 }
+
+/** Finance sub-sections reachable from the dashboard (Epic 52 routes). */
+const QUICK_NAV = [
+  { key: 'invoices', to: '/financial/invoices', managerOnly: true },
+  { key: 'payments', to: '/financial/payments', managerOnly: false },
+  { key: 'budgets', to: '/financial/budgets', managerOnly: true },
+  { key: 'reports', to: '/financial/reports', managerOnly: true },
+] as const;
 
 export function FinancialDashboardPage({
   buildings,
@@ -67,7 +82,9 @@ export function FinancialDashboardPage({
   onViewAllPayments,
   onSendReminder,
   onUnitClick,
+  isManager = false,
 }: FinancialDashboardPageProps) {
+  const { t } = useTranslation();
   const [selectedBuildingId, setSelectedBuildingId] = useState<string>();
   const [startDate, setStartDate] = useState<string>();
   const [endDate, setEndDate] = useState<string>();
@@ -93,35 +110,62 @@ export function FinancialDashboardPage({
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <h1 className="text-2xl font-bold text-gray-900">Financial Dashboard</h1>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <BuildingFilter
-                buildings={buildings}
-                selectedBuildingId={selectedBuildingId}
-                onChange={handleBuildingChange}
-                isLoading={isLoading}
+            <h1 className="text-2xl font-bold text-gray-900">{t('financial.dashboard.title')}</h1>
+            {/* Filters render only when the caller can actually apply them —
+                an inert filter would silently show unfiltered numbers. */}
+            {onBuildingChange && buildings.length > 0 && (
+              <div className="flex flex-col sm:flex-row gap-4">
+                <BuildingFilter
+                  buildings={buildings}
+                  selectedBuildingId={selectedBuildingId}
+                  onChange={handleBuildingChange}
+                  isLoading={isLoading}
+                />
+              </div>
+            )}
+          </div>
+          {onDateRangeChange && (
+            <div className="mt-4">
+              <DateRangeFilter
+                startDate={startDate}
+                endDate={endDate}
+                onStartDateChange={handleStartDateChange}
+                onEndDateChange={handleEndDateChange}
               />
             </div>
-          </div>
-          <div className="mt-4">
-            <DateRangeFilter
-              startDate={startDate}
-              endDate={endDate}
-              onStartDateChange={handleStartDateChange}
-              onEndDateChange={handleEndDateChange}
-            />
-          </div>
+          )}
         </div>
       </div>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Quick navigation to finance sub-sections */}
+        <nav aria-label={t('financial.dashboard.quickNav.label')} className="mb-8">
+          <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {QUICK_NAV.filter((item) => isManager || !item.managerOnly).map((item) => (
+              <li key={item.key}>
+                <Link
+                  to={item.to}
+                  className="block h-full bg-white rounded-lg shadow p-4 hover:shadow-md hover:bg-gray-50 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                >
+                  <span className="block text-base font-medium text-blue-700">
+                    {t(`financial.dashboard.quickNav.${item.key}`)}
+                  </span>
+                  <span className="mt-1 block text-sm text-gray-500">
+                    {t(`financial.dashboard.quickNav.${item.key}Desc`)}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
         {/* Metrics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <MetricCard
-            title="Total Balance"
+            title={t('financial.dashboard.totalBalance')}
             value={formatCurrency(metrics.totalBalance, metrics.currency)}
-            subtitle="Across all accounts"
+            subtitle={t('financial.dashboard.totalBalanceSubtitle')}
             icon={
               <svg
                 className="w-8 h-8"
@@ -140,9 +184,9 @@ export function FinancialDashboardPage({
             }
           />
           <MetricCard
-            title="Outstanding"
+            title={t('financial.dashboard.outstanding')}
             value={formatCurrency(metrics.totalOutstanding, metrics.currency)}
-            subtitle="Pending payments"
+            subtitle={t('financial.dashboard.outstandingSubtitle')}
             icon={
               <svg
                 className="w-8 h-8"
@@ -161,9 +205,9 @@ export function FinancialDashboardPage({
             }
           />
           <MetricCard
-            title="Overdue"
+            title={t('financial.statusOverdue')}
             value={formatCurrency(metrics.totalOverdue, metrics.currency)}
-            subtitle={`${overdueInvoices.length} invoices past due`}
+            subtitle={t('financial.dashboard.overdueSubtitle', { count: overdueInvoices.length })}
             className={metrics.totalOverdue > 0 ? 'border-l-4 border-red-500' : ''}
             icon={
               <svg

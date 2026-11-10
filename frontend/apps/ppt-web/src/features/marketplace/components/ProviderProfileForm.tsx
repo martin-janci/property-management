@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { ServiceCategory } from './ProviderCard';
 
 export interface ProviderProfileFormData {
@@ -44,23 +45,23 @@ interface ProviderProfileFormProps {
   isEdit?: boolean;
 }
 
-const categories: { value: ServiceCategory; label: string }[] = [
-  { value: 'plumbing', label: 'Plumbing' },
-  { value: 'electrical', label: 'Electrical' },
-  { value: 'hvac', label: 'HVAC' },
-  { value: 'cleaning', label: 'Cleaning' },
-  { value: 'landscaping', label: 'Landscaping' },
-  { value: 'security', label: 'Security' },
-  { value: 'painting', label: 'Painting' },
-  { value: 'roofing', label: 'Roofing' },
-  { value: 'carpentry', label: 'Carpentry' },
-  { value: 'locksmith', label: 'Locksmith' },
-  { value: 'pest_control', label: 'Pest Control' },
-  { value: 'general_maintenance', label: 'General Maintenance' },
-  { value: 'elevator_maintenance', label: 'Elevator Maintenance' },
-  { value: 'fire_safety', label: 'Fire Safety' },
-  { value: 'waste_management', label: 'Waste Management' },
-  { value: 'other', label: 'Other' },
+const categoryValues: ServiceCategory[] = [
+  'plumbing',
+  'electrical',
+  'hvac',
+  'cleaning',
+  'landscaping',
+  'security',
+  'painting',
+  'roofing',
+  'carpentry',
+  'locksmith',
+  'pest_control',
+  'general_maintenance',
+  'elevator_maintenance',
+  'fire_safety',
+  'waste_management',
+  'other',
 ];
 
 const defaultFormData: ProviderProfileFormData = {
@@ -79,6 +80,7 @@ export function ProviderProfileForm({
   isLoading,
   isEdit,
 }: ProviderProfileFormProps) {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<ProviderProfileFormData>({
     ...defaultFormData,
     ...initialData,
@@ -87,6 +89,20 @@ export function ProviderProfileForm({
   const [currentStep, setCurrentStep] = useState(1);
 
   const totalSteps = 4;
+
+  const stepLabels = [
+    t('marketplace.providerProfileForm.stepCompanyInfo'),
+    t('marketplace.providerProfileForm.stepServices'),
+    t('marketplace.providerProfileForm.stepPricing'),
+    t('marketplace.providerProfileForm.stepPortfolio'),
+  ];
+
+  const pricingTypes: { value: ProviderProfileFormData['pricingType']; labelKey: string }[] = [
+    { value: 'hourly', labelKey: 'marketplace.providerProfileForm.pricingHourly' },
+    { value: 'project', labelKey: 'marketplace.providerProfileForm.pricingProject' },
+    { value: 'fixed', labelKey: 'marketplace.providerProfileForm.pricingFixed' },
+    { value: 'quote_required', labelKey: 'marketplace.providerProfileForm.pricingQuote' },
+  ];
 
   const updateField = <K extends keyof ProviderProfileFormData>(
     key: K,
@@ -119,21 +135,21 @@ export function ProviderProfileForm({
 
     if (step === 1) {
       if (!formData.companyName.trim()) {
-        newErrors.companyName = 'Company name is required';
+        newErrors.companyName = t('marketplace.providerProfileForm.errCompanyName');
       }
       if (!formData.contactName.trim()) {
-        newErrors.contactName = 'Contact name is required';
+        newErrors.contactName = t('marketplace.providerProfileForm.errContactName');
       }
       if (!formData.contactEmail.trim()) {
-        newErrors.contactEmail = 'Contact email is required';
+        newErrors.contactEmail = t('marketplace.providerProfileForm.errContactEmail');
       } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contactEmail)) {
-        newErrors.contactEmail = 'Invalid email format';
+        newErrors.contactEmail = t('marketplace.providerProfileForm.errEmailFormat');
       }
     }
 
     if (step === 2) {
       if (formData.serviceCategories.length === 0) {
-        newErrors.serviceCategories = 'Select at least one service category';
+        newErrors.serviceCategories = t('marketplace.providerProfileForm.errCategories');
       }
     }
 
@@ -141,7 +157,7 @@ export function ProviderProfileForm({
       if (formData.pricingType === 'hourly') {
         if (formData.hourlyRateMin && formData.hourlyRateMax) {
           if (formData.hourlyRateMin > formData.hourlyRateMax) {
-            newErrors.hourlyRateMax = 'Maximum rate must be greater than minimum';
+            newErrors.hourlyRateMax = t('marketplace.providerProfileForm.errMaxRate');
           }
         }
       }
@@ -173,7 +189,7 @@ export function ProviderProfileForm({
       {/* Progress Indicator */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
-          {['Company Info', 'Services', 'Pricing', 'Portfolio'].map((label, index) => (
+          {stepLabels.map((label, index) => (
             <div key={label} className="flex items-center">
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
@@ -186,7 +202,7 @@ export function ProviderProfileForm({
               >
                 {index + 1 < currentStep ? (
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <title>Completed</title>
+                    <title>{t('marketplace.common.completed')}</title>
                     <path
                       fillRule="evenodd"
                       d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -211,12 +227,14 @@ export function ProviderProfileForm({
       {/* Step 1: Company Information */}
       {currentStep === 1 && (
         <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-gray-900">Company Information</h2>
+          <h2 className="text-xl font-semibold text-gray-900">
+            {t('marketplace.providerProfileForm.companyInformation')}
+          </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
               <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-1">
-                Company Name *
+                {t('marketplace.providerProfileForm.companyName')}
               </label>
               <input
                 id="companyName"
@@ -237,7 +255,7 @@ export function ProviderProfileForm({
                 htmlFor="businessRegistrationNumber"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Business Registration Number
+                {t('marketplace.providerProfileForm.businessRegNumber')}
               </label>
               <input
                 id="businessRegistrationNumber"
@@ -250,7 +268,7 @@ export function ProviderProfileForm({
 
             <div>
               <label htmlFor="taxId" className="block text-sm font-medium text-gray-700 mb-1">
-                Tax ID
+                {t('marketplace.providerProfileForm.taxId')}
               </label>
               <input
                 id="taxId"
@@ -263,35 +281,35 @@ export function ProviderProfileForm({
 
             <div className="md:col-span-2">
               <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                Company Description
+                {t('marketplace.providerProfileForm.companyDescription')}
               </label>
               <textarea
                 id="description"
                 rows={4}
                 value={formData.description || ''}
                 onChange={(e) => updateField('description', e.target.value)}
-                placeholder="Tell potential clients about your company, experience, and what sets you apart..."
+                placeholder={t('marketplace.providerProfileForm.companyDescriptionPlaceholder')}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div>
               <label htmlFor="website" className="block text-sm font-medium text-gray-700 mb-1">
-                Website
+                {t('marketplace.providerProfileForm.website')}
               </label>
               <input
                 id="website"
                 type="url"
                 value={formData.website || ''}
                 onChange={(e) => updateField('website', e.target.value)}
-                placeholder="https://www.example.com"
+                placeholder={t('marketplace.providerProfileForm.websitePlaceholder')}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div>
               <label htmlFor="logoUrl" className="block text-sm font-medium text-gray-700 mb-1">
-                Logo URL
+                {t('marketplace.providerProfileForm.logoUrl')}
               </label>
               <input
                 id="logoUrl"
@@ -303,12 +321,14 @@ export function ProviderProfileForm({
             </div>
           </div>
 
-          <h3 className="text-lg font-medium text-gray-900 pt-4">Contact Information</h3>
+          <h3 className="text-lg font-medium text-gray-900 pt-4">
+            {t('marketplace.providerProfileForm.contactInformation')}
+          </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label htmlFor="contactName" className="block text-sm font-medium text-gray-700 mb-1">
-                Contact Name *
+                {t('marketplace.providerProfileForm.contactName')}
               </label>
               <input
                 id="contactName"
@@ -329,7 +349,7 @@ export function ProviderProfileForm({
                 htmlFor="contactEmail"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Contact Email *
+                {t('marketplace.providerProfileForm.contactEmail')}
               </label>
               <input
                 id="contactEmail"
@@ -350,7 +370,7 @@ export function ProviderProfileForm({
                 htmlFor="contactPhone"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Contact Phone
+                {t('marketplace.providerProfileForm.contactPhone')}
               </label>
               <input
                 id="contactPhone"
@@ -363,7 +383,7 @@ export function ProviderProfileForm({
 
             <div>
               <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
-                City
+                {t('marketplace.providerProfileForm.city')}
               </label>
               <input
                 id="city"
@@ -376,7 +396,7 @@ export function ProviderProfileForm({
 
             <div className="md:col-span-2">
               <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
-                Address
+                {t('marketplace.providerProfileForm.address')}
               </label>
               <input
                 id="address"
@@ -393,32 +413,36 @@ export function ProviderProfileForm({
       {/* Step 2: Services */}
       {currentStep === 2 && (
         <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-gray-900">Services Offered</h2>
+          <h2 className="text-xl font-semibold text-gray-900">
+            {t('marketplace.providerProfileForm.servicesOffered')}
+          </h2>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
-              Select Service Categories *
+              {t('marketplace.providerProfileForm.selectCategories')}
             </label>
             {errors.serviceCategories && (
               <p className="mb-2 text-sm text-red-600">{errors.serviceCategories}</p>
             )}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {categories.map((cat) => (
+              {categoryValues.map((cat) => (
                 <label
-                  key={cat.value}
+                  key={cat}
                   className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
-                    formData.serviceCategories.includes(cat.value)
+                    formData.serviceCategories.includes(cat)
                       ? 'border-blue-500 bg-blue-50'
                       : 'border-gray-300 hover:bg-gray-50'
                   }`}
                 >
                   <input
                     type="checkbox"
-                    checked={formData.serviceCategories.includes(cat.value)}
-                    onChange={() => toggleCategory(cat.value)}
+                    checked={formData.serviceCategories.includes(cat)}
+                    onChange={() => toggleCategory(cat)}
                     className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />
-                  <span className="ml-2 text-sm text-gray-700">{cat.label}</span>
+                  <span className="ml-2 text-sm text-gray-700">
+                    {t(`marketplace.serviceCategory.${cat}`)}
+                  </span>
                 </label>
               ))}
             </div>
@@ -429,14 +453,14 @@ export function ProviderProfileForm({
               htmlFor="serviceDescription"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Service Description
+              {t('marketplace.providerProfileForm.serviceDescription')}
             </label>
             <textarea
               id="serviceDescription"
               rows={4}
               value={formData.serviceDescription || ''}
               onChange={(e) => updateField('serviceDescription', e.target.value)}
-              placeholder="Describe your services in more detail..."
+              placeholder={t('marketplace.providerProfileForm.serviceDescriptionPlaceholder')}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -446,7 +470,7 @@ export function ProviderProfileForm({
               htmlFor="coverageRadiusKm"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Coverage Radius (km)
+              {t('marketplace.providerProfileForm.coverageRadius')}
             </label>
             <input
               id="coverageRadiusKm"
@@ -456,7 +480,7 @@ export function ProviderProfileForm({
               onChange={(e) =>
                 updateField('coverageRadiusKm', e.target.value ? Number(e.target.value) : undefined)
               }
-              placeholder="e.g., 50"
+              placeholder={t('marketplace.providerProfileForm.coverageRadiusPlaceholder')}
               className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -469,7 +493,9 @@ export function ProviderProfileForm({
                 onChange={(e) => updateField('emergencyAvailable', e.target.checked)}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
-              <span className="text-sm text-gray-700">Available for 24/7 Emergency Calls</span>
+              <span className="text-sm text-gray-700">
+                {t('marketplace.providerProfileForm.emergencyCalls')}
+              </span>
             </label>
           </div>
         </div>
@@ -478,17 +504,16 @@ export function ProviderProfileForm({
       {/* Step 3: Pricing */}
       {currentStep === 3 && (
         <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-gray-900">Pricing Structure</h2>
+          <h2 className="text-xl font-semibold text-gray-900">
+            {t('marketplace.providerProfileForm.pricingStructure')}
+          </h2>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">Pricing Type</label>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              {t('marketplace.providerProfileForm.pricingType')}
+            </label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {[
-                { value: 'hourly', label: 'Hourly Rate' },
-                { value: 'project', label: 'Per Project' },
-                { value: 'fixed', label: 'Fixed Price' },
-                { value: 'quote_required', label: 'Quote Required' },
-              ].map((opt) => (
+              {pricingTypes.map((opt) => (
                 <label
                   key={opt.value}
                   className={`flex items-center justify-center p-3 border rounded-lg cursor-pointer transition-colors ${
@@ -510,7 +535,7 @@ export function ProviderProfileForm({
                     }
                     className="sr-only"
                   />
-                  <span className="text-sm text-gray-700">{opt.label}</span>
+                  <span className="text-sm text-gray-700">{t(opt.labelKey)}</span>
                 </label>
               ))}
             </div>
@@ -523,7 +548,7 @@ export function ProviderProfileForm({
                   htmlFor="hourlyRateMin"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Minimum Hourly Rate
+                  {t('marketplace.providerProfileForm.minHourlyRate')}
                 </label>
                 <div className="relative">
                   <input
@@ -551,7 +576,7 @@ export function ProviderProfileForm({
                   htmlFor="hourlyRateMax"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Maximum Hourly Rate
+                  {t('marketplace.providerProfileForm.maxHourlyRate')}
                 </label>
                 <div className="relative">
                   <input
@@ -581,7 +606,7 @@ export function ProviderProfileForm({
 
               <div>
                 <label htmlFor="currency" className="block text-sm font-medium text-gray-700 mb-1">
-                  Currency
+                  {t('marketplace.providerProfileForm.currency')}
                 </label>
                 <select
                   id="currency"
@@ -603,7 +628,7 @@ export function ProviderProfileForm({
               htmlFor="responseTimeHours"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Typical Response Time (hours)
+              {t('marketplace.providerProfileForm.responseTime')}
             </label>
             <input
               id="responseTimeHours"
@@ -616,11 +641,11 @@ export function ProviderProfileForm({
                   e.target.value ? Number(e.target.value) : undefined
                 )
               }
-              placeholder="e.g., 24"
+              placeholder={t('marketplace.providerProfileForm.responseTimePlaceholder')}
               className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             />
             <p className="mt-1 text-sm text-gray-500">
-              How quickly do you typically respond to inquiries?
+              {t('marketplace.providerProfileForm.responseTimeHint')}
             </p>
           </div>
         </div>
@@ -629,30 +654,33 @@ export function ProviderProfileForm({
       {/* Step 4: Portfolio */}
       {currentStep === 4 && (
         <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-gray-900">Portfolio</h2>
+          <h2 className="text-xl font-semibold text-gray-900">
+            {t('marketplace.providerProfileForm.portfolio')}
+          </h2>
 
           <div>
             <label
               htmlFor="portfolioDescription"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Portfolio Description
+              {t('marketplace.providerProfileForm.portfolioDescription')}
             </label>
             <textarea
               id="portfolioDescription"
               rows={4}
               value={formData.portfolioDescription || ''}
               onChange={(e) => updateField('portfolioDescription', e.target.value)}
-              placeholder="Describe your past work, notable projects, and achievements..."
+              placeholder={t('marketplace.providerProfileForm.portfolioDescriptionPlaceholder')}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">Portfolio Images</label>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              {t('marketplace.providerProfileForm.portfolioImages')}
+            </label>
             <p className="text-sm text-gray-500 mb-4">
-              Add URLs to images showcasing your work. You can add more images after creating your
-              profile.
+              {t('marketplace.providerProfileForm.portfolioImagesHint')}
             </p>
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
               <svg
@@ -661,7 +689,7 @@ export function ProviderProfileForm({
                 stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <title>Upload images</title>
+                <title>{t('marketplace.providerProfileForm.uploadImages')}</title>
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -670,16 +698,17 @@ export function ProviderProfileForm({
                 />
               </svg>
               <p className="mt-2 text-sm text-gray-600">
-                Image upload will be available after profile creation
+                {t('marketplace.providerProfileForm.imageUploadHint')}
               </p>
             </div>
           </div>
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="text-sm font-medium text-blue-800">Ready to Submit?</h3>
+            <h3 className="text-sm font-medium text-blue-800">
+              {t('marketplace.providerProfileForm.readyToSubmit')}
+            </h3>
             <p className="mt-1 text-sm text-blue-700">
-              Your profile will be reviewed by our team. Once approved, it will be visible in the
-              marketplace.
+              {t('marketplace.providerProfileForm.reviewNote')}
             </p>
           </div>
         </div>
@@ -692,7 +721,9 @@ export function ProviderProfileForm({
           onClick={currentStep === 1 ? onCancel : handlePrev}
           className="px-4 py-2 text-gray-700 font-medium hover:text-gray-900"
         >
-          {currentStep === 1 ? 'Cancel' : 'Previous'}
+          {currentStep === 1
+            ? t('marketplace.common.cancel')
+            : t('marketplace.providerProfileForm.previous')}
         </button>
 
         <div className="flex items-center gap-3">
@@ -702,7 +733,7 @@ export function ProviderProfileForm({
               onClick={handleNext}
               className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
-              Next
+              {t('marketplace.providerProfileForm.next')}
             </button>
           ) : (
             <button
@@ -710,7 +741,11 @@ export function ProviderProfileForm({
               disabled={isLoading}
               className="px-6 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
             >
-              {isLoading ? 'Saving...' : isEdit ? 'Update Profile' : 'Create Profile'}
+              {isLoading
+                ? t('marketplace.providerProfileForm.saving')
+                : isEdit
+                  ? t('marketplace.providerProfileForm.updateProfile')
+                  : t('marketplace.providerProfileForm.createProfile')}
             </button>
           )}
         </div>

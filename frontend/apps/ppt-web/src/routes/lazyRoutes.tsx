@@ -38,6 +38,12 @@ export const NewsListPage = lazy(() =>
 export const ArticleDetailPage = lazy(() =>
   import('../features/news').then((m) => ({ default: m.ArticleDetailPage }))
 );
+export const CreateArticlePage = lazy(() =>
+  import('../features/news').then((m) => ({ default: m.CreateArticlePage }))
+);
+export const EditArticlePage = lazy(() =>
+  import('../features/news').then((m) => ({ default: m.EditArticlePage }))
+);
 
 // Emergency feature (Epic 62)
 export const EmergencyContactDirectoryPage = lazy(() =>
@@ -166,6 +172,12 @@ export const ForgotPasswordPage = lazy(() =>
 export const ResetPasswordPage = lazy(() =>
   import('../features/auth').then((m) => ({ default: m.ResetPasswordPage }))
 );
+export const OrganizationMembersPage = lazy(() =>
+  import('../features/members').then((m) => ({ default: m.OrganizationMembersPage }))
+);
+export const VerifyEmailPage = lazy(() =>
+  import('../features/auth').then((m) => ({ default: m.VerifyEmailPage }))
+);
 export const ChangePasswordPage = lazy(() =>
   import('../features/auth').then((m) => ({ default: m.ChangePasswordPage }))
 );
@@ -218,7 +230,7 @@ export const FaultReportsPage = lazy(() =>
   import('../features/faults').then((m) => ({ default: m.FaultReportsPage }))
 );
 
-// Community feature (Epic 42)
+// Community feature (Epic 42) — feed, groups, events, marketplace
 export const FeedPage = lazy(() =>
   import('../features/community').then((m) => ({ default: m.FeedPage }))
 );
@@ -237,6 +249,15 @@ export const EventsPage = lazy(() =>
 export const MarketplacePage = lazy(() =>
   import('../features/community').then((m) => ({ default: m.MarketplacePage }))
 );
+export const CreateCommunityEventPage = lazy(() =>
+  import('../features/community').then((m) => ({ default: m.CreateEventPage }))
+);
+export const CreateMarketplaceItemPage = lazy(() =>
+  import('../features/community').then((m) => ({ default: m.CreateItemPage }))
+);
+export const MarketplaceItemDetailPage = lazy(() =>
+  import('../features/community').then((m) => ({ default: m.ItemDetailPage }))
+);
 
 // Financial feature (Epic 52)
 export const FinancialDashboardPage = lazy(() =>
@@ -244,6 +265,9 @@ export const FinancialDashboardPage = lazy(() =>
 );
 export const InvoiceManagementPage = lazy(() =>
   import('../features/financial').then((m) => ({ default: m.InvoiceManagementPage }))
+);
+export const InvoiceDetail = lazy(() =>
+  import('../features/financial').then((m) => ({ default: m.InvoiceDetail }))
 );
 export const PaymentManagementPage = lazy(() =>
   import('../features/financial').then((m) => ({ default: m.PaymentManagementPage }))
@@ -278,6 +302,9 @@ export const ScheduleDetailPage = lazy(() =>
 // Buildings feature (Epic 3, Story 3.1) — built + API-wired, now routed (gap-sweep)
 export const BuildingsPage = lazy(() =>
   import('../features/buildings').then((m) => ({ default: m.BuildingsPage }))
+);
+export const BuildingFormPage = lazy(() =>
+  import('../features/buildings').then((m) => ({ default: m.BuildingFormPage }))
 );
 export const BuildingDetailPage = lazy(() =>
   import('../features/buildings').then((m) => ({ default: m.BuildingDetailPage }))
@@ -322,6 +349,13 @@ export const SentimentDashboardPage = lazy(() =>
 export const NotificationAnalyticsPage = lazy(() =>
   import('../features/notification-analytics').then((m) => ({
     default: m.NotificationAnalyticsPage,
+  }))
+);
+
+// In-app notification inbox (gap audit R6 P1-8)
+export const NotificationInboxPage = lazy(() =>
+  import('../features/notification-inbox').then((m) => ({
+    default: m.NotificationInboxPage,
   }))
 );
 

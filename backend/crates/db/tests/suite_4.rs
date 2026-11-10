@@ -26,6 +26,10 @@ mod rls_listings_global_context_tests;
 mod saved_search_watermark_advance_tests;
 #[path = "suites/search_alert_delivery_tests.rs"]
 mod search_alert_delivery_tests;
+#[path = "suites/seed_force_audit_logs_tests.rs"]
+mod seed_force_audit_logs_tests;
+#[path = "suites/sensor_reading_fold_scope_tests.rs"]
+mod sensor_reading_fold_scope_tests;
 #[path = "suites/sensor_rls_repo_tests.rs"]
 mod sensor_rls_repo_tests;
 #[path = "suites/sentiment_rls_repo_tests.rs"]
@@ -50,6 +54,10 @@ mod violations_cross_org_idor_tests;
 mod vote_cast_regression_tests;
 #[path = "suites/vote_delegation_eligibility_tests.rs"]
 mod vote_delegation_eligibility_tests;
+#[path = "suites/vote_eligible_snapshot_tests.rs"]
+mod vote_eligible_snapshot_tests;
+#[path = "suites/vote_sub_resource_org_scope_tests.rs"]
+mod vote_sub_resource_org_scope_tests;
 #[path = "suites/webhook_repo_dedup_tests.rs"]
 mod webhook_repo_dedup_tests;
 #[path = "suites/work_order_rls_repo_tests.rs"]

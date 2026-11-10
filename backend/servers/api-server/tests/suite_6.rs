@@ -7,6 +7,8 @@
 
 mod common;
 
+#[path = "suites/login_token_org_scope_tests.rs"]
+mod login_token_org_scope_tests;
 #[path = "suites/mfa_e2e_tests.rs"]
 mod mfa_e2e_tests;
 #[path = "suites/mfa_recovery_codes_tests.rs"]
@@ -61,3 +63,5 @@ mod outages_happy_path_tests;
 mod owner_analytics_cross_org_idor_tests;
 #[path = "suites/package_visitor_happy_path_tests.rs"]
 mod package_visitor_happy_path_tests;
+#[path = "suites/package_visitor_round4_authz_tests.rs"]
+mod package_visitor_round4_authz_tests;

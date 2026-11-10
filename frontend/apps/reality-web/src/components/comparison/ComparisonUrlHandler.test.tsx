@@ -129,4 +129,51 @@ describe('ComparisonUrlHandler', () => {
     // The comparison is usable, so the error state must NOT blank it out.
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
+
+  it('rejects a malformed 200 body at the boundary instead of trusting it', async () => {
+    // Regression bar for the unchecked `response.json() as ListingSummary`
+    // cast: a 200 carrying a partial/garbage body (here: missing title + a
+    // non-object address) must be dropped at the API boundary, never handed to
+    // the comparison, mirroring the detail path's `parseListingDetail` guard.
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.endsWith('/bad')) {
+        // Well-formed 200 envelope, but not a renderable ListingSummary.
+        return { ok: true, status: 200, json: async () => ({ id: 'bad', address: 'oops' }) };
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ ...mockListing, id: 'good', slug: 'good' }),
+      };
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    render(<ComparisonUrlHandler sharedIds={['bad', 'good']} />);
+
+    // The good listing loads; the malformed one is dropped.
+    await waitFor(() =>
+      expect(addToComparison).toHaveBeenCalledWith(expect.objectContaining({ id: 'good' }))
+    );
+    for (const [added] of addToComparison.mock.calls) {
+      expect(added.id).toBe('good');
+    }
+    // A partial success is still usable, so no error state.
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('shows the error state when every shared listing body is malformed', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => null, // malformed: a null JSON body typed as a listing
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    render(<ComparisonUrlHandler sharedIds={['x']} />);
+
+    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
+    expect(addToComparison).not.toHaveBeenCalled();
+  });
 });

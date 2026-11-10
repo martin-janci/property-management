@@ -60,6 +60,8 @@ interface FaultFormProps {
   aiSuggestionUnavailable?: boolean;
   /** Callback when photos change (for triggering AI analysis) */
   onPhotosChange?: (photos: UploadedPhoto[]) => void;
+  /** Called when the selected building changes, so the parent can load its units. */
+  onBuildingChange?: (buildingId: string) => void;
 }
 
 export function FaultForm({
@@ -74,6 +76,7 @@ export function FaultForm({
   aiSuggestionLoading = false,
   aiSuggestionUnavailable = false,
   onPhotosChange,
+  onBuildingChange,
 }: FaultFormProps) {
   const { t } = useTranslation();
   const [photos, setPhotos] = useState<UploadedPhoto[]>([]);
@@ -155,7 +158,12 @@ export function FaultForm({
     setFormData((prev) => ({
       ...prev,
       [name]: value || undefined,
+      // A unit belongs to exactly one building — drop a stale selection.
+      ...(name === 'buildingId' ? { unitId: undefined } : {}),
     }));
+    if (name === 'buildingId') {
+      onBuildingChange?.(value);
+    }
     // Clear error on change
     if (errors[name as keyof FaultFormData]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));

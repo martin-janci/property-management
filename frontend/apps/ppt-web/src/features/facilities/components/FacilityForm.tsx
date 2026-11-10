@@ -11,6 +11,8 @@ import type {
   UpdateFacilityRequest,
 } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { FACILITY_TYPES } from './facilityTypes';
 
 interface FacilityFormProps {
   facility?: Facility;
@@ -19,33 +21,18 @@ interface FacilityFormProps {
   isSubmitting?: boolean;
 }
 
-const facilityTypes: { value: FacilityType; label: string }[] = [
-  { value: 'gym', label: 'Gym' },
-  { value: 'laundry', label: 'Laundry' },
-  { value: 'meeting_room', label: 'Meeting Room' },
-  { value: 'party_room', label: 'Party Room' },
-  { value: 'sauna', label: 'Sauna' },
-  { value: 'pool', label: 'Pool' },
-  { value: 'playground', label: 'Playground' },
-  { value: 'parking', label: 'Parking' },
-  { value: 'storage', label: 'Storage' },
-  { value: 'garden', label: 'Garden' },
-  { value: 'bbq', label: 'BBQ Area' },
-  { value: 'bike_storage', label: 'Bike Storage' },
-  { value: 'other', label: 'Other' },
-];
-
 const daysOfWeek = [
-  { bit: 1, label: 'Mon' },
-  { bit: 2, label: 'Tue' },
-  { bit: 4, label: 'Wed' },
-  { bit: 8, label: 'Thu' },
-  { bit: 16, label: 'Fri' },
-  { bit: 32, label: 'Sat' },
-  { bit: 64, label: 'Sun' },
-];
+  { bit: 1, key: 'mon' },
+  { bit: 2, key: 'tue' },
+  { bit: 4, key: 'wed' },
+  { bit: 8, key: 'thu' },
+  { bit: 16, key: 'fri' },
+  { bit: 32, key: 'sat' },
+  { bit: 64, key: 'sun' },
+] as const;
 
 export function FacilityForm({ facility, onSubmit, onCancel, isSubmitting }: FacilityFormProps) {
+  const { t } = useTranslation();
   const [name, setName] = useState(facility?.name || '');
   const [facilityType, setFacilityType] = useState<FacilityType>(
     facility?.facility_type || 'other'
@@ -78,22 +65,22 @@ export function FacilityForm({ facility, onSubmit, onCancel, isSubmitting }: Fac
     const newErrors: Record<string, string> = {};
 
     if (!name.trim()) {
-      newErrors.name = 'Name is required';
+      newErrors.name = t('facilities.form.errors.nameRequired');
     }
     if (!facilityType) {
-      newErrors.facilityType = 'Facility type is required';
+      newErrors.facilityType = t('facilities.form.errors.typeRequired');
     }
     if (availableFrom && availableTo && availableFrom >= availableTo) {
-      newErrors.availableTo = 'Available until must be after available from';
+      newErrors.availableTo = t('facilities.form.errors.availableToAfterFrom');
     }
     if (maxBookingHours && Number(maxBookingHours) <= 0) {
-      newErrors.maxBookingHours = 'Must be greater than 0';
+      newErrors.maxBookingHours = t('facilities.form.errors.mustBePositive');
     }
     if (availableDays === 0) {
-      newErrors.availableDays = 'Select at least one available day';
+      newErrors.availableDays = t('facilities.form.errors.selectDay');
     }
     if (minAdvanceHours && Number(minAdvanceHours) < 0) {
-      newErrors.minAdvanceHours = 'Cannot be negative';
+      newErrors.minAdvanceHours = t('facilities.form.errors.notNegative');
     }
 
     setErrors(newErrors);
@@ -149,12 +136,14 @@ export function FacilityForm({ facility, onSubmit, onCancel, isSubmitting }: Fac
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Basic Information */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          {t('facilities.form.basicInfo')}
+        </h2>
 
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-              Name *
+              {t('facilities.form.name')}
             </label>
             <input
               type="text"
@@ -168,7 +157,7 @@ export function FacilityForm({ facility, onSubmit, onCancel, isSubmitting }: Fac
 
           <div>
             <label htmlFor="facilityType" className="block text-sm font-medium text-gray-700">
-              Type *
+              {t('facilities.form.type')}
             </label>
             <select
               id="facilityType"
@@ -176,9 +165,9 @@ export function FacilityForm({ facility, onSubmit, onCancel, isSubmitting }: Fac
               onChange={(e) => setFacilityType(e.target.value as FacilityType)}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              {facilityTypes.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
+              {FACILITY_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {t(`facilities.types.${type}`)}
                 </option>
               ))}
             </select>
@@ -189,7 +178,7 @@ export function FacilityForm({ facility, onSubmit, onCancel, isSubmitting }: Fac
 
           <div className="md:col-span-2">
             <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-              Description
+              {t('facilities.form.description')}
             </label>
             <textarea
               id="description"
@@ -202,21 +191,21 @@ export function FacilityForm({ facility, onSubmit, onCancel, isSubmitting }: Fac
 
           <div>
             <label htmlFor="location" className="block text-sm font-medium text-gray-700">
-              Location
+              {t('facilities.form.location')}
             </label>
             <input
               type="text"
               id="location"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder="e.g., Ground Floor, Building A"
+              placeholder={t('facilities.form.locationPlaceholder')}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <div>
             <label htmlFor="capacity" className="block text-sm font-medium text-gray-700">
-              Capacity
+              {t('facilities.form.capacity')}
             </label>
             <input
               type="number"
@@ -224,7 +213,7 @@ export function FacilityForm({ facility, onSubmit, onCancel, isSubmitting }: Fac
               value={capacity}
               onChange={(e) => setCapacity(e.target.value ? Number(e.target.value) : '')}
               min={1}
-              placeholder="Maximum number of people"
+              placeholder={t('facilities.form.capacityPlaceholder')}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -233,7 +222,9 @@ export function FacilityForm({ facility, onSubmit, onCancel, isSubmitting }: Fac
 
       {/* Booking Rules */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Booking Rules</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          {t('facilities.form.bookingRules')}
+        </h2>
 
         <div className="space-y-4">
           {/* Toggles */}
@@ -245,7 +236,7 @@ export function FacilityForm({ facility, onSubmit, onCancel, isSubmitting }: Fac
                 onChange={(e) => setIsBookable(e.target.checked)}
                 className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
-              <span className="text-sm text-gray-700">Allow Booking</span>
+              <span className="text-sm text-gray-700">{t('facilities.form.allowBooking')}</span>
             </label>
 
             {facility && (
@@ -256,7 +247,7 @@ export function FacilityForm({ facility, onSubmit, onCancel, isSubmitting }: Fac
                   onChange={(e) => setIsActive(e.target.checked)}
                   className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
-                <span className="text-sm text-gray-700">Active</span>
+                <span className="text-sm text-gray-700">{t('facilities.form.active')}</span>
               </label>
             )}
 
@@ -267,7 +258,7 @@ export function FacilityForm({ facility, onSubmit, onCancel, isSubmitting }: Fac
                 onChange={(e) => setRequiresApproval(e.target.checked)}
                 className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
-              <span className="text-sm text-gray-700">Requires Approval</span>
+              <span className="text-sm text-gray-700">{t('facilities.form.requiresApproval')}</span>
             </label>
           </div>
 
@@ -275,7 +266,7 @@ export function FacilityForm({ facility, onSubmit, onCancel, isSubmitting }: Fac
           <div className="grid gap-4 md:grid-cols-3">
             <div>
               <label htmlFor="maxBookingHours" className="block text-sm font-medium text-gray-700">
-                Max Booking Duration (hours)
+                {t('facilities.form.maxBookingHours')}
               </label>
               <input
                 type="number"
@@ -292,7 +283,7 @@ export function FacilityForm({ facility, onSubmit, onCancel, isSubmitting }: Fac
 
             <div>
               <label htmlFor="maxAdvanceDays" className="block text-sm font-medium text-gray-700">
-                Max Advance Booking (days)
+                {t('facilities.form.maxAdvanceDays')}
               </label>
               <input
                 type="number"
@@ -306,7 +297,7 @@ export function FacilityForm({ facility, onSubmit, onCancel, isSubmitting }: Fac
 
             <div>
               <label htmlFor="minAdvanceHours" className="block text-sm font-medium text-gray-700">
-                Min Advance Booking (hours)
+                {t('facilities.form.minAdvanceHours')}
               </label>
               <input
                 type="number"
@@ -326,7 +317,7 @@ export function FacilityForm({ facility, onSubmit, onCancel, isSubmitting }: Fac
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label htmlFor="availableFrom" className="block text-sm font-medium text-gray-700">
-                Available From
+                {t('facilities.form.availableFrom')}
               </label>
               <input
                 type="time"
@@ -339,7 +330,7 @@ export function FacilityForm({ facility, onSubmit, onCancel, isSubmitting }: Fac
 
             <div>
               <label htmlFor="availableTo" className="block text-sm font-medium text-gray-700">
-                Available Until
+                {t('facilities.form.availableTo')}
               </label>
               <input
                 type="time"
@@ -356,7 +347,9 @@ export function FacilityForm({ facility, onSubmit, onCancel, isSubmitting }: Fac
 
           {/* Available Days */}
           <fieldset>
-            <legend className="block text-sm font-medium text-gray-700 mb-2">Available Days</legend>
+            <legend className="block text-sm font-medium text-gray-700 mb-2">
+              {t('facilities.form.availableDays')}
+            </legend>
             <div className="flex flex-wrap gap-2">
               {daysOfWeek.map((day) => {
                 const isSelected = Boolean(availableDays & day.bit);
@@ -372,7 +365,7 @@ export function FacilityForm({ facility, onSubmit, onCancel, isSubmitting }: Fac
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
-                    {day.label}
+                    {t(`facilities.days.${day.key}`)}
                   </button>
                 );
               })}
@@ -386,33 +379,33 @@ export function FacilityForm({ facility, onSubmit, onCancel, isSubmitting }: Fac
 
       {/* Pricing */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Pricing</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('facilities.form.pricing')}</h2>
 
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <label htmlFor="hourlyFee" className="block text-sm font-medium text-gray-700">
-              Hourly Fee
+              {t('facilities.form.hourlyFee')}
             </label>
             <input
               type="text"
               id="hourlyFee"
               value={hourlyFee}
               onChange={(e) => setHourlyFee(e.target.value)}
-              placeholder="e.g., 25.00"
+              placeholder={t('facilities.form.hourlyFeePlaceholder')}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <div>
             <label htmlFor="depositAmount" className="block text-sm font-medium text-gray-700">
-              Deposit Amount
+              {t('facilities.form.depositAmount')}
             </label>
             <input
               type="text"
               id="depositAmount"
               value={depositAmount}
               onChange={(e) => setDepositAmount(e.target.value)}
-              placeholder="e.g., 50.00"
+              placeholder={t('facilities.form.depositPlaceholder')}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -421,14 +414,16 @@ export function FacilityForm({ facility, onSubmit, onCancel, isSubmitting }: Fac
 
       {/* Amenities */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Amenities</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          {t('facilities.form.amenities')}
+        </h2>
 
         <div className="flex gap-2 mb-4">
           <input
             type="text"
             value={newAmenity}
             onChange={(e) => setNewAmenity(e.target.value)}
-            placeholder="Add amenity (e.g., WiFi, Projector)"
+            placeholder={t('facilities.form.amenityPlaceholder')}
             className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
@@ -442,7 +437,7 @@ export function FacilityForm({ facility, onSubmit, onCancel, isSubmitting }: Fac
             onClick={addAmenity}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
-            Add
+            {t('facilities.form.add')}
           </button>
         </div>
 
@@ -458,7 +453,7 @@ export function FacilityForm({ facility, onSubmit, onCancel, isSubmitting }: Fac
                   type="button"
                   onClick={() => removeAmenity(amenity)}
                   className="text-gray-500 hover:text-red-600"
-                  aria-label={`Remove ${amenity}`}
+                  aria-label={t('facilities.form.removeAmenity', { name: amenity })}
                 >
                   <svg
                     className="w-4 h-4"
@@ -486,14 +481,18 @@ export function FacilityForm({ facility, onSubmit, onCancel, isSubmitting }: Fac
           onClick={onCancel}
           className="flex-1 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
         >
-          Cancel
+          {t('facilities.form.cancel')}
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
           className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {isSubmitting ? 'Saving...' : facility ? 'Update Facility' : 'Create Facility'}
+          {isSubmitting
+            ? t('facilities.form.saving')
+            : facility
+              ? t('facilities.form.update')
+              : t('facilities.form.create')}
         </button>
       </div>
     </form>

@@ -238,6 +238,43 @@ pub struct SsoCallbackQuery {
     pub error_description: Option<String>,
 }
 
+/// Map a failed SSO-callback step into a sanitized client response: log the
+/// full underlying error server-side and return only the fixed, generic
+/// `client_message` to the caller under the stable machine-readable `code`.
+///
+/// SECURITY: the underlying error (`e`) from these steps routinely carries
+/// detail that must never reach an unauthenticated SSO caller — sqlx/Postgres
+/// schema information (table, column and constraint names, driver messages)
+/// from the persistence steps, and the verbatim upstream/provider response body
+/// from the PM OAuth token-exchange and userinfo calls (see
+/// `exchange_code_for_tokens` / `get_user_info`, which wrap the raw provider
+/// text). We log it server-side (so operators can still diagnose the failure)
+/// and return only the generic `client_message` in the body. Mirrors the
+/// log-then-generic convention used elsewhere in the reality-server routes
+/// (e.g. `users.rs`, `inactive_pm_token_response`).
+///
+/// `status` is the HTTP status for the client (upstream failures stay a `400`;
+/// persistence failures are a `500` via [`sso_callback_internal_error`]).
+fn sso_callback_sanitized_error(
+    status: StatusCode,
+    code: &'static str,
+    client_message: &'static str,
+    e: &dyn std::fmt::Display,
+) -> (StatusCode, Json<SsoError>) {
+    tracing::error!(error = %e, code, status = %status, "SSO callback step failed");
+    (status, Json(SsoError::new(code, client_message)))
+}
+
+/// `500` specialization of [`sso_callback_sanitized_error`] for SSO-callback
+/// persistence-step failures (user upsert, session creation).
+fn sso_callback_internal_error(
+    code: &'static str,
+    client_message: &'static str,
+    e: &dyn std::fmt::Display,
+) -> (StatusCode, Json<SsoError>) {
+    sso_callback_sanitized_error(StatusCode::INTERNAL_SERVER_ERROR, code, client_message, e)
+}
+
 /// SSO callback - exchanges authorization code for tokens.
 #[utoipa::path(
     get,
@@ -307,23 +344,34 @@ pub async fn sso_callback(
         ));
     }
 
-    // Exchange code for tokens with PM OAuth server
+    // Exchange code for tokens with PM OAuth server.
+    //
+    // SECURITY: the error wraps the verbatim PM OAuth provider response body
+    // (see `exchange_code_for_tokens`), which can carry provider-internal
+    // detail — client ids, issuer/endpoint URLs, misconfiguration hints. Log
+    // the full detail server-side and return only a generic client message
+    // (log-then-generic convention, see `sso_callback_sanitized_error`).
     let tokens = exchange_code_for_tokens(&state, &code, &pending_session.code_verifier)
         .await
         .map_err(|e| {
-            (
+            sso_callback_sanitized_error(
                 StatusCode::BAD_REQUEST,
-                Json(SsoError::new("token_exchange_failed", &e.to_string())),
+                "token_exchange_failed",
+                "Could not complete sign-in with the identity provider",
+                &e,
             )
         })?;
 
-    // Get user info from PM
+    // Get user info from PM. Same sanitization: `get_user_info` wraps the raw
+    // PM userinfo response body, which must not reach the client.
     let user_info = get_user_info(&state, &tokens.access_token)
         .await
         .map_err(|e| {
-            (
+            sso_callback_sanitized_error(
                 StatusCode::BAD_REQUEST,
-                Json(SsoError::new("user_info_failed", &e.to_string())),
+                "user_info_failed",
+                "Could not retrieve your profile from the identity provider",
+                &e,
             )
         })?;
 
@@ -333,10 +381,7 @@ pub async fn sso_callback(
         .upsert_sso_user(&user_info)
         .await
         .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(SsoError::new("user_create_failed", &e.to_string())),
-            )
+            sso_callback_internal_error("user_create_failed", "Failed to create or update user", &e)
         })?;
 
     // Create portal session
@@ -345,10 +390,7 @@ pub async fn sso_callback(
         .create_session(portal_user.id, &tokens)
         .await
         .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(SsoError::new("session_create_failed", &e.to_string())),
-            )
+            sso_callback_internal_error("session_create_failed", "Failed to create session", &e)
         })?;
 
     // Build redirect URL with session cookie.
@@ -1691,6 +1733,94 @@ mod sync_session_invalidation_tests {
         let (status, err) = inactive_pm_token_response(None);
         assert_eq!(status, StatusCode::UNAUTHORIZED);
         assert_eq!(err.error, "pm_session_expired");
+    }
+}
+
+#[cfg(test)]
+mod sso_callback_error_sanitization_tests {
+    use super::{sso_callback_internal_error, sso_callback_sanitized_error};
+    use axum::http::StatusCode;
+
+    /// Security regression (code-review finding
+    /// `code-review-reality-server-sso-cb-upstream-err-leak`): the two upstream
+    /// calls in `sso_callback` — the PM OAuth token exchange and the PM userinfo
+    /// fetch — must NOT surface the raw upstream/provider error to the client.
+    ///
+    /// Before the fix the handler built
+    /// `SsoError::new("token_exchange_failed", &e.to_string())`, where `e`
+    /// wraps the verbatim provider response body (see
+    /// `exchange_code_for_tokens` / `get_user_info`). That body routinely
+    /// carries provider-internal detail — OAuth client ids, internal endpoint
+    /// paths, misconfiguration hints — none of which may reach an
+    /// unauthenticated SSO caller. The sanitized mapping must log the full
+    /// detail server-side and return ONLY the fixed, generic `client_message`.
+    #[test]
+    fn upstream_provider_error_is_not_leaked_to_client_body() {
+        // Representative upstream error text carrying provider-internal detail,
+        // exactly as `exchange_code_for_tokens` would wrap a PM OAuth 4xx body.
+        let raw = "Token exchange failed: {\"error\":\"invalid_client\",\
+                   \"error_description\":\"client secret for client_id \
+                   reality-portal-prod rejected by issuer https://pm-oauth.internal/token\"}";
+
+        let (status, body) = sso_callback_sanitized_error(
+            StatusCode::BAD_REQUEST,
+            "token_exchange_failed",
+            "Could not complete sign-in with the identity provider",
+            &raw,
+        );
+
+        // Status is preserved (upstream failures stay a 400 for the client)...
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert_eq!(body.0.error, "token_exchange_failed");
+        // ...the generic client message is returned verbatim...
+        assert_eq!(
+            body.0.error_description.as_deref(),
+            Some("Could not complete sign-in with the identity provider"),
+        );
+        // ...and no fragment of the raw upstream error reaches the client body.
+        let serialized = serde_json::to_string(&body.0).expect("serialize SsoError");
+        assert!(
+            !serialized.contains("invalid_client")
+                && !serialized.contains("client secret")
+                && !serialized.contains("reality-portal-prod")
+                && !serialized.contains("pm-oauth.internal"),
+            "raw upstream/provider error detail leaked into client body: {serialized}"
+        );
+    }
+
+    /// Security regression: a DB/sqlx error surfaced by an SSO-callback
+    /// persistence step (user upsert, session creation) must be mapped to a
+    /// 500 whose body carries ONLY a generic message. Before the fix the
+    /// handler passed `&e.to_string()` straight into the `SsoError` body,
+    /// leaking Postgres schema/driver detail (table, column and constraint
+    /// names) to an unauthenticated SSO caller.
+    #[test]
+    fn db_error_detail_is_not_leaked_to_client_body() {
+        // Representative sqlx/Postgres error text carrying schema detail.
+        let raw = "error returned from database: null value in column \
+                   \"portal_users.sso_subject\" violates not-null constraint";
+
+        let (status, body) = sso_callback_internal_error(
+            "user_create_failed",
+            "Failed to create or update user",
+            &raw,
+        );
+
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(body.0.error, "user_create_failed");
+        // The generic client message is returned verbatim...
+        assert_eq!(
+            body.0.error_description.as_deref(),
+            Some("Failed to create or update user"),
+        );
+        // ...and no fragment of the raw DB error reaches the client body.
+        let serialized = serde_json::to_string(&body.0).expect("serialize SsoError");
+        assert!(
+            !serialized.contains("portal_users")
+                && !serialized.contains("not-null")
+                && !serialized.contains("column"),
+            "raw DB error detail leaked into client body: {serialized}"
+        );
     }
 }
 

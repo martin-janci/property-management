@@ -4,7 +4,8 @@
  */
 
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
+import { faultCategories, faultCategoryKeys, faultPriorityKeys } from '../utils/faultLabels';
 import type { FaultCategory, FaultPriority } from './FaultCard';
 
 export interface TriageData {
@@ -28,25 +29,7 @@ interface TriageFaultDialogProps {
   onClose: () => void;
 }
 
-const priorityOptions: { value: FaultPriority; label: string; description: string }[] = [
-  { value: 'low', label: 'Low', description: 'Minor issue, no urgency' },
-  { value: 'medium', label: 'Medium', description: 'Standard priority' },
-  { value: 'high', label: 'High', description: 'Needs prompt attention' },
-  { value: 'urgent', label: 'Urgent', description: 'Immediate action required' },
-];
-
-const categoryOptions: { value: FaultCategory; label: string }[] = [
-  { value: 'plumbing', label: 'Plumbing' },
-  { value: 'electrical', label: 'Electrical' },
-  { value: 'heating', label: 'Heating' },
-  { value: 'structural', label: 'Structural' },
-  { value: 'exterior', label: 'Exterior' },
-  { value: 'elevator', label: 'Elevator' },
-  { value: 'common_area', label: 'Common Area' },
-  { value: 'security', label: 'Security' },
-  { value: 'cleaning', label: 'Cleaning' },
-  { value: 'other', label: 'Other' },
-];
+const priorityOptions: FaultPriority[] = ['low', 'medium', 'high', 'urgent'];
 
 export function TriageFaultDialog({
   isOpen,
@@ -68,6 +51,16 @@ export function TriageFaultDialog({
   const [assignedTo, setAssignedTo] = useState<string>('');
 
   if (!isOpen) return null;
+
+  // AI suggestions arrive as raw enum strings; show the translated label when known.
+  const categoryLabel = (value: string) => {
+    const key = faultCategoryKeys[value as FaultCategory];
+    return key ? t(key) : value;
+  };
+  const priorityLabel = (value: string) => {
+    const key = faultPriorityKeys[value as FaultPriority];
+    return key ? t(key) : value;
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,7 +87,9 @@ export function TriageFaultDialog({
         <div className="relative w-full max-w-md bg-white rounded-lg shadow-xl">
           {/* Header */}
           <div className="px-6 py-4 border-b">
-            <h2 className="text-lg font-semibold text-gray-900">Triage Fault</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              {t('faults.triageDialog.title')}
+            </h2>
             <p className="text-sm text-gray-500 mt-1 truncate">{faultTitle}</p>
           </div>
 
@@ -104,15 +99,26 @@ export function TriageFaultDialog({
               <div className="flex items-center gap-2">
                 <span className="text-blue-600">🤖</span>
                 <span className="text-sm text-blue-800">
-                  AI suggests: <strong>{aiSuggestion.category}</strong>
-                  {aiSuggestion.priority && (
-                    <>
-                      {' '}
-                      with <strong>{aiSuggestion.priority}</strong> priority
-                    </>
+                  {aiSuggestion.priority ? (
+                    <Trans
+                      i18nKey="faults.triageDialog.aiSuggestsWithPriority"
+                      values={{
+                        category: categoryLabel(aiSuggestion.category),
+                        priority: priorityLabel(aiSuggestion.priority),
+                      }}
+                      components={{ strong: <strong /> }}
+                    />
+                  ) : (
+                    <Trans
+                      i18nKey="faults.triageDialog.aiSuggests"
+                      values={{ category: categoryLabel(aiSuggestion.category) }}
+                      components={{ strong: <strong /> }}
+                    />
                   )}
                   <span className="ml-1 text-blue-600">
-                    ({Math.round(aiSuggestion.confidence * 100)}% confidence)
+                    {t('faults.triageDialog.aiConfidence', {
+                      percent: Math.round(aiSuggestion.confidence * 100),
+                    })}
                   </span>
                 </span>
               </div>
@@ -123,13 +129,15 @@ export function TriageFaultDialog({
           <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
             {/* Priority */}
             <fieldset>
-              <legend className="block text-sm font-medium text-gray-700 mb-2">Priority *</legend>
+              <legend className="block text-sm font-medium text-gray-700 mb-2">
+                {t('faults.priority')} *
+              </legend>
               <div className="space-y-2">
-                {priorityOptions.map((opt) => (
+                {priorityOptions.map((value) => (
                   <label
-                    key={opt.value}
+                    key={value}
                     className={`flex items-start p-3 border rounded-lg cursor-pointer ${
-                      priority === opt.value
+                      priority === value
                         ? 'border-blue-500 bg-blue-50'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
@@ -137,14 +145,18 @@ export function TriageFaultDialog({
                     <input
                       type="radio"
                       name="priority"
-                      value={opt.value}
-                      checked={priority === opt.value}
+                      value={value}
+                      checked={priority === value}
                       onChange={(e) => setPriority(e.target.value as FaultPriority)}
                       className="mt-0.5"
                     />
                     <div className="ml-3">
-                      <div className="text-sm font-medium text-gray-900">{opt.label}</div>
-                      <div className="text-xs text-gray-500">{opt.description}</div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {t(faultPriorityKeys[value])}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {t(`faults.triageDialog.priorityHint.${value}`)}
+                      </div>
                     </div>
                   </label>
                 ))}
@@ -154,7 +166,7 @@ export function TriageFaultDialog({
             {/* Category */}
             <div>
               <label htmlFor="category" className="block text-sm font-medium text-gray-700">
-                Category
+                {t('faults.form.category')}
               </label>
               <select
                 id="category"
@@ -162,9 +174,9 @@ export function TriageFaultDialog({
                 onChange={(e) => setCategory(e.target.value as FaultCategory)}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {categoryOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
+                {faultCategories.map((value) => (
+                  <option key={value} value={value}>
+                    {t(faultCategoryKeys[value])}
                   </option>
                 ))}
               </select>
@@ -174,7 +186,7 @@ export function TriageFaultDialog({
             {technicians.length > 0 && (
               <div>
                 <label htmlFor="assignedTo" className="block text-sm font-medium text-gray-700">
-                  Assign to (optional)
+                  {t('faults.triageDialog.assignTo')}
                 </label>
                 <select
                   id="assignedTo"
@@ -182,10 +194,10 @@ export function TriageFaultDialog({
                   onChange={(e) => setAssignedTo(e.target.value)}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="">Unassigned</option>
-                  {technicians.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
+                  <option value="">{t('faults.triageDialog.unassigned')}</option>
+                  {technicians.map((tech) => (
+                    <option key={tech.id} value={tech.id}>
+                      {tech.name}
                     </option>
                   ))}
                 </select>
@@ -201,7 +213,7 @@ export function TriageFaultDialog({
               disabled={isSubmitting}
               className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="button"
@@ -212,7 +224,7 @@ export function TriageFaultDialog({
               {isSubmitting && (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
               )}
-              {isSubmitting ? 'Saving...' : 'Triage Fault'}
+              {isSubmitting ? t('common.saving') : t('faults.triageDialog.submit')}
             </button>
           </div>
         </div>

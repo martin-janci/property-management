@@ -4,6 +4,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../contexts';
 import { gdprFetch } from '../gdprClient';
 
@@ -21,6 +22,7 @@ interface DataExportRequest {
 }
 
 export function PrivacySettingsPage() {
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const [settings, setSettings] = useState<PrivacySettings | null>(null);
   const [exportRequests, setExportRequests] = useState<DataExportRequest[]>([]);
@@ -40,20 +42,20 @@ export function PrivacySettingsPage() {
       ]);
 
       if (!settingsRes.ok) {
-        throw new Error(`Failed to load privacy settings (status ${settingsRes.status})`);
+        throw new Error(`${t('gdprPrivacy.errors.loadSettings')} (HTTP ${settingsRes.status})`);
       }
       if (!historyRes.ok) {
-        throw new Error(`Failed to load export history (status ${historyRes.status})`);
+        throw new Error(`${t('gdprPrivacy.errors.loadHistory')} (HTTP ${historyRes.status})`);
       }
 
       setSettings(await settingsRes.json());
       setExportRequests(await historyRes.json());
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load privacy settings');
+      setError(err instanceof Error ? err.message : t('gdprPrivacy.errors.loadSettings'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadSettings();
@@ -80,16 +82,16 @@ export function PrivacySettingsPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save settings');
+        throw new Error(t('gdprPrivacy.preferences.saveFailed'));
       }
 
-      setSuccess('Privacy settings saved successfully');
+      setSuccess(t('gdprPrivacy.preferences.saved'));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save settings');
+      setError(err instanceof Error ? err.message : t('gdprPrivacy.preferences.saveFailed'));
     } finally {
       setSaving(false);
     }
-  }, [settings]);
+  }, [settings, t]);
 
   const handleRequestExport = useCallback(async () => {
     setError(null);
@@ -103,30 +105,26 @@ export function PrivacySettingsPage() {
 
       if (!response.ok) {
         const errorData = await response.text();
-        throw new Error(errorData || 'Failed to request data export');
+        throw new Error(errorData || t('gdprPrivacy.export.requestFailed'));
       }
 
-      setSuccess('Data export requested. You will be notified when it is ready.');
+      setSuccess(t('gdprPrivacy.export.requested'));
       loadSettings();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to request export');
+      setError(err instanceof Error ? err.message : t('gdprPrivacy.export.requestFailed'));
     }
-  }, [loadSettings]);
+  }, [loadSettings, t]);
 
   const handleRequestDeletion = useCallback(async () => {
     // The backend (RequestDataDeletion) requires a `confirmation` string that
     // must match the account email — an empty body always 400s. Ask the user
     // to retype their email as the GDPR-grade confirmation step.
-    const confirmation = window.prompt(
-      'This will schedule your account and all associated data for permanent ' +
-        'deletion after a 30-day grace period. This cannot be undone after the ' +
-        'grace period.\n\nType your account email address to confirm:'
-    );
+    const confirmation = window.prompt(t('gdprPrivacy.deletion.confirmPrompt'));
     if (!confirmation) {
       return;
     }
     if (user?.email && confirmation.trim().toLowerCase() !== user.email.toLowerCase()) {
-      setError('The email you entered does not match your account email.');
+      setError(t('gdprPrivacy.deletion.emailMismatch'));
       return;
     }
 
@@ -141,31 +139,31 @@ export function PrivacySettingsPage() {
 
       if (!response.ok) {
         const errorData = await response.text();
-        throw new Error(errorData || 'Failed to request account deletion');
+        throw new Error(errorData || t('gdprPrivacy.deletion.requestFailed'));
       }
 
-      setSuccess('Account deletion requested. You have 30 days to cancel this request.');
+      setSuccess(t('gdprPrivacy.deletion.requested'));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to request deletion');
+      setError(err instanceof Error ? err.message : t('gdprPrivacy.deletion.requestFailed'));
     }
-  }, [user]);
+  }, [user, t]);
 
   if (loading) {
-    return <div className="privacy-loading">Loading privacy settings...</div>;
+    return <div className="privacy-loading">{t('gdprPrivacy.loading')}</div>;
   }
 
   return (
     <div className="privacy-settings-page">
       <header className="privacy-header">
-        <h1>Privacy & Data Settings</h1>
-        <p>Manage your privacy preferences and data in accordance with GDPR.</p>
+        <h1>{t('gdprPrivacy.title')}</h1>
+        <p>{t('gdprPrivacy.subtitle')}</p>
       </header>
 
       {error && (
         <div className="privacy-error" role="alert">
           {error}
           <button type="button" onClick={() => setError(null)}>
-            Dismiss
+            {t('gdprPrivacy.dismiss')}
           </button>
         </div>
       )}
@@ -174,14 +172,14 @@ export function PrivacySettingsPage() {
         <output className="privacy-success">
           {success}
           <button type="button" onClick={() => setSuccess(null)}>
-            Dismiss
+            {t('gdprPrivacy.dismiss')}
           </button>
         </output>
       )}
 
       {/* Privacy Settings Section */}
       <section className="privacy-section">
-        <h2>Privacy Preferences</h2>
+        <h2>{t('gdprPrivacy.preferences.title')}</h2>
 
         {settings && (
           <form
@@ -191,7 +189,7 @@ export function PrivacySettingsPage() {
             }}
           >
             <div className="form-field">
-              <label htmlFor="profile-visibility">Profile Visibility</label>
+              <label htmlFor="profile-visibility">{t('gdprPrivacy.preferences.visibility')}</label>
               <select
                 id="profile-visibility"
                 value={settings.profile_visibility}
@@ -202,13 +200,11 @@ export function PrivacySettingsPage() {
                   })
                 }
               >
-                <option value="visible">Visible to all residents</option>
-                <option value="contacts_only">Visible to contacts only</option>
-                <option value="hidden">Hidden from everyone</option>
+                <option value="visible">{t('gdprPrivacy.preferences.visible')}</option>
+                <option value="contacts_only">{t('gdprPrivacy.preferences.contactsOnly')}</option>
+                <option value="hidden">{t('gdprPrivacy.preferences.hidden')}</option>
               </select>
-              <p className="field-description">
-                Controls who can see your profile in the resident directory.
-              </p>
+              <p className="field-description">{t('gdprPrivacy.preferences.visibilityHint')}</p>
             </div>
 
             <div className="form-field">
@@ -223,15 +219,13 @@ export function PrivacySettingsPage() {
                     })
                   }
                 />
-                Show contact information on profile
+                {t('gdprPrivacy.preferences.showContact')}
               </label>
-              <p className="field-description">
-                When enabled, your email and phone will be visible on your profile.
-              </p>
+              <p className="field-description">{t('gdprPrivacy.preferences.showContactHint')}</p>
             </div>
 
             <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? 'Saving...' : 'Save Preferences'}
+              {saving ? t('gdprPrivacy.preferences.saving') : t('gdprPrivacy.preferences.save')}
             </button>
           </form>
         )}
@@ -239,29 +233,30 @@ export function PrivacySettingsPage() {
 
       {/* Data Export Section */}
       <section className="privacy-section">
-        <h2>Your Data</h2>
-        <p>
-          Under GDPR Article 15, you have the right to access your personal data. Request a copy of
-          all data we hold about you.
-        </p>
+        <h2>{t('gdprPrivacy.export.title')}</h2>
+        <p>{t('gdprPrivacy.export.description')}</p>
 
         <button type="button" onClick={handleRequestExport} className="btn btn-secondary">
-          Request Data Export
+          {t('gdprPrivacy.export.request')}
         </button>
 
         {exportRequests.length > 0 && (
           <div className="export-history">
-            <h3>Export History</h3>
+            <h3>{t('gdprPrivacy.export.history')}</h3>
             <ul>
               {exportRequests.map((request) => (
                 <li key={request.id}>
                   <span className="export-date">
-                    {new Date(request.created_at).toLocaleDateString()}
+                    {new Date(request.created_at).toLocaleDateString(i18n.language)}
                   </span>
-                  <span className={`export-status status-${request.status}`}>{request.status}</span>
+                  <span className={`export-status status-${request.status}`}>
+                    {t(`gdprPrivacy.export.status.${request.status}`, {
+                      defaultValue: request.status,
+                    })}
+                  </span>
                   {request.download_url && (
                     <a href={request.download_url} className="download-link">
-                      Download
+                      {t('gdprPrivacy.export.download')}
                     </a>
                   )}
                 </li>
@@ -273,19 +268,15 @@ export function PrivacySettingsPage() {
 
       {/* Account Deletion Section */}
       <section className="privacy-section privacy-danger">
-        <h2>Delete Account</h2>
-        <p>
-          Under GDPR Article 17, you have the right to erasure ("right to be forgotten"). Requesting
-          deletion will schedule your account and all associated data for permanent removal after a
-          30-day grace period.
-        </p>
+        <h2>{t('gdprPrivacy.deletion.title')}</h2>
+        <p>{t('gdprPrivacy.deletion.description')}</p>
         <p className="warning">
-          <strong>Warning:</strong> This action cannot be undone after the grace period. You will
-          lose access to all your data, messages, and account history.
+          <strong>{t('gdprPrivacy.deletion.warningLabel')}</strong>{' '}
+          {t('gdprPrivacy.deletion.warning')}
         </p>
 
         <button type="button" onClick={handleRequestDeletion} className="btn btn-danger">
-          Request Account Deletion
+          {t('gdprPrivacy.deletion.request')}
         </button>
       </section>
     </div>

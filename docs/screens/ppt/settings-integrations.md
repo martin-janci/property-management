@@ -50,4 +50,6 @@ Airbnb calls (via `@ppt/api-client` `integrations` hooks):
   catalogue.
 
 ## Agent Log
+
+- 2026-11-04 — agent: r3-nav-roles — route and user-menu link are manager-only (`MANAGER_ROLES`) (audit r3 #40).
 - 2026-07-08 — agent: gap-83-1-frontend-integrations-ui-not-wired-settings — created the Integrations settings page (Airbnb OAuth connect/sync/disconnect + status + listing mappings) and wired `/settings/integrations` so the built-but-route-less integrations api-client is reachable.

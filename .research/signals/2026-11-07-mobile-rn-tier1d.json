@@ -1,0 +1,58 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-07",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "oldest-unreviewed (dispatcher-tier1d-demand-driven; review_cursor mobile-rn 2026-11-03 oldest; non-KMP, LANDABLE frontend React Native segment). Saturation check: mobile-rn has 0 open code-review-finding rows in backlog.json. Note: mobile-rn also got a tier1d pass on 2026-11-06 (AuthContext refresh/offline-logout); these findings target different files (WidgetDataProvider, NFCAccessController) and do not overlap.",
+  "experts_used": ["frontend", "tester"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-widget-apirequest-swallow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:373-380 — private apiRequest<T>() wraps the whole fetch in try/catch and, on ANY error (rejected fetch = offline/timeout/DNS, or a thrown `API request failed: <status>` for a non-2xx), returns `{} as T` instead of re-throwing. The empty-object cast masks the failure from every caller.",
+        "Consequence: updateAllWidgets() (lines 136-160) deliberately wraps fetchWidgetData() in try/catch to classify each widget as `success: true/false` and only cache successful results. Because apiRequest never throws, the failure path is dead code — a failed backend fetch resolves to an empty payload, is treated as `success: true`, and gets written to AsyncStorage via cacheWidgetData(), OVERWRITING previously-valid cached widget data with empty data during a backend outage. Home-screen widgets then render blank/zeroed instead of showing stale-but-correct data or an error state.",
+        "Fix vector: make apiRequest throw (remove the `{} as T` fallback) so updateAllWidgets' existing success/failure handling engages and good cache is preserved on failure; or move the fallback decision into fetchWidgetData with an explicit mock-mode flag. Cloud-verifiable (frontend workspace: biome + typecheck + jest-expo; module currently has NO test file). Confidence medium: swallow + success-misclassification certain by static read; exact UI blanking depends on which widgets are configured.",
+        "expert: frontend"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-controller-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test",
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts (478 lines) — security-sensitive physical building-access controller (grant/deny decisions, credential-expiry checks, denial-reason mapping, offline validation, access-attempt logging) has NO sibling or repo-wide test file. `rg -l NFCAccessController frontend/apps/mobile/src -g '*.test.*'` returns nothing, while the peer NFCCredentialManager.ts IS covered by NFCCredentialManager.test.ts.",
+        "Latent correctness concern that tests would pin: handleTap() (lines 163-225) only flips a granted result to denied inside `if (NativeNFC) { ... }`. When NativeNFC is null (native module unavailable), the transmit step is skipped but `validationResult.granted` stays true, so the code logs the attempt as 'granted' and calls updateCredentialUsage() even though no credential was physically transmitted to the reader. Reachability is uncertain (handleTap is invoked from the native module, which implies NFC present), hence medium confidence and a test-gap framing rather than a confirmed bug.",
+        "Fix vector: add NFCAccessController.test.ts covering validateAccess() grant/deny/expiry branches, the NativeNFC-null path, and logAccessAttempt() status mapping. Cloud-verifiable (jest-expo, no device needed — native modules are mockable like NFCCredentialManager.test.ts does). Severity LOW (+1): missing tests for a module per the skill's score-delta table.",
+        "expert: tester"
+      ],
+      "expert": "tester"
+    },
+    {
+      "id": "code-review-mobile-rn-widget-cache-json-parse",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:351 (getAllCachedData) and :94 (getAllWidgetConfigs) — both do `return stored ? JSON.parse(stored) : {}` / `: []` with NO try/catch around JSON.parse on the AsyncStorage value. A corrupted or partially-written WIDGET_DATA_KEY / config blob throws SyntaxError, which propagates up through getCachedWidgetData/updateAllWidgets and breaks every widget read until storage is cleared.",
+        "Inconsistency: sibling persistence modules in the same app DO guard storage parsing in try/catch and fall back to defaults — e.g. onboarding/TourManager.ts:289-294 ('Invalid onboarding state schema, using defaults'), nfc/NFCCredentialManager.ts:226/353/366 ('Stored ... corrupted; discarding'), onboarding/HelpCenter.ts:199. WidgetDataProvider is the outlier.",
+        "Fix vector: wrap both JSON.parse calls in try/catch, log a warn, and return the empty default on parse failure (matching TourManager/NFCCredentialManager). Cloud-verifiable (frontend: biome + typecheck + jest-expo). Severity LOW (+1): resilience smell on a rarely-hit corruption path.",
+        "expert: frontend"
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

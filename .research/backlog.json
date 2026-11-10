@@ -13145,7 +13145,7 @@
       "title": "Shared Ktor HttpClient has no HttpTimeout - mobile API calls can hang indefinitely",
       "vector": "bug",
       "confidence": "medium",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "rotating-expert-review [mobile-native-kmp]"
@@ -13153,13 +13153,14 @@
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37-43 - the single shared HttpClient installs only ContentNegotiation and Logging(NONE) and sets a default contentType; it never installs the HttpTimeout plugin (no requestTimeoutMillis / connectTimeoutMillis / socketTimeoutMillis).",
         "This client backs every repository (ApiClient, ListingRepository, PortalListingsRepository, InquiryRepository, NotificationRepository, FavoritesRepository, etc.). The Android (OkHttp/HttpURLConnection) path has no implicit request timeout, so a stalled connection leaves suspend calls hanging and the Compose UI stuck on a spinner with no error path.",
-        "Fix: install(HttpTimeout) with sane request/connect/socket timeouts in HttpClientProvider so stalled requests surface as a catchable exception (already handled by the try/catch -> Result.failure pattern in every repository)."
+        "Fix: install(HttpTimeout) with sane request/connect/socket timeouts in HttpClientProvider so stalled requests surface as a catchable exception (already handled by the try/catch -> Result.failure pattern in every repository).",
+        "decayed: no new signal in 14d (updated 2026-10-25); score 2->1 applied on 2026-11-09 afternoon rerun (morning brief claimed but did not commit)"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt"
       ],
       "created_at": "2026-10-25",
-      "updated_at": "2026-10-25",
+      "updated_at": "2026-11-09",
       "plan": null,
       "type": "code-review-finding",
       "source": "rotating-expert-review",
@@ -13173,22 +13174,23 @@
       "title": "Reality mobile MyListings + portfolio analytics silently cap at 100 listings (no pagination)",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "rotating-expert-review [mobile-native-kmp]"
       ],
       "evidence": [
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:471-472 - MyListings loads portalListingsRepository.listMyListings(limit = 100) once with no offset paging UI; a realtor with >100 listings never sees rows beyond the first 100.",
         "mobile-native/shared/.../realtor/PortalListingsRepository.kt:111-124 getPortfolioAnalytics() also fans out over listMyListings(limit = 100).listings only, so portfolio totals (views/inquiries/favorites/trends) silently undercount for realtors with >100 listings.",
-        "Fix: page listMyListings via offset until the server returns fewer than `limit` rows (or add explicit pagination), and aggregate analytics over the full set rather than the first page."
+        "Fix: page listMyListings via offset until the server returns fewer than `limit` rows (or add explicit pagination), and aggregate analytics over the full set rather than the first page.",
+        "decayed: no new signal in 14d (updated 2026-10-25); score 1->0 -> dropped on 2026-11-09 afternoon rerun (morning brief claimed but did not commit)"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt",
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt"
       ],
       "created_at": "2026-10-25",
-      "updated_at": "2026-10-25",
+      "updated_at": "2026-11-09",
       "plan": null,
       "type": "code-review-finding",
       "source": "rotating-expert-review",
@@ -14385,7 +14387,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [api-handlers]"
       ],
@@ -14406,7 +14408,12 @@
       "segment": "api-handlers",
       "score_delta": 1,
       "candidate_vector": "bug",
-      "expert": "rust"
+      "expert": "rust",
+      "reconciled": {
+        "at": "2026-11-04T14:28:07Z",
+        "assignment_status": "merged",
+        "pr_number": 3266
+      }
     },
     {
       "id": "code-review-api-handlers-mfa-audit-discard",
@@ -14414,7 +14421,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [api-handlers]"
       ],
@@ -14438,7 +14445,12 @@
       "segment": "api-handlers",
       "score_delta": 1,
       "candidate_vector": "bug",
-      "expert": "rust"
+      "expert": "rust",
+      "reconciled": {
+        "at": "2026-11-04T14:28:07Z",
+        "assignment_status": "merged",
+        "pr_number": 3267
+      }
     },
     {
       "id": "churn-hotspot-reality-web-realtor-id-page",
@@ -14446,7 +14458,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3225"
       ],
@@ -14458,7 +14470,12 @@
       ],
       "created_at": "2026-11-04",
       "updated_at": "2026-11-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-04T22:28:58Z",
+        "assignment_status": "merged",
+        "pr_number": 3313
+      }
     },
     {
       "id": "churn-hotspot-ppt-web-messages-sk",
@@ -14466,7 +14483,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3218",
         "PR #3220"
@@ -14484,7 +14501,12 @@
       ],
       "created_at": "2026-11-04",
       "updated_at": "2026-11-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-04T22:28:58Z",
+        "assignment_status": "merged",
+        "pr_number": 3316
+      }
     },
     {
       "id": "screen-map-drift-pr-3217-reality",
@@ -14492,7 +14514,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3217"
       ],
@@ -14506,7 +14528,12 @@
       ],
       "created_at": "2026-11-04",
       "updated_at": "2026-11-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-04T22:28:58Z",
+        "assignment_status": "merged",
+        "pr_number": 3292
+      }
     },
     {
       "id": "screen-map-drift-pr-3224-reality",
@@ -14514,7 +14541,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3224"
       ],
@@ -14528,7 +14555,12 @@
       ],
       "created_at": "2026-11-04",
       "updated_at": "2026-11-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-04T22:28:58Z",
+        "assignment_status": "merged",
+        "pr_number": 3298
+      }
     },
     {
       "id": "screen-map-drift-pr-3225-reality",
@@ -14536,7 +14568,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3225"
       ],
@@ -14550,7 +14582,12 @@
       ],
       "created_at": "2026-11-04",
       "updated_at": "2026-11-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-04T14:28:07Z",
+        "assignment_status": "merged",
+        "pr_number": 3271
+      }
     },
     {
       "id": "code-review-api-handlers-refresh-rotation-nonatomic",
@@ -14558,7 +14595,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "rotating-expert-review 2026-11-04 api-handlers (dispatcher Tier-1d)"
       ],
@@ -14571,7 +14608,12 @@
       ],
       "created_at": "2026-11-04",
       "updated_at": "2026-11-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-04T20:31:11Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "code-review-api-handlers-stripe-webhook-drops-settlement",
@@ -14579,7 +14621,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-11-04 api-handlers (dispatcher Tier-1d)"
       ],
@@ -14592,7 +14634,12 @@
       ],
       "created_at": "2026-11-04",
       "updated_at": "2026-11-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-04T14:28:07Z",
+        "assignment_status": "merged",
+        "pr_number": 3273
+      }
     },
     {
       "id": "code-review-api-handlers-reset-token-invalidate-ignored",
@@ -14600,7 +14647,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-11-04 api-handlers (dispatcher Tier-1d)"
       ],
@@ -14614,7 +14661,12 @@
       ],
       "created_at": "2026-11-04",
       "updated_at": "2026-11-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-04T22:28:58Z",
+        "assignment_status": "merged",
+        "pr_number": 3295
+      }
     },
     {
       "id": "code-review-api-core-api-call-client-build-expect",
@@ -14622,7 +14674,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-11-03 api-core (dispatcher Tier-1d)"
       ],
@@ -14635,7 +14687,12 @@
       ],
       "created_at": "2026-11-04",
       "updated_at": "2026-11-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-04T22:28:58Z",
+        "assignment_status": "merged",
+        "pr_number": 3296
+      }
     },
     {
       "id": "code-review-api-handlers-suspend-cascade-silent-skip",
@@ -14643,7 +14700,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-11-03 api-handlers (dispatcher Tier-1d)"
       ],
@@ -14655,7 +14712,12 @@
       ],
       "created_at": "2026-11-04",
       "updated_at": "2026-11-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-04T22:28:58Z",
+        "assignment_status": "merged",
+        "pr_number": 3297
+      }
     },
     {
       "id": "code-review-api-handlers-templates-list-swallows-db-error",
@@ -14663,7 +14725,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-11-03 api-handlers (dispatcher Tier-1d)"
       ],
@@ -14675,7 +14737,12 @@
       ],
       "created_at": "2026-11-04",
       "updated_at": "2026-11-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-04T14:28:07Z",
+        "assignment_status": "merged",
+        "pr_number": 3278
+      }
     },
     {
       "id": "code-review-api-handlers-listing-detail-photos-silent-drop",
@@ -14683,7 +14750,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-11-03 api-handlers (dispatcher Tier-1d)"
       ],
@@ -14695,7 +14762,12 @@
       ],
       "created_at": "2026-11-04",
       "updated_at": "2026-11-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-04T14:28:07Z",
+        "assignment_status": "merged",
+        "pr_number": 3279
+      }
     },
     {
       "id": "code-review-mobile-native-kmp-sso-error-body-unguarded",
@@ -14721,7 +14793,7 @@
       "id": "code-review-ppt-web-core-refresh-token-localstorage",
       "title": "SECURITY: ppt-web refresh-token persisted in localStorage — XSS-reachable",
       "vector": "security",
-      "confidence": "medium",
+      "confidence": "high",
       "score": 2,
       "status": "open",
       "sources": [
@@ -14729,13 +14801,14 @@
       ],
       "evidence": [
         "See .research/signals/2026-11-03-ppt-web-core-tier1d.json for full finding. Catch-up for 2026-11-03 skipped run.",
-        "Security-sensitive but confidence=medium — security fast-track requires confidence=high, so stays at score 2 without auto-promotion."
+        "Confidence upgraded medium→high 2026-11-09 (pm-scrum-master review). Finding confirmed real: the refresh token is still persisted in localStorage on dev (frontend/apps/ppt-web/src/contexts/AuthContext.tsx REFRESH_TOKEN_KEY='ppt_refresh_token'; setRefreshToken writes it, refreshTokenInternal reads it back into the request body — any XSS on the origin can exfiltrate a long-lived renewable credential). The original review's sole reservation for medium — 'did not runtime-verify the backend sets/prefers the httpOnly cookie for the SPA caller' — is now resolved: the backend already prefers the HttpOnly/Secure/SameSite refresh cookie over the body token (resolve_refresh_token in routes/auth/mod.rs), and draft PR #3294 lands the migration (in-memory + httpOnly cookie) with an IG3 fails-before-fix regression test that proves the token was written to and readable from localStorage; 7634 ppt-web tests pass.",
+        "Security vector, confidence=high, score>=2 — now eligible for the security fast-track (score threshold drops 3→2)."
       ],
       "files": [
         "frontend/apps/ppt-web/src/"
       ],
       "created_at": "2026-11-04",
-      "updated_at": "2026-11-04",
+      "updated_at": "2026-11-09",
       "plan": null
     },
     {
@@ -14744,7 +14817,7 @@
       "vector": "security",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-11-03 ppt-web-core (dispatcher Tier-1d)"
       ],
@@ -14757,7 +14830,877 @@
       ],
       "created_at": "2026-11-04",
       "updated_at": "2026-11-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-05T00:25:03Z",
+        "assignment_status": "merged",
+        "pr_number": 3280
+      }
+    },
+    {
+      "id": "code-review-reality-server-db-error-string-status-map",
+      "title": "reality-server maps HTTP status by substring-matching raw sqlx/Postgres error text (brittle under sqlx 0.9 / PG message changes)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "rotating-expert-review [reality-server]"
+      ],
+      "evidence": [
+        "Multiple reality-server error-mapping closures branch on e.to_string().contains(...) to choose the HTTP status, instead of matching the typed sqlx::Error (e.g. sqlx::Error::RowNotFound) or a DB error code. The matched substrings are Display text, which is not a stable API across sqlx/Postgres versions (backend is on sqlx 0.9).",
+        "backend/servers/reality-server/src/routes/favorites.rs:143 add_favorite maps contains(\"not found\")->404 and :148 contains(\"maximum\")/contains(\"limit\")->400; :194 update_favorite maps contains(\"no rows\")->404",
+        "backend/servers/reality-server/src/routes/realtors.rs:136 contains(\"already exists\")->400; :175 contains(\"not found\")->404",
+        "backend/servers/reality-server/src/routes/agencies.rs:97 contains(\"duplicate\")/contains(\"already exists\")->4xx; :434 contains(\"not found\")->404",
+        "backend/servers/reality-server/src/handlers/favorites/mod.rs:70 contains(\"violates foreign key\")->ListingNotFound; :137 contains(\"no rows\")->FavoriteNotFound",
+        "backend/servers/reality-server/src/handlers/inquiries/mod.rs:339 contains(\"violates foreign key\")->Listing/RealtorNotFound (reachable via routes/inquiries.rs and routes/reports.rs)",
+        "The codebase itself flags this as an anti-pattern: backend/servers/reality-server/src/routes/saved_searches.rs:55 documents moving away from err.to_string().contains(\"maximum\")/contains(\"not found\"). Risk if the text drifts: a legitimate 404/400/409 silently degrades to a generic 500. Fix: match sqlx::Error variants / SQLSTATE codes (23503 FK, 23505 unique, RowNotFound) rather than Display substrings."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/favorites.rs",
+        "backend/servers/reality-server/src/routes/realtors.rs",
+        "backend/servers/reality-server/src/routes/agencies.rs",
+        "backend/servers/reality-server/src/handlers/favorites/mod.rs",
+        "backend/servers/reality-server/src/handlers/inquiries/mod.rs"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "reconciled": {
+        "at": "2026-11-04T22:28:58Z",
+        "assignment_status": "merged",
+        "pr_number": 3302
+      }
+    },
+    {
+      "id": "code-review-reality-server-inquiry-dead-fk-classify",
+      "title": "InquiriesHandler splits ListingNotFound vs RealtorNotFound by error substring, but both collapse to the same 404 at the route - dead, brittle classification",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "dropped",
+      "sources": [
+        "rotating-expert-review [reality-server]"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/handlers/inquiries/mod.rs:339-345 - on a FK violation the handler does a nested if error_str.contains(\"listing\") to return InquiryResult::ListingNotFound vs RealtorNotFound.",
+        "backend/servers/reality-server/src/routes/inquiries.rs:158-161 - inquiry_result_to_id maps ListingNotFound | RealtorNotFound to the identical (404, \"Listing not found\") response, so the handler's listing/realtor distinction is never observable to clients.",
+        "Net effect: extra complexity layered on a brittle substring match (same class as the db-error-string finding) that produces no behavioral difference. Collapse the two branches into one Not-Found outcome, or drop the nested contains(\"listing\") check."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/handlers/inquiries/mod.rs",
+        "backend/servers/reality-server/src/routes/inquiries.rs"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "expert": "rust",
+      "reconciled": {
+        "at": "2026-11-08T10:24:13Z",
+        "assignment_status": "failed",
+        "pr_number": 3301
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3237-ppt",
+      "title": "Screen-map drift: PR #3237 restructured ppt-web app shell + landing without docs/screens/ppt/*.md update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #3237"
+      ],
+      "evidence": [
+        "PR #3237 (feat/grouped, role-aware app shell + landing) edited App.tsx + routes/groups/core.tsx. No docs/screens/ppt/*.md touched. Shell navigation structure changed substantially — screen-map likely drifted.",
+        "Best-effort heuristic: landing + shell reorganization is a real behavioral change, review candidate for actual doc sync."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-06T04:23:37Z",
+        "assignment_status": "merged",
+        "pr_number": 3334
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3242-ppt",
+      "title": "Screen-map drift: PR #3242 localized financial/buildings/my-unit routes without docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #3242"
+      ],
+      "evidence": [
+        "PR #3242 (fix/localize financial, buildings, my-unit) edited routes/groups/financial.tsx. No docs/screens/ppt/*.md touched. Pure i18n — heuristic fires but drift low-impact.",
+        "Best-effort heuristic caveat applies."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-06T04:23:37Z",
+        "assignment_status": "merged",
+        "pr_number": 3336
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3244-ppt",
+      "title": "Screen-map drift: PR #3244 localized faults/news/settings/error pages without docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #3244"
+      ],
+      "evidence": [
+        "PR #3244 (fix/localize faults, news, settings, error pages) edited routes/groups/outages.tsx. No docs/screens/ppt/*.md touched. Mostly i18n — heuristic fires but low-impact.",
+        "Best-effort heuristic caveat applies."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/outages.tsx"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-06T04:23:37Z",
+        "assignment_status": "merged",
+        "pr_number": 3337
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3254-ppt",
+      "title": "Screen-map drift: PR #3254 rewired ppt-web rentals routes to /bookings/* without docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #3254"
+      ],
+      "evidence": [
+        "PR #3254 (fix/wire rentals pages to the real rentals API) rewrote routes/groups/rentals.tsx from /rentals/* SDK to /bookings/* + /statistics + /connections. Real behavioral change — screen-map doc needs sync.",
+        "docs/screens/ppt/rentals-dashboard.md was not touched by this PR; PR #3257 did touch it but for a different flow (calendar/tax-report) — the bookings rewire is separately undocumented."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-06T04:23:37Z",
+        "assignment_status": "merged",
+        "pr_number": 3335
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-marketplace-no-i18n",
+      "title": "ppt-web marketplace feature ships hardcoded English (placeholders, 16 service-category labels) in a 4-locale app — 0 useTranslation across 8 of 9 files",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "rotating-expert-review 2026-11-05 ppt-web-ui (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "The entire marketplace feature module ships user-facing English string literals with NO react-i18next integration, inside an app that ships sk/cs/de/en locales. 8 of 9 user-facing marketplace files have zero useTranslation import and zero t() calls; QuoteComparisonTable.tsx has only 1. This is a whole-feature i18n gap, not a single missed string.",
+        "frontend/apps/ppt-web/src/features/marketplace/components/ProviderSearchFilters.tsx:110,148,216,226 — hardcoded placeholders `Search providers, services...`, `City or Postal Code`, `Min`, `Max`. 0 useTranslation.",
+        "frontend/apps/ppt-web/src/features/marketplace/components/RfqForm.tsx:189,208 — hardcoded textarea placeholders; plus 16 hardcoded service-category option labels at L38-53 (`Plumbing`, `Electrical`, `HVAC`, `Cleaning`, `Carpentry`, ...). 0 useTranslation.",
+        "frontend/apps/ppt-web/src/features/marketplace/components/ProviderProfileForm.tsx:273,439,646 — hardcoded descriptive placeholders. 0 useTranslation. Also ReviewForm.tsx:197,211,285 and VerificationForm.tsx — 0 useTranslation.",
+        "frontend/apps/ppt-web/src/features/marketplace/pages/{MarketplacePage,ProviderDetailPage,RfqListPage}.tsx — 0 useTranslation / 0 t() in the page shells themselves.",
+        "Fix vector: add useTranslation() to each marketplace component/page and move literals (placeholders, option labels, headings) to marketplace.* locale keys across sk/cs/de/en bundles. Cloud-verifiable (ppt-web, biome + typecheck). Confidence medium: literals + absence of useTranslation certain by static read; pages reachable from the shipped /marketplace routes. Severity LOW (+1) i18n gap per the skill's score-delta table (breadth is feature-wide, but the table caps an i18n gap at low).",
+        "expert: frontend+completeness"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/marketplace/components/ProviderSearchFilters.tsx",
+        "frontend/apps/ppt-web/src/features/marketplace/components/RfqForm.tsx",
+        "frontend/apps/ppt-web/src/features/marketplace/components/ProviderProfileForm.tsx",
+        "frontend/apps/ppt-web/src/features/marketplace/pages/MarketplacePage.tsx"
+      ],
+      "created_at": "2026-11-05",
+      "updated_at": "2026-11-05",
+      "plan": null,
+      "segment": "ppt-web-ui",
+      "expert": "frontend",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "reconciled": {
+        "at": "2026-11-06T14:25:26Z",
+        "assignment_status": "merged",
+        "pr_number": 3347
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-no-i18n",
+      "title": "ppt-web registry feature (pet/vehicle forms + lists) ships hardcoded English placeholders in a 4-locale app — 0 useTranslation on 4 files",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "rotating-expert-review 2026-11-05 ppt-web-ui (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "The registry feature's pet/vehicle registration forms and lists render user-facing English literals with NO react-i18next integration, in a 4-locale app. PetRegistrationForm, VehicleRegistrationForm, PetRegistrationList, VehicleRegistrationList have 0 useTranslation / 0 t(); RegistryRulesForm and ReviewRegistrationModal only partially use t() (1 call each) while leaving placeholders hardcoded.",
+        "frontend/apps/ppt-web/src/features/registry/components/PetRegistrationForm.tsx:120,135,154,177,193,214,231 — hardcoded placeholders `Enter pet name`, `Enter breed (optional)`, `Enter age`, `Enter weight`, `Any additional information about your pet`, `Dr. Jane Smith`, `Phone or email`. 0 useTranslation.",
+        "frontend/apps/ppt-web/src/features/registry/components/VehicleRegistrationForm.tsx:94,109,124,161 — hardcoded placeholders `ABC-123`, `Toyota, BMW, etc.`, `Corolla, X5, etc.`, `Black, White, Red, etc.`. 0 useTranslation.",
+        "frontend/apps/ppt-web/src/features/registry/components/PetRegistrationList.tsx:112 — hardcoded search placeholder `Search by name, breed, owner...`. 0 useTranslation. frontend/apps/ppt-web/src/features/registry/components/ReviewRegistrationModal.tsx:193 — hardcoded rejection-reason placeholder despite the modal elsewhere importing useTranslation (partial i18n).",
+        "Fix vector: add useTranslation() to the registry form/list components and move all placeholders to registry.* keys across sk/cs/de/en. Cloud-verifiable (ppt-web, biome + typecheck). Confidence medium: static-read certain; components reachable from the shipped /registry routes. Severity LOW (+1) i18n gap.",
+        "expert: frontend+completeness"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/components/PetRegistrationForm.tsx",
+        "frontend/apps/ppt-web/src/features/registry/components/VehicleRegistrationForm.tsx",
+        "frontend/apps/ppt-web/src/features/registry/components/PetRegistrationList.tsx",
+        "frontend/apps/ppt-web/src/features/registry/components/VehicleRegistrationList.tsx"
+      ],
+      "created_at": "2026-11-05",
+      "updated_at": "2026-11-05",
+      "plan": null,
+      "segment": "ppt-web-ui",
+      "expert": "frontend",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "reconciled": {
+        "at": "2026-11-07T02:24:17Z",
+        "assignment_status": "merged",
+        "pr_number": 3351
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-lang-switcher-aria",
+      "title": "ppt-web LanguageSwitcher has hardcoded English aria-label on the control a non-English screen-reader user would use to find their language",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "rotating-expert-review 2026-11-05 ppt-web-ui (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/LanguageSwitcher.tsx:19 — the shared language-switcher <select> carries a hardcoded English screen-reader label `aria-label=\"Select language\"`. The component already imports and uses useTranslation (it is otherwise i18n-aware), so the untranslated a11y label is an oversight, not a missing capability. Ironic and high-visibility: a non-English user navigating by screen reader hears an English label on the very control that switches language.",
+        "Fix vector: replace the literal with t('common.languageSwitcher.ariaLabel') (or similar) and add the key to the sk/cs/de/en bundles. Cloud-verifiable (ppt-web, biome + typecheck). Confidence medium: certain by static read; the component is mounted in the app shell on every authenticated screen. Severity LOW (+1) i18n/a11y gap.",
+        "expert: frontend+completeness"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/components/LanguageSwitcher.tsx"
+      ],
+      "created_at": "2026-11-05",
+      "updated_at": "2026-11-05",
+      "plan": null,
+      "segment": "ppt-web-ui",
+      "expert": "frontend",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "reconciled": {
+        "at": "2026-11-06T14:25:26Z",
+        "assignment_status": "merged",
+        "pr_number": 3343
+      }
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/util/errors.rs",
+      "title": "Churn hotspot (new): backend/servers/reality-server/src/util/errors.rs is a top-3 churn file this run — watch for instability",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "git-log-numstat"
+      ],
+      "evidence": [
+        "Top-3 churn this run: backend/servers/reality-server/src/util/errors.rs added+deleted 187 lines since 2026-11-04T18:35:00Z (post churn-exclusion filter)."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/util/errors.rs"
+      ],
+      "created_at": "2026-11-05",
+      "updated_at": "2026-11-05",
+      "plan": null,
+      "type": "churn-hotspot",
+      "source": "git-log-numstat",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "reconciled": {
+        "at": "2026-11-06T14:25:26Z",
+        "assignment_status": "merged",
+        "pr_number": 3345
+      }
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/suspend_cascade.rs",
+      "title": "Churn hotspot (new): backend/servers/api-server/src/routes/suspend_cascade.rs is a top-3 churn file this run — watch for instability",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "git-log-numstat"
+      ],
+      "evidence": [
+        "Top-3 churn this run: backend/servers/api-server/src/routes/suspend_cascade.rs added+deleted 166 lines since 2026-11-04T18:35:00Z (post churn-exclusion filter)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/suspend_cascade.rs"
+      ],
+      "created_at": "2026-11-05",
+      "updated_at": "2026-11-05",
+      "plan": null,
+      "type": "churn-hotspot",
+      "source": "git-log-numstat",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "reconciled": {
+        "at": "2026-11-06T04:23:37Z",
+        "assignment_status": "merged",
+        "pr_number": 3339
+      }
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/auth_tests.rs",
+      "title": "Churn hotspot (new): backend/servers/api-server/tests/suites/auth_tests.rs is a top-3 churn file this run — watch for instability",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "git-log-numstat"
+      ],
+      "evidence": [
+        "Top-3 churn this run: backend/servers/api-server/tests/suites/auth_tests.rs added+deleted 138 lines since 2026-11-04T18:35:00Z (post churn-exclusion filter)."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/auth_tests.rs"
+      ],
+      "created_at": "2026-11-05",
+      "updated_at": "2026-11-05",
+      "plan": null,
+      "type": "churn-hotspot",
+      "source": "git-log-numstat",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "reconciled": {
+        "at": "2026-11-06T10:24:49Z",
+        "assignment_status": "merged",
+        "pr_number": 3344
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3293-reality",
+      "title": "Screen-map drift: PR #3293 i18n'd reality-web realtor/[id] page without updating docs/screens/reality/realtor-detail.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #3293"
+      ],
+      "evidence": [
+        "PR #3293 touched reality-product route file(s) but did not update docs/screens/reality/*.md: frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx, frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.test.tsx",
+        "Best-effort heuristic — some of these are test-only or API-route changes that don't warrant a screen-doc update. Treat as review candidate."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.test.tsx"
+      ],
+      "created_at": "2026-11-05",
+      "updated_at": "2026-11-05",
+      "plan": null,
+      "type": "screen-map-drift",
+      "source": "PR #3293",
+      "score_delta": 2,
+      "candidate_vector": "test-gap",
+      "reconciled": {
+        "at": "2026-11-09T04:25:02Z",
+        "assignment_status": "merged",
+        "pr_number": 3358
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3313-reality",
+      "title": "Screen-map drift: PR #3313 added regression tests for reality-web realtor/[id] without updating docs/screens/reality/realtor-detail.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #3313"
+      ],
+      "evidence": [
+        "PR #3313 touched reality-product route file(s) but did not update docs/screens/reality/*.md: frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.test.tsx",
+        "Best-effort heuristic — some of these are test-only or API-route changes that don't warrant a screen-doc update. Treat as review candidate."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.test.tsx"
+      ],
+      "created_at": "2026-11-05",
+      "updated_at": "2026-11-05",
+      "plan": null,
+      "type": "screen-map-drift",
+      "source": "PR #3313",
+      "score_delta": 2,
+      "candidate_vector": "test-gap",
+      "reconciled": {
+        "at": "2026-11-06T04:23:37Z",
+        "assignment_status": "merged",
+        "pr_number": 3340
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3317-ppt",
+      "title": "Screen-map drift: PR #3317 biome-cleaned ppt-web ai-dashboards route test without updating docs/screens/ppt/*.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #3317"
+      ],
+      "evidence": [
+        "PR #3317 touched ppt-product route file(s) but did not update docs/screens/ppt/*.md: frontend/apps/ppt-web/src/routes/groups/ai-dashboards.role-gate.route.test.tsx",
+        "Best-effort heuristic — some of these are test-only or API-route changes that don't warrant a screen-doc update. Treat as review candidate."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/ai-dashboards.role-gate.route.test.tsx"
+      ],
+      "created_at": "2026-11-05",
+      "updated_at": "2026-11-05",
+      "plan": null,
+      "type": "screen-map-drift",
+      "source": "PR #3317",
+      "score_delta": 2,
+      "candidate_vector": "test-gap",
+      "reconciled": {
+        "at": "2026-11-06T14:25:26Z",
+        "assignment_status": "merged",
+        "pr_number": 3342
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3317-reality",
+      "title": "Screen-map drift: PR #3317 biome-cleaned reality-web favorites/report/layout-revalidate route files without updating docs/screens/reality/*.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #3317"
+      ],
+      "evidence": [
+        "PR #3317 touched reality-product route file(s) but did not update docs/screens/reality/*.md: frontend/apps/reality-web/src/app/[locale]/favorites/page.test.tsx, frontend/apps/reality-web/src/app/[locale]/report/page.test.tsx, frontend/apps/reality-web/src/app/api/layout-revalidate/route.test.ts, frontend/apps/reality-web/src/app/api/layout-revalidate/route.ts",
+        "Best-effort heuristic — some of these are test-only or API-route changes that don't warrant a screen-doc update. Treat as review candidate."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/favorites/page.test.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/report/page.test.tsx",
+        "frontend/apps/reality-web/src/app/api/layout-revalidate/route.test.ts",
+        "frontend/apps/reality-web/src/app/api/layout-revalidate/route.ts"
+      ],
+      "created_at": "2026-11-05",
+      "updated_at": "2026-11-05",
+      "plan": null,
+      "type": "screen-map-drift",
+      "source": "PR #3317",
+      "score_delta": 2,
+      "candidate_vector": "test-gap",
+      "reconciled": {
+        "at": "2026-11-06T14:25:26Z",
+        "assignment_status": "merged",
+        "pr_number": 3349
+      }
+    },
+    {
+      "id": "code-review-reality-web-share-cmp-unchecked-json",
+      "title": "reality-web shared-comparison loader casts the listings API body with an unchecked `as Promise<ListingSummary>` — no shape validation, unlike the rest of reality-web's boundary guards (parseJsonBody / parseListingDetail)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "rotating-expert-review 2026-11-05 reality-web (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:47 — the shared-comparison loader casts the listings endpoint body straight to the wire type with an unchecked cast: `return response.json() as Promise<ListingSummary>;`. No shape validation. This bypasses the boundary-validation standard the rest of reality-web deliberately established: lib/realtor-api.ts parseJsonBody() rejects a non-object/array/null 200 with a typed RealtorApiError, and app/[locale]/listings/[slug]/page.tsx funnels the SAME `/api/v1/listings/{id}` endpoint through parseListingDetail() before use. Only this client fetch trusts the wire shape blindly.",
+        "Impact: a well-formed-JSON-but-wrong-shape 200 (e.g. `{}`, a primitive, or a partial/proxy body missing required fields) passes the `if (result.value)` truthiness check (L58-60), is pushed into comparison state via addToComparison() and persisted to localStorage, then rendered by ComparisonView where nested field derefs can throw and crash the in-session shared comparison. (A malformed-JSON body or a non-ok status is already handled: `.json()` throws into Promise.allSettled and the id is dropped; the wrong-shape-but-valid-JSON case is the gap. localStorage self-heals on reload because comparison-context's isStoredListing() filters it, but the in-session render still breaks.)",
+        "Fix vector: validate the body at this boundary before addToComparison — reuse the same pattern as parseJsonBody (reject non-object / array / missing string `id`) or a shared listing-summary normalizer, instead of the raw `as Promise<ListingSummary>` cast. Cloud-verifiable (reality-web, biome + typecheck). Confidence medium: the unchecked cast and the missing guard are certain by static read; reachable from any shared /compare?ids=... URL (Epic 51 Story 51.3). Severity LOW (+1): requires a malformed-but-valid-JSON 200 from the listings endpoint (low likelihood) and reload self-heals.",
+        "expert: frontend"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx"
+      ],
+      "created_at": "2026-11-05",
+      "updated_at": "2026-11-05",
+      "plan": null,
+      "segment": "reality-web",
+      "expert": "frontend",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "reconciled": {
+        "at": "2026-11-07T02:24:17Z",
+        "assignment_status": "merged",
+        "pr_number": 3350
+      }
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/tests/suite_4.rs",
+      "title": "Churn hotspot (new): backend/crates/db/tests/suite_4.rs is a top-3 churn file this run — watch for instability",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "dropped",
+      "sources": [
+        "git-log-numstat"
+      ],
+      "evidence": [
+        "churn: 3 touches since 2026-11-05T03:17:05Z (merged PRs #3330, #3331, #3332 — round-5 authz/functional-fix sweep hit the db integration-suite harness)"
+      ],
+      "files": [
+        "backend/crates/db/tests/suite_4.rs"
+      ],
+      "created_at": "2026-11-06",
+      "updated_at": "2026-11-06",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-06T16:28:05Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/registry.rs",
+      "title": "Churn hotspot (new): backend/crates/db/src/repositories/registry.rs is a top-3 churn file this run — watch for instability",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "dropped",
+      "sources": [
+        "git-log-numstat"
+      ],
+      "evidence": [
+        "churn: 2 touches since 2026-11-05T03:17:05Z (merged PRs #3332 round-5 authz B, #3338 pet/vehicle registration org-scope fix) — registry repo is actively under authz hardening"
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/registry.rs"
+      ],
+      "created_at": "2026-11-06",
+      "updated_at": "2026-11-06",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-06T16:28:05Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/registry.rs",
+      "title": "Churn hotspot (new): backend/servers/api-server/src/routes/registry.rs is a top-3 churn file this run — watch for instability",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "dropped",
+      "sources": [
+        "git-log-numstat"
+      ],
+      "evidence": [
+        "churn: 2 touches since 2026-11-05T03:17:05Z (merged PRs #3332 round-5 authz B, #3338 pet/vehicle registration org-scope fix) — paired with the matching repo-layer churn above"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/registry.rs"
+      ],
+      "created_at": "2026-11-06",
+      "updated_at": "2026-11-06",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-06T16:28:05Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
+    },
+    {
+      "id": "code-review-api-handlers-budgets-db-error-leak",
+      "title": "api-server budgets.rs leaks raw sqlx errors to clients — 26 handler error branches send e.to_string() as DB_ERROR",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "done",
+      "sources": [
+        "PR #3362",
+        "code-review-api-handlers-2026-11-09"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/budgets.rs:468,505,542,583,624,694,735,776,1105,1142,1179,1236,1270,1307,1339,1367,1404,1441,1481,1521,1561,1598,1630,1667,1704,1741 — 26 handler error branches send Json(ErrorResponse::new(\"DB_ERROR\", e.to_string())) to clients. Raw sqlx text (SQL fragments, table/column names, pool/TLS state) reaches PM manager API clients. Grep confirmed count=26.",
+        "Expert: security. Severity: high. Fix shape: log the detail (tracing::error! already present), return a static message. Same class as existing reality-server db-error-leak-to-client plan but on api-server.",
+        "resolved: PR #3362 merged 2026-11-09 14:29 — stop leaking raw sqlx errors from budgets handlers; plan archived to plans/_archive/"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/budgets.rs"
+      ],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": "plans/_archive/code-review-api-handlers-budgets-db-error-leak.md",
+      "reconciled": {
+        "at": "2026-11-09T16:24:47Z",
+        "assignment_status": "merged",
+        "pr_number": 3362
+      }
+    },
+    {
+      "id": "code-review-api-handlers-messaging-db-error-leak",
+      "title": "api-server messaging.rs leaks raw sqlx errors to clients — 33 handler error branches send e.to_string() as DB_ERROR",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #3363",
+        "code-review-api-handlers-2026-11-09"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/messaging.rs — 33 handler error branches send Json(ErrorResponse::new(\"DB_ERROR\", e.to_string())); highest leak concentration in the api-server tree. First site line 302. Grep confirmed count=33.",
+        "Expert: security. Severity: medium. Security fast-track eligible (vector=security + confidence=high + score>=2). Same remediation shape as sibling budgets.rs plan.",
+        "resolved: PR #3363 merged 2026-11-09 14:29 — sanitize DB errors in messaging handlers; plan archived to plans/_archive/"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/messaging.rs"
+      ],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": "plans/_archive/code-review-api-handlers-messaging-db-error-leak.md",
+      "reconciled": {
+        "at": "2026-11-09T16:24:47Z",
+        "assignment_status": "merged",
+        "pr_number": 3363
+      }
+    },
+    {
+      "id": "churn-hotspot-ppt-web-registry-page",
+      "title": "Watch RegistryPage.tsx churn — 3 touches across #3354/#3355/#3359 (auth context + i18n + toasts)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "PR #3354",
+        "PR #3355",
+        "PR #3359",
+        "PR #3365"
+      ],
+      "evidence": [
+        "RegistryPage.tsx touched 3x in this routine window across registry feature consolidation (auth, i18n, toast surfacing). Informational — concentrated intentional feature work, not regression.",
+        "resolved: PR #3365 merged 2026-11-09 14:39 — lock registry action toast + confirm i18n keys (churn consolidation)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx"
+      ],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-09T16:24:47Z",
+        "assignment_status": "merged",
+        "pr_number": 3365
+      }
+    },
+    {
+      "id": "code-review-api-handlers-tenant-export-outdir-path",
+      "title": "SECURITY: admin tenant-export handler writes to a client-supplied out_dir with no validation — arbitrary-directory write via RLS-bypassing export pool",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #3364",
+        "rotating-expert-review [api-handlers]"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/admin_tenant_lifecycle.rs:90-113 — export_handler reads a caller-supplied out_dir: Option<String> straight from the request body (ExportRequest.out_dir, struct at L65-69) and passes it, unvalidated, as PathBuf::from(out_dir) into export_tenant(&state.db, org_id, &manifest, &out_dir) (L102). export_tenant writes the per-tenant logical export (tarball + row dumps) to that directory. The state.db pool used here is the RLS-bypassing service-role pool (tenant-ops export reads every tenant table for the org), so the write target is fully attacker-chosen with no sandbox/allowlist/canonicalization check and no containment to an export root.",
+        "Impact: a platform principal holding Capability::TenantExport (the route's require_capability gate, L50-53) can direct the server to write exported tenant data — and create/overwrite a .tar.gz — at ANY absolute path on the server filesystem (e.g. /var/www, a Caddy-served static dir, another service's config dir, or over an existing file via the tarball path). This is an arbitrary-directory write / path-control primitive on a privileged admin surface; it can be used to stage tenant PII into a web-reachable location or to clobber files. The blast radius is limited to actors with the TenantExport capability + recent MFA, hence medium rather than high.",
+        "Contrast: the sibling org-settings background export (routes/organizations/settings.rs:839) deliberately ignores any caller path and uses std::env::temp_dir().join(format!(\"ppt-org-export-{}\", Uuid::new_v4())); the restore_handler in the SAME file (admin_tenant_lifecycle.rs:203-204) also uses temp_dir() + a random UUID. export_handler is the lone handler that trusts a client path. Landable backend-only fix: drop the out_dir request field (or confine it to a configured export root with canonicalize() + a starts_with(export_root) check that rejects traversal), and default to temp_dir().join(Uuid) exactly like restore_handler and the org-settings export. Confidence medium: static review only, path flow code-verified end-to-end but no runtime write-outside-root was executed.",
+        "resolved: PR #3364 merged 2026-11-09 14:29 — confine tenant-export out_dir to the export root"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/admin_tenant_lifecycle.rs"
+      ],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "expert": "security",
+      "reconciled": {
+        "at": "2026-11-09T16:24:47Z",
+        "assignment_status": "merged",
+        "pr_number": 3364
+      }
+    },
+    {
+      "id": "code-review-api-handlers-health-alerts-page-size-uncapped",
+      "title": "platform-admin health-alerts pagination: page_size used as SQL LIMIT with no clamp despite documented 'max 100' — unbounded query (DoS)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "PR #3361",
+        "rotating-expert-review [api-handlers]"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/platform_admin/ops.rs:176-192 — get_health_alerts computes offset = (query.page.saturating_sub(1)) as i64 * query.page_size as i64 and calls health_monitoring_repo.get_alerts(query.page_size as i64, offset) using query.page_size directly as the SQL LIMIT. AlertsQuery.page_size (struct L44-54) is a u32 whose doc comment literally says 'Page size (max 100)', but nothing clamps it — there is no .clamp(1, 100)/.min(100) before the cast, so the documented cap is unenforced and a caller can request page_size=4294967295, turning the LIMIT effectively unbounded (full-table scan of metric_alerts).",
+        "Impact: a SuperAdmin caller (route is RequireCapability + extract_super_admin_token-gated, L177/L182) can issue an unbounded alerts query, a self-inflicted DoS / memory-pressure vector on the platform-admin surface; low severity because it requires the SuperAdmin capability. The divergence is the real smell: sibling list handlers in the same tree DO clamp — admin/users_lifecycle.rs:273 (page_size.clamp(1, 100)), migration.rs:144 (per_page.clamp(1, 100)) — so this is an inconsistent, documented-but-unenforced cap rather than a deliberate choice.",
+        "Landable backend-only fix: clamp before use, e.g. let page_size = query.page_size.clamp(1, 100); and reuse it for both the offset math and the get_alerts LIMIT, matching the existing clamp(1, 100) convention in users_lifecycle.rs / migration.rs. Confidence medium: static review only; the unbounded LIMIT path is code-verified but not runtime-exercised.",
+        "resolved: PR #3361 merged 2026-11-09 14:29 — clamp health-alerts page_size to documented max"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/platform_admin/ops.rs"
+      ],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "reconciled": {
+        "at": "2026-11-09T16:24:47Z",
+        "assignment_status": "merged",
+        "pr_number": 3361
+      }
+    },
+    {
+      "id": "code-review-reality-server-imports-limit-unclamped",
+      "title": "reality-server imports.rs list_import_jobs passes user `limit` to SQL unclamped - negative LIMIT 500s, huge LIMIT is unbounded",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #3368",
+        "rotating-expert-review [reality-server]"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:125 - list_import_jobs passes `query.limit.unwrap_or(20)` straight into reality_portal_repo.list_import_jobs() with no `.clamp(...)`, while the sibling `offset` on :126 IS bounded via `crate::util::clamp_offset_i32`. ImportJobsQuery.limit is `Option<i32>` (routes/imports.rs:85-89), fully request-controlled.",
+        "Every other list endpoint in the segment clamps the limit: agencies.rs:128 `.clamp(1,200)`, inquiries.rs:597 & :649 `.clamp(1,100)`, portal_listings.rs:452, realtors.rs:207, saved_searches.rs:327, and listings.rs clamp_pagination(). util/mod.rs ships clamp_offset/clamp_offset_i32 but no clamp_limit helper, so this endpoint slipped the pattern.",
+        "Impact: `?limit=-1` reaches Postgres as `LIMIT -1` -> query error surfaced as HTTP 500 (the exact failure listings.rs:22-27 documents having fixed); `?limit=2000000000` requests an unbounded result set (latency/memory pressure, bounded only by the caller's own row count). Fix: clamp to `.clamp(1,100)` like the sibling routes, or add a util::clamp_limit helper.",
+        "resolved: PR #3368 merged 2026-11-09 22:28 — clamp list_import_jobs limit to 1..=100"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/imports.rs"
+      ],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "reconciled": {
+        "at": "2026-11-09T22:40:58Z",
+        "assignment_status": "merged",
+        "pr_number": 3368
+      }
+    },
+    {
+      "id": "code-review-reality-server-imports-source-url-no-validation",
+      "title": "reality-server imports.rs create/update_import_job store user `source_url` without validate_external_url (SSRF parity gap vs agency_imports)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #3367",
+        "rotating-expert-review [reality-server]"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:148-163 (create_import_job) and :209-227 (update_import_job) persist `CreatePortalImportJob.source_url` / `UpdateImportJob.source_url` (both `Option<String>`, defined backend/crates/db/src/models/reality_portal.rs:693-705) directly through the repo with NO URL validation.",
+        "The sibling agency-feed path validates the same concept: agency_imports.rs:14 imports `common::url_validation::validate_external_url` and calls it on both create (:238) and update (:290) of `feed_url`, returning 400 on failure. imports.rs never imports or calls it - a repo-wide grep shows the only two validate_external_url call sites in reality-server are both in agency_imports.rs.",
+        "source_url is a remote feed endpoint fetched server-side by the import pipeline; without validate_external_url (which rejects localhost/private/link-local/non-http targets) an authenticated portal user can point an import job at internal services -> SSRF. Fix: mirror agency_imports and validate source_url on create and update before persisting. (The fetch itself lives outside this segment, so reachability is unconfirmed by static analysis - hence medium confidence.)",
+        "resolved: PR #3367 merged 2026-11-09 22:28 — validate import source_url (SSRF parity)"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/imports.rs"
+      ],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "reconciled": {
+        "at": "2026-11-09T22:40:58Z",
+        "assignment_status": "merged",
+        "pr_number": 3367
+      }
+    },
+    {
+      "id": "code-review-reality-server-imports-total-page-len",
+      "title": "reality-server list_import_jobs reports `total` as page length, breaking client pagination",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [reality-server]"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:131 sets `let total = jobs.len() as i64;` for ImportJobsResponse.total (`i64`, :95) on the paginated list_import_jobs handler (it applies limit/offset at :125-126). So `total` equals the current page size, never the real row count.",
+        "The segment's convention is a separate COUNT query: inquiries.rs:602-620 carries the explicit comment that clients compute total/limit for pagination and that returning inquiries.len() would be wrong, then uses tokio::try_join! to fetch a real count; agencies.rs:131 returns `(agencies, total)` from the repo. list_import_jobs was missed. (Note: list_feeds:325 also uses len() but is NOT paginated, so its total is correct and is out of scope.)",
+        "Impact: a client paginating import jobs sees total == page size, so ceil(total/limit) is always 1 and pages beyond the first are unreachable in the UI. Fix: add a COUNT(*) scoped to principal.user_id (mirroring inquiries.rs) instead of jobs.len()."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/imports.rs"
+      ],
+      "created_at": "2026-11-09",
+      "updated_at": "2026-11-09",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "expert": "rust"
     }
   ]
 }

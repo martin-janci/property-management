@@ -352,7 +352,12 @@
     "saveFailed": "Zapisywanie nie powiodło się",
     "deleteFailed": "Usuwanie nie powiodło się",
     "submitFailed": "Przesyłanie nie powiodło się",
-    "pleaseTryAgain": "Spróbuj ponownie."
+    "pleaseTryAgain": "Spróbuj ponownie.",
+    "enabled": "Włączone",
+    "disabled": "Wyłączone",
+    "more": "Więcej opcji",
+    "settings": "Ustawienia",
+    "confirmTitle": "Czy na pewno?"
   },
   "nav": {
     "home": "Strona główna",
@@ -373,11 +378,26 @@
     "privacy": "Prywatność",
     "admin": "Administracja",
     "aiChat": "Asystent AI",
-    "iotAlerts": "Sensor Alerts",
+    "iotAlerts": "Alerty czujników",
     "integrations": "Integracje",
     "portalWebhooks": "Webhooki portali",
     "notificationTriggers": "Wyzwalacze powiadomień",
-    "notificationAnalytics": "Analityka powiadomień"
+    "notificationAnalytics": "Analityka powiadomień",
+    "myUnit": "Moje mieszkanie",
+    "voting": "Głosowania",
+    "reports": "Raporty",
+    "accounting": "Księgowość",
+    "automations": "Automatyzacje",
+    "iot": "Inteligentny budynek",
+    "rentals": "Najem krótkoterminowy",
+    "sessions": "Aktywne sesje",
+    "messages": "Wiadomości",
+    "meters": "Liczniki",
+    "outages": "Przerwy w dostawach",
+    "neighbors": "Sąsiedzi",
+    "leases": "Umowy najmu",
+    "members": "Osoby i role",
+    "oauthGrants": "Połączone aplikacje"
   },
   "auth": {
     "signIn": "Zaloguj się",
@@ -554,11 +574,77 @@
       "regenerating": "Generowanie…",
       "saveNewCodes": "Zapisz te {{count}} nowe kody odzyskiwania — nie zostaną pokazane ponownie.",
       "done": "Gotowe"
+    },
+    "completingSignIn": "Kończenie logowania…",
+    "redirecting": "Przekierowywanie…",
+    "signInFailed": "Logowanie nie powiodło się",
+    "backToLogin": "Powrót do logowania",
+    "callbackMissingParams": "Nieprawidłowy adres zwrotny: brak parametru code lub state.",
+    "stateValidationFailed": "Uwierzytelnianie nie powiodło się (niezgodność parametru state). Zaloguj się ponownie.",
+    "ssoCallbackFailed": "Logowanie przez SSO nie powiodło się. Spróbuj ponownie.",
+    "ssoProviderError": "Dostawca tożsamości zwrócił błąd.",
+    "verifyEmail": {
+      "verifyingTitle": "Weryfikujemy Twój e-mail…",
+      "verifyingSubtitle": "To potrwa tylko chwilę.",
+      "successTitle": "E-mail zweryfikowany",
+      "successSubtitle": "Twoje konto jest aktywne. Możesz się teraz zalogować.",
+      "signIn": "Zaloguj się",
+      "failedTitle": "Weryfikacja nie powiodła się",
+      "expired": "Link weryfikacyjny wygasł. Podaj swój e-mail, a wyślemy nowy.",
+      "invalid": "Link weryfikacyjny jest nieprawidłowy lub został już użyty. Jeśli nie możesz się zalogować, poproś o nowy link.",
+      "error": "Nie udało się zweryfikować e-maila. Spróbuj ponownie lub poproś o nowy link.",
+      "resend": "Wyślij nowy link",
+      "resending": "Wysyłanie…",
+      "resendSent": "Jeśli dla tego adresu istnieje niezweryfikowane konto, nowy link jest w drodze.",
+      "resendFailed": "Nie udało się wysłać linku. Spróbuj później."
     }
   },
   "home": {
-    "title": "System zarządzania nieruchomościami",
-    "welcome": "Witamy w systemie zarządzania nieruchomościami."
+    "title": "Zarządzanie budynkiem bez papierologii",
+    "welcome": "Witamy w systemie zarządzania nieruchomościami.",
+    "tagline": "Jedno miejsce dla zarządców, właścicieli i najemców: zgłaszaj usterki, głosuj nad decyzjami, śledź koszty i bądź na bieżąco.",
+    "audiences": {
+      "title": "Dla wszystkich w budynku",
+      "managers": {
+        "title": "Zarządcy",
+        "text": "Zarządzaj wieloma budynkami z jednego panelu: usterki, ogłoszenia, odczyty liczników, finanse i zebrania właścicieli."
+      },
+      "owners": {
+        "title": "Właściciele",
+        "text": "Głosuj online, czytaj protokoły i dokumenty, śledź fundusz remontowy i swoje płatności."
+      },
+      "tenants": {
+        "title": "Najemcy i mieszkańcy",
+        "text": "Zgłoś usterkę w minutę, otrzymuj powiadomienia o przerwach w dostawach i bądź w kontakcie z zarządcą i sąsiadami."
+      }
+    },
+    "features": {
+      "title": "Co możesz zrobić",
+      "faults": {
+        "title": "Zgłaszanie usterek",
+        "text": "Zgłaszaj problemy ze zdjęciem, śledź ich status i zobacz, kto się nimi zajmuje."
+      },
+      "voting": {
+        "title": "Głosowanie online",
+        "text": "Przygotuj uchwały właścicieli, zbieraj głosy elektronicznie i publikuj wyniki."
+      },
+      "communication": {
+        "title": "Ogłoszenia i wiadomości",
+        "text": "Informuj wszystkich o przerwach, konserwacji i zebraniach oraz pisz bezpośrednio do zarządcy."
+      },
+      "finance": {
+        "title": "Finanse",
+        "text": "Zaliczki, faktury, budżety i fundusz remontowy — przejrzyście dla każdego właściciela."
+      },
+      "meters": {
+        "title": "Odczyty liczników",
+        "text": "Podawaj odczyty online ze zdjęciem i porównuj zużycie między okresami."
+      },
+      "documents": {
+        "title": "Dokumenty",
+        "text": "Umowy, protokoły, regulamin i rozliczenia bezpiecznie w jednym miejscu."
+      }
+    }
   },
   "facilities": {
     "bookings": {
@@ -567,12 +653,203 @@
       "listTitle": "Rezerwacje",
       "bookFacility": "Zarezerwuj obiekt",
       "empty": "Nie znaleziono rezerwacji.",
-      "allCaughtUp": "Wszystko załatwione! Brak oczekujących rezerwacji do sprawdzenia."
+      "allCaughtUp": "Wszystko załatwione! Brak oczekujących rezerwacji do sprawdzenia.",
+      "status": {
+        "pending": "Oczekuje na zatwierdzenie",
+        "approved": "Zatwierdzona",
+        "rejected": "Odrzucona",
+        "cancelled": "Anulowana",
+        "completed": "Zakończona",
+        "no_show": "Niestawienie się"
+      },
+      "allStatuses": "Wszystkie statusy",
+      "statusLabel": "Status rezerwacji",
+      "from": "Od:",
+      "to": "Do:",
+      "duration": "Czas trwania: {{duration}}",
+      "durationHours": "{{hours}} godz.",
+      "durationMinutes": "{{minutes}} min",
+      "durationHoursMinutes": "{{hours}} godz. {{minutes}} min",
+      "attendees": "Liczba uczestników: {{count}}",
+      "rejectionReason": "Powód odrzucenia:",
+      "cancellationReason": "Powód anulowania:",
+      "depositPaid": "Kaucja wpłacona",
+      "viewDetails": "Zobacz szczegóły",
+      "approve": "Zatwierdź",
+      "reject": "Odrzuć",
+      "cancelBooking": "Anuluj rezerwację",
+      "loadFailed": "Nie udało się wczytać rezerwacji",
+      "loadPendingFailed": "Nie udało się wczytać oczekujących rezerwacji",
+      "cancelFailed": "Nie udało się anulować rezerwacji",
+      "approveFailed": "Nie udało się zatwierdzić rezerwacji",
+      "rejectFailed": "Nie udało się odrzucić rezerwacji",
+      "createFailed": "Nie udało się utworzyć rezerwacji",
+      "loadFacilityFailed": "Nie udało się wczytać szczegółów obiektu",
+      "form": {
+        "location": "Lokalizacja: {{location}}",
+        "capacity": "Pojemność (osoby): {{count}}",
+        "fee": "Opłata: {{fee}}/godz.",
+        "maxDuration": "Maksymalny czas: {{hours}} godz.",
+        "requiresApproval": "Rezerwacja tego obiektu wymaga zatwierdzenia",
+        "date": "Data",
+        "startTime": "Godzina rozpoczęcia",
+        "endTime": "Godzina zakończenia",
+        "selectTime": "Wybierz godzinę",
+        "unavailable": "(niedostępne)",
+        "purpose": "Cel rezerwacji",
+        "purposePlaceholder": "np. spotkanie, przyjęcie urodzinowe",
+        "attendeesCount": "Liczba uczestników",
+        "maxPlaceholder": "Maks.: {{count}}",
+        "notes": "Dodatkowe uwagi",
+        "notesPlaceholder": "Szczególne wymagania lub uwagi",
+        "durationLabel": "Czas trwania:",
+        "hoursValue": "{{hours}} godz.",
+        "estimatedTotal": "Szacowana kwota:",
+        "depositRequired": "Wymagana kaucja:",
+        "cancel": "Anuluj",
+        "submitting": "Rezerwowanie…",
+        "submitForApproval": "Wyślij do zatwierdzenia",
+        "bookNow": "Zarezerwuj",
+        "errors": {
+          "selectDate": "Wybierz datę",
+          "selectStart": "Wybierz godzinę rozpoczęcia",
+          "selectEnd": "Wybierz godzinę zakończenia",
+          "endAfterStart": "Godzina zakończenia musi być późniejsza niż rozpoczęcia",
+          "maxDuration": "Maksymalny czas rezerwacji to {{hours}} godz.",
+          "maxCapacity": "Maksymalna pojemność to {{count}}"
+        }
+      },
+      "cancelDialog": {
+        "title": "Anuluj rezerwację",
+        "confirm": "Czy na pewno chcesz anulować tę rezerwację?",
+        "reason": "Powód anulowania (opcjonalnie)",
+        "reasonPlaceholder": "Daj innym znać, dlaczego anulujesz…",
+        "keep": "Zachowaj rezerwację",
+        "submitting": "Anulowanie…",
+        "submit": "Anuluj rezerwację"
+      },
+      "rejectDialog": {
+        "title": "Odrzuć rezerwację",
+        "subtitle": "Odrzucenie rezerwacji obiektu: {{name}}",
+        "reason": "Powód odrzucenia *",
+        "reasonPlaceholder": "Wyjaśnij, dlaczego rezerwacja jest odrzucana…",
+        "reasonRequired": "Podaj powód odrzucenia",
+        "cancel": "Anuluj",
+        "submitting": "Odrzucanie…",
+        "submit": "Odrzuć rezerwację"
+      }
     },
     "errors": {
       "fetchFailedTitle": "Nie udało się załadować obiektów",
       "fetchFailedDescription": "Podczas ładowania obiektów wystąpił błąd. Spróbuj ponownie.",
-      "retry": "Spróbuj ponownie"
+      "retry": "Spróbuj ponownie",
+      "createFailed": "Nie udało się utworzyć obiektu",
+      "updateFailed": "Nie udało się zapisać obiektu",
+      "loadFailed": "Nie udało się wczytać obiektu",
+      "unexpected": "Wystąpił nieoczekiwany błąd."
+    },
+    "title": "Obiekty wspólne",
+    "addFacility": "Dodaj obiekt",
+    "addFirstFacility": "Dodaj pierwszy obiekt",
+    "empty": "Nie znaleziono żadnych obiektów.",
+    "createTitle": "Dodaj nowy obiekt",
+    "editTitle": "Edytuj obiekt",
+    "notFound": "Nie znaleziono obiektu",
+    "notBookable": "Tego obiektu nie można zarezerwować",
+    "goBack": "Wróć",
+    "types": {
+      "gym": "Siłownia",
+      "laundry": "Pralnia",
+      "meeting_room": "Sala spotkań",
+      "party_room": "Sala imprezowa",
+      "sauna": "Sauna",
+      "pool": "Basen",
+      "playground": "Plac zabaw",
+      "parking": "Parking",
+      "storage": "Magazyn",
+      "garden": "Ogród",
+      "bbq": "Miejsce do grillowania",
+      "bike_storage": "Rowerownia",
+      "other": "Inne"
+    },
+    "filters": {
+      "allTypes": "Wszystkie typy",
+      "typeLabel": "Typ obiektu",
+      "bookableLabel": "Możliwość rezerwacji",
+      "allFacilities": "Wszystkie obiekty",
+      "bookableOnly": "Tylko do rezerwacji",
+      "nonBookable": "Bez możliwości rezerwacji"
+    },
+    "pagination": {
+      "showing": "Wyświetlono {{from}} – {{to}} z {{total}}",
+      "previous": "Poprzednia",
+      "next": "Następna",
+      "page": "Strona {{page}} z {{totalPages}}"
+    },
+    "card": {
+      "inactive": "Nieaktywny",
+      "requiresApproval": "Wymaga zatwierdzenia",
+      "capacity": "Pojemność: {{count}}",
+      "perHour": "{{fee}}/godz.",
+      "viewDetails": "Zobacz szczegóły",
+      "bookNow": "Zarezerwuj",
+      "edit": "Edytuj"
+    },
+    "days": {
+      "mon": "Pn",
+      "tue": "Wt",
+      "wed": "Śr",
+      "thu": "Cz",
+      "fri": "Pt",
+      "sat": "So",
+      "sun": "Nd"
+    },
+    "form": {
+      "basicInfo": "Podstawowe informacje",
+      "bookingRules": "Zasady rezerwacji",
+      "pricing": "Cennik",
+      "amenities": "Wyposażenie",
+      "name": "Nazwa *",
+      "type": "Typ *",
+      "description": "Opis",
+      "location": "Lokalizacja",
+      "locationPlaceholder": "np. parter, budynek A",
+      "capacity": "Pojemność",
+      "capacityPlaceholder": "Maksymalna liczba osób",
+      "allowBooking": "Zezwalaj na rezerwacje",
+      "active": "Aktywny",
+      "requiresApproval": "Wymaga zatwierdzenia",
+      "maxBookingHours": "Maksymalny czas rezerwacji (godziny)",
+      "maxAdvanceDays": "Rezerwacja maksymalnie z wyprzedzeniem (dni)",
+      "minAdvanceHours": "Rezerwacja minimalnie z wyprzedzeniem (godziny)",
+      "availableFrom": "Dostępny od",
+      "availableTo": "Dostępny do",
+      "availableDays": "Dostępne dni",
+      "hourlyFee": "Opłata godzinowa",
+      "hourlyFeePlaceholder": "np. 25.00",
+      "depositAmount": "Kwota kaucji",
+      "depositPlaceholder": "np. 50.00",
+      "amenityPlaceholder": "Dodaj wyposażenie (np. Wi-Fi, projektor)",
+      "add": "Dodaj",
+      "removeAmenity": "Usuń {{name}}",
+      "cancel": "Anuluj",
+      "saving": "Zapisywanie…",
+      "update": "Zapisz zmiany",
+      "create": "Utwórz obiekt",
+      "errors": {
+        "nameRequired": "Podaj nazwę",
+        "typeRequired": "Wybierz typ obiektu",
+        "availableToAfterFrom": "Godzina „Dostępny do” musi być późniejsza niż „Dostępny od”",
+        "mustBePositive": "Wartość musi być większa od 0",
+        "selectDay": "Wybierz co najmniej jeden dostępny dzień",
+        "notNegative": "Wartość nie może być ujemna"
+      }
+    },
+    "nav": {
+      "label": "Pomieszczenia wspólne",
+      "book": "Zarezerwuj pomieszczenie",
+      "myBookings": "Moje rezerwacje",
+      "buildingFacilities": "Pomieszczenia wspólne"
     }
   },
   "faults": {
@@ -660,7 +937,83 @@
     "reported": "Usterka zgłoszona",
     "reportFailed": "Nie udało się zgłosić usterki",
     "updated": "Usterka zaktualizowana",
-    "updateFailed": "Nie udało się zaktualizować usterki"
+    "updateFailed": "Nie udało się zaktualizować usterki",
+    "allStatuses": "Wszystkie statusy",
+    "allPriorities": "Wszystkie priorytety",
+    "allCategories": "Wszystkie kategorie",
+    "searchPlaceholder": "Szukaj usterek...",
+    "noFaultsFound": "Nie znaleziono usterek.",
+    "paginationSummary": "Wyświetlono {{from}}–{{to}} z {{total}} usterek",
+    "reportedDate": "Zgłoszono: {{date}}",
+    "timeline": {
+      "title": "Historia",
+      "empty": "Brak wpisów w historii.",
+      "internal": "Wewnętrzne",
+      "action": {
+        "created": "zgłosił(a) usterkę",
+        "triaged": "ocenił(a) usterkę",
+        "assigned": "przypisał(a) usterkę",
+        "status_changed": "zmienił(a) status",
+        "priority_changed": "zmienił(a) priorytet",
+        "work_note": "dodał(a) notatkę z prac",
+        "comment": "dodał(a) komentarz",
+        "attachment_added": "dodał(a) załącznik",
+        "scheduled": "zaplanował(a) prace",
+        "resolved": "rozwiązał(a) usterkę",
+        "confirmed": "potwierdził(a) usunięcie",
+        "reopened": "ponownie otworzył(a) usterkę",
+        "rated": "ocenił(a) usunięcie"
+      }
+    },
+    "edit": {
+      "backToFault": "Powrót do usterki",
+      "title": "Edytuj usterkę",
+      "subtitle": "Zaktualizuj dane usterki. Uwaga: edycja jest możliwa tylko przed oceną usterki."
+    },
+    "triageDialog": {
+      "title": "Oceń usterkę",
+      "submit": "Oceń usterkę",
+      "aiSuggests": "AI sugeruje: <strong>{{category}}</strong>",
+      "aiSuggestsWithPriority": "AI sugeruje: <strong>{{category}}</strong>, priorytet <strong>{{priority}}</strong>",
+      "aiConfidence": "(pewność {{percent}}%)",
+      "priorityHint": {
+        "low": "Drobny problem, niepilny",
+        "medium": "Standardowy priorytet",
+        "high": "Wymaga szybkiej reakcji",
+        "urgent": "Wymaga natychmiastowego działania"
+      },
+      "assignTo": "Przypisz do (opcjonalnie)",
+      "unassigned": "Nieprzypisane"
+    },
+    "viewReports": "Zobacz raporty",
+    "statsTotal": "Łącznie",
+    "createDescription": "Opisz problem, który występuje. Podaj jak najwięcej szczegółów, abyśmy mogli szybko go rozwiązać.",
+    "reports": {
+      "title": "Raporty usterek",
+      "subtitle": "Analiza usterek według budynków i okresu.",
+      "forbidden": "Nie masz uprawnień do przeglądania raportów usterek.",
+      "allBuildings": "Wszystkie budynki",
+      "building": "Budynek",
+      "dateFrom": "Od",
+      "dateTo": "Do",
+      "exportCsv": "Eksportuj CSV",
+      "exportPdf": "Eksportuj PDF",
+      "failedToLoad": "Nie udało się załadować statystyk usterek",
+      "empty": "Żadna usterka nie pasuje do wybranych filtrów.",
+      "kpiTotal": "Usterki łącznie",
+      "kpiOpen": "Otwarte",
+      "kpiClosed": "Zamknięte",
+      "kpiResolution": "Śr. czas rozwiązania (h)",
+      "kpiRating": "Śr. ocena",
+      "byStatus": "Według statusu",
+      "byCategory": "Według kategorii",
+      "byPriority": "Według priorytetu",
+      "noData": "Brak danych",
+      "viewFaultsInBucket": "{{label}}. Pokaż te usterki"
+    },
+    "confirmDelete": "Usunąć tę usterkę? Tej operacji nie można cofnąć.",
+    "deleted": "Usterka została usunięta",
+    "deleteFailed": "Nie udało się usunąć usterki"
   },
   "buildings": {
     "title": "Budynki",
@@ -670,7 +1023,214 @@
     "units": "Lokale",
     "floors": "Piętra",
     "yearBuilt": "Rok budowy",
-    "manager": "Zarządca"
+    "manager": "Zarządca",
+    "view": "Wyświetl",
+    "status": {
+      "active": "Aktywny",
+      "under_construction": "W budowie",
+      "renovation": "W remoncie",
+      "inactive": "Nieaktywny"
+    },
+    "type": {
+      "residential": "Mieszkalny",
+      "commercial": "Komercyjny",
+      "mixed": "Mieszany",
+      "industrial": "Przemysłowy"
+    },
+    "list": {
+      "subtitle_one": "{{count}} budynek w Twojej organizacji",
+      "subtitle_few": "{{count}} budynki w Twojej organizacji",
+      "subtitle_many": "{{count}} budynków w Twojej organizacji",
+      "subtitle_other": "{{count}} budynku w Twojej organizacji",
+      "addBuilding": "Dodaj budynek",
+      "allStatuses": "Wszystkie statusy",
+      "allTypes": "Wszystkie typy",
+      "statusFilter": "Filtruj według statusu",
+      "typeFilter": "Filtruj według typu",
+      "emptyTitle": "Brak budynków",
+      "emptyBody": "Zacznij od dodania pierwszego budynku.",
+      "pageOf": "Strona <bold>{{page}}</bold> z <bold>{{totalPages}}</bold>"
+    },
+    "card": {
+      "unitCount_one": "{{count}} lokal",
+      "unitCount_few": "{{count}} lokale",
+      "unitCount_many": "{{count}} lokali",
+      "unitCount_other": "{{count}} lokalu",
+      "floorCount_one": "{{count}} piętro",
+      "floorCount_few": "{{count}} piętra",
+      "floorCount_many": "{{count}} pięter",
+      "floorCount_other": "{{count}} piętra"
+    },
+    "errors": {
+      "loadFailed": "Nie udało się wczytać budynków",
+      "unexpected": "Wystąpił nieoczekiwany błąd",
+      "notFoundBody": "Nie znaleziono żądanego budynku.",
+      "generic": "Coś poszło nie tak. Spróbuj ponownie."
+    },
+    "detail": {
+      "personMonths": "Osobomiesiące",
+      "type": "Typ",
+      "totalArea": "Powierzchnia całkowita",
+      "floorFallback": "Piętro {{number}}",
+      "noFloors": "Dla tego budynku nie zdefiniowano pięter.",
+      "commonAreas": "Części wspólne",
+      "noCommonAreas": "Dla tego budynku nie zdefiniowano części wspólnych."
+    },
+    "commonAreaType": {
+      "staircase": "Klatka schodowa",
+      "elevator": "Winda",
+      "lobby": "Hol",
+      "hallway": "Korytarz",
+      "basement": "Piwnica",
+      "attic": "Strych",
+      "parking": "Parking",
+      "garage": "Garaż",
+      "garden": "Ogród",
+      "playground": "Plac zabaw",
+      "pool": "Basen",
+      "gym": "Siłownia",
+      "laundry_room": "Pralnia",
+      "storage_room": "Pomieszczenie gospodarcze",
+      "other": "Inne"
+    },
+    "map": {
+      "title": "Lokalizacja",
+      "openInOsm": "Otwórz w OpenStreetMap",
+      "iframeTitle": "Mapa: {{name}}",
+      "iframeTitleFallback": "Mapa lokalizacji budynku"
+    },
+    "unitType": {
+      "apartment": "Mieszkanie",
+      "commercial": "Lokal użytkowy",
+      "parking": "Miejsce postojowe",
+      "storage": "Komórka lokatorska",
+      "other": "Inny"
+    },
+    "occupancy": {
+      "unknown": "Nieznany",
+      "owner_occupied": "Zajmowany przez właściciela",
+      "rented": "Wynajęty",
+      "vacant": "Pusty"
+    },
+    "unitForm": {
+      "addTitle": "Dodaj lokal",
+      "editTitle": "Edytuj lokal",
+      "designation": "Oznaczenie",
+      "designationPlaceholder": "np. „3B” lub „101”",
+      "floor": "Piętro",
+      "entrance": "Klatka",
+      "type": "Typ",
+      "occupancy": "Zajętość",
+      "size": "Powierzchnia (m²)",
+      "rooms": "Pokoje",
+      "share": "Udział (%)",
+      "description": "Opis",
+      "saving": "Zapisywanie…",
+      "errors": {
+        "designationRequired": "Oznaczenie jest wymagane.",
+        "designationTooLong": "Oznaczenie może mieć maksymalnie {{max}} znaków.",
+        "floorInteger": "Piętro musi być liczbą całkowitą.",
+        "shareRequired": "Udział we współwłasności jest wymagany.",
+        "shareRange": "Udział musi mieścić się w przedziale od 0 do 100.",
+        "sizeInvalid": "Powierzchnia nie może być ujemna.",
+        "roomsInvalid": "Liczba pokoi musi być nieujemną liczbą całkowitą."
+      }
+    },
+    "unitsSection": {
+      "showArchived": "Pokaż zarchiwizowane",
+      "loadFailed": "Nie udało się wczytać lokali",
+      "loadFailedBody": "Nie udało się wczytać listy lokali.",
+      "empty": "Ten budynek nie ma jeszcze lokali. Użyj przycisku „Dodaj lokal”, aby dodać pierwszy.",
+      "unit": "Lokal",
+      "status": "Status",
+      "active": "Aktywny",
+      "archived": "Zarchiwizowany",
+      "restore": "Przywróć",
+      "archive": "Archiwizuj",
+      "archiving": "Archiwizowanie…",
+      "archiveTitle": "Archiwizuj lokal",
+      "archiveConfirm": "Zarchiwizować lokal <bold>{{designation}}</bold>? Zniknie z listy aktywnych lokali, ale później można go przywrócić.",
+      "floorGround": "parter",
+      "floorBasement": "-{{level}}"
+    },
+    "myUnit": {
+      "title": "Mój lokal",
+      "subtitle": "Szczegóły lokalu i status zamieszkania.",
+      "loading": "Wczytywanie lokalu…",
+      "loadError": "Nie udało się wczytać lokalu: {{message}}",
+      "unknownError": "Nieznany błąd",
+      "emptyNotRegistered": "Obecnie nie jesteś przypisany jako mieszkaniec żadnego lokalu.",
+      "emptyContactManager": "Jeśli uważasz, że to błąd, skontaktuj się z zarządcą budynku.",
+      "chooseUnit": "Wybierz lokal",
+      "unitHeading": "Lokal {{designation}}",
+      "entrance": "klatka {{entrance}}",
+      "size": "Powierzchnia",
+      "ownershipShare": "Udział we współwłasności",
+      "building": "Budynek",
+      "residency": "Twoje zamieszkanie",
+      "role": "Rola",
+      "primaryContact": "Główna osoba kontaktowa",
+      "active": "Aktywne",
+      "ended": "Zakończone",
+      "since": "Od",
+      "until": "Do",
+      "privacyNote": "Ze względu na ochronę prywatności inni mieszkańcy i właściciele tego lokalu nie są tu wyświetlani.",
+      "residentType": {
+        "owner": "Właściciel",
+        "tenant": "Najemca",
+        "family_member": "Członek rodziny",
+        "subtenant": "Podnajemca"
+      }
+    },
+    "form": {
+      "createTitle": "Nowy budynek",
+      "editTitle": "Edytuj budynek",
+      "name": "Nazwa",
+      "street": "Ulica i numer",
+      "postalCode": "Kod pocztowy",
+      "city": "Miasto",
+      "country": "Kod kraju",
+      "floorCount": "Liczba kondygnacji",
+      "totalEntrances": "Liczba wejść",
+      "yearBuilt": "Rok budowy",
+      "description": "Opis",
+      "saving": "Zapisywanie…",
+      "saveFailed": "Nie udało się zapisać budynku. Sprawdź pola i spróbuj ponownie.",
+      "errors": {
+        "streetRequired": "Ulica jest wymagana.",
+        "cityRequired": "Miasto jest wymagane.",
+        "postalCodeRequired": "Kod pocztowy jest wymagany.",
+        "floorsInvalid": "Liczba kondygnacji musi być liczbą całkowitą, co najmniej 1.",
+        "entrancesInvalid": "Liczba wejść musi być liczbą całkowitą, co najmniej 1.",
+        "yearInvalid": "Podaj prawidłowy rok."
+      }
+    },
+    "residents": {
+      "manage": "Mieszkańcy",
+      "title": "Mieszkańcy lokalu {{unit}}",
+      "empty": "Do tego lokalu nikt nie jest jeszcze przypisany.",
+      "primary": "główny kontakt",
+      "end": "Zakończ zamieszkanie",
+      "addTitle": "Dodaj mieszkańca",
+      "person": "Osoba",
+      "choosePerson": "Wybierz członka…",
+      "typeLabel": "Relacja",
+      "primaryLabel": "Główny kontakt lokalu",
+      "notListed": "Brak osoby na liście? Najpierw dodaj ją do organizacji.",
+      "add": "Dodaj",
+      "adding": "Dodawanie…",
+      "type": {
+        "owner": "Właściciel",
+        "tenant": "Najemca",
+        "family_member": "Członek gospodarstwa",
+        "subtenant": "Podnajemca"
+      },
+      "errors": {
+        "loadFailed": "Nie udało się wczytać mieszkańców.",
+        "addFailed": "Nie udało się dodać mieszkańca.",
+        "duplicate": "Ta osoba jest już mieszkańcem lokalu."
+      }
+    }
   },
   "documents": {
     "title": "Dokumenty",
@@ -699,6 +1259,10 @@
       "count_few": "{{count}} foldery",
       "count_many": "{{count}} folderów",
       "count_other": "{{count}} foldery",
+      "documentCount_one": "{{count}} dokument",
+      "documentCount_few": "{{count}} dokumenty",
+      "documentCount_many": "{{count}} dokumentów",
+      "documentCount_other": "{{count}} dokumenty",
       "newFolder": "Nowy folder",
       "allDocuments": "Wszystkie dokumenty",
       "loadError": "Nie udało się wczytać folderów.",
@@ -736,7 +1300,7 @@
       "remindSent": "Wysłane przypomnienia: {{count}}.",
       "cancel": "Anuluj prośbę",
       "cancelling": "Anulowanie…",
-      "cancelConfirm": "Anulować tę prośbę o podpis? Sygnatariusze nie będą już mogli podpisać.",
+      "cancelConfirm": "Anulować tę prośbę o podpis? Sygnatariusze nie będą mogli już podpisać.",
       "allSigned": "Wszyscy sygnatariusze odpowiedzieli.",
       "status": {
         "pending": "Oczekuje na podpis",
@@ -1020,7 +1584,7 @@
       "dateRange": "Zakres dat",
       "dateTo": "do",
       "hasSummary": "Ma streszczenie AI",
-      "error": "Błąd wyszukiwania dokumentów: {{error}}",
+      "error": "Podczas wyszukiwania dokumentów wystąpił błąd. Spróbuj ponownie.",
       "found_one": "Znaleziono {{count}} dokument w {{ms}} ms",
       "found_few": "Znaleziono {{count}} dokumenty w {{ms}} ms",
       "found_many": "Znaleziono {{count}} dokumentów w {{ms}} ms",
@@ -1085,9 +1649,6 @@
     "selectUnit": "Wybierz lokal dla tego sporu.",
     "multipleRespondents": "Wielu pozwanych",
     "multipleRespondentsMsg": "Tylko pierwszy pozwany zostanie zarejestrowany.",
-    "addEvidence": "Dodaj dowód",
-    "filedWithEvidenceErrors": "Spór zgłoszony (niektóre pliki nie powiodły się)",
-    "evidenceUploadErrorsMsg": "Nie udało się przesłać {{count}} plików dowodowych. Spróbuj ponownie ze strony szczegółów sporu.",
     "mediation": {
       "title": "Przestrzeń mediacyjna",
       "backToDispute": "← Wróć do sporu",
@@ -1228,7 +1789,12 @@
           "resolutionProposed": "Rozwiązanie zaproponowane",
           "resolutionAccepted": "Rozwiązanie zaakceptowane",
           "escalated": "Eskalowany",
-          "closed": "Zamknięty"
+          "closed": "Zamknięty",
+          "partyAdded": "Dodano stronę",
+          "sessionCompleted": "Spotkanie zakończone",
+          "resolutionVoted": "Głosowanie nad rozwiązaniem",
+          "actionCreated": "Utworzono zadanie",
+          "actionCompleted": "Ukończono zadanie"
         }
       },
       "errors": {
@@ -1263,15 +1829,6 @@
     "filePageTitle": "Zgłoś spór",
     "subjectPlaceholder": "Krótkie podsumowanie sporu",
     "descriptionPlaceholder": "Opisz szczegółowo spór. Podaj daty, godziny i konkretne zdarzenia (minimum 30 znaków).",
-    "evidence": {
-      "unsupportedType": "Nieobsługiwany typ pliku: {{type}}",
-      "fileTooLarge": "Plik zbyt duży (maks. {{maxMb}} MB): {{name}}",
-      "dropHint": "Przeciągnij pliki tutaj lub <1>przeglądaj</1>",
-      "formatHint": "JPG, PNG, PDF, MP3, MP4 · maks. {{maxMb}} MB na plik · do {{maxFiles}} plików",
-      "descriptionPlaceholder": "Krótki opis (opcjonalnie)",
-      "descriptionLabel": "Opis dla {{name}}",
-      "removeLabel": "Usuń {{name}}"
-    },
     "categoryCommonArea": "Części wspólne",
     "categoryParking": "Parkowanie",
     "categoryPets": "Zwierzęta domowe",
@@ -1288,8 +1845,8 @@
     "partyCount_few": "{{count}} strony",
     "partyCount_many": "{{count}} stron",
     "partyCount_other": "{{count}} strony",
-    "filedByName": "Zgłaszający: {{name}}",
-    "assignedToName": "Przypisano do: {{name}}",
+    "filedByName": "Zgłoszone przez: {{name}}",
+    "assignedToName": "Przypisane do: {{name}}",
     "filedDaysAgo_one": "{{count}} dzień temu",
     "filedDaysAgo_few": "{{count}} dni temu",
     "filedDaysAgo_many": "{{count}} dni temu",
@@ -1394,16 +1951,16 @@
       "overdueActions_one": "{{count}} zaległe zadanie",
       "overdueActions_few": "{{count}} zaległe zadania",
       "overdueActions_many": "{{count}} zaległych zadań",
-      "overdueActions_other": "{{count}} zaległe zadania",
+      "overdueActions_other": "{{count}} zaległego zadania",
       "pendingActions_one": "{{count}} oczekujące zadanie",
       "pendingActions_few": "{{count}} oczekujące zadania",
       "pendingActions_many": "{{count}} oczekujących zadań",
-      "pendingActions_other": "{{count}} oczekujące zadania",
+      "pendingActions_other": "{{count}} oczekującego zadania",
       "desiredResolution": "Oczekiwane rozwiązanie",
       "evidenceCount": "Dowody ({{count}})",
-      "noEvidence": "Nie przedłożono dowodów.",
-      "uploadedBy": "Przesłane przez: {{name}} – {{date}}",
-      "resolutions": "Rozwiązania",
+      "noEvidence": "Nie przedłożono żadnych dowodów.",
+      "uploadedBy": "Przesłane przez {{name}} – {{date}}",
+      "resolutions": "Propozycje rozwiązania",
       "proposeResolution": "Zaproponuj rozwiązanie",
       "noResolutions": "Nie zaproponowano jeszcze żadnego rozwiązania.",
       "actionItems": "Zadania",
@@ -1411,21 +1968,46 @@
       "noActionItems": "Brak zadań.",
       "building": "Budynek",
       "filedOn": "Data zgłoszenia",
-      "assignedTo": "Przypisano do",
+      "assignedTo": "Przypisane do",
       "parties": "Strony",
-      "proposalPlaceholder": "Opisz proponowane rozwiązanie...",
+      "proposalPlaceholder": "Opisz proponowane rozwiązanie…",
       "propose": "Zaproponuj",
       "createActionItem": "Utwórz zadanie",
       "actionTitle": "Tytuł",
       "assignTo": "Przypisz do",
-      "selectParty": "Wybierz stronę...",
-      "dueDate": "Termin"
+      "selectParty": "Wybierz stronę…",
+      "dueDate": "Termin",
+      "changeStatus": "Zmień status…",
+      "applyStatus": "Zastosuj",
+      "unknownUser": "Nieznany użytkownik",
+      "actionFailed": "Akcja nie powiodła się",
+      "evidenceDeleted": "Dowód usunięty",
+      "resolutionProposed": "Zaproponowano rozwiązanie",
+      "voteRecorded": "Głos zapisany",
+      "resolutionAccepted": "Rozwiązanie przyjęte",
+      "resolutionImplemented": "Rozwiązanie oznaczone jako wdrożone",
+      "actionCreated": "Zadanie utworzone",
+      "actionCompleted": "Zadanie ukończone",
+      "reminderSent": "Przypomnienie wysłane",
+      "actionEscalationReason": "Zadanie nie zostało wykonane zgodnie z ustaleniami",
+      "actionEscalated": "Zadanie eskalowane",
+      "description": "Opis",
+      "evidenceHeading": "Dowody ({{total}})",
+      "viewEvidence": "Zobacz",
+      "deleteEvidence": "Usuń",
+      "details": "Szczegóły",
+      "unit": "Lokal",
+      "createActionTitle": "Utwórz zadanie",
+      "actionDescription": "Opis",
+      "actionAssignee": "Przypisz do",
+      "actionDueDate": "Termin",
+      "create": "Utwórz"
     },
     "timeline": {
       "title": "Historia aktywności",
       "empty": "Brak aktywności.",
       "statusChange": "Status: {{from}} → {{to}}",
-      "showMore": "Pokaż więcej aktywności..."
+      "showMore": "Pokaż więcej aktywności…"
     },
     "resolution": {
       "status": {
@@ -1433,61 +2015,595 @@
         "accepted": "Zaakceptowane",
         "rejected": "Odrzucone",
         "partially_accepted": "Częściowo zaakceptowane",
-        "implemented": "Wdrożone"
+        "implemented": "Wdrożone",
+        "partiallyAccepted": "Częściowo zaakceptowane"
       },
-      "approval": "Akceptacja: {{percent}}%",
-      "proposedBy": "Zaproponowane przez: {{name}}, {{date}}",
+      "approval": "Poparcie: {{rate}}",
+      "proposedBy": "Zaproponowane przez {{name}} dnia {{date}}",
       "proposalTitle": "Propozycja rozwiązania",
       "terms": "Warunki ({{completed}}/{{total}})",
       "assignedTo": "Odpowiedzialny: {{name}}",
       "due": "Termin: {{date}}",
       "completedOn": "Wykonano: {{date}}",
-      "votes": "Głosy",
+      "votes": "Głosowanie",
       "reject": "Odrzuć",
-      "accept": "Zaakceptuj",
+      "accept": "Akceptuj",
       "finalize": "Zatwierdź rozwiązanie",
-      "markImplemented": "Oznacz jako wdrożone"
+      "markImplemented": "Oznacz jako wdrożone",
+      "proposalHeading": "Propozycja rozwiązania",
+      "termAssignedTo": "Odpowiedzialny: {{name}}",
+      "termDue": "Termin: {{date}}",
+      "termCompleted": "Wykonane: {{date}}",
+      "voteAccepted": "Za",
+      "voteRejected": "Przeciw"
     },
     "action": {
       "status": {
         "pending": "Oczekujące",
         "in_progress": "W toku",
-        "completed": "Zakończone",
+        "completed": "Wykonane",
         "overdue": "Zaległe",
-        "escalated": "Eskalowane"
+        "escalated": "Eskalowane",
+        "inProgress": "W toku"
       },
       "overdueBy_one": "Zaległe o {{count}} dzień",
       "overdueBy_few": "Zaległe o {{count}} dni",
       "overdueBy_many": "Zaległe o {{count}} dni",
-      "overdueBy_other": "Zaległe o {{count}} dni",
+      "overdueBy_other": "Zaległe o {{count}} dnia",
       "dueToday": "Termin dzisiaj",
       "dueTomorrow": "Termin jutro",
       "dueInDays_one": "Termin za {{count}} dzień",
       "dueInDays_few": "Termin za {{count}} dni",
       "dueInDays_many": "Termin za {{count}} dni",
-      "dueInDays_other": "Termin za {{count}} dni",
+      "dueInDays_other": "Termin za {{count}} dnia",
       "dueOn": "Termin: {{date}}",
-      "assignedTo": "Odpowiedzialny:",
+      "assignedTo": "Przypisane do:",
       "completedLabel": "Zakończono:",
       "reminderSent": "Przypomnienie wysłane: {{date}}",
       "escalatedOn": "Eskalowano: {{date}}",
       "start": "Rozpocznij",
       "complete": "Zakończ",
       "sendReminder": "Wyślij przypomnienie",
-      "escalate": "Eskaluj"
+      "escalate": "Eskaluj",
+      "completedNotes": "Wykonane:",
+      "reminderSentOn": "Wysłano przypomnienie: {{date}}",
+      "view": "Zobacz"
+    },
+    "partyRole": {
+      "complainant": "Skarżący",
+      "respondent": "Strona przeciwna",
+      "witness": "Świadek",
+      "mediator": "Mediator"
+    },
+    "file": {
+      "intro": "Złóż formalny spór. Wszystkie pola oznaczone <1>*</1> są wymagane.",
+      "typeHeading": "Rodzaj sporu",
+      "locationHeading": "Lokalizacja",
+      "unitLabel": "Lokal",
+      "selectUnit": "Wybierz lokal…",
+      "otherPartyLabel": "Druga strona (opcjonalnie)",
+      "notSpecified": "Nie określono",
+      "detailsHeading": "Szczegóły",
+      "subjectLabel": "Temat",
+      "descriptionLabel": "Opis",
+      "descriptionHint_one": "Min. {{count}} znak",
+      "descriptionHint_few": "Min. {{count}} znaki",
+      "descriptionHint_many": "Min. {{count}} znaków",
+      "descriptionHint_other": "Min. {{count}} znaku",
+      "nextHeading": "Co dalej?",
+      "nextStep1": "Twój spór otrzyma numer referencyjny",
+      "nextStep2": "Druga strona zostanie powiadomiona i może się odnieść",
+      "nextStep3": "Zarządca lub mediator rozpatrzy sprawę",
+      "nextStep4": "W razie potrzeby zostaną zaplanowane sesje mediacyjne",
+      "nextStep5": "Zostanie zaproponowane rozwiązanie, którego realizacja będzie monitorowana",
+      "filing": "Zgłaszanie…",
+      "submit": "Złóż spór",
+      "types": {
+        "noise": "Hałas",
+        "noiseDesc": "Nadmierny hałas, zakłócanie spokoju, naruszanie ciszy nocnej",
+        "damage": "Szkoda majątkowa",
+        "damageDesc": "Fizyczne uszkodzenie mienia, wyposażenia lub części wspólnych",
+        "payment": "Płatności / opłaty",
+        "paymentDesc": "Sporne należności, nieopłacone opłaty, spory o rozliczenia",
+        "lease": "Warunki najmu",
+        "leaseDesc": "Naruszenia lub spory dotyczące warunków najmu",
+        "maintenance": "Konserwacja",
+        "maintenanceDesc": "Nierozwiązane problemy z konserwacją, zaniedbane naprawy",
+        "other": "Inne",
+        "otherDesc": "Każdy inny spór, który nie mieści się w powyższych kategoriach"
+      },
+      "errors": {
+        "typeRequired": "Wybierz rodzaj sporu.",
+        "subjectMin": "Temat musi mieć co najmniej 5 znaków.",
+        "subjectMax": "Temat może mieć maksymalnie 200 znaków.",
+        "descriptionMin": "Opis musi mieć co najmniej 30 znaków.",
+        "descriptionMax": "Opis może mieć maksymalnie 5000 znaków.",
+        "unitRequired": "Wybierz lokal."
+      }
     }
   },
   "financial": {
     "title": "Finanse",
-    "invoices": "Faktury",
-    "payments": "Płatności",
-    "budget": "Budżet",
     "amount": "Kwota",
     "dueDate": "Termin płatności",
     "paidDate": "Data płatności",
     "statusPaid": "Zapłacone",
     "statusPending": "Oczekujące",
-    "statusOverdue": "Zaległe"
+    "statusOverdue": "Zaległe",
+    "invoices": {
+      "title": "Zarządzanie fakturami",
+      "subtitle": "Twórz, wysyłaj i śledź faktury",
+      "createNew": "Utwórz fakturę",
+      "searchPlaceholder": "Szukaj faktur…",
+      "allStatuses": "Wszystkie statusy",
+      "empty": "Nie znaleziono faktur",
+      "columns": {
+        "number": "Nr faktury",
+        "issueDate": "Data wystawienia",
+        "dueDate": "Termin płatności",
+        "status": "Status",
+        "total": "Razem",
+        "balanceDue": "Do zapłaty"
+      },
+      "send": "Wyślij",
+      "pdf": "PDF",
+      "pdfDownloading": "PDF…",
+      "viewAria": "Pokaż szczegóły faktury {{number}}",
+      "pagination": "Wyświetlono {{from}}–{{to}} z {{total}} faktur",
+      "sent": "Faktura została wysłana",
+      "sendFailed": "Nie udało się wysłać faktury",
+      "pdfFailed": "Nie udało się pobrać pliku PDF"
+    },
+    "payments": {
+      "title": "Zarządzanie płatnościami",
+      "subtitle": "Rejestruj i uzgadniaj płatności",
+      "recordPayment": "Zarejestruj płatność",
+      "totalReceived": "Otrzymano łącznie",
+      "pendingReconciliation": "Oczekuje na uzgodnienie",
+      "pendingReconciliationTitle": "Oczekuje na uzgodnienie",
+      "recentPayments": "Ostatnie płatności",
+      "matchFailed": "Nie udało się przypisać płatności",
+      "autoMatchFailed": "Nie udało się automatycznie uzgodnić płatności"
+    },
+    "budgets": {
+      "title": "Zarządzanie budżetami",
+      "subtitle": "Planuj i monitoruj budżety",
+      "createNew": "Utwórz budżet",
+      "budgetsList": "Budżety",
+      "noBudgets": "Nie znaleziono budżetów",
+      "createFirst": "Utwórz pierwszy budżet"
+    },
+    "startDate": "Data od",
+    "endDate": "Data do",
+    "view": "Wyświetl",
+    "invoiceStatus": {
+      "draft": "Szkic",
+      "sent": "Wysłana",
+      "paid": "Opłacona",
+      "partial": "Częściowo opłacona",
+      "overdue": "Po terminie",
+      "cancelled": "Anulowana",
+      "void": "Unieważniona"
+    },
+    "paymentMethod": {
+      "bank_transfer": "Przelew bankowy",
+      "card": "Karta płatnicza",
+      "cash": "Gotówka",
+      "check": "Czek",
+      "online": "Płatność online",
+      "direct_debit": "Polecenie zapłaty",
+      "other": "Inna"
+    },
+    "paymentStatus": {
+      "pending": "Oczekująca",
+      "completed": "Zrealizowana",
+      "failed": "Nieudana",
+      "refunded": "Zwrócona",
+      "cancelled": "Anulowana"
+    },
+    "budgetStatus": {
+      "draft": "Szkic",
+      "approved": "Zatwierdzony",
+      "active": "Aktywny",
+      "closed": "Zamknięty"
+    },
+    "buildingFilter": {
+      "label": "Budynek:",
+      "allBuildings": "Wszystkie budynki"
+    },
+    "dateRange": {
+      "today": "Dziś",
+      "week": "Ten tydzień",
+      "month": "Ten miesiąc",
+      "quarter": "Ten kwartał",
+      "year": "Ten rok",
+      "clear": "Wyczyść",
+      "from": "Od:",
+      "to": "Do:"
+    },
+    "dashboard": {
+      "title": "Pulpit finansowy",
+      "totalBalance": "Saldo łączne",
+      "totalBalanceSubtitle": "Na wszystkich kontach",
+      "outstanding": "Należności",
+      "outstandingSubtitle": "Oczekujące płatności",
+      "overdueSubtitle_one": "{{count}} faktura po terminie",
+      "overdueSubtitle_few": "{{count}} faktury po terminie",
+      "overdueSubtitle_many": "{{count}} faktur po terminie",
+      "overdueSubtitle_other": "{{count}} faktury po terminie",
+      "quickNav": {
+        "label": "Sekcje finansów",
+        "invoices": "Faktury",
+        "invoicesDesc": "Twórz, wysyłaj i śledź faktury",
+        "payments": "Płatności",
+        "paymentsDesc": "Rejestruj i uzgadniaj płatności",
+        "budgets": "Budżety",
+        "budgetsDesc": "Planuj i monitoruj budżety",
+        "reports": "Raporty",
+        "reportsDesc": "Rachunek zysków i strat, bilans i przepływy pieniężne"
+      }
+    },
+    "invoiceChart": {
+      "title": "Status faktur",
+      "empty": "Brak faktur"
+    },
+    "recentPayments": {
+      "empty": "Brak ostatnich płatności",
+      "viewAll": "Pokaż wszystkie",
+      "reference": "Ref.: {{reference}}"
+    },
+    "overdueInvoices": {
+      "title": "Faktury po terminie",
+      "empty": "Brak faktur po terminie",
+      "daysOverdue_one": "{{count}} dzień po terminie",
+      "daysOverdue_few": "{{count}} dni po terminie",
+      "daysOverdue_many": "{{count}} dni po terminie",
+      "daysOverdue_other": "{{count}} dnia po terminie",
+      "dueAndBalance": "Termin: {{date}} • Do zapłaty: {{amount}}",
+      "sendReminder": "Wyślij przypomnienie"
+    },
+    "arAging": {
+      "title": "Struktura wiekowa należności",
+      "empty": "Brak nierozliczonych należności",
+      "unit": "Lokal",
+      "current": "Bieżące",
+      "days1to30": "1–30 dni",
+      "days31to60": "31–60 dni",
+      "days60plus": "Powyżej 60 dni",
+      "total": "Razem",
+      "viewUnit": "Pokaż szczegóły lokalu {{unit}}"
+    },
+    "invoiceDetail": {
+      "title": "Faktura {{number}}",
+      "billingPeriod": "Okres rozliczeniowy",
+      "lineItems": "Pozycje",
+      "description": "Opis",
+      "quantity": "Ilość",
+      "unitPrice": "Cena jednostkowa",
+      "tax": "VAT",
+      "sending": "Wysyłanie...",
+      "send": "Wyślij fakturę",
+      "downloadPdf": "Pobierz PDF",
+      "paymentHistory": "Historia płatności",
+      "issueDate": "Data wystawienia",
+      "dueDate": "Termin płatności",
+      "amount": "Kwota",
+      "subtotal": "Suma częściowa",
+      "total": "Razem",
+      "paid": "Zapłacono",
+      "balanceDue": "Pozostało do zapłaty",
+      "notes": "Uwagi",
+      "recordPayment": "Zarejestruj płatność",
+      "loadFailed": "Nie udało się wczytać tej faktury."
+    },
+    "totals": {
+      "subtotal": "Suma częściowa:",
+      "tax": "VAT:",
+      "total": "Razem:",
+      "paid": "Zapłacono:",
+      "balanceDue": "Do zapłaty:"
+    },
+    "form": {
+      "unit": "Lokal",
+      "selectUnit": "Wybierz lokal",
+      "unitRequired": "Lokal jest wymagany",
+      "currency": "Waluta",
+      "notes": "Uwagi",
+      "notesPlaceholder": "Opcjonalne uwagi",
+      "removeRow": "Usuń",
+      "saving": "Zapisywanie…"
+    },
+    "invoiceForm": {
+      "billingPeriodStart": "Początek okresu rozliczeniowego",
+      "billingPeriodEnd": "Koniec okresu rozliczeniowego",
+      "dueDateRequired": "Termin płatności jest wymagany",
+      "itemsRequired": "Wymagana jest co najmniej jedna pozycja",
+      "addItem": "Dodaj pozycję",
+      "taxRatePlaceholder": "VAT %",
+      "notesPlaceholder": "Opcjonalne uwagi umieszczone na fakturze",
+      "submitting": "Tworzenie...",
+      "unit": "Lokal",
+      "selectUnit": "Wybierz lokal",
+      "unitRequired": "Lokal jest wymagany",
+      "dueDate": "Termin płatności",
+      "currency": "Waluta",
+      "lineItems": "Pozycje",
+      "description": "Opis",
+      "quantity": "Ilość",
+      "unitPrice": "Cena jednostkowa",
+      "taxRate": "VAT %",
+      "removeItem": "Usuń pozycję",
+      "subtotal": "Suma częściowa",
+      "tax": "VAT",
+      "total": "Razem",
+      "notes": "Uwagi",
+      "submit": "Utwórz fakturę"
+    },
+    "paymentForm": {
+      "allocateToInvoices": "Przypisz do faktur",
+      "autoFillAmount": "Uzupełnij kwotę ({{amount}})",
+      "due": "Termin: {{date}}",
+      "amountRequired": "Wymagana jest prawidłowa kwota",
+      "paymentMethod": "Metoda płatności",
+      "selectPaymentMethod": "Wybierz metodę płatności",
+      "paymentMethodRequired": "Metoda płatności jest wymagana",
+      "reference": "Numer referencyjny",
+      "referencePlaceholder": "Tytuł przelewu, numer czeku itp.",
+      "paymentDate": "Data płatności",
+      "submitting": "Rejestrowanie...",
+      "unit": "Lokal",
+      "selectUnit": "Wybierz lokal",
+      "unitRequired": "Lokal jest wymagany",
+      "amount": "Kwota",
+      "currency": "Waluta",
+      "notes": "Uwagi",
+      "notesPlaceholder": "Opcjonalne uwagi",
+      "submit": "Zarejestruj płatność"
+    },
+    "reconciliation": {
+      "title": "Uzgadnianie płatności",
+      "allReconciled": "Wszystko uzgodnione",
+      "allReconciledBody": "Brak nieprzypisanych płatności i nieopłaconych faktur",
+      "autoMatchAll": "Uzgodnij wszystko automatycznie",
+      "unallocatedPayments": "Nieprzypisane płatności ({{count}})",
+      "noUnallocated": "Brak nieprzypisanych płatności",
+      "unpaidInvoices": "Nieopłacone faktury ({{count}})",
+      "noUnpaid": "Brak nieopłaconych faktur",
+      "due": "Termin: {{date}}",
+      "payment": "Płatność:",
+      "amount": "Kwota:",
+      "invoice": "Faktura:",
+      "amountDue": "(do zapłaty {{amount}})",
+      "match": "Uzgodnij"
+    },
+    "budget": {
+      "overBudget": "Przekroczony budżet",
+      "percentUsed": "Wykorzystano {{percent}}%",
+      "budgetAmount": "Budżet {{amount}}",
+      "budget": "Budżet",
+      "actual": "Wykonanie",
+      "variance": "Odchylenie",
+      "noBudgetForYear": "Brak budżetu na rok {{year}}",
+      "overviewTitle": "Przegląd budżetu – {{year}}",
+      "percentOfBudgetUsed": "Wykorzystano {{percent}}% budżetu",
+      "editBudget": "Edytuj budżet",
+      "totalBudget": "Budżet łączny",
+      "totalSpent": "Wydatki łącznie",
+      "totalActual": "Wykonanie łącznie",
+      "remaining": "Pozostało",
+      "alertTitle": "Alert budżetowy",
+      "categoryCount_one": "{{count}} kategoria",
+      "categoryCount_few": "{{count}} kategorie",
+      "categoryCount_many": "{{count}} kategorii",
+      "categoryCount_other": "{{count}} kategorii",
+      "alertBody_one": "Kategoria {{categories}} przekroczyła budżet.",
+      "alertBody_few": "Kategorie {{categories}} przekroczyły budżet.",
+      "alertBody_many": "Kategorie {{categories}} przekroczyły budżet.",
+      "alertBody_other": "Kategorie {{categories}} przekroczyły budżet."
+    },
+    "budgetForm": {
+      "year": "Rok budżetowy",
+      "categories": "Kategorie budżetu",
+      "addCategory": "Dodaj kategorię",
+      "categoryNamePlaceholder": "Nazwa kategorii",
+      "categoriesRequired": "Wymagana jest co najmniej jedna kategoria z kwotą",
+      "save": "Zapisz budżet",
+      "defaultCategories": {
+        "maintenance": "Konserwacja",
+        "utilities": "Media",
+        "insurance": "Ubezpieczenie",
+        "managementFees": "Opłaty za zarządzanie",
+        "repairs": "Naprawy",
+        "cleaning": "Sprzątanie",
+        "security": "Ochrona",
+        "landscaping": "Pielęgnacja zieleni",
+        "reserveFund": "Fundusz remontowy",
+        "other": "Inne"
+      }
+    },
+    "reports": {
+      "title": "Raporty finansowe",
+      "subtitle": "Rachunek zysków i strat, bilans i rachunek przepływów pieniężnych.",
+      "tabs": {
+        "incomeStatement": "Rachunek zysków i strat",
+        "balanceSheet": "Bilans",
+        "cashFlow": "Przepływy pieniężne"
+      },
+      "from": "Od",
+      "to": "Do",
+      "asOf": "Na dzień",
+      "export": "Eksport:",
+      "exporting": "Eksportowanie…",
+      "exportFailed": "Eksport nie powiódł się",
+      "noEntries": "Brak pozycji",
+      "balance": "Saldo",
+      "asOfDate": "Na dzień {{date}}",
+      "balanceSheetEmpty": "Wybierz datum, na które ma zostać wyświetlony bilans.",
+      "incomeStatementEmpty": "Wybierz zakres dat, aby wyświetlić rachunek zysków i strat.",
+      "cashFlowEmpty": "Wybierz zakres dat, aby wyświetlić rachunek przepływów pieniężnych.",
+      "noAccounts": "Brak kont",
+      "totalAssets": "Aktywa razem",
+      "totalLiabilities": "Zobowiązania razem",
+      "netEquity": "Kapitał własny",
+      "incomeStatement": {
+        "revenue": "Przychody",
+        "totalRevenue": "Przychody razem",
+        "expenses": "Koszty",
+        "totalExpenses": "Koszty razem",
+        "netIncome": "Wynik netto"
+      },
+      "cashFlow": {
+        "inflows": "Wpływy",
+        "totalInflows": "Wpływy razem",
+        "outflows": "Wydatki",
+        "totalOutflows": "Wydatki razem",
+        "netCashFlow": "Przepływy pieniężne netto"
+      },
+      "accountType": {
+        "operating": "Rachunek operacyjny",
+        "reserve": "Fundusz remontowy",
+        "utilities": "Media",
+        "unit_ledger": "Konta lokali",
+        "custom": "Niestandardowe"
+      }
+    },
+    "paymentMethods": {
+      "bank_transfer": "Przelew bankowy",
+      "card": "Karta",
+      "cash": "Gotówka",
+      "check": "Czek",
+      "online": "Płatność online",
+      "direct_debit": "Polecenie zapłaty",
+      "other": "Inne"
+    },
+    "invoiceStatuses": {
+      "draft": "Szkic",
+      "sent": "Wysłana",
+      "paid": "Opłacona",
+      "partial": "Częściowo opłacona",
+      "overdue": "Przeterminowana",
+      "cancelled": "Anulowana",
+      "void": "Unieważniona"
+    },
+    "pages": {
+      "newInvoiceTitle": "Nowa faktura",
+      "newInvoiceSubtitle": "Obciąż lokal opłatami i usługami",
+      "newPaymentTitle": "Zarejestruj płatność",
+      "newPaymentSubtitle": "Zarejestruj otrzymaną płatność i przypisz ją do otwartych faktur",
+      "backToInvoices": "Powrót do faktur",
+      "backToPayments": "Powrót do płatności",
+      "invoiceCreated": "Faktura została utworzona",
+      "createInvoiceFailed": "Nie udało się utworzyć faktury",
+      "paymentRecorded": "Płatność została zarejestrowana",
+      "recordPaymentFailed": "Nie udało się zarejestrować płatności",
+      "invoiceSent": "Faktura została wysłana",
+      "sendInvoiceFailed": "Nie udało się wysłać faktury",
+      "pdfFailed": "Nie udało się pobrać PDF",
+      "invoiceNotFound": "Nie znaleziono faktury",
+      "noUnits": "Brak dostępnych lokali. Najpierw dodaj lokale do budynku."
+    },
+    "budgetPages": {
+      "loading": "Ładowanie…",
+      "retry": "Spróbuj ponownie",
+      "cancel": "Anuluj",
+      "saving": "Zapisywanie…",
+      "budgeted": "Zaplanowano",
+      "actual": "Wykonanie",
+      "remaining": "Pozostało",
+      "wholeOrganization": "Cała organizacja",
+      "backToBudgets": "Powrót do budżetów",
+      "newTitle": "Nowy budżet",
+      "newSubtitle": "Utwórz budżet roczny, a następnie dodaj do niego pozycje",
+      "notFound": "Nie znaleziono budżetu",
+      "status": {
+        "draft": "Szkic",
+        "pending_approval": "Oczekuje na zatwierdzenie",
+        "approved": "Zatwierdzony",
+        "active": "Aktywny",
+        "closed": "Zamknięty"
+      },
+      "list": {
+        "title": "Zarządzanie budżetami",
+        "subtitle": "Planuj budżety i porównuj je z rzeczywistymi wydatkami",
+        "createNew": "Utwórz budżet",
+        "createFirst": "Utwórz pierwszy budżet",
+        "budgetsList": "Budżety",
+        "noBudgets": "Brak budżetów na rok {{year}}",
+        "loadFailed": "Nie udało się wczytać budżetów",
+        "totalBudget": "Zaplanowano łącznie",
+        "totalActual": "Wykonanie łącznie",
+        "remaining": "Pozostało",
+        "yearFilter": "Rok budżetowy"
+      },
+      "form": {
+        "name": "Nazwa budżetu",
+        "namePlaceholder": "np. Budżet operacyjny 2027",
+        "nameRequired": "Podaj nazwę budżetu",
+        "fiscalYear": "Rok budżetowy",
+        "building": "Budynek",
+        "wholeOrganization": "Cała organizacja (wszystkie budynki)",
+        "notes": "Uwagi",
+        "itemsHint": "Po zapisaniu możesz dodać pozycje budżetu według kategorii.",
+        "submit": "Utwórz budżet"
+      },
+      "detail": {
+        "fiscalYear": "Rok budżetowy {{year}}",
+        "approvedOn": "Zatwierdzono {{date}}",
+        "itemsOverBudget": "Pozycje ponad budżet"
+      },
+      "items": {
+        "title": "Pozycje budżetu",
+        "empty": "Ten budżet nie ma pozycji.",
+        "emptyDraft": "Brak pozycji. Dodaj pierwszą pozycję poniżej.",
+        "addTitle": "Dodaj pozycję",
+        "add": "Dodaj pozycję",
+        "category": "Kategoria",
+        "newCategory": "+ Nowa kategoria",
+        "newCategoryName": "Nazwa nowej kategorii",
+        "noCategories": "Brak kategorii — podaj nazwę nowej.",
+        "name": "Pozycja",
+        "amount": "Zaplanowana kwota",
+        "description": "Opis",
+        "actions": "Akcje",
+        "remove": "Usuń",
+        "removeNamed": "Usuń {{name}}",
+        "categoryRequired": "Podaj nazwę kategorii",
+        "nameRequired": "Podaj nazwę pozycji",
+        "amountInvalid": "Podaj prawidłową kwotę"
+      },
+      "actuals": {
+        "record": "Zapisz wydatek",
+        "recordNamed": "Zapisz rzeczywisty wydatek dla {{name}}",
+        "title": "Zapisz rzeczywisty wydatek dla {{item}}",
+        "amount": "Wydana kwota",
+        "date": "Data",
+        "save": "Zapisz",
+        "dateRequired": "Podaj datę"
+      },
+      "actions": {
+        "submit": "Wyślij do zatwierdzenia",
+        "approve": "Zatwierdź",
+        "activate": "Aktywuj",
+        "close": "Zamknij budżet",
+        "delete": "Usuń",
+        "confirmDelete": "Potwierdź usunięcie"
+      },
+      "toast": {
+        "created": "Budżet został utworzony",
+        "createFailed": "Nie udało się utworzyć budżetu",
+        "submitDone": "Budżet wysłano do zatwierdzenia",
+        "approveDone": "Budżet został zatwierdzony",
+        "activateDone": "Budżet został aktywowany",
+        "closeDone": "Budżet został zamknięty",
+        "deleteDone": "Budżet został usunięty",
+        "actionFailed": "Operacja nie powiodła się",
+        "itemAdded": "Pozycja została dodana",
+        "itemAddFailed": "Nie udało się dodać pozycji",
+        "itemRemoveFailed": "Nie udało się usunąć pozycji",
+        "actualRecorded": "Wydatek został zapisany",
+        "actualFailed": "Nie udało się zapisać wydatku"
+      }
+    }
   },
   "announcements": {
     "form": {
@@ -1690,6 +2806,110 @@
       "failedToCreate": "Nie udało się utworzyć kontaktu alarmowego",
       "failedToUpdate": "Nie udało się zaktualizować kontaktu alarmowego",
       "failedToDelete": "Nie udało się usunąć kontaktu alarmowego"
+    },
+    "contactTypes": {
+      "fire_department": "Straż pożarna",
+      "police": "Policja",
+      "ambulance": "Pogotowie ratunkowe",
+      "utility_company": "Dostawca mediów",
+      "building_manager": "Zarządca budynku",
+      "security": "Ochrona",
+      "maintenance": "Konserwacja",
+      "medical": "Pomoc medyczna",
+      "other": "Inne"
+    },
+    "card": {
+      "inactive": "Nieaktywny",
+      "role": "Funkcja:",
+      "phone": "Telefon:",
+      "phoneSecondary": "Dodatkowy telefon:",
+      "email": "E-mail:",
+      "address": "Adres:",
+      "availableHours": "Godziny dostępności:",
+      "notes": "Uwagi:",
+      "priority": "Priorytet:",
+      "editAria": "Edytuj: {{name}}",
+      "deleteAria": "Usuń: {{name}}"
+    },
+    "list": {
+      "empty": "Nie znaleziono kontaktów alarmowych.",
+      "emptyHint": "Zacznij od dodania pierwszego kontaktu alarmowego."
+    }
+  },
+  "news": {
+    "listTitle": "Aktualności i ogłoszenia",
+    "searchPlaceholder": "Szukaj artykułów...",
+    "filters": {
+      "allStatuses": "Wszystkie statusy",
+      "drafts": "Wersje robocze",
+      "pinnedOnly": "Tylko przypięte"
+    },
+    "loadingArticles": "Ładowanie artykułów...",
+    "loadingArticle": "Ładowanie artykułu...",
+    "emptyFiltered": "Żaden artykuł nie pasuje do filtrów.",
+    "empty": "Nie ma jeszcze artykułów. Utwórz pierwszy artykuł!",
+    "confirmDelete": "Usunąć ten artykuł? Tej operacji nie można cofnąć.",
+    "backToNews": "Powrót do aktualności",
+    "pinned": "Przypięte",
+    "views": "Wyświetlenia",
+    "viewCount_one": "{{count}} wyświetlenie",
+    "viewCount_few": "{{count}} wyświetlenia",
+    "viewCount_many": "{{count}} wyświetleń",
+    "viewCount_other": "{{count}} wyświetleń",
+    "coverAlt": "Okładka: {{title}}",
+    "statusAria": "Status: {{status}}",
+    "publishedOn": "Opublikowano: {{date}}",
+    "actions": {
+      "viewAria": "Wyświetl artykuł: {{title}}",
+      "editAria": "Edytuj artykuł: {{title}}",
+      "publishAria": "Opublikuj artykuł: {{title}}",
+      "archiveAria": "Archiwizuj artykuł: {{title}}",
+      "deleteAria": "Usuń artykuł: {{title}}",
+      "publish": "Opublikuj",
+      "archive": "Archiwizuj",
+      "pin": "Przypnij",
+      "unpin": "Odepnij",
+      "pinAria": "Przypnij artykuł",
+      "unpinAria": "Odepnij artykuł"
+    },
+    "reactions": {
+      "like": "Lubię to",
+      "love": "Kocham",
+      "surprised": "Zaskoczenie",
+      "sad": "Smutek",
+      "angry": "Złość",
+      "aria": "Reakcja: {{reaction}}",
+      "ariaActive": "Reakcja: {{reaction}} (aktywna)",
+      "total_one": "{{count}} reakcja",
+      "total_few": "{{count}} reakcje",
+      "total_many": "{{count}} reakcji",
+      "total_other": "{{count}} reakcji"
+    },
+    "comments": {
+      "title": "Komentarze ({{count}})",
+      "placeholder": "Napisz komentarz...",
+      "replyPlaceholder": "Napisz odpowiedź...",
+      "charCount": "{{length}}/{{max}} znaków",
+      "post": "Dodaj komentarz",
+      "posting": "Wysyłanie...",
+      "reply": "Odpowiedz",
+      "deleted": "[Ten komentarz został usunięty]",
+      "empty": "Brak komentarzy. Dodaj pierwszy komentarz!",
+      "replyCount_one": "{{count}} odpowiedź",
+      "replyCount_few": "{{count}} odpowiedzi",
+      "replyCount_many": "{{count}} odpowiedzi",
+      "replyCount_other": "{{count}} odpowiedzi"
+    },
+    "errors": {
+      "loadListFailed": "Nie udało się załadować artykułów",
+      "deleteFailed": "Nie udało się usunąć artykułu",
+      "publishFailed": "Nie udało się opublikować artykułu",
+      "archiveFailed": "Nie udało się zarchiwizować artykułu",
+      "pinFailed": "Nie udało się zmienić przypięcia",
+      "reactionFailed": "Nie udało się zapisać reakcji",
+      "commentPostFailed": "Nie udało się dodać komentarza",
+      "commentUpdateFailed": "Nie udało się zaktualizować komentarza",
+      "commentDeleteFailed": "Nie udało się usunąć komentarza"
     }
   },
   "errors": {
@@ -1797,8 +3017,33 @@
       },
       "rateLimitRetry": "Poczekaj {{seconds}} sekund przed ponowną próbą."
     },
+    "pages": {
+      "goBack": "Wróć",
+      "tryAgain": "Spróbuj ponownie",
+      "backToDashboard": "Powrót do pulpitu",
+      "notFound": {
+        "title": "Nie znaleziono strony",
+        "description": "Strona, której szukasz, nie istnieje lub została przeniesiona."
+      },
+      "forbidden": {
+        "title": "Odmowa dostępu",
+        "description": "Nie masz uprawnień do wyświetlenia tej strony. Jeśli uważasz, że to błąd, skontaktuj się z zarządcą."
+      },
+      "serverError": {
+        "description": "Wystąpił nieoczekiwany błąd. Spróbuj ponownie za chwilę."
+      },
+      "sessionExpired": {
+        "title": "Twoja sesja wygasła",
+        "description": "Zaloguj się ponownie, aby kontynuować. Wrócisz do miejsca, w którym przerwano.",
+        "signIn": "Zaloguj się"
+      },
+      "inlineError": {
+        "description": "Spróbuj ponownie. Jeśli problem będzie się powtarzał, skontaktuj się z pomocą techniczną."
+      }
+    },
     "accessDenied": "Brak dostępu",
-    "backToDashboard": "Powrót do pulpitu"
+    "backToDashboard": "Powrót do pulpitu",
+    "neighborNotFound": "Nie znaleziono sąsiada."
   },
   "notifications": {
     "title": "Powiadomienia",
@@ -1811,7 +3056,18 @@
     "highContrast": "Wysoki kontrast",
     "fontSize": "Rozmiar czcionki",
     "reducedMotion": "Zmniejszony ruch",
-    "screenReader": "Zoptymalizowane dla czytników ekranu"
+    "screenReader": "Zoptymalizowane dla czytników ekranu",
+    "checkingAuthentication": "Sprawdzanie uwierzytelnienia"
+  },
+  "outages": {
+    "failedToStart": "Nie udało się rozpocząć przerwy",
+    "failedToResolve": "Nie udało się oznaczyć przerwy jako zakończonej",
+    "failedToCancel": "Nie udało się anulować przerwy",
+    "severity": {
+      "informational": "Informacyjna",
+      "minor": "Niska",
+      "major": "Wysoka"
+    }
   },
   "dashboard": {
     "managerActionQueue": "Kolejka zadań",
@@ -1879,9 +3135,11 @@
     "completeIn60Seconds": "Większość zadań można wykonać w mniej niż 60 sekund",
     "recentActivity": "Ostatnia aktywność",
     "activity": {
-      "meterReadingSubmitted": "Odczyt licznika wysłany",
-      "voteSubmitted": "Głos oddany",
-      "faultReported": "Usterka zgłoszona"
+      "announcementPublished": "Nowe ogłoszenie: {{title}}",
+      "faultReportedByYou": "Zgłoszono usterkę: {{title}}",
+      "loading": "Wczytywanie aktywności…",
+      "loadFailed": "Nie udało się wczytać aktywności.",
+      "empty": "Brak aktywności. Pojawią się tu nowe ogłoszenia i zgłoszone przez Ciebie usterki."
     },
     "stats": {
       "pendingFaults": "Oczekujące usterki",
@@ -1899,7 +3157,9 @@
       "closeFilters": "Zamknij filtry",
       "showHelp": "Pokaż tę pomoc",
       "hint": "Skup się na liście zadań, aby używać tych skrótów"
-    }
+    },
+    "refresh": "Odśwież",
+    "viewMyUnit": "Zobacz mój lokal"
   },
   "admin": {
     "common": {
@@ -2185,6 +3445,28 @@
       "statusPending": "Oczekujące",
       "statusCancelled": "Anulowane",
       "statusSkipped": "Pominięte"
+    },
+    "page": {
+      "title": "Raporty i analizy",
+      "tabs": {
+        "dashboard": "Pulpit",
+        "reports": "Raporty",
+        "schedules": "Harmonogramy"
+      },
+      "newReport": "+ Nowy raport",
+      "newSchedule": "+ Nowy harmonogram",
+      "keyMetrics": "Kluczowe wskaźniki",
+      "trends": "Trendy",
+      "revenueTrend": "Trend przychodów",
+      "analytics": "Analizy",
+      "monthlyPerformance": "Wyniki miesięczne",
+      "buildingPerformance": "Wyniki budynków",
+      "savedReports": "Zapisane raporty",
+      "noReports": "Nie utworzono jeszcze żadnych raportów",
+      "createFirstReport": "Utwórz pierwszy raport",
+      "createdOn": "Utworzono {{date}}",
+      "public": "Publiczny",
+      "createSchedule": "Utwórz harmonogram"
     }
   },
   "settings": {
@@ -2195,7 +3477,192 @@
       "updateError": "Nie udało się zaktualizować preferencji. Spróbuj ponownie.",
       "disableError": "Nie udało się wyłączyć powiadomień. Spróbuj ponownie.",
       "dismiss": "Zamknij",
-      "lastUpdated": "Ostatnia aktualizacja: {{when}}"
+      "lastUpdated": "Ostatnia aktualizacja: {{when}}",
+      "disableAll": {
+        "title": "Wyłączyć wszystkie powiadomienia?",
+        "intro": "Zamierzasz wyłączyć wszystkie kanały powiadomień. Nie będziesz otrzymywać powiadomień o:",
+        "itemAnnouncements": "ważnych ogłoszeniach od zarządcy",
+        "itemFaults": "postępach w zgłoszonych usterkach i konserwacji",
+        "itemVoting": "terminach i wynikach głosowań",
+        "itemMessages": "wiadomościach od sąsiadów",
+        "warning": "Możesz przegapić ważne informacje o swojej nieruchomości.",
+        "confirm": "Wyłącz wszystkie powiadomienia",
+        "keep": "Zachowaj powiadomienia"
+      },
+      "toggleChannel": "Przełącz: {{channel}}",
+      "channels": {
+        "push": {
+          "label": "Powiadomienia push",
+          "description": "Otrzymuj powiadomienia na urządzeniu mobilnym"
+        },
+        "email": {
+          "label": "Powiadomienia e-mail",
+          "description": "Otrzymuj powiadomienia e-mailem"
+        },
+        "in_app": {
+          "label": "Powiadomienia w aplikacji",
+          "description": "Wyświetlaj powiadomienia w aplikacji"
+        }
+      },
+      "advanced": {
+        "title": "Zaawansowane ustawienia powiadomień",
+        "subtitle": "Dostosuj, jak i kiedy otrzymujesz powiadomienia.",
+        "perEventTriggers": "Wyzwalacze dla poszczególnych zdarzeń",
+        "categoriesIntro": "Wybierz, jakie rodzaje powiadomień chcesz otrzymywać i w jaki sposób.",
+        "tabs": {
+          "categories": "Kategorie",
+          "schedule": "Harmonogram",
+          "grouping": "Grupowanie"
+        },
+        "errors": {
+          "load": "Nie udało się załadować ustawień powiadomień. Spróbuj ponownie później.",
+          "category": "Nie udało się zapisać ustawienia kategorii. Spróbuj ponownie.",
+          "quietHours": "Nie udało się zapisać godzin ciszy. Spróbuj ponownie.",
+          "digest": "Nie udało się zapisać ustawień podsumowania. Spróbuj ponownie.",
+          "grouping": "Nie udało się zapisać ustawień grupowania. Spróbuj ponownie."
+        },
+        "off": "Wyłączone",
+        "allOn": "Wszystkie włączone",
+        "channelShort": {
+          "push": "Push",
+          "email": "E-mail",
+          "in_app": "W aplikacji"
+        },
+        "channelAria": "{{channel}} – powiadomienia: {{category}}",
+        "enableChannelTitle": "Włącz {{channel}} dla: {{category}}",
+        "disableChannelTitle": "Wyłącz {{channel}} dla: {{category}}",
+        "categories": {
+          "faults": {
+            "label": "Zgłoszenia usterek",
+            "description": "Informacje o zgłoszeniach usterek, naprawach i ich usunięciu"
+          },
+          "voting": {
+            "label": "Głosowania i decyzje",
+            "description": "Nowe głosowania, wyniki i przypomnienia"
+          },
+          "announcements": {
+            "label": "Ogłoszenia",
+            "description": "Ogłoszenia i aktualności budynku"
+          },
+          "documents": {
+            "label": "Dokumenty",
+            "description": "Nowe dokumenty, podpisy i zmiany"
+          },
+          "messages": {
+            "label": "Wiadomości",
+            "description": "Wiadomości od sąsiadów i zarządców"
+          },
+          "community": {
+            "label": "Społeczność",
+            "description": "Posty, wydarzenia i aktywność na tablicy ogłoszeń"
+          },
+          "financial": {
+            "label": "Finanse",
+            "description": "Przypomnienia o płatnościach, faktury i informacje finansowe"
+          },
+          "maintenance": {
+            "label": "Konserwacja",
+            "description": "Planowana konserwacja i zlecenia prac"
+          },
+          "system": {
+            "label": "Aktualizacje systemu",
+            "description": "Aktualizacje aplikacji, alerty bezpieczeństwa i powiadomienia systemowe"
+          }
+        },
+        "days": {
+          "monday": "poniedziałek",
+          "tuesday": "wtorek",
+          "wednesday": "środa",
+          "thursday": "czwartek",
+          "friday": "piątek",
+          "saturday": "sobota",
+          "sunday": "niedziela"
+        },
+        "daysShort": {
+          "monday": "Pn",
+          "tuesday": "Wt",
+          "wednesday": "Śr",
+          "thursday": "Cz",
+          "friday": "Pt",
+          "saturday": "So",
+          "sunday": "Nd"
+        },
+        "digest": {
+          "title": "Podsumowanie powiadomień",
+          "subtitle": "Otrzymuj podsumowania zamiast pojedynczych alertów",
+          "frequency": "Częstotliwość",
+          "deliveryTime": "Godzina wysyłki",
+          "deliveryDay": "Dzień wysyłki",
+          "nextDelivery": "Następna wysyłka",
+          "nextDisabled": "Podsumowania są wyłączone",
+          "nextHourly": "Co godzinę o pełnej godzinie",
+          "nextDaily": "Codziennie o {{time}}",
+          "nextWeekly": "Co tydzień – {{day}} o {{time}}",
+          "include": "Uwzględnij w podsumowaniu",
+          "allCategories": "Uwzględniono wszystkie kategorie (bez filtra)",
+          "categoriesSelected": "Wybrane kategorie: {{selected}} z {{total}}",
+          "frequencies": {
+            "hourly": {
+              "label": "Co godzinę",
+              "description": "Co godzinę otrzymasz podsumowanie wszystkich nowych powiadomień"
+            },
+            "daily": {
+              "label": "Codziennie",
+              "description": "Codzienne podsumowanie o wybranej godzinie"
+            },
+            "weekly": {
+              "label": "Co tydzień",
+              "description": "Cotygodniowe podsumowanie w wybranym dniu"
+            },
+            "disabled": {
+              "label": "Wyłączone",
+              "description": "Otrzymuj powiadomienia od razu zamiast w podsumowaniach"
+            }
+          },
+          "allCategoriesNote": "Podsumowanie obejmuje powiadomienia ze wszystkich kategorii."
+        },
+        "quietHours": {
+          "title": "Godziny ciszy",
+          "subtitle": "Wycisz powiadomienia inne niż alarmowe w wybranych godzinach",
+          "startTime": "Początek",
+          "endTime": "Koniec",
+          "timeFormatHint": "Godziny w formacie 24-godzinnym (GG:MM) w strefie czasowej wybranej poniżej.",
+          "preview": "Podgląd harmonogramu",
+          "previewRange": "Cisza od <strong>{{start}}</strong> do <strong>{{end}}</strong>",
+          "activeDays": "Aktywne dni",
+          "dayActive": "{{day}} – aktywny",
+          "dayInactive": "{{day}} – nieaktywny",
+          "timezone": "Strefa czasowa",
+          "allowEmergency": "Zezwalaj na powiadomienia alarmowe",
+          "allowEmergencyHelp": "Krytyczne alerty będą docierać także w godzinach ciszy",
+          "heldNote": "Powiadomienia push, które nadejdą w godzinach ciszy, zostaną wstrzymane i dostarczone po ich zakończeniu."
+        },
+        "grouping": {
+          "title": "Inteligentne grupowanie",
+          "subtitle": "Grupuj podobne powiadomienia, aby zachować porządek",
+          "byCategory": "Grupuj według kategorii",
+          "byCategoryHelp": "Łączy powiadomienia tego samego typu (np. „5 nowych aktualizacji usterek”)",
+          "bySource": "Grupuj według źródła",
+          "bySourceHelp": "Łączy powiadomienia z tego samego budynku lub sprawy",
+          "maxGroupSize": "Maks. rozmiar grupy",
+          "maxGroupSizeHelp": "Po tej liczbie wyświetl „i X więcej”",
+          "autoExpand": "Próg automatycznego rozwijania",
+          "autoExpandHelp": "Rozwija grupy z mniejszą liczbą elementów",
+          "neverExpand": "Nigdy nie rozwijaj automatycznie",
+          "preview": "Podgląd",
+          "clickToExpand": "Kliknij, aby rozwinąć i zobaczyć poszczególne elementy",
+          "expandGroup": "Rozwiń grupę powiadomień",
+          "items_one": "{{count}} element",
+          "items_few": "{{count}} elementy",
+          "items_many": "{{count}} elementów",
+          "items_other": "{{count}} elementów",
+          "orFewer": "{{count}} lub mniej",
+          "previewNewComments_one": "{{count}} nowy komentarz",
+          "previewNewComments_few": "{{count}} nowe komentarze",
+          "previewNewComments_many": "{{count}} nowych komentarzy",
+          "previewNewComments_other": "{{count}} nowych komentarzy"
+        }
+      }
     },
     "portalWebhooks": {
       "title": "Webhooki portali",
@@ -2328,6 +3795,43 @@
       "created": "Signed in",
       "unknownDevice": "Unknown device",
       "unknownIp": "Unknown"
+    },
+    "accessibilityPage": {
+      "intro": "Dostosuj aplikację do swoich potrzeb w zakresie dostępności.",
+      "visualTitle": "Ustawienia wyglądu",
+      "colorScheme": "Schemat kolorów",
+      "colorSchemeHelp": "Wybierz schemat kolorów, który najbardziej Ci odpowiada. Tryb wysokiego kontrastu poprawia czytelność tekstu.",
+      "colorSchemes": {
+        "light": "Jasny",
+        "dark": "Ciemny",
+        "high-contrast": "Wysoki kontrast"
+      },
+      "textSize": "Rozmiar tekstu",
+      "textSizeHelp": "Dostosuj rozmiar tekstu, aby poprawić czytelność w całej aplikacji.",
+      "textSizes": {
+        "small": "Mały",
+        "medium": "Średni",
+        "large": "Duży",
+        "extra-large": "Bardzo duży"
+      },
+      "motionTitle": "Ruch i animacje",
+      "reduceMotion": "Ogranicz ruch",
+      "reduceMotionHelp": "Ogranicza animacje i przejścia, które mogą powodować dyskomfort lub rozpraszać.",
+      "navigationTitle": "Nawigacja",
+      "screenReader": "Tryb czytnika ekranu",
+      "screenReaderHelp": "Optymalizuje interfejs dla użytkowników czytników ekranu dzięki rozszerzonym etykietom i opisom ARIA.",
+      "keyboardNav": "Rozszerzona nawigacja klawiaturą",
+      "keyboardNavHelp": "Wyświetla wyraźniejsze wskaźniki fokusu podczas nawigacji wyłącznie klawiaturą.",
+      "previewTitle": "Podgląd",
+      "previewText": "Tak będzie wyglądał tekst przy obecnych ustawieniach. Pchnąć w tę łódź jeża lub ośm skrzyń fig.",
+      "sampleButton": "Przykładowy przycisk",
+      "helpTitle": "Dodatkowa pomoc",
+      "helpText": "Jeśli napotkasz problemy z dostępnością lub masz sugestie, skontaktuj się z naszym zespołem wsparcia.",
+      "shortcutsTitle": "Skróty klawiszowe:",
+      "shortcutTab": "przejście do następnego elementu interaktywnego",
+      "shortcutShiftTab": "przejście do poprzedniego elementu interaktywnego",
+      "shortcutEnter": "aktywacja przycisków i linków",
+      "shortcutEsc": "zamknięcie okien dialogowych i menu"
     }
   },
   "connectionStatus": {
@@ -2461,13 +3965,6 @@
     "fieldLocation": "Lokalizacja",
     "fieldLocationDescription": "Opis lokalizacji",
     "fieldConnectionType": "Typ połączenia",
-    "connectionTypeNone": "Nie określono",
-    "connectionTypes": {
-      "api": "API",
-      "mqtt": "MQTT",
-      "webhook": "Webhook",
-      "polling": "Cykliczne odpytywanie"
-    },
     "fieldUnit": "Jednostka miary",
     "fieldInterval": "Interwał raportowania (s)",
     "fieldManufacturer": "Producent",
@@ -2580,16 +4077,69 @@
     "sensorRegistered": "Czujnik zarejestrowany",
     "sensorRegisterFailed": "Nie udało się zarejestrować czujnika",
     "sensorUpdated": "Czujnik zaktualizowany",
-    "sensorUpdateFailed": "Nie udało się zaktualizować czujnika"
+    "sensorUpdateFailed": "Nie udało się zaktualizować czujnika",
+    "connectionTypeNone": "Nie określono",
+    "connectionTypes": {
+      "api": "API",
+      "mqtt": "MQTT",
+      "webhook": "Webhook",
+      "polling": "Cykliczne odpytywanie"
+    },
+    "live": "Na żywo",
+    "offline": "Offline",
+    "offlineBannerTitle": "Aktualizacje na żywo zostały rozłączone",
+    "offlineBannerMessage": "Połączenie z telemetrią w czasie rzeczywistym zostało przerwane i nie udało się go przywrócić. Wyświetlane odczyty mogą być nieaktualne – odśwież stronę."
   },
   "commandPalette": {
     "commands": {
-      "goToIotAlerts": "Go to Sensor Alerts",
-      "goToIntegrations": "Przejdź do Integracji"
+      "goToIotAlerts": "Przejdź do alertów czujników",
+      "goToIntegrations": "Przejdź do Integracji",
+      "goToDashboard": "Przejdź do pulpitu",
+      "goToDocuments": "Przejdź do dokumentów",
+      "goToNews": "Przejdź do aktualności",
+      "goToEmergency": "Przejdź do kontaktów alarmowych",
+      "goToDisputes": "Przejdź do sporów",
+      "goToOutages": "Przejdź do przerw w dostawach",
+      "goToIot": "Przejdź do inteligentnego budynku",
+      "goToSensors": "Przejdź do czujników",
+      "createDispute": "Zgłoś spór",
+      "createOutage": "Zgłoś przerwę w dostawie",
+      "uploadDocument": "Prześlij dokument",
+      "goToAccessibility": "Ustawienia dostępności",
+      "goToPrivacy": "Ustawienia prywatności"
     },
     "descriptions": {
-      "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve",
-      "goToIntegrations": "Połącz kanały Airbnb i Booking.com oraz zarządzaj synchronizacją"
+      "goToIotAlerts": "Alerty progowe IoT: potwierdzanie i rozwiązywanie",
+      "goToIntegrations": "Połącz kanały Airbnb i Booking.com oraz zarządzaj synchronizacją",
+      "goToDashboard": "Strona główna",
+      "goToDocuments": "Dokumenty budynku i organizacji",
+      "goToNews": "Aktualności i ogłoszenia",
+      "goToEmergency": "Spis kontaktów alarmowych",
+      "goToDisputes": "Przegląd sporów i mediacji",
+      "goToOutages": "Planowane i nieplanowane przerwy w dostawach",
+      "goToIot": "Czujniki IoT, telemetria i alerty",
+      "goToSensors": "Zarządzaj zarejestrowanymi urządzeniami IoT",
+      "createDispute": "Zgłoś nowy formalny spór",
+      "createOutage": "Powiadom mieszkańców o przerwie w dostawie usług",
+      "uploadDocument": "Prześlij nowy dokument",
+      "goToAccessibility": "Wyświetlanie, ruch i sterowanie klawiaturą",
+      "goToPrivacy": "Prywatność i dane osobowe (RODO)"
+    },
+    "title": "Paleta poleceń",
+    "placeholder": "Wpisz polecenie lub szukaną frazę…",
+    "searchLabel": "Szukaj poleceń",
+    "resultsLabel": "Wyniki",
+    "noResults": "Nie znaleziono poleceń",
+    "navigate": "Nawiguj",
+    "select": "Wybierz",
+    "shortcutHint": "Naciśnij {{shortcut}}, aby otworzyć paletę",
+    "categories": {
+      "recent": "Ostatnie",
+      "navigation": "Nawigacja",
+      "create": "Utwórz",
+      "settings": "Ustawienia",
+      "action": "Akcje",
+      "search": "Szukaj"
     }
   },
   "sentiment": {
@@ -2638,7 +4188,9 @@
   "messaging": {
     "errors": {
       "downloadFailed": "Nie udało się pobrać załącznika"
-    }
+    },
+    "messageSent": "Wiadomość wysłana",
+    "sendFailed": "Nie udało się wysłać wiadomości"
   },
   "notificationTriggers": {
     "title": "Wyzwalacze powiadomień",
@@ -2657,7 +4209,135 @@
     "priorityBadge": "Priorytet",
     "saveFailed": "Nie udało się zaktualizować wyzwalacza",
     "resetDone": "Przywrócono domyślne wyzwalacze",
-    "resetFailed": "Nie udało się zresetować wyzwalaczy"
+    "resetFailed": "Nie udało się zresetować wyzwalaczy",
+    "events": {
+      "fault": {
+        "created": {
+          "name": "Nowe zgłoszenie usterki",
+          "description": "W Twoim budynku zgłoszono nową usterkę"
+        },
+        "updated": {
+          "name": "Usterka zaktualizowana",
+          "description": "Zgłoszona lub obserwowana przez Ciebie usterka została zaktualizowana"
+        },
+        "resolved": {
+          "name": "Usterka usunięta",
+          "description": "Usterka została oznaczona jako usunięta"
+        },
+        "assigned": {
+          "name": "Usterka przydzielona",
+          "description": "Przydzielono Ci usterkę"
+        }
+      },
+      "vote": {
+        "created": {
+          "name": "Nowe głosowanie",
+          "description": "W Twoim budynku utworzono nowe głosowanie"
+        },
+        "reminder": {
+          "name": "Przypomnienie o głosowaniu",
+          "description": "Przypomnienie o oddaniu głosu przed terminem"
+        },
+        "closing_soon": {
+          "name": "Głosowanie wkrótce się kończy",
+          "description": "Głosowanie zakończy się w ciągu 24 godzin"
+        },
+        "closed": {
+          "name": "Głosowanie zakończone",
+          "description": "Głosowanie zostało zakończone, wyniki są dostępne"
+        }
+      },
+      "announcement": {
+        "posted": {
+          "name": "Nowe ogłoszenie",
+          "description": "Opublikowano nowe ogłoszenie"
+        },
+        "urgent": {
+          "name": "Pilne ogłoszenie",
+          "description": "Pilne ogłoszenie wymaga Twojej uwagi"
+        },
+        "comment": {
+          "name": "Komentarz do ogłoszenia",
+          "description": "Ktoś skomentował ogłoszenie"
+        }
+      },
+      "document": {
+        "shared": {
+          "name": "Udostępniony dokument",
+          "description": "Udostępniono Ci dokument"
+        },
+        "signature_request": {
+          "name": "Wymagany podpis",
+          "description": "Poproszono Cię o podpisanie dokumentu"
+        },
+        "signed": {
+          "name": "Dokument podpisany",
+          "description": "Dokument został podpisany przez wszystkie strony"
+        }
+      },
+      "message": {
+        "received": {
+          "name": "Nowa wiadomość",
+          "description": "Otrzymałeś nową wiadomość prywatną"
+        },
+        "thread_reply": {
+          "name": "Odpowiedź w wątku",
+          "description": "Ktoś odpowiedział w wątku wiadomości"
+        }
+      },
+      "critical": {
+        "emergency": {
+          "name": "Alarm awaryjny",
+          "description": "Alarm awaryjny dla Twojego budynku"
+        },
+        "maintenance": {
+          "name": "Planowana konserwacja",
+          "description": "Powiadomienie o planowanej konserwacji"
+        },
+        "security": {
+          "name": "Alert bezpieczeństwa",
+          "description": "Alert dotyczący bezpieczeństwa"
+        }
+      },
+      "finance": {
+        "payment_due": {
+          "name": "Termin płatności",
+          "description": "Wkrótce mija termin płatności"
+        },
+        "payment_received": {
+          "name": "Płatność otrzymana",
+          "description": "Twoja płatność została zaksięgowana"
+        },
+        "balance_low": {
+          "name": "Ostrzeżenie o niskim saldzie",
+          "description": "Saldo Twojego konta jest niskie"
+        }
+      },
+      "facility": {
+        "booking_confirmed": {
+          "name": "Rezerwacja potwierdzona",
+          "description": "Twoja rezerwacja obiektu została potwierdzona"
+        },
+        "booking_cancelled": {
+          "name": "Rezerwacja anulowana",
+          "description": "Rezerwacja obiektu została anulowana"
+        },
+        "booking_reminder": {
+          "name": "Przypomnienie o rezerwacji",
+          "description": "Przypomnienie o nadchodzącej rezerwacji obiektu"
+        }
+      }
+    },
+    "categories": {
+      "fault": "Usterki",
+      "vote": "Głosowania",
+      "announcement": "Ogłoszenia",
+      "document": "Dokumenty",
+      "message": "Wiadomości",
+      "critical": "Alerty krytyczne",
+      "finance": "Finanse",
+      "facility": "Obiekty wspólne"
+    }
   },
   "documentSign": {
     "title": "Podpisz dokument",
@@ -2712,7 +4392,6 @@
   },
   "aria": {
     "acknowledgmentRequired": "Wymagane potwierdzenie",
-    "addEvidenceFiles": "Dodaj pliki dowodowe",
     "additionalInformation": "Dodatkowe informacje",
     "allowEmergencyNotifications": "Zezwalaj na powiadomienia awaryjne w godzinach ciszy",
     "articleActions": "Akcje artykułu",
@@ -2782,6 +4461,7 @@
     "searchArticles": "Szukaj artykułów",
     "searchDocuments": "Szukaj dokumentów",
     "selectFilesToUpload": "Wybierz pliki do przesłania",
+    "selectLanguage": "Wybierz język",
     "sentimentTrend": "Trend nastrojów",
     "settingsPreview": "Podgląd ustawień",
     "tabs": "Karty",
@@ -2797,6 +4477,10 @@
     "zoomOut": "Pomniejsz"
   },
   "voting": {
+    "buildingSelect": {
+      "label": "Budynek",
+      "mine": "{{building}} (mój budynek)"
+    },
     "detail": {
       "backToVoting": "Powrót do głosowania",
       "unavailableTitle": "Głosowanie niedostępne",
@@ -2957,6 +4641,497 @@
         "license": "Licencja",
         "identity": "Tożsamość"
       }
+    },
+    "serviceCategory": {
+      "plumbing": "Hydraulika",
+      "electrical": "Instalacje elektryczne",
+      "hvac": "Ogrzewanie i klimatyzacja",
+      "cleaning": "Sprzątanie",
+      "landscaping": "Prace ogrodnicze",
+      "security": "Ochrona",
+      "painting": "Malowanie",
+      "roofing": "Prace dekarskie",
+      "carpentry": "Stolarstwo",
+      "locksmith": "Ślusarstwo",
+      "pest_control": "Zwalczanie szkodników",
+      "general_maintenance": "Konserwacja ogólna",
+      "elevator_maintenance": "Konserwacja wind",
+      "fire_safety": "Ochrona przeciwpożarowa",
+      "waste_management": "Gospodarka odpadami",
+      "other": "Inne"
+    },
+    "common": {
+      "verified": "Zweryfikowano",
+      "companyPlaceholder": "Symbol zastępczy firmy",
+      "company": "Firma",
+      "back": "Wstecz",
+      "cancel": "Anuluj",
+      "clearAll": "Wyczyść wszystko",
+      "remove": "Usuń",
+      "starsAria": "{{rating}} z 5 gwiazdek",
+      "filledStar": "Wypełniona gwiazdka",
+      "emptyStar": "Pusta gwiazdka",
+      "halfStar": "Gwiazdka wypełniona do połowy",
+      "ratingStar": "Gwiazdka oceny",
+      "selected": "Wybrano",
+      "notSelected": "Nie wybrano",
+      "completed": "Ukończono",
+      "viewDetails": "Zobacz szczegóły",
+      "requestQuote": "Poproś o wycenę",
+      "contact": "Kontakt"
+    },
+    "rfqStatus": {
+      "draft": "Wersja robocza",
+      "sent": "Wysłano",
+      "quotes_received": "Otrzymane wyceny",
+      "awarded": "Przyznano",
+      "cancelled": "Anulowano",
+      "expired": "Wygasło"
+    },
+    "quoteStatus": {
+      "pending": "Oczekuje",
+      "submitted": "Przesłano",
+      "accepted": "Zaakceptowano",
+      "rejected": "Odrzucono",
+      "withdrawn": "Wycofano",
+      "expired": "Wygasło"
+    },
+    "ratingStars": {
+      "rateOne": "Oceń na {{count}} gwiazdkę",
+      "rateOther": "Oceń na {{count}} gwiazdek",
+      "poor": "Słabo",
+      "fair": "Przeciętnie",
+      "good": "Dobrze",
+      "veryGood": "Bardzo dobrze",
+      "excellent": "Doskonale"
+    },
+    "providerCard": {
+      "emergency247": "Pogotowie 24/7",
+      "noReviews": "Brak recenzji",
+      "reviewsCountOne": "({{count}} recenzja)",
+      "reviewsCountOther": "({{count}} recenzji)",
+      "quoteRequired": "Wymagana wycena",
+      "contactForPricing": "Ceny na życzenie",
+      "perHourRange": "{{min}} – {{max}}/godz.",
+      "perHourFrom": "Od {{min}}/godz.",
+      "perHourUpTo": "Do {{max}}/godz.",
+      "moreCount": "+{{count}} więcej",
+      "jobsCompleted": "{{count}} ukończonych zleceń",
+      "respondsWithin": "Zwykle odpowiada w ciągu {{hours}} godz.",
+      "viewProfile": "Zobacz profil"
+    },
+    "searchFilters": {
+      "searchProvidersLabel": "Szukaj usługodawców",
+      "searchIcon": "Ikona wyszukiwania",
+      "searchPlaceholder": "Szukaj usługodawców, usług...",
+      "serviceCategoryLabel": "Kategoria usługi",
+      "allCategories": "Wszystkie kategorie",
+      "locationLabel": "Lokalizacja",
+      "locationPlaceholder": "Miasto lub kod pocztowy",
+      "search": "Szukaj",
+      "searching": "Wyszukiwanie...",
+      "toggleFilters": "Przełącz filtry",
+      "showAdvanced": "Pokaż filtry zaawansowane",
+      "hideAdvanced": "Ukryj filtry zaawansowane",
+      "minimumRating": "Minimalna ocena",
+      "anyRating": "Dowolna ocena",
+      "starsPlus": "{{rating}}+ gwiazdek",
+      "hourlyRateEur": "Stawka godzinowa (EUR)",
+      "minPlaceholder": "Min",
+      "maxPlaceholder": "Maks",
+      "sortByLabel": "Sortuj według",
+      "relevance": "Trafności",
+      "sortRating": "Najwyżej oceniane",
+      "sortReviews": "Najwięcej recenzji",
+      "sortJobs": "Najwięcej zleceń",
+      "sortHourlyRate": "Stawka godzinowa",
+      "options": "Opcje",
+      "verifiedOnly": "Tylko zweryfikowani",
+      "emergencyAvailable": "Dostępne pogotowie",
+      "activeFilters": "Aktywne filtry:",
+      "emergency": "Pogotowie"
+    },
+    "quoteCard": {
+      "notSpecified": "Nie określono",
+      "noExpiry": "Bez terminu ważności",
+      "expired": "Wygasło",
+      "expiresToday": "Wygasa dzisiaj",
+      "expiresTomorrow": "Wygasa jutro",
+      "validForDays": "Ważne jeszcze {{count}} dni",
+      "warrantyIncluded": "Zawiera {{count}}-dniową gwarancję",
+      "startDate": "Data rozpoczęcia:",
+      "endDate": "Data zakończenia:",
+      "duration": "Czas trwania:",
+      "durationDays": "{{count}} dni",
+      "validity": "Ważność:",
+      "submittedOn": "Przesłano: {{date}}",
+      "selectToCompare": "Wybierz do porównania",
+      "acceptQuote": "Zaakceptuj wycenę",
+      "reject": "Odrzuć"
+    },
+    "comparisonTable": {
+      "noQuotes": "Brak wycen",
+      "noQuotesToCompare": "Brak wycen do porównania",
+      "criteria": "Kryteria",
+      "price": "Cena",
+      "providerRating": "Ocena usługodawcy",
+      "verified": "Zweryfikowano",
+      "startDate": "Data rozpoczęcia",
+      "endDate": "Data zakończenia",
+      "duration": "Czas trwania",
+      "warranty": "Gwarancja",
+      "validUntil": "Ważne do",
+      "yes": "Tak",
+      "no": "Nie",
+      "durationDays": "{{count}} dni",
+      "ratingOutOf": "{{rating}} / 5",
+      "best": "Najlepsza",
+      "notes": "Uwagi",
+      "actions": "Akcje",
+      "acceptQuote": "Zaakceptuj wycenę",
+      "bestValue": "Najlepsza wartość w kategorii"
+    },
+    "ratingBreakdown": {
+      "title": "Szczegóły oceny",
+      "reviewsCount": "{{count}} recenzji",
+      "basedOn": "Na podstawie {{count}} recenzji",
+      "starsBarOne": "{{count}} gwiazdka",
+      "starsBarOther": "{{count}} gwiazdek",
+      "ratingByCategory": "Ocena według kategorii",
+      "quality": "Jakość",
+      "timeliness": "Terminowość",
+      "communication": "Komunikacja",
+      "value": "Stosunek jakości do ceny"
+    },
+    "ratingSummary": {
+      "noReviews": "Brak recenzji",
+      "reviewsCountOne": "({{count}} recenzja)",
+      "reviewsCountOther": "({{count}} recenzji)"
+    },
+    "reviewCard": {
+      "quality": "Jakość",
+      "timeliness": "Terminowość",
+      "communication": "Komunikacja",
+      "value": "Stosunek jakości do ceny",
+      "ratingOutOf": "{{rating}}/5",
+      "providerResponse": "Odpowiedź usługodawcy",
+      "respondedOn": "Odpowiedziano {{date}}",
+      "helpful": "Pomocne",
+      "helpfulCount": "Pomocne ({{count}})",
+      "report": "Zgłoś",
+      "respondToReview": "Odpowiedz na recenzję",
+      "noReviews": "Brak recenzji"
+    },
+    "reviewForm": {
+      "title": "Recenzja dla {{provider}}",
+      "forJob": "Dla zlecenia: {{job}}",
+      "qualityOfWork": "Jakość pracy *",
+      "qualityHint": "Jak oceniasz jakość wykonanej pracy?",
+      "timeliness": "Terminowość *",
+      "timelinessHint": "Czy usługodawca ukończył pracę na czas?",
+      "communication": "Komunikacja *",
+      "communicationHint": "Jak responsywna i profesjonalna była ich komunikacja?",
+      "valueForMoney": "Stosunek jakości do ceny *",
+      "valueHint": "Czy cena za wykonaną pracę była uczciwa?",
+      "overallRating": "Ocena ogólna",
+      "reviewTitle": "Tytuł recenzji",
+      "reviewTitlePlaceholder": "Podsumuj swoje doświadczenie",
+      "yourReview": "Twoja recenzja",
+      "yourReviewPlaceholder": "Podziel się szczegółami swojego doświadczenia z tym usługodawcą...",
+      "reviewHelps": "Twoja recenzja pomaga innym zarządcom nieruchomości podejmować świadome decyzje.",
+      "guidelinesTitle": "Wytyczne dotyczące recenzji",
+      "guideline1": "Bądź szczery i konkretny w opisie swojego doświadczenia",
+      "guideline2": "Skup się na wykonanej pracy i profesjonalizmie",
+      "guideline3": "Unikaj danych osobowych i nieodpowiednich treści",
+      "guideline4": "Usługodawca może odpowiedzieć na Twoją recenzję",
+      "submitReview": "Prześlij recenzję",
+      "submitting": "Przesyłanie...",
+      "errQuality": "Oceń jakość",
+      "errTimeliness": "Oceń terminowość",
+      "errCommunication": "Oceń komunikację",
+      "errValue": "Oceń stosunek jakości do ceny"
+    },
+    "responseForm": {
+      "title": "Odpowiedz na recenzję",
+      "placeholder": "Napisz swoją odpowiedź na tę recenzję...",
+      "visibilityHint": "Twoja odpowiedź będzie widoczna dla wszystkich, którzy zobaczą tę recenzję.",
+      "errRequired": "Wprowadź odpowiedź",
+      "postResponse": "Opublikuj odpowiedź",
+      "submitting": "Przesyłanie..."
+    },
+    "rfqCard": {
+      "urgent": "Pilne",
+      "category": "Kategoria:",
+      "budget": "Budżet:",
+      "startDate": "Data rozpoczęcia:",
+      "quoteDeadline": "Termin wycen:",
+      "noBudget": "Nie określono budżetu",
+      "budgetRange": "{{min}} – {{max}}",
+      "budgetFrom": "Od {{min}}",
+      "budgetUpTo": "Do {{max}}",
+      "notSpecified": "Nie określono",
+      "noDeadline": "Brak terminu",
+      "dueToday": "Termin dzisiaj",
+      "dueTomorrow": "Termin jutro",
+      "daysLeft": "Pozostało {{count}} dni",
+      "expired": "Wygasło",
+      "providersInvited": "Zaproszeni usługodawcy",
+      "invited": "{{count}} zaproszonych",
+      "quotesReceived": "Otrzymane wyceny",
+      "quotesCountOne": "{{count}} otrzymana wycena",
+      "quotesCountOther": "{{count}} otrzymanych wycen",
+      "created": "Utworzono: {{date}}",
+      "edit": "Edytuj",
+      "compareQuotes": "Porównaj wyceny"
+    },
+    "rfqForm": {
+      "title": "Utwórz zapytanie o wycenę",
+      "building": "Budynek:",
+      "titleLabel": "Tytuł *",
+      "titlePlaceholder": "np. Roczna konserwacja klimatyzacji",
+      "serviceCategory": "Kategoria usługi *",
+      "description": "Opis *",
+      "descriptionPlaceholder": "Szczegółowo opisz, czego potrzebujesz...",
+      "scopeOfWork": "Zakres prac",
+      "scopePlaceholder": "Szczegółowy zakres, specyfikacje, wymagania...",
+      "timeline": "Harmonogram",
+      "preferredStartDate": "Preferowana data rozpoczęcia",
+      "preferredEndDate": "Preferowana data zakończenia",
+      "quoteDeadline": "Termin wycen",
+      "quoteDeadlineHint": "Do kiedy usługodawcy mają przesłać swoje wyceny?",
+      "markUrgent": "Oznacz jako pilne",
+      "budgetOptional": "Budżet (opcjonalnie)",
+      "minimumBudget": "Budżet minimalny",
+      "maximumBudget": "Budżet maksymalny",
+      "currency": "Waluta",
+      "preferences": "Preferencje",
+      "contactPreference": "Preferowany kontakt",
+      "any": "Dowolny",
+      "emailOnly": "Tylko e-mail",
+      "phoneOnly": "Tylko telefon",
+      "siteVisitRequired": "Wymagana wizyta na miejscu przed wyceną",
+      "sendRfqTo": "Wyślij zapytanie do",
+      "modifySelection": "Zmień wybór",
+      "selectProviders": "Wybierz usługodawców",
+      "noProvidersSelected": "Nie wybrano usługodawców",
+      "browseSelect": "Przeglądaj i wybierz usługodawców",
+      "providersWillReceiveOne": "To zapytanie otrzyma {{count}} usługodawca",
+      "providersWillReceiveOther": "To zapytanie otrzyma {{count}} usługodawców",
+      "sendRfq": "Wyślij zapytanie",
+      "sending": "Wysyłanie...",
+      "errTitle": "Tytuł jest wymagany",
+      "errDescription": "Opis jest wymagany",
+      "errProviders": "Wybierz co najmniej jednego usługodawcę, do którego wyślesz zapytanie",
+      "errBudgetMax": "Budżet maksymalny musi być większy niż minimalny",
+      "errEndDate": "Data zakończenia musi być późniejsza niż data rozpoczęcia"
+    },
+    "providerProfileForm": {
+      "stepCompanyInfo": "Dane firmy",
+      "stepServices": "Usługi",
+      "stepPricing": "Ceny",
+      "stepPortfolio": "Portfolio",
+      "companyInformation": "Dane firmy",
+      "companyName": "Nazwa firmy *",
+      "businessRegNumber": "Numer rejestracyjny firmy",
+      "taxId": "NIP",
+      "companyDescription": "Opis firmy",
+      "companyDescriptionPlaceholder": "Opowiedz potencjalnym klientom o swojej firmie, doświadczeniu i tym, co Cię wyróżnia...",
+      "website": "Strona internetowa",
+      "websitePlaceholder": "https://www.przyklad.pl",
+      "logoUrl": "URL logo",
+      "contactInformation": "Dane kontaktowe",
+      "contactName": "Imię i nazwisko kontaktu *",
+      "contactEmail": "E-mail kontaktowy *",
+      "contactPhone": "Telefon kontaktowy",
+      "city": "Miasto",
+      "address": "Adres",
+      "servicesOffered": "Oferowane usługi",
+      "selectCategories": "Wybierz kategorie usług *",
+      "serviceDescription": "Opis usług",
+      "serviceDescriptionPlaceholder": "Opisz dokładniej swoje usługi...",
+      "coverageRadius": "Promień działania (km)",
+      "coverageRadiusPlaceholder": "np. 50",
+      "emergencyCalls": "Dostępne dla wezwań pogotowia 24/7",
+      "pricingStructure": "Struktura cen",
+      "pricingType": "Rodzaj ceny",
+      "pricingHourly": "Stawka godzinowa",
+      "pricingProject": "Za projekt",
+      "pricingFixed": "Cena stała",
+      "pricingQuote": "Wymagana wycena",
+      "minHourlyRate": "Minimalna stawka godzinowa",
+      "maxHourlyRate": "Maksymalna stawka godzinowa",
+      "currency": "Waluta",
+      "responseTime": "Typowy czas reakcji (godziny)",
+      "responseTimePlaceholder": "np. 24",
+      "responseTimeHint": "Jak szybko zwykle reagujesz na zapytania?",
+      "portfolio": "Portfolio",
+      "portfolioDescription": "Opis portfolio",
+      "portfolioDescriptionPlaceholder": "Opisz swoje dotychczasowe prace, znaczące projekty i osiągnięcia...",
+      "portfolioImages": "Zdjęcia portfolio",
+      "portfolioImagesHint": "Dodaj adresy URL zdjęć prezentujących Twoją pracę. Więcej zdjęć możesz dodać po utworzeniu profilu.",
+      "uploadImages": "Prześlij zdjęcia",
+      "imageUploadHint": "Przesyłanie zdjęć będzie dostępne po utworzeniu profilu",
+      "readyToSubmit": "Gotowy do przesłania?",
+      "reviewNote": "Twój profil zostanie sprawdzony przez nasz zespół. Po zatwierdzeniu będzie widoczny na platformie.",
+      "previous": "Wstecz",
+      "next": "Dalej",
+      "saving": "Zapisywanie...",
+      "updateProfile": "Zaktualizuj profil",
+      "createProfile": "Utwórz profil",
+      "errCompanyName": "Nazwa firmy jest wymagana",
+      "errContactName": "Imię i nazwisko kontaktu jest wymagane",
+      "errContactEmail": "E-mail kontaktowy jest wymagany",
+      "errEmailFormat": "Nieprawidłowy format e-mail",
+      "errCategories": "Wybierz co najmniej jedną kategorię usług",
+      "errMaxRate": "Stawka maksymalna musi być większa niż minimalna"
+    },
+    "verificationForm": {
+      "title": "Prześlij dokument weryfikacyjny",
+      "verificationType": "Rodzaj weryfikacji *",
+      "typeBusinessLabel": "Rejestracja działalności",
+      "typeBusinessDesc": "Oficjalny dokument rejestracji firmy",
+      "typeInsuranceLabel": "Certyfikat ubezpieczenia",
+      "typeInsuranceDesc": "Dowód ubezpieczenia od odpowiedzialności cywilnej",
+      "typeCertificationLabel": "Certyfikat zawodowy",
+      "typeCertificationDesc": "Certyfikaty branżowe i kwalifikacje",
+      "typeLicenseLabel": "Licencja zawodowa",
+      "typeLicenseDesc": "Licencja rzemieślnicza lub zawodowa",
+      "typeIdentityLabel": "Weryfikacja tożsamości",
+      "typeIdentityDesc": "Osobisty dokument tożsamości",
+      "documentName": "Nazwa dokumentu *",
+      "documentNamePlaceholder": "np. certyfikat {{type}}",
+      "documentFallback": "Dokument",
+      "documentNumber": "Numer dokumentu/rejestracji",
+      "documentNumberPlaceholder": "np. REG-12345",
+      "issuingAuthority": "Organ wydający",
+      "issuingAuthorityPlaceholder": "np. rejestr handlowy",
+      "issueDate": "Data wydania",
+      "expiryDate": "Data ważności",
+      "uploadDocument": "Prześlij dokument",
+      "uploadTitle": "Prześlij dokument",
+      "dragDrop": "Przeciągnij i upuść dokument tutaj lub kliknij, aby przeglądać",
+      "fileTypes": "PDF, JPG lub PNG do 10 MB",
+      "selectFile": "Wybierz plik",
+      "documentSelected": "Wybrano dokument",
+      "processTitle": "Proces weryfikacji",
+      "process1": "Twój dokument zostanie sprawdzony przez nasz zespół weryfikacyjny",
+      "process2": "Weryfikacja zwykle trwa 1–3 dni robocze",
+      "process3": "Zostaniesz powiadomiony po zakończeniu weryfikacji",
+      "process4": "Zatwierdzone weryfikacje dodadzą odznaki do Twojego profilu",
+      "submitForVerification": "Prześlij do weryfikacji",
+      "submitting": "Przesyłanie...",
+      "errDocumentName": "Nazwa dokumentu jest wymagana",
+      "errExpiryDate": "Dla tego rodzaju dokumentu data ważności jest wymagana"
+    },
+    "marketplacePage": {
+      "title": "Platforma usługodawców",
+      "subtitle": "Znajdź i zatrudnij zweryfikowanych usługodawców dla swoich nieruchomości",
+      "createRfq": "Utwórz zapytanie",
+      "showingPrefix": "Wyświetlono",
+      "showingMiddle": "z",
+      "showingSuffix": "usługodawców",
+      "noProvidersFound": "Nie znaleziono usługodawców",
+      "sortedByPrefix": "Sortowanie według:",
+      "ascending": "(rosnąco)",
+      "descending": "(malejąco)",
+      "noResults": "Brak wyników",
+      "noProvidersTitle": "Nie znaleziono usługodawców",
+      "adjustFilters": "Spróbuj zmienić filtry wyszukiwania lub przejrzyj wszystkich usługodawców",
+      "clearFilters": "Wyczyść wszystkie filtry",
+      "loadMore": "Załaduj więcej usługodawców",
+      "loading": "Ładowanie...",
+      "browseByCategory": "Przeglądaj według kategorii"
+    },
+    "createRfqPage": {
+      "step1": "Krok 1: Wybierz usługodawców, do których wyślesz zapytanie",
+      "step2": "Krok 2: Wypełnij szczegóły zapytania",
+      "selectProviders": "Wybierz usługodawców",
+      "createRfqStep": "Utwórz zapytanie",
+      "providersSelectedOne": "Wybrano {{count}} usługodawcę",
+      "providersSelectedOther": "Wybrano {{count}} usługodawców",
+      "noProvidersFound": "Nie znaleziono usługodawców. Spróbuj zmienić filtry.",
+      "continueWithOne": "Kontynuuj z {{count}} usługodawcą",
+      "continueWithOther": "Kontynuuj z {{count}} usługodawcami"
+    },
+    "providerDetailPage": {
+      "backToMarketplace": "Powrót do platformy",
+      "tabOverview": "Przegląd",
+      "tabServices": "Usługi",
+      "tabPortfolio": "Portfolio",
+      "tabReviews": "Recenzje ({{count}})",
+      "tabVerifications": "Weryfikacje",
+      "reviewsCount": "({{count}} recenzji)",
+      "jobsCompleted": "| {{count}} ukończonych zleceń",
+      "contactInformation": "Dane kontaktowe",
+      "email": "E-mail",
+      "phone": "Telefon",
+      "website": "Strona internetowa",
+      "address": "Adres",
+      "coverageArea": "Obszar działania",
+      "serviceRadius": "Promień usług",
+      "radiusKm": "{{count}} km",
+      "regionsServed": "Obsługiwane regiony",
+      "responseTime": "Czas reakcji",
+      "respondsWithinHours": "Zwykle odpowiada w ciągu {{count}} godzin",
+      "servicesOffered": "Oferowane usługi",
+      "descriptionHeading": "Opis",
+      "portfolio": "Portfolio",
+      "noPortfolioImages": "Brak dostępnych zdjęć portfolio",
+      "verificationsCredentials": "Weryfikacje i poświadczenia"
+    },
+    "providerProfilePage": {
+      "dashboard": "Panel usługodawcy",
+      "editProfile": "Edytuj profil",
+      "averageRating": "Średnia ocena",
+      "totalReviews": "Łączna liczba recenzji",
+      "jobsCompleted": "Ukończone zlecenia",
+      "pendingResponses": "Oczekujące odpowiedzi",
+      "verifications": "Weryfikacje",
+      "addVerification": "Dodaj weryfikację",
+      "recentReviews": "Najnowsze recenzje",
+      "backToDashboard": "Powrót do panelu"
+    },
+    "quoteComparisonPage": {
+      "backToRfqs": "Powrót do zapytań",
+      "compareQuotes": "Porównaj wyceny",
+      "tableView": "Widok tabeli",
+      "cardView": "Widok kart",
+      "category": "Kategoria:",
+      "budget": "Budżet:",
+      "quotes": "Wyceny:",
+      "urgent": "Pilne",
+      "comparingSelected": "Porównywanie {{count}} wybranych wycen",
+      "selectToCompare": "Wybierz wyceny do porównania lub wyświetl wszystkie",
+      "showAll": "Pokaż wszystkie",
+      "noQuotes": "Brak wycen",
+      "noQuotesTitle": "Brak wycen",
+      "noQuotesHint": "Usługodawcy nie przesłali jeszcze wycen do tego zapytania",
+      "totalQuotes": "Łączna liczba wycen",
+      "lowestQuote": "Najniższa wycena",
+      "highestQuote": "Najwyższa wycena",
+      "averageQuote": "Średnia wycena"
+    },
+    "rfqListPage": {
+      "title": "Zapytania o wycenę",
+      "subtitle": "Zarządzaj swoimi zapytaniami i porównuj wyceny od usługodawców",
+      "createNewRfq": "Utwórz nowe zapytanie",
+      "tabAll": "Wszystkie",
+      "tabDrafts": "Wersje robocze",
+      "tabSent": "Wysłane",
+      "tabQuotesReceived": "Otrzymane wyceny",
+      "tabAwarded": "Przyznane",
+      "tabCancelled": "Anulowane",
+      "noRfqs": "Brak zapytań",
+      "noRfqsTitle": "Brak zapytań",
+      "noStatusRfqsTitle": "Brak zapytań o statusie {{status}}",
+      "noRfqsAllHint": "Utwórz swoje pierwsze zapytanie, aby zacząć otrzymywać wyceny od usługodawców",
+      "noRfqsStatusHint": "Brak zapytań o tym statusie",
+      "loading": "Ładowanie...",
+      "loadMore": "Załaduj więcej",
+      "totalRfqs": "Łączna liczba zapytań",
+      "activeRfqs": "Aktywne zapytania",
+      "withQuotes": "Z wycenami",
+      "awarded": "Przyznane"
     }
   },
   "automation": {
@@ -3244,7 +5419,9 @@
       "categoryCommunications": "Komunikacja",
       "categoryDocuments": "Dokumenty",
       "categoryMaintenance": "Konserwacja",
-      "categoryGeneral": "Ogólne"
+      "categoryGeneral": "Ogólne",
+      "actions_few": "{{count}} akcje",
+      "actions_many": "{{count}} akcji"
     },
     "templatePreview": {
       "popular": "Popularne",
@@ -3330,15 +5507,202 @@
       "retrySuccessMessage": "Wykonanie zostało skolejkowane do ponowienia.",
       "retryErrorTitle": "Ponowienie nie powiodło się",
       "retryErrorMessage": "Nie udało się ponowić wykonania."
+    },
+    "templates": {
+      "weekly_maintenance_report": {
+        "name": "Tygodniowy raport konserwacji",
+        "description": "Co tydzień wysyła zarządcom podsumowanie otwartych zgłoszeń konserwacyjnych"
+      },
+      "overdue_payment_reminder": {
+        "name": "Przypomnienie o zaległej płatności",
+        "description": "Wysyła przypomnienie, gdy płatność jest opóźniona o 7 dni"
+      },
+      "high_priority_fault_escalation": {
+        "name": "Eskalacja usterek o wysokim priorytecie",
+        "description": "Automatycznie przydziela usterki o wysokim priorytecie i powiadamia zarządcę"
+      },
+      "monthly_statement_generation": {
+        "name": "Miesięczne rozliczenie",
+        "description": "Generuje i wysyła miesięczne rozliczenie 1. dnia każdego miesiąca"
+      },
+      "actionTypes": {
+        "generate_report": "Wygeneruj raport",
+        "send_email": "Wyślij e-mail",
+        "send_notification": "Wyślij powiadomienie",
+        "assign_fault": "Przydziel usterkę"
+      }
     }
   },
   "registry": {
+    "page": {
+      "title": "Rejestry budynku",
+      "subtitle": "Zarządzaj rejestracjami zwierząt i pojazdów dla swojego budynku",
+      "tabs": {
+        "pets": "Zwierzęta",
+        "vehicles": "Pojazdy"
+      },
+      "loadError": "Nie udało się załadować rejestracji. Spróbuj ponownie później."
+    },
     "rules": {
       "toast": {
         "saved": "Registry rules saved",
         "savedBody": "Your registry rule changes have been applied.",
         "saveFailed": "Failed to save registry rules",
         "saveFailedBody": "Your changes could not be saved. Please try again."
+      }
+    },
+    "toast": {
+      "petDeleted": "Pet registration deleted",
+      "petDeletedBody": "The pet registration has been removed.",
+      "petDeleteFailed": "Failed to delete pet registration",
+      "petDeleteFailedBody": "The pet registration could not be deleted. Please try again.",
+      "petReviewed": "Pet registration approved",
+      "petReviewedBody": "The pet registration has been approved.",
+      "petReviewFailed": "Failed to review pet registration",
+      "petReviewFailedBody": "The pet registration could not be reviewed. Please try again.",
+      "vehicleDeleted": "Vehicle registration deleted",
+      "vehicleDeletedBody": "The vehicle registration has been removed.",
+      "vehicleDeleteFailed": "Failed to delete vehicle registration",
+      "vehicleDeleteFailedBody": "The vehicle registration could not be deleted. Please try again.",
+      "vehicleReviewed": "Vehicle registration approved",
+      "vehicleReviewedBody": "The vehicle registration has been approved.",
+      "vehicleReviewFailed": "Failed to review vehicle registration",
+      "vehicleReviewFailedBody": "The vehicle registration could not be reviewed. Please try again."
+    },
+    "confirm": {
+      "deletePet": "Usunąć tę rejestrację zwierzęcia?",
+      "approvePet": "Zatwierdzić tę rejestrację zwierzęcia?",
+      "deleteVehicle": "Usunąć tę rejestrację pojazdu?",
+      "approveVehicle": "Zatwierdzić tę rejestrację pojazdu?",
+      "approve": "Zatwierdź"
+    },
+    "status": {
+      "all": "Wszystkie statusy",
+      "pending": "Oczekujące",
+      "approved": "Zatwierdzone",
+      "rejected": "Odrzucone",
+      "expired": "Wygasłe"
+    },
+    "actions": {
+      "view": "Zobacz",
+      "review": "Zweryfikuj",
+      "edit": "Edytuj",
+      "delete": "Usuń",
+      "create": "Utwórz",
+      "search": "Szukaj",
+      "noRegistrations": "Brak rejestracji"
+    },
+    "pagination": {
+      "showing": "Wyświetlanie {{from}} do {{to}} z {{total}}",
+      "page": "Strona {{page}} z {{totalPages}}",
+      "previous": "Poprzednia",
+      "next": "Następna"
+    },
+    "pet": {
+      "types": {
+        "dog": "Pies",
+        "cat": "Kot",
+        "bird": "Ptak",
+        "fish": "Ryba",
+        "reptile": "Gad",
+        "rodent": "Gryzoń",
+        "other": "Inne"
+      },
+      "sizes": {
+        "small": "Mały (< 10 kg)",
+        "medium": "Średni (10-25 kg)",
+        "large": "Duży (25-45 kg)",
+        "extra_large": "Bardzo duży (> 45 kg)"
+      },
+      "form": {
+        "petType": "Rodzaj zwierzęcia",
+        "petSize": "Wielkość zwierzęcia",
+        "name": "Imię zwierzęcia",
+        "namePlaceholder": "Wprowadź imię zwierzęcia",
+        "breed": "Rasa",
+        "breedPlaceholder": "Wprowadź rasę (opcjonalnie)",
+        "age": "Wiek (lata)",
+        "agePlaceholder": "Wprowadź wiek",
+        "weight": "Waga (kg)",
+        "weightPlaceholder": "Wprowadź wagę",
+        "description": "Opis",
+        "descriptionPlaceholder": "Dodatkowe informacje o Twoim zwierzęciu",
+        "veterinarianSection": "Informacje o weterynarzu",
+        "veterinarianName": "Imię i nazwisko weterynarza",
+        "veterinarianNamePlaceholder": "Dr Jan Kowalski",
+        "veterinarianContact": "Kontakt do weterynarza",
+        "veterinarianContactPlaceholder": "Telefon lub e-mail",
+        "documentsSection": "Dokumenty",
+        "vaccinationRecordUrl": "URL książeczki szczepień",
+        "registrationDocumentUrl": "URL dokumentu rejestracyjnego",
+        "photoUrl": "URL zdjęcia zwierzęcia",
+        "urlPlaceholder": "https://...",
+        "cancel": "Anuluj",
+        "submit": "Wyślij rejestrację",
+        "submitting": "Wysyłanie..."
+      },
+      "list": {
+        "title": "Rejestracje zwierząt",
+        "register": "Zarejestruj zwierzę",
+        "searchPlaceholder": "Szukaj według imienia, rasy, właściciela...",
+        "emptyTitle": "Nie znaleziono rejestracji zwierząt",
+        "emptyBody": "Rozpocznij od zarejestrowania zwierzęcia.",
+        "emptyAction": "Zarejestruj swoje pierwsze zwierzę",
+        "colPet": "Zwierzę",
+        "colOwner": "Właściciel",
+        "colUnit": "Lokal",
+        "colStatus": "Status",
+        "colSubmitted": "Zgłoszono",
+        "colActions": "Akcje"
+      }
+    },
+    "vehicle": {
+      "types": {
+        "car": "Samochód",
+        "motorcycle": "Motocykl",
+        "bicycle": "Rower",
+        "scooter": "Hulajnoga",
+        "other": "Inne"
+      },
+      "form": {
+        "vehicleType": "Typ pojazdu",
+        "licensePlate": "Tablica rejestracyjna",
+        "licensePlatePlaceholder": "ABC-123",
+        "make": "Marka",
+        "makePlaceholder": "Toyota, BMW itp.",
+        "model": "Model",
+        "modelPlaceholder": "Corolla, X5 itp.",
+        "year": "Rok",
+        "color": "Kolor",
+        "colorPlaceholder": "Czarny, biały, czerwony itp.",
+        "parkingSpot": "Miejsce parkingowe",
+        "noParkingSpot": "Nie przypisano miejsca parkingowego",
+        "level": "Poziom {{level}}",
+        "zone": "Strefa {{zone}}",
+        "noAvailableSpots": "Brak dostępnych miejsc parkingowych",
+        "documentsSection": "Dokumenty",
+        "registrationDocumentUrl": "URL dokumentu rejestracyjnego",
+        "photoUrl": "URL zdjęcia pojazdu",
+        "urlPlaceholder": "https://...",
+        "cancel": "Anuluj",
+        "submit": "Wyślij rejestrację",
+        "submitting": "Wysyłanie..."
+      },
+      "list": {
+        "title": "Rejestracje pojazdów",
+        "register": "Zarejestruj pojazd",
+        "searchPlaceholder": "Szukaj według tablicy, marki, modelu...",
+        "emptyTitle": "Nie znaleziono rejestracji pojazdów",
+        "emptyBody": "Rozpocznij od zarejestrowania pojazdu.",
+        "emptyAction": "Zarejestruj swój pierwszy pojazd",
+        "colVehicle": "Pojazd",
+        "colLicensePlate": "Tablica rejestracyjna",
+        "colOwner": "Właściciel",
+        "colParkingSpot": "Miejsce parkingowe",
+        "colStatus": "Status",
+        "colSubmitted": "Zgłoszono",
+        "colActions": "Akcje",
+        "notAssigned": "Nie przypisano"
       }
     }
   },
@@ -3352,19 +5716,14 @@
     "deleteFailed": "Nie udało się usunąć grupy",
     "deleteGroupConfirm": "Usunąć tę grupę? Tej akcji nie można cofnąć.",
     "common": {
-      "edit": "Edytuj",
       "delete": "Usuń",
       "cancel": "Anuluj",
-      "add": "Dodaj",
-      "view": "Zobacz",
       "search": "Szukaj",
       "previous": "Poprzednia",
       "next": "Następna",
       "loading": "Ładowanie...",
-      "loadMore": "Załaduj więcej",
       "backToGroups": "Powrót do grup",
-      "official": "Oficjalna",
-      "pageOf": "Strona {{page}} z {{total}}"
+      "official": "Oficjalna"
     },
     "post": {
       "pinned": "Przypięte",
@@ -3374,38 +5733,14 @@
       "daysAgo": "{{count}} dni temu",
       "likes": "{{count}} polubień",
       "comments": "{{count}} komentarzy",
-      "shares": "{{count}} udostępnień",
       "like": "Lubię to",
-      "comment": "Komentuj",
-      "share": "Udostępnij",
       "mediaAlt": "Multimedia wpisu {{index}}"
-    },
-    "comments": {
-      "justNow": "przed chwilą",
-      "minutes": "{{count}} min",
-      "hours": "{{count}} godz.",
-      "days": "{{count}} dni",
-      "liked": "Polubione",
-      "like": "Lubię to",
-      "reply": "Odpowiedz",
-      "replyPlaceholder": "Napisz odpowiedź...",
-      "empty": "Brak komentarzy. Skomentuj jako pierwszy!"
     },
     "feed": {
       "title": "Tablica społeczności",
       "subtitle": "Zobacz, co dzieje się w Twojej społeczności",
       "filters": {
-        "all": "Wszystkie wpisy",
-        "myGroups": "Moje grupy",
-        "building": "Budynek"
-      },
-      "types": {
-        "all": "Wszystkie typy",
-        "text": "Tekst",
-        "photos": "Zdjęcia",
-        "polls": "Ankiety",
-        "events": "Wydarzenia",
-        "items": "Przedmioty"
+        "myGroups": "Moje grupy"
       },
       "post": "wpis",
       "posts": "wpisów",
@@ -3413,19 +5748,7 @@
       "emptyBody": "Podziel się czymś ze społecznością jako pierwszy!"
     },
     "createPost": {
-      "types": {
-        "text": "Tekst",
-        "photo": "Zdjęcie",
-        "poll": "Ankieta"
-      },
-      "visibility": {
-        "group": "Tylko grupa",
-        "building": "Budynek",
-        "public": "Publiczne"
-      },
       "contentPlaceholder": "Co słychać?",
-      "imageUrlPlaceholder": "Wpisz adres URL obrazu",
-      "previewAlt": "Podgląd {{index}}",
       "posting": "Publikowanie...",
       "submit": "Opublikuj"
     },
@@ -3434,37 +5757,18 @@
       "subtitle": "Nawiąż kontakt z sąsiadami dzięki wspólnym zainteresowaniom",
       "create": "Utwórz grupę",
       "searchPlaceholder": "Szukaj grup...",
-      "categoryLabel": "Kategoria",
-      "visibilityLabel": "Widoczność",
       "myGroupsOnly": "Tylko moje grupy",
       "emptyTitle": "Nie znaleziono grup",
       "emptyBodyMember": "Nie dołączyłeś jeszcze do żadnej grupy.",
       "emptyBodyDefault": "Zmień filtry lub utwórz nową grupę.",
-      "showing": "Wyświetlono {{count}} z {{total}} grup",
-      "categories": {
-        "allCategories": "Wszystkie kategorie",
-        "social": "Towarzyskie",
-        "sports": "Sport",
-        "hobbies": "Hobby",
-        "parenting": "Rodzicielstwo",
-        "pets": "Zwierzęta",
-        "business": "Biznes",
-        "other": "Inne"
-      },
-      "visibility": {
-        "all": "Wszystkie grupy",
-        "public": "Publiczne",
-        "private": "Prywatne"
-      }
+      "showing": "Wyświetlono {{count}} z {{total}} grup"
     },
     "groupCard": {
       "visibility": {
         "public": "Publiczna",
         "private": "Prywatna",
-        "hidden": "Ukryta"
+        "secret": "Tajna"
       },
-      "member": "członek",
-      "members": "członków",
       "joining": "Dołączanie...",
       "join": "Dołącz",
       "leaving": "Opuszczanie...",
@@ -3481,71 +5785,39 @@
           "label": "Prywatna",
           "description": "Każdy może ją znaleźć, ale musi poprosić o dołączenie"
         },
-        "hidden": {
-          "label": "Ukryta",
-          "description": "Tylko zaproszeni użytkownicy mogą znaleźć tę grupę"
+        "secret": {
+          "label": "Tajna",
+          "description": "Ukryta na liście grup; widzą ją tylko członkowie"
         }
       },
-      "namePreviewDefault": "Nazwa grupy",
       "nameLabel": "Nazwa grupy",
       "namePlaceholder": "Wpisz nazwę grupy",
       "descriptionLabel": "Opis",
       "descriptionPlaceholder": "Opisz, czym jest Twoja grupa...",
-      "categoryLabel": "Kategoria",
       "visibilityLegend": "Widoczność",
-      "coverPreviewAlt": "Podgląd okładki",
-      "coverUrlLabel": "Adres URL okładki (opcjonalnie)",
-      "coverUrlPlaceholder": "https://example.com/image.jpg",
       "errors": {
         "nameRequired": "Nazwa grupy jest wymagana",
         "nameMin": "Nazwa grupy musi mieć co najmniej 3 znaki",
         "nameMax": "Nazwa grupy musi mieć mniej niż 100 znaków",
-        "descriptionRequired": "Opis jest wymagany",
-        "descriptionMin": "Opis musi mieć co najmniej 10 znaków",
-        "descriptionMax": "Opis musi mieć mniej niż 1000 znaków",
-        "categoryRequired": "Kategoria jest wymagana",
-        "invalidUrl": "Podaj prawidłowy adres URL"
+        "descriptionMax": "Opis musi mieć mniej niż 1000 znaków"
       },
-      "updating": "Aktualizowanie...",
       "creating": "Tworzenie...",
-      "update": "Zaktualizuj grupę",
       "create": "Utwórz grupę"
     },
     "groupMembers": {
       "roles": {
-        "owner": "Właściciel",
-        "admin": "Administrator",
-        "moderator": "Moderator",
-        "member": "Członek"
-      },
-      "empty": "Brak członków",
-      "pendingApproval": "Oczekuje na zatwierdzenie",
-      "you": "(Ty)",
-      "joined": "Dołączył/a {{date}}",
-      "makeModerator": "Ustaw jako moderatora",
-      "makeAdmin": "Ustaw jako administratora",
-      "removeFromGroup": "Usuń z grupy",
-      "banFromGroup": "Zbanuj w grupie"
+        "owner": "Właściciel"
+      }
     },
     "groupDetail": {
-      "tabAbout": "O grupie",
-      "tabMembers": "Członkowie ({{count}})",
-      "tabPosts": "Wpisy ({{count}})",
       "members": "{{count}} członków",
-      "groupSettings": "Ustawienia grupy",
       "ownersCannotLeave": "Właściciele nie mogą opuścić grupy",
-      "leaveGroupTitle": "Opuść grupę",
       "leaving": "Opuszczanie...",
       "leaveGroup": "Opuść grupę",
       "joining": "Dołączanie...",
       "joinGroup": "Dołącz do grupy",
       "aboutTitle": "O tej grupie",
       "createdOn": "Utworzono {{date}}",
-      "membersTitle": "Członkowie",
-      "inviteMembers": "Zaproś członków",
-      "postsPlaceholder": "Wpisy pojawią się tutaj. Wszystkie wpisy społeczności znajdziesz w zakładce Tablica.",
-      "adminActions": "Działania administratora",
-      "editGroup": "Edytuj grupę",
       "deleteGroup": "Usuń grupę"
     },
     "createGroup": {
@@ -3555,24 +5827,6 @@
       "title": "Wydarzenia społeczności",
       "subtitle": "Odkrywaj wydarzenia w swojej społeczności i dołączaj do nich",
       "create": "Utwórz wydarzenie",
-      "time": {
-        "upcoming": "Nadchodzące",
-        "past": "Minione",
-        "all": "Wszystkie"
-      },
-      "status": {
-        "all": "Wszystkie statusy",
-        "published": "Opublikowane",
-        "draft": "Szkic",
-        "cancelled": "Anulowane",
-        "completed": "Zakończone"
-      },
-      "rsvp": {
-        "all": "Wszystkie odpowiedzi",
-        "going": "Wezmę udział",
-        "maybe": "Może",
-        "notGoing": "Nie wezmę udziału"
-      },
       "event": "wydarzenie",
       "events": "wydarzeń",
       "emptyTitle": "Nie znaleziono wydarzeń",
@@ -3580,22 +5834,7 @@
       "emptyBodyDefault": "Żadne wydarzenia nie pasują do filtrów."
     },
     "eventCard": {
-      "relative": {
-        "past": "Minione",
-        "today": "Dziś",
-        "tomorrow": "Jutro",
-        "inDays": "Za {{count}} dni",
-        "inWeeks": "Za {{count}} tygodni",
-        "inMonths": "Za {{count}} miesięcy"
-      },
-      "status": {
-        "draft": "Szkic",
-        "published": "Opublikowane",
-        "cancelled": "Anulowane",
-        "completed": "Zakończone"
-      },
       "going": "{{count}} wybiera się",
-      "maybe": "{{count}} może",
       "max": "Maks. {{count}}",
       "rsvpGoing": "Weźmiesz udział",
       "rsvpMaybe": "Jesteś zainteresowany",
@@ -3603,15 +5842,9 @@
       "btnGoing": "Wezmę udział",
       "btnMaybe": "Może",
       "btnCantGo": "Nie mogę",
-      "ended": "Wydarzenie zakończone",
-      "eventCancelled": "Wydarzenie anulowane",
-      "rsvpNotAvailable": "Odpowiedź niedostępna",
-      "addToCalendar": "Dodaj do kalendarza",
-      "editEvent": "Edytuj wydarzenie",
-      "deleteEvent": "Usuń wydarzenie"
+      "rsvpNotAvailable": "Odpowiedź niedostępna"
     },
     "eventForm": {
-      "titlePreviewDefault": "Tytuł wydarzenia",
       "titleLabel": "Tytuł wydarzenia",
       "titlePlaceholder": "Wpisz tytuł wydarzenia",
       "descriptionLabel": "Opis",
@@ -3624,26 +5857,18 @@
       "allDay": "Wydarzenie całodniowe",
       "start": "Początek",
       "end": "Koniec",
-      "coverUrlLabel": "Adres URL okładki (opcjonalnie)",
-      "coverUrlPlaceholder": "https://example.com/image.jpg",
-      "coverPreviewAlt": "Podgląd okładki",
       "maxAttendeesLabel": "Maksymalna liczba uczestników (opcjonalnie)",
       "maxAttendeesPlaceholder": "Pozostaw puste dla braku limitu",
       "errors": {
         "titleRequired": "Tytuł jest wymagany",
         "titleMin": "Tytuł musi mieć co najmniej 3 znaki",
-        "descriptionRequired": "Opis jest wymagany",
-        "descriptionMin": "Opis musi mieć co najmniej 10 znaków",
-        "locationRequired": "Miejsce jest wymagane",
         "startRequired": "Data rozpoczęcia jest wymagana",
         "endRequired": "Data zakończenia jest wymagana",
         "endAfterStart": "Data zakończenia musi być po dacie rozpoczęcia",
         "invalidUrl": "Podaj prawidłowy adres URL",
         "invalidNumber": "Podaj prawidłową liczbę"
       },
-      "updating": "Aktualizowanie...",
       "creating": "Tworzenie...",
-      "update": "Zaktualizuj wydarzenie",
       "create": "Utwórz wydarzenie"
     },
     "marketplace": {
@@ -3652,36 +5877,8 @@
       "create": "Utwórz ogłoszenie",
       "searchPlaceholder": "Szukaj przedmiotów...",
       "categories": {
-        "allCategories": "Wszystkie kategorie",
-        "electronics": "Elektronika",
-        "furniture": "Meble",
-        "clothing": "Odzież",
-        "books": "Książki",
-        "sports": "Sport",
-        "homeGarden": "Dom i ogród",
-        "kidsBaby": "Dzieci i niemowlęta",
-        "vehicles": "Pojazdy",
-        "other": "Inne"
+        "allCategories": "Wszystkie kategorie"
       },
-      "listingType": {
-        "all": "Wszystkie typy",
-        "sale": "Na sprzedaż",
-        "free": "Za darmo",
-        "wanted": "Poszukiwane",
-        "trade": "Na wymianę"
-      },
-      "condition": {
-        "all": "Dowolny stan",
-        "new": "Nowy",
-        "likeNew": "Jak nowy",
-        "good": "Dobry",
-        "fair": "Przeciętny",
-        "poor": "Słaby"
-      },
-      "minPrice": "Min €",
-      "maxPrice": "Maks €",
-      "item": "przedmiot",
-      "items": "przedmiotów",
       "emptyTitle": "Nie znaleziono przedmiotów",
       "emptyBody": "Zmień filtry lub utwórz nowe ogłoszenie."
     },
@@ -3689,102 +5886,891 @@
       "price": {
         "free": "ZA DARMO",
         "wanted": "Poszukiwane",
-        "trade": "Wymiana",
         "contact": "Cena do uzgodnienia"
       },
-      "minutesAgo": "{{count}} min temu",
-      "hoursAgo": "{{count}} godz. temu",
-      "daysAgo": "{{count}} dni temu",
-      "reserved": "Zarezerwowane",
-      "sold": "Sprzedane",
       "views": "{{count}} wyświetleń",
       "messages": "{{count}} wiadomości",
-      "markSold": "Oznacz jako sprzedane",
       "contactSeller": "Skontaktuj się ze sprzedawcą",
       "viewDetails": "Zobacz szczegóły"
     },
     "itemForm": {
-      "listingTypes": {
-        "sale": {
-          "label": "Na sprzedaż",
-          "description": "Sprzedaż za określoną cenę"
-        },
-        "free": {
-          "label": "Za darmo",
-          "description": "Oddam za darmo"
-        },
-        "wanted": {
-          "label": "Poszukiwane",
-          "description": "Szukam do kupienia"
-        },
-        "trade": {
-          "label": "Na wymianę",
-          "description": "Szukam do wymiany"
-        }
-      },
-      "conditions": {
-        "new": {
-          "label": "Nowy",
-          "description": "Zupełnie nowy, nieużywany"
-        },
-        "likeNew": {
-          "label": "Jak nowy",
-          "description": "Używany raz lub dwa razy, idealny stan"
-        },
-        "good": {
-          "label": "Dobry",
-          "description": "Lekko używany, drobne ślady zużycia"
-        },
-        "fair": {
-          "label": "Przeciętny",
-          "description": "Regularnie używany, widoczne zużycie"
-        },
-        "poor": {
-          "label": "Słaby",
-          "description": "Mocno zużyty, może wymagać naprawy"
-        }
-      },
-      "photos": "Zdjęcia (do 10)",
-      "imageUrlPlaceholder": "Wpisz adres URL obrazu",
-      "imageAlt": "Przedmiot {{index}}",
       "titleLabel": "Tytuł",
       "titlePlaceholder": "Co sprzedajesz?",
       "descriptionLabel": "Opis",
       "descriptionPlaceholder": "Opisz swój przedmiot szczegółowo...",
-      "listingTypeLegend": "Typ ogłoszenia",
       "priceLabel": "Cena",
-      "pricePlaceholder": "0,00",
-      "currencyLabel": "Waluta",
-      "categoryLabel": "Kategoria",
-      "conditionLegend": "Stan",
       "errors": {
         "titleRequired": "Tytuł jest wymagany",
         "titleMin": "Tytuł musi mieć co najmniej 3 znaki",
-        "titleMax": "Tytuł musi mieć mniej niż 100 znaków",
-        "descriptionRequired": "Opis jest wymagany",
-        "descriptionMin": "Opis musi mieć co najmniej 10 znaków",
         "invalidPrice": "Podaj prawidłową cenę"
       },
-      "updating": "Aktualizowanie...",
       "creating": "Tworzenie...",
-      "update": "Zaktualizuj ogłoszenie",
       "create": "Utwórz ogłoszenie"
+    },
+    "hub": {
+      "tabs": {
+        "feed": "Aktualności",
+        "groups": "Grupy",
+        "events": "Wydarzenia",
+        "marketplace": "Giełda"
+      },
+      "tabsLabel": "Sekcje społeczności",
+      "building": "Budynek",
+      "buildingsError": "Nie udało się wczytać Twoich budynków.",
+      "noBuildingTitle": "Brak dostępnego budynku",
+      "noBuildingBody": "Społeczność jest zorganizowana według budynków. Gdy zostaniesz przypisany do lokalu lub budynku, pojawią się tu jego grupy, wydarzenia i giełda.",
+      "loadError": "Nie udało się wczytać danych. Spróbuj ponownie.",
+      "retry": "Spróbuj ponownie",
+      "you": "Ty",
+      "neighbor": "Sąsiad",
+      "anonymous": "Anonim",
+      "feedNoGroupsTitle": "Twoje aktualności są puste",
+      "feedNoGroupsBody": "Dołącz do grupy w tym budynku, aby widzieć i udostępniać posty.",
+      "browseGroups": "Przeglądaj grupy",
+      "filterByGroup": "Pokaż",
+      "postTo": "Opublikuj w",
+      "postType": "Typ",
+      "postTitlePlaceholder": "Tytuł (opcjonalnie)",
+      "postAnonymously": "Opublikuj anonimowo",
+      "postCreated": "Twój post został opublikowany.",
+      "postFailed": "Nie udało się opublikować posta",
+      "likeFailed": "Nie udało się polubić posta",
+      "postsHeading": "Posty",
+      "postCount": "Posty: {{count}}",
+      "joinToPost": "Dołącz do tej grupy, aby publikować.",
+      "groupType": "Typ grupy",
+      "allGroupTypes": "Wszystkie typy grup",
+      "groupRules": "Zasady grupy",
+      "groupRulesPlaceholder": "np. Bądź uprzejmy, bez reklam",
+      "createGroupFailed": "Nie udało się utworzyć grupy",
+      "eventType": "Typ wydarzenia",
+      "allEventTypes": "Wszystkie typy wydarzeń",
+      "attendees": "Uczestnicy",
+      "joinOnline": "Dołącz online",
+      "rsvp": "Twoja odpowiedź",
+      "rsvpSaved": "Twoja odpowiedź została zapisana.",
+      "rsvpFailed": "Nie udało się zapisać odpowiedzi",
+      "isVirtual": "Wydarzenie online",
+      "virtualLink": "Link do spotkania",
+      "costPerPerson": "Koszt na osobę (opcjonalnie, EUR)",
+      "eventCreated": "Wydarzenie zostało utworzone.",
+      "createEventFailed": "Nie udało się utworzyć wydarzenia",
+      "category": "Kategoria",
+      "condition": "Stan",
+      "pricing": "Cena",
+      "giveAwayFree": "Oddam za darmo",
+      "negotiable": "Cena do negocjacji",
+      "tradeAccepted": "Możliwa wymiana",
+      "photoUrl": "URL zdjęcia (opcjonalnie)",
+      "pickupDetails": "Szczegóły odbioru",
+      "itemCreated": "Twoje ogłoszenie zostało opublikowane.",
+      "createItemFailed": "Nie udało się utworzyć ogłoszenia",
+      "noPhoto": "Brak zdjęcia",
+      "itemNotFound": "Nie znaleziono ogłoszenia",
+      "backToMarketplace": "Powrót do giełdy",
+      "listedOn": "Dodano",
+      "ownListing": "To jest Twoje ogłoszenie. Sąsiedzi mogą się z Tobą skontaktować z tej strony.",
+      "listingUnavailable": "To ogłoszenie nie jest już dostępne.",
+      "message": "Wiadomość",
+      "messagePlaceholder": "Dzień dobry, czy to jest jeszcze dostępne?",
+      "messageRequired": "Napisz wiadomość.",
+      "offerPrice": "Twoja oferta (opcjonalnie)",
+      "sendMessage": "Wyślij wiadomość",
+      "sending": "Wysyłanie...",
+      "inquirySent": "Twoja wiadomość została wysłana do sprzedającego.",
+      "inquiryFailed": "Nie udało się wysłać wiadomości"
+    },
+    "groupTypes": {
+      "interest": "Zainteresowania",
+      "floor": "Piętro",
+      "building": "Budynek",
+      "neighborhood": "Sąsiedztwo",
+      "official": "Oficjalna"
+    },
+    "postTypes": {
+      "text": "Post",
+      "photo": "Zdjęcie",
+      "poll": "Ankieta",
+      "event": "Wydarzenie",
+      "marketplace": "Giełda",
+      "question": "Pytanie",
+      "announcement": "Ogłoszenie"
+    },
+    "eventTypes": {
+      "social": "Towarzyskie",
+      "meeting": "Spotkanie",
+      "workshop": "Warsztaty",
+      "volunteer": "Wolontariat",
+      "sports": "Sport",
+      "cultural": "Kulturalne",
+      "other": "Inne"
+    },
+    "marketplaceCategories": {
+      "furniture": "Meble",
+      "electronics": "Elektronika",
+      "clothing": "Odzież",
+      "sports": "Sport",
+      "books": "Książki",
+      "toys": "Zabawki",
+      "home_garden": "Dom i ogród",
+      "services": "Usługi",
+      "free": "Za darmo",
+      "wanted": "Kupię",
+      "other": "Inne"
+    },
+    "itemConditions": {
+      "new": "Nowy",
+      "like_new": "Jak nowy",
+      "good": "Dobry",
+      "fair": "Używany",
+      "for_parts": "Na części"
+    },
+    "itemStatus": {
+      "active": "Aktywne",
+      "sold": "Sprzedane",
+      "reserved": "Zarezerwowane",
+      "expired": "Wygasłe",
+      "removed": "Usunięte"
     }
   },
   "leases": {
-    "created": "Umowa najmu utworzona",
+    "created": "Umowa najmu została utworzona",
     "createFailed": "Nie udało się utworzyć umowy najmu",
-    "violationRecorded": "Naruszenie zarejestrowane",
-    "violationCreateFailed": "Nie udało się zarejestrować naruszenia"
+    "violationRecorded": "Naruszenie zostało zarejestrowane",
+    "violationCreateFailed": "Nie udało się zarejestrować naruszenia",
+    "daysShort": "{{count}} d.",
+    "payments": {
+      "recordModal": {
+        "title": "Zarejestruj płatność",
+        "dueOn": "Planowana płatność z terminem {{date}}",
+        "amount": "Zapłacona kwota",
+        "amountInvalid": "Podaj kwotę większą od zera",
+        "method": "Metoda płatności",
+        "referencePlaceholder": "np. tytuł przelewu lub ID transakcji"
+      },
+      "methods": {
+        "bank_transfer": "Przelew bankowy",
+        "cash": "Gotówka",
+        "credit_card": "Karta kredytowa",
+        "debit_card": "Karta debetowa",
+        "check": "Czek",
+        "other": "Inna"
+      },
+      "recorded": "Płatność została zarejestrowana",
+      "recordFailed": "Nie udało się zarejestrować płatności",
+      "noPayments": "Brak historii płatności",
+      "dueDate": "Termin płatności",
+      "amount": "Kwota",
+      "status": "Status",
+      "paidDate": "Data zapłaty",
+      "reference": "Tytuł płatności",
+      "actions": "Akcje",
+      "paid": "Zapłacono",
+      "recordPayment": "Zarejestruj płatność",
+      "statusLabels": {
+        "pending": "Oczekuje",
+        "paid": "Zapłacona",
+        "overdue": "Zaległa",
+        "partial": "Zapłacona częściowo",
+        "waived": "Umorzona"
+      }
+    },
+    "templates": {
+      "created": "Szablon został utworzony",
+      "createFailed": "Nie udało się utworzyć szablonu",
+      "updated": "Szablon został zaktualizowany",
+      "updateFailed": "Nie udało się zaktualizować szablonu",
+      "activated": "Szablon został aktywowany",
+      "deactivated": "Szablon został dezaktywowany",
+      "title": "Szablony umów",
+      "subtitle": "Zarządzaj szablonami wielokrotnego użytku do szybkiego tworzenia umów",
+      "createNew": "Nowy szablon",
+      "createTemplate": "Utwórz szablon",
+      "editTemplate": "Edytuj szablon",
+      "noTemplates": "Nie znaleziono szablonów",
+      "createFirst": "Utwórz pierwszy szablon",
+      "active": "Aktywny",
+      "inactive": "Nieaktywny",
+      "activate": "Aktywuj",
+      "deactivate": "Dezaktywuj",
+      "defaultRent": "Domyślny czynsz",
+      "duration": "Okres najmu",
+      "months_one": "{{count}} miesiąc",
+      "months_few": "{{count}} miesiące",
+      "months_many": "{{count}} miesięcy",
+      "months_other": "{{count}} miesiąca",
+      "form": {
+        "name": "Nazwa szablonu",
+        "namePlaceholder": "np. Standardowa umowa na 12 miesięcy",
+        "description": "Opis",
+        "descriptionPlaceholder": "Krótko opisz, kiedy używać tego szablonu",
+        "content": "Treść umowy",
+        "contentPlaceholder": "Wpisz standardowe warunki umowy...",
+        "defaultRent": "Domyślny czynsz",
+        "currency": "Waluta",
+        "depositMonths": "Kaucja (miesiące)",
+        "durationMonths": "Okres najmu (miesiące)",
+        "isActive": "Szablon jest aktywny i dostępny do użycia"
+      },
+      "errors": {
+        "nameRequired": "Podaj nazwę szablonu",
+        "contentRequired": "Podaj treść umowy"
+      }
+    },
+    "applications": {
+      "screeningStarted": "Zlecono weryfikację najemcy",
+      "screeningFailed": "Nie udało się rozpocząć weryfikacji najemcy",
+      "approved": "Wniosek został zatwierdzony",
+      "rejected": "Wniosek został odrzucony",
+      "reviewFailed": "Nie udało się zapisać oceny",
+      "title": "Wnioski o najem",
+      "showing": "Wyświetlono: {{count}} z {{total}}",
+      "pendingReview_one": "{{count}} oczekuje na ocenę",
+      "pendingReview_few": "{{count}} oczekują na ocenę",
+      "pendingReview_many": "{{count}} oczekuje na ocenę",
+      "pendingReview_other": "{{count}} oczekuje na ocenę",
+      "searchPlaceholder": "Szukaj według imienia i nazwiska lub e-maila...",
+      "allStatuses": "Wszystkie statusy",
+      "allUnits": "Wszystkie lokale",
+      "clearFilters": "Wyczyść filtry",
+      "noApplications": "Nie znaleziono wniosków",
+      "newApplication": "Nowy wniosek",
+      "submittedOn": "Złożono",
+      "createdOn": "Utworzono",
+      "review": "Oceń",
+      "backToApplications": "Powrót do wniosków",
+      "applyingFor": "Wnioskowany lokal",
+      "reviewApplication": "Oceń wniosek",
+      "reviewNotes": "Uwagi do oceny",
+      "reviewNotesPlaceholder": "Dodaj uwagi do swojej decyzji...",
+      "approve": "Zatwierdź",
+      "reject": "Odrzuć",
+      "createLease": "Utwórz umowę na podstawie wniosku",
+      "details": "Dane wniosku",
+      "currentAddress": "Obecny adres",
+      "employer": "Pracodawca",
+      "annualIncome": "Dochód roczny",
+      "moveInDate": "Preferowana data wprowadzenia się",
+      "occupants": "Liczba osób",
+      "pets": "Zwierzęta domowe",
+      "references": "Referencje",
+      "applicantNotes": "Uwagi wnioskodawcy",
+      "screening": "Weryfikacja wnioskodawcy",
+      "screeningComplete": "Wszystkie weryfikacje zakończone",
+      "initiateScreening": "Rozpocznij weryfikację",
+      "startScreening": "Rozpocznij weryfikację",
+      "noScreenings": "Nie rozpoczęto żadnej weryfikacji",
+      "alreadyInitiated": "już rozpoczęta",
+      "requestedOn": "Zlecono",
+      "completedOn": "Zakończono",
+      "score": "Wynik",
+      "reviewHistory": "Historia oceny",
+      "reviewedOn": "Oceniono {{date}}",
+      "status": {
+        "draft": "Szkic",
+        "submitted": "Złożony",
+        "under_review": "W ocenie",
+        "screening": "Weryfikacja",
+        "approved": "Zatwierdzony",
+        "rejected": "Odrzucony",
+        "withdrawn": "Wycofany"
+      },
+      "screeningTypes": {
+        "credit_check": "Weryfikacja zdolności kredytowej",
+        "background_check": "Weryfikacja niekaralności",
+        "employment_verification": "Weryfikacja zatrudnienia",
+        "rental_history": "Historia najmu",
+        "income_verification": "Weryfikacja dochodów"
+      },
+      "screeningStatus": {
+        "pending": "Oczekuje",
+        "in_progress": "W toku",
+        "completed": "Zakończona",
+        "failed": "Nieudana"
+      },
+      "screeningResult": {
+        "pass": "Pozytywny",
+        "fail": "Negatywny",
+        "review_required": "Wymaga oceny"
+      },
+      "stats": {
+        "total": "Wnioski łącznie",
+        "pending": "Oczekujące na ocenę",
+        "approved": "Zatwierdzone",
+        "rejected": "Odrzucone"
+      },
+      "filterByStatus": "Filtruj według statusu",
+      "filterByUnit": "Filtruj według lokalu"
+    },
+    "violations": {
+      "resolved": "Naruszenie zostało rozwiązane",
+      "resolveFailed": "Nie udało się rozwiązać naruszenia",
+      "disputed": "Sprzeciw został złożony",
+      "disputeFailed": "Nie udało się złożyć sprzeciwu",
+      "evidenceUploaded": "Dowody zostały przesłane",
+      "evidenceUploadFailed": "Nie udało się przesłać dowodów",
+      "uploadingEvidence": "Przesyłanie…",
+      "title": "Naruszenia umów najmu",
+      "subtitle": "Rejestruj i rozwiązuj naruszenia umów najmu",
+      "createNew": "Zgłoś naruszenie",
+      "createTitle": "Zgłoszenie naruszenia",
+      "createSubtitle": "Udokumentuj naruszenie umowy, aby je śledzić i rozwiązać",
+      "backToViolations": "Powrót do naruszeń",
+      "exportReport": "Eksportuj raport",
+      "searchPlaceholder": "Szukaj według najemcy, lokalu lub budynku...",
+      "filterByLease": "Filtruj według umowy",
+      "filterByStatus": "Filtruj według statusu",
+      "filterBySeverity": "Filtruj według wagi",
+      "allLeases": "Wszystkie umowy",
+      "allStatuses": "Wszystkie statusy",
+      "allSeverities": "Wszystkie wagi",
+      "clearFilters": "Wyczyść filtry",
+      "showing": "Wyświetlono: {{count}} z {{total}}",
+      "noViolations": "Nie znaleziono naruszeń",
+      "noViolationsDescription": "Żadne naruszenie nie spełnia podanych kryteriów.",
+      "resolve": "Rozwiąż",
+      "dispute": "Zakwestionuj",
+      "violationDate": "Data naruszenia",
+      "reportedAt": "Zgłoszono",
+      "reportedBy": "Zgłaszający",
+      "leaseLabel": "Okres najmu",
+      "descriptionLabel": "Opis",
+      "resolution": "Rozwiązanie",
+      "resolvedAt": "Rozwiązano",
+      "disputeInfo": "Informacje o sprzeciwie",
+      "disputedAt": "Zakwestionowano",
+      "by": "–",
+      "resolveViolation": "Rozwiąż naruszenie",
+      "resolutionNotes": "Uwagi do rozwiązania",
+      "resolutionNotesPlaceholder": "Opisz, jak naruszenie zostało rozwiązane...",
+      "confirmResolve": "Potwierdź rozwiązanie",
+      "disputeViolation": "Zakwestionuj naruszenie",
+      "disputeReason": "Uzasadnienie sprzeciwu",
+      "disputeReasonPlaceholder": "Wyjaśnij, dlaczego kwestionujesz to naruszenie...",
+      "confirmDispute": "Złóż sprzeciw",
+      "evidenceDocumentation": "Dowody i dokumentacja",
+      "uploadEvidence": "Prześlij dowody",
+      "noEvidence": "Nie przesłano jeszcze dowodów",
+      "statusHistory": "Historia statusów",
+      "noTimeline": "Brak zarejestrowanej aktywności",
+      "tabs": {
+        "details": "Szczegóły",
+        "evidence": "Dowody",
+        "timeline": "Oś czasu"
+      },
+      "type": {
+        "noise": "Zakłócanie spokoju",
+        "damage": "Uszkodzenie mienia",
+        "unauthorized_occupant": "Nieuprawniony lokator",
+        "late_payment": "Opóźnienie w płatności",
+        "pet_policy": "Naruszenie zasad posiadania zwierząt",
+        "parking": "Naruszenie zasad parkowania",
+        "cleanliness": "Naruszenie zasad czystości i porządku",
+        "illegal_activity": "Działalność niezgodna z prawem",
+        "lease_terms": "Naruszenie warunków umowy",
+        "other": "Inne"
+      },
+      "severity": {
+        "minor": "Niska",
+        "moderate": "Średnia",
+        "severe": "Wysoka"
+      },
+      "status": {
+        "open": "Otwarte",
+        "resolved": "Rozwiązane",
+        "disputed": "Zakwestionowane",
+        "escalated": "Eskalowane",
+        "dismissed": "Oddalone"
+      },
+      "stats": {
+        "total": "Naruszenia łącznie",
+        "open": "Otwarte naruszenia",
+        "resolved": "Rozwiązane",
+        "disputed": "Zakwestionowane"
+      },
+      "form": {
+        "lease": "Umowa najmu",
+        "selectLease": "Wybierz umowę",
+        "violationType": "Rodzaj naruszenia",
+        "selectType": "Wybierz rodzaj naruszenia",
+        "severity": "Waga",
+        "violationDate": "Data naruszenia",
+        "description": "Opis",
+        "descriptionPlaceholder": "Opisz szczegóły naruszenia – co się stało, kiedy i ewentualnych świadków...",
+        "characters_one": "{{count}} znak",
+        "characters_few": "{{count}} znaki",
+        "characters_many": "{{count}} znaków",
+        "characters_other": "{{count}} znaku",
+        "evidence": "Dowody (opcjonalnie)",
+        "uploadFiles": "Prześlij pliki",
+        "orDragDrop": "lub przeciągnij i upuść",
+        "fileTypesHint": "PNG, JPG, PDF, DOC, każdy do 10 MB",
+        "filesSelected_one": "Wybrano {{count}} plik",
+        "filesSelected_few": "Wybrano {{count}} pliki",
+        "filesSelected_many": "Wybrano {{count}} plików",
+        "filesSelected_other": "Wybrano {{count}} pliku",
+        "submit": "Wyślij zgłoszenie naruszenia",
+        "errors": {
+          "leaseRequired": "Wybierz umowę",
+          "typeRequired": "Wybierz rodzaj naruszenia",
+          "severityRequired": "Wybierz wagę naruszenia",
+          "descriptionRequired": "Podaj opis",
+          "descriptionTooShort": "Opis musi mieć co najmniej 10 znaków",
+          "dateRequired": "Podaj datę naruszenia",
+          "dateInFuture": "Data naruszenia nie może być w przyszłości"
+        }
+      }
+    },
+    "title": "Zarządzanie najmem",
+    "perMonth": "/mies.",
+    "daysRemaining_one": "pozostał {{count}} dzień",
+    "daysRemaining_few": "pozostały {{count}} dni",
+    "daysRemaining_many": "pozostało {{count}} dni",
+    "daysRemaining_other": "pozostało {{count}} dnia",
+    "expiringSoon": "Wkrótce wygasa",
+    "renew": "Przedłuż",
+    "terminate": "Rozwiąż",
+    "status": {
+      "draft": "Szkic",
+      "pending_signatures": "Oczekuje na podpisy",
+      "active": "Aktywna",
+      "expiring_soon": "Wkrótce wygasa",
+      "expired": "Wygasła",
+      "terminated": "Rozwiązana",
+      "renewed": "Przedłużona"
+    },
+    "dashboard": {
+      "title": "Przegląd najmu",
+      "subtitle": "Przegląd umów najmu, wniosków i wygasających umów",
+      "viewApplications": "Zobacz wnioski",
+      "createLease": "Utwórz umowę",
+      "viewAll": "Zobacz wszystkie",
+      "urgentLeases": "Wymaga pilnej uwagi",
+      "expiring30Days": "Wygasa w ciągu 30 dni",
+      "expiring60Days": "Wygasa w ciągu 60 dni",
+      "noLeasesExpiring": "W tym okresie nie wygasa żadna umowa",
+      "stats": {
+        "totalLeases": "Umowy łącznie",
+        "activeLeases": "Aktywne umowy",
+        "expiringLeases": "Wkrótce wygasają",
+        "expiredLeases": "Wygasłe",
+        "monthlyRent": "Czynsz miesięczny",
+        "pendingApplications": "Oczekujące wnioski",
+        "overduePayments": "Zaległe płatności",
+        "occupancyRate": "Obłożenie: {{rate}}"
+      },
+      "daysShort_one": "{{count}} dzień",
+      "daysShort_few": "{{count}} dni",
+      "daysShort_many": "{{count}} dni",
+      "daysShort_other": "{{count}} dnia"
+    },
+    "list": {
+      "title": "Wszystkie umowy najmu",
+      "showing": "Wyświetlono: {{count}} z {{total}}",
+      "createNew": "Nowa umowa",
+      "searchPlaceholder": "Szukaj według najemcy, lokalu lub budynku...",
+      "allStatuses": "Wszystkie statusy",
+      "allBuildings": "Wszystkie budynki",
+      "allExpiry": "Wszystkie terminy wygaśnięcia",
+      "expiringIn_one": "Wygasa w ciągu {{count}} dnia",
+      "expiringIn_few": "Wygasa w ciągu {{count}} dni",
+      "expiringIn_many": "Wygasa w ciągu {{count}} dni",
+      "expiringIn_other": "Wygasa w ciągu {{count}} dnia",
+      "clearFilters": "Wyczyść filtry",
+      "noLeases": "Nie znaleziono umów najmu",
+      "createFirst": "Utwórz pierwszą umowę najmu",
+      "filterByStatus": "Filtruj według statusu",
+      "filterByBuilding": "Filtruj według budynku",
+      "filterByExpiry": "Filtruj według wygaśnięcia"
+    },
+    "detail": {
+      "backToLeases": "Powrót do umów",
+      "startDate": "Początek najmu",
+      "endDate": "Koniec najmu",
+      "monthlyRent": "Czynsz miesięczny",
+      "deposit": "Kaucja",
+      "paymentDay": "Termin płatności",
+      "dayOfMonth": "{{day}}. dzień każdego miesiąca",
+      "signedDate": "Data podpisania",
+      "leaseDetails": "Dane umowy",
+      "terms": "Warunki umowy",
+      "notes": "Notatki",
+      "termination": "Rozwiązanie",
+      "terminatedOn": "Rozwiązana {{date}}",
+      "amendments": "Aneksy",
+      "addAmendment": "Dodaj aneks",
+      "noAmendments": "Brak aneksów",
+      "effectiveDate": "Data wejścia w życie",
+      "paymentHistory": "Historia płatności",
+      "reminders": "Przypomnienia",
+      "noReminders": "Brak przypomnień",
+      "scheduledFor": "Zaplanowano na",
+      "sent": "Wysłano",
+      "pending": "Oczekuje",
+      "tabs": {
+        "overview": "Przegląd",
+        "amendments": "Aneksy",
+        "payments": "Płatności",
+        "reminders": "Przypomnienia",
+        "violations": "Naruszenia"
+      },
+      "violationsSection": "Naruszenia umowy",
+      "reportViolation": "Zgłoś naruszenie",
+      "viewAllViolations": "Zobacz wszystkie naruszenia",
+      "noViolations": "Dla tej umowy nie odnotowano naruszeń",
+      "openViolationsWarning_one": "{{count}} otwarte naruszenie wymaga uwagi",
+      "openViolationsWarning_few": "{{count}} otwarte naruszenia wymagają uwagi",
+      "openViolationsWarning_many": "{{count}} otwartych naruszeń wymaga uwagi",
+      "openViolationsWarning_other": "{{count}} otwartego naruszenia wymaga uwagi",
+      "moreViolations_one": "+{{count}} kolejne naruszenie",
+      "moreViolations_few": "+{{count}} kolejne naruszenia",
+      "moreViolations_many": "+{{count}} kolejnych naruszeń",
+      "moreViolations_other": "+{{count}} kolejnego naruszenia"
+    },
+    "create": {
+      "title": "Nowa umowa najmu",
+      "subtitle": "Przygotuj nową umowę najmu dla najemcy",
+      "back": "Powrót do umów"
+    },
+    "form": {
+      "template": "Szablon umowy",
+      "noTemplate": "Bez szablonu (pusta umowa)",
+      "unit": "Lokal",
+      "selectUnit": "Wybierz lokal",
+      "tenant": "Najemca",
+      "selectTenant": "Wybierz najemcę",
+      "startDate": "Początek najmu",
+      "endDate": "Koniec najmu",
+      "rentAmount": "Czynsz miesięczny",
+      "currency": "Waluta",
+      "depositAmount": "Kaucja",
+      "paymentDay": "Dzień płatności w miesiącu",
+      "paymentDayHelp": "Podaj dzień od 1 do 28, aby termin płatności był co miesiąc taki sam",
+      "terms": "Warunki umowy",
+      "termsPlaceholder": "Wpisz warunki umowy najmu...",
+      "notes": "Notatki wewnętrzne",
+      "notesPlaceholder": "Notatki widoczne tylko dla zarządcy...",
+      "createLease": "Utwórz umowę",
+      "errors": {
+        "unitRequired": "Wybierz lokal",
+        "tenantRequired": "Wybierz najemcę",
+        "startDateRequired": "Podaj początek najmu",
+        "endDateRequired": "Podaj koniec najmu",
+        "endDateAfterStart": "Koniec najmu musi przypadać po jego początku",
+        "rentAmountRequired": "Podaj wysokość czynszu",
+        "paymentDayInvalid": "Dzień płatności musi być od 1 do 28"
+      }
+    },
+    "esign": {
+      "requestSignature": "Poproś o podpis",
+      "modal": {
+        "title": "Prośba o podpis",
+        "selectSigners": "Wybierz sygnatariuszy",
+        "subject": "Temat (opcjonalnie)",
+        "subjectPlaceholder": "np. Podpisanie umowy najmu",
+        "message": "Wiadomość do sygnatariuszy (opcjonalnie)",
+        "messagePlaceholder": "Prosimy o zapoznanie się z załączoną umową najmu i jej podpisanie.",
+        "sending": "Wysyłanie…",
+        "send": "Wyślij do podpisu"
+      },
+      "role": {
+        "tenant": "Najemca",
+        "manager": "Zarządca"
+      },
+      "status": {
+        "pending": "Oczekuje na podpis",
+        "in_progress": "Podpisywanie w toku",
+        "completed": "Podpisano",
+        "declined": "Odrzucono",
+        "expired": "Wygasło",
+        "cancelled": "Anulowano"
+      }
+    },
+    "actions": {
+      "edit": {
+        "title": "Edytuj umowę",
+        "description": "Czynsz, terminy i strony umowy są ustalone po jej utworzeniu. Aby je zmienić, użyj przedłużenia lub aneksu.",
+        "tenantPhone": "Telefon najemcy",
+        "parkingSpaces": "Miejsca parkingowe",
+        "storageUnits": "Komórki lokatorskie",
+        "maxOccupants": "Maksymalna liczba osób",
+        "petsAllowed": "Zwierzęta dozwolone",
+        "smokingAllowed": "Palenie dozwolone",
+        "invalidNumber": "Podaj liczbę całkowitą równą 0 lub większą",
+        "submit": "Zapisz zmiany",
+        "success": "Umowa została zaktualizowana",
+        "failed": "Nie udało się zaktualizować umowy"
+      },
+      "renew": {
+        "title": "Przedłuż umowę",
+        "description": "Zostanie utworzony nowy szkic umowy z początkiem {{date}}, a ta umowa zostanie oznaczona jako przedłużona.",
+        "newEndDate": "Nowy koniec najmu",
+        "term_one": "Okres najmu: {{count}} miesiąc",
+        "term_few": "Okres najmu: {{count}} miesiące",
+        "term_many": "Okres najmu: {{count}} miesięcy",
+        "term_other": "Okres najmu: {{count}} miesiąca",
+        "newMonthlyRent": "Nowy czynsz miesięczny",
+        "newSecurityDeposit": "Nowa kaucja",
+        "depositHint": "Pozostaw puste, aby zachować obecną kaucję",
+        "endDateInvalid": "Nowy koniec najmu musi przypadać po {{date}}",
+        "rentInvalid": "Podaj kwotę większą od zera",
+        "depositInvalid": "Podaj kwotę większą od zera lub pozostaw pole puste",
+        "submit": "Przedłuż umowę",
+        "success": "Umowa została przedłużona. Utworzono nowy szkic umowy.",
+        "failed": "Nie udało się przedłużyć umowy"
+      },
+      "terminate": {
+        "title": "Rozwiąż umowę",
+        "description": "Podaj przyczynę i datę rozwiązania najmu. Przed rozwiązaniem zostaniesz poproszony o potwierdzenie.",
+        "reason": "Przyczyna rozwiązania",
+        "selectReason": "Wybierz przyczynę",
+        "reasonRequired": "Wybierz przyczynę rozwiązania",
+        "effectiveDate": "Data rozwiązania",
+        "dateRequired": "Wybierz datę rozwiązania",
+        "continue": "Dalej",
+        "reasons": {
+          "end_of_term": "Upływ okresu najmu",
+          "mutual_agreement": "Porozumienie stron",
+          "tenant_breach": "Naruszenie obowiązków przez najemcę",
+          "landlord_breach": "Naruszenie obowiązków przez wynajmującego",
+          "property_sale": "Sprzedaż nieruchomości",
+          "renovation": "Remont",
+          "other": "Inna przyczyna"
+        },
+        "confirmTitle": "Rozwiązać tę umowę?",
+        "confirmMessage": "Umowa najmu dla {{unit}} ({{tenant}}) zostanie rozwiązana z dniem {{date}}. Tej operacji nie można cofnąć.",
+        "confirm": "Rozwiąż umowę",
+        "success": "Umowa została rozwiązana",
+        "failed": "Nie udało się rozwiązać umowy"
+      },
+      "amendment": {
+        "title": "Dodaj aneks",
+        "amendmentTitle": "Tytuł",
+        "titlePlaceholder": "np. Zmiana wysokości czynszu",
+        "titleRequired": "Podaj tytuł",
+        "description": "Opis",
+        "dateRequired": "Wybierz datę wejścia w życie",
+        "newMonthlyRent": "Nowy czynsz miesięczny (opcjonalnie)",
+        "rentHint": "Nowy czynsz zostanie zapisany w aneksie; czynsz w samej umowie nie zmieni się automatycznie.",
+        "submit": "Dodaj aneks",
+        "success": "Aneks został dodany",
+        "failed": "Nie udało się dodać aneksu"
+      }
+    },
+    "notice": {
+      "loading": {
+        "lease": "Wczytywanie umowy…",
+        "application": "Wczytywanie wniosku…",
+        "violation": "Wczytywanie naruszenia…"
+      },
+      "notFound": {
+        "lease": "Nie znaleziono umowy",
+        "application": "Nie znaleziono wniosku",
+        "violation": "Nie znaleziono naruszenia"
+      },
+      "notFoundBody": {
+        "lease": "Nie udało się wczytać tej umowy. Mogła zostać usunięta lub nie masz do niej dostępu.",
+        "application": "Nie udało się wczytać tego wniosku. Mógł zostać usunięty lub nie masz do niego dostępu.",
+        "violation": "Nie udało się wczytać tego naruszenia. Mogło zostać usunięte lub nie masz do niego dostępu."
+      },
+      "back": {
+        "lease": "Powrót do umów",
+        "application": "Powrót do wniosków",
+        "violation": "Powrót do naruszeń"
+      }
+    },
+    "nav": {
+      "templates": "Szablony umów",
+      "violations": "Naruszenia"
+    }
   },
   "meters": {
-    "readingSubmitted": "Odczyt przesłany",
-    "submitFailed": "Nie udało się przesłać odczytu",
-    "correctionSubmitted": "Korekta odczytu przesłana",
+    "readingSubmitted": "Odczyt został wysłany",
+    "submitFailed": "Nie udało się wysłać odczytu",
+    "correctionSubmitted": "Korekta odczytu została wysłana",
     "updateFailed": "Nie udało się zaktualizować odczytu",
-    "readingValidated": "Odczyt zweryfikowany",
+    "readingValidated": "Odczyt został zweryfikowany",
     "validationFailedTitle": "Weryfikacja nie powiodła się",
-    "validationFailed": "Nie udało się zweryfikować odczytu"
+    "validationFailed": "Nie udało się zweryfikować odczytu",
+    "comparison": {
+      "noData": "Brak danych o zużyciu dla wybranych liczników w tym okresie",
+      "loadFailedTitle": "Porównanie nie powiodło się",
+      "loadFailed": "Nie udało się wczytać zużycia jednego lub kilku liczników",
+      "title": "Porównanie liczników",
+      "subtitle": "Porównaj odczyty wielu liczników w czasie",
+      "selectMeters": "Wybierz liczniki",
+      "dateRange": "Okres",
+      "compare": "Porównaj",
+      "chartTitle": "Porównanie odczytów",
+      "overlay": "Nałożenie",
+      "sideBySide": "Obok siebie",
+      "selectToCompare": "Wybierz liczniki i kliknij Porównaj",
+      "exportData": "Eksportuj dane"
+    },
+    "title": "Liczniki",
+    "summary_one": "Wyświetlono: {{shown}} z {{count}} licznika",
+    "summary_few": "Wyświetlono: {{shown}} z {{count}} liczników",
+    "summary_many": "Wyświetlono: {{shown}} z {{count}} liczników",
+    "summary_other": "Wyświetlono: {{shown}} z {{count}} licznika",
+    "meterInfo": "Dane licznika",
+    "type": "Rodzaj",
+    "serialNumber": "Numer fabryczny",
+    "unitOfMeasurement": "Jednostka miary",
+    "location": "Lokalizacja",
+    "unit": "Lokal",
+    "installationDate": "Data montażu",
+    "lastReading": "Ostatni odczyt",
+    "noReadings": "Brak odczytów",
+    "submitReading": "Wprowadź odczyt",
+    "readingHistory": "Historia odczytów",
+    "consumptionHistory": "Historia zużycia",
+    "noConsumptionData": "Brak danych o zużyciu",
+    "totalConsumption": "Zużycie łączne",
+    "averageConsumption": "Średnie zużycie",
+    "consumption": "Zużycie",
+    "readingDate": "Data odczytu",
+    "value": "Stan licznika",
+    "submittedBy": "Wprowadził(a)",
+    "submittedAt": "Wprowadzono",
+    "readingPhoto": "Zdjęcie odczytu",
+    "noMeters": "Nie znaleziono liczników",
+    "showInactive": "Pokaż nieaktywne liczniki",
+    "active": "Aktywny",
+    "inactive": "Nieaktywny",
+    "backToMeters": "Powrót do liczników",
+    "backToMeter": "Powrót do licznika",
+    "pendingValidations": "Odczyty do weryfikacji",
+    "pendingValidationsDescription": "Sprawdź i zweryfikuj odczyty przesłane przez mieszkańców.",
+    "noPendingValidations": "Brak odczytów do weryfikacji",
+    "pendingSummary_one": "Wyświetlono: {{shown}} z {{count}} odczytu do weryfikacji",
+    "pendingSummary_few": "Wyświetlono: {{shown}} z {{count}} odczytów do weryfikacji",
+    "pendingSummary_many": "Wyświetlono: {{shown}} z {{count}} odczytów do weryfikacji",
+    "pendingSummary_other": "Wyświetlono: {{shown}} z {{count}} odczytu do weryfikacji",
+    "approve": "Zatwierdź",
+    "reject": "Odrzuć",
+    "correct": "Popraw",
+    "confirmReject": "Potwierdź odrzucenie",
+    "confirmCorrection": "Potwierdź korektę",
+    "rejectionReason": "Powód odrzucenia",
+    "rejectionReasonPlaceholder": "Wyjaśnij, dlaczego odczyt jest odrzucany...",
+    "correctedValue": "Skorygowany stan",
+    "correctionNotesPlaceholder": "Opcjonalne uwagi do korekty...",
+    "compare": "Porównaj",
+    "readings_one": "{{count}} odczyt",
+    "readings_few": "{{count}} odczyty",
+    "readings_many": "{{count}} odczytów",
+    "readings_other": "{{count}} odczytu",
+    "perPeriod": "na okres",
+    "trend": "Trend",
+    "trendUp": "Zużycie rośnie",
+    "trendDown": "Zużycie spada",
+    "trendStable": "Zużycie stabilne",
+    "types": {
+      "electricity": "Energia elektryczna",
+      "gas": "Gaz",
+      "water": "Woda",
+      "heat": "Ciepło",
+      "cold_water": "Zimna woda",
+      "hot_water": "Ciepła woda"
+    },
+    "status": {
+      "title": "Status",
+      "pending": "Do weryfikacji",
+      "validated": "Zweryfikowany",
+      "rejected": "Odrzucony",
+      "corrected": "Skorygowany"
+    },
+    "form": {
+      "currentReading": "Aktualny stan licznika",
+      "consumption": "Zużycie od ostatniego odczytu",
+      "readingDate": "Data odczytu",
+      "photo": "Zdjęcie licznika",
+      "photoPreview": "Podgląd zdjęcia",
+      "uploadPhoto": "Kliknij, aby przesłać zdjęcie",
+      "photoHelp": "Zrób wyraźne zdjęcie wyświetlacza licznika – ułatwi to weryfikację.",
+      "notes": "Uwagi",
+      "notesPlaceholder": "Dodatkowe informacje o odczycie...",
+      "submitReading": "Wyślij odczyt",
+      "errors": {
+        "valueNegative": "Stan licznika nie może być ujemny",
+        "valueLowerThanLast": "Stan licznika nie może być niższy niż przy ostatnim odczycie",
+        "dateRequired": "Podaj datę odczytu",
+        "futureDate": "Data odczytu nie może być w przyszłości"
+      }
+    },
+    "edit": {
+      "title": "Edytuj odczyt",
+      "previousValue": "Poprzedni stan",
+      "newValue": "Nowy stan",
+      "recordedOn": "Zarejestrowano",
+      "difference": "Różnica",
+      "reason": "Powód zmiany",
+      "reasonPlaceholder": "Wyjaśnij, dlaczego odczyt wymaga zmiany...",
+      "reasonHelp": "Powód jest wymagany na potrzeby ścieżki audytu.",
+      "noteTitle": "Ważne",
+      "noteDescription": "Zmiana odczytu zostanie zapisana w ścieżce audytu wraz z pierwotną wartością i podanym powodem.",
+      "errors": {
+        "reasonRequired": "Podaj powód zmiany"
+      }
+    },
+    "export": {
+      "button": "Eksportuj",
+      "selectFormat": "Wybierz format eksportu",
+      "csvDesc": "Wartości rozdzielone przecinkami",
+      "excelDesc": "Format Microsoft Excel",
+      "selectDateRange": "Wybierz okres",
+      "startDate": "Od",
+      "endDate": "Do",
+      "confirm": "Potwierdź eksport",
+      "format": "Format",
+      "dateRange": "Okres",
+      "metersCount": "Liczniki",
+      "download": "Pobierz"
+    },
+    "tips": {
+      "title": "Wskazówki dotyczące dokładnego odczytu",
+      "readCarefully": "Dokładnie odczytaj wszystkie cyfry na wyświetlaczu licznika",
+      "takePhoto": "Zrób wyraźne zdjęcie licznika do weryfikacji",
+      "reportIssues": "Wszelkie problemy z licznikiem zgłaszaj zarządcy budynku"
+    },
+    "errors": {
+      "failedToLoad": "Nie udało się wczytać liczników",
+      "failedToSubmit": "Nie udało się wysłać odczytu",
+      "failedToValidate": "Nie udało się zweryfikować odczytu"
+    },
+    "ocr": {
+      "previewTitle": "Podgląd rozpoznanego odczytu",
+      "confidenceHigh": "Wysoka pewność",
+      "confidenceMedium": "Średnia pewność",
+      "confidenceLow": "Niska pewność",
+      "extractedValue": "Rozpoznany stan",
+      "detectedArea": "Rozpoznany obszar",
+      "meterPhoto": "Zdjęcie licznika",
+      "acceptValue": "Akceptuj wartość",
+      "acceptCorrected": "Akceptuj poprawioną wartość",
+      "correctValue": "Popraw wartość",
+      "correctedValue": "Poprawiona wartość",
+      "retakePhoto": "Zrób zdjęcie ponownie",
+      "unusualChange": "Nietypowy odczyt",
+      "valueLowerThanLast": "Wartość jest niższa niż przy ostatnim odczycie",
+      "unusuallyHighChange": "Zużycie wydaje się nietypowo wysokie",
+      "lastReading": "Ostatni odczyt",
+      "consumption": "Zużycie",
+      "processingTime": "Przetworzono w {{ms}} ms",
+      "ocrEnabled": "Rozpoznawanie (OCR) włączone",
+      "processing": "Przetwarzanie obrazu przez OCR...",
+      "processingFailed": "Rozpoznawanie nie powiodło się. Wprowadź wartość ręcznie.",
+      "uploadForOcr": "Prześlij zdjęcie do automatycznego odczytu"
+    },
+    "notice": {
+      "loading": "Wczytywanie licznika…",
+      "notFound": "Nie znaleziono licznika",
+      "notFoundBody": "Nie udało się wczytać tego licznika. Mógł zostać usunięty lub nie masz do niego dostępu.",
+      "back": "Powrót do liczników"
+    },
+    "nav": {
+      "validations": "Oczekujące weryfikacje"
+    }
   },
   "personMonths": {
     "unitsUpdated": "Zaktualizowano jednostki: {{count}}",
@@ -3797,7 +6783,7 @@
   },
   "accounting": {
     "title": "Wystawione faktury",
-    "subtitle": "Natywna księgowość MVP",
+    "subtitle": "Faktury, płatności i dokumenty księgowe organizacji",
     "createInvoice": "Utwórz fakturę",
     "newInvoice": "Nowa faktura",
     "createFailed": "Nie udało się utworzyć faktury",
@@ -3856,7 +6842,69 @@
         "requiredFields": "Wypełnij wszystkie wymagane pola",
         "invalidNumbers": "Ilość i cena jednostkowa muszą być prawidłowymi liczbami"
       }
+    },
+    "paymentMatching": {
+      "title": "Dopasowanie płatności",
+      "subtitle": "Sprawdź i potwierdź dopasowania z wyciągów bankowych",
+      "statements": "Wyciągi bankowe",
+      "uploadCsv": "Prześlij CSV",
+      "chooseFile": "Wybierz plik",
+      "uploading": "Przesyłanie…",
+      "uploadFailed": "Przesyłanie nie powiodło się",
+      "noStatements": "Nie przesłano jeszcze żadnych wyciągów",
+      "transactions": "Transakcje",
+      "selectStatement": "Wybierz wyciąg, aby zobaczyć pozycje",
+      "noTransactions": "Ten wyciąg nie zawiera transakcji",
+      "variableSymbol": "Symbol zmienny",
+      "counterpartyIban": "IBAN kontrahenta",
+      "state": {
+        "unmatched": "Niedopasowane",
+        "suggested": "Zasugerowane",
+        "matched": "Dopasowane"
+      },
+      "matchReview": "Weryfikacja dopasowania",
+      "selectTransaction": "Wybierz transakcję, aby zobaczyć sugerowane faktury",
+      "confidence": "Poziom dopasowania",
+      "invoiceReference": "Faktura",
+      "matchReason": "Powód dopasowania",
+      "matchReasonText": "Sugestia na podstawie zgodności symbolu zmiennego; zgodna kwota i IBAN kontrahenta podnoszą wynik.",
+      "confirm": "Potwierdź dopasowanie",
+      "confirming": "Przetwarzanie…",
+      "reject": "To nie to",
+      "rejecting": "Odrzucanie…",
+      "confirmed": "Dopasowanie potwierdzone",
+      "linkedInvoice": "Powiązana faktura:",
+      "noSuggestions": "Brak aktywnych sugestii dopasowania",
+      "actionFailed": "Nie udało się wykonać operacji. Spróbuj ponownie.",
+      "loadFailed": "Nie udało się wczytać danych dopasowania płatności. Spróbuj ponownie."
+    },
+    "nav": {
+      "label": "Sekcje księgowości",
+      "invoices": "Faktury",
+      "paymentMatching": "Dopasowanie płatności"
     }
+  },
+  "shell": {
+    "brand": "Zarządzanie nieruchomościami",
+    "mainNavigation": "Nawigacja główna",
+    "openMenu": "Otwórz menu",
+    "closeMenu": "Zamknij menu",
+    "createAccount": "Utwórz konto",
+    "sections": {
+      "overview": "Przegląd",
+      "operations": "Eksploatacja budynku",
+      "governance": "Właściciele i zarządzanie",
+      "community": "Społeczność",
+      "finance": "Finanse",
+      "rentals": "Najem",
+      "tools": "Narzędzia"
+    },
+    "account": {
+      "password": "Hasło",
+      "twoFactor": "Uwierzytelnianie dwuskładnikowe",
+      "notifications": "Ustawienia powiadomień"
+    },
+    "publicNavigation": "Nawigacja witryny"
   },
   "rentals": {
     "dashboard": {
@@ -4327,6 +7375,204 @@
         "AT_ZMR": "Austria – ZMR",
         "DE_MELDEWESEN": "Niemcy – urząd meldunkowy"
       }
+    }
+  },
+  "notificationAnalytics": {
+    "title": "Analityka powiadomień",
+    "subtitle": "Wskaźniki dostarczeń i błędów według kanału powiadomień.",
+    "forbidden": "Nie masz uprawnień do wyświetlania analityki dostarczania powiadomień.",
+    "failedToLoad": "Nie udało się wczytać analityki powiadomień",
+    "empty": "W wybranym okresie nie odnotowano aktywności powiadomień.",
+    "tableCaption": "Wskaźniki dostarczania powiadomień według kanału",
+    "alertTitle": "Podwyższony wskaźnik błędów powiadomień",
+    "alertBody": "Wskaźnik błędów {{rate}} przekracza próg {{threshold}} przy {{attempted}} próbach dostarczenia.",
+    "allChannels": "Wszystkie kanały",
+    "channel": "Kanał",
+    "window": "Okres",
+    "colChannel": "Kanał",
+    "colSent": "Wysłane",
+    "colDelivered": "Dostarczone",
+    "colOpened": "Otwarte",
+    "colClicked": "Kliknięte",
+    "colFailed": "Nieudane",
+    "colSkipped": "Pominięte",
+    "colFailureRate": "Wskaźnik błędów",
+    "kpiAttempted": "Próby",
+    "kpiSent": "Wysłane",
+    "kpiFailed": "Nieudane",
+    "kpiFailureRate": "Wskaźnik błędów"
+  },
+  "insurance": {
+    "policyType": "Rodzaj polisy"
+  },
+  "neighbors": {
+    "privacy": {
+      "saved": "Ustawienia prywatności zostały zapisane.",
+      "saveFailed": "Nie udało się zapisać ustawień prywatności."
+    }
+  },
+  "aiChat": {
+    "title": "Asystent AI",
+    "subtitle": "Zapytaj o cokolwiek dotyczącego Twojego budynku",
+    "welcomeTitle": "W czym mogę dziś pomóc?",
+    "welcomeDescription": "Odpowiem na pytania o Twój budynek i pomogę w zgłaszaniu usterek, głosowaniach i nie tylko.",
+    "suggestedQuestions": "Spróbuj zapytać",
+    "inputPlaceholder": "Wpisz wiadomość…",
+    "messageInput": "Pole wiadomości",
+    "pressEnter": "Naciśnij Enter, aby wysłać",
+    "send": "Wyślij wiadomość",
+    "loading": "Wczytywanie…",
+    "messageLog": "Wiadomości czatu",
+    "messageFrom": "Wiadomość od: {{role}}",
+    "newConversation": "Nowa rozmowa",
+    "noConversations": "Brak rozmów",
+    "startConversationHint": "Rozpocznij nową rozmowę, aby uzyskać pomoc",
+    "untitledConversation": "Nowy czat",
+    "messageCount_one": "{{count}} wiadomość",
+    "messageCount_few": "{{count}} wiadomości",
+    "messageCount_many": "{{count}} wiadomości",
+    "messageCount_other": "{{count}} wiadomości",
+    "deleteConversation": "Usuń rozmowę",
+    "confirmDelete": "Czy na pewno chcesz usunąć tę rozmowę?",
+    "closeSidebar": "Zamknij panel boczny",
+    "openSidebar": "Otwórz panel boczny",
+    "sendError": "Nie udało się wysłać wiadomości. Spróbuj ponownie.",
+    "confidence": {
+      "low": "Niska pewność",
+      "medium": "Średnia pewność",
+      "high": "Wysoka pewność"
+    },
+    "escalated": "To pytanie może wymagać pomocy człowieka",
+    "sources_one": "{{count}} źródło",
+    "sources_few": "{{count}} źródła",
+    "sources_many": "{{count}} źródeł",
+    "sources_other": "{{count}} źródła",
+    "wasHelpful": "Czy to było pomocne?",
+    "helpful": "Oznacz jako pomocne",
+    "notHelpful": "Oznacz jako niepomocne",
+    "responseTime": "Czas odpowiedzi: {{ms}} ms",
+    "suggested": {
+      "reportFault": "Jak zgłosić usterkę?",
+      "upcomingVotes": "Jakie głosowania są zaplanowane w budynku?",
+      "meterReadings": "Jak przesłać odczyty liczników?",
+      "buildingContacts": "Kto jest osobą kontaktową w moim budynku?",
+      "ownersMeeting": "Kiedy jest najbliższe zebranie właścicieli?",
+      "paymentHistory": "Gdzie znajdę historię moich płatności?"
+    },
+    "categories": {
+      "faults": "Usterki",
+      "voting": "Głosowania",
+      "utilities": "Media i liczniki",
+      "community": "Społeczność",
+      "events": "Wydarzenia",
+      "finance": "Finanse"
+    }
+  },
+  "oauthGrants": {
+    "title": "Autoryzowane aplikacje",
+    "loading": "Wczytywanie autoryzowanych aplikacji…",
+    "loadFailed": "Nie udało się wczytać autoryzowanych aplikacji. Spróbuj ponownie.",
+    "retry": "Spróbuj ponownie",
+    "description": "Te aplikacje innych firm mają dostęp do Twojego konta. W każdej chwili możesz cofnąć dostęp – aplikacja będzie musiała ponownie poprosić o autoryzację.",
+    "empty": "Nie masz żadnych autoryzowanych aplikacji innych firm.",
+    "authorized": "Autoryzowano:",
+    "permissions": "Uprawnienia:",
+    "scopesLabel": "Zakresy: {{scopes}}",
+    "revoke": "Cofnij dostęp",
+    "revokeFor": "Cofnij dostęp dla {{name}}",
+    "revoking": "Cofanie…",
+    "cancel": "Anuluj",
+    "confirmTitle": "Cofnąć dostęp?",
+    "confirmMessage": "Cofnięcie dostępu dla <strong>{{name}}</strong> unieważni wszystkie aktywne tokeny. Aplikacja nie będzie mieć dostępu do Twojego konta, dopóki ponownie go nie przyznasz.",
+    "revoked": "Dostęp cofnięty",
+    "revokedMessage": "Aplikacja {{name}} nie ma już dostępu do Twojego konta.",
+    "revokeFailed": "Nie udało się cofnąć dostępu",
+    "unexpected": "Wystąpił nieoczekiwany błąd."
+  },
+  "gdprPrivacy": {
+    "title": "Prywatność i dane",
+    "subtitle": "Zarządzaj ustawieniami prywatności i swoimi danymi zgodnie z RODO.",
+    "loading": "Wczytywanie ustawień prywatności…",
+    "dismiss": "Zamknij",
+    "preferences": {
+      "title": "Preferencje prywatności",
+      "visibility": "Widoczność profilu",
+      "visible": "Widoczny dla wszystkich mieszkańców",
+      "contactsOnly": "Widoczny tylko dla kontaktów",
+      "hidden": "Ukryty przed wszystkimi",
+      "visibilityHint": "Określa, kto widzi Twój profil w katalogu mieszkańców.",
+      "showContact": "Pokaż dane kontaktowe w profilu",
+      "showContactHint": "Po włączeniu Twój e-mail i telefon będą widoczne w profilu.",
+      "save": "Zapisz preferencje",
+      "saving": "Zapisywanie…",
+      "saved": "Ustawienia prywatności zostały zapisane",
+      "saveFailed": "Nie udało się zapisać ustawień"
+    },
+    "export": {
+      "title": "Twoje dane",
+      "description": "Zgodnie z art. 15 RODO masz prawo dostępu do swoich danych osobowych. Poproś o kopię wszystkich danych, które o Tobie przechowujemy.",
+      "request": "Poproś o eksport danych",
+      "requested": "Zlecono eksport danych. Otrzymasz powiadomienie, gdy będzie gotowy.",
+      "requestFailed": "Nie udało się zlecić eksportu danych",
+      "history": "Historia eksportów",
+      "download": "Pobierz",
+      "status": {
+        "pending": "Oczekuje",
+        "processing": "Przetwarzanie",
+        "completed": "Zakończony",
+        "failed": "Niepowodzenie"
+      }
+    },
+    "deletion": {
+      "title": "Usunięcie konta",
+      "description": "Zgodnie z art. 17 RODO masz prawo do usunięcia danych („prawo do bycia zapomnianym”). Po złożeniu wniosku Twoje konto i wszystkie powiązane dane zostaną trwale usunięte po 30-dniowym okresie karencji.",
+      "warningLabel": "Uwaga:",
+      "warning": "Po upływie okresu karencji tej operacji nie można cofnąć. Utracisz dostęp do wszystkich swoich danych, wiadomości i historii konta.",
+      "request": "Złóż wniosek o usunięcie konta",
+      "confirmPrompt": "Twoje konto i wszystkie powiązane dane zostaną trwale usunięte po 30-dniowym okresie karencji. Po jego upływie nie będzie można tego cofnąć.\n\nAby potwierdzić, wpisz adres e-mail swojego konta:",
+      "emailMismatch": "Wpisany adres e-mail nie zgadza się z adresem Twojego konta.",
+      "requested": "Złożono wniosek o usunięcie konta. Masz 30 dni na jego anulowanie.",
+      "requestFailed": "Nie udało się złożyć wniosku o usunięcie konta"
+    },
+    "errors": {
+      "loadSettings": "Nie udało się wczytać ustawień prywatności",
+      "loadHistory": "Nie udało się wczytać historii eksportów"
+    }
+  },
+  "aiDashboards": {
+    "nav": {
+      "label": "Analizy AI",
+      "sentiment": "Nastroje mieszkańców",
+      "predictiveMaintenance": "Konserwacja predykcyjna"
+    }
+  },
+  "members": {
+    "title": "Osoby i role",
+    "subtitle": "Członkowie Twojej organizacji i ich role.",
+    "addTitle": "Dodaj członka",
+    "email": "E-mail",
+    "emailPlaceholder": "imie@przyklad.pl",
+    "role": "Rola",
+    "add": "Dodaj członka",
+    "adding": "Dodawanie…",
+    "addHint": "Osoba musi już mieć konto (rejestruje się na stronie logowania). Następnie dodasz ją tutaj po e-mailu.",
+    "name": "Imię i nazwisko",
+    "actions": "Akcje",
+    "changeRoleFor": "Zmień rolę dla {{name}}",
+    "remove": "Usuń",
+    "removeTitle": "Usunąć członka?",
+    "removeMessage": "{{name}} straci dostęp do tej organizacji.",
+    "empty": "Organizacja nie ma jeszcze członków.",
+    "added": "Członek dodany.",
+    "roleChanged": "Rola zmieniona.",
+    "removed": "Członek usunięty.",
+    "errors": {
+      "userNotFound": "Dla tego e-maila nie istnieje konto. Poproś osobę, aby najpierw się zarejestrowała.",
+      "alreadyMember": "Ta osoba jest już członkiem.",
+      "forbidden": "Nie możesz wprowadzić tej zmiany dla tego członka.",
+      "invalid": "Sprawdź wprowadzone dane.",
+      "generic": "Nie udało się zapisać zmiany. Spróbuj ponownie.",
+      "loadFailed": "Nie udało się wczytać członków."
     }
   }
 }

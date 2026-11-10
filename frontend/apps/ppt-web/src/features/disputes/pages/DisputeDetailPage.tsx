@@ -8,9 +8,15 @@ import { useTranslation } from 'react-i18next';
 import { Spinner } from '../../../components/Spinner';
 import { type ActionItem, ActionItemCard } from '../components/ActionItemCard';
 import type { DisputeCategory, DisputePriority, DisputeStatus } from '../components/DisputeCard';
-import { categoryLabelKeys, priorityLabelKeys, statusLabelKeys } from '../components/DisputeCard';
 import { DisputeTimeline, type TimelineEntry } from '../components/DisputeTimeline';
 import { type Resolution, ResolutionCard, type ResolutionVote } from '../components/ResolutionCard';
+import {
+  disputeCategoryKeys,
+  disputePriorityKeys,
+  disputeStatusKeys,
+  formatDisputeDate,
+  partyRoleKeys,
+} from '../utils/labels';
 
 export interface DisputeParty {
   id: string;
@@ -59,7 +65,10 @@ export interface DisputeDetail {
 }
 
 interface DisputeDetailPageProps {
-  dispute: DisputeDetail;
+  /** Undefined while loading, after a failed load, or for an unknown id. */
+  dispute: DisputeDetail | undefined;
+  /** The dispute query failed (403, 5xx, network). */
+  isError?: boolean;
   parties: DisputeParty[];
   evidence: DisputeEvidence[];
   timeline: TimelineEntry[];
@@ -72,7 +81,6 @@ interface DisputeDetailPageProps {
   isLoading?: boolean;
   onBack: () => void;
   onUpdateStatus: (status: DisputeStatus, reason?: string) => void;
-  onAddEvidence: (file: File, description?: string) => void;
   onDeleteEvidence: (id: string) => void;
   onProposeResolution: (
     text: string,
@@ -81,7 +89,8 @@ interface DisputeDetailPageProps {
   onVoteResolution: (resolutionId: string, accepted: boolean, comments?: string) => void;
   onAcceptResolution: (resolutionId: string) => void;
   onImplementResolution: (resolutionId: string) => void;
-  onCompleteResolutionTerm: (resolutionId: string, termId: string) => void;
+  /** Omit to render resolution terms read-only (no backend route completes a term). */
+  onCompleteResolutionTerm?: (resolutionId: string, termId: string) => void;
   onCreateAction: (data: {
     title: string;
     description: string;
@@ -93,6 +102,22 @@ interface DisputeDetailPageProps {
   onEscalate: (actionId: string) => void;
   onNavigateToMediation: () => void;
 }
+
+/**
+ * Next statuses a manager may move a dispute to. Mirrors the backend
+ * `dispute_state_machine::allowed_transitions`; `PATCH /disputes/{id}` rejects
+ * anything else with 422.
+ */
+export const allowedStatusTransitions: Record<DisputeStatus, DisputeStatus[]> = {
+  filed: ['under_review', 'awaiting_response', 'withdrawn'],
+  under_review: ['mediation', 'awaiting_response', 'resolved', 'escalated'],
+  awaiting_response: ['under_review', 'mediation', 'resolved', 'withdrawn'],
+  mediation: ['under_review', 'resolved', 'escalated'],
+  escalated: ['under_review', 'resolved', 'closed'],
+  resolved: ['closed'],
+  withdrawn: [],
+  closed: [],
+};
 
 const statusColors: Record<DisputeStatus, string> = {
   filed: 'bg-blue-100 text-blue-800',
@@ -112,14 +137,46 @@ const priorityColors: Record<DisputePriority, string> = {
   urgent: 'text-red-600 font-bold',
 };
 
-const roleLabelKeys: Record<DisputeParty['role'], string> = {
-  complainant: 'disputes.detail.role.complainant',
-  respondent: 'disputes.detail.role.respondent',
-  witness: 'disputes.detail.role.witness',
-  mediator: 'disputes.detail.role.mediator',
-};
+/**
+ * Dispute detail page. Shows loading, error and not-found states before any
+ * `dispute.*` field is read — reading `dispute.status` while the dispute was
+ * still undefined crashed the page when its query failed.
+ */
+export function DisputeDetailPage(props: DisputeDetailPageProps) {
+  const { dispute, isLoading, isError, onBack } = props;
+  const { t } = useTranslation();
 
-export function DisputeDetailPage({
+  if (!dispute) {
+    if (isLoading) {
+      return (
+        <div className="flex justify-center py-12" role="status">
+          <Spinner size="lg" color="blue" />
+        </div>
+      );
+    }
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-16 text-center">
+        <h1 className="text-xl font-semibold text-gray-900">
+          {isError ? t('errors.errorLoadingDispute') : t('errors.disputeNotFound')}
+        </h1>
+        <p className="mt-2 text-sm text-gray-500">
+          {isError ? t('errors.disputeLoadError') : t('errors.disputeNotFoundDesc')}
+        </p>
+        <button
+          type="button"
+          onClick={onBack}
+          className="mt-6 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+        >
+          {t('common.backToDisputes')}
+        </button>
+      </div>
+    );
+  }
+
+  return <DisputeDetailContent {...props} dispute={dispute} />;
+}
+
+function DisputeDetailContent({
   dispute,
   parties,
   evidence,
@@ -133,7 +190,6 @@ export function DisputeDetailPage({
   isLoading,
   onBack,
   onUpdateStatus,
-  onAddEvidence,
   onDeleteEvidence,
   onProposeResolution,
   onVoteResolution,
@@ -145,7 +201,7 @@ export function DisputeDetailPage({
   onSendReminder,
   onEscalate,
   onNavigateToMediation,
-}: DisputeDetailPageProps) {
+}: DisputeDetailPageProps & { dispute: DisputeDetail }) {
   const { t, i18n } = useTranslation();
   const [showProposeDialog, setShowProposeDialog] = useState(false);
   const [showActionDialog, setShowActionDialog] = useState(false);
@@ -154,19 +210,19 @@ export function DisputeDetailPage({
   const [newActionDescription, setNewActionDescription] = useState('');
   const [newActionAssignee, setNewActionAssignee] = useState('');
   const [newActionDueDate, setNewActionDueDate] = useState('');
+  const [nextStatus, setNextStatus] = useState<DisputeStatus | ''>('');
 
   const canManage = isManager || isMediator;
   const canPropose = canManage || isParty;
-  const activeStatus = ['filed', 'under_review', 'mediation', 'awaiting_response'].includes(
-    dispute.status
-  );
+  const activeStatus = !['resolved', 'withdrawn', 'closed'].includes(dispute.status);
+  const nextStatuses = allowedStatusTransitions[dispute.status] ?? [];
   const pendingActions = actionItems.filter((a) => a.status !== 'completed');
   const overdueActions = actionItems.filter((a) => a.status === 'overdue');
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      onAddEvidence(file);
+  const handleApplyStatus = () => {
+    if (nextStatus) {
+      onUpdateStatus(nextStatus);
+      setNextStatus('');
     }
   };
 
@@ -220,38 +276,56 @@ export function DisputeDetailPage({
               <span
                 className={`px-2 py-1 text-sm font-medium rounded ${statusColors[dispute.status]}`}
               >
-                {t(statusLabelKeys[dispute.status])}
+                {t(disputeStatusKeys[dispute.status])}
               </span>
             </div>
             <h1 className="text-2xl font-bold text-gray-900">{dispute.title}</h1>
             <div className="mt-2 flex items-center gap-4 text-sm">
-              <span className="text-gray-500">{t(categoryLabelKeys[dispute.category])}</span>
+              <span className="text-gray-500">{t(disputeCategoryKeys[dispute.category])}</span>
               <span className={priorityColors[dispute.priority]}>
                 {t('disputes.priorityWithLabel', {
-                  priority: t(priorityLabelKeys[dispute.priority]),
+                  priority: t(disputePriorityKeys[dispute.priority]),
                 })}
               </span>
             </div>
           </div>
-          <div className="flex gap-2">
-            {activeStatus && canManage && (
+          <div className="flex flex-wrap items-center gap-2">
+            {activeStatus && (canManage || isParty) && (
+              <button
+                type="button"
+                onClick={onNavigateToMediation}
+                className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                {t('disputes.detail.mediation')}
+              </button>
+            )}
+            {/* Status changes are manager-only on the backend (PATCH /disputes/{id}). */}
+            {isManager && nextStatuses.length > 0 && (
               <>
+                <label htmlFor="dispute-next-status" className="sr-only">
+                  {t('disputes.detail.changeStatus')}
+                </label>
+                <select
+                  id="dispute-next-status"
+                  value={nextStatus}
+                  onChange={(e) => setNextStatus(e.target.value as DisputeStatus | '')}
+                  className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg"
+                >
+                  <option value="">{t('disputes.detail.changeStatus')}</option>
+                  {nextStatuses.map((status) => (
+                    <option key={status} value={status}>
+                      {t(disputeStatusKeys[status])}
+                    </option>
+                  ))}
+                </select>
                 <button
                   type="button"
-                  onClick={onNavigateToMediation}
-                  className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+                  onClick={handleApplyStatus}
+                  disabled={!nextStatus}
+                  className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
                 >
-                  {t('disputes.detail.mediation')}
+                  {t('disputes.detail.applyStatus')}
                 </button>
-                {dispute.status !== 'resolved' && (
-                  <button
-                    type="button"
-                    onClick={() => onUpdateStatus('resolved')}
-                    className="px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
-                  >
-                    {t('disputes.detail.resolve')}
-                  </button>
-                )}
               </>
             )}
           </div>
@@ -281,7 +355,7 @@ export function DisputeDetailPage({
           {/* Description */}
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-3">
-              {t('disputes.form.description')}
+              {t('disputes.detail.description')}
             </h2>
             <p className="text-gray-700 whitespace-pre-wrap">{dispute.description}</p>
             {dispute.desiredResolution && (
@@ -298,14 +372,8 @@ export function DisputeDetailPage({
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900">
-                {t('disputes.detail.evidenceCount', { count: evidence.length })}
+                {t('disputes.detail.evidenceHeading', { total: evidence.length })}
               </h2>
-              {(isParty || canManage) && (
-                <label className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
-                  {t('disputes.addEvidence')}
-                  <input type="file" className="hidden" onChange={handleFileUpload} />
-                </label>
-              )}
             </div>
             {evidence.length === 0 ? (
               <p className="text-gray-500">{t('disputes.detail.noEvidence')}</p>
@@ -321,7 +389,7 @@ export function DisputeDetailPage({
                       <p className="text-sm text-gray-500">
                         {t('disputes.detail.uploadedBy', {
                           name: item.uploaderName,
-                          date: new Date(item.createdAt).toLocaleDateString(i18n.language),
+                          date: formatDisputeDate(item.createdAt, i18n.language),
                         })}
                       </p>
                       {item.description && (
@@ -329,21 +397,23 @@ export function DisputeDetailPage({
                       )}
                     </div>
                     <div className="flex gap-2">
-                      <a
-                        href={item.storageUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-800 text-sm"
-                      >
-                        {t('disputes.view')}
-                      </a>
+                      {/^https?:\/\//.test(item.storageUrl) && (
+                        <a
+                          href={item.storageUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 text-sm"
+                        >
+                          {t('disputes.detail.viewEvidence')}
+                        </a>
+                      )}
                       {canManage && (
                         <button
                           type="button"
                           onClick={() => onDeleteEvidence(item.id)}
                           className="text-red-600 hover:text-red-800 text-sm"
                         >
-                          {t('common.delete')}
+                          {t('disputes.detail.deleteEvidence')}
                         </button>
                       )}
                     </div>
@@ -438,7 +508,7 @@ export function DisputeDetailPage({
           {/* Details */}
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              {t('disputes.form.details')}
+              {t('disputes.detail.details')}
             </h3>
             <dl className="space-y-3 text-sm">
               {dispute.buildingName && (
@@ -449,7 +519,7 @@ export function DisputeDetailPage({
               )}
               {dispute.unitDesignation && (
                 <div>
-                  <dt className="text-gray-500">{t('disputes.form.unit')}</dt>
+                  <dt className="text-gray-500">{t('disputes.detail.unit')}</dt>
                   <dd className="font-medium">{dispute.unitDesignation}</dd>
                 </div>
               )}
@@ -460,7 +530,7 @@ export function DisputeDetailPage({
               <div>
                 <dt className="text-gray-500">{t('disputes.detail.filedOn')}</dt>
                 <dd className="font-medium">
-                  {new Date(dispute.createdAt).toLocaleDateString(i18n.language)}
+                  {formatDisputeDate(dispute.createdAt, i18n.language)}
                 </dd>
               </div>
               {dispute.assignedToName && (
@@ -475,7 +545,7 @@ export function DisputeDetailPage({
           {/* Parties */}
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              {t('disputes.detail.parties')}
+              {t('disputes.mediation.parties')}
             </h3>
             <div className="space-y-3">
               {parties.map((party) => (
@@ -483,7 +553,7 @@ export function DisputeDetailPage({
                   <div className="flex items-center justify-between">
                     <span className="font-medium">{party.userName}</span>
                     <span className="text-xs px-2 py-0.5 bg-gray-200 rounded">
-                      {t(roleLabelKeys[party.role])}
+                      {t(partyRoleKeys[party.role])}
                     </span>
                   </div>
                   <p className="text-sm text-gray-500">{party.userEmail}</p>
@@ -551,7 +621,7 @@ export function DisputeDetailPage({
           <div className="flex min-h-full items-center justify-center p-4">
             <div className="relative w-full max-w-md bg-white rounded-lg shadow-xl p-6">
               <h2 className="text-lg font-semibold mb-4">
-                {t('disputes.detail.createActionItem')}
+                {t('disputes.detail.createActionTitle')}
               </h2>
               <div className="space-y-4">
                 <div>
@@ -567,7 +637,7 @@ export function DisputeDetailPage({
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">
-                    {t('disputes.form.description')}
+                    {t('disputes.detail.actionDescription')}
                   </label>
                   <textarea
                     value={newActionDescription}
@@ -578,7 +648,7 @@ export function DisputeDetailPage({
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">
-                    {t('disputes.detail.assignTo')}
+                    {t('disputes.detail.actionAssignee')}
                   </label>
                   <select
                     value={newActionAssignee}
@@ -595,7 +665,7 @@ export function DisputeDetailPage({
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">
-                    {t('disputes.detail.dueDate')}
+                    {t('disputes.detail.actionDueDate')}
                   </label>
                   <input
                     type="date"
@@ -619,7 +689,7 @@ export function DisputeDetailPage({
                   disabled={!newActionTitle.trim() || !newActionAssignee || !newActionDueDate}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-50"
                 >
-                  {t('common.create')}
+                  {t('disputes.detail.create')}
                 </button>
               </div>
             </div>

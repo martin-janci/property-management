@@ -115,13 +115,13 @@ impl AccountingService {
     ) -> Result<(), AppError> {
         let lines = self
             .repo
-            .list_bank_statement_lines_rls(&mut *executor, statement_id)
+            .list_bank_statement_lines_for_tenant(&mut *executor, tenant_id, statement_id)
             .await
             .map_err(|e| AppError::Database(e.to_string()))?;
 
         let open_invoices = self
             .repo
-            .list_invoices_rls(&mut *executor)
+            .list_invoices_for_tenant(&mut *executor, tenant_id)
             .await
             .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -140,7 +140,7 @@ impl AccountingService {
         // in canonical form.
         let contact_iban: HashMap<Uuid, String> = self
             .repo
-            .list_contacts_rls(&mut *executor)
+            .list_contacts_for_tenant(&mut *executor, tenant_id)
             .await
             .map_err(|e| AppError::Database(e.to_string()))?
             .into_iter()
@@ -268,13 +268,14 @@ impl AccountingService {
     pub async fn confirm_match(
         &self,
         executor: &mut PgConnection,
-        _tenant_id: Uuid,
+        tenant_id: Uuid,
         match_id: Uuid,
         user_id: Uuid,
     ) -> Result<(), AppError> {
+        // Explicit tenant predicate: a foreign match id is NotFound (404).
         let p_match = self
             .repo
-            .find_payment_match_rls(&mut *executor, match_id)
+            .find_payment_match_for_tenant(&mut *executor, tenant_id, match_id)
             .await
             .map_err(|e| AppError::Database(e.to_string()))?
             .ok_or_else(|| AppError::NotFound(format!("Match {} not found", match_id)))?;
@@ -346,12 +347,14 @@ impl AccountingService {
     pub async fn reject_match(
         &self,
         executor: &mut PgConnection,
+        tenant_id: Uuid,
         match_id: Uuid,
         user_id: Uuid,
     ) -> Result<(), AppError> {
+        // Explicit tenant predicate: a foreign match id is NotFound (404).
         let p_match = self
             .repo
-            .find_payment_match_rls(&mut *executor, match_id)
+            .find_payment_match_for_tenant(&mut *executor, tenant_id, match_id)
             .await
             .map_err(|e| AppError::Database(e.to_string()))?
             .ok_or_else(|| AppError::NotFound(format!("Match {} not found", match_id)))?;

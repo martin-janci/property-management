@@ -237,7 +237,7 @@ async fn media_is_org_scoped_via_parent_article(pool: PgPool) {
     );
     assert!(
         !repo
-            .delete_media(media_b.id, org_a)
+            .delete_media(article_b.id, media_b.id, org_a)
             .await
             .expect("delete_media query"),
         "org A must not delete org B's media"
@@ -251,8 +251,22 @@ async fn media_is_org_scoped_via_parent_article(pool: PgPool) {
             .len(),
         1
     );
+    // Same org, but the path names a different article: the media hangs off
+    // `article_b`, so deleting it "via" a sibling article is inert.
+    let sibling_b = repo
+        .create(org_b, author_b, sample_article("B sibling"))
+        .await
+        .expect("create sibling org B article");
     assert!(
-        repo.delete_media(media_b.id, org_b)
+        !repo
+            .delete_media(sibling_b.id, media_b.id, org_b)
+            .await
+            .expect("delete_media query"),
+        "media must not be deleted through a different parent article"
+    );
+
+    assert!(
+        repo.delete_media(article_b.id, media_b.id, org_b)
             .await
             .expect("delete_media query"),
         "org B can delete its own media"

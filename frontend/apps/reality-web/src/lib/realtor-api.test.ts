@@ -137,15 +137,18 @@ describe('realtor-api request helper', () => {
     await expect(getListing('x')).resolves.toBeUndefined();
   });
 
-  it('maps network failures to RealtorApiError status 0', async () => {
+  it('maps network failures to RealtorApiError status 0 with code "network"', async () => {
     fetchMock.mockRejectedValue(new TypeError('boom'));
+    // `code` is the locale-independent discriminator the UI translates off of
+    // (realtor.errorNetwork) — the English `message` stays developer-facing.
     await expect(getListing('x')).rejects.toMatchObject({
       name: 'RealtorApiError',
       status: 0,
+      code: 'network',
     });
   });
 
-  it('surfaces server message on error responses', async () => {
+  it('surfaces server message on error responses and exposes it as serverMessage', async () => {
     fetchMock.mockResolvedValue({
       ok: false,
       status: 422,
@@ -155,9 +158,12 @@ describe('realtor-api request helper', () => {
     expect(err).toBeInstanceOf(RealtorApiError);
     expect(err.message).toBe('bad postal code');
     expect(err.status).toBe(422);
+    expect(err.code).toBe('http');
+    // The backend owns and localizes this copy, so the UI shows it verbatim.
+    expect(err.serverMessage).toBe('bad postal code');
   });
 
-  it('falls back to a generic message for non-JSON error bodies', async () => {
+  it('falls back to a generic message for non-JSON error bodies (no serverMessage)', async () => {
     fetchMock.mockResolvedValue({
       ok: false,
       status: 502,
@@ -165,10 +171,21 @@ describe('realtor-api request helper', () => {
         throw new SyntaxError('not json');
       },
     });
-    await expect(getListing('x')).rejects.toMatchObject({
-      message: 'Request failed (502)',
-      status: 502,
-    });
+    const err = await getListing('x').catch((e) => e);
+    expect(err).toBeInstanceOf(RealtorApiError);
+    // `message` keeps the developer-facing fallback; `serverMessage` is
+    // undefined so the UI translates realtor.errorRequestFailed instead.
+    expect(err.message).toBe('Request failed (502)');
+    expect(err.status).toBe(502);
+    expect(err.code).toBe('http');
+    expect(err.serverMessage).toBeUndefined();
+  });
+
+  it('tags malformed 200 bodies with code "malformed"', async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => null });
+    const err = await getListing('x').catch((e) => e);
+    expect(err).toBeInstanceOf(RealtorApiError);
+    expect(err.code).toBe('malformed');
   });
 
   // Boundary shape validation: `request<T>` must not blindly cast a 200 body to
@@ -214,5 +231,83 @@ describe('realtor-api request helper', () => {
       json: async () => ({ id: 'lst_1', title: 'Byt' }),
     });
     await expect(getListing('lst_1')).resolves.toEqual({ id: 'lst_1', title: 'Byt' });
+  });
+});
+
+// Nested-collection shape validation. `parseJsonBody` guards the *outer* body
+// (non-null, non-array object), but it is generic and cannot know which fields
+// are arrays — so a 200 whose `listings`/`reviews` field is wrong-typed
+// (`{ listings: null }`, `{ reviews: {} }`) still passes the outer guard and was
+// handed back trusting the array shape. The first `.length`/`.map` in a consumer
+// (`profile` page, `realtor/[id]`, agency listings) then throws deep in render.
+// The list helpers must coerce the collection field to `[]` at the boundary so a
+// malformed response degrades to the empty-state instead of crashing.
+describe('realtor-api list helpers coerce malformed array fields', () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it('listMyListings coerces a non-array `listings` field to []', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ listings: null, total: 0 }),
+    });
+    const res = await listMyListings();
+    expect(Array.isArray(res.listings)).toBe(true);
+    expect(res.listings).toEqual([]);
+  });
+
+  it('listMyListings coerces an object `listings` field to []', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ listings: {}, total: 0 }),
+    });
+    const res = await listMyListings();
+    expect(Array.isArray(res.listings)).toBe(true);
+  });
+
+  it('listMyListings passes a well-formed array through unchanged', async () => {
+    const listings = [{ id: 'l1', title: 'Byt' }];
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ listings, total: 1 }),
+    });
+    const res = await listMyListings();
+    expect(res.listings).toEqual(listings);
+    expect(res.total).toBe(1);
+  });
+
+  it('getRealtorReviews coerces a non-array `reviews` field to []', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ reviews: {}, total: 0 }),
+    });
+    const res = await getRealtorReviews('r1');
+    expect(Array.isArray(res.reviews)).toBe(true);
+    expect(res.reviews).toEqual([]);
+  });
+
+  it('getRealtorReviews passes a well-formed array through unchanged', async () => {
+    const reviews = [{ id: 'rev1', rating: 5 }];
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ reviews, total: 1, avg_rating: 5 }),
+    });
+    const res = await getRealtorReviews('r1');
+    expect(res.reviews).toEqual(reviews);
+    expect(res.total).toBe(1);
   });
 });

@@ -12,6 +12,7 @@ export * from './announcements';
 export type { AuthUser } from './auth';
 // Export auth token provider for secure token management
 export * from './auth';
+export * from './budgets';
 export * from './buildings';
 export * from './community';
 export * from './compliance';
@@ -48,6 +49,7 @@ export * from './leases';
 // callers that can't use the generated SDK — multipart uploads and endpoints
 // whose callers read the `Response` themselves (see `./lib/fetch`).
 export { ApiError, authenticatedFetch } from './lib/fetch';
+export * from './members';
 export * from './messaging';
 export * from './meters';
 export * from './mfa';

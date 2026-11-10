@@ -1,12 +1,23 @@
 /**
  * Shared formatting utilities for financial components.
+ *
+ * Money and dates follow the active UI language (`i18n.language`) so a
+ * Slovak/Czech/German… manager sees `1 234,50 €` / `15. 6. 2026` rather than
+ * the US conventions. Formatters are created per call (and cached per locale)
+ * so a runtime language switch takes effect immediately.
  */
 
+import i18n from 'i18next';
+
 /**
- * Detects and returns the user's locale for formatting.
- * Falls back to 'en-US' if locale cannot be determined.
+ * Returns the locale used for formatting: the active i18n language, then the
+ * browser locale, then 'en-US'.
  */
 export function getUserLocale(): string {
+  if (i18n.language) {
+    return i18n.language;
+  }
+
   if (typeof navigator !== 'undefined' && navigator.language) {
     return navigator.language;
   }
@@ -22,8 +33,23 @@ export function getUserLocale(): string {
     }
   }
 
-  // Fallback to previous behavior
   return 'en-US';
+}
+
+const dateFormatterCache = new Map<string, Intl.DateTimeFormat>();
+
+function getDateFormatter(
+  variant: 'short' | 'long' | 'dayMonth',
+  options: Intl.DateTimeFormatOptions
+): Intl.DateTimeFormat {
+  const locale = getUserLocale();
+  const cacheKey = `${variant}|${locale}`;
+  let formatter = dateFormatterCache.get(cacheKey);
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat(locale, options);
+    dateFormatterCache.set(cacheKey, formatter);
+  }
+  return formatter;
 }
 
 /**
@@ -37,33 +63,28 @@ export function formatCurrency(amount: number, currency = 'EUR'): string {
 }
 
 /**
- * Pre-configured date formatter for invoice dates.
- */
-const invoiceDateFormatter = new Intl.DateTimeFormat(getUserLocale(), {
-  month: 'short',
-  day: 'numeric',
-  year: 'numeric',
-});
-
-/**
  * Formats a date string using the invoice date format (short month, day, year).
  */
 export function formatDate(dateString: string): string {
-  return invoiceDateFormatter.format(new Date(dateString));
+  return getDateFormatter('short', { month: 'short', day: 'numeric', year: 'numeric' }).format(
+    new Date(dateString)
+  );
 }
 
 /**
- * Pre-configured date formatter for detailed dates.
+ * Formats a date string as a short day + month (no year).
  */
-const detailedDateFormatter = new Intl.DateTimeFormat(getUserLocale(), {
-  month: 'long',
-  day: 'numeric',
-  year: 'numeric',
-});
+export function formatDayMonth(dateString: string): string {
+  return getDateFormatter('dayMonth', { month: 'short', day: 'numeric' }).format(
+    new Date(dateString)
+  );
+}
 
 /**
  * Formats a date string using the detailed date format (long month, day, year).
  */
 export function formatDetailedDate(dateString: string): string {
-  return detailedDateFormatter.format(new Date(dateString));
+  return getDateFormatter('long', { month: 'long', day: 'numeric', year: 'numeric' }).format(
+    new Date(dateString)
+  );
 }

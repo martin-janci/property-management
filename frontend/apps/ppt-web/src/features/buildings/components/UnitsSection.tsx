@@ -6,39 +6,28 @@
  * goes through the buildings feature hooks; {@link UnitForm} is presentational.
  */
 
-import type {
-  UnitOccupancyStatus,
-  UnitSummary,
-  UnitType,
-  UpdateUnitRequest,
-} from '@ppt/api-client';
+import type { UnitSummary, UpdateUnitRequest } from '@ppt/api-client';
+import type { TFunction } from 'i18next';
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { useUnit, useUnitMutations, useUnits } from '../hooks';
-import { OCCUPANCY_OPTIONS, UNIT_TYPE_OPTIONS, UnitForm, type UnitFormValues } from './UnitForm';
+import { UnitForm, type UnitFormValues } from './UnitForm';
+import { UnitResidentsDialog } from './UnitResidentsDialog';
 
 interface UnitsSectionProps {
   buildingId: string;
 }
 
-const UNIT_TYPE_LABELS: Record<UnitType, string> = Object.fromEntries(
-  UNIT_TYPE_OPTIONS.map((o) => [o.value, o.label])
-) as Record<UnitType, string>;
-
-const OCCUPANCY_LABELS: Record<UnitOccupancyStatus, string> = Object.fromEntries(
-  OCCUPANCY_OPTIONS.map((o) => [o.value, o.label])
-) as Record<UnitOccupancyStatus, string>;
-
-/** Mirror of the backend `Unit::floor_display` helper. */
-function floorLabel(floor: number): string {
-  if (floor < 0) return `B${Math.abs(floor)}`;
-  if (floor === 0) return 'G';
+/** Localized mirror of the backend `Unit::floor_display` helper. */
+function floorLabel(floor: number, t: TFunction): string {
+  if (floor < 0) return t('buildings.unitsSection.floorBasement', { level: Math.abs(floor) });
+  if (floor === 0) return t('buildings.unitsSection.floorGround');
   return String(floor);
 }
 
-function errorMessage(error: unknown): string | null {
+function errorMessage(error: unknown, t: TFunction): string | null {
   if (!error) return null;
-  return error instanceof Error ? error.message : 'Something went wrong. Please try again.';
+  return error instanceof Error ? error.message : t('buildings.errors.generic');
 }
 
 export function UnitsSection({ buildingId }: UnitsSectionProps) {
@@ -47,6 +36,7 @@ export function UnitsSection({ buildingId }: UnitsSectionProps) {
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | null>(null);
   const [editingUnitId, setEditingUnitId] = useState<string | null>(null);
   const [unitToArchive, setUnitToArchive] = useState<UnitSummary | null>(null);
+  const [residentsUnit, setResidentsUnit] = useState<UnitSummary | null>(null);
 
   const {
     data: unitsResponse,
@@ -122,7 +112,7 @@ export function UnitsSection({ buildingId }: UnitsSectionProps) {
     <div className="bg-white rounded-lg shadow-md p-6 mb-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">Units</h2>
+        <h2 className="text-lg font-semibold text-gray-900">{t('buildings.units')}</h2>
         <div className="flex items-center gap-4">
           <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
             <input
@@ -131,7 +121,7 @@ export function UnitsSection({ buildingId }: UnitsSectionProps) {
               onChange={(e) => setShowArchived(e.target.checked)}
               className="rounded border-gray-300"
             />
-            Show archived
+            {t('buildings.unitsSection.showArchived')}
           </label>
           <button
             type="button"
@@ -141,7 +131,7 @@ export function UnitsSection({ buildingId }: UnitsSectionProps) {
             }}
             className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
           >
-            Add unit
+            {t('buildings.unitForm.addTitle')}
           </button>
         </div>
       </div>
@@ -153,38 +143,40 @@ export function UnitsSection({ buildingId }: UnitsSectionProps) {
         </div>
       ) : loadError ? (
         <div className="bg-red-50 border border-red-200 rounded-md p-4">
-          <h3 className="text-sm font-medium text-red-800">Could not load units</h3>
+          <h3 className="text-sm font-medium text-red-800">
+            {t('buildings.unitsSection.loadFailed')}
+          </h3>
           <p className="mt-1 text-sm text-red-700">
-            {errorMessage(loadError) ?? 'The units could not be loaded.'}
+            {errorMessage(loadError, t) ?? t('buildings.unitsSection.loadFailedBody')}
           </p>
         </div>
       ) : units.length === 0 ? (
-        <p className="text-gray-500 text-sm">
-          No units defined for this building yet. Use “Add unit” to create one.
-        </p>
+        <p className="text-gray-500 text-sm">{t('buildings.unitsSection.empty')}</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead>
               <tr className="text-left text-gray-500 border-b">
-                <th className="py-2 pr-4 font-medium">Unit</th>
-                <th className="py-2 pr-4 font-medium">Floor</th>
-                <th className="py-2 pr-4 font-medium">Type</th>
-                <th className="py-2 pr-4 font-medium">Occupancy</th>
-                <th className="py-2 pr-4 font-medium">Status</th>
-                <th className="py-2 pr-4 font-medium text-right">Actions</th>
+                <th className="py-2 pr-4 font-medium">{t('buildings.unitsSection.unit')}</th>
+                <th className="py-2 pr-4 font-medium">{t('buildings.unitForm.floor')}</th>
+                <th className="py-2 pr-4 font-medium">{t('buildings.unitForm.type')}</th>
+                <th className="py-2 pr-4 font-medium">{t('buildings.unitForm.occupancy')}</th>
+                <th className="py-2 pr-4 font-medium">{t('buildings.unitsSection.status')}</th>
+                <th className="py-2 pr-4 font-medium text-right">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
               {units.map((unit) => (
                 <tr key={unit.id} className="border-b last:border-0">
                   <td className="py-2 pr-4 font-medium text-gray-900">{unit.designation}</td>
-                  <td className="py-2 pr-4 text-gray-600">{floorLabel(unit.floor)}</td>
+                  <td className="py-2 pr-4 text-gray-600">{floorLabel(unit.floor, t)}</td>
                   <td className="py-2 pr-4 text-gray-600">
-                    {UNIT_TYPE_LABELS[unit.unit_type] ?? unit.unit_type}
+                    {t(`buildings.unitType.${unit.unit_type}`, { defaultValue: unit.unit_type })}
                   </td>
                   <td className="py-2 pr-4 text-gray-600">
-                    {OCCUPANCY_LABELS[unit.occupancy_status] ?? unit.occupancy_status}
+                    {t(`buildings.occupancy.${unit.occupancy_status}`, {
+                      defaultValue: unit.occupancy_status,
+                    })}
                   </td>
                   <td className="py-2 pr-4">
                     <span
@@ -194,7 +186,9 @@ export function UnitsSection({ buildingId }: UnitsSectionProps) {
                           : 'bg-green-100 text-green-800'
                       }`}
                     >
-                      {unit.status === 'archived' ? 'Archived' : 'Active'}
+                      {unit.status === 'archived'
+                        ? t('buildings.unitsSection.archived')
+                        : t('buildings.unitsSection.active')}
                     </span>
                   </td>
                   <td className="py-2 pr-4 text-right whitespace-nowrap">
@@ -205,10 +199,17 @@ export function UnitsSection({ buildingId }: UnitsSectionProps) {
                         disabled={restoreUnit.isPending}
                         className="text-blue-600 hover:text-blue-800 disabled:opacity-50"
                       >
-                        Restore
+                        {t('buildings.unitsSection.restore')}
                       </button>
                     ) : (
                       <>
+                        <button
+                          type="button"
+                          onClick={() => setResidentsUnit(unit)}
+                          className="mr-4 text-blue-600 hover:text-blue-800"
+                        >
+                          {t('buildings.residents.manage')}
+                        </button>
                         <button
                           type="button"
                           onClick={() => {
@@ -217,14 +218,14 @@ export function UnitsSection({ buildingId }: UnitsSectionProps) {
                           }}
                           className="text-blue-600 hover:text-blue-800"
                         >
-                          Edit
+                          {t('common.edit')}
                         </button>
                         <button
                           type="button"
                           onClick={() => setUnitToArchive(unit)}
                           className="ml-4 text-red-600 hover:text-red-800"
                         >
-                          Archive
+                          {t('buildings.unitsSection.archive')}
                         </button>
                       </>
                     )}
@@ -236,6 +237,15 @@ export function UnitsSection({ buildingId }: UnitsSectionProps) {
         </div>
       )}
 
+      {residentsUnit && (
+        <UnitResidentsDialog
+          buildingId={buildingId}
+          unitId={residentsUnit.id}
+          unitLabel={residentsUnit.designation}
+          onClose={() => setResidentsUnit(null)}
+        />
+      )}
+
       {/* Create dialog */}
       {dialogMode === 'create' && (
         <UnitForm
@@ -243,7 +253,7 @@ export function UnitsSection({ buildingId }: UnitsSectionProps) {
           isOpen
           mode="create"
           isSubmitting={createUnit.isPending}
-          error={errorMessage(createUnit.error)}
+          error={errorMessage(createUnit.error, t)}
           onSubmit={handleCreate}
           onClose={closeDialog}
         />
@@ -273,7 +283,7 @@ export function UnitsSection({ buildingId }: UnitsSectionProps) {
               description: editingUnit.description ?? undefined,
             }}
             isSubmitting={updateUnit.isPending}
-            error={errorMessage(updateUnit.error)}
+            error={errorMessage(updateUnit.error, t)}
             onSubmit={handleUpdate}
             onClose={closeDialog}
           />
@@ -290,13 +300,18 @@ export function UnitsSection({ buildingId }: UnitsSectionProps) {
           />
           <div className="flex min-h-full items-center justify-center p-4">
             <div className="relative w-full max-w-md bg-white rounded-lg shadow-xl p-6">
-              <h3 className="text-lg font-semibold text-gray-900">Archive unit</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                {t('buildings.unitsSection.archiveTitle')}
+              </h3>
               <p className="mt-2 text-sm text-gray-600">
-                Archive unit <span className="font-medium">{unitToArchive.designation}</span>? It
-                will be hidden from the active list but can be restored later.
+                <Trans
+                  i18nKey="buildings.unitsSection.archiveConfirm"
+                  values={{ designation: unitToArchive.designation }}
+                  components={{ bold: <span className="font-medium" /> }}
+                />
               </p>
               {archiveUnit.error && (
-                <p className="mt-3 text-sm text-red-600">{errorMessage(archiveUnit.error)}</p>
+                <p className="mt-3 text-sm text-red-600">{errorMessage(archiveUnit.error, t)}</p>
               )}
               <div className="mt-6 flex justify-end gap-3">
                 <button
@@ -304,7 +319,7 @@ export function UnitsSection({ buildingId }: UnitsSectionProps) {
                   onClick={() => setUnitToArchive(null)}
                   className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="button"
@@ -312,7 +327,9 @@ export function UnitsSection({ buildingId }: UnitsSectionProps) {
                   disabled={archiveUnit.isPending}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
                 >
-                  {archiveUnit.isPending ? 'Archiving…' : 'Archive'}
+                  {archiveUnit.isPending
+                    ? t('buildings.unitsSection.archiving')
+                    : t('buildings.unitsSection.archive')}
                 </button>
               </div>
             </div>

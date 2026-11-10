@@ -203,7 +203,7 @@ async fn validate_slovak_vote(
 ) -> Result<Json<SlovakVoteValidation>, (StatusCode, Json<ErrorResponse>)> {
     let vote = state
         .vote_repo
-        .find_poll_by_id_rls(&mut **rls.conn(), payload.vote_id)
+        .find_poll_by_id_for_org(payload.vote_id, rls.tenant_id(), &mut **rls.conn())
         .await
         .map_err(|e| {
             (
@@ -410,7 +410,7 @@ async fn get_slovak_vote_minutes(
 ) -> Result<Json<SlovakVoteMinutes>, (StatusCode, Json<ErrorResponse>)> {
     let vote = state
         .vote_repo
-        .find_poll_by_id_rls(&mut **rls.conn(), vote_id)
+        .find_poll_by_id_for_org(vote_id, rls.tenant_id(), &mut **rls.conn())
         .await
         .map_err(|e| {
             (
@@ -869,7 +869,7 @@ async fn validate_czech_vote(
 ) -> Result<Json<CzechVoteValidation>, (StatusCode, Json<ErrorResponse>)> {
     let vote = state
         .vote_repo
-        .find_poll_by_id_rls(&mut **rls.conn(), payload.vote_id)
+        .find_poll_by_id_for_org(payload.vote_id, rls.tenant_id(), &mut **rls.conn())
         .await
         .map_err(|e| {
             (
@@ -981,7 +981,7 @@ async fn get_czech_usneseni(
     let org_id = rls.tenant_id();
     let vote = state
         .vote_repo
-        .find_poll_by_id_rls(&mut **rls.conn(), vote_id)
+        .find_poll_by_id_for_org(vote_id, rls.tenant_id(), &mut **rls.conn())
         .await
         .map_err(|e| {
             (

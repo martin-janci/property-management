@@ -63,6 +63,20 @@ export function useToast(): ToastContextValue {
 }
 
 /**
+ * Provider-tolerant variant of {@link useToast}.
+ *
+ * Returns the toast API when a `ToastProvider` is present (the app-level
+ * provider in production — see `App.tsx`), or `null` otherwise, instead of
+ * throwing. This lets a component wire real toast feedback while still
+ * rendering in isolation under tests that intentionally mount it without a
+ * provider (e.g. the RegistryPage auth-context regression suite). Prefer
+ * {@link useToast} for components that always render under the provider.
+ */
+export function useToastOptional(): ToastContextValue | null {
+  return useContext(ToastContext);
+}
+
+/**
  * Maximum number of toasts visible at once.
  * When exceeded, only the most recent toasts are shown.
  */

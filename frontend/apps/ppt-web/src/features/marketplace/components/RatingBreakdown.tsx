@@ -3,6 +3,7 @@
  * Epic 68: Service Provider Marketplace (Story 68.5)
  */
 
+import { useTranslation } from 'react-i18next';
 import { RatingStars } from './RatingStars';
 
 export interface RatingBreakdownData {
@@ -53,7 +54,13 @@ function DimensionRating({ label, value }: { label: string; value: number }) {
 }
 
 export function RatingBreakdown({ data, compact = false }: RatingBreakdownProps) {
+  const { t } = useTranslation();
   const { distribution } = data;
+
+  const starsLabel = (count: number) =>
+    count === 1
+      ? t('marketplace.ratingBreakdown.starsBarOne', { count })
+      : t('marketplace.ratingBreakdown.starsBarOther', { count });
 
   if (compact) {
     return (
@@ -61,7 +68,9 @@ export function RatingBreakdown({ data, compact = false }: RatingBreakdownProps)
         <div className="text-center">
           <p className="text-3xl font-bold text-gray-900">{data.averageOverall.toFixed(1)}</p>
           <RatingStars rating={data.averageOverall} size="sm" />
-          <p className="text-sm text-gray-500 mt-1">{data.totalReviews} reviews</p>
+          <p className="text-sm text-gray-500 mt-1">
+            {t('marketplace.ratingBreakdown.reviewsCount', { count: data.totalReviews })}
+          </p>
         </div>
       </div>
     );
@@ -69,7 +78,9 @@ export function RatingBreakdown({ data, compact = false }: RatingBreakdownProps)
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
-      <h3 className="text-lg font-medium text-gray-900 mb-4">Rating Breakdown</h3>
+      <h3 className="text-lg font-medium text-gray-900 mb-4">
+        {t('marketplace.ratingBreakdown.title')}
+      </h3>
 
       <div className="flex flex-col md:flex-row gap-8">
         {/* Overall Rating */}
@@ -78,27 +89,55 @@ export function RatingBreakdown({ data, compact = false }: RatingBreakdownProps)
           <div className="mt-2 flex justify-center">
             <RatingStars rating={data.averageOverall} size="lg" />
           </div>
-          <p className="mt-2 text-gray-500">Based on {data.totalReviews} reviews</p>
+          <p className="mt-2 text-gray-500">
+            {t('marketplace.ratingBreakdown.basedOn', { count: data.totalReviews })}
+          </p>
         </div>
 
         {/* Distribution */}
         <div className="flex-1 space-y-2">
-          <RatingBar label="5 stars" count={distribution.fiveStar} total={data.totalReviews} />
-          <RatingBar label="4 stars" count={distribution.fourStar} total={data.totalReviews} />
-          <RatingBar label="3 stars" count={distribution.threeStar} total={data.totalReviews} />
-          <RatingBar label="2 stars" count={distribution.twoStar} total={data.totalReviews} />
-          <RatingBar label="1 star" count={distribution.oneStar} total={data.totalReviews} />
+          <RatingBar
+            label={starsLabel(5)}
+            count={distribution.fiveStar}
+            total={data.totalReviews}
+          />
+          <RatingBar
+            label={starsLabel(4)}
+            count={distribution.fourStar}
+            total={data.totalReviews}
+          />
+          <RatingBar
+            label={starsLabel(3)}
+            count={distribution.threeStar}
+            total={data.totalReviews}
+          />
+          <RatingBar label={starsLabel(2)} count={distribution.twoStar} total={data.totalReviews} />
+          <RatingBar label={starsLabel(1)} count={distribution.oneStar} total={data.totalReviews} />
         </div>
       </div>
 
       {/* Dimension Ratings */}
       <div className="mt-6 pt-6 border-t">
-        <h4 className="text-sm font-medium text-gray-700 mb-3">Rating by Category</h4>
+        <h4 className="text-sm font-medium text-gray-700 mb-3">
+          {t('marketplace.ratingBreakdown.ratingByCategory')}
+        </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <DimensionRating label="Quality" value={data.averageQuality} />
-          <DimensionRating label="Timeliness" value={data.averageTimeliness} />
-          <DimensionRating label="Communication" value={data.averageCommunication} />
-          <DimensionRating label="Value" value={data.averageValue} />
+          <DimensionRating
+            label={t('marketplace.ratingBreakdown.quality')}
+            value={data.averageQuality}
+          />
+          <DimensionRating
+            label={t('marketplace.ratingBreakdown.timeliness')}
+            value={data.averageTimeliness}
+          />
+          <DimensionRating
+            label={t('marketplace.ratingBreakdown.communication')}
+            value={data.averageCommunication}
+          />
+          <DimensionRating
+            label={t('marketplace.ratingBreakdown.value')}
+            value={data.averageValue}
+          />
         </div>
       </div>
     </div>
@@ -112,8 +151,12 @@ interface RatingSummaryProps {
 }
 
 export function RatingSummary({ averageRating, totalReviews, size = 'md' }: RatingSummaryProps) {
+  const { t } = useTranslation();
+
   if (totalReviews === 0) {
-    return <span className="text-sm text-gray-500">No reviews yet</span>;
+    return (
+      <span className="text-sm text-gray-500">{t('marketplace.ratingSummary.noReviews')}</span>
+    );
   }
 
   const textSizes = {
@@ -129,7 +172,9 @@ export function RatingSummary({ averageRating, totalReviews, size = 'md' }: Rati
         {averageRating.toFixed(1)}
       </span>
       <span className={`${textSizes[size]} text-gray-500`}>
-        ({totalReviews} review{totalReviews !== 1 ? 's' : ''})
+        {totalReviews === 1
+          ? t('marketplace.ratingSummary.reviewsCountOne', { count: totalReviews })
+          : t('marketplace.ratingSummary.reviewsCountOther', { count: totalReviews })}
       </span>
     </div>
   );

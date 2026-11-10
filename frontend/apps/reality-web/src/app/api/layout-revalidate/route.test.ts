@@ -22,7 +22,7 @@ import {
 
 /** Sign the timestamped payload "{timestamp}.{body}" (issue #2485). */
 function makeSignature(secret: string, timestamp: number, body: string): string {
-  return 'sha256=' + createHmac('sha256', secret).update(`${timestamp}.${body}`).digest('base64');
+  return `sha256=${createHmac('sha256', secret).update(`${timestamp}.${body}`).digest('base64')}`;
 }
 
 function makeRequest(body: string, headers: Record<string, string> = {}): Request {
@@ -352,7 +352,7 @@ describe('POST /api/layout-revalidate', () => {
   it('does not export GET', () => {
     // Verify by checking the module's exported keys directly
     const routeModule = { POST, layoutTagsFor } as Record<string, unknown>;
-    expect(routeModule['GET']).toBeUndefined();
+    expect(routeModule.GET).toBeUndefined();
   });
 });
 

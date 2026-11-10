@@ -169,8 +169,10 @@ export function PendingValidationsPage({
       {/* Summary */}
       {!isLoading && pendingReadings.length > 0 && (
         <div className="mt-6 text-sm text-gray-500">
-          {t('common.showing')} {filteredReadings.length} {t('common.of')} {pendingReadings.length}{' '}
-          {t('meters.pendingReadings')}
+          {t('meters.pendingSummary', {
+            shown: filteredReadings.length,
+            count: pendingReadings.length,
+          })}
         </div>
       )}
     </div>
