@@ -216,7 +216,7 @@ fun AccountScreen(
                     },
                     colors =
                         ButtonDefaults.textButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
+                            contentColor = MaterialTheme.colorScheme.error,
                         ),
                 ) {
                     Text(stringResource(R.string.sign_out))
@@ -298,7 +298,7 @@ private fun ProfileHero(user: SsoUserInfo) {
                                     colors = listOf(Brand800, Brand500),
                                     start = Offset(0f, 0f),
                                     end = Offset(size.width, size.height),
-                                )
+                                ),
                         )
                     },
                 contentAlignment = Alignment.Center,

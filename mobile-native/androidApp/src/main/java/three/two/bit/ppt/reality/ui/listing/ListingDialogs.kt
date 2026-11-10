@@ -26,7 +26,7 @@ internal fun InquiryDialog(
 ) {
     var message by remember {
         mutableStateOf(
-            "Hi, I'm interested in ${listing.title}. Please contact me with more information."
+            "Hi, I'm interested in ${listing.title}. Please contact me with more information.",
         )
     }
     var name by remember { mutableStateOf("") }
@@ -47,8 +47,8 @@ internal fun InquiryDialog(
                     Card(
                         colors =
                             CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                            )
+                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            ),
                     ) {
                         Row(
                             modifier = Modifier.padding(12.dp),
@@ -137,7 +137,7 @@ internal fun InquiryDialog(
                 }
                 Text(
                     if (isSubmitting) stringResource(R.string.inquiry_sending)
-                    else stringResource(R.string.inquiry_send)
+                    else stringResource(R.string.inquiry_send),
                 )
             }
         },

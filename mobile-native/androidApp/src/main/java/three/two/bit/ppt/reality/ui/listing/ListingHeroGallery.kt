@@ -42,7 +42,7 @@ internal fun HeroGallery(
         modifier =
             Modifier.fillMaxWidth()
                 .height(280.dp)
-                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
     ) {
         if (images.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -108,8 +108,8 @@ internal fun HeroGallery(
                                 .clip(CircleShape)
                                 .background(
                                     if (idx == pagerState.currentPage) Color.White
-                                    else Color.White.copy(alpha = 0.5f)
-                                )
+                                    else Color.White.copy(alpha = 0.5f),
+                                ),
                     )
                 }
             }

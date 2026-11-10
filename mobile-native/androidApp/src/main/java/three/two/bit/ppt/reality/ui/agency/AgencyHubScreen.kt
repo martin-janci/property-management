@@ -111,7 +111,7 @@ private fun AgencyHeader(onNotificationsClick: () -> Unit) {
                                 colors = listOf(Brand800, Brand500),
                                 start = Offset(0f, 0f),
                                 end = Offset(size.width, size.height),
-                            )
+                            ),
                     )
                 },
             contentAlignment = Alignment.Center,
@@ -150,7 +150,7 @@ private fun AgencyHeader(onNotificationsClick: () -> Unit) {
                         .size(8.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.error)
-                        .align(Alignment.TopEnd)
+                        .align(Alignment.TopEnd),
             )
         }
     }
@@ -213,7 +213,7 @@ private fun StatCard(
             CardDefaults.cardColors(
                 containerColor =
                     if (accent) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.surface
+                    else MaterialTheme.colorScheme.surface,
             ),
     ) {
         Column(modifier = Modifier.padding(14.dp)) {

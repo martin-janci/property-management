@@ -70,7 +70,7 @@ fun SavedSearchesScreen(
             }
             // "New search" CTA pill (primaryContainer)
             Box(
-                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 14.dp)
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 14.dp),
             ) {
                 Surface(
                     onClick = onCreateNewSearch ?: onBackClick,
@@ -189,7 +189,7 @@ private fun SavedSearchRow(
                                 Text(
                                     if (search.alertsEnabled)
                                         stringResource(R.string.saved_search_disable_alerts)
-                                    else stringResource(R.string.saved_search_enable_alerts)
+                                    else stringResource(R.string.saved_search_enable_alerts),
                                 )
                             },
                             leadingIcon = {

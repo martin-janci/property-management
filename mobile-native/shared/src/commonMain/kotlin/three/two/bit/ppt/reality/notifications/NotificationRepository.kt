@@ -45,7 +45,7 @@ class NotificationRepository(
                 Result.failure(NotificationException("Please sign in to view notifications"))
             } else {
                 Result.failure(
-                    NotificationException("Failed to load notifications: ${response.status}")
+                    NotificationException("Failed to load notifications: ${response.status}"),
                 )
             }
         } catch (e: Exception) {
@@ -66,7 +66,7 @@ class NotificationRepository(
                 Result.success(0)
             } else {
                 Result.failure(
-                    NotificationException("Failed to get unread count: ${response.status}")
+                    NotificationException("Failed to get unread count: ${response.status}"),
                 )
             }
         } catch (e: Exception) {
@@ -79,7 +79,7 @@ class NotificationRepository(
         return try {
             val response =
                 client.post(
-                    "$baseUrl/api/v1/notifications/${notificationId.asPathSegment()}/read"
+                    "$baseUrl/api/v1/notifications/${notificationId.asPathSegment()}/read",
                 ) {
                     configureRequest()
                 }
@@ -104,7 +104,7 @@ class NotificationRepository(
                 Result.success(Unit)
             } else {
                 Result.failure(
-                    NotificationException("Failed to mark all as read: ${response.status}")
+                    NotificationException("Failed to mark all as read: ${response.status}"),
                 )
             }
         } catch (e: Exception) {
@@ -124,7 +124,7 @@ class NotificationRepository(
                 Result.success(Unit)
             } else {
                 Result.failure(
-                    NotificationException("Failed to delete notification: ${response.status}")
+                    NotificationException("Failed to delete notification: ${response.status}"),
                 )
             }
         } catch (e: Exception) {
@@ -151,7 +151,7 @@ class NotificationRepository(
                 Result.success(response.body())
             } else {
                 Result.failure(
-                    NotificationException("Failed to register push token: ${response.status}")
+                    NotificationException("Failed to register push token: ${response.status}"),
                 )
             }
         } catch (e: Exception) {
@@ -172,7 +172,7 @@ class NotificationRepository(
                 Result.success(Unit)
             } else {
                 Result.failure(
-                    NotificationException("Failed to unregister push token: ${response.status}")
+                    NotificationException("Failed to unregister push token: ${response.status}"),
                 )
             }
         } catch (e: Exception) {
@@ -194,7 +194,7 @@ class NotificationRepository(
                 Result.failure(NotificationException("Please sign in to view preferences"))
             } else {
                 Result.failure(
-                    NotificationException("Failed to load preferences: ${response.status}")
+                    NotificationException("Failed to load preferences: ${response.status}"),
                 )
             }
         } catch (e: Exception) {
@@ -204,7 +204,7 @@ class NotificationRepository(
 
     /** Update notification preferences. */
     suspend fun updatePreferences(
-        preferences: NotificationPreferences
+        preferences: NotificationPreferences,
     ): Result<NotificationPreferences> {
         return try {
             val response =
@@ -217,7 +217,7 @@ class NotificationRepository(
                 Result.success(response.body())
             } else {
                 Result.failure(
-                    NotificationException("Failed to update preferences: ${response.status}")
+                    NotificationException("Failed to update preferences: ${response.status}"),
                 )
             }
         } catch (e: Exception) {

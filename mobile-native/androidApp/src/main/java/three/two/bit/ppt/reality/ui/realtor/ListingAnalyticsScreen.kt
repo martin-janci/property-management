@@ -64,10 +64,10 @@ fun ListingAnalyticsScreen(
                 },
                 colors =
                     TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface
+                        containerColor = MaterialTheme.colorScheme.surface,
                     ),
             )
-        }
+        },
     ) { padding ->
         if (isLoading) {
             Box(

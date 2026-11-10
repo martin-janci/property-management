@@ -120,7 +120,7 @@ class FavoritesRepository(
                     Result.success(false) // unauthenticated → treat as not-favorited
                 else ->
                     Result.failure(
-                        FavoritesException("Failed to check favorite: ${response.status}")
+                        FavoritesException("Failed to check favorite: ${response.status}"),
                     )
             }
         } catch (e: Exception) {
@@ -156,7 +156,7 @@ class FavoritesRepository(
                 Result.failure(FavoritesException("Please sign in to view price alerts"))
             } else {
                 Result.failure(
-                    FavoritesException("Failed to load price alerts: ${response.status}")
+                    FavoritesException("Failed to load price alerts: ${response.status}"),
                 )
             }
         } catch (e: Exception) {
@@ -208,7 +208,7 @@ class FavoritesRepository(
                 Result.failure(FavoritesException("Please sign in to manage price alerts"))
             } else {
                 Result.failure(
-                    FavoritesException("Failed to mark all alerts read: ${response.status}")
+                    FavoritesException("Failed to mark all alerts read: ${response.status}"),
                 )
             }
         } catch (e: Exception) {
@@ -229,7 +229,7 @@ class FavoritesRepository(
                 Result.failure(FavoritesException("Please sign in to view saved searches"))
             } else {
                 Result.failure(
-                    FavoritesException("Failed to load saved searches: ${response.status}")
+                    FavoritesException("Failed to load saved searches: ${response.status}"),
                 )
             }
         } catch (e: Exception) {
@@ -278,7 +278,7 @@ class FavoritesRepository(
                 Result.failure(FavoritesException("Saved search not found"))
             } else {
                 Result.failure(
-                    FavoritesException("Failed to update saved search: ${response.status}")
+                    FavoritesException("Failed to update saved search: ${response.status}"),
                 )
             }
         } catch (e: Exception) {
@@ -302,7 +302,7 @@ class FavoritesRepository(
                 Result.failure(FavoritesException("Saved search not found"))
             } else {
                 Result.failure(
-                    FavoritesException("Failed to delete saved search: ${response.status}")
+                    FavoritesException("Failed to delete saved search: ${response.status}"),
                 )
             }
         } catch (e: Exception) {

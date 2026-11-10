@@ -56,7 +56,7 @@ class PortalListingsRepository(
                     Result.failure(PortalListingException("Please sign in to view your listings"))
                 else ->
                     Result.failure(
-                        PortalListingException("Failed to load listings: ${response.status}")
+                        PortalListingException("Failed to load listings: ${response.status}"),
                     )
             }
         } catch (e: Exception) {
@@ -91,7 +91,7 @@ class PortalListingsRepository(
                     Result.failure(PortalListingException("Listing not found or not owned"))
                 else ->
                     Result.failure(
-                        PortalListingException("Failed to load analytics: ${response.status}")
+                        PortalListingException("Failed to load analytics: ${response.status}"),
                     )
             }
         } catch (e: Exception) {
@@ -149,7 +149,7 @@ class PortalListingsRepository(
                 totalFavorites = totalFavorites,
                 viewsTrend = dates.map { viewsByDate[it] ?: 0 },
                 inquiriesTrend = dates.map { inquiriesByDate[it] ?: 0 },
-            )
+            ),
         )
     }
 }
