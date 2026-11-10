@@ -137,18 +137,18 @@
     {
       "task_id": "code-review-mobile-rn-push-isregistered-premature",
       "branch": "auto-impl/code-review-mobile-rn-push-isregistered-d8726b98",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-10T16:29:25Z",
-      "last_updated": "2026-11-10T16:29:25Z",
-      "status_changed_at": "2026-11-10T16:29:25Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-10T16:45:46Z",
+      "status_changed_at": "2026-11-10T16:45:46Z",
+      "pr_number": 3398,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3398",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-native",
+      "implementer_summary": "pr=3398 status=done specialist=react-native note=isRegistered no longer set prematurely (flipped only after backend accepts token); IG3 two-commit split; VERIFY OK a6387882 (mobile jest 72 suites/880)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -157,5 +157,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-10T16:43:43Z"
+  "generated": "2026-11-10T16:45:46Z"
 }
