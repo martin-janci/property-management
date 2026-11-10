@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-10T18:31:47Z",
+  "archived_at": "2026-11-10T20:42:08Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3292,6 +3292,31 @@
       "retry_round": 2
     },
     {
+      "id": "code-review-api-core-argon2-env-params-no-floor",
+      "action": "api core argon2 env params no floor",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-10T04:27:16Z (tier1d api-core score=1 vector=bug) | gc1-reconcile 2026-11-10T20:42:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T04:27:16Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-19T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3394,
+        "merged_at": "2026-11-10T20:29:12Z",
+        "at": "2026-11-10T20:42:08Z"
+      }
+    },
+    {
       "id": "code-review-api-core-client-ip-cf-spoof",
       "action": "api-server client-ip resolver trusts CF-Connecting-IP on any private-range peer — CF-only gate missing, reintroduces #2789 spoof class",
       "owner_role": "pm-security",
@@ -3313,6 +3338,56 @@
         "merged_pr": 2882,
         "merged_at": "2026-08-30T04:38:30Z",
         "at": "2026-08-30T06:23:27Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-cors-prod-test-divergence",
+      "action": "api core cors prod test divergence",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-10T04:27:16Z (tier1d api-core score=2 vector=bug) | gc1-reconcile 2026-11-10T20:42:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T04:27:16Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-18T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3400,
+        "merged_at": "2026-11-10T20:29:57Z",
+        "at": "2026-11-10T20:42:08Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-delay-action-duration-overflow",
+      "action": "api core delay action duration overflow",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-10T04:27:16Z (tier1d api-core score=2 vector=bug) | gc1-reconcile 2026-11-10T20:42:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T04:27:16Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-19T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3399,
+        "merged_at": "2026-11-10T20:29:49Z",
+        "at": "2026-11-10T20:42:08Z"
       }
     },
     {
@@ -6058,6 +6133,31 @@
       }
     },
     {
+      "id": "code-review-mobile-rn-feedback-storage-unguarded-parse",
+      "action": "mobile rn feedback storage unguarded parse",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-10T04:27:16Z (tier1d mobile-rn score=1 vector=bug) | gc1-reconcile 2026-11-10T20:42:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T04:27:16Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-19T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3396,
+        "merged_at": "2026-11-10T20:29:53Z",
+        "at": "2026-11-10T20:42:08Z"
+      }
+    },
+    {
       "id": "code-review-mobile-rn-hardcoded-empty-error-i18n",
       "action": "mobile: empty/error/loading state strings hardcoded in English across ~18 screens despite react-i18next being wired",
       "owner_role": "pm-backend",
@@ -6530,6 +6630,31 @@
       }
     },
     {
+      "id": "code-review-mobile-rn-push-isregistered-premature",
+      "action": "mobile rn push isregistered premature",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-10T04:27:16Z (tier1d mobile-rn score=2 vector=bug) | gc1-reconcile 2026-11-10T20:42:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T04:27:16Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-18T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3398,
+        "merged_at": "2026-11-10T20:30:01Z",
+        "at": "2026-11-10T20:42:08Z"
+      }
+    },
+    {
       "id": "code-review-mobile-rn-report-fault-fake-submit",
       "action": "[archive-terminal-reconcile: terminal in archive (merged)] ReportFaultScreen.tsx handleSubmit() fakes API call with setTimeout(1500) — fault reports never reach backend (App.tsx:126 wires this)",
       "owner_role": "pm-frontend",
@@ -6843,6 +6968,31 @@
       }
     },
     {
+      "id": "code-review-mobile-rn-voting-timeremaining-nan",
+      "action": "mobile rn voting timeremaining nan",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-10T04:27:16Z (tier1d mobile-rn score=2 vector=bug) | gc1-reconcile 2026-11-10T20:42:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T04:27:16Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-18T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3401,
+        "merged_at": "2026-11-10T20:32:04Z",
+        "at": "2026-11-10T20:42:08Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-aml-review-decision-untrusted-cast",
       "action": "AmlDashboardPage casts raw window.prompt text into the review-decision union — a typo submits an invalid AML decision",
       "owner_role": "pm-backend",
@@ -6902,6 +7052,31 @@
         "merged_pr": 3071,
         "merged_at": "2026-10-12T22:32:46Z",
         "at": "2026-10-13T00:26:45Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-ai-ack-no-error-surface",
+      "action": "ppt web core ai ack no error surface",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-10T10:24:54Z (tier1d ppt-web-core score=2 vector=bug) | gc1-reconcile 2026-11-10T20:42:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T10:24:54Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-16T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3403,
+        "merged_at": "2026-11-10T20:32:12Z",
+        "at": "2026-11-10T20:42:08Z"
       }
     },
     {
@@ -7898,6 +8073,31 @@
         "commit": "4356bec22febc0d623f6e3cfd57b02f53922f27f",
         "subject": "code-review-ppt-web-core-ws-giveup-no-resume: resume WebSocket reconnection after the retry budget is exhausted (#2691)",
         "at": "2026-08-07T00:11:53Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-jwt-in-query-param",
+      "action": "ppt web core ws jwt in query param",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-10T10:24:54Z (tier1d ppt-web-core score=2 vector=bug) | gc1-reconcile 2026-11-10T20:42:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T10:24:54Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-16T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3404,
+        "merged_at": "2026-11-10T20:32:15Z",
+        "at": "2026-11-10T20:42:08Z"
       }
     },
     {
@@ -8907,6 +9107,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-portfolio-alert-mutations-silent-fail",
+      "action": "ppt web ui portfolio alert mutations silent fail",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-10T04:27:16Z (tier1d ppt-web-ui score=2 vector=bug) | gc1-reconcile 2026-11-10T20:42:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T04:27:16Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-17T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3402,
+        "merged_at": "2026-11-10T20:32:08Z",
+        "at": "2026-11-10T20:42:08Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-portfolio-mock-data",
       "action": "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:17-208 — the entire dashboard renders hardcoded mockDashboardSummary / mockPropertyCards / mockAlerts / mockCashFlowTrend consts; no useQuery/API hook",
       "owner_role": "pm-backend",
@@ -9813,6 +10038,31 @@
         "merged_pr": 2682,
         "merged_at": "2026-08-06T16:17:00Z",
         "at": "2026-08-06T18:03:49Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-layout-resolved-no-ratelimit-cache",
+      "action": "reality server layout resolved no ratelimit cache",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-10T10:24:54Z (tier1d reality-server score=2 vector=bug) | gc1-reconcile 2026-11-10T20:42:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T10:24:54Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-16T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3406,
+        "merged_at": "2026-11-10T20:32:23Z",
+        "at": "2026-11-10T20:42:08Z"
       }
     },
     {
@@ -22622,6 +22872,33 @@
         "commit": "ae36fcc803ee004722a3392b06aa8279bb891c00",
         "subject": "gh-issue-3352: revoke other sessions on authenticated password change (#3353)",
         "at": "2026-11-07T18:32:59Z"
+      }
+    },
+    {
+      "id": "gh-issue-3397",
+      "action": "Follow-up: last-admin guard's admin role_type list can drift from TenantRole (PR #3366) (Closes #3397)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-11-10T18:25:52Z (#3397) | gc1-reconcile 2026-11-10T20:42:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T18:25:52Z",
+      "issue_ref": {
+        "number": 3397,
+        "url": "https://github.com/martin-janci/property-management/issues/3397",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3405,
+        "merged_at": "2026-11-10T20:32:19Z",
+        "at": "2026-11-10T20:42:08Z"
       }
     },
     {
