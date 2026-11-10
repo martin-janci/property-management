@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-09T22:43:35Z",
+  "archived_at": "2026-11-10T06:40:12Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -4412,6 +4412,31 @@
       }
     },
     {
+      "id": "code-review-api-handlers-db-error-leak",
+      "action": "api handlers db error leak",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-10T00:26:46Z (tier1d api-handlers score=2 vector=security) | gc1-reconcile 2026-11-10T06:39:49Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T00:26:46Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 2,
+        "vector": "security",
+        "generated": "2026-10-25T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3379,
+        "merged_at": "2026-11-10T06:39:30Z",
+        "at": "2026-11-10T06:39:49Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-decide-appeal-unvalidated",
       "action": "api-handlers moderation.rs decide_appeal — free-form req.decision silently rejects appeals on typo/casing; req.rationale not length-validated",
       "owner_role": "pm-backend",
@@ -7942,6 +7967,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-buildings-err-raw-i18n",
+      "action": "ppt web ui buildings err raw i18n",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-10T00:26:46Z (tier1d ppt-web-ui score=1 vector=i18n) | gc1-reconcile 2026-11-10T06:39:49Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T00:26:46Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "i18n",
+        "generated": "2026-11-01T04:40:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3375,
+        "merged_at": "2026-11-10T06:39:30Z",
+        "at": "2026-11-10T06:39:49Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-community-feature-no-i18n",
       "action": "code-review ppt-web-ui: entire community feature (posts, groups, events, marketplace, comments) is shipped English-only — only PostCard.tsx uses useTranslation",
       "owner_role": "pm-backend",
@@ -8142,6 +8192,31 @@
         "merged_pr": 2883,
         "merged_at": "2026-08-30T04:38:30Z",
         "at": "2026-08-30T06:23:27Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-doc-search-raw-err-i18n",
+      "action": "ppt web ui doc search raw err i18n",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-10T00:26:46Z (tier1d ppt-web-ui score=1 vector=i18n) | gc1-reconcile 2026-11-10T06:39:49Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T00:26:46Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "i18n",
+        "generated": "2026-11-01T04:40:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3376,
+        "merged_at": "2026-11-10T06:39:30Z",
+        "at": "2026-11-10T06:39:49Z"
       }
     },
     {
@@ -8531,6 +8606,31 @@
         "commit": "26dce7d602d7a7b4646966f0644631899ef4c1b7",
         "subject": "code-review-ppt-web-ui-offline-ind-i18n: i18n OfflineIndicator banner (#2736)",
         "at": "2026-08-12T06:06:45Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-payment-match-silent-fail",
+      "action": "ppt web ui payment match silent fail",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-10T00:26:46Z (tier1d ppt-web-ui score=2 vector=bug) | gc1-reconcile 2026-11-10T06:39:49Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T00:26:46Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-11-01T04:40:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3373,
+        "merged_at": "2026-11-10T06:39:30Z",
+        "at": "2026-11-10T06:39:49Z"
       }
     },
     {
@@ -9208,6 +9308,29 @@
       }
     },
     {
+      "id": "code-review-reality-server-imports-total-page-len",
+      "action": "reality-server list_import_jobs reports `total` as page length, breaking client pagination",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-10T04:27:16Z (score=2 conf=medium vector=bug) | dev-reconcile 2026-11-10T06:25:41Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T04:27:16Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "cbc954cd107b1cf992d5df2fe9cfd48cee87314e",
+        "subject": "code-review-reality-server-imports-total-page-len: fix import-jobs total to report full count, not page length (#3371)",
+        "at": "2026-11-10T06:25:41Z"
+      }
+    },
+    {
       "id": "code-review-reality-server-inquiries-no-ratelimit",
       "action": "reality-server: InquiryResult::RateLimited variant is defined but never constructed or matc...",
       "owner_role": "pm-backend",
@@ -9604,6 +9727,56 @@
       }
     },
     {
+      "id": "code-review-reality-server-price-map-mode-unvalidated",
+      "action": "reality server price map mode unvalidated",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-10T00:26:46Z (tier1d reality-server score=1 vector=bug) | gc1-reconcile 2026-11-10T06:39:49Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T00:26:46Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-27T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3377,
+        "merged_at": "2026-11-10T06:39:30Z",
+        "at": "2026-11-10T06:39:49Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-pw-reset-timing-oracle",
+      "action": "reality server pw reset timing oracle",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-10T00:26:46Z (tier1d reality-server score=1 vector=bug) | gc1-reconcile 2026-11-10T06:39:49Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T00:26:46Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-27T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3378,
+        "merged_at": "2026-11-10T06:39:30Z",
+        "at": "2026-11-10T06:39:49Z"
+      }
+    },
+    {
       "id": "code-review-reality-server-register-account-enumeration",
       "action": "reality-server: POST /api/v1/users/register leaks existence via 409+differentiated body (account-enumeration oracle)",
       "owner_role": "pm-backend",
@@ -9763,6 +9936,31 @@
         "merged_pr": 2758,
         "merged_at": "2026-08-13T22:31:33Z",
         "at": "2026-08-13T22:34:21Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-sso-cb-db-err-leak",
+      "action": "reality server sso cb db err leak",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-10T00:26:46Z (tier1d reality-server score=2 vector=bug) | gc1-reconcile 2026-11-10T06:39:49Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T00:26:46Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-11-05T05:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3374,
+        "merged_at": "2026-11-10T06:39:30Z",
+        "at": "2026-11-10T06:39:49Z"
       }
     },
     {
@@ -10345,6 +10543,31 @@
         "commit": "4e392bf238b6be13e0868250700e39a30440237f",
         "subject": "code-review-reality-web-inquiry-type-untranslated: translate inquiry type via next-intl (#3224)",
         "at": "2026-11-04T00:32:46Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-json-guard-array-gap",
+      "action": "reality web json guard array gap",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-10T00:26:46Z (tier1d reality-web score=2 vector=bug) | gc1-reconcile 2026-11-10T06:39:49Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T00:26:46Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-26T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3372,
+        "merged_at": "2026-11-10T06:39:30Z",
+        "at": "2026-11-10T06:39:49Z"
       }
     },
     {
