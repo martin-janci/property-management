@@ -135,18 +135,18 @@
     {
       "task_id": "gh-issue-3397",
       "branch": "auto-impl/gh-issue-3397-5f451ed7",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-10T18:31:32Z",
-      "last_updated": "2026-11-10T18:31:32Z",
-      "status_changed_at": "2026-11-10T18:31:32Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-10T19:11:05Z",
+      "status_changed_at": "2026-11-10T19:11:05Z",
+      "pr_number": 3405,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3405",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3405 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=derived last-admin admin set from TenantRole::admin_role_types(); repo binds role_type=ANY($3) replacing hardcoded SQL IN; IG3 split red->green; fmt+clippy+test -p common PASS (130 tests,3 new); DB sqlx tests->CI; Closes #3397",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -265,5 +265,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-10T19:10:22Z"
+  "generated": "2026-11-10T19:11:05Z"
 }
