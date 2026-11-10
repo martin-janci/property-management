@@ -8,8 +8,9 @@
 
 import type { SyncFrequency, SyncHistoryItem } from '@ppt/reality-api-client';
 import { useSyncHistory, useSyncSchedule, useUpdateSyncSchedule } from '@ppt/reality-api-client';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { formatDateTime } from '@/lib/format';
 
 const FREQUENCY_VALUES: SyncFrequency[] = ['manual', 'hourly', 'daily', 'weekly'];
 
@@ -36,6 +37,7 @@ interface SyncScheduleProps {
 
 export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncScheduleProps) {
   const t = useTranslations('import.schedule');
+  const locale = useLocale();
   const { data: schedule, isLoading } = useSyncSchedule(agencyId, connectionId);
   const { data: history } = useSyncHistory(agencyId, connectionId);
   const updateMutation = useUpdateSyncSchedule(agencyId, connectionId);
@@ -228,9 +230,7 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
               {schedule?.nextRunAt && (
                 <div className="info-row">
                   <span className="info-label">{t('nextRun')}</span>
-                  <span className="info-value">
-                    {new Date(schedule.nextRunAt).toLocaleString()}
-                  </span>
+                  <span className="info-value">{formatDateTime(schedule.nextRunAt, locale)}</span>
                 </div>
               )}
             </div>
@@ -518,12 +518,13 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
 
 function HistoryItem({ item }: { item: SyncHistoryItem }) {
   const t = useTranslations('import.schedule');
+  const locale = useLocale();
   const statusConfig = getHistoryStatusConfig(item.status);
 
   return (
     <div className="history-item">
       <div className="history-header">
-        <span className="history-date">{new Date(item.startedAt).toLocaleString()}</span>
+        <span className="history-date">{formatDateTime(item.startedAt, locale)}</span>
         <span
           className="history-status"
           style={{ background: statusConfig.bg, color: statusConfig.color }}

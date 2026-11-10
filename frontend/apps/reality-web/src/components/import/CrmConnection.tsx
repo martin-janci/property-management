@@ -19,8 +19,9 @@ import {
   useSyncCrmConnection,
   useTestCrmConnection,
 } from '@ppt/reality-api-client';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { formatDateTime } from '@/lib/format';
 import { toSafeLogMessage } from '@/lib/safe-error';
 
 const CRM_PROVIDERS: { id: CrmProvider; name: string; logo: string }[] = [
@@ -160,6 +161,7 @@ function ConnectionCard({
 }) {
   const t = useTranslations('import.crm');
   const tFreq = useTranslations('import.feed.frequency');
+  const locale = useLocale();
   const deleteMutation = useDeleteCrmConnection(agencyId);
   const syncMutation = useSyncCrmConnection(agencyId, connection.id);
 
@@ -194,13 +196,13 @@ function ConnectionCard({
         {connection.lastSyncAt && (
           <div className="sync-info">
             <span className="label">{t('lastSync')}</span>
-            <span className="value">{new Date(connection.lastSyncAt).toLocaleString()}</span>
+            <span className="value">{formatDateTime(connection.lastSyncAt, locale)}</span>
           </div>
         )}
         {connection.nextSyncAt && (
           <div className="sync-info">
             <span className="label">{t('nextSync')}</span>
-            <span className="value">{new Date(connection.nextSyncAt).toLocaleString()}</span>
+            <span className="value">{formatDateTime(connection.nextSyncAt, locale)}</span>
           </div>
         )}
         <div className="sync-info">
