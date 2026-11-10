@@ -1318,5 +1318,17 @@
     "errorAreaNegative": "Area must not be negative",
     "errorRoomsInvalid": "Rooms must be a valid number",
     "errorRoomsNegative": "Rooms must not be negative"
+  },
+  "realtor": {
+    "errorNetwork": "Network error. Please try again.",
+    "errorMalformed": "The server returned an unexpected response. Please try again.",
+    "errorRequestFailed": "Request failed ({status}). Please try again.",
+    "errorLoadProfile": "Could not load profile.",
+    "errorSaveProfile": "Could not save profile.",
+    "errorNameRequired": "Name is required.",
+    "errorLoadListing": "Could not load listing.",
+    "errorSaveListing": "Could not save listing.",
+    "errorCreateListing": "Could not create listing. Please try again.",
+    "errorMissingListingId": "Missing listing ID."
   }
 }

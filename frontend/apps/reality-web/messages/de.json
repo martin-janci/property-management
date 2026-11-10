@@ -1318,5 +1318,17 @@
     "errorAreaNegative": "Fläche darf nicht negativ sein",
     "errorRoomsInvalid": "Zimmeranzahl muss eine gültige Zahl sein",
     "errorRoomsNegative": "Zimmeranzahl darf nicht negativ sein"
+  },
+  "realtor": {
+    "errorNetwork": "Netzwerkfehler. Bitte versuchen Sie es erneut.",
+    "errorMalformed": "Der Server hat eine unerwartete Antwort zurückgegeben. Bitte versuchen Sie es erneut.",
+    "errorRequestFailed": "Anfrage fehlgeschlagen ({status}). Bitte versuchen Sie es erneut.",
+    "errorLoadProfile": "Profil konnte nicht geladen werden.",
+    "errorSaveProfile": "Profil konnte nicht gespeichert werden.",
+    "errorNameRequired": "Name ist erforderlich.",
+    "errorLoadListing": "Inserat konnte nicht geladen werden.",
+    "errorSaveListing": "Inserat konnte nicht gespeichert werden.",
+    "errorCreateListing": "Inserat konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
+    "errorMissingListingId": "Inserat-ID fehlt."
   }
 }

@@ -1311,5 +1311,17 @@
     "errorAreaNegative": "A terület nem lehet negatív",
     "errorRoomsInvalid": "A szobák számának érvényes számnak kell lennie",
     "errorRoomsNegative": "A szobák száma nem lehet negatív"
+  },
+  "realtor": {
+    "errorNetwork": "Hálózati hiba. Kérjük, próbálja újra.",
+    "errorMalformed": "A szerver váratlan választ adott. Kérjük, próbálja újra.",
+    "errorRequestFailed": "A kérés sikertelen ({status}). Kérjük, próbálja újra.",
+    "errorLoadProfile": "A profil betöltése nem sikerült.",
+    "errorSaveProfile": "A profil mentése nem sikerült.",
+    "errorNameRequired": "A név megadása kötelező.",
+    "errorLoadListing": "A hirdetés betöltése nem sikerült.",
+    "errorSaveListing": "A hirdetés mentése nem sikerült.",
+    "errorCreateListing": "A hirdetés létrehozása nem sikerült. Kérjük, próbálja újra.",
+    "errorMissingListingId": "Hiányzik a hirdetés azonosítója."
   }
 }
