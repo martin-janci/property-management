@@ -2,7 +2,7 @@
  * ForgotPasswordScreen (UC-14.4).
  *
  * Requests a password reset email by POSTing to
- * `/api/v1/auth/password-reset/request`.
+ * `/api/v1/auth/forgot-password`.
  */
 
 import Constants from 'expo-constants';
@@ -49,7 +49,7 @@ export function ForgotPasswordScreen({ onSignInPress }: ForgotPasswordScreenProp
     }
     setIsSubmitting(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/auth/password-reset/request`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: trimmed }),
