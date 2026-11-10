@@ -113,6 +113,7 @@ UC-03 faults list — the manager's working surface for the 8-state fault machin
 
 <!-- newest entries on top -->
 
+- 2026-11-10 — agent: audit round 8 — server fix: status/priority/category filters on `GET /faults` returned 500 and `sort_by` was injectable; manager role check now matches snake_case roles (fault edit/triage no longer 403 for managers).
 - 2026-11-05 — agent: screen-map-drift-pr-3244-ppt — reconcile i18n drift from PR #3244 (`fix(ppt-web): localize faults, news, settings and error pages`). `FaultsPage` / `FaultCard` / `FaultList` moved hardcoded English UI copy into react-i18next (`faults.*`); new `features/faults/utils/faultLabels.ts` maps fault status/priority/category enum values to i18n keys shared by the list, card and triage components, so status-pill + priority labels now render per-locale across all 6 locales (sk/cs native, de/pl/hu). i18n only — no route/component/endpoint/status change; frontmatter unchanged.
 - 2026-11-04 — agent: r3-nav-roles — Edit and Triage are passed to the cards only for `isManagerRole` users; residents get View only (audit r3 #14).
 - 2026-11-04 — agent: hid Delete action — API has no DELETE /faults/{id} (405); FaultCard renders Delete only when onDelete is wired

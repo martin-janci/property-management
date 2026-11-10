@@ -34,4 +34,5 @@ Note: an `reality/agent-profile` screen-map exists; this stub is for the realtor
 - 2026-05-18 — audit: stub created from `frontend/apps/reality-web/src/app/[locale]/realtor/profile/page.tsx`.
 
 ## Agent Log
+- 2026-11-10 — agent: audit round 8 — profile loads/saves via `GET|PUT|POST /api/v1/realtors/profile` + `/api/v1/users/me` (was calling non-existent `/realtors/me`); a user without a profile gets the empty form and the first save creates it.
 - 2026-05-18 — agent: created stub for unmapped route.
