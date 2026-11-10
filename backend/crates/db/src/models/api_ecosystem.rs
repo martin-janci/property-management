@@ -8,6 +8,30 @@ use sqlx::FromRow;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
+/// Serialize custom outbound HTTP headers with their values masked.
+///
+/// Webhook and connector headers commonly carry credentials
+/// (`Authorization`, `X-Api-Key`, ...). Header names are kept so clients can
+/// see what is configured; values are write-only, like `auth_config`.
+fn serialize_masked_headers<S>(
+    headers: &Option<serde_json::Value>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    let masked = headers.as_ref().map(|value| match value {
+        serde_json::Value::Object(map) => serde_json::Value::Object(
+            map.keys()
+                .map(|k| (k.clone(), serde_json::Value::String("********".into())))
+                .collect(),
+        ),
+        serde_json::Value::Null => serde_json::Value::Null,
+        _ => serde_json::Value::String("********".into()),
+    });
+    serde::Serialize::serialize(&masked, serializer)
+}
+
 // ============================================
 // Story 150.1: Integration Marketplace
 // ============================================
@@ -263,6 +287,8 @@ pub struct Connector {
     pub retry_initial_delay_ms: i32,
     pub retry_max_delay_ms: i32,
     pub timeout_ms: i32,
+    /// Custom headers; values are masked in API responses.
+    #[serde(serialize_with = "serialize_masked_headers")]
     pub headers: Option<serde_json::Value>,
     pub supported_actions: Vec<String>,
     pub error_mapping: Option<serde_json::Value>,
@@ -404,6 +430,8 @@ pub struct EnhancedWebhookSubscription {
     pub filters: Option<serde_json::Value>,
     pub payload_template: Option<serde_json::Value>,
     pub status: String,
+    /// Custom headers; values are masked in API responses.
+    #[serde(serialize_with = "serialize_masked_headers")]
     pub headers: Option<serde_json::Value>,
     pub retry_policy: Option<serde_json::Value>,
     pub rate_limit_requests: Option<i32>,
@@ -1093,7 +1121,7 @@ mod credential_serialization_tests {
             filters: None,
             payload_template: None,
             status: "active".into(),
-            headers: None,
+            headers: Some(serde_json::json!({ "Authorization": "Bearer hdr-secret" })),
             retry_policy: None,
             rate_limit_requests: None,
             rate_limit_window_seconds: None,
@@ -1106,6 +1134,7 @@ mod credential_serialization_tests {
         let json = serde_json::to_value(&webhook).unwrap();
         assert!(json.get("auth_config").is_none());
         assert!(!json.to_string().contains("secret"));
+        assert_eq!(json["headers"]["Authorization"], "********");
 
         let connector = Connector {
             id: Uuid::new_v4(),
@@ -1121,7 +1150,7 @@ mod credential_serialization_tests {
             retry_initial_delay_ms: 100,
             retry_max_delay_ms: 1000,
             timeout_ms: 1000,
-            headers: None,
+            headers: Some(serde_json::json!({ "X-Api-Key": "hdr-secret" })),
             supported_actions: vec![],
             error_mapping: None,
             data_transformations: None,
@@ -1131,6 +1160,7 @@ mod credential_serialization_tests {
         let json = serde_json::to_value(&connector).unwrap();
         assert!(json.get("auth_config").is_none());
         assert!(!json.to_string().contains("secret"));
+        assert_eq!(json["headers"]["X-Api-Key"], "********");
 
         let key = DeveloperApiKey {
             id: Uuid::new_v4(),

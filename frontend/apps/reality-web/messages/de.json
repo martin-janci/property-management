@@ -637,11 +637,59 @@
       }
     },
     "report": {
+      "h1": "Inserat melden",
+      "subtitle": "Helfen Sie uns, das Portal vertrauenswürdig zu halten — sagen Sie uns, was nicht stimmt.",
+      "title": "Inserat melden",
       "submit": "Meldung absenden",
-      "subtitle": "Help us keep the portal trustworthy — tell us what's wrong.",
+      "submitting": "Wird gesendet…",
       "success": "Meldung wurde gesendet",
-      "title": "Report a listing",
-      "h1": "Report a listing"
+      "problemLegend": "Grund der Meldung",
+      "problems": {
+        "fraudulent_listing": {
+          "label": "Betrugsverdacht",
+          "description": "Verdächtiges Inserat, Aufforderung zur Vorauszahlung, gefälschte Makleridentität"
+        },
+        "price_manipulation": {
+          "label": "Falscher Preis",
+          "description": "Der Preis entspricht nicht der Realität oder soll absichtlich täuschen"
+        },
+        "incorrect_information": {
+          "label": "Gefälschte Fotos",
+          "description": "Die Fotos gehören nicht zu dieser Immobilie"
+        },
+        "duplicate_listing": {
+          "label": "Doppeltes Inserat",
+          "description": "Dieselbe Immobilie wird mehrfach inseriert"
+        },
+        "already_sold": {
+          "label": "Verkauft / nicht mehr verfügbar",
+          "description": "Die Immobilie ist bereits verkauft oder vermietet, das Inserat wurde nicht entfernt"
+        },
+        "other": {
+          "label": "Anderer Grund",
+          "description": "Ein anderer technischer Fehler oder Verstoß gegen die Plattformregeln"
+        }
+      },
+      "listingRefLabel": "Link zum Inserat (URL oder ID)",
+      "listingRefPlaceholder": "z. B. https://rlt.sk/listings/ba-byt-3i oder #12345",
+      "descriptionLabel": "Beschreibung des Problems",
+      "descriptionPlaceholder": "Beschreiben Sie, warum Sie dieses Inserat melden. Je mehr Details Sie angeben, desto schneller können wir es prüfen.",
+      "attachmentsLabel": "Anhänge (demnächst)",
+      "attachmentsComingSoon": "Das Hinzufügen von Anhängen wird bald verfügbar sein",
+      "attachmentsHint": "Das Hochladen von Screenshots ist noch nicht verfügbar — bitte beschreiben Sie die Belege in der obigen Beschreibung. Wir arbeiten daran.",
+      "gdpr": {
+        "label": "Ich stimme der Verarbeitung personenbezogener Daten zum Zweck der Prüfung meiner Meldung gemäß der {privacyLink} zu.",
+        "privacyLink": "Datenschutzrichtlinie"
+      },
+      "successTitle": "Meldung wurde gesendet",
+      "successBody": "Wir haben Ihre Meldung erhalten. Unser Team prüft sie innerhalb von 24 Stunden. Danke, dass Sie helfen, das Portal sicher zu halten.",
+      "referenceLabel": "Referenznummer",
+      "referenceHint": "Geben Sie sie bei weiterer Kommunikation an — so können wir Ihre Meldung schnell finden.",
+      "backToListings": "Zurück zu den Angeboten",
+      "errorNoListing": "Wir konnten nicht feststellen, welches Inserat die Meldung betrifft. Öffnen Sie die Meldung über die Detailseite eines Inserats oder fügen Sie oben den Link oder die ID des Inserats ein.",
+      "errorRateLimit": "Zu viele Meldungen von diesem Gerät. Bitte versuchen Sie es in einem Moment erneut.",
+      "errorNotFound": "Inserat nicht gefunden. Überprüfen Sie den Link oder die ID und versuchen Sie es erneut.",
+      "errorGeneric": "Die Meldung konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
     },
     "security": {
       "reportCta": "Inserat melden",
@@ -1384,5 +1432,17 @@
     "errorAreaNegative": "Fläche darf nicht negativ sein",
     "errorRoomsInvalid": "Zimmeranzahl muss eine gültige Zahl sein",
     "errorRoomsNegative": "Zimmeranzahl darf nicht negativ sein"
+  },
+  "realtor": {
+    "errorNetwork": "Netzwerkfehler. Bitte versuchen Sie es erneut.",
+    "errorMalformed": "Der Server hat eine unerwartete Antwort zurückgegeben. Bitte versuchen Sie es erneut.",
+    "errorRequestFailed": "Anfrage fehlgeschlagen ({status}). Bitte versuchen Sie es erneut.",
+    "errorLoadProfile": "Profil konnte nicht geladen werden.",
+    "errorSaveProfile": "Profil konnte nicht gespeichert werden.",
+    "errorNameRequired": "Name ist erforderlich.",
+    "errorLoadListing": "Inserat konnte nicht geladen werden.",
+    "errorSaveListing": "Inserat konnte nicht gespeichert werden.",
+    "errorCreateListing": "Inserat konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
+    "errorMissingListingId": "Inserat-ID fehlt."
   }
 }

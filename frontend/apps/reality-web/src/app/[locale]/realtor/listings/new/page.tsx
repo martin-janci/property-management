@@ -10,11 +10,13 @@ import { useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { ListingForm } from '@/components/realtor/ListingForm';
 import { Footer, Header } from '@/components/ui';
-import { createListing, type ListingDraft, RealtorApiError } from '@/lib/realtor-api';
+import { createListing, type ListingDraft } from '@/lib/realtor-api';
+import { useRealtorErrorMessage } from '@/lib/realtor-error';
 
 function CreateListingContent() {
   const t = useTranslations('pages.realtorListingCreate');
   const router = useRouter();
+  const describeError = useRealtorErrorMessage();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -25,7 +27,7 @@ function CreateListingContent() {
       const created = await createListing(draft);
       router.replace(`/realtor/listings/${created.id}/edit`);
     } catch (err) {
-      setError(err instanceof RealtorApiError ? err.message : t('error'));
+      setError(describeError(err, 'errorCreateListing'));
     } finally {
       setIsSubmitting(false);
     }

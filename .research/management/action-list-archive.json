@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-10T09:10:41Z",
+  "archived_at": "2026-11-10T12:32:19Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -9121,6 +9121,31 @@
         "merged_pr": 2892,
         "merged_at": "2026-08-30T16:37:56Z",
         "at": "2026-08-30T18:24:58Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-compare-add-limit-toctou",
+      "action": "reality server compare add limit toctou",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-10T02:25:23Z (tier1d reality-server score=1 vector=bug) | gc1-reconcile 2026-11-10T12:27:40Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T02:25:23Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-22T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-10T12:27:40Z"
       }
     },
     {

@@ -9,8 +9,21 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getEventTriggers, resetEventTriggers, updateEventTrigger } from './api';
-import type { EventTriggerPreference, EventTriggersResponse, UpdateTriggerRequest } from './types';
+import {
+  deleteInboxGroup,
+  getEventTriggers,
+  listInboxGroups,
+  markAllInboxGroupsRead,
+  markInboxGroupRead,
+  resetEventTriggers,
+  updateEventTrigger,
+} from './api';
+import type {
+  EventTriggerPreference,
+  EventTriggersResponse,
+  InboxQuery,
+  UpdateTriggerRequest,
+} from './types';
 
 export const notificationTriggerKeys = {
   all: ['notification-triggers'] as const,
@@ -114,4 +127,59 @@ export function useResetNotificationTriggers() {
       queryClient.setQueryData(notificationTriggerKeys.events(), data);
     },
   });
+}
+
+// ---------------------------------------------------------------------------
+// In-app notification inbox
+// ---------------------------------------------------------------------------
+
+export const inboxKeys = {
+  all: ['notification-inbox'] as const,
+  list: (query: InboxQuery) => [...inboxKeys.all, 'list', query] as const,
+  unread: () => [...inboxKeys.all, 'unread'] as const,
+};
+
+/** Poll interval for the unread badge. The WebSocket channel is best-effort. */
+const UNREAD_POLL_MS = 60_000;
+
+/** The caller's notification groups. */
+export function useNotificationInbox(query: InboxQuery = {}) {
+  return useQuery({
+    queryKey: inboxKeys.list(query),
+    queryFn: () => listInboxGroups(query),
+  });
+}
+
+/** Unread-group count for the top-bar bell (polled). */
+export function useUnreadNotificationCount(enabled = true) {
+  return useQuery({
+    queryKey: inboxKeys.unread(),
+    queryFn: async () => (await listInboxGroups({ limit: 1 })).totalUnread,
+    enabled,
+    refetchInterval: UNREAD_POLL_MS,
+    staleTime: 30_000,
+  });
+}
+
+function useInboxMutation<TVars>(fn: (vars: TVars) => Promise<void>) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: fn,
+    onSettled: () => queryClient.invalidateQueries({ queryKey: inboxKeys.all }),
+  });
+}
+
+/** Mark one group read. */
+export function useMarkInboxGroupRead() {
+  return useInboxMutation((groupId: string) => markInboxGroupRead(groupId));
+}
+
+/** Mark all groups read. */
+export function useMarkAllInboxRead() {
+  return useInboxMutation<void>(() => markAllInboxGroupsRead());
+}
+
+/** Remove one group from the inbox. */
+export function useDeleteInboxGroup() {
+  return useInboxMutation((groupId: string) => deleteInboxGroup(groupId));
 }

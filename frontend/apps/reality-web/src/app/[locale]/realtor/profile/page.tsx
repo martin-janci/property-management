@@ -10,13 +10,14 @@ import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
 import {
   getMyRealtorProfile,
-  RealtorApiError,
   type RealtorProfile,
   updateMyRealtorProfile,
 } from '@/lib/realtor-api';
+import { useRealtorErrorMessage } from '@/lib/realtor-error';
 
 function ProfileFormContent() {
   const t = useTranslations('pages.realtorProfile');
+  const describeError = useRealtorErrorMessage();
   const [profile, setProfile] = useState<RealtorProfile | null>(null);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -26,7 +27,10 @@ function ProfileFormContent() {
   const [specializationsText, setSpecializationsText] = useState('');
 
   const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string>();
+  // Store the raw thrown value and translate at render time so the message
+  // tracks the active locale and the load effect stays free of the unstable
+  // `describeError` closure (avoids a useExhaustiveDependencies warning).
+  const [loadError, setLoadError] = useState<unknown>();
   const [isSaving, setIsSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number>();
   const [saveError, setSaveError] = useState<string>();
@@ -47,7 +51,7 @@ function ProfileFormContent() {
       })
       .catch((err) => {
         if (cancelled) return;
-        setLoadError(err instanceof RealtorApiError ? err.message : t('loadError'));
+        setLoadError(err);
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);
@@ -81,14 +85,15 @@ function ProfileFormContent() {
       setProfile(updated);
       setSavedAt(Date.now());
     } catch (err) {
-      setSaveError(err instanceof RealtorApiError ? err.message : t('saveError'));
+      setSaveError(describeError(err, 'errorSaveProfile'));
     } finally {
       setIsSaving(false);
     }
   };
 
   if (isLoading) return <p className="state">{t('loading')}</p>;
-  if (loadError) return <p className="state error">{loadError}</p>;
+  if (loadError)
+    return <p className="state error">{describeError(loadError, 'errorLoadProfile')}</p>;
 
   return (
     <form className="form" onSubmit={handleSubmit} noValidate>

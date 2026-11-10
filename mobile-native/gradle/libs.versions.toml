@@ -5,23 +5,23 @@ minSdk = "24"
 targetSdk = "37"
 
 # Build
-kotlin = "2.4.10"
+kotlin = "2.4.21"
 agp = "9.3.0"
 ksp = "2.3.21-2.0.4"
 
 # Compose
-composeBom = "2026.06.01"
+composeBom = "2026.09.00"
 activityCompose = "1.13.0"
 lifecycleRuntimeCompose = "2.11.0"
 navigationCompose = "2.9.8"
 
 # Kotlin Libraries
 kotlinxCoroutines = "1.11.0"
-kotlinxSerialization = "1.11.0"
+kotlinxSerialization = "1.12.0"
 kotlinxDatetime = "0.8.0"
 
 # Ktor
-ktor = "3.5.2"
+ktor = "3.6.1"
 
 [libraries]
 # Compose

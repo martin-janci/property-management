@@ -352,6 +352,13 @@ export const NotificationAnalyticsPage = lazy(() =>
   }))
 );
 
+// In-app notification inbox (gap audit R6 P1-8)
+export const NotificationInboxPage = lazy(() =>
+  import('../features/notification-inbox').then((m) => ({
+    default: m.NotificationInboxPage,
+  }))
+);
+
 // Notification trigger management (Story 84.4 — Notification Trigger System, PM gap 84-4)
 export const NotificationTriggersPage = lazy(() =>
   import('../features/notification-triggers').then((m) => ({

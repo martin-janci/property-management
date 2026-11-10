@@ -637,11 +637,59 @@
       }
     },
     "report": {
+      "h1": "Zgłoś ogłoszenie",
+      "subtitle": "Pomóż nam utrzymać wiarygodność portalu — powiedz nam, co jest nie tak.",
+      "title": "Zgłoś ogłoszenie",
       "submit": "Wyślij zgłoszenie",
-      "subtitle": "Help us keep the portal trustworthy — tell us what's wrong.",
+      "submitting": "Wysyłanie…",
       "success": "Zgłoszenie wysłane",
-      "title": "Report a listing",
-      "h1": "Report a listing"
+      "problemLegend": "Powód zgłoszenia",
+      "problems": {
+        "fraudulent_listing": {
+          "label": "Podejrzenie oszustwa",
+          "description": "Podejrzane ogłoszenie, prośba o przedpłatę, fałszywa tożsamość agenta"
+        },
+        "price_manipulation": {
+          "label": "Nieprawidłowa cena",
+          "description": "Cena nie odpowiada rzeczywistości lub ma celowo wprowadzać w błąd"
+        },
+        "incorrect_information": {
+          "label": "Fałszywe zdjęcia",
+          "description": "Zdjęcia nie należą do tej nieruchomości"
+        },
+        "duplicate_listing": {
+          "label": "Zduplikowane ogłoszenie",
+          "description": "Ta sama nieruchomość jest ogłaszana wielokrotnie"
+        },
+        "already_sold": {
+          "label": "Sprzedane / niedostępne",
+          "description": "Nieruchomość jest już sprzedana lub wynajęta, a ogłoszenie nie zostało usunięte"
+        },
+        "other": {
+          "label": "Inny powód",
+          "description": "Inny błąd techniczny lub naruszenie zasad platformy"
+        }
+      },
+      "listingRefLabel": "Link do ogłoszenia (URL lub ID)",
+      "listingRefPlaceholder": "np. https://rlt.sk/listings/ba-byt-3i lub #12345",
+      "descriptionLabel": "Opis problemu",
+      "descriptionPlaceholder": "Opisz, dlaczego zgłaszasz to ogłoszenie. Im więcej szczegółów podasz, tym szybciej je sprawdzimy.",
+      "attachmentsLabel": "Załączniki (wkrótce)",
+      "attachmentsComingSoon": "Dodawanie załączników będzie wkrótce dostępne",
+      "attachmentsHint": "Przesyłanie zrzutów ekranu nie jest jeszcze dostępne — opisz dowody w opisie powyżej. Pracujemy nad tym.",
+      "gdpr": {
+        "label": "Wyrażam zgodę na przetwarzanie danych osobowych w celu rozpatrzenia mojego zgłoszenia zgodnie z {privacyLink}.",
+        "privacyLink": "Polityką prywatności"
+      },
+      "successTitle": "Zgłoszenie wysłane",
+      "successBody": "Otrzymaliśmy Twoje zgłoszenie. Nasz zespół rozpatrzy je w ciągu 24 godzin. Dziękujemy za pomoc w utrzymaniu bezpieczeństwa portalu.",
+      "referenceLabel": "Numer referencyjny",
+      "referenceHint": "Podaj go w dalszej komunikacji — pomoże nam szybko odnaleźć Twoje zgłoszenie.",
+      "backToListings": "Powrót do ogłoszeń",
+      "errorNoListing": "Nie udało nam się ustalić, którego ogłoszenia dotyczy zgłoszenie. Otwórz zgłoszenie ze strony szczegółów ogłoszenia lub wklej powyżej link albo ID ogłoszenia.",
+      "errorRateLimit": "Zbyt wiele zgłoszeń z tego urządzenia. Spróbuj ponownie za chwilę.",
+      "errorNotFound": "Nie znaleziono ogłoszenia. Sprawdź link lub ID i spróbuj ponownie.",
+      "errorGeneric": "Nie udało się wysłać zgłoszenia. Spróbuj ponownie."
     },
     "security": {
       "reportCta": "Zgłoś ogłoszenie",
@@ -1377,5 +1425,17 @@
     "errorAreaNegative": "Powierzchnia nie może być ujemna",
     "errorRoomsInvalid": "Liczba pokoi musi być prawidłową liczbą",
     "errorRoomsNegative": "Liczba pokoi nie może być ujemna"
+  },
+  "realtor": {
+    "errorNetwork": "Błąd sieci. Spróbuj ponownie.",
+    "errorMalformed": "Serwer zwrócił nieoczekiwaną odpowiedź. Spróbuj ponownie.",
+    "errorRequestFailed": "Żądanie nie powiodło się ({status}). Spróbuj ponownie.",
+    "errorLoadProfile": "Nie udało się wczytać profilu.",
+    "errorSaveProfile": "Nie udało się zapisać profilu.",
+    "errorNameRequired": "Imię jest wymagane.",
+    "errorLoadListing": "Nie udało się wczytać ogłoszenia.",
+    "errorSaveListing": "Nie udało się zapisać ogłoszenia.",
+    "errorCreateListing": "Nie udało się utworzyć ogłoszenia. Spróbuj ponownie.",
+    "errorMissingListingId": "Brak identyfikatora ogłoszenia."
   }
 }

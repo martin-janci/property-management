@@ -7,7 +7,8 @@
 import type { FacilitySummary, FacilityType, ListFacilitiesQuery } from '@ppt/api-client';
 import { listFacilities } from '@ppt/api-client';
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { FacilityList } from '../components';
 
 const PAGE_SIZE = 10;
@@ -44,6 +45,7 @@ export function FacilitiesPage() {
   const { buildingId } = useParams<{ buildingId: string }>();
   const navigate = useNavigate();
   const isManager = useIsManager();
+  const { t } = useTranslation();
 
   const [facilities, setFacilities] = useState<FacilitySummary[]>([]);
   const [total, setTotal] = useState(0);
@@ -112,6 +114,20 @@ export function FacilitiesPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
+      {/* Gap audit R6 P1-9: the pending-approvals page had no entry point. */}
+      <nav className="mb-4 flex flex-wrap gap-4 text-sm" aria-label={t('facilities.title')}>
+        {isManager && (
+          <Link
+            to={`/buildings/${buildingId}/facilities/pending`}
+            className="text-blue-600 hover:underline"
+          >
+            {t('facilities.bookings.pendingTitle')}
+          </Link>
+        )}
+        <Link to="/facilities/bookings/my" className="text-blue-600 hover:underline">
+          {t('facilities.bookings.myTitle')}
+        </Link>
+      </nav>
       <FacilityList
         facilities={facilities}
         total={total}
