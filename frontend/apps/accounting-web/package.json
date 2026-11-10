@@ -25,7 +25,7 @@
     "react-dom": "^19.3.1"
   },
   "devDependencies": {
-    "@playwright/test": "^1.64.1",
+    "@playwright/test": "^1.65.0",
     "@ppt/dev-panel": "workspace:*",
     "@ppt/e2e": "workspace:*",
     "@ppt/vite-plugin-worktree": "workspace:*",

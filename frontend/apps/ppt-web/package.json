@@ -21,6 +21,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.9.1",
     "@ppt/admin-ui": "workspace:*",
     "@ppt/api-client": "workspace:*",
     "@ppt/shared": "workspace:*",
@@ -34,17 +35,16 @@
     "qrcode": "^1.5.4",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
+    "react-hook-form": "^7.91.0",
     "react-i18next": "^17.1.11",
     "react-pdf": "^10.5.0",
     "react-router-dom": "^6.21.0",
-    "react-hook-form": "^7.91.0",
-    "@hookform/resolvers": "^5.9.1",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
     "@axe-core/react": "^4.14.0",
-    "@playwright/test": "^1.64.1",
+    "@playwright/test": "^1.65.0",
     "@ppt/dev-panel": "workspace:*",
     "@ppt/e2e": "workspace:*",
     "@ppt/vite-plugin-worktree": "workspace:*",
