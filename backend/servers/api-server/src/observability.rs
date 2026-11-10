@@ -160,20 +160,18 @@ fn init_sentry(config: &SentryConfig) -> Option<ClientInitGuard> {
 
     let guard = sentry::init((
         dsn,
-        sentry::ClientOptions {
-            release: config.release.clone().map(|v| v.into()),
-            environment: Some(config.environment.clone().into()),
-            sample_rate: config.sample_rate,
-            traces_sample_rate: 0.1, // Sample 10% of transactions
-            attach_stacktrace: true,
-            send_default_pii: false, // PII redaction
-            before_send: Some(std::sync::Arc::new(|mut event| {
+        sentry::ClientOptions::new()
+            .maybe_release(config.release.clone())
+            .environment(config.environment.clone())
+            .sample_rate(config.sample_rate)
+            .traces_sample_rate(0.1) // Sample 10% of transactions
+            .attach_stacktrace(true)
+            .send_default_pii(false) // PII redaction
+            .before_send(|mut event| {
                 // Redact sensitive data from error events
                 redact_pii(&mut event);
                 Some(event)
-            })),
-            ..Default::default()
-        },
+            }),
     ));
 
     Some(guard)
