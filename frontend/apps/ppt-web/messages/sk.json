@@ -1637,7 +1637,7 @@
       "dateRange": "Obdobie",
       "dateTo": "do",
       "hasSummary": "Má zhrnutie od AI",
-      "error": "Chyba pri vyhľadávaní dokumentov: {{error}}",
+      "error": "Pri vyhľadávaní dokumentov sa vyskytla chyba. Skúste to znova.",
       "found_one": "Nájdený {{count}} dokument za {{ms}} ms",
       "found_few": "Nájdené {{count}} dokumenty za {{ms}} ms",
       "found_many": "Nájdených {{count}} dokumentov za {{ms}} ms",

@@ -1615,7 +1615,7 @@
       "dateRange": "Date Range",
       "dateTo": "to",
       "hasSummary": "Has AI summary",
-      "error": "Error searching documents: {{error}}",
+      "error": "Something went wrong while searching documents. Please try again.",
       "found_one": "Found {{count}} document in {{ms}}ms",
       "found_other": "Found {{count}} documents in {{ms}}ms",
       "noResults": "No documents found matching \"{{query}}\"",

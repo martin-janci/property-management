@@ -1557,7 +1557,7 @@
       "dateRange": "Zeitraum",
       "dateTo": "bis",
       "hasSummary": "Mit KI-Zusammenfassung",
-      "error": "Fehler bei der Dokumentsuche: {{error}}",
+      "error": "Bei der Dokumentsuche ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
       "found_one": "{{count}} Dokument in {{ms}} ms gefunden",
       "found_other": "{{count}} Dokumente in {{ms}} ms gefunden",
       "noResults": "Keine Dokumente zu „{{query}}“ gefunden",

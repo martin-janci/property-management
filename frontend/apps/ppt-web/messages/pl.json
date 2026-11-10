@@ -1579,7 +1579,7 @@
       "dateRange": "Zakres dat",
       "dateTo": "do",
       "hasSummary": "Ma streszczenie AI",
-      "error": "Błąd wyszukiwania dokumentów: {{error}}",
+      "error": "Podczas wyszukiwania dokumentów wystąpił błąd. Spróbuj ponownie.",
       "found_one": "Znaleziono {{count}} dokument w {{ms}} ms",
       "found_few": "Znaleziono {{count}} dokumenty w {{ms}} ms",
       "found_many": "Znaleziono {{count}} dokumentów w {{ms}} ms",
