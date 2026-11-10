@@ -95,6 +95,26 @@ impl LeaseRepository {
         Self { pool }
     }
 
+    /// Flip `active` leases whose `end_date` has passed to `expired`
+    /// (gap audit R6 P2-13). Called by the background scheduler, which runs
+    /// without a user context, so this is deliberately cross-tenant: it only
+    /// touches the status of rows that are already past their own end date.
+    ///
+    /// `CURRENT_DATE` keeps the cutoff in DB time, matching the overdue-invoice
+    /// transition. Returns `(lease_id, organization_id)` for logging.
+    pub async fn expire_ended_leases(&self) -> Result<Vec<(Uuid, Uuid)>, SqlxError> {
+        sqlx::query_as::<_, (Uuid, Uuid)>(
+            r#"
+            UPDATE leases
+            SET status = 'expired', updated_at = NOW()
+            WHERE status = 'active' AND end_date < CURRENT_DATE
+            RETURNING id, organization_id
+            "#,
+        )
+        .fetch_all(&self.pool)
+        .await
+    }
+
     // ========================================================================
     // RLS-aware methods (recommended)
     // ========================================================================

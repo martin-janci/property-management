@@ -396,7 +396,8 @@
     "outages": "Przerwy w dostawach",
     "neighbors": "Sąsiedzi",
     "leases": "Umowy najmu",
-    "members": "Osoby i role"
+    "members": "Osoby i role",
+    "oauthGrants": "Połączone aplikacje"
   },
   "auth": {
     "signIn": "Zaloguj się",
@@ -1258,6 +1259,10 @@
       "count_few": "{{count}} foldery",
       "count_many": "{{count}} folderów",
       "count_other": "{{count}} foldery",
+      "documentCount_one": "{{count}} dokument",
+      "documentCount_few": "{{count}} dokumenty",
+      "documentCount_many": "{{count}} dokumentów",
+      "documentCount_other": "{{count}} dokumenty",
       "newFolder": "Nowy folder",
       "allDocuments": "Wszystkie dokumenty",
       "loadError": "Nie udało się wczytać folderów.",

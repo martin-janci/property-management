@@ -410,7 +410,8 @@
     "outages": "Odstávky",
     "neighbors": "Sousedé",
     "leases": "Nájmy",
-    "members": "Lidé a role"
+    "members": "Lidé a role",
+    "oauthGrants": "Propojené aplikace"
   },
   "auth": {
     "signIn": "Přihlásit se",
@@ -1070,7 +1071,14 @@
     },
     "confirmDelete": "Smazat tuto závadu? Tuto akci nelze vrátit zpět.",
     "deleted": "Závada byla smazána",
-    "deleteFailed": "Nepodařilo se smazat závadu"
+    "deleteFailed": "Nepodařilo se smazat závadu",
+    "withdraw": "Stáhnout hlášení",
+    "withdrawConfirm": "Stáhnout toto hlášení poruchy? Bude uzavřeno.",
+    "withdrawn": "Hlášení bylo staženo",
+    "withdrawFailed": "Hlášení se nepodařilo stáhnout",
+    "uploadingPhoto": "Nahrává se…",
+    "photoUploadFailed": "Fotku se nepodařilo nahrát",
+    "photosNotAttached": "{{failed}} z {{total}} fotek se nepodařilo přiložit. Můžete je přidat v detailu poruchy."
   },
   "buildings": {
     "title": "Budovy",
@@ -1316,6 +1324,10 @@
       "count_few": "{{count}} složky",
       "count_many": "{{count}} složek",
       "count_other": "{{count}} složek",
+      "documentCount_one": "{{count}} dokument",
+      "documentCount_few": "{{count}} dokumenty",
+      "documentCount_many": "{{count}} dokumentů",
+      "documentCount_other": "{{count}} dokumentů",
       "newFolder": "Nová složka",
       "allDocuments": "Všechny dokumenty",
       "loadError": "Složky se nepodařilo načíst.",
@@ -7098,7 +7110,30 @@
       "guest": "Host",
       "real_estate_agent": "Realitní makléř"
     },
-    "publicNavigation": "Navigace webu"
+    "publicNavigation": "Navigace webu",
+    "inbox": {
+      "title": "Oznámení",
+      "unreadMarker": "Nepřečtené:",
+      "count_one": "{{count}} oznámení",
+      "count_few": "{{count}} oznámení",
+      "count_many": "{{count}} oznámení",
+      "count_other": "{{count}} oznámení",
+      "markRead": "Označit jako přečtené",
+      "remove": "Odstranit",
+      "unreadSummary_one": "{{count}} nepřečtené",
+      "unreadSummary_few": "{{count}} nepřečtená",
+      "unreadSummary_many": "{{count}} nepřečtených",
+      "unreadSummary_other": "{{count}} nepřečtených",
+      "showRead": "Zobrazit přečtené",
+      "markAllRead": "Označit vše jako přečtené",
+      "failedToLoad": "Oznámení se nepodařilo načíst",
+      "emptyAll": "Nemáte žádná oznámení.",
+      "empty": "Vše máte přečtené.",
+      "bellUnread_one": "Oznámení ({{count}} nepřečtené)",
+      "bellUnread_few": "Oznámení ({{count}} nepřečtená)",
+      "bellUnread_many": "Oznámení ({{count}} nepřečtených)",
+      "bellUnread_other": "Oznámení ({{count}} nepřečtených)"
+    }
   },
   "news": {
     "title": "Novinky",

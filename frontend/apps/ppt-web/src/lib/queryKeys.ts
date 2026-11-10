@@ -378,9 +378,10 @@ export const AUTHED_QUERY_KEY_ROOTS = [
   // hooks (disputes/iot/outages/leases/voting/... route groups). These roots
   // were absent from the allow-list, so their tenant-/user-scoped caches
   // survived logout and leaked into the next session on a shared workstation.
-  // NOTE: `voting` is the live api-client root (votingKeys.all === ['voting']);
-  // the legacy local `queryKeys.votes` factory root (`votes`, above) is kept
-  // for the WebSocket invalidation map but no longer backs the voting queries.
+  // NOTE: `voting` is the live api-client root (votingKeys.all === ['voting'])
+  // that backs the on-screen vote queries AND the WebSocket votes-category
+  // invalidation. The legacy local `queryKeys.votes` factory root (`votes`,
+  // above) is retained only for logout-clear coverage; no live query uses it.
   'community',
   'disputes',
   'iot',

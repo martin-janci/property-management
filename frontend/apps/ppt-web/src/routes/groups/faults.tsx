@@ -12,6 +12,8 @@ import type {
   FaultWithDetails,
 } from '@ppt/api-client';
 import {
+  addAttachment as addFaultAttachment,
+  useAddAttachment,
   useAddComment,
   useBuildings,
   useConfirmFault,
@@ -24,6 +26,7 @@ import {
   useResolveFault,
   useTriageFault,
   useUpdateFault,
+  useWithdrawFault,
 } from '@ppt/api-client';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -195,12 +198,13 @@ function mapApiFaultAttachmentToUi(att: FaultAttachment): UiFaultAttachment {
   return {
     id: att.id,
     faultId: att.fault_id,
-    filename: att.file_name,
-    originalFilename: att.file_name,
-    contentType: att.file_type,
-    sizeBytes: att.file_size,
-    storageUrl: att.file_url,
-    description: undefined,
+    filename: att.filename,
+    originalFilename: att.original_filename,
+    contentType: att.content_type,
+    sizeBytes: att.size_bytes,
+    storageUrl: att.storage_url,
+    thumbnailUrl: att.thumbnail_url,
+    description: att.description,
     createdAt: att.created_at,
   };
 }
@@ -210,7 +214,6 @@ function mapApiFaultAttachmentToUi(att: FaultAttachment): UiFaultAttachment {
  *
  * Wired to @ppt/api-client TanStack Query hooks:
  *   useFaults           — list + pagination + filters (with snake_case→camelCase mapping)
- *   useDeleteFault      — DELETE /api/v1/faults/:id (new-status faults only)
  *   useFaultStatistics  — GET /api/v1/faults/statistics (summary bar: total/open/closed)
  *
  * API FaultSummary uses snake_case and a slightly different status enum;
@@ -295,8 +298,8 @@ function FaultsPageRoute() {
       onRetry={() => {
         void refetch();
       }}
-      // No onDelete: the API exposes no DELETE /faults/{id} (only GET/PUT),
-      // so the card hides the Delete action instead of 405-ing.
+      // No onDelete on the list: reports are withdrawn by their reporter
+      // from the detail page (POST /faults/{id}/withdraw).
       stats={stats}
       onNavigateToCreate={() => navigate('/faults/new')}
       onNavigateToView={(id) => navigate(`/faults/${id}`)}
@@ -336,11 +339,9 @@ function CreateFaultPageRoute() {
       buildings={buildings}
       units={units}
       onBuildingChange={setBuildingId}
-      // Photo-first is off: POST /faults/{id}/attachments only records
-      // metadata for an already-stored object (storage_url) and there is no
-      // fault-scoped presigned upload endpoint, so photos picked here could
-      // never be persisted. Hide the picker rather than silently drop them.
-      enablePhotoFirst={false}
+      // Photos are uploaded after the fault is created (presigned upload via
+      // addAttachment); a failed photo is reported, the fault still stands.
+      enablePhotoFirst
       isSubmitting={createFault.isPending}
       onSubmit={async (data) => {
         try {
@@ -354,6 +355,23 @@ function CreateFaultPageRoute() {
             category: data.category,
             priority: data.priority,
           });
+          const photos = data.photos ?? [];
+          if (created?.id && photos.length > 0) {
+            const results = await Promise.allSettled(
+              photos.map((file) => addFaultAttachment(created.id, file))
+            );
+            const failed = results.filter((r) => r.status === 'rejected').length;
+            if (failed > 0) {
+              showToast({
+                type: 'warning',
+                title: t('faults.photoUploadFailed'),
+                message: t('faults.photosNotAttached', {
+                  failed,
+                  total: photos.length,
+                }),
+              });
+            }
+          }
           showToast({
             type: 'success',
             title: t('common.created', { defaultValue: 'Created' }),
@@ -395,6 +413,8 @@ function FaultDetailPageRoute() {
   const reopen = useReopenFault(faultId ?? '');
   const addComment = useAddComment(faultId ?? '');
   const deleteAttachment = useDeleteAttachment(faultId ?? '');
+  const addAttachment = useAddAttachment(faultId ?? '');
+  const withdraw = useWithdrawFault();
 
   useEffect(() => {
     if (error) {
@@ -446,10 +466,32 @@ function FaultDetailPageRoute() {
       onAddComment={(content, isInternal) =>
         addComment.mutate({ content, is_internal: isInternal })
       }
-      // No onAddAttachment: the attachment endpoint takes JSON metadata of an
-      // already-uploaded object, not multipart bytes, so the upload control
-      // is hidden until a storage upload flow exists.
+      // Presigned upload: documents/upload-url → PUT → POST attachments.
+      onAddAttachment={(file) =>
+        addAttachment.mutate(file, {
+          onError: (err) =>
+            showToast({
+              type: 'error',
+              title: t('faults.photoUploadFailed'),
+              error: err,
+            }),
+        })
+      }
+      isUploadingAttachment={addAttachment.isPending}
       onDeleteAttachment={(id) => deleteAttachment.mutate(id)}
+      onWithdraw={
+        fault.reporterId === user?.id
+          ? () =>
+              withdraw.mutate(faultId, {
+                onSuccess: () => {
+                  showToast({ type: 'success', title: t('faults.withdrawn') });
+                  navigate('/faults');
+                },
+                onError: (err) =>
+                  showToast({ type: 'error', title: t('faults.withdrawFailed'), error: err }),
+              })
+          : undefined
+      }
     />
   );
 }

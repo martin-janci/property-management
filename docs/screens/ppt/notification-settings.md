@@ -92,6 +92,8 @@ There is a sibling **Advanced** route (`/settings/notifications/advanced`, `Adva
 
 <!-- newest entries on top -->
 
+- 2026-11-09 — agent: gap-audit-r7 — added link to advanced notification settings (previously an orphan route).
+
 - 2026-11-05 — agent: screen-map-drift-pr-3244-ppt — reconcile i18n drift from PR #3244 (`fix(ppt-web): localize faults, news, settings and error pages`). `NotificationSettingsPage`, `ChannelToggle` and `DisableAllWarningDialog` moved hardcoded English into react-i18next across all 6 locales (channel labels/descriptions, disable-all warning dialog, load/update error copy, "last updated" line) — this resolves the "CHANNEL_LABELS/CHANNEL_DESCRIPTIONS English-only today; i18n is a follow-up" item in Notes > Specific. i18n only — no route/component/endpoint/status change.
 - 2026-08-31 — agent: screen-map-drift-pr-2889-ppt — reconcile drift from PR #2889 (realtime ws→query-invalidation fix). ppt-web `WebSocketContext` re-keyed cache invalidation from dead `entity:*` names to canonical `domain.action` events (`preference.updated → ['notifications']`, plus a polymorphic `notification.created` subscriber routing by `payload.category`), and `App.tsx` now wires `onEntityEvent → queryClient.invalidateQueries`. This is the app-wide invalidation counterpart to the Story 8A.3 `sync.ts` path already noted in Functionality D. No route/component/endpoint/status change — frontmatter unchanged; docs-only.
 

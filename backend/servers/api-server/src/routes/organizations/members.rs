@@ -32,6 +32,71 @@ fn role_type_level(raw: &str) -> u8 {
         .level()
 }
 
+/// SECURITY (round-4 follow-up, gap audit R7): a caller may only manage a
+/// member who ranks strictly below them. Peers are off limits so two managers
+/// cannot demote or remove each other; the one exception is the top org role
+/// (org admin), where peer management is how admins hand over the org. The
+/// last-admin guard ([`ensure_not_last_admin`]) keeps that exception safe.
+fn ensure_can_manage_member(
+    caller_role_type: &str,
+    target_role_type: &str,
+) -> Result<(), ApiError> {
+    let caller = role_type_level(caller_role_type);
+    let target = role_type_level(target_role_type);
+    let caller_is_admin = caller >= TenantRole::OrgAdmin.level();
+    if target > caller || (target == caller && !caller_is_admin) {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "ROLE_NOT_ASSIGNABLE",
+                "You can only manage members below your own role",
+            )),
+        ));
+    }
+    Ok(())
+}
+
+/// Refuse to demote or remove the last active admin of an organization.
+async fn ensure_not_last_admin(
+    state: &AppState,
+    org_id: Uuid,
+    target_user_id: Uuid,
+    target_role_type: &str,
+    new_role_type: Option<&str>,
+) -> Result<(), ApiError> {
+    let admin_level = TenantRole::OrgAdmin.level();
+    if role_type_level(target_role_type) < admin_level {
+        return Ok(());
+    }
+    if new_role_type.is_some_and(|r| role_type_level(r) >= admin_level) {
+        return Ok(());
+    }
+    let others = state
+        .org_member_repo
+        .count_other_active_admins(org_id, target_user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to count organization admins");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    "Failed to verify admins",
+                )),
+            )
+        })?;
+    if others == 0 {
+        return Err((
+            StatusCode::CONFLICT,
+            Json(ErrorResponse::new(
+                "LAST_ADMIN",
+                "The organization must keep at least one admin",
+            )),
+        ));
+    }
+    Ok(())
+}
+
 /// SECURITY: a member-management permission must not let the caller hand out
 /// a role row carrying permissions they do not hold themselves (e.g. a manager
 /// with only `users:update` assigning a `["*"]` role). Every permission on the
@@ -726,16 +791,7 @@ pub async fn update_organization_member(
             )),
         ));
     }
-    if role_type_level(&target_membership.role_type) > role_type_level(&admin_membership.role_type)
-    {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "ROLE_NOT_ASSIGNABLE",
-                "You cannot change the role of a member above your own role",
-            )),
-        ));
-    }
+    ensure_can_manage_member(&admin_membership.role_type, &target_membership.role_type)?;
 
     // Derive role_type from the role name if not provided
     let role_type = req
@@ -743,6 +799,14 @@ pub async fn update_organization_member(
         .unwrap_or_else(|| new_role.name.to_lowercase().replace(' ', "_"));
     ensure_role_type_assignable(&admin_membership.role_type, &role_type)?;
     ensure_role_permissions_assignable(&role, &new_role)?;
+    ensure_not_last_admin(
+        &state,
+        org_id,
+        target_user_id,
+        &target_membership.role_type,
+        Some(&role_type),
+    )
+    .await?;
 
     // Update the member
     use db::models::UpdateOrganizationMember;
@@ -925,6 +989,21 @@ pub async fn remove_organization_member(
         }
     };
 
+    // SECURITY (gap audit R7): removing someone else requires outranking them
+    // (it used to need only `users:delete`, so a manager could remove an org
+    // admin); nobody, including the admin themself, may remove the last admin.
+    if target_user_id != admin_user_id {
+        ensure_can_manage_member(&admin_membership.role_type, &target_membership.role_type)?;
+    }
+    ensure_not_last_admin(
+        &state,
+        org_id,
+        target_user_id,
+        &target_membership.role_type,
+        None,
+    )
+    .await?;
+
     // Remove member using the membership ID
     match state.org_member_repo.remove(target_membership.id).await {
         Ok(Some(_)) => {}
@@ -987,6 +1066,19 @@ mod tests {
         TenantRole::Resident,
         TenantRole::Guest,
     ];
+
+    #[test]
+    fn manage_member_requires_strictly_lower_rank_except_admins() {
+        // Managers cannot touch peers or anyone above them.
+        assert!(ensure_can_manage_member("manager", "manager").is_err());
+        assert!(ensure_can_manage_member("manager", "org_admin").is_err());
+        assert!(ensure_can_manage_member("manager", "owner").is_ok());
+        // Org admins may manage each other (last-admin guard applies separately).
+        assert!(ensure_can_manage_member("org_admin", "org_admin").is_ok());
+        assert!(ensure_can_manage_member("org_admin", "manager").is_ok());
+        // Residents manage nobody at their level.
+        assert!(ensure_can_manage_member("owner", "owner").is_err());
+    }
 
     /// The escalation gate's `role_type_level` must resolve a stored
     /// `role_type` exactly the way the tenant extractors do, for every role in
