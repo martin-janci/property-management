@@ -27,6 +27,8 @@ mod facility_enum_decode_tests;
 mod fault_find_by_id_for_org_rls_tests;
 #[path = "suites/fault_kpi_unification_tests.rs"]
 mod fault_kpi_unification_tests;
+#[path = "suites/fault_list_filter_sort_tests.rs"]
+mod fault_list_filter_sort_tests;
 #[path = "suites/favorite_alert_read_idempotent_tests.rs"]
 mod favorite_alert_read_idempotent_tests;
 #[path = "suites/form_rls_repo_tests.rs"]
@@ -49,6 +51,8 @@ mod lease_units_join_tests;
 mod legal_rls_repo_tests;
 #[path = "suites/llm_document_rls_repo_tests.rs"]
 mod llm_document_rls_repo_tests;
+#[path = "suites/membership_manager_role_tests.rs"]
+mod membership_manager_role_tests;
 #[path = "suites/membership_revocation_tests.rs"]
 mod membership_revocation_tests;
 #[path = "suites/messaging_rls_cross_tenant_tests.rs"]

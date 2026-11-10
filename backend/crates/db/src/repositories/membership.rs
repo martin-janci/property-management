@@ -198,6 +198,12 @@ impl MembershipRepository {
     ///   SuperAdmin, PlatformAdmin, OrgAdmin, Manager, TechnicalManager,
     ///   PropertyManager.
     ///
+    /// `user_memberships.role` is stored in snake_case (`org_admin`,
+    /// `property_manager`, ... — the 00128 backfill, the seed and the auth
+    /// policy all write that form), while older grants used PascalCase. The
+    /// comparison normalizes both, otherwise every snake_case manager is
+    /// treated as a non-manager.
+    ///
     /// Used by handlers that gate manager-only data (internal notes on
     /// faults, full timeline visibility, etc.). Previously these handlers
     /// hardcoded `is_manager = false` as a least-privilege placeholder
@@ -215,13 +221,13 @@ impl MembershipRepository {
                    AND organization_id = $2
                    AND revoked_at IS NULL
                    AND (expires_at IS NULL OR expires_at > NOW())
-                   AND role IN (
-                       'SuperAdmin',
-                       'PlatformAdmin',
-                       'OrgAdmin',
-                       'Manager',
-                       'TechnicalManager',
-                       'PropertyManager'
+                   AND LOWER(REPLACE(role, '_', '')) IN (
+                       'superadmin',
+                       'platformadmin',
+                       'orgadmin',
+                       'manager',
+                       'technicalmanager',
+                       'propertymanager'
                    )
             )
             "#,
@@ -243,14 +249,14 @@ impl MembershipRepository {
             WHERE organization_id = $1
               AND revoked_at IS NULL
               AND (expires_at IS NULL OR expires_at > NOW())
-              AND role IN (
-                  'SuperAdmin',
-                  'PlatformAdmin',
-                  'OrgAdmin',
-                  'Manager',
-                  'TechnicalManager',
-                  'PropertyManager'
-              )
+              AND LOWER(REPLACE(role, '_', '')) IN (
+                       'superadmin',
+                       'platformadmin',
+                       'orgadmin',
+                       'manager',
+                       'technicalmanager',
+                       'propertymanager'
+                   )
             "#,
         )
         .bind(org_id)
