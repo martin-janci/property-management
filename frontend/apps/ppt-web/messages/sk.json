@@ -7054,7 +7054,8 @@
       "confirmed": "Párovanie potvrdené",
       "linkedInvoice": "Priradená faktúra:",
       "noSuggestions": "Žiadne aktívne návrhy párovania",
-      "actionFailed": "Akciu sa nepodarilo dokončiť. Skúste to znova."
+      "actionFailed": "Akciu sa nepodarilo dokončiť. Skúste to znova.",
+      "loadFailed": "Údaje o párovaní platieb sa nepodarilo načítať. Skúste to znova."
     },
     "nav": {
       "label": "Sekcie účtovníctva",

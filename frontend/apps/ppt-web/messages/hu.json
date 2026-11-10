@@ -6756,7 +6756,8 @@
       "confirmed": "Párosítás jóváhagyva",
       "linkedInvoice": "Kapcsolt számla:",
       "noSuggestions": "Nincs aktív párosítási javaslat",
-      "actionFailed": "A művelet nem sikerült. Próbálja újra."
+      "actionFailed": "A művelet nem sikerült. Próbálja újra.",
+      "loadFailed": "A fizetéspárosítási adatokat nem sikerült betölteni. Próbálja újra."
     },
     "nav": {
       "label": "Könyvelési részlegek",

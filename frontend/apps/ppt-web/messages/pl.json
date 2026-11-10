@@ -6870,7 +6870,8 @@
       "confirmed": "Dopasowanie potwierdzone",
       "linkedInvoice": "Powiązana faktura:",
       "noSuggestions": "Brak aktywnych sugestii dopasowania",
-      "actionFailed": "Nie udało się wykonać operacji. Spróbuj ponownie."
+      "actionFailed": "Nie udało się wykonać operacji. Spróbuj ponownie.",
+      "loadFailed": "Nie udało się wczytać danych dopasowania płatności. Spróbuj ponownie."
     },
     "nav": {
       "label": "Sekcje księgowości",

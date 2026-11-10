@@ -7055,7 +7055,8 @@
       "confirmed": "Párování potvrzeno",
       "linkedInvoice": "Přiřazená faktura:",
       "noSuggestions": "Žádné aktivní návrhy párování",
-      "actionFailed": "Akci se nepodařilo dokončit. Zkuste to znovu."
+      "actionFailed": "Akci se nepodařilo dokončit. Zkuste to znovu.",
+      "loadFailed": "Data párování plateb se nepodařilo načíst. Zkuste to znovu."
     },
     "nav": {
       "label": "Sekce účetnictví",
