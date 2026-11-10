@@ -223,18 +223,18 @@
     {
       "task_id": "code-review-ppt-web-core-ws-jwt-in-query-param",
       "branch": "auto-impl/code-review-ppt-web-core-ws-jwt-in-query-1f80081e",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-10T18:31:32Z",
-      "last_updated": "2026-11-10T18:31:32Z",
-      "status_changed_at": "2026-11-10T18:31:32Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-10T19:10:22Z",
+      "status_changed_at": "2026-11-10T19:10:22Z",
+      "pr_number": 3404,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3404",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=3404 status=partial->pr-opened-by-dispatcher specialist=react-web scope_drift=true note=IoT sensor WS JWT moved to Sec-WebSocket-Protocol subprotocol (reuses extract_token_from_subprotocols); frontend green, backend compiles+clippy clean+iot unit tests pass; only DB-less sqlx integration tests fail (environmental, pass in backend.yml CI); IG3 split 20cb9d6/5c897bb; draft PR opened from pushed branch for CI validation",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -265,5 +265,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-10T19:00:21Z"
+  "generated": "2026-11-10T19:10:22Z"
 }
