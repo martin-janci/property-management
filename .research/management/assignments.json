@@ -115,18 +115,18 @@
     {
       "task_id": "code-review-api-core-argon2-env-params-no-floor",
       "branch": "auto-impl/code-review-api-core-argon2-env-params-n-b2bfd5c7",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-10T14:30:15Z",
-      "last_updated": "2026-11-10T14:30:15Z",
-      "status_changed_at": "2026-11-10T14:30:15Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-10T15:01:13Z",
+      "status_changed_at": "2026-11-10T15:01:13Z",
+      "pr_number": 3394,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3394",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3394 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=clamp argon2 env costs up to P1-08 floor + match/log replacing stale expect; fmt+clippy green, +1 new passing test, 0 regressions",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -135,5 +135,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-10T14:39:12Z"
+  "generated": "2026-11-10T15:01:13Z"
 }
