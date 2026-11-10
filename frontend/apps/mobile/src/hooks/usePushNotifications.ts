@@ -152,8 +152,19 @@ export function usePushNotifications(): UsePushNotificationsReturn {
   }, []);
 
   const checkRegistrationStatus = async () => {
+    // Permission being granted is a *pre-condition* for registration, not proof
+    // of it: the device still needs a native FCM/APNs token obtained AND that
+    // token accepted by the backend before pushes can actually be delivered.
+    // Treating `granted` as "registered" here reported a device as registered
+    // on mount even when it had never contacted this backend (a previously
+    // granted OS permission survives reinstalls / account switches). So we only
+    // treat *lack* of permission as a definitive "not registered"; a positive
+    // `isRegistered` is set solely by `registerForPushNotifications` once the
+    // backend accepts the token.
     const { status } = await Notifications.getPermissionsAsync();
-    setIsRegistered(status === 'granted');
+    if (status !== 'granted') {
+      setIsRegistered(false);
+    }
   };
 
   const handleNotificationNavigation = (data: Record<string, unknown>) => {
@@ -220,11 +231,16 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       const expoToken = await Notifications.getExpoPushTokenAsync({ projectId });
       setExpoPushToken(expoToken.data);
 
-      setIsRegistered(true);
-
       // 3. Register the native token with the backend so the notification
       //    pipeline can deliver FCM/APNs pushes directly to this device.
       await sendTokenToBackend(nativeToken.data);
+
+      // Only now is the device truly registered: permission was granted, a
+      // native token was obtained, AND the backend accepted it. Setting this
+      // flag before the backend call reported "registered" even when the POST
+      // threw — the catch below leaves the flag untouched — so the UI/state
+      // claimed a device could receive pushes when it could not.
+      setIsRegistered(true);
 
       return expoToken.data;
     } catch (err) {
