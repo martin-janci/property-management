@@ -29,15 +29,15 @@
       "branch": "auto-impl/code-review-reality-server-imports-total-bc91233e",
       "status": "review",
       "claimed_at": "2026-11-09T18:27:46Z",
-      "last_updated": "2026-11-10T00:30:05Z",
+      "last_updated": "2026-11-10T00:42:02Z",
       "status_changed_at": "2026-11-09T18:49:00Z",
       "pr_number": 3371,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3371",
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": "pr=3371 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=fixed total to COUNT(*) via new count_import_jobs; fmt+clippy(-D warnings) green on all 8 impacted crates; sqlx::test DB tests deferred to CI (no local Postgres); draft PR open vs dev [dispatcher-rebased onto dev: resolved imports.rs clamp+clone + unified get_json test helper; fmt/clippy green, CI re-running on ca32839f6]",
-      "reviewer_summary": "verdict=approve note=count-filter mirrors list-filter exactly; regression-test valid IG3 split; scope-clean 3 files; CI fully green incl db tests",
-      "last_reviewed_oid": "dd24dece30186de702424c5403ff38b401afed5e",
+      "reviewer_summary": "verdict=approve note=count-filter mirrors list exactly; rebase clamp+clone conflict-resolution re-verified on ca32839f; regression test proves fix; CI green; self-approve 422 so recorded as COMMENT verdict; MERGED 00:36:39Z (squash cbc954cd) — Phase 2 next run will reconcile review->merged from GH truth",
+      "last_reviewed_oid": "ca32839f62d0405bf4316790204634364a752b6c",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
@@ -135,5 +135,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-10T00:30:05Z"
+  "generated": "2026-11-10T00:42:02Z"
 }
