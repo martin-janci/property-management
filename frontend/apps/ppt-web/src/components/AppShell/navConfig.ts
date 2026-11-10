@@ -165,6 +165,11 @@ export const ACCOUNT_ITEMS: NavItem[] = [
     defaultLabel: 'Notification preferences',
   },
   { to: '/settings/privacy', labelKey: 'nav.privacy', defaultLabel: 'Privacy' },
+  {
+    to: '/settings/oauth-grants',
+    labelKey: 'nav.oauthGrants',
+    defaultLabel: 'Connected apps',
+  },
   { to: '/settings/accessibility', labelKey: 'nav.accessibility', defaultLabel: 'Accessibility' },
   {
     to: '/settings/integrations',

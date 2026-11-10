@@ -23,7 +23,7 @@ vi.mock('react-i18next', () => ({
 const state = vi.hoisted(() => ({ enabled: true, items: [] as unknown[] }));
 
 vi.mock('../hooks/useActionQueue', () => ({
-  isActionQueueMockEnabled: () => state.enabled,
+  isActionQueueAvailable: () => state.enabled,
   useActionQueue: () => ({
     items: state.items,
     total: state.items.length,
@@ -88,6 +88,13 @@ describe('actionItemRoute', () => {
 
   it.each(['budget_approval', 'person_months'])('%s has no route', (entityType) => {
     expect(actionItemRoute({ entityType, entityId: 'x' })).toBeUndefined();
+  });
+
+  it('booking → its building pending-bookings page', () => {
+    expect(
+      actionItemRoute({ entityType: 'booking', entityId: 'x', metadata: { buildingId: 'b-1' } })
+    ).toBe('/buildings/b-1/facilities/pending');
+    expect(actionItemRoute({ entityType: 'booking', entityId: 'x' })).toBeUndefined();
   });
 });
 

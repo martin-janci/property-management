@@ -65,3 +65,64 @@ export interface UpdateTriggerRequest {
   emailEnabled?: boolean;
   inAppEnabled?: boolean;
 }
+
+// ---------------------------------------------------------------------------
+// In-app notification inbox (Epic 29 notification groups).
+//
+// In-app notifications are written by the backend NotificationService into
+// `notification_groups` / `grouped_notifications`; these types mirror
+// `NotificationGroup`, `GroupedNotification` and `GroupedNotificationsResponse`
+// in `backend/crates/db/src/models/granular_notification.rs` (camelCase JSON).
+// ---------------------------------------------------------------------------
+
+/** One notification inside a group. */
+export interface InboxNotification {
+  id: string;
+  groupId: string;
+  userId: string;
+  eventType: string;
+  title: string;
+  body?: string;
+  data?: Record<string, unknown>;
+  actorId?: string;
+  actorName?: string;
+  isRead: boolean;
+  readAt?: string;
+  createdAt: string;
+}
+
+/** A group of notifications about one entity (e.g. one fault). */
+export interface InboxGroup {
+  id: string;
+  userId: string;
+  groupKey: string;
+  entityType: string;
+  entityId: string;
+  title: string;
+  notificationCount: number;
+  latestNotificationAt: string;
+  isRead: boolean;
+  readAt?: string;
+  isExpanded: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** A group with its newest (up to 5) notifications. */
+export interface InboxGroupWithNotifications {
+  group: InboxGroup;
+  notifications: InboxNotification[];
+}
+
+/** `GET .../granular/groups` response. */
+export interface InboxResponse {
+  groups: InboxGroupWithNotifications[];
+  totalUnread: number;
+}
+
+/** Query for the inbox list. */
+export interface InboxQuery {
+  includeRead?: boolean;
+  limit?: number;
+  offset?: number;
+}

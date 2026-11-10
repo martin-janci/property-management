@@ -15,9 +15,19 @@ import type { ReactNode } from 'react';
 import {
   type ActionQueueData,
   applyActionQueueFilters,
+  buildManagerQueue,
+  isActionQueueAvailable,
   isActionQueueMockEnabled,
   useActionQueue,
 } from './useActionQueue';
+
+const api = vi.hoisted(() => ({
+  listFaults: vi.fn(),
+  listBuildings: vi.fn(),
+  listPendingBookings: vi.fn(),
+  approveBooking: vi.fn(),
+}));
+vi.mock('@ppt/api-client', () => api);
 
 const MODE_KEY = 'ppt-dev-panel-mode';
 
@@ -39,6 +49,10 @@ function enableMock() {
 
 beforeEach(() => {
   localStorage.clear();
+  api.listFaults.mockResolvedValue({ faults: [], count: 0 });
+  api.listBuildings.mockResolvedValue({ items: [], total: 0 });
+  api.listPendingBookings.mockResolvedValue({ items: [], total: 0 });
+  api.approveBooking.mockResolvedValue({});
 });
 
 describe('applyActionQueueFilters', () => {
@@ -108,9 +122,84 @@ describe('isActionQueueMockEnabled', () => {
   });
 });
 
+describe('isActionQueueAvailable', () => {
+  it('is available for managers (real sources) and not for residents', () => {
+    expect(isActionQueueAvailable('manager')).toBe(true);
+    expect(isActionQueueAvailable('resident')).toBe(false);
+  });
+});
+
+describe('buildManagerQueue — composed from real endpoints', () => {
+  it('lists new faults and pending bookings, urgent first', async () => {
+    api.listFaults.mockResolvedValue({
+      faults: [
+        {
+          id: 'f1',
+          title: 'Leak',
+          priority: 'urgent',
+          building_name: 'A',
+          created_at: '2026-11-01T00:00:00Z',
+        },
+      ],
+      count: 1,
+    });
+    api.listBuildings.mockResolvedValue({ items: [{ id: 'b1' }], total: 1 });
+    api.listPendingBookings.mockResolvedValue({
+      items: [
+        {
+          id: 'k1',
+          facility_name: 'Gym',
+          building_id: 'b1',
+          user_name: 'Jana',
+          start_time: '2026-11-10T10:00:00Z',
+          created_at: '2026-11-02T00:00:00Z',
+        },
+      ],
+      total: 1,
+    });
+
+    const queue = await buildManagerQueue();
+
+    expect(api.listFaults).toHaveBeenCalledWith(expect.objectContaining({ status: 'new' }));
+    expect(queue.items.map((i) => i.id)).toEqual(['fault:f1', 'booking:k1']);
+    expect(queue.items[1].metadata).toEqual({ buildingId: 'b1' });
+    expect(queue.counts).toEqual({ urgent: 1, high: 1, medium: 0, low: 0 });
+  });
+
+  it('keeps the other source when one fails', async () => {
+    api.listFaults.mockRejectedValue(new Error('403'));
+    api.listBuildings.mockResolvedValue({ items: [{ id: 'b1' }], total: 1 });
+    api.listPendingBookings.mockResolvedValue({
+      items: [
+        {
+          id: 'k1',
+          facility_name: 'Gym',
+          building_id: 'b1',
+          start_time: '2026-11-10T10:00:00Z',
+          created_at: '2026-11-02T00:00:00Z',
+        },
+      ],
+      total: 1,
+    });
+    const queue = await buildManagerQueue();
+    expect(queue.items.map((i) => i.id)).toEqual(['booking:k1']);
+  });
+});
+
+describe('useActionQueue — real sources (mock disabled)', () => {
+  it('approves a pending booking inline', async () => {
+    const { result } = renderHook(() => useActionQueue('manager'), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    result.current.handleAction('booking:k1', 'approve');
+
+    await waitFor(() => expect(api.approveBooking).toHaveBeenCalledWith('k1'));
+  });
+});
+
 describe('useActionQueue — no backend / mock disabled', () => {
   it('resolves an empty queue instead of fabricated data', async () => {
-    const { result } = renderHook(() => useActionQueue('manager'), { wrapper: createWrapper() });
+    const { result } = renderHook(() => useActionQueue('resident'), { wrapper: createWrapper() });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
@@ -120,13 +209,13 @@ describe('useActionQueue — no backend / mock disabled', () => {
   });
 
   it('fails loudly on an action instead of a silent no-op', async () => {
-    const { result } = renderHook(() => useActionQueue('manager'), { wrapper: createWrapper() });
+    const { result } = renderHook(() => useActionQueue('resident'), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     result.current.handleAction('some-item', 'approve');
 
     await waitFor(() => expect(result.current.isExecuteError).toBe(true));
-    expect((result.current.executeError as Error).message).toMatch(/not implemented/i);
+    expect((result.current.executeError as Error).message).toMatch(/not supported/i);
   });
 });
 

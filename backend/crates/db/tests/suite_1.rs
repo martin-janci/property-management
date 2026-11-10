@@ -29,6 +29,8 @@ mod api_ecosystem_developer_force_rls_tests;
 mod api_ecosystem_public_conn_routing_tests;
 #[path = "suites/api_ecosystem_rls_repo_tests.rs"]
 mod api_ecosystem_rls_repo_tests;
+#[path = "suites/append_only_audit_parent_delete_tests.rs"]
+mod append_only_audit_parent_delete_tests;
 #[path = "suites/auth_policy_tests.rs"]
 mod auth_policy_tests;
 #[path = "suites/automation_template_slug_tests.rs"]

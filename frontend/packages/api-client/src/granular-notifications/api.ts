@@ -14,7 +14,13 @@
  */
 
 import { authenticatedFetchJson } from '../lib/fetch';
-import type { EventTriggerPreference, EventTriggersResponse, UpdateTriggerRequest } from './types';
+import type {
+  EventTriggerPreference,
+  EventTriggersResponse,
+  InboxQuery,
+  InboxResponse,
+  UpdateTriggerRequest,
+} from './types';
 
 const BASE_PATH = '/api/v1/users/me/notification-preferences/granular';
 
@@ -44,5 +50,42 @@ export async function updateEventTrigger(
 export async function resetEventTriggers(): Promise<EventTriggersResponse> {
   return authenticatedFetchJson<EventTriggersResponse>(`${BASE_PATH}/events/reset`, {
     method: 'POST',
+  });
+}
+
+// ---------------------------------------------------------------------------
+// In-app notification inbox (Epic 29 notification groups)
+//   GET    {BASE}/groups?includeRead=&limit=&offset=
+//   POST   {BASE}/groups/{groupId}/read
+//   POST   {BASE}/groups/read-all
+//   DELETE {BASE}/groups/{groupId}
+// ---------------------------------------------------------------------------
+
+/** List the caller's notification groups, newest first. */
+export async function listInboxGroups(query: InboxQuery = {}): Promise<InboxResponse> {
+  const params = new URLSearchParams();
+  if (query.includeRead) params.set('includeRead', 'true');
+  if (query.limit !== undefined) params.set('limit', String(query.limit));
+  if (query.offset !== undefined) params.set('offset', String(query.offset));
+  const qs = params.toString();
+  return authenticatedFetchJson<InboxResponse>(`${BASE_PATH}/groups${qs ? `?${qs}` : ''}`);
+}
+
+/** Mark one group (and its notifications) as read. */
+export async function markInboxGroupRead(groupId: string): Promise<void> {
+  await authenticatedFetchJson<unknown>(`${BASE_PATH}/groups/${encodeURIComponent(groupId)}/read`, {
+    method: 'POST',
+  });
+}
+
+/** Mark every group as read. */
+export async function markAllInboxGroupsRead(): Promise<void> {
+  await authenticatedFetchJson<unknown>(`${BASE_PATH}/groups/read-all`, { method: 'POST' });
+}
+
+/** Remove a group from the inbox. */
+export async function deleteInboxGroup(groupId: string): Promise<void> {
+  await authenticatedFetchJson<unknown>(`${BASE_PATH}/groups/${encodeURIComponent(groupId)}`, {
+    method: 'DELETE',
   });
 }
