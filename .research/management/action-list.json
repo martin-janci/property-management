@@ -604,6 +604,239 @@
         "vector": "bug",
         "generated": "2026-10-19T08:36:48Z"
       }
+    },
+    {
+      "id": "code-review-reality-server-imports-total-page-len",
+      "action": "reality-server list_import_jobs reports `total` as page length, breaking client pagination",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-10T04:27:16Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T04:27:16Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-accesscontroller-untested",
+      "action": "mobile-rn NFCAccessController (478-line physical door-access authorization engine) has no test file — revocation/expiry/time-window/access-point logic is untested while sibling NFCCredentialManager ships 401 lines of tests",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-10T04:27:16Z (tier1d mobile-rn score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T04:27:16Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-19T08:36:48Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-delay-action-duration-overflow",
+      "action": "api core delay action duration overflow",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-10T04:27:16Z (tier1d api-core score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T04:27:16Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-19T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-argon2-env-params-no-floor",
+      "action": "api core argon2 env params no floor",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-10T04:27:16Z (tier1d api-core score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T04:27:16Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-19T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-feedback-storage-unguarded-parse",
+      "action": "mobile rn feedback storage unguarded parse",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-10T04:27:16Z (tier1d mobile-rn score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T04:27:16Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-19T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-cors-prod-test-divergence",
+      "action": "api core cors prod test divergence",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-10T04:27:16Z (tier1d api-core score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T04:27:16Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-18T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-push-isregistered-premature",
+      "action": "mobile rn push isregistered premature",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-10T04:27:16Z (tier1d mobile-rn score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T04:27:16Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-18T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-voting-quorum-divzero",
+      "action": "mobile rn voting quorum divzero",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-10T04:27:16Z (tier1d mobile-rn score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T04:27:16Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-18T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-voting-timeremaining-nan",
+      "action": "mobile rn voting timeremaining nan",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-10T04:27:16Z (tier1d mobile-rn score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T04:27:16Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-18T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-cors-localhost-prod-default",
+      "action": "api core cors localhost prod default",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-10T04:27:16Z (tier1d api-core score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T04:27:16Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-18T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-push-isregistered-perm-only",
+      "action": "mobile rn push isregistered perm only",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-10T04:27:16Z (tier1d mobile-rn score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T04:27:16Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-18T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-alert-mutations-silent-fail",
+      "action": "ppt web ui portfolio alert mutations silent fail",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-10T04:27:16Z (tier1d ppt-web-ui score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T04:27:16Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-17T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-dashboard-dead-buttons",
+      "action": "ppt web ui portfolio dashboard dead buttons",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-10T04:27:16Z (tier1d ppt-web-ui score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T04:27:16Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-17T00:00:00Z"
+      }
     }
   ],
   "generated": "2026-11-09T06:45:00Z"
