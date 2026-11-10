@@ -5,7 +5,8 @@
 
 use crate::extractors::auth::extract_session_token;
 use crate::handlers::users::{
-    PasswordResetConfirmResult, PasswordResetRequestResult, RegistrationResult, UserHandler,
+    deliver_password_reset, route_password_reset, PasswordResetConfirmResult, RegistrationResult,
+    ResetRouteOutcome, UserHandler,
 };
 use crate::services::{delivery_decision, ResetDelivery};
 use crate::state::AppState;
@@ -15,7 +16,6 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
-use db::models::user::Locale;
 use db::models::PortalUser;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -514,48 +514,50 @@ pub async fn request_password_reset(
         ResetDelivery::Send | ResetDelivery::LogFallback => {}
     }
 
+    // CWE-208 (timing oracle): the response path does ONLY the shared email
+    // lookup — identical work whether or not the email maps to an account. The
+    // account-specific side-effects (two token DB writes + the SMTP send) are
+    // dispatched OFF the response path via `route_password_reset`, so the HTTP
+    // response returns in account-independent wall-clock time. Doing that work
+    // inline here is what previously made the found-account path measurably
+    // slower, leaking account existence through latency.
     let handler = UserHandler::new(state.portal_repo.clone());
-    match handler
-        .request_password_reset(&state.portal_password_reset_repo, &req.email)
-        .await
-    {
-        Ok(PasswordResetRequestResult::Sent {
-            plaintext_token,
-            name,
-            locale,
-        }) => {
-            let locale = Locale::parse(&locale);
-            match mailer
-                .send_reset_link(&req.email, &name, &plaintext_token, locale)
-                .await
-            {
-                Ok(()) => {
-                    tracing::info!(
-                        email_hash = %common::email_log_hash(&req.email),
-                        "Password reset link dispatched"
-                    );
+    let outcome = match handler.find_reset_user(&req.email).await {
+        Ok(target) => {
+            let found = target.is_some();
+            // Build the delivery future owning everything it needs so it can be
+            // spawned as 'static. For an unknown email it is a no-op that is
+            // dropped un-spawned (see `route_password_reset`).
+            let reset_repo = state.portal_password_reset_repo.clone();
+            let mailer = mailer.clone();
+            let email = req.email.clone();
+            let deliver = async move {
+                if let Some(user) = target {
+                    deliver_password_reset(reset_repo, mailer, email, user).await;
                 }
-                Err(e) => {
-                    // Delivery failed at the transport. Keep the response
-                    // enumeration-safe (generic 200) but log loudly so
-                    // operators notice — we no longer silently drop the token.
-                    tracing::error!(
-                        error = %e,
-                        email_hash = %common::email_log_hash(&req.email),
-                        "Failed to send password reset email"
-                    );
-                }
-            }
+            };
+            route_password_reset(found, deliver)
         }
-        Ok(PasswordResetRequestResult::UserNotFound) => {
+        Err(e) => {
+            // Lookup itself failed. Still return 200 to avoid leaking the
+            // failure mode; nothing was dispatched.
+            tracing::error!(error = %e, "Failed to look up account for password reset");
+            ResetRouteOutcome::NoAccount
+        }
+    };
+
+    match outcome {
+        ResetRouteOutcome::Dispatched => {
+            tracing::debug!(
+                email_hash = %common::email_log_hash(&req.email),
+                "Password reset delivery dispatched off the response path"
+            );
+        }
+        ResetRouteOutcome::NoAccount => {
             tracing::debug!(
                 email_hash = %common::email_log_hash(&req.email),
                 "Password reset requested for unknown email"
             );
-        }
-        Err(e) => {
-            tracing::error!(error = %e, "Failed to issue password reset token");
-            // Still return 200 to avoid leaking the failure mode.
         }
     }
 
