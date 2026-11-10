@@ -159,6 +159,66 @@ impl TenantRole {
     pub fn from_role_type(role_type: &str) -> Option<Self> {
         serde_json::from_value(serde_json::Value::String(role_type.to_owned())).ok()
     }
+
+    /// Every [`TenantRole`] variant, for exhaustive iteration. Kept in lockstep
+    /// with the enum by the `all_variants_listed_in_all` test, so helpers that
+    /// derive a subset of roles (e.g. [`admin_role_types`](Self::admin_role_types))
+    /// can never silently miss a newly added variant.
+    pub const ALL: [TenantRole; 12] = [
+        TenantRole::SuperAdmin,
+        TenantRole::PlatformAdmin,
+        TenantRole::OrgAdmin,
+        TenantRole::Manager,
+        TenantRole::TechnicalManager,
+        TenantRole::Owner,
+        TenantRole::OwnerDelegate,
+        TenantRole::Tenant,
+        TenantRole::Resident,
+        TenantRole::PropertyManager,
+        TenantRole::RealEstateAgent,
+        TenantRole::Guest,
+    ];
+
+    /// Canonical snake_case `role_type` string for this role — the exact value
+    /// stored in `organization_members.role_type`, serialized in JWT claims, and
+    /// parsed back by [`from_role_type`](Self::from_role_type). Mirrors the serde
+    /// `rename_all = "snake_case"` representation (pinned by the
+    /// `as_role_type_matches_serde` test).
+    pub fn as_role_type(&self) -> &'static str {
+        match self {
+            TenantRole::SuperAdmin => "super_admin",
+            TenantRole::PlatformAdmin => "platform_admin",
+            TenantRole::OrgAdmin => "org_admin",
+            TenantRole::Manager => "manager",
+            TenantRole::TechnicalManager => "technical_manager",
+            TenantRole::Owner => "owner",
+            TenantRole::OwnerDelegate => "owner_delegate",
+            TenantRole::Tenant => "tenant",
+            TenantRole::Resident => "resident",
+            TenantRole::PropertyManager => "property_manager",
+            TenantRole::RealEstateAgent => "real_estate_agent",
+            TenantRole::Guest => "guest",
+        }
+    }
+
+    /// Canonical `role_type` strings for every admin-level role (`OrgAdmin` and
+    /// above), derived from [`level`](Self::level) so the set stays in lockstep
+    /// with the role taxonomy.
+    ///
+    /// This is the single source of truth for "who counts as an admin" in the
+    /// last-admin guard: both the guard's applicability check (via
+    /// `role_type_level`/[`from_role_type`]) and the backing SQL count bind this
+    /// same set, so they can never drift into disagreement. Previously the SQL
+    /// count carried its own hand-rolled `IN (...)` list of role_type spellings
+    /// that could silently fall out of sync with `TenantRole` (#3397).
+    pub fn admin_role_types() -> Vec<&'static str> {
+        let min = TenantRole::OrgAdmin.level();
+        TenantRole::ALL
+            .iter()
+            .filter(|role| role.level() >= min)
+            .map(TenantRole::as_role_type)
+            .collect()
+    }
 }
 
 impl std::fmt::Display for TenantRole {

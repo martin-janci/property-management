@@ -516,26 +516,33 @@ impl OrganizationMemberRepository {
     /// other than `user_id`. Used to refuse demoting or removing the last
     /// organization admin, which would leave the org without anyone able to
     /// manage members.
+    ///
+    /// The admin `role_type` set is derived from
+    /// [`common::TenantRole::admin_role_types`] (roles at `OrgAdmin` level and
+    /// above) rather than a hard-coded SQL list, so it stays in lockstep with
+    /// the same `TenantRole` taxonomy the guard's applicability check uses and
+    /// cannot silently drift (#3397). Matching is exact (not `LOWER`/squashed),
+    /// mirroring the strict snake_case `TenantRole::from_role_type` the guard
+    /// resolves roles with — and the canonical snake_case value every write
+    /// path persists (`seed::canonical_role_type`, RLS policies).
     pub async fn count_other_active_admins(
         &self,
         org_id: Uuid,
         user_id: Uuid,
     ) -> Result<i64, SqlxError> {
+        let admin_role_types = common::TenantRole::admin_role_types();
         sqlx::query_scalar::<_, i64>(
             r#"
             SELECT COUNT(*) FROM organization_members
             WHERE organization_id = $1
               AND user_id <> $2
               AND status = 'active'
-              AND LOWER(role_type) IN (
-                  'super_admin', 'superadmin',
-                  'platform_admin', 'platformadmin',
-                  'org_admin', 'orgadmin'
-              )
+              AND role_type = ANY($3)
             "#,
         )
         .bind(org_id)
         .bind(user_id)
+        .bind(&admin_role_types)
         .fetch_one(&self.pool)
         .await
     }
