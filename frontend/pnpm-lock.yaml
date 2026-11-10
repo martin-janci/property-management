@@ -208,8 +208,8 @@ importers:
         specifier: ~56.0.18
         version: 56.0.21(expo@57.0.18)(react-native@0.88.1)
       expo-device:
-        specifier: ~56.0.4
-        version: 56.0.4(expo@57.0.18)
+        specifier: ~57.0.1
+        version: 57.0.2(expo@57.0.18)
       expo-document-picker:
         specifier: ~57.0.1
         version: 57.0.1(expo@57.0.18)
@@ -235,14 +235,14 @@ importers:
         specifier: ~57.0.15
         version: 57.0.15(expo@57.0.18)(react-native@0.88.1)(react@19.2.0)(typescript@5.9.3)
       expo-secure-store:
-        specifier: ~56.0.4
-        version: 56.0.4(expo@57.0.18)
+        specifier: ~57.0.3
+        version: 57.0.3(expo@57.0.18)
       expo-sharing:
         specifier: ~55.0.20
         version: 55.0.22(expo@57.0.18)(react-native@0.88.1)(react@19.2.0)
       expo-status-bar:
-        specifier: ~56.0.4
-        version: 56.0.4(expo@57.0.18)(react-native@0.88.1)(react@19.2.0)
+        specifier: ~57.0.1
+        version: 57.0.1(expo@57.0.18)(react-native@0.88.1)(react@19.2.0)
       i18next:
         specifier: ^26.7.1
         version: 26.7.1(typescript@5.9.3)
@@ -6836,8 +6836,8 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  /expo-device@56.0.4(expo@57.0.18):
-    resolution: {integrity: sha512-ucVcGPkvBrl2QHuy7XcYex2Y6BETvJ6TREutZrwLGUDnlvbpKS8KfQoNZOpvkyo5Nmm9RrasYQ0CrXmBHho2mg==}
+  /expo-device@57.0.2(expo@57.0.18):
+    resolution: {integrity: sha512-1A0/FICR3CgrH43FeiDQP3l5eHDmiMoh4EjXfhfoHHkMgdBQdyD0kwDWskiGZlQ3E0Nd0LHkCFH6vJ1ofm/jow==}
     peerDependencies:
       expo: '*'
     dependencies:
@@ -6996,8 +6996,8 @@ packages:
       - typescript
     dev: false
 
-  /expo-secure-store@56.0.4(expo@57.0.18):
-    resolution: {integrity: sha512-hjEi/gmpdFFJ9lYbdp3k3p/WchV7Gi0Qt8jt/m/0WJadqQrskafHAlDxbZkII1cN3Yd7zp9Lvkeq3UfGhSwirQ==}
+  /expo-secure-store@57.0.3(expo@57.0.18):
+    resolution: {integrity: sha512-w7XkSQeUiYXPoKXo1jSrQqql7pyCSyIzOp2k0apsZZBE+RkoLTQIMjcbqc181y6KgupfNnYxkaKe+4MEg94+SA==}
     peerDependencies:
       expo: '*'
     dependencies:
@@ -7025,8 +7025,8 @@ packages:
       - supports-color
     dev: false
 
-  /expo-status-bar@56.0.4(expo@57.0.18)(react-native@0.88.1)(react@19.2.0):
-    resolution: {integrity: sha512-IGs/fDfkHXofy2ZQrGiXayhFK04HB85FZXorhcEhDZEcqASKgSqpak+HwUtAaR0MeTJwWyHNF7I6VmVbbp8EcA==}
+  /expo-status-bar@57.0.1(expo@57.0.18)(react-native@0.88.1)(react@19.2.0):
+    resolution: {integrity: sha512-Xwaq1gAoVRWx5dPG5VhT5RSbnI9OilhZnO5qoPBnUaBAa5VzRzfdS8q0/bsPt0jR2DKLtGuP0bQ6efMJ4RIMDg==}
     peerDependencies:
       expo: '*'
       react: 19.2.0
