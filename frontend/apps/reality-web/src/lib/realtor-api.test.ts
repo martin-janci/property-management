@@ -18,6 +18,7 @@ import {
   getListing,
   getMyListing,
   getMyRealtorAnalytics,
+  getMyRealtorProfile,
   getRealtorReviews,
   type ListingDraft,
   listMyListings,
@@ -110,26 +111,110 @@ describe('realtor-api request helper', () => {
   });
 
   it('sends credentials, default Content-Type and merges caller headers', async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => ({ profile: {} }) });
     await updateMyRealtorProfile({ name: 'Eva' });
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(init.credentials).toBe('include');
-    expect(init.method).toBe('PATCH');
+    expect(init.method).toBe('PUT');
     expect(init.headers).toEqual({ 'Content-Type': 'application/json' });
   });
 
   it('builds optional query strings', async () => {
-    await getMyRealtorAnalytics();
-    await getMyRealtorAnalytics('30 d');
     await listMyListings();
     await listMyListings('a&b');
     await getRealtorReviews('r/1');
     expect(fetchMock.mock.calls.map((c) => c[0])).toEqual([
-      '/api/v1/realtors/me/stats',
-      '/api/v1/realtors/me/stats?period=30%20d',
       '/api/v1/my/listings',
       '/api/v1/my/listings?status=a%26b',
       '/api/v1/realtors/r%2F1/reviews?limit=20',
     ]);
+  });
+
+  it('reads the own profile from /realtors/profile joined with /users/me', async () => {
+    fetchMock.mockImplementation(async (url: string) => ({
+      ok: true,
+      status: 200,
+      json: async () =>
+        url.endsWith('/users/me')
+          ? { id: 'u1', email: 'eva@example.com', name: 'Eva' }
+          : {
+              profile: {
+                id: 'p1',
+                user_id: 'u1',
+                tagline: 'Senior agent',
+                license_number: 'L-1',
+                specializations: null,
+                photo_url: null,
+                total_listings: 4,
+                active_listings: 2,
+                total_views: 200,
+                total_inquiries: 10,
+              },
+            },
+    }));
+    await expect(getMyRealtorProfile()).resolves.toEqual({
+      id: 'p1',
+      name: 'Eva',
+      email: 'eva@example.com',
+      phone: undefined,
+      title: 'Senior agent',
+      bio: undefined,
+      photoUrl: undefined,
+      specializations: [],
+      licenseNumber: 'L-1',
+    });
+    expect(fetchMock.mock.calls.map((c) => c[0]).sort()).toEqual([
+      '/api/v1/realtors/profile',
+      '/api/v1/users/me',
+    ]);
+    await expect(getMyRealtorAnalytics()).resolves.toEqual({
+      totalListings: 4,
+      activeListings: 2,
+      totalViews: 200,
+      totalInquiries: 10,
+      conversionRate: 0.05,
+    });
+  });
+
+  it('saves the name on the user and the rest on the profile, creating it on 404', async () => {
+    const calls: Array<[string, string, unknown]> = [];
+    fetchMock.mockImplementation(async (url: string, init: RequestInit = {}) => {
+      const method = init.method ?? 'GET';
+      calls.push([method, url, init.body ? JSON.parse(String(init.body)) : undefined]);
+      if (url.endsWith('/realtors/profile') && method === 'PUT') {
+        return { ok: false, status: 404, json: async () => ({}) };
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () =>
+          url.endsWith('/users/me')
+            ? { id: 'u1', email: 'eva@example.com', name: 'Eva N' }
+            : {
+                profile: { id: 'p1', user_id: 'u1', tagline: 'Agent', specializations: ['flats'] },
+              },
+      };
+    });
+    const saved = await updateMyRealtorProfile({
+      name: 'Eva N',
+      title: 'Agent',
+      licenseNumber: 'L-2',
+      specializations: ['flats'],
+    });
+    expect(calls).toEqual([
+      ['PUT', '/api/v1/users/me', { name: 'Eva N' }],
+      [
+        'PUT',
+        '/api/v1/realtors/profile',
+        { tagline: 'Agent', specializations: ['flats'], license_number: 'L-2' },
+      ],
+      [
+        'POST',
+        '/api/v1/realtors/profile',
+        { tagline: 'Agent', specializations: ['flats'], license_number: 'L-2' },
+      ],
+    ]);
+    expect(saved).toMatchObject({ id: 'p1', name: 'Eva N', title: 'Agent' });
   });
 
   it('returns undefined on 204', async () => {

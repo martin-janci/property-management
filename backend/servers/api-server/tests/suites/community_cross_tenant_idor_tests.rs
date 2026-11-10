@@ -702,7 +702,20 @@ async fn delete_group_non_owner_403(pool: PgPool) {
         .fetch_one(&ctx.pool)
         .await
         .expect("resolve other user id");
-    seed_user_membership(&ctx.pool, other_id, ctx.org_a).await;
+    // Seed a plain `resident` grant rather than the shared `org_admin` helper:
+    // `org_admin` is a manager-tier role and is allowed to delete the group.
+    // (This test used to pass with `org_admin` only because the manager check
+    // compared PascalCase role names and never matched the stored snake_case.)
+    sqlx::query(
+        r#"INSERT INTO user_memberships (user_id, organization_id, role)
+           VALUES ($1, $2, 'resident')
+           ON CONFLICT DO NOTHING"#,
+    )
+    .bind(other_id)
+    .bind(ctx.org_a)
+    .execute(&ctx.pool)
+    .await
+    .expect("seed resident membership");
 
     let resp = ctx
         .delete_as(

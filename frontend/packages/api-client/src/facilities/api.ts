@@ -88,6 +88,40 @@ export function facilityDayRange(date: string): { from: string; to: string } {
 // FACILITY MANAGEMENT
 // ============================================================================
 
+// The UI edits opening days as a Mon..Sun bitmask (1 = Monday ... 64 = Sunday),
+// while the server stores `available_days` as an array of weekday numbers
+// (0 = Sunday, 1 = Monday ... 6 = Saturday; `null` = every day). Sending the
+// bitmask as-is made every create/update fail with 422, and reading the array
+// as a number broke the edit form, so convert at this boundary.
+const DAY_BITS: ReadonlyArray<readonly [bit: number, weekday: number]> = [
+  [1, 1],
+  [2, 2],
+  [4, 3],
+  [8, 4],
+  [16, 5],
+  [32, 6],
+  [64, 0],
+];
+
+export function daysMaskToWire(mask: number | undefined | null): number[] | undefined {
+  if (mask === undefined || mask === null) return undefined;
+  return DAY_BITS.filter(([bit]) => (mask & bit) !== 0).map(([, weekday]) => weekday);
+}
+
+export function daysWireToMask(days: unknown): number | null {
+  if (typeof days === 'number') return days;
+  if (!Array.isArray(days)) return null;
+  return DAY_BITS.reduce((mask, [bit, weekday]) => (days.includes(weekday) ? mask | bit : mask), 0);
+}
+
+function facilityFromWire(raw: Facility): Facility {
+  return { ...raw, available_days: daysWireToMask(raw.available_days) };
+}
+
+function facilityToWire<T extends { available_days?: number }>(data: T) {
+  return { ...data, available_days: daysMaskToWire(data.available_days) };
+}
+
 /**
  * List facilities in a building.
  */
@@ -114,7 +148,9 @@ export async function listFacilities(
  * Get a single facility by ID.
  */
 export async function getFacility(buildingId: string, facilityId: string): Promise<Facility> {
-  return fetchApi(`${API_BASE}/buildings/${buildingId}/facilities/${facilityId}`);
+  return facilityFromWire(
+    await fetchApi<Facility>(`${API_BASE}/buildings/${buildingId}/facilities/${facilityId}`)
+  );
 }
 
 /**
@@ -124,10 +160,12 @@ export async function createFacility(
   buildingId: string,
   data: CreateFacilityRequest
 ): Promise<Facility> {
-  return fetchApi(`${API_BASE}/buildings/${buildingId}/facilities`, {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
+  return facilityFromWire(
+    await fetchApi<Facility>(`${API_BASE}/buildings/${buildingId}/facilities`, {
+      method: 'POST',
+      body: JSON.stringify(facilityToWire(data)),
+    })
+  );
 }
 
 /**
@@ -138,10 +176,12 @@ export async function updateFacility(
   facilityId: string,
   data: UpdateFacilityRequest
 ): Promise<Facility> {
-  return fetchApi(`${API_BASE}/buildings/${buildingId}/facilities/${facilityId}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  });
+  return facilityFromWire(
+    await fetchApi<Facility>(`${API_BASE}/buildings/${buildingId}/facilities/${facilityId}`, {
+      method: 'PUT',
+      body: JSON.stringify(facilityToWire(data)),
+    })
+  );
 }
 
 /**

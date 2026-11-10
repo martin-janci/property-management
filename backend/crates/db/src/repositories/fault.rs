@@ -748,8 +748,20 @@ impl FaultRepository {
     ) -> Result<Vec<FaultSummary>, SqlxError> {
         let limit = query.limit.unwrap_or(50).min(100);
         let offset = query.offset.unwrap_or(0);
-        let sort_by = query.sort_by.as_deref().unwrap_or("created_at");
-        let sort_order = query.sort_order.as_deref().unwrap_or("DESC");
+        // ORDER BY is assembled from an allowlist: `sort_by` / `sort_order` come
+        // straight from the query string and must never reach the SQL text.
+        let sort_by = match query.sort_by.as_deref() {
+            Some("title") => "title",
+            Some("status") => "status",
+            Some("priority") => "priority",
+            Some("category") => "category",
+            Some("updated_at") => "updated_at",
+            _ => "created_at",
+        };
+        let sort_order = match query.sort_order.as_deref() {
+            Some(order) if order.eq_ignore_ascii_case("asc") => "ASC",
+            _ => "DESC",
+        };
 
         // Build dynamic WHERE clause
         let mut conditions = vec!["organization_id = $1".to_string()];
@@ -772,15 +784,24 @@ impl FaultRepository {
             param_idx += 1;
         }
         if query.status.is_some() {
-            conditions.push(format!("status = ANY(${})::fault_status[]", param_idx));
+            conditions.push(format!(
+                "status = ANY(${}::text[]::fault_status[])",
+                param_idx
+            ));
             param_idx += 1;
         }
         if query.priority.is_some() {
-            conditions.push(format!("priority = ANY(${})::fault_priority[]", param_idx));
+            conditions.push(format!(
+                "priority = ANY(${}::text[]::fault_priority[])",
+                param_idx
+            ));
             param_idx += 1;
         }
         if query.category.is_some() {
-            conditions.push(format!("category = ANY(${})::fault_category[]", param_idx));
+            conditions.push(format!(
+                "category = ANY(${}::text[]::fault_category[])",
+                param_idx
+            ));
             param_idx += 1;
         }
         if query.search.is_some() {

@@ -10,6 +10,7 @@ import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
 import {
   getMyRealtorProfile,
+  RealtorApiError,
   type RealtorProfile,
   updateMyRealtorProfile,
 } from '@/lib/realtor-api';
@@ -51,6 +52,8 @@ function ProfileFormContent() {
       })
       .catch((err) => {
         if (cancelled) return;
+        // No realtor profile yet: show the empty form, the first save creates it.
+        if (err instanceof RealtorApiError && err.status === 404) return;
         setLoadError(err);
       })
       .finally(() => {
