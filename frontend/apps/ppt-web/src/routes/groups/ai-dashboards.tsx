@@ -5,8 +5,9 @@
  * following the same convention as routes/groups/iot.tsx.
  */
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Route } from 'react-router-dom';
-import { AuthRequiredGate, ProtectedRoute } from '../../components';
+import { AuthRequiredGate, ProtectedRoute, useToast } from '../../components';
 import { useAuth } from '../../contexts';
 import {
   useAcknowledgeMaintenancePrediction,
@@ -25,13 +26,27 @@ import { MANAGER_ROLES } from '../shared';
 // ── Sentiment ──────────────────────────────────────────────────────────────
 
 function SentimentDashboardRoute() {
+  const { t } = useTranslation();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const { data: dashboard, isLoading: dashboardLoading } = useSentimentDashboard();
   const { data: trends, isLoading: trendsLoading } = useSentimentTrends({ limit: 60 });
   const { data: alerts, isLoading: alertsLoading } = useSentimentAlerts(false);
   const acknowledge = useAcknowledgeSentimentAlert();
 
   const pendingAcknowledgeId = acknowledge.isPending ? (acknowledge.variables ?? null) : null;
+
+  const handleAcknowledge = async (alertId: string) => {
+    try {
+      await acknowledge.mutateAsync(alertId);
+    } catch (error) {
+      showToast({
+        type: 'error',
+        title: t('sentiment.acknowledgeFailed', { defaultValue: 'Failed to acknowledge alert' }),
+        error: error,
+      });
+    }
+  };
 
   if (!user?.organizationId) {
     return <AuthRequiredGate />;
@@ -46,7 +61,7 @@ function SentimentDashboardRoute() {
       alerts={alerts ?? []}
       alertsLoading={alertsLoading}
       pendingAcknowledgeId={pendingAcknowledgeId}
-      onAcknowledge={(id) => acknowledge.mutate(id)}
+      onAcknowledge={handleAcknowledge}
     />
   );
 }
@@ -54,7 +69,9 @@ function SentimentDashboardRoute() {
 // ── Predictive Maintenance ─────────────────────────────────────────────────
 
 function PredictiveMaintenanceRoute() {
+  const { t } = useTranslation();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [selectedEquipmentId, setSelectedEquipmentId] = useState<string | null>(null);
 
   const { data: equipmentData, isLoading: equipmentLoading } = useEquipmentList();
@@ -65,6 +82,20 @@ function PredictiveMaintenanceRoute() {
   const acknowledge = useAcknowledgeMaintenancePrediction();
 
   const pendingAcknowledgeId = acknowledge.isPending ? (acknowledge.variables ?? null) : null;
+
+  const handleAcknowledgePrediction = async (predictionId: string) => {
+    try {
+      await acknowledge.mutateAsync(predictionId);
+    } catch (error) {
+      showToast({
+        type: 'error',
+        title: t('predictive.acknowledgeFailed', {
+          defaultValue: 'Failed to acknowledge prediction',
+        }),
+        error: error,
+      });
+    }
+  };
 
   if (!user?.organizationId) {
     return <AuthRequiredGate />;
@@ -79,7 +110,7 @@ function PredictiveMaintenanceRoute() {
       predictions={predictions?.predictions ?? []}
       predictionsLoading={predictionsLoading}
       pendingAcknowledgeId={pendingAcknowledgeId}
-      onAcknowledgePrediction={(id) => acknowledge.mutate(id)}
+      onAcknowledgePrediction={handleAcknowledgePrediction}
     />
   );
 }
