@@ -4,8 +4,12 @@ use api_core::AuthUser;
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
 use axum::Json;
+use common::TenantRole;
+use db::models::layout::LayoutConfigRow;
 use db::repositories::LayoutRepository;
-use db::RlsPool;
+use db::{PublicConnection, RlsPool};
+use sqlx::{Executor, Postgres};
+use uuid::Uuid;
 
 use super::types::{PutTenantOverrideRequest, ScreenQuery, ValidationErrorsResponse};
 
@@ -45,6 +49,50 @@ fn admin_required_error() -> ErrorResponse {
     error_response(StatusCode::FORBIDDEN, "org admin role required")
 }
 
+/// Org-admin gate shared by both handlers. Rejects the nil-org sentinel
+/// (platform hosts — an override stored under `Uuid::nil()` would leak across
+/// every org) with 400, then non-admin roles with 403. Rails/manifest/config
+/// are org-admin material. A caller still holding an `RlsConnection` must
+/// release it before propagating the returned error (see `get_tenant_override`).
+fn require_org_admin(org_id: Uuid, role: TenantRole) -> Result<(), ErrorResponse> {
+    if org_id.is_nil() {
+        return Err(nil_org_error());
+    }
+    if !role.is_admin() {
+        return Err(admin_required_error());
+    }
+    Ok(())
+}
+
+/// Acquire the sanctioned public/global (no-RLS) connection for the global
+/// layout tables, mapping a pool failure to 500. Acquiring clears any stale RLS
+/// context, so this is safe to call after an org-scoped connection was released.
+/// Mirrors the sibling `admin.rs` helper so both tenant-override handlers share
+/// one acquisition site instead of repeating the pool dance inline.
+async fn acquire_public_conn(state: &AppState) -> Result<PublicConnection, ErrorResponse> {
+    RlsPool::new(state.db.clone())
+        .acquire_public()
+        .await
+        .map_err(internal_error)
+}
+
+/// Load a screen's layout config from a public/global (no-RLS) connection,
+/// mapping a missing row to 404 and any sqlx failure to 500. Shared by both
+/// handlers so the fetch + not-found mapping stays in one place.
+async fn load_screen_config<'e, E>(
+    repo: &LayoutRepository,
+    executor: E,
+    screen: &str,
+) -> Result<LayoutConfigRow, ErrorResponse>
+where
+    E: Executor<'e, Database = Postgres>,
+{
+    repo.get_config(executor, screen)
+        .await
+        .map_err(internal_error)?
+        .ok_or_else(|| error_response(StatusCode::NOT_FOUND, "unknown screen"))
+}
+
 #[utoipa::path(get, path = "/api/v1/layout/tenant-override", tag = "Layout",
     security(("bearer_auth" = [])), params(("screen" = String, Query, description = "Screen id")),
     responses((status = 200, description = "Override + rails + published base + web manifest for the org"),
@@ -57,18 +105,13 @@ pub async fn get_tenant_override(
     mut rls: RlsConnection,
     Query(q): Query<ScreenQuery>,
 ) -> Result<Json<serde_json::Value>, ErrorResponse> {
-    // Nil-org sentinel (platform hosts) — an override under Uuid::nil() would
-    // be global, so refuse before touching the DB.
+    // Authz on the DB-validated identity (RlsConnection validates membership),
+    // not the raw JWT claim. Refuse the nil-org sentinel / non-admins before
+    // touching the DB; release the held connection on rejection.
     let org_id = rls.tenant_id();
-    if org_id.is_nil() {
+    if let Err(e) = require_org_admin(org_id, rls.role()) {
         rls.release().await;
-        return Err(nil_org_error());
-    }
-    // Authz on the DB-validated role (RlsConnection validates membership),
-    // not the raw JWT claim. Rails/manifest/config are org-admin material.
-    if !rls.role().is_admin() {
-        rls.release().await;
-        return Err(admin_required_error());
+        return Err(e);
     }
     let repo = LayoutRepository::new();
     let ov = repo
@@ -77,15 +120,8 @@ pub async fn get_tenant_override(
     rls.release().await;
     let ov = ov.map_err(internal_error)?;
     // Global no-RLS layout tables — sanctioned public connection (clears stale context).
-    let mut pub_conn = RlsPool::new(state.db.clone())
-        .acquire_public()
-        .await
-        .map_err(internal_error)?;
-    let cfg = repo
-        .get_config(&mut **pub_conn, &q.screen)
-        .await
-        .map_err(internal_error)?
-        .ok_or_else(|| error_response(StatusCode::NOT_FOUND, "unknown screen"))?;
+    let mut pub_conn = acquire_public_conn(&state).await?;
+    let cfg = load_screen_config(&repo, &mut **pub_conn, &q.screen).await?;
     let manifest_row = repo
         .get_manifest(&mut **pub_conn, "web")
         .await
@@ -121,12 +157,7 @@ pub async fn put_tenant_override(
     let is_super_admin = rls.is_super_admin();
     rls.release().await;
 
-    if org_id.is_nil() {
-        return Err(nil_org_error());
-    }
-    if !role.is_admin() {
-        return Err(admin_required_error());
-    }
+    require_org_admin(org_id, role)?;
 
     let parse_err = |e: serde_json::Error, what: &str| {
         error_response(
@@ -157,12 +188,8 @@ pub async fn put_tenant_override(
     // Phase 1: public/global reads (config + rails), no RLS connection held.
     // Global no-RLS layout tables — sanctioned public connection (clears stale context).
     let (base, rails_value) = {
-        let mut pub_conn = rls_pool.acquire_public().await.map_err(internal_error)?;
-        let cfg = repo
-            .get_config(&mut **pub_conn, &req.screen)
-            .await
-            .map_err(internal_error)?
-            .ok_or_else(|| error_response(StatusCode::NOT_FOUND, "unknown screen"))?;
+        let mut pub_conn = acquire_public_conn(&state).await?;
+        let cfg = load_screen_config(&repo, &mut **pub_conn, &req.screen).await?;
         let published = cfg.published.clone().ok_or_else(|| {
             error_response(StatusCode::NOT_FOUND, "screen has no published config")
         })?;

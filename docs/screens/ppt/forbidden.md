@@ -36,4 +36,8 @@ Note: chosen one-per-screen (over a combined error-pages.md) to match the existi
 - 2026-05-18 — audit: stub created from `frontend/apps/ppt-web/src/App.tsx:542`.
 
 ## Agent Log
+
+<!-- newest entries on top -->
+
+- 2026-11-05 — agent: screen-map-drift-pr-3244-ppt — reconcile i18n drift from PR #3244 (`fix(ppt-web): localize faults, news, settings and error pages`). `ForbiddenPage` copy localized across all 6 locales — title/description via `errors.pages.forbidden.*`, actions via `errors.pages.goBack` + `nav.home`. i18n only — still shipped; frontmatter unchanged.
 - 2026-05-18 — agent: created stub for unmapped route.

@@ -7,9 +7,11 @@
 import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams } from 'react-router-dom';
 import { ProtectedRoute } from '../../components';
+import { useAuth } from '../../contexts';
 import {
   BookFacilityPage,
   BuildingDetailPage,
+  BuildingFormPage,
   BuildingsPage,
   CreateFacilityPage,
   EditFacilityPage,
@@ -18,14 +20,31 @@ import {
   MyUnitPage,
   PendingBookingsPage,
 } from '../lazyRoutes';
+import { isManagerRole, MANAGER_ROLES } from '../shared';
 
 /** Route wrapper for buildings list (Epic 3, Story 3.1) — gap-sweep */
 function BuildingsPageRoute() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isManager = isManagerRole(user?.role);
   return (
     <BuildingsPage
       onNavigateToView={(id) => navigate(`/buildings/${id}`)}
-      onNavigateToEdit={(id) => navigate(`/buildings/${id}`)}
+      onNavigateToEdit={isManager ? (id) => navigate(`/buildings/${id}/edit`) : undefined}
+      onNavigateToCreate={isManager ? () => navigate('/buildings/new') : undefined}
+    />
+  );
+}
+
+/** Create / edit building (manager only). */
+function BuildingFormPageRoute() {
+  const { buildingId } = useParams<{ buildingId?: string }>();
+  const navigate = useNavigate();
+  return (
+    <BuildingFormPage
+      buildingId={buildingId}
+      onSaved={(id) => navigate(`/buildings/${id}`)}
+      onCancel={() => navigate(buildingId ? `/buildings/${buildingId}` : '/buildings')}
     />
   );
 }
@@ -49,6 +68,22 @@ export function buildingRoutes() {
         element={
           <ProtectedRoute>
             <BuildingsPageRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/buildings/new"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <BuildingFormPageRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/buildings/:buildingId/edit"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <BuildingFormPageRoute />
           </ProtectedRoute>
         }
       />
@@ -83,7 +118,7 @@ export function buildingRoutes() {
       <Route
         path="/buildings/:buildingId/facilities/new"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <CreateFacilityPage />
           </ProtectedRoute>
         }
@@ -91,7 +126,7 @@ export function buildingRoutes() {
       <Route
         path="/buildings/:buildingId/facilities/:facilityId/edit"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <EditFacilityPage />
           </ProtectedRoute>
         }
@@ -107,7 +142,7 @@ export function buildingRoutes() {
       <Route
         path="/buildings/:buildingId/facilities/pending"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <PendingBookingsPage />
           </ProtectedRoute>
         }

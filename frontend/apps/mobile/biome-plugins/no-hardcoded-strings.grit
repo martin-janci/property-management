@@ -1,0 +1,29 @@
+language js
+
+// no-hardcoded-strings (i18n) — Property Management mobile app
+//
+// Flags user-facing English string literals that should be routed through
+// react-i18next `t(...)` rather than hardcoded. This is the lint counterpart
+// to the manual fixes in PRs #2836 / #2837 (ThreadDetailScreen and
+// voice-assistant hardcoded EN strings). Emitted at `warn` so the workspace
+// Biome gate stays green while the remaining backlog of literals is migrated
+// incrementally; flip to `error` once the app is fully localized.
+//
+// Scope is deliberately conservative to keep false positives low:
+//   1. Non-whitespace text nodes directly inside JSX elements.
+//   2. String literals on a small allow-list of text-bearing JSX attributes.
+// It intentionally does NOT flag `Alert.alert(...)` / imperative string args,
+// object keys, testID/style/URL props, or `{expr}` attribute values.
+or {
+  // 1. Literal text inside JSX elements: <Text>Hello</Text>
+  `<$tag>$children</$tag>` where {
+    $children <: jsx_text(),
+    $children <: r".*\p{L}.*",
+    register_diagnostic(span=$children, message="Hardcoded user-facing string in JSX. Wrap it in i18next t(...) instead of hardcoding English.", severity="warn")
+  },
+  // 2. String literal on a text-bearing JSX attribute: placeholder="..."
+  jsx_attribute() as $attr where {
+    $attr <: r"(?:placeholder|title|label|header|accessibilityLabel|accessibilityHint)=\"[^\"]*[A-Za-z][^\"]*\"",
+    register_diagnostic(span=$attr, message="Hardcoded user-facing string in JSX attribute. Wrap it in i18next t(...) instead of hardcoding English.", severity="warn")
+  }
+}

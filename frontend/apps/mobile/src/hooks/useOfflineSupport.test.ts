@@ -154,6 +154,11 @@ function serverError(status = 503): Response {
   return { ok: false, status, json: async () => ({}) } as unknown as Response;
 }
 
+/** A 4xx client-error response (used to exercise permanent-vs-retryable 4xx). */
+function clientError(status = 400): Response {
+  return { ok: false, status, json: async () => ({}) } as unknown as Response;
+}
+
 beforeEach(() => {
   store.clear();
   jest.clearAllMocks();
@@ -418,5 +423,244 @@ describe('useOfflineSupport.processQueue — issue #1767', () => {
       await api.processQueue();
     });
     expect(readQueue()).toHaveLength(0);
+  });
+
+  it('(g) preserves temp→server id linkage for a dependent edit carried past a mid-cycle halt', async () => {
+    // Regression: the temp→server id mapping is in-memory for one cycle only.
+    // If a CREATE resolves its temp id but an UNRELATED action between it and
+    // its dependent UPDATE fails transiently (halting the cycle), the dependent
+    // UPDATE sits *after* the halt point and was never remapped in-loop. Unless
+    // it is remapped before persisting, next cycle the CREATE is gone, the
+    // mapping is lost, and the edit orphans onto a temp id the server never
+    // knew — a silent loss of an offline edit.
+    const TEMP = 'temp-fault-g';
+    seedQueue([
+      makeAction({
+        id: 'create',
+        type: 'CREATE',
+        endpoint: '/api/v1/faults',
+        body: { title: 'leak', localRef: TEMP },
+        localId: TEMP,
+      }),
+      // Unrelated action that fails transiently and halts the cycle — it sits
+      // BETWEEN the create and the dependent update.
+      makeAction({
+        id: 'blocker',
+        type: 'UPDATE',
+        method: 'PUT',
+        endpoint: '/api/v1/announcements/known-id',
+        body: { seen: true },
+      }),
+      // Dependent update targeting the temp id — never reached this cycle.
+      makeAction({
+        id: 'dependent',
+        type: 'UPDATE',
+        method: 'PUT',
+        endpoint: `/api/v1/faults/${TEMP}`,
+        body: { id: TEMP, priority: 'high' },
+        localId: TEMP,
+      }),
+    ]);
+    const fetchMock = globalThis.fetch as jest.Mock;
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.endsWith('/api/v1/faults')) return ok({ id: 'srv-g' }); // CREATE resolves
+      if (url.includes('/api/v1/announcements/')) return serverError(503); // blocker halts
+      return ok({});
+    });
+
+    await mountHook();
+
+    // Cycle 1: CREATE succeeds and resolves TEMP→srv-g; the blocker 503s and
+    // halts the cycle before the dependent update is reached.
+    await act(async () => {
+      await api.processQueue();
+    });
+
+    // The dependent's persisted endpoint/body must already point at the server
+    // id — the mapping was applied before persisting, not lost with the cycle.
+    const afterHalt = readQueue();
+    const dependent = afterHalt.find((a) => a.id === 'dependent');
+    expect(dependent).toBeDefined();
+    expect(dependent?.endpoint).toBe('/api/v1/faults/srv-g');
+    expect(dependent?.endpoint).not.toContain(TEMP);
+    expect(JSON.stringify(dependent?.body)).toContain('srv-g');
+    expect(JSON.stringify(dependent?.body)).not.toContain(TEMP);
+    // The CREATE is gone (succeeded); blocker + dependent remain, in FIFO order.
+    expect(afterHalt.map((a) => a.id)).toEqual(['blocker', 'dependent']);
+
+    // Cycle 2: the server has recovered — the dependent now hits the real
+    // resource and drains cleanly (rather than orphaning onto the temp id).
+    fetchMock.mockImplementation(async () => ok({}));
+    await act(async () => {
+      await api.processQueue();
+    });
+    const calls = fetchMock.mock.calls.map((c) => c[0] as string);
+    expect(calls).toContain('https://api.test/api/v1/faults/srv-g');
+    expect(calls.every((u) => !u.includes(TEMP))).toBe(true);
+    expect(readQueue()).toHaveLength(0);
+  });
+
+  it('(h) a recoverable 401 (expired token) is RETAINED, not dropped', async () => {
+    // Regression: an access token that expired between enqueue and replay
+    // returns 401. The old code treated every 4xx as permanent and silently
+    // discarded the offline-created action. It must instead be kept and
+    // re-attempted next reconnect (by which time the token is refreshed).
+    seedQueue([makeAction({ id: 'expired', body: { title: 'reported-offline' } })]);
+    const fetchMock = globalThis.fetch as jest.Mock;
+    fetchMock.mockResolvedValue(clientError(401));
+
+    await mountHook();
+
+    let result!: { success: number; failed: number };
+    await act(async () => {
+      result = await api.processQueue();
+    });
+
+    // Nothing succeeded, and crucially nothing was terminally dropped.
+    expect(result).toEqual({ success: 0, failed: 0 });
+    const remaining = readQueue();
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0].id).toBe('expired');
+    expect((remaining[0].body as { title: string }).title).toBe('reported-offline');
+
+    // With a refreshed token (200), the next reconnect drains it.
+    fetchMock.mockResolvedValue(ok({ id: 'srv-after-reauth' }));
+    await act(async () => {
+      await api.processQueue();
+    });
+    expect(readQueue()).toHaveLength(0);
+  });
+
+  it('(i) a recoverable 429 (rate-limit) is RETAINED, not dropped', async () => {
+    seedQueue([makeAction({ id: 'throttled', body: { title: 'reported-offline' } })]);
+    const fetchMock = globalThis.fetch as jest.Mock;
+    fetchMock.mockResolvedValue(clientError(429));
+
+    await mountHook();
+
+    let result!: { success: number; failed: number };
+    await act(async () => {
+      result = await api.processQueue();
+    });
+
+    // Rate-limited, not rejected — carried forward for the next reconnect.
+    expect(result).toEqual({ success: 0, failed: 0 });
+    const remaining = readQueue();
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0].id).toBe('throttled');
+
+    // Once the limit clears (200), it drains.
+    fetchMock.mockResolvedValue(ok({ id: 'srv-after-throttle' }));
+    await act(async () => {
+      await api.processQueue();
+    });
+    expect(readQueue()).toHaveLength(0);
+  });
+
+  it('(j) a permanent 400 (bad payload) IS dropped from the queue', async () => {
+    // Counterpart to (h)/(i): a genuinely permanent 4xx must still be dropped
+    // so the queue never blocks forever on a request that can never win.
+    seedQueue([makeAction({ id: 'bad', body: { title: 'malformed' } })]);
+    const fetchMock = globalThis.fetch as jest.Mock;
+    fetchMock.mockResolvedValue(clientError(400));
+
+    await mountHook();
+
+    let result!: { success: number; failed: number };
+    await act(async () => {
+      result = await api.processQueue();
+    });
+
+    // Terminally failed and removed from the queue.
+    expect(result).toEqual({ success: 0, failed: 1 });
+    expect(readQueue()).toHaveLength(0);
+  });
+
+  it('(l) a permanent 4xx drop is SURFACED via permanentFailures, not dropped silently', async () => {
+    // Regression: a queued request rejected with a permanent 4xx used to be
+    // removed from the queue with only a `console.error` — the user got no
+    // signal that their offline-created content was discarded. The dropped
+    // action must now be surfaced on `permanentFailures` so the UI (App.tsx)
+    // can raise a user-visible error. This must hold for ANY caller, including
+    // the NetInfo auto-sync path that passes no progress callback.
+    seedQueue([makeAction({ id: 'rejected', body: { title: 'malformed' } })]);
+    const fetchMock = globalThis.fetch as jest.Mock;
+    fetchMock.mockResolvedValue(clientError(422));
+
+    await mountHook();
+
+    // Nothing surfaced before the flush.
+    expect(api.permanentFailures).toEqual([]);
+
+    // Flush WITHOUT a progress callback (mirrors the auto-sync path).
+    await act(async () => {
+      await api.processQueue();
+    });
+
+    // The item was dropped from the queue…
+    expect(readQueue()).toHaveLength(0);
+    // …but the drop is now visible to the UI, carrying the dropped action.
+    expect(api.permanentFailures).toHaveLength(1);
+    expect(api.permanentFailures[0].id).toBe('rejected');
+    expect((api.permanentFailures[0].body as { title: string }).title).toBe('malformed');
+
+    // The UI acknowledges the batch, clearing the surfaced state.
+    await act(async () => {
+      api.clearPermanentFailures();
+    });
+    expect(api.permanentFailures).toEqual([]);
+  });
+
+  it('(m) a retryable/transient failure and a clean success never populate permanentFailures', async () => {
+    // Guard the negative: only PERMANENT 4xx drops surface a user-visible error.
+    // A retryable 401 (kept for retry) and a 200 success must leave the list
+    // empty, so the UI does not cry wolf on recoverable or successful syncs.
+    seedQueue([makeAction({ id: 'kept', body: { title: 'reported-offline' } })]);
+    const fetchMock = globalThis.fetch as jest.Mock;
+    fetchMock.mockResolvedValue(clientError(401)); // recoverable — retained
+
+    await mountHook();
+    await act(async () => {
+      await api.processQueue();
+    });
+    // 401 is retained in the queue and NOT surfaced as a permanent failure.
+    expect(readQueue()).toHaveLength(1);
+    expect(api.permanentFailures).toEqual([]);
+
+    // Now the token is refreshed and the action drains cleanly.
+    fetchMock.mockResolvedValue(ok({ id: 'srv' }));
+    await act(async () => {
+      await api.processQueue();
+    });
+    expect(readQueue()).toHaveLength(0);
+    // A successful drain still leaves nothing surfaced.
+    expect(api.permanentFailures).toEqual([]);
+  });
+
+  it('(k) a permanent 400 ahead of a valid action does not block the rest of the queue', async () => {
+    // A dropped (terminal) 4xx must not halt the cycle — its successors still
+    // drain the same reconnect (contrast with a retryable failure, which halts).
+    seedQueue([
+      makeAction({ id: 'bad', endpoint: '/api/v1/faults', body: { title: 'malformed' } }),
+      makeAction({ id: 'good', endpoint: '/api/v1/faults', body: { title: 'valid' } }),
+    ]);
+    const fetchMock = globalThis.fetch as jest.Mock;
+    let call = 0;
+    fetchMock.mockImplementation(async () => {
+      call++;
+      return call === 1 ? clientError(400) : ok({ id: 'srv-good' });
+    });
+
+    await mountHook();
+
+    let result!: { success: number; failed: number };
+    await act(async () => {
+      result = await api.processQueue();
+    });
+
+    // Bad dropped, good succeeded — queue fully drained in one cycle.
+    expect(result).toEqual({ success: 1, failed: 1 });
+    expect(readQueue()).toHaveLength(0);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });

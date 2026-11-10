@@ -12,7 +12,10 @@ use common::ErrorResponse;
 use db::models::EmergencyContactQuery;
 use uuid::Uuid;
 
-use super::shared::{ContactListQuery, CreateContactRequest, OrgQuery, UpdateContactRequest};
+use super::shared::{
+    is_emergency_manager, manager_required_response, ContactListQuery, CreateContactRequest,
+    OrgQuery, UpdateContactRequest,
+};
 use crate::state::AppState;
 
 /// Contact sub-router.
@@ -30,6 +33,11 @@ async fn create_contact(
     mut rls: RlsConnection,
     Json(req): Json<CreateContactRequest>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only action; membership alone is not enough.
+    if !is_emergency_manager(rls.role()) {
+        rls.release().await;
+        return manager_required_response();
+    }
     let org = rls.tenant_id();
     let result = state
         .emergency_repo
@@ -109,6 +117,11 @@ async fn update_contact(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateContactRequest>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only action; membership alone is not enough.
+    if !is_emergency_manager(rls.role()) {
+        rls.release().await;
+        return manager_required_response();
+    }
     let org = rls.tenant_id();
     let result = state
         .emergency_repo
@@ -139,6 +152,11 @@ async fn delete_contact(
     Path(id): Path<Uuid>,
     Query(_): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only action; membership alone is not enough.
+    if !is_emergency_manager(rls.role()) {
+        rls.release().await;
+        return manager_required_response();
+    }
     let org = rls.tenant_id();
     let result = state
         .emergency_repo

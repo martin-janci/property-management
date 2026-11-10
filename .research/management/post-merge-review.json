@@ -1,583 +1,526 @@
 {
-  "generated": "2026-08-05T16:10:11Z",
+  "generated": "2026-11-09T14:38:55Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
     {
-      "run_at": "2026-08-05T16:10:11Z",
-      "prs_scanned": 3,
-      "clean": [
-        2659,
-        2661
-      ],
-      "with_issues": [
-        {
-          "pr": 2660,
-          "issue": 2662,
-          "findings": 2,
-          "specialist": "pm-rust",
-          "note": "Voice-webhook auth fix (closes #2658) is correct+well-tested at the pure-fn level (voice_device_token_matches, ct_eq_str, fail-closed HMAC), but two shape follow-ups: (1) performance/med -- authenticate_voice_user does an unbounded fetch_all of every active token-bearing device for the platform (cross-org) then AES-GCM-decrypts+ct-compares each in a linear scan -> O(N) decrypts/request, grows with adoption, amplification vector on well-formed-but-nonmatching requests; proposed indexed keyed-HMAC access_token_hash column to select the candidate in SQL then verify the single decrypt. (2) test-coverage/med -- the actual priv-escalation regression lives at the fetch_all+find route/DB level but only the extracted pure predicate is tested; #[sqlx::test] DB suite doesn't run in cloud runner so the route selection path (seed 2 devices, present A's token -> must return A not B; nonmatch->401; expired->reject) is uncovered (same net class as #2357/#2359). -> NET-NEW #2662."
-        }
-      ],
-      "skipped_already_reviewed": [],
-      "note": "Dispatcher Phase 2.5, buffer-starved pipeline drained (0 active). gh CLI proxy-unreliable -> GitHub MCP for all network I/O; DISPATCHER_OWNED_COMMIT=1 (wrote artifacts only, no commit/push -- dispatcher Phase 6 folds the .research delta). Window merged-to-dev 14d (>=2026-07-22), base=dev, max_prs=15. Prior run (2026-08-04T14:07Z) reached #2657/#2656/#2655; this run scanned the 3 never-reviewed PRs merged after it: #2659 (mobile-rn ThreadDetailScreen malformed-createdAt guard: new formatMessageTime returns '' not 'Invalid Date', sentAtSortKey NaN-safe sinks anomalous rows to +Inf with ka===kb?0 guard against Infinity-Infinity=NaN, 6 new tests -- CLEAN), #2660 (Rust voice-webhook broken-auth fix -> 1 issue #2662, see with_issues), #2661 (docs-only screen-map reconcile of ppt/financial-payments.md to PR #2649 onError toasts; correctly declined to touch rentals-dashboard since #2649's merged diff only hit financial.tsx; /screens validate clean -- CLEAN). Dedup: 4 pre-existing open follow-ups (#2643 OAuth token-usage hot path, #2612 notification fire-once transient drop, #2575 disputes kpis window-ordering, #2366 S3 building_id) checked -- #2662 is distinct (different route + concerns). Labeling: MCP has no clean PR-label add (update clobbers existing labels), so post-merge-reviewed NOT applied via MCP -- this JSON run-history is the dedup record for the next run (same precedent as prior runs). Breadcrumb comment left on #2660. NET-NEW actionable issues: 1 (#2662).",
-      "focus_prs": [
-        2659,
-        2660,
-        2661
-      ]
-    },
-    {
-      "run_at": "2026-08-04T14:07:35Z",
-      "prs_scanned": 3,
-      "clean": [
-        2655,
-        2656,
-        2657
-      ],
-      "with_issues": [],
-      "skipped_already_reviewed": [],
-      "note": "Tier-1d demand-driven refill (claim buffer starved: claimable=3 < floor=36). gh CLI unavailable -> GitHub MCP for all network I/O; DISPATCHER_OWNED_COMMIT=1 (no commit/push; dispatcher folds .research delta into Phase 6). Window merged-to-dev >=2026-07-21, max_prs=15. Focus PRs #2656 + #2657 both merged 2026-08-04T12:19Z, AFTER the 08:09Z review that only reached #2653; also caught #2655 (merged 08:28Z, likewise after 08:09Z). All prior in-window PRs (2626-2653) already scanned in earlier runs. 3 never-reviewed PRs scanned, all CLEAN: #2655 (dispatcher infra for issue #2652 -- new .research/mobile-native-gate.sh claim-time KMP gate + test-mobile-native-gate.sh smoke test + dispatcher-self-test T32 + dispatcher-prompt Phase 3 candidate-exclusion / Phase 7 'Mobile-native gated:' surface + CI dispatcher-self-test.yml path+step wiring; id_signal regex '(^|[-_])(mobile-native|kmp)([-_]|$)' correctly gates KMP and excludes mobile-rn/frontend-apps-mobile; files_signal gates pure-mobile-native plan Files scope, spares cross-stack; assignment-form arithmetic safe under set -euo pipefail; empty-section guarded; thorough offline fixture-fed tests incl. batch open-only filter -- correct+complete), #2656 (closes prior-review finding #2654: ThreadDetailScreen send-error banner now t('messages.threadSendError'); key added to ALL 6 mobile locales cs/de/en/hu/pl/sk -- verified on disk, no missing-key gap; test updated to assert the i18n key routes through useTranslation and still asserts raw backend error never leaks -- complete), #2657 (docs-only screen-map reconcile of ppt/rentals-dashboard.md to PR #2648's rentals mutation auth-guard; Notes>Specific + Agent Log only, no frontmatter/outcome change, accurate -- clean). Considered filing on #2655 files_signal treating a docs-companion path as a 'verifiable slice' (would un-gate a still-unverifiable KMP plan) and on the 'don't inflate starvation metric' guidance being prose-only (metric code not in diff) -- both too speculative/low-value to file; false-negatives just fall back to prior claim+blocked behavior (no regression). NET-NEW actionable issues: 0. Labeling: MCP update_pull_request has no labels param and issue_write-update would clobber existing PR labels, so post-merge-reviewed NOT applied via MCP (same precedent as prior runs); this JSON run-history is the dedup record for the next run.",
-      "focus_prs": [
-        2656,
-        2657
-      ]
-    },
-    {
-      "run_at": "2026-08-04T08:09:21Z",
-      "prs_scanned": 13,
-      "clean": [
-        2638,
-        2639,
-        2640,
-        2642,
-        2644,
-        2645,
-        2646,
-        2647,
-        2648,
-        2649,
-        2650,
-        2653
-      ],
-      "with_issues": [
-        {
-          "pr": 2641,
-          "issue": 2654,
-          "findings": 1,
-          "specialist": "pm-frontend",
-          "note": "ThreadDetailScreen send-error banner ships a hardcoded English literal (\"Couldn't send your message. Please try again.\") while sibling PR #2642 i18n'd every other empty/error/loading string in the SAME screen across 6 locales; banner is half-localized (retry uses common.retry, message does not). low-severity i18n convention gap -> NET-NEW #2654."
-        }
-      ],
-      "skipped_already_reviewed": [],
-      "note": "Tier-1d demand-driven refill (claim buffer starved: claimable=9 < floor=36). gh CLI unavailable -> GitHub MCP for all network I/O; DISPATCHER_OWNED_COMMIT=1 (no commit/push; dispatcher folds .research delta into Phase 6). Window merged-to-dev >=2026-07-21, max_prs=15. Scanned 13 never-reviewed PRs (2638-2653) not carrying post-merge-reviewed; the 2626-2637 + 2544-2551 wave already labeled/reviewed and skipped. 12 CLEAN: 2638 (offline sync false-complete: adds pending field, isComplete=pending===0, halt+drain tests), 2639 (push-token console.log DEV-gating source-shape guard + no-raw-token assertion), 2640 (AuthProvider now calls configureApiClient so getApiClient() carries Bearer; real fix+test), 2642 (i18n empty/error/loading across ~18 mobile screens, 6 locales, representative FaultsListScreen test), 2644 (screen-map sync to #2636, docs-only), 2645 (offline transient 5xx NEVER dropped past old 3-retry budget; data-loss fix + survival test), 2646 (route-outlet ErrorBoundary keyed on pathname; shell survives stale-chunk lazy reject; 3 tests), 2647 (route-wrapper 'X not found' i18n across 6 locales + Slovak regression test), 2648 (rentals mutation auth guard: requireRentalsAuthHeaders throws typed AuthError not TypeError, onError->logout; thorough tests), 2649 (financial payments allocate/auto-match onError toasts + prod-route test), 2650 (logout cache-purge: adds accounting/financial/reports/rentals/meters/auth/predictive-maintenance/sentiment/notification-analytics roots to AUTHED_QUERY_KEY_ROOTS; security fix + exhaustive test), 2653 (pick-target-epic ascii_downcase so camelCase-derived epic_prefix passes T21; shell fix+test). Minor non-filed observation: 2649 financial onError toast surfaces raw err.message (ppt-web manager-facing; QueryErrorBanner mobile contract says never leak raw error) - too weak to file. Labeling: update_pull_request has no labels param and issue_write-update would clobber existing PR labels (e.g. app-tsx-queue on 2646), so post-merge-reviewed NOT applied via MCP (same precedent as prior runs); this JSON run-history is the dedup record for the next run. NET-NEW actionable issues: 1 (#2654)."
-    },
-    {
-      "run_at": "2026-08-03T20:17:45Z",
-      "prs_scanned": 10,
-      "clean": [
-        2626,
-        2627,
-        2631,
-        2632,
-        2633,
-        2634,
-        2635,
-        2636,
-        2637
-      ],
-      "with_issues": [
-        {
-          "pr": 2629,
-          "issue": 2643,
-          "findings": 3,
-          "specialist": "pm-rust",
-          "note": "OAuth token-event record awaited inline on hot path; unbounded per-client read; sequential reads"
-        }
-      ]
-    },
-    {
-      "run_at": "2026-08-03T04:10:17Z",
-      "prs_scanned": 5,
-      "clean": [
-        2627,
-        2626,
-        2527,
-        2522
-      ],
-      "with_issues": [
-        {
-          "pr": 2629,
-          "issue": 2630,
-          "findings": 1,
-          "specialist": "rust-backend",
-          "note": "2629 wires all 3 legs of #2628 (producer on OAuth issue/refresh/revoke + GET /platform-admin/oauth/token-usage read route + daily scheduler prune w/ unit-tested cadence gate) \u2014 clean, complete. One test gap: the 2 new integration tests only cover the producer + repository rollups called directly (usage_per_client/totals); the HTTP read route has NO executing coverage \u2014 no super-admin/AuditRead deny-path (403), no malformed-since 400 (INVALID_SINCE), no 200-through-router body/camelCase assertion. Same regression-net class as #2357/#2359. -> NET-NEW #2630."
-        }
-      ],
-      "skipped_already_reviewed": [],
-      "note": "Tier-1d demand-driven refill (claim buffer starved: claimable=5 < floor=36). gh CLI unavailable -> GitHub MCP for all network I/O; DISPATCHER_OWNED_COMMIT=1 (no commit/push). In-window (>=2026-07-20) merged-to-dev PRs: nearly all already carry post-merge-reviewed or were reviewed in prior runs (many older data-*/BIT-* un-quarantine wave PRs remain unlabeled but were already reviewed 07-24..08-02). Genuinely never-reviewed substantive PRs scanned this run: 2629 (NEW since 08-02 12:20 run \u2014 auto-impl closing #2628), 2527 (admin-web layout-editor inline-style -> .styles.ts extraction, no behaviour) CLEAN, 2522 (mobile layout-cache logout/re-login round-trip test-only) CLEAN. Re-verified 2627/2626 (reviewed clean 08-02, still unlabeled) \u2014 still clean. NET-NEW actionable issues: 1 (#2630). Note: MCP label-add on merged PRs not applied (single-writer / not in scope), so unlabeled-but-reviewed PRs will keep re-surfacing in the unlabeled search until a labeling pass runs."
-    },
-    {
-      "run_at": "2026-08-02T12:20:00Z",
+      "run_at": "2026-11-09T14:38:55Z",
       "prs_scanned": 6,
       "clean": [
-        2627,
-        2626,
-        2541,
-        2521,
-        2524
-      ],
-      "with_issues": [
-        {
-          "pr": 2526,
-          "issue": 2628,
-          "findings": 3,
-          "specialist": "rust-backend",
-          "note": "OAuth token-usage analytics data layer (migration 00224 + models + OAuthTokenEventRepository record/usage_per_client/totals/cleanup_before, well-tested) is never wired: tree-wide grep shows the only refs are the 4 data-layer files + repositories/mod.rs export. No producer calls record() on oauth.rs token()/revoke() paths (table stays empty -> dashboard reads zeros), no platform-admin read route exposes usage_per_client/totals, cleanup_before unscheduled. Same class as #2531/#2532/#2533."
-        }
-      ],
-      "skipped_already_reviewed": [],
-      "note": "Tier-1d demand-driven refill (claim buffer starved: 0 honest-claimable). The 2 genuinely-new PRs since the 08:16 run are 2627 (workflow api_call.rs SSRF validator drift -> delegates to shared common::url_validation; multicast regression test) and 2626 (idempotency middleware tenant_scope drops the client X-Tenant-ID header fallback for a server-side 'global' sentinel; cross-tenant no-collide + spoofed-header tests) -- both exemplary security self-fixes, clean. To generate fresh actionable work, also reviewed 4 substantive never-reviewed in-window PRs from the 2026-07-23 data-audit wave (the 08-02/08-01 runs only ever reviewed the 15 newest by number; the older data-* wave was never labeled, so 100+ remain unlabeled but most are test-un-quarantine/docs noise). 2521 (fault KPI unification: single-source fault_counts_by_status, global==sum-of-per-org regression test) clean; 2541 (reality-web listing.viewed analytics bus+session+instrumentation, unit-tested, dataLayer/tag-manager transport is the documented design) clean; 2524 (support-audit-event docs-only definitions doc, self-declares gaps A-D) clean; 2526 -> NET-NEW #2628 (data layer unwired end-to-end). NET-NEW actionable issues: 1. Did not label PRs (mcp label-add not in scope; DISPATCHER_OWNED_COMMIT single-writer)."
-    },
-    {
-      "run_at": "2026-08-02T08:16:55Z",
-      "prs_scanned": 15,
-      "clean": [
-        2625,
-        2624,
-        2623,
-        2622,
-        2620,
-        2554,
-        2553,
-        2552,
-        2551,
-        2550,
-        2548,
-        2547,
-        2546,
-        2545,
-        2544
+        3363,
+        3362,
+        3361,
+        3364,
+        3360,
+        3358
       ],
       "with_issues": [],
-      "skipped_already_reviewed": [],
-      "note": "Phase 2.5 24h sweep. Reviewed the 15 newest unlabeled merged PRs in the 14d window (122 unlabeled total; max_prs=15 cap). NET-NEW actionable issues: 0. Genuinely-new PRs this run: 2620 (RAG retrieval observability via metrics facade), 2622 (docs-only mobile-native analytics-parity audit), 2623 (Booking.com push auth-bypass fix + shared verify_timestamped_signature helper + Airbnb ts-parity + dedup guard \u2014 exemplary, closes gap-2528), 2624 (reality-web layout-revalidate stops recording untrusted Host as target_tenant on pre-auth paths, closes #2621), 2625 (quinn-proto 0.11.14->0.11.15 RUSTSEC-2026-0185 dep bump) \u2014 all clean, well-tested. Root cause of re-surfacing (same as 2026-07-31/08-01 notes): the 2026-07-29 run reviewed 2544/2545/2546/2547/2548/2550/2551/2552/2553/2554 but never applied the post-merge-reviewed PR label, so 10 already-reviewed PRs reappeared in the unlabeled search. Re-verified all 10 \u2014 still clean; the only prior issues from that run (2550->#2562 unwired get_dispute_kpis, 2546->#2564 S3 orphan cleanup) were since RESOLVED by merged #2572 (KPI reporting endpoint) and #2571 (org-scoped DELETE-by-file_key route). Labeled all 15 this run to stop the re-review loop."
+      "note": "Phase 2.5 post-merge review (24h cadence), window 14d (merged>=2026-10-26), base=dev. 6 unreviewed in-window merges since the 2026-11-07 run; all older in-window PRs already post-merge-reviewed. All 6 CLEAN, 0 follow-ups: #3363 (messaging DB-error sanitize via db_error() helper + source-scan regression guard), #3362 (budgets DB-error leak -> db_error(ctx,e) with to_bytes body test), #3361 (health-alerts page_size.clamp(1,100) matching tenants/audit siblings + IG3 test seeding 101 alerts), #3364 (tenant-export out_dir confined to PPT_EXPORT_ROOT via component-level traversal rejection on RLS-bypassing pool; thorough security fix + 6 unit tests), #3360 (.research dispatcher-self-test T33 quarantined-row recovery; deterministic offline jq fixture), #3358 (docs-only screen-map realtor-detail i18n reland). JSON-key-case camelCase check N/A (no snake_case accessors vs camelCase DTOs). Labeled all 6 post-merge-reviewed via MCP (gh pr/push 403'd in cloud). DISPATCHER_OWNED_COMMIT single-writer: artifacts written, no git add/commit/push."
     },
     {
-      "run_at": "2026-08-01T06:15:42Z",
-      "prs_scanned": 10,
-      "clean": [
-        2567,
-        2571,
-        2619,
-        2566,
-        2565,
-        2569,
-        2570,
-        2482,
-        2618
-      ],
-      "with_issues": [
-        {
-          "pr": 2549,
-          "issue": 2621,
-          "findings": 1,
-          "specialist": "pm-frontend",
-          "note": "reality-web layout-revalidate records untrusted Host as target_tenant on pre-auth (503/401) paths"
-        }
-      ]
-    },
-    {
-      "run_at": "2026-08-01T00:30:49Z",
-      "prs_scanned": 15,
-      "clean": [
-        2616,
-        2615,
-        2614,
-        2613,
-        2611,
-        2610,
-        2609,
-        2607,
-        2606,
-        2578,
-        2577,
-        2576
-      ],
-      "with_issues": [
-        {
-          "pr": 2608,
-          "issue": 2612,
-          "findings": 0,
-          "specialist": "rust-backend",
-          "note": "Pre-existing open follow-up #2612 (durability of scheduler dispatch) still covers this; re-verified error-handling fix, no NEW gap. Labeled post-merge-reviewed."
-        },
-        {
-          "pr": 2572,
-          "issue": 2575,
-          "findings": 0,
-          "specialist": "rust-backend",
-          "note": "Re-derived the window-validation + BIT-440-quarantined-test gap and opened #2617, then closed #2617 as duplicate of the still-open #2575. Labeled post-merge-reviewed."
-        },
-        {
-          "pr": 2568,
-          "issue": 2574,
-          "findings": 0,
-          "specialist": "mobile-native",
-          "note": "Pre-existing open follow-up #2574 (SSO nonce lost on process death) still covers this; mint site wired by merged #2593. No NEW gap. Labeled post-merge-reviewed."
-        }
-      ],
-      "skipped_already_reviewed": [],
-      "note": "Demand-driven refill sweep (dispatcher buffer starved: claimable=3 < floor=36). Reviewed the 15 newest unlabeled merged PRs in the 14d window. Root cause of re-surfacing: prior standalone runs filed issues but never applied the post-merge-reviewed PR label, so 11 already-reviewed PRs (2611/2610/2609/2608/2607/2606/2578/2577/2576/2572/2568) reappeared in the unlabeled search. Re-verified all, then labeled all 15 to stop the loop. Genuinely-new PRs this run: 2616/2615/2614/2613 (all clean DX/refactor/test). NET-NEW actionable issues: 0 \u2014 the only re-derived gap (#2572) was already tracked by open #2575 (opened #2617 -> closed as duplicate). Open refill vectors remaining from prior runs: #2612, #2574, #2575."
-    },
-    {
-      "run_at": "2026-07-31T16:18:37Z",
-      "prs_scanned": 9,
-      "clean": [
-        2611,
-        2610,
-        2609,
-        2607,
-        2606,
-        2578,
-        2577,
-        2576
-      ],
-      "with_issues": [
-        {
-          "pr": 2608,
-          "issue": 2612,
-          "findings": 1,
-          "specialist": "rust-backend",
-          "note": "#2608 made scheduler notification-target lookup failures observable but left durability out of scope: publish_scheduled() commits the announcement as published, so a transient target-resolution error (now logged) permanently drops the notification \u2014 it is never re-selected. Same fire-once shape on vote-started + closed-vote dispatch. Propose notified_at column + separate dispatch pass that stamps only on success."
-        }
-      ],
-      "skipped_already_reviewed": [
-        2571,
-        2568,
-        2572,
-        2567,
-        2570,
-        2569
-      ],
-      "note": "Fresh window sweep. Re-surfaced PRs 2567/2568/2569/2570/2571/2572 were already reviewed in the 2026-07-30 run (issues #2573/#2574/#2575 filed there) but never carried the post-merge-reviewed label, so they reappeared in the unlabeled search; re-verified and skipped. #2573 subsequently closed by merged PR #2597, #2574 by #2593. Only genuinely-new PR with an actionable gap this run is #2608 -> #2612."
-    },
-    {
-      "run_at": "2026-07-30T00:26:10Z",
-      "prs_scanned": 9,
-      "clean": [
-        2570,
-        2569,
-        2567,
-        2566,
-        2565,
-        2482
-      ],
-      "with_issues": [
-        {
-          "pr": 2571,
-          "issue": 2573,
-          "findings": 1,
-          "specialist": "rust-backend",
-          "note": "DELETE /documents/by-file-key deletes by org-scope only \u2014 no check the key is unreferenced; can drop a live document's S3 bytes intra-org"
-        },
-        {
-          "pr": 2568,
-          "issue": 2574,
-          "findings": 2,
-          "specialist": "mobile-native",
-          "note": "Android SSO CSRF guard half-wired: SsoStateStore.mint() has no prod call site, so every reality://sso callback is rejected; nonce also lost on process death"
-        },
-        {
-          "pr": 2572,
-          "issue": 2575,
-          "findings": 2,
-          "specialist": "rust-backend",
-          "note": "/disputes/kpis has no window_start<=window_end validation; only test is BIT-440 quarantined (zero executing coverage)"
-        }
-      ],
-      "skipped_already_reviewed": [
-        2549,
-        2478,
-        2433,
-        2554,
-        2491,
-        2553
-      ]
-    },
-    {
-      "run_at": "2026-07-29T08:14:41Z",
-      "prs_scanned": 15,
-      "clean": [
-        2478,
-        2433,
-        2504,
-        2544,
-        2545,
-        2547,
-        2548,
-        2551,
-        2552,
-        2553,
-        2554,
-        2491
-      ],
-      "with_issues": [
-        {
-          "pr": 2550,
-          "issue": 2562,
-          "findings": 1,
-          "specialist": "rust-backend",
-          "note": "get_dispute_kpis unwired dead code \u2014 no route/export consumes the funnel/TTR KPIs"
-        },
-        {
-          "pr": 2549,
-          "issue": 2563,
-          "findings": 2,
-          "specialist": "rust-backend",
-          "note": "layout_change_events retention prune defined-but-unscheduled (mirror #2531/2547); revalidate_received emitted but not persisted cross-service"
-        },
-        {
-          "pr": 2546,
-          "issue": 2564,
-          "findings": 1,
-          "specialist": "pm-backend",
-          "note": "S3 direct-upload orphan mitigation only documented in a comment, not implemented/tracked"
-        }
-      ]
-    },
-    {
-      "run_at": "2026-07-24T12:18:05Z",
-      "prs_scanned": 15,
-      "clean": [
-        2517,
-        2490,
-        2497,
-        2519,
-        2501,
-        2520
-      ],
-      "with_issues": [
-        {
-          "pr": 2499,
-          "issue": 2528,
-          "findings": 3,
-          "specialist": "pm-security",
-          "note": "booking webhook unhardened + airbnb replay parity"
-        },
-        {
-          "pr": 2498,
-          "issue": 2529,
-          "findings": 3,
-          "specialist": "pm-security",
-          "note": "join/leave_group cross-tenant IDOR gap"
-        },
-        {
-          "pr": 2515,
-          "issue": 2530,
-          "findings": 2,
-          "specialist": "pm-frontend",
-          "note": "signup funnel only tour leg instrumented"
-        },
-        {
-          "pr": 2512,
-          "issue": 2531,
-          "findings": 3,
-          "specialist": "pm-backend",
-          "note": "retention prune defined but never scheduled"
-        },
-        {
-          "pr": 2494,
-          "issue": 2532,
-          "findings": 2,
-          "specialist": "pm-backend",
-          "note": "layout events spec-only, no producers"
-        },
-        {
-          "pr": 2495,
-          "issue": 2533,
-          "findings": 2,
-          "specialist": "pm-backend",
-          "note": "dispute KPIs no backing SQL; LIKE-parsed transitions"
-        },
-        {
-          "pr": 2500,
-          "issue": 2534,
-          "findings": 2,
-          "specialist": "pm-frontend",
-          "note": "orphaned S3 object on failed direct upload"
-        },
-        {
-          "pr": 2496,
-          "issue": 2536,
-          "findings": 2,
-          "specialist": "pm-frontend",
-          "note": "extractEpics reads nonexistent catalog"
-        },
-        {
-          "pr": 2440,
-          "issue": 2537,
-          "findings": 2,
-          "specialist": "pm-qa",
-          "note": "lease-import IDOR + error branches untested"
-        }
-      ]
-    },
-    {
-      "run_at": "2026-07-23T18:16:57Z",
-      "prs_scanned": 15,
-      "clean": [
-        2493,
-        2492,
-        2488,
-        2487,
-        2481,
-        2480,
-        2479,
-        2477,
-        2476,
-        2475,
-        2474,
-        2473,
-        2472,
-        2471,
-        2470
-      ],
-      "with_issues": []
-    },
-    {
-      "run_at": "2026-07-22T16:17:20Z",
-      "prs_scanned": 11,
-      "clean": [
-        2448,
-        2446,
-        2444,
-        2439,
-        2437,
-        2436,
-        2432,
-        2429,
-        2428,
-        2427
-      ],
-      "with_issues": [
-        {
-          "pr": 2424,
-          "issue": 2449,
-          "findings": 1,
-          "specialist": "rust-backend",
-          "note": "layout-core contract crate excellent (resolve+validate well-tested); one low-sev gap: prop VALUES never validated (only keys via rails.prop_whitelist); validate_publish ignores props entirely; types.rs docstring overclaims 'validated against component prop schemas at publish time' -- ppt-web #2429 PropInput sends arbitrary JSON.parse'd values. Mitigated by superadmin-authored whitelist + defensive rendering + React escaping"
-        }
-      ]
-    },
-    {
-      "run_at": "2026-07-22T08:25:28Z",
-      "prs_scanned": 13,
-      "clean": [
-        2431,
-        2430,
-        2423,
-        2394,
-        2393,
-        2392,
-        2391,
-        2390,
-        2389,
-        2388,
-        2386
-      ],
-      "with_issues": [
-        {
-          "pr": 2426,
-          "issue": 2435,
-          "findings": 1,
-          "specialist": "rust-backend",
-          "note": "put_tenant_override writes updated_by=None (AuthUser bound as _auth, unused) while every other layout write records the actor -> tenant overrides unattributable; RLS itself correct"
-        },
-        {
-          "pr": 2377,
-          "issue": 2434,
-          "findings": 1,
-          "specialist": "rust-backend",
-          "note": "view-webhook dedup gate correct+tested, but 3 comments (portal_webhooks.rs:741,1343; migration 00220:19) cite migration 00218 for the dedup unique index that actually lives in 00219 (00218 is unrelated report_schedules RLS) -- same class as #2417/#2418"
-        }
-      ]
-    },
-    {
-      "run_at": "2026-07-18T16:08:31Z",
-      "prs_scanned": 3,
-      "clean": [
-        2421,
-        2420,
-        2419
-      ],
-      "with_issues": []
-    },
-    {
-      "run_at": "2026-07-17T22:12:33Z",
+      "run_at": "2026-11-07T10:32:09Z",
       "prs_scanned": 5,
       "clean": [
-        2339,
-        2336,
-        2334
+        3282,
+        3275,
+        3297,
+        3296,
+        3295
+      ],
+      "with_issues": [],
+      "note": "Tier-1d demand-driven backlog generator. Merge pipeline wedged (#3215): no new merges since the 06:28Z run (top updated_at=2026-11-07T06:27:36Z, all 30 newest labeled post-merge-reviewed). Reviewed the 5 most substantive UNreviewed in-window (merged>=2026-10-24, base=dev) backend leftovers that earlier max_prs=15 caps skipped: #3282 (org+role-from-membership TenantAuthUser across 20 modules + analytics tenant isolation; sound - its only critique, per-file require_manager duplication, duplicates already-filed #3306/#3287 theme), #3275 (community: secret-group visibility gate, last-owner-leave 409, enum+content validation; solid), #3295/#3296/#3297 (code-review follow-up fixes with regression tests: forgot-password token-invalidation error now propagated, workflow HTTP client build fail-soft instead of panic, suspend-cascade partial failure surfaced as 500). All clean, 0 follow-ups. Remaining unreviewed in-window leftovers are ppt-web i18n/wiring (#3237,#3242,#3243,#3244,#3247,#3249,#3251,#3257,#3263) + screen-map doc #3292 + merge-train #3290, whose themes (i18n reorder churn #3309, community-feed author #3311) are already filed. Dedup: only open from-merged-review issue is #3116 (unrelated); prior follow-ups #3304-3315/#3341/#3352 already fixed+closed. Labeled the 5 reviewed PRs post-merge-reviewed. GitHub I/O via MCP (gh token invalid in env). DISPATCHER_OWNED_COMMIT=1: artifacts written, no git add/commit/push."
+    },
+    {
+      "run_at": "2026-11-07T06:28:00Z",
+      "prs_scanned": 10,
+      "clean": [
+        3351,
+        3350,
+        3349,
+        3347,
+        3346,
+        3345,
+        3344,
+        3343,
+        3342
       ],
       "with_issues": [
         {
-          "pr": 2340,
-          "issue": 2417,
+          "pr": 3348,
+          "issue": 3352,
           "findings": 1,
-          "specialist": "rust-backend",
-          "note": "scheduler-RLS doc + test comments cite migration 00216 for report_schedules_global_read; policy actually ships in this PR's 00218 (00216 is #2335's unrelated document_embeddings policy) \u2014 docs-only, scheduler.rs is correct"
-        },
-        {
-          "pr": 2335,
-          "issue": 2418,
-          "findings": 1,
-          "specialist": "rust-backend",
-          "note": "cross-org /rag/migrate RLS test runs as #[sqlx::test] superuser -> passes vacuously w.r.t. the 00216 super-admin policy; adopt #2340's NOBYPASSRLS role-switch to make it a real regression guard"
+          "specialist": "pm-rust",
+          "note": "authenticated change_password updates the password hash but never revokes refresh tokens/sessions; reset_password does (force re-login). Pre-change sessions (incl. an attacker's) survive a deliberate password change."
         }
       ]
     },
     {
-      "run_at": "2026-07-17T16:12:50Z",
-      "prs_scanned": 11,
+      "run_at": "2026-11-06T04:31:36Z",
+      "prs_scanned": 15,
       "clean": [
-        2416,
-        2415,
-        2414,
-        2412,
-        2411,
-        2410,
-        2409,
-        2408,
-        2407,
-        2372,
-        2371
+        3340,
+        3335,
+        3337,
+        3336,
+        3334,
+        3339,
+        3338,
+        3332,
+        3330,
+        3331,
+        3313,
+        3303,
+        3302,
+        3298
+      ],
+      "with_issues": [
+        {
+          "pr": 3300,
+          "issue": 3341,
+          "findings": 1,
+          "specialist": "pm-rust",
+          "note": "payment_webhook_dead_letters RLS manage policy gates on org membership only (no role predicate) despite its 'admins/managers' comment; latent over-grant once a resolve endpoint runs through RLS"
+        }
+      ]
+    },
+    {
+      "run_at": "2026-11-05T20:43:15Z",
+      "prs_scanned": 15,
+      "clean": [
+        3321,
+        3325,
+        3323,
+        3324,
+        3319,
+        3320,
+        3318,
+        3322,
+        3327,
+        3328,
+        3326,
+        3293,
+        3280,
+        3317,
+        3316
       ],
       "with_issues": []
     },
     {
-      "run_at": "2026-07-17T02:16:08Z",
+      "run_at": "2026-11-04T18:44:47Z",
       "prs_scanned": 15,
       "clean": [
-        2398,
-        2397,
-        2396,
-        2395,
-        2384,
-        2383,
-        2382,
-        2381,
-        2380,
-        2379,
-        2378,
-        2376,
-        2375,
-        2374,
-        2373
+        3285,
+        3270,
+        3259,
+        3258
+      ],
+      "with_issues": [
+        {
+          "pr": 3291,
+          "issue": 3304,
+          "findings": 1,
+          "specialist": "pm-rust",
+          "note": "member-role escalation gate reimplements role parsing instead of reusing common::TenantRole::from_role_type"
+        },
+        {
+          "pr": 3289,
+          "issue": 3305,
+          "findings": 1,
+          "specialist": "pm-rust",
+          "note": "IoT add_reading hot path does a separate SELECT EXISTS org check instead of folding it into the insert"
+        },
+        {
+          "pr": 3287,
+          "issue": 3306,
+          "findings": 1,
+          "specialist": "pm-rust",
+          "note": "board_meetings require_manager(rls) duplicates shared rls_authz::require_manager_rls (consolidate)"
+        },
+        {
+          "pr": 3286,
+          "issue": 3307,
+          "findings": 1,
+          "specialist": "pm-rust",
+          "note": "fault update/triage/status hand-guard org on id-only find_by_id_rls instead of find_by_id_for_org"
+        },
+        {
+          "pr": 3281,
+          "issue": 3308,
+          "findings": 1,
+          "specialist": "pm-rust",
+          "note": "vote sub-resource reads use pool-bypass + manual vote_in_org guard; add RLS-aware repo variants"
+        },
+        {
+          "pr": 3260,
+          "issue": 3309,
+          "findings": 1,
+          "specialist": "pm-frontend",
+          "note": "cs.json/sk.json ~9k-line reorder churn vs ~115-line en/de/hu/pl; enforce stable key order for messages/*.json"
+        },
+        {
+          "pr": 3269,
+          "issue": 3310,
+          "findings": 2,
+          "specialist": "pm-frontend",
+          "note": "community feed shows every author as Neighbor (API returns ids only); formatMoney coerces Decimal via Number()"
+        },
+        {
+          "pr": 3268,
+          "issue": 3311,
+          "findings": 1,
+          "specialist": "pm-rust",
+          "note": "POST /leases/{id}/payments path param is lease id by route but payment id in handler; client works around it"
+        },
+        {
+          "pr": 3264,
+          "issue": 3312,
+          "findings": 1,
+          "specialist": "pm-frontend",
+          "note": "resolution-term responsiblePartyId resolved via user-id map not nameByParty like votes (verify)"
+        },
+        {
+          "pr": 3253,
+          "issue": 3314,
+          "findings": 1,
+          "specialist": "pm-rust",
+          "note": "org-wide automation execution list/stats endpoints not manager-gated (any member can read)"
+        },
+        {
+          "pr": 3252,
+          "issue": 3315,
+          "findings": 1,
+          "specialist": "pm-frontend",
+          "note": "RecentActivity filters my-faults client-side over a capped 20-row org-wide fetch (own faults can vanish)"
+        }
+      ],
+      "note": "Dispatcher Tier-1d demand-driven backlog generator run (buffer starved: claimable=9 < floor=36; DISPATCHER_OWNED_COMMIT=1). repo=martin-janci/property-management, window=14d (merged>=2026-10-21), base=dev, max_prs=15, labels=follow-up,from-merged-review. Scanned the 15 most-recently-merged in-window dev merges lacking post-merge-reviewed/no-review-needed: #3291 plus the 16:23:52Z R4 batch (#3260,#3289,#3287,#3286,#3285,#3281,#3270,#3269,#3268,#3264,#3259,#3258,#3253,#3252). 11 follow-ups opened (#3304,#3305,#3306,#3307,#3308,#3309,#3310,#3311,#3312,#3314,#3315); 4 clean (#3285,#3270,#3259,#3258). No Task fan-out tool available to this subagent, so all diffs reviewed inline. GitHub I/O MCP-primary (gh writes 403-blocked by proxy): enumeration via list_pull_requests(state=closed, base=dev, sort=updated desc), merged detected by non-null merged_at; diffs via pull_request_read get_diff. Cross-cutting themes filed once to avoid duplicates: per-file require_manager helper duplication (filed on #3287/#3306) also appears in #3286; the cs/sk i18n reorder churn (filed on #3260/#3309) also appears in #3270/#3264/#3252 which were marked clean or carried a distinct finding. All 15 PRs labeled post-merge-reviewed (none had prior labels, so label-set writes clobbered nothing) + a breadcrumb comment left where an issue was opened. Every issue/comment body ends with the required _Generated by [Claude Code](https://claude.ai/code)_ footer."
+    },
+    {
+      "run_at": "2026-11-02T14:45:34Z",
+      "prs_scanned": 8,
+      "clean": [
+        3218,
+        3220,
+        3217,
+        3213,
+        3216,
+        3219,
+        3192,
+        3184
       ],
       "with_issues": []
+    },
+    {
+      "run_at": "2026-11-01T14:32:05Z",
+      "prs_scanned": 13,
+      "clean": [
+        3211,
+        3210,
+        3209,
+        3214,
+        3212,
+        3207,
+        3205,
+        3204,
+        3203,
+        3202,
+        3201,
+        3200,
+        3199
+      ],
+      "with_issues": [],
+      "note": "Dispatcher Tier-1d demand-driven backlog generator run (claim buffer starved: honest claimable=6 < floor=36; DISPATCHER_OWNED_COMMIT=1). repo=martin-janci/property-management, window=14d (merged>=2026-10-18), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. 13 net-new in-window dev merges lacking post-merge-reviewed/no-review-needed: #3211/#3210/#3209/#3214/#3212 (2026-11-01), #3207 (2026-10-31 20:45Z), #3205/#3204/#3203/#3202/#3201/#3200/#3199 (2026-10-31 18:26-18:27Z). Everything #3188 and older already carried post-merge-reviewed from prior runs; dependabot #3137/#3007/#2961/#3133/#3089 are closed-unmerged (null merged_at), skipped. ALL 13 CLEAN, 0 follow-ups opened. Clean verdicts: #3211 ppt-web Accounting Invoice i18n + drops native alert/confirm (chrome strings -> react-i18next); #3210 api-server test-only cross-org 404 regression suite for get_rule/get_action/get_appeal by-id reads (same-org-200/cross-org-404), pins the #850 *_for_org threading; #3209 mobile-RN resolves prior-run finding #3206: ranked-ballot a11y labels/hint now use t(key,{defaultValue}) and voting.submit/moveUp/moveDown/rankHint added to all 6 locale bundles, tests assert resolved labels not raw keys; #3214 api-server test-only: consolidate compliance_wave1b_tests fixtures onto shared seed_org/seed_membership + unprivileged_app/authorized_app Caller fixtures (behavior-preserving churn fix); #3212 reality-web extract listing-edit status mapping into tested _status.ts (mapListingStatusToForm/resolveStatusUpdate), preserves #1762 terminal-state-downgrade guard, behavior-preserving; #3207 reality-server validate_price rejects <=0 portal listing price on create/update (DECIMAL has no CHECK, Decimal can't be NaN) w/ unit tests; #3205 reality-server list_my_reports validates status filter against documented enum (400 not silent empty 200), no reflected echo, w/ regression test; #3204 api-server test-only: EDD write unknown-id 404 tests (guards #3174 500-collapse class) + first DSA platform-principal positive paths; #3203 reality-web localizes listing-edit wizard across all 6 locales (sk/cs/de/en/pl/hu) w/ per-locale i18n coverage test, companion to #3197/#3207/#3212; #3202 ppt-web resolveVatRate single-source-of-truth normalizes submitted item.vatRate to UI-derived rate (no stale 21% drift) w/ RTL test; #3201 ppt-web ConnectionStatus reconnect becomes a real <button> distinct from role=status live-region, aria-label connectionStatus.clickToReconnect present in all 6 message bundles (verified not a raw-key gap), w/ a11y tests; #3200 ppt-web ToastItem clears the 2s 'copied' reset timer on unmount via useRef+useEffect cleanup (no setState-after-unmount) w/ fake-timer regression test; #3199 reality-web ComparisonProvider guards localStorage rehydration against malformed-but-valid-JSON shapes (parseStoredListings + isStoredListing), degrades to usable subset, w/ tampered-value tests. No Task fan-out tool available to this subagent, so all 13 diffs reviewed inline (<=5 concurrency honoured conceptually). GitHub I/O MCP-primary (gh writes 403-blocked by proxy): enumeration via list_pull_requests(state=closed, base=dev, sort=updated desc); merged detected by non-null merged_at. All 13 PRs labeled post-merge-reviewed via issue_write update (none had prior labels, so label-set writes clobbered nothing). No breadcrumb comments (no issues opened). DISPATCHER_OWNED_COMMIT=1: wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to orchestrator Phase 6; did NOT touch assignments.json/action-list.json/archives.",
+      "focus_prs": [
+        3211,
+        3210,
+        3209,
+        3214,
+        3212,
+        3207,
+        3205,
+        3204,
+        3203,
+        3202,
+        3201,
+        3200,
+        3199
+      ]
+    },
+    {
+      "run_at": "2026-10-31T16:35:49Z",
+      "prs_scanned": 8,
+      "clean": [
+        3198,
+        3197,
+        3191,
+        3190,
+        3186,
+        3185,
+        3188
+      ],
+      "with_issues": [
+        {
+          "pr": 3189,
+          "issue": 3206,
+          "findings": 1,
+          "specialist": "frontend",
+          "note": "ranked-ballot a11y labels/hint render raw i18n keys: voting.moveUp/moveDown/rankHint absent from all 6 mobile locale bundles, and t(key) ?? literal is a no-op under react-i18next (missing key resolves to the key string). Fix: add keys + use t(key,{defaultValue}) as PR #3186 did."
+        }
+      ],
+      "note": "Dispatcher Phase 2.5 post-merge review (DISPATCHER_OWNED_COMMIT=1). repo=martin-janci/property-management, window=14d (merged>=2026-10-17), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. 8 in-window dev merges lacking post-merge-reviewed/no-review-needed: #3198/#3197 (2026-10-31), #3189/#3191/#3190/#3186/#3185/#3188 (2026-10-30). All prior in-window merges already carried post-merge-reviewed; dependabot #3137/#3007/#2961/#3133/#3089 are closed-unmerged (null merged_at), skipped. 7 CLEAN, 1 follow-up (#3206 on PR #3189). Clean verdicts: #3198 reality-server removes OS-RNG .expect() panics in SSO (503 on entropy failure) + password-reset with 2 PKCE tests; #3197 reality-web resolveListingPrice rejects empty/0/negative/NaN price with vitest suite (hardcoded-sk error string matches the surrounding unlocalized _mock WIP edit page, not a regression); #3191 ppt-web parseNumericInput + submit guard blocks NaN qty/unitPrice totals w/ RTL test; #3190 ppt-web test-only logout-purge drift guard enforcing personMonthKeys + any directly-imported api-client *Keys factory; #3186 ppt-web wires useIotWebSocket.hasGivenUp -> isOffline banner w/ test, i18n via correct t(key,{defaultValue}); #3185 ppt-web neighbors hooks re-key useMemo on current token (fixes stale-Bearer-after-refresh) w/ 2 token-rotation tests; #3188 api-server assign_violation org-scoped existence check first (cross-org IDOR 403-leak -> 404) is covered by the existing cross_org_assign_violation_is_not_found regression test, so no test-gap."
+    },
+    {
+      "run_at": "2026-10-28T10:30:53Z",
+      "prs_scanned": 0,
+      "clean": [],
+      "with_issues": [],
+      "note": "demand-driven refill run; all merged PRs in 14d window against dev already labeled post-merge-reviewed (prior run marker 2026-10-28T04:37:57Z). 0 eligible PRs, 0 new findings — all-deduped."
+    },
+    {
+      "run_at": "2026-10-27T08:30:43Z",
+      "prs_scanned": 7,
+      "clean": [
+        3183,
+        3182,
+        3181,
+        3180,
+        3179,
+        3178,
+        3177
+      ],
+      "with_issues": [],
+      "note": "Dispatcher Tier 1d demand-driven backlog generator run (claim buffer starved: claimable=7 < floor=36; DISPATCHER_OWNED_COMMIT=1). repo=martin-janci/property-management, window=14d (merged>=2026-10-13), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. 7 net-new in-window merges lacking post-merge-reviewed/no-review-needed: #3183/#3180/#3178/#3179/#3182/#3181 (all merged 2026-10-27 ~02:29-02:36Z) + #3177 (2026-10-27 02:29Z). All other in-window merges already carried post-merge-reviewed from prior runs (the 10-26 run and earlier) and were skipped; dependabot #3133/#3089/#3091 are closed-unmerged (null merged_at), skipped. ALL 7 CLEAN, 0 follow-ups opened. These 7 are themselves tightly-scoped research-routine products and each is well-tested: #3183 (rust-backend) adds a 15-case cross-tenant mutation IDOR regression suite on routes/violations.rs + a real 404 fix — create_enforcement_action now gates the INSERT on the parent violation's organization_id via INSERT...SELECT...WHERE and fetch_optional->RowNotFound, and a shared map_mutation_err maps RowNotFound->404 across update/assign/create-action/mark-sent/record-payment/appeal handlers (mirrors add_evidence/add_comment); #3182 (rust-backend) maps moderation assign/unassign RowNotFound->404 (was blanket 500) with 2 unknown-id 404 tests — this directly resolves the prior-run finding #3174; #3181 (rust-backend) enforces assignee org-membership in assign_violation via org_member_repo.is_member (403 for outsiders) with negative+positive controls and a seed_membership fix to the happy-path suite; #3180 (rust-backend, test-only) adds create_group/create_event/create_item building-scoped cross-tenant 403 regressions to community_cross_tenant_idor_tests; #3179 (frontend) threads useLocale()->@/lib/format.formatPrice/formatNumber through the remaining hardcoded toLocaleString('sk-SK') price displays on reality-web realtor/[id]+price-map+sell+account/listings/[id]/edit with a de-locale regression test — the follow-up slice to #3166 resolving issue #3175; #3177 (pm, artifact-only) reconciles _bmad-output sprint-status.yaml epic rollups (epic-6/7a/10b/80) to the coverage.json source-of-truth. Reviewer notes considered but not filed: (a) #3179 drops the per-listing listing.currency field in favor of formatPrice's hardcoded currency:'EUR' (format.ts:55), but this is consistent with the portal-wide EUR-default already established by #3166/#3140 on mock-data pages — not a regression introduced here; (b) #3181's is_member-before-assign ordering lets an in-org manager distinguish member vs non-member assignee UUIDs within their OWN org (403 vs proceed) — intra-tenant, negligible. No actionable findings. All 7 PRs labeled post-merge-reviewed via issue_write update (none had prior labels, so label-set writes clobbered nothing). No breadcrumb comments (no issues opened). No Task fan-out tool available to this subagent, so all 7 diffs reviewed inline (<=5 concurrency honoured conceptually). GitHub I/O MCP-primary (gh writes 403-blocked by proxy): enumeration via list_pull_requests(state=closed, base=dev, sort=updated desc); merged detected by non-null merged_at (MCP 'merged' bool unreliable, reports false). DISPATCHER_OWNED_COMMIT=1: wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to orchestrator Phase 6; did NOT touch assignments.json/action-list.json/archives.",
+      "focus_prs": [
+        3183,
+        3182,
+        3181,
+        3180,
+        3179,
+        3178,
+        3177
+      ]
+    },
+    {
+      "run_at": "2026-10-26T14:34:54Z",
+      "prs_scanned": 7,
+      "clean": [
+        3172,
+        3170,
+        3169,
+        3165,
+        3161
+      ],
+      "with_issues": [
+        {
+          "pr": 3167,
+          "issue": 3174,
+          "findings": 2,
+          "specialist": "rust-backend",
+          "note": "moderation /unassign route (gh-issue-3163, merged 10-26). PR correctly adds the missing backend route (closing the dead-client-path gap flagged in #3163), the ComplianceRepository::unassign_moderation_case mutation is org-scoped via organization_id=$2 (no IDOR), reverts under_review->pending only, and ships a role-gate 403 regression test + a happy-path test that asserts assignee cleared + status reverted against the DB. ModerationCaseResponse is Serialize-only snake_case (no rename_all), so the test's json[\"assigned_to_name\"]/json[\"id\"] snake_case accessors are correct — no camelCase JSON-key-case mismatch. BUT: (1) correctness/medium — repo uses fetch_one, so an unknown or cross-org case id yields SqlxError::RowNotFound which the handler maps to 500 for ALL errors; a routine not-found should be 404. PR explicitly perpetuates this from assign_moderation_case, so both handlers share the wart. (2) authz/low — any org moderator/manager can unassign a case assigned to a different moderator (only require_moderator_role + org scope, no ownership check); confirm intent. Filed #3174 proposing RowNotFound->404 mapping in both assign+unassign + a 404 test, and an authz intent check."
+        },
+        {
+          "pr": 3166,
+          "issue": 3175,
+          "findings": 1,
+          "specialist": "frontend",
+          "note": "reality-web agency profile price locale (gh-issue-3162, merged 10-26). PR correctly threads useLocale() through @/lib/format.formatPrice on /[locale]/agency/[slug] (the numeric half #3155/#3162 left behind) with a de-locale regression test asserting dot-grouping and absence of sk-SK space form — solid. BUT a grep of reality-web/src shows the SAME hardcoded toLocaleString('sk-SK') bug still live on sibling price displays: realtor/[id]/page.tsx:311 (public realtor profile listing price — direct analog of the just-fixed agency page), price-map/page.tsx:37 & :96, account/listings/[id]/edit/page.tsx:740, and sell/page.tsx:653. Reality Portal is a six-language portal so all render Slovak grouping to non-sk visitors. Filed #3175 (correctness/i18n, medium) proposing a formatPrice+useLocale sweep (realtor/[id] first), per-page regression tests mirroring agency/[slug]/page.test.tsx, and a lint/CI gate banning literal toLocaleString('sk-SK'). Also noted lower-severity bare toLocaleString() (no locale arg) in saved-searches/CategoryCards/realtor-analytics to fold into the sweep."
+        }
+      ],
+      "note": "Dispatcher Tier 1d demand-driven backlog run (DISPATCHER_OWNED_COMMIT=1). Scanned 7 merged-to-dev PRs in the 14d window not already labeled post-merge-reviewed (3172,3170,3169,3167,3166,3165,3161); the ~40 other in-window merges already carried post-merge-reviewed and were skipped. 5 clean, 2 follow-ups opened (#3174 backend 404-mapping, #3175 reality-web i18n sweep). All 7 PRs labeled post-merge-reviewed; breadcrumbs added on 3167/3166. No commit/push — artifacts left in working tree for the orchestrator's Phase 6."
+    },
+    {
+      "run_at": "2026-10-25T20:31:08Z",
+      "prs_scanned": 14,
+      "clean": [
+        3159,
+        3160,
+        3153,
+        3152,
+        3154,
+        3070,
+        3074,
+        3107,
+        3120,
+        3111,
+        3028
+      ],
+      "with_issues": [
+        {
+          "pr": 3155,
+          "issue": 3162,
+          "findings": 1,
+          "specialist": "frontend",
+          "note": "reality-web agency profile i18n (code-review-reality-web-agency-page-i18n-gap, merged 10-25). PR correctly extracted all chrome copy on /[locale]/agency/[slug] into next-intl pages.agencyProfile.* (6 locales sk/cs/de/en/pl/hu) with a per-locale coverage + placeholder-preservation test — solid for the string half. BUT left the numeric half: price still rendered as listing.price.toLocaleString('sk-SK') (page.tsx:277), hardcoding Slovak digit grouping for all six locales. Same class PR #3140 fixed for ListingHeader/AdditionalInfo/AgencyListings by threading useLocale() through shared @/lib/format formatPrice/formatNumber (helpers confirmed to exist at format.ts:36/48); agency page does not import @/lib/format at all, so #3140's pass missed it. Filed #3162 (correctness/i18n, medium) proposing formatPrice(price,currency,useLocale()) + a non-sk-locale regression assertion mirroring #3140's ListingHeader.test.tsx."
+        },
+        {
+          "pr": 3158,
+          "issue": 3163,
+          "findings": 1,
+          "specialist": "pm-integration",
+          "note": "moderation client sub-paths (gh-issue-3157, merged 10-25). PR correctly fixed 2 of the 3 sub-path mismatches #3157 flagged — listModerationCases -> /moderation/queue and getModerationStats -> /moderation/queue/stats — and pinned both with a contract test (verified against aml_dsa/mod.rs:70-71). BUT it then CLOSED #3157 as completed (confirmed via issue_read: state=closed/completed, closed_by PR #3158) while leaving the third finding unaddressed: unassignModerationCase still targets POST /moderation/cases/{id}/unassign, for which aml_dsa/mod.rs has NO route (only /moderation/cases/{id}/assign at line 74) — so that call 404s at runtime and is now UNTRACKED. The #3158 contract test asserts list+stats only, so the path stays uncovered (same test-gap root cause that let #3150 ship incomplete). Filed #3163 (correctness, medium) proposing: add backend unassign route (mirror assign) OR delete the dead client fn after a ppt-web caller audit, plus extend api.test.ts either way. Other moderation calls verified correct (getModerationCase, templates, assign, action, appeal, appeal/decide)."
+        },
+        {
+          "pr": 3072,
+          "issue": 3164,
+          "findings": 1,
+          "specialist": "rust-backend",
+          "note": "violations role authz (code-review-api-handlers-violations-missing-role-authz, merged 10-25). PR added require_manager to 13 privileged mutation handlers in routes/violations.rs and carved out create_appeal + add_comment as intentional self-service — thorough, with a dedicated role-authz test suite (resident 403 negative + manager 2xx positive controls). BUT add_evidence (violations.rs:337) was left ungated — only a tenant_id-presence check, so any Resident/Tenant can POST arbitrary evidence onto any violation in their org, tampering with the official enforcement record. Asymmetric with its sibling delete_evidence (line 375), which THIS PR did gate, and add_evidence is NOT in the PR's stated carve-out list (create_appeal/add_comment) — looks like an oversight, not a deliberate self-service decision. Filed #3164 (security/authz, medium) proposing: gate add_evidence with require_manager + a resident_cannot_add_evidence test, OR document it as an intentional carve-out with a pinning test. Verified add_evidence has no pre-existing role/ownership gate by reading the handler."
+        }
+      ],
+      "note": "Dispatcher Phase 2.5 post-merge review (24h cadence). repo=martin-janci/property-management, window=14d (merged>=2026-10-11), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. 14 net-new in-window merges lacking post-merge-reviewed/no-review-needed: #3159/#3160 (10-25, no prior labels), #3153/#3152/#3154/#3155/#3158/#3070/#3107/#3074/#3120/#3111/#3072/#3028 (all merged 10-25, carried needs-human-review). Everything from #3150 and older already carried post-merge-reviewed from prior runs. Dependabot #3091 is closed-unmerged (no merged_at), skipped. 11 CLEAN, 3 WITH ISSUES (#3155->#3162 i18n, #3158->#3163 moderation unassign, #3072->#3164 add_evidence authz). Scanned 14, opened 3 follow-ups. No Task fan-out tool available to this subagent, so all 14 diffs were reviewed inline. GitHub I/O MCP-primary (gh writes 403-blocked by proxy): enumeration via list_pull_requests(closed, base=dev, sort=updated desc); merged detected by non-null merged_at (MCP 'merged' bool unreliable). PR labels applied via issue_write update preserving needs-human-review. DISPATCHER_OWNED_COMMIT=1: wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to orchestrator Phase 6; did NOT touch assignments.json/action-list.json/archives.",
+      "focus_prs": [
+        3159,
+        3160,
+        3153,
+        3152,
+        3154,
+        3155,
+        3158,
+        3070,
+        3107,
+        3074,
+        3120,
+        3111,
+        3072,
+        3028
+      ]
+    },
+    {
+      "run_at": "2026-10-24T18:31:01Z",
+      "prs_scanned": 7,
+      "clean": [
+        3156,
+        3151,
+        3147,
+        3146,
+        3148,
+        3145
+      ],
+      "with_issues": [
+        {
+          "pr": 3150,
+          "issue": 3157,
+          "findings": 1,
+          "specialist": "pm-integration",
+          "note": "PR #3150 correctly fixed the compliance client base path (/api/v1/compliance -> /api/v1/aml-dsa) for AML + DSA + moderation — verified against lib.rs:322 (aml_dsa router mounts aml/dsa/moderation) vs lib.rs:243 (compliance router = audit-logs/gdpr/security only), and the new api.test.ts contract test pins AML/DSA. BUT the base-only fix left three moderation SUB-paths still 404ing against aml_dsa/mod.rs: listModerationCases -> /moderation/cases (backend: /moderation/queue, line 70), getModerationStats -> /moderation/stats (backend: /moderation/queue/stats, line 71), unassignModerationCase -> /moderation/cases/{id}/unassign (no backend route; only assign exists, line 74). The PR contract test only asserted assignModerationCase (which matches) so these slipped through. Filed #3157 (correctness/high) with exact path fixes + a request to extend the contract test. Other moderation calls (getModerationCase, templates, assign, action, appeal/decide) verified correct."
+        }
+      ]
+    },
+    {
+      "run_at": "2026-10-23T16:28:50Z",
+      "prs_scanned": 6,
+      "clean": [
+        3144,
+        3142,
+        3141,
+        3140,
+        3138
+      ],
+      "with_issues": [
+        {
+          "pr": 3139,
+          "issue": 3149,
+          "findings": 3,
+          "specialist": "pm-integration",
+          "note": "pm-integration-audit-integration-prs-openapi-drift (docs-only audit artifact docs/api/audits/2026-10-22-integration-openapi-drift.md) merged 10-22. The audit itself is well-constructed and accurate: it correctly maps the contract pipeline (TypeSpec -> openapi.yaml -> src/generated is the only client-generating path; utoipa ApiDoc is runtime-only; compliance/migration domains are hand-maintained and outside api-validation.yml) and concludes NO new window-caused drift — verified correct for all 8 window changes (#3129/#3127 wire shapes unchanged, rest dep/docs-only). BUT it recorded three genuine pre-existing, actionable drift findings as prose in the doc and opened NO tracking issue, leaving them untracked in a routine that works off GitHub issues. Filed consolidated follow-up #3149 (one issue per PR) converting them to tracked work, and VERIFIED the highest-severity one against the live dev checkout. HIGH (correctness): confirmed path mismatch — frontend/packages/api-client/src/compliance/api.ts sets API_BASE='/api/v1/compliance' (line 26) and uses it for ALL aml/* and dsa/* call sites (lines 138/142/146/150/160/181/185/...), but backend/servers/api-server/src/lib.rs mounts the AML/DSA router at /api/v1/aml-dsa (line 322) while /api/v1/compliance (line 243 -> routes/compliance.rs) serves only moderation/audit/GDPR/security — so every aml/* + dsa/* call resolves to a non-existent /api/v1/compliance/aml|dsa/... path and 404s (broader than the audit's Finding 2 which flagged only /aml/assessments as 'needs confirmation'; moderation/* sharing API_BASE is correct). MEDIUM (correctness): AmlRiskAssessment type in compliance/types.ts diverges from the #3129-formalized server AmlAssessmentListItem (subject_* vs party_*, triggered vs mitigated, risk_factors required vs Option, ~12 unmodeled fields). MEDIUM (architecture): compliance/migration sit outside TypeSpec so api-validation.yml can never catch these — proposal to lift into TypeSpec converts both classes to compile-time failures. 5 CLEAN siblings: #3144 (reality-web: extract sanitizeCssValue into client-safe lib/sanitize-css.ts and route agency cover-gradient primaryColor/secondaryColor through it, mirroring brandingToStyleObject; safe fallback to default gradient on reject; reuses existing helper, no new sanitizer), #3142 (api-server: stop fabricating ready state for GET /migration/export/{id} — get_export_status is now a pure read, no row mutation on GET, no bogus storage.example.com URL / hard-coded 15MB size / invented record counts; download_export 500s on Ready-without-file_path instead of fabricating; IG3 proven BOTH ways against live Postgres, two-commit test/fix split), #3141 (api-server: /impersonation/active audit now derives client IP via shared audit_ip_from_headers (first XFF hop, truncated to VARCHAR(45)) instead of raw XFF chain that overflowed audit_logs.ip_address and silently dropped the audit row; IG3 regression asserts exactly 1 row with the truncated first-hop IP; matches sibling start handler idiom), #3140 (reality-web: thread active next-intl useLocale() through shared @/lib/format formatPrice/formatNumber in ListingHeader/AdditionalInfo/AgencyListings instead of hardcoded Intl.NumberFormat('en-US') on a 4-language (sk/cs/de/en) portal; IG3 ListingHeader.test.tsx forces de locale and asserts German 1.250.000 grouping; reuses existing helpers), #3138 (docs-only: new docs/api/README.md section documenting the reality-server SSO transient-vs-permanent 401 contract — honestly frames it as 401/403-permanent vs 5xx/transport-transient rather than inventing a 'transient 401' the code lacks, documents server-side poison-resistant introspection + sync_session guards, and flags the honest get_session/refresh_session map_err(|_|401) gap; accurate vs the PR #3121 client cushion). All 6 PRs labeled post-merge-reviewed via issue_write update (needs-human-review preserved on #3141/#3140/#3139/#3138; #3144/#3142 had none). Breadcrumb comment on #3139 -> #3149. DISPATCHER_OWNED_COMMIT=1: wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to orchestrator Phase 6; did NOT touch assignments.json/action-list.json/archives. No Task fan-out tool available to this subagent, so the 6 diffs were reviewed inline (<=5 concurrency honoured conceptually). GitHub I/O MCP-primary (gh writes 403-blocked by proxy): enumeration via list_pull_requests(closed, base=dev, sort=updated desc); merged detected by non-null merged_at (MCP 'merged' bool unreliable, reports false)."
+        }
+      ],
+      "note": "Dispatcher Phase 2.5 post-merge review (24h cadence). repo=martin-janci/property-management, window=14d (merged>=2026-10-09), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. 6 net-new in-window merges lacking post-merge-reviewed/no-review-needed: #3144 (10-23), #3142/#3140/#3141/#3139/#3138 (all 10-22). All other in-window merges already carried post-merge-reviewed from prior runs (#3123 @10-21 and earlier). Dependabot #3091/#2981 are closed-unmerged (no merged_at). 5 CLEAN, 1 WITH ISSUE (#3139 -> #3149). Scanned 6, opened 1 follow-up.",
+      "focus_prs": [
+        3144,
+        3142,
+        3141,
+        3140,
+        3139,
+        3138
+      ]
+    },
+    {
+      "run_at": "2026-10-22T12:32:50Z",
+      "prs_scanned": 1,
+      "clean": [
+        3123
+      ],
+      "with_issues": [],
+      "note": "Dispatcher Phase 2.5 post-merge review (24h cadence). repo=martin-janci/property-management, window=14d (merged>=2026-10-08), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: gh GraphQL 403'd, so reads via GitHub MCP list_pull_requests (closed,base=dev,sort=updated desc, pages 1-2) + pull_request_read get/get_diff; label-add via gh api REST (POST issues/3123/labels, preserving needs-human-review). DISPATCHER_OWNED_COMMIT=1: wrote post-merge-review.json + last-merged-review.txt only, deferred commit/push to orchestrator Phase 6. Of all merged-into-dev PRs in window, every one except #3123 already carried post-merge-reviewed/no-review-needed and was skipped. Scanned 1 (#3123), 0 follow-up issues. #3123 (code-review-api-core-totp-rng-expect-panic, rust-backend, merged 2026-10-21): CLEAN. 3-add/1-del one-file defensive fix in backend/servers/api-server/src/services/totp.rs — replaced SysRng.try_fill_bytes(...).expect(\"OS rng failed\") in encrypt_secret() with map_err(|e| TotpError::EncryptionError(format!(\"secure RNG failed to generate nonce: {e}\")))?. Removes a panic/DoS vector on CSPRNG failure; uses the existing EncryptionError variant and matches the sibling map_err(?) idiom already at totp.rs:85 and :102; encrypt_secret already returns Result<String,TotpError> so no signature/caller changes; happy path + nonce:ciphertext format untouched (existing test_encrypt_decrypt_secret still covers it). Only gap: no fault-injection test for the unreachable RNG-failure branch — well-justified in the PR body (would require restructuring the function, which the task explicitly forbade). Not actionable; no follow-up issue warranted. Labeled post-merge-reviewed."
+    },
+    {
+      "run_at": "2026-10-21T10:34:27Z",
+      "prs_scanned": 5,
+      "clean": [
+        3135,
+        3125,
+        3130,
+        3129
+      ],
+      "with_issues": [
+        {
+          "pr": 3127,
+          "issue": 3136,
+          "findings": 2,
+          "specialist": "rust",
+          "note": "code-review-api-handlers-migration-upload-drops-file (persist migration import upload to storage, fix silent data loss) merged 10-20. The fix is CORRECT: upload_import_file now uploads file_data to object storage BEFORE creating the import_job row, fails closed with 503 when storage_service is None, and derives file_path from storage.upload(storage_key, file_data, content_type) instead of the old fabricated key that pointed at nothing (_file_data discard stub -> silent data loss). Ships a real fails-before-fix regression suite migration_import_upload_persists_file.rs (503 + zero job rows on unconfigured storage). 2 findings -> issue #3136. LOW (correctness): the handler classifies the storage error as 400 vs 503 by substring-matching the Display string (msg.to_lowercase().contains(\"content type\")) even though integrations::storage::StorageError has a typed InvalidContentType(String) variant (storage.rs:80, returned at :624) -- brittle, flips to 503 if the Display wording ever changes; proposal: match on the typed variant. MEDIUM (tests): the new suite only covers the fail-closed branch (storage None -> 503); the happy-path persistence the PR is NAMED for (bytes land at the returned key AND import_jobs.file_path references the real object) is never asserted, so a future refactor could reintroduce the silent-data-loss bug with the suite still green; proposal: add a storage-backed case asserting 200 + non-empty file_path + storage.download(file_path) == uploaded bytes. CLEAN siblings: #3135 (clear rustls-webpki RUSTSEC-2026-0382: cargo update to 0.103.16 on the reachable rustls 0.23.x line + [bans] floor-guard 0.103.0..0.103.16 + -0382 ignore scoped ONLY to the un-upgradable AWS-pinned 0.101.7 line, with documented reachability analysis -- same mechanism as the rustls -0346/-0349 and zip 9.x pins, thorough), #3125 (bump rust_xlsxwriter 0.97->0.100 moving transitive zip 8.6->9.0.5 to clear RUSTSEC-2026-0367/-0368/-0369 on the xlsx-export chain + [bans] guard denying zip 4.x-8.x + -0367/-0368/-0369 ignore scoped ONLY to the un-upgradable utoipa-swagger-ui 9.0.2 build-dep zip 3.0.0, documented), #3130 (bump ammonia 4.1.7->4.2.4 to clear RUSTSEC-2026-0373, semver-compatible, pulls html5ever/markup5ever/phf/string_cache/cssparser transitively -- sanitizer minor bump, no config/API change), #3129 (type the AML assessments list endpoint: replaces the ad-hoc serde_json::Value payload with a typed AmlAssessmentListItem + ListAmlAssessmentsResponse carrying ToSchema, a From<AmlRiskAssessment> impl parsing the JSON risk_factors column, and 3 unit tests pinning the wire contract/risk_factors array/envelope shape -- this IS the fix for prior-run finding #3128 on PR #3122, well-shaped). All 5 PRs labeled post-merge-reviewed via issue_write update (needs-human-review preserved on #3125; #3135/#3130/#3129/#3127 had none). Breadcrumb comment on #3127 -> #3136."
+        }
+      ],
+      "note": "Dispatcher Phase 2.5 post-merge review. repo=martin-janci/property-management, window=14d (merged>=2026-10-07), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: gh CLI GraphQL + search/* + write paths HTTP-403'd by the sandbox proxy, so READS via repo-scoped gh api REST (repos/.../pulls?state=closed&base=dev&sort=updated desc&perPage=50 pages 1-2; diffs via Accept: application/vnd.github.v3.diff) and all GitHub WRITES via GitHub MCP (issue_write create/update, add_issue_comment). DISPATCHER_OWNED_COMMIT=1: wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to the orchestrator's Phase 6 (no git add/commit/push; no branch checkout; did NOT touch assignments.json/action-list.json/archives). Review-only + issue creation. No Task fan-out tool available to this subagent, so 5 diffs reviewed inline (<=5 concurrency cap honoured conceptually). 5 net-new unreviewed in-window merges (none carrying post-merge-reviewed): #3135 (10-21 06:30Z), #3129 (10-20 20:32Z), #3127 (10-20 20:32Z), #3125 (10-20 20:28Z, carried needs-human-review), #3130 (10-20 16:38Z). All other in-window merges already carry post-merge-reviewed from prior runs (page-2 sweep confirmed #3067..#3020 labeled). 4 CLEAN, 1 WITH ISSUE (#3127 -> #3136).",
+      "focus_prs": [
+        3135,
+        3129,
+        3127,
+        3125,
+        3130
+      ]
+    },
+    {
+      "run_at": "2026-10-19T06:35:55Z",
+      "prs_scanned": 4,
+      "clean": [
+        3117,
+        3118,
+        3121
+      ],
+      "with_issues": [
+        {
+          "pr": 3122,
+          "issue": 3128,
+          "findings": 2,
+          "specialist": "frontend",
+          "note": "AML list endpoint untyped serde_json::Value -> hand-maintained TS types + recommendations always []"
+        }
+      ]
+    },
+    {
+      "run_at": "2026-10-18T04:34:32Z",
+      "prs_scanned": 0,
+      "clean": [],
+      "with_issues": [],
+      "note": "all 70 PRs merged into dev within window already labeled post-merge-reviewed; nothing new to review"
+    },
+    {
+      "run_at": "2026-10-17T02:30:55Z",
+      "prs_scanned": 11,
+      "clean": [
+        3103,
+        3106,
+        3105,
+        3100,
+        3102,
+        3096,
+        3093,
+        3094,
+        3095,
+        3097
+      ],
+      "with_issues": [
+        {
+          "pr": 3101,
+          "issue": 3109,
+          "findings": 1,
+          "specialist": "pm-ppt-web",
+          "note": "frontend Delete wired to DELETE /community/groups/{id}, but api-server has no such route -> delete 404s; opened backend follow-up"
+        }
+      ]
     }
   ]
 }

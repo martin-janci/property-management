@@ -1,0 +1,34 @@
+{
+  "generated": "2026-09-26T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable buffer below floor) 2026-09-26 — SECOND ppt-dev-review static-review slice of the day (companion to 2026-09-26-ppt-web-ui-tier1d.json)",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "CHURN-ALIGNED. No explicit CHURN_FILES were passed, so live churn was computed via git log --since='10 days ago' over the segment: frontend/apps/ppt-web/src/features is the dominant hotspot (737 change-hits), with the newly-landed workflow-automation, voting, meters and ai-chat feature clusters carrying the churn. features/*/pages/ + components/ map to the ppt-web-ui segment. state.json review_cursor puts ppt-web-ui at 2026-09-06 but the cursor is known-stale (Tier-1d runs do not advance it) and an earlier run TODAY already produced 2026-09-26-ppt-web-ui-tier1d.json — its 3 findings are ALL scoped to the workflow-automation feature (automation-rules-mutations-swallow-errors, automation-feature-no-i18n, createrule-partial-cast-boundary). To avoid duplicate vectors this slice deliberately reviewed a DIFFERENT churn cluster in the same segment: the ai-chat feature (features/ai-chat/, Epic 127). SATURATION check: backlog.json holds 0 OPEN code-review-finding rows for ppt-web-ui (all prior ones status=done), so no saturation-skip. ppt-web-ui is a LANDABLE frontend segment (pnpm/vitest verifiable), satisfying the dispatcher landable-preferred directive over mobile-native-kmp (AGP egress-blocked #2652). Static-only (read + grep, no build/test) per skill contract.",
+  "experts_used": ["frontend"],
+  "findings_count": 1,
+  "static_only": true,
+  "note": "NET-NEW vs the earlier 2026-09-26 ppt-web-ui slice (which covered only workflow-automation) and vs the 2026-09-25 ppt-web-core fault/financial mutation-swallow signals (different segment/feature/files). The recurring 'await mutateAsync with no try/catch and no rendered error state' class in the workflow-automation ExecutionMonitoringPage (handleRetry :74-77) and TemplateLibraryPage (handleUseTemplate :53-60) was intentionally NOT re-filed: it is the same class as the already-open code-review-ppt-web-ui-automation-rules-mutations-swallow-errors filed earlier today. Reviewed the full ai-chat feature (ChatInterface.tsx, ChatInput.tsx, SessionList.tsx, ChatMessageBubble.tsx, SuggestedQuestions.tsx, hooks/useAiChat.ts). ChatInterface already surfaces send errors (:254 sendMessage.isError banner) and delete/create errors are caught, so those are clean. The one finding below is a genuine timing/lifecycle defect in the create-session-then-send flow that the author themselves flagged in a code comment as 'a simplified version'. meters + voting pages were spot-checked and are i18n-clean with proper validation/empty-states.",
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-aichat-first-message-settimeout-race",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-ui features/ai-chat/components/ChatInterface.tsx)",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/ai-chat/components/ChatInterface.tsx",
+        "frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts",
+        "frontend/apps/ppt-web/src/features/ai-chat/pages/AiChatPage.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/ai-chat/components/ChatInterface.tsx:93-118 - handleSendMessage's no-active-session branch creates the session, calls setCurrentSessionId(session.id), then defers the actual send inside a hardcoded setTimeout(async () => { await sendMessage.mutateAsync({ content }) }, 100). The send mutation is bound to the session id at hook-call time: sendMessage = useSendMessage(currentSessionId || '') (:48), and useSendMessage bakes the id straight into the request URL - useAiChat.ts:97-107 POSTs to `${API_BASE}/sessions/${sessionId}/messages`. The 100ms delay is a magic-number bet that React re-renders and TanStack's MutationObserver picks up the new mutationFn (bound to the fresh session id) before the timer fires; the author flagged the fragility inline: 'This is a simplified version - in production you'd want better state management' (:104).",
+        "The deferred send escapes error handling entirely. The outer try/catch (:97-110) wraps only createSession.mutateAsync; the setTimeout callback is a SEPARATE async function whose awaited sendMessage.mutateAsync rejection is caught by nothing - it is an unhandled promise rejection. (The rendered error banner at :254 reads the current-render sendMessage.isError, so whether it lights up depends on MutationObserver identity/timing, not on the setTimeout path handling the error.) On a slow render or a rejected first send, the user's very first message is silently dropped or misrouted with no reliable feedback.",
+        "Reachability: AiChatPage.tsx:12 mounts <ChatInterface showSidebar={true}/> with no initialSessionId, so currentSessionId starts null (:36) and EVERY first interaction - typing in ChatInput or clicking a SuggestedQuestions prompt (handleSuggestedQuestion -> handleSendMessage, :122-127) - takes this no-session branch. This is the primary entry point of the AI chat feature (Epic 127), not an edge path.",
+        "Fix (low-risk, removes the race): thread the freshly-created session id through explicitly instead of relying on state + a timer - e.g. capture const newId = session.id and call a send bound to newId (either useSendMessage refactored to take the id as a mutate argument, or await sendMessage.mutateAsync({ sessionId: newId, content })), all inside the same try/catch so a failed first send surfaces to the user. Drop the setTimeout entirely.",
+        "NET-NEW and distinct: the 3 findings in the sibling 2026-09-26-ppt-web-ui-tier1d.json are all in features/workflow-automation; no prior ppt-web-ui or ppt-web-core signal touches features/ai-chat. Confidence medium: the closure/lifecycle path was fully traced statically, but the exact runtime outcome (dropped vs misrouted vs works-by-luck) depends on TanStack MutationObserver option-refresh timing that was not runtime-confirmed - which is itself the defect (correctness must not depend on a 100ms bet)."
+      ]
+    }
+  ]
+}

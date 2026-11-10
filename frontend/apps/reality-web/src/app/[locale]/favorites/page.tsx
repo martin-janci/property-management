@@ -16,6 +16,7 @@ import { Link } from '@/i18n/routing';
 
 function FavoritesContent() {
   const t = useTranslations('pages.favorites');
+  const tError = useTranslations('error');
   const [page, setPage] = useState(1);
   const { data, isLoading, error } = useFavorites(page, 12);
   const removeFavorite = useRemoveFavorite();
@@ -59,7 +60,7 @@ function FavoritesContent() {
   if (error) {
     return (
       <div className="error-state">
-        <p>Failed to load favorites. Please try again.</p>
+        <p>{t('error')}</p>
         <style jsx>{`
           .error-state {
             padding: 64px 24px;
@@ -85,12 +86,10 @@ function FavoritesContent() {
         >
           <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
         </svg>
-        <h2 className="empty-title">No favorites yet</h2>
-        <p className="empty-text">
-          Start exploring listings and save your favorites by clicking the heart icon.
-        </p>
+        <h2 className="empty-title">{t('emptyTitle')}</h2>
+        <p className="empty-text">{t('emptyText')}</p>
         <Link href="/listings" className="browse-link">
-          Browse listings
+          {t('browseListings')}
         </Link>
         <style jsx>{`
           .empty-state {
@@ -130,6 +129,11 @@ function FavoritesContent() {
 
   return (
     <>
+      {(removeFavorite.isError || updateFavorite.isError) && (
+        <div className="action-error" role="alert" aria-live="assertive">
+          {tError('description')}
+        </div>
+      )}
       <div className="favorites-grid">
         {data.data.map((favorite) => {
           // Backend default for `price_alert_enabled` is `true`; treat an
@@ -183,6 +187,14 @@ function FavoritesContent() {
       )}
 
       <style jsx>{`
+        .action-error {
+          margin: 0 0 16px;
+          padding: 12px 16px;
+          border-radius: 8px;
+          background: var(--ppt-color-danger-light);
+          color: var(--ppt-color-danger-hover);
+          font-size: 14px;
+        }
         .favorites-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));

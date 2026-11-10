@@ -1,0 +1,42 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-07",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "churn-aligned (dispatcher-tier1d-demand-driven). review_cursor: mobile-rn was oldest (2026-11-03) but was already reviewed earlier today (signals/2026-11-07-mobile-rn-tier1d.json + -2/-3). Next-oldest landable group is the 2026-11-04 tier {api-handlers, api-core, reality-server, ppt-web-core}; api-handlers was also already taken today (signals/2026-11-07-api-handlers-tier1d.json). Churn tiebreak: last-14-day non-test source churn in frontend lands in frontend/apps/ppt-web/src/routes/ (lazyRoutes.tsx, routes/groups/*) which maps to the ppt-web-core segment (router). ppt-web-core last reviewed 2026-11-04 and has 0 open code-review-finding rows in backlog.json (not saturated; reality-server=1, mobile-native-kmp=2). mobile-native-kmp excluded as unlandable (AGP egress block). Static analysis only — no compile/test. Grep hit-lists came back clean (console.* calls are all import.meta.env.DEV-gated in usePerformanceMetrics.ts/websocket.ts/api.ts; every `as any`/`as unknown as` is in test files only; lib/api.ts, AuthContext.tsx and the websocket subprotocol-bearer auth path are exceptionally mature). Findings below were surfaced by reading the churned router files (routes/groups/core.tsx) and the shared error-display layer (lib/errorHandler.ts).",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-privacy-route-unguarded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx:257 — the `/settings/privacy` route renders `<PrivacySettingsPage />` directly with NO `<ProtectedRoute>` wrapper, inconsistent with every sibling `/settings/*` route in the same settingsRoutes() aggregator (oauth-grants:259-266, sessions:268-275, members:277-284, integrations:286-293, portal-webhooks:298-305, notifications:307-314, notifications/advanced:316-323 are all wrapped in `<ProtectedRoute>`). `/settings/accessibility` (core.tsx:255) is likewise unwrapped.",
+        "frontend/apps/ppt-web/src/features/privacy/pages/PrivacySettingsPage.tsx:24-62 — the page is GDPR consent/data-export management. On mount its useEffect(loadSettings) unconditionally fires two user-scoped requests (`gdprFetch('/api/v1/gdpr/privacy')` and `gdprFetch('/api/v1/gdpr/export/history')`). It reads `user` via useAuth (L26) but never guards/redirects on an unauthenticated session.",
+        "Impact: an anonymous visitor hitting /settings/privacy triggers unauthenticated GDPR fetches that 401, landing them on an inline error surface instead of the login redirect every other protected settings screen gives. Not a data leak (backend enforces auth), but a broken auth-gating path and a UX regression; the privacy screen in particular should match the ProtectedRoute convention. Landable frontend-only fix: wrap the `/settings/privacy` (and `/settings/accessibility` if it needs auth) Route element in `<ProtectedRoute>` like its siblings."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-i18n-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:244-258 — parseValidationDetails() stores the backend's raw `detail.message` (untranslated English) into the per-field validationErrors Map, which is surfaced to users via getFieldError() (L466-471) and formatValidationErrors() (L432-438). The module docstring (L7-10) states user-facing copy is resolved through react-i18next; validation field messages bypass that contract and leak server English into sk/cs/de/hu/pl locales.",
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:447-457 — formatFieldName() builds user-facing field labels by splitting snake_case and Title-Casing in English (e.g. 'street_name' -> 'Street Name'), so the label prefix in formatValidationErrors() is also hardcoded English rather than i18n-resolved.",
+        "Impact: i18n gap on form validation feedback — a known-English-leak class the repo has otherwise fixed in the sibling describeError.ts (which deliberately keeps raw server text only as secondary `detail`). Low severity (+1); fix by keying validation messages/field labels through the i18n catalogue (or at minimum documenting that detail.message is intentionally raw)."
+      ]
+    }
+  ]
+}

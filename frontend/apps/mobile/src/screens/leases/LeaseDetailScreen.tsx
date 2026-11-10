@@ -16,6 +16,7 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
+import { formatDate } from '../../i18n/format';
 import { warnIfParseFailed } from '../shared/parserWarnings';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 import { type Lease, toUiLeaseStatus } from './LeasesScreen';
@@ -99,7 +100,7 @@ export function toUiLease(detail: ApiLeaseDetail): Lease {
 function periodLabel(dueDate: string): string {
   const d = new Date(dueDate);
   if (Number.isNaN(d.getTime())) return dueDate;
-  return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  return formatDate(d, { month: 'long', year: 'numeric' });
 }
 
 /** Map api-server payments onto the UI payment rows, soonest `due_date` first.
@@ -156,8 +157,7 @@ export function LeaseDetailScreen({ leaseId, onBack, onNavigate }: LeaseDetailSc
               {lease.buildingName ? ` · ${lease.buildingName}` : ''}
             </Text>
             <Text style={s.headerSubtitle}>
-              {new Date(lease.startsAt).toLocaleDateString()} –{' '}
-              {new Date(lease.endsAt).toLocaleDateString()}
+              {formatDate(lease.startsAt)} – {formatDate(lease.endsAt)}
             </Text>
           </>
         ) : (
@@ -206,9 +206,7 @@ export function LeaseDetailScreen({ leaseId, onBack, onNavigate }: LeaseDetailSc
                       {payment.amount} {lease.currency}
                     </Text>
                   </View>
-                  <Text style={s.cardBody}>
-                    Due {new Date(payment.dueDate).toLocaleDateString()}
-                  </Text>
+                  <Text style={s.cardBody}>Due {formatDate(payment.dueDate)}</Text>
                 </View>
               ))
             )}

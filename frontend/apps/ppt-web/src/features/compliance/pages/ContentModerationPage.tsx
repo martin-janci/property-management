@@ -6,6 +6,8 @@
  */
 
 import {
+  type DecideAppealRequest,
+  type TakeModerationActionRequest,
   useAssignModerationCase,
   useDecideModerationAppeal,
   useModerationCases,
@@ -15,10 +17,23 @@ import {
 } from '@ppt/api-client';
 import type React from 'react';
 import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useToast } from '../../../components';
+import { DecideAppealDialog } from '../components/DecideAppealDialog';
 import type { ModerationCase } from '../components/ModerationCaseCard';
 import { ModerationCaseCard } from '../components/ModerationCaseCard';
 import type { ModerationQueueStatsData } from '../components/ModerationQueueStats';
 import { ModerationQueueStats } from '../components/ModerationQueueStats';
+import { TakeModerationActionDialog } from '../components/TakeModerationActionDialog';
+
+type ModerationActionType = TakeModerationActionRequest['action_type'];
+type AppealDecision = DecideAppealRequest['decision'];
+
+// When "overdue only" is active we ask the server for the full breached set
+// (see `overdue` param). Request up to the backend's max page size so the
+// visible list matches the org-wide `overdue_count` badge instead of whatever
+// overdue rows happened to fall in the first default page.
+const OVERDUE_PAGE_LIMIT = 200;
 
 interface ActionTemplate {
   id: string;
@@ -30,12 +45,23 @@ interface ActionTemplate {
 }
 
 export const ContentModerationPage: React.FC = () => {
+  const { t } = useTranslation();
+  const { showToast } = useToast();
+
   // Filters
   const [statusFilter, setStatusFilter] = useState<string>('pending');
   const [contentTypeFilter, setContentTypeFilter] = useState<string>('');
   const [violationTypeFilter, setViolationTypeFilter] = useState<string>('');
   const [priorityFilter, setPriorityFilter] = useState<string>('');
   const [unassignedOnly, setUnassignedOnly] = useState(false);
+  // "Show overdue only", driven by the overdue alert. Applied server-side via
+  // the list API's `overdue` param so the result reflects the true org-wide
+  // breached set, not just the overdue rows in one fetched page.
+  const [overdueOnly, setOverdueOnly] = useState(false);
+
+  // Decision dialogs: which case (if any) each dialog is acting on.
+  const [takeActionCaseId, setTakeActionCaseId] = useState<string | null>(null);
+  const [decideAppealCaseId, setDecideAppealCaseId] = useState<string | null>(null);
 
   // Fetch moderation cases from API
   const {
@@ -48,6 +74,8 @@ export const ContentModerationPage: React.FC = () => {
     violation_type: violationTypeFilter || undefined,
     priority: priorityFilter ? Number.parseInt(priorityFilter, 10) : undefined,
     unassigned_only: unassignedOnly || undefined,
+    overdue: overdueOnly || undefined,
+    limit: overdueOnly ? OVERDUE_PAGE_LIMIT : undefined,
   });
 
   // Fetch stats from API
@@ -70,22 +98,18 @@ export const ContentModerationPage: React.FC = () => {
     content_owner: {
       user_id: c.owner_id,
       name: c.owner_name,
-      // TODO(Phase-2): Extend API to include previous_violations count
-      // Phase 1: Default value
-      previous_violations: 0,
     },
-    // TODO(Phase-2): Extend API to include report_source
-    // Phase 1: Default value
-    report_source: 'user',
     violation_type: c.violation_type as ModerationCase['violation_type'],
     status: c.status as ModerationCase['status'],
     priority: c.priority,
     assigned_to_name: c.assigned_to_name,
     appeal_filed: c.is_appeal ?? false,
     created_at: c.reported_at,
-    age_hours: c.sla_deadline
-      ? Math.max(0, (new Date().getTime() - new Date(c.reported_at).getTime()) / (1000 * 60 * 60))
-      : 0,
+    // Derived from the real `reported_at` timestamp the API returns — not fabricated.
+    age_hours: Math.max(
+      0,
+      (new Date().getTime() - new Date(c.reported_at).getTime()) / (1000 * 60 * 60)
+    ),
   }));
 
   const stats: ModerationQueueStatsData | null = statsData?.stats
@@ -116,44 +140,65 @@ export const ContentModerationPage: React.FC = () => {
       assignCase.mutate(caseId, {
         onError: (err) => {
           console.error('Failed to assign case:', err);
-          alert('Failed to assign case. Please try again.');
+          alert(t('moderation.prompts.assignError'));
         },
       });
     },
-    [assignCase]
+    [assignCase, t]
   );
 
-  const handleTakeAction = useCallback(
-    (caseId: string) => {
-      // TODO(Phase-2): Replace window.prompt with modal form with action templates integration
-      // Phase 1: Basic prompts for action type and rationale
-      const actionType = window.prompt(
-        'Enter action type (remove, restrict, warn, approve):',
-        'approve'
-      );
-      if (!actionType) return;
+  // Both moderation-decision mutations (take-action, decide-appeal) share the
+  // same success/failure UX: on success close the originating dialog and show a
+  // localized success Toast; on failure log the error and show a localized error
+  // Toast. Only the dialog i18n namespace, the case-id reset, and the log label
+  // differ. Factor the shared shape out so the two handlers can't drift — the
+  // Toast wiring has been an active churn site (#2856).
+  const decisionMutationCallbacks = useCallback(
+    (dialog: 'takeAction' | 'decideAppeal', reset: () => void, logLabel: string) => ({
+      onSuccess: () => {
+        reset();
+        showToast({
+          type: 'success',
+          title: t(`moderation.dialogs.${dialog}.successTitle`),
+          message: t(`moderation.dialogs.${dialog}.successMessage`),
+        });
+      },
+      onError: (err: unknown) => {
+        console.error(logLabel, err);
+        showToast({
+          type: 'error',
+          title: t(`moderation.dialogs.${dialog}.errorTitle`),
+          message: t(`moderation.dialogs.${dialog}.errorMessage`),
+        });
+      },
+    }),
+    [showToast, t]
+  );
 
-      const rationale = window.prompt('Enter rationale for this action:');
-      if (!rationale) return;
+  const handleTakeAction = useCallback((caseId: string) => {
+    setTakeActionCaseId(caseId);
+  }, []);
 
+  const submitTakeAction = useCallback(
+    (actionType: ModerationActionType, rationale: string, notifyOwner: boolean) => {
+      if (!takeActionCaseId) return;
       takeAction.mutate(
         {
-          caseId,
+          caseId: takeActionCaseId,
           request: {
-            action_type: actionType as 'remove' | 'restrict' | 'warn' | 'approve',
+            action_type: actionType,
             rationale,
-            notify_owner: true,
+            notify_owner: notifyOwner,
           },
         },
-        {
-          onError: (err) => {
-            console.error('Failed to take action:', err);
-            alert('Failed to take action. Please try again.');
-          },
-        }
+        decisionMutationCallbacks(
+          'takeAction',
+          () => setTakeActionCaseId(null),
+          'Failed to take action:'
+        )
       );
     },
-    [takeAction]
+    [takeActionCaseId, takeAction, decisionMutationCallbacks]
   );
 
   const handleViewContent = useCallback((caseId: string) => {
@@ -162,33 +207,29 @@ export const ContentModerationPage: React.FC = () => {
     window.location.href = `/compliance/moderation/cases/${caseId}`;
   }, []);
 
-  const handleDecideAppeal = useCallback(
-    (caseId: string) => {
-      // TODO(Phase-2): Replace window.prompt with modal form with validation
-      // Phase 1: Basic prompts for decision and rationale
-      const decision = window.prompt('Enter decision (uphold, overturn):', 'uphold');
-      if (!decision) return;
+  const handleDecideAppeal = useCallback((caseId: string) => {
+    setDecideAppealCaseId(caseId);
+  }, []);
 
-      const rationale = window.prompt('Enter rationale for this decision:');
-      if (!rationale) return;
-
+  const submitDecideAppeal = useCallback(
+    (decision: AppealDecision, rationale: string) => {
+      if (!decideAppealCaseId) return;
       decideAppeal.mutate(
         {
-          caseId,
+          caseId: decideAppealCaseId,
           request: {
-            decision: decision as 'uphold' | 'overturn',
+            decision,
             rationale,
           },
         },
-        {
-          onError: (err) => {
-            console.error('Failed to decide appeal:', err);
-            alert('Failed to decide appeal. Please try again.');
-          },
-        }
+        decisionMutationCallbacks(
+          'decideAppeal',
+          () => setDecideAppealCaseId(null),
+          'Failed to decide appeal:'
+        )
       );
     },
-    [decideAppeal]
+    [decideAppealCaseId, decideAppeal, decisionMutationCallbacks]
   );
 
   const handleFilterByPriority = useCallback((priority: number) => {
@@ -200,9 +241,16 @@ export const ContentModerationPage: React.FC = () => {
   }, []);
 
   const handleShowOverdue = useCallback(() => {
-    // Filter to show overdue cases
+    // The `overdue` list param already restricts to open (pending/under_review)
+    // cases past the SLA, so clear the status filter to avoid narrowing it
+    // further, then activate the server-side overdue query via `overdueOnly`.
+    setStatusFilter('');
+    setOverdueOnly(true);
+  }, []);
+
+  const handleClearOverdue = useCallback(() => {
+    setOverdueOnly(false);
     setStatusFilter('pending');
-    // TODO: Add overdue filter parameter when API supports it
   }, []);
 
   // Loading state
@@ -210,10 +258,10 @@ export const ContentModerationPage: React.FC = () => {
     return (
       <div className="content-moderation-page">
         <div className="moderation-page-header">
-          <h1>Content Moderation Dashboard</h1>
-          <p>Review and moderate user-generated content for DSA compliance.</p>
+          <h1>{t('moderation.dashboard.title')}</h1>
+          <p>{t('moderation.dashboard.subtitle')}</p>
         </div>
-        <div className="moderation-loading">Loading moderation queue...</div>
+        <div className="moderation-loading">{t('moderation.dashboard.loading')}</div>
       </div>
     );
   }
@@ -223,17 +271,17 @@ export const ContentModerationPage: React.FC = () => {
     return (
       <div className="content-moderation-page">
         <div className="moderation-page-header">
-          <h1>Content Moderation Dashboard</h1>
-          <p>Review and moderate user-generated content for DSA compliance.</p>
+          <h1>{t('moderation.dashboard.title')}</h1>
+          <p>{t('moderation.dashboard.subtitle')}</p>
         </div>
         <div className="moderation-page-error" role="alert">
-          Failed to load moderation cases: {casesError.message}
+          {t('moderation.dashboard.loadError', { message: casesError.message })}
           <button
             type="button"
             onClick={() => window.location.reload()}
             className="moderation-retry-button"
           >
-            Retry
+            {t('moderation.dashboard.retry')}
           </button>
         </div>
       </div>
@@ -243,8 +291,8 @@ export const ContentModerationPage: React.FC = () => {
   return (
     <div className="content-moderation-page">
       <div className="moderation-page-header">
-        <h1>Content Moderation Dashboard</h1>
-        <p>Review and moderate user-generated content for DSA compliance.</p>
+        <h1>{t('moderation.dashboard.title')}</h1>
+        <p>{t('moderation.dashboard.subtitle')}</p>
       </div>
 
       {/* Queue Statistics */}
@@ -259,73 +307,89 @@ export const ContentModerationPage: React.FC = () => {
 
       {/* Filters */}
       <div className="moderation-filters-section">
-        <h2>Moderation Queue</h2>
+        <h2>{t('moderation.queue.heading')}</h2>
+        {overdueOnly && (
+          <div className="moderation-active-filter" role="status">
+            <span>{t('moderation.queue.overdueActive')}</span>
+            <button type="button" onClick={handleClearOverdue}>
+              {t('moderation.queue.clearOverdue')}
+            </button>
+          </div>
+        )}
         <div className="moderation-filters">
           <div className="moderation-filter">
-            <label htmlFor="statusFilter">Status</label>
+            <label htmlFor="statusFilter">{t('moderation.filters.status')}</label>
             <select
               id="statusFilter"
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => {
+                // A manual status change supersedes the overdue narrowing.
+                setOverdueOnly(false);
+                setStatusFilter(e.target.value);
+              }}
             >
-              <option value="">All Statuses</option>
-              <option value="pending">Pending</option>
-              <option value="under_review">Under Review</option>
-              <option value="appealed">Appealed</option>
-              <option value="removed">Removed</option>
-              <option value="restricted">Restricted</option>
-              <option value="warned">Warned</option>
-              <option value="approved">Approved</option>
+              <option value="">{t('moderation.filters.allStatuses')}</option>
+              <option value="pending">{t('moderation.status.pending')}</option>
+              <option value="under_review">{t('moderation.status.under_review')}</option>
+              <option value="appealed">{t('moderation.status.appealed')}</option>
+              <option value="removed">{t('moderation.status.removed')}</option>
+              <option value="restricted">{t('moderation.status.restricted')}</option>
+              <option value="warned">{t('moderation.status.warned')}</option>
+              <option value="approved">{t('moderation.status.approved')}</option>
             </select>
           </div>
           <div className="moderation-filter">
-            <label htmlFor="contentTypeFilter">Content Type</label>
+            <label htmlFor="contentTypeFilter">{t('moderation.filters.contentType')}</label>
             <select
               id="contentTypeFilter"
               value={contentTypeFilter}
               onChange={(e) => setContentTypeFilter(e.target.value)}
             >
-              <option value="">All Types</option>
-              <option value="listing">Listing</option>
-              <option value="listing_photo">Listing Photo</option>
-              <option value="review">Review</option>
-              <option value="comment">Comment</option>
-              <option value="community_post">Community Post</option>
-              <option value="message">Message</option>
+              <option value="">{t('moderation.filters.allTypes')}</option>
+              <option value="listing">{t('moderation.contentType.listing')}</option>
+              <option value="listing_photo">{t('moderation.contentType.listing_photo')}</option>
+              <option value="review">{t('moderation.contentType.review')}</option>
+              <option value="comment">{t('moderation.contentType.comment')}</option>
+              <option value="community_post">{t('moderation.contentType.community_post')}</option>
+              <option value="message">{t('moderation.contentType.message')}</option>
             </select>
           </div>
           <div className="moderation-filter">
-            <label htmlFor="violationTypeFilter">Violation Type</label>
+            <label htmlFor="violationTypeFilter">{t('moderation.filters.violationType')}</label>
             <select
               id="violationTypeFilter"
               value={violationTypeFilter}
               onChange={(e) => setViolationTypeFilter(e.target.value)}
             >
-              <option value="">All Violations</option>
-              <option value="spam">Spam</option>
-              <option value="harassment">Harassment</option>
-              <option value="hate_speech">Hate Speech</option>
-              <option value="violence">Violence</option>
-              <option value="illegal_content">Illegal Content</option>
-              <option value="misinformation">Misinformation</option>
-              <option value="fraud">Fraud</option>
-              <option value="privacy">Privacy</option>
-              <option value="inappropriate_content">Inappropriate Content</option>
+              <option value="">{t('moderation.filters.allViolations')}</option>
+              <option value="spam">{t('moderation.violationType.spam')}</option>
+              <option value="harassment">{t('moderation.violationType.harassment')}</option>
+              <option value="hate_speech">{t('moderation.violationType.hate_speech')}</option>
+              <option value="violence">{t('moderation.violationType.violence')}</option>
+              <option value="illegal_content">
+                {t('moderation.violationType.illegal_content')}
+              </option>
+              <option value="misinformation">{t('moderation.violationType.misinformation')}</option>
+              <option value="fraud">{t('moderation.violationType.fraud')}</option>
+              <option value="privacy">{t('moderation.violationType.privacy')}</option>
+              <option value="inappropriate_content">
+                {t('moderation.violationType.inappropriate_content')}
+              </option>
             </select>
           </div>
           <div className="moderation-filter">
-            <label htmlFor="priorityFilter">Priority</label>
+            <label htmlFor="priorityFilter">{t('moderation.filters.priority')}</label>
             <select
               id="priorityFilter"
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value)}
             >
-              <option value="">All Priorities</option>
-              <option value="1">Critical (P1)</option>
-              <option value="2">High (P2)</option>
-              <option value="3">Medium (P3)</option>
-              <option value="4">Low (P4)</option>
-              <option value="5">Lowest (P5)</option>
+              <option value="">{t('moderation.filters.allPriorities')}</option>
+              <option value="1">{t('moderation.priorityLabel.1')} (P1)</option>
+              <option value="2">{t('moderation.priorityLabel.2')} (P2)</option>
+              <option value="3">{t('moderation.priorityLabel.3')} (P3)</option>
+              <option value="4">{t('moderation.priorityLabel.4')} (P4)</option>
+              <option value="5">{t('moderation.priorityLabel.5')} (P5)</option>
             </select>
           </div>
           <div className="moderation-filter checkbox">
@@ -336,11 +400,29 @@ export const ContentModerationPage: React.FC = () => {
                 checked={unassignedOnly}
                 onChange={(e) => setUnassignedOnly(e.target.checked)}
               />
-              Unassigned Only
+              {t('moderation.filters.unassignedOnly')}
             </label>
           </div>
         </div>
       </div>
+
+      {/* Overdue truncation notice: the overdue view fetches a single capped
+          page (OVERDUE_PAGE_LIMIT). If the org has more overdue cases than the
+          cap, the list silently truncates below the (unbounded) `overdue_count`
+          badge, re-introducing the badge-vs-list mismatch #2853 fixed. Make the
+          truncation explicit instead of hiding it (#2859). Guard on the badge
+          count strictly exceeding the cap so the notice never fires at the exact
+          boundary (overdue_count === 200, list complete) — #2862. */}
+      {overdueOnly &&
+        (stats?.overdue_count ?? 0) > OVERDUE_PAGE_LIMIT &&
+        cases.length === OVERDUE_PAGE_LIMIT && (
+          <div className="moderation-truncation-notice" role="status">
+            {t('moderation.queue.overdueTruncated', {
+              limit: OVERDUE_PAGE_LIMIT,
+              count: stats?.overdue_count ?? cases.length,
+            })}
+          </div>
+        )}
 
       {/* Cases List */}
       {cases.length > 0 ? (
@@ -360,14 +442,14 @@ export const ContentModerationPage: React.FC = () => {
         </div>
       ) : (
         <div className="moderation-empty-state">
-          <p>No moderation cases found matching the criteria.</p>
-          <p>The moderation queue is currently empty.</p>
+          <p>{t('moderation.queue.emptyTitle')}</p>
+          <p>{t('moderation.queue.emptySubtitle')}</p>
         </div>
       )}
 
       {/* Action Templates */}
       <div className="moderation-templates-section">
-        <h2>Action Templates</h2>
+        <h2>{t('moderation.templates.heading')}</h2>
         <div className="moderation-templates-list">
           {templates.map((template) => (
             <div key={template.id} className="moderation-template-card">
@@ -379,6 +461,29 @@ export const ContentModerationPage: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {/* Moderation decision dialogs (replace the Phase-1 window.prompt/alert flow).
+       *
+       * The `key` binds each dialog's identity to the case it acts on so React
+       * remounts a fresh instance per case (and on close → reopen). Without it the
+       * dialogs stay mounted — they only render `null` while closed — and their
+       * internal action/decision/rationale state would leak from one case into the
+       * next one opened. The `-closed` sentinels force a remount across the closed
+       * state so a same-case reopen also starts blank. */}
+      <TakeModerationActionDialog
+        key={takeActionCaseId ?? 'take-action-closed'}
+        isOpen={takeActionCaseId !== null}
+        isSubmitting={takeAction.isPending}
+        onSubmit={submitTakeAction}
+        onClose={() => setTakeActionCaseId(null)}
+      />
+      <DecideAppealDialog
+        key={decideAppealCaseId ?? 'decide-appeal-closed'}
+        isOpen={decideAppealCaseId !== null}
+        isSubmitting={decideAppeal.isPending}
+        onSubmit={submitDecideAppeal}
+        onClose={() => setDecideAppealCaseId(null)}
+      />
     </div>
   );
 };

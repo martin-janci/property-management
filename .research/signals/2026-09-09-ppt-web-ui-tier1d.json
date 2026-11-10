@@ -1,0 +1,53 @@
+{
+  "segment": "ppt-web-ui",
+  "date": "2026-09-09",
+  "selection_reason": "churn-aligned",
+  "selection_detail": "No CHURN_FILES were passed to this standalone Tier 1d run, so churn was derived from `git log --since=2026-08-10 --name-only`. Heaviest 30-day churn by segment root is frontend/apps/ppt-web/src/features (733 changed-file touches), which maps to the ppt-web-ui segment (pages + components + feature UI) — dominated by the newly-landed workflow-automation feature (Story 43.1) and voting. That beats api-server/routes (203 -> api-handlers) and reality-web app+components (185). The three higher/equal-churn Rust+FE segments already reviewed today (api-core, api-handlers, mobile-rn, ppt-web-core each have a 2026-09-09 signal file); ppt-web-ui had NOT been reviewed today and is the top churn segment still open, so churn-aligned selects it. REVIEW_CURSOR for ppt-web-ui is 2026-09-06 but churn priority overrides recency per the skill's priority-1 rule. Saturation check: 0 open code-review-finding items for ppt-web-ui in backlog.json (backlog has 0 open findings across all segments), so no saturation-skip. gh CLI dependabot/PR-history checks not needed (no manifest-version findings emitted).",
+  "experts_used": ["frontend", "completeness"],
+  "landable_in_cloud": true,
+  "landability_note": "ppt-web-ui is a landable frontend segment in this cloud runner (no Rust/KMP compile required). All three findings are frontend-only remedies in ppt-web feature TSX and are landable without backend changes. Static analysis only — no build/test executed.",
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-automation-rules-mutation-no-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx:56-72 — the three destructive/side-effecting mutations are awaited with no try/catch and no onError: confirmDelete() does `await deleteRule.mutateAsync(deleteConfirm.id); setDeleteConfirm(null);` (56-61); handleToggle() does `await updateRule.mutateAsync({id, data:{isEnabled}})` (63-68); handleRun() does `await runRule.mutateAsync(rule.id)` (70-72). None of the three mutation hooks (useUpdateAutomationRule / useDeleteAutomationRule / useRunAutomationRule, lines 44-46) is passed an onError, and no mutation isError branch is rendered. Only the *query* error is surfaced (lines 178-182).",
+        "frontend/apps/ppt-web/src/main.tsx:28-35 — the app QueryClient sets only `defaultOptions.queries` (staleTime, retry); there is NO MutationCache and NO `defaultOptions.mutations.onError`. Grep confirms no MutationCache/onError in src/lib or main.tsx. So a failed delete/toggle/run is surfaced nowhere: the user sees no error toast/banner, and because these use `mutateAsync` without a catch, a rejected mutation becomes an unhandled promise rejection. For confirmDelete specifically, a rejection also skips `setDeleteConfirm(null)`, leaving the confirmation modal stuck open with no feedback. Landable frontend-only remedy: wrap each mutateAsync in try/catch with a user-facing error (toast or inline banner), or add a global MutationCache onError to the QueryClient in main.tsx."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-workflow-automation-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx — page-level user-facing copy is hardcoded English with no t() wrapping: 'Automation Rules' / 'Create and manage automated workflows...' (82-85), 'Create Rule' (101), filter option labels 'All Status'/'Active'/'Paused' (150-152) and 'All Triggers'/'Time Based'/... (167-171), 'Failed to load automation rules. Please try again.' (180), 'No automation rules yet' + body (217-219), 'Create Your First Rule' (240), 'Showing N of M rules' (246), and the whole delete-confirm modal ('Delete Automation Rule', 'This action cannot be undone.', 'Are you sure...', 'Cancel', 'Deleting...'/'Delete') (285-306).",
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx:50-64 — 'Back to Rules', 'Create Automation Rule', 'Set up a new automated workflow...', and the error string 'Failed to create automation rule. Please try again.' are all hardcoded. These page files do not import useTranslation (grep shows t()/useTranslation only in this feature's *components* like RuleBuilder/TemplatePreviewModal, not its pages). This is an i18n gap against the app norm: 261 of 445 non-test feature TSX files use react-i18next. Landable frontend-only remedy: add useTranslation to the workflow-automation pages and move the strings into the i18n catalog."
+      ],
+      "expert": "completeness"
+    },
+    {
+      "id": "code-review-ppt-web-ui-create-rule-partial-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx:18-20 — handleSave receives `rule: Partial<AutomationRule>` from RuleBuilder and then does `await createRule.mutateAsync(rule as AutomationRule)`, an unchecked widening cast across the API/mutation boundary. If RuleBuilder emits a rule missing required AutomationRule fields (e.g. an unfinished step), TypeScript is silenced by the cast and the incomplete object is sent to the create endpoint, converting a compile-time guarantee into a runtime 400/500. The Frontend checklist flags `as`-casts that cross an API boundary. Landable frontend-only remedy: have RuleBuilder's onSave produce a validated full AutomationRule (or a dedicated CreateAutomationRule request type) so the cast is unnecessary, or validate required fields before mutateAsync."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

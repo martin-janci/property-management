@@ -8,7 +8,11 @@
 # subject exclusion, both degrading gracefully when their input is missing),
 # and the issue #2460 archive-marker guard (skip a stem whose LATEST
 # action-list-archive row carries a done/ghost marker — latest-row semantics
-# and graceful degradation when the archive is absent).
+# and graceful degradation when the archive is absent), and the issue #2743
+# already-landed summary guard (skip a stem whose failed row's own
+# implementer_summary reports the work already merged on dev under a DIFFERENT
+# issue/PR id — an intrinsic-row signal that catches the cross-issue-id ghost
+# the id-join guards structurally miss; a benign summary must NOT exclude).
 set -uo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -50,7 +54,8 @@ EOF
   cat > "$ASGA" <<'EOF'
 { "assignments": [
   { "task_id": "bug-retryable",       "status": "failed", "pr_number": null,
-    "last_updated": "2026-06-20T00:00:00Z" },
+    "last_updated": "2026-06-20T00:00:00Z",
+    "implementer_summary": "implementer died before opening a PR: sandbox timeout; retry safe" },
   { "task_id": "bug-had-pr",          "status": "failed", "pr_number": 42,
     "last_updated": "2026-06-20T00:00:00Z" },
   { "task_id": "bug-too-fresh",       "status": "failed", "pr_number": null,
@@ -78,7 +83,10 @@ EOF
   { "task_id": "bug-on-dev",          "status": "failed", "pr_number": null,
     "last_updated": "2026-06-20T00:00:00Z" },
   { "task_id": "bug-ghost-marked",    "status": "failed", "pr_number": null,
-    "last_updated": "2026-06-20T00:00:00Z" }
+    "last_updated": "2026-06-20T00:00:00Z" },
+  { "task_id": "bug-already-landed",  "status": "failed", "pr_number": null,
+    "last_updated": "2026-06-20T00:00:00Z",
+    "implementer_summary": "already-fixed on dev by fdeca2a (gh-issue-2658/#2660) under a different id — empty diff, no PR needed" }
 ] }
 EOF
   # Dev-truth fixtures (issue #2153): a coverage story flipped "done" out of
@@ -116,6 +124,8 @@ grep -q "live-stem-task"   <<<"$OUT" && bad "live action-list stem must block (T
 grep -q "bug-cov-done"     <<<"$OUT" && bad "coverage-done story must not re-mint (#2153)" || ok "coverage-done stem excluded"
 grep -q "bug-on-dev"       <<<"$OUT" && bad "anchored dev-log subject must block (#2153)" || ok "dev-log subject-prefix excluded"
 grep -q "bug-ghost-marked" <<<"$OUT" && bad "archive-marker stem must not re-mint (#2460)" || ok "archive-marker stem excluded"
+grep -q "bug-already-landed" <<<"$OUT" && bad "already-landed implementer_summary must not re-mint (#2743)" || ok "already-landed summary stem excluded"
+grep -q "bug-retryable-retry1" <<<"$OUT" && ok "benign (non-landed) implementer_summary does NOT exclude (#2743)" || bad "benign summary wrongly excluded bug-retryable"
 grep -q "bug-second-round-retry2" <<<"$OUT" && ok "loose (non-anchored) dev-log mention does NOT exclude" || bad "non-anchored mention wrongly excluded bug-second-round"
 grep -q "bug-retryable-retry1"    <<<"$OUT" && ok "coverage status=partial does NOT exclude" || bad "coverage partial wrongly excluded bug-retryable"
 [ "$(jq '.items | length' "$AL")" = "2" ] && ok "dry-run leaves file untouched" || bad "dry-run mutated action-list"
@@ -198,6 +208,38 @@ OUT=$(ACTION_LIST="$AL" ACTION_ARCHIVE="$TMP/no-ala.json" ASSIGN="$ASG" ASSIGN_A
       COVERAGE_FILE="$COV" DEV_LOG_FILE="$DEVLOG" RETRY_NOW="$NOW" bash "$SCRIPT"); RC=$?
 [ "$RC" -eq 0 ] && ok "missing archive exits 0" || bad "missing archive errored (rc=$RC): $OUT"
 grep -q "bug-ghost-marked-retry1" <<<"$OUT" && ok "archive-marker guard inert when archive missing" || bad "marker guard fired without archive file: $OUT"
+
+echo "T9 already-landed summary guard: signal variants + graceful degradation (#2743)"
+# Each "already-landed" summary variant must exclude its stem; a benign summary
+# and a MISSING field must NOT exclude. Intrinsic-row signal — no external file,
+# so it fires regardless of coverage/dev-log presence.
+A9="$TMP/al9.json"; ALA9="$TMP/ala9.json"; ASG9="$TMP/asg9.json"; ASGA9="$TMP/asga9.json"
+cat > "$A9"   <<'EOF'
+{ "version": 1, "items": [] }
+EOF
+cat > "$ALA9" <<'EOF'
+{ "version": 1, "items": [] }
+EOF
+cat > "$ASG9" <<'EOF'
+{ "assignments": [] }
+EOF
+cat > "$ASGA9" <<'EOF'
+{ "assignments": [
+  { "task_id": "sig-already-fixed",  "status": "failed", "pr_number": null, "last_updated": "2026-06-20T00:00:00Z", "implementer_summary": "already fixed on dev under #999" },
+  { "task_id": "sig-empty-diff",     "status": "failed", "pr_number": null, "last_updated": "2026-06-20T00:00:00Z", "implementer_summary": "landed out-of-band; empty diff, closing" },
+  { "task_id": "sig-no-pr-needed",   "status": "failed", "pr_number": null, "last_updated": "2026-06-20T00:00:00Z", "implementer_summary": "No PR needed — satisfied elsewhere" },
+  { "task_id": "sig-benign",         "status": "failed", "pr_number": null, "last_updated": "2026-06-20T00:00:00Z", "implementer_summary": "verify-env failure: disk pressure, will retry" },
+  { "task_id": "sig-no-field",       "status": "failed", "pr_number": null, "last_updated": "2026-06-20T00:00:00Z" }
+] }
+EOF
+OUT=$(ACTION_LIST="$A9" ACTION_ARCHIVE="$ALA9" ASSIGN="$ASG9" ASSIGN_ARCHIVE="$ASGA9" \
+      RETRY_NOW="$NOW" bash "$SCRIPT"); RC=$?
+[ "$RC" -eq 0 ] && ok "guard run exits 0" || bad "guard run errored (rc=$RC): $OUT"
+grep -q "sig-already-fixed" <<<"$OUT" && bad "'already fixed' must exclude" || ok "'already fixed' excluded"
+grep -q "sig-empty-diff"    <<<"$OUT" && bad "'empty diff' must exclude"    || ok "'empty diff' excluded"
+grep -q "sig-no-pr-needed"  <<<"$OUT" && bad "'no PR needed' must exclude"  || ok "'no PR needed' excluded"
+grep -q "sig-benign-retry1"   <<<"$OUT" && ok "benign summary still mints"       || bad "benign summary wrongly excluded: $OUT"
+grep -q "sig-no-field-retry1" <<<"$OUT" && ok "missing field degrades to no-exclusion (mints)" || bad "missing field wrongly excluded: $OUT"
 
 echo
 [ "$FAIL" = "0" ] && { echo "ALL PASS"; exit 0; } || { echo "FAILURES"; exit 1; }

@@ -1,0 +1,36 @@
+[
+  {
+    "id": "code-review-api-core-delay-duration-overflow-before-cap",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-core",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/services/actions/delay.rs:53-61 — `DelayConfig::to_duration()` multiplies the config-supplied `duration: u64` by an unchecked constant per unit: `Duration::from_secs(self.duration * 60)` (Minutes, :57), `* 3600` (Hours, :58), `* 86400` (Days, :59). The multiplication has no `checked_mul`/`saturating_mul` and no upper-bound check on `self.duration`.",
+      "The 7-day cap that is supposed to bound the delay runs AFTER the overflow-prone multiply, not before: in `execute()` the order is `let duration = delay_config.to_duration();` (delay.rs:100) then `if duration.as_secs() > MAX_DELAY_SECONDS { return Err(...) }` (delay.rs:103-105). So a large `duration` (e.g. Days with `duration >= u64::MAX/86400 + 1`) overflows inside `to_duration()` before the guard can reject it.",
+      "backend/Cargo.toml [profile.release] (lines 176-179) does not set `overflow-checks`, so release builds use the default (off): `self.duration * 86400` silently WRAPS to a small/incorrect value that then PASSES the `> MAX_DELAY_SECONDS` check — bypassing the intended validation and running a wrong-length delay. Debug/test builds (overflow-checks on by default) instead PANIC on the same input, which can crash the workflow worker.",
+      "Config is user-authored: `DelayConfig` is deserialized from the workflow action config JSON (Epic 94, Story 94.1), so `duration` reaches this multiply from manager-created workflow definitions.",
+      "Contrast with the sibling retry-backoff path, which is guarded correctly: `compute_backoff_seconds` (workflow_executor.rs:35-45) uses `saturating_mul` and caps the exponent, and `execute_action` clamps `retry_delay_seconds`/`retry_count` to `MAX_RETRY_DELAY_SECONDS`/`MAX_RETRY_COUNT` BEFORE use (workflow_executor.rs:896-897). delay.rs is the inconsistent outlier.",
+      "Fix: validate `self.duration` against the per-unit maximum (or use `checked_mul` and reject `None`) inside `to_duration()` before constructing the `Duration`, so the 7-day cap is enforced regardless of build profile and no arithmetic overflow is reachable."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-api-core-quiet-hours-db-error-fail-open",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-core",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/services/notification_pipeline.rs:522-528 — the user quiet-hours lookup swallows repository errors: `self.granular_repo.get_user_schedule(user_id).await.ok().flatten().map(...)`. The `.ok()` collapses a DB/pool `Err` into `None`, which is indistinguishable from 'user has no quiet-hours schedule'.",
+      "Consequence is fail-open against a user preference: on a transient DB error while fetching the schedule, `quiet` becomes `None`, so the Push channel is delivered immediately (notification_pipeline.rs:533+ only holds the push when `Some(state)` with `state.active`). A user who configured quiet hours can therefore receive a push during their quiet window purely because a secondary query hit a transient error.",
+      "This is a graceful-degradation choice, but it is silent: no `tracing::warn!` distinguishes 'no schedule configured' from 'schedule fetch failed', so the preference violation is invisible in logs and un-monitorable. The nearby 8h-horizon fallback at :540-542 is explicitly commented as intentional; the `.ok()` swallow is not.",
+      "Fix: match on the `Result` — treat `Ok(None)` as no-schedule (deliver normally) but log/observe `Err(e)` (and consider fail-closed by holding the push, since quiet hours are a user-set preference), instead of silently discarding the error with `.ok()`."
+    ],
+    "expert": "rust"
+  }
+]

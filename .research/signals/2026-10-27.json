@@ -1,0 +1,264 @@
+{
+  "generated": "2026-10-27T01:07:00Z",
+  "trigger": "buffer-low: claimable=6/72 (5 of 6 mobile-native-gated, 1 dup) — refill planner with non-mobile-native vectors",
+  "phase1_observation": {
+    "since_iso": "2026-10-26T20:35:00Z",
+    "merged_prs": 0,
+    "open_prs_touched": 6,
+    "closed_not_merged": 0,
+    "new_issues": 0,
+    "commits_since_cursor": 2,
+    "note": "No external developer activity since last run — only dispatcher's own commits (448cc27, 6479a39). Churn-hotspot set is empty for this run (no new merged PRs). Stalled-review candidates #2555/#2559 already in seen_signals; dependabot opens are dep-update-noise. No lag_warning (LAG_HOURS=4)."
+  },
+  "phase1_5_review": {
+    "segments_reviewed": [
+      "api-core",
+      "ppt-web-core",
+      "mobile-rn"
+    ],
+    "api-core": {
+      "selection_reason": "oldest-unreviewed non-mobile (2026-10-22, 5d); api-handlers saturated with 3 open findings",
+      "findings_count": 0,
+      "note": "Segment clean — ~140 unwrap/expect hits all triaged benign (startup fail-fast, constant parsing, OS CSPRNG fatal); 0 unsafe/todo!/unimplemented!; JWT path signature-verifies; SQL goes through RLS or explicit organization_id filtering; scheduler mutex locks poison-tolerant. 0 findings per honesty rule."
+    },
+    "ppt-web-core": {
+      "selection_reason": "oldest-unreviewed non-mobile (2026-10-22, 5d) after api-core came up clean; dispatcher trigger explicitly asks for non-mobile-native refill",
+      "findings_count": 2,
+      "note": "17 console.* all DEV-gated; 1 as-unknown-as justified; 81 useQuery/useMutation hits mostly wire onError toasts; 11 setInterval/setTimeout have cleanup; 21 localStorage guarded. Two novel findings surfaced on hook-level token staleness + a UI wiring gap."
+    },
+    "mobile-rn": {
+      "selection_reason": "demand-driven buffer refill: oldest-unreviewed segment (review_cursor 2026-10-19, 8d) with 0 open code-review-finding items in backlog (no saturation); no fresh churn hotspots this run so fell to oldest-unreviewed rule. Root: frontend/apps/mobile/src (211 ts/tsx files).",
+      "findings_count": 3,
+      "experts_used": ["frontend", "tester"],
+      "note": "Segment is well-maintained: console.* hits are __DEV__-guarded with security comments (push-token redaction), the `as unknown as Blob` cast is the documented RN FormData idiom (eslint-disabled), VotingScreen's historic blind cast was already replaced with an isApiVoteSummary runtime validator, and prod useMutation call sites (leases/voting/documents/faults) all wire onError/catch. Grep-level hits were triaged false-positive. Three real findings surfaced from deeper read: a non-functional 2FA setup stub that reports success without any backend enrollment, two hardcoded English search placeholders (i18n gap), and an auth-screen component test gap."
+    }
+  },
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-neighbors-stale-token-usememo",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/neighbors/hooks/useNeighbors.ts:117 — useNeighbors memoes `getNeighborsApiClient()` with [] deps; api is captured once at mount with the token present then",
+        "frontend/apps/ppt-web/src/features/neighbors/hooks/useNeighbors.ts:138 — usePrivacySettings has the same [] deps pattern; the api that drives both the read + the update mutation is pinned to the mount-time token",
+        "frontend/packages/api-client/src/neighbors/api.ts:30 — createNeighborsApi() calls buildHeaders(config) ONCE and freezes the Bearer-token `Authorization` header into every subsequent listNeighbors / getPrivacySettings / updatePrivacySettings fetch; this is raw fetch, so there is no axios interceptor to re-inject the rotated token",
+        "frontend/apps/ppt-web/src/features/messaging/hooks/useMessaging.ts:402 — contrast: useMessageRecipients uses the SAME getNeighborsApi factory but memoes with [token] deps, so a token rotation rebuilds the api; useNeighbors.ts omits this and leaves consumers wedged on the stale token"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/neighbors/hooks/useNeighbors.ts",
+        "frontend/packages/api-client/src/neighbors/api.ts"
+      ],
+      "expert": "frontend",
+      "severity_rationale": "+2 because: silent background token refresh is the common path for a long-lived SPA session, and once it happens every fetch and the privacy-settings update mutation on this hook pair will 401 against the raw fetch (no axios 401-replay interceptor on this transport), until the component unmounts. Not +3 because the component may re-mount on route navigation and the user can usually recover by refreshing."
+    },
+    {
+      "id": "code-review-ppt-web-core-iot-ws-hasgivenup-dropped",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts:54-60 — hook's return type documents `hasGivenUp` as the dedicated signal for 'reconnect budget exhausted, UI should surface explicit offline/retry affordance'",
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx:85 — only consumer destructures `{ liveReadings, isConnected }`; hasGivenUp is dropped on the floor",
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx:153 — downstream IotDashboardPage receives only `isLive={isConnected}`, which collapses 'temporarily reconnecting' and 'permanently gave up' into the same UI state"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts",
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx"
+      ],
+      "expert": "frontend",
+      "severity_rationale": "+1 — not a correctness bug, but defeats the intent of the recent reconnect-cap fix (hook exposes `hasGivenUp` so UI can surface a manual-reconnect affordance; UI never reads it). Buffer refill only."
+    },
+    {
+      "id": "code-review-mobile-rn-twofactor-stub-false-enabled",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/auth/TwoFactorScreen.tsx:40 — handleVerify() only runs a client-side regex `/^\\d{6}$/` on the entered code, then on pass immediately setStep('enabled'); there is NO backend enrollment or TOTP-verification call anywhere in the component",
+        "frontend/apps/mobile/src/screens/auth/TwoFactorScreen.tsx:99 — step==='enabled' renders the copy 'Two-factor authentication is enabled.' purely from that local regex check, so ANY 6-digit number tells the user 2FA is active when nothing was registered server-side (false sense of account security)",
+        "frontend/apps/mobile/src/screens/auth/TwoFactorScreen.tsx:76 — the verify step's help text instructs the user to 'Scan the QR code in your authenticator app', but no QR code / otpauth secret is ever rendered or fetched — there is nothing to scan, so a user who follows the instructions enrolls an unrelated/garbage TOTP seed",
+        "frontend/apps/mobile/src/screens/auth/TwoFactorScreen.tsx:4 — the component docstring itself admits 'The backend endpoints for enrollment aren't exposed through our mobile auth layer yet, so this screen wires up local state' — i.e. the whole flow is a UI scaffold shipped as if functional"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/auth/TwoFactorScreen.tsx"
+      ],
+      "expert": "frontend",
+      "severity_rationale": "+3 because this is a security-feature correctness defect with a misleading user-facing outcome: the screen affirmatively claims 2FA is enabled on the account when zero server-side enrollment occurred, and directs the user to scan a QR code that does not exist. A user relying on this believes their account is hardened when it is not. candidate_vector=bug: either wire the real enroll/verify endpoints or gate the screen behind a 'coming soon' state so it cannot report a false enabled status. Confidence medium (static): did not confirm the navigation entry point that routes a production user into this screen."
+    },
+    {
+      "id": "code-review-mobile-rn-search-placeholder-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx:125 — `placeholder=\"Search messages…\"` is a hardcoded English literal, not wrapped in t(); the app ships sk/cs/de/en and this string will never localize",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx:244 — `placeholder=\"Search announcements...\"` same hardcoded-English i18n gap",
+        "frontend/apps/mobile/src/screens/meters/MeterReadingScreen.tsx:234 + frontend/apps/mobile/src/screens/auth/LoginScreen.tsx:93 — contrast: peer screens correctly use t('meters.readingPlaceholder') / t('auth.emailPlaceholder'), so these two are regressions against the established pattern"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx"
+      ],
+      "expert": "frontend",
+      "severity_rationale": "+1 i18n gap: user-facing search placeholders stay English in Slovak/Czech/German locales. Low severity, purely localization polish; mechanical fix (add keys + wrap in t())."
+    },
+    {
+      "id": "code-review-mobile-rn-auth-screens-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/auth/{LoginScreen,RegisterScreen,ForgotPasswordScreen,TwoFactorScreen,AuthFlow}.tsx — none of these auth-screen components have a sibling *.test.tsx; the only auth coverage is frontend/apps/mobile/src/test/integration/auth.integration.test.tsx",
+        "frontend/apps/mobile/src/test/integration/auth.integration.test.tsx:127 — that suite exercises AuthContext logic (login/logout/refresh/biometric/cross-user cache reset) but renders none of the screen components, so the screens' own branches (validation, error display, step transitions) are untested",
+        "frontend/apps/mobile/src/screens/auth/TwoFactorScreen.tsx:38 — concretely, the TwoFactorScreen idle→verify→enabled state machine and its 6-digit validation error path have zero test coverage, which is how the stub-success defect (see code-review-mobile-rn-twofactor-stub-false-enabled) shipped unnoticed"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/auth/LoginScreen.tsx",
+        "frontend/apps/mobile/src/screens/auth/RegisterScreen.tsx",
+        "frontend/apps/mobile/src/screens/auth/TwoFactorScreen.tsx",
+        "frontend/apps/mobile/src/screens/auth/ForgotPasswordScreen.tsx"
+      ],
+      "expert": "tester",
+      "severity_rationale": "+1 test gap on security-sensitive screens. Not higher because AuthContext (the stateful core) is well-covered by the integration suite; the gap is the presentational screen branches. A render-level test on each would also have caught the 2FA false-enabled path."
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — neither Phase 1.5 finding meets confidence=high + score>=3 + allowlist",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-10-27.md && first-line match",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurp prev vs cur: cursor/seen_signals/stats delta",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids in backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signals ids not already in seen_signals unless cumulative",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score>8 cap; decay vacuous (0 open past 14d)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans → adversarial-pass annotation vacuous",
+      "observed": "0 new",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans; metadata/headings/mode checks vacuous",
+      "observed": "0 new",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged paths all under .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secret / private-hostname patterns in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief 'Phases that failed: none' → cursors move freely",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all prior plans slugs still in plans/ or plans/_archive/",
+      "observed": "ok",
+      "expected": "ok"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "plans/_archive/ staged count >= HEAD count",
+      "observed": "22>=22",
+      "expected": "ge"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "Phase 5 skipped → auto_fix_actions empty",
+      "observed": "[]",
+      "expected": "cap"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped (pm_cursor unchanged) → gate is no-op",
+      "observed": "no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token value in staged added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

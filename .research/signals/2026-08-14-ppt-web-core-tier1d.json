@@ -1,0 +1,50 @@
+[
+  {
+    "id": "code-review-ppt-web-core-rentals-mutation-swallow-err",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "ppt-web-core",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:311,323,417,427 — all four rentals mutations (createConnection, syncPlatforms, checkIn, checkOut) use the exact same handler: `onError: (error) => handleRentalsAuthError(error, logout)`. That is the ONLY error handling attached to any of them.",
+      "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:220-226 — handleRentalsAuthError() only reacts to session-loss codes (SESSION_EXPIRED / TOKEN_EXPIRED / TOKEN_INVALID); for every other failure it returns `false` and does nothing. Its own doc comment says 'Non-auth errors are left for the caller to surface' — but the callers ignore the boolean return and surface nothing.",
+      "Net effect: a failed check-in / check-out / create-connection / sync-platforms (validation 4xx, backend 5xx, network error) produces ZERO user feedback — no toast, no error state, the button just silently no-ops. The user cannot tell the action failed and may retry blindly or assume success.",
+      "Inconsistency proof: the sibling route group frontend/apps/ppt-web/src/routes/groups/financial.tsx:179-185,204-210 does this correctly — its mutation onError handlers call showToast({ type: 'error', ... }) with a t()-wrapped title and the error message. Fix: give the rentals mutations a real onError that, when handleRentalsAuthError returns false, surfaces an error toast (useToast) as financial.tsx does."
+    ],
+    "expert": "frontend"
+  },
+  {
+    "id": "code-review-ppt-web-core-rentals-noop-actions",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "ppt-web-core",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:381-383 — BookingsPageRoute wires onCancelBooking, onCheckIn and onCheckOut to `() => {}`. These are live action buttons on the bookings LIST that silently do nothing when clicked.",
+      "This is not a not-yet-built stub: the very same check-in / check-out actions ARE implemented as real mutations in BookingDetailPageRoute (rentals.tsx:409-428, rentalsApiCheckIn / rentalsApiCheckOut). So the list-level buttons are dead handlers for functionality that already exists one screen deeper — a genuine wiring gap, not a missing endpoint.",
+      "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:333-339 (PlatformConnectionsPageRoute onConnect/onDisconnect/onSettings) and :449-456 (BookingDetailPageRoute onEdit/onCancel/onDeleteGuest) are likewise wired to `() => {}` — user-facing buttons that render as functional but perform no action and give no feedback.",
+      "Fix: wire the list-page check-in/check-out/cancel handlers to the existing mutations (or navigate to the detail route that owns them), and either implement or visibly disable the remaining no-op actions so the UI does not present dead controls as functional."
+    ],
+    "expert": "frontend"
+  },
+  {
+    "id": "code-review-ppt-web-core-person-months-toast-i18n",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "ppt-web-core",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:373 — success toast uses raw English literals: `showToast({ type: 'success', title: 'Saved', message: 'Person-month saved' })`, not wrapped in t().",
+      "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:376-379 — error toast likewise hardcodes `title: 'Save failed'` and `message: 'Could not save person-month'` (with only the raw Error.message as a fallback).",
+      "App convention is to route user-facing toast copy through react-i18next t(...) — see frontend/apps/ppt-web/src/routes/groups/financial.tsx:175,182,207 which wrap every toast title in t('financial.invoices.*', { defaultValue }). ppt-web ships localized (i18n/ directory present), so these strings render in English for every non-EN user.",
+      "Fix: wrap the four person-month toast strings in t('personMonths.*', { defaultValue: ... }) and add the keys to the ppt-web i18n message catalogs, matching the financial.tsx pattern."
+    ],
+    "expert": "frontend"
+  }
+]

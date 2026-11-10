@@ -495,6 +495,11 @@ impl ComplianceRepository {
         priority: Option<i32>,
         assigned_to: Option<Uuid>,
         unassigned_only: bool,
+        // When true, restrict to still-open cases past the 24h SLA. This mirrors
+        // the `overdue_count` predicate in `get_moderation_queue_stats` exactly,
+        // so a client filtering by "overdue only" gets the true org-wide set
+        // rather than the overdue rows that happen to fall in one fetched page.
+        overdue_only: bool,
         sort_by: Option<&str>,
         sort_order: Option<&str>,
         limit: i64,
@@ -511,6 +516,7 @@ impl ComplianceRepository {
                 AND ($5::integer IS NULL OR priority = $5)
                 AND ($6::uuid IS NULL OR assigned_to = $6)
                 AND ($7 = FALSE OR assigned_to IS NULL)
+                AND ($8 = FALSE OR (status IN ('pending', 'under_review') AND created_at < NOW() - INTERVAL '24 hours'))
             "#,
         )
         .bind(org_id)
@@ -520,6 +526,7 @@ impl ComplianceRepository {
         .bind(priority)
         .bind(assigned_to)
         .bind(unassigned_only)
+        .bind(overdue_only)
         .fetch_one(&self.pool)
         .await?;
 
@@ -542,8 +549,9 @@ impl ComplianceRepository {
                 AND ($5::integer IS NULL OR priority = $5)
                 AND ($6::uuid IS NULL OR assigned_to = $6)
                 AND ($7 = FALSE OR assigned_to IS NULL)
+                AND ($8 = FALSE OR (status IN ('pending', 'under_review') AND created_at < NOW() - INTERVAL '24 hours'))
             {}
-            LIMIT $8 OFFSET $9
+            LIMIT $9 OFFSET $10
             "#,
             order_clause
         );
@@ -556,6 +564,7 @@ impl ComplianceRepository {
             .bind(priority)
             .bind(assigned_to)
             .bind(unassigned_only)
+            .bind(overdue_only)
             .bind(limit)
             .bind(offset)
             .fetch_all(&self.pool)
@@ -731,6 +740,41 @@ impl ComplianceRepository {
         )
         .bind(id)
         .bind(moderator_id)
+        .bind(org_id)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(case)
+    }
+
+    /// Unassign a moderation case, scoped to caller's organization.
+    ///
+    /// The inverse of [`Self::assign_moderation_case`]: clears the assignee and,
+    /// when the case is still `under_review` (the state `assign` moves a
+    /// `pending` case into), returns it to `pending` so the freed case re-enters
+    /// the queue. Cases that already carry a decision keep their terminal status.
+    /// The `organization_id` predicate scopes the mutation to the caller's tenant
+    /// exactly as `assign_moderation_case` does.
+    pub async fn unassign_moderation_case(
+        &self,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<ModerationCase, SqlxError> {
+        let case = sqlx::query_as::<_, ModerationCase>(
+            r#"
+            UPDATE moderation_cases SET
+                assigned_to = NULL,
+                assigned_at = NULL,
+                status = CASE
+                    WHEN status = 'under_review' THEN 'pending'::moderation_status
+                    ELSE status
+                END,
+                updated_at = NOW()
+            WHERE id = $1 AND organization_id = $2
+            RETURNING *
+            "#,
+        )
+        .bind(id)
         .bind(org_id)
         .fetch_one(&self.pool)
         .await?;

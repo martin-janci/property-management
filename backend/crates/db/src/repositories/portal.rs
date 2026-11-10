@@ -1,9 +1,8 @@
 //! Portal repository (Epic 16: Portal Search & Discovery).
 
 use crate::models::portal::{
-    CreatePortalUser, CreateSavedSearch, Favorite, FavoriteWithListing, FavoriteWithListingRow,
-    PortalUser, PublicListingQuery, PublicListingSummary, SavedSearch, SearchCriteria,
-    UpdatePortalUser, UpdateSavedSearch,
+    CreatePortalUser, Favorite, FavoriteWithListing, FavoriteWithListingRow, PortalUser,
+    PublicListingQuery, PublicListingSummary, SearchCriteria, UpdatePortalUser,
 };
 use crate::DbPool;
 use chrono::Utc;
@@ -588,112 +587,6 @@ impl PortalRepository {
     // Saved Searches (Story 16.3)
     // ========================================================================
 
-    /// Create a saved search.
-    pub async fn create_saved_search(
-        &self,
-        user_id: Uuid,
-        data: CreateSavedSearch,
-    ) -> Result<SavedSearch, SqlxError> {
-        let criteria_json = serde_json::to_value(&data.criteria).unwrap_or(serde_json::json!({}));
-
-        let search = sqlx::query_as::<_, SavedSearch>(
-            r#"
-            INSERT INTO saved_searches (user_id, name, criteria, alerts_enabled, alert_frequency)
-            VALUES ($1, $2, $3, $4, $5)
-            RETURNING *
-            "#,
-        )
-        .bind(user_id)
-        .bind(&data.name)
-        .bind(&criteria_json)
-        .bind(data.alerts_enabled)
-        .bind(&data.alert_frequency)
-        .fetch_one(&self.pool)
-        .await?;
-
-        Ok(search)
-    }
-
-    /// Get saved search by ID.
-    pub async fn get_saved_search(
-        &self,
-        id: Uuid,
-        user_id: Uuid,
-    ) -> Result<Option<SavedSearch>, SqlxError> {
-        let search = sqlx::query_as::<_, SavedSearch>(
-            r#"SELECT * FROM saved_searches WHERE id = $1 AND user_id = $2"#,
-        )
-        .bind(id)
-        .bind(user_id)
-        .fetch_optional(&self.pool)
-        .await?;
-
-        Ok(search)
-    }
-
-    /// Get user's saved searches.
-    pub async fn get_saved_searches(&self, user_id: Uuid) -> Result<Vec<SavedSearch>, SqlxError> {
-        let searches = sqlx::query_as::<_, SavedSearch>(
-            r#"SELECT * FROM saved_searches WHERE user_id = $1 ORDER BY created_at DESC"#,
-        )
-        .bind(user_id)
-        .fetch_all(&self.pool)
-        .await?;
-
-        Ok(searches)
-    }
-
-    /// Update a saved search.
-    pub async fn update_saved_search(
-        &self,
-        id: Uuid,
-        user_id: Uuid,
-        data: UpdateSavedSearch,
-    ) -> Result<SavedSearch, SqlxError> {
-        let search = sqlx::query_as::<_, SavedSearch>(
-            r#"
-            UPDATE saved_searches SET
-                name = COALESCE($3, name),
-                alerts_enabled = COALESCE($4, alerts_enabled),
-                alert_frequency = COALESCE($5, alert_frequency),
-                updated_at = NOW()
-            WHERE id = $1 AND user_id = $2
-            RETURNING *
-            "#,
-        )
-        .bind(id)
-        .bind(user_id)
-        .bind(&data.name)
-        .bind(data.alerts_enabled)
-        .bind(&data.alert_frequency)
-        .fetch_one(&self.pool)
-        .await?;
-
-        Ok(search)
-    }
-
-    /// Delete a saved search.
-    pub async fn delete_saved_search(&self, id: Uuid, user_id: Uuid) -> Result<bool, SqlxError> {
-        let result = sqlx::query(r#"DELETE FROM saved_searches WHERE id = $1 AND user_id = $2"#)
-            .bind(id)
-            .bind(user_id)
-            .execute(&self.pool)
-            .await?;
-
-        Ok(result.rows_affected() > 0)
-    }
-
-    /// Count user's saved searches.
-    pub async fn count_saved_searches(&self, user_id: Uuid) -> Result<i64, SqlxError> {
-        let row: (i64,) =
-            sqlx::query_as(r#"SELECT COUNT(*) FROM saved_searches WHERE user_id = $1"#)
-                .bind(user_id)
-                .fetch_one(&self.pool)
-                .await?;
-
-        Ok(row.0)
-    }
-
     /// Find matching listings for a saved search (for alerts).
     pub async fn find_matching_listings(
         &self,
@@ -777,19 +670,6 @@ impl PortalRepository {
             .collect();
 
         Ok(listings)
-    }
-
-    /// Update saved search match count.
-    pub async fn update_match_count(&self, id: Uuid, count: i32) -> Result<(), SqlxError> {
-        sqlx::query(
-            r#"UPDATE saved_searches SET match_count = $2, last_matched_at = NOW() WHERE id = $1"#,
-        )
-        .bind(id)
-        .bind(count)
-        .execute(&self.pool)
-        .await?;
-
-        Ok(())
     }
 
     // ========================================================================

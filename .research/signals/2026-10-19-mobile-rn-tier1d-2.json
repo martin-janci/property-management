@@ -1,0 +1,57 @@
+{
+  "generated": "2026-10-19T08:36:48Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claim buffer starved: honest claimable=8 < floor=36). Static single-segment rotating code review per .claude/skills/ppt-dev-review/SKILL.md — file reading + grep only, no compile/test/checkout. DISPATCHER_OWNED_COMMIT=1: artifact written to working tree; orchestrator folds it into the Phase 6 commit. Segment selection: no churn list supplied, fell to oldest-unreviewed. state.json review_cursor mobile-rn=2026-10-16 (oldest, NOT saturated). Findings de-duplicated against backlog.json + prior mobile-rn signal files. Note: a sibling tier1d signal (2026-10-19-mobile-rn-tier1d.json) from an earlier run today covered a different file (FeedbackManager); these two NFC findings are distinct and net-new.",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "oldest-unreviewed (mobile-rn=2026-10-16; not saturated)",
+  "experts_used": [
+    "frontend",
+    "tester"
+  ],
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-nfc-timerestrict-midnight-day",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:300-324 validateAccess() — time-restriction check gates on `restriction.days.includes(currentDay)` where currentDay = now.getDay() at tap time (L301), THEN applies the midnight-crossing branch `endMinutes < startMinutes -> currentMinutes >= startMinutes || currentMinutes <= endMinutes` (L319-320)",
+        "Bug: for a window defined on day D spanning midnight (e.g. days:[1]=Mon, 23:00->01:00), the post-midnight portion falls on day D+1 (Tue). At Tue 00:30 currentDay=2 is NOT in days:[1] so L311 returns false and access is DENIED even though the Monday window should still be open",
+        "Mirror bug: at Mon 00:30 currentDay=1 IS in days:[1] and currentMinutes(30) <= endMinutes(60) so access is GRANTED — but that 00:30 slot is the tail of Sunday-night's window, not Monday's; Monday's own window only starts at 23:00",
+        "Reachable in production: public handleTap(accessPointId, name) (L163) -> validateAccess (L188) runs on every physical NFC door tap; manifests whenever an access point is configured with a time restriction whose endTime < startTime",
+        "Fix: when endMinutes < startMinutes, the post-midnight half must be matched against (currentDay-1+7)%7 ∈ days, not currentDay; i.e. evaluate the two halves of a crossing window against their respective calendar days"
+      ],
+      "title": "mobile-rn NFCAccessController: midnight-crossing access-point time restriction checks the tap-day against restriction.days, so a window like Mon 23:00–01:00 wrongly denies Tue 00:00–01:00 and spuriously grants Mon 00:00–01:00"
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-accesscontroller-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "tester",
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts (478 lines) — grep for 'NFCAccessController'/'AccessController' across *.test.ts/*.test.tsx returns ZERO hits; the file has no corresponding test anywhere in the repo",
+        "The class is the access-grant decision engine: validateAccess() (L249) enforces credential status, validUntil expiry, access-point membership, and time-restriction windows — a security-critical allow/deny gate for unlocking physical doors",
+        "By contrast its sibling frontend/apps/mobile/src/nfc/NFCCredentialManager.ts has NFCCredentialManager.test.ts (401 lines), so the coverage gap is specific to the authorization logic, not the NFC module as a whole",
+        "The midnight-crossing day bug (sister finding code-review-mobile-rn-nfc-timerestrict-midnight-day) is exactly the kind of boundary case a validateAccess unit test suite would catch",
+        "Fix: add NFCAccessController.test.ts covering denial reasons (suspended/revoked/expired), validUntil boundary, unknown access point, and time-restriction windows including a midnight-crossing case"
+      ],
+      "title": "mobile-rn NFCAccessController (478-line physical door-access authorization engine) has no test file — revocation/expiry/time-window/access-point logic is untested while sibling NFCCredentialManager ships 401 lines of tests"
+    }
+  ]
+}

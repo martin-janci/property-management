@@ -1,0 +1,40 @@
+{
+  "generated": "2026-08-14T12:30:00Z",
+  "segment": "reality-web",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed",
+  "selection_note": "Demand-driven Tier-1d STATIC review (claim buffer starved: honest claimable=4 < floor 36; review-merged already ran this run, so this is a static-review slice). No CHURN_FILES passed. By review_cursor ascending: api-handlers (08-10) is oldest but already reviewed today (2026-08-14-api-handlers-tier1d.json exists); mobile-native-kmp (08-11) hard-excluded (KMP/AGP unlandable in cloud runner + saturated: 3 open backlog code-review-findings). ppt-web-core & ppt-web-ui (08-12) also already reviewed today. Remaining co-oldest non-excluded at cursor 08-12: reality-web and mobile-rn; picked reality-web. Saturation check clean: 0 open code-review-findings for reality-web in backlog.json. Findings are DISTINCT from all prior reality-web passes (08-11: listings-page-no-error-state / layoutsections-dup-key / maint-fallback-i18n; 08-12: realtor mock-noid / realtor contact fake-submit / profile mock-data): this pass targets the agency RealtorManagement panel and the shared-comparison URL handler. Path root resolved to frontend/apps/reality-web/src (SKILL table lists frontend/reality-web/src, stale). Static analysis only: no compile, no tests.",
+  "experts_used": ["frontend"],
+  "signals": [
+    {
+      "id": "code-review-reality-web-realtormgmt-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx — inconsistent i18n on a multi-locale (sk/cs/de/en) public portal: the file imports `useTranslations` (line 19) and the nested InviteRealtorModal is fully translated (`const t = useTranslations('agency')` line 560; labels/buttons/placeholders/errors all via t(), e.g. lines 593/617/629/664/667), but the outer RealtorManagement panel and the realtor-detail modal ship 13 hardcoded English strings.",
+        "Hardcoded user-facing strings (not wrapped in t()): line 90 `<h1>Realtor Management</h1>`, line 91 `<p>Manage your team of real estate agents</p>`, line 347 `<span>Listings</span>`, line 351 `<span>Sales</span>`, line 854 `<h2>Realtor Details</h2>`, line 888 `<label>Job Title</label>`, line 899 `<label>Bio</label>`, line 914 `<span>Active Listings</span>`, line 918 `<span>Total Sales</span>`, line 922 `<span>Rating</span>`, line 962 `<span>Are you sure?</span>`, plus `aria-label=\"Close\"` on lines 594 and 855.",
+        "Effect: Slovak/Czech/German visitors see the invite dialog localized but the surrounding agent-management UI, the detail modal, and stat labels in English. Fix: move the 13 strings into the existing `agency` message namespace and render them via the already-imported `t()`; localize the two `aria-label=\"Close\"` values for screen-reader parity."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-comparison-unvalidated-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:43-47 — `fetch(`${getApiBase()}/api/v1/listings/${id}`)` then `return response.json() as Promise<ListingSummary>`: an unvalidated type assertion crossing the API boundary. The parsed body is pushed straight into the comparison context via `addToComparison(result.value)` (lines 59-70) and rendered with no shape validation.",
+        "The sibling consumer of the exact same endpoint hardens against this: frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx:79-89 explicitly comments 'A 200 does not guarantee a well-formed body' and routes every response through `parseListingDetail(body)` before use. ComparisonUrlHandler skips that normalizer, so a truthy-but-malformed 200 (upstream/proxy partial response, wrong-typed fields) is cast to ListingSummary and handed to the comparison UI unchecked.",
+        "Severity is bounded (network errors already degrade gracefully via Promise.allSettled at line 54, and the endpoint normally returns a superset ListingDetail), so this is a shape-validation gap rather than a guaranteed crash — but it is a user-facing shared-comparison path that is inconsistent with the codebase's own hardened pattern. Fix: validate/normalize the body (reuse or adapt parseListingDetail / a summary schema guard) before addToComparison, and drop the `as Promise<ListingSummary>` assertion."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

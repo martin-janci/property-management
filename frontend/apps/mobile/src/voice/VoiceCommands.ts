@@ -3,12 +3,25 @@
  *
  * Epic 49 - Story 49.2: Voice Assistant Integration
  */
+import i18n from 'i18next';
 import type {
   ParsedVoiceCommand,
   VoiceActionResult,
   VoiceCommandParams,
   VoiceIntent,
 } from './types';
+
+/**
+ * Spoken confirmation / error copy is localized through the shared i18next
+ * singleton (the same instance configured in `../i18n`), mirroring the
+ * module-level convention in `../i18n/format.ts`. These helpers are plain
+ * functions rather than React components, so they read the app's *active*
+ * language from the singleton instead of the `useTranslation` hook — the
+ * rendered/spoken string still matches the language the user picked in-app.
+ */
+function t(key: string, params?: Record<string, string>): string {
+  return i18n.t(`voice.${key}`, params ?? {});
+}
 
 /**
  * Command patterns for intent recognition.
@@ -212,8 +225,8 @@ export function executeVoiceCommand(command: ParsedVoiceCommand): VoiceActionRes
           priority: command.params.priority ?? 'medium',
         },
         confirmationMessage: command.params.faultCategory
-          ? `Opening fault report for ${command.params.faultCategory} issue`
-          : 'Opening fault report form',
+          ? t('confirmations.reportFaultCategory', { category: command.params.faultCategory })
+          : t('confirmations.reportFaultForm'),
       };
 
     case 'view_announcements':
@@ -221,7 +234,7 @@ export function executeVoiceCommand(command: ParsedVoiceCommand): VoiceActionRes
         success: true,
         action: 'Navigate to announcements',
         navigation: 'Announcements',
-        confirmationMessage: 'Showing announcements',
+        confirmationMessage: t('confirmations.announcements'),
       };
 
     case 'cast_vote':
@@ -230,7 +243,7 @@ export function executeVoiceCommand(command: ParsedVoiceCommand): VoiceActionRes
         action: 'Navigate to voting',
         navigation: 'Voting',
         prefilledData: command.params.voteId ? { voteId: command.params.voteId } : undefined,
-        confirmationMessage: 'Opening voting',
+        confirmationMessage: t('confirmations.voting'),
       };
 
     case 'view_documents':
@@ -243,8 +256,8 @@ export function executeVoiceCommand(command: ParsedVoiceCommand): VoiceActionRes
           query: command.params.query ?? '',
         },
         confirmationMessage: command.params.query
-          ? `Searching documents for ${command.params.query}`
-          : 'Opening documents',
+          ? t('confirmations.documentsSearch', { query: command.params.query })
+          : t('confirmations.documents'),
       };
 
     case 'check_notifications':
@@ -252,7 +265,7 @@ export function executeVoiceCommand(command: ParsedVoiceCommand): VoiceActionRes
         success: true,
         action: 'Check notifications',
         navigation: 'Dashboard',
-        confirmationMessage: 'Checking notifications',
+        confirmationMessage: t('confirmations.notifications'),
       };
 
     case 'view_dashboard':
@@ -260,7 +273,7 @@ export function executeVoiceCommand(command: ParsedVoiceCommand): VoiceActionRes
         success: true,
         action: 'Navigate to dashboard',
         navigation: 'Dashboard',
-        confirmationMessage: 'Going to home',
+        confirmationMessage: t('confirmations.dashboard'),
       };
 
     case 'open_settings':
@@ -268,15 +281,14 @@ export function executeVoiceCommand(command: ParsedVoiceCommand): VoiceActionRes
         success: true,
         action: 'Navigate to settings',
         navigation: 'Settings',
-        confirmationMessage: 'Opening settings',
+        confirmationMessage: t('confirmations.settings'),
       };
 
     default:
       return {
         success: false,
         action: 'Unknown command',
-        errorMessage:
-          "I didn't understand that command. Try saying 'Report a fault' or 'Show announcements'.",
+        errorMessage: t('errors.unknownCommand'),
       };
   }
 }

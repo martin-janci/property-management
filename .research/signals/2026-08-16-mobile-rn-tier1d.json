@@ -1,0 +1,43 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-16",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claim buffer starved: honest_claimable=6, floor=36; all open candidates structurally gated on mobile-native-kmp/AGP, unlandable in the cloud runner). Segment selected per skill priority: (1) churn-alignment wins — recent git churn (git log --since=2026-08-09) is dominated by frontend/apps/mobile/src/screens/** (voting, meters, leases, forms, documents, dashboard, announcements + features/faults), the mobile-rn segment root; mobile-rn is a React Native (TypeScript) segment and is LANDABLE in cloud (not the KMP mobile-native-kmp segment). It is ALSO part of the oldest-unreviewed 4-way tie at 2026-08-12 (ppt-web-ui already taken by the earlier 2026-08-16 tier1d pass; ppt-web-core / reality-web are the remaining tied peers). Saturation check: backlog.json carries 0 open code-review-finding rows for mobile-rn (skip rule needs >=3), so not saturated. Experts: frontend (primary) + tester (secondary). Static-only: file reads + grep, no compile/test. NOTE: this segment is exceptionally mature — defensive response parsing (parseMeterResponse null-guards, Number.isFinite reading validation), correct offline-queue TERMINAL-vs-TRANSIENT classification with 401/408/429 explicitly excluded from the permanent-drop set (useOfflineSupport.ts:281-291), Rules-of-Hooks-compliant conditional queries (LeaseSignatureScreen), __DEV__-guarded + token-redacted push logging, and pervasive t() i18n. No high/medium crash, auth, or data-loss defect surfaced in the churned surface; the only defensible findings are two low-severity hardcoded-English i18n gaps.",
+  "experts_used": [
+    "frontend",
+    "tester"
+  ],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-nfc-wallet-hardcoded-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:380-388 (addToWallet) builds the Apple Wallet pass with three user-facing English string literals that never pass through react-i18next: `description: `${credential.buildingName} Access`` (line 385), `organizationName: 'Property Management'` (line 386), and `style: 'generic'` aside, the ' Access' suffix and org name render verbatim on the pass surface shown in the user's Apple Wallet.",
+        "The rest of this app is thoroughly localized via `const { t } = useTranslation()` (sk/cs/de/en per frontend/apps/mobile/CLAUDE.md i18n setup; e.g. every Alert in screens/documents/DocumentShareSheet.tsx uses t('documentShare.*')). A Slovak/Czech/German user provisioning a building-access credential to Wallet gets an English-only pass description — an i18n gap on a consumer-facing surface.",
+        "Reachability: iOS-only path (Platform.OS==='ios' && NativeWallet available, line 360), gated behind a real credential with encryptedData (line 375), so it is a genuine production path for iOS users, not dead code. Landable frontend-only fix: route buildingName-suffix and organizationName through t() (e.g. t('nfc.walletAccessSuffix'), t('nfc.walletOrgName')) with the four locale bundles, or pass a pre-localized label from the caller. Low severity: cosmetic/localization, no functional or security impact."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-meters-hardcoded-label",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/meters/MetersScreen.tsx:100 (toUiMeter) — `label: m.meter_number?.trim() || m.location?.trim() || 'Meter'` uses a hardcoded English literal 'Meter' as the fallback display label when a meter has neither a meter_number nor a location. That label is rendered directly in the meters list UI, so a Slovak/Czech/German user sees the English word 'Meter' for any unlabeled meter.",
+        "Consistent with the app's i18n convention (react-i18next, four locale bundles) every other user-visible string on this screen is localized; this fallback was left as a raw literal. Triggered whenever the api-server returns a meter with empty/whitespace meter_number and location (a legitimate data state — both fields are optional/trimmable in ApiMeter).",
+        "Landable frontend-only fix: replace the literal with t('meters.unnamedMeter') (add the key to the sk/cs/de/en bundles). Since toUiMeter is a pure exported mapper with no t() in scope, either thread the translator in or resolve the fallback at the render site. Low severity: localization gap on an edge-case label, no functional impact."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

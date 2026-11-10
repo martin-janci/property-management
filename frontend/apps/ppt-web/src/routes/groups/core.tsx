@@ -8,7 +8,7 @@
  */
 import { lazy } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, Navigate, Route, useNavigate } from 'react-router-dom';
+import { Navigate, Route, useNavigate } from 'react-router-dom';
 import { ProtectedRoute } from '../../components';
 import { useAuth } from '../../contexts';
 import { ManagerDashboardPage, ResidentDashboardPage } from '../../features/dashboard';
@@ -29,6 +29,7 @@ import {
   NotFoundPage,
   NotificationSettingsPage,
   OAuthGrantsPage,
+  OrganizationMembersPage,
   PrivacySettingsPage,
   ProfileEditPage,
   RegisterPage,
@@ -37,8 +38,9 @@ import {
   SessionExpiredPage,
   TemplateLibraryPage,
   TwoFactorAuthPage,
+  VerifyEmailPage,
 } from '../lazyRoutes';
-import { MANAGER_ROLES } from '../shared';
+import { isManagerRole, MANAGER_ROLES } from '../shared';
 
 // Sessions management page (#966) — lazy-loaded.
 const SessionsPage = lazy(() =>
@@ -62,74 +64,86 @@ const PortalWebhooksPage = lazy(() =>
   import('../../features/settings').then((m) => ({ default: m.PortalWebhooksPage }))
 );
 
+/**
+ * Resolve the role-appropriate dashboard landing path.
+ *
+ * Managers (per {@link isManagerRole} / `MANAGER_ROLES`) land on the manager
+ * shell; every other role lands on the resident dashboard. Centralising the
+ * path choice keeps the Home "Open dashboard" CTA and the bare-`/dashboard`
+ * redirect ({@link DashboardIndexRedirect}) in lockstep so their targets
+ * cannot drift apart.
+ */
+function dashboardPathForRole(
+  role: string | undefined
+): '/dashboard/manager' | '/dashboard/resident' {
+  return isManagerRole(role) ? '/dashboard/manager' : '/dashboard/resident';
+}
+
 export function Home() {
   const { t } = useTranslation();
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
+
+  // `/` is the public landing page. A signed-in user has nothing to do here,
+  // so send them straight to their role's dashboard (same target as the bare
+  // `/dashboard` redirect).
+  if (isAuthenticated) {
+    return <Navigate to={dashboardPathForRole(user?.role)} replace />;
+  }
 
   return (
     <div className="space-y-10">
       <section className="text-center py-10">
         <h1 className="text-3xl md:text-4xl font-bold mb-3">{t('home.title')}</h1>
         <p className="text-lg max-w-2xl mx-auto" style={{ color: 'var(--color-text-secondary)' }}>
-          {t('home.welcome')}
+          {t('home.tagline')}
         </p>
-        {!isAuthenticated && (
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <button
-              type="button"
-              onClick={() => navigate('/login')}
-              className="btn-primary-token px-5 py-2.5 rounded-lg font-medium"
-            >
-              {t('auth.signIn')}
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/register')}
-              className="btn-outline-token px-5 py-2.5 rounded-lg font-medium"
-            >
-              {t('auth.register', { defaultValue: 'Register' })}
-            </button>
-          </div>
-        )}
-        {isAuthenticated && (
-          <div className="mt-6">
-            <button
-              type="button"
-              onClick={() =>
-                navigate(user?.role === 'manager' ? '/dashboard/manager' : '/dashboard/resident')
-              }
-              className="btn-primary-token px-5 py-2.5 rounded-lg font-medium"
-            >
-              {t('nav.dashboard', { defaultValue: 'Open dashboard' })}
-            </button>
-          </div>
-        )}
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate('/login')}
+            className="btn-primary-token px-5 py-2.5 rounded-lg font-medium"
+          >
+            {t('auth.signIn')}
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/register')}
+            className="btn-outline-token px-5 py-2.5 rounded-lg font-medium"
+          >
+            {t('shell.createAccount', { defaultValue: 'Create account' })}
+          </button>
+        </div>
       </section>
 
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[
-          { to: '/documents', titleKey: 'nav.documents' },
-          { to: '/news', titleKey: 'nav.news' },
-          { to: '/disputes', titleKey: 'nav.disputes' },
-          { to: '/outages', titleKey: 'nav.outages' },
-          { to: '/emergency', titleKey: 'nav.emergency' },
-          { to: '/settings/accessibility', titleKey: 'nav.accessibility' },
-        ].map((card) => (
-          <Link
-            key={card.to}
-            to={card.to}
-            className="block p-5 rounded-xl"
-            style={{
-              backgroundColor: 'var(--color-surface)',
-              border: '1px solid var(--color-border)',
-            }}
-          >
-            <span className="font-semibold" style={{ color: 'var(--color-text)' }}>
-              {t(card.titleKey)}
-            </span>
-          </Link>
-        ))}
+      <section aria-labelledby="home-audiences" className="space-y-4">
+        <h2 id="home-audiences" className="text-xl font-semibold text-center">
+          {t('home.audiences.title')}
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {(['managers', 'owners', 'tenants'] as const).map((key) => (
+            <article key={key} className="home-card">
+              <h3 className="text-base font-semibold mb-1">{t(`home.audiences.${key}.title`)}</h3>
+              <p className="text-sm home-card__text">{t(`home.audiences.${key}.text`)}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section aria-labelledby="home-features" className="space-y-4">
+        <h2 id="home-features" className="text-xl font-semibold text-center">
+          {t('home.features.title')}
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {(['faults', 'voting', 'communication', 'finance', 'meters', 'documents'] as const).map(
+            (key) => (
+              <article key={key} className="home-card">
+                <h3 className="text-base font-semibold mb-1">{t(`home.features.${key}.title`)}</h3>
+                <p className="text-sm home-card__text">{t(`home.features.${key}.text`)}</p>
+              </article>
+            )
+          )}
+        </div>
       </section>
     </div>
   );
@@ -148,6 +162,7 @@ export function authRoutes() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/settings/password" element={<ChangePasswordPage />} />
       <Route path="/settings/two-factor" element={<TwoFactorAuthPage />} />
       <Route path="/settings/profile" element={<ProfileEditPage />} />
@@ -155,17 +170,60 @@ export function authRoutes() {
   );
 }
 
+/**
+ * Bare-`/dashboard` role fan-out.
+ *
+ * Rendered inside a <ProtectedRoute> (auth-only), so it runs with an
+ * authenticated user whose role is resolved. Managers land on the manager
+ * shell; every other role lands on the resident dashboard. Using
+ * {@link isManagerRole} keeps this in lockstep with the manager route's
+ * MANAGER_ROLES gate and the Home "Open dashboard" CTA.
+ */
+export function DashboardIndexRedirect() {
+  const { user } = useAuth();
+  return <Navigate to={dashboardPathForRole(user?.role)} replace />;
+}
+
 /** Dashboard routes (Epic 124). */
 export function dashboardRoutes() {
   return (
     <>
-      {/* Bare /dashboard 404'd previously — redirect it to the manager
-          dashboard so users typing the obvious URL get something useful (the
-          ProtectedRoute / role check on the target page handles auth +
-          role-based fan-out). */}
-      <Route path="/dashboard" element={<Navigate to="/dashboard/manager" replace />} />
-      <Route path="/dashboard/manager" element={<ManagerDashboardPage />} />
-      <Route path="/dashboard/resident" element={<ResidentDashboardPage />} />
+      {/* Bare /dashboard 404'd previously — redirect it to the role-appropriate
+          dashboard so users typing the obvious URL get something useful. The
+          redirect is wrapped in <ProtectedRoute> (auth-only) so it runs with a
+          resolved, authenticated user; it then fans out by role via
+          <DashboardIndexRedirect> — managers to /dashboard/manager, everyone
+          else to /dashboard/resident. This keeps the manager shell role-gated
+          (below) without denying residents who type the bare /dashboard URL. */}
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <DashboardIndexRedirect />
+          </ProtectedRoute>
+        }
+      />
+      {/* Manager dashboard shell. Auth is not enough (#2998): the manager shell
+          is manager-only, so it is role-gated to MANAGER_ROLES — the same
+          single source of truth that drives isManagerRole / the Home CTA. A
+          resident who navigates here directly gets the ProtectedRoute
+          Access-Denied surface rather than the manager shell. */}
+      <Route
+        path="/dashboard/manager"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <ManagerDashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/resident"
+        element={
+          <ProtectedRoute>
+            <ResidentDashboardPage />
+          </ProtectedRoute>
+        }
+      />
       {/* Dashboard layout customisation (Task 4, layout tenant-editor plan).
           Org-admin / super-admin only. */}
       <Route
@@ -215,11 +273,20 @@ export function settingsRoutes() {
           </ProtectedRoute>
         }
       />
+      {/* Organization members + roles (gap audit round 6, P0-2) */}
+      <Route
+        path="/settings/members"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <OrganizationMembersPage />
+          </ProtectedRoute>
+        }
+      />
       {/* External integrations — Airbnb OAuth & Sync (Gap 83-1) */}
       <Route
         path="/settings/integrations"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <IntegrationsPage />
           </ProtectedRoute>
         }
@@ -268,7 +335,7 @@ export function settingsRoutes() {
       <Route
         path="/automations/rules"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <AutomationRulesPage />
           </ProtectedRoute>
         }
@@ -276,7 +343,7 @@ export function settingsRoutes() {
       <Route
         path="/automations/rules/new"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <CreateRulePage />
           </ProtectedRoute>
         }
@@ -284,7 +351,7 @@ export function settingsRoutes() {
       <Route
         path="/automations/rules/:id/edit"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <EditRulePage />
           </ProtectedRoute>
         }
@@ -292,7 +359,7 @@ export function settingsRoutes() {
       <Route
         path="/automations/templates"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <TemplateLibraryPage />
           </ProtectedRoute>
         }
@@ -300,7 +367,7 @@ export function settingsRoutes() {
       <Route
         path="/automations/executions"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <ExecutionMonitoringPage />
           </ProtectedRoute>
         }

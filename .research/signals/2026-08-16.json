@@ -1,0 +1,175 @@
+{
+  "date": "2026-08-16",
+  "segment_reviewed": "mobile-native-kmp",
+  "segment_reason": "oldest-unreviewed (last reviewed 2026-08-11; no churn in mobile-native-kmp this run)",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "type": "churn-hotspot",
+      "source": "top-3-churn-2026-08-16",
+      "score_delta": 1,
+      "evidence": "voice_webhooks.rs +556 lines across PRs #2762 (+59, Alexa cert timeouts), #2765 (+407, Google JWKS ID-token verify), #2766 (+90, /oauth/refresh device-owner authz)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs",
+      "type": "churn-hotspot",
+      "source": "top-3-churn-2026-08-16",
+      "score_delta": 1,
+      "evidence": "voice_oauth_refresh_auth_tests.rs — new 270-line file (PR #2766) pinning /oauth/refresh device-owner auth contract",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/i18n/protectedRouteI18n.test.ts",
+      "type": "churn-hotspot",
+      "source": "top-3-churn-2026-08-16",
+      "score_delta": 0,
+      "evidence": "re-emit (cumulative): PR #2767 +170 lines. Already in state.seen_signals; matched backlog row already status=done. No score bump.",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "cumulative_reemit": true
+    },
+    {
+      "id": "code-review-mobile-native-kmp-inquiries-response-contract",
+      "type": "code-review-finding",
+      "source": "mobile-native-kmp segment review 2026-08-16",
+      "score_delta": 3,
+      "evidence": "InquiryModels.kt:50-55 declares required page_size: Int (@SerialName). reality-server InquiryListResponse (inquiries.rs:253-263) returns `limit` — not `page_size` — so kotlinx.serialization throws MissingFieldException on every real /inquiries response. Realtor endpoint (realtors.rs:39-43) returns only {inquiries, total}; getRealtorInquiries() reuses the same DTO, so realtor inquiries are broken too. Outbound query at InquiryRepository.kt:61 also sends `page_size` while backend InquiryListQuery reads `limit`, so custom page sizes silently drop.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-httpclient-no-timeout",
+      "type": "code-review-finding",
+      "source": "mobile-native-kmp segment review 2026-08-16",
+      "score_delta": 2,
+      "evidence": "HttpClientProvider.kt:37-43 installs only ContentNegotiation + Logging (level=NONE); no HttpTimeout plugin. Grep for HttpTimeout|requestTimeout|connectTimeout|socketTimeout across mobile-native returns zero hits. Every repository (SsoService/Listing/Inquiry/ApiClient) reuses HttpClientProvider.client, so an unresponsive reality-server hangs any suspend call forever on Android + iOS.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches # <today>",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids in backlog",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq re-emit non-cumulative w/ score_delta=0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq no score > 8 + no open item ≤ today-14",
+      "observed": "cap true; no decay-eligible open items",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep brief for adversarial pass line per new plan",
+      "observed": "adversarial pass: passed line present",
+      "expected": "per-plan annotation present"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count ≤2 new plans; 4 metadata + 11 headings + Mode + ≥1 cap tick + files exist",
+      "observed": "1 new plan, all checks pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached scan for secrets/hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "grep brief phase-failure honesty; cursors preserved for failed phases",
+      "observed": "no phase failures; brief lists 'Phases that failed: none'",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present in plans/ or _archive/",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count monotonic (now ≥ HEAD)",
+      "observed": "now=8 prev=8",
+      "expected": "now ≥ prev"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency",
+      "observed": "auto_fix_actions=[]",
+      "expected": "length ≤ 3, per-type ≤ 1"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run — gate is a no-op",
+      "observed": "pm_cursor unchanged, no management artifact writes",
+      "expected": "no-op when Phase 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "git diff --cached for literal Telegram token value",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}

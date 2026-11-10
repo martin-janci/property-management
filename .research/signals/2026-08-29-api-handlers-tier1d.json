@@ -1,0 +1,60 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-29T00:00:00Z",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "churn-aligned",
+  "selection_detail": "Standalone Tier-1d demand-driven run. Segment picked by CHURN priority: every top hotspot in state.json.hotspot_history (integrations.rs churn 4327, organizations.rs 4018, documents.rs 3553, ai.rs 3142, platform_admin.rs 2762) lives under backend/servers/api-server/src/routes/ = the api-handlers segment. Coverage check of .research/signals/ showed api-handlers had NO tier1d file dated 2026-08-29 (unlike api-core, which already had TWO today: 2026-08-29-api-core-tier1d-client-ip.json and 2026-08-29-api-core-tier1d-workflow-docgen.json, the latter overlapping services/workflow_executor.rs + services/document_generation.rs), so api-handlers is both churn-aligned AND the least-covered landable Rust segment today. mobile-native/KMP was excluded (saturated + structurally unlandable in the cloud runner). Saturation check passed: zero OPEN code-review-sourced backlog items in backlog.json for any segment (all prior api-handlers findings are status=done). REVIEW_CURSOR was not used for selection because tier1d supplements do not advance it; churn takes precedence per the skill's selection order. Static-only Rust+Security review: grep sweeps of routes/ for unwrap/expect/panic (all production hits are startup-validated config or documented infallible-primitive expects like HmacSha256::new_from_slice 'accepts keys of any length' and SysRng 'OS rng failed'; the rest are in #[cfg(test)] modules), secrets-in-logs (clean — every tracing:: call logs error = %e, never the secret value), and webhook/signature verification (exhaustively constant-time: subtle::ConstantTimeEq in signatures.rs/voice_webhooks.rs, Mac::verify_slice in portal_webhooks.rs/integrations/sync.rs, each with explicit issue refs #527/#2658/#2485). The backend is highly disciplined; the two findings below are the net-new landable gaps that survived that sweep, both confirmed by reading the flow through to the SQL / persistence layer.",
+  "experts_used": ["rust", "security"],
+  "findings_count": 2,
+  "note": "api-handlers (Rust routes/) — churn-aligned, least-covered landable segment today. Both findings are backend-only (no mobile-native/AGP dependency), fully landable in the cloud runner. Distinct files/ids from today's two api-core tier1d signals.",
+  "signals": [
+    {
+      "id": "code-review-api-handlers-unbounded-pagination-limit",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 api-handlers)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "security",
+      "files": [
+        "backend/servers/api-server/src/routes/ai/sessions.rs",
+        "backend/servers/api-server/src/routes/ai/equipment.rs",
+        "backend/servers/api-server/src/routes/ai/voice.rs",
+        "backend/servers/api-server/src/routes/ai/workflows.rs",
+        "backend/servers/api-server/src/routes/ai/llm.rs",
+        "backend/servers/api-server/src/routes/vendors/contacts.rs",
+        "backend/servers/api-server/src/routes/compliance.rs",
+        "backend/servers/api-server/src/routes/predictive_maintenance.rs",
+        "backend/crates/db/src/repositories/ai_chat.rs"
+      ],
+      "evidence": [
+        "Many list endpoints resolve the client-supplied page size as `query.limit.unwrap_or(N)` with NO upper-bound clamp, then pass that value straight into the repository as the SQL `LIMIT`. A client can therefore send `?limit=100000000` and force the database to plan/materialize an unbounded result set — a cheap unauthenticated-shaped resource-exhaustion / DoS on any org member's endpoint. Unclamped sites include ai/sessions.rs:101 (unwrap_or 50), :205 (unwrap_or 100), :924, :997; ai/equipment.rs:203/:297/:379; ai/voice.rs:317; ai/workflows.rs:546 (`query.limit.unwrap_or(50) as usize` — the cast also silently wraps a hostile i64); ai/llm.rs:1448; vendors/contacts.rs:130; compliance.rs:167/:240/:268 (unwrap_or 100); predictive_maintenance.rs:316/:503/:536.",
+        "CONFIRMED end-to-end for the ai_chat path: routes/ai/sessions.rs:205 passes `query.limit.unwrap_or(100)` into `ai_chat_repo.list_session_messages(..., limit, offset)`, and crates/db/src/repositories/ai_chat.rs:229-247 binds that `limit: i64` directly into `... LIMIT $4 OFFSET $5` (`.bind(limit)` at line 247) with no `.min()`/`clamp` anywhere in the repo. So the user value reaches Postgres LIMIT unmodified. The same repo file repeats the pattern at :137/:156/:160 and :365/:377/:381.",
+        "The intended pattern already exists in the hardened admin handlers, which makes the omission a clear inconsistency rather than a debatable design choice: admin/users.rs:58 `q.limit.unwrap_or(20).min(100)` and admin/audit.rs:261 `q.limit.unwrap_or(100).min(500)` / :280 `.unwrap_or(10_000).min(50_000)` all clamp. market_pricing.rs:1665 `.unwrap_or(10).min(50)` clamps too. The list endpoints above simply never got the `.min(cap)`.",
+        "Fix: clamp every user-supplied limit at the handler boundary with a per-endpoint `.min(MAX_PAGE_SIZE)` (or a shared `Pagination::clamped()` helper), mirroring the admin handlers; belt-and-suspenders, add a defensive clamp in the repository methods that take a raw `limit: i64`. Landable as a single backend-only PR (routes + ai_chat repo), no mobile/AGP dependency. IG3: a handler/integration test asserting `?limit=1000000` returns at most MAX rows fails on any branch missing the clamp.",
+        "Confidence medium: the unclamped flow to SQL LIMIT is statically confirmed for the ai_chat path (route -> repo -> `.bind(limit)`), and the missing `.min()` is visible at each listed call site; 'medium' not 'high' because a subset of the listed endpoints route through repos that could re-clamp internally (not individually traced for all 18 sites) and because the practical blast radius depends on row width and DB timeouts."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-ocr-photo-url-silent-loss",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 api-handlers)",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/routes/ai/ocr.rs"
+      ],
+      "evidence": [
+        "routes/ai/ocr.rs:197-208 — when the image bytes are present but `state.storage_service` is None (storage unavailable), the handler does not fail or defer; it persists the meter reading with a FABRICATED `photo_url = format!(\"pending-upload/{}/{}\", meter_id, Uuid::new_v4())` (line 207) that points at no stored object, then returns `StatusCode::CREATED` (line 228) as if the photo-backed reading succeeded.",
+        "There is no reconciliation path: the `pending-upload/...` sentinel is written into the meter_readings row via `meter_repo.submit_photo_reading(..., photo_url, ...)` (line 210-223) and nothing ever revisits it to actually upload the image (the raw bytes are dropped when the request ends) or to correct the URL. Any later consumer that renders `photo_url` gets a dead reference, and the audit/evidence value of the photo reading is silently lost while the API reported 201 success.",
+        "This is a data-integrity / completeness gap, not a crash: the org-membership authorization above it (ai/ocr.rs:188-195 `is_member` check) is correct, and the `pending-upload` placeholder is a documented deliberate branch — but 'documented' only explains the sentinel, it does not make silently-succeeding-then-losing-the-photo correct behavior. Preferable: return 503/422 when storage is required but unavailable, OR enqueue the bytes for a real deferred upload and mark the row as pending with a reconciler, instead of writing a permanent dead URL under a 201.",
+        "Fix: gate the photo branch on storage availability — reject with a retryable error when `storage_service` is None and image bytes were supplied, or persist to an outbox/pending table that a background job drains (the codebase already has quiet_hours_drain / push_fanout style drainers to model this on). Landable as a small backend-only change in ai/ocr.rs (+ optionally a pending-upload table/migration). IG3: a handler test with storage disabled asserts the endpoint does NOT return 201 with a `pending-upload/` photo_url.",
+        "Confidence medium: the fabricated-URL-under-201 flow is confirmed by direct read of ai/ocr.rs:197-239; 'medium' because whether storage_service is ever actually None in the deployed config (vs always wired) is environment-dependent, so the severity is 'latent under degraded storage' rather than always-on."
+      ]
+    }
+  ]
+}

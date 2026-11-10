@@ -1,0 +1,53 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-29T00:00:00Z",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "oldest-unreviewed",
+  "selection_detail": "Standalone Tier-1d demand-driven run (research backlog starved of LANDABLE items; the only open claimable items were mobile-native/KMP which cannot land in the cloud runner, so a backend/frontend segment was required). No fresh Phase-1 CHURN_FILES were passed. state.review_cursor oldest entries were api-core (2026-08-21) TIED with ppt-web-core (2026-08-21). api-core was chosen and reviewed EARLIER TODAY (2026-08-29-api-core-tier1d-workflow-docgen.json emitted 2 findings: workflow-eq-type-strict + docgen-summarize-char-boundary-panic), so re-reviewing api-core would duplicate (I independently rediscovered the identical document_generation.rs:500/502 char-boundary panic before finding the prior file — it is already captured, so NOT re-emitted here). Pivoted to the co-oldest tied segment ppt-web-core instead: LANDABLE (React/TS, no AGP/ADB), oldest-unreviewed, and not yet reviewed today. Saturation check passed: ZERO open code-review-sourced backlog items in any segment. Deliberately avoided the files covered by the two prior ppt-web-core signals (2026-08-28): AuthContext.tsx (refresh-token-localstorage, no-runtime-refresh, init-no-exp-check), lib/websocket.ts (ws-jwt-in-url), lib/api.ts (retry-ignores-retry-after). This pass targeted routes/ + the axios auth-injection contract. Frontend static review (grep sweep + targeted reads, no build/test): console.log in hooks/usePerformanceMetrics.ts IS dev-guarded (`if (!import.meta.env.DEV) return`) — clean; all `as any`/`as unknown as` hits are in *.test files — clean; lib/api.ts request interceptor (:199-204) correctly injects `Authorization: Bearer <token>` from the AuthContext token provider. Two net-new landable findings below.",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "note": "ppt-web-core (React/TS). Two net-new landable frontend findings in routes/, distinct from the four prior ppt-web-core signals (which covered AuthContext refresh/exp, ws-jwt-in-url, and 429 retry-after). NOTE: api-core was the churn-tie winner but was already reviewed today (workflow-docgen file); the document_generation char-boundary panic I independently found is ALREADY captured there and is intentionally NOT re-emitted.",
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-raw-fetch-bypasses-jwt-interceptor",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 ppt-web-core routes)",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx",
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:77-91 — `useBuildingUnits` runs `await fetch(`/api/v1/units?buildingId=${buildingId}&limit=500`, { headers: { 'Content-Type': 'application/json' } })` inside a TanStack `useQuery` queryFn. This is a RAW browser `fetch`, not the shared axios instance.",
+        "The app injects the JWT ONLY via the axios request interceptor in frontend/apps/ppt-web/src/lib/api.ts:198-204 (`requestConfig.headers.Authorization = `Bearer ${token}`` from the token provider registered in contexts/AuthContext.tsx:327 `setTokenProvider(getAccessToken)`). A raw `fetch()` does not pass through axios, and the call sets no `Authorization` header and no `credentials: 'include'`. There is NO global fetch override, service worker, or cookie-based session in the app (grep for `globalThis.fetch =`/`window.fetch =`/`credentials: 'include'`/`serviceWorker` returns nothing outside tests). So this request to the authenticated management endpoint `/api/v1/units` goes out with no bearer token — it will 401 for a real logged-in session, and the building-units dropdown that feeds the person-months screen silently fails to populate.",
+        "Systemic, not a one-off: the same header-less raw-fetch-to-`/api/v1/*` pattern recurs across the news feature — features/news/pages/EditArticlePage.tsx:115 (PUT), CreateArticlePage.tsx:55 (POST), ArticleDetailPage.tsx:43-45,112,135 — all hitting authenticated endpoints with only a `Content-Type` header and no Authorization. (Those live in the ppt-web-ui segment; person-months.tsx in routes/ is the in-segment instance and the anchor for this finding.) App.tsx:71 `/api/v1/auth/mfa/verify` is the ONE legitimate raw fetch — it runs pre-auth before a token exists.",
+        "Secondary defects in the same block: (a) the response is hand-typed with an `as { data: Array<{ id: string; unitNumber: string }> }` cast that bypasses the generated `@ppt/api-client` types, so it will drift silently from the OpenAPI contract; (b) `limit=500` is hard-coded with no follow-up pagination, so a building with >500 units silently drops the overflow from the dropdown.",
+        "Fix: route this through the shared axios `api` instance (or the generated `@ppt/api-client` units call) so the JWT interceptor attaches the bearer token and the response is typed from the OpenAPI schema; drop the hand-written `as` cast; and either page through all units or document/raise the 500 cap. Self-contained TS change in routes/groups/person-months.tsx (+ optionally sweep the news pages); no backend/migration/mobile dependency — fully landable in the cloud runner.",
+        "Confidence medium: the axios-only token injection (lib/api.ts:198-204), the raw fetch, and the absence of any global fetch/cookie fallback are all confirmed by static read; 'medium' rather than 'high' because an actual 401 was not reproduced at runtime in this static-only pass (a dev proxy or an as-yet-unseen mitigation could in principle mask it)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-iot-sensor-delete-confirm-hardcoded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 ppt-web-core routes)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx:180-184 — the sensor-delete confirmation is a HARDCODED English literal: `window.confirm(`Delete sensor \"${sensor.name}\"? This removes its readings and alerts and cannot be undone.`)` — not wrapped in `t(...)`. Slovak/Czech/German users (the product's primary locales, i18n sk/cs/de/en) see raw English on a destructive-action prompt.",
+        "This is a local inconsistency, not a codebase-wide convention: the SAME file's threshold-delete confirm at iot.tsx:545-549 correctly uses `t('iot.thresholdDeleteConfirm', { defaultValue: 'Delete this threshold? This cannot be undone.' })`, and routes/groups/faults.tsx:262-266 uses `t('faults.confirmDelete', { defaultValue: 'Delete this fault? This action cannot be undone.' })`. The sensor-delete path was simply missed.",
+        "Fix: wrap the sensor-delete message in `t('iot.sensorDeleteConfirm', { defaultValue: 'Delete sensor \"{{name}}\"? This removes its readings and alerts and cannot be undone.', name: sensor.name })` and add the key to the sk/cs/de/en resource bundles, mirroring the existing `iot.thresholdDeleteConfirm` entry. Trivially self-contained TS/i18n change; no backend/mobile dependency — fully landable.",
+        "Confidence high: the hardcoded literal and the two sibling `t()`-wrapped confirms in the same/adjacent files are directly visible; this is an unambiguous i18n gap on a user-facing string."
+      ]
+    }
+  ]
+}

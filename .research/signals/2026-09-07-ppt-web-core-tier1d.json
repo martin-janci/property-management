@@ -1,0 +1,41 @@
+{
+  "segment": "ppt-web-core",
+  "date": "2026-09-07",
+  "selection_reason": "churn-aligned",
+  "selection_detail": "CHURN_FILES from git (since 2026-08-24): frontend/apps/ppt-web/src/contexts/AuthContext.tsx (x3), frontend/apps/ppt-web/src/lib/api.ts (x2) both fall under ppt-web-core root frontend/apps/ppt-web/src/ (contexts/, lib/, hooks/, routes/). ppt-web-core had the most churn hits of any reviewable segment. Not saturated: 0 open code-review-finding items for ppt-web-core in backlog.json.",
+  "experts_used": ["frontend"],
+  "landable_in_cloud": true,
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-rentals-noop-action-handlers",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:517-521 (GuestRegistrationPageRoute): the route fetches real guest data (rentalsApiListGuests, line 483) and groups it into bookingsWithPendingGuests, but every action the page exposes is a no-op stub — onRegisterGuest={() => {}}, onRegisterAllGuests={() => {}}, onEditGuest={() => {}}, onAddGuest={() => {}}. The guest-registration screen (its entire reason for existing) renders functional buttons that silently do nothing; no toast, no navigation, no mutation. Unlike RentalsCalendarPageRoute/TaxReportPageRoute these are NOT documented as 'no endpoint yet', so this reads as unfinished wiring, not an intentional stub.",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:333-339 (PlatformConnectionsPageRoute): onConnect/onDisconnect/onSettings are all () => {} even though the same component wires working createConnection + syncPlatforms mutations (lines 302-323). A user can create/sync a platform connection but Disconnect and Settings buttons are dead.",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:381-383 (BookingsPageRoute): onCancelBooking/onCheckIn/onCheckOut are () => {} despite BookingDetailPageRoute (lines 409-429) already implementing working checkIn/checkOut mutations via rentalsApiCheckIn/rentalsApiCheckOut. Check-in/out from the bookings list is dead while the same action works one screen deeper. Landable frontend-only remedy: wire these handlers to the existing rentals API client mutations (register-guest / check-in / check-out / disconnect) that already back the sibling routes, or hide the affordances until backed."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-financial-dash-false-zeros",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx:70-136 (FinancialDashboardPageRoute): three useQuery calls (getARAgingReport, getOverdueInvoices, listInvoices) destructure ONLY isLoading — never isError/error. On any backend failure the values fall back to zeros/empties (totals => {current:0,...,total:0}, invoices => [], overdueInvoices => []) and the page is handed isLoading only, no error prop. Result: if the AR-aging or invoices endpoint 500s, the manager's financial dashboard renders totalOutstanding/totalOverdue/totalBalance = €0 with NO error indication — a load failure is indistinguishable from 'nothing is due', which is a decision-integrity hazard on a financial screen.",
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx:456-459 shows the correct pattern IS known in the same file: FinancialReportsPage receives error={activeQuery.error instanceof Error ? activeQuery.error.message : null}. The dashboard (and the Invoice/Payment list wrappers above it) omit it.",
+        "frontend/apps/ppt-web/src/main.tsx:28-35: the global QueryClient sets only staleTime + retry:1 — there is no QueryCache onError, no throwOnError, and no MutationCache. So swallowed query errors do NOT reach the top-level ErrorBoundary (main.tsx:50) either; the empty/zero fallback is the only thing the user sees. Landable frontend-only remedy: surface isError on the dashboard queries (pass an error prop like the reports route does) and/or add a QueryCache onError to the global QueryClient so read failures render an error/retry state instead of false zeros."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

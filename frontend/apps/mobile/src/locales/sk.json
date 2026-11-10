@@ -54,7 +54,14 @@
     "biometricNotSuccessful": "Biometricke overenie nebolo uspesne",
     "signInWith": "Prihlasit sa pomocou {{provider}}",
     "faceIdTouchId": "Face ID / Touch ID",
-    "biometrics": "Biometria"
+    "biometrics": "Biometria",
+    "biometric": {
+      "enablePrompt": "Zapnut biometricke prihlasenie",
+      "authenticatePrompt": "Prihlasenie do Spravy nehnutelnosti",
+      "cancel": "Zrusit",
+      "usePasscode": "Pouzit pristupovy kod",
+      "usePassword": "Pouzit heslo"
+    }
   },
   "dashboard": {
     "title": "Prehlad",
@@ -124,6 +131,12 @@
     "galleryButton": "Galeria",
     "submitButton": "Odoslat hlasenie",
     "successSubmit": "Hlasenie poruchy bolo uspesne odoslane",
+    "photosNotUploadedTitle": "Hlasenie ulozene — fotografie neboli pripojene",
+    "photosNotUploadedWarning": "Hlasenie poruchy bolo ulozene, ale pripojene fotografie sa nepodarilo nahrat a neboli zahrnute. Prosim, pridajte ich znova z detailu poruchy.",
+    "successSubmitWithPhotos": "Hlasenie poruchy odoslane s {{count}} fotografiami.",
+    "photosPartialTitle": "Hlasenie odoslane — niektore fotografie neboli pripojene",
+    "photosPartialWarning": "Vase hlasenie poruchy bolo odoslane a {{uploaded}} z {{total}} fotografii bolo pripojenych. {{failed}} sa nepodarilo nahrat — mozete ich znova pridat z detailu poruchy.",
+    "uploadingPhotos": "Nahravanie fotografii…",
     "failedSubmit": "Nepodarilo sa odoslat hlasenie poruchy",
     "cameraPermissionDenied": "Na fotografovanie je potrebne povolenie fotoaparatu",
     "photoLibraryPermissionDenied": "Je potrebne povolenie pre kniznicu fotografii",
@@ -150,13 +163,26 @@
     "emptyText": "Všetky problémy boli vyriešené"
   },
   "news": {
+    "backToList": "‹ Spravy",
     "title": "Spravy",
     "latest": "Najnovsie spravy",
     "readMore": "Citat viac",
     "noNews": "Žiadne správy",
     "loadError": "Nepodarilo sa načítať novinky",
     "emptyTitle": "Nič nové",
-    "emptyText": "Novinky nájdete neskôr."
+    "emptyText": "Novinky nájdete neskôr.",
+    "subtitle": "Novinky z vašej budovy a okolia.",
+    "filters": {
+      "all": "Všetky",
+      "building": "Budova",
+      "district": "Štvrť",
+      "partner": "Partneri"
+    },
+    "categories": {
+      "building": "Budova",
+      "district": "Štvrť",
+      "partner": "Partner"
+    }
   },
   "voting": {
     "title": "Hlasovanie",
@@ -166,7 +192,49 @@
     "voted": "Hlasovane",
     "results": "Vysledky",
     "deadline": "Termin",
-    "noPolls": "Ziadne aktivne hlasovania"
+    "noPolls": "Ziadne aktivne hlasovania",
+    "submit": "Odoslať hlasovanie",
+    "moveUp": "Posunúť vyššie",
+    "moveDown": "Posunúť nižšie",
+    "rankHint": "Zoraďte možnosti podľa preferencie (1 = najviac preferovaná).",
+    "activeCount_one": "{{count}} aktívne",
+    "activeCount_few": "{{count}} aktívne",
+    "activeCount_many": "{{count}} aktívnych",
+    "activeCount_other": "{{count}} aktívnych",
+    "ended": "Ukončené",
+    "timeLeftDaysHours": "Zostáva {{days}} d {{hours}} h",
+    "timeLeftHours": "Zostáva {{hours}} h",
+    "timeLeftMinutes": "Zostáva {{minutes}} min",
+    "filter": {
+      "all": "Všetky",
+      "active": "Aktívne",
+      "closed": "Ukončené"
+    },
+    "loadError": "Hlasovania sa nepodarilo načítať",
+    "emptyTitle": "Zatiaľ žiadne hlasovania",
+    "emptyText": "Momentálne nie sú k dispozícii žiadne hlasovania.",
+    "openDetail": "Otvoriť detail hlasovania",
+    "quorum": "Kvórum",
+    "quorumVotes": "{{current}} / {{required}} hlasov",
+    "tapToVote": "Ťuknite pre zobrazenie a odovzdanie hlasu",
+    "tapToView": "Ťuknite pre zobrazenie výsledkov",
+    "createdBy": "Vytvoril {{name}}",
+    "missingId": "Nie je vybrané žiadne hlasovanie",
+    "confirmVoteTitle": "Potvrdiť hlas",
+    "answerRequired": "Odpovedzte prosím na všetky povinné otázky",
+    "confirmVoteMessage": "Odoslať hlas? Túto akciu nie je možné vrátiť späť.",
+    "voteSubmitted": "Hlas odoslaný",
+    "confirmationNumber": "Potvrdenie",
+    "castError": "Hlas sa nepodarilo odoslať",
+    "noQuestions": "Zatiaľ žiadne otázky",
+    "youHaveVoted": "V tomto hlasovaní ste už hlasovali.",
+    "notActive": "Toto hlasovanie momentálne nie je aktívne.",
+    "votingAs": "Hlasujete ako",
+    "eligibilityReason": {
+      "voteNotAcceptingBallots": "Hlasovanie momentálne neprijíma hlasy.",
+      "notEligibleInBuilding": "V tejto budove nemáte oprávnenie hlasovať.",
+      "allUnitsVoted": "Všetky vaše oprávnené jednotky už hlasovali."
+    }
   },
   "documents": {
     "title": "Dokumenty",
@@ -332,7 +400,9 @@
     "syncFailed": "Niektore polozky sa nepodarilo synchronizovat",
     "syncProgress": "Synchronizujem {{current}} z {{total}}",
     "itemSynced": "{{item}} uspesne synchronizovane",
-    "itemFailed": "Nepodarilo sa synchronizovat {{item}}"
+    "itemFailed": "Nepodarilo sa synchronizovat {{item}}",
+    "droppedTitle": "Zmeny zahodené",
+    "droppedMessage": "{{count}} offline zmien sa nepodarilo uložiť a boli zahodené, pretože ich server odmietol."
   },
   "help": {
     "title": "Centrum pomoci",
@@ -418,6 +488,7 @@
     "enterReading": "Zadajte odpocet",
     "readingPlaceholder": "0,00",
     "readingRequired": "Prosim zadajte odpocet",
+    "readingInvalid": "Zadajte platne cislo",
     "photo": "Fotografia (volitelne)",
     "submit": "Odoslat odpocet",
     "submitSuccess": "Odpocet meraca bol uspesne odoslany",
@@ -433,7 +504,13 @@
     "noUnitText": "Merače sa zobrazia po priradení vášho účtu k jednotke.",
     "detailLoadError": "Nepodarilo sa načítať merač",
     "noReadingsTitle": "Zatiaľ žiadne odpočty",
-    "noReadingsText": "Odošlite svoj prvý odpočet pre tento merač."
+    "noReadingsText": "Odošlite svoj prvý odpočet pre tento merač.",
+    "meterFallback": "Merač",
+    "backToMeters": "Merače",
+    "latestReading": "Posledný odpočet",
+    "usedSincePrevious": "Spotreba od predchádzajúceho odpočtu: {{amount}} {{unit}}",
+    "readingHistory": "História odpočtov",
+    "submitNewReading": "Odoslať nový odpočet"
   },
   "esignature": {
     "title": "Ziadost o podpis",
@@ -526,7 +603,14 @@
     "threadLoadError": "Nepodarilo sa načítať konverzáciu",
     "threadEmptyTitle": "Zatiaľ žiadne správy",
     "threadEmptyText": "Pozdravte a začnite konverzáciu.",
-    "threadSendError": "Správu sa nepodarilo odoslať. Skúste to znova."
+    "threadSendError": "Správu sa nepodarilo odoslať. Skúste to znova.",
+    "backToList": "Správy",
+    "threadTitleFallback": "Konverzácia",
+    "composerPlaceholder": "Napíšte správu…",
+    "syncing": "Synchronizuje sa…",
+    "authorYou": "Vy",
+    "authorFallback": "Účastník",
+    "send": "Odoslať"
   },
   "leases": {
     "loadError": "Nepodarilo sa načítať nájomné zmluvy",
@@ -536,10 +620,40 @@
     "noPayments": "Nie sú naplánované žiadne nadchádzajúce platby.",
     "notFound": "Nájomná zmluva sa nenašla."
   },
+  "personMonths": {
+    "title": "Osobomesiace",
+    "subtitle": "Nahláste, koľko osôb bývalo vo vašej jednotke každý mesiac na účely rozúčtovania nákladov.",
+    "invalidTitle": "Neplatná hodnota",
+    "invalidMessage": "Zadajte celé číslo od 0 do 20.",
+    "bulkEntry": "Hromadné zadanie…",
+    "personCount_one": "{{count}} osoba",
+    "personCount_few": "{{count}} osoby",
+    "personCount_many": "{{count}} osoby",
+    "personCount_other": "{{count}} osôb",
+    "status": {
+      "draft": "Koncept",
+      "submitted": "Odoslané",
+      "confirmed": "Potvrdené"
+    }
+  },
   "outages": {
+    "backToList": "‹ Výpadky",
     "loadError": "Nepodarilo sa načítať výpadky",
     "emptyTitle": "Žiadne výpadky",
-    "emptyText": "Momentálne nie je nič naplánované ani aktívne."
+    "emptyText": "Momentálne nie je nič naplánované ani aktívne.",
+    "title": "Výpadky",
+    "subtitle": "Plánované a aktívne prerušenia dodávok.",
+    "filters": {
+      "all": "Všetky",
+      "scheduled": "Plánované",
+      "active": "Aktívne",
+      "resolved": "Vyriešené"
+    },
+    "status": {
+      "scheduled": "Plánované",
+      "in_progress": "Prebieha",
+      "resolved": "Vyriešené"
+    }
   },
   "forms": {
     "loadError": "Nepodarilo sa načítať formuláre",
@@ -552,6 +666,27 @@
     "emptyTitle": "Zatiaľ žiadni susedia",
     "noMatches": "Žiadne zhody",
     "emptyText": "Obyvatelia, ktorí sa prihlásia do zoznamu, sa zobrazia tu.",
-    "noMatchesText": "Skúste iné meno alebo číslo bytu."
+    "noMatchesText": "Skúste iné meno alebo číslo bytu.",
+    "title": "Susedia",
+    "subtitle": "{{count}} obyvateľov v budove {{building}}",
+    "subtitleGeneric": "{{count}} obyvateľov vo vašej budove",
+    "searchPlaceholder": "Hľadať podľa mena alebo bytu…",
+    "owner": "Vlastník"
+  },
+  "voice": {
+    "confirmations": {
+      "reportFaultCategory": "Otváram hlásenie poruchy pre problém: {{category}}",
+      "reportFaultForm": "Otváram formulár hlásenia poruchy",
+      "announcements": "Zobrazujem oznamy",
+      "voting": "Otváram hlasovanie",
+      "documentsSearch": "Vyhľadávam dokumenty pre: {{query}}",
+      "documents": "Otváram dokumenty",
+      "notifications": "Kontrolujem notifikácie",
+      "dashboard": "Prechádzam na domovskú obrazovku",
+      "settings": "Otváram nastavenia"
+    },
+    "errors": {
+      "unknownCommand": "Tomuto príkazu som nerozumel. Skúste povedať „Report a fault“ alebo „Show announcements“."
+    }
   }
 }

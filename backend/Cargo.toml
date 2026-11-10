@@ -44,20 +44,28 @@ serde_json = "1.0"
 
 # OpenAPI
 utoipa = { version = "5", features = ["axum_extras", "uuid", "chrono", "decimal"] }
-utoipa-swagger-ui = { version = "9", features = ["axum"] }
+# `vendored` embeds the Swagger UI dist (via utoipa-swagger-ui-vendored, which
+# ships the asset inside the published crate) so the build script never fetches
+# the swagger-ui zip from github.com at build time. This keeps the backend
+# buildable in egress-restricted cloud runners (issue #2966 / #2944-2946).
+utoipa-swagger-ui = { version = "9", features = ["axum", "vendored"] }
 
 # Validation
-validator = { version = "0.20", features = ["derive"] }
+validator = { version = "0.21", features = ["derive"] }
 
 # Database
 # Entries within each group are kept alphabetically sorted so that Dependabot
 # and manual edits land in a deterministic spot (minimizes merge conflicts).
-rust_decimal = { version = "1.34", features = ["serde", "serde-str"] }
+# Plain `serde` (no `serde-str` / `serde-float`): Decimal still *serializes* as
+# a JSON string ("650.00") but *deserializes* from a JSON string or a JSON
+# number. With `serde-str`, `650` was a 422 ("expected a Decimal") on every
+# money-taking request (invoices, payments, leases). Don't re-add it.
+rust_decimal = { version = "1.34", features = ["serde"] }
 rust_decimal_macros = "1.34"
 sqlx = { version = "0.9", features = ["runtime-tokio", "postgres", "uuid", "chrono", "migrate", "rust_decimal"] }
 
 # Auth
-argon2 = "=0.6.0-rc.8"
+argon2 = "=0.6.0"
 # jsonwebtoken 10 split its crypto backend into a cargo feature; without one it
 # panics at runtime ("Could not determine the CryptoProvider"). `rust_crypto` is
 # the pure-Rust backend (matches the provider jsonwebtoken 9 had built in).
@@ -77,7 +85,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 uuid = { version = "1.6", features = ["v4", "serde"] }
 
 # Crypto
-base64 = "0.22"
+base64 = "0.23"
 # base32 for RFC-6238 TOTP secrets (authenticator-app compatible)
 data-encoding = "2"
 hmac = "0.13"
@@ -145,7 +153,12 @@ redis = { version = "1.2", features = ["tokio-comp", "connection-manager"] }
 clap = { version = "4.4", features = ["derive", "env"] }
 dialoguer = "0.12"
 genpdf = "0.2.0"
-rust_xlsxwriter = "0.96"
+# rust_xlsxwriter 0.100+ moves its transitive `zip` dependency to the 9.x line
+# (zip >= 9.0.0), which clears RUSTSEC-2026-0367/-0368/-0369 (symlink / SUID-SGID
+# extraction, all patched in zip 9.0.0) on the api-server xlsx-export chain
+# (GH #3124). 0.97–0.99 still pin zip ^8.3 (-> 8.6.0, vulnerable); 0.100 is the
+# first release on zip ^9.0.
+rust_xlsxwriter = "0.100"
 
 # i18n (Epic 111)
 fluent = "0.16"

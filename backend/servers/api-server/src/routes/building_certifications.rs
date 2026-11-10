@@ -37,6 +37,7 @@ use db::models::building_certification::{
     UpdateCertificationCredit, UpdateCertificationMilestone,
 };
 
+use crate::routes::pagination::clamp_limit;
 use crate::state::AppState;
 
 /// Create the router for building certifications.
@@ -122,6 +123,32 @@ fn internal_error(e: sqlx::Error) -> (StatusCode, String) {
     (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
 }
 
+/// Ensure the parent certification exists in the caller's org before a child
+/// row (credit, document, milestone, ...) is attached to it. Returns 404 for
+/// another org's certification. Releases the connection on failure.
+async fn ensure_certification(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    cert_id: Uuid,
+) -> Result<(), (StatusCode, String)> {
+    let org_id = rls.tenant_id();
+    let found = state
+        .building_certification_repo
+        .get_certification(&mut **rls.conn(), org_id, cert_id)
+        .await;
+    match found {
+        Ok(Some(_)) => Ok(()),
+        Ok(None) => {
+            rls.release().await;
+            Err((StatusCode::NOT_FOUND, "Certification not found".to_string()))
+        }
+        Err(e) => {
+            rls.release().await;
+            Err(internal_error(e))
+        }
+    }
+}
+
 // ==================== Dashboard ====================
 
 /// Get certification dashboard summary.
@@ -164,7 +191,7 @@ async fn list_certifications(
             &mut **rls.conn(),
             org_id,
             filters,
-            query.limit.unwrap_or(50),
+            clamp_limit(query.limit, 50),
             query.offset.unwrap_or(0),
         )
         .await
@@ -180,8 +207,27 @@ async fn create_certification(
     mut rls: RlsConnection,
     Json(input): Json<CreateBuildingCertification>,
 ) -> Result<(StatusCode, Json<BuildingCertification>), (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
+
+    // The certified building must belong to the caller's org (404 otherwise).
+    match state
+        .building_repo
+        .belongs_to_organization_rls(&mut **rls.conn(), input.building_id, org_id)
+        .await
+    {
+        Ok(true) => {}
+        Ok(false) => {
+            rls.release().await;
+            return Err((StatusCode::NOT_FOUND, "Building not found".to_string()));
+        }
+        Err(e) => {
+            rls.release().await;
+            return Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string()));
+        }
+    }
+
     let out = state
         .building_certification_repo
         .create_certification(&mut **rls.conn(), org_id, input, Some(user_id))
@@ -239,6 +285,7 @@ async fn update_certification(
     Path(cert_id): Path<Uuid>,
     Json(input): Json<UpdateBuildingCertification>,
 ) -> Result<Json<BuildingCertification>, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .building_certification_repo
@@ -259,6 +306,7 @@ async fn delete_certification(
     mut rls: RlsConnection,
     Path(cert_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .building_certification_repo
@@ -319,6 +367,8 @@ async fn create_credit(
     Path(cert_id): Path<Uuid>,
     Json(mut input): Json<CreateCertificationCredit>,
 ) -> Result<(StatusCode, Json<CertificationCredit>), (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
+    ensure_certification(&state, &mut rls, cert_id).await?;
     let org_id = rls.tenant_id();
     input.certification_id = cert_id;
 
@@ -336,12 +386,13 @@ async fn create_credit(
 async fn get_credit(
     State(state): State<AppState>,
     mut rls: RlsConnection,
-    Path((_cert_id, credit_id)): Path<(Uuid, Uuid)>,
+    Path((cert_id, credit_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<CertificationCredit>, (StatusCode, String)> {
+    ensure_certification(&state, &mut rls, cert_id).await?;
     let org_id = rls.tenant_id();
     let out = state
         .building_certification_repo
-        .get_credit(&mut **rls.conn(), org_id, credit_id)
+        .get_credit(&mut **rls.conn(), org_id, cert_id, credit_id)
         .await
         .map_err(internal_error)
         .and_then(|c| {
@@ -356,13 +407,15 @@ async fn get_credit(
 async fn update_credit(
     State(state): State<AppState>,
     mut rls: RlsConnection,
-    Path((_cert_id, credit_id)): Path<(Uuid, Uuid)>,
+    Path((cert_id, credit_id)): Path<(Uuid, Uuid)>,
     Json(input): Json<UpdateCertificationCredit>,
 ) -> Result<Json<CertificationCredit>, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
+    ensure_certification(&state, &mut rls, cert_id).await?;
     let org_id = rls.tenant_id();
     let out = state
         .building_certification_repo
-        .update_credit(&mut **rls.conn(), org_id, credit_id, input)
+        .update_credit(&mut **rls.conn(), org_id, cert_id, credit_id, input)
         .await
         .map_err(internal_error)
         .and_then(|c| {
@@ -377,12 +430,14 @@ async fn update_credit(
 async fn delete_credit(
     State(state): State<AppState>,
     mut rls: RlsConnection,
-    Path((_cert_id, credit_id)): Path<(Uuid, Uuid)>,
+    Path((cert_id, credit_id)): Path<(Uuid, Uuid)>,
 ) -> Result<StatusCode, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
+    ensure_certification(&state, &mut rls, cert_id).await?;
     let org_id = rls.tenant_id();
     let out = state
         .building_certification_repo
-        .delete_credit(&mut **rls.conn(), org_id, credit_id)
+        .delete_credit(&mut **rls.conn(), org_id, cert_id, credit_id)
         .await
         .map_err(internal_error)
         .and_then(|deleted| {
@@ -422,9 +477,30 @@ async fn create_document(
     Path(cert_id): Path<Uuid>,
     Json(mut input): Json<CreateCertificationDocument>,
 ) -> Result<(StatusCode, Json<CertificationDocument>), (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
+    ensure_certification(&state, &mut rls, cert_id).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     input.certification_id = cert_id;
+
+    // An attached credit must belong to this certification (and org).
+    if let Some(credit_id) = input.credit_id {
+        match state
+            .building_certification_repo
+            .get_credit(&mut **rls.conn(), org_id, cert_id, credit_id)
+            .await
+        {
+            Ok(Some(_)) => {}
+            Ok(None) => {
+                rls.release().await;
+                return Err((StatusCode::NOT_FOUND, "Credit not found".to_string()));
+            }
+            Err(e) => {
+                rls.release().await;
+                return Err(internal_error(e));
+            }
+        }
+    }
 
     let out = state
         .building_certification_repo
@@ -440,12 +516,14 @@ async fn create_document(
 async fn delete_document(
     State(state): State<AppState>,
     mut rls: RlsConnection,
-    Path((_cert_id, doc_id)): Path<(Uuid, Uuid)>,
+    Path((cert_id, doc_id)): Path<(Uuid, Uuid)>,
 ) -> Result<StatusCode, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
+    ensure_certification(&state, &mut rls, cert_id).await?;
     let org_id = rls.tenant_id();
     let out = state
         .building_certification_repo
-        .delete_document(&mut **rls.conn(), org_id, doc_id)
+        .delete_document(&mut **rls.conn(), org_id, cert_id, doc_id)
         .await
         .map_err(internal_error)
         .and_then(|deleted| {
@@ -485,6 +563,8 @@ async fn create_milestone(
     Path(cert_id): Path<Uuid>,
     Json(mut input): Json<CreateCertificationMilestone>,
 ) -> Result<(StatusCode, Json<CertificationMilestone>), (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
+    ensure_certification(&state, &mut rls, cert_id).await?;
     let org_id = rls.tenant_id();
     input.certification_id = cert_id;
 
@@ -502,13 +582,15 @@ async fn create_milestone(
 async fn update_milestone(
     State(state): State<AppState>,
     mut rls: RlsConnection,
-    Path((_cert_id, milestone_id)): Path<(Uuid, Uuid)>,
+    Path((cert_id, milestone_id)): Path<(Uuid, Uuid)>,
     Json(input): Json<UpdateCertificationMilestone>,
 ) -> Result<Json<CertificationMilestone>, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
+    ensure_certification(&state, &mut rls, cert_id).await?;
     let org_id = rls.tenant_id();
     let out = state
         .building_certification_repo
-        .update_milestone(&mut **rls.conn(), org_id, milestone_id, input)
+        .update_milestone(&mut **rls.conn(), org_id, cert_id, milestone_id, input)
         .await
         .map_err(internal_error)
         .and_then(|m| {
@@ -523,12 +605,14 @@ async fn update_milestone(
 async fn delete_milestone(
     State(state): State<AppState>,
     mut rls: RlsConnection,
-    Path((_cert_id, milestone_id)): Path<(Uuid, Uuid)>,
+    Path((cert_id, milestone_id)): Path<(Uuid, Uuid)>,
 ) -> Result<StatusCode, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
+    ensure_certification(&state, &mut rls, cert_id).await?;
     let org_id = rls.tenant_id();
     let out = state
         .building_certification_repo
-        .delete_milestone(&mut **rls.conn(), org_id, milestone_id)
+        .delete_milestone(&mut **rls.conn(), org_id, cert_id, milestone_id)
         .await
         .map_err(internal_error)
         .and_then(|deleted| {
@@ -568,6 +652,8 @@ async fn create_benchmark(
     Path(cert_id): Path<Uuid>,
     Json(mut input): Json<CreateCertificationBenchmark>,
 ) -> Result<(StatusCode, Json<CertificationBenchmark>), (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
+    ensure_certification(&state, &mut rls, cert_id).await?;
     let org_id = rls.tenant_id();
     input.certification_id = cert_id;
 
@@ -607,6 +693,8 @@ async fn create_cost(
     Path(cert_id): Path<Uuid>,
     Json(mut input): Json<CreateCertificationCost>,
 ) -> Result<(StatusCode, Json<CertificationCost>), (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
+    ensure_certification(&state, &mut rls, cert_id).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     input.certification_id = cert_id;
@@ -664,6 +752,8 @@ async fn create_reminder(
     Path(cert_id): Path<Uuid>,
     Json(mut input): Json<CreateCertificationReminder>,
 ) -> Result<(StatusCode, Json<CertificationReminder>), (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
+    ensure_certification(&state, &mut rls, cert_id).await?;
     let org_id = rls.tenant_id();
     input.certification_id = cert_id;
 
@@ -696,7 +786,7 @@ async fn list_audit_logs(
             &mut **rls.conn(),
             org_id,
             cert_id,
-            query.limit.unwrap_or(100),
+            clamp_limit(query.limit, 100),
         )
         .await
         .map(Json)

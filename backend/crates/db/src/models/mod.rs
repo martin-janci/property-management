@@ -78,11 +78,11 @@ pub use equipment::{
     UpdateEquipment, UpdateMaintenance,
 };
 pub use sensor::{
-    sensor_status, sensor_type, AggregatedReading, AlertQuery, BatchSensorReadings, CreateSensor,
-    CreateSensorAlert, CreateSensorFaultCorrelation, CreateSensorReading, CreateSensorThreshold,
-    ReadingQuery, Sensor, SensorAlert, SensorDashboard, SensorFaultCorrelation, SensorQuery,
-    SensorReading, SensorSummary, SensorThreshold, SensorThresholdTemplate, SensorTypeCount,
-    SingleReading, UpdateSensor, UpdateSensorThreshold,
+    sensor_connection_type, sensor_status, sensor_type, AggregatedReading, AlertQuery,
+    BatchSensorReadings, CreateSensor, CreateSensorAlert, CreateSensorFaultCorrelation,
+    CreateSensorReading, CreateSensorThreshold, ReadingQuery, Sensor, SensorAlert, SensorDashboard,
+    SensorFaultCorrelation, SensorQuery, SensorReading, SensorSummary, SensorThreshold,
+    SensorThresholdTemplate, SensorTypeCount, SingleReading, UpdateSensor, UpdateSensorThreshold,
 };
 pub use sentiment::{
     alert_type, BuildingSentiment, CreateSentimentAlert, SentimentAlert, SentimentDashboard,
@@ -198,9 +198,10 @@ pub use financial::{
     CreateInvoice, CreateInvoiceItem, CreateTransaction, FeeFrequency, FeeSchedule,
     FinancialAccount, FinancialAccountResponse, FinancialAccountType, IncomeStatement,
     IncomeStatementLine, InitiatePaymentResponse, Invoice, InvoiceItem, InvoiceResponse,
-    InvoiceStatus, LateFeeConfig, ListInvoicesResponse, OnlinePaymentSession, Payment,
-    PaymentAllocation, PaymentMethod, PaymentResponse, PaymentStatus, RecordPayment,
-    ReminderSchedule, TransactionCategory, TransactionType, UnitCreditBalance, UnitFee,
+    InvoiceStatus, LateFeeConfig, ListInvoicesResponse, NewPaymentWebhookDeadLetter,
+    OnlinePaymentSession, Payment, PaymentAllocation, PaymentMethod, PaymentResponse,
+    PaymentStatus, PaymentWebhookDeadLetter, RecordPayment, ReminderSchedule, TransactionCategory,
+    TransactionType, UnitCreditBalance, UnitFee,
 };
 pub use granular_notification::{
     AddToGroupRequest, CategorySummary, CreateHeldNotification, DigestNotification,
@@ -324,11 +325,10 @@ pub use listing::{
 
 // Epic 16: Portal Search & Discovery
 pub use portal::{
-    alert_frequency, AddFavorite, CreatePortalUser, CreateSavedSearch, Favorite,
-    FavoriteWithListing, FavoriteWithListingRow, FavoritesResponse, MatchedListing, PortalSession,
-    PortalUser, PublicListingDetail, PublicListingQuery, PublicListingSearchResponse,
-    PublicListingSummary, SavedSearch, SavedSearchesResponse, SearchAlert, SearchCriteria,
-    SearchSuggestions, UpdatePortalUser, UpdateSavedSearch,
+    AddFavorite, CreatePortalUser, Favorite, FavoriteWithListing, FavoriteWithListingRow,
+    FavoritesResponse, MatchedListing, PortalSession, PortalUser, PublicListingDetail,
+    PublicListingQuery, PublicListingSearchResponse, PublicListingSummary, SearchAlert,
+    SearchCriteria, SearchSuggestions, UpdatePortalUser,
 };
 
 // Epic 17: Agency & Realtor Management
@@ -348,11 +348,11 @@ pub use rental::{
     rental_platform, report_status, report_type, BookingListQuery, BookingSummary,
     BookingWithGuests, BookingsResponse, CalendarBlock, CalendarEvent, CheckInReminder,
     ConnectionStatus, CreateBooking, CreateCalendarBlock, CreateGuest, CreateGuestIdDocument,
-    CreateICalFeed, CreatePlatformConnection, GenerateReport, GuestSummary, ICalFeed,
-    ICalFeedSummary, NationalityStats, OAuthCallback, PlatformConnectionDetail,
-    PlatformConnectionSummary, PlatformSyncStatus, RegisterGuest, RentalBooking, RentalGuest,
-    RentalGuestIdDocument, RentalGuestReport, RentalPlatformConnection, RentalStatistics,
-    ReportPreview, ReportSummary, SubmitReport, UnitAvailability, UpdateBooking,
+    CreateICalFeed, CreatePlatformConnection, GenerateReport, GuestListItem, GuestListQuery,
+    GuestSummary, ICalFeed, ICalFeedSummary, NationalityStats, OAuthCallback,
+    PlatformConnectionDetail, PlatformConnectionSummary, PlatformSyncStatus, RegisterGuest,
+    RentalBooking, RentalGuest, RentalGuestIdDocument, RentalGuestReport, RentalPlatformConnection,
+    RentalStatistics, ReportPreview, ReportSummary, SubmitReport, UnitAvailability, UpdateBooking,
     UpdateBookingStatus, UpdateGuest, UpdateICalFeed, UpdatePlatformConnection,
 };
 
@@ -508,11 +508,12 @@ pub mod community;
 
 pub use community::{
     CommunityComment, CommunityEvent, CommunityEventRsvp, CommunityEventWithRsvp, CommunityGroup,
-    CommunityGroupMember, CommunityGroupWithMembership, CommunityPost, CommunityPostWithAuthor,
-    CreateCommunityComment, CreateCommunityEvent, CreateCommunityGroup, CreateCommunityPost,
-    CreateMarketplaceInquiry, CreateMarketplaceItem, EventRsvpRequest, JoinGroupRequest,
-    MarketplaceInquiry, MarketplaceItem, MarketplaceItemWithSeller, PollOption,
-    UpdateCommunityEvent, UpdateCommunityGroup, UpdateCommunityPost, UpdateMarketplaceItem,
+    CommunityGroupDetail, CommunityGroupMember, CommunityGroupWithMembership, CommunityPost,
+    CommunityPostWithAuthor, CreateCommunityComment, CreateCommunityEvent, CreateCommunityGroup,
+    CreateCommunityPost, CreateMarketplaceInquiry, CreateMarketplaceItem, EventRsvpRequest,
+    JoinGroupRequest, LeaveGroupOutcome, MarketplaceInquiry, MarketplaceItem,
+    MarketplaceItemWithSeller, PollOption, UpdateCommunityEvent, UpdateCommunityGroup,
+    UpdateCommunityPost, UpdateMarketplaceItem,
 };
 
 // Epic 38: Workflow Automation
@@ -548,7 +549,8 @@ pub use integration::{
 };
 
 pub use automation::{
-    AutomationAction, AutomationLogSummary, AutomationRuleWithStats, CallWebhookConfig,
+    AutomationAction, AutomationExecution, AutomationExecutionFilter, AutomationExecutionList,
+    AutomationExecutionStats, AutomationLogSummary, AutomationRuleWithStats, CallWebhookConfig,
     ConditionTriggerConfig, CreateAutomationRule, CreateRuleFromTemplate, EventTriggerConfig,
     GenerateReportConfig, ScheduleTriggerConfig, SendEmailConfig, SendNotificationConfig,
     UpdateAutomationRule, WorkflowAutomationLog, WorkflowAutomationRule,

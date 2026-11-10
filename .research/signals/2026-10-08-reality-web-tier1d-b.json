@@ -1,0 +1,59 @@
+{
+  "generated": "2026-10-08T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable buffer below floor: claimable=27 < floor=36). Static single-segment rotating code review via ppt-dev-review skill, no compilation / no test execution (cloud runner has no toolchain). File reading + grep only. Second Tier-1d slice for reality-web today (suffix -b); all findings verified net-new against 2026-10-08-reality-web-tier1d.json (which covered whole-section English-only i18n in realtor/ + account/ route groups). These findings are in different routes (report/) and are structurally distinct (partial-i18n Slovak-hardcoded literals, a disabled-feature gap, and a ui-kit migration-debt cluster). Ran under DISPATCHER_OWNED_COMMIT=1: findings written to working tree only, no git add/commit/push, assignments.json and action-list.json untouched.",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "churn-aligned (Phase-1-equivalent git churn since 2026-10-01 shows reality-web as the hottest segment by distinct source files touched: lib/realtor-api.ts, components/import/{FeedImport,CrmConnection,SyncSchedule}.tsx, components/favorites/PriceAlerts.tsx — all under the reality-web segment root frontend/apps/reality-web/src/). No saturation: 0 open code-review-finding rows in backlog.json for this segment. Note: skill segment-map root frontend/reality-web/src/ is stale; actual path is frontend/apps/reality-web/src/ (repo moved apps under apps/).",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 3,
+  "static_only": true,
+  "cloud_landable": "mixed — finding 1 is frontend-only cloud-landable; finding 2 is cross-stack (needs a reality-server upload endpoint); finding 3 is blocked on the @ppt/ui-kit package not yet existing",
+  "signals": [
+    {
+      "id": "code-review-reality-web-report-page-hardcoded-sk-strings",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "cloud_landable": true,
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx — the report-a-problem page imports and uses next-intl (useTranslations, grep -c = 3) yet a cluster of user-facing strings is hardcoded Slovak-only and will never translate for the portal's other 5 locales (en/cs/de/pl/hu). Concretely: a local `MSG` const object at lines 29-34 (submitting: 'Odosiela sa…', errorRateLimit: 'Priveľa nahlásení z tohto zariadenia. Skúste to o chvíľu znova.', errorNotFound, errorGeneric and a no-listing error), the textarea placeholder at line 304 ('Opíšte, prečo nahlasujete tento inzerát…'), the submit-button label at line 426 ('Odoslať nahlásenie'), and the attachments label 'Prílohy (čoskoro)'. An English/Czech/German/Polish/Hungarian reporter on e.g. /en/report sees Slovak text mid-page. Fix (cloud-landable, frontend-only): move the MSG object + inline literals to t(...) keys under a 'report' namespace and add the keys to messages/{en,sk,cs,de,pl,hu}.json. No backend/DB work.",
+        "Net-new: the existing 2026-10-08-reality-web-tier1d.json findings cover whole-section ENGLISH-only pages under realtor/ and account/ (zero next-intl import); this finding is a different route (report/) with partial i18n already wired and SLOVAK-hardcoded leftovers — a distinct, independently PR-able unit."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-report-attachments-disabled-3017",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "feature-gap",
+      "cloud_landable": false,
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx:310-340 — the attachments control on the public report-a-problem flow is intentionally disabled ('Prílohy (čoskoro)' / aria-disabled, no file input) because reality-server's POST /api/v1/reports accepts `attachments` only as pre-uploaded http(s) URLs and no upload endpoint exists yet. Comment (#3017) documents that the previous control collected File objects handleSubmit never transmitted, so reporters saw a success screen while evidence was silently dropped. Durable backlog signal: the report flow cannot carry evidence until the upload pipeline lands. Resolution is cross-stack — needs a reality-server presigned-upload endpoint, then wire the returned URLs into `attachments` (frontend). Tracked as GitHub #3017; confidence high (traced to the handler + the server contract comment).",
+        "Net-new vs 2026-10-08-reality-web-tier1d.json (i18n-only findings)."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-ui-kit-migration-debt",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "cloud_landable": false,
+      "evidence": [
+        "Systemic hand-rolled-control debt across reality-web pages, each with an explicit 'replace with @ppt/ui-kit/<X> once available' TODO: app/[locale]/price-map/page.tsx:24,25,141,165 (ChipGroup, SegmentedControl), app/[locale]/journal/page.tsx:18 (Card), app/[locale]/profile/page.tsx:37-39,367,461 (SegmentedControl, ListingCard, StatusPill), app/[locale]/report/page.tsx:15,332 (RadioCards, FileUpload), app/[locale]/account/listings/[id]/edit/page.tsx:18-20,342 (Stepper, FileUpload, RadioCards). The shared @ppt/ui-kit components these reference do not exist yet, so each page re-implements steppers/segmented-controls/cards/status-pills inline. Durable refactor-epic signal: build the missing @ppt/ui-kit primitives, then migrate these ~6 pages. Blocked on the ui-kit package (not cleanly cloud-landable as a single frontend PR).",
+        "Net-new vs 2026-10-08-reality-web-tier1d.json (i18n-only findings)."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

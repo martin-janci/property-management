@@ -57,7 +57,8 @@ impl FacilityRepository {
                 max_advance_days, min_advance_hours, available_from, available_to,
                 available_days, rules, hourly_fee, deposit_amount
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+            -- `facility_type` is a Postgres enum; a text bind needs an explicit cast.
+            VALUES ($1, $2, $3::facility_type, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
             RETURNING {FACILITY_RETURNING}
             "#
         )))

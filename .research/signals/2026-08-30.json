@@ -1,0 +1,258 @@
+{
+  "run_iso": "2026-08-30T12:41:00Z",
+  "trigger_payload": "buffer-low: claimable=6/72 — all remaining backlog is mobile-native/KMP (unlandable in cloud); need landable vectors",
+  "signals": [
+    {
+      "id": "code-review-api-handlers-compliance-superadmin-exact-match",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 api-handlers)",
+      "score_delta": 1,
+      "evidence": "compliance.rs:22-30 require_super_admin exact-matches TenantRole::SuperAdmin — locks out PlatformAdmin from all 10 platform-compliance handlers, breaking the SuperAdmin|PlatformAdmin idiom used everywhere else (rls_context.rs, rls_connection.rs, auth.rs, emergency/shared.rs). Fails CLOSED → over-restriction, not disclosure.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/routes/compliance.rs",
+        "backend/crates/common/src/tenant.rs",
+        "backend/crates/api-core/src/middleware/authorization.rs"
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-not-wired",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 mobile-native-kmp)",
+      "score_delta": 2,
+      "evidence": "Navigation.kt:493 wires CreateListingScreen onSubmit as NotImplementedError stub — reachable from AgencyHubScreen+MyListingsScreen; PortalListingsRepository has no create method though backend POST /api/v1/my/listings exists (portal_listings.rs:207).",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt",
+        "backend/servers/reality-server/src/routes/portal_listings.rs"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-event-name-mismatch",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 ppt-web-core)",
+      "score_delta": 2,
+      "evidence": "WebSocketContext.tsx:33-40 eventToQueryKeys keys on entity:* names, api-server ONLY emits dot-namespaced domain.action names (announcement.published, vote.*, message.created, notification.created). Exact-string Map dispatch → 100% dead cache invalidation. Independent 2nd root cause from ws-query-invalidation-dead.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx",
+        "frontend/apps/ppt-web/src/lib/websocket.ts",
+        "backend/servers/api-server/src/routes/ws_notifications.rs"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-api-onunauthorized-unwired",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 ppt-web-core)",
+      "score_delta": 1,
+      "evidence": "lib/api.ts:213-221 onUnauthorized 401 branch guarded by callback set only via configureApiClient; only call site (AuthContext.tsx:337) never passes it — callback permanently undefined, 401 branch dead. No refresh-on-401 retry either.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-alert-drainer-i18n-english-only",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 reality-server services sweep)",
+      "score_delta": 1,
+      "evidence": "search_alert_drainer.rs:260-273 composes English-only subject/body despite recipient_locale being threaded to the AlertNotification struct. Latent (only LogEmail stub wired today) but ships English to sk/cs/de the moment a real transport is injected. Localized pattern exists at email.rs:102-125.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/reality-server/src/services/search_alert_drainer.rs",
+        "backend/servers/reality-server/src/services/email.rs"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-sso-introspect-negcache-poison",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 reality-server sso sweep)",
+      "score_delta": 2,
+      "evidence": "sso.rs:759-766 caches active=false when PM introspect returns non-2xx (transport/upstream error) → poisons 60s TTL cache with false-negative for a token whose real status is UNKNOWN. Subsequent bearer-token calls hit the poisoned entry and are denied. Fails CLOSED → availability defect.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs",
+        "backend/servers/reality-server/src/state.rs"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-sso-per-call-client-no-timeout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 reality-server sso sweep)",
+      "score_delta": 1,
+      "evidence": "exchange_pm_token/get_user_info/introspect_pm_token each build a fresh reqwest::Client::new() per request — no pooling and NO request timeout (contrast PmApiClient with .timeout()). A hung PM endpoint stalls SSO helpers indefinitely, compounding the paired negcache-poison outage scenario.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs",
+        "backend/servers/reality-server/src/state.rs"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-bytelen-charcount-validation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 reality-server)",
+      "score_delta": 2,
+      "evidence": "All 4 public Reality Portal write paths (inquiries.rs, articles.rs, agent_reviews.rs, reports.rs) measure str::len() bytes but error messages say 'characters'. Slovak/Czech/German accented chars are 2 bytes/char; sk message of ~2500 chars trips a 5000-'char' cap. Over-rejects primary-locale input.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/reality-server/src/routes/inquiries.rs",
+        "backend/servers/reality-server/src/routes/articles.rs",
+        "backend/servers/reality-server/src/routes/agent_reviews.rs",
+        "backend/servers/reality-server/src/routes/reports.rs"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-report-contact-unvalidated",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 reality-server)",
+      "score_delta": 1,
+      "evidence": "submit_report (POST /api/v1/reports, optionally-authenticated) binds reporter_email + reporter_phone into INSERT (:279-280) with NO length or format validation. Inconsistent with inquiries.rs which caps email at 320/phone at 32 and runs validate_contact. Rate limiter throttles volume but a single permitted request persists unbounded contact strings.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/reality-server/src/routes/reports.rs"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — all 9 signals are code-review-finding (analytical), not on the Phase 5 allowlist (screen-map-drift, screen-map-orphan, fixme-in-merged-code, lockfile-drift, stalled-review)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-30.md && head -1 matches ^# 2026-08-30$",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json changed vs HEAD (cursors/seen_signals)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | length == unique|length'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no re-emitted non-cumulative signals with score_delta != 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq '[.items[] | select(.score > 8)] | length == 0'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "1 stale-open item decayed correctly",
+      "observed": "1 of 1",
+      "expected": "1 of 1"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "no promotions",
+      "expected": "no promotions required"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "new plans <= 2",
+      "observed": "0",
+      "expected": "<= 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths staged",
+      "observed": "0 offenders",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames",
+      "observed": "0 hits",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase-failure inconsistency",
+      "observed": "no failed phases",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no prior plan silently deleted",
+      "observed": "0 missing",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "_archive/ count >= HEAD count",
+      "observed": "9 >= 9",
+      "expected": ">=  "
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap + idempotency",
+      "observed": "0 actions (no candidate)",
+      "expected": "<= 3 total"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped — pm_cursor unchanged",
+      "observed": "pm_cursor.next_index 4 == 4",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot token in staged diff",
+      "observed": "0 hits",
+      "expected": "0"
+    }
+  ]
+}

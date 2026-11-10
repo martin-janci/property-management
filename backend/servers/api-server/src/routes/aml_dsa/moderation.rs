@@ -1,7 +1,7 @@
 //! Story 67.4: Content Moderation Dashboard endpoints.
 
 use crate::state::AppState;
-use api_core::extractors::AuthUser;
+use api_core::extractors::{AuthUser, TenantAuthUser};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -9,8 +9,8 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use db::models::compliance::{
-    CreateModerationCase, ModeratedContentType, ModerationActionType, ModerationStatus,
-    TakeModerationAction, ViolationType,
+    CreateModerationCase, ModeratedContentType, ModerationActionType, ModerationCase,
+    ModerationStatus, TakeModerationAction, ViolationType,
 };
 use db::models::AuditAction;
 use serde::{Deserialize, Serialize};
@@ -49,6 +49,53 @@ pub struct ModerationCaseResponse {
     pub age_hours: f64,
 }
 
+impl ModerationCaseResponse {
+    /// Build a response DTO from a persisted case.
+    ///
+    /// Centralizes the `age_hours` computation and the content-owner /
+    /// assignee presentation fields that were previously duplicated verbatim
+    /// across every moderation handler. `now` is passed in (rather than read
+    /// from `Utc::now()` internally) so callers that map a whole page share a
+    /// single timestamp and so the age math is unit-testable.
+    ///
+    /// Behavior is identical to the former inline construction: `owner_name`
+    /// and `previous_violations` populate `content_owner`, `assigned_to_name`
+    /// is passed through as-is, and `age_hours` is minutes-since-`created_at`
+    /// divided by 60.
+    fn from_case(
+        case: ModerationCase,
+        now: DateTime<Utc>,
+        owner_name: &str,
+        previous_violations: i32,
+        assigned_to_name: Option<String>,
+    ) -> Self {
+        let age_hours = (now - case.created_at).num_minutes() as f64 / 60.0;
+        Self {
+            id: case.id,
+            content_type: case.content_type,
+            content_id: case.content_id,
+            content_preview: case.content_preview,
+            content_owner: ContentOwnerInfo {
+                user_id: case.content_owner_id,
+                name: owner_name.to_string(),
+                previous_violations,
+            },
+            report_source: case.report_source.to_string(),
+            violation_type: case.violation_type,
+            report_reason: case.report_reason,
+            status: case.status,
+            priority: case.priority,
+            assigned_to_name,
+            decision: case.decision,
+            decision_rationale: case.decision_rationale,
+            appeal_filed: case.appeal_filed,
+            appeal_reason: case.appeal_reason,
+            created_at: case.created_at,
+            age_hours,
+        }
+    }
+}
+
 /// Moderation queue query parameters.
 #[derive(Debug, Deserialize)]
 pub struct ModerationQueueQuery {
@@ -58,6 +105,11 @@ pub struct ModerationQueueQuery {
     pub priority: Option<i32>,
     pub assigned_to: Option<Uuid>,
     pub unassigned_only: Option<bool>,
+    /// When true, restrict to still-open cases that have breached the 24h SLA
+    /// (`status IN (pending, under_review) AND created_at < NOW() - 24h`).
+    /// Applied server-side so the result matches `overdue_count` in
+    /// `get_moderation_queue_stats` instead of narrowing a truncated page.
+    pub overdue: Option<bool>,
     pub sort_by: Option<String>,
     pub sort_order: Option<String>,
     pub limit: Option<i64>,
@@ -67,7 +119,7 @@ pub struct ModerationQueueQuery {
 /// Get moderation queue.
 pub(super) async fn get_moderation_queue(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(params): Query<ModerationQueueQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
     require_moderator_role(&user)?;
@@ -80,6 +132,7 @@ pub(super) async fn get_moderation_queue(
     let limit = clamp_limit(params.limit);
     let offset = sanitize_offset(params.offset);
     let unassigned_only = params.unassigned_only.unwrap_or(false);
+    let overdue_only = params.overdue.unwrap_or(false);
 
     let (cases, total) = state
         .compliance_repo
@@ -91,6 +144,7 @@ pub(super) async fn get_moderation_queue(
             params.priority,
             params.assigned_to,
             unassigned_only,
+            overdue_only,
             params.sort_by.as_deref(),
             params.sort_order.as_deref(),
             limit,
@@ -108,32 +162,9 @@ pub(super) async fn get_moderation_queue(
     let now = Utc::now();
     let responses: Vec<ModerationCaseResponse> = cases
         .into_iter()
-        .map(|c| {
-            let age_hours = (now - c.created_at).num_minutes() as f64 / 60.0;
-            ModerationCaseResponse {
-                id: c.id,
-                content_type: c.content_type,
-                content_id: c.content_id,
-                content_preview: c.content_preview,
-                content_owner: ContentOwnerInfo {
-                    user_id: c.content_owner_id,
-                    name: "User".to_string(), // Would fetch from user repo
-                    previous_violations: 0,   // Would calculate from repo
-                },
-                report_source: c.report_source.to_string(),
-                violation_type: c.violation_type,
-                report_reason: c.report_reason,
-                status: c.status,
-                priority: c.priority,
-                assigned_to_name: None, // Would fetch from user repo
-                decision: c.decision,
-                decision_rationale: c.decision_rationale,
-                appeal_filed: c.appeal_filed,
-                appeal_reason: c.appeal_reason,
-                created_at: c.created_at,
-                age_hours,
-            }
-        })
+        // name / previous_violations / assigned_to_name would be enriched from
+        // the user repo; kept as placeholders here as in the original handler.
+        .map(|c| ModerationCaseResponse::from_case(c, now, "User", 0, None))
         .collect();
 
     Ok(Json(serde_json::json!({
@@ -165,7 +196,7 @@ pub struct ModerationQueueStatsResponse {
 /// Get moderation queue statistics.
 pub(super) async fn get_moderation_stats(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
 ) -> Result<Json<ModerationQueueStatsResponse>, (StatusCode, String)> {
     require_moderator_role(&user)?;
 
@@ -213,7 +244,7 @@ pub(super) async fn get_moderation_stats(
 /// Get a specific moderation case.
 pub(super) async fn get_moderation_case(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
     require_moderator_role(&user)?;
@@ -243,32 +274,13 @@ pub(super) async fn get_moderation_case(
         .await
         .unwrap_or(0);
 
-    let now = Utc::now();
-    let age_hours = (now - case.created_at).num_minutes() as f64 / 60.0;
-
-    Ok(Json(ModerationCaseResponse {
-        id: case.id,
-        content_type: case.content_type,
-        content_id: case.content_id,
-        content_preview: case.content_preview,
-        content_owner: ContentOwnerInfo {
-            user_id: case.content_owner_id,
-            name: "User".to_string(),
-            previous_violations: violation_count,
-        },
-        report_source: case.report_source.to_string(),
-        violation_type: case.violation_type,
-        report_reason: case.report_reason,
-        status: case.status,
-        priority: case.priority,
-        assigned_to_name: None,
-        decision: case.decision,
-        decision_rationale: case.decision_rationale,
-        appeal_filed: case.appeal_filed,
-        appeal_reason: case.appeal_reason,
-        created_at: case.created_at,
-        age_hours,
-    }))
+    Ok(Json(ModerationCaseResponse::from_case(
+        case,
+        Utc::now(),
+        "User",
+        violation_count,
+        None,
+    )))
 }
 
 /// Assign case request.
@@ -280,7 +292,7 @@ pub struct AssignCaseRequest {
 /// Assign a moderation case.
 pub(super) async fn assign_moderation_case(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<AssignCaseRequest>,
 ) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
@@ -312,40 +324,78 @@ pub(super) async fn assign_moderation_case(
         .compliance_repo
         .assign_moderation_case(id, org_id, assignee)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to assign moderation case: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to assign case".to_string(),
-            )
+        .map_err(|e| match e {
+            // The UPDATE ... RETURNING matches no row for an unknown id OR a
+            // case owned by another tenant (the `organization_id` predicate
+            // scopes it) — a routine not-found, not a server fault, so surface
+            // 404 rather than 500 and skip the error-level log/alert noise.
+            sqlx::Error::RowNotFound => (
+                StatusCode::NOT_FOUND,
+                "Moderation case not found".to_string(),
+            ),
+            other => {
+                tracing::error!("Failed to assign moderation case: {}", other);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to assign case".to_string(),
+                )
+            }
         })?;
 
-    let now = Utc::now();
-    let age_hours = (now - case.created_at).num_minutes() as f64 / 60.0;
+    Ok(Json(ModerationCaseResponse::from_case(
+        case,
+        Utc::now(),
+        "User",
+        0,
+        Some("Assigned".to_string()),
+    )))
+}
 
-    Ok(Json(ModerationCaseResponse {
-        id: case.id,
-        content_type: case.content_type,
-        content_id: case.content_id,
-        content_preview: case.content_preview,
-        content_owner: ContentOwnerInfo {
-            user_id: case.content_owner_id,
-            name: "User".to_string(),
-            previous_violations: 0,
-        },
-        report_source: case.report_source.to_string(),
-        violation_type: case.violation_type,
-        report_reason: case.report_reason,
-        status: case.status,
-        priority: case.priority,
-        assigned_to_name: Some("Assigned".to_string()),
-        decision: case.decision,
-        decision_rationale: case.decision_rationale,
-        appeal_filed: case.appeal_filed,
-        appeal_reason: case.appeal_reason,
-        created_at: case.created_at,
-        age_hours,
-    }))
+/// Unassign a moderation case (clear its current assignee).
+///
+/// The inverse of [`assign_moderation_case`]; takes no body. Scoped to the
+/// caller's organization so a case in another tenant is not mutated. Mirrors
+/// `assign_moderation_case`'s error mapping: an unknown/cross-org id (the repo's
+/// `RowNotFound`) surfaces as a `404 Not Found`, other repo errors as 500.
+pub(super) async fn unassign_moderation_case(
+    State(state): State<AppState>,
+    TenantAuthUser(user): TenantAuthUser,
+    Path(id): Path<Uuid>,
+) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
+    require_moderator_role(&user)?;
+
+    let org_id = user.tenant_id.ok_or((
+        StatusCode::BAD_REQUEST,
+        "Organization context required".to_string(),
+    ))?;
+
+    let case = state
+        .compliance_repo
+        .unassign_moderation_case(id, org_id)
+        .await
+        .map_err(|e| match e {
+            // See `assign_moderation_case`: an unknown id or a cross-org case is
+            // a routine not-found (404), not a server fault (500).
+            sqlx::Error::RowNotFound => (
+                StatusCode::NOT_FOUND,
+                "Moderation case not found".to_string(),
+            ),
+            other => {
+                tracing::error!("Failed to unassign moderation case: {}", other);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to unassign case".to_string(),
+                )
+            }
+        })?;
+
+    Ok(Json(ModerationCaseResponse::from_case(
+        case,
+        Utc::now(),
+        "User",
+        0,
+        None,
+    )))
 }
 
 /// Take moderation action request.
@@ -359,7 +409,7 @@ pub struct TakeModerationActionRequest {
 /// Take action on a moderation case.
 pub(super) async fn take_moderation_action(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<TakeModerationActionRequest>,
 ) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
@@ -411,32 +461,13 @@ pub(super) async fn take_moderation_action(
     )
     .await;
 
-    let now = Utc::now();
-    let age_hours = (now - case.created_at).num_minutes() as f64 / 60.0;
-
-    Ok(Json(ModerationCaseResponse {
-        id: case.id,
-        content_type: case.content_type,
-        content_id: case.content_id,
-        content_preview: case.content_preview,
-        content_owner: ContentOwnerInfo {
-            user_id: case.content_owner_id,
-            name: "User".to_string(),
-            previous_violations: 0,
-        },
-        report_source: case.report_source.to_string(),
-        violation_type: case.violation_type,
-        report_reason: case.report_reason,
-        status: case.status,
-        priority: case.priority,
-        assigned_to_name: None,
-        decision: case.decision,
-        decision_rationale: case.decision_rationale,
-        appeal_filed: case.appeal_filed,
-        appeal_reason: case.appeal_reason,
-        created_at: case.created_at,
-        age_hours,
-    }))
+    Ok(Json(ModerationCaseResponse::from_case(
+        case,
+        Utc::now(),
+        "User",
+        0,
+        None,
+    )))
 }
 
 /// File appeal request.
@@ -492,6 +523,22 @@ pub(super) async fn file_appeal(
         ));
     }
 
+    // Status guard: once an appeal has reached a final decision
+    // (approved / rejected), the right to appeal is spent. Without this
+    // guard the owner could re-POST and `file_appeal` would unconditionally
+    // reset the case back to `appealed`, erasing the final decision and
+    // re-opening a closed case indefinitely. A spent appeal is a conflict with
+    // the case's terminal state, so refuse with 409.
+    if matches!(
+        existing.status,
+        ModerationStatus::AppealApproved | ModerationStatus::AppealRejected
+    ) {
+        return Err((
+            StatusCode::CONFLICT,
+            "This appeal already has a final decision and cannot be re-filed".to_string(),
+        ));
+    }
+
     let case = state
         .compliance_repo
         .file_appeal(id, org_id, &req.reason)
@@ -510,32 +557,13 @@ pub(super) async fn file_appeal(
         "Appeal filed"
     );
 
-    let now = Utc::now();
-    let age_hours = (now - case.created_at).num_minutes() as f64 / 60.0;
-
-    Ok(Json(ModerationCaseResponse {
-        id: case.id,
-        content_type: case.content_type,
-        content_id: case.content_id,
-        content_preview: case.content_preview,
-        content_owner: ContentOwnerInfo {
-            user_id: case.content_owner_id,
-            name: "User".to_string(),
-            previous_violations: 0,
-        },
-        report_source: case.report_source.to_string(),
-        violation_type: case.violation_type,
-        report_reason: case.report_reason,
-        status: case.status,
-        priority: case.priority,
-        assigned_to_name: None,
-        decision: case.decision,
-        decision_rationale: case.decision_rationale,
-        appeal_filed: case.appeal_filed,
-        appeal_reason: case.appeal_reason,
-        created_at: case.created_at,
-        age_hours,
-    }))
+    Ok(Json(ModerationCaseResponse::from_case(
+        case,
+        Utc::now(),
+        "User",
+        0,
+        None,
+    )))
 }
 
 /// Decide appeal request.
@@ -548,7 +576,7 @@ pub struct DecideAppealRequest {
 /// Decide on an appeal.
 pub(super) async fn decide_appeal(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<DecideAppealRequest>,
 ) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
@@ -558,6 +586,13 @@ pub(super) async fn decide_appeal(
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
     ))?;
+
+    // Reject unknown decisions (typo/casing) up front: the repo maps anything
+    // other than "upheld" to a rejection, so validation here prevents a silent,
+    // wrong appeal outcome. Also cap the rationale free-text length.
+    validate_appeal_decision(&req.decision).map_err(|e| (StatusCode::BAD_REQUEST, e))?;
+    validate_text_field(&req.rationale, MAX_RATIONALE_LEN, "rationale")
+        .map_err(|e| (StatusCode::BAD_REQUEST, e))?;
 
     let case = state
         .compliance_repo
@@ -586,32 +621,13 @@ pub(super) async fn decide_appeal(
     )
     .await;
 
-    let now = Utc::now();
-    let age_hours = (now - case.created_at).num_minutes() as f64 / 60.0;
-
-    Ok(Json(ModerationCaseResponse {
-        id: case.id,
-        content_type: case.content_type,
-        content_id: case.content_id,
-        content_preview: case.content_preview,
-        content_owner: ContentOwnerInfo {
-            user_id: case.content_owner_id,
-            name: "User".to_string(),
-            previous_violations: 0,
-        },
-        report_source: case.report_source.to_string(),
-        violation_type: case.violation_type,
-        report_reason: case.report_reason,
-        status: case.status,
-        priority: case.priority,
-        assigned_to_name: None,
-        decision: case.decision,
-        decision_rationale: case.decision_rationale,
-        appeal_filed: case.appeal_filed,
-        appeal_reason: case.appeal_reason,
-        created_at: case.created_at,
-        age_hours,
-    }))
+    Ok(Json(ModerationCaseResponse::from_case(
+        case,
+        Utc::now(),
+        "User",
+        0,
+        None,
+    )))
 }
 
 /// Report content request.
@@ -629,6 +645,12 @@ pub(super) async fn report_content(
     user: AuthUser,
     Json(req): Json<ReportContentRequest>,
 ) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
+    // This endpoint is open to every authenticated user, so an unbounded
+    // `reason` lets any caller persist MB-scale rows. Cap the free-text length
+    // before touching the database (fail fast on oversized input).
+    validate_optional_text_field(req.reason.as_deref(), MAX_REPORT_REASON_LEN, "reason")
+        .map_err(|e| (StatusCode::BAD_REQUEST, e))?;
+
     // Any authenticated user can report content, but the case must be stored
     // against the *real* content owner — a random placeholder corrupts
     // violation-history and owner-notification downstream (PAP-60/PAP-43 — F7).
@@ -669,32 +691,13 @@ pub(super) async fn report_content(
             )
         })?;
 
-    let now = Utc::now();
-    let age_hours = (now - case.created_at).num_minutes() as f64 / 60.0;
-
-    Ok(Json(ModerationCaseResponse {
-        id: case.id,
-        content_type: case.content_type,
-        content_id: case.content_id,
-        content_preview: case.content_preview,
-        content_owner: ContentOwnerInfo {
-            user_id: case.content_owner_id,
-            name: "Unknown".to_string(),
-            previous_violations: 0,
-        },
-        report_source: case.report_source.to_string(),
-        violation_type: case.violation_type,
-        report_reason: case.report_reason,
-        status: case.status,
-        priority: case.priority,
-        assigned_to_name: None,
-        decision: case.decision,
-        decision_rationale: case.decision_rationale,
-        appeal_filed: case.appeal_filed,
-        appeal_reason: case.appeal_reason,
-        created_at: case.created_at,
-        age_hours,
-    }))
+    Ok(Json(ModerationCaseResponse::from_case(
+        case,
+        Utc::now(),
+        "Unknown",
+        0,
+        None,
+    )))
 }
 
 /// Action template response.
@@ -711,7 +714,7 @@ pub struct ActionTemplateResponse {
 /// Get available action templates.
 pub(super) async fn get_action_templates(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
 ) -> Result<Json<Vec<ActionTemplateResponse>>, (StatusCode, String)> {
     require_moderator_role(&user)?;
 
@@ -740,4 +743,113 @@ pub(super) async fn get_action_templates(
         .collect();
 
     Ok(Json(responses))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::Duration;
+    use db::models::compliance::ReportSource;
+
+    /// A fully-populated case fixture. Individual tests override just the
+    /// fields they exercise so the assertions stay focused.
+    fn sample_case() -> ModerationCase {
+        let now = Utc::now();
+        ModerationCase {
+            id: Uuid::from_u128(1),
+            content_type: ModeratedContentType::Listing,
+            content_id: Uuid::from_u128(2),
+            content_preview: Some("preview".to_string()),
+            content_owner_id: Uuid::from_u128(3),
+            organization_id: Some(Uuid::from_u128(4)),
+            report_source: ReportSource::User,
+            reported_by: Some(Uuid::from_u128(5)),
+            automated_confidence: None,
+            violation_type: Some(ViolationType::Spam),
+            report_reason: Some("looks like spam".to_string()),
+            status: ModerationStatus::Pending,
+            priority: 3,
+            assigned_to: None,
+            assigned_at: None,
+            decision: None,
+            decision_rationale: None,
+            action_template_id: None,
+            decided_by: None,
+            decided_at: None,
+            appeal_filed: false,
+            appeal_reason: None,
+            appeal_filed_at: None,
+            appeal_decision: None,
+            appeal_decided_by: None,
+            appeal_decided_at: None,
+            created_at: now,
+            updated_at: now,
+        }
+    }
+
+    #[test]
+    fn from_case_computes_age_in_hours() {
+        let now = Utc::now();
+        let mut case = sample_case();
+        case.created_at = now - Duration::hours(2);
+        let resp = ModerationCaseResponse::from_case(case, now, "User", 0, None);
+        // 120 minutes / 60 == 2.0 hours.
+        assert!((resp.age_hours - 2.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn from_case_age_uses_minute_granularity() {
+        let now = Utc::now();
+        let mut case = sample_case();
+        case.created_at = now - Duration::minutes(90);
+        let resp = ModerationCaseResponse::from_case(case, now, "User", 0, None);
+        assert!((resp.age_hours - 1.5).abs() < 1e-9);
+    }
+
+    #[test]
+    fn from_case_maps_owner_name_and_violations() {
+        let now = Utc::now();
+        let resp = ModerationCaseResponse::from_case(sample_case(), now, "User", 7, None);
+        assert_eq!(resp.content_owner.name, "User");
+        assert_eq!(resp.content_owner.previous_violations, 7);
+        assert_eq!(resp.content_owner.user_id, Uuid::from_u128(3));
+    }
+
+    #[test]
+    fn from_case_preserves_unknown_owner_label() {
+        // report_content presents the owner as "Unknown"; the other handlers
+        // present "User". Lock that distinction.
+        let now = Utc::now();
+        let resp = ModerationCaseResponse::from_case(sample_case(), now, "Unknown", 0, None);
+        assert_eq!(resp.content_owner.name, "Unknown");
+    }
+
+    #[test]
+    fn from_case_passes_assigned_to_name_through() {
+        let now = Utc::now();
+        let assigned = ModerationCaseResponse::from_case(
+            sample_case(),
+            now,
+            "User",
+            0,
+            Some("Assigned".to_string()),
+        );
+        assert_eq!(assigned.assigned_to_name.as_deref(), Some("Assigned"));
+
+        let unassigned = ModerationCaseResponse::from_case(sample_case(), now, "User", 0, None);
+        assert_eq!(unassigned.assigned_to_name, None);
+    }
+
+    #[test]
+    fn from_case_passes_through_core_fields() {
+        let now = Utc::now();
+        let resp = ModerationCaseResponse::from_case(sample_case(), now, "User", 0, None);
+        assert_eq!(resp.id, Uuid::from_u128(1));
+        assert_eq!(resp.content_id, Uuid::from_u128(2));
+        assert_eq!(resp.content_preview.as_deref(), Some("preview"));
+        assert_eq!(resp.report_source, "user"); // ReportSource::User stringified
+        assert_eq!(resp.priority, 3);
+        assert_eq!(resp.report_reason.as_deref(), Some("looks like spam"));
+        assert!(!resp.appeal_filed);
+    }
 }

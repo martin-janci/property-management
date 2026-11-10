@@ -69,12 +69,7 @@ pub async fn get_my_profile(
         .reality_portal_repo
         .get_realtor_profile(principal.user_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get profile: {}", e),
-            )
-        })?
+        .map_err(|e| crate::util::errors::db_error("get realtor profile", e))?
         .ok_or_else(|| {
             (
                 axum::http::StatusCode::NOT_FOUND,
@@ -104,12 +99,7 @@ pub async fn get_profile(
         .reality_portal_repo
         .get_realtor_profile(user_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get profile: {}", e),
-            )
-        })?
+        .map_err(|e| crate::util::errors::db_error("get realtor profile", e))?
         .ok_or_else(|| {
             (
                 axum::http::StatusCode::NOT_FOUND,
@@ -136,27 +126,28 @@ pub async fn create_profile(
     State(state): State<AppState>,
     principal: RequestPrincipal,
     Json(data): Json<CreateRealtorProfile>,
-) -> Result<Json<ProfileResponse>, (axum::http::StatusCode, String)> {
+) -> Result<(axum::http::StatusCode, Json<ProfileResponse>), (axum::http::StatusCode, String)> {
     let profile = state
         .reality_portal_repo
         .upsert_realtor_profile(principal.user_id, data)
         .await
         .map_err(|e| {
-            let error_str = e.to_string();
-            if error_str.contains("already exists") {
-                (
-                    axum::http::StatusCode::BAD_REQUEST,
-                    "Profile already exists".to_string(),
-                )
-            } else {
-                (
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Failed to create profile: {}", e),
-                )
-            }
+            // A unique-constraint violation (e.g. duplicate license number)
+            // means the profile conflicts with an existing one. Classify by the
+            // typed SQLSTATE (23505), not the message text.
+            crate::util::errors::db_error_or(
+                &e,
+                "create realtor profile",
+                crate::util::errors::DbErrorClass::UniqueViolation,
+                axum::http::StatusCode::BAD_REQUEST,
+                "Profile already exists",
+            )
         })?;
 
-    Ok(Json(ProfileResponse { profile }))
+    Ok((
+        axum::http::StatusCode::CREATED,
+        Json(ProfileResponse { profile }),
+    ))
 }
 
 /// Update realtor profile.
@@ -181,18 +172,17 @@ pub async fn update_profile(
         .update_realtor_profile(principal.user_id, data)
         .await
         .map_err(|e| {
-            let error_str = e.to_string();
-            if error_str.contains("not found") {
-                (
-                    axum::http::StatusCode::NOT_FOUND,
-                    "Profile not found".to_string(),
-                )
-            } else {
-                (
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Failed to update profile: {}", e),
-                )
-            }
+            // `fetch_one` on the UPDATE yields `RowNotFound` when the caller has
+            // no profile yet. Classify by the sqlx variant, not message text —
+            // the old `contains("not found")` never matched `RowNotFound`'s
+            // "no rows returned …" text, so this path silently 500'd.
+            crate::util::errors::db_error_or(
+                &e,
+                "update realtor profile",
+                crate::util::errors::DbErrorClass::NotFound,
+                axum::http::StatusCode::NOT_FOUND,
+                "Profile not found",
+            )
         })?;
 
     Ok(Json(ProfileResponse { profile }))
@@ -215,7 +205,7 @@ pub async fn list_inquiries(
     Query(query): Query<InquiriesQuery>,
 ) -> Result<Json<InquiriesResponse>, (axum::http::StatusCode, String)> {
     let limit = query.limit.unwrap_or(20).clamp(1, 100);
-    let offset = query.offset.unwrap_or(0).max(0);
+    let offset = crate::util::clamp_offset_i32(query.offset);
 
     // Run the page query and the matching COUNT in parallel — the count must
     // use the same status filter as the page so clients can compute
@@ -234,12 +224,7 @@ pub async fn list_inquiries(
             .reality_portal_repo
             .count_realtor_inquiries(principal.user_id, status_filter),
     )
-    .map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to list inquiries: {}", e),
-        )
-    })?;
+    .map_err(|e| crate::util::errors::db_error("list realtor inquiries", e))?;
 
     Ok(Json(InquiriesResponse { inquiries, total }))
 }
@@ -267,12 +252,7 @@ pub async fn mark_inquiry_read(
         .reality_portal_repo
         .mark_inquiry_read_for_realtor(id, principal.user_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to mark inquiry read: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("mark inquiry read", e))?;
 
     if !updated {
         return Err((
@@ -302,17 +282,12 @@ pub async fn respond_to_inquiry(
     principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(data): Json<SendInquiryMessage>,
-) -> Result<Json<InquiryMessage>, (axum::http::StatusCode, String)> {
+) -> Result<(axum::http::StatusCode, Json<InquiryMessage>), (axum::http::StatusCode, String)> {
     let message = state
         .reality_portal_repo
         .respond_to_inquiry(id, principal.user_id, &data.message)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to respond to inquiry: {}", e),
-            )
-        })?
+        .map_err(|e| crate::util::errors::db_error("respond to inquiry", e))?
         .ok_or_else(|| {
             (
                 axum::http::StatusCode::NOT_FOUND,
@@ -320,5 +295,5 @@ pub async fn respond_to_inquiry(
             )
         })?;
 
-    Ok(Json(message))
+    Ok((axum::http::StatusCode::CREATED, Json(message)))
 }

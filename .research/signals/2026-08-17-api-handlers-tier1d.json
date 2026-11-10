@@ -1,0 +1,55 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-17",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "dispatcher-tier1d demand-driven (claimable landable backlog starved; all remaining open code-review-finding rows in backlog.json are mobile-native/KMP = structurally unlandable in the cloud runner). Excluded mobile-native-kmp per run constraint. Segment chosen churn-aligned (skill priority 1): state.hotspot_history top churn is dominated by api-server route files (integrations.rs churn 4327, organizations.rs 4018, documents.rs 3553, ai.rs 3142, platform_admin.rs 2762) which all map to the api-handlers segment. Disjoint from the other tier1d runs already emitted today (ppt-web-core, reality-server, reality-web) — api-handlers is untouched today and last reviewed 2026-08-15. Backlog saturation check: 0 open code-review-finding rows for api-handlers (the 5 open findings in backlog.json are ALL mobile-native-kmp), so not saturated. Note: skill segment-map path is stale (backend/api-server/src/handlers/); actual layout is backend/servers/api-server/src/routes/<noun>/ — reviewed the actual hot route trees (integrations/install.rs, integrations/oauth*.rs, documents/shares.rs, ai/sessions.rs, ai/voice.rs, platform_admin/audit.rs). Static analysis only (no compile/test). Verified NON-issues this pass (no signal emitted): the ~180 unwrap()/expect() hits across the segment are overwhelmingly inside #[cfg(test)] modules; integrations/webhook.rs HMAC `.expect(\"HMAC accepts any key length\")` is infallible-by-construction; integrations/oauth_state.rs mutex `.expect(\"oauth state store mutex poisoned\")` is a test-harness in-memory store (documented, prod path uses Redis GETDEL); ai/voice.rs:193 deliberately does NOT leak upstream OAuth error to the client (comment + generic OAUTH_EXCHANGE_FAILED); auth/password_reset.rs logging hashes the email and never logs tokens; install.rs check_availability uses unwrap_or(false) as a documented fail-safe against double-booking (correct).",
+  "experts_used": ["rust", "security"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-api-handlers-install-swallowed-db-error",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/install.rs (Booking.com reservation sync loop, ~L1116-1136) swallows transient DB errors with `.await.ok().flatten()`. The unit-connection lookup `rental_repo.find_connection_by_unit_platform(room_uuid, \"booking\").await.ok().flatten()` maps any Err (DB timeout, pool exhaustion, deadlock) to None, and the following `match unit_conn { Some(ref conn) if conn.unit_id != nil => .., _ => continue }` silently drops that reservation. Net effect: a transient DB error during sync makes real Booking.com reservations vanish from the import with no error surfaced — only a pulled_count vs persisted_count gap in an info log — i.e. silent data loss masquerading as a successful sync.",
+        "Same pattern on the dedup guard immediately below: `let already_exists = rental_repo.find_booking_by_external_id(\"booking\", &reservation.reservation_id).await.ok().flatten().is_some();` (~L1128-1131). On a DB error `.ok()` -> None -> already_exists=false, so the loop falls through to create_booking and attempts a duplicate insert; it relies entirely on a downstream DB unique constraint (create_booking Err arm at ~L1183 only logs a warning) to avoid a true duplicate. Contrast with the adjacent availability check which correctly uses `unwrap_or(false)` with an explicit fail-safe comment — the two find_* calls should propagate the error (return 502/500) or at minimum count and surface DB failures rather than treating them as 'not found'.",
+        "Severity medium: reachable on the production Booking.com channel-sync path; impact is silent dropped bookings and a dedup bypass under DB stress, not a crash. Confidence medium (static trace of the loop; the exact repository error semantics and unique-constraint presence were not runtime-confirmed)."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-platform-admin-audit-swallow",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/platform_admin/audit.rs support-user-detail handler swallows DB errors on security-relevant reads: `state.platform_admin_repo.get_user_memberships(id).await.unwrap_or_default()` (~L201-205) and `get_user_sessions(id).await.unwrap_or_default()` (~L207-211) both map an Err to an empty Vec. A transient DB failure therefore renders a platform-admin support view showing the user as having NO org memberships and NO active sessions, when in fact the query merely failed.",
+        "This is misleading data on an admin/security surface: an operator using this view to decide whether to revoke a compromised user's sessions, or to audit a user's org access, could wrongly conclude there are no active sessions / no memberships to act on. The same `.unwrap_or_default()`-on-DB-result pattern recurs in this file at ~L133, L357, and L484 (audit-log / listing queries), each of which silently returns an empty result set on error instead of signalling failure to the caller.",
+        "Fix: propagate the repository error (return 500/502) or render an explicit 'data unavailable' state rather than an empty list, so an admin never mistakes a query failure for an authoritative empty result. Severity medium (admin-only, no crash, but wrong security-relevant data); confidence medium (static)."
+      ],
+      "expert": "security"
+    },
+    {
+      "id": "code-review-api-handlers-ai-tenant-config-env",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/ai/sessions.rs (~L451-465) builds the per-tenant AI configuration from PROCESS-WIDE environment variables rather than any tenant-scoped source: `std::env::var(\"AI_PERSONALITY\")`, `std::env::var(\"AI_BUILDING_CONTEXT\")`, and `std::env::var(\"AI_CUSTOM_INSTRUCTIONS\")` are read on every request and wrapped in `TenantAiConfig`. The surrounding comment concedes this: 'Tenant is always present now (auth required) ... In production, this would query a tenant_ai_config table.'",
+        "Because the values come from one global env, every tenant's AI session shares the same personality, building context, and custom instructions. If AI_BUILDING_CONTEXT is ever populated in a real deployment, one tenant's building context bleeds into every other tenant's AI conversations — a multi-tenant isolation smell on an otherwise auth-scoped handler. Today it is effectively a documented stub (Option fields end up None when the env vars are unset), so no live data leak in the default config, but the shape invites one the moment the env is used per-deployment.",
+        "Fix: source TenantAiConfig from a tenant_ai_config table keyed by the authenticated tenant/org id (the tenant is already in scope here), and drop the global env fallback. Severity low (incompleteness / latent multi-tenant config bleed, not a current functional break); confidence medium (static — traced the config construction; DB table absence is per the in-code comment)."
+      ],
+      "expert": "rust"
+    }
+  ]
+}

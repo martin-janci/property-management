@@ -12,6 +12,7 @@ import { useEffect, useState } from 'react';
 
 import { useComparison } from '../../lib/comparison-context';
 import { getApiBase } from '../../lib/env';
+import { parseListingSummary } from './listingSummarySchema';
 
 interface ComparisonUrlHandlerProps {
   sharedIds: string[];
@@ -44,16 +45,46 @@ export function ComparisonUrlHandler({ sharedIds }: ComparisonUrlHandlerProps) {
           if (!response.ok) {
             throw new Error(`Failed to load listing ${id} (HTTP ${response.status})`);
           }
-          return response.json() as Promise<ListingSummary>;
+          // Validate the 200 body at the API boundary instead of trusting it
+          // via an unchecked `as Promise<ListingSummary>` cast. A malformed or
+          // partial body (upstream/proxy partial response, a 200 HTML error
+          // page, a null/primitive/array JSON body) is rejected here —
+          // mirroring the listing detail path's `parseListingDetail` guard —
+          // so it never reaches `ComparisonView` to render garbage or throw.
+          const listing = parseListingSummary(await response.json());
+          if (!listing) {
+            throw new Error(`Malformed listing body for ${id}`);
+          }
+          return listing;
         });
 
-        const loadedListings = await Promise.all(fetchPromises);
+        // Resolve every id independently so one bad/missing listing degrades
+        // gracefully (it is dropped) instead of blanking the whole shared
+        // comparison. `Promise.all` used to reject on the first failure, so a
+        // single stale/invalid id in a shared URL wiped out every listing.
+        const results = await Promise.allSettled(fetchPromises);
 
-        // Add each listing to comparison
-        for (const listing of loadedListings) {
-          if (listing) {
-            addToComparison(listing);
+        const loadedListings: ListingSummary[] = [];
+        for (const result of results) {
+          if (result.status === 'fulfilled') {
+            if (result.value) {
+              loadedListings.push(result.value);
+            }
+          } else {
+            // Skip the bad id but keep the rest of the comparison intact.
+            console.error('Error loading shared listing:', result.reason);
           }
+        }
+
+        // Add each successfully loaded listing to comparison.
+        for (const listing of loadedListings) {
+          addToComparison(listing);
+        }
+
+        // Only surface the error state when NOTHING could be loaded — a
+        // partial success still yields a usable comparison.
+        if (loadedListings.length === 0) {
+          setError(t('loadError'));
         }
       } catch (err) {
         setError(t('loadError'));

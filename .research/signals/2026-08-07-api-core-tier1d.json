@@ -1,0 +1,48 @@
+[
+  {
+    "id": "code-review-api-core-fcm-malformed-token-never-evicted",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-core",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/services/push_fanout.rs:367-376 — `send_fcm` (FCM HTTP v1) only flags a device token for eviction when the upstream error status matches `\"NOT_REGISTERED\" | \"UNREGISTERED\" | \"INVALID_REGISTRATION\"`. The FCM v1 status `\"INVALID_ARGUMENT\"` (HTTP 400, returned for a permanently malformed/garbage registration token) and `\"NOT_FOUND\"` (HTTP 404) are NOT in the match, so the function returns `(false, false)` — send failed, token NOT expired.",
+      "The second bool of the returned tuple is the 'evict this token' signal (the caller deletes the stored token only when it is true — see the APNs sibling at push_fanout.rs:844-959 which evicts on BadDeviceToken/Unregistered). A token that FCM rejects as INVALID_ARGUMENT is therefore never pruned from storage and is re-attempted on every subsequent fanout, producing a permanent per-fanout failed-send + warn log for that device with no self-healing.",
+      "The legacy path `send_fcm_legacy` (push_fanout.rs:449-456) has the same shape: it evicts only on `\"NotRegistered\" | \"InvalidRegistration\"` and would likewise retain a token FCM rejects for other permanent reasons.",
+      "Fix: treat FCM v1 `INVALID_ARGUMENT`/`NOT_FOUND` (and HTTP 400/404 with a token-scoped error) as evict-worthy, i.e. add them to the `expired` match so a permanently invalid token is pruned rather than retried forever. Confirm against the current FCM v1 error-code table before finalizing which codes are token-permanent vs message-level."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-api-core-push-client-build-expect-panic",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-core",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/services/push_fanout.rs:280 — `.expect(\"reqwest client build should not fail\")` and push_fanout.rs:773 — `.expect(\"reqwest APNs client build should not fail\")`. `reqwest::ClientBuilder::build()` is fallible at runtime (it can error on TLS-backend / native-cert-store initialization, not just on programmer misconfiguration), so these are runtime panics living inside the notification-fanout service rather than compile-time invariants.",
+      "A panic here aborts the calling task/worker on the push path instead of degrading gracefully (skip-send + error metric). The surrounding code already models graceful degradation for every other failure mode in this file (network errors return `(false, false)`, unconfigured providers early-return with a warn), so panicking on client construction is the odd path out.",
+      "Fix: propagate the build error (return a constructor `Result` / mark the provider unconfigured and log) so a TLS/cert init failure disables push fanout instead of crashing the worker."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-api-core-pkce-nonconstant-time-compare",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-core",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "security",
+    "evidence": [
+      "backend/servers/api-server/src/services/oauth.rs:920-931 — `verify_pkce` compares the recomputed S256 challenge to the stored `challenge` with the standard `==` operator (`computed == challenge`, line 927), which short-circuits and is not constant-time.",
+      "Practical exploitability is low: the compared value is the base64url of a SHA-256 digest bound to a single-use authorization code, so a timing side-channel does not yield a usable forgery (it would require a SHA-256 preimage, not a byte-by-byte guess). This is a defense-in-depth / hardening nit, not an active auth-bypass — noted at +1 for consistency with the rest of the OAuth path, which is otherwise well-hardened (PKCE required for all clients, argon2 constant-time client-secret verify, scope re-validation on issuance).",
+      "Fix (optional): use a constant-time comparison (e.g. `subtle::ConstantTimeEq` on equal-length byte slices) for the challenge match to keep the crypto-comparison surface uniform. Low priority."
+    ],
+    "expert": "rust"
+  }
+]

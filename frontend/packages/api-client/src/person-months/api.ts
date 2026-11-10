@@ -7,6 +7,7 @@
  * consistent.
  */
 
+import { authenticatedFetch } from '../lib/fetch';
 import type {
   BuildingPersonMonthsQuery,
   BulkPersonMonthUpsertResult,
@@ -39,7 +40,7 @@ function buildQueryString(
 
 /** Generic fetch wrapper with error handling. */
 async function fetchApi<T>(url: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(url, {
+  const response = await authenticatedFetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -57,7 +58,7 @@ async function fetchApi<T>(url: string, options?: RequestInit): Promise<T> {
 
 /** Fetch wrapper for endpoints that return no body (e.g. delete → 200 OK). */
 async function fetchVoid(url: string, options?: RequestInit): Promise<void> {
-  const response = await fetch(url, {
+  const response = await authenticatedFetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',

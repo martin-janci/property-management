@@ -13,7 +13,10 @@ use common::ErrorResponse;
 use db::models::{AcknowledgeBroadcast, EmergencyBroadcastQuery};
 use uuid::Uuid;
 
-use super::shared::{is_emergency_manager, BroadcastListQuery, CreateBroadcastRequest, OrgQuery};
+use super::shared::{
+    is_emergency_manager, manager_required_response, BroadcastListQuery, CreateBroadcastRequest,
+    OrgQuery,
+};
 use crate::state::AppState;
 
 /// Broadcast sub-router.
@@ -225,6 +228,11 @@ async fn list_broadcast_acknowledgments(
     Path(id): Path<Uuid>,
     Query(_): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only action; membership alone is not enough.
+    if !is_emergency_manager(rls.role()) {
+        rls.release().await;
+        return manager_required_response();
+    }
     let org = rls.tenant_id();
     match state
         .emergency_repo

@@ -1,0 +1,51 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-28T00:00:00Z",
+  "segment_reviewed": "api-core",
+  "selection_reason": "oldest-unreviewed",
+  "selection_detail": "Standalone Tier-1d demand run (buffer starved; only mobile-native/KMP backlog remained, which is AGP-egress-blocked in the cloud runner, so a NON-mobile-native segment was required). No CHURN_FILES passed. REVIEW_CURSOR oldest entries were api-core (2026-08-21) tied with ppt-web-core (2026-08-21); by run time every non-mobile segment already had a 2026-08-28 Tier-1d file (api-handlers, api-core, ppt-web-ui, ppt-web-core, reality-server, reality-web), so the daily rotation was exhausted and the marginal value is net-new distinct findings. This supplement reviews the api-server SERVICES layer (backend/servers/api-server/src/services/ + top-level), which the earlier 2026-08-28-api-core-tier1d.json did NOT cover — that file's two findings land in the backend/crates/api-core middleware (idempotency.rs, rls_context.rs). The two findings below are in services/push_fanout.rs and services/scheduler/mod.rs, entirely distinct files with distinct signal ids, so they are additive rather than duplicative. Static-only Rust review: grep sweep for unwrap/expect/unsafe/todo/panic, secrets-in-logs, swallowed Results, then targeted read of the churn hotspot (push_fanout.rs, recent_churn 689) plus the scheduler tick loop. Confirmed-clean areas (no finding): jwt.rs (validate_exp + token_type gate), services/stripe.rs (webhook HMAC with timestamp-tolerance + adversarial-timestamp regression test, verify in test at :299+), services/email.rs (lettre Message::builder encodes headers — no CRLF header-injection via subject/recipient), services/workflow_executor.rs (condition JSON deserialised via `if let Ok(..)` at :506/:510, not unwrap — the unwraps at :1025/:1041 are inside the cfg(test) module at :1013), services/totp.rs + main.rs panics (startup config fail-fast, not runtime crash paths).",
+  "experts_used": ["rust"],
+  "findings_count": 2,
+  "note": "api-core (Rust, services layer) — both findings land in backend/servers/api-server/src/services, fully landable in the cloud runner (no mobile-native/AGP dependency).",
+  "signals": [
+    {
+      "id": "code-review-api-core-fcm-oauth-token-stale",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-28 api-core services)",
+      "segment": "api-core",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/push_fanout.rs"
+      ],
+      "evidence": [
+        "push_fanout.rs:233 — FcmConfig.oauth_token is populated once with std::env::var(\"FCM_OAUTH_TOKEN\").ok() at construction, and the module doc table at :36 states outright '(read once at startup)'. This value is used verbatim as the FCM HTTP v1 Bearer token at :330-334 (`bearer_auth(&bearer)`) for every send, for the entire process lifetime.",
+        "FCM HTTP v1 OAuth2 access tokens minted from a Google service account are short-lived (~1 hour TTL). Because the token is captured at startup and never refreshed (no refresh timer, no re-read, no google-cloud-auth token source — the comment at :324-328 acknowledges 'In production this would come from a service-account key file via google-cloud-auth' but the code just reuses a static env var), a long-running api-server will begin receiving 401 UNAUTHENTICATED from FCM roughly one hour after boot and for the rest of its uptime.",
+        "The 401 path is silently mis-classified as a non-recoverable non-expiry failure: the error branch at :355-388 only sets token_expired=true for err_status in {NOT_REGISTERED, UNREGISTERED, INVALID_REGISTRATION} (:363-367). An auth failure yields err_status like 'UNAUTHENTICATED' -> expired=false -> the function returns (false, false), so the DEVICE token is (correctly) not pruned, but nothing detects that the SERVER credential is the problem: no re-auth, no distinct alert, only a per-message `tracing::warn!(\"[8A-3] FCM rejected message\")`. Net effect: a complete, silent, indefinite outage of Android push delivery after ~1h, indistinguishable in metrics from ordinary per-message rejections.",
+        "Fix: obtain the FCM v1 bearer from a refreshing token source (mint from the service-account JSON with a cached access token that is re-minted before its exp), OR at minimum detect HTTP 401/403 / err_status UNAUTHENTICATED as a credential-expiry signal that triggers re-acquisition and an operational alert rather than being swallowed as a per-message warn. The legacy send_fcm_legacy path (:393+) uses a long-lived server key and is not affected — the bug is specific to the HTTP v1 oauth_token branch that is preferred when FCM_OAUTH_TOKEN is set (:330).",
+        "Confidence medium: the read-once lifecycle (env var at :233, static reuse at :330), the missing refresh, and the 401 mis-classification (:363-367) are all confirmed by static read; the ~1h TTL and resulting outage are inferred from the FCM v1 OAuth model and depend on the deployment actually setting FCM_OAUTH_TOKEN (vs the legacy server-key path)."
+      ]
+    },
+    {
+      "id": "code-review-api-core-scheduler-no-panic-isolation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-28 api-core services)",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs"
+      ],
+      "evidence": [
+        "scheduler/mod.rs:262-282 — the entire background scheduler is a single tokio::spawn (:264) running `loop { ticker.tick().await; self.run_scheduled_tasks().await; }` (:278-281). run_scheduled_tasks (:290+) carefully isolates each job's *Result* (every job is `if let Err(e) = self.<job>().await { tracing::error!(...); self.increment_errors(); }`), so a returned Err in one job does not stop the others — good. But there is NO isolation against a PANIC: run_scheduled_tasks is awaited directly in the loop body, not inside a spawned child task or a catch_unwind boundary.",
+        "Consequence: if ANY scheduled job method panics (an unexpected index-out-of-bounds, an .unwrap()/.expect() on unexpected DB shape, an arithmetic overflow under overflow-checks, a poisoned Mutex — note the metrics mutex is explicitly poisonable, see the intentional-poison test at :2357), the panic unwinds out of run_scheduled_tasks, out of the `loop`, and terminates the single spawned scheduler task. The JoinHandle returned by start() (:262) is not awaited or supervised anywhere with a restart, so the whole background subsystem — scheduled announcement publish/dispatch, vote activation/close/reminders, session cleanup, retention pruning, quiet-hours drain — stops permanently for the remaining process lifetime, silently (a dropped JoinHandle does not propagate the panic to the parent).",
+        "This undercuts the per-job error isolation the code deliberately builds: the Result-level isolation is defeated the moment any job panics instead of returning Err. Fix: wrap each job invocation (or run_scheduled_tasks as a whole) so a panic is contained — e.g. run each tick's work in a `tokio::spawn(...)` whose JoinHandle is awaited and whose JoinError::is_panic is logged + counted, or use FuturesUnordered per-job tasks, so one panicking job is logged and the ticker keeps ticking. At minimum, supervise the top-level spawned task and restart it on JoinError.",
+        "Confidence medium: the single-spawn structure (:264), the direct un-isolated await of run_scheduled_tasks in the loop (:280), and the Result-only (not panic) isolation inside run_scheduled_tasks (:290+) are confirmed by static read; the permanent-outage impact depends on a job actually panicking, which the current Result-returning jobs make uncommon but not impossible (the poisonable metrics mutex and any future unwrap are live vectors)."
+      ]
+    }
+  ]
+}

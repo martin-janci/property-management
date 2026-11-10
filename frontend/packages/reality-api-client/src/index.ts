@@ -37,6 +37,8 @@ export * from './inquiries';
 export * from './listings';
 // Price map module - city/district price aggregations (UC-31)
 export * from './price-map';
+// Reports module - listing abuse / problem reports (UC-23)
+export * from './reports';
 
 // API version
 export const REALITY_API_VERSION = '1.0.0';

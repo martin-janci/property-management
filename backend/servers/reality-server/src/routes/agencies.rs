@@ -87,24 +87,28 @@ pub async fn create_agency(
     State(state): State<AppState>,
     principal: RequestPrincipal,
     Json(data): Json<CreateRealityAgency>,
-) -> Result<Json<AgencyResponse>, (axum::http::StatusCode, String)> {
+) -> Result<(axum::http::StatusCode, Json<AgencyResponse>), (axum::http::StatusCode, String)> {
     let agency = state
         .reality_portal_repo
         .create_agency(principal.user_id, data)
         .await
         .map_err(|e| {
-            let error_str = e.to_string();
-            if error_str.contains("duplicate") || error_str.contains("already exists") {
-                (
-                    axum::http::StatusCode::BAD_REQUEST,
-                    "Agency with this name or slug already exists".to_string(),
-                )
-            } else {
-                crate::util::errors::db_error("create agency", e)
-            }
+            // A unique-constraint violation on name/slug means the agency
+            // already exists. Classify by the typed SQLSTATE (23505), not the
+            // message text.
+            crate::util::errors::db_error_or(
+                &e,
+                "create agency",
+                crate::util::errors::DbErrorClass::UniqueViolation,
+                axum::http::StatusCode::BAD_REQUEST,
+                "Agency with this name or slug already exists",
+            )
         })?;
 
-    Ok(Json(AgencyResponse { agency }))
+    Ok((
+        axum::http::StatusCode::CREATED,
+        Json(AgencyResponse { agency }),
+    ))
 }
 
 /// List public (verified) agencies for the directory surface.
@@ -122,7 +126,7 @@ pub async fn list_agencies(
     Query(query): Query<ListAgenciesQuery>,
 ) -> Result<Json<AgencyListResponse>, (axum::http::StatusCode, String)> {
     let limit = query.limit.unwrap_or(50).clamp(1, 200);
-    let offset = query.offset.unwrap_or(0).max(0);
+    let offset = crate::util::clamp_offset(query.offset);
 
     let (agencies, total) = state
         .reality_portal_repo
@@ -259,12 +263,10 @@ pub async fn update_agency(
     // SECURITY (H2): membership check via the shared helper in
     // `super::agency_imports` — single source of truth for "is this user
     // allowed to mutate this agency's data?".
-    let mut conn = state.acquire_public_conn().await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Database error: {}", e),
-        )
-    })?;
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| crate::util::errors::db_error("acquire db connection", e))?;
     super::agency_imports::check_agency_membership(&mut conn, id, principal.user_id).await?;
     drop(conn);
 
@@ -313,12 +315,10 @@ pub async fn update_branding(
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateAgencyBranding>,
 ) -> Result<Json<AgencyResponse>, (axum::http::StatusCode, String)> {
-    let mut conn = state.acquire_public_conn().await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Database error: {}", e),
-        )
-    })?;
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| crate::util::errors::db_error("acquire db connection", e))?;
     super::agency_imports::check_agency_membership(&mut conn, id, principal.user_id).await?;
     drop(conn);
 
@@ -332,6 +332,17 @@ pub async fn update_branding(
 }
 
 /// List agency members.
+///
+/// SECURITY (members-idor audit): the member roster is agency-internal PII
+/// (names, emails, roles). Previously this handler had no auth extractor and
+/// no membership gate, so anyone on the internet could enumerate any agency's
+/// members via `GET /api/v1/agencies/{id}/members` — unauthenticated
+/// cross-agency member enumeration (IDOR). We now require an authenticated
+/// principal who is an active member of the target agency, using the same
+/// shared `check_agency_membership` gate the sibling mutators
+/// (`update_agency`, `update_branding`, `create_invitation`) apply: `404` when
+/// the agency doesn't exist and `403` for a non-member (never leaks
+/// cross-agency membership).
 #[utoipa::path(
     get,
     path = "/api/v1/agencies/{id}/members",
@@ -339,13 +350,28 @@ pub async fn update_branding(
     params(("id" = Uuid, Path, description = "Agency ID")),
     responses(
         (status = 200, description = "List of members", body = MembersResponse),
-        (status = 401, description = "Unauthorized")
-    )
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Not a member of this agency"),
+        (status = 404, description = "Agency not found")
+    ),
+    security(("session_token" = []))
 )]
 pub async fn list_members(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<MembersResponse>, (axum::http::StatusCode, String)> {
+    // SECURITY (members-idor): gate on active membership of the target agency
+    // via the shared helper — single source of truth for "is this user allowed
+    // to see this agency's internal data?". Returns 404 (unknown agency) / 403
+    // (non-member) before any member data is read.
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| crate::util::errors::db_error("acquire db connection", e))?;
+    super::agency_imports::check_agency_membership(&mut conn, id, principal.user_id).await?;
+    drop(conn);
+
     let members = state
         .reality_portal_repo
         .get_agency_members(id)
@@ -387,17 +413,16 @@ pub async fn create_invitation(
     principal: RequestPrincipal,
     Path(agency_id): Path<Uuid>,
     Json(data): Json<CreateAgencyInvitation>,
-) -> Result<Json<RealityAgencyInvitation>, (axum::http::StatusCode, String)> {
+) -> Result<(axum::http::StatusCode, Json<RealityAgencyInvitation>), (axum::http::StatusCode, String)>
+{
     // SECURITY (invite-authz): gate on active membership of the target agency
     // via the shared helper — single source of truth for "is this user allowed
     // to mutate this agency's data?". Returns 404 (unknown agency) / 403
     // (non-member) before any invitation is created.
-    let mut conn = state.acquire_public_conn().await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Database error: {}", e),
-        )
-    })?;
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| crate::util::errors::db_error("acquire db connection", e))?;
     super::agency_imports::check_agency_membership(&mut conn, agency_id, principal.user_id).await?;
     drop(conn);
 
@@ -406,23 +431,22 @@ pub async fn create_invitation(
         .create_invitation(agency_id, principal.user_id, data)
         .await
         .map_err(|e| {
-            let error_str = e.to_string();
-            if error_str.contains("not found") {
-                (
-                    axum::http::StatusCode::NOT_FOUND,
-                    "Agency not found".to_string(),
-                )
-            } else if error_str.contains("permission") || error_str.contains("unauthorized") {
-                (
-                    axum::http::StatusCode::FORBIDDEN,
-                    "Not authorized to create invitations for this agency".to_string(),
-                )
-            } else {
-                crate::util::errors::db_error("create invitation", e)
-            }
+            // `create_invitation` is a plain INSERT whose `agency_id` is a
+            // foreign key, so a missing agency surfaces as a FK violation ->
+            // 404. (Authorization is enforced earlier by
+            // `check_agency_membership`, so the repository never returns a
+            // permission error — the old `contains("permission")` branch was
+            // dead.) Classify by the typed sqlx error, not message text.
+            crate::util::errors::db_error_or(
+                &e,
+                "create invitation",
+                crate::util::errors::DbErrorClass::ForeignKeyViolation,
+                axum::http::StatusCode::NOT_FOUND,
+                "Agency not found",
+            )
         })?;
 
-    Ok(Json(invitation))
+    Ok((axum::http::StatusCode::CREATED, Json(invitation)))
 }
 
 /// Accept invitation request.
@@ -432,6 +456,17 @@ pub struct AcceptInvitationRequest {
 }
 
 /// Accept agency invitation.
+///
+/// SECURITY (invite-email-match audit): an invitation is bound to the specific
+/// email address it was issued to. A valid, unexpired token is NOT sufficient
+/// to join — the authenticated principal must own the invited email. Without
+/// this gate, a *different* logged-in user who obtains someone else's invite
+/// token (e.g. from a forwarded email or a leaked link) could join the agency,
+/// a privilege escalation. We therefore verify the caller is the invited
+/// recipient (`verify_invitation_recipient`) BEFORE the invitation is consumed
+/// and membership is created: `400` for an unknown/expired token (no oracle
+/// beyond what the caller already holds) and `403` when the token is valid but
+/// issued to a different address.
 #[utoipa::path(
     post,
     path = "/api/v1/agencies/invitations/{token}/accept",
@@ -440,7 +475,8 @@ pub struct AcceptInvitationRequest {
     responses(
         (status = 200, description = "Invitation accepted", body = RealityAgencyMember),
         (status = 400, description = "Invalid or expired token"),
-        (status = 401, description = "Unauthorized")
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Invitation was issued to a different email")
     )
 )]
 pub async fn accept_invitation(
@@ -448,26 +484,95 @@ pub async fn accept_invitation(
     principal: RequestPrincipal,
     Path(token): Path<String>,
 ) -> Result<Json<RealityAgencyMember>, (axum::http::StatusCode, String)> {
+    // SECURITY (invite-email-match): gate on recipient identity before adding
+    // membership. See the handler doc-comment above for the escalation this
+    // prevents.
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| crate::util::errors::db_error("acquire db connection", e))?;
+    verify_invitation_recipient(&mut conn, &token, principal.user_id).await?;
+    drop(conn);
+
     let member = state
         .reality_portal_repo
         .accept_invitation(&token, principal.user_id)
         .await
         .map_err(|e| {
-            let error_str = e.to_string();
-            if error_str.contains("expired") {
-                (
-                    axum::http::StatusCode::BAD_REQUEST,
-                    "Invitation has expired".to_string(),
-                )
-            } else if error_str.contains("not found") || error_str.contains("invalid") {
-                (
-                    axum::http::StatusCode::BAD_REQUEST,
-                    "Invalid invitation token".to_string(),
-                )
-            } else {
-                crate::util::errors::db_error("accept invitation", e)
-            }
+            // The invitation lookup selects on `token AND accepted_at IS NULL
+            // AND expires_at > NOW()` via `fetch_one`, so an unknown, expired,
+            // or already-accepted token surfaces as `RowNotFound`. All of these
+            // collapse to a single 400 with no oracle beyond what the caller
+            // already holds (see the handler security note above). Classify by
+            // the sqlx variant, not message text — the old
+            // `contains("expired")`/`contains("invalid")`/`contains("not
+            // found")` checks never matched `RowNotFound`'s "no rows …" text,
+            // so this path silently 500'd.
+            crate::util::errors::db_error_or(
+                &e,
+                "accept invitation",
+                crate::util::errors::DbErrorClass::NotFound,
+                axum::http::StatusCode::BAD_REQUEST,
+                "Invalid invitation token",
+            )
         })?;
 
     Ok(Json(member))
+}
+
+/// SECURITY helper: verify the authenticated principal is the invited
+/// recipient of the pending invitation identified by `token`.
+///
+/// The invitation carries the exact `email` it was issued to. Membership must
+/// only be granted to the principal that owns that address — a valid token on
+/// its own is not proof of identity. This mirrors the freshness predicate the
+/// repository's `accept_invitation` uses (`accepted_at IS NULL AND expires_at >
+/// NOW()`) so a stale/consumed token is reported as invalid here rather than
+/// silently passing the recipient gate.
+///
+/// Returns:
+/// - `400 Invalid invitation token` — unknown, already-accepted, or expired
+///   token (same shape the repo surfaces, so no new oracle is introduced).
+/// - `403` — token is valid but was issued to a different email address.
+async fn verify_invitation_recipient(
+    conn: &mut sqlx::pool::PoolConnection<sqlx::Postgres>,
+    token: &str,
+    user_id: Uuid,
+) -> Result<(), (axum::http::StatusCode, String)> {
+    let invited_email: Option<String> = sqlx::query_scalar(
+        "SELECT email FROM reality_agency_invitations \
+         WHERE token = $1 AND accepted_at IS NULL AND expires_at > NOW()",
+    )
+    .bind(token)
+    .fetch_optional(&mut **conn)
+    .await
+    .map_err(|e| crate::util::errors::db_error("load invitation", e))?;
+
+    let Some(invited_email) = invited_email else {
+        return Err((
+            axum::http::StatusCode::BAD_REQUEST,
+            "Invalid invitation token".to_string(),
+        ));
+    };
+
+    let user_email: Option<String> = sqlx::query_scalar("SELECT email FROM users WHERE id = $1")
+        .bind(user_id)
+        .fetch_optional(&mut **conn)
+        .await
+        .map_err(|e| crate::util::errors::db_error("load user", e))?;
+
+    // Case-insensitive, whitespace-trimmed comparison: email addresses are
+    // routinely stored/entered with differing case, and the local-part match
+    // here is an authorization decision, not a routing one.
+    let is_recipient =
+        user_email.is_some_and(|email| email.trim().eq_ignore_ascii_case(invited_email.trim()));
+
+    if !is_recipient {
+        return Err((
+            axum::http::StatusCode::FORBIDDEN,
+            "This invitation was issued to a different email address".to_string(),
+        ));
+    }
+
+    Ok(())
 }

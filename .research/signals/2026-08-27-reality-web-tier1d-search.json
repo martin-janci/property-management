@@ -1,0 +1,47 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-27T00:00:00Z",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "oldest-unreviewed (dispatcher passed no CHURN_FILES; review_cursor.reality-web = 2026-08-18 was the oldest of the 8 segments; mobile-native-kmp explicitly excluded as structurally unlandable; 0 open code-review-finding items for reality-web in backlog.json — all 18 existing findings are status=done — so no saturation-skip)",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 2,
+  "note": "Deliberately steered AWAY from the exhausted i18n and mutation-silent-fail veins (already covered by 20+ prior reality-web signals since 2026-08-20 and 3 done backlog i18n findings). Both new findings are non-i18n correctness/error-handling defects on the primary PUBLIC search page (app/[locale]/listings/page.tsx, Epic 44 Story 44.2), and they compound: (1) URL query params are parsed with bare Number() and NaN/negative/zero values flow unguarded into the generated buildQueryString, emitting a literal `priceMin=NaN` / `page=NaN` request; (2) the page destructures only { data, isLoading } from useListings with NO isError branch, so the resulting fetch failure (or any network/5xx error) silently renders the empty-results grid instead of an error/retry UI. The correct numeric guard already exists elsewhere in the same app (components/realtor/ListingForm.tsx parseOptionalNonNegative uses Number.isFinite + negative rejection), so finding 1 is a mechanical, low-risk fix. Rest of the reality-web surface remains genuinely hardened (serializeForScript, HMAC+timing-safe revalidate route, auth-token/comparison-context/analytics all try/catch-wrapped, price-map insights divide-by-zero guarded) — consistent with prior reviews.",
+  "signals": [
+    {
+      "id": "code-review-reality-web-listings-url-nan-query",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx:112-124 — getFiltersFromUrl parses five range params directly with bare Number(): `if (priceMin) filters.priceMin = Number(priceMin)` (L112), priceMax (L115), areaMin (L118), areaMax (L121), roomsMin (L124). searchParams values are attacker/user-controllable via the URL; `/en/listings?priceMin=abc` yields filters.priceMin = NaN with no Number.isFinite guard.",
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx:144 — `const currentPage = Number(searchParams.get('page') || 1)`. `?page=abc` -> NaN; `?page=0` -> 0; `?page=-5` -> -5; `?page=1.5` -> 1.5. No clamp to a positive integer.",
+        "frontend/packages/reality-api-client/src/listings/hooks.ts:22-44 (buildQueryString) — NaN is not undefined, so `if (filters.priceMin !== undefined) params.set('priceMin', String(filters.priceMin))` (L31) emits the literal string `priceMin=NaN`; likewise `params.set('page', String(page))` (L23) emits `page=NaN`. Full traced path: URL -> getFiltersFromUrl -> useListings(filters, currentPage) (page.tsx:145) -> buildQueryString -> `fetch(${getApiBase()}/api/v1/listings?...&priceMin=NaN&page=NaN)` (hooks.ts:51-53). The malformed query string is certain; the backend's 400/degrade response is the only unconfirmed part (static analysis).",
+        "The correct guard already exists in the same app: frontend/apps/reality-web/src/components/realtor/ListingForm.tsx:54-63 (parseOptionalNonNegative) trims, rejects `!Number.isFinite(num)` and `num < 0`, and price validation at L97-98 uses `!Number.isFinite(priceNum) || priceNum <= 0`. The public search parser simply doesn't apply the same discipline.",
+        "Fix: in getFiltersFromUrl, coerce each range param through a helper that drops the key when `!Number.isFinite(n)` (and optionally when negative); clamp currentPage to `Math.max(1, Math.trunc(n))` with a NaN fallback of 1. Keeps a stale/hand-edited/bookmarked URL from firing a malformed request."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-listings-no-error-state",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx:145 — `const { data, isLoading } = useListings(filters, currentPage);` destructures only data + isLoading. There is NO `isError`/`error` destructure and no error branch anywhere in the component's render (grep for isError/onError/ErrorState in the file returns nothing).",
+        "frontend/packages/reality-api-client/src/listings/hooks.ts:53-54 — useListings' queryFn does `if (!response.ok) throw new Error('Failed to fetch listings')`, so ANY non-OK response (network failure, 5xx, or the malformed-query 400 produced by the sibling finding) rejects the query.",
+        "On rejection the render silently degrades: data is undefined, so `listings={data?.data ?? []}` (page.tsx:338) hands ListingGrid an empty array and `isLoading={isLoading}` (L341) is false — the page shows the normal zero-results empty state, indistinguishable from a legitimate 'no matches' search, with no error message and no retry affordance. `data && ...` guards at L243/L345 also just render nothing on error.",
+        "This is the primary public property-search page (Epic 44, Story 44.2) — the highest-traffic screen in the portal — so a transient backend blip presents to every visitor as 'no properties found'.",
+        "Fix: destructure `isError`/`refetch` from useListings and render an error state (with a retry button) when `isError` is true, before the empty-grid fallback. Error-state primitives already exist under frontend/apps/reality-web/src/components/states/ and are used by sibling routes (e.g. inquiries/realtor pages)."
+      ]
+    }
+  ]
+}

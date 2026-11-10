@@ -1,0 +1,26 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-17",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claim buffer starved of landable non-mobile-native work). No CHURN_FILES this run (state.json hotspot_history is stale May-2026 api-server data, not current churn), so churn-alignment does not apply. Oldest-unreviewed rotation from state.json review_cursor: reality-web=2026-08-12 is nominally oldest but was ALREADY swept today by a parallel tier1d run (2026-08-17-reality-web-tier1d.json exists and filed the SSO-callback i18n + comparison-context shape findings I independently rediscovered), so re-filing would duplicate. Next oldest cursor is reality-server=2026-08-13 — a preferred landable Rust backend segment. Saturation check passed: 0 open code-review-finding rows for reality-server in backlog.json (well below the >=3 skip cap). mobile-native-kmp excluded as structurally unlandable in the cloud runner (AGP egress-403). Rust primary expert, static-only (file reads + grep, no compile/test).",
+  "experts_used": ["rust"],
+  "findings_count": 1,
+  "review_note": "reality-server is a mature, heavily-swept segment (5 tier1d sweeps 2026-08-10..16, 0 open findings) — the mechanical risk surface is clean and I verified it: every non-test unwrap()/expect() flagged by grep is guarded or unrecoverable-by-design (inquiries phone-validation unwrap at handlers/inquiries/mod.rs:266 is guarded by the is_empty check at :261; the portal_session cookie strip_prefix().unwrap() at extractors/auth.rs:63 is guarded by the find() predicate at :59; state.rs panics are fail-fast JWT_SECRET boot validation; the OS-rng expects are unrecoverable). No unsafe. Listing-search sort is a fixed-literal match (crates/db portal.rs:277-281) — no ORDER BY injection. Email From header is parsed by lettre's Mailbox (rejects CRLF) from env-derived values — no header injection. The dangerouslySetInnerHTML / XSS surfaces are in reality-web, not here. The one genuinely new finding below is a data-loss logic bug in the saved-search alert engine that the mechanical greps do not surface.",
+  "signals": [
+    {
+      "id": "code-review-reality-server-saved-search-alert-cap-dataloss",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/services/saved_search_alerts.rs:197-240 (run_once matching loop) advances each saved search's watermark UNCONDITIONALLY after a capped scan, so any match beyond the cap in that cadence window is permanently dropped. The scan is `find_new_match_listing_ids(&query, Some(since), self.config.match_limit)` where match_limit defaults to 100 (SavedSearchAlertConfig::default, :80). Its SQL (crates/db/src/repositories/reality_portal/searches.rs:68-104) is `... WHERE l.published_at > $12 ORDER BY l.published_at DESC LIMIT $13` — it returns only the NEWEST match_limit listings published since the watermark.",
+        "After the capped scan the worker calls `mark_saved_search_matched(&mut *conn, search.id, ids.len())` (saved_search_alerts.rs:237-240), and that repo fn sets `last_matched_at = now()` UNCONDITIONALLY (searches.rs:134-159, `SET last_matched_at = now()`). It takes no timestamp argument, so the watermark always jumps to the wall clock, never to the oldest listing actually processed. Consequence: if more than match_limit (100) listings match a saved search within one cadence window — entirely plausible for a broad daily/weekly search such as 'flats in Bratislava' after a bulk portal import — the query keeps the newest 100 (DESC), the watermark leaps to now(), and every OLDER matching listing in that window is skipped forever. Because ORDER BY is `published_at DESC`, the dropped rows are precisely the OLDEST matches (the ones that have waited longest), and the next run resumes from `published_at > now()` so they can never be re-selected. There is no continuation cursor and no carry-over.",
+        "This silently defeats the feature's stated purpose ('new listing matches your search -> you're notified', header doc :1-17) under exactly the high-volume conditions where alerts matter most, with no error and no log — the user simply never receives alerts for the majority of a large batch. Fix options (all local to this worker + repo): (a) advance the watermark to the MIN published_at of the returned ids minus epsilon (resume-from-oldest) so the next due run drains the remainder instead of skipping it; or (b) loop find_new_match_listing_ids page-by-page until fewer than match_limit rows come back before advancing to now(); or (c) at minimum emit a tracing::warn when ids.len() == match_limit so the truncation is observable. Confidence medium: the DESC+LIMIT query and the unconditional now() watermark are both confirmed in source and the full path from run_once -> query -> watermark is traced; the >100-per-window trigger depends on listing volume rather than being unconditionally reachable, so not upgraded to high."
+      ],
+      "expert": "rust"
+    }
+  ]
+}

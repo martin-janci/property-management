@@ -25,7 +25,8 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::common::{
-    create_authenticated_user_with_org, seed_org, TestApp, TestResponse, TestUser,
+    create_authenticated_user, create_authenticated_user_with_org, seed_org, TestApp, TestResponse,
+    TestUser,
 };
 
 async fn seed_user_membership(pool: &PgPool, user_id: Uuid, org_id: Uuid) {
@@ -140,6 +141,7 @@ struct Ctx {
     post_a: Uuid,
     token: String,
     // org-B victim resources
+    building_b: Uuid,
     group_b: Uuid,
     post_b: Uuid,
     event_b: Uuid,
@@ -180,6 +182,7 @@ async fn setup(pool: PgPool) -> Ctx {
         group_a,
         post_a,
         token,
+        building_b,
         group_b,
         post_b,
         event_b,
@@ -191,6 +194,21 @@ impl Ctx {
     /// POST as the org-A caller, with the org-A tenant context resolved.
     async fn post(&self, uri: &str, body: Value) -> TestResponse {
         let rb = self.app.post(uri).bearer(&self.token).json(body);
+        let req = inject_tenant(rb.build(), self.org_a);
+        self.app.execute(req).await
+    }
+
+    /// DELETE as the org-A caller, with the org-A tenant context resolved.
+    async fn delete(&self, uri: &str) -> TestResponse {
+        let rb = self.app.delete(uri).bearer(&self.token);
+        let req = inject_tenant(rb.build(), self.org_a);
+        self.app.execute(req).await
+    }
+
+    /// DELETE as an arbitrary caller `(token, user)` in the org-A tenant
+    /// context — used to drive a non-owner delete attempt.
+    async fn delete_as(&self, token: &str, uri: &str) -> TestResponse {
+        let rb = self.app.delete(uri).bearer(token);
         let req = inject_tenant(rb.build(), self.org_a);
         self.app.execute(req).await
     }
@@ -209,6 +227,22 @@ fn assert_404(resp: &TestResponse, what: &str) {
         resp.status,
         axum::http::StatusCode::NOT_FOUND,
         "{what} cross-tenant must be 404, got {}: {}",
+        resp.status,
+        resp.text()
+    );
+}
+
+/// The building-scoped create handlers (`create_group`, `create_event`,
+/// `create_item`) guard on [`verify_building_access`], which loads the building
+/// and rejects a caller with no active membership in the building's owning org
+/// with **403** (the building provably exists, so there is no id-enumeration
+/// oracle to protect — a different contract from the opaque 404 the resource-id
+/// handlers return). This asserts that cross-tenant contract.
+fn assert_403(resp: &TestResponse, what: &str) {
+    assert_eq!(
+        resp.status,
+        axum::http::StatusCode::FORBIDDEN,
+        "{what} cross-tenant must be 403, got {}: {}",
         resp.status,
         resp.text()
     );
@@ -393,6 +427,157 @@ async fn create_inquiry_cross_tenant_404(pool: PgPool) {
     assert_eq!(inquiries, 0, "no inquiry may land on org B's item");
 }
 
+/// IG3 regression (issue #3109, follow-up to PR #3101): an authenticated org-A
+/// caller deleting org B's group must get 404 and leave the group row intact.
+/// The ppt-web community group-detail screen wires Delete to
+/// `DELETE /community/groups/{id}`; without the tenant guard a guessed id would
+/// let org A destroy org B's group (and cascade its members/posts).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn delete_group_cross_tenant_404(pool: PgPool) {
+    let ctx = setup(pool).await;
+
+    let before = ctx
+        .count(
+            "SELECT COUNT(*) FROM community_groups WHERE id = $1",
+            ctx.group_b,
+        )
+        .await;
+
+    let resp = ctx
+        .delete(&format!("/api/v1/community/groups/{}", ctx.group_b))
+        .await;
+    assert_404(&resp, "delete_group");
+
+    let after = ctx
+        .count(
+            "SELECT COUNT(*) FROM community_groups WHERE id = $1",
+            ctx.group_b,
+        )
+        .await;
+    assert_eq!(before, after, "org B's group row must survive");
+    assert_eq!(after, 1, "org B's group must still exist");
+}
+
+// ----------------------------------------------------------------------------
+// Building-scoped create handlers (403 via verify_building_access)
+//
+// `create_group`, `create_event` and `create_item` take a *building* id from
+// the URL path (`/buildings/{building_id}/...`) rather than a resource id, and
+// guard on `verify_building_access` — a distinct code path from the
+// `verify_*_access` resource helpers exercised above. Without that guard an
+// authenticated org-A caller could POST a group/event/item straight into org
+// B's building by guessing its id. These regressions pin the cross-tenant
+// contract (403 + no row written) so the create hot path stays protected.
+// ----------------------------------------------------------------------------
+
+/// An org-A caller creating a group under org B's building must get 403 and
+/// write NO group row (the building exists but the caller is not a member of
+/// its owning org).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn create_group_cross_tenant_403(pool: PgPool) {
+    let ctx = setup(pool).await;
+
+    let before = ctx
+        .count(
+            "SELECT COUNT(*) FROM community_groups WHERE building_id = $1",
+            ctx.building_b,
+        )
+        .await;
+
+    let resp = ctx
+        .post(
+            &format!("/api/v1/community/buildings/{}/groups", ctx.building_b),
+            json!({ "name": "cross-tenant group" }),
+        )
+        .await;
+    assert_403(&resp, "create_group");
+
+    let after = ctx
+        .count(
+            "SELECT COUNT(*) FROM community_groups WHERE building_id = $1",
+            ctx.building_b,
+        )
+        .await;
+    assert_eq!(
+        before, after,
+        "no group row may be written into org B's building"
+    );
+}
+
+/// An org-A caller creating an event under org B's building must get 403 and
+/// write NO event row.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn create_event_cross_tenant_403(pool: PgPool) {
+    let ctx = setup(pool).await;
+
+    let before = ctx
+        .count(
+            "SELECT COUNT(*) FROM community_events WHERE building_id = $1",
+            ctx.building_b,
+        )
+        .await;
+
+    let resp = ctx
+        .post(
+            &format!("/api/v1/community/buildings/{}/events", ctx.building_b),
+            json!({
+                "title": "cross-tenant event",
+                "start_time": "2026-12-01T10:00:00Z",
+                "end_time": "2026-12-01T12:00:00Z"
+            }),
+        )
+        .await;
+    assert_403(&resp, "create_event");
+
+    let after = ctx
+        .count(
+            "SELECT COUNT(*) FROM community_events WHERE building_id = $1",
+            ctx.building_b,
+        )
+        .await;
+    assert_eq!(
+        before, after,
+        "no event row may be written into org B's building"
+    );
+}
+
+/// An org-A caller creating a marketplace item under org B's building must get
+/// 403 and write NO item row.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn create_item_cross_tenant_403(pool: PgPool) {
+    let ctx = setup(pool).await;
+
+    let before = ctx
+        .count(
+            "SELECT COUNT(*) FROM marketplace_items WHERE building_id = $1",
+            ctx.building_b,
+        )
+        .await;
+
+    let resp = ctx
+        .post(
+            &format!("/api/v1/community/buildings/{}/marketplace", ctx.building_b),
+            json!({
+                "title": "cross-tenant item",
+                "category": "furniture",
+                "condition": "used"
+            }),
+        )
+        .await;
+    assert_403(&resp, "create_item");
+
+    let after = ctx
+        .count(
+            "SELECT COUNT(*) FROM marketplace_items WHERE building_id = $1",
+            ctx.building_b,
+        )
+        .await;
+    assert_eq!(
+        before, after,
+        "no item row may be written into org B's building"
+    );
+}
+
 // ============================================================================
 // Same-tenant (must still succeed — guard doesn't block legitimate writes)
 // ============================================================================
@@ -459,4 +644,85 @@ async fn add_reaction_same_tenant_200(pool: PgPool) {
         )
         .await;
     assert_eq!(reactions, 1, "the legitimate reaction must be written");
+}
+
+// ============================================================================
+// Delete authorization (issue #3109)
+// ============================================================================
+
+/// Happy path: the group's creator (owner) deletes their own org's group and
+/// gets 204 No Content; the group row and its seeded post cascade away.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn delete_group_owner_204(pool: PgPool) {
+    let ctx = setup(pool).await;
+
+    // `group_a` was seeded with `created_by = user_a`, so the caller owns it.
+    let resp = ctx
+        .delete(&format!("/api/v1/community/groups/{}", ctx.group_a))
+        .await;
+    assert_eq!(
+        resp.status,
+        axum::http::StatusCode::NO_CONTENT,
+        "owner delete should be 204, got {}: {}",
+        resp.status,
+        resp.text()
+    );
+
+    let groups = ctx
+        .count(
+            "SELECT COUNT(*) FROM community_groups WHERE id = $1",
+            ctx.group_a,
+        )
+        .await;
+    assert_eq!(groups, 0, "the owned group row must be removed");
+
+    let posts = ctx
+        .count(
+            "SELECT COUNT(*) FROM community_posts WHERE group_id = $1",
+            ctx.group_a,
+        )
+        .await;
+    assert_eq!(posts, 0, "the group's posts must cascade-delete");
+}
+
+/// A same-tenant caller who is neither the group owner nor a manager-tier
+/// member may not delete the group: the request is rejected with 403 and the
+/// group row survives. Server-side authz must not trust a client `isOwner`.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn delete_group_non_owner_403(pool: PgPool) {
+    let ctx = setup(pool).await;
+
+    // A second, authenticated user who is an active member of org A but did
+    // NOT create `group_a` and holds no `owner` membership in it. `group_a` was
+    // created by `user_a`, so this caller is a non-owner, non-manager.
+    let other = TestUser::new();
+    let (other_token, _refresh) = create_authenticated_user(&ctx.app, &other).await;
+    let other_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
+        .bind(&other.email)
+        .fetch_one(&ctx.pool)
+        .await
+        .expect("resolve other user id");
+    seed_user_membership(&ctx.pool, other_id, ctx.org_a).await;
+
+    let resp = ctx
+        .delete_as(
+            &other_token,
+            &format!("/api/v1/community/groups/{}", ctx.group_a),
+        )
+        .await;
+    assert_eq!(
+        resp.status,
+        axum::http::StatusCode::FORBIDDEN,
+        "non-owner delete should be 403, got {}: {}",
+        resp.status,
+        resp.text()
+    );
+
+    let groups = ctx
+        .count(
+            "SELECT COUNT(*) FROM community_groups WHERE id = $1",
+            ctx.group_a,
+        )
+        .await;
+    assert_eq!(groups, 1, "a non-owner must not delete the group");
 }

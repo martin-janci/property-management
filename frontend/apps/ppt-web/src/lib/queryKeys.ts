@@ -337,11 +337,16 @@ export const queryKeys = {
  *
  * Covers the centralized {@link queryKeys} factory roots (including
  * `accounting`), the shared `@ppt/api-client` key-factory roots consumed by
- * ppt-web (`messages`, `meters`, `reports`), and the ad-hoc roots used
+ * ppt-web (`messages`, `meters`, `reports`, plus every mounted-route-group
+ * domain: `community`, `disputes`, `iot`, `outages`, `leases`, `violations`,
+ * `voting`, `registries`, `compliance`, `esignature`, `my-units`,
+ * `portfolio-performance`, `templates`, `integrations`, `syndication`,
+ * `oauth-grants`, `mfa`, `layout`),
+ * and the ad-hoc roots used
  * directly in feature hooks (`developer`, `ocr`, `actionQueue`,
  * `executionLogs`, `executionStats`, `ai-chat`, `predictive-maintenance`,
- * `sentiment`, `notification-analytics`, `financial`, `rentals`, and the
- * `auth`-rooted active-sessions cache).
+ * `sentiment`, `notification-analytics`, `notification-triggers`,
+ * `financial`, `rentals`, and the `auth`-rooted active-sessions cache).
  *
  * When you add a new auth-scoped query root, add it here too — otherwise the
  * cached data will leak into the next user's session. This must cover ALL
@@ -369,6 +374,38 @@ export const AUTHED_QUERY_KEY_ROOTS = [
   // Shared @ppt/api-client key-factory roots consumed by ppt-web
   'meters',
   'reports',
+  // Mounted-route-group domains whose caches populate via @ppt/api-client
+  // hooks (disputes/iot/outages/leases/voting/... route groups). These roots
+  // were absent from the allow-list, so their tenant-/user-scoped caches
+  // survived logout and leaked into the next session on a shared workstation.
+  // NOTE: `voting` is the live api-client root (votingKeys.all === ['voting'])
+  // that backs the on-screen vote queries AND the WebSocket votes-category
+  // invalidation. The legacy local `queryKeys.votes` factory root (`votes`,
+  // above) is retained only for logout-clear coverage; no live query uses it.
+  'community',
+  'disputes',
+  'iot',
+  'outages',
+  'leases',
+  'violations',
+  'voting',
+  // Building registries — pets/vehicles/parking/rules (Epic 57). Consumed via
+  // `createRegistryHooks` on RegistryPage; `registryKeys.all === ['registries']`.
+  // Tenant-scoped, so it must be purged on logout on a shared workstation.
+  'registries',
+  'compliance',
+  'esignature',
+  'my-units',
+  'portfolio-performance',
+  'templates',
+  'integrations',
+  'syndication',
+  'oauth-grants',
+  'mfa',
+  'layout',
+  // Budgets (Epic 24) — `budgetKeys.all === ['budgets']`, consumed by the
+  // financial budget list / create / detail routes. Org-scoped.
+  'budgets',
   // Ad-hoc roots used directly in feature hooks
   'developer',
   'ocr',
@@ -384,6 +421,11 @@ export const AUTHED_QUERY_KEY_ROOTS = [
   'predictive-maintenance',
   'sentiment',
   'notification-analytics',
+  // Granular notification-trigger preferences (@ppt/api-client
+  // granular-notifications — `notificationTriggerKeys`, Story 84.4). These are
+  // per-user preference caches; without this root they leaked into the next
+  // session (PR #2650 fix was incomplete — this root was missed).
+  'notification-triggers',
 ] as const;
 
 // ============================================================================

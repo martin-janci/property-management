@@ -12,7 +12,8 @@ use common::errors::ErrorResponse;
 use db::models::{CreateVendorContact, CreateVendorRating, VendorContact, VendorRating};
 use uuid::Uuid;
 
-use super::shared::{db_error, load_vendor_for_user, not_found, PaginationQuery};
+use super::shared::{db_error, load_vendor_for_user, not_found, require_manager, PaginationQuery};
+use crate::routes::pagination::clamp_limit;
 use crate::state::AppState;
 
 // ==================== Vendor Contacts ====================
@@ -23,6 +24,7 @@ pub(super) async fn add_contact(
     Path(id): Path<Uuid>,
     Json(data): Json<CreateVendorContact>,
 ) -> Result<(StatusCode, Json<VendorContact>), (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&mut rls).await?;
     let out = async {
         load_vendor_for_user(&state, &mut rls, id).await?;
         state
@@ -61,6 +63,7 @@ pub(super) async fn delete_contact(
     mut rls: RlsConnection,
     Path(contact_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = async {
         // Resolve the owning vendor, keyed to the caller's org (PAP-129: the
@@ -127,7 +130,7 @@ pub(super) async fn list_ratings(
             .list_ratings(
                 &mut **rls.conn(),
                 id,
-                query.limit.unwrap_or(50),
+                clamp_limit(query.limit.map(i64::from), 50) as i32,
                 query.offset.unwrap_or(0),
             )
             .await

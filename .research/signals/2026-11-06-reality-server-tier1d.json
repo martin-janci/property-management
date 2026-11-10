@@ -1,0 +1,30 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-06",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "churn-aligned (dispatcher-tier1d-demand-driven; claimable backlog below floor, 15 < 36). CHURN_FILES not supplied explicitly by the dispatcher this slice, so SKILL Step 1 priority 1 was applied against state.hotspot_history: the most recent churn entry (last_seen 2026-11-05) is backend/servers/reality-server/src/util/errors.rs, which lives under the reality-server segment root (backend/servers/reality-server/src/) => churn-aligned hit. Note the SKILL segment map lists the legacy path backend/api-server/... but the actual tree is backend/servers/<srv>/...; reality-server maps to backend/servers/reality-server/src/. Among churn-aligned candidates reality-server was also the oldest-reviewed per review_cursor (reality-server 2026-11-03 vs api-handlers 2026-11-04), so it wins on both signals. Saturation check (open code-review-finding in backlog.json by segment): reality-server=1 (<3 => NOT saturated, proceed); for reference api-handlers=0, ppt-web-ui=3 (would be saturation-skip), mobile-native-kmp=2, reality-web=1. Rust expert primary only per Step 2 (reality-server has no secondary expert). Scope: backend/servers/reality-server/src/ (42 .rs files).",
+  "experts_used": [
+    "rust"
+  ],
+  "findings_count": 1,
+  "signals": [
+    {
+      "id": "code-review-reality-server-pm-api-client-build-expect",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/state.rs:757-760 — PmApiClient::new() does `reqwest::Client::builder().timeout(..).build().expect(\"Failed to create HTTP client\")`. reqwest::ClientBuilder::build() is fallible (TLS backend init, proxy-from-env parse); on failure this panics instead of returning a Result the composition root can log and fail-closed on.",
+        "Consistency smell strengthening the finding: the SAME AppState constructor that calls this (state.rs:948 `PmApiClient::new(config.pm_api_health_url.clone(), 5)`) builds a sibling reqwest client 3 lines later — the SSO oauth client at state.rs:956-960 — with the resilient `.build().unwrap_or_default()`. Two reqwest builders, same startup path, inconsistent failure handling: one degrades gracefully, the other panics. PmApiClient::new should mirror the sibling (unwrap_or_default) or return Result so the single caller at state.rs:948 can decide.",
+        "This is the exact pattern the team already accepted and fixed in sibling segments: done/accepted findings code-review-api-core-push-fanout-client-build-expect (push_fanout.rs built 3 reqwest clients with .expect() in production constructors) and code-review-api-core-api-call-client-build-expect (api_call.rs:308). state.rs:760 is the reality-server instance of the same precedent; same vector, same score=1.",
+        "Severity LOW, identical rationale to the accepted api-core precedents: PmApiClient::new() is reached only from AppState::new()/build at startup (state.rs:948), so the practical effect is a fail-fast crash at boot rather than a per-request panic — close to the acceptable startup-validation pattern. Flagged for consistency with the accepted precedent and with the sibling unwrap_or_default() 3 lines away; do NOT inflate to Medium/High.",
+        "NOTE for triage: reality-server was reviewed statically this slice and is otherwise exceptionally clean, confirming prior reviewers' assessments. Verified no finding in: unwrap/expect audit (all prod-path hits safe — extractors/auth.rs:63 strip_prefix().unwrap() is guarded by the matching find(|c| c.trim().starts_with(\"portal_session=\")); handlers/inquiries/mod.rs:274 chars().next().unwrap() is guarded by the `if cleaned.is_empty() return false` at L269; all other unwrap/expect are inside #[cfg(test)] modules). No unsafe blocks. No reachable todo!()/unimplemented!() (the only panics are startup JWT_SECRET config validation in state.rs:81/100/106). StatusCode::OK on an error branch: only the intentional, documented degraded-health 200 in routes/health.rs:326. SQL injection surface clean: both sqlx::AssertSqlSafe sites (routes/listings.rs:711 and routes/price_map.rs:361) interpolate only &'static-derived text — RICH_LISTING_SELECT const + fixed suffix (listings) and a closed-match static `interval` string that 400s on any unlisted time_window (price_map); all user values are $-bound; both carry accurate SAFETY comments. No sensitive-value logging (tracing lines log error=%e / active booleans, never password/token/secret values). util/errors.rs (the churn hotspot) is a mature, fully-tested error-scrubbing + structured DbErrorClass classifier (keys HTTP status off sqlx variant/ErrorKind, never message text) — itself the product of a prior accepted 'string-typed status codes' finding; no gap. Background workers (search_alert_drainer:331, favorite_alerts:61, saved_search_alerts:121) return JoinHandles and delegate to run_once(), which handles every DB op with match/log-and-return (e.g. saved_search_alerts run_once L151-169) — no unwraps in the loop body. This single +1 is the only defensible signal in the segment.",
+        "expert: rust"
+      ],
+      "expert": "rust"
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-28T00:00:00Z",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed",
+  "selection_detail": "Dispatcher Tier-1d demand: claimable buffer starved (claimable=6 < floor=36) and all remaining open backlog is mobile-native/KMP (structurally unlandable in the cloud runner), so a cloud-LANDABLE (backend/frontend) segment was required. CHURN_FILES not supplied (hotspot_history is stale May churn on api-server). review_cursor in state.json is partly stale (lists api-core=2026-08-21, ppt-web-core=2026-08-21) but the signals/ directory is the reliable record of what was ACTUALLY reviewed: the 2026-08-27 wave covered api-core, api-handlers, ppt-web-core, reality-server and reality-web (x3); 2026-08-28 already covered api-handlers and reality-server. ppt-web-ui was NOT touched in either wave (no signal file since cursor date 2026-08-25) and is the oldest actually-unreviewed cloud-landable segment. mobile-rn (cursor 2026-08-26) is newer. Not saturated: 0 open code-review-finding rows for ppt-web-ui in backlog.json (6 prior findings all status=done). Scope = frontend/apps/ppt-web/src/pages/ + components/ (excludes lib/hooks/contexts/routes = ppt-web-core, and features/ = ppt-web-ui-adjacent feature slices). Deliberately re-reviewed but NOT re-flagged (confirmed clean/duplicate-free): LoginPage.tsx (full a11y, i18n, error mapping, no open-redirect via react-router navigate), Toast.tsx provider timers (cleaned up correctly), ConfirmationDialog.tsx (focus trap + Escape + focus restore all present).",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "findings_count": 2,
+  "note": "ppt-web-ui in ppt-web is a small, mature surface (2 pages, 11 components; all files use i18n, no `as any`/non-null-assertion casts, all console.* calls are import.meta.env.DEV-gated except the legitimate ErrorBoundary logger). Both findings are frontend-only and landable in the cloud runner. CROSS-SEGMENT OBSERVATION for a future ppt-web-core pass (NOT scored here, out of this segment's scope): frontend/apps/ppt-web/src/lib/api.ts:337 `export default getApiClient()` is evaluated at module load and permanently captures the FIRST, unconfigured axios instance (no token getter, no onUnauthorized) into the default export binding; configureApiClient() later replaces the internal `apiInstance` singleton but the default export still points at the stale unconfigured client. No consumer imports the default today (all use the named getApiClient()), so it is a latent footgun, not a live bug — worth flagging when ppt-web-core next rotates.",
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-errorboundary-raw-message-prod",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/ErrorBoundary.tsx:167-168 — the global error boundary renders the raw caught error message to end users unconditionally in every build: `{error && (<p className=\"error-boundary-details\"><code>{error.message}</code></p>)}`. There is NO `import.meta.env.DEV` (or NODE_ENV) guard around it — a grep of the file confirms zero env checks — even though this ErrorBoundary wraps the whole App (see App.route-error-boundary.test.tsx) and is the production crash fallback.",
+        "Effect: on any uncaught render/lifecycle error in production, the user is shown the internal JavaScript error string verbatim (e.g. a serialized API error, a `Cannot read properties of undefined (reading 'x')`, or a thrown backend detail bubbled through a hook). React escapes the text so this is not XSS, but surfacing raw internal error text to end users is an information-disclosure / UX smell — it leaks implementation detail and is meaningless-to-alarming for a non-technical property manager. The neighbouring translated copy (`translations.message`, ErrorBoundary.tsx:164) already provides the user-facing message; the raw `<code>{error.message}</code>` is developer detail that belongs behind a DEV gate (the same `import.meta.env.DEV` convention lib/websocket.ts and lib/api.ts use for their diagnostics) or inside the existing 'Copy error details' affordance (handleCopyError, lines 107-129) which already captures message+stack+URL+UA for support.",
+        "Fix: wrap the details `<p>` in `import.meta.env.DEV && error && (...)` so Vite dead-code-eliminates it from production, keeping the translated message + retry/reload/copy actions for end users. Score 1 (info-disclosure / UX; not a crash or auth issue). Confidence medium: statically traced, not runtime-confirmed against a production build."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-authcallback-decodeuri-throw",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "completeness",
+      "evidence": [
+        "frontend/apps/ppt-web/src/pages/AuthCallbackPage.tsx:93,99-100 — the SSO callback reads `error_description` straight from the URL query (`searchParams.get('error_description')`) and, in the provider-error branch, renders it via `decodeURIComponent(errorDescription)` with no try/catch. `decodeURIComponent` throws a `URIError` on any malformed percent-encoding (e.g. a lone `%`, `%zz`, or a truncated `%E0`). The call sits directly in the effect body (inside `useEffect`, not wrapped), so a throw is an uncaught synchronous exception during the callback handler.",
+        "Reachability: `error_description` is fully attacker-/provider-controllable — it is whatever the identity provider (or anyone who can craft the redirect URL) puts in the query string. A user landing on `/auth/callback?error=access_denied&error_description=denied%` (note the trailing `%`) triggers the throw. Instead of the intended friendly SSO-error screen (status='error' + provider message + 'Back to login'), the exception propagates up and is swallowed by the global ErrorBoundary, replacing the actionable SSO error UI with the generic app-crash fallback — a strictly worse outcome on an auth failure path where the user most needs a clear 'try signing in again' route.",
+        "Note the same effect already handles the happy 'no error_description' case gracefully (falls back to the i18n `auth.ssoProviderError`), so the crash only manifests on the malformed-encoding edge — easy to miss and untested (AuthCallbackPage has no test exercising a malformed error_description). Fix: guard the decode, e.g. `let desc = errorDescription; try { desc = decodeURIComponent(errorDescription); } catch { /* leave raw or use fallback copy */ }`, mirroring the defensive decode pattern used elsewhere. Score 1 (edge-case crash on an auth path, degraded error UX; not a security bypass — React still escapes the rendered text so there is no injection). Confidence medium: decodeURIComponent's throw-on-malformed behaviour is well-defined and the call is statically confirmed unguarded; not runtime-reproduced."
+      ]
+    }
+  ]
+}

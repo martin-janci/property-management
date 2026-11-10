@@ -17,10 +17,17 @@
 //! # Authentication
 //!
 //! WebSocket upgrades cannot carry a custom `Authorization` header via the browser
-//! WS API, so auth is performed via a **short-lived one-time token** passed as the
-//! `token` query parameter.  The value is a standard JWT access token issued by
-//! the existing `JwtService`; the server validates it with the shared `OnceLock`
-//! verifier (same path as REST auth, same 15-min lifetime).
+//! WS API, so auth is performed with a standard JWT access token issued by the
+//! existing `JwtService`, validated with the shared `OnceLock` verifier (same
+//! path as REST auth, same 15-min lifetime).
+//!
+//! The token is read from the `Sec-WebSocket-Protocol` handshake header as a
+//! `bearer.<jwt>` subprotocol (the browser's `new WebSocket(url, ['bearer.<jwt>',
+//! 'ppt.v1'])` form). This is preferred over the legacy `?token=<jwt>` query
+//! parameter because a query-string token leaks the bearer credential into
+//! access logs and proxy logs, whereas the subprotocol header does not. The
+//! `token` query parameter is still accepted as a fallback for clients that have
+//! not yet migrated.
 //!
 //! # Wire format
 //!
@@ -45,7 +52,7 @@ use axum::{
         ws::{Message, WebSocket, WebSocketUpgrade},
         Query, State,
     },
-    http::StatusCode,
+    http::{header::SEC_WEBSOCKET_PROTOCOL, HeaderMap, StatusCode},
     response::IntoResponse,
     routing::get,
     Router,
@@ -57,6 +64,11 @@ use crate::state::AppState;
 
 /// Maximum idle time before the server closes the connection (60 s).
 const WS_IDLE_TIMEOUT_SECS: u64 = 60;
+
+/// Prefix that marks the JWT-bearing entry in the `Sec-WebSocket-Protocol`
+/// handshake header (`bearer.<jwt>`). Must stay in sync with
+/// `WS_BEARER_SUBPROTOCOL_PREFIX` in the ppt-web client (`lib/websocket.ts`).
+const WS_BEARER_SUBPROTOCOL_PREFIX: &str = "bearer.";
 
 /// Maximum lifetime of a WebSocket session regardless of activity (4 h).
 /// Clients should reconnect before their JWT expires (15 m) anyway.
@@ -78,9 +90,12 @@ pub fn router() -> Router<AppState> {
 /// Query parameters for the WebSocket upgrade request.
 #[derive(Debug, Deserialize)]
 pub struct WsQuery {
-    /// JWT access token — required for auth because WS upgrades cannot carry
-    /// a custom `Authorization` header from browser clients.
-    pub token: String,
+    /// Legacy JWT access token transport. Optional: the preferred transport is
+    /// the `bearer.<jwt>` entry in the `Sec-WebSocket-Protocol` header, which
+    /// (unlike this query param) does not leak the token into access logs. Kept
+    /// as a fallback for clients that have not yet migrated.
+    #[serde(default)]
+    pub token: Option<String>,
 }
 
 // ============================================================================
@@ -108,16 +123,29 @@ pub struct WsEvent {
 pub async fn ws_handler(
     ws: WebSocketUpgrade,
     Query(params): Query<WsQuery>,
+    headers: HeaderMap,
     State(state): State<AppState>,
 ) -> impl IntoResponse {
+    // --- Resolve the auth token ---
+    // Prefer the `bearer.<jwt>` subprotocol from the `Sec-WebSocket-Protocol`
+    // header: unlike the legacy `?token=` query param it never lands in access
+    // logs. Fall back to the query param for not-yet-migrated clients.
+    let token = match extract_token_from_subprotocols(&headers).or(params.token) {
+        Some(t) => t,
+        None => {
+            tracing::warn!("WebSocket connection rejected: missing auth token");
+            return (StatusCode::UNAUTHORIZED, "missing auth token").into_response();
+        }
+    };
+
     // --- JWT validation ---
     // Issue #480: also extract the `exp` so the session loop can close
     // the socket once the access token expires; otherwise a logged-out
     // user retains a live channel for up to WS_MAX_SESSION_SECS.
-    let (user_id, exp) = match validate_ws_token_with_exp(&params.token) {
+    let (user_id, exp) = match validate_ws_token_with_exp(&token) {
         Ok(t) => t,
         Err(msg) => {
-            // Never log `params.token` — it is a bearer JWT and a single
+            // Never log the token — it is a bearer JWT and a single
             // log line is enough to give an attacker session takeover.
             tracing::warn!(msg = %msg, "WebSocket connection rejected: invalid token");
             return (StatusCode::UNAUTHORIZED, msg).into_response();
@@ -267,6 +295,28 @@ async fn handle_ws_session(
 }
 
 // ============================================================================
+// Token extraction
+// ============================================================================
+
+/// Recover the JWT access token from the `Sec-WebSocket-Protocol` handshake
+/// header, where the browser client offers it as a `bearer.<jwt>` subprotocol
+/// (alongside `ppt.v1`).
+///
+/// Returns `None` when the header is absent, non-ASCII, or carries no
+/// non-empty `bearer.` entry — callers then fall back to the legacy `?token=`
+/// query param. The header is a comma-separated list of subprotocol tokens;
+/// we scan for the first `bearer.`-prefixed entry and strip the prefix.
+fn extract_token_from_subprotocols(headers: &HeaderMap) -> Option<String> {
+    let value = headers.get(SEC_WEBSOCKET_PROTOCOL)?.to_str().ok()?;
+    value
+        .split(',')
+        .map(str::trim)
+        .find_map(|p| p.strip_prefix(WS_BEARER_SUBPROTOCOL_PREFIX))
+        .filter(|t| !t.is_empty())
+        .map(str::to_owned)
+}
+
+// ============================================================================
 // JWT validation (query-param path)
 // ============================================================================
 
@@ -320,5 +370,46 @@ mod tests {
     fn validate_ws_token_rejects_empty() {
         let result = validate_ws_token("");
         assert!(result.is_err());
+    }
+
+    fn header_map(protocol: &str) -> HeaderMap {
+        let mut headers = HeaderMap::new();
+        headers.insert(SEC_WEBSOCKET_PROTOCOL, protocol.parse().unwrap());
+        headers
+    }
+
+    #[test]
+    fn extract_token_reads_bearer_subprotocol() {
+        let headers = header_map("bearer.jwt-abc, ppt.v1");
+        assert_eq!(
+            extract_token_from_subprotocols(&headers),
+            Some("jwt-abc".to_string())
+        );
+    }
+
+    #[test]
+    fn extract_token_handles_bearer_without_whitespace() {
+        let headers = header_map("bearer.jwt-xyz,ppt.v1");
+        assert_eq!(
+            extract_token_from_subprotocols(&headers),
+            Some("jwt-xyz".to_string())
+        );
+    }
+
+    #[test]
+    fn extract_token_ignores_non_bearer_protocols() {
+        let headers = header_map("ppt.v1");
+        assert_eq!(extract_token_from_subprotocols(&headers), None);
+    }
+
+    #[test]
+    fn extract_token_rejects_empty_bearer() {
+        let headers = header_map("bearer., ppt.v1");
+        assert_eq!(extract_token_from_subprotocols(&headers), None);
+    }
+
+    #[test]
+    fn extract_token_none_when_header_absent() {
+        assert_eq!(extract_token_from_subprotocols(&HeaderMap::new()), None);
     }
 }

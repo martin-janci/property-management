@@ -13,11 +13,14 @@ import {
   useToggleSearchAlert,
 } from '@ppt/reality-api-client';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
 
 function SavedSearchCard({ search }: { search: SavedSearch }) {
+  const t = useTranslations('pages.savedSearches');
+  const tError = useTranslations('error');
   const deleteSearch = useDeleteSavedSearch();
   const toggleAlert = useToggleSearchAlert();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -35,7 +38,7 @@ function SavedSearchCard({ search }: { search: SavedSearch }) {
     const parts: string[] = [];
 
     if (search.filters.transactionType) {
-      parts.push(search.filters.transactionType === 'sale' ? 'For Sale' : 'For Rent');
+      parts.push(search.filters.transactionType === 'sale' ? t('forSale') : t('forRent'));
     }
 
     if (search.filters.propertyType?.length) {
@@ -52,7 +55,7 @@ function SavedSearchCard({ search }: { search: SavedSearch }) {
       parts.push(`€${min} - €${max}`);
     }
 
-    return parts.length > 0 ? parts.join(' • ') : 'All listings';
+    return parts.length > 0 ? parts.join(' • ') : t('allListings');
   };
 
   const searchUrl = `/listings?${new URLSearchParams(
@@ -69,7 +72,7 @@ function SavedSearchCard({ search }: { search: SavedSearch }) {
           <p className="card-summary">{getFilterSummary()}</p>
         </div>
         <Link href={searchUrl} className="view-button">
-          View
+          {t('view')}
         </Link>
       </div>
 
@@ -83,29 +86,31 @@ function SavedSearchCard({ search }: { search: SavedSearch }) {
               className="toggle-checkbox"
               disabled={toggleAlert.isPending}
             />
-            <span className="toggle-text">{search.alertsEnabled ? 'Alerts on' : 'Alerts off'}</span>
+            <span className="toggle-text">
+              {search.alertsEnabled ? t('alertsOn') : t('alertsOff')}
+            </span>
           </label>
           {search.alertsEnabled && search.alertFrequency && (
-            <span className="frequency-badge">{search.alertFrequency}</span>
+            <span className="frequency-badge">{t(`frequency.${search.alertFrequency}`)}</span>
           )}
         </div>
 
         <div className="card-actions">
           {search.newListingsCount !== undefined && search.newListingsCount > 0 && (
-            <span className="new-badge">{search.newListingsCount} new</span>
+            <span className="new-badge">{t('newCount', { count: search.newListingsCount })}</span>
           )}
           {showDeleteConfirm ? (
             <div className="delete-confirm">
-              <span>Delete?</span>
+              <span>{t('deleteConfirm')}</span>
               <button type="button" className="confirm-yes" onClick={handleDelete}>
-                Yes
+                {t('confirmYes')}
               </button>
               <button
                 type="button"
                 className="confirm-no"
                 onClick={() => setShowDeleteConfirm(false)}
               >
-                No
+                {t('confirmNo')}
               </button>
             </div>
           ) : (
@@ -113,7 +118,7 @@ function SavedSearchCard({ search }: { search: SavedSearch }) {
               type="button"
               className="delete-button"
               onClick={() => setShowDeleteConfirm(true)}
-              aria-label="Delete saved search"
+              aria-label={t('deleteAriaLabel')}
             >
               <svg
                 width="16"
@@ -132,12 +137,24 @@ function SavedSearchCard({ search }: { search: SavedSearch }) {
         </div>
       </div>
 
+      {(deleteSearch.isError || toggleAlert.isError) && (
+        <p className="card-error" role="alert" aria-live="assertive">
+          {tError('description')}
+        </p>
+      )}
+
       <style jsx>{`
         .search-card {
           background: var(--ppt-bg-surface);
           border-radius: 12px;
           padding: 20px;
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-error {
+          margin: 12px 0 0;
+          color: var(--ppt-color-danger-hover);
+          font-size: 14px;
         }
 
         .card-header {
@@ -279,6 +296,7 @@ function SavedSearchCard({ search }: { search: SavedSearch }) {
 }
 
 function SavedSearchesContent() {
+  const t = useTranslations('pages.savedSearches');
   const { data: searches, isLoading, error } = useSavedSearches();
 
   if (isLoading) {
@@ -311,7 +329,7 @@ function SavedSearchesContent() {
   if (error) {
     return (
       <div className="error-state">
-        <p>Failed to load saved searches. Please try again.</p>
+        <p>{t('error')}</p>
         <style jsx>{`
           .error-state {
             padding: 64px 24px;
@@ -339,13 +357,10 @@ function SavedSearchesContent() {
           <path d="m21 21-4.35-4.35" />
           <path d="M11 8v6M8 11h6" />
         </svg>
-        <h2 className="empty-title">No saved searches</h2>
-        <p className="empty-text">
-          Search for listings and save your search to get alerts when new properties match your
-          criteria.
-        </p>
+        <h2 className="empty-title">{t('emptyTitle')}</h2>
+        <p className="empty-text">{t('emptyText')}</p>
         <Link href="/listings" className="browse-link">
-          Start searching
+          {t('startSearching')}
         </Link>
         <style jsx>{`
           .empty-state {
@@ -401,15 +416,14 @@ function SavedSearchesContent() {
 }
 
 export default function SavedSearchesPage() {
+  const t = useTranslations('pages.savedSearches');
   return (
     <div className="page-container">
       <Header />
       <main className="main">
         <div className="container">
-          <h1 className="page-title">Saved Searches</h1>
-          <p className="page-subtitle">
-            Manage your saved searches and get notified when new listings match your criteria.
-          </p>
+          <h1 className="page-title">{t('title')}</h1>
+          <p className="page-subtitle">{t('subtitle')}</p>
           <ProtectedRoute>
             <SavedSearchesContent />
           </ProtectedRoute>

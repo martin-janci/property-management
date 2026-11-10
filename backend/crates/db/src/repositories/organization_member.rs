@@ -172,6 +172,12 @@ impl OrganizationMemberRepository {
     // ========================================================================
 
     /// Add a member to an organization.
+    ///
+    /// Removing a member is a soft delete (`status = 'removed'`), and
+    /// `(organization_id, user_id)` is unique, so re-adding a removed member
+    /// reactivates that row instead of inserting a new one. A row that is not
+    /// `removed` is left alone, and the call then fails with `RowNotFound`
+    /// (callers check membership first and answer 409).
     pub async fn create(
         &self,
         data: CreateOrganizationMember,
@@ -189,6 +195,15 @@ impl OrganizationMemberRepository {
             INSERT INTO organization_members
                 (organization_id, user_id, role_id, role_type, status, invited_by, invited_at, joined_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            ON CONFLICT (organization_id, user_id) DO UPDATE SET
+                role_id = EXCLUDED.role_id,
+                role_type = EXCLUDED.role_type,
+                status = EXCLUDED.status,
+                invited_by = EXCLUDED.invited_by,
+                invited_at = EXCLUDED.invited_at,
+                joined_at = EXCLUDED.joined_at,
+                updated_at = NOW()
+            WHERE organization_members.status = 'removed'
             RETURNING *
             "#,
         )
@@ -461,5 +476,67 @@ impl OrganizationMemberRepository {
         .await?;
 
         Ok(role_type)
+    }
+
+    /// Count active manager-level members of `org_id` other than `user_id`.
+    ///
+    /// The role set mirrors `TenantRole::is_manager()` (super/platform/org
+    /// admin, manager, technical manager), and the case-insensitive spellings
+    /// accepted by the tenant extractor when it resolves the role from
+    /// `organization_members.role_type` (via [`Self::get_user_role_type`]).
+    /// Uses the pool like the extractor: under RLS a member only sees their
+    /// own membership row.
+    pub async fn count_other_active_managers(
+        &self,
+        org_id: Uuid,
+        user_id: Uuid,
+    ) -> Result<i64, SqlxError> {
+        sqlx::query_scalar::<_, i64>(
+            r#"
+            SELECT COUNT(*) FROM organization_members
+            WHERE organization_id = $1
+              AND user_id <> $2
+              AND status = 'active'
+              AND LOWER(role_type) IN (
+                  'super_admin', 'superadmin',
+                  'platform_admin', 'platformadmin',
+                  'org_admin', 'orgadmin',
+                  'manager',
+                  'technical_manager', 'technicalmanager'
+              )
+            "#,
+        )
+        .bind(org_id)
+        .bind(user_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
+    /// Count active admin-level members (org admin and above) of `org_id`
+    /// other than `user_id`. Used to refuse demoting or removing the last
+    /// organization admin, which would leave the org without anyone able to
+    /// manage members.
+    pub async fn count_other_active_admins(
+        &self,
+        org_id: Uuid,
+        user_id: Uuid,
+    ) -> Result<i64, SqlxError> {
+        sqlx::query_scalar::<_, i64>(
+            r#"
+            SELECT COUNT(*) FROM organization_members
+            WHERE organization_id = $1
+              AND user_id <> $2
+              AND status = 'active'
+              AND LOWER(role_type) IN (
+                  'super_admin', 'superadmin',
+                  'platform_admin', 'platformadmin',
+                  'org_admin', 'orgadmin'
+              )
+            "#,
+        )
+        .bind(org_id)
+        .bind(user_id)
+        .fetch_one(&self.pool)
+        .await
     }
 }

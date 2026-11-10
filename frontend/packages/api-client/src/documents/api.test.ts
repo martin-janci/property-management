@@ -156,13 +156,13 @@ describe('documents api client', () => {
     vi.unstubAllGlobals();
   });
 
-  it('uploadDocumentDirect forwards folder_id but NOT building_id (#2366)', async () => {
-    // Guards the deliberate omission documented in `uploadDocumentDirect`:
-    // the backend registration contract has no `building_id` (no column, no
-    // struct field, no `deny_unknown_fields`), so forwarding it would be a
-    // silent no-op — a false-green. `folder_id` DOES carry building scope and
-    // must survive. When #2366's backend support lands, this test should be
-    // updated deliberately alongside the forwarding change.
+  it('uploadDocumentDirect forwards folder_id and building scope via access_scope (#2366)', async () => {
+    // The shipped registration contract (`POST /api/v1/documents`) has no
+    // `building_id` field — building association is expressed as
+    // `access_scope='building'` + `access_target_ids=[buildingId]` (the JSONB
+    // array the RLS gate and building list/search filter read). gap-84-1
+    // originally dropped the association when it switched to the direct path;
+    // #2366 restores it the shipped way. `folder_id` must also survive.
     const listeners: Record<string, () => void> = {};
     const xhrMock = {
       upload: { addEventListener: vi.fn() },
@@ -209,7 +209,65 @@ describe('documents api client', () => {
       (vi.mocked(fetch).mock.calls[1][1] as RequestInit).body as string
     );
     expect(registerBody.folder_id).toBe('folder-3');
+    // Building association is carried by the shipped access-scope mechanism,
+    // NOT a raw `building_id` field (which the server would ignore).
     expect(registerBody).not.toHaveProperty('building_id');
+    expect(registerBody.access_scope).toBe('building');
+    expect(registerBody.access_target_ids).toEqual(['building-7']);
+
+    vi.unstubAllGlobals();
+  });
+
+  it('uploadDocumentDirect omits access_scope when no building is supplied (#2366)', async () => {
+    // Without a building context the client must NOT set an access scope — the
+    // server then applies its default (organization) scope. Setting
+    // `access_scope='building'` unconditionally would 400 (missing
+    // access_target_ids) and would wrongly narrow org-wide uploads.
+    const listeners: Record<string, () => void> = {};
+    const xhrMock = {
+      upload: { addEventListener: vi.fn() },
+      addEventListener: (evt: string, cb: () => void) => {
+        listeners[evt] = cb;
+      },
+      open: vi.fn(),
+      setRequestHeader: vi.fn(),
+      send: vi.fn(() => {
+        queueMicrotask(() => {
+          xhrMock.status = 200;
+          listeners.load?.();
+        });
+      }),
+      status: 0,
+    };
+    vi.stubGlobal('XMLHttpRequest', function XMLHttpRequestMock() {
+      return xhrMock;
+    });
+
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(
+        mockOkResponse({
+          url: 'https://s3.example/bucket/key?sig=abc',
+          file_key: 'org/2026/07/uuid_report.pdf',
+          content_type: 'application/pdf',
+          method: 'PUT',
+          expires_at: '2026-07-15T00:05:00Z',
+        })
+      )
+      .mockResolvedValueOnce(mockOkResponse({ id: 'doc-1', message: 'created' }));
+
+    const file = new File(['hello'], 'report.pdf', { type: 'application/pdf' });
+    await uploadDocumentDirect({
+      file,
+      title: 'Report',
+      category: 'report',
+      organizationId: 'org-1',
+    });
+
+    const registerBody = JSON.parse(
+      (vi.mocked(fetch).mock.calls[1][1] as RequestInit).body as string
+    );
+    expect(registerBody).not.toHaveProperty('access_scope');
+    expect(registerBody).not.toHaveProperty('access_target_ids');
 
     vi.unstubAllGlobals();
   });

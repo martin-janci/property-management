@@ -6,6 +6,7 @@
 //! - Request signature verification
 //! - User authentication via OAuth token
 
+use crate::routes::rate_limit::{rate_limit_allowed, InProcessRateLimiter};
 use crate::services::VoiceCommandProcessor;
 use crate::state::AppState;
 use api_core::extractors::RlsConnection;
@@ -29,13 +30,20 @@ use db::models::{
 use db::RlsPool;
 use hmac::{Hmac, KeyInit, Mac};
 use integrations::{encrypt_optional_required, encrypt_required, CryptoError, IntegrationCrypto};
+use jsonwebtoken::{decode, decode_header, Algorithm, DecodingKey, Validation};
 use serde::Deserialize;
 use sha2::Sha256;
 use sqlx::PgConnection;
+use std::sync::OnceLock;
+use tokio::sync::RwLock;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 type HmacSha256 = Hmac<Sha256>;
+
+/// Encrypted voice OAuth token material ready for storage:
+/// `(access_ciphertext, refresh_ciphertext, access_hash)`.
+type EncryptedVoiceTokens = (String, Option<String>, Option<Vec<u8>>);
 
 /// Map a fail-closed encryption error to an HTTP 500.
 ///
@@ -49,6 +57,101 @@ fn voice_encryption_required(e: CryptoError) -> (StatusCode, Json<ErrorResponse>
             "ENCRYPTION_REQUIRED",
             "Integration token encryption is not configured",
         )),
+    )
+}
+
+/// Encrypt a freshly exchanged / refreshed voice OAuth token pair for storage.
+///
+/// `oauth_token_exchange` and `oauth_token_refresh` (real and simulated
+/// branches alike) persist upstream Amazon/Google tokens the same way and must
+/// stay in lock-step on two security invariants:
+/// - #765: encryption is MANDATORY — [`encrypt_required`] fails closed when no
+///   `INTEGRATION_ENCRYPTION_KEY` is configured, mapped here to HTTP 500 so a
+///   token is never written in plaintext.
+/// - #2662: the indexed `access_token_hash` is derived from the SAME plaintext
+///   as the stored ciphertext, so the O(1) device lookup can never drift out of
+///   sync with the encrypted access token.
+///
+/// Returns `(access_ciphertext, refresh_ciphertext, access_hash)`; the caller
+/// supplies `expires_at`, which is provider- or simulation-specific. Keeping
+/// this in one place means the four call sites cannot silently diverge on
+/// either invariant.
+fn encrypt_voice_token_pair(
+    crypto: Option<&IntegrationCrypto>,
+    access_token: &str,
+    refresh_token: Option<&str>,
+) -> Result<EncryptedVoiceTokens, (StatusCode, Json<ErrorResponse>)> {
+    let access_encrypted =
+        encrypt_required(crypto, access_token).map_err(voice_encryption_required)?;
+    let refresh_encrypted =
+        encrypt_optional_required(crypto, refresh_token).map_err(voice_encryption_required)?;
+    let access_hash = voice_access_token_hash(access_token);
+    Ok((access_encrypted, refresh_encrypted, access_hash))
+}
+
+/// Whether an unconfigured voice OAuth platform may fall back to minting a
+/// locally-simulated token instead of failing the request.
+///
+/// Simulated tokens are a development-only aid. Fail-open fix (security #890):
+/// in RELEASE builds an unconfigured platform must fail closed — never mint or
+/// store a fake token, which would otherwise clobber the device's real stored
+/// token with a dead simulated one. The build flag is threaded through as an
+/// explicit argument so the release (fail-closed) path stays unit-testable —
+/// test binaries always compile with `debug_assertions` on.
+fn voice_simulated_oauth_allowed(debug_build: bool) -> bool {
+    debug_build
+}
+
+// ============================================================================
+// Rate limiting (#2769)
+// ============================================================================
+//
+// `oauth_token_refresh` rotates the linked user's upstream OAuth token and
+// makes a live call to Amazon/Google. Even for an authenticated owner, an
+// unbounded loop is an amplification vector, so throttle per PM user with the
+// shared in-process sliding-window limiter (same primitive as `routes::mfa`).
+// `std::time::Duration` is fully qualified here to avoid clashing with the
+// `chrono::Duration` already imported in this module.
+const VOICE_REFRESH_MAX_ATTEMPTS: u32 = 10;
+const VOICE_REFRESH_WINDOW: std::time::Duration = std::time::Duration::from_secs(900);
+const VOICE_REFRESH_SWEEP_THRESHOLD: usize = 1024;
+
+static VOICE_REFRESH_RATE_LIMITER: std::sync::LazyLock<InProcessRateLimiter<Uuid>> =
+    std::sync::LazyLock::new(|| std::sync::Mutex::new(std::collections::HashMap::new()));
+
+/// Record a refresh attempt for `user_id`; `false` once more than
+/// `VOICE_REFRESH_MAX_ATTEMPTS` occur in a rolling `VOICE_REFRESH_WINDOW`.
+fn voice_refresh_attempt_allowed(user_id: Uuid) -> bool {
+    rate_limit_allowed(
+        &VOICE_REFRESH_RATE_LIMITER,
+        user_id,
+        VOICE_REFRESH_MAX_ATTEMPTS,
+        VOICE_REFRESH_WINDOW,
+        VOICE_REFRESH_SWEEP_THRESHOLD,
+    )
+}
+
+// `oauth_token_exchange` completes account linking by making a live call to
+// Amazon/Google (`exchange_code`). Like `oauth_token_refresh`, an authenticated
+// caller must not be able to loop it and amplify against the upstream OAuth
+// provider, so throttle per PM user with the same in-process sliding-window
+// limiter idiom (#2769).
+const VOICE_EXCHANGE_MAX_ATTEMPTS: u32 = 10;
+const VOICE_EXCHANGE_WINDOW: std::time::Duration = std::time::Duration::from_secs(900);
+const VOICE_EXCHANGE_SWEEP_THRESHOLD: usize = 1024;
+
+static VOICE_EXCHANGE_RATE_LIMITER: std::sync::LazyLock<InProcessRateLimiter<Uuid>> =
+    std::sync::LazyLock::new(|| std::sync::Mutex::new(std::collections::HashMap::new()));
+
+/// Record an exchange attempt for `user_id`; `false` once more than
+/// `VOICE_EXCHANGE_MAX_ATTEMPTS` occur in a rolling `VOICE_EXCHANGE_WINDOW`.
+fn voice_exchange_attempt_allowed(user_id: Uuid) -> bool {
+    rate_limit_allowed(
+        &VOICE_EXCHANGE_RATE_LIMITER,
+        user_id,
+        VOICE_EXCHANGE_MAX_ATTEMPTS,
+        VOICE_EXCHANGE_WINDOW,
+        VOICE_EXCHANGE_SWEEP_THRESHOLD,
     )
 }
 
@@ -145,6 +248,8 @@ async fn alexa_webhook(
                 state.llm_document_repo.clone(),
                 state.fault_repo.clone(),
                 state.unit_repo.clone(),
+                state.announcement_repo.clone(),
+                state.meter_repo.clone(),
             );
             let (result, _) = processor
                 .process_command(rls.conn(), device.id, "help", &locale)
@@ -165,6 +270,8 @@ async fn alexa_webhook(
                 state.llm_document_repo.clone(),
                 state.fault_repo.clone(),
                 state.unit_repo.clone(),
+                state.announcement_repo.clone(),
+                state.meter_repo.clone(),
             );
             let (result, _) = processor
                 .process_command(rls.conn(), device.id, &command_text, &locale)
@@ -210,14 +317,19 @@ async fn alexa_health_check() -> StatusCode {
 
 /// Google Actions webhook endpoint.
 ///
-/// Handles Google Assistant requests via Actions SDK.
+/// Handles Google Assistant requests via the Actions SDK. The request is
+/// authenticated by a Google-issued ID token supplied as
+/// `Authorization: Bearer <jwt>`: its RS256 signature is verified against
+/// Google's JWKS and its `aud` claim must equal `GOOGLE_ACTIONS_PROJECT_ID`
+/// (issuer + expiry are enforced too). Once verified, the linked account is
+/// resolved from the OAuth access token in `user.params.bearerToken`.
 #[utoipa::path(
     post,
     path = "/api/v1/webhooks/voice/google",
     request_body = GoogleActionsRequest,
     responses(
         (status = 200, description = "Google Actions response", body = GoogleActionsResponse),
-        (status = 401, description = "Unauthorized - invalid token"),
+        (status = 401, description = "Unauthorized - missing or invalid Google ID token"),
         (status = 500, description = "Internal server error"),
     ),
     tag = "Voice Webhooks"
@@ -228,8 +340,9 @@ async fn google_actions_webhook(
     mut rls: RlsConnection,
     Json(request): Json<GoogleActionsRequest>,
 ) -> Result<Json<GoogleActionsResponse>, (StatusCode, Json<ErrorResponse>)> {
-    // Verify request (Google uses Bearer token in Authorization header)
-    if let Err(e) = verify_google_request(&headers) {
+    // Verify request: Google-issued ID token (Bearer) with RS256 signature +
+    // aud/iss/exp validation. Fails closed on any verification error.
+    if let Err(e) = verify_google_request(&headers).await {
         tracing::warn!("Google Actions verification failed: {}", e);
         rls.release().await;
         return Err((
@@ -272,6 +385,8 @@ async fn google_actions_webhook(
         state.llm_document_repo.clone(),
         state.fault_repo.clone(),
         state.unit_repo.clone(),
+        state.announcement_repo.clone(),
+        state.meter_repo.clone(),
     );
     let (result, _) = processor
         .process_command(rls.conn(), device.id, command_text, locale)
@@ -309,6 +424,7 @@ async fn google_actions_webhook(
         (status = 400, description = "Invalid authorization code"),
         (status = 401, description = "Unauthorized - missing or invalid PM access token"),
         (status = 403, description = "Forbidden - no active organization context"),
+        (status = 429, description = "Too many exchange attempts"),
         (status = 500, description = "Token exchange failed"),
     ),
     security(("bearer_auth" = [])),
@@ -316,10 +432,27 @@ async fn google_actions_webhook(
 )]
 async fn oauth_token_exchange(
     State(state): State<AppState>,
-    auth: api_core::AuthUser,
+    api_core::TenantAuthUser(auth): api_core::TenantAuthUser,
     Json(request): Json<VoiceOAuthExchangeRequest>,
 ) -> Result<Json<VoiceOAuthExchangeResponse>, (StatusCode, Json<ErrorResponse>)> {
     use integrations::{VoiceOAuthManager, VoicePlatform};
+
+    // Throttle authenticated abuse: a valid principal must not be able to loop
+    // this endpoint and amplify against the upstream OAuth provider (#2769).
+    if !voice_exchange_attempt_allowed(auth.user_id) {
+        tracing::warn!(
+            user_id = %auth.user_id,
+            platform = %request.platform,
+            "Voice OAuth exchange rate limit exceeded"
+        );
+        return Err((
+            StatusCode::TOO_MANY_REQUESTS,
+            Json(ErrorResponse::new(
+                "RATE_LIMITED",
+                "Too many token exchange attempts; try again later",
+            )),
+        ));
+    }
 
     // Bind the linking to the authenticated PM user + their active org.
     // Without an org context we cannot create a tenant-scoped voice device.
@@ -402,14 +535,13 @@ async fn oauth_token_exchange(
                 )
             })?;
 
-        // Issue #765: encryption is MANDATORY — fail closed if no key is set.
-        let access_encrypted = encrypt_required(crypto.as_ref(), &tokens.access_token)
-            .map_err(voice_encryption_required)?;
-        let refresh_encrypted =
-            encrypt_optional_required(crypto.as_ref(), tokens.refresh_token.as_deref())
-                .map_err(voice_encryption_required)?;
-        // #2662: derive the indexed lookup hash from the plaintext token.
-        let access_hash = voice_access_token_hash(&tokens.access_token);
+        // #765 (fail-closed encryption) + #2662 (indexed hash in lock-step),
+        // centralized in `encrypt_voice_token_pair`.
+        let (access_encrypted, refresh_encrypted, access_hash) = encrypt_voice_token_pair(
+            crypto.as_ref(),
+            &tokens.access_token,
+            tokens.refresh_token.as_deref(),
+        )?;
 
         (
             access_encrypted,
@@ -427,14 +559,11 @@ async fn oauth_token_exchange(
         );
         let simulated_access = format!("voice_access_{}_{}", request.platform, Uuid::new_v4());
         let simulated_refresh = format!("voice_refresh_{}_{}", request.platform, Uuid::new_v4());
-        let access_hash = voice_access_token_hash(&simulated_access);
+        let (access_encrypted, refresh_encrypted, access_hash) =
+            encrypt_voice_token_pair(crypto.as_ref(), &simulated_access, Some(&simulated_refresh))?;
         (
-            encrypt_required(crypto.as_ref(), &simulated_access)
-                .map_err(voice_encryption_required)?,
-            Some(
-                encrypt_required(crypto.as_ref(), &simulated_refresh)
-                    .map_err(voice_encryption_required)?,
-            ),
+            access_encrypted,
+            refresh_encrypted,
             Some(Utc::now() + Duration::hours(1)),
             access_hash,
         )
@@ -454,9 +583,7 @@ async fn oauth_token_exchange(
 
     // Device is bound to the authenticated PM user and their organization
     // (derived above from the verified access token — never random UUIDs).
-    let device_id = format!("{}_{}", request.platform, Uuid::new_v4());
-
-    // Create the voice device with tokens.
+    //
     // PAP-170 (PAP-150 P2): bind the verified PM user's org/user RLS context for
     // the device write instead of touching the raw `state.db` pool.
     // `voice_assistant_devices` is not RLS-bound today, but binding context is
@@ -474,10 +601,30 @@ async fn oauth_token_exchange(
                 )),
             )
         })?;
+
+    // Upsert on (org, user, platform). A re-link must ROTATE the tokens on the
+    // existing device row for this tuple, not insert an independent new row:
+    // the old code minted a fresh random `device_id` and created a row every
+    // call, so re-linking accumulated multiple active devices whose previously
+    // stored tokens stayed independently usable (stale-token accumulation). By
+    // reusing the existing row we overwrite its `access_token_encrypted` /
+    // `access_token_hash`, which invalidates the superseded token.
+    //
+    // #2794: the "at most one active device per (org, user, platform)" invariant
+    // is enforced by the DATABASE — the `uniq_voice_devices_active_org_user_platform`
+    // partial UNIQUE index (WHERE is_active = TRUE, migration 00231) is the single
+    // writer. A single atomic `INSERT ... ON CONFLICT ... DO UPDATE` (upsert) makes
+    // the DB the arbiter: first link inserts, re-link conflicts on the index and
+    // rotates the tokens on the existing row in place. This closes the
+    // concurrent-re-link race the previous sequential find -> branch ->
+    // insert/update path allowed (two racing requests could each observe "no
+    // existing row" and both INSERT). On conflict the `device_id` is preserved, so
+    // the returned id is stable across re-links.
+    let device_id = format!("{}_{}", request.platform, Uuid::new_v4());
     let device = state
         .llm_document_repo
-        .create_voice_device(
-            &mut **guard.conn(),
+        .upsert_active_voice_device(
+            guard.conn(),
             org_id,
             user_id,
             None,
@@ -492,7 +639,7 @@ async fn oauth_token_exchange(
         )
         .await
         .map_err(|e| {
-            tracing::error!("Failed to create voice device: {}", e);
+            tracing::error!("Failed to upsert voice device: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new(
@@ -521,28 +668,61 @@ async fn oauth_token_exchange(
 }
 
 /// Refresh OAuth tokens for a voice device.
+///
+/// SECURITY (#2769): this endpoint rotates the linked user's upstream
+/// Amazon/Google OAuth token, so it is invoked by the **authenticated
+/// Property Management user** (from the voice account-management flow), not
+/// anonymously by the voice platform. It requires a valid PM access token
+/// (`AuthUser`) and only refreshes a device the caller **owns**
+/// (`auth.user_id == device.user_id`) or that a platform admin manages.
+///
+/// Before this fix the handler took only `State` + `Json<{device_id}>` with no
+/// auth extractor, so any caller who learned a `device_id` could rotate that
+/// user's token and amplify unauthenticated traffic against the upstream OAuth
+/// endpoints. Authenticated callers are additionally throttled per-user.
 #[utoipa::path(
     post,
     path = "/api/v1/webhooks/voice/oauth/refresh",
     request_body = VoiceTokenRefreshRequest,
     responses(
         (status = 200, description = "Token refresh successful", body = VoiceTokenRefreshResult),
+        (status = 401, description = "Unauthorized - missing or invalid PM access token"),
+        (status = 403, description = "Forbidden - caller does not own the device"),
         (status = 404, description = "Device not found"),
+        (status = 429, description = "Too many refresh attempts"),
         (status = 500, description = "Token refresh failed"),
     ),
+    security(("bearer_auth" = [])),
     tag = "Voice OAuth"
 )]
 async fn oauth_token_refresh(
     State(state): State<AppState>,
+    auth: api_core::AuthUser,
     Json(request): Json<VoiceTokenRefreshRequest>,
 ) -> Result<Json<VoiceTokenRefreshResult>, (StatusCode, Json<ErrorResponse>)> {
     use integrations::{decrypt_if_available, VoiceOAuthManager, VoicePlatform};
 
+    // Throttle authenticated abuse: a valid principal must not be able to loop
+    // this endpoint and amplify against the upstream OAuth provider (#2769).
+    if !voice_refresh_attempt_allowed(auth.user_id) {
+        tracing::warn!(
+            user_id = %auth.user_id,
+            device_id = %request.device_id,
+            "Voice OAuth refresh rate limit exceeded"
+        );
+        return Err((
+            StatusCode::TOO_MANY_REQUESTS,
+            Json(ErrorResponse::new(
+                "RATE_LIMITED",
+                "Too many token refresh attempts; try again later",
+            )),
+        ));
+    }
+
     // Find the device.
-    // PAP-170 (PAP-150 P5): this endpoint is called by the voice platform (no PM
-    // principal). Bootstrap the device on a context-cleared connection — it is
-    // addressed by an opaque, server-issued device_id and carries its owning
-    // org/user, which we bind below for the token write.
+    // `voice_assistant_devices` is not RLS-bound (see migration 00226), so the
+    // lookup runs on a context-cleared connection; the ownership check below is
+    // what authorizes the rotation.
     let rls_pool = RlsPool::new(state.db.clone());
     let mut lookup = rls_pool.acquire_public().await.map_err(|e| {
         tracing::error!("Database error: {}", e);
@@ -572,6 +752,25 @@ async fn oauth_token_refresh(
             )
         })?;
     drop(lookup);
+
+    // Authorize: only the device's owner (or a platform admin) may rotate its
+    // upstream OAuth token (#2769). Reject anyone else before touching the
+    // provider or the stored token.
+    if auth.user_id != device.user_id && !auth.is_platform_admin() {
+        tracing::warn!(
+            caller_user_id = %auth.user_id,
+            device_id = %device.id,
+            device_owner = %device.user_id,
+            "Voice OAuth refresh rejected: caller does not own the device"
+        );
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "You do not have permission to refresh this device's tokens",
+            )),
+        ));
+    }
 
     // Check if device has refresh token
     let refresh_token_encrypted = match &device.refresh_token_encrypted {
@@ -620,14 +819,13 @@ async fn oauth_token_refresh(
                     )
                 })?;
 
-            // Issue #765: encryption is MANDATORY — fail closed if no key is set.
-            let access_encrypted = encrypt_required(crypto.as_ref(), &tokens.access_token)
-                .map_err(voice_encryption_required)?;
-            let refresh_encrypted =
-                encrypt_optional_required(crypto.as_ref(), tokens.refresh_token.as_deref())
-                    .map_err(voice_encryption_required)?;
-            // #2662: keep the indexed lookup hash in lock-step with the new token.
-            let access_hash = voice_access_token_hash(&tokens.access_token);
+            // #765 (fail-closed encryption) + #2662 (indexed hash in lock-step),
+            // centralized in `encrypt_voice_token_pair`.
+            let (access_encrypted, refresh_encrypted, access_hash) = encrypt_voice_token_pair(
+                crypto.as_ref(),
+                &tokens.access_token,
+                tokens.refresh_token.as_deref(),
+            )?;
 
             (
                 access_encrypted,
@@ -635,21 +833,38 @@ async fn oauth_token_refresh(
                 tokens.expires_at,
                 access_hash,
             )
-        } else {
-            // Platform not configured - use simulated tokens for development
+        } else if voice_simulated_oauth_allowed(cfg!(debug_assertions)) {
+            // Platform not configured - use simulated tokens for development only.
+            // Gated (security fix #890): release builds must never mint fake voice
+            // tokens or overwrite the device's real stored token with one.
             tracing::warn!(
-                "Voice OAuth not configured for platform {}, using simulated refresh",
+                "Voice OAuth not configured for platform {}, using simulated refresh (debug build)",
                 device.platform
             );
             let new_access = format!("voice_access_refreshed_{}", Uuid::new_v4());
-            let access_hash = voice_access_token_hash(&new_access);
+            let (access_encrypted, refresh_encrypted, access_hash) =
+                encrypt_voice_token_pair(crypto.as_ref(), &new_access, None)?;
             (
-                encrypt_required(crypto.as_ref(), &new_access)
-                    .map_err(voice_encryption_required)?,
-                None,
+                access_encrypted,
+                refresh_encrypted,
                 Some(Utc::now() + Duration::hours(1)),
                 access_hash,
             )
+        } else {
+            // Fail closed (#890): an unconfigured platform in a release build must
+            // not mint a simulated token — returning here also leaves the device's
+            // real stored token untouched (no `update_voice_device_tokens` below).
+            tracing::error!(
+                "Voice OAuth not configured for platform {} in a release build; refusing to mint a simulated refresh token",
+                device.platform
+            );
+            return Err((
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(ErrorResponse::new(
+                    "OAUTH_NOT_CONFIGURED",
+                    "Voice OAuth is not configured for this platform",
+                )),
+            ));
         };
 
     // Update the device tokens under the device's own org/user RLS context.
@@ -727,16 +942,33 @@ async fn verify_webhook_signature(
 ) -> Json<WebhookVerificationResult> {
     let result = match request.platform.as_str() {
         "alexa" => {
-            // Alexa uses certificate-based signature verification
-            // Simplified check for demo
+            // SECURITY: Alexa request signing is certificate-chain based — the
+            // caller must present a `SignatureCertChainUrl` header, a base64
+            // `Signature` header, and the *raw* request body, which are then
+            // verified as a PKCS#1 v1.5 RSA-SHA1 signature under an Amazon-issued
+            // leaf certificate (see `verify_alexa_signature` /
+            // `verify_alexa_cert_and_signature`, wired into the mounted
+            // `POST /api/v1/webhooks/voice/alexa` receiver).
+            //
+            // This JSON introspection endpoint receives none of that material
+            // (no cert-chain URL, and `body` is a lossy string rather than the
+            // raw signed bytes), so it CANNOT cryptographically verify an Alexa
+            // signature and MUST NOT claim it did. The previous implementation
+            // returned `valid: !signature.is_empty()`, accepting any non-empty
+            // string as a valid Alexa signature — a forgery vector that let an
+            // attacker have an arbitrary payload reported as "valid". Fail
+            // CLOSED: never report `valid: true` from this endpoint for Alexa.
             WebhookVerificationResult {
-                valid: !request.signature.is_empty(),
+                valid: false,
                 platform: "alexa".to_string(),
-                error: if request.signature.is_empty() {
-                    Some("Missing signature".to_string())
+                error: Some(if request.signature.is_empty() {
+                    "Missing signature".to_string()
                 } else {
-                    None
-                },
+                    "Alexa signature verification is certificate-chain based and \
+                     is performed by POST /api/v1/webhooks/voice/alexa; this \
+                     endpoint cannot verify Alexa signatures"
+                        .to_string()
+                }),
             }
         }
         "google" => {
@@ -847,12 +1079,47 @@ static ALEXA_CERT_CACHE: std::sync::OnceLock<
     >,
 > = std::sync::OnceLock::new();
 
+/// Time budget for establishing the TCP+TLS connection to S3 when fetching the
+/// Alexa signing certificate.
+const ALEXA_CERT_CONNECT_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(5);
+
+/// Overall time budget for a single certificate fetch (connect + response
+/// body). Bounds how long a slow S3 can stall the webhook handler.
+const ALEXA_CERT_REQUEST_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(10);
+
+/// Shared HTTP client for Alexa certificate fetches.
+///
+/// Built once (process-wide) with explicit connect and request timeouts and
+/// reused for every fetch. Reusing a single client keeps the connection pool
+/// and TLS session cache warm and, crucially, prevents a burst of cold-cache
+/// requests from spawning an unbounded number of independent TLS clients.
+static ALEXA_CERT_HTTP_CLIENT: std::sync::OnceLock<reqwest::Client> = std::sync::OnceLock::new();
+
+/// Return the shared, timeout-bounded HTTP client used to fetch Alexa signing
+/// certificates, initialising it on first use.
+fn alexa_cert_http_client() -> &'static reqwest::Client {
+    ALEXA_CERT_HTTP_CLIENT.get_or_init(|| {
+        reqwest::Client::builder()
+            .connect_timeout(ALEXA_CERT_CONNECT_TIMEOUT)
+            .timeout(ALEXA_CERT_REQUEST_TIMEOUT)
+            .build()
+            // A builder failure means the TLS backend could not initialise; a
+            // default client would fail the same way, so fall back to it rather
+            // than panicking inside a request handler.
+            .unwrap_or_else(|_| reqwest::Client::new())
+    })
+}
+
 /// Fetch the PEM certificate chain from a (previously validated) Alexa cert
 /// URL, memoising the result for [`ALEXA_CERT_CACHE_TTL`].
 ///
 /// The URL is only ever reached after [`validate_alexa_cert_url`], so it always
 /// points at `https://s3.amazonaws.com/echo.api/…`; TLS authenticates the S3
 /// origin. Returns the raw PEM bytes (one or more concatenated certificates).
+///
+/// The fetch goes through a shared client ([`alexa_cert_http_client`]) with
+/// explicit connect/request timeouts so a slow or unresponsive S3 cannot stall
+/// the handler indefinitely.
 async fn fetch_alexa_cert_chain(url: &str) -> Result<std::sync::Arc<Vec<u8>>, String> {
     let cache =
         ALEXA_CERT_CACHE.get_or_init(|| std::sync::Mutex::new(std::collections::HashMap::new()));
@@ -866,7 +1133,7 @@ async fn fetch_alexa_cert_chain(url: &str) -> Result<std::sync::Arc<Vec<u8>>, St
         }
     }
 
-    let response = reqwest::Client::new()
+    let response = alexa_cert_http_client()
         .get(url)
         .send()
         .await
@@ -1060,87 +1327,178 @@ fn validate_alexa_timestamp(body: &[u8]) -> Result<(), String> {
     Ok(())
 }
 
-/// Verify Google Actions request (Story 98.6).
-///
-/// Google Actions verification can use:
-/// 1. Google project ID from the Google-Actions-API-Version header
-/// 2. ID token in Authorization header (JWT format)
-///
-/// For security, we validate the project ID matches our configuration.
-fn verify_google_request(headers: &HeaderMap) -> Result<(), String> {
-    // Get the Google Actions API version header (contains project context)
-    let api_version = headers
-        .get("Google-Actions-API-Version")
-        .and_then(|v| v.to_str().ok());
+/// Google's OAuth2 JWKS endpoint — RS256 signing certificates for Google-issued
+/// ID tokens (used by Google Assistant / Actions account linking).
+const GOOGLE_CERTS_URL: &str = "https://www.googleapis.com/oauth2/v3/certs";
 
-    if let Some(version) = api_version {
-        tracing::debug!("Google Actions API version: {}", version);
-    }
+/// Accepted `iss` values for a Google-issued ID token.
+const GOOGLE_ISSUERS: [&str; 2] = ["https://accounts.google.com", "accounts.google.com"];
 
-    // Get the Google Assistant Signature header if present
-    let signature = headers
-        .get("Google-Assistant-Signature")
-        .and_then(|v| v.to_str().ok());
+/// How long a fetched JWKS is trusted before a refresh. Google rotates signing
+/// keys on the order of days; a 1h TTL keeps the hot path off the network while
+/// still picking up rotations promptly (a rotated-in `kid` also forces an
+/// immediate refresh regardless of TTL — see `google_decoding_key`).
+const GOOGLE_JWKS_TTL: std::time::Duration = std::time::Duration::from_secs(3600);
 
-    // Check for Authorization header (Bearer token)
-    let auth_header = headers.get("Authorization").and_then(|v| v.to_str().ok());
+/// One JWK entry from Google's `/oauth2/v3/certs` response (RSA public key).
+#[derive(Clone, Deserialize)]
+struct GoogleJwk {
+    kid: String,
+    n: String,
+    e: String,
+    #[allow(dead_code)]
+    alg: Option<String>,
+}
 
-    // Validate project ID if configured
-    if let Ok(expected_project) = std::env::var("GOOGLE_ACTIONS_PROJECT_ID") {
-        // If we have a signature, it should contain project info
-        if let Some(sig) = signature {
-            // The signature is base64-encoded JSON with project info
-            // For now, just log it - full validation would decode and verify
-            tracing::debug!(
-                signature_len = sig.len(),
-                expected_project = %expected_project,
-                "Google Actions signature present"
-            );
-        }
+#[derive(Clone, Deserialize)]
+struct GoogleJwks {
+    keys: Vec<GoogleJwk>,
+}
 
-        // If we have an auth header with Bearer token, validate format
-        if let Some(auth) = auth_header {
-            if !auth.starts_with("Bearer ") {
-                return Err("Invalid Authorization header format".to_string());
-            }
+struct JwksCache {
+    keys: Vec<GoogleJwk>,
+    fetched_at: std::time::Instant,
+}
 
-            let token = &auth[7..];
+/// Process-wide JWKS cache (1h TTL) and shared HTTP client (5s timeout).
+static GOOGLE_JWKS_CACHE: OnceLock<RwLock<Option<JwksCache>>> = OnceLock::new();
+static GOOGLE_JWKS_HTTP: OnceLock<reqwest::Client> = OnceLock::new();
 
-            // Validate JWT format (three base64 parts separated by dots)
-            let parts: Vec<&str> = token.split('.').collect();
-            if parts.len() != 3 {
-                return Err("Invalid JWT token format".to_string());
-            }
+fn google_jwks_cache() -> &'static RwLock<Option<JwksCache>> {
+    GOOGLE_JWKS_CACHE.get_or_init(|| RwLock::new(None))
+}
 
-            // In production, you would:
-            // 1. Decode the JWT header to get the key ID
-            // 2. Fetch Google's public keys from https://www.googleapis.com/oauth2/v3/certs
-            // 3. Verify the signature using the appropriate key
-            // 4. Check the 'aud' claim matches your project ID
-            // 5. Check the 'iss' claim is accounts.google.com or https://accounts.google.com
-            // 6. Check the token is not expired
+fn google_jwks_http() -> &'static reqwest::Client {
+    GOOGLE_JWKS_HTTP.get_or_init(|| {
+        reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(5))
+            .build()
+            // Mirror `alexa_cert_http_client`: a builder failure means the TLS
+            // backend could not initialise, and a default client would fail the
+            // same way — fall back to it rather than panicking inside the
+            // request-serving `verify_google_request` path.
+            .unwrap_or_else(|_| reqwest::Client::new())
+    })
+}
 
-            // Decode and check the payload for project ID (basic validation)
-            if let Ok(payload_bytes) = BASE64.decode(parts[1]) {
-                if let Ok(payload_str) = std::str::from_utf8(&payload_bytes) {
-                    if payload_str.contains(&expected_project) {
-                        tracing::info!(
-                            project_id = %expected_project,
-                            "Google Actions project ID verified"
-                        );
-                    }
+/// Fetch and parse Google's current JWKS. `error_for_status()` is deliberate:
+/// a 4xx/5xx JSON error body would otherwise parse into an empty `keys[]` and
+/// surface later as a confusing "unknown kid" instead of the real HTTP failure.
+async fn fetch_google_jwks() -> Result<Vec<GoogleJwk>, String> {
+    let resp = google_jwks_http()
+        .get(GOOGLE_CERTS_URL)
+        .send()
+        .await
+        .map_err(|e| format!("Failed to fetch Google signing certs: {e}"))?
+        .error_for_status()
+        .map_err(|e| format!("Google signing certs endpoint returned an error: {e}"))?;
+    let jwks: GoogleJwks = resp
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse Google signing certs: {e}"))?;
+    Ok(jwks.keys)
+}
+
+/// Resolve the RSA public [`DecodingKey`] for a `kid`, using the cached JWKS
+/// when fresh and it contains the key, otherwise refreshing from Google.
+/// Mirrors the JWKS resolver in `deploy-server`'s OIDC validator.
+async fn google_decoding_key(kid: &str) -> Result<DecodingKey, String> {
+    // Fast path: cached, fresh, and contains the requested kid.
+    {
+        let guard = google_jwks_cache().read().await;
+        if let Some(cache) = guard.as_ref() {
+            if cache.fetched_at.elapsed() < GOOGLE_JWKS_TTL {
+                if let Some(k) = cache.keys.iter().find(|k| k.kid == kid) {
+                    return DecodingKey::from_rsa_components(&k.n, &k.e)
+                        .map_err(|e| format!("Invalid Google JWK for kid {kid}: {e}"));
                 }
             }
         }
     }
 
-    // Log validation for audit
-    tracing::info!(
-        has_signature = signature.is_some(),
-        has_auth = auth_header.is_some(),
-        "Google Actions request validation passed"
-    );
+    // Refresh: stale cache OR the kid was rotated in and isn't cached yet.
+    let fresh = fetch_google_jwks().await?;
+    let key = fresh
+        .iter()
+        .find(|k| k.kid == kid)
+        .ok_or_else(|| format!("Unknown Google signing key id: {kid}"))
+        .and_then(|k| {
+            DecodingKey::from_rsa_components(&k.n, &k.e)
+                .map_err(|e| format!("Invalid Google JWK for kid {kid}: {e}"))
+        })?;
+    *google_jwks_cache().write().await = Some(JwksCache {
+        keys: fresh,
+        fetched_at: std::time::Instant::now(),
+    });
+    Ok(key)
+}
 
+/// Verify a Google-issued ID token's RS256 signature and registered claims
+/// against `key`. Pure and synchronous so it is unit-testable without a live
+/// JWKS fetch. FAILS CLOSED: any bad signature, wrong audience (`aud` must
+/// equal `expected_project` exactly), untrusted issuer, or expired/not-yet-valid
+/// token yields `Err`.
+fn verify_google_id_token(
+    token: &str,
+    expected_project: &str,
+    key: &DecodingKey,
+) -> Result<(), String> {
+    let mut validation = Validation::new(Algorithm::RS256);
+    // Exact audience match against the configured Actions project id.
+    validation.set_audience(&[expected_project]);
+    validation.set_issuer(&GOOGLE_ISSUERS);
+    validation.validate_exp = true;
+    validation.validate_nbf = true;
+
+    // jsonwebtoken base64url-decodes the segments itself (no STANDARD-alphabet
+    // mis-decode) and enforces signature + aud + iss + exp/nbf.
+    decode::<serde_json::Value>(token, key, &validation)
+        .map(|_| ())
+        .map_err(|e| format!("Google ID token verification failed: {e}"))
+}
+
+/// Verify a Google Actions request (Epic 93 / Story 93.3).
+///
+/// The request MUST carry a Google-issued ID token in the `Authorization:
+/// Bearer <jwt>` header. The token's RS256 signature is verified against
+/// Google's published JWKS (`/oauth2/v3/certs`, cached 1h), and its `aud`
+/// claim must equal `GOOGLE_ACTIONS_PROJECT_ID`, its `iss` must be a Google
+/// issuer, and it must be unexpired.
+///
+/// FAILS CLOSED on every path: an unset `GOOGLE_ACTIONS_PROJECT_ID`, a missing
+/// or malformed `Authorization` header, or any signature/claim failure all
+/// return `Err` (mapped by the caller to `401`).
+async fn verify_google_request(headers: &HeaderMap) -> Result<(), String> {
+    // FAIL CLOSED: the audience we verify against must be configured.
+    let expected_project = std::env::var("GOOGLE_ACTIONS_PROJECT_ID")
+        .map_err(|_| "GOOGLE_ACTIONS_PROJECT_ID is not configured".to_string())?;
+
+    // FAIL CLOSED: a Google-signed Bearer ID token is required.
+    let auth_header = headers
+        .get("Authorization")
+        .and_then(|v| v.to_str().ok())
+        .ok_or_else(|| "Missing Authorization header".to_string())?;
+    let token = auth_header
+        .strip_prefix("Bearer ")
+        .ok_or_else(|| "Invalid Authorization header format".to_string())?;
+
+    // Fail fast — and off the network — on a structurally invalid token.
+    let header =
+        decode_header(token).map_err(|e| format!("Invalid Google ID token header: {e}"))?;
+    if header.alg != Algorithm::RS256 {
+        return Err(format!(
+            "Unexpected Google ID token algorithm: {:?}",
+            header.alg
+        ));
+    }
+    let kid = header
+        .kid
+        .ok_or_else(|| "Google ID token missing key id (kid)".to_string())?;
+
+    let key = google_decoding_key(&kid).await?;
+    verify_google_id_token(token, &expected_project, &key)?;
+
+    tracing::info!(project_id = %expected_project, "Google Actions ID token verified");
     Ok(())
 }
 
@@ -1156,14 +1514,19 @@ fn ct_eq_str(a: &str, b: &str) -> bool {
 
 /// Verify HMAC-SHA256 signature.
 ///
-/// Issue #2658 (#2): fails **closed** when `VOICE_WEBHOOK_SECRET` is unset.
-/// The previous `unwrap_or("default_secret")` verified against a literal
-/// present in source, letting anyone forge signatures; the sibling receivers
-/// (`PORTAL_WEBHOOK_SECRET`, `AIRBNB_WEBHOOK_SECRET`, `STRIPE_WEBHOOK_SECRET`)
-/// all fail closed, and so do we now.
+/// Issue #2658 (#2): fails **closed** when `VOICE_WEBHOOK_SECRET` is unset
+/// **or empty**. The previous `unwrap_or("default_secret")` verified against a
+/// literal present in source, letting anyone forge signatures; the sibling
+/// receivers (`PORTAL_WEBHOOK_SECRET`, `AIRBNB_WEBHOOK_SECRET`,
+/// `STRIPE_WEBHOOK_SECRET`) read the secret with `unwrap_or_default()` and then
+/// reject a blank value as "not configured" (see `routes/integrations/webhook.rs`),
+/// so an empty env var can never key the HMAC. We mirror that here: unset and
+/// empty both fail closed.
 fn verify_hmac_signature(signature: &str, body: &str) -> Result<bool, String> {
-    let secret = std::env::var("VOICE_WEBHOOK_SECRET")
-        .map_err(|_| "VOICE_WEBHOOK_SECRET is not configured".to_string())?;
+    let secret = std::env::var("VOICE_WEBHOOK_SECRET").unwrap_or_default();
+    if secret.is_empty() {
+        return Err("VOICE_WEBHOOK_SECRET is not configured".to_string());
+    }
 
     let mut mac = HmacSha256::new_from_slice(secret.as_bytes())
         .map_err(|e| format!("Invalid HMAC key: {}", e))?;
@@ -1550,6 +1913,62 @@ mod tests {
         BASE64.encode(mac.finalize().into_bytes())
     }
 
+    // --- voice OAuth simulated-token fallback gate (#890) ---------------
+
+    #[test]
+    fn simulated_voice_oauth_fallback_forbidden_in_release_builds() {
+        // Fail-open fix (#890): when the platform OAuth client is unconfigured,
+        // a RELEASE build must fail closed — never mint or store a simulated
+        // refresh token (which would also clobber the device's real stored
+        // token). The refresh handler gates its simulated branch on this.
+        assert!(
+            !voice_simulated_oauth_allowed(false),
+            "release builds must fail closed, never mint a simulated voice token"
+        );
+    }
+
+    #[test]
+    fn simulated_voice_oauth_fallback_allowed_in_debug_builds() {
+        // Development convenience is preserved: debug/test builds may still use
+        // the simulated fallback when the platform is unconfigured.
+        assert!(
+            voice_simulated_oauth_allowed(true),
+            "debug builds may use the simulated fallback"
+        );
+    }
+
+    // --- oauth exchange rate limiting (#2769) ---------------------------
+
+    #[test]
+    fn exchange_rate_limiter_throttles_after_max_attempts() {
+        // Fresh principal => isolated bucket in the process-global limiter.
+        let user_id = Uuid::new_v4();
+        for i in 0..VOICE_EXCHANGE_MAX_ATTEMPTS {
+            assert!(
+                voice_exchange_attempt_allowed(user_id),
+                "attempt {i} within the window should be allowed"
+            );
+        }
+        // One past the limit within the same window is throttled, mirroring the
+        // /oauth/refresh guard.
+        assert!(
+            !voice_exchange_attempt_allowed(user_id),
+            "attempt beyond VOICE_EXCHANGE_MAX_ATTEMPTS should be throttled"
+        );
+    }
+
+    #[test]
+    fn exchange_rate_limiter_isolates_per_user() {
+        let user_a = Uuid::new_v4();
+        let user_b = Uuid::new_v4();
+        for _ in 0..VOICE_EXCHANGE_MAX_ATTEMPTS {
+            assert!(voice_exchange_attempt_allowed(user_a));
+        }
+        // user_a is now throttled, but a distinct principal is unaffected.
+        assert!(!voice_exchange_attempt_allowed(user_a));
+        assert!(voice_exchange_attempt_allowed(user_b));
+    }
+
     // --- validate_alexa_cert_url ----------------------------------------
 
     #[test]
@@ -1668,6 +2087,28 @@ mod tests {
         headers.insert("signature", HeaderValue::from_static("sig"));
         let body = alexa_body_with_timestamp(&Utc::now().to_rfc3339());
         assert!(verify_alexa_signature(&headers, &body).await.is_err());
+    }
+
+    // The Alexa cert fetch must go through a single shared, timeout-bounded
+    // client rather than building a fresh `reqwest::Client` per call — a burst
+    // of cold-cache requests would otherwise spawn unbounded TLS clients.
+    // Guards against a regression back to `reqwest::Client::new()` per fetch.
+    #[test]
+    fn alexa_cert_http_client_is_shared() {
+        let first = alexa_cert_http_client();
+        let second = alexa_cert_http_client();
+        assert!(
+            std::ptr::eq(first, second),
+            "expected a single process-wide Alexa cert HTTP client"
+        );
+    }
+
+    // Sanity-check the fetch timeouts are ordered sensibly (connect budget is a
+    // subset of the overall request budget) and are actually bounded.
+    #[test]
+    fn alexa_cert_timeouts_are_bounded() {
+        assert!(ALEXA_CERT_CONNECT_TIMEOUT <= ALEXA_CERT_REQUEST_TIMEOUT);
+        assert!(!ALEXA_CERT_REQUEST_TIMEOUT.is_zero());
     }
 
     // Regression for issue #2668: a valid cert URL + fresh timestamp is NO
@@ -1810,43 +2251,162 @@ dQPD++LeIpOChiX4Ru2uMQ==\n\
         .is_err());
     }
 
-    // --- verify_google_request ------------------------------------------
+    // --- verify_google_request (fail-closed JWT verification) -----------
     //
-    // GOOGLE_ACTIONS_PROJECT_ID is process-global; `verify_google_request` is
-    // the only reader, so confining every mutation of it to this single test
-    // keeps the assertions race-free under the parallel test runner.
+    // Regression coverage for the fail-open bug: `verify_google_request` used
+    // to return Ok(()) for an unset project id, a missing auth header, and a
+    // forged bearer whose base64 payload merely *contained* the project id
+    // (with no signature check), and it decoded JWT payloads with the STANDARD
+    // (padded) base64 alphabet so real URL-safe Google tokens silently fell
+    // through to Ok(()). It now verifies the RS256 signature + aud/iss/exp and
+    // fails closed on every error path.
+
+    // Fixed RSA test keypair (2048-bit) used to mint + verify signed tokens in
+    // these unit tests. NOT a real Google key — the production path resolves the
+    // decoding key from Google's live JWKS via `google_decoding_key`.
+    const TEST_RSA_PRIV_PEM: &str = "-----BEGIN PRIVATE KEY-----
+MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC7p2rNa9yZ9llX
+ZmRH2tWIayNP4yIdGP72CzZx8/YxOx03BbqKTNmcfpShjw9AuaWENi0sWXe9j1TX
+RR/JZ1Cff2qDHwsFfdwAwWraFtKFrFAziLG9yZXicxxY9fotLHOzEGwnPqZo4JqK
+APqVW/0bZzQLIpYALCM7Snj/DA2axsrlHH1Usi5UqEjaXQUpagwGRVpyR6eS6/Sg
+u/BkU50/xMZCyyv1/0ebeDKxOy3I5j+hxLW/reJZaNIOHEzZwXmARjah8b0L0/yP
+C6h5Y1Xg7Rn53qBw+DI03Z2HEwFf9cldO15X0B9XQiqJ+ZdGi2Jj6eq3oOBp812w
+1SIzp+V/AgMBAAECggEAAQP5l/2qxp/cAT+/Rdmb/jkA3+siwXWOgQEJMmSs7byc
+KTK8El4yxJ4Kv9++UriuefYGbeRYuYs6XPqKyX7oTh9VEZCWxq4qWqFcAAIk8YQ/
+4DIv2WRrOJEsPhmsA5fnUw4WXRVXC9+V9oPlge7ALT3JvPsFmh/4W4HJAIMC2oDm
+iB1fsl0jq+rk+k0JYIy11yRcI6Dz6CxMzrZtkl6h66a9LXUpwfqVSPUwuHilXCwp
+PpwNGja/Qi+91DFAM3AjAHy85uSzg+wV2thCKvS+OF45z2MuElXnWDbQKinW6ige
+tl8lbvQkIvDTpPAecSokYsV1ZI7LX5gqT4GlO1ImQQKBgQDmgDEsdBuIJP1lJarL
+NeL2/t9n9Nhs7FoxPy+qKy8+7F6W98wJzrXXCxcK6NhKSw6RmPunrFx3ha3i6aPp
+hu/855ihB0ZTkvNHQxCKmHPDW0wrrN6u77ANMYQa+Uwbs/DDbe/5Bj24ECcYqwHk
+7womofS/DewMsabouuk+ymxmWwKBgQDQacynrub8CjTUaCyvLqcKjIv/+Mv0i3j+
+zO1Fpb8bO9NM/FCKtnB3oddIRINAQRNJ3nd1V8HrHZhGxOTbIIeLi2RmtmJ0kjBE
+gVAKPDAqvhaybfgnRKsFpl0WDzeu0UmwaC2zrsBLEXpoLRfnT2JHnA4THBj3h4yG
+hVoIP1VOrQKBgQDJx7DEZIPxg8gbcoT4TZz5chbqb0nC2IkAEXtNcW5znAIWEKia
+cU14CepLD5jAOMJxLMYoe1ea/fhB6xwlg421DJztYmvrH3o+iPQDEABPJS4iEbwC
+0iqA8jbeUhyRJ819l1D6477F0cYX7yPCYIu3VBHn6m0Yk7A0jeM/p36LfwKBgFhf
+5KZeJhhOA6TmH7yRHcf9XQhH6cRiuAXjw+E6rVTRA4Kro0OOpRY1jGJamwVOEu3J
+5gHeGp6mSAIKT7kTjCaCDyr2v70KmGkUJGqSpyIYxOsYcpfEKHkW2HYYMdZxbLvf
+ETIWMfgjCzLNnEs7gEM5S0aTLYsY8V/BgDHrGTNpAoGBANeF2qEjS1NyJ99mJcGj
+Y5TPLyQot9d9hEkIpNT2aAFnUb0baqJ0j1eyN6NvOCUAdXcqskj4S5G5kIJEHQxP
+mR3t5mHnqglfXy8CSVtCuIuBxzPf32fQq8XZo0JtE6oKfbd0jnsAX61NYhnF7LDO
+mFM80HjvdsbTWHj9n2QgMU5B
+-----END PRIVATE KEY-----";
+    const TEST_RSA_PUB_PEM: &str = "-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu6dqzWvcmfZZV2ZkR9rV
+iGsjT+MiHRj+9gs2cfP2MTsdNwW6ikzZnH6UoY8PQLmlhDYtLFl3vY9U10UfyWdQ
+n39qgx8LBX3cAMFq2hbShaxQM4ixvcmV4nMcWPX6LSxzsxBsJz6maOCaigD6lVv9
+G2c0CyKWACwjO0p4/wwNmsbK5Rx9VLIuVKhI2l0FKWoMBkVackenkuv0oLvwZFOd
+P8TGQssr9f9Hm3gysTstyOY/ocS1v63iWWjSDhxM2cF5gEY2ofG9C9P8jwuoeWNV
+4O0Z+d6gcPgyNN2dhxMBX/XJXTteV9AfV0IqifmXRotiY+nqt6DgafNdsNUiM6fl
+fwIDAQAB
+-----END PUBLIC KEY-----";
+
+    const GOOGLE_ISS: &str = "https://accounts.google.com";
+
+    fn test_decoding_key() -> DecodingKey {
+        DecodingKey::from_rsa_pem(TEST_RSA_PUB_PEM.as_bytes()).unwrap()
+    }
+
+    // Mint an RS256-signed JWT with the test private key. `exp_offset` is
+    // seconds relative to now (negative => already expired).
+    fn signed_google_token(iss: &str, aud: &str, exp_offset: i64) -> String {
+        use jsonwebtoken::{encode, EncodingKey, Header};
+        let now = Utc::now().timestamp();
+        let claims = serde_json::json!({
+            "iss": iss,
+            "aud": aud,
+            "sub": "1234567890",
+            "iat": now,
+            "exp": now + exp_offset,
+        });
+        let mut header = Header::new(Algorithm::RS256);
+        header.kid = Some("test-kid".to_string());
+        let key = EncodingKey::from_rsa_pem(TEST_RSA_PRIV_PEM.as_bytes()).unwrap();
+        encode(&header, &claims, &key).unwrap()
+    }
+
+    // A properly-signed, correctly-audienced, unexpired Google ID token is
+    // accepted. Also proves URL-safe base64url JWT segments decode for real
+    // (the old STANDARD-alphabet decode silently failed and fell through).
     #[test]
-    fn google_request_verification_branches() {
-        // No project configured -> always passes (both auth present and absent).
+    fn google_id_token_valid_signature_accepted() {
+        let token = signed_google_token(GOOGLE_ISS, "my-project-123", 3600);
+        assert!(verify_google_id_token(&token, "my-project-123", &test_decoding_key()).is_ok());
+    }
+
+    // A forged bearer whose payload merely *contains* the project id but whose
+    // signature does not verify is rejected (the core of the old fail-open bug).
+    #[test]
+    fn google_id_token_forged_bearer_rejected() {
+        let good = signed_google_token(GOOGLE_ISS, "my-project-123", 3600);
+        let parts: Vec<&str> = good.split('.').collect();
+        // Keep the real header + the payload (still carries aud=my-project-123),
+        // but replace the signature with garbage.
+        let forged = format!("{}.{}.AAAAAAAAAAAAAAAA", parts[0], parts[1]);
+        let err = verify_google_id_token(&forged, "my-project-123", &test_decoding_key())
+            .expect_err("forged signature must be rejected");
+        assert!(err.contains("verification failed"), "unexpected: {err}");
+    }
+
+    // Signature is valid but the audience is a different project => rejected
+    // (exact project-id match, not a substring contains()).
+    #[test]
+    fn google_id_token_wrong_project_rejected() {
+        let token = signed_google_token(GOOGLE_ISS, "someone-elses-project", 3600);
+        assert!(verify_google_id_token(&token, "my-project-123", &test_decoding_key()).is_err());
+    }
+
+    // Signature + audience valid but the token is expired => rejected.
+    #[test]
+    fn google_id_token_expired_rejected() {
+        let token = signed_google_token(GOOGLE_ISS, "my-project-123", -3600);
+        assert!(verify_google_id_token(&token, "my-project-123", &test_decoding_key()).is_err());
+    }
+
+    // Signature + audience valid but issued by an untrusted issuer => rejected.
+    #[test]
+    fn google_id_token_untrusted_issuer_rejected() {
+        let token = signed_google_token("https://evil.example.com", "my-project-123", 3600);
+        assert!(verify_google_id_token(&token, "my-project-123", &test_decoding_key()).is_err());
+    }
+
+    // GOOGLE_ACTIONS_PROJECT_ID is process-global and read only by
+    // `verify_google_request`; confining every mutation of it to this single
+    // test keeps the assertions race-free under the parallel test runner. All
+    // branches here fail closed *before* any JWKS network fetch.
+    #[tokio::test]
+    async fn google_request_fails_closed_on_bad_input() {
+        // Unset project id => fail closed (previously returned Ok).
         std::env::remove_var("GOOGLE_ACTIONS_PROJECT_ID");
-        assert!(verify_google_request(&HeaderMap::new()).is_ok());
+        let err = verify_google_request(&HeaderMap::new())
+            .await
+            .expect_err("must fail closed when project id unset");
+        assert!(err.contains("not configured"), "unexpected: {err}");
 
         std::env::set_var("GOOGLE_ACTIONS_PROJECT_ID", "my-project-123");
 
-        // No Authorization header still passes.
-        assert!(verify_google_request(&HeaderMap::new()).is_ok());
+        // Missing Authorization header => rejected (previously returned Ok).
+        let err = verify_google_request(&HeaderMap::new())
+            .await
+            .expect_err("missing auth header must be rejected");
+        assert!(err.contains("Missing Authorization"), "unexpected: {err}");
 
-        // Malformed Authorization (no "Bearer " prefix) is rejected.
+        // Malformed Authorization (no "Bearer " prefix) => rejected.
         let mut bad_scheme = HeaderMap::new();
         bad_scheme.insert("authorization", HeaderValue::from_static("Basic abc"));
-        let err = verify_google_request(&bad_scheme).unwrap_err();
+        let err = verify_google_request(&bad_scheme)
+            .await
+            .expect_err("non-bearer scheme must be rejected");
         assert!(
             err.contains("Authorization header format"),
             "unexpected: {err}"
         );
 
-        // Bearer token that isn't a 3-part JWT is rejected.
+        // Structurally invalid bearer token => rejected before any network I/O.
         let mut bad_jwt = HeaderMap::new();
         bad_jwt.insert("authorization", HeaderValue::from_static("Bearer only.two"));
-        let err = verify_google_request(&bad_jwt).unwrap_err();
-        assert!(err.contains("JWT token format"), "unexpected: {err}");
-
-        // Well-formed 3-part JWT carrying the project id in the payload passes.
-        let payload = BASE64.encode(br#"{"aud":"my-project-123"}"#);
-        let token = format!("Bearer header.{payload}.signature");
-        let mut good = HeaderMap::new();
-        good.insert("authorization", HeaderValue::from_str(&token).unwrap());
-        assert!(verify_google_request(&good).is_ok());
+        assert!(verify_google_request(&bad_jwt).await.is_err());
 
         std::env::remove_var("GOOGLE_ACTIONS_PROJECT_ID");
     }
@@ -1893,6 +2453,14 @@ dQPD++LeIpOChiX4Ru2uMQ==\n\
         // (Err) rather than silently verifying against a hardcoded default.
         std::env::remove_var("VOICE_WEBHOOK_SECRET");
         assert!(verify_hmac_signature(&good, body).is_err());
+
+        // ...and a *blank* secret is treated the same as unset — never key the
+        // HMAC with an empty value (mirrors the sibling PORTAL/AIRBNB/STRIPE
+        // receivers). Both a correct-looking and a bogus signature must Err.
+        std::env::set_var("VOICE_WEBHOOK_SECRET", "");
+        assert!(verify_hmac_signature(&good, body).is_err());
+        assert!(verify_hmac_signature("anything", body).is_err());
+        std::env::remove_var("VOICE_WEBHOOK_SECRET");
     }
 
     // --- ct_eq_str / voice_device_token_matches (issue #2658) -----------
@@ -2093,19 +2661,48 @@ dQPD++LeIpOChiX4Ru2uMQ==\n\
     }
 
     #[tokio::test]
-    async fn verify_endpoint_alexa_branch() {
-        // Non-empty signature -> valid.
+    async fn verify_endpoint_alexa_branch_fails_closed() {
+        // SECURITY regression: the JSON /verify endpoint must NEVER report an
+        // Alexa signature as valid. It has no certificate-chain URL and no raw
+        // signed body, so it cannot perform Amazon's cert-based verification;
+        // the old code returned `valid: !signature.is_empty()`, accepting any
+        // non-empty string as a valid Alexa signature (a forgery vector).
+
+        // A forged, attacker-controlled non-empty "signature" is rejected — this
+        // is exactly the input the old code accepted as valid.
         let resp = verify_webhook_signature(Json(VerifyWebhookRequest {
             platform: "alexa".to_string(),
-            signature: "present".to_string(),
+            signature: "any-forged-non-empty-string".to_string(),
+            body: r#"{"request":{"type":"IntentRequest","intent":{"name":"evil"}}}"#.to_string(),
+            timestamp: None,
+        }))
+        .await;
+        assert!(
+            !resp.0.valid,
+            "a non-empty (forged) Alexa signature must NOT be accepted"
+        );
+        assert_eq!(resp.0.platform, "alexa");
+        assert!(
+            resp.0
+                .error
+                .as_deref()
+                .is_some_and(|e| e.contains("cannot verify Alexa signatures")),
+            "unexpected error: {:?}",
+            resp.0.error
+        );
+
+        // Even a plausibly base64-shaped signature is rejected — there is no
+        // input to this endpoint that yields `valid: true` for Alexa.
+        let resp = verify_webhook_signature(Json(VerifyWebhookRequest {
+            platform: "alexa".to_string(),
+            signature: BASE64.encode([0u8; 256]),
             body: "b".to_string(),
             timestamp: None,
         }))
         .await;
-        assert!(resp.0.valid);
-        assert_eq!(resp.0.platform, "alexa");
+        assert!(!resp.0.valid, "no Alexa input may be reported as valid");
 
-        // Empty signature -> invalid with "Missing signature".
+        // Empty signature -> still invalid, with the "Missing signature" hint.
         let resp = verify_webhook_signature(Json(VerifyWebhookRequest {
             platform: "alexa".to_string(),
             signature: String::new(),
@@ -2146,6 +2743,122 @@ dQPD++LeIpOChiX4Ru2uMQ==\n\
             voice_encryption_required(CryptoError::KeyNotConfigured("no key".to_string()));
         assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
         assert_eq!(body.0.code, "ENCRYPTION_REQUIRED");
+    }
+
+    #[test]
+    fn encrypt_voice_token_pair_fails_closed_without_crypto() {
+        // #765: the shared token-encryption choke point used by both the
+        // exchange and refresh handlers must refuse to produce a token pair
+        // (HTTP 500 ENCRYPTION_REQUIRED) when no encryption key is configured —
+        // never emit a plaintext access/refresh token. Passing `Some(refresh)`
+        // ensures the failure is on the access token, before the refresh branch.
+        let (status, body) = encrypt_voice_token_pair(None, "access-token", Some("refresh-token"))
+            .expect_err("must fail closed when crypto is unconfigured");
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(body.0.code, "ENCRYPTION_REQUIRED");
+    }
+
+    #[test]
+    fn encrypt_voice_token_pair_round_trips_and_stores_no_plaintext() {
+        // #2838 centralization: every voice OAuth persistence site (exchange +
+        // refresh, real Alexa/Google upstreams and the simulated fallback alike)
+        // funnels its token pair through `encrypt_voice_token_pair`. This asserts
+        // the shared choke point's round-trip and no-plaintext-at-rest guarantee
+        // across all three provider shapes.
+        //
+        // Env-independent by design: `crypto` is built directly from a fixed key.
+        // The concurrently-running `authenticate_voice_user_*` test toggles the
+        // process-wide INTEGRATION_ENCRYPTION_KEY, so the returned `access_hash`
+        // — which reads that env — is deliberately NOT asserted here; the stored
+        // hash / plaintext lock-step (#2662) is covered end to end by the suite_8
+        // `voice_oauth_token_encryption_roundtrip_tests` integration suite.
+        let crypto = IntegrationCrypto::new(
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        )
+        .expect("valid 32-byte key");
+
+        // (label, access_token, refresh_token) — Alexa, Google (with and without
+        // a refresh token), and the dev-only simulated fallback provider
+        // (`voice_access_<platform>_<uuid>`, minted when a platform is
+        // unconfigured in a debug build).
+        let cases: [(&str, &str, Option<&str>); 4] = [
+            (
+                "alexa",
+                "Atza|IQEBLjAsAhRmHjN.alexa-access-token",
+                Some("Atzr|IQEBLzAsAhRmHjN.alexa-refresh-token"),
+            ),
+            (
+                "google",
+                "ya29.a0AfB_byC-google-access-token",
+                Some("1//09-google-refresh-token"),
+            ),
+            // Google may legitimately omit a refresh token on re-consent.
+            (
+                "google_no_refresh",
+                "ya29.a0AfB_byC-google-access-only",
+                None,
+            ),
+            // Fallback / simulated provider (unconfigured platform, debug build).
+            (
+                "fallback_simulated",
+                "voice_access_alexa_2f1c4e8a-0000-4000-8000-000000000001",
+                Some("voice_refresh_alexa_2f1c4e8a-0000-4000-8000-000000000002"),
+            ),
+        ];
+
+        for (label, access, refresh) in cases {
+            let (access_ct, refresh_ct, _access_hash) =
+                encrypt_voice_token_pair(Some(&crypto), access, refresh).unwrap_or_else(
+                    |(s, b)| panic!("[{label}] must encrypt with a key: {s} {}", b.0.code),
+                );
+
+            // Access token: encrypted at rest, plaintext never stored.
+            assert_ne!(
+                access_ct, access,
+                "[{label}] access ciphertext must differ from plaintext"
+            );
+            assert!(
+                access_ct.starts_with("enc:"),
+                "[{label}] stored access token must carry the enc: prefix, got {access_ct}"
+            );
+            assert!(
+                !access_ct.contains(access),
+                "[{label}] plaintext access token must never appear in the stored value"
+            );
+            // Round-trip: the stored ciphertext decrypts back to the original.
+            assert_eq!(
+                integrations::decrypt_if_available(Some(&crypto), &access_ct),
+                access,
+                "[{label}] access token must round-trip through decrypt"
+            );
+
+            // Refresh token: same guarantees when present; `None` passes through.
+            match (refresh, refresh_ct) {
+                (Some(refresh_plain), Some(refresh_ct)) => {
+                    assert_ne!(
+                        refresh_ct, refresh_plain,
+                        "[{label}] refresh ciphertext must differ from plaintext"
+                    );
+                    assert!(
+                        refresh_ct.starts_with("enc:"),
+                        "[{label}] stored refresh token must carry the enc: prefix"
+                    );
+                    assert!(
+                        !refresh_ct.contains(refresh_plain),
+                        "[{label}] plaintext refresh token must never appear in the stored value"
+                    );
+                    assert_eq!(
+                        integrations::decrypt_if_available(Some(&crypto), &refresh_ct),
+                        refresh_plain,
+                        "[{label}] refresh token must round-trip through decrypt"
+                    );
+                }
+                (None, None) => { /* no refresh token to persist — correct */ }
+                (r, c) => {
+                    panic!("[{label}] refresh presence mismatch: input {r:?} -> stored {c:?}")
+                }
+            }
+        }
     }
 
     // --- extract_alexa_command_text -------------------------------------

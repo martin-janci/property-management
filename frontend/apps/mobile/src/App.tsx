@@ -3,7 +3,7 @@ import Constants from 'expo-constants';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { OfflineBanner, SyncProgressToast, SyncStatusBadge } from './components/sync';
 import { AuthProvider, useAuth } from './contexts';
 import { useDeepLinkRouting, useOfflineSupport, usePushNotifications } from './hooks';
@@ -14,6 +14,7 @@ import './i18n'; // Initialize i18n
 import {
   AnnouncementDetailScreen,
   AnnouncementsScreen,
+  ArticleDetailScreen,
   AuthFlow,
   BuildingsScreen,
   DashboardScreen,
@@ -34,6 +35,7 @@ import {
   NeighborsScreen,
   NewsScreen,
   NotificationsScreen,
+  OutageDetailScreen,
   OutagesScreen,
   PersonMonthsScreen,
   ProfileScreen,
@@ -59,8 +61,15 @@ const API_BASE_URL = (Constants.expoConfig?.extra?.apiUrl as string) || 'http://
 function MainApp() {
   const { t } = useTranslation();
   const { isAuthenticated, isLoading } = useAuth();
-  const { isConnected, queuedActionsCount, isSyncing, syncProgress, processQueue } =
-    useOfflineSupport();
+  const {
+    isConnected,
+    queuedActionsCount,
+    isSyncing,
+    syncProgress,
+    processQueue,
+    permanentFailures,
+    clearPermanentFailures,
+  } = useOfflineSupport();
   const { registerForPushNotifications } = usePushNotifications();
   const [showSyncToast, setShowSyncToast] = useState(false);
 
@@ -81,6 +90,24 @@ function MainApp() {
   const handleRetrySync = useCallback(() => {
     processQueue();
   }, [processQueue]);
+
+  // Surface permanently-dropped offline actions to the user. A queued request
+  // that fails with a permanent 4xx is removed from the queue (it can never win
+  // on retry); previously that drop was silent, so offline-created content could
+  // vanish with no signal. The hook exposes those drops as state so the alert
+  // fires no matter which path triggered the flush (including the NetInfo
+  // auto-sync listener). Acknowledge by clearing so it shows once per batch.
+  useEffect(() => {
+    if (permanentFailures.length === 0) {
+      return;
+    }
+    Alert.alert(
+      t('sync.droppedTitle'),
+      t('sync.droppedMessage', { count: permanentFailures.length }),
+      [{ text: t('common.ok'), onPress: clearPermanentFailures }],
+      { onDismiss: clearPermanentFailures }
+    );
+  }, [permanentFailures, clearPermanentFailures, t]);
 
   // Show toast when sync is in progress
   const isSyncingWithProgress = isSyncing && syncProgress !== null;
@@ -215,8 +242,22 @@ function MainApp() {
         return <PersonMonthsScreen onNavigate={handleNavigate} />;
       case 'Outages':
         return <OutagesScreen onNavigate={handleNavigate} />;
+      case 'OutageDetail':
+        return (
+          <OutageDetailScreen
+            outageId={screenParams?.outageId as string | undefined}
+            onBack={() => handleNavigate('Outages')}
+          />
+        );
       case 'News':
         return <NewsScreen onNavigate={handleNavigate} />;
+      case 'ArticleDetail':
+        return (
+          <ArticleDetailScreen
+            articleId={screenParams?.articleId as string | undefined}
+            onBack={() => handleNavigate('News')}
+          />
+        );
       case 'Forms':
         return <FormsScreen onNavigate={handleNavigate} />;
       case 'Buildings':
@@ -306,7 +347,9 @@ function MainApp() {
             currentScreen === 'Notifications' ||
             currentScreen === 'PersonMonths' ||
             currentScreen === 'Outages' ||
+            currentScreen === 'OutageDetail' ||
             currentScreen === 'News' ||
+            currentScreen === 'ArticleDetail' ||
             currentScreen === 'Forms' ||
             currentScreen === 'Buildings' ||
             currentScreen === 'Leases' ||

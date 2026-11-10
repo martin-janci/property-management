@@ -1,0 +1,39 @@
+{
+  "generated": "2026-08-15T00:00:00Z",
+  "segment": "mobile-native-kmp",
+  "source": "tier1d-dispatcher-generator",
+  "selection_reason": "oldest-unreviewed",
+  "selection_note": "Buffer-refill generator run (research backlog starved: claimable ~5, floor 36; deterministic refill sources exhausted). No Phase-1 CHURN_FILES provided (state.json hotspot_history is stale May-2026 api-server data, not current churn), so churn-alignment does not apply. Fell back to review_cursor: mobile-native-kmp (2026-08-11) is the oldest-reviewed segment. Saturation check passed: 0 open code-review-finding items for this segment in backlog.json (< 3 skip threshold). NOTE: an earlier tier1d run today (2026-08-15-mobile-native-kmp-tier1d.json) already reviewed this segment's shared/commonMain surface and enumerated a known-avoided list (create-listing stub, mylistings paging, portfolio-analytics fan-out, ApiClient cancellation-swallowed, HttpClient no-timeout, SsoService test gap, LayoutRepository println, systemic barren catch(e), compose !! re-assertion) plus emitted the decimal-serializer finding. This run deliberately reviewed a DIFFERENT layer (androidApp Navigation graph inline loaders + account stats aggregation) to avoid duplicating those. Static analysis only, no compilation/tests. Verified as NOT duplicates: repository-level barren catch(e) is shared/commonMain; these two findings are (1) the androidApp presentation layer discarding an already-surfaced Result error into a false empty-state, and (2) a sequential-vs-concurrent latency smell in ProfileStatsLoader — neither on the prior known-avoided list.",
+  "experts_used": ["kotlin", "tester"],
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-nav-loaders-swallow-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt — four inline LaunchedEffect loaders in the Compose nav graph discard the repository's surfaced error by folding a failed load into an empty list: SavedSearches `.onFailure { searches = emptyList() }` (:380), AgencyInquiries `.onFailure { inquiries = emptyList() }` (:450), MyListings `.onFailure { listings = emptyList() }` (:476), and ListingAnalytics `.onFailure { metrics = emptyList() }` (:541). On any network/HTTP failure the screen renders its 'no items' empty state — indistinguishable from the user genuinely having zero saved searches / listings / inquiries / analytics — with no error message and no retry affordance. A realtor whose network blips sees their listings/analytics apparently vanish and has no in-screen way to recover (must navigate away and back to re-trigger the LaunchedEffect(Unit)).",
+        "This is DISTINCT from the shared-module 'systemic barren catch(e)' finding: the repositories here correctly return a typed Result.failure (e.g. PortalListingsRepository.listMyListings, FavoritesRepository.getSavedSearches, InquiryRepository.getInquiries all wrap in try/catch -> Result). The defect is in the androidApp PRESENTATION layer, which receives that Result and then throws the error information away in .onFailure. It is also inconsistent with the rest of the app: the ViewModel-backed surfaces (ListingDetailViewModel onFailure -> errorMessage, PriceTrackingViewModel onFailure -> errorMapper(e), and the standalone InquiriesScreen which shows ErrorContent + onRetry) all surface a user-facing error with a retry. These four inline nav-graph screens are the outliers.",
+        "Fix: give each inline loader an errorMessage state alongside isLoading (mirroring InquiriesScreen), render an ErrorContent with an onRetry that re-runs the load, and reserve the empty-state for a genuine empty success. Static-analysis finding: the .onFailure discard is clear from source; reachability is certain (these are live nav destinations reached from the realtor/account tabs)."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-profilestats-serial-fetch",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/account/ProfileStats.kt:41-46 — ProfileStatsLoader.load() awaits three independent network GETs strictly sequentially: `favoritesRepository.getFavorites()` (GET /api/v1/favorites), then `favoritesRepository.getSavedSearches()` (GET /api/v1/saved-searches), then `inquiryRepository.getInquiries()` (GET /api/v1/inquiries). Because each `.getOrNull()` suspends until its call completes before the next begins, the Account/Profile stat strip pays the sum of all three round-trips (~3x latency) instead of the max of one.",
+        "The code's own doc comment (:35 'The three calls are independent: a failure in one leaves the others intact') establishes there is no data dependency between them, so they are a textbook candidate for concurrent execution. Fix: launch the three inside a `coroutineScope { }` with `async { }` and `awaitAll()` (or three `async` handles), collapsing screen-load latency to a single round-trip while preserving the per-field null-on-failure fallback. Low severity (perf/latency smell, not a correctness bug), but on a mobile radio the serial penalty is user-visible on the profile screen open. Distinct from the previously-noted portfolio-analytics fan-out, which is a per-listing N-call fan-out inside PortalListingsRepository, not this account-stats aggregation."
+      ],
+      "expert": "kotlin"
+    }
+  ]
+}

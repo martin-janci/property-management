@@ -24,7 +24,7 @@ export function EditReadingPage({
   onSubmit,
   onCancel,
 }: EditReadingPageProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState<EditReadingFormData>({
@@ -150,7 +150,8 @@ export function EditReadingPage({
               {reading.value.toLocaleString()} {meter.unit}
             </p>
             <p className="text-sm text-amber-700 mt-1">
-              {t('meters.edit.recordedOn')} {new Date(reading.readingDate).toLocaleDateString()}
+              {t('meters.edit.recordedOn')}{' '}
+              {new Date(reading.readingDate).toLocaleDateString(i18n.language)}
             </p>
           </div>
 

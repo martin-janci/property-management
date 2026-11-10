@@ -35,8 +35,10 @@ the UI's page/pageSize params to the API's limit/offset params.
 - 2026-05-18 — audit: stub created from `frontend/apps/ppt-web/src/App.tsx:490`.
 - 2026-05-24 — api-integration: wired to GET /api/v1/messages/threads + unread-count; onDeleteThreads shows a not-supported toast (API does not expose thread deletion).
 - 2026-06-25 — group conversations (BIT-244): thread list renders the full participant set, not one arbitrary "other". `ThreadWithPreview.otherParticipant` → `participants: ParticipantInfo[]` (backend PR #1848); list preview attributed to the actual last-message sender.
+- 2026-08-31 — realtime sync (PR #2889): the `messages` query root now auto-refetches on a `message.created` frame (and on `notification.created` with `category: messages`). Previously `WebSocketContext.eventToQueryKeys` keyed on dead `entity:*` names the api-server never emits, and `App.tsx` never passed `onEntityEvent`, so this list never refreshed in realtime (100% dead sync). REST wiring unchanged.
 
 ## Agent Log
+- 2026-08-31 — agent: screen-map-drift-pr-2889-ppt — reconcile drift from PR #2889 (realtime ws→query-invalidation fix). ppt-web `WebSocketContext` re-keyed cache invalidation from dead `entity:*` names to the api-server's canonical `domain.action` events, and `App.tsx` now wires `onEntityEvent → queryClient.invalidateQueries`, so the `messages` root is invalidated on `message.created` / `notification.created(category=messages)`. No route/component/endpoint/status change — frontmatter unchanged; docs-only.
 - 2026-07-13 — agent: gap-screens-normalize-frontmatter — normalized story-id-style epic ref(s) Epic-6-5 → Epic-6 (strip story suffix); /screens validate clean.
 - 2026-06-25 — agent: group conversations (BIT-244 / PM #972.5b) — `mapApiThreadToUi` maps every other participant from `participants[]`; preview sender resolved from the participant list. No route/status change.
 - 2026-05-18 — agent: created stub for unmapped route.

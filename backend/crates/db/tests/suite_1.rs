@@ -17,6 +17,8 @@ mod agency_domain_cache_tests;
 mod ai_chat_rls_repo_tests;
 #[path = "suites/announcement_comments_rls_tests.rs"]
 mod announcement_comments_rls_tests;
+#[path = "suites/announcement_fanout_metrics_tests.rs"]
+mod announcement_fanout_metrics_tests;
 #[path = "suites/announcement_targeting_visibility_tests.rs"]
 mod announcement_targeting_visibility_tests;
 #[path = "suites/announcement_tests.rs"]
@@ -27,8 +29,12 @@ mod api_ecosystem_developer_force_rls_tests;
 mod api_ecosystem_public_conn_routing_tests;
 #[path = "suites/api_ecosystem_rls_repo_tests.rs"]
 mod api_ecosystem_rls_repo_tests;
+#[path = "suites/append_only_audit_parent_delete_tests.rs"]
+mod append_only_audit_parent_delete_tests;
 #[path = "suites/auth_policy_tests.rs"]
 mod auth_policy_tests;
+#[path = "suites/automation_template_slug_tests.rs"]
+mod automation_template_slug_tests;
 #[path = "suites/background_jobs_stuck_retry_budget_tests.rs"]
 mod background_jobs_stuck_retry_budget_tests;
 #[path = "suites/board_meetings_list_join_tests.rs"]

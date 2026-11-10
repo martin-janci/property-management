@@ -1,0 +1,73 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-31T00:00:00Z",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "oldest-unreviewed",
+  "selection_detail": "Standalone Tier-1d demand-driven run (dispatcher claimable buffer starved: honest landable claimable ~= 0, the entire open backlog is mobile-native/KMP work that is structurally unlandable in this cloud runner, so fresh landable NON-mobile-native review vectors were required). No CHURN_FILES passed by the dispatcher. Selection from state.review_cursor: mobile-native-kmp (2026-08-25) is the true oldest but is EXCLUDED per assignment (cloud-unlandable, AGP egress-403 — any KMP finding cannot be implemented in the cloud runner). Next oldest is reality-server (2026-08-28); every other landable segment (api-handlers, api-core, ppt-web-ui, ppt-web-core, reality-web, mobile-rn) sits at 2026-08-29. Saturation check passed: reality-server has only 1 OPEN code-review-finding row in backlog.json (<3), no segment is at the saturation cap, so no saturation-skip. Primary expert = Rust, no secondary (per segment->expert map for reality-server). Static-only review: grep sweep of backend/servers/reality-server/src (43 .rs files) for unwrap/expect/unsafe/todo/panic/dynamic-SQL/PII-in-logs/pagination-clamping/owner-scoping, then targeted reads of the endpoints NOT covered by the 2026-08-30 sibling runs (agent_reviews, saved_searches, favorites, compare, price_map, articles, url_validator, util/errors, extractors/auth). Sibling Tier-1d runs already emitted the byte-vs-char length bug, the report-contact gap, the SSO negcache-poison + per-call-client findings, the drainer i18n gap, and the branding-color gap; this run deliberately avoided all of those and surfaced three remaining distinct defects in previously-unreviewed route files.",
+  "experts_used": ["rust"],
+  "findings_count": 3,
+  "note": "reality-server remains a mature, multiply-audited codebase and the high-severity classes are CLEAN under this pass: all non-test unwrap/expect are startup-config fail-fast (state.rs JWT_SECRET panics), OS-rng failures (acceptable), or guarded (extractors/auth.rs:63 strip_prefix is gated by the same closure's starts_with predicate; handlers/inquiries/mod.rs:274 chars().next().unwrap() is gated by the is_empty() early-return at :269, and the subsequent cleaned[1..] byte-slice is safe because reaching it proves the first char is ASCII '+' or ASCII digit = 1 byte). No unsafe blocks. util/errors::db_error scrubs every sqlx/anyhow error to a generic 500 (unit-tested for leak-freedom) and is used at essentially every DB map_err boundary in the segment (only non-db_error map_err in a response path is an internal url::parse helper in sso.rs, not client-facing). url_validator SSRF guard is thorough (scheme allowlist, IPv4 private/loopback/link-local/reserved/broadcast/multicast, IPv6 loopback/ULA/link-local, and IPv4-mapped/-compatible unmapping to defeat ::ffff: re-encoding). price_map.rs's one format!-built SQL only interpolates an allowlisted INTERVAL literal (time_window validated against {1m,3m,12m,5y} first) and uses sqlx::AssertSqlSafe with all user values bound as params. compare.rs is H4-audited (status='active' gate on both add and the LEFT JOIN read; owner-scoped delete). All user-scoped saved-search/favorite/compare mutations pass principal.user_id (no IDOR). The three findings below are the genuine, distinct, landable defects that survived that sweep — all confined to reality-server route files, no KMP, each a clean self-contained fix distinct from every prior reality-server finding.",
+  "signals": [
+    {
+      "id": "code-review-reality-server-agent-review-self-review",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-31 reality-server)",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/agent_reviews.rs"
+      ],
+      "evidence": [
+        "create_review (routes/agent_reviews.rs:198, POST /api/v1/realtors/{id}/reviews, UC-49/UC-51) lets an authenticated portal user review ANY realtor with NO guard preventing a realtor from reviewing their OWN profile. The handler checks: rating in 1..=5 (:204), body length (:211-218), realtor existence (:226-238), verified_buyer derivation (:243-256), and duplicate-review via the ON CONFLICT (realtor_id, reviewer_user_id) DO NOTHING (:274). It never checks that the realtor_profiles row addressed by the path {id} is not owned by principal.user_id. A realtor profile is just a portal user with a realtor_profiles row (rp.user_id), so the profile owner can POST a 5-star review of themselves.",
+        "Impact: reputation self-inflation on a public trust signal. list_reviews (:88) and the avg_rating aggregate (SELECT AVG(rating::float8) FROM realtor_reviews WHERE realtor_id = $1, :150) are UNAUTHENTICATED public reads rendered on the realtor's public agency/agent page. A realtor can raise their own displayed average and review count at will (bounded only by the one-review-per-user unique constraint, i.e. +1 self five-star). verified_buyer would come back false for the self case (no self-inquiry with responded_at), but the rating still counts toward the public avg — the flag does not exclude it.",
+        "This is the kind of integrity gap the file already reasons about elsewhere (it derives verified_buyer server-side precisely to prevent client-forged trust signals), so leaving self-review open is an internal inconsistency, not a deliberate product decision — nothing in the doc comments or the OpenAPI responses (:190-195) mentions allowing self-review.",
+        "Fix: before the INSERT, reject when the target realtor profile belongs to the caller — e.g. add `AND user_id <> $2` to a lookup or a dedicated `SELECT EXISTS(SELECT 1 FROM realtor_profiles WHERE id = $1 AND user_id = $2)` guard binding (realtor_id, principal.user_id) and return 400 'You cannot review your own profile'. Self-contained change in agent_reviews.rs; IG3 via an integration test that a user who owns realtor_profiles.id = R gets 400 when POSTing to /realtors/R/reviews, while a different user gets 201.",
+        "Confidence medium: the absence of any self-review guard and the direct path {id}->realtor_id INSERT are confirmed by static read of the full handler; 'medium' rather than 'high' because the impact is reputation/data-integrity manipulation by an authenticated (non-anonymous) actor rather than a crash, cross-tenant data leak, or auth bypass."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-pagination-offset-overflow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-31 reality-server)",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/articles.rs",
+        "backend/servers/reality-server/src/routes/inquiries.rs"
+      ],
+      "evidence": [
+        "Three page-based pagination sites compute the SQL OFFSET as an UNCHECKED i64 multiplication of a user-controlled page against the page size: articles.rs:157 `let offset = (page - 1) * per_page;` (page = query.page.unwrap_or(1).max(1), per_page clamped to 1..=100), inquiries.rs:590 and inquiries.rs:642 `let offset = (page - 1) * limit;` (same pattern, limit clamped to 1..=100). page/per_page/limit come straight off the query string as Option<i64>; page is clamped only for a LOWER bound (.max(1)) and never for an upper bound, and the product is never checked_mul'd.",
+        "articles list (GET /api/v1/articles) and article comments list are UNAUTHENTICATED public endpoints. A request like `?page=92233720368547759&per_page=100` makes (page-1)*100 exceed i64::MAX. In a debug build this panics (arithmetic overflow) -> the handler thread unwinds -> 500. In a release build (prod) it wraps two's-complement to a garbage (typically negative) i64 that is then bound as the BIGINT OFFSET: Postgres rejects a negative OFFSET ('OFFSET must not be negative'), which db_error maps to a generic 500 — the same 'raw DB error surfaced as 500 instead of a clean 4xx' failure mode the listings pagination clamp (#953) was specifically added to eliminate.",
+        "So the guard that was applied on the listings search path was not applied to these three sites: an unauthenticated caller can force a 500 (and, on any debug/staging build, an actual panic + noisy stacktrace log) with a single crafted query param, and even sub-overflow large pages produce enormous OFFSETs that make Postgres scan-and-discard huge row counts (a cheap amplification lever).",
+        "Fix: clamp page to a sane upper bound and/or compute the offset with checked arithmetic — e.g. `let offset = page.saturating_sub(1).saturating_mul(per_page);` (saturates instead of overflowing), optionally capping page so offset stays within a reasonable window. Apply identically at articles.rs:157, inquiries.rs:590, inquiries.rs:642. IG3: a unit test that offset computation for page = i64::MAX / per_page = 100 does not panic and yields a non-negative value.",
+        "Confidence medium: the unchecked multiplication on user-controlled page and the missing upper clamp are confirmed by static read at all three sites; severity is low (+1) because the outcome is a 500/incorrect-error (release) or panic-to-500 (debug) rather than data loss or a security bypass, and the abuse volume is otherwise throttleable."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-saved-search-error-string-status",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-31 reality-server)",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/saved_searches.rs"
+      ],
+      "evidence": [
+        "Two saved-search handlers map a repository error to its client-facing HTTP status by SUBSTRING-MATCHING the error's Display string. create_saved_search (saved_searches.rs:93-103) returns 400 'Maximum saved searches limit reached' only when `e.to_string().contains(\"maximum\") || contains(\"limit\")`, else falls through to a generic 500. update_saved_search (saved_searches.rs:166-176) returns 404 'Saved search not found' only when `e.to_string().contains(\"not found\") || contains(\"RowNotFound\")`, else 500.",
+        "This couples the public API contract to the exact wording of an internal error string. The wording is not owned by this file — it comes from the repo layer / sqlx (e.g. the sqlx `RowNotFound` Display text, or a repo-side 'maximum ... limit' message). A dependency bump (SQLx is on 0.9 per CLAUDE.md and gets routine dependabot bumps) or a repo-message reword silently flips behaviour: the per-user max-saved-searches cap would start surfacing as a 500 instead of the documented 400 (:80 advertises '400 Max searches reached'), and — more importantly — an update against a saved search the caller does not own would surface as a 500 instead of the intended 404, muddying the not-found-vs-error signal on a per-user resource. The failure is silent: no compiler error, no test unless one asserts the exact status on these branches.",
+        "Note the get/run/delete siblings in the same file do NOT have this problem — get_saved_search (:120) and run_saved_search (:219) use the typed `get_saved_search_for_user(...).ok_or_else(404)` shape, and delete (:193) is a straight db_error. So the two string-sniffing branches are an inconsistency within the file, and the typed pattern to mirror already exists two functions away.",
+        "Fix: have the repository return a typed error (or the create path return a typed 'limit reached' outcome / the update path an Option like get does) so the handler can branch on a variant instead of `contains(...)` on Display text. Minimal landable version: change create_saved_search to detect the cap via a typed repo result and update_saved_search to use the same Option-returning 'for_user' lookup + typed update that get/run already use. IG3: an integration test asserting update of a non-owned/absent id returns 404 (not 500) and that the Nth+1 create returns 400.",
+        "Confidence medium: the substring-based status mapping and the divergence from the typed sibling handlers are confirmed by static read; severity is low (+1) because today the strings presumably match (correct status is returned now) — the defect is brittleness/maintainability that turns a dependency or wording change into a silent contract regression, not a current live break."
+      ]
+    }
+  ]
+}

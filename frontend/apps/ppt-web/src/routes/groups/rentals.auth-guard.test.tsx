@@ -24,7 +24,11 @@ import { QueryClient, QueryClientProvider, useMutation } from '@tanstack/react-q
 import { renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { handleRentalsAuthError, requireRentalsAuthHeaders } from './rentals';
+import {
+  handleRentalsAuthError,
+  handleRentalsMutationError,
+  requireRentalsAuthHeaders,
+} from './rentals';
 
 describe('requireRentalsAuthHeaders', () => {
   it('throws a typed AuthError(SESSION_EXPIRED) — not a raw TypeError — when auth is null', () => {
@@ -72,6 +76,81 @@ describe('handleRentalsAuthError', () => {
     expect(handleRentalsAuthError(new Error('network down'), logout)).toBe(false);
     expect(handleRentalsAuthError(new TypeError('boom'), logout)).toBe(false);
     expect(logout).not.toHaveBeenCalled();
+  });
+});
+
+describe('handleRentalsMutationError', () => {
+  // Bug code-review-ppt-web-core-rentals-mutation-silent: the 4 rentals
+  // mutations (create connection, sync platforms, guest check-in/out) wired
+  // `onError` to `handleRentalsAuthError` alone and dropped its boolean result,
+  // so every NON-auth failure (network / 4xx / 5xx) was swallowed with no UI
+  // feedback. The fix routes those errors to an error toast.
+
+  it('redirects to /login on a session-loss AuthError and raises NO toast', () => {
+    const logout = vi.fn();
+    const showToast = vi.fn();
+    handleRentalsMutationError(new AuthError('gone', 'SESSION_EXPIRED'), {
+      logout,
+      showToast,
+      title: 'Failed to create connection',
+      fallbackMessage: 'Please try again.',
+    });
+    expect(logout).toHaveBeenCalledTimes(1);
+    // Session loss is handled by the redirect — not by a transient toast.
+    expect(showToast).not.toHaveBeenCalled();
+  });
+
+  it('surfaces a non-auth Error as an error toast carrying the error message (no logout)', () => {
+    const logout = vi.fn();
+    const showToast = vi.fn();
+    handleRentalsMutationError(new Error('platform rejected the request'), {
+      logout,
+      showToast,
+      title: 'Failed to sync platform',
+      fallbackMessage: 'Please try again.',
+    });
+    expect(logout).not.toHaveBeenCalled();
+    expect(showToast).toHaveBeenCalledTimes(1);
+    expect(showToast).toHaveBeenCalledWith({
+      type: 'error',
+      title: 'Failed to sync platform',
+      message: 'platform rejected the request',
+    });
+  });
+
+  it('falls back to the provided message for a non-Error throw', () => {
+    const logout = vi.fn();
+    const showToast = vi.fn();
+    handleRentalsMutationError('weird string throw', {
+      logout,
+      showToast,
+      title: 'Failed to check in',
+      fallbackMessage: 'Please try again.',
+    });
+    expect(logout).not.toHaveBeenCalled();
+    expect(showToast).toHaveBeenCalledWith({
+      type: 'error',
+      title: 'Failed to check in',
+      message: 'Please try again.',
+    });
+  });
+
+  it('treats a non-session AuthError (e.g. INVALID_CREDENTIALS) as a surfaced error, not a logout', () => {
+    const logout = vi.fn();
+    const showToast = vi.fn();
+    handleRentalsMutationError(new AuthError('bad creds', 'INVALID_CREDENTIALS'), {
+      logout,
+      showToast,
+      title: 'Failed to check out',
+      fallbackMessage: 'Please try again.',
+    });
+    expect(logout).not.toHaveBeenCalled();
+    expect(showToast).toHaveBeenCalledTimes(1);
+    expect(showToast).toHaveBeenCalledWith({
+      type: 'error',
+      title: 'Failed to check out',
+      message: 'bad creds',
+    });
   });
 });
 

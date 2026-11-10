@@ -1,0 +1,71 @@
+{
+  "generated": "2026-10-02",
+  "source_run": "dispatcher Tier-1d demand-driven finding generator (claim buffer starved: claimable=18 < floor=36; deterministic refills backlog+retry-remint found nothing). Third same-day pass on the oldest-unreviewed segment (-c variant), following the dispatcher's existing same-day double/triple-up convention (cf. 2026-10-02-reality-server-tier1d.json and -tier1d-b.json). Static single-segment code review via grep + Read only; no compilation, no test execution.",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "OLDEST-UNREVIEWED. No CHURN_FILES handed to this demand-driven refill run; state.json review_cursor ranks reality-server (2026-08-31) oldest, ahead of api-core (2026-09-01). reality-server carries 0 OPEN code-review-finding rows in backlog.json (not saturated per Step-1 rule). The two prior 2026-10-02 reality-server passes covered the pagination/offset-overflow class (inquiries.rs/articles.rs) and the SSO web-flow class (in-memory PKCE state durability + upstream error-detail disclosure). These three findings are DISJOINT from both: SSO token-validation cache revocation gap, background-worker supervision, and a worker test-coverage gap.",
+  "experts_used": ["rust"],
+  "landable_in_cloud": true,
+  "landability_note": "All three are static-only; the token-cache-invalidate wiring and the worker test are small, self-contained changes an implementer can land without a running stack. The worker-supervision finding may warrant a short design note (supervise-and-restart vs. abort-on-shutdown) before implementation.",
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-reality-server-sso-token-cache-no-invalidate",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/reality-server/src/state.rs:722 defines `pub async fn invalidate(&self, token: &str)` on TokenValidationCache, but `grep -rn '\\.invalidate(' backend/servers/reality-server/src --include='*.rs' | grep -i token` returns ZERO hits outside tests — the method has no production call site anywhere in reality-server. It is unwired dead code that signals an intended-but-unfinished revocation hook.",
+        "backend/servers/reality-server/src/routes/sso.rs:395-417 (sso_logout) invalidates ONLY the portal session (`state.session_service.invalidate_session(&session_token)` at :405) and clears the cookie; it never calls `state.token_cache.invalidate(...)`. The only token_cache references in sso.rs are the introspection read/write path (:774, :797, :805, :844).",
+        "backend/servers/reality-server/src/routes/sso.rs:804-855 (introspect_pm_token_inner): a PM bearer token's `active=true` verdict is cached by token (state.rs:675 set) and returned on cache hit (:805-813) for the full TTL. Default TTL is 60s (state.rs:633 `Self::new(60, 10000)`). Consequence: when a PM token is revoked server-side (or the PM user logs out) mid-session, reality-server keeps honoring it as active for up to the cache TTL — token revocation is not propagated to the portal's validation cache because no logout/revocation event is wired to invalidate(). Window is bounded (60s default) so severity is medium, not high.",
+        "Fix direction: wire sso_logout (and any PM-token-inactive path, e.g. sync_session at sso.rs:1154-1175) to call token_cache.invalidate(token) so revocation is honored immediately rather than after TTL expiry; or delete invalidate() if the TTL window is accepted as the deliberate design."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs",
+        "backend/servers/reality-server/src/state.rs"
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-alert-workers-unsupervised",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/main.rs:446, :457, :461 start the three background alert workers and bind each returned JoinHandle to a discarded `_`-prefixed local: `let _alert_worker_handle = alert_worker.start();`, `let _drainer_worker_handle = ...start();`, `let _favorite_alert_worker_handle = ...start();`. Dropping the handle detaches the task (it keeps running) but means nothing ever awaits it or observes completion.",
+        "Each worker's body is `loop { ticker.tick().await; self.run_once().await; }` (e.g. saved_search_alerts.rs:134-137). There is no catch_unwind around run_once and no supervisor to restart a dead task: a single panic inside run_once terminates that worker's loop permanently, silently halting saved-search / favorite-alert / drainer delivery for the entire process lifetime with no log beyond the default panic hook and no restart.",
+        "Lower severity (+1) because run_once bodies are defensively written (match on db.acquire, no production unwraps on the hot path), so a panic is unlikely — but the lack of supervision means any future regression that can panic becomes a silent, process-lifetime outage of a user-facing alerting feature. Fix direction: either supervise (respawn on JoinHandle completion with backoff) or at minimum log worker exit, and keep the handles for graceful-shutdown abort."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/main.rs",
+        "backend/servers/reality-server/src/services/saved_search_alerts.rs",
+        "backend/servers/reality-server/src/services/favorite_alerts.rs",
+        "backend/servers/reality-server/src/services/search_alert_drainer.rs"
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-favorite-alerts-no-tests",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "backend/servers/reality-server/src/services/favorite_alerts.rs has NO `#[cfg(test)]` module: `grep -n '#\\[cfg(test)\\]|#\\[tokio::test\\]|#\\[test\\]' favorite_alerts.rs` returns nothing, while its two sibling workers do have test modules — saved_search_alerts.rs:256 `#[cfg(test)]` (5 tests) and search_alert_drainer.rs:437 `#[cfg(test)]` (4 tests).",
+        "FavoriteAlertWorker::run_once is a public matching-pass method (favorite_alerts.rs:87) that drives user-facing favorite-price-change alert delivery; it is the only one of the three alert workers whose matching logic is entirely unexercised by unit tests.",
+        "Fix direction: add a `#[cfg(test)]` module mirroring saved_search_alerts.rs's pattern (pure-function / decision-point coverage of run_once's match + alert-emit branches) so the favorite-alert path has parity with its siblings."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/services/favorite_alerts.rs"
+      ],
+      "expert": "rust"
+    }
+  ]
+}

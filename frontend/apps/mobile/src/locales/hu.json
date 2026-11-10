@@ -54,7 +54,14 @@
     "biometricNotSuccessful": "A biometrikus hitelesites nem sikerult",
     "signInWith": "Bejelentkezes ezzel: {{provider}}",
     "faceIdTouchId": "Face ID / Touch ID",
-    "biometrics": "Biometria"
+    "biometrics": "Biometria",
+    "biometric": {
+      "enablePrompt": "Biometrikus bejelentkezes engedelyezese",
+      "authenticatePrompt": "Bejelentkezes az Ingatlankezelesbe",
+      "cancel": "Megse",
+      "usePasscode": "Jelkod hasznalata",
+      "usePassword": "Jelszo hasznalata"
+    }
   },
   "dashboard": {
     "title": "Iranyitopult",
@@ -124,6 +131,12 @@
     "galleryButton": "Galeria",
     "submitButton": "Jelentes bekuldese",
     "successSubmit": "Hibajelentes sikeresen elkuldve",
+    "photosNotUploadedTitle": "Bejelentes mentve — a fenykepek nem lettek csatolva",
+    "photosNotUploadedWarning": "A hibajelentes mentve lett, de a csatolt fenykepeket nem sikerult feltolteni, ezert nem kerultek bele. Kerjuk, adja hozza oket ujra a hiba reszleteibol.",
+    "successSubmitWithPhotos": "Hibajelentes elkuldve {{count}} fenykeppel.",
+    "photosPartialTitle": "Jelentes elkuldve — nehany fenykep nem lett csatolva",
+    "photosPartialWarning": "A hibajelentes elkuldve, es {{total}} fenykepbol {{uploaded}} lett csatolva. {{failed}} feltoltese nem sikerult — ujra hozzaadhatja oket a hiba reszleteibol.",
+    "uploadingPhotos": "Fenykepek feltoltese…",
     "failedSubmit": "Nem sikerult elkuldeni a hibajelentest",
     "cameraPermissionDenied": "Kamera engedelyre van szukseg",
     "photoLibraryPermissionDenied": "Fotokozyvtar engedelyre van szukseg",
@@ -150,13 +163,26 @@
     "emptyText": "Minden probléma megoldva"
   },
   "news": {
+    "backToList": "‹ Hirek",
     "title": "Hirek",
     "latest": "Legfrissebb hirek",
     "readMore": "Bovebben",
     "noNews": "Nincsenek elérhető hírek",
     "loadError": "A hírek nem tölthetők be",
     "emptyTitle": "Semmi új",
-    "emptyText": "Nézzen vissza később a friss hírekért."
+    "emptyText": "Nézzen vissza később a friss hírekért.",
+    "subtitle": "Hírek az épületből és a környékről.",
+    "filters": {
+      "all": "Összes",
+      "building": "Épület",
+      "district": "Kerület",
+      "partner": "Partnerek"
+    },
+    "categories": {
+      "building": "Épület",
+      "district": "Kerület",
+      "partner": "Partner"
+    }
   },
   "voting": {
     "title": "Szavazas",
@@ -166,7 +192,47 @@
     "voted": "Szavazott",
     "results": "Eredmenyek",
     "deadline": "Hatarido",
-    "noPolls": "Nincsenek aktiv szavazasok"
+    "noPolls": "Nincsenek aktiv szavazasok",
+    "submit": "Szavazat leadása",
+    "moveUp": "Mozgatás felfelé",
+    "moveDown": "Mozgatás lefelé",
+    "rankHint": "Rendezze a lehetőségeket preferencia szerint (1 = legjobban preferált).",
+    "activeCount_one": "{{count}} aktív",
+    "activeCount_other": "{{count}} aktív",
+    "ended": "Lezárva",
+    "timeLeftDaysHours": "{{days}} nap {{hours}} óra van hátra",
+    "timeLeftHours": "{{hours}} óra van hátra",
+    "timeLeftMinutes": "{{minutes}} perc van hátra",
+    "filter": {
+      "all": "Összes",
+      "active": "Aktív",
+      "closed": "Lezárt"
+    },
+    "loadError": "A szavazásokat nem sikerült betölteni",
+    "emptyTitle": "Még nincsenek szavazások",
+    "emptyText": "Jelenleg nincsenek megjeleníthető szavazások.",
+    "openDetail": "Szavazás részleteinek megnyitása",
+    "quorum": "Határozatképesség",
+    "quorumVotes": "{{current}} / {{required}} szavazat",
+    "tapToVote": "Koppintson a megtekintéshez és szavazáshoz",
+    "tapToView": "Koppintson az eredmények megtekintéséhez",
+    "createdBy": "Létrehozta: {{name}}",
+    "missingId": "Nincs kiválasztott szavazás",
+    "confirmVoteTitle": "Szavazat megerősítése",
+    "answerRequired": "Kérjük, válaszoljon minden kötelező kérdésre",
+    "confirmVoteMessage": "Leadja a szavazatát? Ez a művelet nem vonható vissza.",
+    "voteSubmitted": "Szavazat leadva",
+    "confirmationNumber": "Visszaigazolás",
+    "castError": "A szavazatot nem sikerült leadni",
+    "noQuestions": "Még nincsenek kérdések",
+    "youHaveVoted": "Ön már szavazott ezen a szavazáson.",
+    "notActive": "Ez a szavazás jelenleg nem aktív.",
+    "votingAs": "Szavazás mint",
+    "eligibilityReason": {
+      "voteNotAcceptingBallots": "A szavazás jelenleg nem fogad szavazatokat.",
+      "notEligibleInBuilding": "Ebben az épületben nincs szavazati jogosultsága.",
+      "allUnitsVoted": "Minden jogosult egysége már szavazott."
+    }
   },
   "documents": {
     "title": "Dokumentumok",
@@ -292,7 +358,9 @@
     "syncFailed": "Nehany elem szinkronizalasa sikertelen",
     "syncProgress": "Szinkronizalas {{current}}/{{total}}",
     "itemSynced": "{{item}} sikeresen szinkronizalva",
-    "itemFailed": "{{item}} szinkronizalasa sikertelen"
+    "itemFailed": "{{item}} szinkronizalasa sikertelen",
+    "droppedTitle": "Módosítások elvetve",
+    "droppedMessage": "{{count}} offline módosítást nem sikerült menteni, és elvetésre kerültek, mert a szerver elutasította azokat."
   },
   "help": {
     "title": "Sugocentrum",
@@ -378,6 +446,7 @@
     "enterReading": "Adja meg az allast",
     "readingPlaceholder": "0,00",
     "readingRequired": "Kerem adja meg az allast",
+    "readingInvalid": "Adjon meg egy ervenyes szamot",
     "photo": "Foto (opcionalis)",
     "submit": "Allas elkuldese",
     "submitSuccess": "Meroora allas sikeresen elkuldve",
@@ -393,7 +462,13 @@
     "noUnitText": "A mérőórák akkor jelennek meg, ha fiókját egy egységhez társítják.",
     "detailLoadError": "A mérőóra nem tölthető be",
     "noReadingsTitle": "Még nincsenek leolvasások",
-    "noReadingsText": "Küldje be első leolvasását ehhez a mérőórához."
+    "noReadingsText": "Küldje be első leolvasását ehhez a mérőórához.",
+    "meterFallback": "Mérőóra",
+    "backToMeters": "Mérőórák",
+    "latestReading": "Legutóbbi leolvasás",
+    "usedSincePrevious": "Fogyasztás az előző leolvasás óta: {{amount}} {{unit}}",
+    "readingHistory": "Leolvasási előzmények",
+    "submitNewReading": "Új leolvasás beküldése"
   },
   "esignature": {
     "title": "Alairasi keres",
@@ -486,7 +561,14 @@
     "threadLoadError": "A beszélgetés nem tölthető be",
     "threadEmptyTitle": "Még nincsenek üzenetek",
     "threadEmptyText": "Köszönjön, és kezdje el a beszélgetést.",
-    "threadSendError": "Az üzenet elküldése nem sikerült. Kérjük, próbálja újra."
+    "threadSendError": "Az üzenet elküldése nem sikerült. Kérjük, próbálja újra.",
+    "backToList": "Üzenetek",
+    "threadTitleFallback": "Beszélgetés",
+    "composerPlaceholder": "Írjon üzenetet…",
+    "syncing": "Szinkronizálás…",
+    "authorYou": "Ön",
+    "authorFallback": "Résztvevő",
+    "send": "Küldés"
   },
   "leases": {
     "loadError": "A bérleti szerződések nem tölthetők be",
@@ -496,10 +578,38 @@
     "noPayments": "Nincsenek ütemezett közelgő fizetések.",
     "notFound": "A bérleti szerződés nem található."
   },
+  "personMonths": {
+    "title": "Személyhónapok",
+    "subtitle": "Adja meg, hány személy lakott az egységében havonta a költségfelosztáshoz.",
+    "invalidTitle": "Érvénytelen érték",
+    "invalidMessage": "Adjon meg egy egész számot 0 és 20 között.",
+    "bulkEntry": "Tömeges bevitel…",
+    "personCount_one": "{{count}} személy",
+    "personCount_other": "{{count}} személy",
+    "status": {
+      "draft": "Piszkozat",
+      "submitted": "Beküldve",
+      "confirmed": "Megerősítve"
+    }
+  },
   "outages": {
+    "backToList": "‹ Kimaradások",
     "loadError": "A kimaradások nem tölthetők be",
     "emptyTitle": "Nincsenek kimaradások",
-    "emptyText": "Jelenleg semmi sincs ütemezve vagy aktív."
+    "emptyText": "Jelenleg semmi sincs ütemezve vagy aktív.",
+    "title": "Kimaradások",
+    "subtitle": "Tervezett és aktív közműkimaradások.",
+    "filters": {
+      "all": "Összes",
+      "scheduled": "Ütemezett",
+      "active": "Aktív",
+      "resolved": "Megoldott"
+    },
+    "status": {
+      "scheduled": "Ütemezett",
+      "in_progress": "Folyamatban",
+      "resolved": "Megoldott"
+    }
   },
   "forms": {
     "loadError": "Az űrlapok nem tölthetők be",
@@ -512,6 +622,27 @@
     "emptyTitle": "Még nincsenek szomszédok",
     "noMatches": "Nincs találat",
     "emptyText": "A névjegyzékbe jelentkező lakók itt jelennek meg.",
-    "noMatchesText": "Próbáljon meg más nevet vagy lakásszámot."
+    "noMatchesText": "Próbáljon meg más nevet vagy lakásszámot.",
+    "title": "Szomszédok",
+    "subtitle": "{{count}} lakó itt: {{building}}",
+    "subtitleGeneric": "{{count}} lakó az Ön épületében",
+    "searchPlaceholder": "Keresés név vagy lakás szerint…",
+    "owner": "Tulajdonos"
+  },
+  "voice": {
+    "confirmations": {
+      "reportFaultCategory": "Hibabejelentés megnyitása a következő problémához: {{category}}",
+      "reportFaultForm": "Hibabejelentő űrlap megnyitása",
+      "announcements": "Közlemények megjelenítése",
+      "voting": "Szavazás megnyitása",
+      "documentsSearch": "Dokumentumok keresése erre: {{query}}",
+      "documents": "Dokumentumok megnyitása",
+      "notifications": "Értesítések ellenőrzése",
+      "dashboard": "Ugrás a kezdőképernyőre",
+      "settings": "Beállítások megnyitása"
+    },
+    "errors": {
+      "unknownCommand": "Nem értettem ezt a parancsot. Próbáld mondani: „Report a fault” vagy „Show announcements”."
+    }
   }
 }

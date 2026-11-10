@@ -1,0 +1,69 @@
+{
+  "generated": "2026-09-27T00:00:00Z",
+  "source_run": "dispatcher Phase 1.5 Tier-1d demand-driven static code review (claim buffer starved, claimable below floor 36; cloud-landable frontend segment preferred) 2026-09-27",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "oldest-unreviewed. review_cursor in state.json: reality-web=2026-08-29 is the uniquely oldest entry (next oldest api-handlers/reality-server=2026-08-31; ppt-web-core=2026-09-27 was already mined earlier this same run, see 2026-09-27-ppt-web-core-tier1d.json). reality-web has 0 OPEN code-review-finding items in backlog.json (all 3 prior reality-web findings are status=done), so it is NOT saturated. The prior reality-web Tier-1d pass (2026-09-24, 0 findings) audited only the security/SSR/XSS axes (fetch null-handling, HMAC webhook, serialize-script, SSO CSRF, auth-token); it never checked i18n/content-correctness coverage of the public profile + account-edit routes. This pass covers that orthogonal axis and surfaces net-new findings, so it is not a duplicate.",
+  "experts_used": ["frontend"],
+  "landable_in_cloud": true,
+  "landability_note": "reality-web is a Next.js frontend app; findings here ARE landable in the cloud runner (unlike backend api-server, blocked by utoipa-swagger-ui build-script egress-403 #2966, and mobile-native KMP, AGP egress-gated).",
+  "findings_count": 3,
+  "static_only": true,
+  "note": "Frontend-expert static sweep (read + grep only, no build/test per skill contract). Confirmed the security/SSR/XSS surface remains hardened (matches the 2026-09-24 assessment). Net-new finding class: three user-facing route components render with ZERO next-intl integration on a 4-locale portal (sk/cs/de/en), so cs/de/en visitors see hardcoded Slovak. Verified via `grep -c 'getTranslations|useTranslations'` == 0 on each file plus enumeration of the hardcoded strings. This is the same class as the prior done findings (ComparisonView / RealtorManagement / agency error-state i18n), but three DIFFERENT files not previously flagged. Excluded already-mined-and-fixed import/ files (FeedImport/SyncSchedule/CrmConnection). Capped at the highest-severity 3.",
+  "signals": [
+    {
+      "id": "code-review-reality-web-agency-slug-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-27 reality-web public routes)",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx (325 lines) imports NO next-intl and calls getTranslations/useTranslations 0 times, yet is a fully user-facing PUBLIC agency-profile route on a 4-locale portal (sk/cs/de/en). All UI text is hardcoded Slovak, so cs/de/en visitors see Slovak.",
+        "Hardcoded Slovak: L36 'Načítavam…' (loading), L46 'Kancelária sa nenašla.' (not-found), L223 'Žiadne aktívne ponuky.' (empty state), L279 'Kontakt', L302 '🌐 Navštíviť web'.",
+        "The file header comment L9 explicitly claims '... (next-intl). Data is fetched client-side ...' — the comment asserts i18n integration that does not exist, so the gap is easy to miss on read.",
+        "Distinct from the prior done finding code-review-reality-web-agency-errorstate-i18n (that covered agency/error.tsx, the error boundary — not this [slug] profile page)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-realtor-id-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-27 reality-web public routes)",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx (649 lines) imports NO next-intl and calls getTranslations/useTranslations 0 times; it is a PUBLIC realtor-profile route on the 4-locale portal (sk/cs/de/en). All UI text is hardcoded Slovak.",
+        "Hardcoded Slovak strings: L154 'Kontaktovať', L420 'Kontaktné údaje', L588 'Kontaktovať {agent.name}', plus the accessibility label aria-label='Kontaktovať makléra' at L556 (screen-reader text is also un-localized).",
+        "Same content-correctness bug class as the done ComparisonView/RealtorManagement i18n findings but a different, never-flagged file — cs/de/en visitors get a Slovak-only realtor profile."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-27 reality-web account routes)",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx (930 lines — a churn hotspot; edited in the last 3 PRs touching the segment) is a 5-step listing-edit wizard that imports NO next-intl and calls getTranslations/useTranslations 0 times. Every label, button and message is hardcoded Slovak on the 4-locale portal (sk/cs/de/en).",
+        "Hardcoded Slovak: L166 error 'Načítanie inzerátu zlyhalo.', L223 'Načítavam inzerát…', L233 '← Späť na účet', L254 'Zmeny v inzeráte #{listingId} boli úspešne uložené.', L268 'Zobraziť inzerát', L317 'Upraviť inzerát #{listingId}', L340 'Krok {step} z {EDIT_STEPS.length}: …', L659 'Stav inzerátu', L775 '← Späť', L794 'Ďalej →', L827 'Ukladám…' / 'Uložiť zmeny'.",
+        "Highest-effort of the three (largest file, most strings, recently churned); a cs/de/en agent editing their own listing gets a fully Slovak wizard."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

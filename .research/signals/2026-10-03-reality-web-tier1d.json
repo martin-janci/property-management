@@ -1,0 +1,84 @@
+{
+  "generated": "2026-10-03T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claim buffer starved: claimable=25 < floor=36; no deterministic backlog candidates available to promote). Static single-segment code review, no compilation / no test execution. Produces fresh CLOUD-LANDABLE frontend backlog vectors.",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "churn-aligned. Automatic selection rule 1 (churn) fired: state.json hotspot_history records three reality-web files with last_seen=2026-10-03 (today) — app/[locale]/sell/page.tsx, app/[locale]/report/page.tsx, components/home/FeaturedListings.tsx — all under the reality-web segment root (frontend/apps/reality-web/src/). This beats rule 2 (oldest-unreviewed) and the fallback. reality-web is cloud-landable single-package frontend (dispatcher-preferred over egress-blocked api-server/mobile-native fix paths). SATURATION CHECK: backlog.json holds 0 OPEN code-review-finding rows for reality-web (all 19 historical code-review-findings are status=done), so the >=3-open skip rule does not trigger. DEDUP: the churn files themselves read CLEAN (sell + report submit handlers wrap mutateAsync/createListing in try/catch with typed error-state copy; the sell wizard no-persist bug is already FIXED per the in-file #code-review-reality-web-sell-wizard-no-persist reference; FeaturedListings handles isLoading/error/!data and toggleFavorite.isError). Prior reality-web Tier-1d passes (2026-09-19 i18n/href-XSS/PhotoGallery-OOB, 2026-09-21 currency-crash, 2026-09-30 listings pagination NaN + comparison unvalidated cast) covered the data-ingestion and currency/format classes. This pass widened from the clean churn files to the sibling public pages and surfaces a net-new class NOT previously flagged: shipped public routes backed by ./_mock placeholder data with a silently-discarding contact form. Static-only: findings are backlog signals, cloud-landable (single-package frontend edits under frontend/apps/reality-web/src/, verifiable with pnpm --filter @ppt/reality-web typecheck/test + biome).",
+  "experts_used": ["frontend"],
+  "findings_count": 3,
+  "static_only": true,
+  "cloud_landable": true,
+  "reviewed_clean": [
+    "app/[locale]/sell/page.tsx handlePublish (createListing awaited in try/catch/finally, typed RealtorApiError -> submitError state, saving flag reset in finally; the previous no-persist bug is documented as already fixed at L151-157)",
+    "app/[locale]/report/page.tsx handleSubmit (submitReport.mutateAsync in try/catch, SubmitReportError.status mapped to 429/404/generic copy, listingId resolved + guarded before submit)",
+    "components/home/FeaturedListings.tsx (isLoading skeleton branch L25, error||!data fallback L98, toggleFavorite.isError alert L186 — full TanStack-Query state coverage)",
+    "app/[locale]/listings/[slug]/page.tsx getListing (response.ok null-check + parseListingDetail shape validation + real HTTP 404 via notFound(); resolveApiBase hardens against misconfigured NEXT_PUBLIC_API_URL)",
+    "app/api/layout-revalidate/route.ts POST (HMAC over {timestamp}.{body}, replay window +-300s, 16KiB body cap applied before HMAC work, timingSafeEqual with length guard, '*' tenant sentinel on all pre-auth emit paths — issues #2485/#2532/#2621 all addressed)",
+    "lib/serialize-script.ts serializeForScript (escapes < > & U+2028 U+2029 to \\uXXXX) + its two consumers app/[locale]/layout.tsx (tenantBootstrap + ORGANIZATION_LD both routed through it) and components/listings/ListingDetailContent.tsx JSON-LD — XSS-safe inline <script> injection confirmed",
+    "lib/auth-token.ts getSession (hasStorage SSR guard, finite+non-expired timestamp check wipes corrupted state, try/catch around every localStorage access)"
+  ],
+  "signals": [
+    {
+      "id": "code-review-reality-web-agent-contact-no-persist",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-03 reality-web agent-profile contact-form data-loss)",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:22-28 — handleSendMessage(e) does `e.preventDefault(); if (message.trim()) { setMessageSent(true); setContactOpen(false); }` and NOTHING else. There is NO network call: the file's only imports are `useState` (react), `Footer, Header` (@/components/ui) and the MOCK_* placeholders from ./_mock (L9-11) — no SDK/mutation hook (no useSendMessage / useContactAgent / fetch) is present. The user's contact-the-agent message is silently discarded and the UI shows a success confirmation (messageSent=true) for a message that was never sent.",
+        "This is the same data-loss bug class as the previously-FIXED sell-wizard no-persist defect (#code-review-reality-web-sell-wizard-no-persist, documented at sell/page.tsx:151-157 — a Publish button that flipped `submitted` without any network call). The agent-profile contact form on the PUBLIC, SEO-indexed /[locale]/realtor/[id] route repeats that exact pattern and has not been fixed.",
+        "Impact: a prospective buyer who contacts an agent through this page gets a false 'message sent' confirmation while the lead is dropped on the floor. For a real-estate portal this is a lost sales lead — a user-facing broken path with silent data loss, not merely cosmetic.",
+        "Confidence MEDIUM (static-only): the absence of any mutation call is confirmed by direct read of the whole import list + handler body; MEDIUM rather than HIGH only because confirming the backing reality-server contact endpoint exists (vs. is genuinely not built yet) was not done at runtime. If the endpoint does not yet exist this becomes a completeness gap on the same line; either way the shipped success toast is wrong.",
+        "Fix (cloud-landable, frontend-only once the endpoint exists): wire handleSendMessage to the agent-contact mutation (mutateAsync in try/catch), only set messageSent=true on resolved 2xx, and surface an error state on failure — mirroring the report/page.tsx submit handler. Single-package reality-web edit, verifies with pnpm --filter @ppt/reality-web typecheck/test + biome."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-public-pages-mock-data",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-03 reality-web public routes serving placeholder data)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "completeness",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:16-20 — the agent public-profile page is keyed by the `[id]` dynamic route segment but IGNORES it entirely: `const agent = MOCK_AGENT;` (L20), with MOCK_AGENT / MOCK_AGENT_LISTINGS / MOCK_AGENT_REVIEWS imported from ./_mock (L11). Every /[locale]/realtor/<any-id> URL renders the identical hardcoded agent, listings and reviews. No useParams()/id read, no SDK fetch keyed on the id.",
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx:65,268,346,384 — the user profile page renders `const profile = MOCK_PROFILE;` and maps MOCK_LISTINGS / MOCK_ACTIVITY / MOCK_REVIEWS. The file header comment (L8-11) acknowledges this: 'when real auth/profile lands, replace MOCK_* with live data via the SDK' — so this one is tracked-WIP, but it is shipping placeholder content on a routable public page today.",
+        "These are distinct from the realtor contact-form data-loss finding (same realtor file, different defect): this finding is about the pages serving hardcoded fake data rather than reality-server-backed content. The sell/report/edit _mock files are legitimate static form config (PROPERTY_TYPES, SELL_STEPS, REPORT_PROBLEMS) and are NOT flagged — only the profile/agent MOCK_* entity data is.",
+        "Impact: public, indexable routes (agent profile especially, since it accepts an id and looks dynamic) present fake identities/listings/reviews as if real. SEO and trust risk on a real-estate portal; the agent page additionally 404-less-ly serves the same person for nonexistent ids.",
+        "Confidence MEDIUM (static-only): the unconditional MOCK_* assignment and absence of any id-keyed fetch are confirmed by direct read. LOW severity because at least the profile page is an acknowledged placeholder; the agent page is not annotated as WIP.",
+        "Fix (cloud-landable, frontend-only once the SDK hooks exist): read the id via useParams, fetch the agent via the reality-api-client agent hook keyed on id, render notFound()/empty-state on miss, and replace MOCK_* with the live payload. Single-package reality-web edits, verify with typecheck/test + biome."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-report-page-hardcoded-sk",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-03 reality-web report-page i18n gap)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/report/_mock.ts"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx:24-34 — the submit/status copy is a hardcoded Slovak `MSG` object (submitting 'Odosiela sa…', errorNoListing/errorRateLimit/errorNotFound/errorGeneric all Slovak string literals). The in-file comment (L24-26) admits 'This page ships its user-facing text hardcoded in Slovak (only the title/subtitle go through next-intl today)'. The page is under the /[locale]/ segment and the portal supports sk, cs, de, en (per frontend/apps/reality-web/CLAUDE.md i18n note), so a /de/report or /en/report visitor who hits a rate-limit/404/generic submit error is shown Slovak text.",
+        "frontend/apps/reality-web/src/app/[locale]/report/_mock.ts:13-50 — the REPORT_PROBLEMS radio-card labels and descriptions (Podozrenie z podvodu, Nespravna cena, Duplicitny inzerat, …) are likewise hardcoded Slovak, rendered as the primary form options regardless of active locale.",
+        "This is a specific, previously-unflagged instance of the i18n-gap class (the 2026-09-19 pass covered other localization sinks, not this page). Distinct file + distinct strings, so not a duplicate of any open finding; backlog.json has 0 open code-review-findings for the segment.",
+        "Impact: broken localization on a GDPR/abuse-reporting flow for cs/de/en users — error recovery guidance and the problem taxonomy are unreadable to non-Slovak speakers. LOW severity (no crash), but it is a user-facing correctness gap on a multi-language public portal, not a mere style nit.",
+        "Fix (cloud-landable, frontend-only): move MSG + REPORT_PROBLEMS labels/descriptions into the next-intl message catalogs (messages/{sk,cs,de,en}.json) under pages.report and read them via useTranslations, matching how title/subtitle are already handled. Single-package reality-web edit, verify with typecheck/test + biome."
+      ]
+    }
+  ]
+}

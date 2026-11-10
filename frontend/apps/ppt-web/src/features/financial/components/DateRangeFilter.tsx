@@ -2,6 +2,8 @@
  * DateRangeFilter component for filtering financial data by date range.
  */
 
+import { useTranslation } from 'react-i18next';
+
 interface DateRangeFilterProps {
   startDate?: string;
   endDate?: string;
@@ -12,13 +14,8 @@ interface DateRangeFilterProps {
 
 type PresetKey = 'today' | 'week' | 'month' | 'quarter' | 'year';
 
-const PRESETS: { key: PresetKey; label: string }[] = [
-  { key: 'today', label: 'Today' },
-  { key: 'week', label: 'This Week' },
-  { key: 'month', label: 'This Month' },
-  { key: 'quarter', label: 'This Quarter' },
-  { key: 'year', label: 'This Year' },
-];
+/** Presets in display order (labels: `financial.dateRange.<key>`). */
+const PRESETS: PresetKey[] = ['today', 'week', 'month', 'quarter', 'year'];
 
 function getPresetDates(preset: PresetKey): { start: string; end: string } {
   const today = new Date();
@@ -71,6 +68,7 @@ export function DateRangeFilter({
   onEndDateChange,
   presets = true,
 }: DateRangeFilterProps) {
+  const { t } = useTranslation();
   const handlePresetClick = (preset: PresetKey) => {
     const dates = getPresetDates(preset);
     onStartDateChange(dates.start);
@@ -83,12 +81,12 @@ export function DateRangeFilter({
         <div className="flex gap-2">
           {PRESETS.map((preset) => (
             <button
-              key={preset.key}
+              key={preset}
               type="button"
-              onClick={() => handlePresetClick(preset.key)}
+              onClick={() => handlePresetClick(preset)}
               className="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
             >
-              {preset.label}
+              {t(`financial.dateRange.${preset}`)}
             </button>
           ))}
           <button
@@ -99,14 +97,14 @@ export function DateRangeFilter({
             }}
             className="px-3 py-1 text-xs font-medium text-gray-500 hover:text-gray-700"
           >
-            Clear
+            {t('financial.dateRange.clear')}
           </button>
         </div>
       )}
 
       <div className="flex items-center gap-2">
         <label htmlFor="start-date" className="text-sm text-gray-600">
-          From:
+          {t('financial.dateRange.from')}
         </label>
         <input
           id="start-date"
@@ -116,7 +114,7 @@ export function DateRangeFilter({
           className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
         />
         <label htmlFor="end-date" className="text-sm text-gray-600 ml-2">
-          To:
+          {t('financial.dateRange.to')}
         </label>
         <input
           id="end-date"

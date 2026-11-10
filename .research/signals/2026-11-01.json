@@ -1,0 +1,187 @@
+{
+  "run": "2026-11-01",
+  "last_run_iso_prev": "2026-10-28T10:54:38Z",
+  "lag_hours": 91,
+  "trigger_payload": "buffer-low: claimable=6/72 (floor=36) — pipeline WIP-jammed on human-gated merges; refill planner",
+  "signals": [
+    {
+      "id": "lag-warning-2026-11-01",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-10-28T10:54:38Z",
+      "score_delta": 0,
+      "evidence": "routine has not run in 91h (~3d 19h). Previous brief was 2026-10-28; no briefs for 2026-10-29 / 10-30 / 10-31. Dispatcher kept ticking (26 dispatcher commits in the gap) so backlog/management artifacts are not stale.",
+      "confidence": "high",
+      "candidate_vector": "process"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+      "type": "churn-hotspot",
+      "source": "churn 2026-11-01 (14d window since 2026-10-28T10:54:38Z)",
+      "score_delta": 1,
+      "evidence": "216 lines churn (top-1 raw this run) from PR #3197 (reject empty/invalid listing price) and PR #3203 (localize listing-edit wizard across all locales). runs_seen=1.",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs",
+      "type": "churn-hotspot",
+      "source": "churn 2026-11-01 (14d window)",
+      "score_delta": 0,
+      "evidence": "171 lines churn this run (PR #3204 strengthen compliance wave-1b regression coverage). Re-emit — id already in seen_signals; cumulative-type, score not re-applied. Backlog item is terminal (done, reconciled with PR #3204 2026-10-31); no reopen.",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
+      "type": "churn-hotspot",
+      "source": "churn 2026-11-01 (14d window)",
+      "score_delta": 1,
+      "evidence": "162 lines churn (top-3 raw) from PR #3189 (ranked-ballot ordering fix) plus adjacent VoteDetailScreen.tsx 158-line edit. runs_seen=1.",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history runs_seen 1 -> 2",
+      "score_delta": 1,
+      "evidence": "runs_seen advances to 2 (2026-10-28 top-3 + 2026-11-01 top-3). Instability proxy: compliance Wave-1b test suite still being expanded iteratively 2 routine windows in a row.",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "dep-update-noise-2026-11-01-grouped",
+      "type": "dep-update-noise",
+      "source": "closed-unmerged dependabot PRs #3137 (npm-minor-patch 29 updates), #3007 (gradle-minor-patch 6 updates), #2961 (kotlin group 4 updates)",
+      "score_delta": 0,
+      "evidence": "3 dependabot grouped-bump PRs closed-unmerged on 2026-10-29 10:14-10:21 UTC — superseded by newer bump cycles. No score, log in brief.",
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — all open items have score < 3 and no signal of eligible allowlist type (screen-map-drift / orphan / fixme-in-merged-code / lockfile-drift / stalled-review) fired this run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-11-01.md && head -1 | grep ^# 2026-11-01$",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev state advancement",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] | (length == (unique | length))",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative dup score check",
+      "observed": "true",
+      "expected": "true",
+      "note": "churn-hotspot-compliance_wave1b_tests.rs re-emits with score_delta=0 (cumulative type)"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap 8 + decay sweep",
+      "observed": "true",
+      "expected": "true",
+      "note": "no open items older than 14d; decay vacuous this run"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans",
+      "observed": "vacuous",
+      "expected": "vacuous"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets scan",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity regen diff",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases",
+      "observed": "vacuous",
+      "expected": "vacuous"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plans convergence",
+      "observed": "no changes",
+      "expected": "vacuous"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count 22 >= HEAD 22",
+      "observed": "22>=22",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity regen diff",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length <=3 + idempotency",
+      "observed": "0 actions",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped -> no-op",
+      "observed": "skipped",
+      "expected": "vacuous"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram token scan",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

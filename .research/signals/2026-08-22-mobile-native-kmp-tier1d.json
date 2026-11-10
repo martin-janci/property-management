@@ -1,0 +1,40 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-22T13:00:00Z",
+  "segment_reviewed": "mobile-native-kmp",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["kotlin"],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-not-wired",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "kotlin",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — the CreateListing composable route wires onSubmit to `Result.failure(NotImplementedError(\"Wire to listing API\"))`, so the realtor 'Create Listing' feature ALWAYS fails in production. Reachable from the MyListings screen's onCreateClick FAB (Navigation.kt:483) → Screen.CreateListing.route.",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt:39-135 — a full 399-line form (title/description/city/price/currency/transactionType OutlinedTextFields + validation + submit button) collects CreateListingInput and calls `onSubmit(...)`; on the hardwired failure it shows R.string.realtor_create_validation_publish_failed. A user fills the entire form, taps Publish, and is told publishing failed every time.",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:40-145 — the repository exposes only listMyListings / getListingAnalytics / getPortfolioAnalytics; there is NO create method at all. The submit callback has nothing to call. Landable fix: add `suspend fun createListing(input): Result<Unit>` (POST /api/v1/my/listings) and wire it into the Navigation.kt route in place of the NotImplementedError."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-analytics-unbounded-fanout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "kotlin",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-124 — getPortfolioAnalytics() fans out one getListingAnalytics HTTP call per listing via `listings.map { async { ... } }.awaitAll()` with NO concurrency cap. listMyListings(limit = 100) means up to 100 simultaneous GET /api/v1/my/listings/{id}/analytics requests fired at once from a mobile Ktor client.",
+        "On mobile this can exhaust the Ktor HttpClient connection pool, trigger server-side rate limiting (all 100 hit the same host in one burst), and spike radio/battery for a realtor with a large portfolio. The comment acknowledges the fan-out is intentional but sets no bound.",
+        "Landable fix: bound concurrency (e.g. `listings.chunked(8)` sequential batches, or a `Semaphore(8)` around each async) so the dashboard load degrades gracefully instead of issuing an unbounded request burst. Covered by the existing PortalListingsRepositoryTest.kt harness."
+      ]
+    }
+  ]
+}

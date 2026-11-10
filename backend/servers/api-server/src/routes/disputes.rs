@@ -3,29 +3,30 @@
 //! Provides API endpoints for filing, mediating, tracking, and enforcing
 //! dispute resolutions between parties.
 
-use api_core::extractors::AuthUser;
+use api_core::extractors::{AuthUser, TenantAuthUser};
 use axum::{
     extract::{Path, Query, State},
-    http::StatusCode,
+    http::{request::Parts, StatusCode},
     routing::{delete, get, patch, post},
     Json, Router,
 };
 use chrono::{DateTime, Utc};
 use common::errors::ErrorResponse;
 use db::models::{
-    ActionItem, AddEvidence, CompleteActionItem, CreateActionItem, CreateEscalation, Dispute,
-    DisputeActivity, DisputeEvidence, DisputeKpis, DisputeParty, DisputeQuery, DisputeResolution,
-    DisputeStatistics, DisputeSummary, DisputeWithDetails, Escalation, FileDispute, MediationCase,
-    MediationSession, PartyActionsDashboard, PartySubmission, ProposeResolution,
-    RecordSessionNotes, ResolutionVote, ResolutionWithVotes, ResolveDispute, ResolveEscalation,
-    ScheduleSession, SessionAttendance, SubmitResponse, UpdateDisputeStatus, UpdateMediationNotes,
-    VoteOnResolution,
+    party_role, ActionItem, AddEvidence, CompleteActionItem, CreateActionItem, CreateEscalation,
+    Dispute, DisputeActivity, DisputeEvidence, DisputeKpis, DisputeParty, DisputeQuery,
+    DisputeResolution, DisputeStatistics, DisputeSummary, DisputeWithDetails, Escalation,
+    FileDispute, MediationCase, MediationSession, PartyActionsDashboard, PartySubmission,
+    ProposeResolution, RecordSessionNotes, ResolutionTerm, ResolutionVote, ResolutionWithVotes,
+    ResolveDispute, ResolveEscalation, ScheduleSession, SessionAttendance, SubmitResponse,
+    UpdateDisputeStatus, UpdateMediationNotes, VoteOnResolution,
 };
-use db::repositories::{UpdateAttendanceData, UpdateSessionData};
+use db::repositories::{DisputeChild, UpdateAttendanceData, UpdateSessionData};
 use serde::Deserialize;
 use utoipa::IntoParams;
 use uuid::Uuid;
 
+use crate::routes::pagination::clamp_limit;
 use crate::state::AppState;
 
 /// Create disputes router.
@@ -108,10 +109,13 @@ pub fn router() -> Router<AppState> {
 // Shared helpers
 // =============================================================================
 
-/// Derive the caller's organization from the verified JWT, or 403 if absent.
+/// The caller's organization, or 403 if absent.
 ///
-/// Issue #2441: dispute sub-resource handlers must scope by the JWT tenant
-/// (never a path- or body-supplied org) so they cannot cross tenants.
+/// Issue #2441: dispute sub-resource handlers must scope by the caller's
+/// tenant (never a path- or body-supplied org) so they cannot cross tenants.
+/// Handlers take `TenantAuthUser`, so `tenant_id` is the org from Host /
+/// `X-Tenant-ID` validated against an active membership, and `role` is that
+/// membership's role (login JWTs carry neither claim).
 fn require_org(user: &AuthUser) -> Result<Uuid, (StatusCode, Json<ErrorResponse>)> {
     user.tenant_id.ok_or_else(|| {
         (
@@ -119,6 +123,58 @@ fn require_org(user: &AuthUser) -> Result<Uuid, (StatusCode, Json<ErrorResponse>
             Json(ErrorResponse::new("FORBIDDEN", "No organization context")),
         )
     })
+}
+
+/// Resolve the organization for an org-scoped collection call.
+///
+/// The organization always comes from the caller's validated tenant
+/// (`TenantAuthUser`: Host / `X-Tenant-ID`, else the JWT claim, with an active
+/// membership). A client-supplied `organization_id` (query or body) is accepted only for
+/// backwards compatibility and must match that tenant; a mismatch is rejected
+/// with 403 so one org's members can never list, count or file disputes in
+/// another org by swapping the id.
+fn scoped_org(
+    user: &AuthUser,
+    requested: Option<Uuid>,
+) -> Result<Uuid, (StatusCode, Json<ErrorResponse>)> {
+    let org = require_org(user)?;
+    match requested {
+        Some(id) if id != org => Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "organization_id does not match the caller's organization",
+            )),
+        )),
+        _ => Ok(org),
+    }
+}
+
+/// [`TenantAuthUser`] for a collection handler that still accepts a legacy
+/// client-supplied `organization_id`.
+///
+/// A `requested` org that differs from the org the request targets is
+/// rejected with 403 before the membership lookup (see
+/// [`TenantAuthUser::for_org`]), so a cross-org probe is refused cleanly and
+/// never turns into a DB round trip or a 500. `scoped_org` still re-checks the
+/// validated tenant afterwards.
+async fn tenant_user_for_org(
+    parts: &mut Parts,
+    state: &AppState,
+    requested: Option<Uuid>,
+) -> Result<AuthUser, (StatusCode, Json<ErrorResponse>)> {
+    TenantAuthUser::for_org(parts, state, requested)
+        .await
+        .map(|TenantAuthUser(user)| user)
+        .map_err(|(status, msg)| {
+            let code = match status {
+                StatusCode::UNAUTHORIZED => "UNAUTHORIZED",
+                StatusCode::FORBIDDEN => "FORBIDDEN",
+                StatusCode::BAD_REQUEST => "BAD_REQUEST",
+                _ => "INTERNAL_ERROR",
+            };
+            (status, Json(ErrorResponse::new(code, msg)))
+        })
 }
 
 /// Map a repository error from an org-scoped sub-resource call to an HTTP
@@ -143,14 +199,191 @@ fn map_dispute_err(
     }
 }
 
+/// Whether the caller holds a manager or admin role.
+fn is_manager(user: &AuthUser) -> bool {
+    user.role
+        .as_ref()
+        .is_some_and(|r| r.is_manager() || r.is_admin())
+}
+
+fn forbidden(msg: &str) -> (StatusCode, Json<ErrorResponse>) {
+    (
+        StatusCode::FORBIDDEN,
+        Json(ErrorResponse::new("FORBIDDEN", msg)),
+    )
+}
+
+/// Require a manager or admin role (same policy as `resolve_dispute`).
+fn require_manager(user: &AuthUser) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    if is_manager(user) {
+        Ok(())
+    } else {
+        Err(forbidden("Insufficient role"))
+    }
+}
+
+/// Party roles the caller holds on the dispute (empty if not a party).
+/// The dispute must already be verified to belong to `organization_id`.
+async fn caller_party_roles(
+    state: &AppState,
+    user: &AuthUser,
+    dispute_id: Uuid,
+    organization_id: Uuid,
+) -> Result<Vec<String>, (StatusCode, Json<ErrorResponse>)> {
+    let parties = state
+        .dispute_repo
+        .list_parties(dispute_id, organization_id)
+        .await
+        .map_err(|e| map_dispute_err(e, "Failed to load dispute parties"))?;
+    Ok(parties
+        .into_iter()
+        .filter(|p| p.user_id == user.user_id)
+        .map(|p| p.role)
+        .collect())
+}
+
+/// Whether the caller is a party (any role) to the dispute.
+async fn is_dispute_party(
+    state: &AppState,
+    user: &AuthUser,
+    dispute_id: Uuid,
+    organization_id: Uuid,
+) -> Result<bool, (StatusCode, Json<ErrorResponse>)> {
+    Ok(
+        !caller_party_roles(state, user, dispute_id, organization_id)
+            .await?
+            .is_empty(),
+    )
+}
+
+/// Whether the caller is the dispute's mediator (a party with role `mediator`).
+async fn is_dispute_mediator(
+    state: &AppState,
+    user: &AuthUser,
+    dispute_id: Uuid,
+    organization_id: Uuid,
+) -> Result<bool, (StatusCode, Json<ErrorResponse>)> {
+    Ok(caller_party_roles(state, user, dispute_id, organization_id)
+        .await?
+        .iter()
+        .any(|r| r == party_role::MEDIATOR))
+}
+
+/// Org managers/admins or the dispute's mediator; everyone else 403.
+async fn require_manager_or_mediator(
+    state: &AppState,
+    user: &AuthUser,
+    dispute_id: Uuid,
+    organization_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    if is_manager(user) || is_dispute_mediator(state, user, dispute_id, organization_id).await? {
+        Ok(())
+    } else {
+        Err(forbidden(
+            "Only a manager or the dispute mediator may do this",
+        ))
+    }
+}
+
+/// Org managers/admins or any party to the dispute; everyone else 403.
+async fn require_manager_or_party(
+    state: &AppState,
+    user: &AuthUser,
+    dispute_id: Uuid,
+    organization_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    if is_manager(user) || is_dispute_party(state, user, dispute_id, organization_id).await? {
+        Ok(())
+    } else {
+        Err(forbidden("User is not a party to this dispute"))
+    }
+}
+
+/// A body-supplied user id (assignee, escalation target) must be an active
+/// member of the caller's organization; otherwise 400 with `code`.
+async fn require_active_member(
+    state: &AppState,
+    organization_id: Uuid,
+    user_id: Uuid,
+    code: &str,
+    msg: &str,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let is_member = state
+        .org_member_repo
+        .is_member(organization_id, user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = ?e, "Failed to check org membership");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to check membership")),
+            )
+        })?;
+    if is_member {
+        Ok(())
+    } else {
+        Err((StatusCode::BAD_REQUEST, Json(ErrorResponse::new(code, msg))))
+    }
+}
+
+/// Verify the dispute in the path belongs to the caller's JWT tenant and
+/// return that organization. A dispute owned by another org is 404.
+async fn guard_dispute(
+    state: &AppState,
+    user: &AuthUser,
+    dispute_id: Uuid,
+) -> Result<Uuid, (StatusCode, Json<ErrorResponse>)> {
+    let organization_id = require_org(user)?;
+    state
+        .dispute_repo
+        .ensure_dispute_in_org(dispute_id, organization_id)
+        .await
+        .map_err(|e| map_dispute_err(e, "Failed to verify dispute"))?;
+    Ok(organization_id)
+}
+
+/// Verify a dispute sub-resource (resolution, action item, escalation,
+/// session) belongs to the dispute in the path, and that dispute to the
+/// caller's JWT tenant. Any mismatch is 404 so foreign ids are not an oracle.
+async fn guard_child(
+    state: &AppState,
+    user: &AuthUser,
+    kind: DisputeChild,
+    child_id: Uuid,
+    dispute_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let organization_id = require_org(user)?;
+    state
+        .dispute_repo
+        .ensure_child_in_dispute_in_org(kind, child_id, dispute_id, organization_id)
+        .await
+        .map_err(|e| match e {
+            common::errors::AppError::NotFound(msg) => (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", msg)),
+            ),
+            e => {
+                tracing::error!("Failed to verify dispute sub-resource: {:?}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "DB_ERROR",
+                        "Failed to verify dispute sub-resource",
+                    )),
+                )
+            }
+        })
+}
+
 // =============================================================================
 // Request/Response Types
 // =============================================================================
 
-/// Organization query parameter.
+/// Organization query parameter. Optional: the organization is taken from the
+/// JWT tenant; when supplied it must match it (see [`scoped_org`]).
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct OrgQuery {
-    pub organization_id: Uuid,
+    pub organization_id: Option<Uuid>,
 }
 
 /// Dispute KPI reporting window (`[window_start, window_end)`), keyed on filing
@@ -162,17 +395,30 @@ pub struct KpisQuery {
 }
 
 /// File dispute request.
+///
+/// `organization_id` is optional (the JWT tenant is authoritative and a
+/// mismatching id is rejected) and `filed_by` is always the caller, so neither
+/// is required in the body. This previously flattened `FileDispute`, whose own
+/// required `organization_id` / `filed_by` fields made every request fail
+/// deserialization with 422.
 #[derive(Debug, Deserialize)]
 pub struct FileDisputeRequest {
-    pub organization_id: Uuid,
-    #[serde(flatten)]
-    pub data: FileDispute,
+    pub organization_id: Option<Uuid>,
+    pub building_id: Option<Uuid>,
+    pub unit_id: Option<Uuid>,
+    pub category: String,
+    pub title: String,
+    pub description: String,
+    pub desired_resolution: Option<String>,
+    #[serde(default)]
+    pub respondent_ids: Vec<Uuid>,
 }
 
 /// List disputes query.
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct ListDisputesQuery {
-    pub organization_id: Uuid,
+    /// Optional; must match the JWT tenant when supplied (see [`scoped_org`]).
+    pub organization_id: Option<Uuid>,
     pub building_id: Option<Uuid>,
     pub category: Option<String>,
     pub status: Option<String>,
@@ -226,10 +472,18 @@ pub struct UpdateStatusRequest {
 }
 
 /// Schedule session request.
+///
+/// `dispute_id` comes from the path and `mediator_id` from the JWT; any such
+/// fields in the body are ignored (unknown fields are not rejected).
 #[derive(Debug, Deserialize)]
 pub struct ScheduleSessionRequest {
-    #[serde(flatten)]
-    pub data: ScheduleSession,
+    pub session_type: String,
+    pub scheduled_at: DateTime<Utc>,
+    pub duration_minutes: Option<i32>,
+    pub location: Option<String>,
+    pub meeting_url: Option<String>,
+    #[serde(default)]
+    pub attendee_party_ids: Vec<Uuid>,
 }
 
 /// Update session request.
@@ -266,10 +520,14 @@ pub struct SubmitResponseRequest {
 }
 
 /// Propose resolution request.
+///
+/// `dispute_id` comes from the path and `proposed_by` from the JWT; any such
+/// fields in the body are ignored (unknown fields are not rejected).
 #[derive(Debug, Deserialize)]
 pub struct ProposeResolutionRequest {
-    #[serde(flatten)]
-    pub data: ProposeResolution,
+    pub resolution_text: String,
+    #[serde(default)]
+    pub terms: Vec<ResolutionTerm>,
 }
 
 /// Vote on resolution request.
@@ -280,10 +538,17 @@ pub struct VoteRequest {
 }
 
 /// Create action item request.
+///
+/// `dispute_id` comes from the path; a `dispute_id` in the body is ignored
+/// (unknown fields are not rejected).
 #[derive(Debug, Deserialize)]
 pub struct CreateActionRequest {
-    #[serde(flatten)]
-    pub data: CreateActionItem,
+    pub resolution_id: Option<Uuid>,
+    pub resolution_term_id: Option<String>,
+    pub assigned_to: Uuid,
+    pub title: String,
+    pub description: String,
+    pub due_date: DateTime<Utc>,
 }
 
 /// Update action item request.
@@ -342,15 +607,26 @@ pub struct PaginationQuery {
 /// File a new dispute.
 async fn file_dispute(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut parts: Parts,
     Json(payload): Json<FileDisputeRequest>,
 ) -> Result<(StatusCode, Json<Dispute>), (StatusCode, Json<ErrorResponse>)> {
-    let mut data = payload.data;
-    data.filed_by = user.user_id;
+    let user = tenant_user_for_org(&mut parts, &state, payload.organization_id).await?;
+    let organization_id = scoped_org(&user, payload.organization_id)?;
+    let data = FileDispute {
+        organization_id,
+        building_id: payload.building_id,
+        unit_id: payload.unit_id,
+        category: payload.category,
+        title: payload.title,
+        description: payload.description,
+        desired_resolution: payload.desired_resolution,
+        respondent_ids: payload.respondent_ids,
+        filed_by: user.user_id,
+    };
 
     state
         .dispute_repo
-        .file_dispute(payload.organization_id, data)
+        .file_dispute(organization_id, data)
         .await
         .map(|d| (StatusCode::CREATED, Json(d)))
         .map_err(|e| {
@@ -365,12 +641,14 @@ async fn file_dispute(
 /// List disputes for an organization.
 async fn list_disputes(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut parts: Parts,
     Query(query): Query<ListDisputesQuery>,
 ) -> Result<Json<Vec<DisputeSummary>>, (StatusCode, Json<ErrorResponse>)> {
+    let user = tenant_user_for_org(&mut parts, &state, query.organization_id).await?;
+    let organization_id = scoped_org(&user, query.organization_id)?;
     state
         .dispute_repo
-        .list(query.organization_id, (&query).into())
+        .list(organization_id, (&query).into())
         .await
         .map(Json)
         .map_err(|e| {
@@ -385,12 +663,14 @@ async fn list_disputes(
 /// Get dispute statistics.
 async fn get_statistics(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut parts: Parts,
     Query(query): Query<OrgQuery>,
 ) -> Result<Json<DisputeStatistics>, (StatusCode, Json<ErrorResponse>)> {
+    let user = tenant_user_for_org(&mut parts, &state, query.organization_id).await?;
+    let organization_id = scoped_org(&user, query.organization_id)?;
     state
         .dispute_repo
-        .get_statistics(query.organization_id)
+        .get_statistics(organization_id)
         .await
         .map(Json)
         .map_err(|e| {
@@ -413,10 +693,29 @@ async fn get_statistics(
 /// cache/schedule it.
 async fn get_kpis(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(query): Query<KpisQuery>,
 ) -> Result<Json<DisputeKpis>, (StatusCode, Json<ErrorResponse>)> {
     let organization_id = require_org(&user)?;
+
+    // Issue #2575: validate the reporting window before touching the repo.
+    // `get_dispute_kpis` filters the cohort on `window_start <= filed_at <
+    // window_end`, so an inverted or empty window (`window_start >=
+    // window_end`) silently yields a degenerate zero-count `DisputeKpis` with
+    // a 200 — a caller cannot distinguish "no disputes in window" from
+    // "I inverted my bounds". Reject it up front, mirroring how the sibling
+    // mutating handlers surface `VALIDATION_ERROR` (see `resolve_dispute` /
+    // `update_mediation_notes`). Cheap guard, clearer contract.
+    if query.window_start >= query.window_end {
+        return Err((
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Json(ErrorResponse::new(
+                "VALIDATION_ERROR",
+                "window_start must be strictly before window_end",
+            )),
+        ));
+    }
+
     state
         .dispute_repo
         .get_dispute_kpis(organization_id, query.window_start, query.window_end)
@@ -441,7 +740,7 @@ async fn get_kpis(
 ///     redacted to `None`, even though they may read the rest of the dispute.
 async fn get_dispute(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<DisputeWithDetails>, (StatusCode, Json<ErrorResponse>)> {
     // Derive the org from the verified JWT so the read cannot cross tenants.
@@ -507,7 +806,7 @@ async fn get_dispute(
 /// permitted from the current status (`filed` → `under_review` → `resolved`).
 async fn update_dispute_status(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateStatusRequest>,
 ) -> Result<Json<Dispute>, (StatusCode, Json<ErrorResponse>)> {
@@ -576,7 +875,7 @@ async fn update_dispute_status(
 /// to `resolved` (e.g. `filed`, already `resolved`, `withdrawn`, or `closed`).
 async fn resolve_dispute(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<ResolveDisputeRequest>,
 ) -> Result<Json<Dispute>, (StatusCode, Json<ErrorResponse>)> {
@@ -656,7 +955,7 @@ async fn resolve_dispute(
 /// Does not change the dispute status.
 async fn update_mediation_notes(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateMediationNotesRequest>,
 ) -> Result<Json<Dispute>, (StatusCode, Json<ErrorResponse>)> {
@@ -752,7 +1051,7 @@ async fn update_mediation_notes(
 /// dispute owned by another org returns 404 and is never mutated.
 async fn withdraw_dispute(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
     let organization_id = user.tenant_id.ok_or_else(|| {
@@ -789,7 +1088,7 @@ async fn withdraw_dispute(
 /// caller cannot enumerate a foreign dispute's parties.
 async fn list_parties(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<DisputeParty>>, (StatusCode, Json<ErrorResponse>)> {
     let organization_id = require_org(&user)?;
@@ -806,7 +1105,7 @@ async fn list_parties(
 /// inject or overwrite a party (e.g. a MEDIATOR role) on a foreign dispute.
 async fn add_party(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<AddPartyRequest>,
 ) -> Result<(StatusCode, Json<DisputeParty>), (StatusCode, Json<ErrorResponse>)> {
@@ -827,7 +1126,7 @@ async fn add_party(
 /// the caller's JWT tenant. A `dispute_id` owned by another org returns 404.
 async fn list_evidence(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<DisputeEvidence>>, (StatusCode, Json<ErrorResponse>)> {
     let organization_id = require_org(&user)?;
@@ -846,7 +1145,7 @@ async fn list_evidence(
 /// guessing the `dispute_id`.
 async fn add_evidence(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<AddEvidenceRequest>,
 ) -> Result<(StatusCode, Json<DisputeEvidence>), (StatusCode, Json<ErrorResponse>)> {
@@ -870,7 +1169,7 @@ async fn add_evidence(
 /// and returns 404, so a caller cannot destroy a foreign org's evidence.
 async fn delete_evidence(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path((id, evidence_id)): Path<(Uuid, Uuid)>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
     let organization_id = require_org(&user)?;
@@ -896,7 +1195,7 @@ async fn delete_evidence(
 /// `dispute_id` owned by another org returns 404.
 async fn list_activities(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<Vec<DisputeActivity>>, (StatusCode, Json<ErrorResponse>)> {
@@ -906,7 +1205,7 @@ async fn list_activities(
         .list_activities(
             id,
             organization_id,
-            query.limit.unwrap_or(50),
+            clamp_limit(query.limit.map(i64::from), 50) as i32,
             query.offset.unwrap_or(0),
         )
         .await
@@ -923,9 +1222,11 @@ async fn list_activities(
 /// List mediation sessions for a dispute.
 async fn list_sessions(
     State(state): State<AppState>,
-    _user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<MediationSession>>, (StatusCode, Json<ErrorResponse>)> {
+    let org = guard_dispute(&state, &user, id).await?;
+    require_manager_or_party(&state, &user, id, org).await?;
     state
         .dispute_repo
         .list_sessions(id)
@@ -940,16 +1241,25 @@ async fn list_sessions(
         })
 }
 
-/// Schedule a new mediation session.
+/// Schedule a new mediation session. Managers or the dispute mediator only.
 async fn schedule_session(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<ScheduleSessionRequest>,
 ) -> Result<(StatusCode, Json<MediationSession>), (StatusCode, Json<ErrorResponse>)> {
-    let mut session_data = data.data;
-    session_data.dispute_id = id;
-    session_data.mediator_id = user.user_id;
+    let org = guard_dispute(&state, &user, id).await?;
+    require_manager_or_mediator(&state, &user, id, org).await?;
+    let session_data = ScheduleSession {
+        dispute_id: id,
+        mediator_id: user.user_id,
+        session_type: data.session_type,
+        scheduled_at: data.scheduled_at,
+        duration_minutes: data.duration_minutes,
+        location: data.location,
+        meeting_url: data.meeting_url,
+        attendee_party_ids: data.attendee_party_ids,
+    };
 
     state
         .dispute_repo
@@ -968,9 +1278,12 @@ async fn schedule_session(
 /// Get a specific mediation session.
 async fn get_session(
     State(state): State<AppState>,
-    _user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path((id, session_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<MediationSession>, (StatusCode, Json<ErrorResponse>)> {
+    guard_child(&state, &user, DisputeChild::Session, session_id, id).await?;
+    let org = require_org(&user)?;
+    require_manager_or_party(&state, &user, id, org).await?;
     state
         .dispute_repo
         .find_session_by_id(id, session_id)
@@ -994,10 +1307,13 @@ async fn get_session(
 /// Update a mediation session.
 async fn update_session(
     State(state): State<AppState>,
-    _user: AuthUser,
-    Path((_id, session_id)): Path<(Uuid, Uuid)>,
+    TenantAuthUser(user): TenantAuthUser,
+    Path((id, session_id)): Path<(Uuid, Uuid)>,
     Json(data): Json<UpdateSessionRequest>,
 ) -> Result<Json<MediationSession>, (StatusCode, Json<ErrorResponse>)> {
+    guard_child(&state, &user, DisputeChild::Session, session_id, id).await?;
+    let org = require_org(&user)?;
+    require_manager_or_mediator(&state, &user, id, org).await?;
     let update_data = UpdateSessionData {
         scheduled_at: data.scheduled_at,
         duration_minutes: data.duration_minutes,
@@ -1022,9 +1338,12 @@ async fn update_session(
 /// Cancel a mediation session.
 async fn cancel_session(
     State(state): State<AppState>,
-    _user: AuthUser,
-    Path((_id, session_id)): Path<(Uuid, Uuid)>,
+    TenantAuthUser(user): TenantAuthUser,
+    Path((id, session_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<MediationSession>, (StatusCode, Json<ErrorResponse>)> {
+    guard_child(&state, &user, DisputeChild::Session, session_id, id).await?;
+    let org = require_org(&user)?;
+    require_manager_or_mediator(&state, &user, id, org).await?;
     state
         .dispute_repo
         .cancel_session(session_id)
@@ -1042,9 +1361,12 @@ async fn cancel_session(
 /// Get attendance for a session.
 async fn get_attendance(
     State(state): State<AppState>,
-    _user: AuthUser,
-    Path((_id, session_id)): Path<(Uuid, Uuid)>,
+    TenantAuthUser(user): TenantAuthUser,
+    Path((id, session_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<Vec<SessionAttendance>>, (StatusCode, Json<ErrorResponse>)> {
+    guard_child(&state, &user, DisputeChild::Session, session_id, id).await?;
+    let org = require_org(&user)?;
+    require_manager_or_party(&state, &user, id, org).await?;
     state
         .dispute_repo
         .list_attendance(session_id)
@@ -1062,10 +1384,13 @@ async fn get_attendance(
 /// Update attendance for a party.
 async fn update_attendance(
     State(state): State<AppState>,
-    _user: AuthUser,
-    Path((_id, session_id, party_id)): Path<(Uuid, Uuid, Uuid)>,
+    TenantAuthUser(user): TenantAuthUser,
+    Path((id, session_id, party_id)): Path<(Uuid, Uuid, Uuid)>,
     Json(data): Json<UpdateAttendanceRequest>,
 ) -> Result<Json<SessionAttendance>, (StatusCode, Json<ErrorResponse>)> {
+    guard_child(&state, &user, DisputeChild::Session, session_id, id).await?;
+    let org = require_org(&user)?;
+    require_manager_or_mediator(&state, &user, id, org).await?;
     let update_data = UpdateAttendanceData {
         confirmed: data.confirmed,
         attended: data.attended,
@@ -1091,10 +1416,13 @@ async fn update_attendance(
 /// Record notes for a session.
 async fn record_notes(
     State(state): State<AppState>,
-    _user: AuthUser,
-    Path((_id, session_id)): Path<(Uuid, Uuid)>,
+    TenantAuthUser(user): TenantAuthUser,
+    Path((id, session_id)): Path<(Uuid, Uuid)>,
     Json(data): Json<RecordNotesRequest>,
 ) -> Result<Json<MediationSession>, (StatusCode, Json<ErrorResponse>)> {
+    guard_child(&state, &user, DisputeChild::Session, session_id, id).await?;
+    let org = require_org(&user)?;
+    require_manager_or_mediator(&state, &user, id, org).await?;
     state
         .dispute_repo
         .record_session_notes(RecordSessionNotes {
@@ -1116,9 +1444,10 @@ async fn record_notes(
 /// List submissions for a dispute.
 async fn list_submissions(
     State(state): State<AppState>,
-    _user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<PartySubmission>>, (StatusCode, Json<ErrorResponse>)> {
+    guard_dispute(&state, &user, id).await?;
     state
         .dispute_repo
         .list_submissions(id)
@@ -1136,10 +1465,11 @@ async fn list_submissions(
 /// Submit a response.
 async fn submit_response(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<SubmitResponseRequest>,
 ) -> Result<(StatusCode, Json<PartySubmission>), (StatusCode, Json<ErrorResponse>)> {
+    guard_dispute(&state, &user, id).await?;
     // Get user's party ID for this dispute
     let party = state
         .dispute_repo
@@ -1185,9 +1515,11 @@ async fn submit_response(
 /// Get mediation case with all sessions and submissions.
 async fn get_mediation_case(
     State(state): State<AppState>,
-    _user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<MediationCase>, (StatusCode, Json<ErrorResponse>)> {
+    let org = guard_dispute(&state, &user, id).await?;
+    require_manager_or_party(&state, &user, id, org).await?;
     match state.dispute_repo.get_mediation_case(id).await {
         Ok(Some(case)) => Ok(Json(case)),
         Ok(None) => Err((
@@ -1214,9 +1546,10 @@ async fn get_mediation_case(
 /// List resolutions for a dispute.
 async fn list_resolutions(
     State(state): State<AppState>,
-    _user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<DisputeResolution>>, (StatusCode, Json<ErrorResponse>)> {
+    guard_dispute(&state, &user, id).await?;
     state
         .dispute_repo
         .list_resolutions(id)
@@ -1234,13 +1567,17 @@ async fn list_resolutions(
 /// Propose a resolution.
 async fn propose_resolution(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<ProposeResolutionRequest>,
 ) -> Result<(StatusCode, Json<DisputeResolution>), (StatusCode, Json<ErrorResponse>)> {
-    let mut proposal = data.data;
-    proposal.dispute_id = id;
-    proposal.proposed_by = user.user_id;
+    guard_dispute(&state, &user, id).await?;
+    let proposal = ProposeResolution {
+        dispute_id: id,
+        proposed_by: user.user_id,
+        resolution_text: data.resolution_text,
+        terms: data.terms,
+    };
 
     state
         .dispute_repo
@@ -1262,9 +1599,10 @@ async fn propose_resolution(
 /// Get a resolution with votes.
 async fn get_resolution(
     State(state): State<AppState>,
-    _user: AuthUser,
-    Path((_id, resolution_id)): Path<(Uuid, Uuid)>,
+    TenantAuthUser(user): TenantAuthUser,
+    Path((id, resolution_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<ResolutionWithVotes>, (StatusCode, Json<ErrorResponse>)> {
+    guard_child(&state, &user, DisputeChild::Resolution, resolution_id, id).await?;
     match state
         .dispute_repo
         .get_resolution_with_votes(resolution_id)
@@ -1288,10 +1626,11 @@ async fn get_resolution(
 /// Vote on a resolution.
 async fn vote_on_resolution(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path((id, resolution_id)): Path<(Uuid, Uuid)>,
     Json(data): Json<VoteRequest>,
 ) -> Result<Json<ResolutionVote>, (StatusCode, Json<ErrorResponse>)> {
+    guard_child(&state, &user, DisputeChild::Resolution, resolution_id, id).await?;
     // Get user's party ID for this dispute
     let party = state
         .dispute_repo
@@ -1336,12 +1675,14 @@ async fn vote_on_resolution(
         })
 }
 
-/// Accept a resolution (all parties agreed).
+/// Accept a resolution (all parties agreed). Manager/admin only.
 async fn accept_resolution(
     State(state): State<AppState>,
-    user: AuthUser,
-    Path((_id, resolution_id)): Path<(Uuid, Uuid)>,
+    TenantAuthUser(user): TenantAuthUser,
+    Path((id, resolution_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<DisputeResolution>, (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&user)?;
+    guard_child(&state, &user, DisputeChild::Resolution, resolution_id, id).await?;
     state
         .dispute_repo
         .accept_resolution(resolution_id, user.user_id)
@@ -1359,12 +1700,14 @@ async fn accept_resolution(
         })
 }
 
-/// Mark a resolution as implemented.
+/// Mark a resolution as implemented. Manager/admin only.
 async fn implement_resolution(
     State(state): State<AppState>,
-    user: AuthUser,
-    Path((_id, resolution_id)): Path<(Uuid, Uuid)>,
+    TenantAuthUser(user): TenantAuthUser,
+    Path((id, resolution_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<DisputeResolution>, (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&user)?;
+    guard_child(&state, &user, DisputeChild::Resolution, resolution_id, id).await?;
     state
         .dispute_repo
         .implement_resolution(resolution_id, user.user_id)
@@ -1389,9 +1732,10 @@ async fn implement_resolution(
 /// List action items for a dispute.
 async fn list_action_items(
     State(state): State<AppState>,
-    _user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<ActionItem>>, (StatusCode, Json<ErrorResponse>)> {
+    guard_dispute(&state, &user, id).await?;
     state
         .dispute_repo
         .list_action_items(id)
@@ -1409,15 +1753,37 @@ async fn list_action_items(
         })
 }
 
-/// Create an action item.
+/// Create an action item. Managers or the dispute mediator only; the
+/// assignee must be an active member of the caller's org.
 async fn create_action_item(
     State(state): State<AppState>,
-    _user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<CreateActionRequest>,
 ) -> Result<(StatusCode, Json<ActionItem>), (StatusCode, Json<ErrorResponse>)> {
-    let mut action = data.data;
-    action.dispute_id = id;
+    let org = guard_dispute(&state, &user, id).await?;
+    require_manager_or_mediator(&state, &user, id, org).await?;
+    // A linked resolution must belong to this same dispute.
+    if let Some(resolution_id) = data.resolution_id {
+        guard_child(&state, &user, DisputeChild::Resolution, resolution_id, id).await?;
+    }
+    require_active_member(
+        &state,
+        org,
+        data.assigned_to,
+        "INVALID_ASSIGNEE",
+        "assigned_to must be an active member of the organization",
+    )
+    .await?;
+    let action = CreateActionItem {
+        dispute_id: id,
+        resolution_id: data.resolution_id,
+        resolution_term_id: data.resolution_term_id,
+        assigned_to: data.assigned_to,
+        title: data.title,
+        description: data.description,
+        due_date: data.due_date,
+    };
 
     state
         .dispute_repo
@@ -1439,9 +1805,10 @@ async fn create_action_item(
 /// Get an action item.
 async fn get_action_item(
     State(state): State<AppState>,
-    _user: AuthUser,
-    Path((_id, action_id)): Path<(Uuid, Uuid)>,
+    TenantAuthUser(user): TenantAuthUser,
+    Path((id, action_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<ActionItem>, (StatusCode, Json<ErrorResponse>)> {
+    guard_child(&state, &user, DisputeChild::ActionItem, action_id, id).await?;
     match state.dispute_repo.find_action_item(action_id).await {
         Ok(Some(item)) => Ok(Json(item)),
         Ok(None) => Err((
@@ -1461,10 +1828,13 @@ async fn get_action_item(
 /// Update an action item.
 async fn update_action_item(
     State(state): State<AppState>,
-    _user: AuthUser,
-    Path((_id, action_id)): Path<(Uuid, Uuid)>,
+    TenantAuthUser(user): TenantAuthUser,
+    Path((id, action_id)): Path<(Uuid, Uuid)>,
     Json(data): Json<UpdateActionRequest>,
 ) -> Result<Json<ActionItem>, (StatusCode, Json<ErrorResponse>)> {
+    guard_child(&state, &user, DisputeChild::ActionItem, action_id, id).await?;
+    let org = require_org(&user)?;
+    require_manager_or_mediator(&state, &user, id, org).await?;
     state
         .dispute_repo
         .update_action_item(
@@ -1488,13 +1858,34 @@ async fn update_action_item(
         })
 }
 
-/// Complete an action item.
+/// Complete an action item. Managers, the dispute mediator, or the assignee.
 async fn complete_action_item(
     State(state): State<AppState>,
-    _user: AuthUser,
-    Path((_id, action_id)): Path<(Uuid, Uuid)>,
+    TenantAuthUser(user): TenantAuthUser,
+    Path((id, action_id)): Path<(Uuid, Uuid)>,
     Json(data): Json<CompleteActionRequest>,
 ) -> Result<Json<ActionItem>, (StatusCode, Json<ErrorResponse>)> {
+    guard_child(&state, &user, DisputeChild::ActionItem, action_id, id).await?;
+    let org = require_org(&user)?;
+    // Managers and the mediator may complete any item; otherwise only its assignee.
+    if !is_manager(&user) && !is_dispute_mediator(&state, &user, id, org).await? {
+        let item = state
+            .dispute_repo
+            .find_action_item(action_id)
+            .await
+            .map_err(|e| map_dispute_err(e, "Failed to load action item"))?
+            .ok_or_else(|| {
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(ErrorResponse::new("NOT_FOUND", "Action item not found")),
+                )
+            })?;
+        if item.assigned_to != user.user_id {
+            return Err(forbidden(
+                "Only a manager, the mediator or the assignee may complete this item",
+            ));
+        }
+    }
     state
         .dispute_repo
         .complete_action_item(CompleteActionItem {
@@ -1518,9 +1909,12 @@ async fn complete_action_item(
 /// Send a reminder for an action item.
 async fn send_action_reminder(
     State(state): State<AppState>,
-    _user: AuthUser,
-    Path((_id, action_id)): Path<(Uuid, Uuid)>,
+    TenantAuthUser(user): TenantAuthUser,
+    Path((id, action_id)): Path<(Uuid, Uuid)>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    guard_child(&state, &user, DisputeChild::ActionItem, action_id, id).await?;
+    let org = require_org(&user)?;
+    require_manager_or_mediator(&state, &user, id, org).await?;
     state
         .dispute_repo
         .send_action_reminder(action_id)
@@ -1538,9 +1932,10 @@ async fn send_action_reminder(
 /// List escalations for a dispute.
 async fn list_escalations(
     State(state): State<AppState>,
-    _user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<Escalation>>, (StatusCode, Json<ErrorResponse>)> {
+    guard_dispute(&state, &user, id).await?;
     state
         .dispute_repo
         .list_escalations(id)
@@ -1555,13 +1950,30 @@ async fn list_escalations(
         })
 }
 
-/// Create an escalation.
+/// Create an escalation. Managers or any dispute party (incl. the mediator).
 async fn create_escalation(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<CreateEscalationRequest>,
 ) -> Result<(StatusCode, Json<Escalation>), (StatusCode, Json<ErrorResponse>)> {
+    let org = guard_dispute(&state, &user, id).await?;
+    require_manager_or_party(&state, &user, id, org).await?;
+    // A linked action item must belong to this same dispute (the repo also
+    // flips that action item's status to `escalated`).
+    if let Some(action_item_id) = data.action_item_id {
+        guard_child(&state, &user, DisputeChild::ActionItem, action_item_id, id).await?;
+    }
+    if let Some(escalated_to) = data.escalated_to {
+        require_active_member(
+            &state,
+            org,
+            escalated_to,
+            "INVALID_ESCALATION_TARGET",
+            "escalated_to must be an active member of the organization",
+        )
+        .await?;
+    }
     state
         .dispute_repo
         .create_escalation(CreateEscalation {
@@ -1586,13 +1998,15 @@ async fn create_escalation(
         })
 }
 
-/// Resolve an escalation.
+/// Resolve an escalation. Manager/admin only.
 async fn resolve_escalation(
     State(state): State<AppState>,
-    _user: AuthUser,
-    Path((_id, escalation_id)): Path<(Uuid, Uuid)>,
+    TenantAuthUser(user): TenantAuthUser,
+    Path((id, escalation_id)): Path<(Uuid, Uuid)>,
     Json(data): Json<ResolveEscalationRequest>,
 ) -> Result<Json<Escalation>, (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&user)?;
+    guard_child(&state, &user, DisputeChild::Escalation, escalation_id, id).await?;
     state
         .dispute_repo
         .resolve_escalation(ResolveEscalation {
@@ -1616,12 +2030,14 @@ async fn resolve_escalation(
 /// Get action items for the current user.
 async fn get_my_actions(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut parts: Parts,
     Query(query): Query<OrgQuery>,
 ) -> Result<Json<PartyActionsDashboard>, (StatusCode, Json<ErrorResponse>)> {
+    let user = tenant_user_for_org(&mut parts, &state, query.organization_id).await?;
+    let organization_id = scoped_org(&user, query.organization_id)?;
     state
         .dispute_repo
-        .get_party_actions(query.organization_id, user.user_id)
+        .get_party_actions(organization_id, user.user_id)
         .await
         .map(Json)
         .map_err(|e| {
@@ -1636,12 +2052,14 @@ async fn get_my_actions(
 /// List overdue action items.
 async fn list_overdue_actions(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut parts: Parts,
     Query(query): Query<OrgQuery>,
 ) -> Result<Json<Vec<ActionItem>>, (StatusCode, Json<ErrorResponse>)> {
+    let user = tenant_user_for_org(&mut parts, &state, query.organization_id).await?;
+    let organization_id = scoped_org(&user, query.organization_id)?;
     state
         .dispute_repo
-        .list_overdue_actions(query.organization_id)
+        .list_overdue_actions(organization_id)
         .await
         .map(Json)
         .map_err(|e| {

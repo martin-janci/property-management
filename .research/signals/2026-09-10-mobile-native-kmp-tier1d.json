@@ -1,0 +1,66 @@
+{
+  "segment": "mobile-native-kmp",
+  "date": "2026-09-10",
+  "selection_reason": "oldest-unreviewed",
+  "selection_detail": "CHURN_FILES empty this run. Selection by REVIEW_CURSOR ascending: mobile-native-kmp is the numerically oldest cursor at 2026-08-25 (next: ppt-web-core 2026-08-29, reality-web 2026-08-29, api-handlers 2026-08-31, reality-server 2026-08-31, api-core 2026-09-01, ppt-web-ui 2026-09-06, mobile-rn 2026-09-09). Saturation check: 0 open code-review-finding items for mobile-native-kmp in backlog.json (backlog has 0 open findings across ALL segments), so no saturation-skip. Per the skill's priority rules the oldest-unreviewed segment wins; the dispatcher's cloud-landability bias (KMP is AGP-egress-blocked #2652) is explicitly NOT allowed to override rotation, so mobile-native-kmp is reviewed and its findings are RECORDED but flagged not-cloud-landable. Experts: Kotlin (primary) + Tester (secondary) per Step 2. gh dependabot/PR-history checks not needed (no manifest-version findings emitted).",
+  "experts_used": ["kotlin", "tester"],
+  "landable_in_cloud": false,
+  "landability_note": "mobile-native-kmp is AGP-egress-blocked in this cloud runner (#2652): a Kotlin/KMP + androidApp build cannot be produced or verified here. All three findings are in androidApp Compose screens (three.two.bit.ppt.reality.ui.*) and the fixes are Kotlin/Compose changes that require the Gradle/AGP toolchain, so they are RECORDED for a local/CI implementer but are NOT cloud-landable or verifiable this run. Note: the underlying repositories (commonMain FavoritesRepository / InquiryRepository / NotificationRepository) are clean and defensive — every finding is a UI-layer error-surfacing gap in :androidApp, not a shared-module correctness bug.",
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-notif-prefs-update-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-10 mobile-native-kmp account/notifications)",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "kotlin",
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/account/AccountScreen.kt"
+      ],
+      "evidence": [
+        "AccountScreen.kt:175-186 — the notification-preferences toggles silently fail with NO user feedback. Each switch in NotificationPreferencesCard is fully state-driven (checked = preferences.<field>, where preferences == the `notificationPrefs` state var, AccountScreen.kt:174 + card at :558-611). onPreferenceChange -> notificationRepository.updatePreferences(newPrefs) is folded with onSuccess = { notificationPrefs = it } but onFailure = { Log.e(TAG, \"Failed to update notification preferences\", it) } only (AccountScreen.kt:181-186).",
+        "Because notificationPrefs is updated ONLY on success, a failed PUT /api/v1/notifications/preferences leaves the backing state unchanged, so on recomposition the Material Switch snaps back to its prior value and the user is shown NO error (no Snackbar, no inline message, no retry). The user believes they turned e.g. 'marketing' off; it silently reverts and the only trace is a logcat line. Compare the sibling load/write handlers on the same screen that DO surface friendlyError(...) — this write path was missed.",
+        "Impact: MEDIUM — user-facing write on a settings surface fails invisibly; the preference the user thinks they changed did not persist, with no signal to retry. No data loss/security issue (server rejected the write; RLS intact). Confidence MEDIUM: the swallow (Log.e-only onFailure) and the state-driven, success-only switch update are confirmed statically; not runtime-reproduced. Fresh vs backlog: no prior mobile-native-kmp notification-preferences finding exists (seen_signals has no notif-prefs entry for KMP). Fix (androidApp/Compose, AGP-required — NOT cloud-landable per #2652): on updatePreferences failure set an error state and show a Snackbar / revert-with-message, mirroring the friendlyError() pattern already used by getInquiries/getFavorites/cancelViewing on this app."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-viewings-load-silent-empty",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-10 mobile-native-kmp inquiries)",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "kotlin",
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/inquiries/InquiriesScreen.kt"
+      ],
+      "evidence": [
+        "InquiriesScreen.kt:116-121 — the second (Viewings) tab silently renders an empty list on a load error. In the LaunchedEffect the screen loads getInquiries() with onFailure = { errorMessage = friendlyError(it) } (:114), then loads getViewings() with onFailure = { Log.e(TAG, \"Failed to load viewings\", it) } ONLY (:120). The `viewings` state stays emptyList().",
+        "The render `when` block (:159-215) shows ErrorContent only when `errorMessage != null`, and errorMessage is wired exclusively to the getInquiries result. So if getInquiries succeeds but getViewings fails (independent endpoints: GET /api/v1/inquiries vs GET /api/v1/viewings), errorMessage is null and switching to the Viewings tab (selectedTab == 1) shows an empty ViewingsList — indistinguishable from a legitimate 'you have no viewing requests' state. The user is told (implicitly) they have zero viewings when the request actually failed.",
+        "Impact: MEDIUM — misleading empty-state-on-error: a network/server failure is presented as 'no data', so the user never retries and may believe scheduled viewings were lost. Confidence MEDIUM: the Log.e-only onFailure and the errorMessage-only-from-inquiries wiring are confirmed statically. Fresh vs backlog: no prior KMP inquiries/viewings error-state finding in seen_signals. Fix (androidApp/Compose, AGP-required — NOT cloud-landable per #2652): track a per-tab load error (or a shared errorMessage covering both loads) and render ErrorContent/an empty-vs-error distinction on the Viewings tab, matching the getInquiries path."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-saved-searches-load-silent-empty",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-10 mobile-native-kmp favorites)",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "kotlin",
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/favorites/FavoritesScreen.kt"
+      ],
+      "evidence": [
+        "FavoritesScreen.kt:105-109 — same misleading-empty-state pattern on the Saved Searches tab. The load effect folds getFavorites() with onFailure = { errorMessage = friendlyError(error) } (:103) but getSavedSearches() with onFailure = { Log.e(TAG, \"Failed to load saved searches\", error) } ONLY (:109); `savedSearches` stays empty.",
+        "The render `when` (:159-...) shows ErrorContent only when errorMessage != null, and errorMessage is set exclusively by the getFavorites result. When getFavorites succeeds but getSavedSearches fails (distinct endpoint GET /api/v1/saved-searches), the Searches tab (selectedTab == 1) renders an empty list with no error, indistinguishable from 'no saved searches' — and its retry ErrorContent (:162-178) is only reachable via the favorites errorMessage, so the failed searches load has no retry affordance.",
+        "Impact: MEDIUM — a failed saved-searches fetch masquerades as an empty saved-searches list; the user cannot tell load failure from genuinely-empty and gets no retry. Confidence MEDIUM: Log.e-only onFailure and errorMessage-only-from-favorites wiring confirmed statically. Fresh vs backlog: no prior KMP favorites/saved-searches error-state finding in seen_signals. Fix (androidApp/Compose, AGP-required — NOT cloud-landable per #2652): surface the saved-searches load error (per-tab error state or a shared errorMessage) so the Searches tab distinguishes empty from error and offers retry, matching the getFavorites path."
+      ]
+    }
+  ]
+}

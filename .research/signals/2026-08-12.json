@@ -1,0 +1,204 @@
+{
+  "generated": "2026-08-12T22:45:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-12",
+      "type": "lag_warning",
+      "source": "state.json (last_run_iso=2026-08-07T06:24:00Z; now=2026-08-12T22:32Z)",
+      "score_delta": 0,
+      "evidence": "routine has not run in 5d 16h (136h) — cloud cron likely paused; state.json last advanced 2026-08-07T06:24:00Z. Dispatcher on planning branch is still ticking (see .research/management/assignments.json).",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-mappers-test-tsx",
+      "type": "churn-hotspot",
+      "source": "git churn 2026-08-07..HEAD (227 lines) — added by PR #2735",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/src/routes/groups/rentals.mappers.test.tsx +227 lines in-window; new test file added by PR #2735 pinning six pure rental-mapper folds. Hotspot only via addition, not repeated churn.",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-mobile-src-hooks-useOfflineSupport-test-ts",
+      "type": "churn-hotspot",
+      "source": "git churn 2026-08-07..HEAD (183 lines) — added by PR #2738",
+      "score_delta": 1,
+      "evidence": "frontend/apps/mobile/src/hooks/useOfflineSupport.test.ts +183 lines in-window; new test file for the offline retryable-4xx fix (PR #2738). Hotspot only via addition.",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-oauth-rs",
+      "type": "churn-hotspot",
+      "source": "git churn 2026-08-07..HEAD (178 lines) — PR #2732",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/services/oauth.rs +178 lines in-window — PR #2732 (gh-issue-2643-retry1: move OAuth token-usage recording off the hot token path). Adjacent oauth_integration_tests.rs also churned (+65 lines). Real code hotspot; runs_seen was 0 in hotspot_history so no repeated-churn firing.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "stalled-review-pr-2555",
+      "type": "stalled-review",
+      "source": "PR #2555 (feat(acc) UC-ACC-05.17 wire sent/cancelled invoice lifecycle) — opened 2026-07-28, last updated 2026-07-30 (13d idle, 15d open)",
+      "score_delta": 1,
+      "evidence": "PR #2555 open 15 days, no activity for 13 days. Accounting Phase-A lifecycle wiring; author=martin-janci. Process signal — outside dispatcher scope (feat/acc branch). Suggest routine ping or human triage.",
+      "confidence": "medium",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stalled-review-pr-2558",
+      "type": "stalled-review",
+      "source": "PR #2558 (feat(acc) UC-ACC-05.9 invoice PDF render endpoint) — opened 2026-07-28, last updated 2026-07-30 (13d idle, 15d open)",
+      "score_delta": 1,
+      "evidence": "PR #2558 open 15 days, no activity for 13 days. Accounting Phase-A follow-up; author=martin-janci. Sibling of #2555/#2559.",
+      "confidence": "medium",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stalled-review-pr-2559",
+      "type": "stalled-review",
+      "source": "PR #2559 (feat(acc) UC-ACC-05.8 PAY by square QR endpoint) — opened 2026-07-28, last updated 2026-07-30 (13d idle, 15d open)",
+      "score_delta": 1,
+      "evidence": "PR #2559 open 15 days, no activity for 13 days. Accounting Phase-A follow-up; author=martin-janci. Sibling of #2555/#2558.",
+      "confidence": "medium",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-2705",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2705 dx-closed-not-merged-pr-2385-retry2: bump dtolnay/rust-toolchain 1.94.1 → 1.100.0 (closed 2026-08-08 without merge)",
+      "score_delta": 1,
+      "evidence": "Auto-generated dx-cnm-retry PR closed unmerged 2026-08-08. Second retry — likely CI failure or superseded; recommend human review of the rust-toolchain bump path.",
+      "confidence": "medium",
+      "candidate_vector": "dx"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches # 2026-08-12",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare staged state.json vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog id uniqueness",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no re-scoring of seen signals (cumulative allowlist)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "cap=0 violations; no items older than 14d to decay",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "promoted plans annotated adversarial pass",
+      "observed": "no new plans this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans; each has all sections + Files ok",
+      "observed": "0 new plans",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached only .research/ paths (verified in Phase 6)",
+      "observed": "verified pre-commit",
+      "expected": "true"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets / private hostnames in staged .research/ (four baseline docs exempt)",
+      "observed": "grep = 0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regenerated /tmp/backlog.regen.md",
+      "observed": "exit 0 (identical)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty — brief lists any failed phase and cursors not advanced",
+      "observed": "Phase 1.5/1.6 skipped (not failed); other phases ok; cursors advanced only for succeeded phases",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs still present or archived",
+      "observed": "no plans deleted this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count monotonic",
+      "observed": "no changes to archive",
+      "expected": "≥ HEAD count"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regenerated /tmp/ideas-triage.regen.md",
+      "observed": "exit 0 (identical)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (cap/idempotency/kill-switch)",
+      "observed": "no auto_fix_actions this run (nothing met certainty bar)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid (when Phase 1.6 ran) — no-op if skipped",
+      "observed": "Phase 1.6 skipped → gate is no-op",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token value in staged diff (added lines)",
+      "observed": "grep = 0",
+      "expected": "0"
+    }
+  ],
+  "notes": [
+    "routine catch-up run — last run was 2026-08-07T06:24Z (5d 16h gap)",
+    "Phase 1.5 skipped this run: token-budget for catch-up; review_cursor NOT advanced (dispatcher already ran per-segment tier-1d reviews multiple times in the gap window)",
+    "Phase 1.6 skipped this run: dispatcher already keeps management artifacts fresh (assignments/coverage/action-list touched today); pm_cursor NOT advanced"
+  ]
+}

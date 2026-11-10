@@ -1,0 +1,56 @@
+{
+  "generated": "2026-10-26T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (buffer starved: claimable=14 < BUFFER_FLOOR=36; deterministic refill sources coverage.json/backlog.json/retry-remint dry). Static single-segment rotating code review per .claude/skills/ppt-dev-review/SKILL.md — no compilation, no test execution, no branch checkout (cloud runner: file reading + grep only). DISPATCHER_OWNED_COMMIT=1: this artifact was written into the working tree only; no git add/commit/push and no branch/checkout performed; no dispatcher state file (assignments.json) or action-list.json touched — the orchestrator folds .research deltas into its Phase 6 commit. Segment selection: priority-1 churn-alignment. git log --since=2026-10-12 shows reality-web as the dominant non-.research/non-docs/non-test churn cluster: app/[locale]/agency/[slug]/page.tsx (3 commits), lib/realtor-api.ts, components/import/{FeedImport,CrmConnection}.tsx, components/agency/RealtorManagement.tsx (2 each). api-handlers was already reviewed today (2026-10-26-api-handlers-tier1d.json; review_cursor.api-handlers=2026-10-26) and is saturated (3 open code-review-finding rows for segment==api-handlers in backlog.json). reality-web is NOT saturated (0 open code-review-finding rows; its 3 reality-web rows are status=done/dropped). Scope mapped to this repo's actual pnpm layout: the skill's reality-web root frontend/reality-web/src/ is stale — the app lives at frontend/apps/reality-web/src/; narrowed to churn-touched files + their realtor-api.ts consumers per the Step-5 >40-file rule. Primary expert Frontend only (segment has no secondary per Step 2). Dedup: the 2026-10-23/25 reality-web runs already captured console.error-in-catch (now fixed: toSafeLogMessage), the realtor-api unchecked-JSON cast (now fixed: parseJsonBody added), the toLocale* date-locale bug, the analytics-page i18n gap, and the inquiry-enum .replace bug — none re-flagged here. The churn hotspot app/[locale]/agency/[slug]/page.tsx re-cleared with no new findings (hardened: sanitizeHref scheme allowlist, sanitizeCssValue on brand colors, real loading/error/empty states). The two findings below are a residual crash gap in the parseJsonBody boundary fix and an i18n gap on the realtor/account CRUD error surfaces — both distinct from all prior reality-web rows.",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "churn-aligned (git --since=2026-10-12 churn dominated by reality-web: agency/[slug]/page.tsx x3, lib/realtor-api.ts, import/{FeedImport,CrmConnection}.tsx, agency/RealtorManagement.tsx x2). api-handlers already reviewed today and saturated (3 open code-review-finding rows). reality-web not saturated: 0 open rows for the segment in backlog.json.",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": true,
+  "landability_note": "Both findings are frontend-only edits confined to reality-web (no backend, no migration, no openapi/client regen). Finding 1 tightens parseJsonBody in lib/realtor-api.ts (or adds caller-side guards in profile/page.tsx) — pure TS, verifiable via `pnpm --filter @ppt/reality-web typecheck` + `pnpm --filter @ppt/reality-web test`. Finding 2 is next-intl keying: thrown-message i18n in lib/realtor-api.ts plus hardcoded English error fallbacks in the realtor/* and account/* CRUD pages, resolved with useTranslations + messages/{en,sk,cs,de,pl,hu}.json key additions. No runtime stack required.",
+  "signals": [
+    {
+      "id": "code-review-reality-web-json-guard-array-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-26 reality-web",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts",
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts:68-79 — parseJsonBody<T> was added (ref #2276/#2281/#2341) to stop a malformed 200 from crashing 'deep in a component' (its own doc comment, L58-59, cites `res.listings.map`). But the guard only enforces 'non-null, non-array object' (L75); it does NOT validate that the expected array/scalar fields are present. A 200 whose body is a valid object missing the contract field (e.g. `{}`, or `{listings: null}`, or `{total: 0}` without `reviews`) passes the guard and is returned typed as T — so the exact crash the fix targets is still reachable.",
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx:137 — `listMyListings().then((res) => setListings(res.listings))`: if `res.listings` is absent, `listings` state becomes `undefined`. Rendering then hits ListingsTab L445 `if (listings.length === 0)` → `undefined.length` throws (React error boundary / white panel). The `.catch` at L139 does NOT cover this: the deref `res.listings` returns undefined without throwing, so the failure moves to render time, exactly the 'throws deep in a component' symptom the boundary guard was meant to prevent.",
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx:160-161 `setReviews(res)` from getRealtorReviews, then ReviewsTab L548 `if (!reviews || reviews.reviews.length === 0)` — the guard checks `reviews` truthiness but not `reviews.reviews`; a `{}` 200 body makes `reviews.reviews.length` throw. L191 `reviews.total` and L195 `reviews.avg_rating.toFixed(1)` have the same exposure.",
+        "Severity MEDIUM (+2): reachable render crash on an authenticated user-facing page (profile) whenever the server/proxy emits a partial-but-object 200 — the scenario the parseJsonBody fix explicitly set out to close, left half-open. Confidence medium: the throw is statically certain given a field-missing object body; the likelihood of such a 200 under the real reality-server contract is the uncertain part (static-only, no runtime confirmation). Fix: make parseJsonBody accept a lightweight shape predicate (or add per-endpoint `Array.isArray(body.listings)` / `Array.isArray(body.reviews)` checks) so array fields are validated at the boundary, and/or default to `res.listings ?? []` / `res.reviews ?? []` at the call sites in profile/page.tsx."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-realtor-crud-en-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-26 reality-web",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/profile/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/new/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/[id]/edit/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts:35,73,76,38 — RealtorApiError is thrown with hardcoded English messages ('Network error. Please try again.', 'Malformed response from server.', `Request failed (${status})`). These are not log-only: the realtor/account CRUD pages surface `err.message` verbatim to the user.",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/profile/page.tsx:48,82 — `setLoadError(err instanceof RealtorApiError ? err.message : 'Could not load profile.')` and `setSaveError(... : 'Could not save profile.')`: BOTH branches are English on a 6-locale portal (sk/cs/de/en/pl/hu) — the RealtorApiError branch shows the untranslated lib string, the fallback branch a hardcoded English literal. Same pattern at realtor/listings/new/page.tsx:27 ('Could not create listing. Please try again.'), realtor/listings/[id]/edit/page.tsx:42,61 ('Could not load listing.' / 'Could not save listing.'), realtor/analytics/page.tsx:54 ('Could not load analytics.').",
+        "This is the skill Frontend pattern 'hardcoded user-facing string that should be in i18n', on error/empty paths across the realtor-portal CRUD surface. Distinct from the done/prior reality-web i18n rows (ComparisonView, RealtorManagement, AgencyErrorStates, the 2026-10-25 analytics-page body copy and inquiry-enum) — this cluster is specifically the thrown-error message strings in realtor-api.ts plus the error-state fallbacks in the realtor/* and account/* pages. Note account/listings/[id]/edit/page.tsx:166,213 use Slovak literals ('Načítanie inzerátu zlyhalo.' / 'Uloženie zlyhalo, skúste znova.'), i.e. hardcoded the OTHER direction — same i18n-bypass class, confirming the error strings route around next-intl entirely.",
+        "Severity LOW (+1): no crash; localization gap on error surfaces only. Confidence medium: the hardcoded strings are statically certain; impact depends on how often these error paths fire. Fix: route RealtorApiError messages through an error-code → next-intl key map (or carry a code on the error and translate at the call site), and replace the English/Slovak literal fallbacks with `t('...')` keys in messages/{en,sk,cs,de,pl,hu}.json."
+      ]
+    }
+  ]
+}

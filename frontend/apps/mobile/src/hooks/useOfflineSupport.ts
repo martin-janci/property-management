@@ -4,13 +4,34 @@ import * as SecureStore from 'expo-secure-store';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getApiBaseUrl } from '../config/api';
 import { CACHE_PREFIX, LAST_SYNC_KEY, QUEUE_KEY } from '../services/localCacheKeys';
-import { extractTenantId } from '../utils/jwt';
+import { resolveTenantId } from '../utils/session';
 
 // Storage keys. The AsyncStorage cache/queue namespaces live in
 // `services/localCacheKeys` (shared with `resetLocalData`, issue #2399). The
 // access token is a SecureStore key, not part of that purgeable namespace, so
 // it stays local here.
 const ACCESS_TOKEN_KEY = 'ppt_access_token';
+
+/**
+ * 4xx statuses that are RECOVERABLE and must NOT drop the queued action.
+ *
+ * Not every 4xx is a permanent client error — some clear on their own or after
+ * the client refreshes state, so replaying later can succeed:
+ *   - 401 Unauthorized — the access token expired between enqueue and replay.
+ *     The action is kept; `executeQueuedAction` reads the token fresh from
+ *     SecureStore on every dispatch, so once AuthContext refreshes it the next
+ *     reconnect replays with a valid bearer token. Dropping here silently loses
+ *     offline-created content the moment a token ages out.
+ *   - 408 Request Timeout — the server timed out reading the request; a retry
+ *     may well complete.
+ *   - 429 Too Many Requests — rate-limited; the action is throttled, not
+ *     rejected. Retrying after backoff is exactly the intended behaviour.
+ *
+ * Everything else in the 4xx range (400/403/404/409/422/…) is treated as a
+ * genuinely permanent client error and dropped, so the queue never blocks
+ * forever on a request that can never win.
+ */
+const RETRYABLE_HTTP_STATUSES: ReadonlySet<number> = new Set([401, 408, 429]);
 
 export interface CacheOptions {
   expiresIn?: number; // milliseconds
@@ -147,6 +168,22 @@ export interface OfflineState {
   lastSyncTime: Date | null;
 }
 
+/**
+ * Actions dropped this session because the server rejected them with a
+ * PERMANENT client error (a 4xx not in `RETRYABLE_HTTP_STATUSES`).
+ *
+ * A permanent 4xx means the queued request can never win on retry (bad
+ * payload, gone, forbidden, …), so `processQueue` removes it from the queue.
+ * Previously that drop was silent — only a `console.error` — so offline-created
+ * content the user cared about (e.g. a fault reported while offline) could
+ * vanish with no user-visible signal. These dropped actions are now surfaced as
+ * hook state so the UI can raise a user-visible error, regardless of which
+ * caller triggered the flush (the NetInfo auto-sync listener passes no
+ * callback, so callback-only reporting would miss the most common path). The
+ * consumer acknowledges them via `clearPermanentFailures` once shown.
+ */
+export type PermanentFailure = QueuedAction;
+
 export interface UseOfflineSupportReturn extends OfflineState {
   // Caching
   cacheData: <T>(key: string, data: T, expiresIn?: number) => Promise<void>;
@@ -162,6 +199,14 @@ export interface UseOfflineSupportReturn extends OfflineState {
   isSyncing: boolean;
   // Sync progress (for UI binding)
   syncProgress: SyncProgress | null;
+  /**
+   * Actions dropped this session on a permanent 4xx (see `PermanentFailure`).
+   * The UI watches this to surface a user-visible error instead of the item
+   * disappearing silently, then calls `clearPermanentFailures` to acknowledge.
+   */
+  permanentFailures: PermanentFailure[];
+  /** Acknowledge and clear the surfaced permanent-failure list. */
+  clearPermanentFailures: () => void;
 }
 
 export function useOfflineSupport(): UseOfflineSupportReturn {
@@ -172,6 +217,8 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncProgress, setSyncProgress] = useState<SyncProgress | null>(null);
+  // Permanent 4xx drops surfaced for the UI (issue: silent permanent-4xx drop).
+  const [permanentFailures, setPermanentFailures] = useState<PermanentFailure[]>([]);
 
   // Synchronous re-entrancy guard for processQueue (issue #1767).
   //
@@ -240,7 +287,7 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
         // X-Tenant-ID. The tenant id lives in the JWT's `tenant_id`
         // claim — extract it so replayed offline actions hit the same
         // tenant the user was signed into when they enqueued.
-        const tenantId = extractTenantId(accessToken);
+        const tenantId = await resolveTenantId(accessToken);
         if (tenantId) {
           headers['X-Tenant-ID'] = tenantId;
         }
@@ -253,14 +300,23 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
       });
 
       if (!response.ok) {
-        // Treat 4xx as terminal (the request will never succeed even on
-        // retry — bad payload, gone, unauthorized, …) so the queue drops
-        // the action without burning the retry budget on hopeless replays.
-        // 5xx and network failures bubble up as a normal error so the
-        // outer retry loop handles them.
+        // Classify the failure so processQueue can decide to DROP vs RETRY.
+        // Most 4xx are permanent (the request will never succeed on retry —
+        // bad payload, gone, forbidden, …) so the action is dropped without
+        // burning reconnects on a hopeless replay. But the recoverable
+        // statuses in RETRYABLE_HTTP_STATUSES (401 expired-token / 408 timeout
+        // / 429 rate-limit) are transient: dropping them silently loses
+        // offline-created content, so they are left UNMARKED and flow through
+        // the same carry-forward path as 5xx / network failures — kept in the
+        // queue and re-attempted (401 replays with a refreshed token) until
+        // they succeed or turn permanent.
         const error = new Error(`HTTP ${response.status} on ${action.method} ${action.endpoint}`);
-        if (response.status >= 400 && response.status < 500) {
-          // Mark the error so processQueue can decide to drop instead of retry.
+        const isPermanentClientError =
+          response.status >= 400 &&
+          response.status < 500 &&
+          !RETRYABLE_HTTP_STATUSES.has(response.status);
+        if (isPermanentClientError) {
+          // Mark the error so processQueue drops it instead of retrying.
           (error as Error & { permanent?: boolean }).permanent = true;
         }
         throw error;
@@ -343,6 +399,14 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
         const succeededIds = new Set<string>();
         const terminalFailureIds = new Set<string>();
 
+        // Actions dropped this cycle on a PERMANENT 4xx. Collected so the drop
+        // can be surfaced to the user instead of vanishing with only a
+        // console.error (issue: silent permanent-4xx drop). Appended to the
+        // hook's `permanentFailures` state after the loop, so every caller —
+        // including the NetInfo auto-sync listener that passes no callback —
+        // gets user-visible feedback.
+        const droppedPermanent: QueuedAction[] = [];
+
         // Offline-edit linkage (issue #1767): when a CREATE that carries a temp
         // `localId` flushes and the server returns the real id, record the
         // mapping so subsequent queued actions targeting that temp id can be
@@ -392,6 +456,10 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
             if (isPermanent) {
               failed++;
               terminalFailureIds.add(action.id);
+              // Record the dropped action so the UI can raise a user-visible
+              // error — the drop used to be silent (console.error only), so an
+              // offline-created item rejected by the server just disappeared.
+              droppedPermanent.push(action);
               console.error('Action permanently failed (4xx), dropping:', action);
               // A terminal failure can't block its successors — skip it and keep
               // draining the rest of the queue this cycle.
@@ -458,8 +526,25 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
             return a;
           });
         // Prefer the original (post-retry-increment) objects for carried items
-        // so their bumped `retries` count is what gets persisted.
-        const merged = [...carriedForward.map((a) => byId.get(a.id) ?? a), ...newlyEnqueued];
+        // so their bumped `retries` count is what gets persisted. Also apply the
+        // temp→server id remap before persisting: a cycle that halts on a
+        // head-of-line failure breaks the loop before reaching dependent
+        // UPDATE/DELETEs queued *after* the halt point, so those never got
+        // remapped in-loop. `tempIdToServerId` is in-memory only and is gone
+        // next cycle, so if a CREATE already resolved its temp id this cycle we
+        // must rewrite its dependents now or the mapping is lost and the edit
+        // orphans onto a temp id that no longer exists server-side (same reason
+        // `newlyEnqueued` is remapped above). remapActionIds is a no-op for
+        // actions that carry no still-live temp id, so re-applying it to items
+        // that were already remapped in-loop is safe.
+        const merged = [
+          ...carriedForward.map((a) => {
+            const carried = byId.get(a.id) ?? a;
+            remapActionIds(carried, tempIdToServerId);
+            return carried;
+          }),
+          ...newlyEnqueued,
+        ];
 
         await AsyncStorage.setItem(QUEUE_KEY, JSON.stringify(merged));
         setQueuedActionsCount(merged.length);
@@ -484,6 +569,13 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
         };
         setSyncProgress(finalProgress);
         onProgress?.(finalProgress);
+
+        // Surface any permanent 4xx drops so the UI can show a user-visible
+        // error. Appended (not replaced) so drops from a previous cycle the
+        // user hasn't acknowledged yet are not lost.
+        if (droppedPermanent.length > 0) {
+          setPermanentFailures((prev) => [...prev, ...droppedPermanent]);
+        }
 
         return { success, failed };
       } catch (error) {
@@ -606,6 +698,12 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
     [getQueuedActions]
   );
 
+  // Acknowledge and clear the surfaced permanent-failure list. Called by the UI
+  // once it has shown the user the "some offline changes were discarded" error.
+  const clearPermanentFailures = useCallback((): void => {
+    setPermanentFailures([]);
+  }, []);
+
   // Clear the offline queue
   const clearQueue = useCallback(async (): Promise<void> => {
     try {
@@ -655,5 +753,7 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
     syncData,
     isSyncing,
     syncProgress,
+    permanentFailures,
+    clearPermanentFailures,
   };
 }

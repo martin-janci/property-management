@@ -5,13 +5,21 @@ import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
 import type { ReactNode } from 'react';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { resetLocalData } from '../services/resetLocalData';
+import { isJwtExpired } from '../utils/jwt';
+import { buildSessionUser, readTokenPair, TENANT_ID_KEY } from '../utils/session';
 
 // Token storage keys
 const ACCESS_TOKEN_KEY = 'ppt_access_token';
 const REFRESH_TOKEN_KEY = 'ppt_refresh_token';
 const USER_KEY = 'ppt_user';
 const BIOMETRIC_ENABLED_KEY = 'ppt_biometric_enabled';
+
+// Treat an access token that expires within this many seconds as already stale,
+// so a restored session refreshes it proactively instead of handing the app a
+// bearer that dies on (or moments after) the first request.
+const TOKEN_REFRESH_SKEW_SECONDS = 30;
 
 export interface User {
   id: string;
@@ -22,6 +30,8 @@ export interface User {
   buildingId?: string;
   unitId?: string;
   avatarUrl?: string;
+  organizationId?: string;
+  organizationName?: string;
 }
 
 export interface AuthState {
@@ -59,6 +69,7 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const [state, setState] = useState<AuthState>({
     isLoading: true,
     isAuthenticated: false,
@@ -67,49 +78,6 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
     biometricEnabled: false,
     biometricAvailable: false,
   });
-
-  // Check biometric availability and load stored auth on mount
-  useEffect(() => {
-    async function initialize() {
-      try {
-        // Check biometric availability
-        const compatible = await LocalAuthentication.hasHardwareAsync();
-        const enrolled = await LocalAuthentication.isEnrolledAsync();
-        const biometricAvailable = compatible && enrolled;
-
-        // Load stored tokens
-        const accessToken = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
-        const userJson = await SecureStore.getItemAsync(USER_KEY);
-        const biometricEnabled = await SecureStore.getItemAsync(BIOMETRIC_ENABLED_KEY);
-
-        if (accessToken && userJson) {
-          const user = JSON.parse(userJson) as User;
-          setState({
-            isLoading: false,
-            isAuthenticated: true,
-            user,
-            accessToken,
-            biometricEnabled: biometricEnabled === 'true',
-            biometricAvailable,
-          });
-        } else {
-          setState((prev) => ({
-            ...prev,
-            isLoading: false,
-            biometricAvailable,
-          }));
-        }
-      } catch (error) {
-        console.error('Failed to initialize auth:', error);
-        setState((prev) => ({
-          ...prev,
-          isLoading: false,
-        }));
-      }
-    }
-
-    initialize();
-  }, []);
 
   const login = useCallback(
     async (email: string, password: string) => {
@@ -130,11 +98,15 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
         }
 
         const data = await response.json();
-        // The api-server returns snake_case fields; map them to the camelCase
-        // names we use throughout the app state.
-        const accessToken = data.access_token;
-        const refreshToken = data.refresh_token;
-        const user = data.user;
+        // The api-server answers in camelCase (`accessToken`, `refreshToken`,
+        // `tenants[]`) and embeds no user object, so the user is derived from
+        // the token claims plus the active tenant.
+        const tokens = readTokenPair(data);
+        if (!tokens) {
+          throw new Error('Login failed');
+        }
+        const { accessToken, refreshToken } = tokens;
+        const { user, tenantId } = buildSessionUser(data, accessToken);
 
         // Store tokens securely
         await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
@@ -158,6 +130,14 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
         await resetLocalData();
         queryClient.clear();
 
+        // Remember the organisation so tenant-scoped requests can send
+        // X-Tenant-ID (the access token has no `tenant_id` claim).
+        if (tenantId) {
+          await SecureStore.setItemAsync(TENANT_ID_KEY, tenantId);
+        } else {
+          await SecureStore.deleteItemAsync(TENANT_ID_KEY);
+        }
+
         setState((prev) => ({
           ...prev,
           isLoading: false,
@@ -179,6 +159,7 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
       await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
       await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
       await SecureStore.deleteItemAsync(USER_KEY);
+      await SecureStore.deleteItemAsync(TENANT_ID_KEY);
 
       // Wipe the whole query cache on logout (issue #2329). `useTenantId`
       // caches the tenant id forever (`staleTime: Infinity`) and nothing else
@@ -219,16 +200,18 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ refresh_token: storedRefreshToken }),
+        body: JSON.stringify({ refreshToken: storedRefreshToken }),
       });
 
       if (!response.ok) {
         throw new Error('Token refresh failed');
       }
 
-      const data = await response.json();
-      const accessToken = data.access_token;
-      const newRefreshToken = data.refresh_token;
+      const tokens = readTokenPair(await response.json());
+      if (!tokens) {
+        throw new Error('Token refresh failed');
+      }
+      const { accessToken, refreshToken: newRefreshToken } = tokens;
 
       // Store new tokens
       await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
@@ -252,9 +235,9 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
 
     try {
       const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: 'Enable biometric login',
-        cancelLabel: 'Cancel',
-        fallbackLabel: 'Use passcode',
+        promptMessage: t('auth.biometric.enablePrompt'),
+        cancelLabel: t('auth.biometric.cancel'),
+        fallbackLabel: t('auth.biometric.usePasscode'),
       });
 
       if (result.success) {
@@ -268,7 +251,7 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
       console.error('Failed to enable biometric:', error);
       return false;
     }
-  }, [state.biometricAvailable]);
+  }, [state.biometricAvailable, t]);
 
   const disableBiometric = useCallback(async () => {
     await SecureStore.deleteItemAsync(BIOMETRIC_ENABLED_KEY);
@@ -282,9 +265,9 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
 
     try {
       const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: 'Login to Property Management',
-        cancelLabel: 'Cancel',
-        fallbackLabel: 'Use password',
+        promptMessage: t('auth.biometric.authenticatePrompt'),
+        cancelLabel: t('auth.biometric.cancel'),
+        fallbackLabel: t('auth.biometric.usePassword'),
       });
 
       if (result.success) {
@@ -299,11 +282,27 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
 
         if (accessToken && userJson) {
           const user = JSON.parse(userJson) as User;
+          // The device may have sat locked past the access-token TTL, so the
+          // stored bearer can be expired even though the refresh token is still
+          // valid. Refresh it before restoring the session — but preserve the
+          // #2399 intent above: only the *token* is refreshed here, we still do
+          // NOT refetch the user's cached data.
+          let activeToken = accessToken;
+          if (isJwtExpired(accessToken, TOKEN_REFRESH_SKEW_SECONDS)) {
+            try {
+              await refreshToken();
+              activeToken = (await SecureStore.getItemAsync(ACCESS_TOKEN_KEY)) ?? accessToken;
+            } catch {
+              // refreshToken() already logged out (clearing SecureStore) when
+              // the refresh failed — the session is dead, fall back to login.
+              return false;
+            }
+          }
           setState((prev) => ({
             ...prev,
             isAuthenticated: true,
             user,
-            accessToken,
+            accessToken: activeToken,
           }));
           return true;
         }
@@ -314,7 +313,85 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
       console.error('Biometric authentication failed:', error);
       return false;
     }
-  }, [state.biometricEnabled, state.biometricAvailable]);
+  }, [state.biometricEnabled, state.biometricAvailable, t, refreshToken]);
+
+  // Check biometric availability and load any stored session on mount. This
+  // runs after the callbacks above so it can reuse `refreshToken()` when a
+  // restored access token has expired (rather than duplicating refresh logic).
+  useEffect(() => {
+    async function initialize() {
+      try {
+        // Check biometric availability
+        const compatible = await LocalAuthentication.hasHardwareAsync();
+        const enrolled = await LocalAuthentication.isEnrolledAsync();
+        const biometricAvailable = compatible && enrolled;
+
+        // Load stored tokens
+        const accessToken = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+        const userJson = await SecureStore.getItemAsync(USER_KEY);
+        const biometricEnabled = await SecureStore.getItemAsync(BIOMETRIC_ENABLED_KEY);
+
+        if (accessToken && userJson) {
+          const user = JSON.parse(userJson) as User;
+          const biometricEnabledFlag = biometricEnabled === 'true';
+
+          // Access tokens are short-lived: a cold start after the TTL would
+          // otherwise restore `isAuthenticated: true` with an already-expired
+          // bearer. Refresh it first when the stored token is expired/near
+          // expiry, and only trust the session once a fresh token is in hand.
+          if (isJwtExpired(accessToken, TOKEN_REFRESH_SKEW_SECONDS)) {
+            try {
+              await refreshToken();
+              const refreshed = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+              setState({
+                isLoading: false,
+                isAuthenticated: true,
+                user,
+                accessToken: refreshed,
+                biometricEnabled: biometricEnabledFlag,
+                biometricAvailable,
+              });
+            } catch {
+              // refreshToken() already ran logout() (clearing SecureStore +
+              // caches) on failure; drop to the login screen.
+              setState((prev) => ({
+                ...prev,
+                isLoading: false,
+                isAuthenticated: false,
+                user: null,
+                accessToken: null,
+                biometricEnabled: biometricEnabledFlag,
+                biometricAvailable,
+              }));
+            }
+          } else {
+            setState({
+              isLoading: false,
+              isAuthenticated: true,
+              user,
+              accessToken,
+              biometricEnabled: biometricEnabledFlag,
+              biometricAvailable,
+            });
+          }
+        } else {
+          setState((prev) => ({
+            ...prev,
+            isLoading: false,
+            biometricAvailable,
+          }));
+        }
+      } catch (error) {
+        console.error('Failed to initialize auth:', error);
+        setState((prev) => ({
+          ...prev,
+          isLoading: false,
+        }));
+      }
+    }
+
+    initialize();
+  }, [refreshToken]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

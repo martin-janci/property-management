@@ -22,7 +22,7 @@ import {
 
 /** Sign the timestamped payload "{timestamp}.{body}" (issue #2485). */
 function makeSignature(secret: string, timestamp: number, body: string): string {
-  return 'sha256=' + createHmac('sha256', secret).update(`${timestamp}.${body}`).digest('base64');
+  return `sha256=${createHmac('sha256', secret).update(`${timestamp}.${body}`).digest('base64')}`;
 }
 
 function makeRequest(body: string, headers: Record<string, string> = {}): Request {
@@ -258,6 +258,29 @@ describe('POST /api/layout-revalidate', () => {
     expect(revalidateTag).not.toHaveBeenCalled();
   });
 
+  it('returns 401 when a valid signature is presented over a DIFFERENT body (HMAC binds the body)', async () => {
+    vi.stubEnv('LAYOUT_WEBHOOK_SECRET', SECRET);
+    // Parity documentation (sec-layout-webhook-hmac-verify): the receiver's
+    // HMAC must cover the whole request body, exactly like the esignature
+    // token's MAC binds every field (`test_tampered_*_rejected`) and the
+    // portal receiver's `verify_slice` over "{timestamp}.{body}". An attacker
+    // who captures a valid (timestamp, signature) for one body and swaps in a
+    // different body must be rejected — otherwise the signature would not
+    // authenticate the payload that is actually acted on.
+    const ts = nowTs();
+    const signedBody = JSON.stringify({ screen: 'reality/listing-detail', event: 'published' });
+    const tamperedBody = JSON.stringify({ screen: 'reality/pricing', event: 'published' });
+    const req = makeRequest(tamperedBody, {
+      'X-Webhook-Timestamp': String(ts),
+      // Signature is valid for `signedBody`, but a different body is sent.
+      'X-Webhook-Signature': makeSignature(SECRET, ts, signedBody),
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual({ error: 'invalid signature' });
+    expect(revalidateTag).not.toHaveBeenCalled();
+  });
+
   it('returns 413 for bodies larger than 16 KiB before verifying', async () => {
     vi.stubEnv('LAYOUT_WEBHOOK_SECRET', SECRET);
     // Correctly signed, but oversized — the size cap must fire first so an
@@ -329,7 +352,7 @@ describe('POST /api/layout-revalidate', () => {
   it('does not export GET', () => {
     // Verify by checking the module's exported keys directly
     const routeModule = { POST, layoutTagsFor } as Record<string, unknown>;
-    expect(routeModule['GET']).toBeUndefined();
+    expect(routeModule.GET).toBeUndefined();
   });
 });
 

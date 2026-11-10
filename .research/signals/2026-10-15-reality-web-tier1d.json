@@ -1,0 +1,44 @@
+{
+  "generated": "2026-10-15T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (research buffer starved: claimable=9 < floor=36, backlog empty). Static single-segment rotating code review, no compilation / no test execution (cloud runner has no toolchain). File reading + grep only, DISPATCHER_OWNED_COMMIT=1 (artifact written to working tree only; no git add/commit/push — dispatcher Phase 6 folds this delta in). reality-web is an exhaustively-mined segment: 154 distinct prior code-review-reality-web-* finding ids across the signals corpus + backlog.json. Every concrete candidate I independently re-derived this run was already reported and was DISCARDED as a duplicate (see discarded_duplicates). The reviewed entry-point code is genuinely well-hardened; no net-new finding survived dedup at the skill's medium-confidence bar.",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "oldest-unreviewed (review_cursor.reality-web = 2026-10-11, co-oldest at 2026-10-11 with api-handlers + mobile-rn). api-handlers SKIPPED (saturated: 3 open code-review-finding rows with segment==api-handlers && status==open in backlog.json, == the skill's 3-item saturation floor: violations-missing-role-authz, violations-number-count-race, violations-record-payment-non-atomic). mobile-rn SKIPPED (also co-oldest but already reviewed today 2026-10-15 — fresh signal file 2026-10-15-mobile-rn-tier1d.json present; it carries 3 open backlog rows too: outage-news-detail-dead-nav, outages-news-header-chip-i18n, outages-transforms-untested). api-core / ppt-web-core / ppt-web-ui / reality-server all already reviewed today (fresh tier1d files present). mobile-native-kmp not co-oldest (cursor 2026-10-13). reality-web is the remaining oldest-unreviewed co-leader that is NOT saturated (0 open code-review-finding rows for reality-web in backlog.json) and NOT already reviewed today. No churn files supplied for this segment.",
+  "experts_used": ["frontend"],
+  "findings_count": 0,
+  "static_only": true,
+  "cloud_landable": true,
+  "files_reviewed": [
+    "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx",
+    "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx",
+    "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx",
+    "frontend/apps/reality-web/src/components/import/FeedImport.tsx",
+    "frontend/apps/reality-web/src/components/import/CrmConnection.tsx",
+    "frontend/apps/reality-web/src/components/import/SyncSchedule.tsx",
+    "frontend/apps/reality-web/src/components/import/CsvImport.tsx",
+    "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx",
+    "frontend/apps/reality-web/src/lib/realtor-api.ts",
+    "frontend/apps/reality-web/src/lib/auth-api.ts",
+    "frontend/apps/reality-web/src/lib/auth-context.tsx",
+    "frontend/apps/reality-web/src/lib/layout.ts",
+    "frontend/apps/reality-web/src/middleware.ts",
+    "frontend/apps/reality-web/src/app/api/layout-revalidate/route.ts",
+    "frontend/apps/reality-web/src/app/api/health/route.ts",
+    "frontend/apps/reality-web/src/app/version/route.ts",
+    "frontend/apps/reality-web/src/providers/TenantProvider.tsx",
+    "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx",
+    "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+  ],
+  "discarded_duplicates": [
+    "ComparisonUrlHandler.tsx:47 returns `response.json() as Promise<ListingSummary>` with only a truthiness check before addToComparison — unvalidated API response cast, no shape validation (contrast listings/[slug]/page.tsx which routes through parseListingDetail). ALREADY REPORTED as code-review-reality-web-comparison-unvalidated-cast / comparison-fetch-unvalidated-cast / comparison-url-unvalidated-cast / comparison-unvalidated-listing-cast / compare-url-unvalidated-body / shared-cmp-no-shape-check.",
+    "Hardcoded user-facing error strings bypass next-intl in the 4-locale (sk/cs/de/en) portal: realtor-api.ts:35/38 ('Network error. Please try again.' / `Request failed (${status})`), auth-api.ts:48/52 (same pattern), account/listings/[id]/edit/page.tsx:166/213 (hardcoded Slovak fallbacks 'Načítanie inzerátu zlyhalo.' / 'Uloženie zlyhalo, skúste znova.'). ALREADY REPORTED — code-review-reality-web-realtor-account-pages-no-i18n explicitly names lib/realtor-api.ts:35/38, and code-review-reality-web-account-edit-wrong-locale-strings covers the edit-page Slovak fallbacks; broad i18n coverage also in i18n-error-state-gap / realtor-profile-hardcoded-slovak.",
+    "realtor/[id]/page.tsx renders MOCK_AGENT_LISTINGS / MOCK_AGENT_REVIEWS (fabricated listings + reviews) on a PUBLIC profile route while real API fns exist in realtor-api.ts (getRealtorReviews / listMyListings). ALREADY REPORTED as code-review-reality-web-realtor-profile-mock-unwired / realtor-profile-mock-data / realtor-profile-mock-noid / agent-profile-mock-stub / public-pages-mock-data."
+  ],
+  "not_flagged_verified_clean": [
+    "listings/[slug]/page.tsx — SSR listing fetch is hardened: !response.ok -> null, parseListingDetail normalizes/validates the 200 body, notFound() emits a real 404 (no soft-404), host inference guards a misconfigured localhost base.",
+    "app/api/layout-revalidate/route.ts — exemplary webhook: HMAC over `{timestamp}.{body}`, timingSafeEqual with length guard, replay protection (±300s fresh timestamp), 16 KiB body cap applied before any verification work, pre-auth paths record the '*' tenant sentinel to prevent cardinality injection.",
+    "lib/layout.ts — getResolvedLayout never throws / never gates render, element-level defense (isRenderableSection + MAX_SECTIONS clamp), and the global `layout:listing-detail` tag matches layoutTagsFor in the webhook (per-host tag over-invalidation is a documented, intentional tradeoff). Next.js data cache keys on the fetch init incl. the Host header, so per-tenant reads are separated — considered as a cross-tenant-bleed candidate and rejected (no net-new cache-key finding warranted).",
+    "components/import/SyncSchedule.tsx — explicit Sunday==0 guard (avoids `||` collapsing day 0 to 1), preferredDay sent only for weekly frequency, local saveError state isolated per edit session.",
+    "lib/realtor-api.ts request<T>() and lib/auth-context.tsx — all fetches check response.ok, distinguish 401/403 (definitive) from 5xx/network (transient), and surface typed errors; providers/TenantProvider.tsx hydration-safe."
+  ],
+  "signals": []
+}

@@ -15,7 +15,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use std::{
-    collections::HashMap,
+    collections::{BTreeMap, HashMap},
     sync::Arc,
     time::{Duration, Instant},
 };
@@ -27,18 +27,206 @@ use utoipa::{IntoParams, ToSchema};
 struct CacheEntry {
     data: Vec<DistrictPriceData>,
     expires_at: Instant,
+    /// Monotonic insertion sequence — the eviction-order key into
+    /// [`BoundedCache::order`]. Assigned by [`BoundedCache::insert`]; callers
+    /// never set it.
+    seq: u64,
 }
 
 /// Global price map cache (key = serialised query parameters).
-static PRICE_MAP_CACHE: std::sync::OnceLock<Arc<RwLock<HashMap<String, CacheEntry>>>> =
-    std::sync::OnceLock::new();
+static PRICE_MAP_CACHE: std::sync::OnceLock<Arc<RwLock<BoundedCache>>> = std::sync::OnceLock::new();
 
-fn price_map_cache() -> &'static Arc<RwLock<HashMap<String, CacheEntry>>> {
-    PRICE_MAP_CACHE.get_or_init(|| Arc::new(RwLock::new(HashMap::new())))
+fn price_map_cache() -> &'static Arc<RwLock<BoundedCache>> {
+    PRICE_MAP_CACHE.get_or_init(|| Arc::new(RwLock::new(BoundedCache::new())))
 }
 
 /// Cache TTL: 1 hour.
 const CACHE_TTL: Duration = Duration::from_secs(3600);
+
+/// Hard cap on the number of distinct entries held by [`PRICE_MAP_CACHE`].
+///
+/// The cache key embeds the attacker-controlled `city` / `property_type` query
+/// parameters off the public, unauthenticated `GET /api/v1/price-map` handler,
+/// so an anonymous client looping distinct `?city=<random>` values would
+/// otherwise accumulate a brand-new entry per value inside the 1 h TTL window
+/// and grow the heap without bound (OOM DoS). Bounding the map inline on every
+/// insert caps memory regardless of how many distinct keys are presented —
+/// mirroring `INQUIRY_RATE_LIMIT_MAX_IPS` for the sibling anonymous-abuse
+/// surface in `state.rs`. Kept well below that 100k cap because each entry
+/// carries a `Vec<DistrictPriceData>`, not a bare counter.
+const MAX_PRICE_MAP_CACHE_ENTRIES: usize = 10_000;
+
+/// Bounded, insertion-ordered price-map cache.
+///
+/// A lookup `HashMap` paired with a monotonic insertion-order index
+/// (`BTreeMap<seq, key>`). Both eviction policies run **without cloning the
+/// keyset or sorting on every insert** — the fix for the "eviction amplifies
+/// the flood" DoS follow-up (#3132, on PR #3092):
+///
+/// 1. **TTL (correctness):** expired entries are reclaimed by popping the front
+///    of the order index while it is expired — amortised O(1) per reclaimed
+///    entry instead of an O(n) `retain` scan on every insert. A stale
+///    aggregation is never served (the read path re-checks `expires_at` too).
+/// 2. **Size cap (memory bound):** a genuinely new key that would exceed
+///    `MAX_PRICE_MAP_CACHE_ENTRIES` evicts the single oldest-inserted entry
+///    (front of the index) — O(log n), no full-keyset clone, no O(n log n)
+///    sort. Under the distinct-key flood this defends against, each at-capacity
+///    insert is now one BTree pop + one map insert while holding the write
+///    lock, rather than cloning and sorting ~10k keys. OOM stays fixed and the
+///    CPU/lock-contention amplifier is gone.
+///
+/// **Invariant:** `expires_at` is monotonic non-decreasing in `seq` (every
+/// entry shares the constant `CACHE_TTL`, the `Instant` clock is monotonic, and
+/// a replaced key is re-sequenced to the back with a fresh `expires_at`), so
+/// the front of `order` is always the oldest-inserted and soonest-to-expire
+/// live entry — making the FIFO order exact for both policies.
+#[derive(Default)]
+struct BoundedCache {
+    /// key -> entry (the entry carries its own `seq`).
+    entries: HashMap<String, CacheEntry>,
+    /// insertion sequence -> key, ascending (front == oldest-inserted).
+    order: BTreeMap<u64, String>,
+    /// Next insertion sequence to hand out (strictly monotonic).
+    next_seq: u64,
+}
+
+impl BoundedCache {
+    fn new() -> Self {
+        Self::default()
+    }
+
+    /// Look up an entry by key. The caller re-checks `expires_at` before
+    /// serving, so a not-yet-reclaimed stale entry is never returned as live.
+    fn get(&self, key: &str) -> Option<&CacheEntry> {
+        self.entries.get(key)
+    }
+
+    /// Evict the oldest-inserted (front) entry, keeping `entries` and `order`
+    /// in sync. Returns the evicted key, or `None` when empty.
+    fn evict_oldest(&mut self) -> Option<String> {
+        let (seq, key) = self.order.first_key_value().map(|(&s, k)| (s, k.clone()))?;
+        self.order.remove(&seq);
+        self.entries.remove(&key);
+        Some(key)
+    }
+
+    /// Insert `data` under `key`, keeping the cache correct and bounded.
+    fn insert(&mut self, key: String, data: Vec<DistrictPriceData>, expires_at: Instant) {
+        let now = Instant::now();
+        // (1) Correctness: reclaim TTL-expired entries from the front (oldest
+        // first). Stops at the first live entry — O(1) under the flood, where
+        // nothing has expired yet, instead of an O(n) scan of the whole map.
+        while let Some((seq, front_key)) =
+            self.order.first_key_value().map(|(&s, k)| (s, k.clone()))
+        {
+            let expired = self
+                .entries
+                .get(&front_key)
+                .map(|e| e.expires_at <= now)
+                .unwrap_or(true);
+            if !expired {
+                break;
+            }
+            self.order.remove(&seq);
+            self.entries.remove(&front_key);
+        }
+        // (2) Replacing an existing key must not grow the map: drop its old
+        // order slot so the refreshed entry re-sequences to the back (youngest)
+        // below, and the size-cap check sees the correct post-removal length.
+        if let Some(prev) = self.entries.remove(&key) {
+            self.order.remove(&prev.seq);
+        }
+        // (3) Memory bound: evict the oldest-inserted entry until there is room
+        // for exactly one more. Normally runs zero or one time (the map grows
+        // one key at a time), so no sort or full-keyset clone is ever needed.
+        while self.entries.len() >= MAX_PRICE_MAP_CACHE_ENTRIES {
+            if self.evict_oldest().is_none() {
+                break;
+            }
+        }
+        // (4) Insert at the back with a fresh monotonic sequence.
+        let seq = self.next_seq;
+        self.next_seq += 1;
+        self.order.insert(seq, key.clone());
+        self.entries.insert(
+            key,
+            CacheEntry {
+                data,
+                expires_at,
+                seq,
+            },
+        );
+    }
+
+    #[cfg(test)]
+    fn len(&self) -> usize {
+        self.entries.len()
+    }
+
+    #[cfg(test)]
+    fn contains_key(&self, key: &str) -> bool {
+        self.entries.contains_key(key)
+    }
+}
+
+/// Build the ILIKE pattern for the optional `city` substring filter.
+///
+/// The user-supplied `city` is matched as a substring (`%…%`), but LIKE/ILIKE
+/// metacharacters (`%`, `_`, and the `\` escape char) inside the user's own
+/// input must be matched *literally* — otherwise `?city=100%` degrades to
+/// "match every city" and `?city=a_b` matches `axb`, silently returning the
+/// wrong aggregation on the public, unauthenticated endpoint. Postgres LIKE's
+/// default escape character is backslash, so we backslash-escape those three
+/// characters (backslash first) before wrapping in the substring wildcards.
+fn city_like_pattern(city: &str) -> String {
+    // Backslash-escape LIKE metacharacters (backslash first) so user input is
+    // matched literally under Postgres ILIKE's default `\` escape character.
+    let escaped = city
+        .replace('\\', "\\\\")
+        .replace('%', "\\%")
+        .replace('_', "\\_");
+    format!("%{escaped}%")
+}
+
+/// Validate the `mode` query parameter against the allowed transaction types.
+///
+/// Mirrors the `time_window` validation in [`get_price_map`]: an unsupported
+/// value must be rejected up-front with 400 rather than bound as an unknown
+/// `transaction_type = $1` (which matches zero rows, then echoes the bogus
+/// `mode` back and caches that empty aggregation for the full TTL). Allowed
+/// values are the canonical `transaction_type` enum (`sale`, `rent`).
+fn validate_mode(mode: &str) -> Result<(), String> {
+    use db::models::transaction_type as tx;
+    match mode {
+        tx::SALE | tx::RENT => Ok(()),
+        other => Err(format!(
+            "Unsupported mode {other:?} — expected one of sale, rent"
+        )),
+    }
+}
+
+/// Validate the optional `property_type` query parameter against the canonical
+/// listing `property_type` enum. `None` (no filter) is always valid; any present
+/// value must be a known type, otherwise 400 — consistent with [`validate_mode`]
+/// and the `time_window` check.
+fn validate_property_type(property_type: Option<&str>) -> Result<(), String> {
+    use db::models::property_type as pt;
+    match property_type {
+        None => Ok(()),
+        Some(
+            pt::APARTMENT
+            | pt::HOUSE
+            | pt::COMMERCIAL
+            | pt::LAND
+            | pt::PARKING
+            | pt::STORAGE
+            | pt::OTHER,
+        ) => Ok(()),
+        Some(other) => Err(format!(
+            "Unsupported property_type {other:?} — expected one of apartment, house, commercial, land, parking, storage, other"
+        )),
+    }
+}
 
 /// Create price map router.
 pub fn router() -> Router<AppState> {
@@ -122,6 +310,15 @@ pub async fn get_price_map(
         }
     };
 
+    // Validate mode and property_type up-front, mirroring the time_window check
+    // above: reject unsupported values with 400 rather than binding an unknown
+    // value that matches zero rows and then caching that empty aggregation for
+    // the full TTL. Runs BEFORE the cache read, the DB query, and the cache
+    // write.
+    validate_mode(&mode).map_err(|msg| (axum::http::StatusCode::BAD_REQUEST, msg))?;
+    validate_property_type(query.property_type.as_deref())
+        .map_err(|msg| (axum::http::StatusCode::BAD_REQUEST, msg))?;
+
     let cache_key = format!(
         "{}:{}:{}:{}",
         mode,
@@ -147,12 +344,10 @@ pub async fn get_price_map(
         }
     }
 
-    let mut conn = state.acquire_public_conn().await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Database error: {}", e),
-        )
-    })?;
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| crate::util::errors::db_error("acquire db connection", e))?;
 
     // Aggregate current-period avg price/m² by city.
     // size_sqm is the listings column; price/size_sqm gives €/m².
@@ -203,20 +398,22 @@ pub async fn get_price_map(
         interval = interval,
     );
 
-    let city_pattern = query.city.as_ref().map(|c| format!("%{}%", c));
+    let city_pattern = query.city.as_deref().map(city_like_pattern);
 
+    // SAFETY (sqlx::AssertSqlSafe): the only value interpolated into `sql` via
+    // `format!` is `interval`, a `&'static str` chosen from the closed match on
+    // `time_window_str` above (any other value already returned 400). It is
+    // never derived from request input. All request-controlled values — mode,
+    // property_type and the city pattern — are passed as bound parameters
+    // ($1/$2/$3), so no untrusted data reaches the query text. Opting out of the
+    // SQL-injection guard here is sound.
     let rows = sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&mode)
         .bind(&query.property_type)
         .bind(&city_pattern)
         .fetch_all(&mut *conn)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to aggregate price map data: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("aggregate price map data", e))?;
 
     let districts: Vec<DistrictPriceData> = rows
         .into_iter()
@@ -229,18 +426,15 @@ pub async fn get_price_map(
         })
         .collect();
 
-    // Store in cache (async write lock — never blocks Tokio worker)
+    // Store in cache (async write lock — never blocks Tokio worker).
+    // `BoundedCache::insert` reclaims TTL-expired entries and enforces the size
+    // cap via an insertion-order index, so the map can never grow past
+    // `MAX_PRICE_MAP_CACHE_ENTRIES` — and each insert stays O(log n) rather than
+    // cloning + sorting the whole keyset — even when an anonymous caller rotates
+    // distinct `city` / `property_type` values.
     {
         let mut cache = price_map_cache().write().await;
-        // Evict expired entries to avoid unbounded growth
-        cache.retain(|_, v| Instant::now() < v.expires_at);
-        cache.insert(
-            cache_key,
-            CacheEntry {
-                data: districts.clone(),
-                expires_at: Instant::now() + CACHE_TTL,
-            },
-        );
+        cache.insert(cache_key, districts.clone(), Instant::now() + CACHE_TTL);
     }
 
     Ok(Json(PriceMapResponse {
@@ -251,4 +445,236 @@ pub async fn get_price_map(
         time_window: time_window_str,
         cached: false,
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Regression: an unsupported `mode` must be rejected up-front (→ 400),
+    /// mirroring the `time_window` validation. Before the fix, `validate_mode`
+    /// accepted ANY string, so `?mode=foo` bound `transaction_type = 'foo'`,
+    /// matched zero rows, returned HTTP 200 with an empty `districts` list while
+    /// echoing `mode: "foo"`, and cached that empty result for the 1 h TTL. Only
+    /// the canonical `sale` / `rent` transaction types are valid.
+    #[test]
+    fn validate_mode_rejects_unknown_and_accepts_known() {
+        assert!(validate_mode("sale").is_ok());
+        assert!(validate_mode("rent").is_ok());
+
+        let err = validate_mode("foo").expect_err("unknown mode must be rejected");
+        assert!(
+            err.contains("Unsupported mode"),
+            "message should mirror the time_window style, got: {err}"
+        );
+        // Validation is case-sensitive — the DB column stores lowercase values.
+        assert!(validate_mode("SALE").is_err());
+        assert!(validate_mode("").is_err());
+    }
+
+    /// Regression: an unsupported `property_type` must be rejected (→ 400), while
+    /// `None` (no filter) and every canonical listing `property_type` are
+    /// accepted. Before the fix, an unknown `property_type` was bound as
+    /// `property_type = $2`, silently matched nothing, and cached the empty
+    /// aggregation for the TTL — the same consistency gap as `mode`.
+    #[test]
+    fn validate_property_type_rejects_unknown_and_accepts_known_or_none() {
+        assert!(validate_property_type(None).is_ok());
+        for ok in [
+            "apartment",
+            "house",
+            "commercial",
+            "land",
+            "parking",
+            "storage",
+            "other",
+        ] {
+            assert!(
+                validate_property_type(Some(ok)).is_ok(),
+                "{ok} must be accepted"
+            );
+        }
+
+        let err = validate_property_type(Some("mansion"))
+            .expect_err("unknown property_type must be rejected");
+        assert!(
+            err.contains("Unsupported property_type"),
+            "message should mirror the time_window style, got: {err}"
+        );
+    }
+
+    /// Regression: the `city` substring filter must treat LIKE/ILIKE
+    /// metacharacters in the *user's* input literally. Before the escape fix,
+    /// `?city=100%` built the pattern `%100%%` — where the embedded `%` is a
+    /// wildcard — so the filter matched every city instead of the literal
+    /// "100%", and `?city=a_b` matched `axb`. The public endpoint then returned
+    /// a wrong (over-broad) aggregation. After the fix the metacharacters are
+    /// backslash-escaped and only plain substrings pass through unchanged.
+    #[test]
+    fn city_like_pattern_escapes_like_metacharacters() {
+        // Plain input is unchanged — backward-compatible substring match.
+        assert_eq!(city_like_pattern("Bratislava"), "%Bratislava%");
+        // `%` and `_` in user input must be escaped so they match literally.
+        assert_eq!(city_like_pattern("100%"), "%100\\%%");
+        assert_eq!(city_like_pattern("a_b"), "%a\\_b%");
+        // The escape character itself must be escaped first.
+        assert_eq!(city_like_pattern("c:\\d"), "%c:\\\\d%");
+    }
+
+    /// Regression for the unbounded-cache DoS: an anonymous caller rotating
+    /// distinct `city` values inserts a brand-new key every time within the TTL
+    /// window. Without the size cap the map grows past the cap; with it the map
+    /// plateaus at `MAX_PRICE_MAP_CACHE_ENTRIES` and the oldest-inserted keys
+    /// are the ones evicted.
+    #[test]
+    fn price_map_cache_bounded_under_distinct_key_flood() {
+        let base = Instant::now();
+        let mut cache = BoundedCache::new();
+        let n = MAX_PRICE_MAP_CACHE_ENTRIES + 10;
+        for i in 0..n {
+            // Monotonic, comfortably-live expiries keep every entry past `now`
+            // so this test isolates the size cap from the TTL sweep.
+            cache.insert(
+                format!("sale:3m::city-{i:08}"),
+                Vec::new(),
+                base + CACHE_TTL + Duration::from_secs(i as u64),
+            );
+        }
+
+        assert_eq!(
+            cache.len(),
+            MAX_PRICE_MAP_CACHE_ENTRIES,
+            "cache must stay bounded at MAX_PRICE_MAP_CACHE_ENTRIES after a distinct-key flood within the TTL"
+        );
+        assert!(
+            !cache.contains_key("sale:3m::city-00000000"),
+            "oldest-inserted key must have been evicted under the size cap"
+        );
+        assert!(
+            cache.contains_key(&format!("sale:3m::city-{:08}", n - 1)),
+            "most-recently-inserted key must be retained"
+        );
+    }
+
+    /// Follow-up regression (#3132): under a burst where every entry lands in
+    /// the same clock tick (identical `expires_at`), size-cap eviction must
+    /// still be deterministic oldest-inserted-first. The previous
+    /// sort-by-`expires_at` eviction broke ties by `HashMap` iteration order
+    /// (nondeterministic); the insertion-order index makes it exact. The first
+    /// `EVICTED` inserted keys are dropped; the last `MAX` are retained.
+    #[test]
+    fn price_map_cache_evicts_in_insertion_order_under_tied_expiry() {
+        // All entries share one expiry — the realistic coarse-clock / burst
+        // case — so eviction order is decided purely by insertion order.
+        let tied = Instant::now() + CACHE_TTL;
+        let mut cache = BoundedCache::new();
+        const EVICTED: usize = 256;
+        let n = MAX_PRICE_MAP_CACHE_ENTRIES + EVICTED;
+        for i in 0..n {
+            cache.insert(format!("city-{i:08}"), Vec::new(), tied);
+        }
+
+        assert_eq!(cache.len(), MAX_PRICE_MAP_CACHE_ENTRIES);
+        for i in 0..EVICTED {
+            assert!(
+                !cache.contains_key(&format!("city-{i:08}")),
+                "oldest-inserted key city-{i:08} must be evicted first under tied expiry"
+            );
+        }
+        for i in EVICTED..n {
+            assert!(
+                cache.contains_key(&format!("city-{i:08}")),
+                "recently-inserted key city-{i:08} must be retained"
+            );
+        }
+    }
+
+    /// Re-inserting an existing key refreshes it in place: the map does not
+    /// grow, and the refreshed key moves to the youngest slot so it survives
+    /// a subsequent size-cap eviction (it is no longer the oldest).
+    #[test]
+    fn price_map_cache_replace_refreshes_without_growing() {
+        let tied = Instant::now() + CACHE_TTL;
+        let mut cache = BoundedCache::new();
+        for i in 0..MAX_PRICE_MAP_CACHE_ENTRIES {
+            cache.insert(format!("city-{i:08}"), Vec::new(), tied);
+        }
+        assert_eq!(cache.len(), MAX_PRICE_MAP_CACHE_ENTRIES);
+
+        // Refresh the oldest key — must not grow the map and must move it to
+        // the back of the eviction order.
+        cache.insert("city-00000000".to_string(), Vec::new(), tied);
+        assert_eq!(
+            cache.len(),
+            MAX_PRICE_MAP_CACHE_ENTRIES,
+            "replacing an existing key must not grow the map"
+        );
+
+        // One genuinely new key now evicts the *new* oldest (city-00000001),
+        // not the just-refreshed city-00000000.
+        cache.insert("city-new".to_string(), Vec::new(), tied);
+        assert_eq!(cache.len(), MAX_PRICE_MAP_CACHE_ENTRIES);
+        assert!(
+            cache.contains_key("city-00000000"),
+            "refreshed key must survive — it is no longer the oldest"
+        );
+        assert!(
+            !cache.contains_key("city-00000001"),
+            "the new oldest key must be the one evicted"
+        );
+        assert!(cache.contains_key("city-new"));
+    }
+
+    /// The TTL sweep alone keeps already-expired entries from accumulating,
+    /// independently of the size cap.
+    #[test]
+    fn price_map_cache_drops_ttl_expired_entries_on_insert() {
+        let mut cache = BoundedCache::new();
+        // Pre-seed an already-expired entry.
+        cache.insert(
+            "stale".to_string(),
+            Vec::new(),
+            Instant::now() - Duration::from_secs(1),
+        );
+        cache.insert("fresh".to_string(), Vec::new(), Instant::now() + CACHE_TTL);
+
+        assert!(
+            !cache.contains_key("stale"),
+            "expired entry must be reclaimed"
+        );
+        assert!(cache.contains_key("fresh"));
+        assert_eq!(cache.len(), 1);
+    }
+
+    /// Thread-safety: two tasks each flood `MAX/2 + 1` distinct keys through
+    /// the shared write lock; the final size must still respect the cap.
+    #[tokio::test]
+    async fn price_map_cache_bounded_under_concurrent_distinct_key_flood() {
+        let cache: Arc<RwLock<BoundedCache>> = Arc::new(RwLock::new(BoundedCache::new()));
+        let per_task = MAX_PRICE_MAP_CACHE_ENTRIES / 2 + 1;
+
+        let mut handles = Vec::new();
+        for t in 0..2u64 {
+            let cache = cache.clone();
+            handles.push(tokio::spawn(async move {
+                for i in 0..per_task {
+                    let mut w = cache.write().await;
+                    w.insert(
+                        format!("t{t}:city-{i}"),
+                        Vec::new(),
+                        Instant::now() + CACHE_TTL,
+                    );
+                }
+            }));
+        }
+        for h in handles {
+            h.await.unwrap();
+        }
+
+        let len = cache.read().await.len();
+        assert!(
+            len <= MAX_PRICE_MAP_CACHE_ENTRIES,
+            "concurrent flood pushed cache to {len}, over the {MAX_PRICE_MAP_CACHE_ENTRIES} cap"
+        );
+    }
 }

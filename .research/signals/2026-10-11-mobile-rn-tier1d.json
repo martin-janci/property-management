@@ -1,0 +1,70 @@
+{
+  "generated": "2026-10-11T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator; static single-segment rotating review (ppt-dev-review), no compilation/tests.",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "oldest-unreviewed (cursor 2026-10-01)",
+  "experts_used": [
+    "frontend",
+    "tester",
+    "completeness"
+  ],
+  "findings_count": 3,
+  "static_only": true,
+  "cloud_landable": "yes",
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-states-untested-hardcoded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "expert": "tester",
+      "files": [
+        "frontend/apps/mobile/src/components/states/ErrorState.tsx",
+        "frontend/apps/mobile/src/components/states/LoadingSkeleton.tsx",
+        "frontend/apps/mobile/src/components/states/EmptyState.tsx"
+      ],
+      "evidence": [
+        "components/states/{ErrorState,EmptyState,LoadingSkeleton}.tsx are the shared loading/error/empty primitives used across screens, yet no test file anywhere in src references them (grep for ErrorState/EmptyState in *test* returns 0).",
+        "ErrorState.tsx:20,23 default props are hardcoded English ('Something went wrong', 'Try again') not routed through t(), and LoadingSkeleton.tsx:67,78,88 sets accessibilityLabel=\"Loading\" in English, so screen readers announce English in sk/cs/de locales.",
+        "Frontend-only, cloud-landable: add a small render test (retry press fires onRetry, progressbar role present) and switch defaults to useTranslation keys in locales."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-feedback-device-info-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/mobile/src/screens/help/FeedbackScreen.tsx"
+      ],
+      "evidence": [
+        "FeedbackScreen.tsx:~206-211 renders literal English 'Platform: ...' and 'App: v... (Build ...)' inside an otherwise t()-translated device-info preview, and :216 Alert.alert('Diagnostic Report', ...) title is hardcoded.",
+        "Frontend-only i18n gap; add feedback.platform/feedback.appVersion/feedback.diagnosticReport keys in all mobile locales."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-sync-notifications-dead-hook",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "completeness",
+      "files": [
+        "frontend/apps/mobile/src/hooks/useSyncNotifications.ts"
+      ],
+      "evidence": [
+        "useSyncNotifications is exported from hooks/index.ts:19-20 but has zero consumers outside hooks/ (repo-wide grep) and no test file; Epic 123.2 sync-progress toast is never wired to useOfflineSupport queue processing.",
+        "showSyncSuccess/showSyncFailure accept itemName but ignore it (_itemName), and updateProgress can set current>total without clamping. Either wire into the offline sync flow with a test or remove the dead hook."
+      ]
+    }
+  ]
+}

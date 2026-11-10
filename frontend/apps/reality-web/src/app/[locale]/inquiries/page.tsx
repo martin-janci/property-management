@@ -9,35 +9,37 @@
 import type { Inquiry, InquiryStatus } from '@ppt/reality-api-client';
 import { useCancelInquiry, useMyInquiries } from '@ppt/reality-api-client';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
+import { inquiryTypeLabel } from '@/lib/inquiry-type';
 
-const statusConfig: Record<InquiryStatus, { label: string; color: string; bg: string }> = {
+// Status labels are resolved via next-intl (`pages.inquiries.status.<status>`);
+// only the presentational colors live here.
+const statusConfig: Record<InquiryStatus, { color: string; bg: string }> = {
   pending: {
-    label: 'Pending',
     color: 'var(--ppt-color-warning-dark)',
     bg: 'var(--ppt-color-warning-light)',
   },
   responded: {
-    label: 'Responded',
     color: 'var(--ppt-color-primary-hover)',
     bg: 'var(--ppt-color-primary-soft-bg)',
   },
-  scheduled: { label: 'Scheduled', color: '#6d28d9', bg: '#ede9fe' },
+  scheduled: { color: '#6d28d9', bg: '#ede9fe' },
   completed: {
-    label: 'Completed',
     color: 'var(--ppt-color-success-dark)',
     bg: 'var(--ppt-color-success-light)',
   },
   cancelled: {
-    label: 'Cancelled',
     color: 'var(--ppt-color-danger-dark)',
     bg: 'var(--ppt-color-danger-light)',
   },
 };
 
 function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
+  const t = useTranslations('pages.inquiries');
+  const tError = useTranslations('error');
   const cancelInquiry = useCancelInquiry();
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
@@ -63,12 +65,13 @@ function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
               {inquiry.listingTitle}
             </Link>
             <p className="inquiry-date">
-              {new Date(inquiry.createdAt).toLocaleDateString()} • {inquiry.type.replace('_', ' ')}
+              {new Date(inquiry.createdAt).toLocaleDateString()} •{' '}
+              {inquiryTypeLabel(t, inquiry.type)}
             </p>
           </div>
         </div>
         <span className="status-badge" style={{ color: status.color, background: status.bg }}>
-          {status.label}
+          {t(`status.${inquiry.status}`)}
         </span>
       </div>
 
@@ -92,15 +95,17 @@ function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
               <line x1="3" y1="10" x2="21" y2="10" />
             </svg>
             <span>
-              Viewing scheduled: {new Date(inquiry.scheduledViewing.date).toLocaleDateString()} at{' '}
-              {inquiry.scheduledViewing.timeSlot}
+              {t('viewingScheduled', {
+                date: new Date(inquiry.scheduledViewing.date).toLocaleDateString(),
+                time: inquiry.scheduledViewing.timeSlot,
+              })}
             </span>
           </div>
         )}
 
         {inquiry.agentResponse && (
           <div className="agent-response">
-            <p className="response-label">Agent response:</p>
+            <p className="response-label">{t('agentResponse')}</p>
             <p className="response-text">{inquiry.agentResponse}</p>
             {inquiry.respondedAt && (
               <p className="response-date">{new Date(inquiry.respondedAt).toLocaleDateString()}</p>
@@ -113,16 +118,16 @@ function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
         <div className="card-footer">
           {showCancelConfirm ? (
             <div className="cancel-confirm">
-              <span>Cancel this inquiry?</span>
+              <span>{t('cancelConfirm')}</span>
               <button type="button" className="confirm-yes" onClick={handleCancel}>
-                Yes, cancel
+                {t('cancelYes')}
               </button>
               <button
                 type="button"
                 className="confirm-no"
                 onClick={() => setShowCancelConfirm(false)}
               >
-                No
+                {t('cancelNo')}
               </button>
             </div>
           ) : (
@@ -131,8 +136,13 @@ function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
               className="cancel-button"
               onClick={() => setShowCancelConfirm(true)}
             >
-              Cancel inquiry
+              {t('cancelInquiry')}
             </button>
+          )}
+          {cancelInquiry.isError && (
+            <p className="cancel-error" role="alert" aria-live="assertive">
+              {tError('description')}
+            </p>
           )}
         </div>
       )}
@@ -263,6 +273,12 @@ function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
           color: var(--ppt-color-danger-hover);
         }
 
+        .cancel-error {
+          margin: 8px 0 0;
+          color: var(--ppt-color-danger-hover);
+          font-size: 13px;
+        }
+
         .cancel-confirm {
           display: flex;
           align-items: center;
@@ -295,6 +311,7 @@ function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
 }
 
 function InquiriesContent() {
+  const t = useTranslations('pages.inquiries');
   const [statusFilter, setStatusFilter] = useState<InquiryStatus | undefined>(undefined);
   const [page, setPage] = useState(1);
   const { data, isLoading, error } = useMyInquiries(statusFilter, page, 10);
@@ -329,7 +346,7 @@ function InquiriesContent() {
   if (error) {
     return (
       <div className="error-state">
-        <p>Failed to load inquiries. Please try again.</p>
+        <p>{t('error')}</p>
         <style jsx>{`
           .error-state {
             padding: 64px 24px;
@@ -353,7 +370,7 @@ function InquiriesContent() {
             setPage(1);
           }}
         >
-          All
+          {t('filterAll')}
         </button>
         {(Object.keys(statusConfig) as InquiryStatus[]).map((status) => (
           <button
@@ -365,7 +382,7 @@ function InquiriesContent() {
               setPage(1);
             }}
           >
-            {statusConfig[status].label}
+            {t(`status.${status}`)}
           </button>
         ))}
       </div>
@@ -384,12 +401,10 @@ function InquiriesContent() {
             <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
             <polyline points="22,6 12,13 2,6" />
           </svg>
-          <h2 className="empty-title">No inquiries yet</h2>
-          <p className="empty-text">
-            When you contact agents about listings, your inquiries will appear here.
-          </p>
+          <h2 className="empty-title">{t('emptyTitle')}</h2>
+          <p className="empty-text">{t('emptyText')}</p>
           <Link href="/listings" className="browse-link">
-            Browse listings
+            {t('browseListings')}
           </Link>
         </div>
       ) : (
@@ -408,18 +423,16 @@ function InquiriesContent() {
                 onClick={() => setPage((p) => p - 1)}
                 className="page-button"
               >
-                Previous
+                {t('previous')}
               </button>
-              <span className="page-info">
-                Page {page} of {data.totalPages}
-              </span>
+              <span className="page-info">{t('pageInfo', { page, total: data.totalPages })}</span>
               <button
                 type="button"
                 disabled={page >= data.totalPages}
                 onClick={() => setPage((p) => p + 1)}
                 className="page-button"
               >
-                Next
+                {t('next')}
               </button>
             </div>
           )}
@@ -533,13 +546,14 @@ function InquiriesContent() {
 }
 
 export default function InquiriesPage() {
+  const t = useTranslations('pages.inquiries');
   return (
     <div className="page-container">
       <Header />
       <main className="main">
         <div className="container">
-          <h1 className="page-title">My Inquiries</h1>
-          <p className="page-subtitle">Track your property inquiries and viewing requests.</p>
+          <h1 className="page-title">{t('title')}</h1>
+          <p className="page-subtitle">{t('subtitle')}</p>
           <ProtectedRoute>
             <InquiriesContent />
           </ProtectedRoute>

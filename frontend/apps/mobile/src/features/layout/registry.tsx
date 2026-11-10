@@ -3,6 +3,7 @@ import { createContext, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
+import { formatDate as formatLocaleDate } from '../../i18n/format';
 import { colors } from '../../screens/shared/screenStyles';
 import type { ResolvedScreen } from './types';
 
@@ -120,7 +121,7 @@ export function DashboardStatsSection({ mode: _mode, props: _props }: SectionCom
 
 // --- ActionQueueSection ---
 export function ActionQueueSection({ mode: _mode, props: _props }: SectionComponentProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
 
   const votesQuery = useApiQuery<ApiVoteListResponse>(['dashboard', 'votes'], '/api/v1/voting', {
     staleTime: 60_000,
@@ -136,10 +137,8 @@ export function ActionQueueSection({ mode: _mode, props: _props }: SectionCompon
       dueDate: v.end_at,
     }));
 
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString(i18n.language, { month: 'short', day: 'numeric' });
-  };
+  const formatDate = (dateString: string): string =>
+    formatLocaleDate(dateString, { month: 'short', day: 'numeric' });
 
   const getActionIcon = (type: PendingAction['type']): string => {
     switch (type) {

@@ -1,0 +1,46 @@
+{
+  "generated": "2026-09-02T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven (buffer starved, LANDABLE-only) 2026-09-02",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "saturation-skip then oldest-unreviewed (landable only). mobile-native-kmp was the oldest cursor (2026-08-25) but is the parked cloud-build blocker (structurally unlandable) and already ran 2026-09-01, so it was excluded. reality-web (2026-08-29) was reviewed first this run but proved saturated: every concrete bug found was an exact duplicate of fresh 2026-08-27 signals (listings-url-nan-query at listings/page.tsx:112-144; import-delete-toggle-unhandled at FeedImport.tsx:154-165) — so per the skill's saturation-skip intent the pass moved to ppt-web-core (also 2026-08-29, squarely landable, hooks/lib/contexts/routes). ppt-web-ui already ran earlier today.",
+  "experts_used": ["frontend"],
+  "findings_count": 1,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-route-groups-no-protectedroute",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02 ppt-web-core routes)",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/accounting.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/disputes.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/messaging.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/neighbors.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/outages.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/announcements.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/ai-dashboards.tsx",
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx",
+        "frontend/apps/ppt-web/src/App.tsx",
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/buildings.tsx"
+      ],
+      "evidence": [
+        "ppt-web has NO global auth gate: App.tsx:272-275 renders `<RouteErrorBoundary><Suspense><AppRoutes/></Suspense></RouteErrorBoundary>` inside the always-rendered app shell (the shell only toggles header UI on `isAuthenticated`, App.tsx:164/173/183). AppRoutes.tsx:39-67 composes every feature route-group fragment flat under a single `<Routes>` with no enclosing `<Route element={<ProtectedRoute/>}>` parent. So the ONLY auth gate for a feature route is a per-route `<ProtectedRoute>` wrapper inside its group file.",
+        "ProtectedRoute.tsx:92-122 is the gate: when `!isLoading && !isAuthenticated` it stores the return URL and `return <Navigate to={redirectTo} replace/>` (redirect to /login). Groups that wrap each element in it therefore bounce unauthenticated users to login — e.g. buildings.tsx:47-80 wraps every `<Route element={<ProtectedRoute>…</ProtectedRoute>}/>`; same in leases.tsx, meters.tsx, documents.tsx, rentals.tsx (auth guard added by PR #2648), reports.tsx, voting.tsx, person-months.tsx, core.tsx, notifications.tsx.",
+        "11 route groups mount their pages as BARE `<Route element={<…PageRoute/>}/>` with ZERO ProtectedRoute wrapper (grep `ProtectedRoute` count = 0 in each): financial.tsx:466-474 (/financial, /financial/invoices, /financial/payments, /financial/budgets, /financial/reports), accounting.tsx:9-14 (/accounting/invoices, /accounting/payment-matching), faults.tsx, community.tsx, disputes.tsx, iot.tsx, messaging.tsx, neighbors.tsx, outages.tsx, announcements.tsx, ai-dashboards.tsx. An unauthenticated user navigating directly to e.g. /financial or /accounting/invoices is NOT redirected to login — the authenticated-only page shell renders instead.",
+        "The financial wrappers do not self-guard: FinancialDashboardPageRoute (financial.tsx:66-68) only does `const { user } = useAuth(); const orgId = user?.organizationId ?? ''` and gates its money queries with `enabled: !!orgId` (financial.tsx:73/78/83); InvoiceManagement/PaymentManagement/FinancialReports wrappers (financial.tsx:148/257/384) follow the same read-only `user?.…` pattern with no `if (!isAuthenticated) return <Navigate/>`. There is no internal redirect anywhere in the group.",
+        "Data-leak is BOUNDED, which is why this is scored medium (+2) not high: with no `user` the org-scoped queries stay disabled (`enabled:!!orgId` with orgId='') and the reality-server/api-server require auth (401), so no tenant financial data is actually fetched or shown to an anonymous visitor. The defect is a broken-access-control / missing-redirect posture bug (CWE-284): protected app surfaces are reachable without authentication and render a broken empty shell instead of sending the user to /login (and losing the return-URL capture that ProtectedRoute.tsx:43-49 provides). Money-sensitive surfaces (financial, accounting) are among the unguarded set.",
+        "This is a distinct, systemic, LANDABLE finding — not the same as the done route items (security-role-gate-fail-open = ProtectedRoute's own role check; code-review-ppt-web-ui-protectedroute-i18n = untranslated gate copy; screen-map-drift-pr-2648-ppt = rentals-only mutation guard). Mechanical fix: wrap each `<Route>` element in these 11 group files with `<ProtectedRoute>` (importing from '../../components'), mirroring buildings.tsx:47-80, so the whole app enforces auth uniformly at the routing layer. Confidence medium: the missing-wrapper + no-global-gate mechanism is code-verified end to end (App.tsx -> AppRoutes -> group -> ProtectedRoute), but the exact anonymous-visitor render is not runtime-confirmed (static analysis, no execution)."
+      ]
+    }
+  ]
+}

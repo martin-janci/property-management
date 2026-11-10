@@ -1,0 +1,52 @@
+{
+  "generated": "2026-10-22T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claim buffer starved: claimable=16 < floor=36; all other deterministic refill tiers exhausted this run). Static single-segment rotating code review per .claude/skills/ppt-dev-review/SKILL.md — no compilation, no test execution, no branch checkout (cloud runner: file reading + grep only). DISPATCHER_OWNED_COMMIT=1: this artifact was written into the working tree only; no git add/commit/push and no branch/checkout performed, and .research/management/assignments.json was not touched — the orchestrator folds .research deltas into its Phase 6 commit. Segment selection: no Phase-1 churn list was handed to this demand-driven invocation (state.json hotspot_history entries are all 2026-05, ~5 months stale, so priority-1 churn-alignment was treated as empty), so selection fell to priority-2 oldest-unreviewed. state.json review_cursor dates: reality-web=2026-10-17 (oldest), mobile-native-kmp=2026-10-18, api-handlers=2026-10-19 (also saturated: 3 open code-review-finding rows), mobile-rn=2026-10-19, and api-core/reality-server/ppt-web-ui/ppt-web-core all at 2026-10-22 (reviewed today). reality-web is the strict oldest and is NOT saturated (0 open code-review-finding rows for segment==reality-web in backlog.json), so it was selected. Scope mapped to this repo's actual layout: the skill's reality-web root (frontend/reality-web/src) maps to frontend/apps/reality-web/src (pnpm workspace nests apps under apps/). Primary expert: Frontend (no secondary per segment-expert matrix). VERIFIED-CLEAN / NOT-FINDINGS this pass (honest de-duplication against backlog.json): (a) every production fetch site checks response.ok before parsing — ComparisonUrlHandler.tsx:44 (throws on !ok, Promise.allSettled for graceful partial degradation), listings/[slug]/page.tsx:79 (returns null on !ok, then parseListingDetail validates the 200 body shape), lib/realtor-api.ts:37 (RealtorApiError with message extraction), middleware.ts:88 (fails open to normal traffic), auth-context.tsx:89/142 (transient-5xx vs genuine-401/403 distinction so a struggling backend never force-logs-out) — all defensively written with issue references; (b) OAuth/SSO callback auth/callback/page.tsx is hardened — CSRF state required whenever a nonce was issued (GH #1826 finding-2 fix) and open-redirect guard rejects //, /\\ (same-origin path-only); (c) all dangerouslySetInnerHTML uses are JSON-LD / theme-bootstrap with escaping (serializeForScript) and biome-ignore justification; (d) all localStorage/sessionStorage access is wrapped (auth-token.ts getSession try/catch at 50-66, comparison-context.tsx try/catch, hasStorage() guards); (e) every JSON.parse of stored data is inside try/catch; (f) all `as unknown as` casts are in *.test.tsx mock setup only, none cross a production API boundary; (g) the report-page disabled attachment control is INTENTIONAL and tracked (TODO #3017 with a documented rationale — prevents silently dropping evidence), so not flagged. The findings below are a single confirmed defect class — hardcoded Slovak user-facing strings bypassing next-intl on the public, SEO-indexed, 4-language (sk/cs/de/en) portal — split across two distinct screens that need separate fixes.",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": true,
+  "landability_note": "Both findings are pure frontend string-externalization work (move literals into messages/{sk,cs,de,en}.json, replace with t('...') via the existing useTranslations hook already imported in each file). No backend, migration, or API-contract change; no compilation needed to author the fix. Landable in cloud by a frontend specialist. Each page already wires next-intl (useTranslations present), so the pattern to follow is in-file.",
+  "signals": [
+    {
+      "id": "code-review-reality-web-realtor-agency-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-22 reality-web",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx:36,46,223 — the agency public profile page imports/uses useTranslations for some copy but hardcodes Slovak literals for its loading, not-found, and empty states: line 36 renders 'Načítavam…' (Loading…), line 46 'Kancelária sa nenašla.' (Office not found), line 223 'Žiadne aktívne ponuky.' (No active offers). These are the exact states a cs/de/en visitor hits most often (slow load, stale slug, agency with no listings), and all three render untranslated Slovak regardless of the active /[locale]/ prefix.",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:597 — the realtor contact form's message <textarea> placeholder is the hardcoded Slovak literal 'Dobrý deň, mám záujem o Vaše služby...' instead of a t('...') lookup. A de/en/cs user composing a lead message sees a Slovak prompt. (Line 448's '✉️ {agent.email}' is a data value, not a hardcoded string — not flagged.)",
+        "Both files already import and call useTranslations (4 t(...)/hook references each), so the i18n infrastructure is present and these literals are simply un-externalized — not a 'translations don't exist yet' gap. reality-web's whole product premise is a multi-language (sk/cs/de/en) public portal (see frontend/apps/reality-web/messages/{en,sk,cs,de}.json and apps/CLAUDE.md), so untranslated strings on public realtor/agency pages degrade the core value prop and leak into SSR/SEO output.",
+        "Severity LOW (+1): i18n gap, no correctness/security impact. Confidence medium: the hardcoded literals are confirmed by static read and the files demonstrably use next-intl elsewhere, but which non-sk locales actually render in production is config/traffic-dependent (not runtime-confirmed). Fix: move each literal into messages/*.json under the page's namespace and replace with the already-available t(...)."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-report-page-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-22 reality-web",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx:40 + an in-file comment at :26 — the report-listing page calls useTranslations('pages.report') but only routes the h1/subtitle through it (t('h1') at :260, t('subtitle') at :263); the comment at line 26 explicitly states 'only the title/subtitle go through next-intl today', confirming the rest of the form is intentionally un-externalized rather than an oversight.",
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx:361 — the report-reason <textarea> placeholder is the hardcoded Slovak sentence 'Opíšte, prečo nahlasujete tento inzerát. Čím viac detailov uvediete, tým rýchlejšie to preveríme.' with no t(...) wrapper. This is the primary input of the abuse-reporting flow, so a cs/de/en reporter gets Slovak-only guidance.",
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx (attachments block ~line 384) — the attachments field <label> renders the hardcoded Slovak 'Prílohy (čoskoro)' (Attachments (coming soon)). The disabled control itself is intentional and tracked (TODO #3017), but its label is still untranslated user-facing text. (The grep across the app flagged 21 lines carrying Slovak diacritics in this file, confirming the form body is broadly un-i18n'd.)",
+        "Severity LOW (+1): i18n gap on a public, abuse-reporting form, no correctness/security impact. Confidence medium: literals confirmed by static read and the in-file comment documents the partial-i18n state, but production locale exposure is config/traffic-dependent. Fix: externalize the report form's labels/placeholders/option text into messages/*.json under pages.report and expand the existing t(...) usage; keep the #3017 upload control disabled, only translate its label."
+      ]
+    }
+  ]
+}

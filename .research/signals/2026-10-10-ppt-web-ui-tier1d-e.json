@@ -1,0 +1,69 @@
+{
+  "generated": "2026-10-10T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (research backlog starved: claimable=9 < floor=36). Static single-segment rotating code review, no compilation / no test execution (cloud runner has no toolchain). File reading + grep only. Produces fresh CLOUD-LANDABLE frontend backlog vectors for the ppt-web-ui segment. Fifth Tier-1d slice for ppt-web-ui today (suffix -e); the segment's heavily-mined pages (portfolio deadnav/i18n, accounting invoice noop-view, moderation full-reload nav, 2FA QR silent fail, etc.) were verified already-covered in prior ppt-web-ui signal files and deliberately skipped. Findings below are net-new: they target the less-mined iot / outages / leases route-group wrappers and a shared error-handling anti-pattern not previously flagged for this segment.",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed (review_cursor.ppt-web-ui = 2026-10-01, tied-oldest with mobile-rn; segment-map order breaks tie to ppt-web-ui). No CHURN_FILES provided. No saturation skip: 0 open code-review-finding items for ppt-web-ui in backlog.json.",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "findings_count": 3,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-iot-dashboard-swallows-query-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx",
+        "frontend/apps/ppt-web/src/features/iot/pages/IotDashboardPage.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx:78-80 — the IoT dashboard wrapper destructures only `{ data, isLoading }` from useIotDashboard(), useSensors() and useSensorReadings(); the queries' isError/error are dropped and never threaded into IotDashboardPage (its props expose dashboardLoading/sensorsLoading/readingsLoading but NO error flags).",
+        "frontend/apps/ppt-web/src/features/iot/pages/IotDashboardPage.tsx:76-96 — on a failed dashboard fetch, `dashboard` is undefined and the KPI cards render `dashboard?.total_sensors ?? 0`, `active_sensors ?? 0`, `offline_sensors ?? 0`, `unresolved_alerts ?? 0`, so a manager sees an all-zero 'healthy empty building' view that is indistinguishable from a backend/network failure — misleading state on a monitoring surface (Epic 14 FR75). Fix: destructure isError from the read queries, pass an error flag down, and render an explicit error panel instead of zeroed KPIs."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-outages-page-swallows-query-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "completeness",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/outages.tsx",
+        "frontend/apps/ppt-web/src/features/outages/pages/OutagesPage.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/outages.tsx:42 — `const { data, isLoading } = useOutages(queryParams);` drops isError/error; OutagesPage (UC-12 Utility Outages) receives `outages`/`total`/`isLoading` props but no error prop (OutagesPage.tsx has 0 error references).",
+        "frontend/apps/ppt-web/src/features/outages/pages/OutagesPage.tsx:72-85 — on a failed list fetch, `outages` is an empty array, so OutageList renders a normal empty state; a failed load is indistinguishable from 'no active outages' — exactly the wrong signal for a utility-outage list where empty vs. failed is safety-relevant. Fix: thread isError into the wrapper and surface a retryable error state distinct from the empty state."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-leases-list-swallows-query-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "completeness",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/leases.tsx",
+        "frontend/apps/ppt-web/src/features/leases/pages/LeasesListPage.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/leases.tsx:587 — `const { data, isLoading } = useLeases({ organization_id: organizationId });` drops isError; `leases = (data?.items ?? [])` and `total={data?.total ?? 0}` are passed to LeasesListPage with no error prop.",
+        "frontend/apps/ppt-web/src/features/leases/pages/LeasesListPage.tsx:229 — the page renders its empty state (`!isLoading && leases.length === 0`) whenever the query fails, since a failed fetch yields `leases=[]`; the user sees 'no leases' instead of a load-failure message. Same swallowed-read-error anti-pattern as the iot and outages route-group wrappers — a shared fix (destructure isError + render a distinct error state) applies across these route groups. Fix: surface isError and render an error state separate from the empty state."
+      ]
+    }
+  ]
+}

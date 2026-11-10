@@ -16,6 +16,7 @@
 import { useMyUnits } from '@ppt/api-client';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 
 export function MyUnitPage() {
   const { t } = useTranslation();
@@ -37,7 +38,7 @@ export function MyUnitPage() {
   if (isLoading) {
     return (
       <div className="my-unit-page">
-        <p>Loading your unit…</p>
+        <p>{t('buildings.myUnit.loading')}</p>
       </div>
     );
   }
@@ -46,7 +47,9 @@ export function MyUnitPage() {
     return (
       <div className="my-unit-page">
         <p role="alert">
-          Could not load your unit: {error instanceof Error ? error.message : 'Unknown error'}
+          {t('buildings.myUnit.loadError', {
+            message: error instanceof Error ? error.message : t('buildings.myUnit.unknownError'),
+          })}
         </p>
       </div>
     );
@@ -55,9 +58,9 @@ export function MyUnitPage() {
   if (!units || units.length === 0) {
     return (
       <div className="my-unit-page">
-        <h1>My Unit</h1>
-        <p>You are not currently registered as a resident of any unit.</p>
-        <p>If you believe this is a mistake, please contact your building manager.</p>
+        <h1>{t('buildings.myUnit.title')}</h1>
+        <p>{t('buildings.myUnit.emptyNotRegistered')}</p>
+        <p>{t('buildings.myUnit.emptyContactManager')}</p>
       </div>
     );
   }
@@ -68,13 +71,13 @@ export function MyUnitPage() {
   return (
     <div className="my-unit-page">
       <header>
-        <h1>My Unit</h1>
-        <p>Your unit details and residency status.</p>
+        <h1>{t('buildings.myUnit.title')}</h1>
+        <p>{t('buildings.myUnit.subtitle')}</p>
       </header>
 
       {units.length > 1 && (
         <div className="my-unit-page__switcher">
-          <label htmlFor="my-unit-switcher">Choose a unit</label>
+          <label htmlFor="my-unit-switcher">{t('buildings.myUnit.chooseUnit')}</label>
           <select
             id="my-unit-switcher"
             value={selected.unit.id}
@@ -91,33 +94,39 @@ export function MyUnitPage() {
 
       <section className="my-unit-page__unit" aria-label={t('aria.unitDetails')}>
         <h2>
-          Unit {unit.designation}
-          {!unit.entrance ? null : ` · Entrance ${unit.entrance}`}
+          {t('buildings.myUnit.unitHeading', { designation: unit.designation })}
+          {!unit.entrance
+            ? null
+            : ` · ${t('buildings.myUnit.entrance', { entrance: unit.entrance })}`}
         </h2>
         <dl>
-          <dt>Type</dt>
-          <dd>{unit.unitType}</dd>
-          <dt>Floor</dt>
+          <dt>{t('buildings.unitForm.type')}</dt>
+          <dd>{t(`buildings.unitType.${unit.unitType}`, { defaultValue: unit.unitType })}</dd>
+          <dt>{t('buildings.unitForm.floor')}</dt>
           <dd>{unit.floorDisplay}</dd>
           {unit.rooms !== null && (
             <>
-              <dt>Rooms</dt>
+              <dt>{t('buildings.unitForm.rooms')}</dt>
               <dd>{unit.rooms}</dd>
             </>
           )}
           {unit.sizeSqm !== null && (
             <>
-              <dt>Size</dt>
+              <dt>{t('buildings.myUnit.size')}</dt>
               <dd>{unit.sizeSqm} m²</dd>
             </>
           )}
-          <dt>Ownership share</dt>
+          <dt>{t('buildings.myUnit.ownershipShare')}</dt>
           <dd>{unit.ownershipShare}</dd>
-          <dt>Occupancy</dt>
-          <dd>{unit.occupancyStatus}</dd>
+          <dt>{t('buildings.unitForm.occupancy')}</dt>
+          <dd>
+            {t(`buildings.occupancy.${unit.occupancyStatus}`, {
+              defaultValue: unit.occupancyStatus,
+            })}
+          </dd>
           {unit.description && (
             <>
-              <dt>Description</dt>
+              <dt>{t('buildings.unitForm.description')}</dt>
               <dd>{unit.description}</dd>
             </>
           )}
@@ -125,7 +134,7 @@ export function MyUnitPage() {
       </section>
 
       <section className="my-unit-page__building" aria-label={t('aria.building')}>
-        <h2>Building</h2>
+        <h2>{t('buildings.myUnit.building')}</h2>
         <address>
           {building.name && (
             <>
@@ -137,31 +146,42 @@ export function MyUnitPage() {
           <br />
           {building.postalCode} {building.city}
         </address>
+        <nav
+          className="my-unit-page__links mt-2 flex flex-wrap gap-4"
+          aria-label={t('facilities.nav.label')}
+        >
+          <Link to={`/buildings/${building.id}/facilities`}>{t('facilities.nav.book')}</Link>
+          <Link to="/facilities/bookings/my">{t('facilities.nav.myBookings')}</Link>
+        </nav>
       </section>
 
       <section className="my-unit-page__association" aria-label={t('aria.yourResidency')}>
-        <h2>Your residency</h2>
+        <h2>{t('buildings.myUnit.residency')}</h2>
         <dl>
-          <dt>Role</dt>
-          <dd>{association.residentTypeDisplay}</dd>
-          <dt>Primary contact</dt>
-          <dd>{association.isPrimary ? 'Yes' : 'No'}</dd>
-          <dt>Status</dt>
-          <dd>{association.isActive ? 'Active' : 'Ended'}</dd>
-          <dt>Since</dt>
+          <dt>{t('buildings.myUnit.role')}</dt>
+          <dd>
+            {t(`buildings.myUnit.residentType.${association.residentType}`, {
+              defaultValue: association.residentTypeDisplay,
+            })}
+          </dd>
+          <dt>{t('buildings.myUnit.primaryContact')}</dt>
+          <dd>{association.isPrimary ? t('common.yes') : t('common.no')}</dd>
+          <dt>{t('buildings.unitsSection.status')}</dt>
+          <dd>
+            {association.isActive ? t('buildings.myUnit.active') : t('buildings.myUnit.ended')}
+          </dd>
+          <dt>{t('buildings.myUnit.since')}</dt>
           <dd>{association.startDate}</dd>
           {association.endDate && (
             <>
-              <dt>Until</dt>
+              <dt>{t('buildings.myUnit.until')}</dt>
               <dd>{association.endDate}</dd>
             </>
           )}
         </dl>
       </section>
 
-      <p className="my-unit-page__privacy-note">
-        For your privacy, other residents and owners of this unit are not shown here.
-      </p>
+      <p className="my-unit-page__privacy-note">{t('buildings.myUnit.privacyNote')}</p>
     </div>
   );
 }

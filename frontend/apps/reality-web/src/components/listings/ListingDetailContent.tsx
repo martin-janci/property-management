@@ -79,7 +79,7 @@ export function ListingNotFound() {
 }
 
 export function ListingDetailContent({ listing, jsonLd, layout }: ListingDetailContentProps) {
-  const t = useTranslations('listing');
+  const _t = useTranslations('listing');
   const tNav = useTranslations('nav');
 
   const { previewLayout, inPreview, sendSectionClick } =

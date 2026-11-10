@@ -1,0 +1,40 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-28",
+  "segment_reviewed": "api-core",
+  "selection_reason": "churn-aligned after saturation-skip (dispatcher-tier1d-demand-driven; buffer starved, claimable=24 < floor=36). Phase-1 churn/hotspot_history ranks the freshest commits (2026-10-28) under backend/servers/api-server/src/routes/ (aml_dsa/moderation.rs, violations.rs) => segment api-handlers, but api-handlers already has 3 OPEN code-review-finding rows in backlog.json (saturated, SKIP per SKILL Step 1). Next churn-aligned segment (price_map.rs, 2026-10-25) => reality-server, also saturated (3 open, SKIP). Next churn-aligned non-saturated segment is api-core: services/push_fanout.rs is a persistent hotspot (runs_seen=3, last_seen 2026-10-25, recent_churn 135) and api-core has 0 open code-review-findings. Repo path note: SKILL segment root 'backend/api-server/src/' maps to this tree's 'backend/servers/api-server/src/' (routes/ = handlers/ for api-handlers). Static scan of api-core (services/ + top-level src, excl routes/): only 16 non-test unwrap/expect, all benign (hardcoded Decimal literals in accounting.rs, OS-rng expect, startup JWT/config panics in main.rs); zero unsafe; no sensitive fields in tracing/log; all parts[] slice indexing is length-guarded (totp.rs, auth.rs, workflow_executor.rs); push_fanout.rs and notification_pipeline.rs are mature and defensively hardened (capped body reads, graceful transport degradation, documented prior-fix comments). The two findings below are the only genuine issues and are concentrated in the workflow outbound-API-call path.",
+  "experts_used": ["rust"],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-api-core-api-call-client-build-panic",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/api_call.rs:300-308 ApiCallExecutor::new() builds its reqwest client with reqwest::Client::builder()...dns_resolver(SsrfGuardResolver).build().expect(\"Failed to create HTTP client\") — a panic on build failure (TLS backend / DNS resolver init error) rather than a Result.",
+        "Reachability traced to a request/event path: WorkflowExecutor::execute_workflow (backend/servers/api-server/src/services/workflow_executor.rs:286) calls ActionRegistry::new() on EVERY workflow execution, and ActionRegistry::new() (services/actions/mod.rs:206) calls ApiCallExecutor::new(). Line 286 is evaluated synchronously while constructing WorkflowExecutorTask BEFORE the tokio::spawn, so the panic surfaces inside the workflow-trigger handler's future, not an isolated background worker.",
+        "Inconsistent with the module's own hardening precedent: backend/servers/api-server/src/services/push_fanout.rs:467-485 build_push_http_client() was deliberately changed to RETURN Result<reqwest::Client, reqwest::Error> and degrade to a disabled/no-op transport, with a comment stating the old .expect() 'took the whole worker (and, on the synchronous pipeline path, request handling) down instead of degrading to push skipped.' api_call.rs:308 is the only remaining reqwest .build().expect() straggler in api-server services (grep confirms push_fanout returns Result; all other sites are tests). Impact medium: environment-level build failure is rare but the panic is reachable on a per-request path. Suggested fix vector: mirror push_fanout — make the constructor fallible (or lazily build and return ActionError on build failure) and fail the single action instead of panicking the executor."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-registry-rebuilt-per-exec",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:286 (and :236 in with_config) construct a fresh ActionRegistry via ActionRegistry::new() on every execute_workflow invocation. ActionRegistry::new() (services/actions/mod.rs:197-209) eagerly instantiates ApiCallExecutor::new() (builds a reqwest::Client with its own connection pool, api_call.rs:300) and EmailExecutor/NotificationExecutor.",
+        "reqwest::Client is explicitly documented as 'cheap to clone' and intended to be created once and reused so the internal connection pool / TLS session cache is shared; rebuilding it per workflow execution discards the pool every run and re-pays client+TLS init cost on each trigger. This is also the structural reason the panic in finding #1 sits on the hot path rather than at startup.",
+        "Impact low (resource/perf + robustness smell, no correctness bug on its own): worth consolidating by building ActionRegistry once (e.g. on the shared WorkflowExecutor / app state, Arc-shared into WorkflowExecutorTask) instead of per execute_workflow call. Confidence medium: construction sites and per-execution call path verified by reading; throughput impact not benchmarked."
+      ],
+      "expert": "rust"
+    }
+  ]
+}

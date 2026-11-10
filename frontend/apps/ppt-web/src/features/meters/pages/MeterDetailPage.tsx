@@ -39,7 +39,7 @@ export function MeterDetailPage({
   onViewReading,
   onEditReading,
 }: MeterDetailPageProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
 
   if (isLoading) {
@@ -304,7 +304,7 @@ export function MeterDetailPage({
                       return (
                         <tr key={reading.id} className="hover:bg-gray-50">
                           <td className="px-4 py-3 text-sm text-gray-900">
-                            {new Date(reading.readingDate).toLocaleDateString()}
+                            {new Date(reading.readingDate).toLocaleDateString(i18n.language)}
                           </td>
                           <td className="px-4 py-3 text-sm text-right font-medium text-gray-900">
                             {reading.value.toLocaleString()} {meter.unit}
@@ -428,7 +428,7 @@ export function MeterDetailPage({
                 <div>
                   <dt className="text-gray-500">{t('meters.installationDate')}</dt>
                   <dd className="font-medium">
-                    {new Date(meter.installationDate).toLocaleDateString()}
+                    {new Date(meter.installationDate).toLocaleDateString(i18n.language)}
                   </dd>
                 </div>
               )}
@@ -454,7 +454,7 @@ export function MeterDetailPage({
               </p>
               {meter.lastReadingDate && (
                 <p className="text-sm text-blue-700 mt-1">
-                  {new Date(meter.lastReadingDate).toLocaleDateString()}
+                  {new Date(meter.lastReadingDate).toLocaleDateString(i18n.language)}
                 </p>
               )}
             </div>

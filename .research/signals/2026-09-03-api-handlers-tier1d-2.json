@@ -1,0 +1,72 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-09-03T00:00:00Z",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "churn-aligned",
+  "selection_detail": "Standalone Tier-1d demand-driven run (dispatcher claimable buffer starved: claimable=8 < floor=36, and the entire remaining actionable backlog is mobile-native/KMP-gated and UNLANDABLE in this cloud runner, so fresh LANDABLE non-mobile-native review vectors were required). Segment rotation would have picked mobile-native-kmp (oldest cursor 2026-08-25) but that is cloud-unlandable and was OVERRIDDEN per the dispatcher constraint. Churn since 2026-08-20 (git log, mobile-native excluded) ranks backend/servers/api-server/src/routes/compliance.rs highest (5 commits) -> segment api-handlers. NOTE: the skill segment map lists api-handlers root as backend/api-server/src/handlers/, but the real tree has NO handlers/ dir; the actual Axum handler layer is backend/servers/api-server/src/routes/ and compliance.rs is a route/handler file, so api-handlers is the correct segment id (root=routes/). Saturation check passed: 0 OPEN code-review-finding rows for api-handlers in backlog.json. Primary expert = Rust, secondary = Security. Static-only: grep sweep (unwrap/expect/unsafe/todo/panic/dynamic-SQL/StatusCode-on-error/owner-scoping/PII-in-logs) then full read of routes/compliance.rs (950 lines). IMPORTANT: the prior 2026-08-31 api-handlers Tier-1d run emitted 3 compliance.rs findings (data-export-report-stub, user-audit-logs-total-page-len, raw-db-error-leak) plus an earlier superadmin-exact-match and an unbounded-pagination-limit finding; ALL FIVE are now confirmed LANDED/FIXED in the recent churn (get_data_export_report now calls data_export_repo.report_summary with real counts at :405-431; get_user_audit_logs now issues a real count() for total at :305-319; every fallible call now maps through .map_err(db_error) rather than e.to_string(); require_platform_admin uses AuthUser::is_platform_admin covering SuperAdmin+PlatformAdmin). This run therefore deliberately does NOT re-flag any of those; the three findings below are genuine, distinct, previously-unreported defects that survived the sweep. gh CLI dep-version/dependabot checks skipped gracefully (no manifest findings).",
+  "experts_used": [
+    "rust",
+    "security"
+  ],
+  "findings_count": 3,
+  "note": "compliance.rs is platform-tier gated end-to-end (every handler opens with require_platform_admin/require_super_admin), all hand-written SQL is fully parameterized via .bind() (no injection), and no unwrap/expect/unsafe/todo/panic exists in non-test code (the only .unwrap()/.expect() hits in the file are inside #[cfg(test)]). The three findings are aggregation-correctness and error-handling defects on the GDPR/audit/security reporting surface, each confined to compliance.rs, each a self-contained landable fix, none overlapping any prior api-handlers finding.",
+  "signals": [
+    {
+      "id": "code-review-api-handlers-mfa-report-population-mismatch",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 api-handlers)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/routes/compliance.rs"
+      ],
+      "evidence": [
+        "get_mfa_status_report (routes/compliance.rs:671-711, GDPR/security MFA-adoption report) computes its two aggregates over DIFFERENT populations: mfa_enabled = SELECT COUNT(*) FROM user_2fa WHERE enabled = true (:678-685) counts every 2FA row regardless of the owning user's status, while total_users = SELECT COUNT(*) FROM users WHERE status = 'active' (:688-695) counts only active users. It then derives mfa_disabled = total_users - mfa_enabled (:697) and adoption_rate = mfa_enabled / total_users * 100 (:698-702).",
+        "Because the numerator (all enabled-2FA rows, including suspended / pending / soft-deleted / deactivated users that still have a user_2fa row) is drawn from a superset of the denominator (active users only), the report can produce nonsensical figures: mfa_disabled_count can go NEGATIVE and adoption_rate can exceed 100%. Even short of those extremes the adoption rate is systematically inflated whenever any inactive user retains an enabled 2FA row.",
+        "Odd-one-out within the same file: the sibling get_privacy_settings_report (:509-560) correctly scopes BOTH numerator and denominator to WHERE status = 'active'. Fix: scope the mfa_enabled count to active users too via JOIN users u ON u.id = t.user_id WHERE t.enabled = true AND u.status = 'active'. IG3: seed one active user with 2FA, one SUSPENDED user with 2FA, one active user without 2FA -> expect mfa_enabled_count==1, total_users==2, mfa_disabled_count==1, adoption_rate==50.0 (currently 2/0/100.0).",
+        "Confidence medium; severity medium (+2): corrupts a compliance/security metric (possible negative/over-100% values) rather than crashing or leaking data. Platform-admin-gated."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-audit-summary-integrity-swallow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 api-handlers)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "security",
+      "files": [
+        "backend/servers/api-server/src/routes/compliance.rs"
+      ],
+      "evidence": [
+        "get_audit_summary (routes/compliance.rs:229-265) obtains integrity_verified via state.audit_log_repo.verify_integrity(Some(1000)).await.unwrap_or(false) (:252-256). Unlike every other fallible call in this file (which propagate through .map_err(db_error)?), this SWALLOWS any error and coerces it to false.",
+        "Consequence: a false-negative on a security/compliance signal. A transient DB error, lock timeout, or any failure inside verify_integrity is reported as integrity_verified: false -- as if the audit-log hash chain had been TAMPERED with -- when the check merely failed to run. That can trigger incident response for a non-event and masks the real DB error. The dedicated verify_audit_integrity handler (:339-364) correctly propagates with .map_err(db_error)?, so the summary handler is the inconsistent one.",
+        "Fix: propagate the error (.map_err(db_error)?) so a check failure returns 500 rather than masquerading as an integrity violation; or model integrity as tri-state (verified / violated / check-unavailable). IG3: force verify_integrity to error and assert the endpoint does NOT return integrity_verified:false-with-200.",
+        "Confidence medium; severity medium (+2): misreports a security-integrity signal (false tamper alarm) and hides the real error; platform-admin-gated, not a crash or data leak."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-audit-logs-action-filter-dropped",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 api-handlers)",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/routes/compliance.rs"
+      ],
+      "evidence": [
+        "get_audit_logs (routes/compliance.rs:158-209) parses the client action filter via let action = params.action.and_then(|a| parse_audit_action(&a)); (:164). parse_audit_action (:809-843) returns None for any string not in its match table. Because None means 'no action filter', an UNRECOGNISED action value is silently DROPPED and the query returns audit logs for ALL actions instead of rejecting the request.",
+        "Silent filter-ignored contract violation on an audit-query surface: ?action=loign (typo) or ?action=user_login (wrong token vs accepted login) returns an unfiltered superset with 200 and no indication the filter was ignored -- a foot-gun for compliance tooling that trusts the filter. Same silent-drop applies to get_user_audit_logs (shares AuditLogQueryParams).",
+        "Fix: distinguish 'no action param' from 'action param supplied but unparseable' -- when params.action.is_some() but parse returns None, return 400 (unknown audit action: <value>). IG3: GET /audit-logs?action=not_a_real_action -> 400; ?action=login still returns only login rows.",
+        "Confidence medium; severity low (+1): filter-hygiene / API-contract defect (over-returns within an already platform-admin-gated dataset), not a crash or cross-tenant disclosure."
+      ]
+    }
+  ]
+}

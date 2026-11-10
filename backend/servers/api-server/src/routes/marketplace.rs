@@ -30,6 +30,7 @@ use serde::Deserialize;
 use utoipa::IntoParams;
 use uuid::Uuid;
 
+use crate::routes::pagination::clamp_limit;
 use crate::state::AppState;
 
 /// Rating dimension configuration
@@ -78,6 +79,43 @@ async fn verify_org_access(
         ));
     }
 
+    Ok(())
+}
+
+/// Verify the caller is a manager-tier member of `org_id` (role from the
+/// `organization_members` row, never the JWT). Non-members get `404` (as in
+/// [`verify_org_access`]); members without a manager role get `403`.
+async fn verify_org_manager(
+    state: &AppState,
+    user_id: Uuid,
+    org_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(state, user_id, org_id).await?;
+    let role_type = state
+        .org_member_repo
+        .get_user_role_type(org_id, user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = ?e, "Failed to look up org role");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+            )
+        })?;
+    let is_manager = role_type
+        .as_deref()
+        .and_then(common::TenantRole::from_role_type)
+        .map(|r| r.is_manager())
+        .unwrap_or(false);
+    if !is_manager {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Manager role required for this action",
+            )),
+        ));
+    }
     Ok(())
 }
 
@@ -209,8 +247,30 @@ async fn current_provider_id(
 /// provider trust data and were previously callable by any authenticated user
 /// (PAP-140), letting an org member approve verifications or revoke badges
 /// platform-wide.
-fn require_platform_admin(user: &AuthUser) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
-    if user.is_platform_admin() {
+///
+/// SECURITY (audit4): platform-admin status is resolved from the trusted
+/// `users.principal_kind` column (the same source as
+/// `RequestPrincipal::is_platform`), not the JWT `role` claim that login
+/// tokens never carry.
+async fn is_platform_admin(state: &AppState, user: &AuthUser) -> bool {
+    match state
+        .user_repo
+        .find_by_id_and_kind(user.user_id, db::models::PrincipalKind::Platform)
+        .await
+    {
+        Ok(found) => found.is_some(),
+        Err(e) => {
+            tracing::error!(error = %e, "platform principal lookup failed");
+            false
+        }
+    }
+}
+
+async fn require_platform_admin(
+    state: &AppState,
+    user: &AuthUser,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    if is_platform_admin(state, user).await {
         Ok(())
     } else {
         Err((
@@ -720,7 +780,8 @@ async fn create_rfq(
     user: AuthUser,
     Json(payload): Json<CreateRfqRequest>,
 ) -> Result<(StatusCode, Json<RequestForQuote>), (StatusCode, Json<ErrorResponse>)> {
-    verify_org_access(&state, user.user_id, payload.organization_id).await?;
+    // SECURITY (audit4): RFQs are a manager procurement action.
+    verify_org_manager(&state, user.user_id, payload.organization_id).await?;
 
     let rfq = state
         .marketplace_repo
@@ -808,7 +869,9 @@ async fn update_rfq(
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateRequestForQuote>,
 ) -> Result<Json<RequestForQuote>, (StatusCode, Json<ErrorResponse>)> {
-    load_rfq_for_org(&state, user.user_id, id).await?;
+    // SECURITY (audit4): RFQ mutations are manager-only.
+    let rfq = load_rfq_for_org(&state, user.user_id, id).await?;
+    verify_org_manager(&state, user.user_id, rfq.organization_id).await?;
 
     let rfq = state
         .marketplace_repo
@@ -840,7 +903,9 @@ async fn delete_rfq(
     user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    load_rfq_for_org(&state, user.user_id, id).await?;
+    // SECURITY (audit4): RFQ mutations are manager-only.
+    let rfq = load_rfq_for_org(&state, user.user_id, id).await?;
+    verify_org_manager(&state, user.user_id, rfq.organization_id).await?;
 
     let deleted = state.marketplace_repo.delete_rfq(id).await.map_err(|e| {
         tracing::error!(error = %e, "Failed to delete RFQ");
@@ -925,11 +990,41 @@ async fn award_quote(
     Path(id): Path<Uuid>,
     Json(data): Json<AwardQuoteRequest>,
 ) -> Result<Json<RequestForQuote>, (StatusCode, Json<ErrorResponse>)> {
-    load_rfq_for_org(&state, user.user_id, id).await?;
+    // SECURITY (audit4): RFQ mutations are manager-only.
+    let rfq = load_rfq_for_org(&state, user.user_id, id).await?;
+    verify_org_manager(&state, user.user_id, rfq.organization_id).await?;
+
+    // IDOR guard: `quote_id` comes from the request body, while the org check
+    // above only proves the caller owns the RFQ path param `{id}`. Verify the
+    // awarded quote actually belongs to THIS rfq before awarding — otherwise a
+    // caller could award a quote from a foreign RFQ (and, transitively, another
+    // org) by guessing its id. Surface a mismatch as 404 (same shape as a
+    // missing quote) so quote existence is not leaked across tenants.
+    let quote = state
+        .marketplace_repo
+        .find_quote_by_id(data.quote_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to load quote for award");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .filter(|q| q.rfq_id == id)
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    format!("Quote {} not found for RFQ {}", data.quote_id, id),
+                )),
+            )
+        })?;
 
     let rfq = state
         .marketplace_repo
-        .award_rfq(id, data.quote_id)
+        .award_rfq(id, quote.id)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to award RFQ");
@@ -964,7 +1059,9 @@ async fn cancel_rfq(
     user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RequestForQuote>, (StatusCode, Json<ErrorResponse>)> {
-    load_rfq_for_org(&state, user.user_id, id).await?;
+    // SECURITY (audit4): RFQ mutations are manager-only.
+    let rfq = load_rfq_for_org(&state, user.user_id, id).await?;
+    verify_org_manager(&state, user.user_id, rfq.organization_id).await?;
 
     let rfq = state
         .marketplace_repo
@@ -1020,6 +1117,29 @@ async fn submit_quote(
             )
         })?;
 
+    // SECURITY (audit4): quotes are invitation-only — the provider must hold a
+    // live invitation for this RFQ and the RFQ must still be open.
+    let invited = state
+        .marketplace_repo
+        .provider_can_quote(payload.data.rfq_id, provider.id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to check RFQ invitation");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?;
+    if !invited {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new(
+                "NOT_FOUND",
+                format!("RFQ {} not found", payload.data.rfq_id),
+            )),
+        ));
+    }
+
     let quote = state
         .marketplace_repo
         .submit_quote(provider.id, payload.data)
@@ -1074,7 +1194,7 @@ async fn list_my_quotes(
         .marketplace_repo
         .list_provider_quotes(
             provider.id,
-            query.limit.unwrap_or(20),
+            clamp_limit(query.limit.map(i64::from), 20) as i32,
             query.offset.unwrap_or(0),
         )
         .await
@@ -1221,7 +1341,7 @@ async fn list_my_invitations(
         .marketplace_repo
         .list_provider_invitations(
             provider.id,
-            query.limit.unwrap_or(20),
+            clamp_limit(query.limit.map(i64::from), 20) as i32,
             query.offset.unwrap_or(0),
         )
         .await
@@ -1371,7 +1491,7 @@ async fn list_verifications(
     Query(query): Query<ListVerificationsQuery>,
 ) -> Result<Json<Vec<ProviderVerification>>, (StatusCode, Json<ErrorResponse>)> {
     // Cross-provider verification listing is a platform-moderation view (PAP-140).
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
 
     let verification_query: VerificationQuery = (&query).into();
 
@@ -1399,11 +1519,14 @@ async fn get_verification_queue(
     user: AuthUser,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<Vec<VerificationQueueItem>>, (StatusCode, Json<ErrorResponse>)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
 
     let queue = state
         .marketplace_repo
-        .get_verification_queue(query.limit.unwrap_or(20), query.offset.unwrap_or(0))
+        .get_verification_queue(
+            clamp_limit(query.limit.map(i64::from), 20) as i32,
+            query.offset.unwrap_or(0),
+        )
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to get verification queue");
@@ -1422,7 +1545,7 @@ async fn get_expiring_verifications(
     user: AuthUser,
     Query(query): Query<ExpiringQuery>,
 ) -> Result<Json<Vec<ExpiringVerification>>, (StatusCode, Json<ErrorResponse>)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
 
     let days = query.days.unwrap_or(30);
 
@@ -1471,7 +1594,7 @@ async fn get_verification(
     // Verification documents carry sensitive data (document numbers, URLs). Only
     // the owning provider or a platform admin (reviewer) may read one by id;
     // anyone else gets 404 so the row's existence isn't disclosed (PAP-140).
-    if !user.is_platform_admin() {
+    if !is_platform_admin(&state, &user).await {
         let provider_id = current_provider_id(&state, user.user_id).await?;
         if provider_id != verification.provider_id {
             return Err((
@@ -1496,7 +1619,7 @@ async fn review_verification(
 ) -> Result<Json<ProviderVerification>, (StatusCode, Json<ErrorResponse>)> {
     // Approving/rejecting a verification and awarding badges is platform
     // moderation, not an org-scoped action (PAP-140).
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
 
     let verification = state
         .marketplace_repo
@@ -1584,7 +1707,7 @@ async fn award_badge(
     Json(data): Json<AwardBadgeRequest>,
 ) -> Result<(StatusCode, Json<ProviderBadge>), (StatusCode, Json<ErrorResponse>)> {
     // Badges are global provider-trust markers — platform moderation only (PAP-140).
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
 
     let badge = state
         .marketplace_repo
@@ -1622,7 +1745,7 @@ async fn revoke_badge(
     user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
 
     let revoked = state.marketplace_repo.revoke_badge(id).await.map_err(|e| {
         tracing::error!(error = %e, "Failed to revoke badge");
@@ -1696,7 +1819,7 @@ async fn list_provider_reviews(
 ) -> Result<Json<Vec<ProviderReviewWithResponse>>, (StatusCode, Json<ErrorResponse>)> {
     let reviews = state
         .marketplace_repo
-        .list_provider_reviews(id, query.limit.unwrap_or(20))
+        .list_provider_reviews(id, clamp_limit(query.limit.map(i64::from), 20) as i32)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to list reviews");
@@ -1733,10 +1856,22 @@ async fn get_rating_breakdown(
 /// List all reviews (with filters).
 async fn list_reviews(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Query(query): Query<ListReviewsQuery>,
 ) -> Result<Json<Vec<ProviderReview>>, (StatusCode, Json<ErrorResponse>)> {
-    let review_query: ReviewQuery = (&query).into();
+    let mut review_query: ReviewQuery = (&query).into();
+
+    // SECURITY (audit4): only managers of the filtered org may see reviews in
+    // any moderation state; everyone else sees approved reviews only.
+    let can_moderate = match query.organization_id {
+        Some(org_id) => verify_org_manager(&state, user.user_id, org_id)
+            .await
+            .is_ok(),
+        None => false,
+    };
+    if !can_moderate {
+        review_query.status = Some(db::models::marketplace::review_status::APPROVED.to_string());
+    }
 
     let reviews = state
         .marketplace_repo
@@ -1941,7 +2076,8 @@ async fn moderate_review(
             )
         })?;
 
-    verify_org_access(&state, user.user_id, existing.organization_id).await?;
+    // SECURITY (audit4): moderation is a manager action in the owning org.
+    verify_org_manager(&state, user.user_id, existing.organization_id).await?;
 
     let review = state
         .marketplace_repo
@@ -2009,9 +2145,13 @@ async fn mark_review_helpful(
 /// Get manager marketplace dashboard.
 async fn get_manager_dashboard(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Query(query): Query<OrgQuery>,
 ) -> Result<Json<ManagerMarketplaceDashboard>, (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (audit4): the org id comes from the query string, so verify the
+    // caller manages that org before returning its dashboard.
+    verify_org_manager(&state, user.user_id, query.organization_id).await?;
+
     let dashboard = state
         .marketplace_repo
         .get_manager_dashboard(query.organization_id)

@@ -1,0 +1,52 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-25T00:00:00Z",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "oldest-unreviewed (review_cursor: mobile-rn=2026-08-17 is the oldest among non-KMP landable segments; mobile-native-kmp excluded as structurally unlandable in cloud runner; mobile-rn has 0 open code-review-finding items in backlog.json so not saturated)",
+  "experts_used": ["frontend"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-faults-screen-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/features/faults/screens/FaultsScreen.tsx:1-63 — active screen (Epic 4: Fault Reporting & Resolution, UC-03) has NO `useTranslation`/`t()` anywhere (0 hits) while sibling faults screens use it (e.g. screens/faults/FaultsListScreen.tsx, screens/documents/DocumentsScreen.tsx=17 t() hits).",
+        "frontend/apps/mobile/src/features/faults/screens/FaultsScreen.tsx:52 — the `ListEmptyComponent` renders a hardcoded English string `<Text style={styles.emptyText}>No faults reported yet.</Text>`; the empty-state copy never reaches the sk/cs/de locales. Fix: import useTranslation, add a `faults.empty` key to the locale bundles, and wrap the string in t()."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-widget-settings-alerts-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx — partial-i18n regression: the file DOES use t() (13 hits) but several user-facing strings are hardcoded English.",
+        "WidgetSettingsScreen.tsx:66 `Alert.alert('Widget Added', `${widgetMeta?.name ?? type} widget has been configured.`)`; :79 `Alert.alert('Widgets Updated', 'All widgets have been refreshed.')`; :194 section title `<Text ...>How to Add Widgets</Text>`. These Alert titles/bodies and the instructions heading bypass i18n while the rest of the screen is localized. Fix: move the four strings to locale keys and wrap in t()."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-person-months-hardcoded-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx — partial-i18n regression (file uses t() = 5 hits, but header, primary action, and validation Alert are hardcoded English).",
+        "PersonMonthsScreen.tsx:78 `Alert.alert('Invalid value', 'Enter a whole number between 0 and 20.')` (validation feedback); :165 `<Text style={s.primaryButtonText}>Bulk entry…</Text>` (primary CTA); header `<Text style={s.headerTitle}>Person-months</Text>` (~L92) and subtitle `Declare how many people lived in your unit each month for cost allocation.` (~L94). All are user-facing and untranslated. Fix: add person-months locale keys and wrap in t()."
+      ]
+    }
+  ]
+}

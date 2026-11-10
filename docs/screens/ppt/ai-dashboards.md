@@ -61,6 +61,13 @@ transient `5xx`/`429`. Sibling screen-maps:
 ## Notes
 
 ### Specific (recent)
+- 2026-11-06 — #3317 reconciliation: PR #3317 (gh-issue-3299, Biome lint debt
+  cleanup) touched this module's `routes/groups/ai-dashboards.role-gate.route.test.tsx`
+  (dropped an unused `Route` import) and `lib/api.ts` (narrowed the
+  `UnauthorizedHandler` return type from `void |` to `undefined |` in its union).
+  Both are cosmetic/type-only — no route, component, endpoint, or state change.
+  Surfaces (`/ai/sentiment`, `/ai/predictive-maintenance`), wrappers, and the
+  `getApiClient()` auth/error/retry semantics documented below remain current.
 - 2026-06-23 — #1674: routed both dashboards' hooks through `getApiClient()`
   (was hand-rolled `fetch` bypassing auth/retry), added the org-scoping
   `<AuthRequiredGate />`, moved all hardcoded strings into `sentiment.*` /
@@ -68,5 +75,9 @@ transient `5xx`/`429`. Sibling screen-maps:
   `@ppt/sitemap`, and created these screen-maps.
 
 ## Agent Log
+- 2026-11-06 — agent: reconciled screen-map with PR #3317 (Biome lint cleanup of
+  the ai-dashboards route test + `lib/api.ts` type narrowing). Confirmed no
+  route/screen state drift; logged the cosmetic touch under Notes > Specific.
+  `/screens validate` clean (0 errors, 0 warnings).
 - 2026-06-23 — FrontendEngineer: created the AI dashboards module map and child
   screen-maps as part of the #1674 follow-up (Epic 13 / Stories 13.2-13.3).

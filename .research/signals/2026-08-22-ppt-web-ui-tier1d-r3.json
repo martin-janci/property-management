@@ -1,0 +1,55 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-22T05:00:00Z",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-accounting-invoice-form-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx — component has ZERO `useTranslation` import (grep -c = 0) in an app fully localized for sk/cs/de/en. Every visible string is hardcoded English: labels 'Contact *' (:121), 'Invoice Number *' (:137), 'Variable Symbol' (:147), 'Issue Date *' (:160), 'Due Date *' (:170), 'Currency *' (:182), the placeholder 'Item description' (:251), and the section headings 'Line Items' (:211), 'Base Amount:' (:323), 'Total:' (:335), plus the empty-option 'Select a contact' (:128).",
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx:76 — form validation uses a raw native `alert('Please fill all required fields')` with a hardcoded English string instead of the app's Toast component + i18n. Non-Slovak/Czech/German users see English on a core accounting entry form, and the browser alert is inconsistent with the rest of ppt-web's error UX.",
+        "Distinct from today's r1/r2 ppt-web-ui i18n findings (forms/, reports/ReportsPage, buildings/BuildingDetailPage, registry, compliance/DsaReportsPage) — this is the accounting invoice-entry form, a different feature and file."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-guest-report-submission-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/government-portal/pages/GuestReportSubmissionPage.tsx (745 lines) — NO `useTranslation` import (grep -c = 0). All headings/labels are hardcoded English: 'Submit Guest Report' (:220), 'Select Country' (:315), 'Portal Connection' (:350), 'Report Template' (:396), 'Submission Preview' (:514), 'Guest Data' (:552), 'Submitting to Portal...' (:676), 'Submission Complete!' (:715).",
+        "This is a user-facing multi-step government-portal submission flow (country select -> portal connection -> template -> preview -> submit). In a sk/cs/de/en localized product this whole page renders untranslated for every non-English user, including the terminal success/progress states.",
+        "Not covered by today's r1 findings, which flagged forms/, reports/ReportsPage, and buildings/BuildingDetailPage — this is the government-portal feature."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-native-prompt-flow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "completeness",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:129,132,165,168 — the take-action and appeal-decision flows collect operator input via raw `window.prompt(...)` (action type / rationale / decision / rationale), and report outcomes via native `alert(...)` at :118,:147,:182. The code itself marks this as tech debt: 'TODO(Phase-2): Replace window.prompt with modal form...' (:127,:163).",
+        "Sibling compliance pages already migrated off this pattern — features/compliance/components/ReviewAssessmentDialog.tsx and InitiateEddDialog.tsx headers both note they 'Replace the Phase-1 window.prompt flow with an in-app, localized form', and AmlDashboardPage.tsx did the same (:4). ContentModerationPage is the remaining un-migrated moderation surface: a `window.prompt` free-text 'approve' default (:129) with no validation on a regulatory DSA content-moderation action gives no field constraints, no cancel-vs-empty distinction beyond a falsy check, and no accessible/localized UI.",
+        "Fresh vs today's r2 (which flagged registry mutation error handling + DsaReportsPage native alerts) — different file and the specific defect is the prompt-driven action/appeal flow."
+      ]
+    }
+  ]
+}

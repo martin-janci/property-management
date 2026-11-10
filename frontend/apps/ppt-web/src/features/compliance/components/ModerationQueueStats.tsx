@@ -5,6 +5,7 @@
  */
 
 import type React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface PriorityCount {
   priority: number;
@@ -32,29 +33,12 @@ export interface ModerationQueueStatsProps {
   onShowOverdue?: () => void;
 }
 
-const getPriorityLabel = (priority: number): string => {
-  switch (priority) {
-    case 1:
-      return 'Critical';
-    case 2:
-      return 'High';
-    case 3:
-      return 'Medium';
-    case 4:
-      return 'Low';
-    case 5:
-      return 'Lowest';
-    default:
-      return `P${priority}`;
-  }
-};
-
-const formatViolationType = (type: string): string => {
-  return type
+// Fallback humanizer for enum values that lack an explicit translation key.
+const humanize = (value: string): string =>
+  value
     .split('_')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
-};
 
 const formatHours = (hours: number): string => {
   if (hours < 1) {
@@ -74,7 +58,13 @@ export const ModerationQueueStats: React.FC<ModerationQueueStatsProps> = ({
   onFilterByViolationType,
   onShowOverdue,
 }) => {
+  const { t } = useTranslation();
   const totalPending = stats.pending_count + stats.under_review_count;
+
+  const getPriorityLabel = (priority: number): string =>
+    t(`moderation.priorityLabel.${priority}`, t('moderation.priorityLabel.fallback', { priority }));
+  const getViolationTypeLabel = (type: string): string =>
+    t(`moderation.violationType.${type}`, humanize(type));
 
   return (
     <div className="moderation-queue-stats">
@@ -82,21 +72,21 @@ export const ModerationQueueStats: React.FC<ModerationQueueStatsProps> = ({
       <div className="moderation-stats-overview">
         <div className="moderation-stat-card pending">
           <div className="moderation-stat-value">{stats.pending_count}</div>
-          <div className="moderation-stat-label">Pending Cases</div>
+          <div className="moderation-stat-label">{t('moderation.stats.pendingCases')}</div>
         </div>
         <div className="moderation-stat-card review">
           <div className="moderation-stat-value">{stats.under_review_count}</div>
-          <div className="moderation-stat-label">Under Review</div>
+          <div className="moderation-stat-label">{t('moderation.stats.underReview')}</div>
         </div>
         <div className="moderation-stat-card total">
           <div className="moderation-stat-value">{totalPending}</div>
-          <div className="moderation-stat-label">Total Queue</div>
+          <div className="moderation-stat-label">{t('moderation.stats.totalQueue')}</div>
         </div>
         <div className="moderation-stat-card time">
           <div className="moderation-stat-value">
             {formatHours(stats.avg_resolution_time_hours)}
           </div>
-          <div className="moderation-stat-label">Avg Resolution</div>
+          <div className="moderation-stat-label">{t('moderation.stats.avgResolution')}</div>
         </div>
       </div>
 
@@ -111,14 +101,14 @@ export const ModerationQueueStats: React.FC<ModerationQueueStatsProps> = ({
         >
           <span className="moderation-overdue-icon">!</span>
           <span className="moderation-overdue-text">
-            {stats.overdue_count} case{stats.overdue_count > 1 ? 's' : ''} overdue (24h+ SLA)
+            {t('moderation.stats.overdue', { count: stats.overdue_count })}
           </span>
         </div>
       )}
 
       {/* Priority Breakdown */}
       <div className="moderation-priority-breakdown">
-        <h4>By Priority</h4>
+        <h4>{t('moderation.stats.byPriority')}</h4>
         <div className="moderation-priority-bars">
           {stats.by_priority.map((item) => (
             <div
@@ -147,7 +137,7 @@ export const ModerationQueueStats: React.FC<ModerationQueueStatsProps> = ({
       {/* Violation Type Breakdown */}
       {stats.by_violation_type.length > 0 && (
         <div className="moderation-violation-breakdown">
-          <h4>By Violation Type</h4>
+          <h4>{t('moderation.stats.byViolationType')}</h4>
           <ul className="moderation-violation-list">
             {stats.by_violation_type.map((item, index) => (
               <li
@@ -159,7 +149,7 @@ export const ModerationQueueStats: React.FC<ModerationQueueStatsProps> = ({
                 }
               >
                 <span className="moderation-violation-type">
-                  {formatViolationType(item.violation_type)}
+                  {getViolationTypeLabel(item.violation_type)}
                 </span>
                 <span className="moderation-violation-count">{item.count}</span>
               </li>

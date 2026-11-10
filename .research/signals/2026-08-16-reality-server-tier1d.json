@@ -1,0 +1,33 @@
+[
+  {
+    "id": "code-review-reality-server-sso-negcache-transient",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "reality-server",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/reality-server/src/routes/sso.rs:731-785 (introspect_pm_token) caches PM token-validation results in a 60s TTL cache (TokenValidationCache::new(60, 10000), state.rs:947). On a cache miss it POSTs to the PM introspection endpoint (sso.rs:749-757). When that HTTP call returns a NON-2xx status (line 759 `if !response.status().is_success()`), the code executes `state.token_cache.set(token, false, None, None)` (line 762) — caching the token as active:false — then returns Err.",
+      "Bug: a non-2xx from an RFC 7662 introspection endpoint is NOT evidence the token is inactive. An inactive token is signalled by HTTP 200 with body `{\"active\": false}` (parsed at line 769-780). A non-2xx status means the introspection endpoint itself failed — PM API 5xx during a deploy/overload, a 429 rate-limit, or a 401 from a client_id/client_secret misconfig. The comment at line 761 (\"Cache inactive tokens too (to prevent repeated failed validations)\") conflates 'introspection call failed (transient/unknown)' with 'token is definitively inactive'.",
+      "Impact / reachability: introspect_pm_token is the shared validation primitive for the portal-session paths — e.g. the PM<->Reality session sync (sso.rs:1070-1101, which on an inactive result logs 'Invalidated portal session due to inactive PM token' and tears the session down). During ANY PM introspection outage, the FIRST request for each distinct token poisons the cache with active:false, and every subsequent request for that token within the 60s TTL is served the cached active:false straight from sso.rs:736-743 WITHOUT re-calling PM — so valid portal users are rejected as inactive / logged out for up to 60s even after PM has fully recovered. A rolling PM deploy that briefly 503s thus amplifies into a 60s auth-rejection window for the entire active portal user base.",
+      "Landable backend-only fix: only write a negative cache entry when introspection DEFINITIVELY reports inactivity — i.e. move the `set(token, false, ...)` into the 2xx branch guarded by `!result.active` (after line 769), and on a non-2xx / transport failure return Err WITHOUT caching (optionally cache a short-lived 'unknown' sentinel with a much smaller TTL if repeated-validation load is a concern). Note the transport-error path (`.send().await?`, line 757) already correctly does NOT poison the cache — this fix makes the non-2xx path consistent with it."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-reality-server-session-ttl-dup",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "reality-server",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "refactor",
+    "evidence": [
+      "backend/servers/reality-server/src/state.rs:282 (create_mobile_session) sets the persisted session-row expiry to `chrono::Utc::now() + chrono::Duration::days(7)` and stores it via repo.create_session(...). The login handler at routes/users.rs:226 independently recomputes `let expires_at = chrono::Utc::now() + chrono::Duration::days(7)` and returns THAT value to the client in LoginResponse.expires_at (users.rs:230-233).",
+      "The two 7-day literals are the authoritative session lifetime duplicated across a service method and its caller with no shared constant. They agree today, but there is no compile-time or test coupling: changing the real session TTL in create_mobile_session (state.rs:282) would silently leave users.rs:226 advertising the old 7-day expiry to clients, so the token the client is told expires in 7 days could actually expire sooner/later. The two now-values are also captured at slightly different instants, so the advertised expires_at is already a few microseconds off the DB row it describes.",
+      "Landable refactor (reality-server only): have create_mobile_session return the expires_at it actually persisted (e.g. `Ok((session_token, expires_at))` or a small struct), and have the login handler surface that value instead of recomputing it — or hoist the 7-day lifetime into a single `const SESSION_TTL: Duration` used by both. This makes the advertised expiry the same value that was written to the session row and removes the drift hazard."
+    ],
+    "expert": "rust"
+  }
+]

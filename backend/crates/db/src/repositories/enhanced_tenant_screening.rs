@@ -208,14 +208,25 @@ impl EnhancedTenantScreeningRepository {
     /// Delete a risk model.
     ///
     /// RLS scopes the delete to the caller's org; a foreign id matches no row.
-    pub async fn delete_risk_model<'e, E>(&self, executor: E, id: Uuid) -> Result<bool, sqlx::Error>
+    ///
+    /// The explicit `organization_id` predicate keeps the delete scoped even
+    /// when the connection role bypasses RLS (owner / superuser).
+    pub async fn delete_risk_model<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+        id: Uuid,
+    ) -> Result<bool, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let result = sqlx::query("DELETE FROM ai_risk_scoring_models WHERE id = $1")
-            .bind(id)
-            .execute(executor)
-            .await?;
+        let result = sqlx::query(
+            "DELETE FROM ai_risk_scoring_models WHERE id = $1 AND organization_id = $2",
+        )
+        .bind(id)
+        .bind(org_id)
+        .execute(executor)
+        .await?;
         Ok(result.rows_affected() > 0)
     }
 
@@ -321,29 +332,32 @@ impl EnhancedTenantScreeningRepository {
     /// Update provider status.
     ///
     /// RLS scopes the update to the caller's org; a foreign id matches no row.
+    /// Returns `false` when no row in `org_id` matched (→ 404).
     pub async fn update_provider_status<'e, E>(
         &self,
         executor: E,
+        org_id: Uuid,
         id: Uuid,
         status: ProviderIntegrationStatus,
         error_message: Option<&str>,
-    ) -> Result<(), sqlx::Error>
+    ) -> Result<bool, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        sqlx::query(
+        let result = sqlx::query(
             r#"
             UPDATE screening_provider_configs
             SET status = $2, error_message = $3, last_health_check = NOW(), updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $4
             "#,
         )
         .bind(id)
         .bind(status)
         .bind(error_message)
+        .bind(org_id)
         .execute(executor)
         .await?;
-        Ok(())
+        Ok(result.rows_affected() > 0)
     }
 
     /// Delete provider config.
@@ -352,15 +366,19 @@ impl EnhancedTenantScreeningRepository {
     pub async fn delete_provider_config<'e, E>(
         &self,
         executor: E,
+        org_id: Uuid,
         id: Uuid,
     ) -> Result<bool, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let result = sqlx::query("DELETE FROM screening_provider_configs WHERE id = $1")
-            .bind(id)
-            .execute(executor)
-            .await?;
+        let result = sqlx::query(
+            "DELETE FROM screening_provider_configs WHERE id = $1 AND organization_id = $2",
+        )
+        .bind(id)
+        .bind(org_id)
+        .execute(executor)
+        .await?;
         Ok(result.rows_affected() > 0)
     }
 
@@ -796,6 +814,7 @@ impl EnhancedTenantScreeningRepository {
     pub async fn get_pending_queue_items<'e, E>(
         &self,
         executor: E,
+        org_id: Uuid,
         limit: i32,
     ) -> Result<Vec<ScreeningRequestQueueItem>, sqlx::Error>
     where
@@ -804,12 +823,14 @@ impl EnhancedTenantScreeningRepository {
         sqlx::query_as(
             r#"
             SELECT * FROM screening_request_queue
-            WHERE status = 'pending' OR (status = 'retry' AND next_retry_at <= NOW())
+            WHERE organization_id = $2
+              AND (status = 'pending' OR (status = 'retry' AND next_retry_at <= NOW()))
             ORDER BY priority, created_at
             LIMIT $1
             "#,
         )
         .bind(limit)
+        .bind(org_id)
         .fetch_all(executor)
         .await
     }
@@ -821,31 +842,36 @@ impl EnhancedTenantScreeningRepository {
     pub async fn update_queue_item_status<'e, E>(
         &self,
         executor: E,
+        org_id: Uuid,
         id: Uuid,
         status: &str,
         error: Option<&str>,
-    ) -> Result<(), sqlx::Error>
+    ) -> Result<bool, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        match status {
+        let rows = match status {
             "processing" => {
                 sqlx::query(
-                    "UPDATE screening_request_queue SET status = $2, started_at = NOW(), updated_at = NOW() WHERE id = $1",
+                    "UPDATE screening_request_queue SET status = $2, started_at = NOW(), updated_at = NOW() WHERE id = $1 AND organization_id = $3",
                 )
                 .bind(id)
                 .bind(status)
+                .bind(org_id)
                 .execute(executor)
-                .await?;
+                .await?
+                .rows_affected()
             }
             "completed" => {
                 sqlx::query(
-                    "UPDATE screening_request_queue SET status = $2, completed_at = NOW(), updated_at = NOW() WHERE id = $1",
+                    "UPDATE screening_request_queue SET status = $2, completed_at = NOW(), updated_at = NOW() WHERE id = $1 AND organization_id = $3",
                 )
                 .bind(id)
                 .bind(status)
+                .bind(org_id)
                 .execute(executor)
-                .await?;
+                .await?
+                .rows_affected()
             }
             "failed" | "retry" => {
                 sqlx::query(
@@ -853,26 +879,61 @@ impl EnhancedTenantScreeningRepository {
                     UPDATE screening_request_queue
                     SET status = $2, last_error = $3, attempt_count = attempt_count + 1,
                         next_retry_at = NOW() + INTERVAL '5 minutes', updated_at = NOW()
-                    WHERE id = $1
+                    WHERE id = $1 AND organization_id = $4
                     "#,
                 )
                 .bind(id)
                 .bind(status)
                 .bind(error)
+                .bind(org_id)
                 .execute(executor)
-                .await?;
+                .await?
+                .rows_affected()
             }
             _ => {
                 sqlx::query(
-                    "UPDATE screening_request_queue SET status = $2, updated_at = NOW() WHERE id = $1",
+                    "UPDATE screening_request_queue SET status = $2, updated_at = NOW() WHERE id = $1 AND organization_id = $3",
                 )
                 .bind(id)
                 .bind(status)
+                .bind(org_id)
                 .execute(executor)
-                .await?;
+                .await?
+                .rows_affected()
             }
-        }
-        Ok(())
+        };
+        Ok(rows > 0)
+    }
+
+    /// True when `screening_id` (and `provider_config_id`, if given) belong
+    /// to `org_id`. Used to reject cross-org references in create payloads.
+    pub async fn screening_refs_in_org<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+        screening_id: Uuid,
+        provider_config_id: Option<Uuid>,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_scalar(
+            r#"
+            SELECT EXISTS(
+                       SELECT 1 FROM tenant_screenings
+                        WHERE id = $1 AND organization_id = $2
+                   )
+               AND ($3::uuid IS NULL OR EXISTS(
+                       SELECT 1 FROM screening_provider_configs
+                        WHERE id = $3 AND organization_id = $2
+                   ))
+            "#,
+        )
+        .bind(screening_id)
+        .bind(org_id)
+        .bind(provider_config_id)
+        .fetch_one(executor)
+        .await
     }
 
     // =========================================================================

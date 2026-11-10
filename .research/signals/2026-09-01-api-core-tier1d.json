@@ -1,0 +1,65 @@
+{
+  "generated": "2026-09-01T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven (buffer starved, LANDABLE-only) 2026-09-01",
+  "segment_reviewed": "api-core",
+  "selection_reason": "steered (dispatcher Tier-1d LANDABLE-only). api-core (backend Rust, cloud-landable) selected explicitly; mobile-native-kmp excluded as unlandable in the cloud runner. Saturation check passed: api-core has 0 open code-review-finding rows in backlog.json (all prior api-core findings are done/dropped), so it is not saturated. CHURN_FILES empty per dispatcher. This pass targeted the largest UNREVIEWED critical-path files in the segment — services/push_fanout.rs (2124 lines, push notification delivery) and its FCM/APNs auth paths, none of which any prior api-core finding touched (prior coverage: scheduler, payment matcher, docgen, voice, workflow, client_ip, quiet-hours, oauth-ssrf, idempotency).",
+  "experts_used": ["rust"],
+  "findings_count": 3,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-api-core-fcm-v1-static-oauth-token",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-01 api-core push_fanout)",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/push_fanout.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/push_fanout.rs:233 `oauth_token: std::env::var(\"FCM_OAUTH_TOKEN\").ok()` is loaded once at FcmConfig::from_env() and then used verbatim as the bearer for every FCM HTTP v1 send at :330-341 (`let bearer = self.fcm_config.oauth_token.clone(); ... .bearer_auth(&bearer)`). FCM HTTP v1 (`/v1/projects/{id}/messages:send`) requires a Google OAuth2 access token, which Google issues with a ~3600s (1 hour) lifetime. There is no refresh path anywhere in the file — the token is never re-minted from a service-account key. Result: Android push via the v1 path stops working roughly one hour after the process boots (or after the operator-supplied token was minted), returning 401 UNAUTHENTICATED on every send until the process is restarted with a fresh FCM_OAUTH_TOKEN.",
+        "The inline comment at :324-329 acknowledges the shortcut ('In production this would come from a service-account key file via google-cloud-auth. We re-use FCM_SERVER_KEY as a bearer token here to keep the dependency footprint minimal'), so this is a known-incomplete implementation rather than an accident — but it is shipped on the wired push delivery hot path (PushFanoutWorker.deliver_job -> CombinedPushAdapter.send -> FcmHttpAdapter.send_fcm_v1), not gated behind a dev flag.",
+        "Impact: the entire Android push channel is not production-viable via v1. Confidence medium: the static-token wiring and absence of any refresh/token-exchange code are confirmed by static read; the exact expiry-driven failure is inferred from Google's documented OAuth2 token lifetime, not runtime-confirmed. Severity medium (not high) because in-app notifications remain the mandatory record — no data loss, but a silently-degrading delivery channel. Fix: mint short-lived OAuth2 access tokens from a service-account key (e.g. yup-oauth2 / gcp_auth) and cache/refresh them, instead of trusting a static env token."
+      ]
+    },
+    {
+      "id": "code-review-api-core-apns-jwt-per-send-mint",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-01 api-core push_fanout)",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/push_fanout.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/push_fanout.rs:901-909 `ApnsHttpAdapter::deliver` mints a brand-new ES256 provider-authentication JWT via `mint_apns_jwt(&self.apns_config)` (fn at :699-733) on EVERY delivery — i.e. once per notification per user, since the worker processes one Notification per queue job (deliver_job at :1383). There is no cache of the minted token; each call re-signs fresh claims with `iat = Utc::now()`.",
+        "Apple's APNs provider-token rules require REUSING the same authentication token: a provider must not generate a new token more than once every 20 minutes, and a token stays valid for up to 60 minutes. Minting a fresh token on every push violates this — under any real notification volume APNs will start rejecting sends with 429 `TooManyProviderTokenUpdates`, dropping iOS pushes until the rate subsides. The code has no handling for that reason string: send_apns_one at :843-851 only treats `BadDeviceToken`/`Unregistered` as token_expired; a 429 TooManyProviderTokenUpdates falls through to a generic `(false, false)` failure with no backoff and no token reuse, so the condition is self-sustaining under load.",
+        "The comment at :901 ('Mint a fresh JWT for this batch (negligible overhead vs. HTTP round-trip)') reasons only about CPU cost of signing, not about Apple's provider-token-update rate limit — so the rate-limit hazard is unaddressed. Confidence medium: the per-notification mint and absence of any token cache are confirmed by static read; the 429 threshold depends on production send rate, not runtime-confirmed. Fix: mint one APNs JWT and cache it on the adapter, refreshing on a ~50-minute interval (or lazily when older than ~50 min), so all sends in a window reuse one token."
+      ]
+    },
+    {
+      "id": "code-review-api-core-fcm-legacy-dead-endpoint",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-01 api-core push_fanout)",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/push_fanout.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/push_fanout.rs:330-336 — when no FCM_OAUTH_TOKEN is configured, send_fcm_v1 falls back to `send_fcm_legacy` (fn at :395-426), which POSTs to `{base_url}/fcm/send` (default base_url `https://fcm.googleapis.com`, :247) with an `Authorization: key={FCM_SERVER_KEY}` header (:424). This is Google's LEGACY FCM HTTP API, which Google decommissioned on 2024-06-20. `POST https://fcm.googleapis.com/fcm/send` now returns 404/401 for all callers, so this fallback path can never deliver in production.",
+        "Reachability: any deployment that sets FCM_SERVER_KEY but not FCM_OAUTH_TOKEN (a natural config given the :324-329 comment's own suggestion to 'reuse FCM_SERVER_KEY') routes 100% of Android sends into this dead path. Combined with the sibling finding code-review-api-core-fcm-v1-static-oauth-token, both FCM auth branches are non-functional in production: v1 with a static token that expires hourly, legacy against a shut-down endpoint.",
+        "Severity low (config-dependent latent failure; in-app remains the mandatory record) but net-new and independently fixable from the v1-token finding. Confidence medium: the endpoint URL and auth scheme are confirmed by static read; the decommission date is external knowledge, not runtime-confirmed. Fix: remove the legacy fallback and require a service-account-derived OAuth2 token for FCM v1 (fail closed with a clear log when unconfigured), rather than silently attempting a dead API."
+      ]
+    }
+  ]
+}

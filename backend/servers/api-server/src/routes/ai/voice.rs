@@ -6,6 +6,7 @@
 //! and are exposed `pub(crate)` so the router constructor can reference them.
 
 use crate::routes::ai::PaginationQuery;
+use crate::routes::pagination::clamp_limit;
 use crate::state::AppState;
 use api_core::extractors::RlsConnection;
 use axum::{
@@ -16,6 +17,11 @@ use axum::{
 use common::errors::ErrorResponse;
 use db::models::LinkVoiceDeviceRequest;
 use uuid::Uuid;
+
+/// Client-facing message returned when the voice-device OAuth code exchange
+/// fails. The underlying provider error is logged server-side but is never
+/// forwarded to the client, to avoid leaking upstream OAuth-provider detail.
+const OAUTH_EXCHANGE_FAILED_MESSAGE: &str = "Authorization code exchange failed";
 
 // ============================================================================
 // Story 64.5: Voice Assistant Endpoints
@@ -65,6 +71,44 @@ pub(crate) async fn link_voice_device(
     let tenant_id = rls.tenant_id();
     let user_id = rls.user_id();
 
+    // The optional unit binds later voice commands (fault reports, meter
+    // readings) to that unit, so it must be a unit of the caller's org that
+    // the caller lives in / owns (managers: any unit of the org). 404 otherwise.
+    if let Some(unit_id) = req.unit_id {
+        let allowed = if rls.role().is_manager() {
+            state
+                .unit_repo
+                .unit_belongs_to_org(&mut **rls.conn(), tenant_id, unit_id)
+                .await
+        } else {
+            state
+                .unit_repo
+                .is_user_linked_to_unit_in_org(&mut **rls.conn(), tenant_id, unit_id, user_id)
+                .await
+        };
+        match allowed {
+            Ok(true) => {}
+            Ok(false) => {
+                rls.release().await;
+                return Err((
+                    StatusCode::NOT_FOUND,
+                    Json(ErrorResponse::new("UNIT_NOT_FOUND", "Unit not found")),
+                ));
+            }
+            Err(e) => {
+                tracing::error!(error = %e, "Failed to verify voice device unit");
+                rls.release().await;
+                return Err((
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "INTERNAL_ERROR",
+                        "Failed to link device",
+                    )),
+                ));
+            }
+        }
+    }
+
     // Generate a unique device ID: platform prefix + UUID for debugging and uniqueness.
     // Format: "google_assistant_550e8400-e29b-41d4-a716-446655440000"
     // While longer than a plain UUID, the platform prefix aids in debugging and log analysis.
@@ -81,10 +125,19 @@ pub(crate) async fn link_voice_device(
         }
     };
 
+    // #2807: route through the same single-writer upsert the OAuth-exchange
+    // webhook path uses. The `uniq_voice_devices_active_org_user_platform`
+    // partial UNIQUE index (migration 00231) constrains *every* insert into the
+    // table, so a plain `create_voice_device` here raised a `23505`
+    // unique-violation (surfaced as an opaque 500) whenever the caller re-linked
+    // a device that already had an active row for this (org, user, platform).
+    // The upsert makes the DB the arbiter: first link inserts, a re-link
+    // conflicts on the index and rotates the tokens on the existing row in
+    // place, keeping `device_id` stable and one active row per tuple.
     let device = state
         .llm_document_repo
-        .create_voice_device(
-            &mut **rls.conn(),
+        .upsert_active_voice_device(
+            rls.conn(),
             tenant_id,
             user_id,
             req.unit_id,
@@ -191,7 +244,9 @@ async fn exchange_voice_oauth_tokens(
                 StatusCode::BAD_REQUEST,
                 Json(ErrorResponse::new(
                     "OAUTH_EXCHANGE_FAILED",
-                    format!("Failed to exchange authorization code: {}", e),
+                    // Do not leak the upstream OAuth-provider error to the client;
+                    // the detail is already logged server-side above.
+                    OAUTH_EXCHANGE_FAILED_MESSAGE,
                 )),
             )
         })?;
@@ -298,7 +353,7 @@ pub(crate) async fn list_voice_commands(
                 &mut **rls.conn(),
                 device_id,
                 user_id,
-                query.limit.unwrap_or(50),
+                clamp_limit(query.limit, 50),
                 query.offset.unwrap_or(0),
             )
             .await?;
@@ -320,5 +375,34 @@ pub(crate) async fn list_voice_commands(
                 Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to list")),
             ))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Regression guard for the AI upstream-error leak finding: the client-facing
+    /// body for a failed voice-device OAuth code exchange must carry only the
+    /// fixed generic message and must never contain the raw upstream provider
+    /// error (which is logged server-side).
+    #[test]
+    fn oauth_exchange_error_does_not_leak_upstream_detail() {
+        // A representative raw provider error that must not reach the client.
+        let upstream_detail = "invalid_grant: authorization code expired (provider trace xyz)";
+
+        // Mirror the client body built by the OAuth exchange error branch.
+        let response = ErrorResponse::new("OAUTH_EXCHANGE_FAILED", OAUTH_EXCHANGE_FAILED_MESSAGE);
+        let body = serde_json::to_string(&response).expect("serialize ErrorResponse");
+
+        assert!(
+            !body.contains(upstream_detail),
+            "client error body leaked the upstream provider detail: {body}"
+        );
+        assert!(
+            !body.contains("Failed to exchange authorization code:"),
+            "client error body still interpolates the upstream error: {body}"
+        );
+        assert_eq!(response.message, OAUTH_EXCHANGE_FAILED_MESSAGE);
     }
 }

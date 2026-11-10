@@ -7,7 +7,144 @@ use async_trait::async_trait;
 use db::models::action_type;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::future::Future;
+use std::net::IpAddr;
+use std::pin::Pin;
+use std::sync::Arc;
 use std::time::{Duration, Instant};
+
+/// Type-erased hostname → IPs resolver used by [`SsrfGuardResolver`].
+///
+/// Injected so the executor's real DNS path and the hermetic
+/// DNS-rebinding regression test share one code path (the test drives a
+/// stateful resolver that returns a public IP first and a private IP on the
+/// connect-time lookup).
+type IpResolver = Arc<
+    dyn Fn(String) -> Pin<Box<dyn Future<Output = std::io::Result<Vec<IpAddr>>> + Send>>
+        + Send
+        + Sync,
+>;
+
+/// Connect-time SSRF-guard DNS resolver for the workflow HTTP client.
+///
+/// `reqwest`/`hyper` invoke this at **connect** time for the initial request
+/// **and every redirect hop**. It resolves the hostname and validates every
+/// resulting address against the shared SSRF forbidden-range policy, erroring
+/// out (which aborts the connection) if any address is forbidden. Because the
+/// addresses `reqwest` connects to are exactly the ones validated here —
+/// resolved once, at connect, in the same step — this closes the
+/// DNS-rebinding TOCTOU window that a separate pre-flight lookup left open (a
+/// pre-flight lookup and `reqwest`'s own connect-time lookup could disagree,
+/// letting a hostname that first resolved public rebind to a private address
+/// before the socket is opened). It also re-validates redirects, which a
+/// one-shot pre-flight check never covered.
+struct SsrfGuardResolver {
+    resolve_ips: IpResolver,
+}
+
+impl reqwest::dns::Resolve for SsrfGuardResolver {
+    fn resolve(&self, name: reqwest::dns::Name) -> reqwest::dns::Resolving {
+        let resolve_ips = self.resolve_ips.clone();
+        Box::pin(async move {
+            let host = name.as_str().to_string();
+            // The port is irrelevant to SSRF validation (range checks are on
+            // the IP) and `hyper` overrides it with the real destination port
+            // after resolution, so we resolve/validate with 0.
+            let ips = (resolve_ips)(host.clone())
+                .await
+                .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> { Box::new(e) })?;
+            let addrs = common::url_validation::validate_resolved_addrs(&host, 0, &ips)
+                .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> { Box::new(e) })?;
+            let iter: reqwest::dns::Addrs = Box::new(addrs.into_iter());
+            Ok(iter)
+        })
+    }
+}
+
+/// Maximum number of redirect hops the workflow HTTP client will follow before
+/// aborting. `reqwest`'s default is also 10, but we set it explicitly because
+/// the client below installs a *custom* redirect policy (which otherwise has no
+/// hop limit of its own) and the bound is a security-relevant part of the SSRF
+/// posture, not an incidental default.
+const MAX_REDIRECTS: usize = 10;
+
+/// Decide whether a single redirect hop may be followed.
+///
+/// Extracted from the [`reqwest::redirect::Policy`] closure in
+/// [`ApiCallExecutor::with_ip_resolver`] so the SSRF re-validation of redirect
+/// targets is unit-testable *without* a live HTTP server: the SSRF DNS guard
+/// (`SsrfGuardResolver`) refuses to connect to a loopback address, so a
+/// redirect-following test cannot stand up a `127.0.0.1` server to emit a 3xx —
+/// the only hermetic way to exercise the redirect branch is this pure decision
+/// function.
+///
+/// `Ok(())` means the hop is safe to follow; `Err(reason)` aborts the whole
+/// request (fail closed). A hop is refused when:
+///   * the redirect chain has already reached [`MAX_REDIRECTS`], or
+///   * the redirect target fails [`common::url_validation::validate_external_url`]
+///     — i.e. it points at a blocked host, a private/reserved literal IP, an
+///     `http://` downgrade (outside development), or a `.local` / `.internal`
+///     TLD. This is what stops a redirect from bouncing an initially-valid
+///     request onto an internal/blocked host after the initial-URL check has
+///     already passed, or
+///   * the redirect target is a **different origin** (scheme/host/port) from the
+///     originally-configured request URL. This is a credential-leak defence:
+///     `reqwest` strips only the well-known sensitive headers
+///     (`Authorization` / `Cookie` / `Proxy-Authorization` / `Www-Authenticate`)
+///     when a redirect crosses to a different host — it does **not** strip
+///     arbitrary custom headers. A credential carried in
+///     [`AuthConfig::Header`] (e.g. `X-Api-Key`) or any user-supplied secret in
+///     `ApiCallConfig::headers` would therefore be forwarded verbatim to the
+///     redirect target's host. An initially-valid endpoint that answers
+///     `302 Location: https://attacker.example/…` would thus exfiltrate the
+///     secret to an attacker-controlled origin — a hop the SSRF range checks
+///     above cannot catch (the attacker host is a perfectly ordinary public
+///     `https://` host). Pinning redirects to the same origin as the configured
+///     request closes that channel for **every** header, standard or custom.
+///
+/// `original` is the originally-configured request URL (the first entry in
+/// `reqwest`'s redirect chain); the same-origin comparison is always made
+/// against it rather than the immediately-preceding hop, so no chain of
+/// individually-"small" host changes can walk the request off its origin.
+fn redirect_hop_allowed(target: &str, original: &str, previous_hops: usize) -> Result<(), String> {
+    if previous_hops >= MAX_REDIRECTS {
+        return Err("too many redirects".to_string());
+    }
+    common::url_validation::validate_external_url(target).map_err(|e| e.to_string())?;
+
+    // Same-origin enforcement (credential-leak defence — see doc comment). Parse
+    // both URLs with the same (`reqwest`-re-exported) `url` crate so their
+    // `Origin` values are directly comparable; `Origin` equality covers
+    // scheme + host + port, so an `https`→`http` downgrade or a port change also
+    // counts as cross-origin and is refused.
+    let target_origin = reqwest::Url::parse(target)
+        .map_err(|e| format!("invalid redirect target URL: {e}"))?
+        .origin();
+    let original_origin = reqwest::Url::parse(original)
+        .map_err(|e| format!("invalid original request URL: {e}"))?
+        .origin();
+    if target_origin != original_origin {
+        return Err(
+            "cross-origin redirect refused (credential-leak / SSRF hardening): the redirect \
+             target is a different origin than the configured request URL"
+                .to_string(),
+        );
+    }
+    Ok(())
+}
+
+/// Real DNS resolver used in production: the OS resolver via Tokio's async
+/// wrapper around `getaddrinfo`.
+fn real_ip_resolver() -> IpResolver {
+    Arc::new(
+        |host: String| -> Pin<Box<dyn Future<Output = std::io::Result<Vec<IpAddr>>> + Send>> {
+            Box::pin(async move {
+                let addrs = tokio::net::lookup_host((host.as_str(), 0)).await?;
+                Ok(addrs.map(|sa| sa.ip()).collect::<Vec<IpAddr>>())
+            })
+        },
+    )
+}
 
 /// HTTP method for the API call.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -83,6 +220,22 @@ pub struct ApiCallConfig {
     pub include_response: bool,
 }
 
+/// Maximum number of response-body bytes the API-call action will buffer into
+/// memory. A workflow action issues one small outbound request but then reads
+/// the *entire* upstream response with `response.text()`, which buffers with no
+/// ceiling — a malicious or misbehaving endpoint can reply with a multi-GB (or,
+/// via chunked transfer with no `Content-Length`, effectively unbounded) body
+/// and amplify a trivial request into an out-of-memory DoS on the worker. We
+/// cap the read at this many bytes; anything beyond is dropped and the stored
+/// body is marked truncated. 8 MiB comfortably covers legitimate JSON webhook
+/// responses while bounding worst-case allocation per in-flight action.
+const MAX_RESPONSE_BODY_BYTES: usize = 8 * 1024 * 1024;
+
+/// Appended to a response body that was cut off at `MAX_RESPONSE_BODY_BYTES`,
+/// so the persisted workflow-execution record makes the truncation explicit
+/// instead of silently storing a partial payload.
+const RESPONSE_TRUNCATION_MARKER: &str = "\u{2026}[truncated: response exceeded 8 MiB cap]";
+
 fn default_timeout_seconds() -> u64 {
     30
 }
@@ -97,19 +250,91 @@ fn default_true() -> bool {
 
 /// API call action executor.
 pub struct ApiCallExecutor {
-    client: reqwest::Client,
+    /// The built HTTP client, or the error produced while building it.
+    ///
+    /// `reqwest::Client::builder().build()` can fail when the TLS backend or
+    /// the connection pool cannot be initialised. Panicking there (the former
+    /// `.expect(...)`) would abort the whole action registry / server startup
+    /// on a transient or environment-level misconfiguration instead of
+    /// surfacing it as a recoverable error. We retain the build error and
+    /// convert it into an [`ActionError`] from [`ApiCallExecutor::client`] /
+    /// `execute`, the handler boundary that already returns `Result`.
+    client: Result<reqwest::Client, String>,
+    /// The same resolver the HTTP client uses at connect time, kept so the
+    /// fail-fast pre-flight check and the connect-time re-validation observe
+    /// one DNS path (and so the rebinding regression test can inject a
+    /// stateful resolver that drives both).
+    resolve_ips: IpResolver,
 }
 
 impl ApiCallExecutor {
-    /// Create a new API call executor.
+    /// Create a new API call executor backed by the real OS DNS resolver.
     pub fn new() -> Self {
+        Self::with_ip_resolver(real_ip_resolver())
+    }
+
+    /// Build an executor whose HTTP client resolves and SSRF-validates every
+    /// connection (initial request + redirects) through `resolve_ips`. The
+    /// connect-time [`SsrfGuardResolver`] is what closes the DNS-rebinding
+    /// TOCTOU: `reqwest` connects only to addresses this resolver validated.
+    fn with_ip_resolver(resolve_ips: IpResolver) -> Self {
+        // Re-validate every redirect hop's URL statically before following it.
+        // The connect-time `SsrfGuardResolver` already blocks any hop that
+        // resolves to a forbidden IP (including rebinds), but the static
+        // `validate_external_url` additionally rejects a redirect that
+        // downgrades to plain `http://`, or targets a blocked hostname /
+        // `.local` / `.internal` TLD, which an IP-range check alone would not
+        // catch. The same-origin check additionally refuses a redirect to a
+        // *different* (but otherwise valid, public) origin, which would leak any
+        // custom credential header to the target host (`reqwest` only strips the
+        // well-known sensitive headers cross-host). Fail closed: an invalid hop
+        // aborts the request.
+        let redirect_policy = reqwest::redirect::Policy::custom(|attempt| {
+            // The originally-configured request URL is the first entry in the
+            // redirect chain (empty on the very first hop, where the URL being
+            // attempted IS the original).
+            let original = attempt
+                .previous()
+                .first()
+                .unwrap_or_else(|| attempt.url())
+                .as_str()
+                .to_string();
+            match redirect_hop_allowed(attempt.url().as_str(), &original, attempt.previous().len())
+            {
+                Ok(()) => attempt.follow(),
+                Err(reason) => attempt.error(reason),
+            }
+        });
+
+        // Build the client, but DO NOT panic on failure: retain the error so
+        // it can be surfaced as a recoverable `ActionError` at execution time
+        // (see the `client` field / `ApiCallExecutor::client`). A TLS-backend
+        // or connection-pool init failure here must not take down server
+        // startup or the whole action registry.
         let client = reqwest::Client::builder()
             .timeout(Duration::from_secs(60))
             .user_agent("PPT-Workflow/1.0")
+            .redirect(redirect_policy)
+            .dns_resolver(Arc::new(SsrfGuardResolver {
+                resolve_ips: resolve_ips.clone(),
+            }))
             .build()
-            .expect("Failed to create HTTP client");
+            .map_err(|e| format!("Failed to create workflow HTTP client: {e}"));
 
-        Self { client }
+        Self {
+            client,
+            resolve_ips,
+        }
+    }
+
+    /// Borrow the built HTTP client, or convert the retained build error into
+    /// an [`ActionError`]. This is the fail-soft replacement for the former
+    /// `.expect(...)` on `reqwest::Client::builder().build()`: a client that
+    /// could not be constructed yields a handler error instead of a panic.
+    fn client(&self) -> Result<&reqwest::Client, ActionError> {
+        self.client
+            .as_ref()
+            .map_err(|e| ActionError::ExecutionFailed(e.clone()))
     }
 
     /// Parse and validate the API call configuration.
@@ -138,6 +363,56 @@ impl ApiCallExecutor {
             ),
             other => other.clone(),
         }
+    }
+
+    /// Read an upstream response body while hard-capping how many bytes are
+    /// buffered, defending against a memory-amplification DoS (a small request
+    /// provoking an enormous reply). Returns `(body_text, truncated)`.
+    ///
+    /// Two layers of defence:
+    /// 1. **`Content-Length` pre-check** — if the upstream already advertises a
+    ///    body larger than the cap, refuse to buffer any of it.
+    /// 2. **Streaming bounded read** — otherwise pull the body chunk-by-chunk
+    ///    and stop the moment the accumulated size would exceed the cap. This
+    ///    is what protects against a chunked-transfer body with no (or a lying)
+    ///    `Content-Length`, which the pre-check alone cannot catch.
+    ///
+    /// A mid-stream network error keeps whatever was read so far (best-effort),
+    /// mirroring the previous `unwrap_or_default()` behaviour.
+    async fn read_capped_body(mut response: reqwest::Response) -> (String, bool) {
+        // Layer 1: honest oversized Content-Length — never start buffering.
+        if let Some(len) = response.content_length() {
+            if len > MAX_RESPONSE_BODY_BYTES as u64 {
+                return (RESPONSE_TRUNCATION_MARKER.to_string(), true);
+            }
+        }
+
+        // Layer 2: bounded streaming read.
+        let mut buf: Vec<u8> = Vec::new();
+        let mut truncated = false;
+        loop {
+            match response.chunk().await {
+                Ok(Some(chunk)) => {
+                    let remaining = MAX_RESPONSE_BODY_BYTES.saturating_sub(buf.len());
+                    if chunk.len() > remaining {
+                        buf.extend_from_slice(&chunk[..remaining]);
+                        truncated = true;
+                        break;
+                    }
+                    buf.extend_from_slice(&chunk);
+                }
+                Ok(None) => break,
+                // Network error mid-read: keep the partial body, don't fail the
+                // whole action on it (matches prior best-effort semantics).
+                Err(_) => break,
+            }
+        }
+
+        let mut text = String::from_utf8_lossy(&buf).into_owned();
+        if truncated {
+            text.push_str(RESPONSE_TRUNCATION_MARKER);
+        }
+        (text, truncated)
     }
 }
 
@@ -169,17 +444,53 @@ impl ActionExecutor for ApiCallExecutor {
         // documentation ranges. Delegating keeps scheme allowlisting
         // (http(s) only, plain-http gated to `RUST_ENV=development`), blocked
         // hosts/TLDs, and private/reserved IP checks in lock-step everywhere.
-        if let Err(e) = common::url_validation::validate_external_url(&url) {
-            return Err(ActionError::ConfigurationError(e.to_string()));
-        }
+        let parsed_url = common::url_validation::validate_external_url(&url)
+            .map_err(|e| ActionError::ConfigurationError(e.to_string()))?;
 
-        // Build request
+        // SSRF via DNS: `validate_external_url` only inspects the literal
+        // string — a hostname with no literal-IP form (e.g.
+        // "attacker.example.com") that resolves to a private/internal
+        // address at request time sails straight through it. Two layers guard
+        // the DNS path:
+        //
+        //   1. This fail-fast pre-flight: resolve now and reject if *any*
+        //      resolved address is forbidden, so an obviously-internal or
+        //      unresolvable host is rejected with a clean `ConfigurationError`
+        //      before a request is ever built.
+        //   2. The connect-time `SsrfGuardResolver` wired into `self.client`
+        //      (see `with_ip_resolver`), which re-resolves-and-validates at
+        //      the moment `reqwest` opens the socket, for the initial request
+        //      and every redirect hop. THIS is what actually closes the
+        //      DNS-rebinding TOCTOU: a hostname that resolves public here but
+        //      rebinds to a private address before connect is rejected at
+        //      connect, because the client connects only to addresses the
+        //      resolver validated. Both layers share `self.resolve_ips`, so
+        //      the pre-flight and the connection observe one DNS code path.
+        //
+        // Fails closed: a resolution error also rejects.
+        let host = parsed_url.host_str().ok_or_else(|| {
+            ActionError::ConfigurationError("API call URL must have a host".to_string())
+        })?;
+        let port = parsed_url.port_or_known_default().unwrap_or(443);
+        let resolved_ips = (self.resolve_ips)(host.to_string()).await.map_err(|e| {
+            ActionError::ConfigurationError(
+                common::url_validation::UrlValidationError::ResolutionFailed(e.to_string())
+                    .to_string(),
+            )
+        })?;
+        common::url_validation::validate_resolved_addrs(host, port, &resolved_ips)
+            .map_err(|e| ActionError::ConfigurationError(e.to_string()))?;
+
+        // Build request — fail soft if the HTTP client could not be
+        // constructed (e.g. TLS/connection-pool init error) rather than having
+        // panicked at construction time.
+        let client = self.client()?;
         let mut request = match api_config.method {
-            HttpMethod::GET => self.client.get(&url),
-            HttpMethod::POST => self.client.post(&url),
-            HttpMethod::PUT => self.client.put(&url),
-            HttpMethod::PATCH => self.client.patch(&url),
-            HttpMethod::DELETE => self.client.delete(&url),
+            HttpMethod::GET => client.get(&url),
+            HttpMethod::POST => client.post(&url),
+            HttpMethod::PUT => client.put(&url),
+            HttpMethod::PATCH => client.patch(&url),
+            HttpMethod::DELETE => client.delete(&url),
         };
 
         // Set timeout
@@ -239,9 +550,18 @@ impl ActionExecutor for ApiCallExecutor {
         // Check if status code indicates success
         let is_success = api_config.success_codes.contains(&status);
 
-        // Get response body
+        // Get response body — capped read so an oversized/unbounded upstream
+        // reply cannot amplify into an out-of-memory DoS on the worker.
         let response_body = if api_config.include_response {
-            let text = response.text().await.unwrap_or_default();
+            let (text, truncated) = Self::read_capped_body(response).await;
+            if truncated {
+                tracing::warn!(
+                    workflow_id = %context.workflow_id,
+                    execution_id = %context.execution_id,
+                    cap_bytes = MAX_RESPONSE_BODY_BYTES,
+                    "Workflow API-call response body exceeded cap; truncated before persisting"
+                );
+            }
             if api_config.parse_json_response {
                 serde_json::from_str(&text).unwrap_or(serde_json::Value::String(text))
             } else {
@@ -419,6 +739,348 @@ mod tests {
             other => panic!(
                 "expected ConfigurationError (SSRF rejection) for a multicast \
                  address, got: {other:?}"
+            ),
+        }
+    }
+
+    /// Regression (SSRF via DNS): `validate_external_url` only inspected the
+    /// literal URL string, so a DNS hostname with no literal-IP form (e.g.
+    /// `internal.attacker.example`) sailed through even when it resolves to
+    /// a private/internal address at request time — the guard never ran a
+    /// DNS lookup at all. `common::url_validation::validate_resolved_host`
+    /// covers the "resolves to a private IP" case itself, using an injected
+    /// fake resolver so it stays hermetic (see
+    /// `common::url_validation::tests::validate_resolved_host_rejects_hostname_resolving_to_private_ip`).
+    ///
+    /// This test proves the executor actually *wires in* that check (rather
+    /// than the fix existing only in the library, unused) by exercising the
+    /// fail-closed branch: a hostname under the IETF-reserved `.invalid` TLD
+    /// (RFC 2606) can never resolve, so DNS resolution errors out and the
+    /// fail-closed `ResolutionFailed` branch rejects it — fast and without
+    /// depending on any specific external network state, since the
+    /// non-delegation of `.invalid` is guaranteed rather than incidental.
+    /// Fails on `dev`: `execute` there never calls
+    /// `validate_resolved_host`/`validate_resolved_host_with`, so a
+    /// non-literal-IP hostname was never re-validated post-DNS and this call
+    /// would instead fail later with an `ExternalServiceError` from
+    /// `reqwest` (a connect failure), not the `ConfigurationError` this test
+    /// asserts.
+    #[tokio::test]
+    async fn execute_rejects_hostname_that_fails_dns_resolution() {
+        let executor = ApiCallExecutor::new();
+        let context = ActionContext::new(
+            uuid::Uuid::new_v4(),
+            uuid::Uuid::new_v4(),
+            uuid::Uuid::new_v4(),
+            serde_json::json!({}),
+        );
+        let config = serde_json::json!({
+            "url": "https://this-host-cannot-resolve.invalid/webhook"
+        });
+
+        match executor.execute(&config, &context).await {
+            Err(ActionError::ConfigurationError(msg)) => {
+                assert!(
+                    msg.contains("resolve"),
+                    "expected a DNS-resolution rejection message, got: {msg}"
+                );
+            }
+            other => panic!(
+                "expected ConfigurationError (fail-closed DNS resolution) for an \
+                 unresolvable host, got: {other:?}"
+            ),
+        }
+    }
+
+    /// Regression (memory-amplification DoS): the executor used to buffer the
+    /// *entire* upstream response with `response.text().await` and no ceiling,
+    /// so a small outbound request could provoke a multi-GB (or, via chunked
+    /// transfer, effectively unbounded) reply and OOM the worker. `read_capped_body`
+    /// now hard-caps the buffered bytes at `MAX_RESPONSE_BODY_BYTES` and marks
+    /// the result truncated.
+    ///
+    /// Hermetic: we hand `read_capped_body` a synthesized over-limit response
+    /// (built via `http::Response` → `reqwest::Response`) instead of standing
+    /// up a network server — the SSRF validator would reject a `127.0.0.1`
+    /// loopback server anyway, so a real request is not an option here.
+    /// Fails on `dev` (the old code returned the full body, so the non-marker
+    /// payload length would exceed the cap and `truncated` would be false).
+    #[tokio::test]
+    async fn read_capped_body_truncates_oversized_response() {
+        use axum::http;
+
+        // A body deliberately larger than the cap.
+        let oversized = vec![b'a'; MAX_RESPONSE_BODY_BYTES + 4096];
+        let http_response = http::Response::builder()
+            .status(200)
+            .body(oversized)
+            .expect("build synthetic http::Response");
+        let response = reqwest::Response::from(http_response);
+
+        let (text, truncated) = ApiCallExecutor::read_capped_body(response).await;
+
+        assert!(truncated, "an over-limit body must be reported truncated");
+        assert!(
+            text.ends_with(RESPONSE_TRUNCATION_MARKER),
+            "truncated body must carry the truncation marker"
+        );
+        // The retained payload (excluding the marker) must never exceed the cap
+        // — i.e. the full body was NOT buffered.
+        let payload_len = text.len() - RESPONSE_TRUNCATION_MARKER.len();
+        assert!(
+            payload_len <= MAX_RESPONSE_BODY_BYTES,
+            "buffered payload {payload_len} must not exceed cap {MAX_RESPONSE_BODY_BYTES}"
+        );
+    }
+
+    /// Companion: a body comfortably under the cap is returned verbatim and is
+    /// not flagged truncated (guards against an over-eager cap).
+    #[tokio::test]
+    async fn read_capped_body_passes_small_response_through() {
+        use axum::http;
+
+        let payload = b"{\"ok\":true}".to_vec();
+        let http_response = http::Response::builder()
+            .status(200)
+            .body(payload.clone())
+            .expect("build synthetic http::Response");
+        let response = reqwest::Response::from(http_response);
+
+        let (text, truncated) = ApiCallExecutor::read_capped_body(response).await;
+
+        assert!(!truncated, "a small body must not be flagged truncated");
+        assert_eq!(text.as_bytes(), payload.as_slice());
+    }
+
+    /// IG3 regression (SSRF DNS-rebinding TOCTOU, #2703): the pre-fix executor
+    /// resolved+validated the host **once** in a pre-flight lookup, then let
+    /// `reqwest` resolve the same host **again** at connect time. An attacker
+    /// controlling DNS could answer the first lookup with a public IP (passing
+    /// validation) and the second with a private/link-local IP (the socket the
+    /// client actually opens) — a classic time-of-check/time-of-use bypass of
+    /// the anti-SSRF gate.
+    ///
+    /// The fix wires a connect-time `SsrfGuardResolver` into the HTTP client so
+    /// the addresses `reqwest` connects to are exactly the ones re-validated at
+    /// connect. This test models the rebind with a hermetic, stateful resolver
+    /// (no real network): the **first** resolution — the pre-flight — returns a
+    /// public IP so validation passes, and the **second** — `reqwest`'s
+    /// connect-time lookup — returns `10.0.0.5`. The request must be rejected,
+    /// and the resolver must have been consulted at least twice (proving the
+    /// connect-time layer ran and observed the rebind).
+    ///
+    /// Fails on `dev`: there the client uses its own default resolver, so a
+    /// rebind to a private IP at connect is not re-validated and the request
+    /// would proceed to open a socket to the private address rather than being
+    /// rejected here.
+    #[tokio::test]
+    async fn execute_rejects_dns_rebinding_to_private_ip_at_connect() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+
+        let calls = Arc::new(AtomicUsize::new(0));
+        let calls_in_resolver = calls.clone();
+
+        // Stateful rebinding resolver: lookup #0 (pre-flight validation) →
+        // public; lookup #1+ (connect-time) → private.
+        let resolver: IpResolver = Arc::new(
+            move |_host: String| -> Pin<Box<dyn Future<Output = std::io::Result<Vec<IpAddr>>> + Send>> {
+                let calls = calls_in_resolver.clone();
+                Box::pin(async move {
+                    let n = calls.fetch_add(1, Ordering::SeqCst);
+                    let ip: IpAddr = if n == 0 {
+                        "93.184.216.34".parse().unwrap() // public — first (pre-flight) lookup
+                    } else {
+                        "10.0.0.5".parse().unwrap() // private — connect-time rebind
+                    };
+                    Ok(vec![ip])
+                })
+            },
+        );
+
+        let executor = ApiCallExecutor::with_ip_resolver(resolver);
+        let context = ActionContext::new(
+            uuid::Uuid::new_v4(),
+            uuid::Uuid::new_v4(),
+            uuid::Uuid::new_v4(),
+            serde_json::json!({}),
+        );
+        let config = serde_json::json!({ "url": "https://rebind.attacker.example/webhook" });
+
+        let result = executor.execute(&config, &context).await;
+
+        assert!(
+            result.is_err(),
+            "a host that rebinds to a private IP at connect must be rejected, got: {result:?}"
+        );
+        assert!(
+            calls.load(Ordering::SeqCst) >= 2,
+            "expected the connect-time resolver to re-resolve after the pre-flight \
+             lookup (rebinding observed), but it was consulted {} time(s)",
+            calls.load(Ordering::SeqCst)
+        );
+    }
+
+    /// IG3 regression (SSRF via HTTP redirect): the workflow HTTP client is
+    /// built with a *custom* redirect policy. Before that policy existed the
+    /// client followed up to 10 redirects with `reqwest`'s default policy,
+    /// which re-validates nothing — so an attacker-controlled endpoint that
+    /// first passed `validate_external_url` could reply `302 Location:
+    /// http://169.254.169.254/…` (or any private/blocked host) and the client
+    /// would happily follow the hop straight into the internal network,
+    /// defeating the entire SSRF guard.
+    ///
+    /// The redirect decision lives in `redirect_hop_allowed`, which the policy
+    /// closure calls for every hop. This test exercises that decision directly
+    /// (the SSRF DNS guard blocks standing up a loopback test server, so the
+    /// redirect branch can only be reached hermetically via this pure
+    /// function): a hop whose target is a private or link-local/metadata
+    /// literal IP must be **refused** (`Err`), which makes the policy return
+    /// `attempt.error(..)` and aborts the request rather than following it.
+    ///
+    /// Both targets asserted here are rejected by `validate_external_url`
+    /// unconditionally (private + link-local ranges are forbidden regardless of
+    /// `RUST_ENV`), so the assertion is environment-independent.
+    ///
+    /// Fails on `dev` before the redirect policy was wired in: there the client
+    /// used `reqwest`'s default follow-everything policy with no per-hop
+    /// re-validation, so a redirect to a blocked/internal host WAS followed.
+    #[test]
+    fn redirect_to_blocked_or_internal_host_is_not_followed() {
+        let original = "https://api.example.com/webhook";
+        // Redirect target = private RFC1918 host → must be refused.
+        assert!(
+            redirect_hop_allowed("https://10.0.0.1/internal", original, 0).is_err(),
+            "a redirect to a private (10.0.0.0/8) host must not be followed"
+        );
+        // Redirect target = link-local cloud-metadata endpoint → must be refused.
+        assert!(
+            redirect_hop_allowed("https://169.254.169.254/latest/meta-data/", original, 0).is_err(),
+            "a redirect to the 169.254.169.254 metadata host must not be followed"
+        );
+    }
+
+    /// Companion: a redirect to a legitimate public `https://` host is allowed
+    /// (guards against an over-broad policy that would break normal redirects),
+    /// while a redirect chain that has reached `MAX_REDIRECTS` is refused
+    /// (bounded-hops half of the policy).
+    #[test]
+    fn redirect_hop_allows_public_https_and_bounds_chain_length() {
+        // Same-origin redirect to a public https host → followed.
+        assert!(
+            redirect_hop_allowed(
+                "https://api.example.com/next",
+                "https://api.example.com/webhook",
+                0
+            )
+            .is_ok(),
+            "a same-origin redirect to a public https host should be followed"
+        );
+        assert!(
+            redirect_hop_allowed(
+                "https://api.example.com/next",
+                "https://api.example.com/webhook",
+                MAX_REDIRECTS
+            )
+            .is_err(),
+            "a redirect chain at the hop limit must be refused"
+        );
+    }
+
+    /// IG3 regression (credential leakage on cross-origin redirect): a request
+    /// may carry a secret in a custom header — `AuthConfig::Header` (e.g.
+    /// `X-Api-Key`) or an entry in `ApiCallConfig::headers`. `reqwest` strips
+    /// only the well-known sensitive headers (`Authorization` / `Cookie` /
+    /// `Proxy-Authorization` / `Www-Authenticate`) when a redirect crosses to a
+    /// different host; it forwards every *custom* header unchanged. So an
+    /// initially-valid endpoint answering `302 Location:
+    /// https://attacker.example/collect` would leak the custom credential to the
+    /// attacker's origin — and the SSRF range checks cannot catch it, because
+    /// `attacker.example` is an ordinary public `https://` host that passes
+    /// `validate_external_url`.
+    ///
+    /// The fix pins redirects to the **same origin** as the configured request
+    /// URL. This test exercises that decision directly (the SSRF DNS guard
+    /// blocks standing up a loopback test server, so the redirect branch is only
+    /// reachable hermetically via this pure function): a cross-origin hop to a
+    /// perfectly valid public host must be **refused**, while the corresponding
+    /// same-origin hop is allowed.
+    ///
+    /// Fails on `dev` before same-origin pinning: there the custom policy
+    /// re-validated the target for SSRF but followed any valid cross-origin hop,
+    /// forwarding the custom credential header to the new host.
+    #[test]
+    fn cross_origin_redirect_is_refused_even_to_a_valid_public_host() {
+        let original = "https://api.trusted.example/webhook";
+
+        // Different host (but a valid public https host) → refused.
+        let err = redirect_hop_allowed("https://attacker.example/collect", original, 0)
+            .expect_err("a cross-origin redirect to a different host must be refused");
+        assert!(
+            err.contains("cross-origin"),
+            "refusal must cite the cross-origin credential-leak guard, got: {err}"
+        );
+
+        // Different port on the same host → still cross-origin → refused.
+        assert!(
+            redirect_hop_allowed("https://api.trusted.example:8443/webhook", original, 0).is_err(),
+            "a redirect to a different port is cross-origin and must be refused"
+        );
+
+        // Same origin, different path → allowed (guards against over-broad pinning).
+        assert!(
+            redirect_hop_allowed("https://api.trusted.example/v2/webhook", original, 0).is_ok(),
+            "a same-origin redirect (identical scheme/host/port) must still be followed"
+        );
+    }
+
+    /// Regression: building the workflow HTTP client used to end in
+    /// `.build().expect("Failed to create HTTP client")`, so a TLS-backend or
+    /// connection-pool initialisation failure would **panic** — aborting the
+    /// action registry / server startup instead of surfacing a recoverable
+    /// error. The client build result is now retained and converted into an
+    /// `ActionError` at execution time.
+    ///
+    /// We cannot force `reqwest::Client::builder().build()` to fail
+    /// hermetically (there is no public fault-injection hook), so this test
+    /// drives the error branch directly: it constructs an executor whose
+    /// `client` field holds the build error (the test module shares the
+    /// module's private fields) and asserts `execute` returns
+    /// `ActionError::ExecutionFailed` — i.e. it does NOT panic and does NOT
+    /// attempt a request. This locks in the fail-soft contract that replaced
+    /// the panic.
+    #[tokio::test]
+    async fn execute_surfaces_client_build_failure_as_error_not_panic() {
+        // Hermetic resolver: always returns a public IP so the SSRF DNS
+        // pre-flight passes without touching the network, letting execution
+        // reach the client-build check this test targets.
+        let resolver: IpResolver = Arc::new(
+            |_host: String| -> Pin<Box<dyn Future<Output = std::io::Result<Vec<IpAddr>>> + Send>> {
+                Box::pin(async move { Ok(vec!["93.184.216.34".parse::<IpAddr>().unwrap()]) })
+            },
+        );
+        let executor = ApiCallExecutor {
+            client: Err("simulated TLS backend init failure".to_string()),
+            resolve_ips: resolver,
+        };
+        let context = ActionContext::new(
+            uuid::Uuid::new_v4(),
+            uuid::Uuid::new_v4(),
+            uuid::Uuid::new_v4(),
+            serde_json::json!({}),
+        );
+        let config = serde_json::json!({ "url": "https://api.example.com/webhook" });
+
+        match executor.execute(&config, &context).await {
+            Err(ActionError::ExecutionFailed(msg)) => {
+                assert!(
+                    msg.contains("simulated TLS backend init failure"),
+                    "the surfaced error should carry the retained client build \
+                     failure, got: {msg}"
+                );
+            }
+            other => panic!(
+                "a failed HTTP client build must surface as ActionError::ExecutionFailed, \
+                 got: {other:?}"
             ),
         }
     }

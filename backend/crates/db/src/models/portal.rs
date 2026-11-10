@@ -124,55 +124,6 @@ pub struct FavoritesResponse {
 // Saved Searches (Story 16.3)
 // ============================================
 
-/// Saved search entity.
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
-pub struct SavedSearch {
-    pub id: Uuid,
-    pub user_id: Uuid,
-    pub name: String,
-    pub criteria: serde_json::Value,
-    pub alerts_enabled: bool,
-    pub alert_frequency: String, // instant, daily, weekly
-    pub last_matched_at: Option<DateTime<Utc>>,
-    pub match_count: i32,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-}
-
-/// Alert frequency enum.
-pub mod alert_frequency {
-    pub const INSTANT: &str = "instant";
-    pub const DAILY: &str = "daily";
-    pub const WEEKLY: &str = "weekly";
-}
-
-/// Create saved search request.
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct CreateSavedSearch {
-    pub name: String,
-    pub criteria: SearchCriteria,
-    #[serde(default = "default_true")]
-    pub alerts_enabled: bool,
-    #[serde(default = "default_daily")]
-    pub alert_frequency: String,
-}
-
-fn default_true() -> bool {
-    true
-}
-
-fn default_daily() -> String {
-    alert_frequency::DAILY.to_string()
-}
-
-/// Update saved search request.
-#[derive(Debug, Clone, Default, Serialize, Deserialize, ToSchema)]
-pub struct UpdateSavedSearch {
-    pub name: Option<String>,
-    pub alerts_enabled: Option<bool>,
-    pub alert_frequency: Option<String>,
-}
-
 /// Search criteria (stored as JSON).
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct SearchCriteria {
@@ -187,13 +138,6 @@ pub struct SearchCriteria {
     pub rooms_max: Option<i32>,
     pub city: Option<String>,
     pub country: Option<String>,
-}
-
-/// Saved searches list response.
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct SavedSearchesResponse {
-    pub searches: Vec<SavedSearch>,
-    pub total: i64,
 }
 
 /// Search alert notification.

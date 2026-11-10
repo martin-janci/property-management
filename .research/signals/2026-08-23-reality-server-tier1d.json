@@ -1,0 +1,55 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-23T05:00:00Z",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["rust"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-reality-server-drainer-mark-fail-redeliver",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/reality-server/src/services/search_alert_drainer.rs:317-325 — after a transport send succeeds (any_ok == true), the drainer calls mark_search_alert_notified(alert.id); if that DB write returns Err it is only tracing::error!'d. Neither notified_at is set NOR record_search_alert_notify_failure() is called on this branch, so the row stays in the undelivered set (list_undelivered_search_alerts) and is re-drained on the very next poll — re-sending the same email + push fan-out to every device, unbounded, because max_attempts is only consumed on the all-channels-failed branch (line 323).",
+        "This is the exact bug class the sibling saved_search_alerts.rs already fixed: see the #983 note at services/saved_search_alerts.rs:222-229 ('this used to enqueue and advance as two separate statements ... when the enqueue succeeded but the advance failed ... the next due run re-enqueued a duplicate'). The drainer reintroduces the same succeed-then-persist-fails → duplicate-delivery gap for the send→mark step.",
+        "The drainer runs by default (SearchAlertDrainerConfig::default().enabled = true, poll every 60s) so the path is reachable in production. The existing test suite (tests/suites/search_alert_drainer_tests.rs) covers only the happy drain and the all-channels-fail attempt-budget path (failed_delivery_increments_attempts_until_budget_exhausted) — the send-ok-but-mark-fails redelivery edge is untested."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-sso-sessions-unbounded-map",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/reality-server/src/state.rs:855 — sso_sessions: Arc<Mutex<HashMap<String, PendingSsoSession>>>, an unbounded in-memory map initialised empty at state.rs:991. Entries are inserted on SSO initiation (routes/sso.rs:94) and removed ONLY on a successful callback lookup (routes/sso.rs:243).",
+        "The 10-minute expiry (routes/sso.rs:251-257) is enforced lazily AFTER a callback removes the entry — there is no background sweeper / retain() that proactively evicts expired PendingSsoSession rows. Any SSO flow that starts but never completes the callback (user abandons, or an attacker scripts the authorize initiation) leaves its entry resident for the whole process lifetime.",
+        "The authorize/initiation endpoint is public (SSO login start, no prior session), so an unauthenticated caller can grow the map without bound → gradual memory-exhaustion DoS across the reality-server process. Fix: sweep expired entries on insert, or move pending SSO sessions to Redis with a TTL (the crate already uses Redis for sessions per the stack docs)."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-url-validator-cgnat-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/reality-server/src/util/url_validator.rs:71-105 — ipv4_forbidden_reason() (the SSRF defense-in-depth IP allowlist used by validate_fetch_url for user-supplied fetch URLs, e.g. agency import feeds) omits several reserved ranges: 100.64.0.0/10 (RFC 6598 Carrier-Grade NAT — routable to internal infra on many cloud/ISP networks), 192.0.0.0/24 + 192.0.2.0/24 / 198.51.100.0/24 / 203.0.113.0/24 (TEST-NET), and 198.18.0.0/15 (RFC 2544 benchmarking).",
+        "CGNAT (100.64.0.0/10) is the notable gap: on providers that place internal services behind CGNAT space it is an SSRF pivot the current guard passes through. The IPv6-mapped path (lines 152-159) reuses ipv4_forbidden_reason so it inherits the same omissions.",
+        "Low severity because the module documents (lines 13-15, 112-115) that the import worker MUST re-resolve and re-validate the resolved IP post-DNS — this static check is defense-in-depth, not the sole control. Hardening: add the missing ranges to ipv4_forbidden_reason so the string-time check matches the post-DNS policy."
+      ]
+    }
+  ]
+}

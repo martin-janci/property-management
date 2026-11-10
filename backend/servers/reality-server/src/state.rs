@@ -16,6 +16,7 @@ use db::{
     DbPool,
 };
 
+use crate::handlers::inquiries::{InquiriesHandler, LogInquiryNotifier};
 use crate::routes::sso::{OAuthTokens, PendingSsoSession, SessionInfo, SsoUserInfo};
 
 /// Application configuration.
@@ -833,8 +834,21 @@ pub struct AppState {
     pub portal_repo: PortalRepository,
     /// Reality Portal Professional repository (agencies, realtors, inquiries)
     pub reality_portal_repo: RealityPortalRepository,
+    /// Shared inquiries handler. The public anonymous POST routes
+    /// (`send_contact_message`, `request_viewing`) create inquiries through
+    /// this handler rather than the repository directly, so the best-effort
+    /// realtor notification fires via the injected [`InquiryNotifier`] seam.
+    /// Built with [`LogInquiryNotifier`] via [`InquiriesHandler::with_notifier`]
+    /// until a real email/push transport is wired — swapping the notifier here
+    /// is then the single change needed to light up delivery.
+    pub inquiries_handler: InquiriesHandler,
     /// Portal password-reset token repository (UC-44.3)
     pub portal_password_reset_repo: PortalPasswordResetRepository,
+    /// Password-reset email transport (UC-44.3). Selected from the environment:
+    /// a real SMTP transport when `SMTP_*` is configured, otherwise a logging
+    /// fallback that reports `is_configured() == false` so the request handler
+    /// never falsely claims a reset link was delivered.
+    pub password_reset_mailer: Arc<dyn crate::services::PasswordResetMailer>,
     /// Application configuration
     pub config: AppConfig,
     /// Pending SSO sessions (OAuth flow state)
@@ -847,6 +861,13 @@ pub struct AppState {
     pub sso_token_service: SsoTokenService,
     /// PM API HTTP client (Epic 104.1)
     pub pm_api_client: PmApiClient,
+    /// Shared pooled HTTP client for the PM OAuth/SSO calls (token exchange,
+    /// userinfo, introspection). Built once with connect + request timeouts so
+    /// the SSO handlers reuse one connection pool instead of constructing a
+    /// fresh, timeout-less `reqwest::Client` per call (which pools nothing and
+    /// can hang indefinitely if the PM endpoint stalls). `reqwest::Client` is
+    /// internally `Arc`-backed, so cloning it out of `AppState` is cheap.
+    pub pm_oauth_client: reqwest::Client,
     /// PM API health check cache (Epic 104.1)
     pub health_cache: HealthCheckCache,
     /// SSO token validation cache (Epic 104.2)
@@ -859,7 +880,44 @@ pub struct AppState {
     /// Holds the SAME `Arc` the middleware uses; admin handlers can install
     /// per-tenant overrides via `tenant_rate_limiters.set_override(org, rpm)`.
     pub tenant_rate_limiters: std::sync::Arc<api_core::middleware::TenantRateLimiterSet>,
+    /// Per-IP throttle for the UNAUTHENTICATED inquiry POST endpoints
+    /// (`send_contact_message`, `request_viewing`). The per-tenant limiter
+    /// above keys on a resolved org and therefore does not cover anonymous
+    /// inquiry traffic, which persists rows and fires realtor notifications;
+    /// this set keys on a hash of the client IP so an anonymous flood is
+    /// answered with HTTP 429 (see `InquiriesHandler::rate_limit_result`).
+    /// Default quota comes from `INQUIRY_RATE_LIMIT_RPM` (env override).
+    ///
+    /// Because the key space is attacker-influenced (rotating source IPs), the
+    /// set is constructed **bounded** (`with_default_bounded`) so the map can
+    /// never grow past `INQUIRY_RATE_LIMIT_MAX_IPS` entries — memory is capped
+    /// inline on every insert, no background sweep task required.
+    pub inquiry_rate_limiters: std::sync::Arc<api_core::middleware::TenantRateLimiterSet>,
+    /// Number of trusted reverse-proxy hops in front of reality-server, used to
+    /// pick a **spoof-resistant** client address out of `X-Forwarded-For` (the
+    /// hop our own trusted proxy appended, counted from the right — see
+    /// `routes::inquiries::client_ip_bucket`). Loaded from
+    /// `INQUIRY_TRUSTED_PROXY_HOPS`, default 1 (a single reverse proxy).
+    pub inquiry_trusted_proxy_hops: usize,
 }
+
+/// Default per-IP quota (requests/minute) for the anonymous inquiry POST
+/// endpoints. Deliberately low — no legitimate visitor submits more than a
+/// handful of contact/viewing requests per minute from one address, while a
+/// spam/DB-exhaustion bot needs far more. Override with `INQUIRY_RATE_LIMIT_RPM`.
+pub const INQUIRY_RATE_LIMIT_RPM: u32 = 12;
+
+/// Hard cap on the number of distinct per-IP buckets held by the anonymous
+/// inquiry limiter. Bounds memory against an attacker rotating source IPs:
+/// once the map is full, inserting a new IP first reclaims TTL-expired buckets
+/// and then evicts the oldest — the map never exceeds this many entries.
+/// ~100k small entries is a few MB. Override with `INQUIRY_RATE_LIMIT_MAX_IPS`.
+pub const INQUIRY_RATE_LIMIT_MAX_IPS: usize = 100_000;
+
+/// Idle TTL for a per-IP inquiry bucket. Only needs to outlive the 1-minute
+/// rate window; a few minutes lets bursts be counted while keeping the map
+/// small. Buckets idle longer than this are reclaimed on the next insert.
+pub const INQUIRY_RATE_LIMIT_IDLE_TTL: Duration = Duration::from_secs(300);
 
 impl AppState {
     /// Create a new AppState with database pool.
@@ -871,11 +929,35 @@ impl AppState {
         let portal_repo = PortalRepository::new(db.clone());
         let reality_portal_repo = RealityPortalRepository::new(db.clone());
         let portal_password_reset_repo = PortalPasswordResetRepository::new(db.clone());
+        // UC-44.3: pick the reset email transport from the environment. Without
+        // SMTP_* this returns a logging fallback (delivery disabled) so the
+        // request handler can refuse to claim a link was sent in production.
+        let password_reset_mailer = crate::services::build_password_reset_mailer();
+
+        // Public inquiry POSTs go through this handler so the best-effort realtor
+        // notification fires. `with_notifier` makes the transport injectable:
+        // today it is the logging stub; a real email/push adapter drops in here.
+        let inquiries_handler = InquiriesHandler::with_notifier(
+            reality_portal_repo.clone(),
+            Arc::new(LogInquiryNotifier),
+        );
         let config = AppConfig::from_env();
         let jwt_secret = config.jwt_secret.clone();
 
         // Epic 104.1: Create PM API client for health checks
         let pm_api_client = PmApiClient::new(config.pm_api_health_url.clone(), 5);
+
+        // Shared pooled HTTP client for the SSO OAuth calls (exchange /
+        // userinfo / introspect). Built once here so the three handlers reuse a
+        // single connection pool and inherit bounded timeouts, rather than each
+        // spinning up a fresh, timeout-less `reqwest::Client::new()` per request.
+        // Mirrors the `.timeout()` + `.connect_timeout()` convention used by the
+        // integration clients (e.g. `booking::client`).
+        let pm_oauth_client = reqwest::Client::builder()
+            .timeout(Duration::from_secs(15))
+            .connect_timeout(Duration::from_secs(5))
+            .build()
+            .unwrap_or_default();
 
         // Epic 104.1: Health check cache with 30 second TTL
         let health_cache = HealthCheckCache::new(30);
@@ -887,23 +969,59 @@ impl AppState {
         let user_service = UserService::new(db.clone());
         let session_service = SessionService::new(db.clone(), jwt_secret);
 
+        // Per-IP throttle for anonymous inquiry POSTs. Independent of the
+        // per-tenant set: anonymous traffic has no resolved org to key on.
+        let inquiry_rpm = std::env::var("INQUIRY_RATE_LIMIT_RPM")
+            .ok()
+            .and_then(|v| v.parse::<u32>().ok())
+            .filter(|v| *v > 0)
+            .unwrap_or(INQUIRY_RATE_LIMIT_RPM);
+        // Bounded construction: the key space is a hash of the client IP, which
+        // an attacker can rotate freely, so we MUST cap the map or it grows
+        // without bound (memory-DoS). `with_default_bounded` evicts inline.
+        let inquiry_max_ips = std::env::var("INQUIRY_RATE_LIMIT_MAX_IPS")
+            .ok()
+            .and_then(|v| v.parse::<usize>().ok())
+            .filter(|v| *v > 0)
+            .unwrap_or(INQUIRY_RATE_LIMIT_MAX_IPS);
+        let inquiry_rate_limiters = Arc::new(
+            api_core::middleware::TenantRateLimiterSet::with_default_bounded(
+                inquiry_rpm,
+                INQUIRY_RATE_LIMIT_IDLE_TTL,
+                inquiry_max_ips,
+            ),
+        );
+        // Trusted reverse-proxy hop count for spoof-resistant client-IP
+        // derivation (default 1 = a single reverse proxy in front of us).
+        let inquiry_trusted_proxy_hops = std::env::var("INQUIRY_TRUSTED_PROXY_HOPS")
+            .ok()
+            .and_then(|v| v.parse::<usize>().ok())
+            .filter(|v| *v > 0)
+            .unwrap_or(1);
+
         Self {
             db,
             portal_repo,
             reality_portal_repo,
+            inquiries_handler,
             portal_password_reset_repo,
+            password_reset_mailer,
             config,
             sso_sessions: Arc::new(Mutex::new(HashMap::new())),
             user_service,
             session_service,
             sso_token_service: SsoTokenService::new(),
             pm_api_client,
+            pm_oauth_client,
             health_cache,
             token_cache,
             // Phase 1: shared host-resolution cache
             tenant_resolution_cache,
             // Phase 5.5: shared per-tenant rate limiter set (defense leak #15)
             tenant_rate_limiters,
+            // Per-IP throttle for unauthenticated inquiry POSTs.
+            inquiry_rate_limiters,
+            inquiry_trusted_proxy_hops,
         }
     }
 

@@ -1,0 +1,40 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-25T09:30:00Z",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable buffer starved of LANDABLE work — all open backlog code-review rows are mobile-native-kmp, structurally unlandable in the cloud runner). CHURN_FILES not supplied (hotspot_history is stale May churn on api-server), so oldest-unreviewed rule among cloud-landable NON-mobile-native segments WITHOUT same-day (2026-08-25) coverage. review_cursor => mobile-rn=08-17 (excluded: mobile, non-landable), reality-web=08-18 (SKIPPED: already has a same-day 2026-08-25-reality-web-tier1d.json pass covering realtor/* + account/*), reality-server=08-19 (WINNER: oldest landable segment, no same-day file), then api-core/ppt-web-core=08-21, api-handlers=08-22, ppt-web-ui=08-25. reality-server has 0 OPEN code-review-finding rows in backlog.json (its 2 prior rows are done) so not saturated. Prior reality-server findings covered inquiry-detail empty-messages + saved-search watermark discard; this pass targets the alert-transport drainer (services/search_alert_drainer.rs) which had not been reviewed.",
+  "experts_used": ["rust"],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-search-drainer-stub-marks-delivered",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/reality-server/src/main.rs:453 — production wiring constructs the saved-search alert drainer via `SearchAlertDrainerWorker::new(db, SearchAlertDrainerConfig::from_env())`, which (search_alert_drainer.rs:188-195) hard-codes the logging stubs `LogEmailTransport` / `LogPushTransport` as the email + push transports. There is no `with_transports(...)` call with a real SMTP/FCM/APNs adapter anywhere outside tests (only ref besides the def is main.rs:453).",
+        "Both stub transports unconditionally return `Ok(())` (search_alert_drainer.rs:81-94 send_email, :100-119 send_push — they only `tracing::info!` what *would* be sent). In `run_once()` (search_alert_drainer.rs:280-325) an alert is treated as delivered when `any_ok` is true, and the email stub alone always sets `any_ok = true`, so EVERY drained alert reaches `self.repo.mark_search_alert_notified(alert.id)` (:318) and its `notified_at` watermark is set.",
+        "Net effect in production: saved-search alert emails and push notifications are silently NEVER sent, yet the drainer marks each queue row delivered (notified_at set, independent of the in-app read `status`). Because the row is stamped delivered, it is filtered out by `list_undelivered_search_alerts` on the next poll — the miss is undetectable from the queue and users who configured saved-search alerts (a shipped Epic 16 feature) receive nothing. Documented as an intended 'first cut' (module doc lines 16-22) but the stub is wired into `main.rs` and drains+consumes real queue rows in prod, so the feature is effectively dead while reporting success. Fix: guard the drainer behind real transports (or keep SEARCH_ALERT_DRAINER_ENABLED=false in prod until an adapter exists) so it does not consume/mark-delivered rows it cannot actually deliver."
+      ]
+    },
+    {
+      "id": "code-review-search-drainer-alert-copy-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/reality-server/src/services/search_alert_drainer.rs:259-276 — the alert `subject` and `body` are built from hard-coded English `format!` templates ('N new listings match your saved search ...', 'Open the app to view them.') with English-only pluralization ('listing'/'listings', 'it'/'them'). The 4-locale reality portal (sk/cs/de/en) therefore sends every saved-search alert email + push in English regardless of recipient locale.",
+        "The `AlertNotification.locale` field (search_alert_drainer.rs:45-47) is explicitly resolved from `alert.recipient_locale` (:272-275, defaulting to 'en') and threaded to the transport traits, but is never used to localize the composed copy — the copy is built in English BEFORE the transport is called, so even a future locale-aware transport cannot fix it (localization seam is on the wrong side of the composition).",
+        "The same crate already has the correct pattern: services/email.rs:102-111 localizes the password-reset email via `reset_subject(locale)` / `reset_body(name, url, locale)` with a `match locale { sk|cs|de|en }`. The saved-search alert drainer bypasses this established per-`Locale` pattern. Fix: compose subject/body per `notification.locale` (mirror email.rs reset_subject/reset_body), or move localization into the transport and pass structured data instead of pre-rendered English."
+      ]
+    }
+  ]
+}

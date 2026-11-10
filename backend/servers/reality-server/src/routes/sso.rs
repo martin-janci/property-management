@@ -16,6 +16,15 @@ use utoipa::ToSchema;
 use crate::extractors::auth::{extract_session_cookie, extract_session_token};
 use crate::state::AppState;
 
+/// Maximum lifetime of a pending PKCE SSO login session, in minutes.
+///
+/// `sso_login` stores server-side PKCE state under a random session id; the
+/// matching `sso_callback` must arrive within this window or the session is
+/// rejected as expired. Kept as a single constant so the callback's expiry
+/// check and the opportunistic prune in `sso_login` (see
+/// [`prune_expired_sso_sessions`]) can never drift apart.
+const PENDING_SSO_SESSION_TTL_MINUTES: i64 = 10;
+
 /// Create SSO router.
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -83,15 +92,33 @@ pub async fn sso_login(
         }
     }
 
-    // Generate PKCE code verifier and challenge
-    let code_verifier = generate_code_verifier();
+    // Generate PKCE code verifier and challenge. A failure of the OS entropy
+    // source must not panic the worker — degrade to 503 so the client can retry.
+    let code_verifier = match generate_code_verifier() {
+        Ok(v) => v,
+        Err(err) => {
+            tracing::error!(error = %err, "Failed to generate PKCE code verifier");
+            return Err((
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(SsoError::new(
+                    "rng_unavailable",
+                    "Login is temporarily unavailable. Please try again.",
+                )),
+            ));
+        }
+    };
     let code_challenge = generate_code_challenge(&code_verifier);
 
     // Store code verifier in session (to be retrieved in callback)
     let session_id = uuid::Uuid::new_v4().to_string();
 
-    // Store session data for callback
-    state.sso_sessions.lock().await.insert(
+    // Store session data for callback. Opportunistically prune abandoned
+    // pending sessions first (under the lock we already hold) so the in-memory
+    // map stays bounded to the TTL window instead of growing unbounded with
+    // never-completed logins — see prune_expired_sso_sessions.
+    let mut sessions = state.sso_sessions.lock().await;
+    prune_expired_sso_sessions(&mut sessions, chrono::Utc::now());
+    sessions.insert(
         session_id.clone(),
         PendingSsoSession {
             code_verifier,
@@ -99,6 +126,7 @@ pub async fn sso_login(
             created_at: chrono::Utc::now(),
         },
     );
+    drop(sessions);
 
     // Build OAuth authorize URL
     let oauth_authorize_url = format!(
@@ -137,8 +165,9 @@ fn ensure_redirect_uri_allowed(state: &AppState, raw: &str) -> Result<(), String
 ///
 /// - Same-origin **relative** paths (`/dashboard`) are allowed unconditionally;
 ///   the browser resolves them against the trusted reality-web origin. Note
-///   that protocol-relative URLs (`//evil.com`) are NOT relative paths and fall
-///   through to allowlist matching.
+///   that protocol-relative URLs (`//evil.com`) — including the backslash-
+///   obfuscated form (`/\evil.com`), which browsers normalise to `//evil.com`
+///   — are NOT relative paths and fall through to allowlist matching.
 /// - Absolute URLs must use `http`/`https` (blocks `javascript:`, `data:`,
 ///   `file:`, …) and their origin (`scheme://host[:port]`) must appear in
 ///   `allowed_origins`.
@@ -146,7 +175,11 @@ fn check_redirect_uri_allowed(raw: &str, allowed_origins: &[String]) -> Result<(
     // Allow same-origin relative paths (e.g. "/dashboard") unconditionally —
     // the browser will resolve them against the reality-web origin that
     // initiated the flow, which by definition the user already trusts.
-    if raw.starts_with('/') && !raw.starts_with("//") {
+    //
+    // A leading "/" is a same-origin relative path ONLY when the next char is
+    // neither "/" nor "\" — browsers normalise "\" to "/", so "/\evil.com" and
+    // "//evil.com" both resolve to a foreign authority (open-redirect bypass).
+    if raw.starts_with('/') && !raw.starts_with("//") && !raw.starts_with("/\\") {
         return Ok(());
     }
 
@@ -171,6 +204,27 @@ fn check_redirect_uri_allowed(raw: &str, allowed_origins: &[String]) -> Result<(
     }
 }
 
+/// Drop pending PKCE sessions older than [`PENDING_SSO_SESSION_TTL_MINUTES`]
+/// from `sessions`, relative to `now`.
+///
+/// Robustness / DoS hardening: `sso_login` stores one `PendingSsoSession` per
+/// login attempt, but only the attempt whose `sso_callback` actually completes
+/// is ever removed (by id). Abandoned logins — a user closing the tab, or an
+/// attacker hammering `/login` — would otherwise accumulate in the in-memory
+/// map forever. Such entries can never be redeemed anyway: `sso_callback`
+/// already rejects any session past the same TTL. Pruning them when a new login
+/// is stored therefore bounds the map to sessions created within the TTL window
+/// without affecting any legitimate flow. Mirrors the accepted sweep-on-mint
+/// hardening already applied to the mobile SSO token store (issue #820 / PR
+/// #921).
+fn prune_expired_sso_sessions(
+    sessions: &mut std::collections::HashMap<String, PendingSsoSession>,
+    now: chrono::DateTime<chrono::Utc>,
+) {
+    let ttl = chrono::Duration::minutes(PENDING_SSO_SESSION_TTL_MINUTES);
+    sessions.retain(|_, s| now - s.created_at <= ttl);
+}
+
 /// SSO callback query parameters.
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct SsoCallbackQuery {
@@ -182,6 +236,43 @@ pub struct SsoCallbackQuery {
     pub error: Option<String>,
     /// Error description
     pub error_description: Option<String>,
+}
+
+/// Map a failed SSO-callback step into a sanitized client response: log the
+/// full underlying error server-side and return only the fixed, generic
+/// `client_message` to the caller under the stable machine-readable `code`.
+///
+/// SECURITY: the underlying error (`e`) from these steps routinely carries
+/// detail that must never reach an unauthenticated SSO caller — sqlx/Postgres
+/// schema information (table, column and constraint names, driver messages)
+/// from the persistence steps, and the verbatim upstream/provider response body
+/// from the PM OAuth token-exchange and userinfo calls (see
+/// `exchange_code_for_tokens` / `get_user_info`, which wrap the raw provider
+/// text). We log it server-side (so operators can still diagnose the failure)
+/// and return only the generic `client_message` in the body. Mirrors the
+/// log-then-generic convention used elsewhere in the reality-server routes
+/// (e.g. `users.rs`, `inactive_pm_token_response`).
+///
+/// `status` is the HTTP status for the client (upstream failures stay a `400`;
+/// persistence failures are a `500` via [`sso_callback_internal_error`]).
+fn sso_callback_sanitized_error(
+    status: StatusCode,
+    code: &'static str,
+    client_message: &'static str,
+    e: &dyn std::fmt::Display,
+) -> (StatusCode, Json<SsoError>) {
+    tracing::error!(error = %e, code, status = %status, "SSO callback step failed");
+    (status, Json(SsoError::new(code, client_message)))
+}
+
+/// `500` specialization of [`sso_callback_sanitized_error`] for SSO-callback
+/// persistence-step failures (user upsert, session creation).
+fn sso_callback_internal_error(
+    code: &'static str,
+    client_message: &'static str,
+    e: &dyn std::fmt::Display,
+) -> (StatusCode, Json<SsoError>) {
+    sso_callback_sanitized_error(StatusCode::INTERNAL_SERVER_ERROR, code, client_message, e)
 }
 
 /// SSO callback - exchanges authorization code for tokens.
@@ -243,31 +334,44 @@ pub async fn sso_callback(
             )
         })?;
 
-    // Check session expiry (10 minutes max)
-    if chrono::Utc::now() - pending_session.created_at > chrono::Duration::minutes(10) {
+    // Check session expiry (PENDING_SSO_SESSION_TTL_MINUTES max)
+    if chrono::Utc::now() - pending_session.created_at
+        > chrono::Duration::minutes(PENDING_SSO_SESSION_TTL_MINUTES)
+    {
         return Err((
             StatusCode::BAD_REQUEST,
             Json(SsoError::new("session_expired", "SSO session expired")),
         ));
     }
 
-    // Exchange code for tokens with PM OAuth server
+    // Exchange code for tokens with PM OAuth server.
+    //
+    // SECURITY: the error wraps the verbatim PM OAuth provider response body
+    // (see `exchange_code_for_tokens`), which can carry provider-internal
+    // detail — client ids, issuer/endpoint URLs, misconfiguration hints. Log
+    // the full detail server-side and return only a generic client message
+    // (log-then-generic convention, see `sso_callback_sanitized_error`).
     let tokens = exchange_code_for_tokens(&state, &code, &pending_session.code_verifier)
         .await
         .map_err(|e| {
-            (
+            sso_callback_sanitized_error(
                 StatusCode::BAD_REQUEST,
-                Json(SsoError::new("token_exchange_failed", &e.to_string())),
+                "token_exchange_failed",
+                "Could not complete sign-in with the identity provider",
+                &e,
             )
         })?;
 
-    // Get user info from PM
+    // Get user info from PM. Same sanitization: `get_user_info` wraps the raw
+    // PM userinfo response body, which must not reach the client.
     let user_info = get_user_info(&state, &tokens.access_token)
         .await
         .map_err(|e| {
-            (
+            sso_callback_sanitized_error(
                 StatusCode::BAD_REQUEST,
-                Json(SsoError::new("user_info_failed", &e.to_string())),
+                "user_info_failed",
+                "Could not retrieve your profile from the identity provider",
+                &e,
             )
         })?;
 
@@ -277,10 +381,7 @@ pub async fn sso_callback(
         .upsert_sso_user(&user_info)
         .await
         .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(SsoError::new("user_create_failed", &e.to_string())),
-            )
+            sso_callback_internal_error("user_create_failed", "Failed to create or update user", &e)
         })?;
 
     // Create portal session
@@ -289,10 +390,7 @@ pub async fn sso_callback(
         .create_session(portal_user.id, &tokens)
         .await
         .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(SsoError::new("session_create_failed", &e.to_string())),
-            )
+            sso_callback_internal_error("session_create_failed", "Failed to create session", &e)
         })?;
 
     // Build redirect URL with session cookie.
@@ -657,13 +755,19 @@ pub struct TokenIntrospectionResponse {
 /// Uses OS CSPRNG directly — the verifier is the proof-of-possession secret
 /// that makes PKCE effective against authorization-code interception attacks,
 /// so it must be unpredictable even under adversarial timing.
-fn generate_code_verifier() -> String {
+///
+/// Returns `Err` if the OS entropy source is unavailable rather than panicking
+/// the worker — the caller surfaces this as a `503 Service Unavailable`.
+fn generate_code_verifier() -> Result<String, String> {
     use rand::TryRng;
     let mut bytes = [0u8; 32];
     rand::rngs::SysRng
         .try_fill_bytes(&mut bytes)
-        .expect("OS rng failed");
-    base64::Engine::encode(&base64::engine::general_purpose::URL_SAFE_NO_PAD, bytes)
+        .map_err(|e| format!("OS RNG unavailable: {e}"))?;
+    Ok(base64::Engine::encode(
+        &base64::engine::general_purpose::URL_SAFE_NO_PAD,
+        bytes,
+    ))
 }
 
 /// Generate PKCE code challenge from verifier.
@@ -679,8 +783,8 @@ async fn exchange_code_for_tokens(
     code: &str,
     code_verifier: &str,
 ) -> Result<OAuthTokens, anyhow::Error> {
-    let client = reqwest::Client::new();
-    let response = client
+    let response = state
+        .pm_oauth_client
         .post(&state.config.pm_oauth_token_url)
         .form(&[
             ("grant_type", "authorization_code"),
@@ -703,8 +807,8 @@ async fn exchange_code_for_tokens(
 
 /// Get user info from PM OAuth server.
 async fn get_user_info(state: &AppState, access_token: &str) -> Result<SsoUserInfo, anyhow::Error> {
-    let client = reqwest::Client::new();
-    let response = client
+    let response = state
+        .pm_oauth_client
         .get(&state.config.pm_userinfo_url)
         .bearer_auth(access_token)
         .send()
@@ -727,8 +831,39 @@ async fn introspect_pm_token(
     state: &AppState,
     token: &str,
 ) -> Result<TokenIntrospectionResponse, anyhow::Error> {
+    introspect_pm_token_inner(
+        &state.token_cache,
+        &state.pm_oauth_client,
+        &state.config.pm_introspect_url,
+        &state.config.pm_client_id,
+        &state.config.pm_client_secret,
+        token,
+    )
+    .await
+}
+
+/// DB-free core of [`introspect_pm_token`], taking only the token cache and the
+/// PM introspection endpoint config so the negative-cache-poisoning invariant
+/// is unit-testable without an `AppState`/database.
+///
+/// Negative-cache poisoning guard: an introspection *failure* — a PM 5xx
+/// outage, a 502/504 gateway error, or a transport error — tells us nothing
+/// about the token's real state. RFC 7662 reports a genuinely inactive token as
+/// an HTTP 2xx carrying `{"active": false}`, so a real "inactive" verdict is
+/// always recorded via the success path below. We therefore cache ONLY
+/// successful responses; a non-2xx status returns an error WITHOUT writing the
+/// cache, so a transient PM outage cannot deny every session presenting that
+/// token for the full cache TTL (Epic 104.2).
+async fn introspect_pm_token_inner(
+    token_cache: &crate::state::TokenValidationCache,
+    client: &reqwest::Client,
+    introspect_url: &str,
+    client_id: &str,
+    client_secret: &str,
+    token: &str,
+) -> Result<TokenIntrospectionResponse, anyhow::Error> {
     // Story 104.2: Check cache first
-    if let Some(cached) = state.token_cache.get(token).await {
+    if let Some(cached) = token_cache.get(token).await {
         tracing::debug!(active = cached.active, "SSO token validation cache hit");
         return Ok(TokenIntrospectionResponse {
             active: cached.active,
@@ -740,32 +875,34 @@ async fn introspect_pm_token(
 
     // Cache miss - perform actual introspection
     tracing::debug!("SSO token validation cache miss, calling PM API");
-    let client = reqwest::Client::new();
     let response = client
-        .post(&state.config.pm_introspect_url)
+        .post(introspect_url)
         .form(&[
             ("token", token),
-            ("client_id", &state.config.pm_client_id),
-            ("client_secret", &state.config.pm_client_secret),
+            ("client_id", client_id),
+            ("client_secret", client_secret),
         ])
         .send()
         .await?;
 
-    if !response.status().is_success() {
+    let status = response.status();
+    if !status.is_success() {
         let error_text = response.text().await.unwrap_or_default();
-        // Cache inactive tokens too (to prevent repeated failed validations)
-        state.token_cache.set(token, false, None, None).await;
+        // Do NOT cache: a non-2xx introspection response (PM 5xx/outage,
+        // gateway error, auth misconfig) is not a genuine `active=false`
+        // verdict. Caching it as inactive would poison the negative cache and
+        // deny otherwise-valid sessions for the full TTL during a transient PM
+        // introspection outage.
         return Err(anyhow::anyhow!(
-            "Token introspection failed: {}",
-            error_text
+            "Token introspection failed ({status}): {error_text}"
         ));
     }
 
     let result: TokenIntrospectionResponse = response.json().await?;
 
-    // Story 104.2: Cache the validation result
-    state
-        .token_cache
+    // Story 104.2: Cache the definitive validation result — including a genuine
+    // `active=false`, which arrives here as an HTTP 2xx per RFC 7662.
+    token_cache
         .set(
             token,
             result.active,
@@ -1006,6 +1143,44 @@ pub struct SyncSessionResponse {
     pub status: String,
 }
 
+/// Decide the response when a PM token is found inactive during session sync,
+/// given the outcome of the portal-session invalidation attempt.
+///
+/// * `None` — no portal session was supplied, so there was nothing to
+///   invalidate: report the PM session as expired (`401`).
+/// * `Some(Ok(()))` — the portal session was invalidated: report the PM
+///   session as expired (`401`).
+/// * `Some(Err(_))` — invalidation FAILED. We must not claim the session was
+///   invalidated; surface a `500` so the caller treats the portal session as
+///   still live (and can retry) rather than trusting a false "invalidated"
+///   signal.
+fn inactive_pm_token_response(
+    invalidate_result: Option<Result<(), anyhow::Error>>,
+) -> (StatusCode, SsoError) {
+    match invalidate_result {
+        Some(Err(e)) => {
+            tracing::error!(
+                error = %e,
+                "Failed to invalidate portal session after PM token went inactive"
+            );
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                SsoError::new(
+                    "session_invalidation_failed",
+                    "PM session is inactive but the portal session could not be invalidated",
+                ),
+            )
+        }
+        Some(Ok(())) | None => (
+            StatusCode::UNAUTHORIZED,
+            SsoError::new(
+                "pm_session_expired",
+                "PM session has expired, portal session invalidated",
+            ),
+        ),
+    }
+}
+
 /// Synchronize session state between PM and Reality Portal.
 ///
 /// This ensures that logout in PM invalidates the Reality Portal session,
@@ -1037,23 +1212,29 @@ pub async fn sync_session(
             )
         })?;
 
-    // If PM token is inactive, invalidate portal session
+    // If PM token is inactive, invalidate the portal session. The
+    // invalidation error MUST NOT be swallowed: if the portal session cannot
+    // be torn down we must surface that failure instead of falsely reporting
+    // it as invalidated — otherwise the portal session outlives the
+    // deactivated PM token and the caller is lulled into believing the SSO
+    // session is dead when it is still usable (security regression).
     if !token_info.active {
-        if let Some(portal_session) = &request.portal_session {
-            let _ = state
-                .session_service
-                .invalidate_session(portal_session)
-                .await;
+        let invalidate_result = match &request.portal_session {
+            Some(portal_session) => Some(
+                state
+                    .session_service
+                    .invalidate_session(portal_session)
+                    .await,
+            ),
+            None => None,
+        };
+
+        if matches!(invalidate_result, Some(Ok(()))) {
             tracing::info!("Invalidated portal session due to inactive PM token");
         }
 
-        return Err((
-            StatusCode::UNAUTHORIZED,
-            Json(SsoError::new(
-                "pm_session_expired",
-                "PM session has expired, portal session invalidated",
-            )),
-        ));
+        let (status, err) = inactive_pm_token_response(invalidate_result);
+        return Err((status, Json(err)));
     }
 
     // Get current user info
@@ -1339,6 +1520,85 @@ fn derive_pm_roles(scope: Option<&str>, requested: Option<&[String]>) -> Vec<Str
     }
 }
 
+// ============ Pending-session prune tests ============
+
+#[cfg(test)]
+mod pending_session_prune_tests {
+    use super::{prune_expired_sso_sessions, PendingSsoSession, PENDING_SSO_SESSION_TTL_MINUTES};
+    use std::collections::HashMap;
+
+    fn session(created_at: chrono::DateTime<chrono::Utc>) -> PendingSsoSession {
+        PendingSsoSession {
+            code_verifier: "verifier".to_string(),
+            redirect_uri: None,
+            created_at,
+        }
+    }
+
+    /// Abandoned sessions older than the TTL are dropped while still-live ones
+    /// are kept — the core bound on unbounded in-memory growth.
+    #[test]
+    fn prunes_expired_keeps_live() {
+        let now = chrono::Utc::now();
+        let mut sessions = HashMap::new();
+        sessions.insert(
+            "fresh".to_string(),
+            session(now - chrono::Duration::minutes(1)),
+        );
+        sessions.insert(
+            "stale".to_string(),
+            session(now - chrono::Duration::minutes(PENDING_SSO_SESSION_TTL_MINUTES + 5)),
+        );
+
+        prune_expired_sso_sessions(&mut sessions, now);
+
+        assert!(sessions.contains_key("fresh"), "live session must survive");
+        assert!(
+            !sessions.contains_key("stale"),
+            "abandoned session past the TTL must be pruned"
+        );
+    }
+
+    /// A session exactly at the TTL boundary is retained (`<=`), matching the
+    /// callback's own `> TTL` expiry check so a session is never pruned while
+    /// the callback would still accept it; one second past is pruned.
+    #[test]
+    fn boundary_is_inclusive() {
+        let now = chrono::Utc::now();
+        let mut sessions = HashMap::new();
+        sessions.insert(
+            "at_ttl".to_string(),
+            session(now - chrono::Duration::minutes(PENDING_SSO_SESSION_TTL_MINUTES)),
+        );
+        sessions.insert(
+            "just_past".to_string(),
+            session(
+                now - chrono::Duration::minutes(PENDING_SSO_SESSION_TTL_MINUTES)
+                    - chrono::Duration::seconds(1),
+            ),
+        );
+
+        prune_expired_sso_sessions(&mut sessions, now);
+
+        assert!(
+            sessions.contains_key("at_ttl"),
+            "a session exactly at the TTL must still be redeemable"
+        );
+        assert!(
+            !sessions.contains_key("just_past"),
+            "a session one second past the TTL must be pruned"
+        );
+    }
+
+    /// Pruning an empty map is a no-op (no panic, stays empty).
+    #[test]
+    fn empty_map_is_noop() {
+        let mut sessions: HashMap<String, PendingSsoSession> = HashMap::new();
+        prune_expired_sso_sessions(&mut sessions, chrono::Utc::now());
+        assert!(sessions.is_empty());
+    }
+}
+
 // ============ PM-role derivation security tests (#2249) ============
 
 #[cfg(test)]
@@ -1435,6 +1695,257 @@ mod pm_role_derivation_tests {
         let derived = derive_pm_roles(Some(&token_scope), Some(&requested));
         assert!(derived.is_empty(), "empty filter must intersect to nothing");
         assert_eq!(portal_role_for(&derived), portal_roles::USER);
+    }
+}
+
+#[cfg(test)]
+mod sync_session_invalidation_tests {
+    use super::inactive_pm_token_response;
+    use axum::http::StatusCode;
+
+    /// Security regression: when the PM token is inactive and the portal
+    /// session invalidation FAILS, the handler must NOT report the session as
+    /// invalidated. It must surface a 500 so the caller does not trust a false
+    /// "portal session invalidated" signal while the session is still live.
+    #[test]
+    fn invalidation_failure_is_surfaced_not_swallowed() {
+        let result = Some(Err(anyhow::anyhow!("redis down")));
+        let (status, err) = inactive_pm_token_response(result);
+        assert_eq!(
+            status,
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "a failed invalidation must not masquerade as a successful 401"
+        );
+        assert_eq!(err.error, "session_invalidation_failed");
+    }
+
+    /// A successful invalidation reports the PM session as expired (401).
+    #[test]
+    fn successful_invalidation_reports_pm_session_expired() {
+        let (status, err) = inactive_pm_token_response(Some(Ok(())));
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
+        assert_eq!(err.error, "pm_session_expired");
+    }
+
+    /// No portal session supplied: nothing to invalidate, still a 401.
+    #[test]
+    fn no_portal_session_reports_pm_session_expired() {
+        let (status, err) = inactive_pm_token_response(None);
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
+        assert_eq!(err.error, "pm_session_expired");
+    }
+}
+
+#[cfg(test)]
+mod sso_callback_error_sanitization_tests {
+    use super::{sso_callback_internal_error, sso_callback_sanitized_error};
+    use axum::http::StatusCode;
+
+    /// Security regression (code-review finding
+    /// `code-review-reality-server-sso-cb-upstream-err-leak`): the two upstream
+    /// calls in `sso_callback` — the PM OAuth token exchange and the PM userinfo
+    /// fetch — must NOT surface the raw upstream/provider error to the client.
+    ///
+    /// Before the fix the handler built
+    /// `SsoError::new("token_exchange_failed", &e.to_string())`, where `e`
+    /// wraps the verbatim provider response body (see
+    /// `exchange_code_for_tokens` / `get_user_info`). That body routinely
+    /// carries provider-internal detail — OAuth client ids, internal endpoint
+    /// paths, misconfiguration hints — none of which may reach an
+    /// unauthenticated SSO caller. The sanitized mapping must log the full
+    /// detail server-side and return ONLY the fixed, generic `client_message`.
+    #[test]
+    fn upstream_provider_error_is_not_leaked_to_client_body() {
+        // Representative upstream error text carrying provider-internal detail,
+        // exactly as `exchange_code_for_tokens` would wrap a PM OAuth 4xx body.
+        let raw = "Token exchange failed: {\"error\":\"invalid_client\",\
+                   \"error_description\":\"client secret for client_id \
+                   reality-portal-prod rejected by issuer https://pm-oauth.internal/token\"}";
+
+        let (status, body) = sso_callback_sanitized_error(
+            StatusCode::BAD_REQUEST,
+            "token_exchange_failed",
+            "Could not complete sign-in with the identity provider",
+            &raw,
+        );
+
+        // Status is preserved (upstream failures stay a 400 for the client)...
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert_eq!(body.0.error, "token_exchange_failed");
+        // ...the generic client message is returned verbatim...
+        assert_eq!(
+            body.0.error_description.as_deref(),
+            Some("Could not complete sign-in with the identity provider"),
+        );
+        // ...and no fragment of the raw upstream error reaches the client body.
+        let serialized = serde_json::to_string(&body.0).expect("serialize SsoError");
+        assert!(
+            !serialized.contains("invalid_client")
+                && !serialized.contains("client secret")
+                && !serialized.contains("reality-portal-prod")
+                && !serialized.contains("pm-oauth.internal"),
+            "raw upstream/provider error detail leaked into client body: {serialized}"
+        );
+    }
+
+    /// Security regression: a DB/sqlx error surfaced by an SSO-callback
+    /// persistence step (user upsert, session creation) must be mapped to a
+    /// 500 whose body carries ONLY a generic message. Before the fix the
+    /// handler passed `&e.to_string()` straight into the `SsoError` body,
+    /// leaking Postgres schema/driver detail (table, column and constraint
+    /// names) to an unauthenticated SSO caller.
+    #[test]
+    fn db_error_detail_is_not_leaked_to_client_body() {
+        // Representative sqlx/Postgres error text carrying schema detail.
+        let raw = "error returned from database: null value in column \
+                   \"portal_users.sso_subject\" violates not-null constraint";
+
+        let (status, body) = sso_callback_internal_error(
+            "user_create_failed",
+            "Failed to create or update user",
+            &raw,
+        );
+
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(body.0.error, "user_create_failed");
+        // The generic client message is returned verbatim...
+        assert_eq!(
+            body.0.error_description.as_deref(),
+            Some("Failed to create or update user"),
+        );
+        // ...and no fragment of the raw DB error reaches the client body.
+        let serialized = serde_json::to_string(&body.0).expect("serialize SsoError");
+        assert!(
+            !serialized.contains("portal_users")
+                && !serialized.contains("not-null")
+                && !serialized.contains("column"),
+            "raw DB error detail leaked into client body: {serialized}"
+        );
+    }
+}
+
+/// Regression: PM introspection outages must NOT poison the negative
+/// (`active=false`) token-validation cache.
+///
+/// Before the fix, a non-2xx response from the PM introspection endpoint wrote
+/// `active=false` into the 60 s cache, so every session presenting that token
+/// was denied for the full TTL during a transient PM 5xx outage. These tests
+/// exercise the DB-free introspection core against a stubbed PM endpoint.
+#[cfg(test)]
+mod introspect_negcache_tests {
+    use super::introspect_pm_token_inner;
+    use crate::state::TokenValidationCache;
+    use axum::{http::StatusCode, routing::post, Router};
+
+    /// Spin a throwaway HTTP server on 127.0.0.1 that answers every POST with a
+    /// fixed status + body, and return its introspection URL.
+    async fn spawn_pm_stub(status: StatusCode, body: &'static str) -> String {
+        let app = Router::new().route("/introspect", post(move || async move { (status, body) }));
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+            .await
+            .expect("bind stub");
+        let addr = listener.local_addr().expect("addr");
+        tokio::spawn(async move {
+            let _ = axum::serve(listener, app).await;
+        });
+        format!("http://{addr}/introspect")
+    }
+
+    /// A PM 5xx (introspection outage) must return an error AND leave the cache
+    /// untouched — no negative entry to deny the token for the next 60 s.
+    #[tokio::test]
+    async fn pm_5xx_does_not_poison_negative_cache() {
+        let url = spawn_pm_stub(StatusCode::SERVICE_UNAVAILABLE, "pm down").await;
+        let cache = TokenValidationCache::new(60, 100);
+        let token = "tok-under-outage";
+
+        let result = introspect_pm_token_inner(
+            &cache,
+            &reqwest::Client::new(),
+            &url,
+            "cid",
+            "secret",
+            token,
+        )
+        .await;
+        assert!(result.is_err(), "a PM 5xx must surface as an error");
+
+        assert!(
+            cache.get(token).await.is_none(),
+            "an introspection outage must NOT write a negative cache entry",
+        );
+    }
+
+    /// A PM 502 gateway error is likewise indeterminate and must not be cached.
+    #[tokio::test]
+    async fn pm_502_does_not_poison_negative_cache() {
+        let url = spawn_pm_stub(StatusCode::BAD_GATEWAY, "bad gateway").await;
+        let cache = TokenValidationCache::new(60, 100);
+        let token = "tok-gateway-error";
+
+        let result = introspect_pm_token_inner(
+            &cache,
+            &reqwest::Client::new(),
+            &url,
+            "cid",
+            "secret",
+            token,
+        )
+        .await;
+        assert!(result.is_err());
+        assert!(
+            cache.get(token).await.is_none(),
+            "a gateway error must NOT write a negative cache entry",
+        );
+    }
+
+    /// A genuine inactive verdict arrives as HTTP 2xx per RFC 7662 — that IS
+    /// cacheable, so repeated presentations of a truly-inactive token are still
+    /// short-circuited by the cache.
+    #[tokio::test]
+    async fn genuine_inactive_is_cached() {
+        let url = spawn_pm_stub(StatusCode::OK, r#"{"active":false}"#).await;
+        let cache = TokenValidationCache::new(60, 100);
+        let token = "tok-really-inactive";
+
+        let result = introspect_pm_token_inner(
+            &cache,
+            &reqwest::Client::new(),
+            &url,
+            "cid",
+            "secret",
+            token,
+        )
+        .await
+        .expect("2xx introspection must succeed");
+        assert!(!result.active, "body says inactive");
+
+        let cached = cache.get(token).await.expect("genuine inactive is cached");
+        assert!(!cached.active);
+    }
+
+    /// A genuine active verdict is cached as active.
+    #[tokio::test]
+    async fn genuine_active_is_cached() {
+        let url = spawn_pm_stub(StatusCode::OK, r#"{"active":true,"sub":"u-1"}"#).await;
+        let cache = TokenValidationCache::new(60, 100);
+        let token = "tok-active";
+
+        let result = introspect_pm_token_inner(
+            &cache,
+            &reqwest::Client::new(),
+            &url,
+            "cid",
+            "secret",
+            token,
+        )
+        .await
+        .expect("2xx introspection must succeed");
+        assert!(result.active);
+
+        let cached = cache.get(token).await.expect("active result is cached");
+        assert!(cached.active);
+        assert_eq!(cached.sub.as_deref(), Some("u-1"));
     }
 }
 
@@ -1690,6 +2201,28 @@ mod sso_consumer_security_tests {
         );
     }
 
+    /// Regression (open-redirect): a backslash-obfuscated authority
+    /// (`/\evil.com`, `/\\evil.com`, `/\/evil.com`) must NOT be treated as a
+    /// same-origin relative path. Browsers normalise `\` to `/`, so these
+    /// resolve to the foreign authority `//evil.com`. They must fall through to
+    /// allowlist matching (and be rejected here, with an empty allowlist),
+    /// while a legitimate relative path like `/dashboard` still passes.
+    #[test]
+    fn redirect_backslash_authority_is_not_treated_as_relative() {
+        let empty: Vec<String> = Vec::new();
+        for raw in ["/\\evil.com", "/\\\\evil.com", "/\\/evil.com"] {
+            let res = check_redirect_uri_allowed(raw, &empty);
+            assert!(
+                res.is_err(),
+                "backslash-obfuscated authority must not bypass the allowlist: {raw} -> {res:?}"
+            );
+        }
+        // Guard against over-tightening: a legitimate relative path still works.
+        assert!(check_redirect_uri_allowed("/dashboard", &empty).is_ok());
+        // Existing behaviour preserved: protocol-relative form also rejected.
+        assert!(check_redirect_uri_allowed("//evil.com", &empty).is_err());
+    }
+
     /// Regression (issue #820): dangerous non-http(s) schemes (`javascript:`,
     /// `data:`, `file:`) must be blocked outright.
     #[test]
@@ -1809,5 +2342,50 @@ mod sso_consumer_security_tests {
                 );
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod pkce_verifier_tests {
+    use super::{generate_code_challenge, generate_code_verifier};
+
+    /// `generate_code_verifier` returns `Ok` with a URL-safe, base64url (no-pad)
+    /// verifier under a healthy OS RNG. The function now surfaces entropy-source
+    /// failures as `Err` instead of panicking the worker (OS-RNG `.expect`
+    /// removal regression); this locks in the fallible contract so the happy
+    /// path keeps producing a usable PKCE verifier + challenge pair.
+    #[test]
+    fn verifier_is_url_safe_and_derives_a_challenge() {
+        let verifier = generate_code_verifier().expect("healthy OS RNG yields a verifier");
+        // 32 random bytes → base64url-no-pad → 43 chars.
+        assert_eq!(verifier.len(), 43, "expected a 43-char base64url verifier");
+        assert!(
+            verifier
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_'),
+            "verifier must be URL-safe base64 (no padding): {verifier}"
+        );
+        // The challenge derivation must accept the verifier and stay URL-safe.
+        let challenge = generate_code_challenge(&verifier);
+        assert_eq!(
+            challenge.len(),
+            43,
+            "SHA-256 → base64url-no-pad is 43 chars"
+        );
+        assert!(
+            challenge
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_'),
+            "challenge must be URL-safe base64 (no padding): {challenge}"
+        );
+    }
+
+    /// Two successive calls must not collide — the verifier is the PKCE
+    /// proof-of-possession secret and must be freshly random each login.
+    #[test]
+    fn successive_verifiers_differ() {
+        let a = generate_code_verifier().expect("rng ok");
+        let b = generate_code_verifier().expect("rng ok");
+        assert_ne!(a, b, "PKCE verifiers must be unique per login");
     }
 }

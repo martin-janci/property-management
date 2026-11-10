@@ -1,0 +1,13 @@
+{
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed",
+  "generator": "dispatcher-tier1d",
+  "generated_at": "2026-08-16T08:21:00Z",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 3,
+  "signals": [
+    {"id":"code-review-ppt-web-ui-confirm-dialog-i18n","type":"code-review-finding","source":"rotating-expert-review","segment":"ppt-web-ui","score_delta":1,"confidence":"medium","candidate_vector":"i18n","evidence":["frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx:138 — hardcoded 'Processing...' rendered during the loading state is a literal (not a prop), so callers cannot localize it; it stays English in sk/cs/de/pl/hu locales","frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx:37-38 — confirmLabel/cancelLabel default to hardcoded English 'Confirm'/'Cancel'; any caller that omits them ships untranslated button text in a shared app-wide dialog"],"expert":"frontend"},
+    {"id":"code-review-ppt-web-ui-langswitcher-aria-i18n","type":"code-review-finding","source":"rotating-expert-review","segment":"ppt-web-ui","score_delta":1,"confidence":"medium","candidate_vector":"i18n","evidence":["frontend/apps/ppt-web/src/components/LanguageSwitcher.tsx:19 — aria-label=\"Select language\" is a hardcoded English string; the component has useTranslation available (i18n) yet the screen-reader label is never passed through t(), so it is announced in English in every locale"],"expert":"frontend"},
+    {"id":"code-review-ppt-web-ui-langswitcher-promise","type":"code-review-finding","source":"rotating-expert-review","segment":"ppt-web-ui","score_delta":1,"confidence":"medium","candidate_vector":"quality","evidence":["frontend/apps/ppt-web/src/components/LanguageSwitcher.tsx:11 — i18n.changeLanguage(newLocale) returns a Promise that is neither awaited nor .catch()-handled; a rejected locale switch (e.g. resource load failure) becomes an unhandled promise rejection with no user-facing error path"],"expert":"frontend"}
+  ]
+}

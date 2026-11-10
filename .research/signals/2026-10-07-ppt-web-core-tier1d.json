@@ -1,0 +1,32 @@
+{
+  "generated": "2026-10-07T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable buffer below floor: claimable=16 < floor=36). Static single-segment rotating code review, no compilation / no test execution (cloud runner has no toolchain). File reading + grep only. Produces fresh CLOUD-LANDABLE frontend backlog vectors for the ppt-web-core segment.",
+  "segment_reviewed": "ppt-web-core",
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-mfa-verify-relative-fetch-base",
+      "type": "code-review-finding",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/ppt-web/src/App.tsx"],
+      "evidence": ["App.tsx:72 MfaWrapper verify() uses hardcoded relative fetch('/api/v1/auth/mfa/verify') ignoring VITE_API_URL base honoured by main.tsx client.setConfig and lib/api.ts axios; breaks MFA verify + leaks bearer to web origin in cross-origin-API deployments. Fix: route through getApiClient().post or generated @ppt/api-client. Frontend-only, cloud-landable."]
+    },
+    {
+      "id": "code-review-ppt-web-core-privacy-route-unprotected",
+      "type": "code-review-finding",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/ppt-web/src/routes/groups/core.tsx"],
+      "evidence": ["routes/groups/core.tsx:247 /settings/privacy rendered without <ProtectedRoute> while every sibling settings route is auth-gated; UX/consistency defect (not a data leak). Fix: wrap element in <ProtectedRoute>. Frontend-only, cloud-landable."]
+    }
+  ]
+}

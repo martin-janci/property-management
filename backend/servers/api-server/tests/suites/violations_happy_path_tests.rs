@@ -79,6 +79,10 @@ async fn setup(pool: PgPool, tag: &str) -> Ctx {
     let org_id = seed_org(&pool, tag).await;
     let email = format!("{tag}-{}@violations-hp.test", Uuid::new_v4());
     let user_id = seed_user(&pool, &email).await;
+    // `assign_violation` requires the assignee to be an active member of the
+    // org (see `violations_role_authz_tests::manager_cannot_assign_violation_to_non_member`).
+    // The full-flow test assigns the violation to this user, so seed membership.
+    common::seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint_token(user_id, org_id);
     Ctx {
         app,

@@ -1,0 +1,55 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-16",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claim buffer starved; open backlog is ~100% mobile-native/KMP which is structurally unlandable in this cloud runner — AGP resolves from dl.google.com, egress-403-blocked, issue #2652 — so mobile-native-kmp is excluded regardless of cursor age). No CHURN_FILES this run. Oldest-unreviewed rotation: state.json review_cursor ties four segments at 2026-08-12 (ppt-web-ui, ppt-web-core, reality-web, mobile-rn), but THREE of them were already reviewed earlier today — .research/signals/ already carries 2026-08-16 files for ppt-web-ui, ppt-web-core, and mobile-rn (re-reviewing them would clobber/duplicate). reality-web is the only landable oldest-tie segment with no 2026-08-16 signal file yet, and carries 0 open code-review-finding rows in backlog.json (not saturated). Selected reality-web. Frontend primary expert (Next.js). Static-only: file reads + grep, no compile/test. Note: reality-web core (SSR listing fetch, serialize-script XSS hardening, auth-token storage, layout-revalidate HMAC webhook) is very mature; the actionable findings cluster entirely in the Epic-51 comparison feature (components/comparison/), the least-polished corner.",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-reality-web-compare-label-currency-guard",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx:163-169 (getHighlightClass) gates a correctness guard on a DISPLAY STRING: `if ((row.label === 'Price' || row.label === 'Price per m²') && !currenciesMatch()) return '';` — i.e. 'suppress the best-price highlight when the compared listings use different currencies' is keyed off `row.label` equality against the English literals. The rows are defined with `label: 'Price per m²'` (L83) etc., and that same `label` field is ALSO rendered to the user as the row header, so it is inherently a translatable display string, not a stable key.",
+        "Latent silent break: this is a public sk/cs/de/en portal and the comparison feature currently ships these labels as hardcoded English (see companion i18n finding). The moment the labels are translated — which the i18n fix requires — `row.label === 'Price'` no longer matches (Slovak 'Cena', German 'Preis', …), the guard stops firing, and cross-currency price rows get the `highlight-best` 'lowest price' badge again. Concretely: a 12,000,000 CZK flat would be badged 'best price' against a 450,000 EUR flat because raw numeric price is compared with the currency guard defeated — exactly the misleading comparison currenciesMatch() (L157-161) exists to prevent.",
+        "Even pre-i18n it is fragile design: business logic coupled to a rendered label rather than to a stable discriminator. Fix: give each ComparisonRow a stable `id`/`key` (e.g. `id: 'price' | 'price_per_m2' | …`) separate from its display `label`, and branch on `row.id` in getHighlightClass (and the L167 check). Frontend-only, self-contained to ComparisonView.tsx. Confidence medium: today's English labels match so the guard works at rest; the defect activates on translation/label edit, which is imminent given the co-located i18n gap."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-comparison-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "The entire Epic-51 comparison feature renders hardcoded English on a portal whose whole premise is multi-language (next-intl, locales sk/cs/de/en). None of CompareButton.tsx, ComparisonTray.tsx, ComparisonView.tsx import `useTranslations` (grep: 0 hits each), while the sibling ComparisonUrlHandler.tsx in the same directory correctly uses it — establishing the convention these three violate.",
+        "User-visible English literals: frontend/apps/reality-web/src/components/comparison/CompareButton.tsx:47 `title={inComparison ? 'Remove from comparison' : 'Add to comparison'}`, :62 button text `'Comparing' / 'Compare'`, :67 `'Maximum 4 properties. Remove one first.'`. frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx:104-107 empty-state `'No properties to compare'` / `'Add properties to your comparison from the listings page.'` / `'Browse Listings'`, :145 toast `'Comparison link copied to clipboard!'`, :83/:78 row labels `'Price per m²'` / `'District'`.",
+        "A Slovak/Czech/German visitor sees these comparison controls, tooltips, empty states, and toasts in English. Fix: route all literals through `useTranslations('comparison')` and add the keys to the sk/cs/de/en message catalogs — mirroring ComparisonUrlHandler.tsx. Low severity (i18n gap, no functional break) but should be paired with the currency-guard fix above since translating the labels is what triggers that latent bug."
+      ],
+      "expert": "completeness"
+    },
+    {
+      "id": "code-review-reality-web-compare-exportpdf-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx:212-227 renders a fully-styled, enabled `<button className=\"action-btn\" onClick={handleExportPDF}>Export PDF</button>` to end users on the public portal, but the handler (L151-154) is a stub: `// In a real implementation, this would generate a PDF` → `showToast('PDF export coming soon!', 'info')`. The button does nothing but toast a placeholder.",
+        "This is a shipped dead control on a public-facing page: it advertises a capability (PDF export of a property comparison) that does not exist, with no disabled state, tooltip, or feature flag to signal it is unavailable. Users click it expecting a download and get 'coming soon'.",
+        "Fix options (frontend-only): either implement the export, or gate the button behind a feature flag / remove it until the capability lands, so the UI does not promise a non-existent feature. Low severity (completeness/UX). Related: the toast string here is also hardcoded English — folds into the comparison-i18n-gap sweep above."
+      ],
+      "expert": "completeness"
+    }
+  ]
+}

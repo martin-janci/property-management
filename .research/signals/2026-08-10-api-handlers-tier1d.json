@@ -1,0 +1,35 @@
+{
+  "signals": [
+    {
+      "id": "code-review-api-handlers-residency-compliance-failopen",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/data_residency.rs:1040-1048 — in the data-residency dashboard handler, the top-level `compliance_status` field is computed as `if last_verification.as_ref().map(|v| v.is_compliant).unwrap_or(true) { ComplianceStatus::Compliant } else { ComplianceStatus::NonCompliant }`. The `.unwrap_or(true)` is a fail-OPEN default: when `last_verification` is `None`, the org is reported as `Compliant`.",
+        "backend/servers/api-server/src/routes/data_residency.rs:936-941 — `last_verification` is `None` exactly when `data_residency_repo.get_latest_verification_result(org_id)` returns `None`, i.e. the organization has NEVER run a compliance verification (a fresh org, or one whose verification rows were purged). This branch is reachable in production for every org before its first verification run — not a hypothetical.",
+        "Consequence: the data-residency compliance dashboard displays `compliance_status: Compliant` for an organization whose compliance has never actually been checked. This is the summary signal most consumers surface; a never-verified tenant looks green. For a GDPR/data-residency compliance feature the correct default is fail-CLOSED — `Unknown` or `NonCompliant` — so unverified state is visibly distinct from verified-compliant. Note the sibling per-record mapping at data_residency.rs:953-957 keys strictly off `result.is_compliant`, so only the None case is mis-defaulted.",
+        "Fix: when `last_verification` is `None`, do not report `Compliant`. Either add an `Unknown`/`Unverified` variant to `ComplianceStatus`, or default to `NonCompliant` (`.unwrap_or(false)`), so a never-verified org does not read as compliant."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-residency-chain-valid-failopen",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/data_residency.rs:736 — in `list_audit_logs_impl`, the audit-chain tamper-evidence flag is read as `let chain_valid = verification[\"chain_valid\"].as_bool().unwrap_or(true);`. The `.unwrap_or(true)` is a fail-OPEN default: if the `verify_audit_chain` result ever lacks a boolean `chain_valid` field (schema drift, an error-shaped JSON, a null), the audit chain is reported as VALID / untampered.",
+        "backend/crates/db/src/repositories/data_residency.rs:552-596 — the current repo implementation always emits `\"chain_valid\": <bool>`, so today the missing-field branch is not reachable and the practical impact is low. This is a latent wrong-direction defensive default rather than an active exploit — flagged so a future change to `verify_audit_chain`'s return shape (or a switch to a fallible/partial JSON) does not silently turn a broken tamper check into a green 'chain intact' signal.",
+        "For a tamper-evidence integrity check the safe default is fail-CLOSED. Fix: `.unwrap_or(false)` (an unparseable/absent verification result means the chain could NOT be confirmed valid), and/or `tracing::warn!` when the field is missing so schema drift surfaces instead of being swallowed."
+      ],
+      "expert": "rust"
+    }
+  ]
+}

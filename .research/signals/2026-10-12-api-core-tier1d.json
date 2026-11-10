@@ -1,0 +1,34 @@
+{
+  "generated": "2026-10-12T00:00:00Z",
+  "source_run": "dispatcher Tier-1d buffer-starvation demand-driven vector generator. Static single-segment rotating code review via ppt-dev-review skill, no compilation / no test execution (cloud runner has no toolchain: api-server build blocked by utoipa-swagger-ui egress #2966). File reading + grep only. CHURN_FILES empty this run (no Phase 1 churn list).",
+  "segment_reviewed": "api-core",
+  "selection_reason": "oldest-unreviewed: three segments tie at review_cursor 2026-10-03 (api-core, reality-server, mobile-native-kmp); none saturated (0 open code-review-findings each; only api-handlers is saturated at 3 open). Tie broken by segment-map order -> api-core (backend/servers/api-server/src/ excl. routes/).",
+  "experts_used": [
+    "rust"
+  ],
+  "findings_count": 1,
+  "static_only": true,
+  "cloud_landable": false,
+  "cloud_landable_note": "Backend (api-server) fix requires cargo compile/test which the cloud runner cannot do (utoipa-swagger-ui egress block #2966). Static review itself needs no toolchain; landing a fix does.",
+  "signals": [
+    {
+      "id": "code-review-api-core-syndication-jobs-never-drained",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "completeness",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/syndication.rs",
+        "backend/servers/api-server/src/routes/listings.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/syndication.rs:289-406 (SyndicationService::process_syndication_job) is the ONLY code that actually acts on a queued syndication job (updates syndication status, would call the portal). A repo-wide grep for callers of `process_syndication_job` returns ZERO hits outside its own definition (`grep -rn process_syndication_job backend --include=*.rs`). Meanwhile SyndicationService::create_publish_jobs IS wired into production: routes/listings.rs:655-661 constructs a SyndicationService and calls create_publish_jobs(&listing, &data.portals, Some(tenant.user_id)) when a manager publishes a listing to portals. Net effect: publishing a listing enqueues background jobs on SYNDICATION_QUEUE that NOTHING ever drains -- there is no registered worker consuming that queue. Listings are never actually propagated to Sreality/Bezrealitky/Nehnutelnosti/etc., and the per-portal syndication status stays pending forever, with no error surfaced to the manager who requested syndication.",
+        "Even if a worker were wired up, process_syndication_job is a documented mock (syndication.rs:286-288 comment: 'This is a placeholder for the actual portal API integration. In production, this would call the respective portal APIs.'). For the PUBLISH operation it fabricates a fake external id -- `let external_id = format!(\"{}_{}\", payload.portal, uuid::Uuid::new_v4());` (syndication.rs:318) -- and then calls listing_repo.update_syndication_status(..., syndication_status::SYNCED, Some(&external_id), None) at L321-330, i.e. it records the listing as SYNCED to the portal with a made-up external reference without any outbound portal API call. The STATUS_CHANGE / UPDATE / REMOVE arms likewise stamp SYNCED/REMOVED without contacting any portal. This is a false-success stub on a user-facing feature path (manager-initiated listing syndication, UC-31/UC-32).",
+        "Consequence: the 'publish listing to external portals' feature is silently non-functional in two compounding ways -- (1) enqueued jobs are never consumed (no drainer registered for SYNDICATION_QUEUE, unlike the push-fanout / quiet-hours-drain workers which are explicitly spawned), and (2) the processor, if ever invoked, reports success with a synthetic external id instead of integrating. Managers believe their listings reached the portals when nothing was sent. Fix: register a background worker that drains SYNDICATION_QUEUE and calls process_syndication_job, and replace the mock PUBLISH/UPDATE/REMOVE arms with real portal API calls (or gate the feature off / mark jobs failed with an explicit 'portal integration not configured' status so the UI stops claiming success). Backend fix is not cloud-landable until the api-server build block (#2966) is lifted."
+      ]
+    }
+  ]
+}

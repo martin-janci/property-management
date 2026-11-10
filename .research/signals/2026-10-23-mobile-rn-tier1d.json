@@ -1,0 +1,40 @@
+{
+  "generated": "2026-10-23T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven dev-review generator per .claude/skills/ppt-dev-review/SKILL.md - static single-segment rotating code review, no compilation / no test execution / no branch checkout (cloud runner: file reading + grep only). Claim buffer starved (claimable=14 < floor=36); no backlog candidates available, so this run was spawned to emit fresh code-review-finding signals. DISPATCHER_OWNED_COMMIT=1: this artifact was written into the working tree only; NO git add/commit/push and NO branch/checkout performed - the orchestrator folds .research/** deltas into its Phase 6 commit. Only .research/signals/** is touched; .research/management/** (assignments.json, action-list.json, state ledgers, review_cursor advance) is owned by the dispatcher and left untouched. SEGMENT SELECTION: no Phase-1 churn list was supplied to this demand-driven invocation, so priority-1 churn-alignment was empty and selection fell to priority-2 oldest-unreviewed. state.json review_cursor raw dates: mobile-native-kmp=2026-10-18 (raw-oldest) but it was ALREADY exhaustively reviewed earlier TODAY (.research/signals/2026-10-23-mobile-native-kmp-tier1d.json, 0 net-new; the CreateListing NotImplementedError dead-end it would surface is already backlogged as code-review-mobile-native-kmp-create-listing-not-wired), so re-mining it would only duplicate that pass -> skipped to avoid backlog noise. api-handlers=2026-10-19 is SATURATED (3 open code-review-finding rows with status==open in backlog.json) -> skipped per SKILL Step 1. mobile-rn=2026-10-19 is the next-oldest, NOT reviewed today, and NOT saturated (0 open code-review-finding rows; its 3 prior rows are all status==done NFC findings) -> SELECTED. Experts: frontend (primary) + tester (secondary), per SKILL Step 2.",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["frontend", "tester"],
+  "findings_count": 1,
+  "static_only": true,
+  "cloud_landable": true,
+  "landability_note": "Static-analysis review only; 1 net-new finding emitted. The proposed fix (wrap three hardcoded English UI strings in react-i18next t() + add locale keys) is a self-contained, cloud-landable frontend change with no backend/schema dependency.",
+  "review_notes": [
+    "NET-NEW FINDINGS: 1 (i18n gap across NeighborsScreen/MessagesScreen/AnnouncementsScreen). This is NOT a duplicate: mobile-rn has an active i18n-remediation track (30 status==done code-review-mobile-rn-* rows, ~9 of them i18n: hardcoded-empty-error-i18n, biometric-prompt-i18n, meterdetail-i18n, voice-cmd-hardcoded-en, thread-detail-hardcoded-en, detail-back-button-hardcoded-en, outage-status-untranslated, news-personmonths-badge-untranslated, outages-news-header-chip-i18n) but NONE of them cover the Neighbors screen header/subtitle/placeholder nor the Messages/Announcements search placeholders. Confirmed via id/segment scan of backlog.json.",
+    "CLEAN (no finding): the data layer is solid. hooks/useApi.ts wraps every call in apiRequest returning Result-shaped {data,isLoading,error}; hooks/useOfflineSupport.ts is a hardened offline queue (RETRYABLE_HTTP_STATUSES={401,408,429} carried forward, 5xx never dropped, permanent-4xx surfaced to UI via permanentFailures + App.tsx Alert, strict-FIFO head-of-line blocking per issues #1767/#2637) - already thoroughly worked (matches done rows offline-401-dropped, offline-terminal-drop-dataloss, offline-permanent-4xx-silent-drop). Every list/detail screen checked (24 screens using useApiQuery) renders an explicit isLoading + error branch AND an empty-state; OutageDetailScreen/ArticleDetailScreen/VoteDetailScreen all guard `if (error || !data)` / `loadError ?`. No unhandled query. DocumentUploadScreen.tsx:172 `as unknown as Blob` is the documented RN FormData idiom (eslint-disabled + comment), not an unsafe cross-boundary cast.",
+    "NITS (skipped per SKILL 'skip nits'): console.error calls in useOfflineSupport.ts are deliberate diagnostics paired with user-visible surfacing, not debug leftovers; usePushNotifications.ts:240/267 `console.log('[push] ...')` are tagged push lifecycle logs (already captured + done as code-review-mobile-rn-push-debug-console-log). VoteDetailScreen.tsx:300 `t('voting.loadError') ?? \"Couldn't load vote\"` has a dead nullish fallback (react-i18next t() never returns null) - cosmetic only. No GlobalScope-equivalent leaks; deep-link listener leak already done (code-review-mobile-rn-deeplink-url-listener-leak)."
+  ],
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-neighbors-search-hardcoded-en",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-23 mobile-rn",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/mobile/src/screens/neighbors/NeighborsScreen.tsx",
+        "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/neighbors/NeighborsScreen.tsx:184 - the screen header title is a hardcoded English literal `<Text style={s.headerTitle}>Neighbours</Text>`, and :187-188 the subtitle is a hardcoded English template `${visibleNeighbors.length} residents in ${buildingName}` / `${visibleNeighbors.length} residents in your building`, and :195 the search box is `placeholder=\"Search by name or apartment…\"` - all rendered in English for every locale.",
+        "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx:125 - `placeholder=\"Search messages…\"` hardcoded English, same i18n bypass.",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx:244 - `placeholder=\"Search announcements...\"` hardcoded English, same i18n bypass.",
+        "Asymmetry confirming this is an accidental gap, not a deliberate opt-out: all three files are otherwise fully internationalized. NeighborsScreen imports useTranslation (:13), binds `const {t}=useTranslation()` (:123) and uses t() for its loading (:164), load-error (:173), retry (:175) and empty-state (:214/:217) strings - only the header, subtitle and placeholder were missed. MessagesScreen uses {t( 7x and AnnouncementsScreen 6x elsewhere; only their search placeholders are hardcoded.",
+        "Severity LOW (+1), i18n gap: @ppt/mobile is a react-i18next app with src/locales per-language bundles; these user-facing header/subtitle/search-placeholder strings render in fixed English regardless of the active locale. Confidence medium - the hardcoded literals and the absence of t() are confirmed by static read; whether a non-English locale is actively selected at runtime is config-dependent. Net-new: the mobile-rn i18n-remediation track (9 done i18n rows) does not include the Neighbors screen or the Messages/Announcements search placeholders. Fix: wrap in t() with new keys (e.g. neighbors.title / neighbors.subtitle with count+building interpolation / neighbors.searchPlaceholder, messages.searchPlaceholder, announcements.searchPlaceholder) and add them to the locale bundles."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+[
+  {
+    "id": "code-review-ppt-web-core-ocr-fetch-no-auth",
+    "type": "code-review-finding",
+    "source": "rotating-expert-review",
+    "segment": "ppt-web-core",
+    "score_delta": 2,
+    "confidence": "high",
+    "candidate_vector": "bug",
+    "evidence": [
+      "frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.ts:26-35 — the ocrFetch<T>() helper does a bare `fetch(url, options)` and attaches NO Authorization header. It backs useOcrProcessImage (POST /api/v1/ai/ocr/meter-reading, line 45) and useOcrCorrection (POST /api/v1/ai/ocr/correction, line 59) — both first-party API paths, not presigned URLs.",
+      "backend/servers/api-server/src/routes/ai/ocr.rs:125-129 — process_meter_reading is declared `async fn process_meter_reading(State, auth: AuthUser, mut multipart: Multipart)`; the AuthUser extractor requires a valid bearer token. The correction route (ocr.rs:74 `.route(\"/correction\", ...)`) sits on the same authenticated router. So every OCR upload / correction call 401s in production.",
+      "Contrast: every sibling hand-rolled client that hits a first-party endpoint attaches the token — features/notification-analytics/hooks/useNotificationAnalytics.ts:35-39 (`headers.set('Authorization', 'Bearer '+token)`), features/privacy/gdprClient.ts:24-30, features/accounting/api/paymentMatching.ts:66-74 (uploadStatement sets Authorization + X-Tenant-ID). The two legitimately header-less fetches in the segment (useMessaging.ts:241, useDocumentDownload.ts:33) target presigned S3 URLs; useOcrMeterReading targets first-party /api/v1/ai/ocr/* but omits the token.",
+      "No global fetch interceptor or service worker exists in ppt-web (grep: no window.fetch/globalThis.fetch override, no navigator.serviceWorker in main.tsx), so the bare fetch is genuinely unauthenticated — the Epic 128 OCR meter-preview feature is non-functional in prod. Fix: read the bearer token (ACCESS_TOKEN_KEY 'ppt_access_token' from localStorage, per the sibling convention) and set `Authorization: Bearer <token>` in ocrFetch, or route these calls through @ppt/api-client / the configured axios client."
+    ],
+    "expert": "frontend"
+  },
+  {
+    "id": "code-review-ppt-web-core-aichat-fetch-no-auth",
+    "type": "code-review-finding",
+    "source": "rotating-expert-review",
+    "segment": "ppt-web-core",
+    "score_delta": 2,
+    "confidence": "high",
+    "candidate_vector": "bug",
+    "evidence": [
+      "frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts:31-46 — the apiFetch<T>() helper does `fetch(url, { ...options, headers: { 'Content-Type': 'application/json', ...options?.headers } })` with NO Authorization header. It backs every AI-chat operation against /api/v1/ai/chat/*: useAiChatSessions (GET /sessions), useAiChatSession, useAiChatMessages, useCreateSession (POST /sessions:96), useSendMessage (POST /sessions/{id}/messages:113), plus feedback.",
+      "backend/servers/api-server/src/routes/ai/sessions.rs:49-59, 90-96, 243-260 — create_session/list_sessions/send_message all take the `RlsConnection` extractor and derive org/user from the RLS-validated request context (`rls.tenant_id()`, `rls.user_id()`); the handler comments state a principal with no resolved auth context 'is rejected by the RlsConnection extractor itself'. So all chat calls require a bearer token and 401 in production without one.",
+      "Same defect class and same segment convention as useOcrMeterReading (ocr-fetch-no-auth) — sibling first-party clients (useNotificationAnalytics, gdprClient, paymentMatching) all attach `Authorization: Bearer <token>`; this hand-rolled apiFetch does not. No global fetch interceptor/service worker in ppt-web to backfill the header (verified in main.tsx).",
+      "Impact: the Epic 127 AI Chatbot interface cannot list/create sessions or send messages in prod — every request fails auth. Fix: attach the localStorage bearer token in apiFetch (mirror useNotificationAnalytics readAccessToken + `Authorization` header) or migrate these calls onto @ppt/api-client so they share the interceptor."
+    ],
+    "expert": "frontend"
+  }
+]

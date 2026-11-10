@@ -1,0 +1,72 @@
+{
+  "generated": "2026-09-02T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven (buffer starved, LANDABLE-only) 2026-09-02",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed among cloud-landable segments. review_cursor at run start: api-handlers 2026-08-31, api-core 2026-09-01, reality-server 2026-08-31, ppt-web-ui/ppt-web-core/reality-web/mobile-rn tied at 2026-08-29, mobile-native-kmp 2026-08-25 (excluded per dispatcher constraint — structurally unlandable in this cloud runner). ppt-web-ui picked as first among the 2026-08-29 tie per segment-priority order. No segment saturation: zero open code-review-finding rows for ppt-web-ui (or any candidate segment) in backlog.json at run start.",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 3,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-facilities-ismanager-stub-true",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02 ppt-web-ui facilities)",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "completeness",
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx:36-41 — `useIsManager()` is a hardcoded stub: `// Placeholder: Returns true during development to enable all manager features. // Replace with actual role check when AuthContext is implemented for ppt-web.` and the body is simply `return true;`. It is not gated behind a dev-only flag or feature flag — it ships as-is.",
+        "This page is wired and reachable in production: mounted via routes/groups/buildings.tsx and routes/lazyRoutes.tsx (Epic 56 Facility Booking). `isManager` (line 46) is passed straight into `<FacilityList isManager={isManager} ... onCreate={handleCreate} onEdit={handleEdit} />` (lines 110-124), which — per the sibling component contract used across the app — controls whether manager-only actions (Create Facility, Edit) render for the current viewer.",
+        "Effect: every visitor to /buildings/:buildingId/facilities — resident or manager — sees and can click Create/Edit facility controls. The comment claims 'Backend still enforces authorization - this is for UI display only', so a resident's click likely 403s rather than succeeding, but the UI still exposes manager-only affordances and navigates to /facilities/new or /facilities/:id/edit for a plain resident, producing a confusing broken-looking flow (form opens, submit silently fails) instead of the buttons simply not being there. Not verified at runtime whether every backend facility-mutation endpoint actually enforces the role check (static read only) — confidence medium.",
+        "Fix: wire the real role check (the file's own docstring gives the exact replacement — `const { user } = useAuth(); return user?.role === 'manager' || user?.role === 'admin';`, mirroring frontend/apps/mobile/src/contexts/AuthContext.tsx) instead of the permanent `return true` stub."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-api-client-no-auth",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02 ppt-web-ui registry)",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx",
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx",
+        "frontend/packages/api-client/src/registry/api.ts"
+      ],
+      "evidence": [
+        "RegistryPage.tsx:17-21 and RegistryRulesPage.tsx:16-20 both instantiate `const registryApi = createRegistryApi({ baseUrl: API_BASE_URL, // accessToken and tenantId would come from auth context });` at MODULE scope (evaluated once at import time), with no accessToken or tenantId ever supplied — the comment is a live TODO, not a resolved wiring.",
+        "packages/api-client/src/registry/api.ts:29-33,43-45 — `buildHeaders(config)` builds `Authorization`/`X-Tenant-ID` headers ONLY if `config.accessToken`/`config.tenantId` are truthy, and `createRegistryApi` calls `buildHeaders(config)` exactly once and closes over the resulting static `headers` object for every subsequent pets/vehicles/rules request (list/get/create/update/delete/review). Unlike the rest of the app's api-client modules (e.g. faults/hooks.ts -> faults/api.ts), which resolve auth per-request through a shared client, this factory bakes auth in at construction and never refreshes it.",
+        "Net effect: every request the Building Registries feature (Epic 57 — pet/vehicle registration list, create, update, delete, review, and registry-rules read/update) makes goes out with NO Authorization header and NO tenant header, guaranteed to 401 (or hit the wrong/default tenant scope if the backend doesn't strictly require the header) the moment this feature is routed into the app.",
+        "Currently reduces to a latent landmine rather than a live incident: grepping frontend/apps/ppt-web/src/routes/ and docs/screens/ppt/ turns up no route or screen-map entry for RegistryPage/RegistryRulesPage — the feature is not mounted in the router today, so this specific defect has no current production reachability. Flagging now because it is a real, non-obvious footgun for whoever wires the route next (the module-scope singleton pattern silently swallows the missing token instead of erroring). Fix: build the api instance from a hook/context that supplies a live accessToken/tenantId (matching the pattern other wired features use) rather than a frozen module-level singleton.",
+        "Confidence medium: the missing-auth-header logic is confirmed by static read of buildHeaders/createRegistryApi; actual backend response behavior (hard 401 vs silent wrong-tenant read) is not verified without execution."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-forms-hardcoded-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02 ppt-web-ui facilities)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/EditFacilityPage.tsx",
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx"
+      ],
+      "evidence": [
+        "EditFacilityPage.tsx has NO `useTranslation` import at all (checked full file) — every user-facing string is hardcoded English: 'Edit Facility' (line 89 heading), 'Failed to load facility' (line 30, set as the error banner text), 'Failed to update facility' (line 50, mutation-error fallback), 'Facility not found' (line 74), 'Go back' (line 80). This is the sole page under features/facilities/pages that skips i18n entirely — its siblings (BookFacilityPage, FacilitiesPage's FacilityList) at least partially use `t()`.",
+        "BookFacilityPage.tsx does import `useTranslation` and wraps the page title (line 128, `t('facilities.bookings.bookFacility')`), but every error/fallback string is still hardcoded English: 'Failed to load facility details' (line 35), 'Failed to create booking' (line 71, mutation fallback), 'Facility not found' (line 95), 'This facility is not available for booking' (line 112), 'Go back' (lines 101, 118) — i.e. i18n is wired but not applied to the error-path copy on this file specifically.",
+        "Both pages are wired and reachable in production (routes/groups/buildings.tsx + routes/lazyRoutes.tsx, Epic 56 Facility Booking) — an sk/cs/de-locale user who hits any facility-load or booking/update error sees raw English copy on a mounted, everyday manager/resident flow.",
+        "Same defect class as prior ppt-web-ui i18n-gap findings (e.g. 2026-09-01 notif-settings-hardcoded-errors) but a distinct, previously-unreviewed feature area. Fix: add `useTranslation` to EditFacilityPage.tsx and move all listed strings (both files) into an i18n namespace. Confidence medium: hardcoded-string presence confirmed by static read; exact end-user visibility depends on which error path fires at runtime."
+      ]
+    }
+  ]
+}

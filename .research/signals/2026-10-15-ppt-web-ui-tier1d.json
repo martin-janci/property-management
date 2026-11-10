@@ -1,0 +1,40 @@
+{
+  "generated": "2026-10-15T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable buffer starved: claimable=9 < floor=36). Static single-segment rotating code review via the ppt-dev-review skill — no compilation / no test execution (cloud runner has no frontend toolchain). File reading + grep only. DISPATCHER_OWNED_COMMIT=1: no git add/commit/push in this working tree; orchestrator folds .research deltas into its Phase 6 commit. assignments.json untouched; no PR opened. Segment ppt-web-ui selected by priority-2 oldest-unreviewed: four segments tie at REVIEW_CURSOR = 2026-10-11 (api-handlers, ppt-web-ui, reality-web, mobile-rn). CHURN_FILES empty this run, so priority-1 churn-alignment input was empty. api-handlers skipped by the skill's formal saturation rule (3 open code-review-finding rows with status==open in backlog.json == the >=3 threshold). mobile-rn excluded by dispatcher directive deferral only indirectly (not needed; it is also 2026-10-11 but ppt-web-ui wins the tie). Among the remaining non-saturated tie, ppt-web-ui is first in the skill's segment-map order. ppt-web-ui itself is NOT saturated (0 open code-review-finding rows with segment==ppt-web-ui && status==open in backlog.json). Scope mapped faithfully to the skill's segment map: frontend/apps/ppt-web/src/pages/ (4 files, 2 source) + frontend/apps/ppt-web/src/components/ (13 source .tsx) — excludes features/, hooks/, contexts/, routes/, lib/ (those are ppt-web-core / ppt-web-ui-adjacent). This segment is EXTREMELY heavily mined (~190 historical code-review-ppt-web-ui-* ids across backlog.json + prior signal files). Every file was re-read and each candidate verified net-new against all prior signals + backlog via grep. DELIBERATELY DROPPED as duplicates (confirmed already filed, NOT re-emitted to avoid padding): LanguageSwitcher.tsx:19 hardcoded aria-label=\"Select language\" (code-review-ppt-web-ui-langswitcher-aria-i18n, 2026-08-16); ConfirmationDialog.tsx:43-44 confirmLabel/cancelLabel English defaults + :138 'Processing...' literal (code-review-ppt-web-ui-confirm-dialog-i18n, 2026-08-16 / 2026-08-11); ConnectionStatus.tsx:104-113 role=status on clickable reconnect div + :58 hardcoded status labels (already filed 2026-08-11 / 2026-10-08); Toast.tsx:144 overflow-hidden persistent error toasts and :172-189 ToastItem copy-timer setState-after-unmount leak (both already filed, the copy-timer 2026-10-10); LoginPage.tsx:80-86 raw error.message fallback (already filed login-raw-message); AuthCallbackPage.tsx:93 unguarded decodeURIComponent (already filed). Verified CLEAN / NOT bugs (re-read, no new finding): Spinner.tsx (0 prior mentions — correct role=status + i18n aria-label), PageLoading.tsx (0 prior mentions — correct a11y + i18n), Announcer.tsx (all four timers tracked + cleaned up), ProtectedRoute.tsx (deny-on-missing-role is fail-safe), AuthRequiredGate.tsx, OfflineIndicator.tsx. Only 2 genuinely net-new findings survived; emitted below the 3-cap with no duplicate padding.",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed (tie at REVIEW_CURSOR = 2026-10-11 with api-handlers/reality-web/mobile-rn; api-handlers skipped for saturation = 3 open findings; ppt-web-ui first in segment-map order among the remaining non-saturated tie). No churn files supplied for this demand-driven run. ppt-web-ui not saturated (0 open code-review-finding rows). Net-new yield intentionally low: ~190 historical ppt-web-ui finding ids already exist, so the obvious i18n/a11y/timer classes are all tracked; the pass surfaced only the two subtle, previously-unflagged edge cases below.",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-confirmdialog-loading-focustrap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx"],
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx:76-90 — the Tab focus-trap for this aria-modal=\"true\" alertdialog collects focusable children with querySelectorAll('button:not([disabled]), [tabindex]:not([tabindex=\"-1\"])') (:77-79). When the confirm action is in flight BOTH action buttons render disabled={isLoading} (:136 cancel, :144 confirm) and the dialog/overlay carry no tabindex, so the selector matches ZERO elements: firstElement/lastElement are undefined (:80-81) and the shift/!shift guards at :83-88 can never be true, so the trap silently no-ops and native Tab moves focus OUT of the open modal to the background page. Compounding it, the initial-focus effect keyed on [isOpen] (:57-66) does not re-run when isLoading flips, so the cancel button it focused (:61) becomes disabled and focus falls to <body> for the whole latency window. Net effect: a WCAG 2.1.2/2.4.3 keyboard-trap/focus-order defect on every confirmation with a non-instant onConfirm (delete / danger API calls are exactly the latency case). NET-NEW: the only prior ConfirmationDialog findings are i18n (confirmLabel/cancelLabel defaults, 'Processing...'); the 2026-08-28 ppt-web-ui pass explicitly re-reviewed this file and recorded 'focus trap + Escape + focus restore all present' — i.e. it checked the non-loading path and MISSED the isLoading edge. Severity low (a11y, no crash); confidence medium (statically confirmed from the selector + disabled attributes, not runtime-reproduced). Fix (frontend-only, cloud-landable): keep at least one focusable control reachable while loading (e.g. don't disable cancel, or make the dialog container tabindex=0 and focus it), or guard the trap so an empty focusable set re-focuses the dialog instead of releasing Tab."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-authcallback-raw-err-message",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/ppt-web/src/pages/AuthCallbackPage.tsx"],
+      "evidence": [
+        "frontend/apps/ppt-web/src/pages/AuthCallbackPage.tsx:138-146 — the SSO code-exchange catch block does `err instanceof Error ? err.message : t('auth.ssoCallbackFailed')`, so whenever loginWithSsoCode() rejects with a plain Error the RAW err.message is stored in errorMessage and rendered verbatim in the error banner (:191-196, `<span>{errorMessage}</span>`). On the sk/cs/de locales this surfaces untranslated English/developer text on the primary SSO auth surface, and leaks whatever internal/network detail the thrown Error carries (e.g. a fetch/axios message or backend error string) to the end user. This is the SAME raw-backend-message anti-pattern already filed for LoginPage.tsx:80-86 (login-raw-message) and errorboundary-raw-message-prod / emergency-dir-raw-err / signature-modal-raw-err, but is NET-NEW for AuthCallbackPage: the only prior finding on this file is the unguarded decodeURIComponent at :93; grep for AuthCallbackPage raw/err.message/138/141 across .research/signals + backlog.json returned no prior hit. Severity low (i18n/UX consistency + minor internal-detail disclosure, no crash — React escapes the text so no injection); confidence medium (literal statically confirmed). Fix (frontend-only, cloud-landable): render a translated generic fallback (t('auth.ssoCallbackFailed') / t('auth.unexpectedError')) for unmapped errors and map known AuthError codes, instead of echoing err.message — mirroring the fix proposed for the LoginPage sibling finding."
+      ]
+    }
+  ]
+}

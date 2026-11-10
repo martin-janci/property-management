@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useApiQuery } from '../../hooks/useApi';
+import { formatDate } from '../../i18n/format';
 import { warnIfListDegraded } from '../shared/parserWarnings';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
@@ -190,9 +191,7 @@ export function MetersScreen({ onNavigate }: MetersScreenProps) {
                 {meter.lastReading != null
                   ? `${meter.lastReading} ${meter.unit}`
                   : '— no reading yet'}
-                {meter.lastReadingAt
-                  ? ` (${new Date(meter.lastReadingAt).toLocaleDateString()})`
-                  : ''}
+                {meter.lastReadingAt ? ` (${formatDate(meter.lastReadingAt)})` : ''}
               </Text>
 
               <View style={s.cardFooter}>

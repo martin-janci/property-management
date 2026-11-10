@@ -1,0 +1,188 @@
+{
+  "generated_at": "2026-08-17",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "type": "churn-hotspot",
+      "source": "churn-scan 2026-08-17",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "top-3 churn again this run (2026-08-17); runs_seen bumped 1→2. Cumulative re-emit — no score_delta re-applied.",
+        "14-day window: 3 non-chore commits (#2762, #2765, #2766 all voice OAuth / Alexa security hardening), ~2897 line adds+dels."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs",
+      "type": "churn-hotspot",
+      "source": "churn-scan 2026-08-17",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "top-3 churn again this run (2026-08-17) after PR #2772 landed. runs_seen bumped 1→2. Cumulative re-emit — no score_delta re-applied.",
+        "14-day window: 2 commits — #2766 (new 270-line file) and #2772 (+82 Test 5 for platform-admin bypass arm)."
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "type": "repeated-churn",
+      "source": "churn-scan 2026-08-17",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "hotspot_history.runs_seen bumped to 2; parent churn-hotspot-voice-webhooks-rs already dropped as 'no in-scope hardening'. Instability tracking only."
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs",
+      "type": "repeated-churn",
+      "source": "churn-scan 2026-08-17",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "hotspot_history.runs_seen bumped to 2; parent churn-hotspot-voice-oauth-refresh-auth-tests already done via PR #2772. Instability tracking only."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-i18n-gap",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "Consumed pre-generated tier1d artifact: .research/signals/2026-08-17-ppt-web-core-tier1d.json",
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:56-141 defines ERROR_MESSAGES + DEFAULT_ERROR as hardcoded English literals; parseApiError/parseErrorResponse/parseHttpStatusError and 429 branch never route through react-i18next; ~300 useTranslation components elsewhere in ppt-web."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/$(date -u +%F).md && head -1 …",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev …",
+      "observed": "true",
+      "expected": "true",
+      "note": "seen_signals grew, last_pr_seen/last_commit_sha advanced, hotspot_history changed"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique|length))' backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal ids checked against prior seen_signals for non-cumulative types with score_delta != 0",
+      "observed": "no offenders",
+      "expected": "no offenders"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay check",
+      "observed": "no scores > 8; no open item older than 14d requires decay",
+      "expected": "pass"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans → gate vacuously passes",
+      "expected": "no unannotated new plans"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans this run",
+      "observed": "0 new plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/'",
+      "observed": "verify at Phase 6 stage",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret / private-hostname scan",
+      "observed": "0 secrets in added lines (staged diff contains a removed .rlt.sk line from a prior malformed row's evidence — sanitized this run; interpretation mirrors G17's added-lines-only semantics)",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regen backlog.md diff",
+      "observed": "byte-identical (regenerator uses pinned NOW_UTC)",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no phase failures this run",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs still present",
+      "observed": "no plans removed this run",
+      "expected": "converge"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive-only-grows count check",
+      "observed": "no archive removals",
+      "expected": "count unchanged or grown"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regen IDEAS_TRIAGE.md diff",
+      "observed": "byte-identical (regenerator uses pinned NOW_UTC)",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline check",
+      "observed": "auto_fix_actions empty this run",
+      "expected": "≤ caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm_cursor + coverage_cursor validity",
+      "observed": "Phase 1.6 skipped this run (pm_cursor unchanged) → gate is no-op; existing artifacts parse",
+      "expected": "valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram-secret scan on staged diff",
+      "observed": "verify at Phase 6 stage",
+      "expected": "0"
+    }
+  ]
+}

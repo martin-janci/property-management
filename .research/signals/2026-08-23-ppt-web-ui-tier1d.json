@@ -1,0 +1,54 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-23T00:00:00Z",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed",
+  "selection_note": "review_cursor tie at 2026-08-16 between ppt-web-ui and mobile-native-kmp; mobile-native-kmp skipped as structurally unlandable in the cloud runner (AGP egress proxy-blocked), so the next landable segment (ppt-web-ui) was reviewed. No open code-review-finding items in backlog for this segment (no saturation).",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-community-wired-nonfunctional",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx:20-40 - FeedPageRoute passes posts={[]}, total={0}, and every handler (onCreatePost/onLikePost/onCommentPost/onSharePost/onEditPost/onDeletePost/onLoadMore) is a no-op () => {}; the community feed never loads data and no post action persists.",
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx:73-114 - GroupDetailPageRoute renders a hardcoded '// Mock group data' object (mockGroup: name 'Sample Group', description 'A sample community group'); GroupsPageRoute/EventsPageRoute/MarketplacePageRoute (community) all pass empty arrays + no-op handlers; CreateGroupPageRoute.onSubmit shows a fake 'Group created' success toast and navigates WITHOUT calling any @ppt/api-client mutation - a create that silently discards user input.",
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx:51 - communityRoutes() is mounted in the production router (/community, /community/groups, /community/groups/new, /community/groups/:groupId, /community/events, /community/marketplace), so this non-functional shell IS exposed to paying customers. 'community' is NOT listed in frontend/apps/ppt-web/src/features/unwired-features.ts UNWIRED_FEATURES - unlike the 10 intentionally-hidden features - so this is an unintended half-built surface, exactly the PAP-55 board decision says to hide until wired."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-reports-page-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/reports/pages/ReportsPage.tsx - 422-line core Reports & Analytics screen imports NO useTranslation (grep count 0) yet is a wired, nav-exposed manager screen; all headings render English for every locale.",
+        "Hardcoded UI text: L168 'Reports & Analytics', L221 'Key Metrics', L231 'Trends', L247 'Analytics', L258 'Building Performance', L293 'Saved Reports'."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-buildings-pages-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "completeness",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/buildings/pages/BuildingDetailPage.tsx - no useTranslation (grep count 0); hardcoded English on a core, high-traffic building-management screen: L66 'Building not found', L159 'Type', L163 'Units', L167 'Floors', L172 'Year Built', L178 'Total Area', L193 'Floors', L222 'Common Areas'.",
+        "frontend/apps/ppt-web/src/features/buildings/pages/BuildingsPage.tsx - no useTranslation (grep count 0); hardcoded L70 'Error loading buildings'. Buildings is a wired core feature (not in unwired-features.ts), so this renders English for all sk/cs/de users."
+      ]
+    }
+  ]
+}

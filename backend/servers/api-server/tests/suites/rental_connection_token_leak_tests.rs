@@ -17,7 +17,8 @@
 //!   3. Returns a token-free `PlatformConnectionDetail` DTO from
 //!      `GET/PUT /connections/{id}` so tokens are never serialized.
 //!
-//! Tenant mechanism: `TenantExtractor` validates a bearer JWT (`AuthUser`) and
+//! Tenant mechanism: `ValidatedTenantExtractor` validates a bearer JWT (`AuthUser`),
+//! requires active DB membership of the request org, and
 //! then reads the tenant from the `X-Tenant-ID` header (TestApp does not wire
 //! `host_tenant_middleware`). We mint a JWT carrying the `Claims` shape the
 //! `AuthUser` extractor expects (`sub`, `exp`, `iat`, `token_type:"access"`,
@@ -36,7 +37,7 @@ use uuid::Uuid;
 use db::models::UpdateBookingStatus;
 use db::repositories::RentalRepository;
 
-use crate::common::TestApp;
+use crate::common::{seed_membership, TestApp};
 
 // Must match `TestConfig::default().jwt_secret` in tests/common/mod.rs — the
 // `AuthUser` extractor reads `JWT_SECRET` (set once from that value).
@@ -187,6 +188,10 @@ async fn get_connection_from_other_org_is_not_found(pool: PgPool) {
     let building_a = seed_building(&pool, org_a, "get-conn-a").await;
     let unit_a = seed_unit(&pool, building_a, "A-1").await;
     let conn_in_a = seed_connection(&pool, org_a, unit_a).await;
+    // Rental routes validate DB membership of the request org (the JWT
+    // tenant claim alone is no longer trusted), so the org B caller must
+    // really be an org B member to reach the scoped lookup.
+    seed_membership(&pool, org_b, user_b, "manager").await;
 
     // Org B caller (valid JWT, X-Tenant-ID=org_b) tries to read org A's connection.
     let token_b = mint_access_token(user_b, org_b);
@@ -223,6 +228,8 @@ async fn get_connection_same_org_succeeds_without_leaking_tokens(pool: PgPool) {
     let building_a = seed_building(&pool, org_a, "ok-conn-a").await;
     let unit_a = seed_unit(&pool, building_a, "OK-1").await;
     let conn_in_a = seed_connection(&pool, org_a, unit_a).await;
+    // Rental routes validate DB membership of the request org.
+    seed_membership(&pool, org_a, user_a, "manager").await;
 
     let token_a = mint_access_token(user_a, org_a);
     let uri = format!("/api/v1/rentals/connections/{conn_in_a}");

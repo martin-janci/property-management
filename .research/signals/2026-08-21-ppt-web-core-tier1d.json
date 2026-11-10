@@ -1,0 +1,25 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-21T16:30:00Z",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["frontend"],
+  "findings_count": 1,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-authctx-no-token-expiry-check",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:412-415 — initializeAuth() (the mount-time effect) branch `if (storedUser && accessToken)` carries the comment 'Validate the token is not expired (basic check)' but then just calls setUser(storedUser). No expiry validation is performed: an expired access token persisted in localStorage is accepted verbatim and the app renders an authenticated session on cold boot.",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:221-233 — decodeJwtPayload() already extracts the unverified JWT claims (used by deriveActiveRole) and could read `exp`, so the guard the comment promises is trivially implementable with an existing utility; it is simply not wired into the cold-boot path.",
+        "Impact/reachability: on every reload with a stale token the user is treated as authenticated until the first API call returns 401 and the axios response interceptor (lib/api.ts:218-221) fires onUnauthorizedCallback. During that window protected UI can flash and deriveActiveRole runs against an expired token. Self-recovering via the 401 flow (hence medium, not high), but the comment/code mismatch is a real auth-correctness gap on the app's core session-init path."
+      ]
+    }
+  ]
+}

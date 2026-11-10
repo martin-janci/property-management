@@ -1,0 +1,72 @@
+{
+  "run_iso": "2026-09-10T00:00:00Z",
+  "trigger_payload": "Tier-1d demand-driven code-review generation: dispatcher claimable buffer STARVED (claimable=8 < BUFFER_FLOOR=36) and every open backlog item is infra-gated. Fresh LANDABLE review signals must be produced (not promoted). ONE rotating static-analysis segment, no compilation, no test execution.",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "oldest-unreviewed among CLOUD-LANDABLE segments. No CHURN_FILES were handed to this slice (demand-driven, not routine Phase 1), so churn-alignment did not apply. Per the established Tier-1d convention (see 2026-09-07-reality-web-tier1d.json), state.review_cursor in state.json is STALE and is NOT the source of truth — the tier1d generator does not advance it. Real last-reviewed dates reconstructed from .research/signals/*.json filenames: mobile-native-kmp=2026-09-10 (EXCLUDED: structurally unlandable, KMP/AGP egress #2652), api-handlers=2026-09-09 + api-core=2026-09-09 (EXCLUDED: backend/api-server not cloud-buildable, utoipa-swagger-ui build-script egress #2949), mobile-rn=2026-09-09 (EXCLUDED: RN jest egress #2951), ppt-web-ui=2026-09-09, ppt-web-core=2026-09-09, reality-web=2026-09-07. reality-server has no clearly-landable status (Rust, shares the backend workspace with the egress-blocked api-server) and was not treated as a safe landable pick. Among definitively cloud-buildable (Next.js/frontend) segments, reality-web (2026-09-07) is the OLDEST-reviewed — older than ppt-web-ui / ppt-web-core (both 2026-09-09) — so it wins oldest-unreviewed. Saturation check PASSED: 0 OPEN code-review-finding rows for reality-web in backlog.json (skill's >=3-open skip rule not triggered; only mobile-native-kmp has open rows, at 4). DEDUP DISCIPLINE: reality-web is heavily mined (92 prior finding ids across many runs). All 92 prior ids were enumerated and every finding below was cross-checked against them. The three most obvious static candidates this pass produced were DISCARDED as exact duplicates: (a) unvalidated Number() coercion of /listings URL search params -> NaN is already code-review-reality-web-listings-url-nan-query; (b) account-edit price coerced to 0 is already code-review-reality-web-edit-price-zero; (c) the realtor/ + account/ page i18n gap has ~8 prior ids (realtor-account-i18n-gap, realtor-account-pages-no-i18n, realtor-section-no-i18n, account-routes-i18n, profile-pages-i18n-gap, realtor-profile-hardcoded-slovak, account-edit-wrong-locale-strings, ...). Review was redirected to a set of PREVIOUSLY-UNMINED files identified by diffing the referenced-file set of all prior *reality-web*.json findings against the live src tree: components/agency/AgencyDashboard.tsx and components/listings/sections/AdditionalInfo.tsx (neither basename appears in any prior finding). CookieConsentBanner.tsx, lib/analytics.ts, ListingCard.tsx, useListingPreviewLayout.ts, sections/registry.tsx, KeyDetails/Features were also read: mostly clean, and the one weak candidate there (ListingCard favorite-button hardcoded English aria-label) was DROPPED as thematically covered by prior code-review-reality-web-aria-labels-untranslated. All three findings below are frontend-only (reality-web) -> cloud-landable.",
+  "experts_used": ["frontend"],
+  "findings_count": 3,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-reality-web-additionalinfo-hardcoded-en-us-price",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-10 reality-web listing-detail AdditionalInfo section formats prices with a locally-redefined formatPrice hardcoded to en-US, wrong for every sk/cs/de/pl/hu visitor)",
+      "segment": "reality-web",
+      "expert": "frontend",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/sections/AdditionalInfo.tsx",
+        "frontend/apps/reality-web/src/lib/format.ts"
+      ],
+      "evidence": [
+        "AdditionalInfo.tsx:8-16 -- the section defines its OWN module-local `formatPrice(price, currency)` that calls `new Intl.NumberFormat('en-US', ...)` on BOTH branches (the no-currency fallback at :11 and the currency branch at :12-15). The locale is hardcoded to 'en-US' regardless of the visitor's route locale, so on the public, SEO-indexed listing-detail page a Slovak/Czech/German buyer sees US-formatted money (comma thousands + '.' decimals + '$'-style symbol placement) instead of `1 234 €` / `1.234 €`. This is a customer-facing correctness defect on the money field of the primary listing page.",
+        "This directly re-introduces the anti-pattern the codebase's shared helper was built to kill: lib/format.ts header (:1-17) states it 'Replaces scattered Number#toLocaleString(...) / Intl.NumberFormat(\\'en-US\\', {...}) call sites that all hardcoded a single locale and produced visibly wrong output for the other five', and exposes `formatPrice(value, locale, options)` (lib/format.ts:48-59) that threads bcp47(locale) + defaults to EUR. AdditionalInfo bypasses it with an inline en-US copy.",
+        "The locale is trivially available in this component -- it is a `[locale]` route section and already calls `useTranslations('listing')` at :20, so `useLocale()` is in scope. The fix is frontend-only: delete the local formatPrice and import `formatPrice` from '@/lib/format', calling `formatPrice(price, locale, { currency })`.",
+        "Reproduce (static): grep -n \"'en-US'\" components/listings/sections/AdditionalInfo.tsx -> :11 and :12; grep -n 'import.*format' AdditionalInfo.tsx -> no import from lib/format. Contrast ListingCard.tsx:106 which correctly does `formatPrice(listing.price, locale, { currency: listing.currency })`.",
+        "Non-duplicate: verified against all 92 prior *reality-web*.json ids -- no prior id references AdditionalInfo or a hardcoded 'en-US' formatter. Distinct from code-review-reality-web-categorycards-tolocalestring-no-locale (that was a bare `toLocaleString()` on a homepage COUNT; this is an explicit `Intl.NumberFormat('en-US')` on a PRICE in the listing-detail section registry) and from the missing-string i18n findings. Confidence medium: the en-US hardcode is code-verified statically; exact rendered glyphs depend on the runtime Intl data, not run-confirmed."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-agency-period-chart-unwired",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-10 reality-web AgencyDashboard period selector drives the stat cards but the performance chart granularity is hardcoded and ignores the selected period)",
+      "segment": "reality-web",
+      "expert": "frontend",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/AgencyDashboard.tsx"
+      ],
+      "evidence": [
+        "AgencyDashboard.tsx:30 declares `const [period, setPeriod] = useState<PeriodType>('30d')` and the header renders a 4-button period selector (7d / 30d / 90d / 12m, :79-95) whose onClick calls `setPeriod(p)`. The stats query correctly threads it: `useAgencyStats(agency?.id || '', period)` (:42). But the performance chart query does NOT: `useAgencyPerformance(agency?.id || '', undefined, undefined, 'week')` (:43-48) passes a hardcoded literal `'week'` as its granularity arg and never references `period`.",
+        "Net effect: clicking 7d/30d/90d/12m re-fetches and updates the stat cards, but the PerformanceChart (:110-117) re-renders with identical args every time -> the chart visibly does not respond to the period toggle. For a user selecting '12m' the chart still shows week-bucketed data, which reads as a broken/stuck control. This is a functional wiring gap, not a formatting nit.",
+        "Reproduce (static): sed -n '40,49p' AgencyDashboard.tsx shows `useAgencyStats(..., period)` immediately above `useAgencyPerformance(..., 'week')`; grep -n 'period' AgencyDashboard.tsx shows `period` threaded into useAgencyStats and the selector buttons but never into useAgencyPerformance.",
+        "Landable remedy (frontend-only): thread `period` into useAgencyPerformance (map the PeriodType to the hook's date-range / granularity args) so the chart tracks the same selector as the cards; or, if the chart is deliberately always-weekly, remove the coupling illusion by giving it its own control / label. Confidence medium: the call site is code-verified, but the useAgencyPerformance param semantics live in the generated @ppt/reality-api-client (out of segment, not installed in the cloud runner), so whether the 4th arg is truly 'granularity' vs an unrelated bucket was not source-confirmed -- either way `period` is provably never passed. Non-duplicate: no prior *reality-web*.json id references AgencyDashboard, the period selector, or the performance chart (verified across all 92 ids)."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-agency-dashboard-local-formatnumber",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-10 reality-web AgencyDashboard defines a local locale-less formatNumber with hardcoded English K/M magnitude suffixes, shadowing the shared locale-aware helper)",
+      "segment": "reality-web",
+      "expert": "frontend",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/AgencyDashboard.tsx",
+        "frontend/apps/reality-web/src/lib/format.ts"
+      ],
+      "evidence": [
+        "AgencyDashboard.tsx:889-893 defines a module-local `function formatNumber(num: number): string` that returns `${(num/1000000).toFixed(1)}M` / `${(num/1000).toFixed(1)}K` / `num.toString()`. It (a) hardcodes English magnitude suffixes 'K'/'M' -- a German/Slovak agency owner sees English abbreviations; (b) uses toFixed which forces a '.' decimal separator regardless of locale (de/sk use ','); (c) for values < 1000 emits bare `num.toString()` with no locale grouping. It is used for the stat cards at :402 `value: formatNumber(stats.totalViews)` (called with ONE arg, so it resolves to this local fn, NOT the shared one).",
+        "This shadows and contradicts lib/format.ts#formatNumber(value, locale, options) (:38-45), the app's designated locale-aware helper whose header (:1-17) exists precisely to replace 'scattered ... call sites that all hardcoded a single locale'. The shared fn requires a locale arg; the local one takes none, which is why the single-arg call at :402 silently binds to the wrong function.",
+        "The component already imports next-intl useTranslations (:17) and is a `[locale]` route, so `useLocale()` is available to thread. Landable remedy (frontend-only): remove the local formatNumber, import formatNumber from '@/lib/format', and either use `formatNumber(value, locale, { notation: 'compact' })` (locale-aware compact 'K/M'/'tis.'/'Mio.') or full locale grouping.",
+        "Reproduce (static): sed -n '889,893p' AgencyDashboard.tsx shows the local def; grep -n 'formatNumber' AgencyDashboard.tsx shows the :402 single-arg call and the local def, and NO import from lib/format.",
+        "Non-duplicate: verified against all 92 prior *reality-web*.json ids -- none reference AgencyDashboard or a local formatNumber / K-M suffixes. Related theme to the AdditionalInfo en-US finding this same run but a DISTINCT file + distinct mechanism (a redefined abbreviating helper vs an en-US Intl call). Low severity (authenticated agency dashboard, cosmetic). Confidence medium: static-only."
+      ]
+    }
+  ]
+}

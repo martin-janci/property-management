@@ -1,0 +1,52 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-30",
+  "segment_reviewed": "api-core",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable=19 < floor=36). Churn-aligned: hotspot_history's most-recent in-segment src files pick the segment. api-handlers (routes/aml_dsa/moderation.rs, routes/violations.rs @2026-10-28) is hottest but SKIPPED (3 open code-review-findings, saturated); reality-server (routes/price_map.rs @2026-10-25) SKIPPED (3 open, saturated). Next churn-aligned non-saturated, not-reviewed-today = api-core (services/push_fanout.rs @2026-10-25, 0 open code-review-findings; only today's signals are mobile-native-kmp). Review covered api-server/src excluding routes/ (services/, bin/, main.rs, state.rs, client_ip.rs). push_fanout.rs itself is clean (layered OAuth refresh, bounded body reads, poison-safe); findings are elsewhere in-segment.",
+  "experts_used": [
+    "rust"
+  ],
+  "signals": [
+    {
+      "id": "code-review-api-core-bg-workers-unsupervised",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/main.rs:692,704,715,727 — all four long-lived background workers are started with their JoinHandle bound to a discard variable (`let _scheduler_handle = scheduler.start();`, `let _push_fanout_handle = ...`, `let _quiet_hours_drain_handle = ...`, `let _notification_digest_handle = ...`). Nothing awaits, polls, or re-spawns them.",
+        "backend/servers/api-server/src/services/scheduler/mod.rs:277-280 — the spawned task body is `loop { ticker.tick().await; self.run_scheduled_tasks().await; }` (push_fanout.rs:1697-1700 is the same shape). A panic anywhere inside a tick (not an Err — those are caught per-task and logged) terminates the tokio task; the loop stops permanently and the dropped handle means no supervisor detects the death or restarts it. Scheduled-announcement publish, vote activation/close, push fanout, quiet-hours drain and inactivity digests silently stop server-wide until a process restart.",
+        "This failure mode is known-real in this codebase: the regression test at backend/servers/api-server/src/services/scheduler/mod.rs:~2325 (test_metrics_lock_recovers_from_poison) documents that a prior `.lock().unwrap()` on the metrics mutex poisoned it on one panic so 'every subsequent tick panicked — silently killing all scheduled work'. The mutex idiom was fixed, but the structural gap (no panic supervision / JoinSet / abort-on-panic wiring into shutdown for the spawned worker tasks) remains, so any future reachable panic in a worker loop reproduces the silent total-outage."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-voice-device-err-swallowed",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/voice_commands.rs:233-237 — `let _ = self.llm_document_repo.update_voice_device_last_used(&mut *conn, device_id).await;` discards the Result with no tracing on the Err branch. Every other DB call on this path uses `?` or logs. A persistent failure to update the device's last-used timestamp (e.g. constraint/connection error) is completely invisible in logs/metrics, so device-staleness logic that depends on last_used can silently drift with no operational signal. Low severity (best-effort write, does not corrupt the voice response), but should at least `tracing::warn!` on error rather than swallow silently."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-pkce-nonconst-cmp",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/oauth.rs:945-946 — verify_pkce (fn at oauth.rs:939) computes `let computed = URL_SAFE_NO_PAD.encode(sha256(verifier))` then returns `computed == challenge`, a non-constant-time String equality on a security-sensitive comparison. Reachable from the token endpoint (oauth.rs:500, exchange_code path) on every S256 PKCE exchange. Prefer a constant-time compare (e.g. subtle::ConstantTimeEq / ring::constant_time::verify_slices_are_equal) to remove the timing side-channel, matching the constant-time posture used elsewhere for secret material. Low severity (PKCE challenge is single-use and the practical attack is marginal) but it is the one secret-material comparison in this file not using a hash/CT primitive — client_secret goes through argon2 verify_password (oauth.rs:334)."
+      ],
+      "expert": "rust"
+    }
+  ]
+}

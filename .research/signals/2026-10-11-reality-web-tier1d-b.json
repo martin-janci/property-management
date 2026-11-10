@@ -1,0 +1,38 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-11",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claim buffer starved: honest_claimable=6 < BUFFER_FLOOR=36). Oldest-unreviewed cursor (review_cursor.reality-web=2026-10-02) and churn-aligned; api-handlers/ppt-web-ui/mobile-rn cursors are 2026-10-11 (already reviewed today). Not backlog-saturated (0 open code-review-finding items for reality-web). This is a second slice (-b) complementing the earlier 2026-10-11-reality-web-tier1d.json run, which covered i18n/refactor vectors; this slice targets client-component data-fetch error handling (distinct files, distinct vector).",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-reality-web-feedimport-no-error-state",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/FeedImport.tsx:48 — `const { data: feeds, isLoading } = useFeedSources(agency?.id || '')` destructures the query result without an `isError`/`error` branch. The render at L74-84 only handles `isLoading` (skeleton) and `feeds?.length === 0` (EmptyState); on a transport/server error `feeds` is `undefined`, so `feeds?.length === 0` is `false` and control falls to the else branch where `feeds?.map(...)` yields nothing — the user sees a silent blank `.feeds-list` with no error message and no retry affordance. This is the exact anti-pattern RealtorManagement.tsx was fixed for (Issue #2343, sibling of #2277: 'transport/server error no longer renders the misleading empty state'), and PriceAlerts.tsx:133 handles correctly via an `if (error)` role=\"alert\" block. FeedImport never adopted the fix."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-crmconn-no-error-state",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/CrmConnection.tsx:50 — `const { data: connections, isLoading } = useCrmConnections(agency?.id || '')` has the same missing-error-branch bug as FeedImport. Render at L76-84 handles only `isLoading` and `connections?.length === 0`; on query failure `connections` is `undefined`, `connections?.length === 0` is `false`, and the else branch's `connections?.map(...)` renders an empty list — a silent failure on the agency CRM-connection management screen with no error UI or retry. Should follow the established reality-web pattern (PriceAlerts.tsx:133 / RealtorManagement.tsx Issue #2343): destructure `isError`/`error` and render a role=\"alert\" error state."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

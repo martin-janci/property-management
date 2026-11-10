@@ -10,7 +10,9 @@
  */
 
 import { makeJwt } from '../test/jwt';
-import { decodeJwtPayload, extractTenantId } from './jwt';
+import { decodeJwtPayload, extractTenantId, isJwtExpired } from './jwt';
+
+const nowSec = () => Math.floor(Date.now() / 1000);
 
 describe('decodeJwtPayload', () => {
   it('decodes a well-formed payload into an object', () => {
@@ -58,21 +60,17 @@ describe('decodeJwtPayload', () => {
     expect(decodeJwtPayload(token)).toBeNull();
   });
 
-  it('mojibakes multi-byte (UTF-8) claim values — Latin1 `atob` limitation, pinned', () => {
-    // A real server base64-encodes the UTF-8 *bytes* of the payload. `atob`
-    // returns a Latin1 string, so a genuinely multi-byte char (outside the
-    // Latin1 range that `btoa` can encode) comes back mojibake'd. `tenant_id`
-    // is a UUID today so this never bites; this pins the limitation the source
-    // only notes in a comment. Built by hand because `makeJwt`'s `btoa` can't
-    // encode multi-byte chars directly.
-    const json = JSON.stringify({ note: '你好' });
+  it('decodes multi-byte (UTF-8) claim values', () => {
+    // A real server base64-encodes the UTF-8 *bytes* of the payload; the
+    // decoder must re-assemble them so names such as "Nováková" survive.
+    const json = JSON.stringify({ note: '你好', name: 'Jana Nováková' });
     const b64url = btoa(String.fromCharCode(...new TextEncoder().encode(json)))
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
       .replace(/=+$/, '');
     const decoded = decodeJwtPayload(`header.${b64url}.sig`);
-    expect(decoded).not.toBeNull();
-    expect(decoded?.note).not.toBe('你好');
+    expect(decoded?.note).toBe('你好');
+    expect(decoded?.name).toBe('Jana Nováková');
   });
 });
 
@@ -91,5 +89,32 @@ describe('extractTenantId', () => {
 
   it('returns null (no throw) for a malformed token', () => {
     expect(extractTenantId('not-a-jwt')).toBeNull();
+  });
+});
+
+describe('isJwtExpired', () => {
+  it('returns true for a token whose exp is in the past', () => {
+    expect(isJwtExpired(makeJwt({ sub: 'u-1', exp: nowSec() - 60 }))).toBe(true);
+  });
+
+  it('returns false for a token whose exp is comfortably in the future', () => {
+    expect(isJwtExpired(makeJwt({ sub: 'u-1', exp: nowSec() + 3600 }))).toBe(false);
+  });
+
+  it('treats a token within the skew window as already expired', () => {
+    // exp is 10s out but the skew is 30s, so it should be considered stale.
+    expect(isJwtExpired(makeJwt({ exp: nowSec() + 10 }), 30)).toBe(true);
+    // Outside the skew window it is still valid.
+    expect(isJwtExpired(makeJwt({ exp: nowSec() + 120 }), 30)).toBe(false);
+  });
+
+  it('returns false when exp is missing or non-numeric (defer to server 401)', () => {
+    expect(isJwtExpired(makeJwt({ sub: 'u-1' }))).toBe(false);
+    expect(isJwtExpired(makeJwt({ exp: 'soon' }))).toBe(false);
+  });
+
+  it('returns false (no throw) for a malformed token', () => {
+    expect(isJwtExpired('not-a-jwt')).toBe(false);
+    expect(isJwtExpired('')).toBe(false);
   });
 });

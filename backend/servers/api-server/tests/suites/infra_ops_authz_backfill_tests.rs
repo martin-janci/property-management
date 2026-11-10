@@ -5,8 +5,20 @@
 //! endpoints that were previously marked as partial or none.
 //!
 //! For each endpoint:
-//!   1. an unauthenticated request is rejected (401) — auth is now required;
-//!   2. an authenticated *non-admin* request is rejected with 403.
+//!   1. an unauthenticated request is rejected with **401 Unauthorized** — the
+//!      `AuthUser` extractor (`FromRequestParts`) runs before any body/path
+//!      extraction, so this holds for every method regardless of payload;
+//!   2. an authenticated *non-admin* request is rejected with **403 Forbidden**.
+//!
+//! Assertion strength note (point 2): the handlers extract `Json<T>` *before*
+//! the in-handler platform-admin check runs, so a body-bearing request whose
+//! payload fails validation could surface a 4xx validation error ahead of the
+//! 403. For the bodyless endpoints (all GET/DELETE plus the no-`Json` POSTs)
+//! the 403 is deterministic and asserted exactly; for body-bearing endpoints we
+//! assert the caller was authenticated (not 401) yet still rejected (4xx). This
+//! is strictly stronger than a bare `is_client_error()` check: it proves auth is
+//! actually enforced (a stray 404 would now fail) rather than merely that *some*
+//! error occurred.
 //!
 //! Note that `/api/v1/infrastructure/health/metrics` is intentionally exempt from
 //! the platform-admin capability gate since it is a Prometheus scrape endpoint.
@@ -43,6 +55,29 @@ fn authed(token: &str, method: Method, uri: &str, body: Option<&str>) -> Request
             .body(Body::from(j.to_string()))
             .unwrap(),
         None => b.body(Body::empty()).unwrap(),
+    }
+}
+
+/// Assert that an authenticated *non-admin* caller is rejected.
+///
+/// For bodyless requests (no `Json<T>` extraction can precede the in-handler
+/// platform-admin check) the rejection is deterministically `403 Forbidden`.
+/// For body-bearing requests, `Json` deserialization runs before the admin
+/// check, so an incomplete/invalid payload may legitimately surface a 4xx
+/// validation error ahead of the 403 — there we assert the caller was
+/// authenticated (not `401`) yet still rejected (`4xx`).
+fn assert_non_admin_rejected(bodyless: bool, status: StatusCode, method: &Method, uri: &str) {
+    if bodyless {
+        assert_eq!(
+            status,
+            StatusCode::FORBIDDEN,
+            "{method} {uri} must reject an authenticated non-admin with 403, got {status}"
+        );
+    } else {
+        assert!(
+            status.is_client_error() && status != StatusCode::UNAUTHORIZED,
+            "{method} {uri} must reject an authenticated non-admin (4xx, not 401), got {status}"
+        );
     }
 }
 
@@ -306,9 +341,10 @@ async fn infrastructure_endpoints_require_auth(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     for (method, uri, body) in infrastructure_cases() {
         let resp = app.execute(anon(method.clone(), &uri, body)).await;
-        assert!(
-            resp.status.is_client_error(),
-            "{method} {uri} must require auth (4xx), got {}",
+        assert_eq!(
+            resp.status,
+            StatusCode::UNAUTHORIZED,
+            "{method} {uri} must reject an unauthenticated caller with 401, got {}",
             resp.status
         );
     }
@@ -320,14 +356,11 @@ async fn infrastructure_endpoints_reject_non_platform_admin(pool: PgPool) {
     let (token, _r) = create_authenticated_user(&app, &TestUser::new()).await;
 
     for (method, uri, body) in infrastructure_cases() {
+        let bodyless = body.is_none();
         let resp = app
             .execute(authed(&token, method.clone(), &uri, body))
             .await;
-        assert!(
-            resp.status.is_client_error(),
-            "{method} {uri} must reject non-admin (4xx), got {}",
-            resp.status
-        );
+        assert_non_admin_rejected(bodyless, resp.status, &method, &uri);
     }
 }
 
@@ -336,9 +369,10 @@ async fn operations_endpoints_require_auth(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     for (method, uri, body) in operations_cases() {
         let resp = app.execute(anon(method.clone(), &uri, body)).await;
-        assert!(
-            resp.status.is_client_error(),
-            "{method} {uri} must require auth (4xx), got {}",
+        assert_eq!(
+            resp.status,
+            StatusCode::UNAUTHORIZED,
+            "{method} {uri} must reject an unauthenticated caller with 401, got {}",
             resp.status
         );
     }
@@ -350,13 +384,10 @@ async fn operations_endpoints_reject_non_platform_admin(pool: PgPool) {
     let (token, _r) = create_authenticated_user(&app, &TestUser::new()).await;
 
     for (method, uri, body) in operations_cases() {
+        let bodyless = body.is_none();
         let resp = app
             .execute(authed(&token, method.clone(), &uri, body))
             .await;
-        assert!(
-            resp.status.is_client_error(),
-            "{method} {uri} must reject non-admin (4xx), got {}",
-            resp.status
-        );
+        assert_non_admin_rejected(bodyless, resp.status, &method, &uri);
     }
 }

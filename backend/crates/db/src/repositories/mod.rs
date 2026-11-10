@@ -18,6 +18,7 @@ pub mod audit_log;
 pub mod building;
 pub mod critical_notification;
 pub mod data_export;
+pub mod data_export_test;
 pub mod delegation;
 pub mod device_push_token;
 pub mod document;
@@ -33,8 +34,10 @@ pub mod health_monitoring;
 pub mod help;
 pub mod layout;
 pub mod membership;
+pub mod membership_test;
 pub mod messaging;
 pub mod meter;
+pub mod mobile_config;
 pub mod notification_event;
 pub mod notification_preference;
 pub mod oauth;
@@ -129,6 +132,7 @@ pub use layout::{LayoutChangeEventKind, LayoutPublishError, LayoutRepository};
 pub use membership::MembershipRepository;
 pub use messaging::MessagingRepository;
 pub use meter::MeterRepository;
+pub use mobile_config::{MobileConfig, MobileConfigPatch, MobileConfigRepository};
 pub use notification_event::{total_counts, NotificationEventRepository};
 pub use notification_preference::NotificationPreferenceRepository;
 pub use oauth::OAuthRepository;
@@ -218,7 +222,10 @@ pub use government_portal::GovernmentPortalRepository;
 // Epics 31-34: Reality Portal Professional
 pub mod reality_portal;
 
-pub use reality_portal::{FavoriteAlertReadOutcome, RealityPortalRepository};
+pub use reality_portal::{
+    FavoriteAlertReadOutcome, RealityPortalRepository, SavedSearchError,
+    MAX_SAVED_SEARCHES_PER_USER,
+};
 
 // Epic 37: Community & Social Features
 pub mod community;
@@ -287,7 +294,7 @@ pub use owner_analytics::OwnerAnalyticsRepository;
 // Epic 77: Dispute Resolution
 pub mod dispute;
 
-pub use dispute::{DisputeRepository, UpdateAttendanceData, UpdateSessionData};
+pub use dispute::{DisputeChild, DisputeRepository, UpdateAttendanceData, UpdateSessionData};
 
 // Epic 71: Background Jobs Infrastructure (Phase 1.3)
 pub mod background_jobs;
@@ -383,6 +390,8 @@ pub use reserve_funds::ReserveFundRepository;
 
 // Epic 142: Violation Tracking & Enforcement
 pub mod violations;
+#[cfg(test)]
+mod violations_test;
 
 pub use violations::ViolationRepository;
 

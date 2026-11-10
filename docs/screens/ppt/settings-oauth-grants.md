@@ -44,5 +44,6 @@ Wired to live backend endpoints in Epic 10A, Story 10A-3:
 - 2026-05-24 — agent: OAuthGrantsPage created; full list + revoke with confirmation dialog wired to @ppt/api-client oauth-grants hooks; apiStatus complete.
 
 ## Agent Log
+- 2026-11-04 — agent: localized all copy (`oauthGrants.*` in all 6 locales), incl. toasts, confirm dialog (Trans with <strong> app name) and aria labels; grant dates use the active language.
 - 2026-07-13 — agent: gap-screens-normalize-frontmatter — normalized story-id-style epic ref(s) Epic-10A-3 → Epic-10A (strip story suffix); /screens validate clean.
 - 2026-05-24 — agent: gap-10a-3-user-grants-ui — built OAuthGrantsPage under features/oauth-grants/; added lazy route at /settings/oauth-grants; wired useUserGrants + useRevokeUserGrant; toast feedback on success/error; confirmation dialog before revoke.

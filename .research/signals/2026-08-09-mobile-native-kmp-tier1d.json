@@ -1,0 +1,52 @@
+{
+  "generated": "2026-08-09T00:00:00Z",
+  "segment": "mobile-native-kmp",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["kotlin", "tester"],
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-cancellationexception-swallowed-repos",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Systemic across the commonMain repository layer: every repository that wraps a suspend Ktor call in try/catch uses a bare `catch (e: Exception)` and folds the throwable into `Result.failure(e)` WITHOUT first rethrowing kotlinx.coroutines.CancellationException. In Kotlin coroutines, CancellationException is an Exception, so `catch (e: Exception)` swallows it — this breaks structured/cooperative cancellation. Affected files (57 catch sites total): favorites/FavoritesRepository.kt (11), auth/SsoService.kt (9), notifications/NotificationRepository.kt (9), inquiry/InquiryRepository.kt (8), listing/ListingRepository.kt (6), agency/AgencyRepository.kt (4), realtor/PortalListingsRepository.kt (2, lines 62 & 97), realtor/RealtorRepository.kt (2, lines 41 & 61).",
+        "The correct pattern already exists in this very codebase: shared/src/commonMain/kotlin/three/two/bit/ppt/reality/layout/LayoutRepository.kt:65-70 does `catch (e: CancellationException) { throw e }` immediately before the generic `catch (e: Exception)`. LayoutRepository is the ONLY of the 10 repos that handles this correctly (grep for CancellationException across commonMain returns only LayoutRepository.kt), which demonstrates the intended convention and that the other 9 repos are inconsistent regressions rather than a deliberate design choice.",
+        "Impact: when a composable's rememberCoroutineScope / viewModelScope is cancelled (user navigates away, screen disposed, or a newer request supersedes an in-flight one), the cancelled Ktor call throws CancellationException which is caught and returned as `Result.failure(e)`. Callers then treat a normal cancellation as a real error — e.g. Navigation.kt list loaders do `.onFailure { xxx = emptyList() }`, and screens like AccountScreen surface Log.e / error UI. This produces spurious error states/empty-list flashes on navigation and can interfere with cancellation propagation. Fix: add `catch (e: CancellationException) { throw e }` as the first catch clause in each suspend fun's try/catch (mirroring LayoutRepository), or centralize the request+Result wrapping in a shared helper that rethrows CancellationException. Recommend a follow-up implementer task to sweep the 9 repositories."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-layoutrepo-println-logging",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "cleanup",
+      "evidence": [
+        "shared/src/commonMain/kotlin/three/two/bit/ppt/reality/layout/LayoutRepository.kt uses raw `println(...)` for diagnostic logging in commonMain (shared production KMP code) at three sites: line 48 ('falling back to default layout: HTTP ...'), line 57 ('...: unexpected screen echo ...'), and line 68 ('...: ${e.message}'). println in commonMain writes uncontrolled output to stdout on Android (logcat System.out) and to the device console on iOS with no tag, level, or ability to disable it in release builds.",
+        "It is the only repository in the commonMain layer that logs with println (the sibling repos either return Result.failure with a message or use platform loggers at the call site, e.g. AccountScreen uses Log.e). This is inconsistent and leaks internal fallback behavior to release logs. Fix: route through a shared expect/actual logger (or Kermit/Napier if already available), gate on a debug flag, or drop the println entirely since the fallback is already returned as DEFAULT_LISTING_DETAIL_LAYOUT. Low severity / cleanup, but easy and self-contained."
+      ],
+      "expert": "tester"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-compose-state-bang-bang",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "cleanup",
+      "evidence": [
+        "Compose screens repeatedly re-assert nullable UI-state fields with `!!` immediately after a `when`/`if` null-guard instead of smart-casting a locally captured val: androidApp/.../ui/listing/ListingDetailScreen.kt:121 (state.errorMessage!!), :125/:149/:160 (state.listing!!), :132 (state.listing!!.realtor?...); ui/account/AccountScreen.kt:174 (notificationPrefs!!); ui/inquiries/InquiriesScreen.kt:169 (errorMessage!!); ui/favorites/FavoritesScreen.kt:164 (errorMessage!!).",
+        "Because `state` is backed by a Compose State/StateFlow, the guard check and the `!!` deref are separate reads of a mutable property; a delegated-property `!!` after a `when (state.x != null)` is not protected by smart-cast and is a latent NPE-on-recomposition smell if the state can change between reads. The idiomatic fix is to capture into a local val inside the guarded branch (e.g. `val listing = state.listing ?: return@... ` or `state.listing?.let { ... }`) so the compiler smart-casts and the `!!` disappears. Repeated across 4 screens; low severity but a consistent maintainability/robustness cleanup for a follow-up task."
+      ],
+      "expert": "kotlin"
+    }
+  ]
+}

@@ -102,8 +102,13 @@ async function fetchKillSwitch(host: string): Promise<KillSwitchInfo> {
 export const config = {
   // Match all pathnames except for:
   // - api routes
+  // - `version` — the shared runtime version surface (T6). It must NOT be
+  //   locale-routed: next-intl would rewrite/redirect `/version` to
+  //   `/<locale>/version`, where no route exists, so `curl https://<host>/version`
+  //   (the same command used against ppt-web, admin-web and the two Rust
+  //   servers) would 404 on the reality apex. See src/app/version/route.ts.
   // - _next (Next.js internals)
   // - _vercel (Vercel internals)
   // - static files (images, favicon, etc.)
-  matcher: ['/((?!api|_next|_vercel|.*\\..*).*)'],
+  matcher: ['/((?!api|version|_next|_vercel|.*\\..*).*)'],
 };

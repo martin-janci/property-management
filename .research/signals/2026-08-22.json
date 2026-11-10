@@ -1,0 +1,134 @@
+{
+  "run_iso": "2026-08-22T03:03:20Z",
+  "since_iso": "2026-08-22T00:43:14Z",
+  "merged_prs": [],
+  "signals": [],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 0 new signals this window",
+  "_note": "same-day rerun over the 2026-08-22T00:43:14Z brief; window 00:43\u219203:03 saw 0 new merged PRs, 0 new issues, only PR #2821 (dispatcher-owned, in review) activity \u2014 a quiet increment. The 6 signals derived by the 00:43 run remain in state.seen_signals (audit trail) and their scoring landed in backlog.json in that commit.",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/$TODAY.md && head -1 | grep '^# $TODAY$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq diff seen_signals/cursors/quiet_days vs HEAD",
+      "observed": "true",
+      "expected": "true",
+      "note": "stats.quiet_days 2\u21923 satisfies G2 progress"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq intersect signals vs seen_signals filter cumulative",
+      "observed": "true",
+      "expected": "true",
+      "note": "0 signals this run \u2014 vacuous"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq max score check",
+      "observed": "true",
+      "expected": "true",
+      "note": "no decay candidates this run (0 items with updated_at \u2264 2026-08-08)"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep new plan slugs in brief for 'adversarial pass:'",
+      "observed": "n/a",
+      "expected": "n/a",
+      "note": "0 new plans this run \u2014 vacuously PASS"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/",
+      "observed": "0",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/'",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep -E secret patterns in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "parse brief phases-failed + cursor snapshot",
+      "observed": "none failed; cursors unchanged",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior HEAD plans still present or archived",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "ls-files _archive/ count now vs HEAD",
+      "observed": "8 == 8",
+      "expected": "now \u2265 head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "jq auto_fix_actions caps",
+      "observed": "0 actions",
+      "expected": "\u22643 with per-type caps \u22641"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "pm_cursor.next_index unchanged (Phase 1.6 skipped)",
+      "observed": "3 == 3",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram token patterns in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

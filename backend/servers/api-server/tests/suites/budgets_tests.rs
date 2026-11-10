@@ -7,7 +7,10 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::common::{create_authenticated_user_with_org, TestApp, TestUser};
+use crate::common::{
+    create_authenticated_user, create_authenticated_user_with_org, seed_membership, TestApp,
+    TestUser,
+};
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn budget_module_happy_path_lifecycle(pool: PgPool) {
@@ -308,12 +311,22 @@ async fn budget_module_happy_path_lifecycle(pool: PgPool) {
     assert_eq!(submitted_budget["status"], "pending_approval");
 
     // 4.2 POST /api/v1/budgets/{id}/approve -> approve_budget
+    // The creator may not approve their own budget, so a second manager
+    // (org_admin) of the same organization approves it.
+    let approver = TestUser::new();
+    let (approver_token, _) = create_authenticated_user(&app, &approver).await;
+    let approver_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
+        .bind(&approver.email)
+        .fetch_one(&app.pool)
+        .await
+        .expect("resolve approver id");
+    seed_membership(&app.pool, org_id, approver_id, "org_admin").await;
     let resp = app
         .execute(
             app.post(&format!(
                 "/api/v1/budgets/{budget_id}/approve?organization_id={org_id}"
             ))
-            .bearer(&token)
+            .bearer(&approver_token)
             .tenant(org_id)
             .build(),
         )
@@ -524,6 +537,7 @@ async fn budget_module_happy_path_lifecycle(pool: PgPool) {
     assert_eq!(closed_budget["status"], "closed");
 
     // 7.2 DELETE /api/v1/budgets/items/{item_id} -> delete_budget_item
+    // Budget lines are frozen once the budget left `draft`.
     let resp = app
         .execute(
             app.delete(&format!("/api/v1/budgets/items/{item_id}"))
@@ -534,12 +548,28 @@ async fn budget_module_happy_path_lifecycle(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::NO_CONTENT,
-        "delete_budget_item failed: {}",
+        StatusCode::BAD_REQUEST,
+        "delete_budget_item on a closed budget must be rejected: {}",
         resp.text()
     );
 
     // 7.3 DELETE /api/v1/budgets/categories/{id} -> delete_category
+    // (the original category is still referenced by the frozen line, so
+    // delete an unused one)
+    let resp = app
+        .execute(
+            app.post("/api/v1/budgets/categories")
+                .bearer(&token)
+                .tenant(org_id)
+                .json(json!({ "organization_id": org_id, "name": "Throwaway" }))
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::CREATED, "{}", resp.text());
+    let category_id = resp.json_value()["id"]
+        .as_str()
+        .expect("id missing")
+        .to_string();
     let resp = app
         .execute(
             app.delete(&format!(
@@ -556,4 +586,86 @@ async fn budget_module_happy_path_lifecycle(pool: PgPool) {
         "delete_category failed: {}",
         resp.text()
     );
+}
+
+/// Round-3 audit #11: a freshly created budget has no items, so `SUM()` is
+/// NULL. `GET /budgets/{id}/summary` decoded NULL into a non-null Decimal and
+/// returned 500; `/variance` did the same for categories without items.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn summary_and_variance_of_budget_without_items(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "budempty").await;
+    let building_id = sqlx::query_scalar::<_, Uuid>(
+        r#"INSERT INTO buildings (organization_id, street, city, postal_code, country)
+           VALUES ($1, 'Empty Street 1', 'Bratislava', '81101', 'Slovakia') RETURNING id"#,
+    )
+    .bind(org_id)
+    .fetch_one(&app.pool)
+    .await
+    .expect("seed building");
+
+    // A category with no items in this budget exercises the LEFT JOIN path.
+    let resp = app
+        .execute(
+            app.post("/api/v1/budgets/categories")
+                .bearer(&token)
+                .tenant(org_id)
+                .json(json!({ "organization_id": org_id, "name": "Empty category" }))
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::CREATED, "{}", resp.text());
+
+    let resp = app
+        .execute(
+            app.post("/api/v1/budgets")
+                .bearer(&token)
+                .tenant(org_id)
+                .json(json!({
+                    "organization_id": org_id,
+                    "building_id": building_id,
+                    "fiscal_year": 2027,
+                    "name": "Empty budget"
+                }))
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::CREATED, "{}", resp.text());
+    let budget_id = resp.json_value()["id"].as_str().unwrap().to_string();
+
+    let resp = app
+        .execute(
+            app.get(&format!("/api/v1/budgets/{budget_id}/summary"))
+                .bearer(&token)
+                .tenant(org_id)
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::OK, "summary: {}", resp.text());
+    let summary = resp.json_value();
+    for field in [
+        "total_budgeted",
+        "total_actual",
+        "total_variance",
+        "variance_percent",
+    ] {
+        let v: rust_decimal::Decimal = summary[field]
+            .as_str()
+            .unwrap_or_else(|| panic!("{field} missing: {summary}"))
+            .parse()
+            .unwrap();
+        assert!(v.is_zero(), "{field} = {v}");
+    }
+    assert_eq!(summary["items_over_budget"], 0);
+
+    let resp = app
+        .execute(
+            app.get(&format!("/api/v1/budgets/{budget_id}/variance"))
+                .bearer(&token)
+                .tenant(org_id)
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::OK, "variance: {}", resp.text());
 }

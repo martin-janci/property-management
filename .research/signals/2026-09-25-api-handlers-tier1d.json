@@ -1,0 +1,74 @@
+{
+  "generated": "2026-09-25T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven generator (claim buffer starved: only mobile-native/KMP backlog remains, structurally unlandable in cloud runner AGP egress-blocked #2652) 2026-09-25",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "OLDEST-UNREVIEWED per the task-provided deterministic cursor in .research/state.json review_cursor, filtered to the task's landable-preferred (non-mobile-native) segments and de-duplicated against segments already reviewed in today's signal corpus. review_cursor: {api-handlers:2026-08-31, api-core:2026-09-01, reality-server:2026-08-31, ppt-web-ui:2026-09-06, ppt-web-core:2026-08-29, reality-web:2026-08-29, mobile-rn:2026-09-09, mobile-native-kmp:2026-09-10}. The two absolute-oldest (ppt-web-core, reality-web, both 2026-08-29) were BOTH already reviewed earlier today (signals/2026-09-25-ppt-web-core-tier1d.json and signals/2026-09-25-reality-web-tier1d.json exist), so they are skipped to keep findings FRESH. Next oldest are api-handlers and reality-server (both 2026-08-31); reality-server was reviewed 2026-09-24 (signals/2026-09-24-reality-server-tier1d.json, 0 findings) so api-handlers wins as the oldest un-mined landable segment. SATURATION CHECK PASSED: backlog.json holds 0 OPEN code-review-finding rows for api-handlers, well under the >=3-open skip rule. api-handlers = backend/servers/api-server/src/routes/ (the actual handler layer; the skill's segment map path backend/api-server/src/handlers/ predates the repo's backend/servers/*/routes layout). The task explicitly names api-server among the landable-preferred segments; this current dispatcher directive is followed over the stale landability note in yesterday's reality-server signal (see landability_note). Static analysis only (read + grep, no build/test) per skill contract.",
+  "experts_used": ["rust", "security"],
+  "landable_in_cloud": true,
+  "landability_note": "TENSION NOTED: signals/2026-09-24-reality-server-tier1d.json asserts api-server is structurally unbuildable in the cloud runner due to a utoipa-swagger-ui build-script egress-403 (issue #2966), which would make api-server findings hard to verify end-to-end in cloud. However (a) the current task explicitly lists api-server among the landable-preferred segments and current dispatcher directive overrides the stale note, and (b) all three findings below are small, self-contained, statically-obvious changes (error-message scrubbing, one pagination clamp, one revoke-ordering fix) that a specialist can land and unit-test in isolation even if a full swagger-ui-linked build is blocked in one runner. If #2966 truly blocks api-server compilation in the assigned runner, these rows should be routed to a runner where api-server builds, not dropped.",
+  "findings_count": 3,
+  "static_only": true,
+  "note": "api-handlers (backend/servers/api-server/src/routes/, 94 handler files) is a broadly mature, well-hardened segment. Verified CLEAN this pass (so future rotations are not re-mined speculatively): (1) UNWRAP/EXPECT PANICS - all non-test production unwrap/expect hits are safe/justified: schedule_cadence.rs(36)/financial.rs(13)/voice_webhooks.rs(23) density is entirely inside #[cfg(test)] mods; the handful of real production ones are guarded (lease_abstraction.rs:774/867 & agencies.rs:747 short-circuit is_none() before as_ref().unwrap(); market_pricing.rs and_hms_opt always-valid; oauth_state mutex-poisoned; signatures.rs ESIGN_TOKEN_SECRET validated at startup with comment; admin/memberships.rs OS-rng expect). (2) WEBHOOK SIGNATURE TIMING - signatures.rs:679 and voice_webhooks.rs:1538 use subtle ct_eq; caddy_ask.rs:181 constant-time; portal_webhooks.rs and integrations/webhook.rs use hmac mac.verify_slice (constant-time within the crate). No naive `sig == expected`. (3) SHARE-LINK BRUTE FORCE - documents/shares.rs has a token:ip-keyed attempt limiter running BEFORE the (expensive) hashed password verify (verify_share_password_for_share), with 429 on flood and reset on success; well-commented. (4) OK-ON-ERROR - the StatusCode::OK sites inspected (ai/workflows.rs:460, unit_residents.rs:838, listings.rs:860) are all on genuine success branches; error branches correctly return 4xx/5xx. (5) no todo!()/unimplemented!()/unsafe in routes. (6) SENSITIVE-IN-LOGS - the many token/secret hits in tracing calls log the error value (%e) or describe token operations; none log a decrypted secret/token value. (7) refresh flow otherwise strong: replay detection with family fan-out revoke, user-active recheck, claims.sub parse guarded. The three net-new findings below are the substantive gaps: two error-hygiene/limit issues (raw DB-error leakage; one unbounded pagination limit) and one auth token-rotation atomicity gap.",
+  "signals": [
+    {
+      "id": "code-review-api-handlers-budgets-raw-db-error-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-25 api-handlers routes/budgets.rs + routes/listings.rs + routes/ai/workflows.rs)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "security",
+      "files": [
+        "backend/servers/api-server/src/routes/budgets.rs",
+        "backend/servers/api-server/src/routes/listings.rs",
+        "backend/servers/api-server/src/routes/ai/workflows.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/budgets.rs - the raw error Display is embedded directly in the CLIENT-facing response body at 37 sites: `Json(ErrorResponse::new(\"DB_ERROR\", e.to_string()))` (e.g. :260, :291, :327, :363, :402, :441, :480, :519, :558, :585, :612, :645, :677, :704, :740, :775, :803, :830 and 19 more; `grep -c 'ErrorResponse::new(\"DB_ERROR\", e.to_string())' budgets.rs` = 37). `e` here is the sqlx/repository error, whose Display can contain SQL fragments, table/column/constraint names, and connection detail. This is returned to the authenticated caller verbatim in the JSON `message` field -> information disclosure about DB schema and internals.",
+        "backend/servers/api-server/src/routes/ai/workflows.rs:44-49 - the shared `internal_error(e)` helper does the same: `Json(ErrorResponse::new(\"INTERNAL_ERROR\", e.to_string()))`. It is used across the ai/workflows handlers, so every internal failure there leaks the raw error string into the 500 body.",
+        "backend/servers/api-server/src/routes/listings.rs:290-293 and :1040-1043 - the listings handlers return the raw error interpolated into the response String: `(StatusCode::INTERNAL_SERVER_ERROR, format!(\"Failed to count listings: {}\", e))` (and the sibling `Failed to list listings: {}` / `Failed to get organization stats: {}`). The tuple's String becomes the HTTP body, leaking `e` to the client.",
+        "This is INCONSISTENT with the established repo pattern: reality-server has util/errors.rs::db_error() that SCRUBS raw sqlx/anyhow text to a generic 500 (with dedicated tests asserting no constraint/host/dbname/sslmode leak - see signals/2026-09-24-reality-server-tier1d.json), and the api-server admin/auth/documents handlers reviewed this pass use STATIC messages (e.g. auth/mod.rs err_response(..., \"Failed to validate session\"), unit_residents.rs \"Failed to remove resident\") while logging %e via tracing. budgets/listings/ai/workflows are the outliers that put %e on the wire.",
+        "Fix (low-risk, landable in isolation): return a static client message (e.g. ErrorResponse::new(\"DB_ERROR\", \"Failed to process request\")) and keep the detail in a tracing::error!(error = %e, ...) call, matching the auth/admin handlers and reality-server's db_error() scrubber. Confidence medium: the leak into the response body is statically certain; severity depends on how verbose the underlying sqlx error Display is at runtime (not runtime-confirmed), hence medium not high."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-listings-unbounded-limit",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-25 api-handlers routes/listings.rs)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/routes/listings.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/listings.rs:269-300 - `list_listings` takes `Query(query): Query<ListingListQuery>` and passes `&query` straight into `state.listing_repo.list(tenant.tenant_id, &query)` (:276) and `.count(...)` (:287) with NO clamp on the user-supplied `limit`. The response echo at :300 (`limit: query.limit.unwrap_or(20)`) confirms `ListingListQuery.limit` is a caller-controlled Option with no upper bound applied in the handler. The syndication-dashboard handler at :1040-1050 has the identical unclamped shape.",
+        "This is INCONSISTENT with every other paginated handler in the segment, which DO cap the page size at the handler layer: admin/users.rs:58 `q.limit.unwrap_or(20).min(100)`, admin/audit.rs:261 `q.limit.unwrap_or(100).min(500)`, admin/users_lifecycle.rs:273 `query.page_size.clamp(1, 100)`, admin/agencies.rs:81 `q.page_size.unwrap_or(20).clamp(1, 100)`. reality-server likewise clamps (clamp_pagination DEFAULT 20 / MAX 100 per signals/2026-09-24-reality-server-tier1d.json). listings is the outlier.",
+        "Impact: a caller can request an arbitrarily large `limit`, flowing into the repository's SQL LIMIT and materializing an unbounded result set (large DB scan + serialization of the full listing set into memory and over the wire) -> DoS / memory-pressure vector on a tenant-facing listing endpoint.",
+        "Fix (low-risk, landable in isolation): clamp the limit in the handler before calling the repo, e.g. `let limit = query.limit.unwrap_or(20).clamp(1, 100);` and pass the clamped value, mirroring admin/agencies.rs. Confidence medium: the missing clamp in the handler is statically certain; whether the repository (routes-external repositories/ segment, not read this pass) applies its own cap is not verified, so the finding is scoped to the handler-layer inconsistency and the reachable unbounded path if the repo does not clamp."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-auth-nonatomic-refresh-rotation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-25 api-handlers routes/auth/mod.rs)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "security",
+      "files": [
+        "backend/servers/api-server/src/routes/auth/mod.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/auth/mod.rs:1009-1013 - the refresh handler's token rotation revokes the presented refresh token then CONTINUES on failure: `if let Err(e) = state.session_repo.revoke_token(stored_token.id).await { tracing::error!(error = %e, \"Failed to revoke old refresh token\"); /* Continue anyway - better to issue new token than fail */ }`. Immediately after, it mints a NEW access + refresh token pair (:1015+). On a revoke failure the OLD refresh token therefore remains valid in the DB alongside the newly-issued one.",
+        "This breaks the one-time-use guarantee that the rest of this flow is built around: the same handler implements replay detection that, on seeing an already-consumed refresh token, fan-out-revokes the whole session family (see :930-940 'Failed to fan-out-revoke after refresh-token replay' / TOKEN_REVOKED path). If a legitimate rotation leaves the old token live (revoke failed) and the old token is later presented (client retry, or an attacker who captured it), the outcome is either (a) two concurrently-valid refresh tokens - defeating rotation - or (b) a false-positive replay that revokes the legitimate active session. Either way the security/availability contract of rotation is violated by the silent continue.",
+        "The surrounding flow is otherwise hardened (replay family-revoke, is_valid() check, user-active recheck at :980+, claims.sub parse guarded), which makes this the one weak link: rotation is not atomic with issuance.",
+        "Fix options (landable in isolation): treat revoke failure as fatal (return 500 / DATABASE_ERROR instead of continuing), or issue+revoke within a single DB transaction so the new pair is only committed if the old token is revoked. Confidence medium: the non-atomic continue is statically certain and reachable on the /auth/refresh path; the exploitability depends on revoke_token failure frequency (a DB blip) which is not runtime-confirmed, hence medium."
+      ]
+    }
+  ]
+}

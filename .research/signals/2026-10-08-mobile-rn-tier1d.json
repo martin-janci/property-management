@@ -1,0 +1,66 @@
+{
+  "generated": "2026-10-08T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable buffer below floor: claimable=12 < floor=36; cheaper refill tiers exhausted). Static single-segment rotating code review via ppt-dev-review skill, no compilation / no test execution (cloud runner has no toolchain: utoipa-swagger-ui egress block #2966, AGP 403). File reading + grep only. Produces fresh CLOUD-LANDABLE frontend (React Native) backlog vectors for the mobile-rn segment.",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "oldest-unreviewed: cursor's oldest is ppt-web-core (2026-09-27) but it already has a same-day 2026-10-08 tier1d signal file (exhausted today by sibling runs), so advanced to next-oldest tier (2026-10-01, ppt-web-ui vs mobile-rn). Tie broken toward mobile-rn: least-densely-mined cloud-landable segment (29 prior signal files vs ppt-web-ui's 53), 1 open code-review-finding in backlog (not saturated, floor is >=3 status==open), cloud-landable RN frontend. ppt-web-core skipped (reviewed today).",
+  "experts_used": ["frontend", "tester"],
+  "findings_count": 3,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-meter-reading-not-flushed",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/mobile/src/screens/meters/MeterReadingScreen.tsx"],
+      "evidence": [
+        "MeterReadingScreen.tsx:52 pulls only { isConnected, addToQueue } from useOfflineSupport — no processQueue, no direct apiRequest. handleSubmit (:99-145) ALWAYS calls addToQueue({endpoint:'/api/v1/meter-readings', method:'POST', ...}) regardless of connectivity, sets syncStatus:'syncing' when isConnected, then immediately shows Alert t('meters.submitSuccess') (:136).",
+        "The offline queue is only flushed by useOfflineSupport's NetInfo.addEventListener callback 'when coming back online' (useOfflineSupport.ts:593-619, processQueue at :601) or by the manual retry handler App.tsx:88-90. addToQueue (useOfflineSupport.ts:676-700) never triggers processQueue.",
+        "Consequence: a reading submitted while the device is already online and STAYS online is enqueued but never POSTed until the next connectivity transition (disconnect->reconnect) or app relaunch — yet the user was told it succeeded. Data-delivery gap on the happy path.",
+        "Contrast / correct pattern: screens/faults/ReportFaultScreen.tsx does a direct apiRequest('/api/v1/faults', POST) at :385 when online and only addToQueue (:340) when offline. Fix: mirror that dual-path in MeterReadingScreen (direct POST when connected, enqueue only when offline) or call processQueue() right after addToQueue when connected. Frontend-only, cloud-landable."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-person-months-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx"],
+      "evidence": [
+        "PersonMonthsScreen.tsx has NO useTranslation import and no t() calls anywhere — all user-facing strings are hardcoded English, e.g. :78 Alert.alert('Invalid value', 'Enter a whole number between 0 and 20.'), plus the screen's labels/headers.",
+        "Every sibling mobile screen uses react-i18next (verified: Neighbors, WidgetSettings, Feedback, HelpCenter, Dashboard, Buildings, Leases*, LeaseSignature all import useTranslation). This screen is the lone i18n outlier, so it ships English to sk/cs/de/en users regardless of selected locale.",
+        "Independent of the screen's documented mock-data TODO (its header NOTE explains the backend person-months endpoint is a follow-up) — the i18n gap is a separate, cloud-landable fix: wrap strings in t() with keys in the person-months namespace and add the keys to all 4 locale files. Frontend-only, cloud-landable."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-features-faults-orphaned",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "cleanup",
+      "expert": "tester",
+      "files": [
+        "frontend/apps/mobile/src/features/faults/index.ts",
+        "frontend/apps/mobile/src/features/faults/screens/CreateFaultScreen.tsx",
+        "frontend/apps/mobile/src/features/faults/screens/FaultsScreen.tsx",
+        "frontend/apps/mobile/src/features/faults/components/FaultCard.tsx"
+      ],
+      "evidence": [
+        "features/faults/index.ts barrel re-exports FaultCard, CreateFaultScreen, FaultsScreen (Epic 4 / UC-03), but a repo-wide grep finds NO importer of 'features/faults', the barrel, or any of its three modules outside the features/faults/ directory itself.",
+        "The live app wires the OTHER fault implementation: App.tsx:25/40/148/151 render FaultsListScreen + ReportFaultScreen from screens/faults (screens/index.ts:26). So features/faults/ is an orphaned duplicate fault UI.",
+        "Risk: dead duplicate code silently drifts from the real screens/faults/* (e.g. the offline/online submit fix, i18n, validation) and misdirects future agents into editing/testing the wrong copy. No test file references these modules either. Fix: delete features/faults/ (or, if it is the intended future replacement, wire it into navigation and remove screens/faults). Frontend-only, cloud-landable."
+      ]
+    }
+  ]
+}

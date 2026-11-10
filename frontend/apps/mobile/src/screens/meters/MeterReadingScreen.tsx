@@ -22,6 +22,7 @@ import {
 import { PendingSyncIndicator, type SyncStatus } from '../../components/sync';
 import { useOfflineSupport } from '../../hooks';
 import { colors } from '../shared/screenStyles';
+import { isValidReading, normalizeReadingInput } from './meterReadingInput';
 
 export interface MeterReadingScreenProps {
   onSuccess?: () => void;
@@ -102,6 +103,14 @@ export function MeterReadingScreen({ onSuccess, onCancel }: MeterReadingScreenPr
       return;
     }
 
+    // Guard against non-numeric / malformed values reaching the sync queue.
+    // `keyboardType="decimal-pad"` is only a hint — hardware keyboards, paste
+    // and autofill can still enter garbage, which was previously queued verbatim.
+    if (!isValidReading(reading)) {
+      Alert.alert(t('common.error'), t('meters.readingInvalid'));
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -115,10 +124,14 @@ export function MeterReadingScreen({ onSuccess, onCancel }: MeterReadingScreenPr
         syncStatus: isConnected ? 'syncing' : 'pending',
       };
 
-      // Add to offline queue
+      // Add to offline queue.
+      // Endpoint must match the api-server route: POST /api/v1/meters/readings
+      // (lib.rs nests "/api/v1/meters" + meters.rs "/readings"), which is the
+      // same path @ppt/api-client's `submitReading` targets. The previous
+      // "/api/v1/meter-readings" had no backing route and 404'd on sync.
       await addToQueue({
         type: 'CREATE',
-        endpoint: '/api/v1/meter-readings',
+        endpoint: '/api/v1/meters/readings',
         method: 'POST',
         body: {
           meterType: readingData.meterType,
@@ -220,7 +233,7 @@ export function MeterReadingScreen({ onSuccess, onCancel }: MeterReadingScreenPr
             <TextInput
               style={styles.readingInput}
               value={reading}
-              onChangeText={setReading}
+              onChangeText={(text) => setReading(normalizeReadingInput(text))}
               keyboardType="decimal-pad"
               placeholder={t('meters.readingPlaceholder')}
               placeholderTextColor={colors.textSubtle}

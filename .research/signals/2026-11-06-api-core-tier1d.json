@@ -1,0 +1,29 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-06",
+  "segment_reviewed": "api-core",
+  "selection_reason": "oldest-unreviewed (dispatcher-tier1d-demand-driven; CHURN_FILES not supplied this slice so SKILL Step 1 priority 2 applies). The review_cursor in state.json is stale/unreliable (it lists mobile-rn 2026-11-03 as oldest, but a 2026-11-06-mobile-rn-tier1d.json already exists in the signals ledger today), so — per the convention the 2026-11-01 generators established — the .research/signals/ ledger is used as ground truth for what was ACTUALLY reviewed. Last-reviewed per segment from the ledger: api-handlers 2026-11-06, api-core 2026-11-03, reality-server 2026-11-06, ppt-web-ui 2026-11-05, ppt-web-core 2026-11-03, reality-web 2026-11-06, mobile-rn 2026-11-06, mobile-native-kmp 2026-11-03. Three segments tie for oldest at 2026-11-03 (api-core, ppt-web-core, mobile-native-kmp); tiebreak by fewest reviews since 2026-10-31 picks api-core (2 reviews vs 3 each). Saturation check: api-core has 0 open code-review-finding rows in backlog.json => not saturated, selected. Rust expert primary, no secondary per Step 2. NOTE: the SKILL segment-map path (backend/api-server/src/) is stale; the crate now lives at backend/servers/api-server/src/ (backend workspace is crates/ + servers/), and api-core = that src/ EXCLUDING routes/ (routes/ is this repo's handlers dir, owned by the api-handlers segment). 37 non-routes .rs files reviewed. The segment is heavily hardened already: the unwrap/expect/panic grep hits are almost all in #[cfg(test)] modules; the production residue is all defensible — main.rs + totp.rs::new() panics are boot-time fail-fast on missing/invalid prod secrets (JWT_SECRET, TOTP_ENCRYPTION_KEY) with explicit RUST_ENV=development guidance; auth.rs:62 argon2 .expect is a documented-infallible const-params invariant; accounting.rs Decimal::from_str(\"0.5\").unwrap() x5 are infallible literal parses (refactor nit, skipped); bin/features.rs strip_prefix().unwrap() calls are each guarded by a matching starts_with() immediately above (infallible by construction, not a bug); bin/seed.rs DATABASE_URL expect is dev-tool fail-fast. No unsafe blocks. No discarded fallible results (let _ = ...await / .ok()), no StatusCode::OK on error branches. The detached tokio::spawn tasks (notification_pipeline.rs:660, oauth.rs:218, push_fanout.rs:1681, etc.) all log their own errors inside the task and are documented as deliberately off-path. The single genuine residue is the RNG-panic inconsistency below. Capped well under 3; no nits padded.",
+  "experts_used": [
+    "rust"
+  ],
+  "findings_count": 1,
+  "signals": [
+    {
+      "id": "code-review-api-core-rng-expect-panic",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/auth.rs:97 — AuthService::generate_token() does `rng.try_fill_bytes(&mut bytes).expect(\"OS rng failed\")`. generate_token() mints email-verification and password-reset tokens, so it runs on live request paths (auth handlers). An OsRng/SysRng fill failure therefore panics inside the request task instead of returning an AuthError, aborting the request ungracefully rather than yielding a clean 500.",
+        "backend/servers/api-server/src/services/oauth.rs:914-919 — OAuthService::generate_random_b64() has the identical `rand::rngs::SysRng.try_fill_bytes(&mut bytes).expect(\"OS rng failed\")`, and per its own doc comment (L908-910) it backs generate_secure_token(), register_client / regenerate_client_secret (client secret), and register_client (client id) — all request-path OAuth operations.",
+        "The divergence is internal to this same service layer: the sibling totp.rs (services/totp.rs:149-155) handles the EXACT same SysRng.try_fill_bytes failure gracefully, mapping it to `TotpError::EncryptionError(format!(\"secure RNG failed to generate nonce: {e}\"))` rather than panicking. auth.rs and oauth.rs should follow totp.rs and return their existing error type (AuthError / an OAuth error) on RNG failure so a CSPRNG fault degrades to a handled 500 instead of a panicked task abort.",
+        "Severity low: an OS CSPRNG fill failure is extraordinarily rare and arguably unrecoverable, so this is a robustness/consistency smell, not a live crash under normal input. Confidence medium: the panic path and the request-path reachability are certain by static read, but triggering it requires an OS RNG failure that cannot be reproduced statically. candidate_vector bug (recoverable-error vs panic), not test/perf.",
+        "expert: rust"
+      ],
+      "expert": "rust"
+    }
+  ]
+}

@@ -4,6 +4,9 @@
 
 import type { Invoice, Payment } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { paymentMethodKey } from '../utils/constants';
+import { formatCurrency, formatDayMonth } from '../utils/formatting';
 
 interface ReconciliationTableProps {
   unallocatedPayments: Payment[];
@@ -13,20 +16,6 @@ interface ReconciliationTableProps {
   isLoading?: boolean;
 }
 
-function formatCurrency(amount: number, currency = 'EUR'): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-  }).format(amount);
-}
-
-function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-  });
-}
-
 export function ReconciliationTable({
   unallocatedPayments,
   unpaidInvoices,
@@ -34,6 +23,7 @@ export function ReconciliationTable({
   onAutoMatch,
   isLoading,
 }: ReconciliationTableProps) {
+  const { t } = useTranslation();
   const [selectedPayment, setSelectedPayment] = useState<string | null>(null);
   const [selectedInvoice, setSelectedInvoice] = useState<string | null>(null);
   const [matchAmount, setMatchAmount] = useState('');
@@ -66,8 +56,10 @@ export function ReconciliationTable({
       <div className="bg-white rounded-lg shadow p-6">
         <div className="text-center py-8">
           <div className="text-green-500 text-4xl mb-2">✓</div>
-          <h3 className="text-lg font-medium text-gray-900">All Reconciled</h3>
-          <p className="text-gray-500 mt-1">No unallocated payments or unpaid invoices</p>
+          <h3 className="text-lg font-medium text-gray-900">
+            {t('financial.reconciliation.allReconciled')}
+          </h3>
+          <p className="text-gray-500 mt-1">{t('financial.reconciliation.allReconciledBody')}</p>
         </div>
       </div>
     );
@@ -77,13 +69,13 @@ export function ReconciliationTable({
     <div className="bg-white rounded-lg shadow">
       {/* Header */}
       <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-        <h3 className="text-lg font-medium text-gray-900">Payment Reconciliation</h3>
+        <h3 className="text-lg font-medium text-gray-900">{t('financial.reconciliation.title')}</h3>
         <button
           type="button"
           onClick={onAutoMatch}
           className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100"
         >
-          Auto-Match All
+          {t('financial.reconciliation.autoMatchAll')}
         </button>
       </div>
 
@@ -91,11 +83,15 @@ export function ReconciliationTable({
         {/* Unallocated Payments */}
         <div className="p-4">
           <h4 className="text-sm font-medium text-gray-700 mb-3">
-            Unallocated Payments ({unallocatedPayments.length})
+            {t('financial.reconciliation.unallocatedPayments', {
+              count: unallocatedPayments.length,
+            })}
           </h4>
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {unallocatedPayments.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-4">No unallocated payments</p>
+              <p className="text-sm text-gray-500 text-center py-4">
+                {t('financial.reconciliation.noUnallocated')}
+              </p>
             ) : (
               unallocatedPayments.map((payment) => (
                 <button
@@ -121,12 +117,14 @@ export function ReconciliationTable({
                         {formatCurrency(payment.amount, payment.currency)}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {formatDate(payment.payment_date)}
+                        {formatDayMonth(payment.payment_date)}
                         {payment.reference && ` • ${payment.reference}`}
                       </p>
                     </div>
                     <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
-                      {payment.payment_method.replace('_', ' ')}
+                      {t(paymentMethodKey(payment.payment_method), {
+                        defaultValue: payment.payment_method.replace('_', ' '),
+                      })}
                     </span>
                   </div>
                 </button>
@@ -138,11 +136,13 @@ export function ReconciliationTable({
         {/* Unpaid Invoices */}
         <div className="p-4">
           <h4 className="text-sm font-medium text-gray-700 mb-3">
-            Unpaid Invoices ({unpaidInvoices.length})
+            {t('financial.reconciliation.unpaidInvoices', { count: unpaidInvoices.length })}
           </h4>
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {unpaidInvoices.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-4">No unpaid invoices</p>
+              <p className="text-sm text-gray-500 text-center py-4">
+                {t('financial.reconciliation.noUnpaid')}
+              </p>
             ) : (
               unpaidInvoices.map((invoice) => (
                 <button
@@ -165,7 +165,11 @@ export function ReconciliationTable({
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="text-sm font-medium text-gray-900">{invoice.invoice_number}</p>
-                      <p className="text-xs text-gray-500">Due: {formatDate(invoice.due_date)}</p>
+                      <p className="text-xs text-gray-500">
+                        {t('financial.reconciliation.due', {
+                          date: formatDayMonth(invoice.due_date),
+                        })}
+                      </p>
                     </div>
                     <span
                       className={`text-sm font-medium ${
@@ -189,7 +193,7 @@ export function ReconciliationTable({
             <div className="flex-1">
               {selectedPaymentData && (
                 <span className="text-sm">
-                  Payment:{' '}
+                  {t('financial.reconciliation.payment')}{' '}
                   <strong>
                     {formatCurrency(selectedPaymentData.amount, selectedPaymentData.currency)}
                   </strong>
@@ -198,7 +202,7 @@ export function ReconciliationTable({
             </div>
             <div className="flex items-center gap-2">
               <label htmlFor="match-amount" className="text-sm text-gray-600">
-                Amount:
+                {t('financial.reconciliation.amount')}
               </label>
               <input
                 id="match-amount"
@@ -214,9 +218,14 @@ export function ReconciliationTable({
             <div className="flex-1 text-right">
               {selectedInvoiceData && (
                 <span className="text-sm">
-                  Invoice: <strong>{selectedInvoiceData.invoice_number}</strong> (
-                  {formatCurrency(selectedInvoiceData.balance_due, selectedInvoiceData.currency)}{' '}
-                  due)
+                  {t('financial.reconciliation.invoice')}{' '}
+                  <strong>{selectedInvoiceData.invoice_number}</strong>{' '}
+                  {t('financial.reconciliation.amountDue', {
+                    amount: formatCurrency(
+                      selectedInvoiceData.balance_due,
+                      selectedInvoiceData.currency
+                    ),
+                  })}
                 </span>
               )}
             </div>
@@ -226,7 +235,7 @@ export function ReconciliationTable({
               disabled={!selectedPayment || !selectedInvoice || !matchAmount}
               className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Match
+              {t('financial.reconciliation.match')}
             </button>
           </div>
         </div>

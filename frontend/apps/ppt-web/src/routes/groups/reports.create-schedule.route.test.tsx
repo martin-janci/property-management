@@ -187,9 +187,13 @@ describe('ReportsPageRoute create-schedule wiring (gap-81-1)', () => {
       renderReportsRoute();
 
       await user.click(
-        await screen.findByRole('button', { name: /schedules|naplánova/i }, { timeout: 5000 })
+        await screen.findByRole(
+          'button',
+          { name: new RegExp(sk.reports.page.tabs.schedules) },
+          { timeout: 5000 }
+        )
       );
-      await user.click(await screen.findByRole('button', { name: /new schedule|naplánova/i }));
+      await user.click(await screen.findByRole('button', { name: sk.reports.page.newSchedule }));
 
       // The Slovak label for the "faults" built-in report — proves the option
       // is resolved via i18n, not the English `BuiltinReport.name`.
@@ -211,9 +215,13 @@ describe('ReportsPageRoute create-schedule wiring (gap-81-1)', () => {
       renderReportsRoute();
 
       await user.click(
-        await screen.findByRole('button', { name: /schedules|naplánova/i }, { timeout: 5000 })
+        await screen.findByRole(
+          'button',
+          { name: new RegExp(sk.reports.page.tabs.schedules) },
+          { timeout: 5000 }
+        )
       );
-      await user.click(await screen.findByRole('button', { name: /new schedule|naplánova/i }));
+      await user.click(await screen.findByRole('button', { name: sk.reports.page.newSchedule }));
 
       // The empty "Select a report" placeholder option — localized, not the
       // hardcoded English literal.

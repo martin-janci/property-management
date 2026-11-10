@@ -9,7 +9,9 @@ use db::models::{
     fault_category, voice_intent, CreateFault, ParsedVoiceCommand, VoiceActionResult,
     VoiceAssistantDevice, VoiceCard, VoiceCommandHistory,
 };
-use db::repositories::{FaultRepository, LlmDocumentRepository, UnitRepository};
+use db::repositories::{
+    AnnouncementRepository, FaultRepository, LlmDocumentRepository, MeterRepository, UnitRepository,
+};
 use serde_json::json;
 use sqlx::PgConnection;
 use std::time::Instant;
@@ -47,6 +49,8 @@ pub struct VoiceCommandProcessor {
     llm_document_repo: LlmDocumentRepository,
     fault_repo: FaultRepository,
     unit_repo: UnitRepository,
+    announcement_repo: AnnouncementRepository,
+    meter_repo: MeterRepository,
 }
 
 impl VoiceCommandProcessor {
@@ -55,11 +59,15 @@ impl VoiceCommandProcessor {
         llm_document_repo: LlmDocumentRepository,
         fault_repo: FaultRepository,
         unit_repo: UnitRepository,
+        announcement_repo: AnnouncementRepository,
+        meter_repo: MeterRepository,
     ) -> Self {
         Self {
             llm_document_repo,
             fault_repo,
             unit_repo,
+            announcement_repo,
+            meter_repo,
         }
     }
 
@@ -157,10 +165,10 @@ impl VoiceCommandProcessor {
             voice_intent::CHECK_BALANCE => self.action_check_balance(device, parsed).await,
             voice_intent::REPORT_FAULT => self.action_report_fault(conn, device, parsed).await,
             voice_intent::CHECK_ANNOUNCEMENTS => {
-                self.action_check_announcements(device, parsed).await
+                self.action_check_announcements(conn, device, parsed).await
             }
             voice_intent::BOOK_FACILITY => self.action_book_facility(device, parsed).await,
-            voice_intent::CHECK_METER => self.action_check_meter(device, parsed).await,
+            voice_intent::CHECK_METER => self.action_check_meter(conn, device, parsed).await,
             voice_intent::CONTACT_MANAGER => self.action_contact_manager(device, parsed).await,
             voice_intent::GET_HELP => self.action_get_help(device, parsed).await,
             _ => Err(VoiceCommandError::InvalidIntent(parsed.intent.clone())),
@@ -248,33 +256,30 @@ impl VoiceCommandProcessor {
 
     async fn action_check_balance(
         &self,
-        device: &VoiceAssistantDevice,
+        _device: &VoiceAssistantDevice,
         parsed: &ParsedVoiceCommand,
     ) -> Result<VoiceActionResult, VoiceCommandError> {
-        // In a real implementation, this would query the financial repository
-        // For now, return a placeholder response
+        // No financial repository is wired into the voice processor yet, so
+        // there is no real balance to report. This used to fabricate a
+        // "your balance is zero" success response on this live webhook path
+        // (code review: fabricated success) — a resident could be told they
+        // owe nothing when the actual balance was never queried. Fail
+        // honestly instead: tell the caller the feature isn't available yet
+        // rather than making up a number.
         let response = match parsed.language.as_str() {
-            "sk" => "Vas aktualni zostatok je nula eur. Nemate ziadne nezaplatene poplatky.",
-            "cs" => "Vas aktualni zustatek je nula korun. Nemate zadne nezaplacene poplatky.",
-            _ => "Your current balance is zero. You have no outstanding fees.",
+            "sk" => "Kontrola zostatku hlasom momentalne nie je dostupna. Prosim, pouzite mobilnu aplikaciu alebo webovy portal.",
+            "cs" => "Kontrola zustatku hlasem momentalne neni dostupna. Prosim, pouzijte mobilni aplikaci nebo webovy portal.",
+            _ => "Balance checking is not yet available via voice assistant. Please use the mobile app or web portal.",
         };
 
         Ok(VoiceActionResult {
-            success: true,
+            success: false,
             action_type: voice_intent::CHECK_BALANCE.to_string(),
             response_text: response.to_string(),
             ssml: Some(format!("<speak>{}</speak>", response)),
-            card: Some(VoiceCard {
-                title: self.localize("Balance", &parsed.language),
-                content: response.to_string(),
-                image_url: None,
-            }),
+            card: None,
             should_end_session: true,
-            data: Some(json!({
-                "balance": 0.0,
-                "currency": "EUR",
-                "unit_id": device.unit_id
-            })),
+            data: None,
         })
     }
 
@@ -387,31 +392,55 @@ impl VoiceCommandProcessor {
 
     async fn action_check_announcements(
         &self,
-        _device: &VoiceAssistantDevice,
+        conn: &mut PgConnection,
+        device: &VoiceAssistantDevice,
         parsed: &ParsedVoiceCommand,
     ) -> Result<VoiceActionResult, VoiceCommandError> {
-        // In a real implementation, this would query the announcement repository
-        let response = match parsed.language.as_str() {
-            "sk" => "Nemate ziadne nove oznamy.",
-            "cs" => "Nemate zadne nove oznameni.",
-            _ => "You have no new announcements.",
+        // Actually query the resident's unread published announcements before
+        // answering. This handler used to fabricate a "you have no new
+        // announcements" success response with an empty `data` payload without
+        // ever consulting a repository (code review: fabricated empty success)
+        // — a resident could be told there is nothing new when announcements
+        // were never queried. Now we count genuinely-unread announcements on
+        // the caller's RLS-scoped connection and only report an empty inbox
+        // when the query truly returned zero.
+        let unread = self
+            .announcement_repo
+            .count_unread_rls(&mut *conn, device.organization_id, device.user_id)
+            .await?;
+
+        let response = if unread == 0 {
+            match parsed.language.as_str() {
+                "sk" => "Nemate ziadne nove oznamy.".to_string(),
+                "cs" => "Nemate zadna nova oznameni.".to_string(),
+                _ => "You have no new announcements.".to_string(),
+            }
+        } else {
+            match parsed.language.as_str() {
+                "sk" => format!(
+                    "Mate {unread} novych oznamov. Podrobnosti najdete v mobilnej aplikacii alebo na webovom portali."
+                ),
+                "cs" => format!(
+                    "Mate {unread} novych oznameni. Podrobnosti najdete v mobilni aplikaci nebo na webovem portalu."
+                ),
+                _ => format!(
+                    "You have {unread} new announcement(s). Open the mobile app or web portal to read them."
+                ),
+            }
         };
 
         Ok(VoiceActionResult {
             success: true,
             action_type: voice_intent::CHECK_ANNOUNCEMENTS.to_string(),
-            response_text: response.to_string(),
+            response_text: response.clone(),
             ssml: Some(format!("<speak>{}</speak>", response)),
             card: Some(VoiceCard {
                 title: self.localize("Announcements", &parsed.language),
-                content: response.to_string(),
+                content: response.clone(),
                 image_url: None,
             }),
             should_end_session: true,
-            data: Some(json!({
-                "count": 0,
-                "announcements": []
-            })),
+            data: Some(json!({ "unread_count": unread })),
         })
     }
 
@@ -439,32 +468,63 @@ impl VoiceCommandProcessor {
 
     async fn action_check_meter(
         &self,
-        _device: &VoiceAssistantDevice,
+        conn: &mut PgConnection,
+        device: &VoiceAssistantDevice,
         parsed: &ParsedVoiceCommand,
     ) -> Result<VoiceActionResult, VoiceCommandError> {
-        // In a real implementation, this would query the meter repository
-        let response = match parsed.language.as_str() {
-            "sk" => {
-                "Vase posledne odcitanie meracov bolo zaznamenane. Nemam ziadne cakajuce odcitania."
+        // Actually query the resident's pending meter readings before
+        // answering. This handler used to fabricate a "there are no pending
+        // readings" success response with an empty `data` payload without ever
+        // consulting a repository (code review: fabricated empty success) — a
+        // resident could be told their readings are up to date when the meter
+        // state was never queried. The device is linked to a unit; resolve it
+        // and count genuinely-pending readings on the caller's RLS-scoped
+        // connection, only reporting "nothing pending" when the query truly
+        // returned zero.
+        let unit_id = device.unit_id.ok_or_else(|| {
+            VoiceCommandError::ActionFailed(
+                "voice device is not linked to a unit; cannot check meter readings".to_string(),
+            )
+        })?;
+
+        let pending = self
+            .meter_repo
+            .get_pending_readings_for_unit_rls(&mut *conn, unit_id)
+            .await?;
+        let pending_count = pending.len();
+
+        let response = if pending_count == 0 {
+            match parsed.language.as_str() {
+                "sk" => "Nemate ziadne cakajuce odcitania meracov.".to_string(),
+                "cs" => "Nemate zadne cekajici odecty meracu.".to_string(),
+                _ => "You have no pending meter readings.".to_string(),
             }
-            "cs" => "Vase posledni odecty meracu byly zaznamenany. Nemam zadne cekajici odecty.",
-            _ => "Your latest meter readings have been recorded. There are no pending readings.",
+        } else {
+            match parsed.language.as_str() {
+                "sk" => format!(
+                    "Mate {pending_count} cakajucich odcitani meracov. Podrobnosti najdete v mobilnej aplikacii alebo na webovom portali."
+                ),
+                "cs" => format!(
+                    "Mate {pending_count} cekajicich odectu meracu. Podrobnosti najdete v mobilni aplikaci nebo na webovem portalu."
+                ),
+                _ => format!(
+                    "You have {pending_count} pending meter reading(s). Open the mobile app or web portal for details."
+                ),
+            }
         };
 
         Ok(VoiceActionResult {
             success: true,
             action_type: voice_intent::CHECK_METER.to_string(),
-            response_text: response.to_string(),
+            response_text: response.clone(),
             ssml: Some(format!("<speak>{}</speak>", response)),
             card: Some(VoiceCard {
                 title: self.localize("Meter Readings", &parsed.language),
-                content: response.to_string(),
+                content: response.clone(),
                 image_url: None,
             }),
             should_end_session: true,
-            data: Some(json!({
-                "pending_readings": 0
-            })),
+            data: Some(json!({ "pending_count": pending_count })),
         })
     }
 
@@ -626,7 +686,9 @@ mod tests {
         VoiceCommandProcessor::new(
             LlmDocumentRepository::new(pool.clone()),
             FaultRepository::new(pool.clone()),
-            UnitRepository::new(pool),
+            UnitRepository::new(pool.clone()),
+            AnnouncementRepository::new(pool.clone()),
+            MeterRepository::new(pool),
         )
     }
 
@@ -634,7 +696,9 @@ mod tests {
         VoiceCommandProcessor::new(
             LlmDocumentRepository::new(pool.clone()),
             FaultRepository::new(pool.clone()),
-            UnitRepository::new(pool),
+            UnitRepository::new(pool.clone()),
+            AnnouncementRepository::new(pool.clone()),
+            MeterRepository::new(pool),
         )
     }
 
@@ -750,6 +814,203 @@ mod tests {
         let parsed = processor.parse_command("Skontroluj moj zostatok", "sk-SK");
         assert_eq!(parsed.intent, voice_intent::CHECK_BALANCE);
         assert_eq!(parsed.language, "sk");
+    }
+
+    /// Regression (code-review: voice check-balance fabricated success): the
+    /// handler used to unconditionally report `success: true` with a
+    /// hardcoded "your balance is zero" response on this live webhook path,
+    /// without ever consulting a financial repository. No balance service is
+    /// wired in yet, so it must now fail honestly — `success: false`, no
+    /// fabricated `data` (balance/currency), and a response that tells the
+    /// caller the feature isn't available rather than inventing a number.
+    #[tokio::test]
+    async fn test_check_balance_fails_honestly_instead_of_fabricating_success() {
+        let processor = create_test_processor();
+        let org = Uuid::new_v4();
+        let user = Uuid::new_v4();
+        let unit = Uuid::new_v4();
+        let device = make_device(org, user, Some(unit));
+        let parsed = processor.parse_command("What is my balance?", "en-US");
+
+        // action_check_balance doesn't touch the database, so it can be
+        // called directly without acquiring a real connection.
+        let result = processor
+            .action_check_balance(&device, &parsed)
+            .await
+            .expect("check-balance must not error, it must fail honestly in-band");
+
+        assert!(
+            !result.success,
+            "check-balance must not report fabricated success"
+        );
+        assert!(
+            result.data.is_none(),
+            "no balance/currency data must be fabricated when no financial repository was queried"
+        );
+        assert!(
+            !result.response_text.to_lowercase().contains("zero"),
+            "response must not claim a fabricated zero balance"
+        );
+    }
+
+    /// Regression (code-review: voice check-announcements fabricated empty
+    /// success): the handler used to unconditionally report "you have no new
+    /// announcements" with an empty `data` payload without ever consulting an
+    /// announcement repository — a resident could be told there is nothing new
+    /// when announcements were never queried. It must now actually query the
+    /// resident's unread announcements and only report an empty inbox when the
+    /// query genuinely returned zero. Skipped by the offline verify gate (no
+    /// DATABASE_URL); runs under backend.yml CI.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_check_announcements_reports_empty_only_when_query_is_empty(pool: sqlx::PgPool) {
+        let org = seed_org(&pool, "ann").await;
+        let user = seed_user(&pool, "ann@voice.test").await;
+
+        let processor = processor_with_pool(pool.clone());
+        let device = make_device(org, user, Some(Uuid::new_v4()));
+        let parsed = processor.parse_command("Any new announcements?", "en-US");
+        assert_eq!(parsed.intent, voice_intent::CHECK_ANNOUNCEMENTS);
+
+        // With no announcements in the org, the genuine query returns zero and
+        // the handler reports a real empty inbox.
+        let mut conn = pool.acquire().await.expect("acquire connection");
+        let empty = processor
+            .action_check_announcements(&mut conn, &device, &parsed)
+            .await
+            .expect("check-announcements should succeed");
+        assert!(empty.success);
+        assert_eq!(
+            empty.data.as_ref().and_then(|d| d.get("unread_count")),
+            Some(&json!(0)),
+            "empty-inbox count must reflect the real query result"
+        );
+        assert!(empty
+            .response_text
+            .to_lowercase()
+            .contains("no new announcements"));
+
+        // Publish an announcement the user has not read; the query must now see
+        // it and the handler must report a non-empty inbox.
+        sqlx::query(
+            r#"
+            INSERT INTO announcements
+                (organization_id, author_id, title, content, target_type, target_ids, status, published_at)
+            VALUES ($1, $2, 'Roof works', 'Scheduled maintenance', 'all', '[]'::jsonb, 'published', NOW())
+            "#,
+        )
+        .bind(org)
+        .bind(user)
+        .execute(&pool)
+        .await
+        .expect("insert published announcement");
+
+        let non_empty = processor
+            .action_check_announcements(&mut conn, &device, &parsed)
+            .await
+            .expect("check-announcements should succeed");
+        assert!(non_empty.success);
+        assert_eq!(
+            non_empty.data.as_ref().and_then(|d| d.get("unread_count")),
+            Some(&json!(1)),
+            "the handler must report the real unread count, not a fabricated empty inbox"
+        );
+        assert!(!non_empty
+            .response_text
+            .to_lowercase()
+            .contains("no new announcements"));
+    }
+
+    /// Regression (code-review: voice check-meter fabricated empty success):
+    /// the handler used to unconditionally report "there are no pending
+    /// readings" with an empty `data` payload without ever consulting a meter
+    /// repository — a resident could be told their readings are up to date when
+    /// the meter state was never queried. It must now actually query the
+    /// resident's pending readings and only report nothing pending when the
+    /// query genuinely returned zero. Skipped by the offline verify gate (no
+    /// DATABASE_URL); runs under backend.yml CI.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_check_meter_reports_empty_only_when_query_is_empty(pool: sqlx::PgPool) {
+        use db::models::meter::{RegisterMeter, SubmitReading};
+
+        let org = seed_org(&pool, "mtr").await;
+        let user = seed_user(&pool, "mtr@voice.test").await;
+        let building = seed_building(&pool, org, "MTR").await;
+        let unit = seed_unit(&pool, building, "MTR-1").await;
+
+        let processor = processor_with_pool(pool.clone());
+        let device = make_device(org, user, Some(unit));
+        let parsed = processor.parse_command("Do I have any pending meter readings?", "en-US");
+        assert_eq!(parsed.intent, voice_intent::CHECK_METER);
+
+        // With no readings on the unit's meters, the genuine query returns zero
+        // and the handler reports a real "nothing pending".
+        let mut conn = pool.acquire().await.expect("acquire connection");
+        let empty = processor
+            .action_check_meter(&mut conn, &device, &parsed)
+            .await
+            .expect("check-meter should succeed");
+        assert!(empty.success);
+        assert_eq!(
+            empty.data.as_ref().and_then(|d| d.get("pending_count")),
+            Some(&json!(0)),
+            "empty count must reflect the real query result"
+        );
+        assert!(empty
+            .response_text
+            .to_lowercase()
+            .contains("no pending meter readings"));
+
+        // Register a meter on the unit and submit a manual reading (which lands
+        // in `pending` status). The query must now see it.
+        let meter = processor
+            .meter_repo
+            .register_meter(
+                org,
+                RegisterMeter {
+                    building_id: building,
+                    unit_id: Some(unit),
+                    meter_number: "MTR-0001".to_string(),
+                    meter_type: db::models::meter::MeterType::Water,
+                    location: None,
+                    description: None,
+                    initial_reading: rust_decimal::Decimal::from(0),
+                    unit_of_measure: "m3".to_string(),
+                    is_shared: false,
+                    installed_at: None,
+                },
+            )
+            .await
+            .expect("register meter");
+        processor
+            .meter_repo
+            .submit_reading(
+                user,
+                SubmitReading {
+                    meter_id: meter.id,
+                    reading: rust_decimal::Decimal::from(42),
+                    reading_date: None,
+                    reading_time: None,
+                    source: db::models::meter::ReadingSource::Manual,
+                    photo_url: None,
+                },
+            )
+            .await
+            .expect("submit pending reading");
+
+        let non_empty = processor
+            .action_check_meter(&mut conn, &device, &parsed)
+            .await
+            .expect("check-meter should succeed");
+        assert!(non_empty.success);
+        assert_eq!(
+            non_empty.data.as_ref().and_then(|d| d.get("pending_count")),
+            Some(&json!(1)),
+            "the handler must report the real pending count, not a fabricated empty result"
+        );
+        assert!(!non_empty
+            .response_text
+            .to_lowercase()
+            .contains("no pending meter readings"));
     }
 
     #[test]

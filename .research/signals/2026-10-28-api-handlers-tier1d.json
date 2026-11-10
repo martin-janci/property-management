@@ -1,0 +1,40 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-28",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "churn-aligned (dispatcher-tier1d-demand-driven; buffer starved, claimable=8 < floor=36). Recent git churn (last 7-14d) over backend/servers/api-server/src/routes/ puts routes/violations.rs and routes/aml_dsa/moderation.rs at the top (3 commits each), aml_dsa/mod.rs at 2 — all map to segment api-handlers, so churn-aligned wins over oldest-unreviewed per SKILL Step 1. api-handlers had 1 open code-review-finding in backlog.json (< 3) => NOT saturated. No prior 2026-10-28 api-handlers run exists. Hot files violations.rs + moderation.rs are already heavily hardened (defensive comments citing prior findings PAP-60/PAP-43 F5 IDOR; consistent require_manager/require_moderator_role + org_id scoping; zero prod unwrap/expect/todo/unsafe; JWT webhook verify fails closed; financial.rs fetch-then-authz 404-no-leak). Both findings below are genuine, verified state/abuse gaps traced handler->repo in the churn hotspot moderation.rs; the unscoped list_action_templates was checked and is correct (global system table, no organization_id column) so NOT flagged.",
+  "experts_used": ["security", "rust"],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-api-handlers-moderation-report-flood",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs:627-684 report_content (POST /moderation/report, wired in aml_dsa/mod.rs:88) is open to EVERY authenticated user (no require_moderator_role; the handler comment itself notes 'This endpoint is open to every authenticated user'). It validates only reason length (validate_optional_text_field, MAX_REPORT_REASON_LEN) and resolves the content owner, then calls create_moderation_case.",
+        "backend/crates/db/src/repositories/compliance.rs:431-470 create_moderation_case does a blind INSERT INTO moderation_cases (...) with NO dedup/idempotency check — no lookup for an existing open/pending case on the same (content_type, content_id) and no per-reporter guard. Combined with the open-to-all route there is no rate limit anywhere (grep for rate_limit/RateLimit/dedup/find_open_case across routes/aml_dsa/ returns nothing; aml_dsa/mod.rs router adds no limiting layer on /moderation/report).",
+        "Impact (medium, abuse/DoS + data-integrity): any authenticated tenant member can POST the same content_id repeatedly to create unbounded moderation_cases rows — flooding the moderator queue (get_moderation_queue), skewing get_moderation_stats, and bloating the table. Confidence medium: reachability fully traced (route -> handler -> repo INSERT); runtime throughput not measured. Suggested fix vector: add a unique/partial index or a repo-side 'return existing open case for (org, content_type, content_id)' dedup, plus a per-user report rate limit on the open endpoint."
+      ],
+      "expert": "security"
+    },
+    {
+      "id": "code-review-api-handlers-appeal-no-status-guard",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs:480-551 file_appeal checks ONLY content ownership (existing.content_owner_id == user.user_id) and org scoping; it does NOT check the case's current status before appealing.",
+        "backend/crates/db/src/repositories/compliance.rs:836-861 file_appeal issues UPDATE moderation_cases SET appeal_filed=TRUE, appeal_reason=$2, appeal_filed_at=NOW(), status='appealed' ... WHERE id=$1 AND organization_id=$3 — the WHERE clause has NO status guard. So a case in ANY state (open/under_review, or one whose appeal was already decided via decide_appeal -> appeal_upheld/appeal_rejected) is unconditionally flipped back to status='appealed', overwriting appeal_reason/appeal_filed_at.",
+        "Impact (medium, state-machine / DSA appeal finality): a content owner can re-file an appeal repeatedly, including after a final decision, silently re-opening a closed case and resetting the appeal workflow — defeating appeal finality and enabling appeal-spam. Confidence medium: traced handler->repo; the exact allowed status set for an appeal is a product decision, but the absence of ANY status guard is a definite gap. Suggested fix vector: gate file_appeal on an appealable status set (e.g. WHERE status IN (...) AND appeal_filed = FALSE) and return 409 CONFLICT otherwise."
+      ],
+      "expert": "rust"
+    }
+  ]
+}

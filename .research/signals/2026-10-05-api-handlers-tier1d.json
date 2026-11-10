@@ -1,0 +1,34 @@
+{
+  "generated": "2026-10-05",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (backlog starved: claimable=17 < floor=36). Single static-review slice, no compilation/no test execution.",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "CHURN-ALIGNED (selection priority #1). Recent git churn (last 14 days, code only, excluding docs/.research/generated/lockfiles) is dominated by backend/servers/api-server/src/routes/integrations/webhook.rs (5551) and backend/servers/api-server/src/routes/voice_webhooks.rs (2999) — both under the api-handlers segment root (backend/servers/api-server/src/routes/). Churn-aligned therefore selects api-handlers over the review_cursor oldest (ppt-web-core 2026-09-27). Note: the prior Tier-1d run mined api-handlers on 2026-10-03 but focused on auth/registration.rs (email-verification token ordering); the churn hotspots this run targets (the inbound webhook receivers + voice webhook handlers) are different, fresh code. Saturation check: 0 OPEN code-review-finding items for api-handlers in backlog.json -> not saturated -> selected.",
+  "experts_used": ["rust", "security"],
+  "landable_in_cloud": true,
+  "landability_note": "The single finding is a backend-only Rust edit confined to two handlers in backend/servers/api-server/src/routes/voice_webhooks.rs (alexa_webhook, google_actions_webhook): ensure rls.release().await runs on the ?-propagated error paths (authenticate_voice_user failure, process_command failure, and for Alexa also the signature/parse-fail paths), mirroring the verify-fail path that already releases at line 347. No migration, no openapi/client regen. Verifiable via `cargo build -p api-server` plus a focused test asserting a failing-auth voice request does not hit the RlsConnection Drop fallback. Independently landable by a single implementer.",
+  "findings_count": 1,
+  "signals": [
+    {
+      "id": "code-review-api-handlers-voice-webhook-rls-no-release-on-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:198-307 (alexa_webhook) takes `mut rls: RlsConnection` as an extractor (checks out a pool connection + sets tenant/RLS context). Its SUCCESS and account-link paths correctly call `rls.release().await` (lines 233 and 305), but EVERY error path returns without releasing: signature-verification failure returns Err at 205-210, body-parse failure at 214-223, `authenticate_voice_user(rls.conn(), ...).await?` at line 230, and the two `process_command(...).await.map_err(...)?` sites at 257-263 and 279-285. The `?` operator and the early `return Err(...)` statements all return before any release() call runs.",
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:337-404 (google_actions_webhook) is inconsistent with itself: it DOES release on the Google-ID-token verify-failure path (line 347) and on the success/link paths (367, 402), but still skips release on the `?`-propagated error paths — `authenticate_voice_user(...).await?` at line 364 and `process_command(...).await.map_err(...)?` at 391-400. So even the more-careful of the two handlers leaks release() on auth/processing errors.",
+        "backend/crates/api-core/src/extractors/rls_connection.rs:197-221 — `impl Drop for RlsConnection` is a safety net: when dropped without release() it emits `tracing::warn!(... \"RlsConnection dropped without calling release() - spawning cleanup task. Call rls.release().await before handler returns for guaranteed cleanup.\")` and calls `db::tenant_context::spawn_clear_context(...)`. The explicit `release()` (lines 143-168) instead AWAITS `clear_request_context` before the connection returns to the pool. Because Drop clears the context (via a spawned task), this is NOT a cross-tenant RLS leak — the impact is operational, not a security hole.",
+        "Impact: the voice webhook endpoints (POST /api/v1/webhooks/voice/alexa and /google) are UNAUTHENTICATED public receivers — anyone can POST. Every forged/invalid request (fails at signature/ID-token verification) and every downstream processing error therefore produces a warn-level 'RlsConnection dropped without calling release()' log line plus a spawned cleanup task, instead of a clean awaited release. Under a burst of forged requests this is a cheap log-amplification / task-spawn vector that also masks the warning's intended diagnostic value. It also violates the contract documented in routes/integrations/webhook.rs (\"Every authenticated path calls rls.release().await before returning\") and the Drop warning's own instruction.",
+        "Confidence MEDIUM (static-only): both handler bodies and the RlsConnection Drop/release impls were read directly and the missing release() on the error branches is unambiguous; not runtime-confirmed (no compilation/test execution on this cloud runner). Severity LOW (+1): the Drop safety net guarantees context is cleared and the connection returns to the pool, so there is no data leak or connection exhaustion — the defect is a documented-contract violation plus warn-log/task amplification on a public endpoint.",
+        "Fix direction: capture the Result of the fallible steps, call `rls.release().await`, then return/propagate — e.g. replace `let device = authenticate_voice_user(rls.conn(), token, ...).await?;` with a match that releases on the Err arm before returning, and do the same for the `process_command` sites and (for Alexa) the signature/parse-fail early returns. This mirrors the verify-fail path in google_actions_webhook (line 347) that already releases correctly. Alternatively restructure each handler so a single release() runs on all exits (inner async fn returning Result, release after it)."
+      ],
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs",
+        "backend/crates/api-core/src/extractors/rls_connection.rs"
+      ]
+    }
+  ]
+}

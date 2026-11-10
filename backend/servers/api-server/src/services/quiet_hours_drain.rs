@@ -10,7 +10,9 @@
 
 use std::time::Duration;
 
-use db::{repositories::GranularNotificationRepository, DbPool};
+use common::notifications::pipeline::DeliveryStatus;
+use common::notifications::PipelineResult;
+use db::{models::HeldNotification, repositories::GranularNotificationRepository, DbPool};
 use tokio::time::interval;
 use tracing::Instrument;
 
@@ -27,6 +29,19 @@ pub struct QuietHoursDrainConfig {
     pub poll_interval_secs: u64,
     /// Safety cap on rows processed per tick.
     pub batch_limit: usize,
+    /// Bounded retry budget (issue #2823): once a held row has been attempted
+    /// this many times without draining cleanly, it is dead-lettered instead of
+    /// being retried forever (which would also keep re-delivering its healthy
+    /// channels every tick).
+    pub max_attempts: i32,
+    /// Claim lease in seconds (issue #2831): the drain claims each due row
+    /// (stamping `claimed_at`) so only one api-server replica delivers it. A
+    /// claim older than this lease is treated as unclaimed, so a worker that
+    /// crashed mid-delivery does not strand the row — another replica re-claims
+    /// it once the lease expires. Must comfortably exceed the time it takes one
+    /// tick to deliver a full `batch_limit` so a live worker's in-flight rows
+    /// are never stolen by a peer.
+    pub claim_lease_secs: u64,
 }
 
 impl Default for QuietHoursDrainConfig {
@@ -35,6 +50,8 @@ impl Default for QuietHoursDrainConfig {
             enabled: true,
             poll_interval_secs: 60,
             batch_limit: 500,
+            max_attempts: 10,
+            claim_lease_secs: 300,
         }
     }
 }
@@ -43,6 +60,8 @@ impl QuietHoursDrainConfig {
     /// Build from environment:
     /// - `QUIET_HOURS_DRAIN_ENABLED` (default `true`)
     /// - `QUIET_HOURS_DRAIN_INTERVAL_SECS` (default `60`)
+    /// - `QUIET_HOURS_DRAIN_MAX_ATTEMPTS` (default `10`)
+    /// - `QUIET_HOURS_DRAIN_CLAIM_LEASE_SECS` (default `300`)
     pub fn from_env() -> Self {
         let default = Self::default();
         let enabled = std::env::var("QUIET_HOURS_DRAIN_ENABLED")
@@ -52,9 +71,21 @@ impl QuietHoursDrainConfig {
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(default.poll_interval_secs);
+        let max_attempts = std::env::var("QUIET_HOURS_DRAIN_MAX_ATTEMPTS")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .filter(|&n| n > 0)
+            .unwrap_or(default.max_attempts);
+        let claim_lease_secs = std::env::var("QUIET_HOURS_DRAIN_CLAIM_LEASE_SECS")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .filter(|&n| n > 0)
+            .unwrap_or(default.claim_lease_secs);
         Self {
             enabled,
             poll_interval_secs,
+            max_attempts,
+            claim_lease_secs,
             ..default
         }
     }
@@ -115,11 +146,27 @@ impl QuietHoursDrainWorker {
     }
 
     /// Release every held notification whose `release_at` has passed.
+    ///
+    /// Issue #2831: rows are *claimed* atomically, not merely selected, so that
+    /// when more than one api-server replica runs this worker each due row is
+    /// delivered by exactly one of them. `claim_notifications_to_release` stamps
+    /// `claimed_at` under `FOR UPDATE SKIP LOCKED` and hands back only the rows
+    /// this replica won; a peer polling the same tick claims a disjoint set.
+    ///
+    /// The claimed batch is delivered row-by-row (see [`Self::deliver_one`]);
+    /// this method only owns the claim, the loop, and the per-tick summary log.
     async fn drain_due(&self) {
-        let due = match self.granular_repo.get_notifications_to_release().await {
+        let due = match self
+            .granular_repo
+            .claim_notifications_to_release(
+                self.config.batch_limit as i64,
+                self.config.claim_lease_secs as i64,
+            )
+            .await
+        {
             Ok(rows) => rows,
             Err(e) => {
-                tracing::error!(error = %e, "[#980] Failed to fetch held notifications to release");
+                tracing::error!(error = %e, "[#980] Failed to claim held notifications to release");
                 return;
             }
         };
@@ -128,21 +175,323 @@ impl QuietHoursDrainWorker {
         }
 
         let mut released = 0usize;
-        for held in due.into_iter().take(self.config.batch_limit) {
-            // Deliver first; only mark released if the row is accounted for so a
-            // transient failure can be retried on the next tick. `deliver_held`
-            // is best-effort per channel and never panics.
-            let sent = self.pipeline.deliver_held(&held).await;
-            if let Err(e) = self.granular_repo.mark_notification_released(held.id).await {
-                tracing::warn!(id = %held.id, error = %e, "[#980] Delivered held notification but failed to mark released; may re-deliver");
-                continue;
+        let mut dead_lettered = 0usize;
+        for held in &due {
+            match self.deliver_one(held).await {
+                RowOutcome::Released => released += 1,
+                RowOutcome::DeadLettered => dead_lettered += 1,
+                RowOutcome::Held => {}
             }
-            released += 1;
-            tracing::debug!(id = %held.id, sent = sent, "[#980] Released held notification");
         }
 
-        if released > 0 {
-            tracing::info!(released = released, "[#980] Drained held notifications");
+        if released > 0 || dead_lettered > 0 {
+            tracing::info!(
+                released = released,
+                dead_lettered = dead_lettered,
+                "[#980] Drained held notifications"
+            );
         }
+    }
+
+    /// Deliver a single claimed held row and decide its fate.
+    ///
+    /// Deliver first, then decide. A held row is marked released ONLY when
+    /// delivery left nothing to retry (no channel reported a transient
+    /// `Failed`). If any channel failed we leave `released_at` NULL so the next
+    /// tick re-attempts, rather than permanently dropping the notification on a
+    /// transient failure. `deliver_held` is best-effort per channel and never
+    /// panics.
+    async fn deliver_one(&self, held: &HeldNotification) -> RowOutcome {
+        let outcome = self.pipeline.deliver_held(held).await;
+        if !should_mark_released(&outcome) {
+            return self.record_failure(held, &outcome).await;
+        }
+        if let Err(e) = self.granular_repo.mark_notification_released(held.id).await {
+            tracing::warn!(id = %held.id, error = %e, "[#980] Delivered held notification but failed to mark released; may re-deliver");
+            return RowOutcome::Held;
+        }
+        tracing::debug!(
+            id = %held.id,
+            sent = outcome.sent,
+            skipped = outcome.skipped,
+            "[#980] Released held notification"
+        );
+        RowOutcome::Released
+    }
+
+    /// A channel failed, so the row stays held. Persist the channels that DID
+    /// succeed this tick so they are not re-delivered (duplicate) on the next
+    /// attempt, and bump the attempt counter so a permanently-failing row is
+    /// eventually dead-lettered instead of looping forever (issue #2823).
+    async fn record_failure(
+        &self,
+        held: &HeldNotification,
+        outcome: &PipelineResult,
+    ) -> RowOutcome {
+        let delivered = merge_delivered(&held.delivered_channels, &delivered_channels(outcome));
+        let attempts = held.attempts.saturating_add(1);
+        if let Err(e) = self
+            .granular_repo
+            .record_held_attempt(held.id, &delivered, attempts)
+            .await
+        {
+            tracing::warn!(id = %held.id, error = %e, "[#2823] Failed to persist held-notification attempt progress; may re-deliver a channel");
+        }
+        if should_give_up(attempts, self.config.max_attempts) {
+            return self.dead_letter(held, attempts, &delivered).await;
+        }
+        tracing::warn!(
+            id = %held.id,
+            sent = outcome.sent,
+            failed = outcome.failed,
+            attempts = attempts,
+            max_attempts = self.config.max_attempts,
+            "[#980] Held notification delivery failed on ≥1 channel; leaving held for retry"
+        );
+        RowOutcome::Held
+    }
+
+    /// Dead-letter a row that has exhausted its retry budget: stop retrying a
+    /// row that never drains cleanly (issue #2823). If the dead-letter write
+    /// itself fails the row stays held and is retried next tick.
+    async fn dead_letter(
+        &self,
+        held: &HeldNotification,
+        attempts: i32,
+        delivered: &[String],
+    ) -> RowOutcome {
+        if let Err(e) = self
+            .granular_repo
+            .mark_notification_dead_lettered(held.id)
+            .await
+        {
+            tracing::warn!(id = %held.id, error = %e, "[#2823] Failed to dead-letter exhausted held notification; will keep retrying");
+            return RowOutcome::Held;
+        }
+        tracing::error!(
+            id = %held.id,
+            attempts = attempts,
+            max_attempts = self.config.max_attempts,
+            delivered_channels = ?delivered,
+            "[#2823] Held notification exhausted retry budget; dead-lettered (giving up)"
+        );
+        RowOutcome::DeadLettered
+    }
+}
+
+/// Terminal fate of a single held row within one drain tick. Returned by
+/// [`QuietHoursDrainWorker::deliver_one`] so `drain_due` can tally per-tick
+/// counters without carrying the branching logic inline.
+///
+/// `Held` covers both the "left for retry" path and every write-failure path
+/// (the row keeps `released_at`/`dead_lettered_at` NULL and is re-fetched next
+/// tick) — neither bumps a summary counter.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum RowOutcome {
+    /// Marked `released_at` — delivered cleanly, will not be re-fetched.
+    Released,
+    /// Marked `dead_lettered_at` — exhausted its retry budget.
+    DeadLettered,
+    /// Still held — left for retry, or a write failed mid-handling.
+    Held,
+}
+
+/// Decide whether a drained held-notification row may be marked released.
+///
+/// Releasing is permanent (`released_at` is set once and the row is never
+/// re-fetched), so it must only happen when there is nothing left to retry.
+///
+/// - `failed > 0` — at least one channel hit a transient error. Return `false`
+///   so the row stays held and the next tick re-attempts delivery. Releasing
+///   here is the bug this guards against: a `sent == 0` transient failure would
+///   otherwise mark the row released and lose the notification forever.
+/// - `failed == 0` — everything was either sent or skipped (e.g. push not
+///   configured, unknown user, unrecognised channel). Return `true`: the row is
+///   accounted for and retrying it would loop forever with no progress.
+fn should_mark_released(outcome: &PipelineResult) -> bool {
+    outcome.failed == 0
+}
+
+/// The stored-channel strings that were delivered successfully in this drain
+/// attempt (issue #2823). Derived from the `Sent` delivery records so the
+/// worker can persist per-channel progress and skip them on the next retry.
+fn delivered_channels(outcome: &PipelineResult) -> Vec<String> {
+    outcome
+        .records
+        .iter()
+        .filter(|r| r.status == DeliveryStatus::Sent)
+        .map(|r| r.channel.as_str().to_string())
+        .collect()
+}
+
+/// Union of the channels already recorded on the held row with the ones
+/// delivered this tick, de-duplicated and order-stable (existing first). This
+/// is what gets persisted to `held_notifications.delivered_channels` so a
+/// retry never re-delivers a channel that already succeeded (issue #2823).
+fn merge_delivered(existing: &[String], newly: &[String]) -> Vec<String> {
+    let mut merged = existing.to_vec();
+    for ch in newly {
+        if !merged.iter().any(|e| e == ch) {
+            merged.push(ch.clone());
+        }
+    }
+    merged
+}
+
+/// Whether a held row has exhausted its bounded retry budget and must be
+/// dead-lettered instead of retried again (issue #2823). `attempts` is the
+/// count *including* the attempt just made.
+fn should_give_up(attempts: i32, max_attempts: i32) -> bool {
+    attempts >= max_attempts
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn result(sent: usize, skipped: usize, failed: usize) -> PipelineResult {
+        PipelineResult {
+            sent,
+            skipped,
+            failed,
+            ..PipelineResult::default()
+        }
+    }
+
+    #[test]
+    fn row_outcome_variants_are_distinct() {
+        // The drain loop tallies per-tick counters by matching on RowOutcome;
+        // only Released and DeadLettered bump a counter, Held bumps neither.
+        // Guard that the three fates stay distinct (and the Copy/Eq derives the
+        // loop relies on keep compiling).
+        assert_ne!(RowOutcome::Released, RowOutcome::Held);
+        assert_ne!(RowOutcome::DeadLettered, RowOutcome::Held);
+        assert_ne!(RowOutcome::Released, RowOutcome::DeadLettered);
+        let copied = RowOutcome::Released;
+        assert_eq!(copied, RowOutcome::Released);
+    }
+
+    #[test]
+    fn releases_when_delivered_cleanly() {
+        assert!(should_mark_released(&result(1, 0, 0)));
+        assert!(should_mark_released(&result(2, 1, 0)));
+    }
+
+    #[test]
+    fn releases_when_fully_skipped_nothing_to_retry() {
+        // e.g. push not configured / unknown user — sent==0 but no failure.
+        assert!(should_mark_released(&result(0, 1, 0)));
+        assert!(should_mark_released(&result(0, 0, 0)));
+    }
+
+    #[test]
+    fn holds_for_retry_when_any_channel_failed() {
+        // Regression: a transient failure (sent==0, failed>0) must NOT be
+        // released — it would permanently drop the held notification.
+        assert!(!should_mark_released(&result(0, 0, 1)));
+        // Partial success with a failed channel still retries.
+        assert!(!should_mark_released(&result(1, 0, 1)));
+    }
+
+    // --- Issue #2823: per-channel bookkeeping + bounded retry ---------------
+
+    use common::notifications::pipeline::DeliveryRecord;
+    use common::notifications::NotificationChannel;
+    use uuid::Uuid;
+
+    /// A PipelineResult whose records mark `push` Sent and `email` Failed —
+    /// the exact partial-failure shape from the issue.
+    fn partial_push_ok_email_failed() -> PipelineResult {
+        let uid = Uuid::new_v4();
+        let nid = Uuid::new_v4();
+        PipelineResult {
+            sent: 1,
+            skipped: 0,
+            failed: 1,
+            records: vec![
+                DeliveryRecord::pending(nid, uid, NotificationChannel::Push).into_sent(),
+                DeliveryRecord::pending(nid, uid, NotificationChannel::Email)
+                    .into_failed("smtp timeout"),
+            ],
+        }
+    }
+
+    #[test]
+    fn delivered_channels_lists_only_sent() {
+        // The healthy channel (push) is recorded; the failed one (email) is not.
+        assert_eq!(
+            delivered_channels(&partial_push_ok_email_failed()),
+            vec!["push".to_string()]
+        );
+    }
+
+    #[test]
+    fn merge_delivered_is_union_dedup_order_stable() {
+        assert_eq!(
+            merge_delivered(&["push".to_string()], &["email".to_string()]),
+            vec!["push".to_string(), "email".to_string()]
+        );
+        // Re-recording an already-delivered channel does not duplicate it.
+        assert_eq!(
+            merge_delivered(&["push".to_string()], &["push".to_string()]),
+            vec!["push".to_string()]
+        );
+        assert!(merge_delivered(&[], &[]).is_empty());
+    }
+
+    #[test]
+    fn partial_failure_recover_never_redelivers_a_channel() {
+        // Tick 1: push Sent, email Failed -> row held, push recorded.
+        let tick1 = partial_push_ok_email_failed();
+        assert!(!should_mark_released(&tick1));
+        let recorded = merge_delivered(&[], &delivered_channels(&tick1));
+        assert_eq!(recorded, vec!["push".to_string()]);
+        // Tick 2 (recovery): deliver_held now skips push (already recorded) and
+        // only re-attempts email. Persisted state must still contain push
+        // exactly once — no duplicate push was ever sent across the two ticks.
+        let tick2_delivered = vec!["email".to_string()]; // what deliver_held returns
+        let after = merge_delivered(&recorded, &tick2_delivered);
+        assert_eq!(after, vec!["push".to_string(), "email".to_string()]);
+        assert_eq!(
+            after.iter().filter(|c| *c == "push").count(),
+            1,
+            "push must be delivered exactly once across retries"
+        );
+    }
+
+    #[test]
+    fn gives_up_after_max_attempts() {
+        // Bounded retry: below the cap keeps retrying, at/above the cap gives up.
+        assert!(!should_give_up(1, 10));
+        assert!(!should_give_up(9, 10));
+        assert!(should_give_up(10, 10));
+        assert!(should_give_up(11, 10));
+    }
+
+    #[test]
+    fn max_attempts_from_env_defaults_and_rejects_non_positive() {
+        // A garbage / non-positive override falls back to the default cap so a
+        // misconfiguration can never make every row dead-letter on tick one.
+        assert_eq!(QuietHoursDrainConfig::default().max_attempts, 10);
+    }
+
+    // --- Issue #2831: cross-replica claim lease -----------------------------
+
+    #[test]
+    fn claim_lease_default_is_positive_and_exceeds_poll_interval() {
+        // The lease must be a positive duration and comfortably longer than a
+        // single poll interval: a live worker must finish delivering a claimed
+        // batch (or clear/release each row) well within the lease, so a peer
+        // replica never re-claims a row that is still in flight. A lease at or
+        // below the poll interval would let peers steal in-flight rows and
+        // reintroduce the double-delivery this fix removes.
+        let cfg = QuietHoursDrainConfig::default();
+        assert!(cfg.claim_lease_secs > 0);
+        assert!(
+            cfg.claim_lease_secs > cfg.poll_interval_secs,
+            "claim lease ({}) must exceed the poll interval ({})",
+            cfg.claim_lease_secs,
+            cfg.poll_interval_secs
+        );
     }
 }

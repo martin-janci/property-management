@@ -1,0 +1,33 @@
+[
+  {
+    "id": "code-review-mobile-native-kmp-formatprice-minor-unit-contract",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "mobile-native-kmp",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/util/FormatUtils.kt:18-24 — FormatUtils.formatPrice(price: Long, currency) documents '@param price The price in minor units (e.g., cents)', but the actual system contract is whole-currency units, so the docstring directly contradicts every real caller and the wire format.",
+      "The wire deserializer is explicit that prices are whole units: api/DecimalStringSerializers.kt:37-49 DecimalAsLongSerializer does `raw.substringBefore('.').toLong()` and its own doc says 'Prices in the portal models are whole-currency Longs, so the sub-unit scale carried by DECIMAL(15,2) is dropped' ('200000.00' -> 200000). listing/ListingModels.kt:96,123 declare `val price: Long` fed by that serializer.",
+      "All 10 production call sites pass the whole-unit `listing.price` (e.g. androidApp .../ui/listing/ListingHeaderSection.kt:55, ui/home/HomeScreen.kt:457,676, ui/search/SearchScreen.kt:1060, ui/favorites/FavoritesScreen.kt:551,625, ui/listing/ListingPriceHistory.kt:70,76,97). formatPriceAmount() also hard-codes whole-unit thresholds — `price >= 1_000_000` renders '1.00M' meaning one million currency units, not one million cents.",
+      "Impact: any future caller (or iOS port) that trusts the 'minor units / cents' docstring and passes cents will render prices 100x too large AND cross the M/K abbreviation thresholds 100x early. This is a latent money-formatting contract defect, not a style nit. Landable mobile-only fix: correct the KDoc to 'whole-currency units (sub-unit scale already dropped by DecimalAsLongSerializer)', matching the serializer's own wording."
+    ],
+    "expert": "kotlin"
+  },
+  {
+    "id": "code-review-mobile-native-kmp-ssoinitiation-callback-unencoded",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "mobile-native-kmp",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoInitiation.kt:buildUrl — `fun buildUrl(state: String): String = \"$PM_APP_SCHEME://sso?callback=$CALLBACK&state=$state\"` splices CALLBACK (= 'reality://sso', containing ':' and '//') into a query-parameter VALUE with no percent-encoding, and does not encode `state` either.",
+      "This is the asymmetric mirror of the inbound path, which is careful: navigation/DeepLinkRouter.kt.urlDecode form-url-DEcodes every query component and its KDoc records a previously-shipped encode/decode parity bug ('The shared router previously returned the raw, still-encoded substring ... breaking SSO validation on iOS'). The outbound leg has no matching encode step.",
+      "Currently non-exploitable because CALLBACK is a fixed constant with no '&' or extra '=' and the minted `state` nonce is 64-char hex (URL-safe) — but it is brittle: the moment the callback or state carries a reserved character ('&', '=', a query of its own) the PM app's query parser will mis-split the URL. Landable mobile-only fix: percent-encode the callback and state values (e.g. Ktor `encodeURLParameter()` / `encodeURLQueryComponent()`) in buildUrl, symmetric with DeepLinkRouter's decode. Covered by the existing SsoInitiationTest surface."
+    ],
+    "expert": "kotlin"
+  }
+]

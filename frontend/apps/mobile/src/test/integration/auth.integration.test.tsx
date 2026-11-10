@@ -25,6 +25,20 @@ import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
 import type { ReactNode } from 'react';
 import { AuthProvider, useAuth } from '../../contexts/AuthContext';
+import csLocale from '../../locales/cs.json';
+import deLocale from '../../locales/de.json';
+import enLocale from '../../locales/en.json';
+import huLocale from '../../locales/hu.json';
+import plLocale from '../../locales/pl.json';
+import skLocale from '../../locales/sk.json';
+import { makeJwt } from '../jwt';
+
+/** Current time in whole seconds — the unit JWT `exp` claims use. */
+const nowSec = () => Math.floor(Date.now() / 1000);
+/** A well-formed access token whose `exp` is already in the past. */
+const expiredToken = () => makeJwt({ sub: 'u-1', exp: nowSec() - 60 });
+/** A well-formed access token valid for another hour. */
+const validToken = () => makeJwt({ sub: 'u-1', exp: nowSec() + 3600 });
 
 // AuthProvider now purges the AsyncStorage-backed tenant caches on
 // login/logout (issue #2399), so swap the shared jest stub for a real
@@ -157,11 +171,79 @@ describe('AuthContext integration', () => {
     });
   });
 
+  // Regression for the code-review finding: the cold-start `initialize()` effect
+  // used to restore `isAuthenticated: true` whenever a stored access token +
+  // user existed, without checking the token's `exp`. Access tokens are
+  // short-lived, so a cold start after the TTL restored an already-expired
+  // bearer. The same gap existed on the biometric-unlock path.
+  describe('stale access-token restore (exp check)', () => {
+    it('refreshes an expired stored access token on cold start before restoring the session', async () => {
+      const store = primeSecureStore({
+        ppt_access_token: expiredToken(),
+        ppt_refresh_token: 'stored-refresh',
+        ppt_user: JSON.stringify(sampleUser),
+      });
+      // initialize() must exchange the expired bearer via /auth/refresh.
+      mockFetchOnce({ access_token: 'refreshed-access', refresh_token: 'refreshed-refresh' });
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+
+      await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
+      // The refresh endpoint was hit on cold start (not the login endpoint).
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        `${API_BASE}/api/v1/auth/refresh`,
+        expect.objectContaining({ method: 'POST' })
+      );
+      const [, init] = (globalThis.fetch as jest.Mock).mock.calls.at(-1) ?? [];
+      expect(JSON.parse(init.body)).toEqual({ refreshToken: 'stored-refresh' });
+      // The session is trusted only with the freshly-issued token.
+      expect(result.current.accessToken).toBe('refreshed-access');
+      expect(result.current.user).toEqual(sampleUser);
+      expect(store.get('ppt_access_token')).toBe('refreshed-access');
+      expect(store.get('ppt_refresh_token')).toBe('refreshed-refresh');
+    });
+
+    it('drops to the login screen when the cold-start refresh of an expired token fails', async () => {
+      const store = primeSecureStore({
+        ppt_access_token: expiredToken(),
+        ppt_refresh_token: 'stored-refresh',
+        ppt_user: JSON.stringify(sampleUser),
+      });
+      mockFetchOnce({}, 401); // refresh rejected
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      // Never restore an expired session when it cannot be refreshed.
+      expect(result.current.isAuthenticated).toBe(false);
+      expect(result.current.user).toBeNull();
+      expect(result.current.accessToken).toBeNull();
+      // The failed refresh cascaded through logout(), clearing SecureStore.
+      expect(store.has('ppt_access_token')).toBe(false);
+      expect(store.has('ppt_refresh_token')).toBe(false);
+    });
+
+    it('restores the session without a refresh when the stored access token is still valid', async () => {
+      const token = validToken();
+      primeSecureStore({
+        ppt_access_token: token,
+        ppt_refresh_token: 'stored-refresh',
+        ppt_user: JSON.stringify(sampleUser),
+      });
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+
+      await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
+      expect(result.current.accessToken).toBe(token);
+      // A valid token must NOT trigger a network round-trip on boot.
+      expect(globalThis.fetch).not.toHaveBeenCalled();
+    });
+  });
+
   describe('login', () => {
     it('persists tokens and flips into the authenticated state on success', async () => {
       const store = primeSecureStore();
-      // The api-server returns snake_case JSON keys; keep the test aligned
-      // with the real contract so AuthContext's mapping is exercised.
+      // Legacy snake_case response with an embedded user is still accepted.
       mockFetchOnce({
         access_token: 'new-access',
         refresh_token: 'new-refresh',
@@ -197,6 +279,45 @@ describe('AuthContext integration', () => {
       expect(store.get('ppt_access_token')).toBe('new-access');
       expect(store.get('ppt_refresh_token')).toBe('new-refresh');
       expect(JSON.parse(store.get('ppt_user') ?? '{}')).toEqual(sampleUser);
+    });
+
+    it('handles the real camelCase api-server contract (no embedded user)', async () => {
+      const store = primeSecureStore();
+      const access = makeJwt({
+        sub: 'u-9',
+        email: 'novakova@example.sk',
+        name: 'Jana Nováková',
+        exp: nowSec() + 900,
+      });
+      mockFetchOnce({
+        accessToken: access,
+        refreshToken: 'camel-refresh',
+        expiresIn: 900,
+        tokenType: 'Bearer',
+        tenants: [{ tenantId: 'org-1', tenantName: 'SVB Hlavná 1', role: 'owner' }],
+      });
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      await act(async () => {
+        await result.current.login('novakova@example.sk', 'pw');
+      });
+
+      expect(result.current.isAuthenticated).toBe(true);
+      expect(result.current.accessToken).toBe(access);
+      expect(result.current.user).toMatchObject({
+        id: 'u-9',
+        email: 'novakova@example.sk',
+        firstName: 'Jana',
+        lastName: 'Nováková',
+        role: 'owner',
+        organizationId: 'org-1',
+        organizationName: 'SVB Hlavná 1',
+      });
+      expect(store.get('ppt_refresh_token')).toBe('camel-refresh');
+      // The org is remembered so requests can send X-Tenant-ID.
+      expect(store.get('ppt_tenant_id')).toBe('org-1');
     });
 
     it('evicts a stale cached tenant id on login (issue #2329)', async () => {
@@ -407,8 +528,9 @@ describe('AuthContext integration', () => {
 
       const [url, init] = (globalThis.fetch as jest.Mock).mock.calls.at(-1) ?? [];
       expect(url).toBe(`${API_BASE}/api/v1/auth/refresh`);
-      // Backend's RefreshTokenRequest uses snake_case.
-      expect(JSON.parse(init.body)).toEqual({ refresh_token: 'old-refresh' });
+      // Backend's RefreshTokenRequest is camelCase (`refreshToken`); a
+      // snake_case body is rejected with 422 "missing field `refreshToken`".
+      expect(JSON.parse(init.body)).toEqual({ refreshToken: 'old-refresh' });
 
       expect(result.current.accessToken).toBe('rotated-access');
       expect(store.get('ppt_access_token')).toBe('rotated-access');
@@ -479,6 +601,19 @@ describe('AuthContext integration', () => {
       expect(enabled).toBe(true);
       expect(result.current.biometricEnabled).toBe(true);
       expect(store.get('ppt_biometric_enabled')).toBe('true');
+
+      // The OS biometric dialog copy must come from i18n, not hardcoded
+      // English (code-review-mobile-rn-biometric-prompt-i18n). The shared
+      // react-i18next mock returns the key verbatim (`t(key) => key`), so we
+      // assert on the keys and that the old literals are gone.
+      expect(mockedLocalAuth.authenticateAsync).toHaveBeenCalledWith({
+        promptMessage: 'auth.biometric.enablePrompt',
+        cancelLabel: 'auth.biometric.cancel',
+        fallbackLabel: 'auth.biometric.usePasscode',
+      });
+      const enableArg = mockedLocalAuth.authenticateAsync.mock.calls[0][0];
+      expect(enableArg.promptMessage).not.toBe('Enable biometric login');
+      expect(enableArg.fallbackLabel).not.toBe('Use passcode');
     });
 
     it('enableBiometric returns false when prompt is cancelled', async () => {
@@ -549,6 +684,17 @@ describe('AuthContext integration', () => {
       expect(ok).toBe(true);
       expect(result.current.isAuthenticated).toBe(true);
       expect(result.current.user).toEqual(sampleUser);
+
+      // Unlock dialog copy is i18n-sourced, not hardcoded English
+      // (code-review-mobile-rn-biometric-prompt-i18n).
+      expect(mockedLocalAuth.authenticateAsync).toHaveBeenCalledWith({
+        promptMessage: 'auth.biometric.authenticatePrompt',
+        cancelLabel: 'auth.biometric.cancel',
+        fallbackLabel: 'auth.biometric.usePassword',
+      });
+      const authArg = mockedLocalAuth.authenticateAsync.mock.calls[0][0];
+      expect(authArg.promptMessage).not.toBe('Login to Property Management');
+      expect(authArg.fallbackLabel).not.toBe('Use password');
     });
 
     it('authenticateWithBiometric deliberately preserves persisted caches (issue #2399)', async () => {
@@ -574,6 +720,87 @@ describe('AuthContext integration', () => {
       expect(asyncStore.has('ppt_cache_faults_list')).toBe(true);
     });
 
+    it('authenticateWithBiometric refreshes an expired stored token on unlock without refetching (#2399)', async () => {
+      // Boot with a still-valid token so mount restores cleanly (no refresh).
+      primeSecureStore({
+        ppt_access_token: validToken(),
+        ppt_refresh_token: 'stored-refresh',
+        ppt_user: JSON.stringify(sampleUser),
+        ppt_biometric_enabled: 'true',
+      });
+      mockedLocalAuth.authenticateAsync.mockResolvedValue({ success: true });
+      // A same-user persisted cache entry that must survive the unlock.
+      asyncStore.set('ppt_cache_faults_list', JSON.stringify([{ id: 'f-1' }]));
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
+
+      // Simulate the device sitting locked past the access-token TTL: the stored
+      // bearer is now expired, but the refresh token is still valid.
+      const store = primeSecureStore({
+        ppt_access_token: expiredToken(),
+        ppt_refresh_token: 'stored-refresh',
+        ppt_user: JSON.stringify(sampleUser),
+        ppt_biometric_enabled: 'true',
+      });
+      mockFetchOnce({ access_token: 'unlocked-access', refresh_token: 'unlocked-refresh' });
+
+      let ok: boolean | undefined;
+      await act(async () => {
+        ok = await result.current.authenticateWithBiometric();
+      });
+
+      expect(ok).toBe(true);
+      expect(result.current.isAuthenticated).toBe(true);
+      // The token was refreshed on unlock...
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        `${API_BASE}/api/v1/auth/refresh`,
+        expect.objectContaining({ method: 'POST' })
+      );
+      expect(result.current.accessToken).toBe('unlocked-access');
+      expect(store.get('ppt_access_token')).toBe('unlocked-access');
+      // ...but the user's cached data was preserved (only the token refreshed,
+      // no resetLocalData / user refetch — #2399 intent kept intact).
+      expect(asyncStore.has('ppt_cache_faults_list')).toBe(true);
+      expect(globalThis.fetch).not.toHaveBeenCalledWith(
+        `${API_BASE}/api/v1/auth/login`,
+        expect.anything()
+      );
+    });
+
+    it('authenticateWithBiometric returns false when the expired-token refresh fails', async () => {
+      primeSecureStore({
+        ppt_access_token: validToken(),
+        ppt_refresh_token: 'stored-refresh',
+        ppt_user: JSON.stringify(sampleUser),
+        ppt_biometric_enabled: 'true',
+      });
+      mockedLocalAuth.authenticateAsync.mockResolvedValue({ success: true });
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
+
+      // Log out, then present an expired stored token whose refresh is rejected.
+      await act(async () => {
+        await result.current.logout();
+      });
+      primeSecureStore({
+        ppt_access_token: expiredToken(),
+        ppt_refresh_token: 'stored-refresh',
+        ppt_user: JSON.stringify(sampleUser),
+        ppt_biometric_enabled: 'true',
+      });
+      mockFetchOnce({}, 401);
+
+      let ok: boolean | undefined;
+      await act(async () => {
+        ok = await result.current.authenticateWithBiometric();
+      });
+
+      expect(ok).toBe(false);
+      await waitFor(() => expect(result.current.isAuthenticated).toBe(false));
+    });
+
     it('authenticateWithBiometric is a no-op when biometric is not enabled', async () => {
       primeSecureStore();
 
@@ -588,5 +815,48 @@ describe('AuthContext integration', () => {
       expect(ok).toBe(false);
       expect(mockedLocalAuth.authenticateAsync).not.toHaveBeenCalled();
     });
+  });
+});
+
+// Resource-layer guard: the biometric prompt keys referenced by AuthContext
+// must exist in every shipped locale and carry a real, non-English translation
+// (code-review-mobile-rn-biometric-prompt-i18n). Mirrors the pattern in
+// FaultsListScreen.i18n.test.tsx.
+describe('auth.biometric prompt keys resolve to real, locale-distinct translations', () => {
+  const BIOMETRIC_KEYS = [
+    'enablePrompt',
+    'authenticatePrompt',
+    'cancel',
+    'usePasscode',
+    'usePassword',
+  ] as const;
+
+  it('en carries the expected English copy', () => {
+    expect(enLocale.auth.biometric.enablePrompt).toBe('Enable biometric login');
+    expect(enLocale.auth.biometric.authenticatePrompt).toBe('Login to Property Management');
+    expect(enLocale.auth.biometric.cancel).toBe('Cancel');
+    expect(enLocale.auth.biometric.usePasscode).toBe('Use passcode');
+    expect(enLocale.auth.biometric.usePassword).toBe('Use password');
+  });
+
+  it('every shipped locale defines all biometric keys as non-empty strings', () => {
+    for (const locale of [enLocale, skLocale, csLocale, deLocale, plLocale, huLocale]) {
+      for (const key of BIOMETRIC_KEYS) {
+        const value = locale.auth.biometric[key];
+        expect(typeof value).toBe('string');
+        expect(value.length).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('non-English locales translate the prompt copy away from English', () => {
+    // `cancel` is a proper noun-ish UI word that can legitimately collide in
+    // some languages, so only assert divergence on the descriptive prompts.
+    for (const locale of [skLocale, csLocale, deLocale, plLocale, huLocale]) {
+      expect(locale.auth.biometric.enablePrompt).not.toBe(enLocale.auth.biometric.enablePrompt);
+      expect(locale.auth.biometric.authenticatePrompt).not.toBe(
+        enLocale.auth.biometric.authenticatePrompt
+      );
+    }
   });
 });

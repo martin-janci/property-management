@@ -4,7 +4,7 @@
  * API functions for managing buildings (UC-15).
  */
 
-import { getToken } from '../auth';
+import { bearerAuthHeader, getOrg } from '../auth';
 import type { ApiConfig } from '../index';
 import type {
   Building,
@@ -34,17 +34,12 @@ import type {
 const _win = typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>) : {};
 const API_BASE = `${_win.__API_BASE_URL__ ? String(_win.__API_BASE_URL__) : ''}/api/v1/buildings`;
 
-function getAuthHeaders(): HeadersInit {
-  const token = getToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...getAuthHeaders(),
+      ...bearerAuthHeader(),
       ...options.headers,
     },
   });
@@ -110,25 +105,143 @@ function normalizeBuilding<T extends Partial<Building>>(building: T): T {
   return building;
 }
 
-/** Normalize every building in a paginated list response. */
-function normalizeBuildingList(
-  response: BuildingsPaginatedResponse<Building>
-): BuildingsPaginatedResponse<Building> {
-  if (!response || !Array.isArray(response.items)) return response;
-  return { ...response, items: response.items.map(normalizeBuilding) };
+/**
+ * Map an api-server building payload onto the client `Building` shape.
+ *
+ * `GET /api/v1/buildings` and `GET /api/v1/buildings/{id}` return flat
+ * snake_case rows (`street`, `postal_code`, `total_floors`, `unit_count`,
+ * `organization_id`, …) while the UI reads `address.*`, `floorCount`,
+ * `unitCount`, … Without this mapping every building rendered with an empty
+ * address and "undefined" counts. Payloads that already carry `address` are
+ * passed through untouched (mocks, future camelCase responses).
+ */
+export function fromApiBuilding(raw: unknown): Building {
+  if (!raw || typeof raw !== 'object') return raw as Building;
+  const r = raw as Record<string, unknown>;
+  if (r.address && typeof r.address === 'object')
+    return normalizeBuilding(r as unknown as Building);
+  const str = (v: unknown) => (typeof v === 'string' ? v : undefined);
+  const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);
+  const building = {
+    id: String(r.id ?? ''),
+    organizationId: str(r.organization_id) ?? str(r.organizationId) ?? '',
+    name: str(r.name) ?? '',
+    address: {
+      street: str(r.street) ?? '',
+      city: str(r.city) ?? '',
+      postalCode: str(r.postal_code) ?? str(r.postalCode) ?? '',
+      country: str(r.country) ?? '',
+    },
+    type: (str(r.type) ?? str(r.building_type) ?? 'residential') as Building['type'],
+    floorCount: num(r.total_floors) ?? num(r.floorCount) ?? 0,
+    totalEntrances: num(r.total_entrances) ?? num(r.totalEntrances),
+    unitCount: num(r.unit_count) ?? num(r.unitCount) ?? 0,
+    yearBuilt: num(r.year_built) ?? num(r.yearBuilt),
+    totalAreaM2: num(r.total_area_m2) ?? num(r.totalAreaM2),
+    photoUrl: str(r.photo_url) ?? str(r.photoUrl),
+    description: str(r.description),
+    status: (str(r.status) ?? 'active') as Building['status'],
+    createdAt: str(r.created_at) ?? str(r.createdAt) ?? '',
+    updatedAt: str(r.updated_at) ?? str(r.updatedAt) ?? '',
+    latitude: r.latitude,
+    longitude: r.longitude,
+  };
+  const { latitude: _lat, longitude: _lng, ...rest } = normalizeBuilding(building);
+  return rest as Building;
+}
+
+/**
+ * Map the client create request onto api-server's `CreateBuildingRequest`
+ * (flat snake_case: street/city/postal_code/…, total_floors). The server has
+ * no `type`, `location`, `total_area_m2` or manager columns on create.
+ */
+export function toApiCreateBuilding(
+  data: CreateBuildingRequest,
+  fallbackOrgId?: string
+): Record<string, unknown> {
+  return dropUndefined({
+    organization_id: data.organizationId ?? fallbackOrgId,
+    name: data.name,
+    street: data.address.street,
+    city: data.address.city,
+    postal_code: data.address.postalCode,
+    country: data.address.country || undefined,
+    description: data.description,
+    year_built: data.yearBuilt,
+    total_floors: data.floorCount,
+    total_entrances: data.totalEntrances,
+  });
+}
+
+/** Map the client update request onto api-server's `UpdateBuildingRequest` (PUT, all optional). */
+export function toApiUpdateBuilding(data: UpdateBuildingRequest): Record<string, unknown> {
+  return dropUndefined({
+    name: data.name,
+    street: data.address?.street,
+    city: data.address?.city,
+    postal_code: data.address?.postalCode,
+    country: data.address?.country,
+    description: data.description,
+    year_built: data.yearBuilt,
+    total_floors: data.floorCount,
+    total_entrances: data.totalEntrances,
+  });
+}
+
+function dropUndefined(obj: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined));
+}
+
+/**
+ * Normalize a list response. api-server returns
+ * `{ buildings, total, offset, limit }`; the client contract is
+ * `{ items, total, page, pageSize, totalPages }`.
+ */
+function normalizeBuildingList(response: unknown): BuildingsPaginatedResponse<Building> {
+  const r = (response ?? {}) as Record<string, unknown>;
+  const rows = Array.isArray(r.items) ? r.items : Array.isArray(r.buildings) ? r.buildings : [];
+  const total = typeof r.total === 'number' ? r.total : rows.length;
+  const limit =
+    typeof r.pageSize === 'number'
+      ? r.pageSize
+      : typeof r.limit === 'number' && r.limit > 0
+        ? r.limit
+        : Math.max(rows.length, 1);
+  const page =
+    typeof r.page === 'number'
+      ? r.page
+      : typeof r.offset === 'number'
+        ? Math.floor(r.offset / limit) + 1
+        : 1;
+  return {
+    items: rows.map(fromApiBuilding),
+    total,
+    page,
+    pageSize: limit,
+    totalPages:
+      typeof r.totalPages === 'number' ? r.totalPages : Math.max(1, Math.ceil(total / limit)),
+  };
 }
 
 /**
  * List buildings with optional filters.
+ *
+ * api-server requires `organization_id` (it must equal the active tenant) and
+ * paginates with `offset` / `limit`; translate the client's page-based params.
  */
 export async function listBuildings(
   params?: ListBuildingsParams,
   signal?: AbortSignal
 ): Promise<BuildingsPaginatedResponse<Building>> {
-  const qs = buildQueryString(params || {});
-  const response = await apiRequest<BuildingsPaginatedResponse<Building>>(`${API_BASE}${qs}`, {
-    signal,
+  const { page, pageSize, ...filters } = params ?? {};
+  const limit = pageSize ?? 50;
+  const qs = buildQueryString({
+    organization_id: getOrg() ?? undefined,
+    offset: page && page > 1 ? (page - 1) * limit : undefined,
+    limit: pageSize,
+    ...filters,
   });
+  const response = await apiRequest<unknown>(`${API_BASE}${qs}`, { signal });
   return normalizeBuildingList(response);
 }
 
@@ -136,8 +249,21 @@ export async function listBuildings(
  * Get building by ID.
  */
 export async function getBuilding(id: string, signal?: AbortSignal): Promise<Building> {
-  const building = await apiRequest<Building>(`${API_BASE}/${id}`, { signal });
-  return normalizeBuilding(building);
+  const building = await apiRequest<unknown>(`${API_BASE}/${id}`, { signal });
+  return fromApiBuilding(building);
+}
+
+/**
+ * List units in a building (`GET /api/v1/buildings/{id}/units`, paginated).
+ * Archived units are excluded unless `params.include_archived` is set.
+ */
+export async function listBuildingUnits(
+  buildingId: string,
+  params?: ListUnitsParams,
+  signal?: AbortSignal
+): Promise<UnitsListResponse> {
+  const qs = buildQueryString(params || {});
+  return apiRequest<UnitsListResponse>(`${API_BASE}/${buildingId}/units${qs}`, { signal });
 }
 
 // ============================================
@@ -149,6 +275,11 @@ const buildHeaders = (config: ApiConfig): HeadersInit => ({
   ...(config.accessToken && { Authorization: `Bearer ${config.accessToken}` }),
   ...(config.tenantId && { 'X-Tenant-ID': config.tenantId }),
 });
+
+/** Page size for unit pagination (the backend caps `limit` at 100). */
+const UNIT_PAGE_SIZE = 100;
+/** Safety cap on unit pages fetched when deriving floors (10 000 units). */
+const MAX_UNIT_PAGES = 100;
 
 const handleResponse = async <T>(response: Response): Promise<T> => {
   if (!response.ok) {
@@ -173,17 +304,16 @@ export const createBuildingsApi = (config: ApiConfig) => {
      * List buildings with optional filters.
      */
     list: async (params?: ListBuildingsParams): Promise<BuildingsPaginatedResponse<Building>> => {
-      const searchParams = new URLSearchParams();
-      if (params?.page) searchParams.set('page', params.page.toString());
-      if (params?.pageSize) searchParams.set('pageSize', params.pageSize.toString());
-      if (params?.status) searchParams.set('status', params.status);
-      if (params?.type) searchParams.set('type', params.type);
-
-      const url = searchParams.toString() ? `${baseUrl}?${searchParams}` : baseUrl;
-      const response = await fetch(url, { headers });
-      return normalizeBuildingList(
-        await handleResponse<BuildingsPaginatedResponse<Building>>(response)
-      );
+      const { page, pageSize, ...filters } = params ?? {};
+      const limit = pageSize ?? 50;
+      const qs = buildQueryString({
+        organization_id: config.tenantId ?? getOrg() ?? undefined,
+        offset: page && page > 1 ? (page - 1) * limit : undefined,
+        limit: pageSize,
+        ...filters,
+      });
+      const response = await fetch(`${baseUrl}${qs}`, { headers });
+      return normalizeBuildingList(await handleResponse<unknown>(response));
     },
 
     /**
@@ -193,9 +323,9 @@ export const createBuildingsApi = (config: ApiConfig) => {
       const response = await fetch(baseUrl, {
         method: 'POST',
         headers,
-        body: JSON.stringify(data),
+        body: JSON.stringify(toApiCreateBuilding(data, config.tenantId ?? getOrg() ?? undefined)),
       });
-      return normalizeBuilding(await handleResponse<Building>(response));
+      return fromApiBuilding(await handleResponse<unknown>(response));
     },
 
     /**
@@ -203,19 +333,20 @@ export const createBuildingsApi = (config: ApiConfig) => {
      */
     get: async (id: string): Promise<Building> => {
       const response = await fetch(`${baseUrl}/${id}`, { headers });
-      return normalizeBuilding(await handleResponse<Building>(response));
+      return fromApiBuilding(await handleResponse<unknown>(response));
     },
 
     /**
      * Update a building.
      */
     update: async (id: string, data: UpdateBuildingRequest): Promise<Building> => {
+      // api-server mounts PUT /buildings/{id} (there is no PATCH route).
       const response = await fetch(`${baseUrl}/${id}`, {
-        method: 'PATCH',
+        method: 'PUT',
         headers,
-        body: JSON.stringify(data),
+        body: JSON.stringify(toApiUpdateBuilding(data)),
       });
-      return normalizeBuilding(await handleResponse<Building>(response));
+      return fromApiBuilding(await handleResponse<unknown>(response));
     },
 
     /**
@@ -236,8 +367,30 @@ export const createBuildingsApi = (config: ApiConfig) => {
      * List floors in a building.
      */
     listFloors: async (buildingId: string): Promise<Floor[]> => {
-      const response = await fetch(`${baseUrl}/${buildingId}/floors`, { headers });
-      return handleResponse(response);
+      // The backend has no floors table: a floor is the `floor` column of the
+      // building's units, so derive the list from every (non-archived) unit.
+      const counts = new Map<number, number>();
+      let offset = 0;
+      for (let page = 0; page < MAX_UNIT_PAGES; page++) {
+        const response = await fetch(
+          `${baseUrl}/${buildingId}/units?offset=${offset}&limit=${UNIT_PAGE_SIZE}`,
+          { headers }
+        );
+        const body = await handleResponse<UnitsListResponse>(response);
+        for (const unit of body.units) {
+          counts.set(unit.floor, (counts.get(unit.floor) ?? 0) + 1);
+        }
+        offset += body.units.length;
+        if (body.units.length === 0 || offset >= body.total) break;
+      }
+      return [...counts.entries()]
+        .sort(([a], [b]) => a - b)
+        .map(([number, unitCount]) => ({
+          id: `${buildingId}:floor:${number}`,
+          buildingId,
+          number,
+          unitCount,
+        }));
     },
 
     /**
@@ -255,8 +408,12 @@ export const createBuildingsApi = (config: ApiConfig) => {
     /**
      * List common areas in a building.
      */
-    listCommonAreas: async (buildingId: string): Promise<CommonArea[]> => {
+    listCommonAreas: async (buildingId: string): Promise<CommonArea[] | null> => {
       const response = await fetch(`${baseUrl}/${buildingId}/common-areas`, { headers });
+      // The backend does not implement common areas yet: a 404 means the
+      // feature is unavailable (resolve `null`, so the query neither errors
+      // nor retries), not that the request failed.
+      if (response.status === 404) return null;
       return handleResponse(response);
     },
 

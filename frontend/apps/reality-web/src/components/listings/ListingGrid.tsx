@@ -7,6 +7,9 @@
 'use client';
 
 import type { ListingSummary } from '@ppt/reality-api-client';
+import { useTranslations } from 'next-intl';
+import { EmptyState } from '@/components/states/EmptyState';
+import { ErrorState } from '@/components/states/ErrorState';
 import { ListingCard } from './ListingCard';
 
 interface ListingGridProps {
@@ -14,6 +17,8 @@ interface ListingGridProps {
   viewMode: 'grid' | 'list';
   onToggleFavorite?: (listingId: string, isFavorite: boolean) => void;
   isLoading?: boolean;
+  isError?: boolean;
+  onRetry?: () => void;
 }
 
 export function ListingGrid({
@@ -21,7 +26,11 @@ export function ListingGrid({
   viewMode,
   onToggleFavorite,
   isLoading = false,
+  isError = false,
+  onRetry,
 }: ListingGridProps) {
+  const t = useTranslations('listings');
+
   if (isLoading) {
     return (
       <div className={`listing-grid ${viewMode}`}>
@@ -58,48 +67,23 @@ export function ListingGrid({
     );
   }
 
-  if (listings.length === 0) {
+  // Distinguish API failure from a genuinely empty result set. On error `data`
+  // is undefined and `listings` is `[]`, which would otherwise fall through to
+  // the empty ("no results") state below and hide the failure from the user.
+  if (isError) {
     return (
-      <div className="empty-state">
-        <svg
-          width="64"
-          height="64"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1"
-          aria-hidden="true"
-        >
-          <circle cx="11" cy="11" r="8" />
-          <path d="m21 21-4.35-4.35" />
-        </svg>
-        <h3 className="empty-title">No listings found</h3>
-        <p className="empty-text">
-          Try adjusting your filters or search criteria to find more properties.
-        </p>
-        <style jsx>{`
-          .empty-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 64px 24px;
-            text-align: center;
-            color: var(--ppt-fg-muted);
-          }
-          .empty-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--ppt-fg-secondary);
-            margin: 16px 0 8px;
-          }
-          .empty-text {
-            margin: 0;
-            max-width: 300px;
-          }
-        `}</style>
-      </div>
+      <ErrorState
+        icon="⚠️"
+        title={t('errorTitle')}
+        description={t('errorDescription')}
+        onRetry={onRetry}
+        retryLabel={t('retry')}
+      />
     );
+  }
+
+  if (listings.length === 0) {
+    return <EmptyState icon="🔍" title={t('emptyTitle')} description={t('emptyDescription')} />;
   }
 
   return (

@@ -1,7 +1,7 @@
 //! Document sharing routes (Story 7A.5).
 
 use crate::state::AppState;
-use api_core::{extractors::RlsConnection, AuthUser, TenantExtractor};
+use api_core::{extractors::RlsConnection, AuthUser, ValidatedTenantExtractor};
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -11,9 +11,62 @@ use axum::{
 use common::errors::ErrorResponse;
 use common::notifications::{Notification, NotificationCategory};
 use db::models::{share_type, CreateShare, DocumentSummary, LogShareAccess};
+use std::collections::HashMap;
+use std::sync::{LazyLock, Mutex};
+use std::time::Duration;
 use uuid::Uuid;
 
+use crate::client_ip::resolve_client_ip;
+use crate::routes::rate_limit::{rate_limit_allowed, InProcessRateLimiter};
+
 use super::core::*;
+
+// ── Brute-force throttle for password-protected share access ────────────────
+//
+// `POST /api/v1/documents/shared/{token}/access` is a fully public endpoint
+// that verifies a share password. Without a limiter an attacker who has the
+// (guessable-length) token can brute-force the password at request speed. We
+// reuse the shared sliding-window limiter (`routes::rate_limit`) — the same
+// algorithm that guards the MFA verify + `/forgot-password` surfaces — keyed
+// on `token:ip` so one source IP hammering one share is blocked after
+// `SHARE_ACCESS_MAX_ATTEMPTS` failures in the window, without locking that IP
+// out of unrelated shares or locking the share out for other IPs. A correct
+// password clears the key so a legitimate viewer who first mistyped is never
+// penalised.
+const SHARE_ACCESS_MAX_ATTEMPTS: u32 = 10;
+const SHARE_ACCESS_WINDOW: Duration = Duration::from_secs(900);
+/// Only sweep expired limiter entries once the map exceeds this size, bounding
+/// memory against a token/IP-fanned flood (mirrors the MFA limiter tuning).
+const SHARE_ACCESS_SWEEP_THRESHOLD: usize = 1024;
+
+static SHARE_ACCESS_RATE_LIMITER: LazyLock<InProcessRateLimiter<String>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
+
+/// Build the per-share, per-IP limiter key.
+fn share_access_key(token: &str, ip: &str) -> String {
+    format!("{token}:{ip}")
+}
+
+/// Record a share-access attempt for `token`+`ip`; `false` once more than
+/// `SHARE_ACCESS_MAX_ATTEMPTS` attempts occur in a rolling
+/// `SHARE_ACCESS_WINDOW`.
+fn share_access_attempt_allowed(token: &str, ip: &str) -> bool {
+    rate_limit_allowed(
+        &SHARE_ACCESS_RATE_LIMITER,
+        share_access_key(token, ip),
+        SHARE_ACCESS_MAX_ATTEMPTS,
+        SHARE_ACCESS_WINDOW,
+        SHARE_ACCESS_SWEEP_THRESHOLD,
+    )
+}
+
+/// Clear the attempt counter for a `token`+`ip` after a successful password
+/// verification (and used by tests to reset the process-global limiter).
+fn share_access_attempts_reset(token: &str, ip: &str) {
+    if let Ok(mut map) = SHARE_ACCESS_RATE_LIMITER.lock() {
+        map.remove(&share_access_key(token, ip));
+    }
+}
 
 /// Create authenticated documents shares router.
 pub fn authenticated_router() -> Router<AppState> {
@@ -50,7 +103,7 @@ pub fn public_router() -> Router<AppState> {
 async fn list_shares(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ShareListResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -78,6 +131,9 @@ async fn list_shares(
             ));
         }
     };
+
+    // Explicit org guard (FORCE RLS does not bind a BYPASSRLS pool).
+    super::core::validate_document_org_scope(existing.organization_id, tenant.tenant_id)?;
 
     // Only creator or manager can view shares
     if existing.created_by != auth.user_id && !tenant.role.is_manager() {
@@ -132,7 +188,7 @@ async fn list_shares(
 async fn create_share(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<CreateShareRequest>,
@@ -161,6 +217,9 @@ async fn create_share(
             ));
         }
     };
+
+    // Explicit org guard (FORCE RLS does not bind a BYPASSRLS pool).
+    super::core::validate_document_org_scope(existing.organization_id, tenant.tenant_id)?;
 
     // Only creator or manager can create shares
     if existing.created_by != auth.user_id && !tenant.role.is_manager() {
@@ -303,7 +362,7 @@ async fn create_share(
 async fn revoke_share(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path((id, share_id)): Path<(Uuid, Uuid)>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
@@ -331,6 +390,9 @@ async fn revoke_share(
             ));
         }
     };
+
+    // Explicit org guard (FORCE RLS does not bind a BYPASSRLS pool).
+    super::core::validate_document_org_scope(existing.organization_id, tenant.tenant_id)?;
 
     // Only creator or manager can revoke shares
     if existing.created_by != auth.user_id && !tenant.role.is_manager() {
@@ -437,9 +499,10 @@ async fn revoke_share(
 async fn access_shared_document(
     State(state): State<AppState>,
     axum::extract::ConnectInfo(addr): axum::extract::ConnectInfo<std::net::SocketAddr>,
+    headers: axum::http::HeaderMap,
     Path(token): Path<String>,
 ) -> Result<Json<SharedDocumentResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let ip_address = addr.ip().to_string();
+    let ip_address = resolve_client_ip(&headers, addr, &state.trusted_proxies);
     // Find share by token. This public endpoint has no caller org context, so
     // the validated token is the authorization grant: the lookup runs with
     // super-admin RLS context on a dedicated connection (see
@@ -568,16 +631,18 @@ async fn access_shared_document(
         (status = 200, description = "Shared document access", body = SharedDocumentResponse),
         (status = 401, description = "Invalid password", body = ErrorResponse),
         (status = 404, description = "Share not found or expired", body = ErrorResponse),
+        (status = 429, description = "Too many password attempts", body = ErrorResponse),
     ),
     tag = "Documents"
 )]
 async fn access_protected_share(
     State(state): State<AppState>,
     axum::extract::ConnectInfo(addr): axum::extract::ConnectInfo<std::net::SocketAddr>,
+    headers: axum::http::HeaderMap,
     Path(token): Path<String>,
     Json(req): Json<AccessShareRequest>,
 ) -> Result<Json<SharedDocumentResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let ip_address = addr.ip().to_string();
+    let ip_address = resolve_client_ip(&headers, addr, &state.trusted_proxies);
     // Find share by token. This public endpoint has no caller org context, so
     // the validated token is the authorization grant: the lookup runs with
     // super-admin RLS context on a dedicated connection (see
@@ -610,6 +675,27 @@ async fn access_protected_share(
         }
     };
 
+    // Brute-force throttle: this public endpoint verifies a share password, so
+    // cap attempts per `token`+`ip` within a rolling window before doing the
+    // (deliberately expensive) password hash comparison. The (N+1)th attempt in
+    // the window is rejected with 429; a correct password below clears the
+    // counter. Runs before the verify so a flood cannot amplify into hashing
+    // load.
+    if !share_access_attempt_allowed(&token, &ip_address) {
+        tracing::warn!(
+            share_id = %share.id,
+            ip_address = %ip_address,
+            "protected share access rate limited",
+        );
+        return Err((
+            StatusCode::TOO_MANY_REQUESTS,
+            Json(ErrorResponse::new(
+                "RATE_LIMITED",
+                "Too many password attempts. Please try again later.",
+            )),
+        ));
+    }
+
     // Verify password. The share row is under FORCE RLS, so the lookup needed
     // to read its password hash runs with super-admin RLS context on a
     // dedicated connection (#754 / PAP-21).
@@ -624,6 +710,10 @@ async fn access_protected_share(
             Json(ErrorResponse::new("INVALID_PASSWORD", "Invalid password")),
         ));
     }
+
+    // Correct password: clear this key's counter so a legitimate viewer who
+    // first mistyped is never penalised by the earlier failed attempts.
+    share_access_attempts_reset(&token, &ip_address);
 
     // Get document via the share-token path. The validated token is the
     // authorization grant; the lookup runs with super-admin RLS context on a
@@ -789,3 +879,79 @@ async fn resolve_share_recipients(
 }
 
 // ============================================================================
+
+#[cfg(test)]
+mod share_access_throttle_tests {
+    use super::{
+        share_access_attempt_allowed, share_access_attempts_reset, SHARE_ACCESS_MAX_ATTEMPTS,
+    };
+
+    // Distinct token/IP per test so the process-global limiter can't leak state
+    // between them (LazyLock static is shared across the whole test binary).
+
+    #[test]
+    fn blocks_after_max_attempts_for_same_token_and_ip() {
+        let token = "throttle-tok-block";
+        let ip = "203.0.113.1";
+        for i in 0..SHARE_ACCESS_MAX_ATTEMPTS {
+            assert!(
+                share_access_attempt_allowed(token, ip),
+                "attempt {i} within the limit must be allowed"
+            );
+        }
+        assert!(
+            !share_access_attempt_allowed(token, ip),
+            "the (max + 1)th attempt in the window must be blocked"
+        );
+    }
+
+    #[test]
+    fn different_ip_on_same_token_is_independent() {
+        let token = "throttle-tok-shared";
+        let attacker_ip = "203.0.113.2";
+        // Exhaust the attacker IP against the share.
+        for _ in 0..=SHARE_ACCESS_MAX_ATTEMPTS {
+            share_access_attempt_allowed(token, attacker_ip);
+        }
+        assert!(
+            !share_access_attempt_allowed(token, attacker_ip),
+            "attacker IP must stay blocked on this token"
+        );
+        // A legitimate viewer from another IP is not locked out of the share.
+        assert!(
+            share_access_attempt_allowed(token, "198.51.100.9"),
+            "a different IP on the same token must be unaffected"
+        );
+    }
+
+    #[test]
+    fn same_ip_different_token_is_independent() {
+        let ip = "203.0.113.3";
+        for _ in 0..=SHARE_ACCESS_MAX_ATTEMPTS {
+            share_access_attempt_allowed("throttle-tok-a", ip);
+        }
+        assert!(
+            !share_access_attempt_allowed("throttle-tok-a", ip),
+            "the exhausted token must stay blocked for this IP"
+        );
+        assert!(
+            share_access_attempt_allowed("throttle-tok-b", ip),
+            "the same IP against a different share must be unaffected"
+        );
+    }
+
+    #[test]
+    fn reset_clears_counter_after_success() {
+        let token = "throttle-tok-reset";
+        let ip = "203.0.113.4";
+        for _ in 0..SHARE_ACCESS_MAX_ATTEMPTS {
+            assert!(share_access_attempt_allowed(token, ip));
+        }
+        // Simulate a correct password clearing the window.
+        share_access_attempts_reset(token, ip);
+        assert!(
+            share_access_attempt_allowed(token, ip),
+            "after a reset the key must be allowed to attempt again"
+        );
+    }
+}

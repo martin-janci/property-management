@@ -231,8 +231,11 @@ pub async fn invite(
 pub struct AcceptRequest {
     pub token: String,
     /// The accepting user's id (the request principal). The handler also
-    /// verifies the principal's email matches the invite (single-use, email-bound).
+    /// verifies the account's stored email matches the invite (single-use,
+    /// email-bound).
     pub user_id: Uuid,
+    /// Informational only — the invite is matched against the account's
+    /// stored email, never this value.
     pub email: String,
 }
 
@@ -259,9 +262,24 @@ pub async fn accept(
         ));
     }
 
+    // SECURITY: bind the invite to the accepting account's *stored* email,
+    // not the client-supplied `req.email` — otherwise anyone holding a leaked
+    // or forwarded invite token could redeem it onto their own account by
+    // echoing the invited address.
+    let account_email = state
+        .user_repo
+        .find_by_id(req.user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "failed to load accepting user");
+            (StatusCode::INTERNAL_SERVER_ERROR, "invite accept failed")
+        })?
+        .map(|u| u.email)
+        .ok_or((StatusCode::FORBIDDEN, "invite email does not match"))?;
+
     let invite_repo = UserInviteRepository::new(state.db.clone());
     let outcome = invite_repo
-        .consume_by_token(&req.token, req.user_id, &req.email)
+        .consume_by_token(&req.token, req.user_id, &account_email)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "failed to consume invite");

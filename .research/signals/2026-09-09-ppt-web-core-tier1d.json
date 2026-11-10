@@ -1,0 +1,41 @@
+{
+  "segment": "ppt-web-core",
+  "date": "2026-09-09",
+  "selection_reason": "oldest-unreviewed",
+  "selection_detail": "CHURN_FILES empty this run (no Phase-1 churn list). Fell through to oldest-unreviewed on REVIEW_CURSOR. mobile-native-kmp is the numerically oldest cursor (2026-08-25) but is SATURATED — 4 open code-review-finding items in backlog.json (portfolio-analytics-caps-100, cancellation-swallowed, httpclient-no-timeout, create-listing-not-wired), all >=3 — so the saturation-skip rule drops it. Next tier is a 3-way tie at 2026-08-29 (ppt-web-core, reality-web, mobile-rn), none saturated (0 open findings each). Deterministic tiebreak by segment-map table order picks ppt-web-core. gh CLI unavailable in this runner: dependabot/PR-history checks skipped (no manifest-version findings emitted, so no impact).",
+  "experts_used": ["frontend"],
+  "landable_in_cloud": true,
+  "landability_note": "ppt-web-core is a landable frontend segment in this cloud runner. Recorded for awareness only (did not affect rotation): the api-server crate (issue #2949) and mobile-native/KMP (issue #2652) are currently structurally unbuildable in this cloud runner; mobile-native-kmp was skipped here for backlog saturation, not buildability.",
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-dashboard-route-no-guard",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx:166-168 (dashboardRoutes): /dashboard/manager renders <ManagerDashboardPage/> and /dashboard/resident renders <ResidentDashboardPage/> with NO <ProtectedRoute> wrapper at all — neither an auth check nor requiredRoles. This diverges from every sibling manager surface in the same file: /dashboard/customize uses <ProtectedRoute requiredRoles={['org_admin','super_admin']}> (lines 171-178) and /settings/portal-webhooks uses <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}> (lines 231-238). The inline comment at lines 162-165 justifies the omission by claiming 'the ProtectedRoute / role check on the target page handles auth + role-based fan-out' — but that guard does not exist on the target page.",
+        "frontend/apps/ppt-web/src/features/dashboard/pages/ManagerDashboardPage.tsx:21-49: the page has no auth/role guard. It reads user?.role only to toggle the 'customize' link via CUSTOMIZE_ROLES (lines 19,27-28) and otherwise renders unconditionally, explicitly falling back to DEFAULT_DASHBOARD_LAYOUT even on layout-fetch error (lines 42-46, 'never gate on layout fetch'). There is no isAuthenticated/role check and no <Navigate>/redirect to /forbidden.",
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx:37-68: AppRoutes has no wrapping guard — public routes (/, /login, /register) sit in the same flat <Routes> as the dashboard routes, so nothing upstream enforces auth on /dashboard/manager. Net effect: any authenticated resident, and (since no auth gate exists) an unauthenticated visitor, can render the manager dashboard shell at /dashboard/manager. Backend RLS/role checks still gate the underlying data via the section API calls, so this is a defense-in-depth gap and a documented-but-false guarantee rather than a confirmed data leak. Landable frontend-only remedy: wrap /dashboard/manager (and /dashboard/customize's siblings) in <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}> and /dashboard/resident in a bare <ProtectedRoute>, or add the claimed role check to ManagerDashboardPage; then correct the misleading comment."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-home-role-hardcoded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx:99-101 (Home): the 'Open dashboard' CTA runs navigate(user?.role === 'manager' ? '/dashboard/manager' : '/dashboard/resident'). The literal === 'manager' comparison ignores the other four manager-equivalent roles that the same segment defines as the single source of truth in shared.tsx (MANAGER_ROLES / isManagerRole, lines 36-50): org_admin, super_admin, technical_manager, property_manager. A logged-in org_admin / super_admin / technical_manager / property_manager who clicks the Home CTA is misrouted to /dashboard/resident instead of /dashboard/manager.",
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx:100 is the ONLY hardcoded role-equality check remaining in the router — every other role gate correctly delegates to isManagerRole(user?.role): faults.tsx:225,421,530; announcements.tsx:470; disputes.tsx:344,455; notifications.tsx:32. Confirmed by grep: exactly one non-test hit for a hardcoded role literal in routes/. Landable frontend-only remedy: import isManagerRole from '../shared' and use navigate(isManagerRole(user?.role) ? '/dashboard/manager' : '/dashboard/resident')."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

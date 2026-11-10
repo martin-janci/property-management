@@ -1,6 +1,6 @@
 //! Owner Investment Analytics routes (Epic 74).
 use crate::state::AppState;
-use api_core::extractors::AuthUser;
+use api_core::extractors::{AuthUser, TenantAuthUser};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -19,6 +19,21 @@ use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 type ApiResult<T> = Result<T, (StatusCode, Json<ErrorResponse>)>;
+
+/// Manager-class role, read from the caller's membership (`TenantAuthUser`),
+/// for the mutations of this module.
+fn require_manager(user: &AuthUser) -> ApiResult<()> {
+    if user.role.is_some_and(|r| r.is_manager()) {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::forbidden(
+                "Manager role required for this action",
+            )),
+        ))
+    }
+}
 
 /// Serialize a value to `serde_json::Value`, mapping failures to a 500 response.
 fn to_json_value<T: Serialize>(value: T) -> ApiResult<serde_json::Value> {
@@ -112,7 +127,7 @@ pub struct SubmitExpenseRequest {
 
 async fn get_unit_valuation(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(uid): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org = user.tenant_id.ok_or_else(|| {
@@ -136,10 +151,13 @@ async fn get_unit_valuation(
 
 async fn create_valuation(
     State(s): State<AppState>,
-    user: AuthUser,
-    Path(_uid): Path<Uuid>,
-    Json(r): Json<CreateValuationRequest>,
+    TenantAuthUser(user): TenantAuthUser,
+    Path(uid): Path<Uuid>,
+    Json(mut r): Json<CreateValuationRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
+    // The path unit is authoritative; the repo then checks it is in our org.
+    r.data.unit_id = uid;
     // Derive the org from the authenticated session, never trust the body.
     let org = user.tenant_id.ok_or_else(|| {
         (
@@ -158,7 +176,7 @@ async fn create_valuation(
 
 async fn get_valuation_with_comparables(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(vid): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org = user.tenant_id.ok_or_else(|| {
@@ -186,7 +204,7 @@ async fn get_valuation_with_comparables(
 
 async fn add_comparable(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(vid): Path<Uuid>,
     Json(r): Json<AddComparableProperty>,
 ) -> ApiResult<Json<serde_json::Value>> {
@@ -207,7 +225,7 @@ async fn add_comparable(
 
 async fn get_value_history(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(uid): Path<Uuid>,
     Query(p): Query<ValueHistoryParams>,
 ) -> ApiResult<Json<serde_json::Value>> {
@@ -238,7 +256,7 @@ async fn get_value_history(
 
 async fn get_value_trend(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(uid): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org = user.tenant_id.ok_or_else(|| {
@@ -262,7 +280,7 @@ async fn get_value_trend(
 
 async fn calculate_roi(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(_uid): Path<Uuid>,
     Json(r): Json<CalculateROIWithOrg>,
 ) -> ApiResult<Json<serde_json::Value>> {
@@ -283,7 +301,7 @@ async fn calculate_roi(
 
 async fn get_cash_flow_breakdown(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(uid): Path<Uuid>,
     Query(p): Query<CashFlowParams>,
 ) -> ApiResult<Json<serde_json::Value>> {
@@ -308,7 +326,7 @@ async fn get_cash_flow_breakdown(
 
 async fn get_roi_dashboard(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(uid): Path<Uuid>,
     Query(p): Query<ROIDashboardParams>,
 ) -> ApiResult<Json<serde_json::Value>> {
@@ -333,7 +351,7 @@ async fn get_roi_dashboard(
 
 async fn get_portfolio_summary(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(p): Query<PortfolioParams>,
 ) -> ApiResult<Json<serde_json::Value>> {
     match s
@@ -354,7 +372,7 @@ async fn get_portfolio_summary(
 
 async fn compare_properties(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Json(r): Json<PortfolioComparisonRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org = user.tenant_id.ok_or_else(|| {
@@ -374,7 +392,7 @@ async fn compare_properties(
 
 async fn list_auto_approval_rules(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org = user.tenant_id.ok_or_else(|| {
         (
@@ -397,7 +415,7 @@ async fn list_auto_approval_rules(
 
 async fn create_auto_approval_rule(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Json(r): Json<CreateRuleRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org = user.tenant_id.ok_or_else(|| {
@@ -458,7 +476,7 @@ async fn delete_auto_approval_rule(
 
 async fn submit_expense(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Json(r): Json<SubmitExpenseRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org = user.tenant_id.ok_or_else(|| {
@@ -482,7 +500,7 @@ async fn submit_expense(
 
 async fn list_expense_requests(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(q): Query<ExpenseRequestsQuery>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org = user.tenant_id.ok_or_else(|| {
@@ -502,10 +520,11 @@ async fn list_expense_requests(
 
 async fn review_expense(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(r): Json<ReviewExpenseRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     let org = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,

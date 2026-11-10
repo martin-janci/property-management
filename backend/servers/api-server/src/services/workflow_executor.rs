@@ -87,7 +87,14 @@ pub enum ComparisonOperator {
 }
 
 /// A single condition to evaluate.
+///
+/// `deny_unknown_fields` is deliberate: a stored condition JSON that carries
+/// keys outside this shape is treated as *unparseable* rather than being
+/// silently coerced, so [`evaluate_conditions_list`] can fail closed on it
+/// (issue #2768). Without it, serde would ignore the stray keys and accept a
+/// malformed rule.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Condition {
     /// Field path to evaluate (e.g., "trigger.amount", "action_1.status")
     pub field: String,
@@ -108,7 +115,15 @@ pub enum LogicalOperator {
 }
 
 /// A group of conditions with a logical operator.
+///
+/// `deny_unknown_fields` is deliberate (issue #2768). Every field here is
+/// `#[serde(default)]`, so without this attribute serde would happily
+/// deserialize *any* JSON object into an empty `And` group — which then
+/// evaluates as vacuously satisfied, letting a corrupt or unknown stored rule
+/// wave the workflow's actions through unguarded. Denying unknown fields makes
+/// a malformed object fail to parse so it reaches the fail-closed branch.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ConditionGroup {
     /// Logical operator to combine conditions
     #[serde(default)]
@@ -341,12 +356,29 @@ impl WorkflowExecutor {
                     event.data.clone(),
                 );
 
-                if !self.evaluate_conditions(&conditions, &context)? {
-                    tracing::debug!(
-                        workflow_id = %workflow.id,
-                        "Workflow conditions not met, skipping"
-                    );
-                    continue;
+                match classify_condition_outcome(&conditions, &context) {
+                    ConditionOutcome::Run => {}
+                    ConditionOutcome::NotMet => {
+                        tracing::debug!(
+                            workflow_id = %workflow.id,
+                            "Workflow conditions not met, skipping"
+                        );
+                        continue;
+                    }
+                    ConditionOutcome::Error(e) => {
+                        // Batch isolation: a single corrupt/unparseable stored
+                        // condition fails closed for THIS workflow only (its
+                        // actions never run unguarded), but must NOT abort the
+                        // whole event — previously `evaluate_conditions(..)?`
+                        // propagated the error and silently disabled every other
+                        // automation on this event.
+                        tracing::error!(
+                            workflow_id = %workflow.id,
+                            error = %e,
+                            "Workflow condition evaluation failed; skipping this workflow (fail-closed) and continuing the batch"
+                        );
+                        continue;
+                    }
                 }
             }
 
@@ -461,247 +493,359 @@ impl WorkflowExecutor {
         conditions: &[serde_json::Value],
         context: &ActionContext,
     ) -> Result<bool, WorkflowError> {
-        if conditions.is_empty() {
-            return Ok(true);
-        }
+        evaluate_conditions_list(conditions, context)
+    }
+}
 
-        for condition_json in conditions {
-            // Try to parse as a condition group
-            if let Ok(group) = serde_json::from_value::<ConditionGroup>(condition_json.clone()) {
-                if !self.evaluate_condition_group(&group, context)? {
-                    return Ok(false);
-                }
-            } else if let Ok(condition) =
-                serde_json::from_value::<Condition>(condition_json.clone())
-            {
-                // Try to parse as a single condition
-                if !self.evaluate_single_condition(&condition, context)? {
-                    return Ok(false);
-                }
-            } else {
-                tracing::warn!(
-                    condition = ?condition_json,
-                    "Could not parse condition, skipping"
-                );
-            }
-        }
+/// Outcome of evaluating one workflow's conditions within an event batch.
+///
+/// Used by [`WorkflowExecutor::handle_event`] to isolate per-workflow
+/// condition failures: a corrupt/unparseable stored condition fails closed for
+/// that workflow (it never runs unguarded) while leaving the rest of the
+/// event's automations to run. This is the seam that stops one bad stored
+/// condition from aborting the whole batch and silently disabling every other
+/// automation on the event.
+#[derive(Debug)]
+enum ConditionOutcome {
+    /// Conditions are satisfied — run the workflow.
+    Run,
+    /// Conditions evaluated cleanly but are not satisfied — skip this workflow.
+    NotMet,
+    /// Condition evaluation failed (corrupt/unparseable/uncomparable rule).
+    /// Fail closed for this workflow only; keep processing the batch.
+    Error(WorkflowError),
+}
 
-        Ok(true)
+/// Classify a workflow's conditions for batch processing.
+///
+/// Converts the `Result` from [`evaluate_conditions_list`] into a
+/// [`ConditionOutcome`] so that a `ConditionError` becomes an isolatable
+/// `Error` variant instead of a `?`-propagated abort of the whole event batch.
+fn classify_condition_outcome(
+    conditions: &[serde_json::Value],
+    context: &ActionContext,
+) -> ConditionOutcome {
+    match evaluate_conditions_list(conditions, context) {
+        Ok(true) => ConditionOutcome::Run,
+        Ok(false) => ConditionOutcome::NotMet,
+        Err(e) => ConditionOutcome::Error(e),
+    }
+}
+
+/// Evaluate a workflow's stored condition list against an [`ActionContext`].
+///
+/// Semantics:
+/// - **Empty list ⇒ satisfied.** A workflow with no conditions always runs;
+///   `Ok(true)` is returned immediately.
+/// - **All conditions must hold.** The list is an implicit AND — the first
+///   condition that evaluates to `false` short-circuits to `Ok(false)`.
+/// - **Unparseable condition ⇒ FAIL CLOSED.** If a stored condition JSON
+///   deserializes as neither a [`ConditionGroup`] nor a [`Condition`], we
+///   return `Err(WorkflowError::ConditionError(..))` instead of silently
+///   skipping it. A corrupt or unknown rule must halt execution visibly:
+///   skipping it would let the workflow's actions run *unguarded*, which is
+///   exactly the guard the condition was meant to enforce (issue #2768).
+fn evaluate_conditions_list(
+    conditions: &[serde_json::Value],
+    context: &ActionContext,
+) -> Result<bool, WorkflowError> {
+    if conditions.is_empty() {
+        return Ok(true);
     }
 
-    /// Evaluate a condition group.
-    fn evaluate_condition_group(
-        &self,
-        group: &ConditionGroup,
-        context: &ActionContext,
-    ) -> Result<bool, WorkflowError> {
-        match group.operator {
-            LogicalOperator::And => {
-                // All conditions must be true
-                for condition in &group.conditions {
-                    if !self.evaluate_single_condition(condition, context)? {
-                        return Ok(false);
-                    }
-                }
-                for nested_group in &group.groups {
-                    if !self.evaluate_condition_group(nested_group, context)? {
-                        return Ok(false);
-                    }
-                }
-                Ok(true)
+    for condition_json in conditions {
+        // Try to parse as a condition group
+        if let Ok(group) = serde_json::from_value::<ConditionGroup>(condition_json.clone()) {
+            if !evaluate_condition_group(&group, context)? {
+                return Ok(false);
             }
-            LogicalOperator::Or => {
-                // At least one condition must be true
-                for condition in &group.conditions {
-                    if self.evaluate_single_condition(condition, context)? {
-                        return Ok(true);
-                    }
-                }
-                for nested_group in &group.groups {
-                    if self.evaluate_condition_group(nested_group, context)? {
-                        return Ok(true);
-                    }
-                }
-                Ok(false)
+        } else if let Ok(condition) = serde_json::from_value::<Condition>(condition_json.clone()) {
+            // Try to parse as a single condition
+            if !evaluate_single_condition(&condition, context)? {
+                return Ok(false);
             }
-            LogicalOperator::Not => {
-                // Invert the result (only first condition is considered)
-                if let Some(condition) = group.conditions.first() {
-                    Ok(!self.evaluate_single_condition(condition, context)?)
-                } else if let Some(nested_group) = group.groups.first() {
-                    Ok(!self.evaluate_condition_group(nested_group, context)?)
-                } else {
-                    Ok(true)
-                }
-            }
-        }
-    }
-
-    /// Evaluate a single condition.
-    fn evaluate_single_condition(
-        &self,
-        condition: &Condition,
-        context: &ActionContext,
-    ) -> Result<bool, WorkflowError> {
-        // Get the field value from context
-        let field_value = self.get_field_value(&condition.field, context);
-
-        match condition.operator {
-            ComparisonOperator::IsNull => Ok(field_value.is_null()),
-            ComparisonOperator::IsNotNull => Ok(!field_value.is_null()),
-            _ => {
-                let compare_value = condition.value.as_ref().ok_or_else(|| {
-                    WorkflowError::ConditionError(format!(
-                        "Missing comparison value for field: {}",
-                        condition.field
-                    ))
-                })?;
-
-                match condition.operator {
-                    ComparisonOperator::Eq => Ok(field_value == *compare_value),
-                    ComparisonOperator::Ne => Ok(field_value != *compare_value),
-                    ComparisonOperator::Gt => {
-                        Ok(self.compare_numeric(&field_value, compare_value)? > 0)
-                    }
-                    ComparisonOperator::Gte => {
-                        Ok(self.compare_numeric(&field_value, compare_value)? >= 0)
-                    }
-                    ComparisonOperator::Lt => {
-                        Ok(self.compare_numeric(&field_value, compare_value)? < 0)
-                    }
-                    ComparisonOperator::Lte => {
-                        Ok(self.compare_numeric(&field_value, compare_value)? <= 0)
-                    }
-                    ComparisonOperator::Contains => {
-                        let field_string = field_value.to_string();
-                        let compare_string = compare_value.to_string();
-                        let field_str = field_value.as_str().unwrap_or(&field_string);
-                        let compare_str = compare_value.as_str().unwrap_or(&compare_string);
-                        Ok(field_str.contains(compare_str))
-                    }
-                    ComparisonOperator::StartsWith => {
-                        let field_string = field_value.to_string();
-                        let compare_string = compare_value.to_string();
-                        let field_str = field_value.as_str().unwrap_or(&field_string);
-                        let compare_str = compare_value.as_str().unwrap_or(&compare_string);
-                        Ok(field_str.starts_with(compare_str))
-                    }
-                    ComparisonOperator::EndsWith => {
-                        let field_string = field_value.to_string();
-                        let compare_string = compare_value.to_string();
-                        let field_str = field_value.as_str().unwrap_or(&field_string);
-                        let compare_str = compare_value.as_str().unwrap_or(&compare_string);
-                        Ok(field_str.ends_with(compare_str))
-                    }
-                    ComparisonOperator::In => {
-                        if let Some(arr) = compare_value.as_array() {
-                            Ok(arr.contains(&field_value))
-                        } else {
-                            Ok(false)
-                        }
-                    }
-                    ComparisonOperator::NotIn => {
-                        if let Some(arr) = compare_value.as_array() {
-                            Ok(!arr.contains(&field_value))
-                        } else {
-                            Ok(true)
-                        }
-                    }
-                    ComparisonOperator::Matches => {
-                        let field_string = field_value.to_string();
-                        let field_str = field_value.as_str().unwrap_or(&field_string);
-                        let pattern = compare_value.as_str().ok_or_else(|| {
-                            WorkflowError::ConditionError(
-                                "Regex pattern must be a string".to_string(),
-                            )
-                        })?;
-                        let regex = regex::Regex::new(pattern).map_err(|e| {
-                            WorkflowError::ConditionError(format!("Invalid regex: {}", e))
-                        })?;
-                        Ok(regex.is_match(field_str))
-                    }
-                    _ => Ok(false),
-                }
-            }
-        }
-    }
-
-    /// Get a field value from the context using dot notation.
-    fn get_field_value(&self, field: &str, context: &ActionContext) -> serde_json::Value {
-        let parts: Vec<&str> = field.split('.').collect();
-        if parts.is_empty() {
-            return serde_json::Value::Null;
-        }
-
-        let root = parts[0];
-        let remaining = &parts[1..];
-
-        let root_value = if root == "trigger" {
-            context.trigger_event.clone()
-        } else if root.starts_with("action_") {
-            context
-                .context
-                .get(root)
-                .cloned()
-                .unwrap_or(serde_json::Value::Null)
         } else {
-            // Direct field access on trigger event
-            return self.traverse_json(&context.trigger_event, &parts);
-        };
-
-        self.traverse_json(&root_value, remaining)
-    }
-
-    /// Traverse a JSON value using field path.
-    fn traverse_json(&self, value: &serde_json::Value, path: &[&str]) -> serde_json::Value {
-        let mut current = value.clone();
-        for key in path {
-            current = match current {
-                serde_json::Value::Object(map) => {
-                    map.get(*key).cloned().unwrap_or(serde_json::Value::Null)
-                }
-                serde_json::Value::Array(arr) => {
-                    if let Ok(index) = key.parse::<usize>() {
-                        arr.get(index).cloned().unwrap_or(serde_json::Value::Null)
-                    } else {
-                        serde_json::Value::Null
-                    }
-                }
-                _ => return serde_json::Value::Null,
-            };
+            // Fail closed: an unparseable stored condition must NOT be treated
+            // as satisfied. Halt execution so the corrupt rule is surfaced
+            // rather than letting the workflow's actions run unguarded.
+            tracing::error!(
+                condition = ?condition_json,
+                "Unparseable workflow condition; failing closed"
+            );
+            return Err(WorkflowError::ConditionError(format!(
+                "unparseable condition (matches neither ConditionGroup nor Condition): {condition_json}"
+            )));
         }
-        current
     }
 
-    /// Compare two JSON values as numbers.
-    fn compare_numeric(
-        &self,
-        a: &serde_json::Value,
-        b: &serde_json::Value,
-    ) -> Result<i32, WorkflowError> {
-        let a_num = a
-            .as_f64()
-            .or_else(|| a.as_str().and_then(|s| s.parse::<f64>().ok()));
+    Ok(true)
+}
 
-        let b_num = b
-            .as_f64()
-            .or_else(|| b.as_str().and_then(|s| s.parse::<f64>().ok()));
-
-        match (a_num, b_num) {
-            (Some(a), Some(b)) => {
-                if (a - b).abs() < f64::EPSILON {
-                    Ok(0)
-                } else if a > b {
-                    Ok(1)
-                } else {
-                    Ok(-1)
+/// Evaluate a condition group.
+///
+/// Semantics per [`LogicalOperator`]:
+/// - `And` — every condition **and** every nested group must hold.
+/// - `Or`  — at least one condition or nested group must hold.
+/// - `Not` — the negation of the group's conjunction (De Morgan): the group
+///   is satisfied iff **not all** of its conditions/nested groups hold. Every
+///   child participates — earlier revisions negated only the first condition
+///   and silently dropped the rest, so a multi-condition `Not` gave wrong
+///   results.
+fn evaluate_condition_group(
+    group: &ConditionGroup,
+    context: &ActionContext,
+) -> Result<bool, WorkflowError> {
+    match group.operator {
+        LogicalOperator::And => evaluate_conjunction(group, context),
+        LogicalOperator::Or => {
+            // At least one condition must be true
+            for condition in &group.conditions {
+                if evaluate_single_condition(condition, context)? {
+                    return Ok(true);
                 }
             }
-            _ => Err(WorkflowError::ConditionError(format!(
-                "Cannot compare non-numeric values: {:?} and {:?}",
-                a, b
-            ))),
+            for nested_group in &group.groups {
+                if evaluate_condition_group(nested_group, context)? {
+                    return Ok(true);
+                }
+            }
+            Ok(false)
         }
+        LogicalOperator::Not => {
+            // NOT negates the conjunction of the ENTIRE group, so all
+            // conditions and nested groups are considered — not just the
+            // first. NOT(a AND b AND …) by De Morgan.
+            Ok(!evaluate_conjunction(group, context)?)
+        }
+    }
+}
+
+/// Evaluate every condition and nested group of `group` as a conjunction (AND).
+///
+/// Returns `true` only when all conditions and all nested groups hold. An empty
+/// group is vacuously `true`. Shared by the `And` and `Not` operators.
+fn evaluate_conjunction(
+    group: &ConditionGroup,
+    context: &ActionContext,
+) -> Result<bool, WorkflowError> {
+    for condition in &group.conditions {
+        if !evaluate_single_condition(condition, context)? {
+            return Ok(false);
+        }
+    }
+    for nested_group in &group.groups {
+        if !evaluate_condition_group(nested_group, context)? {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+/// Evaluate a single condition.
+fn evaluate_single_condition(
+    condition: &Condition,
+    context: &ActionContext,
+) -> Result<bool, WorkflowError> {
+    // Get the field value from context
+    let field_value = get_field_value(&condition.field, context);
+
+    match condition.operator {
+        ComparisonOperator::IsNull => Ok(field_value.is_null()),
+        ComparisonOperator::IsNotNull => Ok(!field_value.is_null()),
+        _ => {
+            let compare_value = condition.value.as_ref().ok_or_else(|| {
+                WorkflowError::ConditionError(format!(
+                    "Missing comparison value for field: {}",
+                    condition.field
+                ))
+            })?;
+
+            match condition.operator {
+                ComparisonOperator::Eq => Ok(values_equivalent(&field_value, compare_value)),
+                ComparisonOperator::Ne => Ok(!values_equivalent(&field_value, compare_value)),
+                ComparisonOperator::Gt => Ok(compare_numeric(&field_value, compare_value)? > 0),
+                ComparisonOperator::Gte => Ok(compare_numeric(&field_value, compare_value)? >= 0),
+                ComparisonOperator::Lt => Ok(compare_numeric(&field_value, compare_value)? < 0),
+                ComparisonOperator::Lte => Ok(compare_numeric(&field_value, compare_value)? <= 0),
+                ComparisonOperator::Contains => {
+                    let field_string = field_value.to_string();
+                    let compare_string = compare_value.to_string();
+                    let field_str = field_value.as_str().unwrap_or(&field_string);
+                    let compare_str = compare_value.as_str().unwrap_or(&compare_string);
+                    Ok(field_str.contains(compare_str))
+                }
+                ComparisonOperator::StartsWith => {
+                    let field_string = field_value.to_string();
+                    let compare_string = compare_value.to_string();
+                    let field_str = field_value.as_str().unwrap_or(&field_string);
+                    let compare_str = compare_value.as_str().unwrap_or(&compare_string);
+                    Ok(field_str.starts_with(compare_str))
+                }
+                ComparisonOperator::EndsWith => {
+                    let field_string = field_value.to_string();
+                    let compare_string = compare_value.to_string();
+                    let field_str = field_value.as_str().unwrap_or(&field_string);
+                    let compare_str = compare_value.as_str().unwrap_or(&compare_string);
+                    Ok(field_str.ends_with(compare_str))
+                }
+                ComparisonOperator::In => {
+                    if let Some(arr) = compare_value.as_array() {
+                        Ok(arr.iter().any(|item| values_equivalent(&field_value, item)))
+                    } else {
+                        Ok(false)
+                    }
+                }
+                ComparisonOperator::NotIn => {
+                    if let Some(arr) = compare_value.as_array() {
+                        Ok(!arr.iter().any(|item| values_equivalent(&field_value, item)))
+                    } else {
+                        Ok(true)
+                    }
+                }
+                ComparisonOperator::Matches => {
+                    let field_string = field_value.to_string();
+                    let field_str = field_value.as_str().unwrap_or(&field_string);
+                    let pattern = compare_value.as_str().ok_or_else(|| {
+                        WorkflowError::ConditionError("Regex pattern must be a string".to_string())
+                    })?;
+                    let regex = regex::Regex::new(pattern).map_err(|e| {
+                        WorkflowError::ConditionError(format!("Invalid regex: {}", e))
+                    })?;
+                    Ok(regex.is_match(field_str))
+                }
+                _ => Ok(false),
+            }
+        }
+    }
+}
+
+/// Get a field value from the context using dot notation.
+fn get_field_value(field: &str, context: &ActionContext) -> serde_json::Value {
+    let parts: Vec<&str> = field.split('.').collect();
+    if parts.is_empty() {
+        return serde_json::Value::Null;
+    }
+
+    let root = parts[0];
+    let remaining = &parts[1..];
+
+    let root_value = if root == "trigger" {
+        context.trigger_event.clone()
+    } else if root.starts_with("action_") {
+        context
+            .context
+            .get(root)
+            .cloned()
+            .unwrap_or(serde_json::Value::Null)
+    } else {
+        // Direct field access on trigger event
+        return traverse_json(&context.trigger_event, &parts);
+    };
+
+    traverse_json(&root_value, remaining)
+}
+
+/// Traverse a JSON value using field path.
+fn traverse_json(value: &serde_json::Value, path: &[&str]) -> serde_json::Value {
+    let mut current = value.clone();
+    for key in path {
+        current = match current {
+            serde_json::Value::Object(map) => {
+                map.get(*key).cloned().unwrap_or(serde_json::Value::Null)
+            }
+            serde_json::Value::Array(arr) => {
+                if let Ok(index) = key.parse::<usize>() {
+                    arr.get(index).cloned().unwrap_or(serde_json::Value::Null)
+                } else {
+                    serde_json::Value::Null
+                }
+            }
+            _ => return serde_json::Value::Null,
+        };
+    }
+    current
+}
+
+/// Coerce a JSON value to a **finite** `f64` for numeric comparison.
+///
+/// Accepts JSON numbers directly and numeric strings via `parse`. Non-finite
+/// results (`NaN`, `±inf`) are rejected: Rust's `f64::from_str` happily parses
+/// `"NaN"`, `"inf"`, `"infinity"`, `"-inf"` (case-insensitively), so a
+/// stored/attacker-supplied string field of `"NaN"` would otherwise slip past
+/// the numeric comparators and produce a bogus, non-antisymmetric ordering
+/// (e.g. `"NaN" < 100` == `true` while `"NaN" > 100` == `false`). Returning
+/// `None` here routes such values to `compare_numeric`'s "uncomparable" error
+/// branch, matching how any other non-numeric string is already handled.
+fn coerce_finite_f64(v: &serde_json::Value) -> Option<f64> {
+    v.as_f64()
+        .or_else(|| v.as_str().and_then(|s| s.parse::<f64>().ok()))
+        .filter(|n| n.is_finite())
+}
+
+/// Equivalence used by the `Eq`/`Ne`/`In`/`NotIn` operators.
+///
+/// The ordering operators (`Gt`/`Lt`/…) coerce via [`compare_numeric`] and the
+/// substring operators (`Contains`/`StartsWith`/`EndsWith`) coerce via
+/// `to_string`, but equality historically used raw JSON structural equality
+/// (`==`). That mismatch meant a trigger emitting a JSON number (`12`) would
+/// silently fail an `eq` condition configured as a string (`"12"`), and vice
+/// versa — the two sides never met even though every other operator would have
+/// coerced them. This helper closes that gap by mirroring the same coercion:
+///
+/// 1. exact structural equality (also covers arrays/objects/bool/null), then
+/// 2. finite-numeric coercion — the same normalization as the ordering
+///    operators (`12` matches `"12"`, `1.0` matches `"1"`), then
+/// 3. scalar string normalization — the same `to_string`/`as_str` view the
+///    substring operators use, so a bool/number configured as its text form
+///    still matches.
+///
+/// Non-finite numeric strings (`"NaN"`, `"inf"`) are intentionally *not* forced
+/// equal via the numeric path — [`coerce_finite_f64`] rejects them — so they
+/// only match under exact structural/string equality, consistent with how the
+/// ordering operators treat them as uncomparable.
+fn values_equivalent(a: &serde_json::Value, b: &serde_json::Value) -> bool {
+    // 1. Exact JSON structural equality (arrays, objects, null, bool, and
+    //    same-typed scalars).
+    if a == b {
+        return true;
+    }
+    // 2. Numeric coercion — same normalization as the ordering operators.
+    if let (Some(a_num), Some(b_num)) = (coerce_finite_f64(a), coerce_finite_f64(b)) {
+        return (a_num - b_num).abs() < f64::EPSILON;
+    }
+    // 3. Scalar string normalization — same `to_string`/`as_str` view the
+    //    substring operators use. Restricted to scalars so we never coerce a
+    //    container (array/object) or null into a text match.
+    let is_scalar = |v: &serde_json::Value| v.is_number() || v.is_string() || v.is_boolean();
+    if is_scalar(a) && is_scalar(b) {
+        let a_string = a.to_string();
+        let b_string = b.to_string();
+        let a_str = a.as_str().unwrap_or(&a_string);
+        let b_str = b.as_str().unwrap_or(&b_string);
+        return a_str == b_str;
+    }
+    false
+}
+
+/// Compare two JSON values as numbers.
+fn compare_numeric(a: &serde_json::Value, b: &serde_json::Value) -> Result<i32, WorkflowError> {
+    let a_num = coerce_finite_f64(a);
+    let b_num = coerce_finite_f64(b);
+
+    match (a_num, b_num) {
+        (Some(a), Some(b)) => {
+            if (a - b).abs() < f64::EPSILON {
+                Ok(0)
+            } else if a > b {
+                Ok(1)
+            } else {
+                Ok(-1)
+            }
+        }
+        _ => Err(WorkflowError::ConditionError(format!(
+            "Cannot compare non-numeric values: {:?} and {:?}",
+            a, b
+        ))),
     }
 }
 
@@ -994,6 +1138,388 @@ mod tests {
         let group: ConditionGroup = serde_json::from_value(group_json).unwrap();
         assert_eq!(group.operator, LogicalOperator::And);
         assert_eq!(group.conditions.len(), 2);
+    }
+
+    // ------------------------------------------------------------------
+    // compare_numeric: numeric-string coercion must reject non-finite
+    // values (NaN / ±inf) rather than yielding a bogus ordering.
+    //
+    // Regression: `"NaN".parse::<f64>()` (and `"inf"`, `"infinity"`, …)
+    // succeeds in Rust, so an event payload carrying a stringified "NaN"/
+    // "inf" previously slipped past the numeric comparators — e.g.
+    // `"NaN" < 100` returned `Ok(-1)` and `"NaN" > 100` returned `Ok(false)`,
+    // a non-antisymmetric ordering — instead of being treated as
+    // uncomparable like every other non-numeric string.
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn test_compare_numeric_plain_numbers() {
+        assert_eq!(
+            compare_numeric(&serde_json::json!(5), &serde_json::json!(3)).unwrap(),
+            1
+        );
+        assert_eq!(
+            compare_numeric(&serde_json::json!(3), &serde_json::json!(5)).unwrap(),
+            -1
+        );
+        assert_eq!(
+            compare_numeric(&serde_json::json!(5), &serde_json::json!(5)).unwrap(),
+            0
+        );
+    }
+
+    #[test]
+    fn test_compare_numeric_numeric_strings_still_coerce() {
+        // Legitimate numeric strings must still compare as numbers.
+        assert_eq!(
+            compare_numeric(&serde_json::json!("5"), &serde_json::json!(3)).unwrap(),
+            1
+        );
+        assert_eq!(
+            compare_numeric(&serde_json::json!("2.5"), &serde_json::json!("2.5")).unwrap(),
+            0
+        );
+    }
+
+    #[test]
+    fn test_compare_numeric_rejects_non_finite_strings() {
+        // "NaN"/"inf"/"infinity" must be uncomparable, on either side.
+        for s in ["NaN", "nan", "inf", "-inf", "infinity", "+inf"] {
+            let left = compare_numeric(&serde_json::json!(s), &serde_json::json!(100));
+            assert!(
+                matches!(left, Err(WorkflowError::ConditionError(_))),
+                "compare_numeric({s:?}, 100) must be uncomparable, got {left:?}"
+            );
+            let right = compare_numeric(&serde_json::json!(100), &serde_json::json!(s));
+            assert!(
+                matches!(right, Err(WorkflowError::ConditionError(_))),
+                "compare_numeric(100, {s:?}) must be uncomparable, got {right:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_compare_numeric_rejects_plain_non_numeric() {
+        assert!(matches!(
+            compare_numeric(&serde_json::json!("open"), &serde_json::json!(5)),
+            Err(WorkflowError::ConditionError(_))
+        ));
+    }
+
+    // ------------------------------------------------------------------
+    // NOT operator: must consider the FULL condition set, not just the
+    // first child. Regression for the bug where evaluate_condition_group
+    // negated only `conditions.first()` and dropped the rest.
+    // ------------------------------------------------------------------
+
+    fn eval_ctx(trigger_event: serde_json::Value) -> ActionContext {
+        ActionContext::new(
+            Uuid::new_v4(),
+            Uuid::new_v4(),
+            Uuid::new_v4(),
+            trigger_event,
+        )
+    }
+
+    #[test]
+    fn test_not_group_considers_all_conditions() {
+        // First condition TRUE, second FALSE → conjunction is FALSE →
+        // NOT(false) = TRUE. The old first-only path returned NOT(true) =
+        // FALSE, silently ignoring the second condition.
+        let ctx = eval_ctx(serde_json::json!({ "amount": 50, "status": "open" }));
+        let group: ConditionGroup = serde_json::from_value(serde_json::json!({
+            "operator": "not",
+            "conditions": [
+                { "field": "trigger.amount", "operator": "gt", "value": 10 },      // true
+                { "field": "trigger.status", "operator": "eq", "value": "closed" } // false
+            ]
+        }))
+        .unwrap();
+
+        assert!(
+            evaluate_condition_group(&group, &ctx).unwrap(),
+            "NOT(true AND false) must be true; the second condition must not be dropped"
+        );
+    }
+
+    #[test]
+    fn test_not_group_all_true_is_false() {
+        // Every condition TRUE → conjunction TRUE → NOT(true) = FALSE.
+        let ctx = eval_ctx(serde_json::json!({ "amount": 50, "status": "open" }));
+        let group: ConditionGroup = serde_json::from_value(serde_json::json!({
+            "operator": "not",
+            "conditions": [
+                { "field": "trigger.amount", "operator": "gt", "value": 10 },    // true
+                { "field": "trigger.status", "operator": "eq", "value": "open" } // true
+            ]
+        }))
+        .unwrap();
+
+        assert!(!evaluate_condition_group(&group, &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_not_group_does_not_drop_nested_groups() {
+        // A TRUE condition plus a FALSE nested group → conjunction FALSE →
+        // NOT(false) = TRUE. Confirms nested groups also participate in NOT.
+        let ctx = eval_ctx(serde_json::json!({ "amount": 50, "status": "open" }));
+        let group: ConditionGroup = serde_json::from_value(serde_json::json!({
+            "operator": "not",
+            "conditions": [
+                { "field": "trigger.amount", "operator": "gt", "value": 10 } // true
+            ],
+            "groups": [
+                {
+                    "operator": "and",
+                    "conditions": [
+                        { "field": "trigger.status", "operator": "eq", "value": "closed" } // false
+                    ]
+                }
+            ]
+        }))
+        .unwrap();
+
+        assert!(evaluate_condition_group(&group, &ctx).unwrap());
+    }
+
+    // ------------------------------------------------------------------
+    // evaluate_conditions_list: fail-closed on unparseable stored condition
+    // (issue #2768). An unknown/corrupt condition must halt execution with
+    // a ConditionError instead of being silently skipped (which would let
+    // the workflow's actions run unguarded). Empty / valid condition lists
+    // must keep their existing "satisfied" behavior.
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn test_unparseable_condition_fails_closed() {
+        let ctx = eval_ctx(serde_json::json!({ "amount": 50, "status": "open" }));
+        // Matches neither ConditionGroup (no `operator`) nor Condition
+        // (no `field`/`operator`) — a corrupt/unknown stored rule.
+        let garbage = serde_json::json!({ "totally": "unknown", "shape": [1, 2, 3] });
+
+        let result = evaluate_conditions_list(&[garbage], &ctx);
+        assert!(
+            matches!(result, Err(WorkflowError::ConditionError(_))),
+            "unparseable condition must fail closed, got {result:?}"
+        );
+    }
+
+    #[test]
+    fn test_unparseable_condition_after_valid_one_still_fails_closed() {
+        // A valid, satisfied condition followed by a garbage one must still
+        // fail closed — the corrupt rule cannot be skipped just because an
+        // earlier condition passed.
+        let ctx = eval_ctx(serde_json::json!({ "amount": 50, "status": "open" }));
+        let valid = serde_json::json!({
+            "field": "trigger.amount", "operator": "gt", "value": 10
+        });
+        let garbage = serde_json::json!(["not", "an", "object"]);
+
+        let result = evaluate_conditions_list(&[valid, garbage], &ctx);
+        assert!(
+            matches!(result, Err(WorkflowError::ConditionError(_))),
+            "unparseable condition must fail closed even after a valid one, got {result:?}"
+        );
+    }
+
+    #[test]
+    fn test_empty_conditions_still_satisfied() {
+        // No conditions ⇒ the workflow always runs. Fail-closed applies only
+        // to *unparseable* conditions, never to an empty list.
+        let ctx = eval_ctx(serde_json::json!({ "amount": 50 }));
+        assert!(
+            evaluate_conditions_list(&[], &ctx).unwrap(),
+            "empty condition list must be satisfied"
+        );
+    }
+
+    #[test]
+    fn test_valid_conditions_still_evaluate() {
+        // Sanity: well-formed conditions keep evaluating normally after the
+        // fail-closed change — a satisfied single condition ⇒ true, an
+        // unsatisfied one ⇒ false.
+        let ctx = eval_ctx(serde_json::json!({ "amount": 50, "status": "open" }));
+
+        let satisfied = serde_json::json!({
+            "field": "trigger.amount", "operator": "gt", "value": 10
+        });
+        assert!(evaluate_conditions_list(&[satisfied], &ctx).unwrap());
+
+        let unsatisfied = serde_json::json!({
+            "field": "trigger.amount", "operator": "lt", "value": 10
+        });
+        assert!(!evaluate_conditions_list(&[unsatisfied], &ctx).unwrap());
+    }
+
+    // ------------------------------------------------------------------
+    // Batch isolation: a single workflow's corrupt/unparseable stored
+    // condition must fail closed for THAT workflow only (skip it) without
+    // aborting the whole event batch. Previously `handle_event` did
+    // `self.evaluate_conditions(..)?`, so one `ConditionError` propagated out
+    // of the loop and silently disabled every *other* automation on the event.
+    // `classify_condition_outcome` is the per-workflow decision seam that makes
+    // the error isolatable: it yields `Error` (skip, continue the batch)
+    // instead of a `?`-propagated abort.
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn test_condition_error_is_isolated_not_propagated() {
+        let ctx = eval_ctx(serde_json::json!({ "amount": 50, "status": "open" }));
+
+        // Corrupt stored rule → classify as Error (fail-closed skip for this
+        // workflow), NOT a batch-aborting propagation.
+        let garbage = serde_json::json!({ "totally": "unknown", "shape": [1, 2, 3] });
+        assert!(
+            matches!(
+                classify_condition_outcome(&[garbage], &ctx),
+                ConditionOutcome::Error(_)
+            ),
+            "unparseable condition must be isolated as Error (skip this workflow), not abort the batch"
+        );
+
+        // A satisfied condition → Run.
+        let satisfied = serde_json::json!({
+            "field": "trigger.amount", "operator": "gt", "value": 10
+        });
+        assert!(matches!(
+            classify_condition_outcome(&[satisfied], &ctx),
+            ConditionOutcome::Run
+        ));
+
+        // An unsatisfied condition → NotMet (clean skip, still not an Error).
+        let unsatisfied = serde_json::json!({
+            "field": "trigger.amount", "operator": "lt", "value": 10
+        });
+        assert!(matches!(
+            classify_condition_outcome(&[unsatisfied], &ctx),
+            ConditionOutcome::NotMet
+        ));
+
+        // A valid, satisfied condition followed by a corrupt one must still
+        // isolate as Error — fail-closed for this workflow (the corrupt rule
+        // cannot be skipped just because an earlier one passed), but the batch
+        // keeps going for the remaining workflows.
+        let valid = serde_json::json!({
+            "field": "trigger.amount", "operator": "gt", "value": 10
+        });
+        let garbage2 = serde_json::json!(["not", "an", "object"]);
+        assert!(matches!(
+            classify_condition_outcome(&[valid, garbage2], &ctx),
+            ConditionOutcome::Error(_)
+        ));
+    }
+
+    // ------------------------------------------------------------------
+    // Eq/Ne/In/NotIn type coercion: a numeric trigger value must match a
+    // string-configured condition (and vice versa), consistent with the
+    // coercion the ordering / substring operators already apply. Regression
+    // for the silent condition mismatch where `eq` used raw JSON structural
+    // equality (`12` != `"12"`).
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn test_eq_number_trigger_matches_string_condition() {
+        // Trigger emits a JSON number; condition is configured as a string.
+        // Previously `12 == "12"` was false → the workflow silently skipped.
+        let ctx = eval_ctx(serde_json::json!({ "amount": 12 }));
+        let condition = serde_json::json!({
+            "field": "trigger.amount", "operator": "eq", "value": "12"
+        });
+        assert!(
+            evaluate_conditions_list(&[condition], &ctx).unwrap(),
+            "numeric trigger value must match a string-configured eq condition"
+        );
+    }
+
+    #[test]
+    fn test_eq_string_trigger_matches_number_condition() {
+        // The reverse: trigger emits a string, condition is a number.
+        let ctx = eval_ctx(serde_json::json!({ "amount": "12" }));
+        let condition = serde_json::json!({
+            "field": "trigger.amount", "operator": "eq", "value": 12
+        });
+        assert!(
+            evaluate_conditions_list(&[condition], &ctx).unwrap(),
+            "string trigger value must match a number-configured eq condition"
+        );
+    }
+
+    #[test]
+    fn test_ne_respects_coercion() {
+        // `12 != "12"` must now be FALSE (they are equivalent), and a genuine
+        // mismatch must still be TRUE.
+        let ctx = eval_ctx(serde_json::json!({ "amount": 12 }));
+        let equivalent = serde_json::json!({
+            "field": "trigger.amount", "operator": "ne", "value": "12"
+        });
+        assert!(
+            !evaluate_conditions_list(&[equivalent], &ctx).unwrap(),
+            "ne must be false for coercion-equivalent values"
+        );
+        let different = serde_json::json!({
+            "field": "trigger.amount", "operator": "ne", "value": "13"
+        });
+        assert!(
+            evaluate_conditions_list(&[different], &ctx).unwrap(),
+            "ne must be true for genuinely different values"
+        );
+    }
+
+    #[test]
+    fn test_in_notin_coerce_across_types() {
+        // Numeric trigger value against a list of string-configured members.
+        let ctx = eval_ctx(serde_json::json!({ "amount": 12 }));
+        let in_cond = serde_json::json!({
+            "field": "trigger.amount", "operator": "in", "value": ["10", "12", "14"]
+        });
+        assert!(
+            evaluate_conditions_list(&[in_cond], &ctx).unwrap(),
+            "in must coerce a numeric trigger against string-typed list members"
+        );
+        let not_in_cond = serde_json::json!({
+            "field": "trigger.amount", "operator": "not_in", "value": ["10", "12", "14"]
+        });
+        assert!(
+            !evaluate_conditions_list(&[not_in_cond], &ctx).unwrap(),
+            "not_in must be false when the coerced value is present in the list"
+        );
+    }
+
+    #[test]
+    fn test_values_equivalent_unit() {
+        // Numeric/string coercion both directions.
+        assert!(values_equivalent(
+            &serde_json::json!(12),
+            &serde_json::json!("12")
+        ));
+        assert!(values_equivalent(
+            &serde_json::json!("12"),
+            &serde_json::json!(12)
+        ));
+        // Float vs integer-looking string.
+        assert!(values_equivalent(
+            &serde_json::json!(1.0),
+            &serde_json::json!("1")
+        ));
+        // Exact structural equality still holds.
+        assert!(values_equivalent(
+            &serde_json::json!("open"),
+            &serde_json::json!("open")
+        ));
+        // Genuine mismatches remain unequal.
+        assert!(!values_equivalent(
+            &serde_json::json!(12),
+            &serde_json::json!("13")
+        ));
+        assert!(!values_equivalent(
+            &serde_json::json!("open"),
+            &serde_json::json!("closed")
+        ));
+        // Non-finite numeric strings are not forced equal to a number.
+        assert!(!values_equivalent(
+            &serde_json::json!("NaN"),
+            &serde_json::json!(0)
+        ));
     }
 
     #[test]

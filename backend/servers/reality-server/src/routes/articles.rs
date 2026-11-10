@@ -356,7 +356,7 @@ pub async fn list_comments(
         .limit
         .unwrap_or(DEFAULT_COMMENTS_LIMIT)
         .clamp(1, MAX_COMMENTS_LIMIT);
-    let offset = query.offset.unwrap_or(0).max(0);
+    let offset = crate::util::clamp_offset(query.offset);
 
     let mut conn = state
         .acquire_public_conn()
@@ -453,7 +453,7 @@ pub async fn create_comment(
             "Comment body cannot be empty".to_string(),
         ));
     }
-    if data.body.len() > MAX_COMMENT_BODY_LEN {
+    if data.body.chars().count() > MAX_COMMENT_BODY_LEN {
         return Err((
             axum::http::StatusCode::BAD_REQUEST,
             format!(

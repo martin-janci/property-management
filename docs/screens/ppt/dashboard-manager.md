@@ -32,7 +32,19 @@ Note: existing `ppt/dashboard` screen-map is mobile-only — this is the web-onl
 ## Notes
 
 ### Specific (recent)
+- 2026-10-05 — `/dashboard/manager` is now role-gated (PR #3002, closes #2998): wrapped in `<ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>` (single source of truth in `routes/shared.ts`, same as `isManagerRole()` and the Home "Open dashboard" CTA). An authenticated non-manager (resident/owner/tenant) now hits the `ProtectedRoute` Access-Denied surface instead of the manager shell; unauthenticated → `/login`. This tightens access on the existing route — `buildStatus`/`apiStatus` unchanged. The bare `/dashboard` redirect also became role-aware (`DashboardIndexRedirect`): managers → here, everyone else → `/dashboard/resident`.
 - 2026-05-18 — audit: stub created from `frontend/apps/ppt-web/src/App.tsx:392`.
 
 ## Agent Log
+
+- 2026-11-04 — agent: r3-nav-roles — quick stats now read live counts (new faults from /faults/statistics, active votes, unread messages); the hard-coded tiles and the "pending approvals" tile (no data source) are gone (audit r3 #16).
+- 2026-10-05 — agent: reconciled screen-map with PR #3002 — `/dashboard/manager` role-gated to MANAGER_ROLES (resident lands on Access-Denied, not the manager shell); access-control only, no build/api status change.
 - 2026-05-18 — agent: created stub for unmapped route.
+
+## Agent Log
+
+<!-- newest entries on top -->
+
+- 2026-11-09 — agent: gap-audit-r7 — Action Queue now composed from real endpoints for managers (new faults + pending facility bookings, inline booking approve); no longer hidden outside DEV mock.
+
+- 2026-11-04 — agent: action queue: View → /voting/:id (was /votes/:id); budget approvals/person-months render without a View link (no route); widget hidden outside DEV mock mode (no /api/v1/action-queue) instead of a false 'all caught up'

@@ -1,0 +1,34 @@
+[
+  {
+    "id": "code-review-reality-server-agent-review-self-review",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "reality-server",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/reality-server/src/routes/agent_reviews.rs:190-269 — create_review (POST /api/v1/realtors/{id}/reviews) lets an authenticated portal principal post a rating+body for realtor_profiles.id = {id}. reviewer_user_id is correctly server-derived from principal.user_id (agent_reviews.rs:263) and rating is bounds-checked 1..=5 (agent_reviews.rs:196-201), but there is NO guard that principal.user_id != the reviewed realtor's owner user_id.",
+      "The realtor's own owner is realtor_profiles.user_id (joined as rp.user_id at agent_reviews.rs:230 for the verified_buyer check), so a realtor who owns profile {id} can call this endpoint on their own profile and insert a self-authored 5-star review. The ON CONFLICT (realtor_id, reviewer_user_id) DO NOTHING (agent_reviews.rs:257) only blocks a second review by the same reviewer — it does not block the first self-review.",
+      "Impact: public realtor rating / avg_rating (ReviewsResponse.avg_rating, agent_reviews.rs:55) is a trust signal shown to consumers browsing agents on the reality portal. A realtor can inflate their own public average by self-reviewing — reputation manipulation on a public-facing surface. verified_buyer would compute false for the self-review, but avg_rating still moves.",
+      "Fix: before the INSERT, reject when principal.user_id equals the realtor's owner — e.g. SELECT user_id FROM realtor_profiles WHERE id = $1 and return 400/403 if it equals principal.user_id (fold into the existing realtor_exists probe at agent_reviews.rs:209-214)."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-reality-server-agent-review-body-unbounded",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "reality-server",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/reality-server/src/routes/agent_reviews.rs:45-49 — CreateReviewRequest { rating: i32, body: Option<String> }. In create_review the rating is validated (196-201) but body is passed straight into the INSERT (agent_reviews.rs:265, .bind(&data.body)) with no length or content validation — grep for body.len/body.chars/validate/MAX_ in agent_reviews.rs returns zero hits.",
+      "The listing-report sibling on the same server DOES bound its free-text attachment URLs (reports.rs:182-188 validate_image_or_link_url, <= 2048 chars), so unbounded review bodies are an inconsistency in input hardening across the public write surfaces of reality-server.",
+      "Impact: an authenticated portal user can store an arbitrarily large review body (bounded only by the request body limit, if any), which is then served verbatim in ReviewsResponse to every consumer viewing the realtor — storage-amplification / payload-bloat abuse vector on a public read path. Lower severity than the self-review gap because it requires a valid session and does not cross a tenant boundary.",
+      "Fix: add a max-length check on data.body (mirror the reports.rs pattern, e.g. return 400 when body exceeds a sane cap such as 2000-4000 chars) before the INSERT at agent_reviews.rs:252."
+    ],
+    "expert": "rust"
+  }
+]

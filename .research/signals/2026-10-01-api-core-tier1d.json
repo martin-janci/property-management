@@ -1,0 +1,52 @@
+{
+  "generated": "2026-10-01",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (backlog starved: claimable=8 < floor=36, all 8 open items are mobile-native/KMP which is structurally unlandable in the cloud runner)",
+  "segment_reviewed": "api-core",
+  "selection_reason": "CLOUD-LANDABLE BIAS + LEAST-RECENTLY-MINED. Task directed a bias toward a non-mobile-native (cloud-landable) segment. No CHURN_FILES were handed in from Phase 1 (demand-driven refill, automated sources empty). review_cursor oldest-first is reality-web (2026-08-29) but reality-web is the single most-recently-mined segment in the Tier-1d signal history (2026-09-26, 09-27, 09-30) and already carries 2 OPEN reality-web code-review-finding items in backlog.json (import-create-mutation-silent-fail, syncschedule-save-silent-fail) — low marginal value. Among the cloud-landable segments, api-core is the least-recently-mined (last Tier-1d 2026-09-25; cf. api-handlers 09-27, reality-server 09-26, ppt-web-core 09-27, ppt-web-ui 09-26) and has 0 OPEN code-review-finding items in backlog.json -> not saturated -> selected. No api-core Tier-1d run exists today.",
+  "experts_used": [
+    "rust"
+  ],
+  "landable_in_cloud": true,
+  "landability_note": "Both findings are backend-only Rust edits confined to a single api-server service file each, no migration and no client/openapi regen. Each is verifiable via `cargo build -p api-server` plus a focused unit test. (1) auth.rs: validate the three env-overridable Argon2 cost params (or map the Params::new error to a logged fallback-to-defaults) instead of .expect(); testable by setting PPT_ARGON2_T_COST=0 and asserting AuthService::new() does not panic. (2) workflow_executor.rs: scope the condition-evaluation error to the single workflow (log + continue, matching the existing execute_workflow Err arm) instead of `?`-propagating out of the whole batch; testable with two workflows subscribed to one event where the first has a malformed condition JSON and asserting the second still executes. Independently landable by separate implementers.",
+  "findings_count": 2,
+  "static_only": true,
+  "note": "Static analysis only (no compilation, no test execution) per skill. Segment root is backend/servers/api-server/src/ excl. routes/ (the skill's segment-map path backend/api-server/src/handlers/ is stale for this repo layout; the real api-core surface is services/ ~20.7k LOC + the top-level client_ip/state/preflight/observability files). This is a mature, heavily-hardened segment and most patterns scanned came up CLEAN this pass (recorded so future rotations don't re-mine speculatively): (a) UNWRAP/EXPECT crash paths — essentially all non-test unwrap/expect are inside #[cfg(test)] mods (totp/jwt/voice_commands/scheduler) or infallible const-string parses (Decimal::from_str(\"0.5\").unwrap, threshold weights); totp.rs:153 .expect(\"OS rng failed\") is a documented fail-closed nonce invariant, not a defect. (b) CWE-209 raw-DB-error leak — the api-handlers class does NOT reproduce here: services wrap errors as AppError::Database(e.to_string()) but the accounting/matches route maps AppError -> bare StatusCode (full error logged server-side, only a status returned to the client), and there is no blanket `impl IntoResponse for AppError` that would serialize self.to_string() into a response body. (c) SSRF — actions/api_call.rs is exemplary: connect-time SsrfGuardResolver, redirect-hop validation via common::url_validation, same-origin credential-header stripping. (d) Stripe webhook verify_signature uses constant-time ct_eq, an overflow-proof timestamp-skew helper, and fails closed. (e) Outbound email HTML (email.rs) consistently html_escape()s / ammonia::clean()s user-controlled fields. The two findings below are the genuine net-new defects: a mislabelled .expect() over env-overridable Argon2 params that can panic the server at boot, and a batch-abort error-propagation asymmetry in the workflow trigger loop. Neither has an existing backlog finding (grep of backlog.json for argon2/auth-service/workflow-condition returned nothing).",
+  "signals": [
+    {
+      "id": "code-review-api-core-auth-argon2-params-expect-panic",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-01 api-core)",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/auth.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/auth.rs:49-62 — AuthService::new() reads three Argon2id cost parameters from the environment (PPT_ARGON2_M_COST_KIB, PPT_ARGON2_T_COST, PPT_ARGON2_P_COST), each via `std::env::var(..).ok().and_then(|s| s.parse().ok()).unwrap_or(<default>)`, then builds `Params::new(m_cost, t_cost, p_cost, None).expect(\"argon2 params hard-coded above the library minimum, cannot fail\")`. The .expect() message is factually wrong: three of the four inputs are operator-supplied env values, NOT hard-coded. argon2::Params::new validates its arguments and returns Err for out-of-range combinations (e.g. t_cost == 0, p_cost == 0, or m_cost < 8*p_cost). A single malformed-but-parseable env value — e.g. PPT_ARGON2_T_COST=0 (parses fine as u32, then rejected by Params::new) — makes .expect() panic.",
+        "Reachability: AuthService::new() is invoked while constructing AppState at api-server startup, so a bad env value does not degrade gracefully — it panics the whole server on boot (an operator-misconfiguration DoS). Note the asymmetry with the sibling cost reads, which already tolerate a *garbage* value by falling back to the default via `.parse().ok()`; a *parseable-but-out-of-range* value defeats that same intent and crashes instead. The reassuring .expect() comment actively discourages a future reader from adding the missing bound check.",
+        "Net-new: grep of .research/backlog.json for argon2 / auth-service / params-new returned no existing finding. Landable backend-only remedy (confined to auth.rs): either clamp each env value to the Argon2 valid range before Params::new, or match on the Params::new Err and `tracing::warn!` + fall back to the documented defaults (m=65536,t=3,p=1) instead of .expect(). Verifiable via `cargo build -p api-server` + a unit test that sets PPT_ARGON2_T_COST=0 and asserts AuthService::new() returns a working hasher rather than panicking. Confidence medium: the panic is confirmed by static read of the Params::new contract; exact production env values are deployment-dependent, so reachability is operator-triggered rather than user-triggered."
+      ]
+    },
+    {
+      "id": "code-review-api-core-workflow-condition-err-aborts-batch",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-01 api-core)",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/workflow_executor.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs — trigger_workflows_for_event loads every workflow subscribed to an event and iterates them. Inside the loop (around :359) it evaluates each workflow's stored conditions with `if !self.evaluate_conditions(&conditions, &context)? { continue; }`. The `?` propagates a WorkflowError (evaluate_conditions returns Err(WorkflowError::ConditionError) at :523 when a workflow's stored condition JSON parses as neither a ConditionGroup nor a Condition) out of the ENTIRE batch function, aborting processing of every remaining subscribed workflow for that event.",
+        "This is an error-handling asymmetry: the actual workflow execution a few lines down (:392-403) deliberately catches a per-workflow Err and `tracing::warn!`s + continues, so one failing execution never blocks the others — but the condition-evaluation step does the opposite and lets one tenant's malformed-condition workflow suppress all other legitimate workflows triggered by the same event. The conditions come from persisted `workflow.conditions.0`, so a single bad config written at any time silently degrades automation for unrelated workflows on every matching event thereafter.",
+        "Net-new: grep of .research/backlog.json for workflow-condition / evaluate-conditions / aborts-batch returned no existing finding. Landable backend-only remedy (confined to workflow_executor.rs): treat a ConditionError like the execute_workflow Err arm — log it against the offending workflow_id and `continue` to the next workflow instead of `?`-propagating, so a malformed condition is isolated to its own workflow. Verifiable via `cargo build -p api-server` + a unit test with two workflows on one event where the first has a malformed condition JSON, asserting the second still runs. Confidence medium: the propagation path is confirmed by static read; whether a malformed stored condition exists in production is data-dependent, so the trigger is latent rather than runtime-confirmed."
+      ]
+    }
+  ]
+}

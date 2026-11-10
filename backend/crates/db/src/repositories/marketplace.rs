@@ -783,9 +783,15 @@ impl MarketplaceRepository {
         id: Uuid,
         quote_id: Uuid,
     ) -> Result<Option<RequestForQuote>, SqlxError> {
-        // Get quote info
-        let quote = self.find_quote_by_id(quote_id).await?;
-        let provider_id = quote.map(|q| q.provider_id);
+        // Get quote info. Defense-in-depth against IDOR: the awarded quote must
+        // belong to THIS rfq. A quote from a different RFQ (possibly another
+        // org) must never be awardable, even if a caller reaches this method
+        // without the route-level ownership check. Return `Ok(None)` (surfaced
+        // as 404) rather than awarding a foreign quote.
+        let provider_id = match self.find_quote_by_id(quote_id).await? {
+            Some(q) if q.rfq_id == id => Some(q.provider_id),
+            _ => return Ok(None),
+        };
 
         // Update RFQ
         let rfq = sqlx::query_as::<_, RequestForQuote>(
@@ -1083,6 +1089,33 @@ impl MarketplaceRepository {
         .bind(id)
         .bind(provider_id)
         .fetch_optional(&self.pool)
+        .await
+    }
+
+    /// True when `provider_id` holds a live (not declined) invitation for
+    /// `rfq_id` and the RFQ is still open for quotes. Quotes are
+    /// invitation-only, so `submit_quote` must reject anything else.
+    pub async fn provider_can_quote(
+        &self,
+        rfq_id: Uuid,
+        provider_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        sqlx::query_scalar(
+            r#"
+            SELECT EXISTS(
+                SELECT 1
+                  FROM rfq_invitations i
+                  JOIN rfqs r ON r.id = i.rfq_id
+                 WHERE i.rfq_id = $1
+                   AND i.provider_id = $2
+                   AND COALESCE(i.declined, FALSE) = FALSE
+                   AND r.status NOT IN ('awarded', 'cancelled', 'expired')
+            )
+            "#,
+        )
+        .bind(rfq_id)
+        .bind(provider_id)
+        .fetch_one(&self.pool)
         .await
     }
 

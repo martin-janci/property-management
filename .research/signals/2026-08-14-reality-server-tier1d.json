@@ -1,0 +1,34 @@
+[
+  {
+    "id": "code-review-reality-server-review-body-no-cap",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "reality-server",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/reality-server/src/routes/agent_reviews.rs:190-266 (create_review) validates only `data.rating` (1..=5 at :196) and then binds the free-text `data.body` straight into the `INSERT INTO realtor_reviews (... body ...)` at :255-266 with NO length validation anywhere. CreateReviewRequest.body is `Option<String>` (agent_reviews.rs:47) and there is no MAX_* constant or `.len()` check on it in the whole file (confirmed: grep for body length/cap on this file returns nothing).",
+      "This is an authenticated-but-public portal write endpoint (RequestPrincipal, principal_kind = 'public'), i.e. exactly the abuse surface the sibling reality-server endpoints explicitly cap. reports.rs caps its free text at MAX_REPORT_DESCRIPTION_LEN = 5000 (reports.rs:27, enforced at :161) and inquiries.rs caps its message at MAX_INQUIRY_MESSAGE_LEN = 5000 (inquiries.rs:27, enforced at :54 and :446). agent_reviews.rs is the outlier that skipped the same H6 input-hygiene control.",
+      "Impact (H6 abuse / resource): a portal user can POST an arbitrarily large review body (bounded only by the global request-body limit, not by an application cap), bloating `realtor_reviews` rows and every log line / response that echoes the review body — the exact unbounded-string abuse the neighboring endpoints were hardened against. The review body is also surfaced back verbatim in list_reviews (:115,:157), amplifying the bloat on every reader.",
+      "Landable backend-only fix (self-contained, no API/schema change): add a `const MAX_REVIEW_BODY_LEN: usize = 5000;` and reject over-length `data.body` with 400 before the insert, mirroring reports.rs:161 / inquiries.rs:54. Optionally also reject an all-whitespace/empty body to match the input-hygiene posture of the sibling handlers."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-reality-server-url-validator-dup",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "reality-server",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "refactor",
+    "evidence": [
+      "backend/servers/reality-server/src/routes/reports.rs:35 and backend/servers/reality-server/src/routes/users.rs:28 each define a byte-for-byte identical private `fn validate_image_or_link_url(s: &str) -> Result<(), String>` (len <= MAX_URL_LEN 2048, then allow only http/https scheme to block stored-XSS `javascript:`/`data:`/`file:` URLs that later render in `<img src>` / `<a href>`).",
+      "Both copies carry an in-code TODO acknowledging the duplication: reports.rs:33-34 (\"once the auth-hardening branch lands a shared `url_validator` module this should be swapped for the import\") and users.rs:24-25 (\"swap for a shared `url_validator` module once it lands on main\"). The shared module already exists and is used elsewhere: backend/servers/reality-server/src/util/url_validator.rs (validate_fetch_url) is imported by agency_imports.rs:7.",
+      "Risk (security-relevant drift): the two copies are an XSS mitigation. If one file's copy is hardened (e.g. also stripping control chars, tightening the scheme list, or normalizing) and the other is not, the profile-image path (users.rs, `profile_image_url` -> `<img src>`) or the report-attachment path (reports.rs) silently regresses. Duplicated security predicates diverge under maintenance.",
+      "Landable refactor (reality-server only): extract a single scheme/length validator into util/url_validator.rs (alongside the existing validate_fetch_url) and replace both inline copies with the shared import, deleting the two TODOs. No behavior change intended; add one shared unit test covering the reject cases (javascript:/data:/file:, over-length)."
+    ],
+    "expert": "rust"
+  }
+]

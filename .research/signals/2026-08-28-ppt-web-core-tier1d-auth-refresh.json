@@ -1,0 +1,74 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-28T00:00:00Z",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "oldest-unreviewed",
+  "selection_detail": "Standalone Tier-1d demand-driven refill run (buffer starved: claimable=6, all mobile-native/KMP-gated and AGP-egress-blocked in the cloud runner, so a NON-mobile-native segment was required to produce landable vectors). The dispatcher directive additionally excluded api-core and reality-web (the two prior Tier-1d runs today). REVIEW_CURSOR oldest entries were api-core (2026-08-21) tied with ppt-web-core (2026-08-21); api-core is excluded by directive, so the tie resolves to ppt-web-core. Saturation check passed: zero open code-review-sourced backlog items in any segment. A 2026-08-28-ppt-web-core-tier1d.json already existed today with TWO findings (refresh-token-localstorage = token storage/XSS surface in AuthContext.tsx; ws-jwt-in-url = bearer token in the WS URL in lib/websocket.ts), so the marginal value here is net-new distinct findings in an UNCOVERED sub-concern. This supplement reviews the RUNTIME TOKEN-REFRESH LIFECYCLE (lib/api.ts axios interceptors + contexts/AuthContext.tsx session/refresh wiring) — a different failure mode (session liveness / silent-refresh) than the prior storage/transport findings, in entirely distinct code paths and with distinct ids. Static-only Frontend review: grep sweep of hooks/, lib/, contexts/, routes/, App.tsx, main.tsx for console.*, `as any`/`as unknown as`, non-null assertions, and useQuery/useMutation error handling (all clean or gated: usePerformanceMetrics console.* is import.meta.env.DEV-gated; websocket.ts `this.socket!.send` is isConnected()-guarded + try/catch; no `as any` in the segment), then traced the full JWT lifecycle from configureApiClient() wiring through the 401 response-interceptor branch, the cold-boot initializeAuth() branch, and the refreshToken()/refreshTokenInternal() queued-refresh path to establish reachability.",
+  "experts_used": ["frontend"],
+  "findings_count": 3,
+  "note": "ppt-web-core (Frontend) — runtime token-refresh lifecycle. All three land in frontend/apps/ppt-web/src/{lib/api.ts,contexts/AuthContext.tsx}, fully landable in the cloud runner (no mobile-native/AGP dependency). Distinct from the two earlier 2026-08-28 ppt-web-core signals (token-in-localStorage + jwt-in-ws-url).",
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-no-runtime-token-refresh",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-28 ppt-web-core auth-refresh)",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "evidence": [
+        "There is NO runtime silent-refresh: once the short-lived access token expires mid-session, every subsequent request 401s indefinitely with no recovery and no redirect to login. Three facts combine to produce this. (1) contexts/AuthContext.tsx:337 wires the hand-rolled axios client with `configureApiClient({ getToken: getAccessToken })` — passing getToken ONLY, and NO `onUnauthorized` callback.",
+        "(2) lib/api.ts:211-214 the response interceptor's 401 branch is `if (error.response?.status === 401 && onUnauthorizedCallback) { onUnauthorizedCallback(); }` — but onUnauthorizedCallback is undefined (never configured), so the 401 branch is a no-op. Nothing triggers a refresh, and nothing redirects the user to login.",
+        "(3) lib/api.ts:75 `RETRYABLE_STATUS_CODES = [408, 429, 500, 502, 503, 504]` does NOT include 401, and the interceptor has no 401->refresh->replay logic, so an expired-token 401 is transformed and rejected straight to the caller.",
+        "The refresh machinery exists but is effectively dead at runtime: AuthContext.tsx exposes `refreshToken()` (context value, line 82 / ~455) with a proper concurrent-refresh queue (isRefreshing/refreshPromise), yet a repo-wide grep for a runtime caller of `refreshToken()` finds only the interface declaration and a comment — no component, hook, or interceptor invokes it. `refreshTokenInternal` only runs from the cold-boot initializeAuth() effect. So the queued-refresh path never fires during a live session.",
+        "Impact: any authenticated session that outlives the access-token TTL breaks — WebSocketContext (getToken via authRef.current.accessToken) also re-auths with the stale token and burns its reconnect budget to max-retries-exceeded. The user is neither silently refreshed nor bounced to login; they just see requests fail. Fix: either pass an `onUnauthorized` to configureApiClient that runs refreshTokenInternal() and replays the original request on success (falling back to logout+redirect on failure), or add a 401 branch in the response interceptor that awaits a single queued refresh then retries once. Landable as a self-contained change to lib/api.ts + the configureApiClient call site; IG3 can assert via a test that a 401 followed by a successful refresh replays the request with the rotated token.",
+        "Confidence medium: the missing onUnauthorized wiring, the no-op 401 branch, 401 absent from the retryable set, and the absence of any runtime refreshToken() caller are all confirmed by static read + repo-wide grep of the ppt-web-core segment; 'medium' not 'high' because the generated @ppt/api-client (outside this segment, wired via setTokenProvider) was not inspected for its own 401 interceptor — the hand-rolled axios instance used directly by feature hooks (sentiment, predictive-maintenance, ...) definitely has this gap."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-init-no-exp-check",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-28 ppt-web-core auth-refresh)",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "evidence": [
+        "contexts/AuthContext.tsx:412-421 cold-boot init trusts a stored access token with NO expiry validation, despite a comment that claims otherwise. The branch reads `if (storedUser && accessToken) { // Validate the token is not expired (basic check) ... setUser(storedUser); }` — the comment promises an expiry check but the code performs none; it simply re-authenticates from the stored user.",
+        "Because `storedUser && accessToken` is truthy whenever a (possibly expired) token is present, control never falls through to the `else if (refreshTokenValue)` cold-boot-refresh branch (line 416) that would have rotated the token via refreshTokenInternal(). So on any cold boot after the access-token TTL has elapsed, the app comes up 'authenticated' on a dead token.",
+        "The helper to fix this already exists in the same file: `decodeJwtPayload` (line 221) best-effort decodes the unverified JWT payload; checking `claims.exp * 1000 < Date.now()` (with a small skew) is enough to route an expired-but-refreshable session through the refresh branch instead of trusting the stale token.",
+        "Impact compounds with the no-runtime-refresh finding: the stale token from init is used on the first authenticated request, 401s, and (per that finding) is neither refreshed nor redirected — the user lands on a broken authenticated shell after every cold boot where the access token expired while the refresh token is still valid. Fix: in the `storedUser && accessToken` branch, decode exp; if expired (or within a skew window) and a refresh token exists, fall through to refreshTokenInternal() rather than setUser(storedUser). Self-contained to AuthContext.tsx; IG3 can assert init with an expired stored access token + valid refresh token ends up calling the refresh path.",
+        "Confidence medium: the comment/behavior mismatch, the truthy-guard that skips the refresh branch, and the availability of decodeJwtPayload are confirmed by static read; 'medium' because exact production token TTLs (docs/api/README.md) were not cross-checked, though the gap is TTL-independent."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-retry-ignores-retry-after",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-28 ppt-web-core auth-refresh)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts",
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts"
+      ],
+      "evidence": [
+        "lib/api.ts auto-retries 429 (and 503) but ignores the server's Retry-After header. The retry loop (lib/api.ts:216-243) computes its wait purely from `calculateRetryDelay(retryCount)` (INITIAL_RETRY_DELAY * 2**retryCount + jitter) and never reads `error.response.headers['retry-after']`. For a 429 rate-limit response this replays before the server-specified window, which prolongs / worsens the rate-limiting rather than backing off as instructed.",
+        "The parser already exists and is used elsewhere: lib/errorHandler.ts:335 `parseRetryAfter(value)` fully handles both the delta-seconds and the HTTP-date forms of Retry-After, and errorHandler.ts:148-160 already surfaces `retryAfterSeconds` on the mapped error. So the retry loop in api.ts is the only place that drops this signal — an inconsistency within the same lib/ directory.",
+        "Fix: in the api.ts retry branch, when a Retry-After header is present prefer it over exponential backoff, i.e. `const delay = parseRetryAfter(error.response?.headers?.['retry-after']) ?? calculateRetryDelay(retryCount)` (clamped to a sane max). Landable as a few lines in lib/api.ts reusing the existing parseRetryAfter (export it from errorHandler.ts); IG3 can assert a 429 with `Retry-After: 5` waits ~5s rather than the ~1s exponential first step.",
+        "Confidence medium: the absence of any Retry-After read in the api.ts retry loop and the presence of a complete parseRetryAfter in errorHandler.ts are confirmed by static read + grep; low severity because it only degrades behavior under active rate-limiting, not on the common path."
+      ]
+    }
+  ]
+}

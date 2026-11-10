@@ -43,6 +43,50 @@ pub struct UpdateAttendanceData {
     pub notes: Option<String>,
 }
 
+/// Dispute sub-resource tables that carry a `dispute_id` foreign key, used by
+/// [`DisputeRepository::ensure_child_in_dispute_in_org`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DisputeChild {
+    Resolution,
+    ActionItem,
+    Escalation,
+    Session,
+}
+
+impl DisputeChild {
+    /// Static ownership query per table: the child row must belong to the
+    /// given dispute (`$2`) and that dispute to the given org (`$3`).
+    fn ownership_sql(self) -> &'static str {
+        match self {
+            Self::Resolution => {
+                "SELECT c.id FROM dispute_resolutions c JOIN disputes d ON d.id = c.dispute_id \
+                 WHERE c.id = $1 AND c.dispute_id = $2 AND d.organization_id = $3"
+            }
+            Self::ActionItem => {
+                "SELECT c.id FROM action_items c JOIN disputes d ON d.id = c.dispute_id \
+                 WHERE c.id = $1 AND c.dispute_id = $2 AND d.organization_id = $3"
+            }
+            Self::Escalation => {
+                "SELECT c.id FROM escalations c JOIN disputes d ON d.id = c.dispute_id \
+                 WHERE c.id = $1 AND c.dispute_id = $2 AND d.organization_id = $3"
+            }
+            Self::Session => {
+                "SELECT c.id FROM mediation_sessions c JOIN disputes d ON d.id = c.dispute_id \
+                 WHERE c.id = $1 AND c.dispute_id = $2 AND d.organization_id = $3"
+            }
+        }
+    }
+
+    fn label(self) -> &'static str {
+        match self {
+            Self::Resolution => "Resolution",
+            Self::ActionItem => "Action item",
+            Self::Escalation => "Escalation",
+            Self::Session => "Session",
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct DisputeRepository {
     pool: DbPool,
@@ -539,7 +583,11 @@ impl DisputeRepository {
     /// share this guard so a caller in org A cannot reach org B's rows by
     /// guessing a `dispute_id`. Mapping "no such row in this org" to `NotFound`
     /// keeps the response from becoming a cross-tenant existence oracle.
-    async fn ensure_dispute_in_org(&self, dispute_id: Uuid, org_id: Uuid) -> Result<(), AppError> {
+    pub async fn ensure_dispute_in_org(
+        &self,
+        dispute_id: Uuid,
+        org_id: Uuid,
+    ) -> Result<(), AppError> {
         let found: Option<Uuid> =
             sqlx::query_scalar("SELECT id FROM disputes WHERE id = $1 AND organization_id = $2")
                 .bind(dispute_id)
@@ -550,6 +598,38 @@ impl DisputeRepository {
 
         if found.is_none() {
             return Err(AppError::NotFound("Dispute not found".to_string()));
+        }
+        Ok(())
+    }
+
+    /// Verify that a dispute sub-resource row (`child_id` in `kind`'s table)
+    /// belongs to `dispute_id` AND that the dispute belongs to `org_id`.
+    ///
+    /// The resolution / action-item / escalation / mediation-session routes
+    /// take both the dispute id and the child id from the path and the repo
+    /// methods address the child by its own id only, so without this guard a
+    /// caller could pair one of their own disputes with a foreign child id.
+    /// Like [`Self::ensure_dispute_in_org`], every mismatch (absent, wrong
+    /// dispute, wrong org) is `NotFound` so the answer is not an existence
+    /// oracle.
+    pub async fn ensure_child_in_dispute_in_org(
+        &self,
+        kind: DisputeChild,
+        child_id: Uuid,
+        dispute_id: Uuid,
+        org_id: Uuid,
+    ) -> Result<(), AppError> {
+        let sql = kind.ownership_sql();
+        let found: Option<Uuid> = sqlx::query_scalar(sql)
+            .bind(child_id)
+            .bind(dispute_id)
+            .bind(org_id)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(|e| AppError::Database(e.to_string()))?;
+
+        if found.is_none() {
+            return Err(AppError::NotFound(format!("{} not found", kind.label())));
         }
         Ok(())
     }
@@ -692,6 +772,36 @@ impl DisputeRepository {
             None,
         )
         .await?;
+
+        // Access-audit event (who added evidence to which dispute) on the
+        // platform-admin `audit_logs` stream — the same append-only,
+        // AuditRead-gated table the platform_admin support flow reads (see
+        // `membership.rs`, which emits `org_member_added`/`org_member_removed`
+        // the same way). Mirrors the support-data audit-emission pattern so a
+        // support engineer can trace evidence attachment across tenants. A
+        // generic `resource_created` action over `resource_type =
+        // 'dispute_evidence'` keeps this in the existing enum — no new
+        // `audit_action` value / migration is required.
+        sqlx::query(
+            r#"
+            INSERT INTO audit_logs (
+                user_id, action, resource_type, resource_id, org_id, details
+            )
+            VALUES ($1, 'resource_created'::audit_action, 'dispute_evidence', $2, $3, $4)
+            "#,
+        )
+        .bind(req.uploaded_by)
+        .bind(evidence.id)
+        .bind(org_id)
+        .bind(serde_json::json!({
+            "dispute_id":        req.dispute_id,
+            "evidence_id":       evidence.id,
+            "filename":          req.filename,
+            "original_filename": req.original_filename,
+        }))
+        .execute(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
 
         Ok(evidence)
     }

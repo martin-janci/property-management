@@ -1,0 +1,219 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-11-09",
+      "type": "lag_warning",
+      "source": "state.json last_run_iso=2026-11-06T14:58:01Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "routine last ran 2026-11-06 14:58 UTC — ~64h lag (> 36h threshold); cloud cron likely mis-fired or paused for ~2.5 days",
+      "rerun_note": "re-emit on same-day rerun: score already applied in morning commit (G4 non-cumulative carve-out)"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx",
+      "type": "churn-hotspot",
+      "source": "commits in window 2026-11-06..2026-11-09",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "RegistryPage.tsx touched 3x across PRs #3354, #3355, #3359 (registry feature consolidation + i18n + toasts) — concentrated change surface, but feature-focused not regression",
+      "churn": 3,
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
+      "type": "churn-hotspot",
+      "source": "commits in window 2026-11-06..2026-11-09",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "en.json touched 3x across PRs #3351, #3355, #3359 for registry i18n; ties in sk/de/cs/hu/pl at churn=3 — localised feature churn",
+      "churn": 3,
+      "files": [
+        "frontend/apps/ppt-web/messages/en.json"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/sk.json",
+      "type": "churn-hotspot",
+      "source": "commits in window 2026-11-06..2026-11-09",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "sk.json touched 3x in registry i18n; prior hotspot last_seen=2026-11-04 (runs_seen=1→2 next run would qualify for repeated-churn)",
+      "churn": 3,
+      "files": [
+        "frontend/apps/ppt-web/messages/sk.json"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-budgets-db-error-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/budgets.rs:468,505,542,583,624,694,735,776,1105,1142,1179,1236,1270,1307,1339,1367,1404,1441,1481,1521,1561,1598,1630,1667,1704,1741 — 26 handler error branches send Json(ErrorResponse::new(\"DB_ERROR\", e.to_string())) to clients, leaking raw sqlx error text (SQL fragments, table/column names, DB host info in connection errors). Same class as existing reality-server leak plan but on api-server; blast-radius is the Property Management manager API."
+      ],
+      "file": "backend/servers/api-server/src/routes/budgets.rs",
+      "line": 468,
+      "severity": "high",
+      "expert": "security",
+      "rerun_note": "re-emit on same-day rerun: score already applied in morning commit (G4 non-cumulative carve-out)"
+    },
+    {
+      "id": "code-review-api-handlers-messaging-db-error-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/messaging.rs:302,313,374,… — 33 handler error branches send raw sqlx e.to_string() to clients (Json(ErrorResponse::new(\"DB_ERROR\", e.to_string()))). Highest leak concentration in the api-server tree; same remediation shape as budgets.rs sibling finding — log the detail, return a static message."
+      ],
+      "file": "backend/servers/api-server/src/routes/messaging.rs",
+      "line": 302,
+      "severity": "medium",
+      "expert": "security",
+      "rerun_note": "re-emit on same-day rerun: score already applied in morning commit (G4 non-cumulative carve-out)"
+    },
+    {
+      "id": "buffer-refill-blocked-quarantined-pr-3294-2026-11-09",
+      "type": "stalled-review",
+      "source": "PR #3294",
+      "score_delta": 0,
+      "evidence": "PR #3294 (code-review-ppt-web-core-refresh-token-localstorage) has been in DRAFT state 5 days (opened 2026-11-04 14:53Z). The sole cloud-landable security fast-track candidate (score=2 conf=high) stem-collides with its quarantined assignments.json row, so Phase 3 cannot promote a duplicate plan. Buffer refill is structurally blocked until a human marks the draft ready-for-review or closes it; dispatcher assignments show status=quarantined.",
+      "confidence": "high",
+      "candidate_vector": "process"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — none of this run's signals matched the Phase 5 allowlist (allowlist: fixme-in-merged-code, dep-update-noise, screen-map-drift, screen-map-orphan, stalled-review)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches # <today>",
+      "observed": "brief exists, header matches",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "last_pr_seen 3359->3370, last_commit_sha advanced, seen_signals grew 689->690, stats.runs 116->117",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog.json ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative re-emit score_delta==0 for ids already in seen_signals",
+      "observed": "lag-warning + 2 code-review-finding re-emits zeroed; churn-hotspot carve-out kept original delta; new buffer-refill-blocked signal is fresh",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap <=8; open items >14d decayed or dropped this run",
+      "observed": "max score 6; 2 overdue KMP items decayed this run (http-client-no-timeout 2->1; my-listings-pagination-cap 1->0 dropped)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "every new plan has adversarial pass annotation",
+      "observed": "0 new plans this run (vacuously true)",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans, metadata+headings complete, files exist",
+      "observed": "0 new plans this run (vacuously true)",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged paths only under .research/",
+      "observed": "0 outside",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in staged diff (excluding baseline docs)",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen from backlog.json",
+      "observed": "diff empty",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief Phases-that-failed matches state cursors",
+      "observed": "no phases failed; all cursors advanced",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior plan slug present in plans/ or plans/_archive/",
+      "observed": "19 slugs, 0 missing",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "_archive grows (count >= HEAD)",
+      "observed": "now=24 head=22 (+2 from this run)",
+      "expected": "ge"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "diff empty",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps + idempotency",
+      "observed": "0 actions this run; no history entries touched",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid; pm_cursor in 0..7; coverage_cursor sane",
+      "observed": "pm_cursor.next_index=4 unchanged (Phase 1.6 did not run this rerun); coverage_cursor.next_index=1; GC7 vacuous pass",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token in staged added lines",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}

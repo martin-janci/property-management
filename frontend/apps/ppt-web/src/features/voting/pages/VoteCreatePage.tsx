@@ -12,20 +12,22 @@ import {
   publishVote,
   type QuestionType,
   type QuorumType,
-  useBuildings,
   useCreateVote,
+  useDeleteVote,
 } from '@ppt/api-client';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../../../components';
-import { QUESTION_TYPE_LABELS, QUORUM_TYPE_LABELS } from '../types';
+import { VotingBuildingSelect } from '../components';
+import { useVotingBuilding } from '../hooks';
+import { QUESTION_TYPE_LABEL_KEYS, QUORUM_TYPE_LABEL_KEYS } from '../types';
 
 interface VoteCreatePageProps {
   onCreated: (voteId: string) => void;
   onCancel: () => void;
 }
 
-interface DraftQuestion {
+export interface DraftQuestion {
   key: string;
   question_text: string;
   question_type: QuestionType;
@@ -41,6 +43,8 @@ function newId(): string {
   return crypto.randomUUID();
 }
 
+// Persisted option payload for yes/no questions (stored server-side as data,
+// not rendered as UI copy — the ballot renders its own localized Yes/No).
 function yesNoOptions() {
   return [
     { id: 'yes', text: 'Yes' },
@@ -58,12 +62,36 @@ function blankQuestion(): DraftQuestion {
   };
 }
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Build the `POST /voting/{id}/questions` body for a draft question. The
+ * server parses every option id as a UUID and rejects anything else with 422
+ * (the yes/no options carry the local ids "yes"/"no"), so non-UUID ids are
+ * replaced with fresh UUIDs here.
+ */
+export function toQuestionPayload(q: DraftQuestion, index: number): AddQuestionRequest {
+  return {
+    question_text: q.question_text.trim(),
+    question_type: q.question_type,
+    options: q.options
+      .filter((o) => o.text.trim() || q.question_type === 'yes_no')
+      .map((o, idx) => ({
+        id: UUID_PATTERN.test(o.id) ? o.id : newId(),
+        text: o.text.trim(),
+        order: idx,
+      })),
+    display_order: index,
+    is_required: q.is_required,
+  };
+}
+
 export function VoteCreatePage({ onCreated, onCancel }: VoteCreatePageProps) {
   const { t } = useTranslation();
   const { showToast } = useToast();
-  const { data: buildingsData } = useBuildings();
-  const buildingId = buildingsData?.items?.[0]?.id ?? '';
+  const { buildingId, options: buildingOptions, setBuildingId } = useVotingBuilding();
   const createVote = useCreateVote();
+  const discardDraft = useDeleteVote();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -122,16 +150,16 @@ export function VoteCreatePage({ onCreated, onCancel }: VoteCreatePageProps) {
   };
 
   const validate = (): string | null => {
-    if (!buildingId) return 'No building is available for this account.';
-    if (!title.trim()) return 'A title is required.';
-    if (!endAt) return 'A closing date is required.';
-    if (questions.length === 0) return 'Add at least one question.';
+    if (!buildingId) return t('voting.create.errors.noBuilding');
+    if (!title.trim()) return t('voting.create.errors.titleRequired');
+    if (!endAt) return t('voting.create.errors.endAtRequired');
+    if (questions.length === 0) return t('voting.create.errors.noQuestions');
     for (const q of questions) {
-      if (!q.question_text.trim()) return 'Every question needs text.';
+      if (!q.question_text.trim()) return t('voting.create.errors.questionTextRequired');
       if (q.question_type !== 'yes_no') {
         const filled = q.options.filter((o) => o.text.trim());
         if (filled.length < 2)
-          return `"${q.question_text || 'Question'}" needs at least 2 options.`;
+          return t('voting.create.errors.minOptions', { question: q.question_text });
       }
     }
     return null;
@@ -140,7 +168,7 @@ export function VoteCreatePage({ onCreated, onCancel }: VoteCreatePageProps) {
   const handleSubmit = async (publish: boolean) => {
     const err = validate();
     if (err) {
-      showToast({ type: 'error', title: 'Check the form', message: err });
+      showToast({ type: 'error', title: t('voting.create.checkForm'), message: err });
       return;
     }
     setSubmitting(true);
@@ -154,18 +182,14 @@ export function VoteCreatePage({ onCreated, onCancel }: VoteCreatePageProps) {
         quorum_percentage: quorumPercentage ? Number(quorumPercentage) : null,
       });
 
-      for (let i = 0; i < questions.length; i++) {
-        const q = questions[i];
-        const payload: AddQuestionRequest = {
-          question_text: q.question_text.trim(),
-          question_type: q.question_type,
-          options: q.options
-            .filter((o) => o.text.trim() || q.question_type === 'yes_no')
-            .map((o, idx) => ({ id: o.id, text: o.text.trim(), order: idx })),
-          display_order: i,
-          is_required: q.is_required,
-        };
-        await addQuestion(vote.id, payload);
+      try {
+        for (let i = 0; i < questions.length; i++) {
+          await addQuestion(vote.id, toQuestionPayload(questions[i], i));
+        }
+      } catch (questionError) {
+        // Don't leave an empty draft behind when a question is rejected.
+        await discardDraft.mutateAsync(vote.id).catch(() => undefined);
+        throw questionError;
       }
 
       if (publish) {
@@ -174,15 +198,15 @@ export function VoteCreatePage({ onCreated, onCancel }: VoteCreatePageProps) {
 
       showToast({
         type: 'success',
-        title: publish ? 'Vote published' : 'Draft saved',
-        message: publish ? 'Eligible owners can now vote.' : 'You can publish it later.',
+        title: publish ? t('voting.detail.publishDone') : t('voting.create.draftSaved'),
+        message: publish ? t('voting.create.publishedBody') : t('voting.create.draftSavedBody'),
       });
       onCreated(vote.id);
     } catch (e) {
       showToast({
         type: 'error',
-        title: 'Failed to create vote',
-        message: e instanceof Error ? e.message : 'Unexpected error',
+        title: t('voting.create.createFailed'),
+        message: e instanceof Error ? e.message : t('voting.detail.unexpectedError'),
       });
     } finally {
       setSubmitting(false);
@@ -199,31 +223,41 @@ export function VoteCreatePage({ onCreated, onCancel }: VoteCreatePageProps) {
         onClick={onCancel}
         className="text-sm text-gray-500 hover:text-gray-700"
       >
-        ← Back to voting
+        ← {t('voting.detail.backToVoting')}
       </button>
-      <h1 className="mt-2 text-2xl font-bold text-gray-900">Create vote</h1>
+      <h1 className="mt-2 text-2xl font-bold text-gray-900">{t('voting.create.title')}</h1>
+
+      {buildingOptions.length > 0 && (
+        <section className="mt-6 rounded-lg bg-white p-5 shadow">
+          <VotingBuildingSelect
+            options={buildingOptions}
+            value={buildingId}
+            onChange={setBuildingId}
+          />
+        </section>
+      )}
 
       {/* Topic */}
       <section className="mt-6 rounded-lg bg-white p-5 shadow">
-        <h2 className="text-sm font-semibold text-gray-900">Topic</h2>
+        <h2 className="text-sm font-semibold text-gray-900">{t('voting.create.topic')}</h2>
         <label className="mt-3 block text-sm font-medium text-gray-700">
-          Title
+          {t('voting.create.titleLabel')}
           <input
             className={inputClass}
             value={title}
             maxLength={120}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. Approve façade renovation budget"
+            placeholder={t('voting.create.titlePlaceholder')}
           />
         </label>
         <label className="mt-3 block text-sm font-medium text-gray-700">
-          Description
+          {t('voting.detail.description')}
           <textarea
             className={inputClass}
             rows={4}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Context owners need to make an informed decision"
+            placeholder={t('voting.create.descriptionPlaceholder')}
           />
         </label>
       </section>
@@ -231,13 +265,13 @@ export function VoteCreatePage({ onCreated, onCancel }: VoteCreatePageProps) {
       {/* Questions */}
       <section className="mt-5 rounded-lg bg-white p-5 shadow">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-gray-900">Questions</h2>
+          <h2 className="text-sm font-semibold text-gray-900">{t('voting.create.questions')}</h2>
           <button
             type="button"
             onClick={() => setQuestions((qs) => [...qs, blankQuestion()])}
             className="text-sm font-medium text-blue-600 hover:text-blue-800"
           >
-            + Add question
+            + {t('voting.create.addQuestion')}
           </button>
         </div>
 
@@ -246,7 +280,7 @@ export function VoteCreatePage({ onCreated, onCancel }: VoteCreatePageProps) {
             <div key={q.key} className="rounded-lg border border-gray-200 p-4">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase text-gray-400">
-                  Question {idx + 1}
+                  {t('voting.create.questionNumber', { number: idx + 1 })}
                 </span>
                 {questions.length > 1 ? (
                   <button
@@ -254,7 +288,7 @@ export function VoteCreatePage({ onCreated, onCancel }: VoteCreatePageProps) {
                     onClick={() => setQuestions((qs) => qs.filter((x) => x.key !== q.key))}
                     className="text-xs text-red-500 hover:text-red-700"
                   >
-                    Remove
+                    {t('voting.create.remove')}
                   </button>
                 ) : null}
               </div>
@@ -262,21 +296,21 @@ export function VoteCreatePage({ onCreated, onCancel }: VoteCreatePageProps) {
                 className={inputClass}
                 value={q.question_text}
                 onChange={(e) => updateQuestion(q.key, { question_text: e.target.value })}
-                placeholder="Question text"
+                placeholder={t('voting.create.questionTextPlaceholder')}
               />
               <div className="mt-3 flex flex-wrap gap-2">
-                {QUESTION_TYPES.map((t) => (
+                {QUESTION_TYPES.map((type) => (
                   <button
-                    key={t}
+                    key={type}
                     type="button"
-                    onClick={() => setType(q.key, t)}
+                    onClick={() => setType(q.key, type)}
                     className={`rounded-full px-3 py-1 text-xs ${
-                      q.question_type === t
+                      q.question_type === type
                         ? 'bg-blue-600 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
-                    {QUESTION_TYPE_LABELS[t]}
+                    {t(QUESTION_TYPE_LABEL_KEYS[type])}
                   </button>
                 ))}
               </div>
@@ -289,7 +323,7 @@ export function VoteCreatePage({ onCreated, onCancel }: VoteCreatePageProps) {
                         className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
                         value={o.text}
                         onChange={(e) => setOptionText(q.key, o.id, e.target.value)}
-                        placeholder="Option text"
+                        placeholder={t('voting.create.optionTextPlaceholder')}
                       />
                       {q.options.length > 2 ? (
                         <button
@@ -308,11 +342,11 @@ export function VoteCreatePage({ onCreated, onCancel }: VoteCreatePageProps) {
                     onClick={() => addOption(q.key)}
                     className="text-xs font-medium text-blue-600 hover:text-blue-800"
                   >
-                    + Add option
+                    + {t('voting.create.addOption')}
                   </button>
                 </div>
               ) : (
-                <p className="mt-3 text-xs text-gray-400">Options: Yes / No</p>
+                <p className="mt-3 text-xs text-gray-400">{t('voting.create.yesNoOptions')}</p>
               )}
 
               <label className="mt-3 flex items-center gap-2 text-xs text-gray-600">
@@ -321,7 +355,7 @@ export function VoteCreatePage({ onCreated, onCancel }: VoteCreatePageProps) {
                   checked={q.is_required}
                   onChange={(e) => updateQuestion(q.key, { is_required: e.target.checked })}
                 />
-                Required
+                {t('voting.create.required')}
               </label>
             </div>
           ))}
@@ -330,23 +364,25 @@ export function VoteCreatePage({ onCreated, onCancel }: VoteCreatePageProps) {
 
       {/* Quorum + schedule */}
       <section className="mt-5 rounded-lg bg-white p-5 shadow">
-        <h2 className="text-sm font-semibold text-gray-900">Quorum &amp; schedule</h2>
+        <h2 className="text-sm font-semibold text-gray-900">
+          {t('voting.create.quorumAndSchedule')}
+        </h2>
         <label className="mt-3 block text-sm font-medium text-gray-700">
-          Quorum rule
+          {t('voting.create.quorumRule')}
           <select
             className={inputClass}
             value={quorumType}
             onChange={(e) => setQuorumType(e.target.value as QuorumType)}
           >
-            {QUORUM_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {QUORUM_TYPE_LABELS[t]}
+            {QUORUM_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {t(QUORUM_TYPE_LABEL_KEYS[type])}
               </option>
             ))}
           </select>
         </label>
         <label className="mt-3 block text-sm font-medium text-gray-700">
-          Quorum percentage (optional)
+          {t('voting.create.quorumPercentage')}
           <input
             type="number"
             min={0}
@@ -354,11 +390,11 @@ export function VoteCreatePage({ onCreated, onCancel }: VoteCreatePageProps) {
             className={inputClass}
             value={quorumPercentage}
             onChange={(e) => setQuorumPercentage(e.target.value)}
-            placeholder="e.g. 50"
+            placeholder={t('voting.create.quorumPercentagePlaceholder')}
           />
         </label>
         <label className="mt-3 block text-sm font-medium text-gray-700">
-          Closes at
+          {t('voting.create.closesAt')}
           <input
             type="datetime-local"
             className={inputClass}
@@ -374,7 +410,7 @@ export function VoteCreatePage({ onCreated, onCancel }: VoteCreatePageProps) {
           onClick={onCancel}
           className="rounded-md px-4 py-2 text-sm text-gray-600 hover:text-gray-800"
         >
-          Cancel
+          {t('common.cancel')}
         </button>
         <button
           type="button"
@@ -382,7 +418,7 @@ export function VoteCreatePage({ onCreated, onCancel }: VoteCreatePageProps) {
           onClick={() => handleSubmit(false)}
           className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
         >
-          Save draft
+          {t('voting.create.saveDraft')}
         </button>
         <button
           type="button"
@@ -390,7 +426,7 @@ export function VoteCreatePage({ onCreated, onCancel }: VoteCreatePageProps) {
           onClick={() => handleSubmit(true)}
           className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
         >
-          {submitting ? 'Saving…' : 'Publish vote'}
+          {submitting ? t('voting.create.saving') : t('voting.create.publishVote')}
         </button>
       </div>
     </div>

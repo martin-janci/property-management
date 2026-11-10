@@ -56,8 +56,12 @@ interface FaultFormProps {
   aiSuggestion?: AiSuggestion | null;
   /** Whether AI suggestion is loading */
   aiSuggestionLoading?: boolean;
+  /** Whether AI triage is unavailable (no production endpoint) — shows an honest notice instead of a fabricated suggestion */
+  aiSuggestionUnavailable?: boolean;
   /** Callback when photos change (for triggering AI analysis) */
   onPhotosChange?: (photos: UploadedPhoto[]) => void;
+  /** Called when the selected building changes, so the parent can load its units. */
+  onBuildingChange?: (buildingId: string) => void;
 }
 
 export function FaultForm({
@@ -70,7 +74,9 @@ export function FaultForm({
   enablePhotoFirst = false,
   aiSuggestion,
   aiSuggestionLoading = false,
+  aiSuggestionUnavailable = false,
   onPhotosChange,
+  onBuildingChange,
 }: FaultFormProps) {
   const { t } = useTranslation();
   const [photos, setPhotos] = useState<UploadedPhoto[]>([]);
@@ -152,7 +158,12 @@ export function FaultForm({
     setFormData((prev) => ({
       ...prev,
       [name]: value || undefined,
+      // A unit belongs to exactly one building — drop a stale selection.
+      ...(name === 'buildingId' ? { unitId: undefined } : {}),
     }));
+    if (name === 'buildingId') {
+      onBuildingChange?.(value);
+    }
     // Clear error on change
     if (errors[name as keyof FaultFormData]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
@@ -223,6 +234,17 @@ export function FaultForm({
               isAccepted={aiSuggestionAccepted}
             />
           )}
+
+          {/* Honest "unavailable" notice — shown instead of a fabricated
+              suggestion when no AI triage endpoint is wired up. */}
+          {aiSuggestionUnavailable &&
+            !aiSuggestion &&
+            !aiSuggestionLoading &&
+            photos.length > 0 && (
+              <p className="mt-3 text-sm text-gray-500" role="status">
+                {t('faults.ai.unavailable')}
+              </p>
+            )}
         </div>
       )}
 

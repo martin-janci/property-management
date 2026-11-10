@@ -360,7 +360,7 @@ async fn withdraw_quote_succeeds(pool: PgPool) {
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_verification_queue_as_admin_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
-    let admin = seed_user(&pool, "verq-admin@b3.test").await;
+    let admin = crate::common::seed_platform_user(&pool, "verq-admin@b3.test").await;
     let token = mint_token_with_role(admin, "verq-admin@b3.test", None, "super_admin");
 
     let resp = app
@@ -386,7 +386,7 @@ async fn get_verification_queue_as_admin_succeeds(pool: PgPool) {
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_expiring_verifications_as_admin_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
-    let admin = seed_user(&pool, "exp-admin@b3.test").await;
+    let admin = crate::common::seed_platform_user(&pool, "exp-admin@b3.test").await;
     let token = mint_token_with_role(admin, "exp-admin@b3.test", None, "super_admin");
 
     let resp = app
@@ -443,7 +443,7 @@ async fn award_badge_as_admin_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let prov_user = seed_user(&pool, "award-badge-prov@b3.test").await;
     let provider = seed_provider(&pool, prov_user, "award-badge").await;
-    let admin = seed_user(&pool, "award-badge-admin@b3.test").await;
+    let admin = crate::common::seed_platform_user(&pool, "award-badge-admin@b3.test").await;
     let token = mint_token_with_role(admin, "award-badge-admin@b3.test", None, "super_admin");
 
     let resp = app

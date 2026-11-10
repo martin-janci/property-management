@@ -2,6 +2,8 @@
  * BudgetOverview component for displaying budget summary with charts.
  */
 
+import { useTranslation } from 'react-i18next';
+import { formatCurrency } from '../utils/formatting';
 import { BudgetCard } from './BudgetCard';
 
 interface BudgetCategory {
@@ -18,13 +20,6 @@ interface BudgetOverviewProps {
   isLoading?: boolean;
 }
 
-function formatCurrency(amount: number, currency = 'EUR'): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-  }).format(amount);
-}
-
 export function BudgetOverview({
   categories,
   year,
@@ -32,6 +27,8 @@ export function BudgetOverview({
   onEditBudget,
   isLoading,
 }: BudgetOverviewProps) {
+  const { t, i18n } = useTranslation();
+
   if (isLoading) {
     return (
       <div className="bg-white rounded-lg shadow p-6">
@@ -58,14 +55,14 @@ export function BudgetOverview({
     return (
       <div className="bg-white rounded-lg shadow p-6">
         <div className="text-center py-8">
-          <p className="text-gray-500 mb-4">No budget set for {year}</p>
+          <p className="text-gray-500 mb-4">{t('financial.budget.noBudgetForYear', { year })}</p>
           {onEditBudget && (
             <button
               type="button"
               onClick={onEditBudget}
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
             >
-              Create Budget
+              {t('financial.budgets.createNew')}
             </button>
           )}
         </div>
@@ -79,8 +76,17 @@ export function BudgetOverview({
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="text-lg font-medium text-gray-900">Budget Overview - {year}</h3>
-            <p className="text-sm text-gray-500">{percentUsed.toFixed(1)}% of budget used</p>
+            <h3 className="text-lg font-medium text-gray-900">
+              {t('financial.budget.overviewTitle', { year })}
+            </h3>
+            <p className="text-sm text-gray-500">
+              {t('financial.budget.percentOfBudgetUsed', {
+                percent: percentUsed.toLocaleString(i18n.language, {
+                  minimumFractionDigits: 1,
+                  maximumFractionDigits: 1,
+                }),
+              })}
+            </p>
           </div>
           {onEditBudget && (
             <button
@@ -88,7 +94,7 @@ export function BudgetOverview({
               onClick={onEditBudget}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
-              Edit Budget
+              {t('financial.budget.editBudget')}
             </button>
           )}
         </div>
@@ -112,19 +118,19 @@ export function BudgetOverview({
         {/* Summary Stats */}
         <div className="grid grid-cols-4 gap-4">
           <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <p className="text-sm text-gray-500">Total Budget</p>
+            <p className="text-sm text-gray-500">{t('financial.budget.totalBudget')}</p>
             <p className="text-xl font-bold text-gray-900">
               {formatCurrency(totalBudgeted, currency)}
             </p>
           </div>
           <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <p className="text-sm text-gray-500">Total Spent</p>
+            <p className="text-sm text-gray-500">{t('financial.budget.totalSpent')}</p>
             <p className="text-xl font-bold text-gray-900">
               {formatCurrency(totalActual, currency)}
             </p>
           </div>
           <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <p className="text-sm text-gray-500">Remaining</p>
+            <p className="text-sm text-gray-500">{t('financial.budget.remaining')}</p>
             <p
               className={`text-xl font-bold ${
                 totalVariance >= 0 ? 'text-green-600' : 'text-red-600'
@@ -134,13 +140,13 @@ export function BudgetOverview({
             </p>
           </div>
           <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <p className="text-sm text-gray-500">Over Budget</p>
+            <p className="text-sm text-gray-500">{t('financial.budget.overBudget')}</p>
             <p
               className={`text-xl font-bold ${
                 overBudgetCategories.length > 0 ? 'text-red-600' : 'text-green-600'
               }`}
             >
-              {overBudgetCategories.length} categories
+              {t('financial.budget.categoryCount', { count: overBudgetCategories.length })}
             </p>
           </div>
         </div>
@@ -164,10 +170,14 @@ export function BudgetOverview({
                 />
               </svg>
               <div>
-                <p className="text-sm font-medium text-red-800">Budget Alert</p>
+                <p className="text-sm font-medium text-red-800">
+                  {t('financial.budget.alertTitle')}
+                </p>
                 <p className="text-sm text-red-700 mt-1">
-                  {overBudgetCategories.map((cat) => cat.name).join(', ')}{' '}
-                  {overBudgetCategories.length === 1 ? 'is' : 'are'} over budget.
+                  {t('financial.budget.alertBody', {
+                    count: overBudgetCategories.length,
+                    categories: overBudgetCategories.map((cat) => cat.name).join(', '),
+                  })}
                 </p>
               </div>
             </div>

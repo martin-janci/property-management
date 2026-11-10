@@ -1,0 +1,47 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-15",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "dispatcher-tier1d demand-driven (claim buffer starved: 0 non-gated claimable tasks; all remaining claimable items are mobile-native/KMP, structurally unlandable in the cloud runner). Excluded mobile-native-kmp per run constraint (AGP/dl.google.com egress block) and iOS/Swift-only segments. Landable-segment cursor state: api-handlers reviewed today (cursor 2026-08-15); api-core + reality-server at 2026-08-13; ppt-web-ui / ppt-web-core / reality-web / mobile-rn at 2026-08-12 (oldest tier). ppt-web-ui has 0 open code-review-finding rows in backlog.json (not saturated; the only open code-review findings are 3 mobile-native-kmp rows). Selected ppt-web-ui: churn-aligned (the ppt-web disputes-feature cluster dominates recent frontend churn in state.hotspot_history) AND in the oldest-unreviewed tier. NOTE: an earlier tier1d run today (2026-08-15-ppt-web-ui-tier1d.json) already covered the disputes mediation-panels read-query cluster (isError gap); this second pass is disjoint from it — it targets (a) the orphaned CreateDisputePage stub (a different, non-routed dispute page, NOT the mediation panels) and (b) the compliance-pages alert() cluster (ContentModeration/AmlDashboard/DsaReports), a wholly separate feature area. Same-day second-pass has precedent (2026-08-13-api-handlers-tier1d-2.json). Skill segment-map paths are stale (frontend/ppt-web/src/pages/) vs actual layout (frontend/apps/ppt-web/src/features/); reviewed the actual feature tree. Static-analysis only — no compile/run.",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-createdispute-fake-submit",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/CreateDisputePage.tsx:29-42 — handleSubmit() collects the full dispute form (respondentId/category/subject/description) but never calls any create-dispute API: the try block is just `await new Promise((resolve) => setTimeout(resolve, 1000))` (line 35) then `navigate('/disputes')` (line 36). The form data is silently discarded; the user sees a 1s spinner and a redirect that looks like success. This is an abandoned first-cut stub of the real FileDisputePage.",
+        "It is an orphan: the /disputes/new route is wired to FileDisputePageRoute (frontend/apps/ppt-web/src/routes/groups/disputes.tsx:482), NOT CreateDisputePage. But CreateDisputePage is still exported from the public barrel (frontend/apps/ppt-web/src/features/disputes/pages/index.ts:6 and features/disputes/index.ts), so it remains importable/discoverable and would silently drop data if ever mounted.",
+        "Secondary: CreateDisputePage.tsx uses hardcoded English JSX strings with no i18n — 'Back to Disputes' (line 50), 'File New Dispute' (line 52), the intro paragraph (line 53-55), the error string 'Failed to create dispute. Please try again.' (line 38), 'Respondent ID' (line 67), 'Enter the ID of the other party' (line 77) — inconsistent with the fully-i18n'd sibling MediationWorkspacePage/FileDisputePage.",
+        "Same recognized pattern as the already-landed backlog item code-review-mobile-rn-report-fault-fake-submit (RN report-fault fake submit). Fix: delete CreateDisputePage (dead duplicate) and drop its barrel export, or wire it to the real useFileDispute mutation + i18n if it is meant to be the canonical page.",
+        "Static-analysis only (no compile/run). Severity medium: dead-code/completeness defect that discards user input if the orphan is ever mounted; currently not reachable via routing, hence confidence medium not high."
+      ],
+      "expert": "completeness"
+    },
+    {
+      "id": "code-review-ppt-web-ui-compliance-alert-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "The entire features/compliance/ page cluster uses the browser-native window.alert() with hardcoded English strings for ALL user feedback, bypassing the app's toast + react-i18next pattern used everywhere else (e.g. MediationWorkspacePage onToastSuccess/onToastError + t()).",
+        "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:108 alert('Report published successfully.'), :112 alert('Failed to publish report. Please try again.'), :124 alert('Failed to download report. Please try again.').",
+        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx:127 alert('Enhanced Due Diligence initiated successfully.'), :131, :150, :169 alert('Assessment reviewed successfully.'), :173 — 5 hardcoded alerts.",
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:119, :151, :186 — 3 hardcoded alert() error strings. ~11 hardcoded, non-i18n alert() calls across the compliance epic total.",
+        "Static-analysis only. Severity low: i18n gap (untranslatable, breaks sk/cs/de locales) plus inconsistent/blocking-modal UX on compliance pages. Fix: replace window.alert() with the app's toast helper and wrap all strings in t('compliance.*.')."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

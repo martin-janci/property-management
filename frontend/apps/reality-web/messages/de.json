@@ -18,6 +18,9 @@
     "inviteRealtor": "Makler einladen",
     "loadErrorMessage": "Beim Laden des Agentur-Dashboards ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
     "loadErrorTitle": "Ihre Agentur konnte nicht geladen werden",
+    "createAgency": "Agentur erstellen",
+    "noAgencyMessage": "Sie sind mit keiner Agentur verknüpft.",
+    "noAgencyTitle": "Keine Agentur gefunden",
     "manageRealtors": "Makler verwalten",
     "performanceOverview": "Leistungsübersicht",
     "period1y": "1 Jahr",
@@ -39,7 +42,43 @@
     "chartViews": "Aufrufe",
     "chartInquiries": "Anfragen",
     "leaderboardEmpty": "Noch keine aktiven Makler",
-    "leaderboardStats": "{sales} Verkäufe · {active} aktiv"
+    "leaderboardStats": "{sales} Verkäufe · {active} aktiv",
+    "backToDashboard": "Zurück zum Dashboard",
+    "realtorManagementTitle": "Maklerverwaltung",
+    "realtorManagementSubtitle": "Verwalten Sie Ihr Team von Immobilienmaklern",
+    "tabAll": "Alle",
+    "tabActive": "Aktiv",
+    "tabPending": "Ausstehend",
+    "tabInactive": "Inaktiv",
+    "realtorsLoadError": "Makler konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+    "statusActive": "Aktiv",
+    "statusPending": "Ausstehend",
+    "statusInactive": "Inaktiv",
+    "statusSuspended": "Gesperrt",
+    "cardListings": "Inserate",
+    "cardSales": "Verkäufe",
+    "cardReviews": "{count} Bewertungen",
+    "buttonResend": "Erneut senden",
+    "buttonView": "Ansehen",
+    "detailTitle": "Maklerdetails",
+    "formLabelBio": "Biografie",
+    "statTotalSales": "Verkäufe gesamt",
+    "statRating": "Bewertung",
+    "statusLabel": "Status",
+    "confirmRemoveQuestion": "Sind Sie sicher?",
+    "confirmRemoveYes": "Ja, entfernen",
+    "buttonRemove": "Entfernen",
+    "buttonSaveChanges": "Änderungen speichern",
+    "buttonEdit": "Bearbeiten",
+    "buttonClose": "Schließen",
+    "emptyAllTitle": "Noch keine Makler",
+    "emptyAllDesc": "Laden Sie Ihren ersten Makler ein, um zu beginnen.",
+    "emptyActiveTitle": "Keine aktiven Makler",
+    "emptyActiveDesc": "Aktive Makler werden hier angezeigt.",
+    "emptyInvitedTitle": "Keine ausstehenden Einladungen",
+    "emptyInvitedDesc": "Laden Sie Makler ein, Ihrer Agentur beizutreten.",
+    "emptyInactiveTitle": "Keine inaktiven Makler",
+    "emptyInactiveDesc": "Inaktive Makler werden hier angezeigt."
   },
   "auth": {
     "login": {
@@ -64,6 +103,13 @@
       "loading": "Wird geladen…",
       "signIn": "Anmelden",
       "title": "Anmeldung erforderlich"
+    },
+    "callback": {
+      "title": "Anmeldung fehlgeschlagen",
+      "invalidState": "Ungültiges Status-Token. Bitte versuchen Sie erneut, sich anzumelden.",
+      "returnHome": "Zurück zur Startseite",
+      "loading": "Wird geladen...",
+      "completingLogin": "Anmeldung wird abgeschlossen..."
     }
   },
   "common": {
@@ -82,7 +128,41 @@
   },
   "comparison": {
     "loadError": "Der geteilte Vergleich konnte nicht geladen werden. Einige Immobilien sind möglicherweise nicht mehr verfügbar.",
-    "loading": "Geteilter Vergleich wird geladen..."
+    "loading": "Geteilter Vergleich wird geladen...",
+    "empty": {
+      "title": "Keine Immobilien zum Vergleichen",
+      "description": "Fügen Sie Immobilien von der Angebotsseite zu Ihrem Vergleich hinzu.",
+      "browse": "Angebote durchsuchen"
+    },
+    "actions": {
+      "share": "Teilen",
+      "exportPdf": "PDF exportieren",
+      "clearAll": "Alle löschen"
+    },
+    "toast": {
+      "linkCopied": "Vergleichslink in die Zwischenablage kopiert!",
+      "shareUrl": "Teilen Sie diese URL: {url}",
+      "pdfComingSoon": "PDF-Export kommt bald!"
+    },
+    "currencyWarning": "Hinweis: Die Immobilien verwenden unterschiedliche Währungen. Die Hervorhebung des Preisvergleichs ist deaktiviert.",
+    "propertyHeader": "Immobilie",
+    "remove": "Entfernen",
+    "removeAria": "{title} aus dem Vergleich entfernen",
+    "rows": {
+      "price": "Preis",
+      "type": "Art",
+      "propertyType": "Immobilientyp",
+      "area": "Fläche",
+      "rooms": "Zimmer",
+      "floor": "Etage",
+      "city": "Stadt",
+      "district": "Bezirk",
+      "pricePerSqm": "Preis pro m²"
+    },
+    "transactionType": {
+      "sale": "Zum Verkauf",
+      "rent": "Zur Miete"
+    }
   },
   "contact": {
     "askQuestion": "Eine Frage stellen",
@@ -279,6 +359,10 @@
   },
   "listings": {
     "allProperties": "Alle Immobilien",
+    "emptyDescription": "Passen Sie Ihre Filter oder Suchkriterien an, um mehr Immobilien zu finden.",
+    "emptyTitle": "Keine Angebote gefunden",
+    "errorDescription": "Beim Laden der Immobilien ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+    "errorTitle": "Angebote konnten nicht geladen werden",
     "filters": "Filter",
     "gridView": "Rasteransicht",
     "listView": "Listenansicht",
@@ -288,6 +372,7 @@
     "propertiesForRent": "Immobilien zur Miete",
     "propertiesForSale": "Immobilien zum Verkauf",
     "resultsCount": "{count} Angebote gefunden",
+    "retry": "Erneut versuchen",
     "sortNewest": "Neueste zuerst",
     "sortOldest": "Älteste zuerst",
     "sortPriceHigh": "Preis: teuerste zuerst",
@@ -315,12 +400,38 @@
       "title": "Über Reality Portal"
     },
     "agentProfile": {
+      "about": "Über den Makler",
       "activeListings": "Aktive Inserate",
       "contact": "Kontaktieren",
+      "contactDetails": "Kontaktdaten",
+      "defaultName": "Immobilienmakler",
+      "experience": "{count} Jahre Erfahrung",
       "languages": "Sprachen",
+      "license": "Lizenz: {number}",
+      "loading": "Wird geladen…",
+      "mailtoSubject": "Kontakt über Reality Portal",
+      "memberSince": "Mitglied seit: {date}",
+      "modalAriaLabel": "Makler kontaktieren",
+      "modalCancel": "Abbrechen",
+      "modalClose": "Schließen",
+      "modalEmailHint": "Die Nachricht wird in Ihrem E-Mail-Programm geöffnet.",
+      "modalNoContact": "Der Makler hat derzeit keine Kontaktdaten veröffentlicht.",
+      "modalPhoneIntro": "Diesen Makler können Sie telefonisch kontaktieren:",
+      "modalPlaceholder": "Guten Tag, ich interessiere mich für Ihre Dienstleistungen...",
+      "modalSendEmail": "E-Mail senden",
+      "modalTitle": "{name} kontaktieren",
+      "noContact": "Der Makler hat keine Kontaktdaten veröffentlicht.",
+      "noReviews": "Noch keine Bewertungen.",
+      "notFoundBody": "Das Profil dieses Maklers ist nicht verfügbar.",
+      "notFoundTitle": "Makler nicht gefunden",
+      "rating": "Bewertung",
+      "reviewVerified": "Verifiziert",
       "reviews": "Bewertungen",
+      "sendMessage": "Nachricht senden",
       "specializations": "Spezialisierungen",
-      "verified": "Verifizierter Makler"
+      "totalListings": "Inserate gesamt",
+      "verified": "Verifizierter Makler",
+      "views": "Aufrufe"
     },
     "careers": {
       "hero": {
@@ -375,9 +486,104 @@
       "newsletterTitle": "Newsletter signup"
     },
     "listingEdit": {
+      "title": "Inserat bearbeiten",
+      "breadcrumbAccount": "← Mein Konto",
+      "breadcrumb": "Inserat #{id} bearbeiten",
+      "stepLabel": "Schritt {step} von {total}: {stepTitle}",
+      "asideTitle": "Schritte",
+      "back": "← Zurück",
+      "next": "Weiter →",
       "save": "Änderungen speichern",
+      "saving": "Speichern…",
+      "loading": "Inserat wird geladen…",
+      "loadFailed": "Das Inserat konnte nicht geladen werden.",
+      "backToAccount": "← Zurück zum Konto",
+      "priceInvalid": "Geben Sie einen gültigen Preis größer als 0 € ein (Schritt 4).",
+      "saveFailed": "Speichern fehlgeschlagen, bitte versuchen Sie es erneut.",
       "success": "Inserat gespeichert!",
-      "title": "Inserat bearbeiten"
+      "successBody": "Die Änderungen am Inserat #{id} wurden erfolgreich gespeichert.",
+      "viewListing": "Inserat ansehen",
+      "moreEdits": "Weitere Änderungen",
+      "steps": {
+        "type": {
+          "title": "Typ & Lage",
+          "description": "Immobilientyp und Adresse"
+        },
+        "details": {
+          "title": "Details",
+          "description": "Fläche, Zimmer, Etage"
+        },
+        "photos": {
+          "title": "Fotos",
+          "description": "Fotos verwalten"
+        },
+        "price": {
+          "title": "Preis",
+          "description": "Angebotspreis aktualisieren"
+        },
+        "summary": {
+          "title": "Zusammenfassung",
+          "description": "Prüfen und speichern"
+        }
+      },
+      "fields": {
+        "transactionType": "Art des Geschäfts",
+        "propertyType": "Immobilientyp",
+        "address": "Adresse",
+        "addressPlaceholder": "Straße und Hausnummer",
+        "city": "Stadt / Gemeinde",
+        "cityPlaceholder": "z. B. Bratislava",
+        "area": "Fläche (m²)",
+        "areaPlaceholder": "z. B. 72",
+        "rooms": "Anzahl der Zimmer",
+        "roomsPlaceholder": "z. B. 3",
+        "floor": "Etage",
+        "floorPlaceholder": "z. B. 4",
+        "totalFloors": "Etagen insgesamt",
+        "totalFloorsPlaceholder": "z. B. 8",
+        "yearBuilt": "Baujahr",
+        "yearBuiltPlaceholder": "z. B. 2005",
+        "description": "Beschreibung",
+        "price": "Preis (€)",
+        "priceNegotiable": "Preis verhandelbar",
+        "status": "Status des Inserats"
+      },
+      "transactionOptions": {
+        "sale": "Verkauf",
+        "rent": "Miete"
+      },
+      "propertyOptions": {
+        "apartment": "Wohnung",
+        "house": "Haus",
+        "land": "Grundstück",
+        "commercial": "Gewerbe"
+      },
+      "statusOptions": {
+        "active": "Aktiv",
+        "inactive": "Inaktiv",
+        "draft": "Entwurf"
+      },
+      "photos": {
+        "existing": "Vorhandene Fotos",
+        "alt": "Foto",
+        "remove": "Foto entfernen",
+        "addNew": "Neue Fotos hinzufügen",
+        "addedCount": "+ {count} neue Fotos"
+      },
+      "summary": {
+        "title": "Zusammenfassung der Änderungen",
+        "type": "Typ",
+        "location": "Lage",
+        "area": "Fläche",
+        "rooms": "Zimmer",
+        "floor": "Etage",
+        "year": "Baujahr",
+        "price": "Preis",
+        "status": "Status",
+        "photos": "Fotos",
+        "negotiable": "(verhandelbar)",
+        "photosValue": "{existing} vorhanden + {added} neu"
+      }
     },
     "priceMap": {
       "clickHint": "Klicken Sie auf einen Bezirk für detaillierte Statistiken.",
@@ -396,14 +602,94 @@
         "reviews": "Bewertungen",
         "settings": "Einstellungen"
       },
-      "title": "Mein Profil"
+      "title": "Mein Profil",
+      "stats": {
+        "activeListings": "Aktive Inserate",
+        "totalListings": "Alle Inserate",
+        "reviews": "Bewertungen",
+        "avgRating": "Ø Bewertung"
+      },
+      "status": {
+        "active": "Aktiv",
+        "sold": "Verkauft",
+        "rented": "Vermietet",
+        "draft": "Entwurf",
+        "paused": "Pausiert",
+        "archived": "Archiviert"
+      },
+      "listings": {
+        "loading": "Inserate werden geladen…",
+        "error": "Inserate konnten nicht geladen werden.",
+        "emptyTitle": "Sie haben noch keine Inserate",
+        "emptyBody": "Sobald Sie ein Inserat hinzufügen, erscheint es hier.",
+        "rooms": "{count} Zimmer"
+      },
+      "activity": {
+        "emptyTitle": "Aktivität ist noch nicht verfügbar",
+        "emptyBody": "Eine Übersicht Ihrer Aktivität ist verfügbar, sobald wir die entsprechende Übersicht vorbereitet haben."
+      },
+      "reviews": {
+        "emptyTitle": "Noch keine Bewertungen",
+        "emptyBody": "Bewertungen von Kunden erscheinen hier, sobald Sie welche erhalten."
+      },
+      "settings": {
+        "description": "Profileinstellungen finden Sie im Bereich <account>Mein Konto</account>."
+      }
     },
     "report": {
+      "h1": "Inserat melden",
+      "subtitle": "Helfen Sie uns, das Portal vertrauenswürdig zu halten — sagen Sie uns, was nicht stimmt.",
+      "title": "Inserat melden",
       "submit": "Meldung absenden",
-      "subtitle": "Help us keep the portal trustworthy — tell us what's wrong.",
+      "submitting": "Wird gesendet…",
       "success": "Meldung wurde gesendet",
-      "title": "Report a listing",
-      "h1": "Report a listing"
+      "problemLegend": "Grund der Meldung",
+      "problems": {
+        "fraudulent_listing": {
+          "label": "Betrugsverdacht",
+          "description": "Verdächtiges Inserat, Aufforderung zur Vorauszahlung, gefälschte Makleridentität"
+        },
+        "price_manipulation": {
+          "label": "Falscher Preis",
+          "description": "Der Preis entspricht nicht der Realität oder soll absichtlich täuschen"
+        },
+        "incorrect_information": {
+          "label": "Gefälschte Fotos",
+          "description": "Die Fotos gehören nicht zu dieser Immobilie"
+        },
+        "duplicate_listing": {
+          "label": "Doppeltes Inserat",
+          "description": "Dieselbe Immobilie wird mehrfach inseriert"
+        },
+        "already_sold": {
+          "label": "Verkauft / nicht mehr verfügbar",
+          "description": "Die Immobilie ist bereits verkauft oder vermietet, das Inserat wurde nicht entfernt"
+        },
+        "other": {
+          "label": "Anderer Grund",
+          "description": "Ein anderer technischer Fehler oder Verstoß gegen die Plattformregeln"
+        }
+      },
+      "listingRefLabel": "Link zum Inserat (URL oder ID)",
+      "listingRefPlaceholder": "z. B. https://rlt.sk/listings/ba-byt-3i oder #12345",
+      "descriptionLabel": "Beschreibung des Problems",
+      "descriptionPlaceholder": "Beschreiben Sie, warum Sie dieses Inserat melden. Je mehr Details Sie angeben, desto schneller können wir es prüfen.",
+      "attachmentsLabel": "Anhänge (demnächst)",
+      "attachmentsComingSoon": "Das Hinzufügen von Anhängen wird bald verfügbar sein",
+      "attachmentsHint": "Das Hochladen von Screenshots ist noch nicht verfügbar — bitte beschreiben Sie die Belege in der obigen Beschreibung. Wir arbeiten daran.",
+      "gdpr": {
+        "label": "Ich stimme der Verarbeitung personenbezogener Daten zum Zweck der Prüfung meiner Meldung gemäß der {privacyLink} zu.",
+        "privacyLink": "Datenschutzrichtlinie"
+      },
+      "successTitle": "Meldung wurde gesendet",
+      "successBody": "Wir haben Ihre Meldung erhalten. Unser Team prüft sie innerhalb von 24 Stunden. Danke, dass Sie helfen, das Portal sicher zu halten.",
+      "referenceLabel": "Referenznummer",
+      "referenceHint": "Geben Sie sie bei weiterer Kommunikation an — so können wir Ihre Meldung schnell finden.",
+      "backToListings": "Zurück zu den Angeboten",
+      "errorNoListing": "Wir konnten nicht feststellen, welches Inserat die Meldung betrifft. Öffnen Sie die Meldung über die Detailseite eines Inserats oder fügen Sie oben den Link oder die ID des Inserats ein.",
+      "errorRateLimit": "Zu viele Meldungen von diesem Gerät. Bitte versuchen Sie es in einem Moment erneut.",
+      "errorNotFound": "Inserat nicht gefunden. Überprüfen Sie den Link oder die ID und versuchen Sie es erneut.",
+      "errorGeneric": "Die Meldung konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
     },
     "security": {
       "reportCta": "Inserat melden",
@@ -443,6 +729,8 @@
       "back": "← Back",
       "next": "Next →",
       "publish": "Publish listing",
+      "publishing": "Publishing…",
+      "submitFailed": "Publishing failed, please try again.",
       "submittedTitle": "Your listing has been submitted!",
       "submittedBody": "After review it will be published within 2 hours.",
       "submittedCta": "Add another listing",
@@ -453,6 +741,8 @@
         "addressPlaceholder": "Street and number",
         "city": "City / Town",
         "cityPlaceholder": "e.g. Bratislava",
+        "postalCode": "Postal code",
+        "postalCodePlaceholder": "e.g. 811 01",
         "area": "Area (m²)",
         "areaPlaceholder": "e.g. 65",
         "rooms": "Number of rooms",
@@ -511,6 +801,7 @@
         "required": "Required",
         "addressRequired": "Address is required",
         "cityRequired": "City is required",
+        "postalCodeRequired": "Postal code is required",
         "areaRequired": "Area is required",
         "areaPositive": "Area must be greater than 0",
         "roomsRequired": "Number of rooms is required",
@@ -538,7 +829,11 @@
       "description": "Immobilien, die Sie gespeichert haben.",
       "h1": "Meine Favoriten",
       "priceAlertsLink": "Preisbenachrichtigungen",
-      "watchPrice": "Preis beobachten"
+      "watchPrice": "Preis beobachten",
+      "error": "Favoriten konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+      "emptyTitle": "Noch keine Favoriten",
+      "emptyText": "Entdecken Sie Angebote und speichern Sie Ihre Favoriten, indem Sie auf das Herzsymbol klicken.",
+      "browseListings": "Angebote durchsuchen"
     },
     "login": {
       "title": "Anmelden",
@@ -617,6 +912,79 @@
     "priceAlerts": {
       "title": "Preisbenachrichtigungen",
       "description": "Benachrichtigungen zu Preissenkungen und Rückkehr auf den Markt für Ihre Favoriten."
+    },
+    "inquiries": {
+      "error": "Anfragen konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+      "emptyTitle": "Noch keine Anfragen",
+      "emptyText": "Wenn Sie Makler zu Angeboten kontaktieren, erscheinen Ihre Anfragen hier.",
+      "browseListings": "Angebote durchsuchen",
+      "title": "Meine Anfragen",
+      "subtitle": "Verfolgen Sie Ihre Immobilienanfragen und Besichtigungstermine.",
+      "filterAll": "Alle",
+      "status": {
+        "pending": "Ausstehend",
+        "responded": "Beantwortet",
+        "scheduled": "Geplant",
+        "completed": "Abgeschlossen",
+        "cancelled": "Storniert"
+      },
+      "type": {
+        "general": "Allgemeine Anfrage",
+        "viewing_request": "Besichtigungsanfrage",
+        "price_negotiation": "Preisverhandlung",
+        "availability": "Verfügbarkeit"
+      },
+      "viewingScheduled": "Besichtigung geplant: {date} um {time}",
+      "agentResponse": "Antwort des Maklers:",
+      "cancelConfirm": "Diese Anfrage stornieren?",
+      "cancelYes": "Ja, stornieren",
+      "cancelNo": "Nein",
+      "cancelInquiry": "Anfrage stornieren",
+      "previous": "Zurück",
+      "next": "Weiter",
+      "pageInfo": "Seite {page} von {total}"
+    },
+    "savedSearches": {
+      "alertsOff": "Benachrichtigungen aus",
+      "alertsOn": "Benachrichtigungen ein",
+      "allListings": "Alle Angebote",
+      "confirmNo": "Nein",
+      "confirmYes": "Ja",
+      "deleteAriaLabel": "Gespeicherte Suche löschen",
+      "deleteConfirm": "Löschen?",
+      "emptyText": "Suchen Sie nach Angeboten und speichern Sie Ihre Suche, um benachrichtigt zu werden, wenn neue Immobilien Ihren Kriterien entsprechen.",
+      "emptyTitle": "Keine gespeicherten Suchen",
+      "error": "Gespeicherte Suchen konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+      "forRent": "Zu vermieten",
+      "forSale": "Zu verkaufen",
+      "frequency": {
+        "daily": "Täglich",
+        "instant": "Sofort",
+        "weekly": "Wöchentlich"
+      },
+      "newCount": "{count} neue",
+      "startSearching": "Suche starten",
+      "subtitle": "Verwalten Sie Ihre gespeicherten Suchen und lassen Sie sich benachrichtigen, wenn neue Angebote Ihren Kriterien entsprechen.",
+      "title": "Gespeicherte Suchen",
+      "view": "Ansehen"
+    },
+    "realtorListings": {
+      "error": "Angebote konnten nicht geladen werden.",
+      "empty": "Sie haben noch keine Angebote veröffentlicht.",
+      "createFirst": "Erstellen Sie Ihr erstes Angebot"
+    },
+    "agencyProfile": {
+      "loading": "Wird geladen…",
+      "notFound": "Agentur nicht gefunden.",
+      "verified": "Verifiziert",
+      "about": "Über die Agentur",
+      "team": "Unser Team ({count})",
+      "activeListings": "Aktive Angebote ({count})",
+      "noListings": "Keine aktiven Angebote.",
+      "rentSuffix": "/Mon.",
+      "contact": "Kontakt",
+      "visitWebsite": "Website besuchen",
+      "license": "Lizenz: {number}"
     }
   },
   "search": {
@@ -850,6 +1218,7 @@
       "mappingHint": "Ordnen Sie Ihre CRM-Felder den Inserateigenschaften zu",
       "creating": "Erstelle...",
       "createConnection": "Verbindung erstellen",
+      "createError": "Verbindung konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
       "connectionFailed": "Verbindung fehlgeschlagen",
       "connectionSuffix": "Verbindung",
       "status": {
@@ -888,6 +1257,9 @@
       "feedName": "Feed-Name (optional)",
       "feedNamePlaceholder": "Mein Immobilien-Feed",
       "fetchError": "Feed konnte nicht abgerufen werden. Bitte prüfen Sie die URL und versuchen Sie es erneut.",
+      "updateError": "Feed konnte nicht aktualisiert werden. Bitte versuchen Sie es erneut.",
+      "syncError": "Feed-Synchronisierung konnte nicht gestartet werden. Bitte versuchen Sie es erneut.",
+      "removeError": "Feed konnte nicht entfernt werden. Bitte versuchen Sie es erneut.",
       "format": "Format",
       "itemsFound": "Gefundene Einträge",
       "availableFields": "Verfügbare Felder",
@@ -899,6 +1271,7 @@
       "mappingHint": "Ordnen Sie Feed-Felder den Inserateigenschaften zu",
       "creating": "Erstelle...",
       "createFeed": "Feed erstellen",
+      "createError": "Feed konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
       "defaultName": "Immobilien-Feed",
       "status": {
         "active": "Aktiv",
@@ -923,6 +1296,7 @@
       "cancel": "Abbrechen",
       "saving": "Speichern...",
       "saveChanges": "Änderungen speichern",
+      "saveError": "Änderungen konnten nicht gespeichert werden. Bitte versuchen Sie es erneut.",
       "status": "Status",
       "enabled": "Aktiviert",
       "disabled": "Deaktiviert",
@@ -963,5 +1337,46 @@
         "cancelled": "Abgebrochen"
       }
     }
+  },
+  "listingForm": {
+    "labelTitle": "Titel",
+    "labelDescription": "Beschreibung",
+    "labelPropertyType": "Immobilientyp",
+    "labelTransaction": "Transaktion",
+    "labelPrice": "Preis",
+    "labelCurrency": "Währung",
+    "labelCity": "Stadt",
+    "labelPostalCode": "Postleitzahl",
+    "labelStreet": "Straße",
+    "labelArea": "Fläche (m²)",
+    "labelRooms": "Zimmer",
+    "propertyTypeApartment": "Wohnung",
+    "propertyTypeHouse": "Haus",
+    "propertyTypeLand": "Grundstück",
+    "propertyTypeCommercial": "Gewerbe",
+    "propertyTypeOther": "Sonstiges",
+    "transactionSale": "Zu verkaufen",
+    "transactionRent": "Zu vermieten",
+    "saving": "Wird gespeichert…",
+    "errorTitleRequired": "Titel ist erforderlich",
+    "errorDescriptionRequired": "Beschreibung ist erforderlich",
+    "errorCityRequired": "Stadt ist erforderlich",
+    "errorPricePositive": "Preis muss eine positive Zahl sein",
+    "errorAreaInvalid": "Fläche muss eine gültige Zahl sein",
+    "errorAreaNegative": "Fläche darf nicht negativ sein",
+    "errorRoomsInvalid": "Zimmeranzahl muss eine gültige Zahl sein",
+    "errorRoomsNegative": "Zimmeranzahl darf nicht negativ sein"
+  },
+  "realtor": {
+    "errorNetwork": "Netzwerkfehler. Bitte versuchen Sie es erneut.",
+    "errorMalformed": "Der Server hat eine unerwartete Antwort zurückgegeben. Bitte versuchen Sie es erneut.",
+    "errorRequestFailed": "Anfrage fehlgeschlagen ({status}). Bitte versuchen Sie es erneut.",
+    "errorLoadProfile": "Profil konnte nicht geladen werden.",
+    "errorSaveProfile": "Profil konnte nicht gespeichert werden.",
+    "errorNameRequired": "Name ist erforderlich.",
+    "errorLoadListing": "Inserat konnte nicht geladen werden.",
+    "errorSaveListing": "Inserat konnte nicht gespeichert werden.",
+    "errorCreateListing": "Inserat konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
+    "errorMissingListingId": "Inserat-ID fehlt."
   }
 }

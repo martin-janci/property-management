@@ -15,6 +15,7 @@
 import type React from 'react';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { describeError } from '../lib/describeError';
 import './Toast.css';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
@@ -29,6 +30,15 @@ export interface Toast {
   type: ToastType;
   title: string;
   message?: string;
+  /**
+   * The thrown error. When set (and `message` is not), the toast shows a
+   * translated message chosen by HTTP status and keeps the raw server text
+   * only as a secondary detail line — instead of surfacing English server
+   * messages such as "Only managers can create articles" or "HTTP 422".
+   */
+  error?: unknown;
+  /** Secondary detail line (smaller, below the message). */
+  detail?: string;
   duration?: number; // 0 = persistent
   action?: ToastAction;
 }
@@ -50,6 +60,20 @@ export function useToast(): ToastContextValue {
     throw new Error('useToast must be used within a ToastProvider');
   }
   return context;
+}
+
+/**
+ * Provider-tolerant variant of {@link useToast}.
+ *
+ * Returns the toast API when a `ToastProvider` is present (the app-level
+ * provider in production — see `App.tsx`), or `null` otherwise, instead of
+ * throwing. This lets a component wire real toast feedback while still
+ * rendering in isolation under tests that intentionally mount it without a
+ * provider (e.g. the RegistryPage auth-context regression suite). Prefer
+ * {@link useToast} for components that always render under the provider.
+ */
+export function useToastOptional(): ToastContextValue | null {
+  return useContext(ToastContext);
 }
 
 /**
@@ -168,13 +192,40 @@ interface ToastItemProps {
 function ToastItem({ toast, onDismiss }: ToastItemProps) {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
+  // Track the "copied" reset timer so it can be cleared on unmount; otherwise
+  // a toast dismissed within the 2s window fires setState after unmount.
+  const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear any pending "copied" reset timer when the toast unmounts.
+  useEffect(() => {
+    return () => {
+      if (copiedTimeoutRef.current !== null) {
+        clearTimeout(copiedTimeoutRef.current);
+        copiedTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
+  const described = toast.error !== undefined ? describeError(toast.error, t) : undefined;
+  const message = toast.message || described?.message;
+  const detail = toast.detail ?? described?.detail;
 
   const handleCopy = useCallback(async () => {
-    const textToCopy = toast.message ? `${toast.title}: ${toast.message}` : toast.title;
+    const parts = [message, detail].filter(Boolean).join(' — ');
+    const textToCopy = parts ? `${toast.title}: ${parts}` : toast.title;
+    const scheduleReset = () => {
+      if (copiedTimeoutRef.current !== null) {
+        clearTimeout(copiedTimeoutRef.current);
+      }
+      copiedTimeoutRef.current = setTimeout(() => {
+        copiedTimeoutRef.current = null;
+        setCopied(false);
+      }, 2000);
+    };
     try {
       await navigator.clipboard.writeText(textToCopy);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      scheduleReset();
     } catch {
       // Fallback for older browsers
       const textArea = document.createElement('textarea');
@@ -184,9 +235,9 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
       document.execCommand('copy');
       document.body.removeChild(textArea);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      scheduleReset();
     }
-  }, [toast.title, toast.message]);
+  }, [toast.title, message, detail]);
 
   const ariaLive = toast.type === 'error' ? 'assertive' : 'polite';
   const copiedLabel = t('common.copied');
@@ -198,7 +249,8 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
       <div className="toast-icon">{getIcon(toast.type)}</div>
       <div className="toast-content">
         <div className="toast-title">{toast.title}</div>
-        {toast.message && <div className="toast-message">{toast.message}</div>}
+        {message && <div className="toast-message">{message}</div>}
+        {detail && <div className="toast-detail">{detail}</div>}
       </div>
       <div className="toast-actions">
         {toast.action && (

@@ -7,6 +7,8 @@
 
 mod common;
 
+#[path = "suites/comms_cluster_org_scope_tests.rs"]
+mod comms_cluster_org_scope_tests;
 #[path = "suites/esignature_email_status_tracking_tests.rs"]
 mod esignature_email_status_tracking_tests;
 #[path = "suites/esignature_nonce_replay_tests.rs"]
@@ -23,6 +25,8 @@ mod faults_authz_gap_tests;
 mod faults_behaviour_tests;
 #[path = "suites/faults_cross_org_idor_tests.rs"]
 mod faults_cross_org_idor_tests;
+#[path = "suites/faults_round4_authz_tests.rs"]
+mod faults_round4_authz_tests;
 #[path = "suites/faults_tests.rs"]
 mod faults_tests;
 #[path = "suites/faults_workflow_happy_path_tests.rs"]
@@ -57,3 +61,5 @@ mod insurance_cross_tenant_idor_tests;
 mod integration_sync_tests;
 #[path = "suites/integrations_batch4_tests.rs"]
 mod integrations_batch4_tests;
+#[path = "suites/operations_platform_admin_db_tests.rs"]
+mod operations_platform_admin_db_tests;

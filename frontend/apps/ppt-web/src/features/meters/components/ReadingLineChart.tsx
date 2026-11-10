@@ -25,7 +25,7 @@ export function ReadingLineChart({
   height = 300,
   showConsumption = false,
 }: ReadingLineChartProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   if (data.length === 0) {
     return (
@@ -92,7 +92,7 @@ export function ReadingLineChart({
 
   const formatDate = (dateStr: string): string => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return date.toLocaleDateString(i18n.language, { month: 'short', day: 'numeric' });
   };
 
   // Create SVG path for the line

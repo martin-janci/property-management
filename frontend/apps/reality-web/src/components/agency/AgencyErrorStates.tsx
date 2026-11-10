@@ -109,6 +109,7 @@ export function SectionError({ message }: { message: string }) {
  * must NOT be shown on a transport/server error.
  */
 export function NoAgencyMessage() {
+  const t = useTranslations('agency');
   return (
     <div className="no-agency">
       <svg
@@ -123,10 +124,10 @@ export function NoAgencyMessage() {
         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
         <polyline points="9 22 9 12 15 12 15 22" />
       </svg>
-      <h2>No Agency Found</h2>
-      <p>You are not associated with any agency.</p>
+      <h2>{t('noAgencyTitle')}</h2>
+      <p>{t('noAgencyMessage')}</p>
       <Link href="/agency/create" className="create-button">
-        Create Agency
+        {t('createAgency')}
       </Link>
       <style jsx>{`
         .no-agency {

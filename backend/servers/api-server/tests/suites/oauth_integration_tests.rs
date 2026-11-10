@@ -171,6 +171,30 @@ async fn count_token_events(pool: &PgPool, client_id: &str, event_type: &str) ->
     .unwrap_or(0)
 }
 
+/// Wait until at least `expected` `oauth_token_events` rows exist for
+/// `client_id` + `event_type`, or panic after a short timeout.
+///
+/// Since #2643 the token-usage recording is written by a **detached background
+/// task** off the hot token path, so the row may not be visible the instant the
+/// HTTP token response returns. Polling here removes that race while still
+/// proving the recording is preserved on the happy path (no dropped writes) —
+/// a genuinely dropped write makes this time out and fail.
+async fn await_token_event_count(pool: &PgPool, client_id: &str, event_type: &str, expected: i64) {
+    // ~2s budget (100 × 20ms) — comfortably covers a local INSERT round-trip
+    // while still failing fast if the event is never recorded.
+    for _ in 0..100 {
+        if count_token_events(pool, client_id, event_type).await >= expected {
+            return;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+    }
+    panic!(
+        "timed out waiting for {expected} `{event_type}` token-usage event(s) for client \
+         {client_id}; observed {} — the detached recorder dropped the write",
+        count_token_events(pool, client_id, event_type).await,
+    );
+}
+
 /// Run the full PKCE S256 authorization-code flow for a **confidential** client
 /// and return `(access_token, refresh_token)`.
 ///
@@ -2952,14 +2976,12 @@ mod token_usage_analytics {
         let (user_at, _) = create_authenticated_user(&app, &user).await;
         let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
 
-        // 1) authorization_code exchange → one `issued` event.
+        // 1) authorization_code exchange → one `issued` event. Recording is
+        // detached off the hot path (#2643), so poll for it rather than reading
+        // once; a genuinely dropped write makes this time out.
         let (access_token, refresh_token) =
             confidential_auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
-        assert_eq!(
-            count_token_events(&pool, &client_id, "issued").await,
-            1,
-            "authorization_code exchange must record an `issued` token-usage event"
-        );
+        await_token_event_count(&pool, &client_id, "issued", 1).await;
 
         // 2) refresh_token grant → one `refreshed` event.
         let refresh_body = form_body(&[
@@ -2977,11 +2999,7 @@ mod token_usage_analytics {
             "refresh must succeed. body={}",
             refresh_resp.text()
         );
-        assert_eq!(
-            count_token_events(&pool, &client_id, "refreshed").await,
-            1,
-            "refresh_token grant must record a `refreshed` token-usage event"
-        );
+        await_token_event_count(&pool, &client_id, "refreshed", 1).await;
 
         // 3) RFC 7009 revocation of the access token → one `revoked` event.
         let revoke_status = revoke_rfc7009(
@@ -2997,13 +3015,10 @@ mod token_usage_analytics {
             StatusCode::OK,
             "revoke must succeed per RFC 7009"
         );
-        assert_eq!(
-            count_token_events(&pool, &client_id, "revoked").await,
-            1,
-            "revocation must record a `revoked` token-usage event"
-        );
+        await_token_event_count(&pool, &client_id, "revoked", 1).await;
 
-        // The per-client rollup the dashboard reads must now be non-empty and
+        // All three detached writes have landed (we polled for each above), so
+        // the per-client rollup the dashboard reads must now be non-empty and
         // consistent with the three lifecycle transitions above.
         let repo = db::repositories::OAuthTokenEventRepository::new(pool.clone());
         let since = chrono::Utc::now() - chrono::Duration::hours(1);
@@ -3063,11 +3078,9 @@ mod token_usage_analytics {
             "public client token exchange must succeed. body={}",
             resp.text()
         );
-        assert_eq!(
-            count_token_events(&pool, &client_id, "issued").await,
-            1,
-            "public client authorization_code exchange must record an `issued` event"
-        );
+        // Detached recording off the hot path (#2643): poll for the `issued`
+        // event rather than reading once.
+        await_token_event_count(&pool, &client_id, "issued", 1).await;
     }
 }
 
@@ -3199,11 +3212,9 @@ mod token_usage_read_route {
         let (user_at, _) = create_authenticated_user(app, &user).await;
         let (client_id, client_secret, redirect_uri) = seed_confidential_client(pool).await;
         confidential_auth_flow(app, &user_at, &client_id, &client_secret, &redirect_uri).await;
-        assert_eq!(
-            count_token_events(pool, &client_id, "issued").await,
-            1,
-            "precondition: one issuance must be seeded through the router"
-        );
+        // Recording is detached off the hot path (#2643): wait for the seeded
+        // issuance to land before the read-route assertions depend on it.
+        await_token_event_count(pool, &client_id, "issued", 1).await;
         client_id
     }
 

@@ -28,6 +28,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { formatDate } from '../../i18n/format';
 import { colors } from '../shared/screenStyles';
 import {
   type CreateShareRequest,
@@ -62,7 +63,7 @@ function isActive(share: ShareWithDocument): boolean {
 }
 
 function formatExpiry(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString(undefined, {
+  return formatDate(dateStr, {
     month: 'short',
     day: 'numeric',
     year: 'numeric',

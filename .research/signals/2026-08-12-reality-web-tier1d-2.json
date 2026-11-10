@@ -1,0 +1,65 @@
+{
+  "generated": "2026-08-12T20:30:00Z",
+  "segment": "reality-web",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed",
+  "selection_note": "No CHURN_FILES passed (demand-driven Tier 1d refill; claim buffer starved, backlog avail=0). Saturation: mobile-native-kmp is the only saturated segment (3 open code-review-findings in backlog.json), excluded. By review_cursor ascending, reality-web (cursor 2026-08-07) is the oldest segment and has 0 open code-review-findings in backlog.json (not saturated). A same-day 2026-08-12-reality-web-tier1d.json already exists (realtor/profile mock surfaces) but review_cursor was never advanced past 2026-08-07, so reality-web is legitimately re-selectable; this second pass targets a distinct surface set (fake-submit lead/report forms + realtor/account i18n gap) with no overlap. Path root resolved to frontend/apps/reality-web/src (SKILL table lists frontend/reality-web/src, which is stale). Static analysis only; no compile/test run.",
+  "experts_used": ["frontend"],
+  "signals": [
+    {
+      "id": "code-review-reality-web-sell-page-fake-submit",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx:723-731 — the final step of the multi-step public 'Sell your property' wizard collects property details + seller contact info, but the submit button's onClick only runs validateStep() then setSubmitted(true). No network call is made: grep for fetch|mutate|apiClient|.post over the file returns 0 hits. The success screen renders while the captured seller lead is silently dropped — the form never persists anything to reality-server.",
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx:730 — `if (Object.keys(stepErrors).length === 0) setSubmitted(true);` is the entire submit action.",
+        "Impact: business-lead data loss on a public conversion surface. Same fake-submit pattern class as the previously-flagged realtor-contact-fake-submit (2026-08-12 signals) but on a different, higher-traffic route."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-report-page-fake-submit",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx:37-41 — handleSubmit() validates (problem set, non-empty description, gdprAccepted) then calls setSubmitted(true) with no network submit. grep for fetch|mutate|apiClient|.post over the file returns 0 hits. The 'Report a listing' abuse/problem-report form shows a success confirmation but the report is never sent to any backend.",
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx:3-4 — file header 'Report a listing — problem report form'; REPORT_PROBLEMS categories are imported from a local ./_mock module.",
+        "Impact: content/abuse reports are silently discarded. Beyond data loss, a listing-report surface that captures nothing carries DSA/notice-and-action compliance risk for a public EU real-estate portal."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-realtor-account-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "evidence": [
+        "The entire realtor/* and account/* route subtree ships hardcoded English with no next-intl usage, in a portal that serves sk/cs/de/en. 11 page.tsx files have zero useTranslations/getTranslations/next-intl import: app/[locale]/realtor/{profile,[id],'',listings,listings/new,listings/[id]/edit,analytics}/page.tsx and app/[locale]/account/{profile,'',listings/[id]/edit,password}/page.tsx.",
+        "Concrete example — frontend/apps/reality-web/src/app/[locale]/realtor/listings/page.tsx renders literal 'My listings', 'Manage the properties you have published.', 'For sale'/'For rent', 'views', 'inquiries', 'Loading…', 'Failed to load listings.', 'You haven't published any listings yet.' with no t() wrapping, unlike sibling public routes (ContactForm, listing detail) which use useTranslations.",
+        "Non-Slovak realtors/owners see English-only management screens; the [locale] segment is honored for public pages but ignored across the authenticated realtor/account area."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/profile/page.tsx"
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

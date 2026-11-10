@@ -1,0 +1,37 @@
+-- Widen `portal_saved_searches.match_count` from int4 to bigint so a long-lived,
+-- high-traffic saved search can never wedge itself on integer overflow (#2814,
+-- follow-up to PR #2812).
+--
+-- Background
+-- ----------
+-- `RealityPortalRepository::mark_saved_search_matched` advances the alert
+-- watermark with `match_count = match_count + N`. Since PR #2812 made the
+-- enqueue + watermark advance atomic (correct, all-or-nothing), a failed
+-- advance now rolls the whole run back — which is the intended contract for
+-- ordinary failures but exposes a nasty latent edge for arithmetic overflow:
+-- once a saved search accumulates `match_count` near `i32::MAX`, every
+-- subsequent advance overflows `integer`, aborts the transaction, and the
+-- watermark never moves again. The search then stops delivering alerts
+-- **permanently**, with no self-recovery and no alerting once it trips.
+--
+-- The failure mode is exactly what the regression test
+-- `failed_watermark_advance_rolls_back_enqueue` induces deliberately (it
+-- primes `match_count = i32::MAX` to force the overflow to validate the
+-- rollback contract). In production the overflow is implausible for a single
+-- search in the near term, but `match_count` is unbounded and monotonic, so
+-- it is a real "wedges forever, silently" edge — pick a durable ceiling.
+--
+-- Fix
+-- ---
+-- Widen the column to `bigint` (i64). `bigint` shares int4's storage class in
+-- Postgres for ALTER TYPE — the rewrite is O(N) but touches at most a few
+-- rows per portal user, so the migration is fast even on populated
+-- environments. Repo/model types move from `i32` -> `i64` in the same PR;
+-- utoipa's `ToSchema` still surfaces a JSON number, so the on-the-wire shape
+-- is unchanged for consumers (JSON numbers cover both).
+--
+-- Column default and NOT NULL are preserved by ALTER COLUMN TYPE; the
+-- existing rows keep their current values (bigint is a strict superset of
+-- int4).
+ALTER TABLE portal_saved_searches
+    ALTER COLUMN match_count TYPE bigint;

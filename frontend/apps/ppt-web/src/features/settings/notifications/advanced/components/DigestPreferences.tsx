@@ -4,11 +4,9 @@
  * Configuration UI for notification digests - bundled notification summaries.
  */
 
-import type { DayOfWeek, DigestConfig, NotificationCategory } from '@ppt/api-client';
+import type { DayOfWeek, DigestConfig } from '@ppt/api-client';
 import {
-  ALL_CATEGORIES,
   ALL_DAYS,
-  CATEGORY_LABELS,
   DAY_FULL_LABELS,
   DIGEST_OPTIONS,
   FREQUENCY_DESCRIPTIONS,
@@ -24,16 +22,12 @@ interface DigestPreferencesProps {
 
 export function DigestPreferences({ config, loading, onUpdate }: DigestPreferencesProps) {
   const { t } = useTranslation();
-  const handleCategoryToggle = (category: NotificationCategory) => {
-    const newCategories = config.includeCategories.includes(category)
-      ? config.includeCategories.filter((c) => c !== category)
-      : [...config.includeCategories, category];
-    onUpdate({ includeCategories: newCategories });
-  };
+  const dayLabel = (day: DayOfWeek) =>
+    t(`settings.notifications.advanced.days.${day}`, { defaultValue: DAY_FULL_LABELS[day] });
 
   const getNextDeliveryText = (): string => {
     if (!config.enabled || config.frequency === 'disabled') {
-      return 'Digests are disabled';
+      return t('settings.notifications.advanced.digest.nextDisabled');
     }
 
     const time = config.deliveryTime || '09:00';
@@ -42,11 +36,14 @@ export function DigestPreferences({ config, loading, onUpdate }: DigestPreferenc
     // knows config.frequency can only be 'hourly' | 'daily' | 'weekly' here
     switch (config.frequency) {
       case 'hourly':
-        return 'Every hour at :00';
+        return t('settings.notifications.advanced.digest.nextHourly');
       case 'daily':
-        return `Every day at ${time}`;
+        return t('settings.notifications.advanced.digest.nextDaily', { time });
       case 'weekly':
-        return `Every ${DAY_FULL_LABELS[config.deliveryDay || 'monday']} at ${time}`;
+        return t('settings.notifications.advanced.digest.nextWeekly', {
+          day: dayLabel(config.deliveryDay || 'monday'),
+          time,
+        });
     }
   };
 
@@ -54,9 +51,11 @@ export function DigestPreferences({ config, loading, onUpdate }: DigestPreferenc
     <div className="bg-white border border-gray-200 rounded-lg p-6">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Notification Digest</h3>
+          <h3 className="text-lg font-semibold text-gray-900">
+            {t('settings.notifications.advanced.digest.title')}
+          </h3>
           <p className="text-sm text-gray-500 mt-0.5">
-            Receive notification summaries instead of individual alerts
+            {t('settings.notifications.advanced.digest.subtitle')}
           </p>
         </div>
 
@@ -90,7 +89,9 @@ export function DigestPreferences({ config, loading, onUpdate }: DigestPreferenc
         <div className="space-y-5 pt-4 border-t border-gray-100">
           {/* Frequency selector */}
           <fieldset className="border-0 p-0 m-0">
-            <legend className="block text-sm font-medium text-gray-700 mb-2">Frequency</legend>
+            <legend className="block text-sm font-medium text-gray-700 mb-2">
+              {t('settings.notifications.advanced.digest.frequency')}
+            </legend>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {DIGEST_OPTIONS.map((freq) => (
                 <button
@@ -109,11 +110,20 @@ export function DigestPreferences({ config, loading, onUpdate }: DigestPreferenc
                     ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                   `}
                 >
-                  {FREQUENCY_LABELS[freq]}
+                  {t(`settings.notifications.advanced.digest.frequencies.${freq}.label`, {
+                    defaultValue: FREQUENCY_LABELS[freq],
+                  })}
                 </button>
               ))}
             </div>
-            <p className="text-xs text-gray-500 mt-2">{FREQUENCY_DESCRIPTIONS[config.frequency]}</p>
+            <p className="text-xs text-gray-500 mt-2">
+              {t(
+                `settings.notifications.advanced.digest.frequencies.${config.frequency}.description`,
+                {
+                  defaultValue: FREQUENCY_DESCRIPTIONS[config.frequency],
+                }
+              )}
+            </p>
           </fieldset>
 
           {/* Delivery time (for daily/weekly) */}
@@ -124,7 +134,7 @@ export function DigestPreferences({ config, loading, onUpdate }: DigestPreferenc
                   htmlFor="delivery-time"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Delivery Time
+                  {t('settings.notifications.advanced.digest.deliveryTime')}
                 </label>
                 <input
                   type="time"
@@ -142,7 +152,7 @@ export function DigestPreferences({ config, loading, onUpdate }: DigestPreferenc
                     htmlFor="delivery-day"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    Delivery Day
+                    {t('settings.notifications.advanced.digest.deliveryDay')}
                   </label>
                   <select
                     id="delivery-day"
@@ -153,7 +163,7 @@ export function DigestPreferences({ config, loading, onUpdate }: DigestPreferenc
                   >
                     {ALL_DAYS.map((day) => (
                       <option key={day} value={day}>
-                        {DAY_FULL_LABELS[day]}
+                        {dayLabel(day)}
                       </option>
                     ))}
                   </select>
@@ -164,47 +174,15 @@ export function DigestPreferences({ config, loading, onUpdate }: DigestPreferenc
 
           {/* Preview */}
           <div className="bg-blue-50 rounded-lg p-3">
-            <p className="text-xs text-blue-600 mb-1 font-medium">Next Delivery</p>
+            <p className="text-xs text-blue-600 mb-1 font-medium">
+              {t('settings.notifications.advanced.digest.nextDelivery')}
+            </p>
             <p className="text-sm text-blue-800">{getNextDeliveryText()}</p>
           </div>
 
-          {/* Categories to include */}
-          <fieldset className="border-0 p-0 m-0">
-            <legend className="block text-sm font-medium text-gray-700 mb-2">
-              Include in Digest
-            </legend>
-            <div className="flex flex-wrap gap-2">
-              {ALL_CATEGORIES.map((category) => {
-                const isSelected = config.includeCategories.includes(category);
-                return (
-                  <button
-                    key={category}
-                    type="button"
-                    aria-pressed={isSelected}
-                    onClick={() => handleCategoryToggle(category)}
-                    disabled={loading}
-                    className={`
-                      px-3 py-1.5 rounded-full text-xs font-medium transition-colors
-                      ${
-                        isSelected
-                          ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                          : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                      }
-                      ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                    `}
-                  >
-                    {CATEGORY_LABELS[category]}
-                  </button>
-                );
-              })}
-            </div>
-            {/* Empty array = no filter = all categories included in digest */}
-            <p className="text-xs text-gray-500 mt-2">
-              {config.includeCategories.length === 0
-                ? 'All categories included (no filter applied)'
-                : `${config.includeCategories.length} of ${ALL_CATEGORIES.length} categories selected`}
-            </p>
-          </fieldset>
+          <p className="text-xs text-gray-500">
+            {t('settings.notifications.advanced.digest.allCategoriesNote')}
+          </p>
         </div>
       )}
     </div>

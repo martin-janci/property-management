@@ -6,10 +6,13 @@
 //! anonymous-friendly via the optional wrapper; the list-my-reports path
 //! requires a real principal.
 
+use crate::handlers::inquiries::{InquiriesHandler, InquiryResult};
+use crate::routes::inquiries::client_ip_bucket;
 use crate::state::AppState;
 use api_core::extractors::{OptionalRequestPrincipal, RequestPrincipal};
 use axum::{
     extract::{Query, State},
+    http::HeaderMap,
     routing::{get, post},
     Json, Router,
 };
@@ -28,12 +31,19 @@ const MAX_REPORT_DESCRIPTION_LEN: usize = 5000;
 const MAX_REPORT_ATTACHMENTS: usize = 10;
 const MAX_URL_LEN: usize = 2048;
 
+/// Canonical `listing_reports.status` values a reporter may filter by. Mirrors
+/// the status comment in migration `00106_create_listing_reports.sql` and the
+/// `MyReportsQuery::status` doc. Keep in sync with the moderation workflow.
+const REPORT_STATUS_VALUES: [&str; 4] = ["received", "in_review", "resolved", "rejected"];
+
 /// Reject `javascript:`, `data:`, `file:`, etc. URLs that would later be
 /// rendered in `<img src=>` / `<a href=>` on the frontend (stored XSS).
-/// Inlined locally per H7 brief — once the auth-hardening branch lands a
-/// shared `url_validator` module this should be swapped for the import.
+/// Inlined locally per H7 brief. NOTE: this is an XSS-focused scheme check
+/// for URLs rendered in the frontend, distinct from the SSRF fetch validator
+/// now shared in `common::url_validation`; a future consolidation could move
+/// this image/link validator into that shared crate too.
 fn validate_image_or_link_url(s: &str) -> Result<(), String> {
-    if s.len() > MAX_URL_LEN {
+    if s.chars().count() > MAX_URL_LEN {
         return Err(format!("URL must be at most {} characters", MAX_URL_LEN));
     }
     let parsed = url::Url::parse(s).map_err(|_| "Invalid URL".to_string())?;
@@ -128,12 +138,41 @@ pub struct MyReportsQuery {
     pub offset: Option<i64>,
 }
 
+/// Enforce the per-IP anonymous report-submission throttle. Returns `Err(429)`
+/// when the client has exceeded the quota.
+///
+/// Reuses the same per-client-IP limiter and spoof-resistant bucket key as the
+/// anonymous inquiry POSTs (`state.inquiry_rate_limiters` +
+/// [`client_ip_bucket`]): the abuse profile is identical (listing-scoped
+/// anonymous POST), so a shared budget keeps the blast radius to a single
+/// state field. If an operator later needs an independent budget, split off a
+/// dedicated `state.report_rate_limiters` slot.
+async fn enforce_public_report_rate_limit(
+    state: &AppState,
+    headers: &HeaderMap,
+    listing_id: Uuid,
+) -> Result<(), (axum::http::StatusCode, String)> {
+    let key = client_ip_bucket(headers, state.inquiry_trusted_proxy_hops);
+    let decision = state.inquiry_rate_limiters.check(key).await;
+    match InquiriesHandler::rate_limit_result(decision) {
+        Some(InquiryResult::RateLimited) => {
+            tracing::warn!(%listing_id, "Anonymous report rate limit tripped");
+            Err((
+                axum::http::StatusCode::TOO_MANY_REQUESTS,
+                "Too many requests. Please try again in a minute.".to_string(),
+            ))
+        }
+        _ => Ok(()),
+    }
+}
+
 /// Submit a listing report (UC-23).
 ///
 /// Auth is optional — anonymous reports allowed (per screen-map
 /// `reality/report-listing`). Authenticated reports get a faster SLA because
-/// the moderator can follow up; anonymous reports still go through but should
-/// be rate-limited by IP at the moderation layer.
+/// the moderator can follow up; anonymous reports go through the same per-IP
+/// throttle enforced at the route layer (`enforce_public_report_rate_limit`,
+/// reusing the inquiry limiter) before any validation or DB work.
 #[utoipa::path(
     post,
     path = "/api/v1/reports",
@@ -149,16 +188,22 @@ pub struct MyReportsQuery {
 pub async fn submit_report(
     State(state): State<AppState>,
     OptionalRequestPrincipal(principal): OptionalRequestPrincipal,
+    headers: HeaderMap,
     Json(data): Json<SubmitReportRequest>,
 ) -> Result<(axum::http::StatusCode, Json<SubmitReportResponse>), (axum::http::StatusCode, String)>
 {
+    // Reject anonymous floods at the routing layer BEFORE any validation or DB
+    // work — an unauthenticated attacker could otherwise bloat `listing_reports`
+    // and the moderation queue unboundedly from a single IP.
+    enforce_public_report_rate_limit(&state, &headers, data.listing_id).await?;
+
     if data.description.trim().is_empty() {
         return Err((
             axum::http::StatusCode::BAD_REQUEST,
             "Description is required".to_string(),
         ));
     }
-    if data.description.len() > MAX_REPORT_DESCRIPTION_LEN {
+    if data.description.chars().count() > MAX_REPORT_DESCRIPTION_LEN {
         return Err((
             axum::http::StatusCode::BAD_REQUEST,
             format!(
@@ -185,6 +230,33 @@ pub async fn submit_report(
                     "Attachment URL is invalid (must be http(s) and <= 2048 chars)".to_string(),
                 ));
             }
+        }
+    }
+
+    // Optional reporter contact details are persisted verbatim into
+    // `listing_reports` and later surfaced to moderators, so they need the same
+    // length + format guarantees as the anonymous inquiry contact fields.
+    // Reuse `InquiriesHandler::is_valid_email` / `is_valid_phone` (the identical
+    // anonymous-contact validators) rather than re-deriving divergent checks
+    // here. Both are optional: skip when absent or blank, reject when present
+    // but malformed. `is_valid_email` caps length at 254 chars and
+    // `is_valid_phone` at 9–15 cleaned digits, covering the length bound too.
+    if let Some(ref email) = data.reporter_email {
+        let email = email.trim().to_lowercase();
+        if !email.is_empty() && !InquiriesHandler::is_valid_email(&email) {
+            return Err((
+                axum::http::StatusCode::BAD_REQUEST,
+                "Invalid reporter email format".to_string(),
+            ));
+        }
+    }
+    if let Some(ref phone) = data.reporter_phone {
+        let phone = phone.trim();
+        if !phone.is_empty() && !InquiriesHandler::is_valid_phone(phone) {
+            return Err((
+                axum::http::StatusCode::BAD_REQUEST,
+                "Invalid reporter phone number format".to_string(),
+            ));
         }
     }
 
@@ -288,7 +360,28 @@ pub async fn list_my_reports(
     Query(query): Query<MyReportsQuery>,
 ) -> Result<Json<MyReportsResponse>, (axum::http::StatusCode, String)> {
     let limit = query.limit.unwrap_or(20).clamp(1, 100);
-    let offset = query.offset.unwrap_or(0).max(0);
+    let offset = crate::util::clamp_offset(query.offset);
+
+    // Validate the optional status filter against the documented enum. An
+    // unrecognised value (typo, wrong case, or a status that doesn't exist)
+    // was previously bound straight into `status = $4` and silently matched
+    // zero rows, returning a 200 empty page indistinguishable from "you have no
+    // reports with this status" — a confusing success where a 400 belongs. A
+    // blank value means "no filter". Do NOT echo the offending value back
+    // (reflected-XSS hygiene, as in `submit_report`); list the allowed values.
+    let status_filter: Option<String> = match query.status.as_deref().map(str::trim) {
+        None | Some("") => None,
+        Some(s) if REPORT_STATUS_VALUES.contains(&s) => Some(s.to_string()),
+        Some(_) => {
+            return Err((
+                axum::http::StatusCode::BAD_REQUEST,
+                format!(
+                    "Invalid status filter. Allowed values: {}",
+                    REPORT_STATUS_VALUES.join(", ")
+                ),
+            ));
+        }
+    };
 
     let mut conn = state
         .acquire_public_conn()
@@ -310,7 +403,7 @@ pub async fn list_my_reports(
     .bind(principal.user_id)
     .bind(limit)
     .bind(offset)
-    .bind(&query.status)
+    .bind(&status_filter)
     .fetch_all(&mut *conn)
     .await
     .map_err(|e| crate::util::errors::db_error("list reports", e))?;
@@ -339,6 +432,24 @@ pub async fn list_my_reports(
         })
         .collect();
 
-    let total = reports.len();
+    // Total row count for pagination must reflect ALL matching rows, not just
+    // the current page (LIMIT/OFFSET), so run a COUNT with the same filters.
+    let total_row = sqlx::query(
+        r#"
+        SELECT COUNT(*) AS total
+        FROM listing_reports
+        WHERE reporter_user_id = $1
+          AND ($2::text IS NULL OR status = $2)
+        "#,
+    )
+    .bind(principal.user_id)
+    .bind(&status_filter)
+    .fetch_one(&mut *conn)
+    .await
+    .map_err(|e| crate::util::errors::db_error("count reports", e))?;
+
+    let total_count: i64 = total_row.get("total");
+    let total = usize::try_from(total_count).unwrap_or(0);
+
     Ok(Json(MyReportsResponse { reports, total }))
 }

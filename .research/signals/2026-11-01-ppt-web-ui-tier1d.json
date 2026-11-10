@@ -1,0 +1,32 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-01",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed (dispatcher-tier1d-demand-driven; claimable buffer starved, 10 < floor 36; backlog source exhausted). CHURN_FILES not supplied by the dispatcher this slice, so SKILL Step 1 priority 2 applies. THIS run is cloud-verify-constrained: only ppt-web / reality-web / admin-web / reality-server findings can land (api-server #2949 no-pg, mobile-native/KMP #2652 egress, mobile-rn #2951 jest-rot are cloud-verify-BLOCKED), so segment selection was restricted to the cloud-verifiable subset {reality-server, ppt-web-ui, ppt-web-core, reality-web}. review_cursor (from .research/state.json) over that subset, sorted ascending: ppt-web-ui 2026-10-22, reality-web 2026-10-23, ppt-web-core 2026-10-27, reality-server 2026-10-28. Saturation check against open code-review-finding rows in backlog.json: ppt-web-ui=1 (<3, not saturated; the one open row is code-review-ppt-web-ui-invoice-feature-no-i18n in the accounting feature). Oldest non-saturated cloud-verifiable segment is ppt-web-ui (2026-10-22) => selected. Frontend expert primary + Completeness secondary per Step 2. Scope reviewed: frontend/apps/ppt-web/src/pages/ + components/ (the UI segment root) plus the churn-hot disputes feature UI (features/disputes/{pages,components}, flagged in state.json hotspot_history). Static analysis only; no compile, no test run. Dedup: distinct from the 3 ppt-web-ui i18n findings written 2026-10-31 (my-unit page, neighbors InvitationsPage) and from the open accounting-invoice row — this finding is the disputes card-layer dir, not previously flagged.",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "findings_count": 1,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-disputes-cards-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "The disputes feature's presentational card layer renders user-facing English string literals with NO useTranslation import, inside an app that ships react-i18next with sk/cs/de/en locales. The surrounding pages are translated (DisputeList.tsx uses t() for title/filters/empty-state; MediationChatThread.tsx and MediationResolutionForm.tsx are fully t()-wrapped), so these cards are the un-wrapped gap, not a missing capability.",
+        "frontend/apps/ppt-web/src/features/disputes/components/DisputeCard.tsx:147-151 — hardcoded `Filed by {name}`, `Assigned to {name}`, and the relative-time literals `Today` / `${daysAgo} days ago` (also lacks plural handling for 1 day). No useTranslation in the file.",
+        "frontend/apps/ppt-web/src/features/disputes/components/ResolutionCard.tsx:118,180 — hardcoded headings `Resolution Proposal`, `Votes`, plus `Assigned to:` / `Due:` row labels (L161,163). No useTranslation.",
+        "frontend/apps/ppt-web/src/features/disputes/components/ActionItemCard.tsx:73-89,118,126,139 — hardcoded status/relative-time strings `Completed`, `Overdue by {n} days`, `Due today`, `Due tomorrow`, `Due in {n} days`, and labels `Assigned to:`, `Completed:`, `Escalated:`. No useTranslation; no plural handling.",
+        "frontend/apps/ppt-web/src/features/disputes/components/DisputeTimeline.tsx:85,94,97 — hardcoded `Just now`, heading `Activity Timeline`, and empty-state `No activity yet.`. No useTranslation.",
+        "Fix vector: add const { t, i18n } = useTranslation() to each of the 4 card files and move the literals to disputes.* keys (e.g. disputes.card.filedBy, disputes.actionItem.dueInDays with i18next plural forms, disputes.timeline.empty); add the keys to the sk/cs/de/en locale bundles. Cloud-verifiable (ppt-web, biome + typecheck). Confidence medium: literals certain by static read, all four cards reachable from the shipped DisputesPage/DisputeDetailPage/MediationWorkspacePage; severity LOW (+1) i18n gap per the skill's score-delta table.",
+        "expert: frontend+completeness"
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

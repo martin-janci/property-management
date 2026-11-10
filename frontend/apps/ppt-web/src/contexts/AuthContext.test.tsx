@@ -164,6 +164,40 @@ function renderAuthApp(): RenderResult {
 // Tests
 // ---------------------------------------------------------------------------
 
+/**
+ * Mounted-route-group / feature-page domains whose `@ppt/api-client` query
+ * hooks are used in ppt-web (disputes / iot / outages / leases / voting /
+ * registries / community / compliance / esignature / my-units /
+ * portfolio-performance / templates / integrations / syndication /
+ * oauth-grants / mfa / layout).
+ * Their caches previously survived logout — regression guard for the
+ * shared-workstation session-leak fix. Each entry is `[queryKey, root]`; the
+ * root is the first segment `removeQueries` prefix-matches on logout.
+ */
+const NEWLY_COVERED_SEED: ReadonlyArray<readonly [readonly unknown[], string]> = [
+  [['community', 'posts', {}], 'community'],
+  [['disputes', 'list', {}], 'disputes'],
+  [['iot', 'sensors', {}], 'iot'],
+  [['outages', 'list', {}], 'outages'],
+  [['leases', 'list', {}], 'leases'],
+  [['violations', 'list', {}], 'violations'],
+  [['voting', 'list', {}], 'voting'],
+  // Building registries — real shape from registryKeys.petsList()
+  // (['registries','pets','list',params]); consumed via createRegistryHooks.
+  [['registries', 'pets', 'list', {}], 'registries'],
+  [['compliance', 'moderation', 'cases', {}], 'compliance'],
+  [['esignature', 'requests', {}], 'esignature'],
+  [['my-units'], 'my-units'],
+  [['portfolio-performance', 'dashboard-summary'], 'portfolio-performance'],
+  [['templates', 'list', {}], 'templates'],
+  [['integrations', 'airbnb', 'status'], 'integrations'],
+  [['syndication', 'dashboard'], 'syndication'],
+  [['oauth-grants', 'user'], 'oauth-grants'],
+  [['mfa', 'status'], 'mfa'],
+  [['layout', 'tenant'], 'layout'],
+];
+const NEWLY_COVERED_ROOTS = NEWLY_COVERED_SEED.map(([, root]) => root);
+
 describe('AuthContext.logout — Issue #712', () => {
   beforeEach(() => {
     seedAuthedSession();
@@ -197,6 +231,11 @@ describe('AuthContext.logout — Issue #712', () => {
       'predictive-maintenance',
       'sentiment',
       'notification-analytics',
+      // Per-user granular notification-trigger preferences — regression guard
+      // for the PR #2650 follow-up where this root was still missed and the
+      // previous user's notification-preference cache leaked into the next
+      // session on a shared workstation.
+      'notification-triggers',
       // Tenant-scoped financial + operational caches — the most sensitive
       // data in the app (invoices, contacts, bank statements, payment
       // matching, AR aging, report schedules) plus rentals/meters and the
@@ -207,6 +246,11 @@ describe('AuthContext.logout — Issue #712', () => {
       'rentals',
       'meters',
       'auth',
+      // Mounted-route-group / feature-page domains whose @ppt/api-client caches
+      // previously leaked across sessions on a shared workstation because their
+      // roots were missing from AUTHED_QUERY_KEY_ROOTS. `voting` is the live
+      // root (the legacy `votes` root never matched votingKeys queries).
+      ...NEWLY_COVERED_ROOTS,
     ]) {
       expect(AUTHED_QUERY_KEY_ROOTS).toContain(root);
     }
@@ -227,6 +271,9 @@ describe('AuthContext.logout — Issue #712', () => {
     queryClient.setQueryData(['predictive-maintenance', 'needing-maintenance'], [{ id: 'e-1' }]);
     queryClient.setQueryData(['sentiment', 'dashboard'], { score: 0.42 });
     queryClient.setQueryData(['notification-analytics', {}], { delivered: 10 });
+    // Per-user notification-trigger preferences — real key from
+    // notificationTriggerKeys.events() (@ppt/api-client granular-notifications).
+    queryClient.setQueryData(['notification-triggers', 'events'], [{ id: 'nt-1' }]);
     // Tenant-scoped financial + operational caches — real keys from
     // queryKeys.accounting (invoices/contacts/statements/matching),
     // financial.tsx (['financial','ar-aging',orgId]), reportKeys
@@ -241,6 +288,13 @@ describe('AuthContext.logout — Issue #712', () => {
     queryClient.setQueryData(['auth', 'sessions'], [{ id: 'sess-1' }]);
     queryClient.setQueryData(['router', 'breadcrumbs'], ['home']);
 
+    // Mounted-route-group / feature-page caches (community…layout) — seeded
+    // with representative real key shapes. Before the session-leak fix these
+    // roots were absent from AUTHED_QUERY_KEY_ROOTS and survived logout.
+    for (const [key] of NEWLY_COVERED_SEED) {
+      queryClient.setQueryData(key, [{ id: `${key[0]}-seed` }]);
+    }
+
     // Sanity: all entries present before logout.
     expect(queryClient.getQueryData(['user', 'profile'])).toBeDefined();
     expect(queryClient.getQueryData(['faults', 'list', { page: 1 }])).toBeDefined();
@@ -252,12 +306,16 @@ describe('AuthContext.logout — Issue #712', () => {
     ).toBeDefined();
     expect(queryClient.getQueryData(['sentiment', 'dashboard'])).toBeDefined();
     expect(queryClient.getQueryData(['notification-analytics', {}])).toBeDefined();
+    expect(queryClient.getQueryData(['notification-triggers', 'events'])).toBeDefined();
     expect(queryClient.getQueryData(['accounting', 'invoices'])).toBeDefined();
     expect(queryClient.getQueryData(['financial', 'ar-aging', 'org-1'])).toBeDefined();
     expect(queryClient.getQueryData(['reports', 'schedules', 'list', 'org-1'])).toBeDefined();
     expect(queryClient.getQueryData(['rentals', 'reservations', 'tenant-1'])).toBeDefined();
     expect(queryClient.getQueryData(['meters', 'building-list', 'b-1'])).toBeDefined();
     expect(queryClient.getQueryData(['auth', 'sessions'])).toBeDefined();
+    for (const [key] of NEWLY_COVERED_SEED) {
+      expect(queryClient.getQueryData(key)).toBeDefined();
+    }
     expect(queryClient.getQueryData(['router', 'breadcrumbs'])).toBeDefined();
 
     // Trigger logout via the live context.
@@ -284,6 +342,8 @@ describe('AuthContext.logout — Issue #712', () => {
     ).toBeUndefined();
     expect(queryClient.getQueryData(['sentiment', 'dashboard'])).toBeUndefined();
     expect(queryClient.getQueryData(['notification-analytics', {}])).toBeUndefined();
+    // Per-user notification-trigger preferences must not survive logout.
+    expect(queryClient.getQueryData(['notification-triggers', 'events'])).toBeUndefined();
     // Tenant-scoped financial + operational caches must not survive logout.
     expect(queryClient.getQueryData(['accounting', 'invoices'])).toBeUndefined();
     expect(queryClient.getQueryData(['financial', 'ar-aging', 'org-1'])).toBeUndefined();
@@ -291,6 +351,11 @@ describe('AuthContext.logout — Issue #712', () => {
     expect(queryClient.getQueryData(['rentals', 'reservations', 'tenant-1'])).toBeUndefined();
     expect(queryClient.getQueryData(['meters', 'building-list', 'b-1'])).toBeUndefined();
     expect(queryClient.getQueryData(['auth', 'sessions'])).toBeUndefined();
+    // Mounted-route-group / feature-page caches must not survive logout — the
+    // core of the shared-workstation session-leak fix.
+    for (const [key] of NEWLY_COVERED_SEED) {
+      expect(queryClient.getQueryData(key)).toBeUndefined();
+    }
 
     // (c) Non-auth-scoped cache survives — the purge is bounded to the
     // AUTHED_QUERY_KEY_ROOTS list, not a blanket `queryClient.clear()`.

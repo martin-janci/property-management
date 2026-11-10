@@ -37,6 +37,7 @@ use sqlx::PgConnection;
 use utoipa::IntoParams;
 use uuid::Uuid;
 
+use crate::routes::pagination::clamp_limit;
 use crate::state::AppState;
 
 /// Create work orders router.
@@ -118,6 +119,59 @@ async fn verify_org_access(
     }
 
     Ok(())
+}
+
+/// Require a manager-tier role in `org_id`, read from the caller's
+/// `organization_members` row (never the JWT). `403` otherwise.
+///
+/// SECURITY (audit4): work-order and maintenance-schedule mutations were
+/// gated on membership only, so any resident could create, assign, delete or
+/// complete work orders and run `process_due_schedules`.
+async fn require_org_manager(
+    state: &AppState,
+    user_id: Uuid,
+    org_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let role_type = state
+        .org_member_repo
+        .get_user_role_type(org_id, user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = ?e, "Failed to look up org role");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?;
+    let is_manager = role_type
+        .as_deref()
+        .and_then(common::TenantRole::from_role_type)
+        .map(|r| r.is_manager())
+        .unwrap_or(false);
+    if is_manager {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Manager role required for this action",
+            )),
+        ))
+    }
+}
+
+/// Like [`require_org_manager`], but the work order's assignee may also act
+/// (start / complete / hold the job they were given).
+async fn require_manager_or_assignee(
+    state: &AppState,
+    user_id: Uuid,
+    work_order: &WorkOrder,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    if work_order.assigned_to == Some(user_id) {
+        return Ok(());
+    }
+    require_org_manager(state, user_id, work_order.organization_id).await
 }
 
 /// Load a work order by id and authorize the caller against its owning org.
@@ -337,6 +391,7 @@ async fn create_work_order(
     let uid = rls.user_id();
     let out: Result<(StatusCode, Json<WorkOrder>), (StatusCode, Json<ErrorResponse>)> = async {
         verify_org_access(&state, uid, payload.organization_id).await?;
+        require_org_manager(&state, uid, payload.organization_id).await?;
         state
             .work_order_repo
             .create_work_order(
@@ -460,7 +515,7 @@ async fn list_overdue(
             .list_overdue(
                 &mut **rls.conn(),
                 query.organization_id,
-                query.limit.unwrap_or(20),
+                clamp_limit(query.limit.map(i64::from), 20) as i32,
             )
             .await
             .map(Json)
@@ -498,7 +553,8 @@ async fn update_work_order(
 ) -> Result<Json<WorkOrder>, (StatusCode, Json<ErrorResponse>)> {
     let uid = rls.user_id();
     let out: Result<Json<WorkOrder>, (StatusCode, Json<ErrorResponse>)> = async {
-        load_work_order_for_user(&state, rls.conn(), uid, id).await?;
+        let wo = load_work_order_for_user(&state, rls.conn(), uid, id).await?;
+        require_org_manager(&state, uid, wo.organization_id).await?;
         state
             .work_order_repo
             .update(rls.conn(), id, uid, data)
@@ -527,7 +583,8 @@ async fn delete_work_order(
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
     let uid = rls.user_id();
     let out: Result<StatusCode, (StatusCode, Json<ErrorResponse>)> = async {
-        load_work_order_for_user(&state, rls.conn(), uid, id).await?;
+        let wo = load_work_order_for_user(&state, rls.conn(), uid, id).await?;
+        require_org_manager(&state, uid, wo.organization_id).await?;
         let deleted = state
             .work_order_repo
             .delete(&mut **rls.conn(), id)
@@ -565,7 +622,8 @@ async fn assign_work_order(
 ) -> Result<Json<WorkOrder>, (StatusCode, Json<ErrorResponse>)> {
     let uid = rls.user_id();
     let out: Result<Json<WorkOrder>, (StatusCode, Json<ErrorResponse>)> = async {
-        load_work_order_for_user(&state, rls.conn(), uid, id).await?;
+        let wo = load_work_order_for_user(&state, rls.conn(), uid, id).await?;
+        require_org_manager(&state, uid, wo.organization_id).await?;
         state
             .work_order_repo
             .assign(rls.conn(), id, uid, data.assigned_to, data.vendor_id)
@@ -594,7 +652,8 @@ async fn start_work(
 ) -> Result<Json<WorkOrder>, (StatusCode, Json<ErrorResponse>)> {
     let uid = rls.user_id();
     let out: Result<Json<WorkOrder>, (StatusCode, Json<ErrorResponse>)> = async {
-        load_work_order_for_user(&state, rls.conn(), uid, id).await?;
+        let wo = load_work_order_for_user(&state, rls.conn(), uid, id).await?;
+        require_manager_or_assignee(&state, uid, &wo).await?;
         state
             .work_order_repo
             .start_work(rls.conn(), id, uid)
@@ -621,7 +680,8 @@ async fn complete_work_order(
 ) -> Result<Json<WorkOrder>, (StatusCode, Json<ErrorResponse>)> {
     let uid = rls.user_id();
     let out: Result<Json<WorkOrder>, (StatusCode, Json<ErrorResponse>)> = async {
-        load_work_order_for_user(&state, rls.conn(), uid, id).await?;
+        let wo = load_work_order_for_user(&state, rls.conn(), uid, id).await?;
+        require_manager_or_assignee(&state, uid, &wo).await?;
         state
             .work_order_repo
             .complete(
@@ -657,7 +717,8 @@ async fn put_on_hold(
 ) -> Result<Json<WorkOrder>, (StatusCode, Json<ErrorResponse>)> {
     let uid = rls.user_id();
     let out: Result<Json<WorkOrder>, (StatusCode, Json<ErrorResponse>)> = async {
-        load_work_order_for_user(&state, rls.conn(), uid, id).await?;
+        let wo = load_work_order_for_user(&state, rls.conn(), uid, id).await?;
+        require_manager_or_assignee(&state, uid, &wo).await?;
         state
             .work_order_repo
             .put_on_hold(rls.conn(), id, uid, &data.reason)
@@ -718,7 +779,7 @@ async fn list_comments(
             .list_updates(
                 &mut **rls.conn(),
                 id,
-                query.limit.unwrap_or(50),
+                clamp_limit(query.limit.map(i64::from), 50) as i32,
                 query.offset.unwrap_or(0),
             )
             .await
@@ -747,6 +808,7 @@ async fn create_schedule(
     let out: Result<(StatusCode, Json<MaintenanceSchedule>), (StatusCode, Json<ErrorResponse>)> =
         async {
             verify_org_access(&state, uid, payload.organization_id).await?;
+            require_org_manager(&state, uid, payload.organization_id).await?;
             state
                 .work_order_repo
                 .create_schedule(
@@ -810,7 +872,7 @@ async fn get_upcoming_schedules(
                 &mut **rls.conn(),
                 query.organization_id,
                 query.days_ahead.unwrap_or(30),
-                query.limit.unwrap_or(20),
+                clamp_limit(query.limit.map(i64::from), 20) as i32,
             )
             .await
             .map(Json)
@@ -835,6 +897,7 @@ async fn process_due_schedules(
     let uid = rls.user_id();
     let out: Result<Json<Vec<WorkOrder>>, (StatusCode, Json<ErrorResponse>)> = async {
         verify_org_access(&state, uid, query.organization_id).await?;
+        require_org_manager(&state, uid, query.organization_id).await?;
         state
             .work_order_repo
             .process_due_schedules(rls.conn(), query.organization_id)
@@ -877,7 +940,8 @@ async fn update_schedule(
 ) -> Result<Json<MaintenanceSchedule>, (StatusCode, Json<ErrorResponse>)> {
     let uid = rls.user_id();
     let out: Result<Json<MaintenanceSchedule>, (StatusCode, Json<ErrorResponse>)> = async {
-        load_schedule_for_user(&state, rls.conn(), uid, id).await?;
+        let sched = load_schedule_for_user(&state, rls.conn(), uid, id).await?;
+        require_org_manager(&state, uid, sched.organization_id).await?;
         state
             .work_order_repo
             .update_schedule(&mut **rls.conn(), id, data)
@@ -903,7 +967,8 @@ async fn delete_schedule(
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
     let uid = rls.user_id();
     let out: Result<StatusCode, (StatusCode, Json<ErrorResponse>)> = async {
-        load_schedule_for_user(&state, rls.conn(), uid, id).await?;
+        let sched = load_schedule_for_user(&state, rls.conn(), uid, id).await?;
+        require_org_manager(&state, uid, sched.organization_id).await?;
         let deleted = state
             .work_order_repo
             .delete_schedule(&mut **rls.conn(), id)
@@ -937,7 +1002,8 @@ async fn activate_schedule(
 ) -> Result<Json<MaintenanceSchedule>, (StatusCode, Json<ErrorResponse>)> {
     let uid = rls.user_id();
     let out: Result<Json<MaintenanceSchedule>, (StatusCode, Json<ErrorResponse>)> = async {
-        load_schedule_for_user(&state, rls.conn(), uid, id).await?;
+        let sched = load_schedule_for_user(&state, rls.conn(), uid, id).await?;
+        require_org_manager(&state, uid, sched.organization_id).await?;
         state
             .work_order_repo
             .set_schedule_active(&mut **rls.conn(), id, true)
@@ -966,7 +1032,8 @@ async fn deactivate_schedule(
 ) -> Result<Json<MaintenanceSchedule>, (StatusCode, Json<ErrorResponse>)> {
     let uid = rls.user_id();
     let out: Result<Json<MaintenanceSchedule>, (StatusCode, Json<ErrorResponse>)> = async {
-        load_schedule_for_user(&state, rls.conn(), uid, id).await?;
+        let sched = load_schedule_for_user(&state, rls.conn(), uid, id).await?;
+        require_org_manager(&state, uid, sched.organization_id).await?;
         state
             .work_order_repo
             .set_schedule_active(&mut **rls.conn(), id, false)
@@ -996,7 +1063,8 @@ async fn skip_schedule(
 ) -> Result<Json<MaintenanceSchedule>, (StatusCode, Json<ErrorResponse>)> {
     let uid = rls.user_id();
     let out: Result<Json<MaintenanceSchedule>, (StatusCode, Json<ErrorResponse>)> = async {
-        load_schedule_for_user(&state, rls.conn(), uid, id).await?;
+        let sched = load_schedule_for_user(&state, rls.conn(), uid, id).await?;
+        require_org_manager(&state, uid, sched.organization_id).await?;
         state
             .work_order_repo
             .skip_schedule_execution(rls.conn(), id, &data.reason)
@@ -1029,7 +1097,7 @@ async fn list_executions(
             .list_executions(
                 &mut **rls.conn(),
                 id,
-                query.limit.unwrap_or(50),
+                clamp_limit(query.limit.map(i64::from), 50) as i32,
                 query.offset.unwrap_or(0),
             )
             .await
@@ -1102,7 +1170,7 @@ async fn get_equipment_service_history(
             .get_service_history(
                 &mut **rls.conn(),
                 equipment_id,
-                query.limit.unwrap_or(50),
+                clamp_limit(query.limit.map(i64::from), 50) as i32,
                 query.offset.unwrap_or(0),
             )
             .await
@@ -1157,7 +1225,7 @@ async fn get_building_service_history(
             .get_building_service_history(
                 &mut **rls.conn(),
                 building_id,
-                query.limit.unwrap_or(50),
+                clamp_limit(query.limit.map(i64::from), 50) as i32,
                 query.offset.unwrap_or(0),
             )
             .await

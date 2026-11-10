@@ -1,0 +1,42 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-07",
+  "segment_reviewed": "api-core",
+  "selection_reason": "oldest-unreviewed (dispatcher-tier1d-demand-driven, buffer below floor). review_cursor group at 2026-11-04 = {api-handlers, api-core, reality-server, ppt-web-core, mobile-native-kmp}. api-handlers, reality-server and ppt-web-core were already reviewed earlier today (signals/2026-11-07-*-tier1d.json) and mobile-rn 3x; mobile-native-kmp excluded per caller steer (structurally unclaimable in cloud, issue #2652). Among the remaining oldest-tier, api-core (backend Rust, cloud-verifiable, static-only) had NOT been reviewed today. Saturation check: 0 open code-review-finding rows for api-core in backlog.json (< 3 cap) — not saturated. No CHURN_FILES passed (standalone invocation); hotspot_history top entries are route files (api-handlers segment) with one api-core-adjacent hotspot (services/push_fanout.rs, 2026-10-25). Rust static sweep of backend/servers/api-server/src/ excluding routes/: unwrap/expect are overwhelmingly in #[cfg(test)] modules; the handful of prod unwraps are guarded or standard-unrecoverable (oauth.rs:918 expect on OS rng; main.rs + totp.rs panics are boot-time config fail-fast). No unsafe, no todo!/unimplemented! in prod. Detached tokio::spawn sites (notification_pipeline.rs:660, scheduler/mod.rs, quiet_hours_drain.rs, oauth.rs:218) are deliberate best-effort with error logging + explanatory comments. Money uses rust_decimal::Decimal (no float). Email reminder bodies use ContentType::TEXT_PLAIN (no HTML-injection vector). Both findings below are in the bank-statement accounting ingestion path (services/accounting.rs), distinct from the already-done code-review-api-core-payment-matcher-multi-suggest backlog row.",
+  "experts_used": [
+    "rust"
+  ],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-api-core-accounting-nonatomic-statement-ingest",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:49-107 — process_statement_upload() creates the parent bank_statement row first (create_bank_statement_rls, L61-71) and then parses + inserts CSV lines one at a time inside the `for result in rdr.deserialize()` loop (L73-100). Both a CSV deserialize/parse failure (L74-81: `AppError::BadRequest`) and a per-line insert failure (L96-99) return `?` mid-loop, so execution aborts after the statement and a partial subset of lines have already been written.",
+        "backend/servers/api-server/src/routes/accounting/statements.rs:49-54 — the handler calls process_statement_upload(&mut rls, ...) passing the RLS-scoped connection guard, NOT a transaction. Each repository insert therefore commits independently (connection auto-commit), so there is no rollback on the mid-loop error path: the orphaned parent statement plus any lines inserted before the bad row remain committed in the DB while the user receives a 4xx/5xx and believes the upload failed.",
+        "Impact: data-integrity / financial-ledger pollution. A statement export whose Nth row has a malformed date (L77-81 accepts only %Y-%m-%d or %d.%m.%Y) or amount persists a partial statement with rows 1..N-1 and silently triggers run_payment_matcher on the partial set (L103). On retry the user re-uploads, producing a duplicate statement. Landable backend-only fix: wrap the create-statement + line-insert loop (+ optionally the matcher) in a single sqlx transaction (begin on the RLS connection, commit only after the loop) so a parse/insert failure rolls the whole upload back. Reachability traced end-to-end (POST statement-upload route -> service -> repo); kept at medium because confirmation of the orphan requires observing commit behaviour at runtime, which static analysis cannot execute."
+      ]
+    },
+    {
+      "id": "code-review-api-core-accounting-matcher-ignores-currency",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:197-203 — the payment matcher's amount-corroboration step compares `line.amount == remaining_amount` (and the `<=` partial-payment branch) purely on the rust_decimal::Decimal numeric value. The bank statement line carries `currency: String` (set from the CSV at accounting.rs:89) and the Invoice carries `currency: String` (backend/crates/db/src/models/accounting.rs:76-93), but run_payment_matcher (accounting.rs:110-226) never compares the two currencies anywhere while scoring.",
+        "backend/servers/api-server/src/services/accounting.rs:182-225 — confidence is accumulated across variable-symbol (0.8), amount (0.15 exact / 0.05 partial) and IBAN (0.05) signals, then compared against threshold 0.5 (L155). Because currency is ignored, a line amounting to e.g. EUR 1000 numerically equals a CZK 1000 remaining balance and receives the +0.15 exact-amount corroboration; if the two also share a variable symbol the pair auto-suggests a cross-currency PaymentMatch (L223-239), and the amount tie-breaker can even promote a wrong-currency invoice above the correct-currency one.",
+        "Impact: incorrect payment-to-invoice reconciliation across currencies on a multi-currency ledger (CZK/EUR are both first-class here — see the CZ/SK IBAN handling at accounting.rs:17-26 and the CZ date format support). Landable backend-only fix: gate the amount-corroboration branches (and ideally the whole candidate) on `line.currency.eq_ignore_ascii_case(&invoice.currency)` so amounts are only ever compared within the same currency. Call path traced (process_statement_upload -> run_payment_matcher, also invokable directly); medium confidence because the real-world blast radius depends on tenants actually holding mixed-currency open invoices with shared variable symbols."
+      ]
+    }
+  ]
+}

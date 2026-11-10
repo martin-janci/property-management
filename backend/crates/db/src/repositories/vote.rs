@@ -123,6 +123,29 @@ struct CommentWithUserRow {
     pub reply_count: i64,
 }
 
+/// Map a joined comment+user row to the API shape. Shared by the org-scoped
+/// comment/reply reads (#3308).
+fn comment_row_to_with_user(row: CommentWithUserRow) -> VoteCommentWithUser {
+    VoteCommentWithUser {
+        comment: VoteComment {
+            id: row.id,
+            vote_id: row.vote_id,
+            user_id: row.user_id,
+            parent_id: row.parent_id,
+            content: row.content,
+            hidden: row.hidden,
+            hidden_by: row.hidden_by,
+            hidden_at: row.hidden_at,
+            hidden_reason: row.hidden_reason,
+            ai_consent: row.ai_consent,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+        },
+        user_name: row.user_name,
+        reply_count: row.reply_count,
+    }
+}
+
 /// Row struct for eligible unit.
 #[derive(Debug, FromRow)]
 struct EligibleUnitRow {
@@ -211,6 +234,371 @@ impl VoteRepository {
         .await?;
 
         Ok(vote)
+    }
+
+    /// Find a vote by id, scoped to `organization_id` (explicit org check, not
+    /// reliant on RLS). A vote from another org resolves to `None` (route 404).
+    ///
+    /// `organization_id` comes before the executor so callers can pass
+    /// `rls.tenant_id()` and `&mut **rls.conn()` in one call.
+    pub async fn find_poll_by_id_for_org<'e, E>(
+        &self,
+        id: Uuid,
+        organization_id: Uuid,
+        executor: E,
+    ) -> Result<Option<Vote>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, Vote>(
+            r#"
+            SELECT id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at FROM votes WHERE id = $1 AND organization_id = $2
+            "#,
+        )
+        .bind(id)
+        .bind(organization_id)
+        .fetch_optional(executor)
+        .await
+    }
+
+    /// Org-scoped / RLS-aware variant of [`get_questions`](Self::get_questions).
+    ///
+    /// Runs on the caller's `RlsConnection` executor and folds the owning
+    /// vote's `organization_id` into the query (join to `votes`), so a vote
+    /// from another org yields no questions even if a handler forgets the
+    /// `vote_in_org` pre-check. Replaces the pool-bypass read flagged in #3308.
+    pub async fn get_questions_for_org<'e, E>(
+        &self,
+        vote_id: Uuid,
+        organization_id: Uuid,
+        executor: E,
+    ) -> Result<Vec<VoteQuestion>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, VoteQuestion>(
+            r#"
+            SELECT q.id, q.vote_id, q.question_text, q.description, q.question_type::text AS question_type, q.options, q.display_order, q.is_required, q.created_at, q.updated_at
+            FROM vote_questions q
+            JOIN votes v ON v.id = q.vote_id
+            WHERE q.vote_id = $1 AND v.organization_id = $2
+            ORDER BY q.display_order
+            "#,
+        )
+        .bind(vote_id)
+        .bind(organization_id)
+        .fetch_all(executor)
+        .await
+    }
+
+    /// Org-scoped / RLS-aware variant of
+    /// [`get_user_response`](Self::get_user_response). Folds the owning vote's
+    /// `organization_id` into the query so a response under a vote from another
+    /// org is never returned. See #3308.
+    pub async fn get_user_response_for_org<'e, E>(
+        &self,
+        vote_id: Uuid,
+        unit_id: Uuid,
+        organization_id: Uuid,
+        executor: E,
+    ) -> Result<Option<VoteResponse>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, VoteResponse>(
+            r#"
+            SELECT r.* FROM vote_responses r
+            JOIN votes v ON v.id = r.vote_id
+            WHERE r.vote_id = $1 AND r.unit_id = $2 AND v.organization_id = $3
+            "#,
+        )
+        .bind(vote_id)
+        .bind(unit_id)
+        .bind(organization_id)
+        .fetch_optional(executor)
+        .await
+    }
+
+    /// Org-scoped / RLS-aware variant of
+    /// [`list_comments`](Self::list_comments). Folds the owning vote's
+    /// `organization_id` into the query (join to `votes`). See #3308.
+    pub async fn list_comments_for_org<'e, E>(
+        &self,
+        vote_id: Uuid,
+        organization_id: Uuid,
+        include_hidden: bool,
+        executor: E,
+    ) -> Result<Vec<VoteCommentWithUser>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let hidden_filter = if include_hidden {
+            ""
+        } else {
+            "AND c.hidden = false"
+        };
+
+        let sql = format!(
+            r#"
+            SELECT
+                c.id, c.vote_id, c.user_id, c.parent_id, c.content, c.hidden,
+                c.hidden_by, c.hidden_at, c.hidden_reason, c.ai_consent,
+                c.created_at, c.updated_at,
+                u.name as user_name,
+                (SELECT COUNT(*) FROM vote_comments WHERE parent_id = c.id {}) as reply_count
+            FROM vote_comments c
+            JOIN users u ON c.user_id = u.id
+            JOIN votes v ON v.id = c.vote_id
+            WHERE c.vote_id = $1 AND v.organization_id = $2 AND c.parent_id IS NULL {}
+            ORDER BY c.created_at
+            "#,
+            hidden_filter, hidden_filter
+        );
+
+        let rows = sqlx::query_as::<_, CommentWithUserRow>(sqlx::AssertSqlSafe(sql))
+            .bind(vote_id)
+            .bind(organization_id)
+            .fetch_all(executor)
+            .await?;
+
+        Ok(rows.into_iter().map(comment_row_to_with_user).collect())
+    }
+
+    /// Org-scoped / RLS-aware variant of
+    /// [`list_replies`](Self::list_replies). Folds the owning vote's
+    /// `organization_id` (join to `votes`) AND the parent comment's `vote_id`
+    /// into the query, so a reply only surfaces when its thread belongs to the
+    /// caller's vote and org. See #3308.
+    pub async fn list_replies_for_org<'e, E>(
+        &self,
+        parent_id: Uuid,
+        vote_id: Uuid,
+        organization_id: Uuid,
+        include_hidden: bool,
+        executor: E,
+    ) -> Result<Vec<VoteCommentWithUser>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let hidden_filter = if include_hidden {
+            ""
+        } else {
+            "AND c.hidden = false"
+        };
+
+        let sql = format!(
+            r#"
+            SELECT
+                c.id, c.vote_id, c.user_id, c.parent_id, c.content, c.hidden,
+                c.hidden_by, c.hidden_at, c.hidden_reason, c.ai_consent,
+                c.created_at, c.updated_at,
+                u.name as user_name,
+                (SELECT COUNT(*) FROM vote_comments WHERE parent_id = c.id {}) as reply_count
+            FROM vote_comments c
+            JOIN users u ON c.user_id = u.id
+            JOIN votes v ON v.id = c.vote_id
+            WHERE c.parent_id = $1 AND c.vote_id = $2 AND v.organization_id = $3 {}
+            ORDER BY c.created_at
+            "#,
+            hidden_filter, hidden_filter
+        );
+
+        let rows = sqlx::query_as::<_, CommentWithUserRow>(sqlx::AssertSqlSafe(sql))
+            .bind(parent_id)
+            .bind(vote_id)
+            .bind(organization_id)
+            .fetch_all(executor)
+            .await?;
+
+        Ok(rows.into_iter().map(comment_row_to_with_user).collect())
+    }
+
+    /// Org-scoped / RLS-aware variant of
+    /// [`check_eligibility`](Self::check_eligibility). Loads the vote with
+    /// `find_poll_by_id_for_org` and runs the eligible-units query on the same
+    /// caller connection, so the whole check is tenant-scoped (no pool bypass,
+    /// no deprecated `find_by_id`). A vote from another org resolves to
+    /// `RowNotFound`. See #3308.
+    pub async fn check_eligibility_for_org(
+        &self,
+        vote_id: Uuid,
+        user_id: Uuid,
+        organization_id: Uuid,
+        conn: &mut sqlx::PgConnection,
+    ) -> Result<VoteEligibility, SqlxError> {
+        let vote = self
+            .find_poll_by_id_for_org(vote_id, organization_id, &mut *conn)
+            .await?
+            .ok_or(SqlxError::RowNotFound)?;
+
+        let eligible_units = sqlx::query_as::<_, EligibleUnitRow>(
+            r#"
+            WITH user_units AS (
+                -- Owned units
+                SELECT
+                    u.id as unit_id,
+                    u.designation as unit_designation,
+                    u.ownership_share,
+                    true as is_owner,
+                    false as is_delegated,
+                    NULL::uuid as delegation_id
+                FROM units u
+                JOIN unit_residents ur ON u.id = ur.unit_id
+                WHERE u.building_id = $1
+                  AND ur.user_id = $2
+                  AND ur.resident_type = 'owner'
+                  AND ur.end_date IS NULL
+
+                UNION ALL
+
+                -- Delegated units (if delegation allowed)
+                SELECT
+                    u.id as unit_id,
+                    u.designation as unit_designation,
+                    u.ownership_share,
+                    false as is_owner,
+                    true as is_delegated,
+                    d.id as delegation_id
+                FROM units u
+                JOIN delegations d ON u.id = d.unit_id
+                WHERE u.building_id = $1
+                  AND d.delegate_user_id = $2
+                  AND d.status = 'active'
+                  AND (d.scopes && ARRAY['voting','all']::delegation_scope[])
+                  AND (d.end_date IS NULL OR d.end_date >= CURRENT_DATE)
+                  AND $3 = true
+            )
+            SELECT
+                uu.unit_id,
+                uu.unit_designation,
+                uu.ownership_share,
+                uu.is_owner,
+                uu.is_delegated,
+                uu.delegation_id,
+                EXISTS (
+                    SELECT 1 FROM vote_responses vr
+                    WHERE vr.vote_id = $4 AND vr.unit_id = uu.unit_id
+                ) as already_voted
+            FROM user_units uu
+            "#,
+        )
+        .bind(vote.building_id)
+        .bind(user_id)
+        .bind(vote.allow_delegation)
+        .bind(vote_id)
+        .fetch_all(&mut *conn)
+        .await?;
+
+        let units: Vec<EligibleUnit> = eligible_units
+            .into_iter()
+            .map(|row| EligibleUnit {
+                unit_id: row.unit_id,
+                unit_designation: row.unit_designation,
+                ownership_share: row.ownership_share,
+                is_owner: row.is_owner,
+                is_delegated: row.is_delegated,
+                delegation_id: row.delegation_id,
+                already_voted: row.already_voted,
+            })
+            .collect();
+
+        let can_vote = vote.can_vote() && units.iter().any(|u| !u.already_voted);
+        let reason = if !vote.can_vote() {
+            Some("Vote is not currently accepting ballots".to_string())
+        } else if units.is_empty() {
+            Some("User is not eligible to vote in this building".to_string())
+        } else if units.iter().all(|u| u.already_voted) {
+            Some("All eligible units have already voted".to_string())
+        } else {
+            None
+        };
+
+        Ok(VoteEligibility {
+            vote_id,
+            user_id,
+            eligible_units: units,
+            can_vote,
+            reason,
+        })
+    }
+
+    /// Whether question `question_id` belongs to vote `vote_id`.
+    pub async fn question_belongs_to_vote(
+        &self,
+        question_id: Uuid,
+        vote_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        sqlx::query_scalar(
+            "SELECT EXISTS (SELECT 1 FROM vote_questions WHERE id = $1 AND vote_id = $2)",
+        )
+        .bind(question_id)
+        .bind(vote_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
+    /// Whether comment `comment_id` belongs to vote `vote_id`.
+    pub async fn comment_belongs_to_vote(
+        &self,
+        comment_id: Uuid,
+        vote_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        sqlx::query_scalar(
+            "SELECT EXISTS (SELECT 1 FROM vote_comments WHERE id = $1 AND vote_id = $2)",
+        )
+        .bind(comment_id)
+        .bind(vote_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
+    /// Whether `user_id` holds the voting right of unit `unit_id` for a vote on
+    /// building `building_id`: the unit must be in that building and the user
+    /// must be its current owner, or, when `allow_delegation` is set, an active
+    /// voting delegate for it. Mirrors the unit set of `check_eligibility`.
+    pub async fn user_may_vote_for_unit<'e, E>(
+        &self,
+        executor: E,
+        building_id: Uuid,
+        unit_id: Uuid,
+        user_id: Uuid,
+        allow_delegation: bool,
+    ) -> Result<bool, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_scalar(
+            r#"
+            SELECT EXISTS (
+                SELECT 1 FROM units u
+                WHERE u.id = $1
+                  AND u.building_id = $2
+                  AND (
+                    EXISTS (
+                        SELECT 1 FROM unit_residents ur
+                        WHERE ur.unit_id = u.id
+                          AND ur.user_id = $3
+                          AND ur.resident_type = 'owner'
+                          AND ur.end_date IS NULL
+                    )
+                    OR ($4 AND EXISTS (
+                        SELECT 1 FROM delegations d
+                        WHERE d.unit_id = u.id
+                          AND d.delegate_user_id = $3
+                          AND d.status = 'active'
+                          AND (d.scopes && ARRAY['voting','all']::delegation_scope[])
+                          AND (d.end_date IS NULL OR d.end_date >= CURRENT_DATE)
+                    ))
+                  )
+            )
+            "#,
+        )
+        .bind(unit_id)
+        .bind(building_id)
+        .bind(user_id)
+        .bind(allow_delegation)
+        .fetch_one(executor)
+        .await
     }
 
     /// Cast a vote with RLS context (Story 5.3).
@@ -374,6 +762,7 @@ impl VoteRepository {
         &self,
         executor: E,
         building_id: Uuid,
+        organization_id: Uuid,
     ) -> Result<Vec<VoteSummary>, SqlxError>
     where
         E: Executor<'e, Database = Postgres>,
@@ -381,13 +770,15 @@ impl VoteRepository {
         let votes = sqlx::query_as::<_, VoteSummary>(
             r#"
             SELECT id, building_id, title, status::text as status, end_at,
-                   quorum_type::text as quorum_type, participation_count, eligible_count, quorum_met
+                   quorum_type::text as quorum_type, participation_count, eligible_count, quorum_met,
+                   (SELECT COUNT(*) FROM vote_questions vq WHERE vq.vote_id = votes.id) AS question_count
             FROM votes
-            WHERE building_id = $1
+            WHERE building_id = $1 AND organization_id = $2
             ORDER BY created_at DESC
             "#,
         )
         .bind(building_id)
+        .bind(organization_id)
         .fetch_all(executor)
         .await?;
 
@@ -519,7 +910,7 @@ impl VoteRepository {
         .fetch_optional(&self.pool)
         .await?;
 
-        Ok(result.map(|row| {
+        let result = result.map(|row| {
             let vote = Vote {
                 id: row.id,
                 organization_id: row.organization_id,
@@ -554,8 +945,11 @@ impl VoteRepository {
                 question_count: row.question_count,
                 response_count: row.response_count,
                 comment_count: row.comment_count,
+                questions: Vec::new(),
             }
-        }))
+        });
+
+        self.attach_questions(result).await
     }
 
     /// Find vote with full details, scoped to a single organization.
@@ -595,7 +989,7 @@ impl VoteRepository {
         .fetch_optional(&self.pool)
         .await?;
 
-        Ok(result.map(|row| {
+        let result = result.map(|row| {
             let vote = Vote {
                 id: row.id,
                 organization_id: row.organization_id,
@@ -630,8 +1024,25 @@ impl VoteRepository {
                 question_count: row.question_count,
                 response_count: row.response_count,
                 comment_count: row.comment_count,
+                questions: Vec::new(),
             }
-        }))
+        });
+
+        self.attach_questions(result).await
+    }
+
+    /// Fill `questions` on a fetched vote detail (no-op for `None`).
+    async fn attach_questions(
+        &self,
+        details: Option<VoteWithDetails>,
+    ) -> Result<Option<VoteWithDetails>, SqlxError> {
+        match details {
+            Some(mut d) => {
+                d.questions = self.get_questions(d.vote.id).await?;
+                Ok(Some(d))
+            }
+            None => Ok(None),
+        }
     }
 
     /// List votes with filters.
@@ -672,7 +1083,8 @@ impl VoteRepository {
         let sql = format!(
             r#"
             SELECT id, building_id, title, status::text as status, end_at,
-                   quorum_type::text as quorum_type, participation_count, eligible_count, quorum_met
+                   quorum_type::text as quorum_type, participation_count, eligible_count, quorum_met,
+                   (SELECT COUNT(*) FROM vote_questions vq WHERE vq.vote_id = votes.id) AS question_count
             FROM votes
             WHERE {}
             ORDER BY created_at DESC
@@ -720,7 +1132,8 @@ impl VoteRepository {
         let votes = sqlx::query_as::<_, VoteSummary>(
             r#"
             SELECT id, building_id, title, status::text as status, end_at,
-                   quorum_type::text as quorum_type, participation_count, eligible_count, quorum_met
+                   quorum_type::text as quorum_type, participation_count, eligible_count, quorum_met,
+                   (SELECT COUNT(*) FROM vote_questions vq WHERE vq.vote_id = votes.id) AS question_count
             FROM votes
             WHERE building_id = $1 AND status = 'active'
             ORDER BY end_at ASC
@@ -808,7 +1221,18 @@ impl VoteRepository {
                 eligible_count = $4,
                 published_by = $5,
                 published_at = NOW(),
-                updated_at = NOW()
+                updated_at = NOW(),
+                -- A manual publish straight to `active` stamps the started
+                -- watermark = NOW() (issue #2612) so the scheduler's decoupled
+                -- vote-started dispatch pass (selects `active AND
+                -- started_notified_at IS NULL`) does NOT re-notify it —
+                -- preserving the pre-existing behaviour that manual publish did
+                -- not fan out a vote-started notification. Publishing to
+                -- `scheduled` leaves it NULL so activation notifies later.
+                started_notified_at = CASE
+                    WHEN $2::vote_status = 'active'::vote_status THEN NOW()
+                    ELSE NULL
+                END
             WHERE id = $1 AND status = 'draft'
             RETURNING id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at
             "#,
@@ -893,7 +1317,15 @@ impl VoteRepository {
                 quorum_met = $3,
                 results = $4,
                 results_calculated_at = NOW(),
-                updated_at = NOW()
+                updated_at = NOW(),
+                -- Stamp the closed watermark = NOW() (issue #2612). This is the
+                -- shared close path (manager route AND the scheduler's
+                -- `close_expired_votes`). A manual close is thereby suppressed
+                -- from the scheduler's closed-vote dispatch pass, preserving the
+                -- pre-existing behaviour that manual close did not fan out a
+                -- result notification. `close_expired_votes` re-clears this to
+                -- NULL for the votes IT closes so the scheduler still notifies.
+                closed_notified_at = NOW()
             WHERE id = $1
             RETURNING id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at
             "#,
@@ -924,10 +1356,15 @@ impl VoteRepository {
 
     /// Activate scheduled votes that have reached their start time.
     pub async fn activate_scheduled_votes(&self) -> Result<Vec<Vote>, SqlxError> {
+        // `started_notified_at = NULL` marks the activated vote as "needs a
+        // vote-started notification" (issue #2612). Activation only flips the
+        // state; the scheduler's decoupled dispatch pass resolves eligible
+        // voters, notifies, and stamps the watermark only on success — so a
+        // transient failure retries instead of dropping the notification.
         let votes = sqlx::query_as::<_, Vote>(
             r#"
             UPDATE votes
-            SET status = 'active', updated_at = NOW()
+            SET status = 'active', updated_at = NOW(), started_notified_at = NULL
             WHERE status = 'scheduled' AND start_at <= NOW()
             RETURNING id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at
             "#,
@@ -955,7 +1392,80 @@ impl VoteRepository {
             closed.push(id);
         }
 
+        // `close()` (shared with the manager route) stamps `closed_notified_at`
+        // = NOW() to suppress manual closes from the dispatch pass. Re-clear it
+        // to NULL for the votes the SCHEDULER just closed, marking them "needs a
+        // closed-vote result notification" (issue #2612). The dispatch pass then
+        // notifies and re-stamps on success.
+        if !closed.is_empty() {
+            sqlx::query("UPDATE votes SET closed_notified_at = NULL WHERE id = ANY($1)")
+                .bind(&closed)
+                .execute(&self.pool)
+                .await?;
+        }
+
         Ok(closed)
+    }
+
+    /// Active votes whose vote-started notification has not yet been dispatched
+    /// (`status = 'active' AND started_notified_at IS NULL`). Backs the
+    /// decoupled dispatch pass (issue #2612): activation and notification are
+    /// separate, so a transient failure leaves the watermark NULL and the vote
+    /// is re-selected here next tick. Oldest-first so a backlog drains in order.
+    pub async fn find_active_pending_started_notification(&self) -> Result<Vec<Vote>, SqlxError> {
+        let votes = sqlx::query_as::<_, Vote>(
+            r#"
+            SELECT id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at
+            FROM votes
+            WHERE status = 'active' AND started_notified_at IS NULL
+            ORDER BY start_at ASC NULLS FIRST
+            "#,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(votes)
+    }
+
+    /// Stamp a vote's started-notification watermark after a successful dispatch
+    /// (issue #2612). Guarded on `started_notified_at IS NULL` (idempotent).
+    /// Returns rows stamped (0 or 1).
+    pub async fn mark_started_notified(&self, id: Uuid) -> Result<u64, SqlxError> {
+        let result =
+            sqlx::query("UPDATE votes SET started_notified_at = NOW() WHERE id = $1 AND started_notified_at IS NULL")
+                .bind(id)
+                .execute(&self.pool)
+                .await?;
+        Ok(result.rows_affected())
+    }
+
+    /// Ids of closed votes whose result notification has not yet been dispatched
+    /// (`status = 'closed' AND closed_notified_at IS NULL`). Only votes closed
+    /// by the scheduler (`close_expired_votes` cleared the watermark) qualify;
+    /// manual closes keep the NOW() stamp `close()` set. Oldest-first.
+    pub async fn find_closed_pending_notification(&self) -> Result<Vec<Uuid>, SqlxError> {
+        let rows: Vec<(Uuid,)> = sqlx::query_as(
+            r#"
+            SELECT id FROM votes
+            WHERE status = 'closed' AND closed_notified_at IS NULL
+            ORDER BY end_at ASC NULLS FIRST
+            "#,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(rows.into_iter().map(|(id,)| id).collect())
+    }
+
+    /// Stamp a vote's closed-notification watermark after a successful dispatch
+    /// (issue #2612). Guarded on `closed_notified_at IS NULL` (idempotent).
+    /// Returns rows stamped (0 or 1).
+    pub async fn mark_closed_notified(&self, id: Uuid) -> Result<u64, SqlxError> {
+        let result =
+            sqlx::query("UPDATE votes SET closed_notified_at = NOW() WHERE id = $1 AND closed_notified_at IS NULL")
+                .bind(id)
+                .execute(&self.pool)
+                .await?;
+        Ok(result.rows_affected())
     }
 
     // ========================================================================

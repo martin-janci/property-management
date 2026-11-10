@@ -51,6 +51,7 @@ export function useModerationCases(params?: {
   violation_type?: string;
   priority?: number;
   unassigned_only?: boolean;
+  overdue?: boolean;
   limit?: number;
   offset?: number;
 }) {

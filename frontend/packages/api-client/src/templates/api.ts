@@ -10,7 +10,8 @@
  *   POST   /api/v1/templates/{id}/generate
  */
 
-import { getToken } from '../auth';
+import { bearerAuthHeader } from '../auth';
+import { authenticatedFetch } from '../lib/fetch';
 import type {
   CreateTemplateRequest,
   CreateTemplateResponse,
@@ -25,17 +26,12 @@ import type {
 
 const TEMPLATES_BASE = '/api/v1/templates';
 
-function getAuthHeaders(): HeadersInit {
-  const token = getToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(url, {
+  const response = await authenticatedFetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...getAuthHeaders(),
+      ...bearerAuthHeader(),
       ...options.headers,
     },
   });

@@ -1,0 +1,52 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-09-03T00:00:00Z",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "oldest-unreviewed-landable",
+  "selection_detail": "Standalone Tier-1d demand-driven run (dispatcher claimable buffer deeply starved of LANDABLE work: claimable=8 < floor=36, and nearly the entire open backlog is structurally-unlandable mobile-native/KMP work that is AGP-egress-blocked in the cloud runner). SEGMENT BIAS applied: the two prior generators today already covered mobile-native-kmp (14:31) and api-handlers (16:34), and 2026-09-03 signal files already exist for api-handlers, mobile-native-kmp, ppt-web-core, ppt-web-ui and reality-web — so those segments are exhausted for fresh coverage today. state.review_cursor at run time: api-handlers=2026-08-31, api-core=2026-09-01, reality-server=2026-08-31, ppt-web-ui/ppt-web-core/reality-web/mobile-rn=2026-08-29, mobile-native-kmp=2026-08-25. Excluding mobile-native-kmp (unlandable in cloud) and api-handlers (covered today), the oldest-unreviewed LANDABLE segment NOT already stamped 2026-09-03 is reality-server (backend Rust server, cursor 2026-08-31, no 09-03 file). Picked it. NOTE ON PATHS: the skill segment map lists reality-server root as backend/reality-server/src/, but the real tree is backend/servers/reality-server/src/ (43 .rs files, 16.7k LOC; handler layer split across routes/ and handlers/). Saturation check passed: 0 OPEN code-review-finding rows for reality-server in backlog.json. Primary expert = Rust (per segment->expert map; reality-server has no secondary). Static-only: full grep sweep for unwrap/expect/unsafe/todo/panic/unreachable/dynamic-SQL(format!)/ignored-Results(let _ =)/numeric-casts, then targeted reads of every non-test hit. gh CLI dep-version / dependabot-history checks were not needed (no manifest findings emitted). Deliberately did NOT re-flag the three known 2026-08-31 reality-server findings (agent self-review, pagination OFFSET overflow, saved-search error-string status) — the two findings below are distinct.",
+  "experts_used": [
+    "rust"
+  ],
+  "findings_count": 2,
+  "note": "reality-server is a well-maintained segment. The high-severity vectors came back clean and are documented here so a future run does not re-walk them: (a) both non-test unwraps flagged by grep are provably safe — handlers/inquiries/mod.rs:274 `cleaned.chars().next().unwrap()` is guarded by the `if cleaned.is_empty() { return false }` at :269, and extractors/auth.rs:63 `strip_prefix(\"portal_session=\").unwrap()` is guarded by the matching `starts_with(\"portal_session=\")` at :59; (b) both dynamic-SQL format! sites are injection-safe — routes/listings.rs:700 interpolates only the RICH_LISTING_SELECT constant and binds $1/$2, and routes/price_map.rs:158 interpolates `{interval}` which is a strict 4-value allow-list ('1 month'|'3 months'|'12 months'|'5 years', anything else 400s at :114-122), with mode/property_type/city all passed as bind params; (c) the three panic!() in state.rs:81/100/106 are boot-time JWT_SECRET config validation (correct fail-fast, not a request path); (d) no unsafe blocks, no todo!/unimplemented! in production code. The two findings below are a genuine paginated-list `total`-field bug and a silent history-truncation, each self-contained, each distinct from any prior reality-server finding. The other `total = <vec>.len()` sites (routes/imports.rs:322 list_feeds, routes/agencies.rs:377 list_members) are correct because those endpoints are NOT paginated (they return the full set), so they are intentionally excluded.",
+  "signals": [
+    {
+      "id": "code-review-reality-server-import-jobs-total-page-len",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 reality-server)",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/imports.rs"
+      ],
+      "evidence": [
+        "list_import_jobs (routes/imports.rs:115-135, GET /api/v1/imports/jobs) is a PAGINATED endpoint — it reads query.limit.unwrap_or(20) and clamp_offset_i32(query.offset) (:124-126) and fetches a single page via reality_portal_repo.list_import_jobs(user_id, status, limit, offset). It then computes the pagination total as `let total = jobs.len() as i64;` (:131) and returns ImportJobsResponse { jobs, total } (:133). total therefore equals the size of the CURRENT PAGE (at most `limit`, default 20), NOT the true number of import jobs for the user.",
+        "Consequence: any client that computes page count as ceil(total / limit) sees total==20 on every full page (and total==remainder on the last), concludes there is exactly one page, and never requests offset=20,40,... — silently hiding every import job beyond the first page from the agency/realtor UI. On a user with, say, 55 import jobs the list appears to contain only 20. This is the same class of defect already confirmed in the sibling api-server compliance handler (code-review-api-handlers-user-audit-logs-total-page-len), here on the reality-server imports surface.",
+        "Fix: back total with a real count query (e.g. a reality_portal_repo.count_import_jobs(user_id, status) mirroring the filter), not the page length. IG3: an integration test seeding N>limit import jobs for one user asserts response.total == N while response.jobs.len() == limit. Distinct from the known 2026-08-31 reality-server pagination finding (which was about OFFSET integer overflow / clamping, since fixed via util::clamp_offset_i32 used right here at :126) — this is the response `total` field being wrong, an orthogonal bug.",
+        "Confidence medium: the paginated fetch (limit+offset) and the page-length-as-total computation are confirmed by static read of the full handler; medium (not high) because the surface is auth-gated (PortalPrincipal) and the harm is a corrupted pagination contract / under-exposed list rather than a crash, data loss, or cross-tenant leak."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-import-history-limit-100-trunc",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 reality-server)",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/agency_imports.rs"
+      ],
+      "evidence": [
+        "The agency import-history handler (routes/agency_imports.rs, around :165-190) runs a hand-written query `SELECT ... FROM portal_import_jobs WHERE agency_id = $1 ORDER BY created_at DESC LIMIT 100` (:170-176) and then reports `let total = rows.len() as i64;` (:183) as the response total. There is no offset/limit query param and no count query: the endpoint hard-caps the returned history at 100 rows and sets total = min(actual_rows, 100).",
+        "Consequence: once an agency accumulates more than 100 import jobs, the import-history view silently drops everything older than the 100 most-recent, and `total` misreports the real number of jobs as 100 — there is no pagination affordance and no signal to the client that the list was truncated. For a busy agency running recurring feed imports this hides the bulk of the audit trail. Lower severity than the imports.rs:131 finding because the truncation is a fixed cap (no client-side page-count miscomputation), but it is a distinct handler and a distinct silent-data-loss-on-read defect.",
+        "Fix: either add real pagination (limit+offset params + a COUNT(*) for total, mirroring list_import_jobs once that is corrected) or, at minimum, surface a `truncated`/`has_more` flag and derive total from a COUNT(*) rather than rows.len(). IG3: an integration test seeding >100 portal_import_jobs for one agency asserts the response exposes the true count (or a has_more flag) instead of a flat total==100.",
+        "Confidence medium: the LIMIT 100 literal and total=rows.len() are confirmed by static read; medium severity capped at +1 because the surface is membership-gated (check_agency_membership at :168) and the impact is truncated read visibility rather than a crash or cross-tenant leak."
+      ]
+    }
+  ]
+}

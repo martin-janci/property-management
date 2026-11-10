@@ -1,0 +1,61 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-20",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "dispatcher-tier1d-demand-driven (open_claimable=7 < BUFFER_FLOOR=36; all 7 open action-list items unclaimable — 6 mobile-native/KMP-gated, 1 already active). Task explicitly steered away from mobile-native segments; among non-KMP segments the review_cursor shows reality-web=2026-08-18 tied with reality-server=2026-08-19 — reality-web is the oldest-unreviewed non-mobile-native segment. Backlog has 0 open code-review-finding rows for reality-web so not saturated.",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-reality-web-import-mutations-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Systematic gap across the Epic 46 agency-import feature: every state-changing mutation fires without an onError handler, isError branch, or user-visible toast/alert. When the server rejects the request (network / 403 / validation / rate-limit), the UI silently proceeds as if success — this is the same class of bug as the 2026-08-18-reality-web finding on inquiries/page.tsx cancel, but affects a broader surface (CRM + feed imports + branding + sync schedule).",
+        "frontend/apps/reality-web/src/components/import/CrmConnection.tsx:168-172 — handleDelete awaits deleteMutation.mutateAsync(connection.id) with no try/catch; grep of the whole file yields zero onError / isError / toast references. Line 215 syncMutation.mutate() and lines 372/391 test+create mutateAsync calls have the same gap.",
+        "frontend/apps/reality-web/src/components/import/FeedImport.tsx:154-165 — handleTogglePause + handleDelete both await mutateAsync with no error catch; line 207 syncMutation.mutate() is pure fire-and-forget. Whole file also has zero onError / isError / toast.",
+        "frontend/apps/reality-web/src/components/import/SyncSchedule.tsx:56-64 — handleSave awaits updateMutation.mutateAsync(...) then unconditionally setIsEditing(false); a failed save closes the edit form and the user sees the OLD schedule values re-rendered as though they saved.",
+        "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx:78-95 — handleSave awaits updateBranding.mutateAsync({logo, coverImage, primaryColor, ...}) with no try/catch; a failed logo/cover upload becomes a silent unhandled promise rejection (browser-console only).",
+        "Fix vector: add a shared useMutationToast helper (or Sonner/react-hot-toast) and wire onError on every mutation hook — or at minimum an isError branch that surfaces the message in the existing card/modal."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-listinggrid-empty-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/listings/ListingGrid.tsx — the PRIMARY listing-search-results grid has zero next-intl usage (no useTranslations import) on a sk/cs/de/en portal. Every other listings/* sibling (ContactForm, LayoutSections, ListingCard, ListingDetailContent, ListingFilters, PhotoGallery, SearchBar) DOES use useTranslations, so this component is a systemic gap in an otherwise localized directory.",
+        "Line 76 <h3 className='empty-title'>No listings found</h3> and line 78 'Try adjusting your filters or search criteria to find more properties.' render raw English for every non-EN visitor whose search returns zero results — the empty-state on the highest-traffic route (/[locale]/listings).",
+        "Fix: import { useTranslations } from 'next-intl', add a 'listingGrid.empty.{title,body}' namespace and drop keys into messages/{en,sk,cs,de}.json."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-sso-callback-error-passthrough",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx:83-91 — the SSO callback pulls `error` and `error_description` off the query string with searchParams.get(...) and passes them straight into setError(errorDescription || errorParam), which then renders as <p style={styles.errorMessage}>{error}</p> on line 131. There is no allow-list of expected error codes, no length cap, and no scrubbing.",
+        "React JSX escaping prevents HTML/JS injection so this is NOT XSS, but an attacker who can hand a victim a link to /<locale>/auth/callback?error=x&error_description=Please+call+1-800-... renders arbitrary attacker-controlled body text under our origin, with our SSO chrome and our real 'Return Home' button — a page-shaped phishing surface hosted from the real reality-web SSO callback URL. Because the URL is legitimately linked from OAuth error redirects, users are trained to trust content on that route.",
+        "Additionally the same file (162 lines) has zero next-intl usage on the 4-locale portal: 'Login Failed' (L130), 'Return Home' (L133), 'Loading...' (L66), 'Completing login...' (L144), and the constructed 'Invalid state token. Please try logging in again.' (L106) all render English regardless of locale.",
+        "Fix vector: constrain error to a known enum ('access_denied', 'invalid_state', 'server_error', ...) and translate via useTranslations('auth.sso.error.<code>'); fall back to a single generic key when the code is unknown. Drop the raw error_description from the rendered UI (log it only). Wrap the remaining strings in t()."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

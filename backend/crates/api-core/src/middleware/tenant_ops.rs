@@ -49,6 +49,19 @@ pub enum RateLimitDecision {
 /// One [`DefaultDirectRateLimiter`] per organization id, lazily created
 /// on first sight. Old idle entries are evicted by a TTL sweep so a long-
 /// lived process doesn't grow without bound.
+///
+/// # Key cardinality & unbounded-growth protection
+///
+/// When the key space is bounded by the platform (the per-*tenant* use — one
+/// entry per real organization), the map is naturally small and the optional
+/// [`max_entries`](Self::max_entries) cap can stay `None`. When the key space
+/// is **attacker-influenced** — e.g. a per-client-IP throttle for anonymous
+/// endpoints, where an adversary rotating source IPs would otherwise insert an
+/// unbounded number of distinct keys — construct the set with
+/// [`Self::with_default_bounded`] so the cold-path insert enforces a hard cap
+/// (TTL-expired entries dropped first, then oldest-created entries evicted
+/// LRU-style). That makes the map's memory footprint bounded **inline**,
+/// without relying on a background [`Self::sweep_idle`] task ever being run.
 pub struct TenantRateLimiterSet {
     /// Per-tenant limiters keyed by org id, with their last-touched time.
     limiters: Arc<RwLock<HashMap<Uuid, LimiterEntry>>>,
@@ -56,6 +69,11 @@ pub struct TenantRateLimiterSet {
     overrides: Arc<RwLock<HashMap<Uuid, u32>>>,
     /// How long an unused limiter entry survives before being swept.
     idle_ttl: Duration,
+    /// Optional hard cap on the number of tracked keys. `None` = unbounded
+    /// (safe only when the key space is platform-bounded, e.g. per-tenant).
+    /// `Some(cap)` bounds memory even under an adversarial key stream (e.g.
+    /// per-IP), enforced on every cold-path insert.
+    max_entries: Option<usize>,
 }
 
 struct LimiterEntry {
@@ -74,13 +92,35 @@ impl TenantRateLimiterSet {
         Self::with_default(DEFAULT_RATE_LIMIT_RPM)
     }
 
-    /// Build with a custom baseline.
+    /// Build with a custom baseline. Unbounded key space (`max_entries: None`)
+    /// — use only when keys are platform-bounded (per-tenant).
     pub fn with_default(default_rpm: u32) -> Self {
         Self {
             limiters: Arc::new(RwLock::new(HashMap::new())),
             default_rpm: default_rpm.max(1),
             overrides: Arc::new(RwLock::new(HashMap::new())),
             idle_ttl: Duration::from_secs(3600),
+            max_entries: None,
+        }
+    }
+
+    /// Build with a custom baseline, idle TTL, and a **hard cap** on the number
+    /// of tracked keys.
+    ///
+    /// Use this for adversary-influenced key spaces (per-client-IP throttles on
+    /// anonymous endpoints): an attacker rotating source IPs cannot grow the
+    /// map past `max_entries`, because each cold-path insert first sweeps
+    /// TTL-expired entries and then, if still at the cap, evicts the
+    /// oldest-created entries to make room. Memory is bounded inline — no
+    /// background [`Self::sweep_idle`] task is required. `max_entries` is
+    /// clamped to at least 1.
+    pub fn with_default_bounded(default_rpm: u32, idle_ttl: Duration, max_entries: usize) -> Self {
+        Self {
+            limiters: Arc::new(RwLock::new(HashMap::new())),
+            default_rpm: default_rpm.max(1),
+            overrides: Arc::new(RwLock::new(HashMap::new())),
+            idle_ttl,
+            max_entries: Some(max_entries.max(1)),
         }
     }
 
@@ -138,6 +178,15 @@ impl TenantRateLimiterSet {
         let outcome = limiter.check();
 
         let mut w = self.limiters.write().await;
+        // Unbounded-growth protection: before inserting a *new* key, make sure
+        // the hard cap (if any) is honoured so an adversarial key stream (e.g.
+        // rotating source IPs on an anonymous throttle) cannot balloon the map.
+        // Only runs on the cold path (new key), so the common fast path stays
+        // lock-light. Re-check `contains_key` because another writer may have
+        // inserted this key while we were on the cold path.
+        if !w.contains_key(&org_id) {
+            self.evict_for_insert(&mut w);
+        }
         w.insert(
             org_id,
             LimiterEntry {
@@ -161,6 +210,42 @@ impl TenantRateLimiterSet {
         let before = w.len();
         w.retain(|_, e| now.duration_since(e.last_touched) < self.idle_ttl);
         before - w.len()
+    }
+
+    /// Make room for one new key so the map never exceeds `max_entries`.
+    ///
+    /// Called under the write lock on the cold-path insert only. Strategy:
+    /// 1. If uncapped or below the cap, do nothing.
+    /// 2. Drop TTL-expired entries first (cheapest, and they were going to be
+    ///    swept anyway) — this alone usually frees room.
+    /// 3. If still at the cap, evict the oldest-created entries (LRU-style)
+    ///    until there is room for exactly one more insert.
+    ///
+    /// Eviction merely resets a key's bucket to a fresh (more lenient) state;
+    /// it never grants access, so evicting under pressure is safe. The cap is
+    /// the DoS-relevant invariant: memory stays bounded regardless of how many
+    /// distinct keys an attacker presents.
+    fn evict_for_insert(&self, w: &mut HashMap<Uuid, LimiterEntry>) {
+        let Some(cap) = self.max_entries else {
+            return;
+        };
+        if w.len() < cap {
+            return;
+        }
+        let now = Instant::now();
+        w.retain(|_, e| now.duration_since(e.last_touched) < self.idle_ttl);
+        if w.len() < cap {
+            return;
+        }
+        // Still full of live entries — evict oldest-created first. Need room
+        // for one more, so bring the count down to `cap - 1`.
+        let overflow = w.len() + 1 - cap;
+        let mut by_age: Vec<(Uuid, Instant)> =
+            w.iter().map(|(k, e)| (*k, e.last_touched)).collect();
+        by_age.sort_by_key(|(_, touched)| *touched);
+        for (k, _) in by_age.into_iter().take(overflow) {
+            w.remove(&k);
+        }
     }
 
     /// Number of tracked tenants (for tests / metrics).
@@ -263,6 +348,65 @@ mod tests {
             allow > 10,
             "override of 1000 rpm should allow many more than default 1: got {allow}"
         );
+    }
+
+    #[tokio::test]
+    async fn bounded_set_never_exceeds_cap_under_key_flood() {
+        // Defense: an attacker rotating source IPs (each a distinct key)
+        // must NOT grow the limiter map without bound. With a hard cap the
+        // map stays <= cap no matter how many unique keys arrive, WITHOUT any
+        // background sweep task running.
+        const CAP: usize = 64;
+        let set = TenantRateLimiterSet::with_default_bounded(
+            600,
+            Duration::from_secs(3600), // long TTL: nothing expires during the test
+            CAP,
+        );
+        for _ in 0..10_000 {
+            // Every call is a brand-new key => always the cold-path insert.
+            let _ = set.check(Uuid::new_v4()).await;
+            assert!(
+                set.len().await <= CAP,
+                "bounded limiter map must never exceed its cap"
+            );
+        }
+        assert_eq!(
+            set.len().await,
+            CAP,
+            "after a large key flood the map should sit exactly at the cap"
+        );
+    }
+
+    #[tokio::test]
+    async fn bounded_insert_prefers_dropping_expired_over_live() {
+        // With a tiny TTL, expired entries are reclaimed on insert so live
+        // traffic is not collaterally evicted while stale keys linger.
+        let set = TenantRateLimiterSet::with_default_bounded(600, Duration::from_millis(10), 8);
+        // Fill with keys, let them go idle/expired.
+        for _ in 0..8 {
+            let _ = set.check(Uuid::new_v4()).await;
+        }
+        assert_eq!(set.len().await, 8);
+        tokio::time::sleep(Duration::from_millis(30)).await;
+        // Next insert triggers the TTL sweep first, reclaiming all 8 expired
+        // entries, leaving just the new one.
+        let _ = set.check(Uuid::new_v4()).await;
+        assert_eq!(
+            set.len().await,
+            1,
+            "TTL-expired entries must be reclaimed on the bounded insert path"
+        );
+    }
+
+    #[tokio::test]
+    async fn unbounded_set_keeps_growing() {
+        // Sanity: the per-tenant (uncapped) construction is unchanged — it does
+        // NOT evict, because its key space is platform-bounded.
+        let set = TenantRateLimiterSet::with_default(600);
+        for _ in 0..200 {
+            let _ = set.check(Uuid::new_v4()).await;
+        }
+        assert_eq!(set.len().await, 200);
     }
 
     #[tokio::test]

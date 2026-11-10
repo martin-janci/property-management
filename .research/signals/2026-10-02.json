@@ -1,0 +1,364 @@
+{
+  "generated": "2026-10-02T03:21:51Z",
+  "cursor_at_start": {
+    "last_pr_seen": 3005,
+    "last_issue_seen": 3006,
+    "last_commit_sha": "dfa61369412117ab548e604cfc31e484d99fc7d3",
+    "last_run_iso": "2026-10-01T04:46:44Z"
+  },
+  "cursor_at_end": {
+    "last_pr_seen": 3011,
+    "last_issue_seen": 3012,
+    "last_commit_sha": "31c8bade6e74e62f4e5bb5afca3bbcbbfd97d05c"
+  },
+  "window": {
+    "merged_prs": 3,
+    "open_prs_touched": 7,
+    "closed_unmerged_prs": 2,
+    "issues_new_or_updated": 2,
+    "commits": 18,
+    "lag_hours": 22
+  },
+  "phase_1_5": {
+    "segment_reviewed": "reality-web",
+    "reason": "folded-dispatcher-tier1d-today",
+    "findings": 5,
+    "next_segment_candidate": "api-core (last 2026-09-01 — oldest after this run; reality-server 2026-08-31 also eligible)",
+    "skipped_rotating_expert_skill": "dispatcher Tier-1d already produced 5 reality-web findings today; routine folds them in rather than re-running the segment"
+  },
+  "phase_1_6": {
+    "ran": false,
+    "reason": "dispatcher refreshed .research/management/ artifacts within last hour (action-list.json / coverage.json / project-state.md mtime 2026-10-02 03:11); pm_cursor NOT advanced this run to keep G16 as no-op"
+  },
+  "signals": [
+    {
+      "id": "code-review-reality-web-sell-wizard-no-persist",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d)",
+      "score_delta": 3,
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx:723-746 — the final 'Publish' button's onClick runs `const stepErrors = validateStep(...); setErrors(stepErrors); if (Object.keys(stepErrors).length === 0) setSubmitted(true);` (also at line 730). It NEVER sends the collected listing to any API: `grep -c 'fetch|mutate|axios|useQuery|RealtorApi|await ' sell/page.tsx` returns 0 across the whole 848-line file. The form's initial data and step config are imported from `./_mock` (`INITIAL_FORM_DATA`, `SELL_STEPS`, line 16).",
+        "Full dataflow traced: all property fields are held in local `form` state; on Publish, `submitted` flips to true (page.tsx:730) and the component early-returns a success screen (`if (submitted)` at line 151, rendering `t('submittedTitle')`/`t('submittedBody')`). No create-listing mutation, no POST, no reality-api-client hook is invoked anywhere in the file.",
+        "Impact: data loss on a public, conversion-critical flow. A seller completes the entire multi-step wizard (address, price, area, rooms, description, contact details, terms acceptance), clicks Publish, and is shown a success confirmation — but nothing is ever persisted or transmitted. Every submission is silently discarded; no listing is created and no lead is captured.",
+        "Confidence HIGH (static-only but fully traced): the complete onClick -> setSubmitted -> success-screen path is confirmed by direct read, and the total absence of any network/mutation call is confirmed by `grep -c` returning 0 over the entire file. The `/[locale]/sell` route is public and reachable in production.",
+        "Fix (cloud-landable, frontend-only): wire the Publish handler to the generated create-listing mutation from @ppt/reality-api-client (make the handler async, await the mutation, set `submitted` only on success, and render a submit-error state on failure — mirroring the already-correct await+try/catch+setSaveError pattern in the sibling edit page account/listings/[id]/edit/page.tsx:195-217). Single-package reality-web edit; verifies with typecheck/test + biome."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-report-page-no-submit",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d)",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx:37-41 — `handleSubmit` is `(e) => { e.preventDefault(); if (!problem || !description.trim() || !gdprAccepted) return; setSubmitted(true); }`. It validates the form and the GDPR checkbox, then flips local `submitted` state and renders a success screen (`if (submitted)` at line 43) WITHOUT ever POSTing the report. No fetch / mutation / reality-api-client call exists in the file; problem options are imported from `./_mock` (`REPORT_PROBLEMS`, line 11).",
+        "This is an integration gap, not a backend-not-ready case: reality-server already exposes a report-submission endpoint (see done backlog rows `code-review-reality-server-submit-report-no-rate-limit`, `code-review-reality-server-report-contact-unvalidated`, which review the server-side submit-report handler). The reality-web page simply never calls it.",
+        "Impact: trust/safety. A user reporting a problematic listing (fraud, scam, wrong data) fills the form, accepts GDPR, submits, and sees a confirmation — but the report is silently dropped and never reaches moderators. Users believe abuse has been reported when it has not.",
+        "Confidence MEDIUM (static-only): the handler body and the absence of any network call are confirmed by direct read; the matching server endpoint's exact contract was inferred from existing backlog rows rather than re-read this run.",
+        "Fix (cloud-landable, frontend-only): make `handleSubmit` async and call the generated report-submission hook from @ppt/reality-api-client, setting `submitted` only on success and surfacing a submit-error branch on failure. Single-package reality-web edit; verifies with typecheck/test + biome."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-profile-mock-data",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d)",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx:17,65,268,346,384 — the profile route renders entirely from hardcoded fixtures imported from `./_mock`: `const profile = MOCK_PROFILE` (line 65), `MOCK_LISTINGS.map(...)` (268), `MOCK_ACTIVITY.map(...)` (346), `MOCK_REVIEWS.map(...)` (384). There is no `useQuery`/SDK call and no auth-context read to fetch the current user's real profile, listings, activity, or reviews.",
+        "The file's own header comment (lines 8-11) acknowledges this is a placeholder: '...instead of seeing the placeholder MOCK_PROFILE ... replace MOCK_* with live data via the SDK.' The route is nonetheless a shipped, user-reachable page.",
+        "Impact: completeness / correctness. Every authenticated user who opens their profile sees the same fabricated identity, listing set, activity log, and reviews rather than their own data — misleading and unusable for its stated purpose. On a public portal this also risks displaying fictitious listings/reviews as if real.",
+        "Confidence MEDIUM (static-only): the mock-only data sourcing is confirmed by direct read; classified MEDIUM (not HIGH) because the file comment marks it as a known, intentional placeholder pending SDK wiring rather than a regression.",
+        "Fix (cloud-landable, frontend-only): replace the MOCK_* references with the generated current-user / my-listings / my-reviews hooks from @ppt/reality-api-client, with loading and empty states. If the live endpoints are not all available yet, split into a smaller finding for the covered subset. Single-package reality-web edit; verifies with typecheck/test + biome."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-featured-fav-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d)",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/reality-web/src/components/home/FeaturedListings.tsx:20-22 — handleToggleFavorite calls toggleFavorite.mutate({ listingId, isFavorite }) fire-and-forget with no onError callback, and the component never reads toggleFavorite.isError/.error. The heart control (passed to every ListingCard via onToggleFavorite on the public homepage) therefore has no failure feedback.",
+        "Hook contract traced: frontend/packages/api-client... actually frontend/packages/reality-api-client/src/listings/hooks.ts:146-169 — useToggleFavorite's mutationFn does `if (!response.ok) throw new Error('Failed to toggle favorite')` and defines ONLY onSuccess (invalidateQueries); there is no onError. React Query captures the thrown rejection into mutation.isError state rather than surfacing it, so with no call-site handler the failure is fully silent — no toast, no console error, no rollback.",
+        "Impact: on the homepage and all featured ListingCards, a favorite toggle that fails (e.g. 401 when unauthenticated, or a network error) shows nothing to the user; the heart UI diverges from server state until the next listings refetch. UX/correctness gap on a conversion-critical public surface.",
+        "Inconsistency confirms this is a gap, not a convention: sibling mutation call sites DO handle errors — components/agency/RealtorManagement.tsx:570-580 (try/catch + setInviteError + i18n t('inviteError')), app/[locale]/saved-searches/page.tsx:140 and app/[locale]/inquiries/page.tsx:140 (render on mutation.isError).",
+        "Confidence MEDIUM (static-only): component -> hook path fully read; route is public and reachable; classified medium severity because the action is non-destructive (favorite toggle) rather than data loss.",
+        "Fix (cloud-landable, frontend-only): surface toggleFavorite.isError (inline message/toast) or add an onError to the mutate call; optionally add optimistic rollback. Single-package reality-web edit; verifies with typecheck/test + biome."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-price-alert-markread-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d)",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx:170,190 — markAllRead.mutate() and markRead.mutate(alert.id) are fired with no onError, and the component never reads markRead.isError/markAllRead.isError. Note the asymmetry: the QUERY path is fully handled (isLoading skeleton at :85, error state at :105, empty state at :123), but the two mutations have no failure surface at all.",
+        "Hook contract traced: frontend/packages/reality-api-client/src/favorites/hooks.ts:293-328 — both useMarkFavoriteAlertRead and useMarkAllFavoriteAlertsRead do `if (!response.ok) throw new Error(...)` and define only onSuccess (invalidateQueries FAVORITE_ALERTS_KEY); neither defines onError. The thrown rejection is swallowed into mutation.isError with no call-site reader, so a failed mark-read is silent.",
+        "Impact: a user clicking 'Mark read' / 'Mark all read' on a failed request sees the button re-enable with the alert still unread and no error shown — they cannot tell the action failed. Trust/clarity gap on the price-alert surface (Story 84.3).",
+        "Confidence MEDIUM (static-only): component -> hook path fully read; lower impact than the favorite toggle since the operation is non-destructive and retryable.",
+        "Fix (cloud-landable, frontend-only): render an inline error when markRead.isError || markAllRead.isError (mirror the existing isError branches in saved-searches/page.tsx:140 and inquiries/page.tsx:140). Single-package reality-web edit; verifies with typecheck/test + biome."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "dep-update-noise-pr-2957",
+      "type": "dep-update-noise",
+      "source": "PR #2957",
+      "score_delta": 0,
+      "evidence": [
+        "chore(deps): bump tower-http from 0.7.0 to 0.7.1 in /backend"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2961",
+      "type": "dep-update-noise",
+      "source": "PR #2961",
+      "score_delta": 0,
+      "evidence": [
+        "chore(deps): bump the kotlin group across 1 directory with 4 updates"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2962",
+      "type": "dep-update-noise",
+      "source": "PR #2962",
+      "score_delta": 0,
+      "evidence": [
+        "chore(deps): bump androidx.compose:compose-bom 2026.06.01 → 2026.09.00"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2972",
+      "type": "dep-update-noise",
+      "source": "PR #2972",
+      "score_delta": 0,
+      "evidence": [
+        "chore(deps): bump the ktor group across 1 directory with 7 updates"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2973",
+      "type": "dep-update-noise",
+      "source": "PR #2973",
+      "score_delta": 0,
+      "evidence": [
+        "chore(deps): bump the gradle-minor-patch group with 5 updates (closed-unmerged)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2975",
+      "type": "dep-update-noise",
+      "source": "PR #2975",
+      "score_delta": 0,
+      "evidence": [
+        "chore(deps): bump the npm-minor-patch group with 29 updates (closed-unmerged)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-3007",
+      "type": "dep-update-noise",
+      "source": "PR #3007",
+      "score_delta": 0,
+      "evidence": [
+        "chore(deps): bump the gradle-minor-patch group with 6 updates"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-3008",
+      "type": "dep-update-noise",
+      "source": "PR #3008",
+      "score_delta": 0,
+      "evidence": [
+        "chore(deps): bump the npm-minor-patch group with 28 updates"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-10-02.md && head -1 ... | grep -q '^# 2026-10-02$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq (last_pr_seen advanced or seen_signals grew or stats changed)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq (no non-cumulative-type re-emit with score_delta != 0)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5 (cap)",
+      "passed": true,
+      "command": "jq '[.items[] | select(.score > 8)] | length == 0'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5 (decay)",
+      "passed": true,
+      "command": "no open items with updated_at <= 2026-09-18 (14d threshold)",
+      "observed": "0",
+      "expected": "0 or all decayed/dropped"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "every new plan has an 'adversarial pass:' annotation in the brief",
+      "observed": "annotated",
+      "expected": "annotated"
+    },
+    {
+      "goal": "G7 (count)",
+      "passed": true,
+      "command": "git diff --cached A -- plans/ | grep -c '.md$'",
+      "observed": "1",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G7 (metadata)",
+      "passed": true,
+      "command": "4 **Key:** fields at top of plan",
+      "observed": "all 4 present",
+      "expected": "all 4 present"
+    },
+    {
+      "goal": "G7 (headings)",
+      "passed": true,
+      "command": "11 required ## headings",
+      "observed": "all 11 present (+ optional Dependencies)",
+      "expected": "11"
+    },
+    {
+      "goal": "G7 (capability tick)",
+      "passed": true,
+      "command": "grep -c '^- [x]' plan",
+      "observed": "2",
+      "expected": "≥1"
+    },
+    {
+      "goal": "G7 (mode)",
+      "passed": true,
+      "command": "grep -E '^Mode: (local-only|cloud-ok)'",
+      "observed": "cloud-ok",
+      "expected": "match"
+    },
+    {
+      "goal": "G7 (files)",
+      "passed": true,
+      "command": "each file bullet exists on disk",
+      "observed": "both resolve",
+      "expected": "all resolve"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets grep on staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regenerated backlog.md diff vs staged",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief 'Phases that failed:' line",
+      "observed": "- Phases that failed: none",
+      "expected": "none or match"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all prior plan slugs still exist in plans/ or plans/_archive/",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "git ls-files -- plans/_archive/ count >= HEAD count",
+      "observed": ">=",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regenerated IDEAS_TRIAGE.md diff vs staged",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length <= 3 and per-type cap <= 1 (kill switch unset but no eligible candidate)",
+      "observed": "0 actions",
+      "expected": "<= caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped — pm_cursor + coverage_cursor unchanged — gate is no-op",
+      "observed": "skip-noop",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no literal Telegram token value in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no eligible candidate (no screen-map-drift / orphan / fixme-in-merged-code / stalled-review / dep-noise-lockfile-drift signal with confidence=high + score>=3 + on allowlist)"
+}

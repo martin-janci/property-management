@@ -1,0 +1,38 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-29",
+  "segment_reviewed": "api-core",
+  "selection_reason": "dispatcher-tier1d-demand-driven (honest_claimable=19 < floor=36; no backlog/retry candidates). Churn-aligned (skill priority 1): CHURN_FILES from state.hotspot_history include backend/servers/api-server/src/services/push_fanout.rs (recent_churn=135, runs_seen=3, last_seen=2026-10-25) which is under the api-core root (backend/servers/api-server/src/ excl. routes/) -> api-core selected. api-core is NOT saturated (0 open code-review-findings in backlog.json). All not-reviewed-today segments are saturated (ppt-web-ui=5, api-handlers=3, reality-server=3, reality-web=3 open). Today's existing api-core runs (2026-10-29-api-core-tier1d.json, -b.json) covered services/accounting.rs only; this complementary pass reviewed the service/middleware layer (push_fanout, quiet_hours, stripe, oauth, email, client_ip, workflow_executor, scheduler, auth_policy, id_ocr, syndication, feature_service, notification_pipeline) static-only. Findings below are non-overlapping with the accounting.rs findings.",
+  "experts_used": [
+    "rust"
+  ],
+  "signals": [
+    {
+      "id": "code-review-api-core-scheduler-no-panic-isolation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs:262-288 — BackgroundScheduler::start() runs a single tokio::spawn'd `loop { ticker.tick().await; self.run_scheduled_tasks().await; }` with no per-tick panic isolation (no catch_unwind, no supervisor/restart). A panic inside any task reached from run_scheduled_tasks propagates out of the spawned future and aborts the entire JoinHandle, permanently stopping ALL background maintenance for the process lifetime.",
+        "backend/servers/api-server/src/services/scheduler/mod.rs:291-416 — run_scheduled_tasks dispatches ~16 maintenance tasks (publish_scheduled_announcements, dispatch_announcement_notifications, activate/close votes + vote notifications, cleanup_sessions, prune_support_tooling/layout_change/oauth_token_events, expire/send signature reminders, send_meter/payment_reminders, transition_overdue_invoices, fire_due_report_schedules). Each task's Result error is logged with `if let Err(e)` and the loop continues (good), but a panic (unexpected unwrap/slice-index/overflow in any transitively-called fn) is NOT caught — blast radius is silent total loss of announcements, vote lifecycle, session GC, invoice overdue transitions, retention pruning, and all reminders. Recommend wrapping each tick (or each task) so one panic cannot kill the whole worker. Reachability of a panic is unproven statically (tasks currently return Result), hence confidence=medium."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-scheduler-burst-ticks",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs:276 — `interval(Duration::from_secs(self.config.interval_secs))` (default 60s, mod.rs:81) uses tokio's default MissedTickBehavior::Burst and is never reconfigured (grep for MissedTickBehavior across services/ returns zero hits). If a single run_scheduled_tasks() exceeds the 60s interval under load (it awaits ~16 sequential DB-backed tasks, several fanning out notifications), Burst makes the ticker immediately fire the backlog of missed ticks back-to-back, producing a burst of overlapping-cadence maintenance runs instead of a steady 60s cadence. Recommend ticker.set_missed_tick_behavior(MissedTickBehavior::Skip) (or Delay) so a slow tick cannot stampede."
+      ],
+      "expert": "rust"
+    }
+  ]
+}

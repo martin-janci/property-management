@@ -26,6 +26,8 @@ interface AnnouncementsPageProps {
   onArchive: (id: string) => void;
   onPin: (id: string, pinned: boolean) => void;
   onFilterChange: (params: ListAnnouncementsParams) => void;
+  /** Whether the viewer may manage announcements (defaults to true). */
+  canManage?: boolean;
 }
 
 export function AnnouncementsPage({
@@ -43,6 +45,7 @@ export function AnnouncementsPage({
   onArchive,
   onPin,
   onFilterChange,
+  canManage = true,
 }: AnnouncementsPageProps) {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
@@ -88,6 +91,7 @@ export function AnnouncementsPage({
         onArchive={onArchive}
         onPin={onPin}
         onCreate={onNavigateToCreate}
+        canManage={canManage}
       />
     </div>
   );

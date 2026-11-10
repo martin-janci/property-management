@@ -51,7 +51,7 @@ pub struct ListSessionsResponse {
 pub async fn list_sessions(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
-) -> Result<Json<ListSessionsResponse>, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<Json<ListSessionsResponse>, AuthError> {
     let user_id = authenticated_user_id(&state, &headers)?;
 
     // Identify the caller's current session. Prefer the HttpOnly cookie,
@@ -65,12 +65,10 @@ pub async fn list_sessions(
         Ok(sessions) => sessions,
         Err(e) => {
             tracing::error!(error = %e, "Failed to fetch user sessions");
-            return Err((
+            return Err(err_response(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to fetch sessions",
-                )),
+                "DATABASE_ERROR",
+                "Failed to fetch sessions",
             ));
         }
     };
@@ -132,17 +130,15 @@ pub async fn revoke_session(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Json(req): Json<RevokeSessionRequest>,
-) -> Result<Json<RevokeSessionResponse>, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<Json<RevokeSessionResponse>, AuthError> {
     let user_id = authenticated_user_id(&state, &headers)?;
 
     // Parse session ID
     let session_id: uuid::Uuid = req.session_id.parse().map_err(|_| {
-        (
+        err_response(
             StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new(
-                "INVALID_SESSION_ID",
-                "Invalid session ID format",
-            )),
+            "INVALID_SESSION_ID",
+            "Invalid session ID format",
         )
     })?;
 
@@ -151,21 +147,20 @@ pub async fn revoke_session(
         Ok(sessions) => sessions,
         Err(e) => {
             tracing::error!(error = %e, "Failed to fetch user sessions");
-            return Err((
+            return Err(err_response(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to verify session",
-                )),
+                "DATABASE_ERROR",
+                "Failed to verify session",
             ));
         }
     };
 
     let session_exists = sessions.iter().any(|s| s.id == session_id);
     if !session_exists {
-        return Err((
+        return Err(err_response(
             StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new("SESSION_NOT_FOUND", "Session not found")),
+            "SESSION_NOT_FOUND",
+            "Session not found",
         ));
     }
 
@@ -177,21 +172,17 @@ pub async fn revoke_session(
                 message: "Session revoked successfully".to_string(),
             }))
         }
-        Ok(false) => Err((
+        Ok(false) => Err(err_response(
             StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new(
-                "SESSION_NOT_FOUND",
-                "Session already revoked",
-            )),
+            "SESSION_NOT_FOUND",
+            "Session already revoked",
         )),
         Err(e) => {
             tracing::error!(error = %e, "Failed to revoke session");
-            Err((
+            Err(err_response(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to revoke session",
-                )),
+                "DATABASE_ERROR",
+                "Failed to revoke session",
             ))
         }
     }
@@ -221,7 +212,7 @@ pub struct RevokeAllSessionsResponse {
 pub async fn revoke_all_sessions(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
-) -> Result<Json<RevokeAllSessionsResponse>, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<Json<RevokeAllSessionsResponse>, AuthError> {
     let user_id = authenticated_user_id(&state, &headers)?;
 
     // Get current session to exclude. Prefer the HttpOnly cookie, fall back
@@ -250,12 +241,10 @@ pub async fn revoke_all_sessions(
         }
         Err(e) => {
             tracing::error!(error = %e, "Failed to revoke sessions");
-            Err((
+            Err(err_response(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to revoke sessions",
-                )),
+                "DATABASE_ERROR",
+                "Failed to revoke sessions",
             ))
         }
     }

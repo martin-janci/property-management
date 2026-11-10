@@ -1,0 +1,346 @@
+{
+  "generated_at": "2026-08-06T18:38:44Z",
+  "signals": [
+    {
+      "id": "code-review-api-handlers-enhanced-chat-stub",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/ai/llm.rs:1119-1158 \u2014 `enhanced_chat` is a stubbed production handler that returns fabricated data. It ignores the request except to echo it: `\"response\": format!(\"I understand you're asking about: {}. Let me help you with that.\", req.message)` (line 1149), with a hardcoded `confidence: 0.85` (line 1144), `tokens_used: 150`, empty `sources: []`, and an `escalated` flag derived from the fake confidence. No LLM call, no document-embedding search is performed. The inline comment admits it: `// Placeholder response - real implementation would: 1. Search document embeddings ... 2. Call LLM with context ... 3. Check confidence against threshold`.",
+        "Reachable in production: mounted at POST /chat/enhanced in `llm_router()` (backend/servers/api-server/src/routes/ai/llm.rs:49, `.route(\"/chat/enhanced\", post(enhanced_chat))`), which lib.rs wires into the app. The placeholder branch is unconditional \u2014 every caller receives the canned echo plus fabricated confidence/token/escalation metrics, so any UI or client that trusts these fields is acting on invented data.",
+        "Fix: implement the documented pipeline (embedding search -> LLM call -> confidence/escalation check) or fail closed with a 501/NOT_IMPLEMENTED instead of returning a success payload with fabricated confidence and token counts. The neighbouring `generate_lease` handler in the same file shows the real LLM-call + persistence pattern to follow."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-ai-upstream-error-leak",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/ai/llm.rs:687 \u2014 the raw upstream LLM-provider error is forwarded verbatim into the client-facing response body: `Json(ErrorResponse::new(\"GENERATION_FAILED\", format!(\"Failed to generate lease: {}\", e)))`. The error is already captured server-side via `tracing::error!(\"Lease generation failed: {}\", e)` (line 658), so the client copy adds no user value while potentially exposing provider request IDs, model/config hints, or fragments of the upstream response body.",
+        "backend/servers/api-server/src/routes/ai/voice.rs:194 \u2014 same pattern on the voice OAuth path: `Json(ErrorResponse::new(\"OAUTH_EXCHANGE_FAILED\", format!(\"Failed to exchange authorization code: {}\", e)))` returns the upstream OAuth-provider exchange error `e` (already logged at voice.rs:189) directly to the API caller.",
+        "This is a segment-level error-hygiene pattern: internal/upstream error detail should be logged server-side (as it already is) and replaced with a generic client message. Fix: return a stable generic message (e.g. \"Lease generation failed\", \"Authorization code exchange failed\") and keep the detailed `{e}` only in the tracing call."
+      ],
+      "expert": "security"
+    },
+    {
+      "id": "code-review-mobile-rn-auth-restore-stale-token",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/contexts/AuthContext.tsx:85-95 \u2014 the cold-start `initialize()` effect reads the stored access token (`SecureStore.getItemAsync(ACCESS_TOKEN_KEY)`) and, whenever both `accessToken` and `userJson` are present, unconditionally sets `{ isLoading:false, isAuthenticated:true, user, accessToken }`. It never decodes/checks the token's `exp` claim and never calls the existing `refreshToken()`. Because access tokens are short-lived (refresh tokens are the long-lived credential \u2014 see REFRESH_TOKEN_KEY / the /auth/refresh flow at :209-231), any app cold-start that happens after the stored access token's TTL has elapsed restores the user into an `isAuthenticated:true` state holding an already-expired bearer token.",
+        "frontend/apps/mobile/src/contexts/AuthContext.tsx:296-312 \u2014 `authenticateWithBiometric` has the identical gap on the unlock path: after `LocalAuthentication.authenticateAsync` succeeds it reads the stored `accessToken`/`userJson` and sets `isAuthenticated:true` with that token, with an explicit comment (\":296\") that it deliberately does NOT refetch/reset (issue #2399) \u2014 but it also performs no `exp` validation and no proactive `refreshToken()`, so a biometric unlock after the access token expired lands the user authenticated-but-with-an-expired-token.",
+        "This compounds the already-filed `code-review-mobile-rn-useapi-no-refresh-retry` (the API layer does not transparently refresh + retry on 401): with no proactive refresh at restore/unlock AND no reactive refresh-retry in useApi, the first request after an expired restore 401s and the user is stuck in a broken 'logged in but everything fails' state until a manual logout/login. `refreshToken()` already exists in this same context (:209) and is simply never invoked on the two restore paths. Fix: on `initialize()` and on successful biometric unlock, decode the access token's `exp` (utils/jwt.ts already ships a guarded `decodeJwtPayload`) and, if expired/near-expiry, `await refreshToken()` before setting `isAuthenticated:true` (fall back to the login screen if refresh fails)."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-biometric-prompt-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/contexts/AuthContext.tsx:252-256 \u2014 `enableBiometric` passes hardcoded English strings to the OS biometric dialog: `promptMessage: 'Enable biometric login'`, `cancelLabel: 'Cancel'`, `fallbackLabel: 'Use passcode'`. None are wrapped in `t()`, so non-English users (this app ships sk/cs/de/en) see English in the native Face ID / fingerprint prompt.",
+        "frontend/apps/mobile/src/contexts/AuthContext.tsx:284-287 \u2014 `authenticateWithBiometric` repeats it: `promptMessage: 'Login to Property Management'`, `cancelLabel: 'Cancel'`, `fallbackLabel: 'Use password'` \u2014 all hardcoded English on the unlock prompt.",
+        "Distinct location from the prior mobile-rn i18n findings (`hardcoded-i18n-screens`, `alert-i18n-gap`, `announcements-i18n`, `fault-category-i18n`, `hardcoded-empty-error-i18n`), which covered screen copy / Alert bodies \u2014 none touched the AuthContext biometric prompt strings. Fix: route these six strings through `t('auth.biometric.*')` keys so the login/unlock prompts localise with the rest of the app."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-pong-timeout-drop",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts:688-709 \u2014 the client heartbeat sends an APPLICATION-level ping frame `{type:'ping', payload:null, timestamp}` via send() every heartbeatInterval (default 30000ms, :288), sets `awaitingPong = true`, and arms a pongTimeout (default 10000ms, :289). The ONLY thing that clears awaitingPong is receiving a text frame whose `data.type === 'pong'` (handleMessage :529-532 -> handlePong :711-718). If no such frame arrives within 10s, `this.socket?.close(4000, 'Pong timeout')` fires (:705), producing a non-clean close -> onclose (:495-510) -> scheduleReconnect().",
+        "The api-server notification WS handler NEVER sends an application-level `{type:'pong'}`. Verified in backend/servers/api-server/src/routes/ws_notifications.rs: the server only emits `Message::Text` carrying the `{event, payload}` WsEvent envelope (:219-230) for notifications, and uses PROTOCOL-level `Message::Ping(vec![])` for its own liveness probe (:242). Its inbound arm (:257-260) explicitly treats every client frame (Text/Binary/Ping/Pong) as a heartbeat and returns without replying \u2014 see the module header comment (:27, 'Client -> server: any message is treated as a heartbeat (pong)'). No code path serialises the string 'pong' back to the client.",
+        "Consequence: on every connection the client opens (onopen -> startHeartbeat :488-493), 30s later it sends `{type:'ping'}`, the server swallows it, awaitingPong stays true, and at ~40s the client force-closes with code 4000 and reconnects. onclose->stopHeartbeat->scheduleReconnect->connect->onopen->startHeartbeat repeats the cycle indefinitely. parseServerMessage (:59-76) maps real notification events onto `type = <event name>`, never 'pong', so an incoming notification never clears awaitingPong either. The realtime notification channel therefore drops and reconnects roughly every 40s for the entire authenticated session.",
+        "Reachability confirmed in production: App.tsx:94-101 mounts <WebSocketProvider> around the whole authenticated app with NO heartbeatInterval/pongTimeout override, so the 30s/10s defaults apply; WebSocketContext.tsx:250-251 calls service.connect() whenever auth.isAuthenticated && accessToken. Impact: constant socket churn, missed pushes during each reconnect gap, redundant server WS-session setup/teardown, and spurious onDisconnected/onReconnected callback firing every ~40s. Fix: the client-side app-level ping is both wrong (server never answers it) and redundant (the server already pings and the browser auto-pongs at the protocol level, invisible to JS). Remove the sendPing/pongTimeout logic and rely on the server's Message::Ping + browser auto-pong for liveness; OR have the server echo an application `{type:'pong'}` on receipt of `{type:'ping'}` so the contract matches. Distinct from the prior ws-token-rotation-stale and ws-ungated-console findings."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-giveup-no-resume",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts:600-612 \u2014 once reconnectAttempts reaches maxReconnectAttempts (default 10, :290) scheduleReconnect() sets `shouldReconnect = false`, emits `connection:max-retries-exceeded`, and sets an error state. From that point NOTHING in the client re-arms reconnection: onclose only reconnects when shouldReconnect is true (:507), and reconnectAttempts is never reset by connect() or disconnect() \u2014 only a successful onopen resets it (:489). The public resetReconnectAttempts() (:479-481) is dead code (no caller in the segment).",
+        "The default backoff sum (min 1000ms doubling, capped at 30000ms, over 10 attempts) is only ~3 minutes, so any real outage longer than that \u2014 laptop sleep, tunnel/VPN drop, backend redeploy window, mobile network gap \u2014 permanently kills the notification socket for the rest of the session.",
+        "There is no auto-resume wiring. contexts/WebSocketContext.tsx only calls service.connect() on an auth change (:246-256); it never subscribes to `connection:max-retries-exceeded` and is not connected to hooks/useNetworkStatus.ts (which already detects browser online/offline transitions, useNetworkStatus.ts:96-121). So when connectivity returns, the socket stays dead until the user logs out/in or reloads the page \u2014 user silently stops receiving realtime pushes with no indication and no recovery path.",
+        "Fix: on the browser `online` event (or via useNetworkStatusEffect) call service.connect() to resume, and have connect() reset reconnectAttempts (or call resetReconnectAttempts()) so a fresh attempt budget is granted; optionally surface the `connection:max-retries-exceeded` state in WebSocketContext so the UI can offer a manual reconnect. Net-new \u2014 no prior ppt-web-core finding covered the reconnect give-up / resume lifecycle."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-server-inquiries-no-ratelimit",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/handlers/inquiries/mod.rs:36 \u2014 InquiryResult::RateLimited variant is defined but never constructed or matched anywhere (grep finds a single occurrence). The abuse control is dead code: create_inquiry (mod.rs:189) never enforces any throttle.",
+        "backend/servers/reality-server/src/routes/inquiries.rs:180 send_contact_message and :298 request_viewing are unauthenticated public POST endpoints (no RequestPrincipal extractor) that persist inquiry rows and fire a realtor notification, guarded only by length/format validation \u2014 no per-IP or per-listing rate limit, giving an anonymous spam / DB resource-exhaustion vector.",
+        "backend/servers/reality-server/src/main.rs:527-569 \u2014 the middleware stack (DefaultBodyLimit, security_headers, CORS, host/tenant-resolution) has no per-IP/governor rate limiter; tenant_rate_limiters (state.rs:861) is per-org RPM and does not cover anonymous inquiry POSTs."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-inquiry-email-stub",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/handlers/inquiries/mod.rs:340 send_inquiry_notification is a stub that only emits a tracing::info log ('In production, this would send an email via email service'); no email is ever dispatched. Realtors are never notified of new contact/viewing requests, yet the public endpoint (routes/inquiries.rs:267) responds 'Your message has been sent. The realtor will respond soon.' \u2014 a shipped-but-non-functional notification path."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-listing-viewcount-hardcoded-zero",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/listings.rs:432 \u2014 the LIVE public listing-detail handler get_listing() (route wired at routes/listings.rs:62 `.route(\"/{id}\", get(get_listing))` and registered in main.rs:150 for `GET /api/v1/listings/{id}`) builds its `ListingDetail` response with `view_count: 0, // Would need analytics query`. Every other field on this response is correctly hydrated from the DB row `l.` (bathrooms, floor, total_floors, latitude, longitude, features, country), so the endpoint is otherwise complete \u2014 only the view counter is a hardcoded literal.",
+        "The write path for view analytics IS implemented and runs on this very handler: routes/listings.rs:380 calls `state.reality_portal_repo.track_view(id, \"website\").await` on each detail fetch, and a dedicated `POST /api/v1/listings/{id}/view` (routes/listings.rs:851-870) also increments. Per handlers/listings/mod.rs:127-131 track_view routes through the SECURITY DEFINER `portal_track_listing_view` fn (migration 00214) and lands rows in `listing_analytics`. So views are persisted but the read path was never wired \u2014 the response `view_count` is a constant 0.",
+        "Net user-facing effect: the public listing page (reality-web + mobile-native KMP) permanently displays 0 views for every listing regardless of real traffic, and any realtor/analytics surface reading this field under-reports to zero. This is a live read-path gap on the core public surface (distinct from the 2026-08-05 incomplete-feature findings). Fix: replace the literal with a `SELECT`/aggregate over `listing_analytics` for the listing id (or a cached counter), mirroring the write path already in place."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-orphan-listinghandler-stub-detail",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/handlers/listings/mod.rs:74-113 \u2014 `ListingHandler::get_listing()` returns a `PublicListingDetail` with a whole block of fields hardcoded to empty/false regardless of the DB: `is_negotiable: false`, `bathrooms: None`, `floor: None`, `total_floors: None`, `street: String::new()`, `postal_code: String::new()`, `country: String::new()`, `latitude: None`, `longitude: None`, `features: vec![]` (each carrying a `// Would need to be fetched from DB` comment). A parallel struct, the LIVE `routes/listings.rs::get_listing` (line 411-433), proves those same attributes DO exist on the row (it hydrates `l.bathrooms`, `l.latitude`, `l.country`, etc.) \u2014 so this is a stubbing bug, not a missing schema.",
+        "However, this handler is dead/orphaned code: a segment-wide grep for `ListingHandler` / `handlers::listings::` / `.get_listing(` call sites finds only the definition in handlers/listings/mod.rs itself \u2014 nothing constructs `ListingHandler` or calls this `get_listing()`, and no Axum route is wired to it (the live `GET /api/v1/listings/{id}` uses routes::listings::get_listing per main.rs:150). So there is no current user-facing impact.",
+        "Risk is latent-trap + maintenance debt: a future refactor that rewires the public detail route to this handler (a natural-looking choice given its name) would silently ship listings with blank address, no map coordinates (lat/lng None), and empty features. Fix: either delete the orphaned handler, or complete it to hydrate from the same row source routes/listings.rs already uses, so the two detail paths cannot diverge."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-orphan-schedule-viewing-stub",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/handlers/inquiries/mod.rs:290-337 \u2014 `schedule_viewing()` runs full input validation (future-date at :300, <=90-days window at :308, 15-120min duration at :317) and then, at the point it must persist the viewing, unconditionally returns `ViewingResult::ValidationFailed(vec![ValidationError { field: \"viewing\", message: \"Viewing scheduling not yet implemented\" }])` (:333-336) after only a `tracing::info!(... \"Viewing scheduling requested\")`. It creates no record. Reporting a not-implemented feature as a field-level *validation* error is also a semantically wrong contract (should be 501/NOT_IMPLEMENTED, not a 400-shaped validation failure).",
+        "Like the listings stub, this method is dead/orphaned: the live viewing route `POST /api/v1/inquiries/viewing/{listing_id}` (routes/inquiries.rs:62 -> request_viewing at :298) does NOT call schedule_viewing \u2014 it builds a message embedding the preferred times (routes/inquiries.rs:352-364) and creates a normal inquiry via InquiriesHandler::validate_contact + create. A grep for `schedule_viewing(` call sites finds only its own definition. So the live viewing-request flow works; this handler is unreachable.",
+        "Impact is dead-code / incomplete-stub hygiene, not a live outage. Fix: delete schedule_viewing (the real flow lives in request_viewing), or if a structured viewing-record feature is intended, implement the repo write and return a proper success/501 rather than a misleading ValidationFailed. Distinct from the 2026-08-05 inquiry-detail-empty-messages finding."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "lag-warning-2026-08-06",
+      "type": "lag_warning",
+      "source": "routine-scheduler",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "Last routine run at 2026-08-04T03:15:00Z; ~63h since last run \u2014 routine scheduler drifted by ~1d."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 no signal matched confidence=high + score>=3 + allowlist",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-06.md && head -1 == '# 2026-08-06'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state cursor diff",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signal id vs seen",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq [.items[]|select(.score>8)]|length==0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "python3 iterate open items older than 14d",
+      "observed": "no violations",
+      "expected": "no violations"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep plans/<slug>.md and 'adversarial pass:' in brief",
+      "observed": "1 plan named + adversarial pass: passed",
+      "expected": "1 plan named + adversarial pass line"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -v _archive | grep -c md",
+      "observed": "1",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G7-metadata",
+      "passed": true,
+      "command": "grep 4 metadata fields in plan",
+      "observed": "1/1/1/1",
+      "expected": "4/4/4/4"
+    },
+    {
+      "goal": "G7-headings",
+      "passed": true,
+      "command": "grep 11 ## headings in plan",
+      "observed": "11/11",
+      "expected": "11/11"
+    },
+    {
+      "goal": "G7-capability",
+      "passed": true,
+      "command": "grep -c '^- [x]' plan",
+      "observed": "2",
+      "expected": ">=1"
+    },
+    {
+      "goal": "G7-mode",
+      "passed": true,
+      "command": "grep -E '^Mode: (local-only|cloud-ok)$' plan",
+      "observed": "Mode: cloud-ok",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G7-files",
+      "passed": true,
+      "command": "awk Files section paths | test -e",
+      "observed": "5/5 exist",
+      "expected": "all exist"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/hostname grep on staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "parse Phases-that-failed line",
+      "observed": "none",
+      "expected": "none or matching"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still in plans/ or plans/_archive/",
+      "observed": "0 missing",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now >= HEAD count",
+      "observed": "7>=7",
+      "expected": ">= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap check",
+      "observed": "true (0 actions)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm_cursor + coverage_cursor liveness",
+      "observed": "exit 0 (pm_cursor 2->3, coverage_cursor 4->5)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram-token pattern on staged diff added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

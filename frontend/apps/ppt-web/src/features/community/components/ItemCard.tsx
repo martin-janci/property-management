@@ -1,303 +1,62 @@
 /**
- * ItemCard Component
- *
- * Displays a marketplace item listing card.
- * Part of Story 42.4: Item Marketplace.
+ * ItemCard — a marketplace listing tile linking to its detail page.
  */
 
-import type { ItemCondition, ItemListingType, ItemStatus, MarketplaceItem } from '@ppt/api-client';
+import type { MarketplaceItem } from '@ppt/api-client';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
+import { formatMoney } from '../utils/format';
+
+export function itemPriceLabel(item: MarketplaceItem, locale: string, t: TFunction): string {
+  if (item.isFree || item.category === 'free') return t('community.itemCard.price.free');
+  if (item.category === 'wanted') return t('community.itemCard.price.wanted');
+  return formatMoney(item.price, item.currency, locale) ?? t('community.itemCard.price.contact');
+}
 
 interface ItemCardProps {
   item: MarketplaceItem;
-  onView?: (id: string) => void;
-  onContact?: (id: string) => void;
-  onEdit?: (id: string) => void;
-  onDelete?: (id: string) => void;
-  onMarkSold?: (id: string) => void;
-  isCurrentUser?: boolean;
+  onOpen: (id: string) => void;
 }
 
-const conditionLabels: Record<ItemCondition, string> = {
-  new: 'New',
-  like_new: 'Like New',
-  good: 'Good',
-  fair: 'Fair',
-  poor: 'Poor',
-};
-
-const conditionColors: Record<ItemCondition, string> = {
-  new: 'bg-green-100 text-green-800',
-  like_new: 'bg-blue-100 text-blue-800',
-  good: 'bg-gray-100 text-gray-800',
-  fair: 'bg-yellow-100 text-yellow-800',
-  poor: 'bg-red-100 text-red-800',
-};
-
-const listingTypeLabels: Record<ItemListingType, string> = {
-  sale: 'For Sale',
-  free: 'Free',
-  wanted: 'Wanted',
-  trade: 'For Trade',
-};
-
-const listingTypeColors: Record<ItemListingType, string> = {
-  sale: 'bg-green-600 text-white',
-  free: 'bg-blue-600 text-white',
-  wanted: 'bg-purple-600 text-white',
-  trade: 'bg-orange-600 text-white',
-};
-
-const statusColors: Record<ItemStatus, string> = {
-  active: '',
-  reserved: 'bg-yellow-50 border-yellow-200',
-  sold: 'bg-gray-50 border-gray-200 opacity-75',
-  expired: 'bg-gray-50 border-gray-200 opacity-60',
-  removed: 'bg-gray-50 border-gray-200 opacity-50',
-};
-
-function formatPrice(
-  price: number | undefined,
-  currency: string | undefined,
-  listingType: ItemListingType
-): string {
-  if (listingType === 'free') return 'FREE';
-  if (listingType === 'wanted') return 'Wanted';
-  if (listingType === 'trade') return 'Trade';
-  if (price === undefined) return 'Contact for price';
-  return new Intl.NumberFormat(undefined, {
-    style: 'currency',
-    currency: currency || 'EUR',
-  }).format(price);
-}
-
-function formatTimeAgo(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
-  return date.toLocaleDateString();
-}
-
-export function ItemCard({
-  item,
-  onView,
-  onContact,
-  onEdit,
-  onDelete,
-  onMarkSold,
-  isCurrentUser,
-}: ItemCardProps) {
-  const isAvailable = item.status === 'active';
-  const isReserved = item.status === 'reserved';
-  const isSold = item.status === 'sold';
+export function ItemCard({ item, onOpen }: ItemCardProps) {
+  const { t, i18n } = useTranslation();
+  const photo = item.photoUrls[0];
 
   return (
-    <div
-      className={`bg-white rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow border ${statusColors[item.status]}`}
-    >
-      {/* Image */}
-      <div className="relative aspect-square bg-gray-100">
-        {item.imageUrls.length > 0 ? (
-          <img src={item.imageUrls[0]} alt={item.title} className="w-full h-full object-cover" />
+    <article className="bg-white rounded-lg shadow overflow-hidden flex flex-col">
+      <div className="h-40 bg-gray-100 flex items-center justify-center">
+        {photo ? (
+          <img src={photo} alt={item.title} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <svg
-              className="w-16 h-16 text-gray-300"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
-          </div>
+          <span className="text-sm text-gray-400">{t('community.hub.noPhoto')}</span>
         )}
-        {/* Listing Type Badge */}
-        <span
-          className={`absolute top-2 left-2 px-2 py-1 text-xs font-medium rounded ${listingTypeColors[item.listingType]}`}
-        >
-          {listingTypeLabels[item.listingType]}
-        </span>
-        {/* Image Count */}
-        {item.imageUrls.length > 1 && (
-          <span className="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
-            <svg
-              className="w-3 h-3"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
-            {item.imageUrls.length}
-          </span>
-        )}
-        {/* Status Overlay */}
-        {!isAvailable && (
-          <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-            <span className="bg-white text-gray-800 px-3 py-1 rounded-full text-sm font-medium">
-              {isReserved ? 'Reserved' : isSold ? 'Sold' : item.status}
+      </div>
+      <div className="p-4 flex flex-col flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="text-base font-semibold text-gray-900 line-clamp-2">{item.title}</h3>
+          {item.status !== 'active' && (
+            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-200 text-gray-700 shrink-0">
+              {t(`community.itemStatus.${item.status}`, { defaultValue: item.status })}
             </span>
-          </div>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="p-4">
-        {/* Price */}
-        <div className="text-lg font-bold text-gray-900">
-          {formatPrice(item.price, item.currency, item.listingType)}
-        </div>
-
-        {/* Title */}
-        <button
-          type="button"
-          className="mt-1 font-medium text-gray-900 truncate cursor-pointer hover:text-blue-600 text-left w-full"
-          onClick={() => onView?.(item.id)}
-        >
-          {item.title}
-        </button>
-
-        {/* Category & Condition */}
-        <div className="mt-2 flex items-center gap-2 text-xs">
-          <span className="text-gray-500">{item.category}</span>
-          <span className="text-gray-300">•</span>
-          <span className={`px-1.5 py-0.5 rounded ${conditionColors[item.condition]}`}>
-            {conditionLabels[item.condition]}
-          </span>
-        </div>
-
-        {/* Seller Info */}
-        <div className="mt-3 flex items-center gap-2">
-          {item.sellerAvatar ? (
-            <img
-              src={item.sellerAvatar}
-              alt={item.sellerName}
-              className="w-6 h-6 rounded-full object-cover"
-            />
-          ) : (
-            <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center">
-              <span className="text-gray-600 text-xs font-medium">
-                {item.sellerName.charAt(0).toUpperCase()}
-              </span>
-            </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <span className="text-sm text-gray-600 truncate">{item.sellerName}</span>
-            {item.sellerUnit && (
-              <span className="text-xs text-gray-400 ml-1">• {item.sellerUnit}</span>
-            )}
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="mt-2 flex items-center gap-3 text-xs text-gray-400">
-          <span>{formatTimeAgo(item.createdAt)}</span>
-          <span>•</span>
-          <span>{item.viewCount} views</span>
-          {item.messageCount > 0 && (
-            <>
-              <span>•</span>
-              <span>{item.messageCount} messages</span>
-            </>
           )}
         </div>
-      </div>
-
-      {/* Actions */}
-      <div className="px-4 py-3 bg-gray-50 border-t flex items-center justify-between">
-        {isCurrentUser ? (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => onEdit?.(item.id)}
-              className="text-sm text-gray-600 hover:text-gray-800"
-            >
-              Edit
-            </button>
-            {isAvailable && (
-              <button
-                type="button"
-                onClick={() => onMarkSold?.(item.id)}
-                className="text-sm text-green-600 hover:text-green-800"
-              >
-                Mark Sold
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => onDelete?.(item.id)}
-              className="text-sm text-red-600 hover:text-red-800"
-            >
-              Delete
-            </button>
-          </div>
-        ) : (
+        <p className="mt-1 text-lg font-bold text-blue-700">
+          {itemPriceLabel(item, i18n.language, t)}
+        </p>
+        <p className="mt-1 text-xs text-gray-500">
+          {t(`community.marketplaceCategories.${item.category}`)} ·{' '}
+          {t(`community.itemConditions.${item.condition}`)}
+        </p>
+        <div className="mt-auto pt-3">
           <button
             type="button"
-            onClick={() => onContact?.(item.id)}
-            disabled={!isAvailable && !isReserved}
-            className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={() => onOpen(item.id)}
+            className="w-full px-3 py-2 text-sm font-medium text-blue-600 border border-blue-200 rounded-md hover:bg-blue-50"
           >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-              />
-            </svg>
-            Contact Seller
+            {t('community.itemCard.viewDetails')}
           </button>
-        )}
-        <button
-          type="button"
-          onClick={() => onView?.(item.id)}
-          className="p-2 text-gray-400 hover:text-gray-600 rounded"
-          title="View Details"
-        >
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-            />
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-            />
-          </svg>
-        </button>
+        </div>
       </div>
-    </div>
+    </article>
   );
 }

@@ -22,6 +22,7 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
+import { formatDate } from '../../i18n/format';
 import { warnIfListDegraded } from '../shared/parserWarnings';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
@@ -162,7 +163,7 @@ export function FormsScreen({ onNavigate }: FormsScreenProps) {
                 )}
                 {form.dueAt && (
                   <Text style={[s.cardMeta, { marginLeft: 'auto' }]}>
-                    Due {new Date(form.dueAt).toLocaleDateString()}
+                    Due {formatDate(form.dueAt)}
                   </Text>
                 )}
               </View>

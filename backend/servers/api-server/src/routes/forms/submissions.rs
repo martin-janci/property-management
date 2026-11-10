@@ -42,13 +42,17 @@ pub(super) async fn submit_form(
     Path(id): Path<Uuid>,
     Json(req): Json<SubmitFormRequest>,
 ) -> Result<(StatusCode, Json<SubmitFormResponse>), (StatusCode, Json<ErrorResponse>)> {
-    // Extract IP from X-Forwarded-For header or connection address
-    let ip_address = headers
-        .get("x-forwarded-for")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|v| v.split(',').next())
-        .map(|s| s.trim().to_string())
-        .or_else(|| Some(addr.ip().to_string()));
+    // Resolve the client IP through the trusted-proxy allowlist (issue #2789):
+    // forwarding headers (`X-Forwarded-For` / `CF-Connecting-IP`) are only
+    // believed when the socket peer is a trusted proxy, otherwise a client could
+    // forge the source IP recorded on the submission / signature. Always yields
+    // an address (falls back to the socket peer), matching the prior contract of
+    // an always-populated `Option<String>`.
+    let ip_address = Some(crate::client_ip::resolve_client_ip(
+        &headers,
+        addr,
+        &state.trusted_proxies,
+    ));
 
     // Extract User-Agent from headers
     let user_agent = headers

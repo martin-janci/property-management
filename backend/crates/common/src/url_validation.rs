@@ -12,10 +12,38 @@
 //!   (`metadata.google.internal`, `169.254.169.254`, ...),
 //! * `.local` / `.internal` TLD suffixes.
 //!
-//! **Important -- DNS rebinding**: this is a *static* check on the string.
-//! Callers that resolve the hostname themselves (e.g. import workers) MUST
-//! re-validate the resolved IP at fetch time.
+//! **DNS-hostname SSRF**: [`validate_external_url`] is a *static* check on
+//! the string — a hostname that has no literal-IP form (e.g.
+//! `attacker.example.com`) but resolves to a private/internal address at
+//! request time sails through it untouched. Any caller that is about to
+//! issue the actual outbound request (i.e. every caller in this codebase)
+//! **MUST** additionally call [`validate_resolved_host`] with the validated
+//! URL's host/port immediately before sending the request, and reject on
+//! error. `validate_resolved_host` resolves the hostname and checks *every*
+//! returned address against the same forbidden ranges, failing closed
+//! (resolution error, empty result, or any forbidden address => reject).
+//!
+//! A one-shot pre-flight [`validate_resolved_host`] on its own still leaves a
+//! narrow DNS-rebinding window between that lookup and the HTTP client's own
+//! connect-time lookup (TOCTOU): the two lookups can disagree, and the client
+//! owns the socket connect. To close that window a caller must ensure the
+//! addresses the client actually *connects to* are the validated ones. Two
+//! building blocks here support that:
+//!
+//! * [`resolve_and_validate_host`] resolves once and returns the concrete,
+//!   validated [`SocketAddr`]s so a caller can pin them into its HTTP client
+//!   (e.g. `reqwest`'s custom resolver / `resolve_to_addrs`), guaranteeing the
+//!   connect targets the exact addresses that passed validation.
+//! * [`validate_resolved_addrs`] validates an already-resolved address set —
+//!   the primitive a connect-time custom resolver calls so that validation and
+//!   connection observe the *same* resolution (no second, unvalidated lookup),
+//!   and so every redirect hop is re-validated too.
+//!
+//! `backend/servers/api-server/src/services/actions/api_call.rs` wires the
+//! workflow HTTP client this way (connect-time SSRF-guard resolver), which is
+//! what actually closes the TOCTOU for that path.
 
+use std::net::{IpAddr, SocketAddr};
 use url::{Host, Url};
 
 /// Structured error returned when a URL fails SSRF validation.
@@ -35,6 +63,11 @@ pub enum UrlValidationError {
     PrivateOrReservedIp(String),
     /// Host ends with a blocked TLD (`.local`, `.internal`).
     BlockedTld(String),
+    /// DNS resolution failed, or resolved to zero addresses. Fail closed:
+    /// we can't prove the destination is safe, so we reject it.
+    ResolutionFailed(String),
+    /// The hostname resolved to (at least one) IP in a forbidden range.
+    ResolvedToPrivateIp(String),
 }
 
 impl std::fmt::Display for UrlValidationError {
@@ -56,6 +89,10 @@ impl std::fmt::Display for UrlValidationError {
                 write!(f, "URL points to a forbidden network range: {}", reason)
             }
             Self::BlockedTld(h) => write!(f, "Internal domain not allowed: {}", h),
+            Self::ResolutionFailed(e) => write!(f, "Could not resolve host: {}", e),
+            Self::ResolvedToPrivateIp(reason) => {
+                write!(f, "Host resolves to a forbidden network range: {}", reason)
+            }
         }
     }
 }
@@ -118,51 +155,245 @@ pub fn validate_external_url(raw: &str) -> Result<Url, UrlValidationError> {
         return Err(UrlValidationError::BlockedTld(host_str.to_string()));
     }
 
-    // IP range checks.
+    // IP range checks (literal IPs only — see `validate_resolved_host` for
+    // the DNS-hostname case, which this static check cannot see).
     match host {
         Host::Ipv4(ip) => {
-            if let Err(reason) = check_ipv4(ip) {
+            if let Err(reason) = is_forbidden_ip(IpAddr::V4(ip)) {
                 return Err(UrlValidationError::PrivateOrReservedIp(reason));
             }
         }
         Host::Ipv6(ip) => {
-            if let Some(v4) = ip.to_ipv4_mapped() {
-                if let Err(reason) = check_ipv4(v4) {
-                    return Err(UrlValidationError::PrivateOrReservedIp(reason));
-                }
-            } else {
-                let segs = ip.segments();
-                if (segs[0] & 0xfe00) == 0xfc00 {
-                    return Err(UrlValidationError::PrivateOrReservedIp(
-                        "fc00::/7 (IPv6 unique-local)".into(),
-                    ));
-                }
-                if (segs[0] & 0xffc0) == 0xfe80 {
-                    return Err(UrlValidationError::PrivateOrReservedIp(
-                        "fe80::/10 (IPv6 link-local)".into(),
-                    ));
-                }
-                if (segs[0] & 0xff00) == 0xff00 {
-                    return Err(UrlValidationError::PrivateOrReservedIp(
-                        "ff00::/8 (IPv6 multicast)".into(),
-                    ));
-                }
-                if ip.is_loopback() {
-                    return Err(UrlValidationError::PrivateOrReservedIp(
-                        "::1 (IPv6 loopback)".into(),
-                    ));
-                }
-                if ip.is_unspecified() {
-                    return Err(UrlValidationError::PrivateOrReservedIp(
-                        ":: (IPv6 unspecified)".into(),
-                    ));
-                }
+            if let Err(reason) = is_forbidden_ip(IpAddr::V6(ip)) {
+                return Err(UrlValidationError::PrivateOrReservedIp(reason));
             }
         }
         Host::Domain(_) => {}
     }
 
     Ok(parsed)
+}
+
+/// Resolve `host`/`port` and validate that **every** returned address is a
+/// routable, non-forbidden IP. This is the second half of SSRF defence for
+/// DNS hostnames — [`validate_external_url`] only inspects the literal
+/// string and cannot see where a domain actually resolves.
+///
+/// Fails closed: a resolution error, an empty result set, or any single
+/// forbidden address in the result set causes rejection. Call this
+/// immediately before issuing the outbound request (after
+/// `validate_external_url` has already passed), using the same host/port
+/// the HTTP client is about to connect to.
+pub async fn validate_resolved_host(host: &str, port: u16) -> Result<(), UrlValidationError> {
+    validate_resolved_host_with(host.to_string(), port, resolve_host).await
+}
+
+/// Resolve `host`/`port` and return the **validated** set of socket
+/// addresses. Same policy and fail-closed semantics as
+/// [`validate_resolved_host`], but returns the concrete addresses so a caller
+/// can pin them into its HTTP client and connect only to addresses that
+/// passed validation — closing the DNS-rebinding TOCTOU window that a lookup
+/// which merely returns `Ok(())` leaves open (the client would otherwise
+/// perform its own, second, unvalidated lookup at connect time).
+///
+/// Fails closed: resolution error, empty result set, or any single forbidden
+/// address in the result causes rejection.
+pub async fn resolve_and_validate_host(
+    host: &str,
+    port: u16,
+) -> Result<Vec<SocketAddr>, UrlValidationError> {
+    resolve_and_validate_host_with(host.to_string(), port, resolve_host).await
+}
+
+/// Validate an already-resolved address set against the SSRF forbidden-range
+/// policy, returning the corresponding [`SocketAddr`]s (with `port`) on
+/// success.
+///
+/// This is the primitive a connect-time custom resolver (e.g. `reqwest`'s
+/// [`dns::Resolve`]) calls so that the addresses validated here are *exactly*
+/// the ones the HTTP client connects to — there is no second, unvalidated
+/// lookup between check and use, which is what closes the DNS-rebinding
+/// TOCTOU. Fails closed on an empty set or any forbidden address.
+///
+/// [`dns::Resolve`]: https://docs.rs/reqwest/latest/reqwest/dns/trait.Resolve.html
+pub fn validate_resolved_addrs(
+    host: &str,
+    port: u16,
+    addrs: &[IpAddr],
+) -> Result<Vec<SocketAddr>, UrlValidationError> {
+    if addrs.is_empty() {
+        return Err(UrlValidationError::ResolutionFailed(format!(
+            "no addresses found for host '{}'",
+            host
+        )));
+    }
+
+    let mut out = Vec::with_capacity(addrs.len());
+    for &ip in addrs {
+        if let Err(reason) = is_forbidden_ip(ip) {
+            return Err(UrlValidationError::ResolvedToPrivateIp(format!(
+                "{} resolves to {} ({})",
+                host, ip, reason
+            )));
+        }
+        out.push(SocketAddr::new(ip, port));
+    }
+
+    Ok(out)
+}
+
+/// Same as [`validate_resolved_host`] but with the resolver injected, so
+/// tests can exercise the private-IP-rejection path with a fake resolver
+/// instead of depending on live DNS/network access (which CI/sandbox
+/// runners may not have).
+async fn validate_resolved_host_with<F, Fut>(
+    host: String,
+    port: u16,
+    resolve: F,
+) -> Result<(), UrlValidationError>
+where
+    F: FnOnce(String, u16) -> Fut,
+    Fut: std::future::Future<Output = std::io::Result<Vec<IpAddr>>>,
+{
+    resolve_and_validate_host_with(host, port, resolve)
+        .await
+        .map(|_| ())
+}
+
+/// Resolve-and-validate with the resolver injected (returns the validated
+/// addresses). Backs both [`resolve_and_validate_host`] and, via
+/// [`validate_resolved_host_with`], [`validate_resolved_host`].
+///
+/// `host` is owned (`String`) rather than borrowed: an `F: FnOnce(&str, ..)
+/// -> Fut` bound ties `Fut` to the elided lifetime of that borrow, which
+/// rustc can't unify with the higher-ranked lifetime the call site needs
+/// (`implementation of FnOnce is not general enough`). Taking ownership
+/// sidesteps the borrow-checker issue entirely.
+async fn resolve_and_validate_host_with<F, Fut>(
+    host: String,
+    port: u16,
+    resolve: F,
+) -> Result<Vec<SocketAddr>, UrlValidationError>
+where
+    F: FnOnce(String, u16) -> Fut,
+    Fut: std::future::Future<Output = std::io::Result<Vec<IpAddr>>>,
+{
+    let addrs = resolve(host.clone(), port)
+        .await
+        .map_err(|e| UrlValidationError::ResolutionFailed(e.to_string()))?;
+
+    validate_resolved_addrs(&host, port, &addrs)
+}
+
+/// Default resolver: real DNS via the OS resolver (through Tokio's async
+/// wrapper around `getaddrinfo`). Extracted so tests can substitute a fake
+/// resolver instead of depending on live DNS/network access.
+async fn resolve_host(host: String, port: u16) -> std::io::Result<Vec<IpAddr>> {
+    let addrs = tokio::net::lookup_host((host.as_str(), port)).await?;
+    Ok(addrs.map(|sa| sa.ip()).collect())
+}
+
+/// Returns `Ok(())` when `ip` is a routable, non-forbidden address (IPv4 or
+/// IPv6). Backs both the literal-IP check in `validate_external_url` and
+/// the resolved-IP check in `validate_resolved_host`.
+fn is_forbidden_ip(ip: IpAddr) -> Result<(), String> {
+    match ip {
+        IpAddr::V4(v4) => check_ipv4(v4),
+        IpAddr::V6(v6) => {
+            if let Some(v4) = v6.to_ipv4_mapped() {
+                return check_ipv4(v4);
+            }
+            // IPv4-compatible IPv6 (the deprecated `::a.b.c.d` ::/96 embedding,
+            // e.g. `::127.0.0.1` or `::169.254.169.254`). `to_ipv4()` covers both
+            // the mapped and compatible ranges; the mapped case already returned
+            // above, so a `Some` here is a compatible-range address. Skip `::`
+            // and `::1`, which keep their dedicated unspecified/loopback checks
+            // below so their rejection reasons stay accurate.
+            if let Some(v4) = v6.to_ipv4() {
+                if !v6.is_unspecified() && !v6.is_loopback() {
+                    return check_ipv4(v4);
+                }
+            }
+            // Other well-known IPv4-in-IPv6 embeddings `to_ipv4()` does NOT cover
+            // (they live outside `::/96`): the NAT64 well-known prefix and the
+            // SIIT/IPv4-translated prefix. Both carry the embedded IPv4 in the low
+            // 32 bits, so range-check that through the same `check_ipv4` path (#3084,
+            // RFC 6052). Keeping this as a single `embedded_ipv4` helper means the
+            // next embedding variant is a one-line addition, not a reopened hole.
+            if let Some(v4) = embedded_ipv4(&v6) {
+                return check_ipv4(v4);
+            }
+            let segs = v6.segments();
+            if (segs[0] & 0xfe00) == 0xfc00 {
+                return Err("fc00::/7 (IPv6 unique-local)".into());
+            }
+            if (segs[0] & 0xffc0) == 0xfe80 {
+                return Err("fe80::/10 (IPv6 link-local)".into());
+            }
+            if (segs[0] & 0xff00) == 0xff00 {
+                return Err("ff00::/8 (IPv6 multicast)".into());
+            }
+            if v6.is_loopback() {
+                return Err("::1 (IPv6 loopback)".into());
+            }
+            if v6.is_unspecified() {
+                return Err(":: (IPv6 unspecified)".into());
+            }
+            Ok(())
+        }
+    }
+}
+
+/// Extracts the IPv4 address embedded in the low 32 bits of an IPv6 address for
+/// the well-known IPv4-in-IPv6 embedding prefixes that `Ipv6Addr::to_ipv4` does
+/// NOT already canonicalise (everything outside `::/96`):
+///
+/// * **NAT64 well-known prefix `64:ff9b::/96`** (RFC 6052) — on an IPv6-only /
+///   NAT64 host `64:ff9b::169.254.169.254` translates to the cloud-metadata IP.
+/// * **NAT64 RFC 8215 local-use prefix `64:ff9b:1::/48`** — the `/96`-on-local-use
+///   form (`64:ff9b:1:0:0:0:a.b.c.d`) embeds the IPv4 in the low 32 bits exactly
+///   like the well-known prefix, so `64:ff9b:1::169.254.169.254` is the same
+///   cloud-metadata SSRF target on a host configured with the local-use prefix (#3099).
+/// * **SIIT / IPv4-translated `::ffff:0:0/96`** (RFC 6052 §2.2) — e.g.
+///   `::ffff:0:127.0.0.1` reaches loopback.
+///
+/// Returns `None` for anything else, leaving the `to_ipv4_mapped()` /
+/// `to_ipv4()` branches and the fc00/fe80/ff00 masks to handle their own ranges.
+/// Centralising the extraction here (rather than special-casing each prefix
+/// inline) keeps future embedding variants a one-line addition.
+fn embedded_ipv4(v6: &std::net::Ipv6Addr) -> Option<std::net::Ipv4Addr> {
+    let segs = v6.segments();
+    let is_nat64_well_known = segs[0] == 0x0064
+        && segs[1] == 0xff9b
+        && segs[2] == 0
+        && segs[3] == 0
+        && segs[4] == 0
+        && segs[5] == 0;
+    // RFC 8215 local-use NAT64 prefix `64:ff9b:1::/48`, `/96`-on-local-use form
+    // (`64:ff9b:1:0:0:0:a.b.c.d`): same low-32-bit embedding as the well-known
+    // prefix above, differing only in `segs[2] == 0x0001` (#3099).
+    let is_nat64_local_use = segs[0] == 0x0064
+        && segs[1] == 0xff9b
+        && segs[2] == 0x0001
+        && segs[3] == 0
+        && segs[4] == 0
+        && segs[5] == 0;
+    let is_siit_translated = segs[0] == 0
+        && segs[1] == 0
+        && segs[2] == 0
+        && segs[3] == 0
+        && segs[4] == 0xffff
+        && segs[5] == 0;
+    if is_nat64_well_known || is_nat64_local_use || is_siit_translated {
+        Some(std::net::Ipv4Addr::new(
+            (segs[6] >> 8) as u8,
+            segs[6] as u8,
+            (segs[7] >> 8) as u8,
+            segs[7] as u8,
+        ))
+    } else {
+        None
+    }
 }
 
 /// Returns `Ok(())` when `ip` is routable public IPv4.
@@ -333,6 +564,87 @@ mod tests {
         ));
     }
 
+    /// Regression (#3079): IPv4-*compatible* IPv6 (the deprecated `::a.b.c.d`
+    /// `::/96` embedding, distinct from the `::ffff:a.b.c.d` *mapped* form) must
+    /// also be unmapped and range-checked. `::127.0.0.1` is the IPv6 literal
+    /// `::7f00:1` — `to_ipv4_mapped()` returns `None`, `segs[0]` is 0 so the
+    /// fc00/fe80/ff00 masks miss, and `is_loopback()`/`is_unspecified()` only
+    /// match `::1`/`::`, so before the fix it fell through to `Ok` and this
+    /// loopback address passed the static SSRF check.
+    #[test]
+    fn rejects_ipv4_compatible_ipv6_loopback() {
+        assert!(matches!(
+            validate_external_url("https://[::127.0.0.1]/"),
+            Err(UrlValidationError::PrivateOrReservedIp(_))
+        ));
+    }
+
+    /// Regression (#3079): the cloud-metadata IP embedded as an IPv4-compatible
+    /// IPv6 address (`::169.254.169.254`) must be rejected for the same reason
+    /// as the loopback case above — it is the highest-value SSRF target.
+    #[test]
+    fn rejects_ipv4_compatible_ipv6_metadata() {
+        assert!(matches!(
+            validate_external_url("https://[::169.254.169.254]/"),
+            Err(UrlValidationError::PrivateOrReservedIp(_))
+        ));
+    }
+
+    /// Regression (#3084): NAT64 well-known prefix `64:ff9b::/96` (RFC 6052).
+    /// `64:ff9b::169.254.169.254` (`64:ff9b::a9fe:a9fe`) embeds the cloud-metadata
+    /// IP in its low 32 bits. `to_ipv4_mapped()` / `to_ipv4()` both return `None`
+    /// (it is not in `::/96`), and `segs[0]` is `0x0064` so the fc00/fe80/ff00
+    /// masks miss — before the fix this highest-value SSRF target reached `Ok`
+    /// and translated to `169.254.169.254` on an IPv6-only / NAT64 host.
+    #[test]
+    fn rejects_nat64_metadata() {
+        assert!(matches!(
+            validate_external_url("https://[64:ff9b::169.254.169.254]/"),
+            Err(UrlValidationError::PrivateOrReservedIp(_))
+        ));
+    }
+
+    /// Regression (#3099): NAT64 RFC 8215 local-use prefix `64:ff9b:1::/48`.
+    /// The `/96`-on-local-use form `64:ff9b:1:0:0:0:169.254.169.254`
+    /// (`64:ff9b:1::a9fe:a9fe`) embeds the cloud-metadata IP in its low 32 bits.
+    /// Like the well-known prefix it is neither IPv4-mapped nor IPv4-compatible
+    /// (`to_ipv4_mapped()` / `to_ipv4()` both return `None`) and `segs[0]` is
+    /// `0x0064` so the fc00/fe80/ff00 masks miss — before the fix this reached
+    /// `Ok` and translated to `169.254.169.254` on a host configured with the
+    /// RFC 8215 local-use NAT64 prefix.
+    #[test]
+    fn rejects_nat64_local_use_metadata() {
+        assert!(matches!(
+            validate_external_url("https://[64:ff9b:1:0:0:0:169.254.169.254]/"),
+            Err(UrlValidationError::PrivateOrReservedIp(_))
+        ));
+    }
+
+    /// Regression (#3099): loopback via the same RFC 8215 local-use prefix —
+    /// `64:ff9b:1:0:0:0:127.0.0.1` (`64:ff9b:1::7f00:1`) must be rejected for
+    /// the same reason as the metadata case above.
+    #[test]
+    fn rejects_nat64_local_use_loopback() {
+        assert!(matches!(
+            validate_external_url("https://[64:ff9b:1:0:0:0:127.0.0.1]/"),
+            Err(UrlValidationError::PrivateOrReservedIp(_))
+        ));
+    }
+
+    /// Regression (#3084): SIIT / IPv4-translated `::ffff:0:a.b.c.d`
+    /// (`::ffff:0:0/96`, RFC 6052 §2.2). `::ffff:0:127.0.0.1` (`::ffff:0:7f00:1`)
+    /// places `0xffff` in `segs[4]` (not `segs[5]`), so it is neither IPv4-mapped
+    /// nor IPv4-compatible — `to_ipv4_mapped()` and `to_ipv4()` both return `None`
+    /// — and `segs[0]` is 0 so the masks miss. Before the fix this loopback form
+    /// fell through to `Ok`.
+    #[test]
+    fn rejects_siit_translated_loopback() {
+        assert!(matches!(
+            validate_external_url("https://[::ffff:0:127.0.0.1]/"),
+            Err(UrlValidationError::PrivateOrReservedIp(_))
+        ));
+    }
+
     #[test]
     fn rejects_dot_local_tld() {
         assert!(matches!(
@@ -355,5 +667,155 @@ mod tests {
             validate_external_url("not a url"),
             Err(UrlValidationError::InvalidFormat(_))
         ));
+    }
+
+    /// A domain host has no literal-IP form, so `validate_external_url`
+    /// (the static check) can't reject it on IP-range grounds — this is by
+    /// design; the resolved-IP check is a separate, second step.
+    #[test]
+    fn validate_external_url_lets_ordinary_domains_through() {
+        assert!(validate_external_url("https://attacker.example.com/x").is_ok());
+    }
+
+    /// Regression (SSRF via DNS): a hostname with no literal-IP form that
+    /// resolves to a private/internal address must be rejected. Before
+    /// `validate_resolved_host` existed, every caller only ran the static
+    /// `validate_external_url` check — which explicitly no-ops on
+    /// `Host::Domain` — so a hostname like `internal.attacker.example`
+    /// resolving to `10.0.0.5` sailed straight through to the outbound
+    /// request. Fails to compile on `dev` (`validate_resolved_host_with`
+    /// does not exist there); passes here because every resolved address is
+    /// checked against the forbidden ranges and any hit is rejected.
+    ///
+    /// Uses an injected fake resolver so the test is hermetic — no real DNS
+    /// lookup, no network access required — matching this repo's SSRF-test
+    /// convention (see `workflow_webhook_ssrf_tests.rs`).
+    #[tokio::test]
+    async fn validate_resolved_host_rejects_hostname_resolving_to_private_ip() {
+        async fn fake_resolve(_host: String, _port: u16) -> std::io::Result<Vec<IpAddr>> {
+            Ok(vec!["10.0.0.5".parse().unwrap()])
+        }
+
+        let result =
+            validate_resolved_host_with("internal.attacker.example".to_string(), 443, fake_resolve)
+                .await;
+
+        assert!(
+            matches!(result, Err(UrlValidationError::ResolvedToPrivateIp(_))),
+            "expected rejection for a hostname resolving to a private IP, got: {result:?}"
+        );
+    }
+
+    /// Fail-closed: if *any* resolved address is forbidden, the whole
+    /// hostname is rejected — even when other addresses in the answer are
+    /// public. A caller/HTTP client could pick any of the returned
+    /// addresses, so accepting on the presence of a public one and ignoring
+    /// the private one would leave the SSRF hole open.
+    #[tokio::test]
+    async fn validate_resolved_host_rejects_when_any_resolved_ip_is_private() {
+        async fn fake_resolve(_host: String, _port: u16) -> std::io::Result<Vec<IpAddr>> {
+            Ok(vec![
+                "93.184.216.34".parse().unwrap(),
+                "169.254.169.254".parse().unwrap(),
+            ])
+        }
+
+        let result =
+            validate_resolved_host_with("multi-answer.example".to_string(), 443, fake_resolve)
+                .await;
+
+        assert!(
+            matches!(result, Err(UrlValidationError::ResolvedToPrivateIp(_))),
+            "expected rejection when one of several resolved IPs is private, got: {result:?}"
+        );
+    }
+
+    /// A hostname that resolves only to public addresses must pass.
+    #[tokio::test]
+    async fn validate_resolved_host_accepts_hostname_resolving_to_public_ip() {
+        async fn fake_resolve(_host: String, _port: u16) -> std::io::Result<Vec<IpAddr>> {
+            Ok(vec!["93.184.216.34".parse().unwrap()])
+        }
+
+        let result =
+            validate_resolved_host_with("example.com".to_string(), 443, fake_resolve).await;
+        assert!(result.is_ok(), "expected success, got: {result:?}");
+    }
+
+    /// Fail closed on resolution errors too — we can't prove the
+    /// destination is safe, so we don't proceed.
+    #[tokio::test]
+    async fn validate_resolved_host_rejects_on_resolution_error() {
+        async fn fake_resolve(_host: String, _port: u16) -> std::io::Result<Vec<IpAddr>> {
+            Err(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "simulated NXDOMAIN",
+            ))
+        }
+
+        let result =
+            validate_resolved_host_with("nonexistent.example".to_string(), 443, fake_resolve).await;
+        assert!(matches!(
+            result,
+            Err(UrlValidationError::ResolutionFailed(_))
+        ));
+    }
+
+    /// Fail closed on an empty answer set too.
+    #[tokio::test]
+    async fn validate_resolved_host_rejects_on_empty_resolution() {
+        async fn fake_resolve(_host: String, _port: u16) -> std::io::Result<Vec<IpAddr>> {
+            Ok(vec![])
+        }
+
+        let result =
+            validate_resolved_host_with("empty-answer.example".to_string(), 443, fake_resolve)
+                .await;
+        assert!(matches!(
+            result,
+            Err(UrlValidationError::ResolutionFailed(_))
+        ));
+    }
+
+    /// `validate_resolved_addrs` (the primitive a connect-time custom resolver
+    /// calls) returns the validated `SocketAddr`s — carrying the requested
+    /// port — when every resolved IP is public.
+    #[test]
+    fn validate_resolved_addrs_returns_socket_addrs_for_public_ips() {
+        let ips: Vec<IpAddr> = vec!["93.184.216.34".parse().unwrap()];
+        let out = validate_resolved_addrs("example.com", 8443, &ips).expect("public IP accepted");
+        assert_eq!(out, vec![SocketAddr::new(ips[0], 8443)]);
+    }
+
+    /// Fail-closed for a connect-time resolver too: if any resolved address is
+    /// forbidden, the whole set is rejected so the client never connects.
+    #[test]
+    fn validate_resolved_addrs_rejects_when_any_ip_is_forbidden() {
+        let ips: Vec<IpAddr> = vec![
+            "93.184.216.34".parse().unwrap(),
+            "10.0.0.5".parse().unwrap(),
+        ];
+        assert!(matches!(
+            validate_resolved_addrs("multi.example", 443, &ips),
+            Err(UrlValidationError::ResolvedToPrivateIp(_))
+        ));
+    }
+
+    /// `resolve_and_validate_host` hands back the concrete validated addresses
+    /// (so a caller can pin them into its HTTP client), not just `Ok(())`.
+    #[tokio::test]
+    async fn resolve_and_validate_host_returns_validated_addrs() {
+        async fn fake_resolve(_host: String, port: u16) -> std::io::Result<Vec<IpAddr>> {
+            let _ = port;
+            Ok(vec!["93.184.216.34".parse().unwrap()])
+        }
+
+        let out = resolve_and_validate_host_with("example.com".to_string(), 443, fake_resolve)
+            .await
+            .expect("public IP accepted");
+        assert_eq!(
+            out,
+            vec![SocketAddr::new("93.184.216.34".parse().unwrap(), 443)]
+        );
     }
 }

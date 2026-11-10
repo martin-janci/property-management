@@ -1,0 +1,63 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-12",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claim buffer starved: honest_claimable=8 < BUFFER_FLOOR=36; deterministic tiers 1b/1c found no candidates). Oldest-unreviewed cursor: review_cursor.reality-server=2026-10-03 (tied with mobile-native-kmp=2026-10-03, broken by segment-map order -> reality-server). Not backlog-saturated (0 open code-review-finding items for reality-server; api-handlers is the only saturated segment at 3). This is a SECOND slice (-b) complementing the earlier 2026-10-12-reality-server-tier1d.json run, which covered one SSO raw-error-leak vector; this slice targets distinct files and vectors: anonymous mutating-endpoint rate limiting, agency-branding input validation, and background-worker supervision. Static analysis only, no compilation. Note: skill segment-map path 'backend/reality-server/src/' is stale; crate lives at 'backend/servers/reality-server/src/'.",
+  "experts_used": ["rust"],
+  "findings_count": 3,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-reality-server-record-view-no-rate-limit",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": ["backend/servers/reality-server/src/routes/listings.rs"],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/listings.rs:861-872 — `record_view` is an anonymous (no-auth), mutating POST endpoint (`/api/v1/listings/{id}/view`) that calls `state.reality_portal_repo.track_view(id, \"website\")` on every request with NO per-IP throttle and no dedup. Every other anonymous mutating endpoint in this crate enforces the shared per-IP rate limiter first: inquiries (routes/inquiries.rs `enforce_inquiry_rate_limit`, e.g. request_viewing:422 and the contact path) and reports (routes/reports.rs:191 `enforce_public_report_rate_limit`). This one does not, so an unauthenticated client can inflate a listing's view_count arbitrarily and drive unbounded DB write amplification by hammering the endpoint.",
+        "Secondary defect in the same handler: the OpenAPI doc annotates `(status = 404, description = \"Listing not found\")` (listings.rs:858) but the handler NEVER returns 404 — track_view errors are swallowed as a non-fatal warn (:868-870) and it unconditionally returns 204 NO_CONTENT, so a view against a non-existent/inactive listing silently succeeds. Spec/impl mismatch.",
+        "Suggested fix (cloud-landable, backend-only): route `record_view` through the existing `state.inquiry_rate_limiters.check(key)` / `InquiriesHandler::rate_limit_result` path keyed on client IP + listing_id (mirror enforce_public_report_rate_limit in reports.rs), and either verify listing existence to honor the documented 404 or drop the 404 from the utoipa annotation. Add a regression test asserting a 429 after the per-IP budget is exhausted."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-branding-color-no-validation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": ["backend/servers/reality-server/src/routes/agency_branding.rs"],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agency_branding.rs:244-319 — `update_branding` explicitly validates the three URL fields against an XSS allowlist before any DB work (`check_optional_url_field` on logo_url/banner_url/watermark_url, :252-254, with the comment at :250-251 'These end up in `<img src=>` on the frontend — reject `javascript:`, `data:`, `file:`'), but `primary_color` and `secondary_color` (UpdateBrandingRequest, :116-117, free-form `Option<String>`) receive NO format validation. They are UPSERTed verbatim (:301-319) and echoed back verbatim by the GET path (:185-186). Agency branding colors are consumed by reality-web/mobile-native branding render, where they are typically interpolated into inline CSS/`style` — an unvalidated color string (e.g. a `red;}`-style selector breakout, a `url(...)`/`expression(...)` payload, or a `</style>` escape) is a stored CSS/XSS injection surface that bypasses the exact threat the sibling URL fields were hardened against.",
+        "The write is gated by active-member authorization (:277-296), so this is an authenticated-agency-member -> persisted-to-all-branding-viewers stored injection, not an anonymous one — still a stored-XSS vector for anyone viewing that agency's branded listings.",
+        "Suggested fix (cloud-landable, backend-only): validate primary_color/secondary_color against a strict CSS-color allowlist (e.g. `^#[0-9A-Fa-f]{3,8}$` or a named-color set) in update_branding, mirroring check_optional_url_field, and reject with 400 on mismatch. Separately, `watermark_opacity` (:120) is documented 'between 0.0 and 1.0' but is never clamped/range-checked in the handler. Add a unit test asserting a non-hex color string is rejected."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-alert-workers-fire-forget",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/main.rs",
+        "backend/servers/reality-server/src/services/search_alert_drainer.rs"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/main.rs:442-461 — all three background notification workers (SavedSearchAlertWorker, SearchAlertDrainerWorker, FavoriteAlertWorker) are spawned fire-and-forget: their JoinHandles are dropped into `_`-prefixed bindings (`let _alert_worker_handle = ...start();` :446, `let _drainer_worker_handle = ...` :457, `let _favorite_alert_worker_handle = ...` :461). Nothing awaits, supervises, or restarts them.",
+        "backend/servers/reality-server/src/services/search_alert_drainer.rs:330-354 — each worker's `start()` runs an infinite `loop { ticker.tick().await; self.run_once().await; }` inside a single `tokio::spawn`. `run_once` catches its own DB/transport errors (:365-369), so steady-state is fine — but a panic anywhere inside the tick loop (e.g. a panic in a transport adapter or in AlertNotification::localized, or a future `.unwrap()`) terminates that one task permanently and silently. The process keeps serving HTTP with its notification pipeline dead and NO liveness signal; users simply stop receiving saved-search / favorite alerts until an operator notices and restarts the process.",
+        "Suggested fix (cloud-landable, backend-only): wrap each worker tick in a supervised restart (observe the JoinHandle, or an inner watchdog that re-spawns on unexpected exit), or at minimum surface a last-tick heartbeat into the readiness probe (routes/health.rs) so a dead worker fails readiness instead of silently dropping notifications. Add a test that a panicking run_once does not permanently halt the drain loop."
+      ]
+    }
+  ]
+}

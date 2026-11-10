@@ -3,13 +3,13 @@
 #![allow(clippy::type_complexity)]
 
 use crate::models::data_export::{
-    ActivityExport, AnnouncementExport, CreateDataExportRequest, DataExportRequest, DocumentExport,
-    ExportFormat, ExportMetadata, FaultExport, MessageExport, OrganizationExport, ProfileExport,
-    ResidencyExport, UserDataExport, VoteExport,
+    ActivityExport, AnnouncementExport, CreateDataExportRequest, DataExportReportSummary,
+    DataExportRequest, DocumentExport, ExportFormat, ExportMetadata, FaultExport, MessageExport,
+    OrganizationExport, ProfileExport, ResidencyExport, UserDataExport, VoteExport,
 };
 use crate::DbPool;
-use chrono::Utc;
-use sqlx::Error as SqlxError;
+use chrono::{DateTime, Utc};
+use sqlx::{Error as SqlxError, PgConnection};
 use uuid::Uuid;
 
 /// Repository for GDPR data export operations.
@@ -90,6 +90,116 @@ impl DataExportRepository {
         )
         .bind(limit)
         .fetch_all(&self.pool)
+        .await
+    }
+
+    /// Aggregate counts + a bounded most-recent slice for the platform GDPR
+    /// data-export compliance report (see [`DataExportReportSummary`]).
+    ///
+    /// The four counts are computed in one filtered aggregate so they stay
+    /// mutually consistent. `from_date` / `to_date` bound `created_at` (either
+    /// may be `None` to leave that side unbounded); `limit` bounds only the
+    /// detail `entries`, never the counts.
+    ///
+    /// The aggregate and the detail slice are two statements, so a concurrent
+    /// write landing between them would otherwise yield a summary whose counts
+    /// disagree with its entries (issue #2924). Both reads run inside one
+    /// `REPEATABLE READ` transaction: PostgreSQL freezes the transaction
+    /// snapshot at the first statement, so the counts and the entries always
+    /// observe the exact same set of rows regardless of concurrent commits.
+    pub async fn report_summary(
+        &self,
+        from_date: Option<DateTime<Utc>>,
+        to_date: Option<DateTime<Utc>>,
+        limit: i64,
+    ) -> Result<DataExportReportSummary, SqlxError> {
+        // A read-only REPEATABLE READ transaction pins one snapshot for both
+        // reads. `SET TRANSACTION` must precede any data statement, so it is
+        // issued as the transaction's first command.
+        let mut tx = self.pool.begin().await?;
+        sqlx::query("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY")
+            .execute(&mut *tx)
+            .await?;
+
+        // Both reads run against the *same* connection/transaction so they share
+        // the frozen snapshot. The two statements are split into the seams below
+        // (`count_summary` / `list_entries`) so the snapshot-consistency invariant
+        // can be driven under concurrent contention in tests — see
+        // `data_export_test.rs`.
+        let (total_requests, pending_count, completed_count, downloaded_count) =
+            Self::count_summary(&mut tx, from_date, to_date).await?;
+
+        let entries = Self::list_entries(&mut tx, from_date, to_date, limit).await?;
+
+        // Read-only transaction: commit is cheap and just releases the snapshot.
+        tx.commit().await?;
+
+        Ok(DataExportReportSummary {
+            total_requests,
+            pending_count,
+            completed_count,
+            downloaded_count,
+            entries,
+        })
+    }
+
+    /// Aggregate the four GDPR report counts for the given `created_at` window,
+    /// on an arbitrary connection.
+    ///
+    /// This is the counts half of [`report_summary`]. It takes an explicit
+    /// `&mut PgConnection` (rather than reading `&self.pool`) so it can be run
+    /// on the same connection as [`list_entries`] inside one snapshot-pinned
+    /// transaction — that shared connection is what makes the counts and the
+    /// entries mutually consistent. Callers that pass two *different* pooled
+    /// connections get the pre-#2924 behaviour where a concurrent commit can
+    /// desync the two reads.
+    pub(crate) async fn count_summary(
+        conn: &mut PgConnection,
+        from_date: Option<DateTime<Utc>>,
+        to_date: Option<DateTime<Utc>>,
+    ) -> Result<(i64, i64, i64, i64), SqlxError> {
+        sqlx::query_as(
+            r#"
+            SELECT
+                COUNT(*),
+                COUNT(*) FILTER (WHERE status IN ('pending', 'processing')),
+                COUNT(*) FILTER (WHERE status IN ('ready', 'downloaded', 'expired')),
+                COUNT(*) FILTER (WHERE downloaded_at IS NOT NULL)
+            FROM data_export_requests
+            WHERE ($1::timestamptz IS NULL OR created_at >= $1)
+              AND ($2::timestamptz IS NULL OR created_at <= $2)
+            "#,
+        )
+        .bind(from_date)
+        .bind(to_date)
+        .fetch_one(&mut *conn)
+        .await
+    }
+
+    /// Fetch the bounded most-recent detail slice for the given `created_at`
+    /// window, on an arbitrary connection.
+    ///
+    /// This is the entries half of [`report_summary`]; see [`count_summary`]
+    /// for why it takes an explicit connection.
+    pub(crate) async fn list_entries(
+        conn: &mut PgConnection,
+        from_date: Option<DateTime<Utc>>,
+        to_date: Option<DateTime<Utc>>,
+        limit: i64,
+    ) -> Result<Vec<DataExportRequest>, SqlxError> {
+        sqlx::query_as::<_, DataExportRequest>(
+            r#"
+            SELECT * FROM data_export_requests
+            WHERE ($1::timestamptz IS NULL OR created_at >= $1)
+              AND ($2::timestamptz IS NULL OR created_at <= $2)
+            ORDER BY created_at DESC
+            LIMIT $3
+            "#,
+        )
+        .bind(from_date)
+        .bind(to_date)
+        .bind(limit)
+        .fetch_all(&mut *conn)
         .await
     }
 

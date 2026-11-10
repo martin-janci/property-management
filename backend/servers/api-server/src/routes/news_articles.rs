@@ -1,7 +1,7 @@
 //! News article routes (Epic 59: News & Media Management).
 
 use crate::state::AppState;
-use api_core::{AuthUser, TenantExtractor};
+use api_core::{AuthUser, TenantAuthUser, TenantExtractor};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -342,7 +342,7 @@ pub fn router() -> Router<AppState> {
 async fn list_articles(
     State(state): State<AppState>,
     TenantExtractor(tenant): TenantExtractor,
-    _user: AuthUser,
+    TenantAuthUser(_user): TenantAuthUser,
     Query(query): Query<ArticleListQuery>,
 ) -> Result<impl IntoResponse, ApiError> {
     let repo = NewsArticleRepository::new(state.db.clone());
@@ -383,7 +383,7 @@ async fn list_articles(
 async fn get_article(
     State(state): State<AppState>,
     TenantExtractor(tenant): TenantExtractor,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, ApiError> {
     let repo = NewsArticleRepository::new(state.db.clone());
@@ -439,7 +439,7 @@ async fn get_article(
 async fn create_article(
     State(state): State<AppState>,
     TenantExtractor(tenant): TenantExtractor,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Json(req): Json<CreateArticleRequest>,
 ) -> Result<impl IntoResponse, ApiError> {
     // Authorization check - only managers can create articles
@@ -524,7 +524,7 @@ async fn create_article(
 async fn update_article(
     State(state): State<AppState>,
     TenantExtractor(tenant): TenantExtractor,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateArticleRequest>,
 ) -> Result<impl IntoResponse, ApiError> {
@@ -607,7 +607,7 @@ async fn update_article(
 async fn publish_article(
     State(state): State<AppState>,
     TenantExtractor(tenant): TenantExtractor,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<PublishArticleRequest>,
 ) -> Result<impl IntoResponse, ApiError> {
@@ -659,7 +659,7 @@ async fn publish_article(
 async fn archive_article(
     State(state): State<AppState>,
     TenantExtractor(tenant): TenantExtractor,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, ApiError> {
     let repo = NewsArticleRepository::new(state.db.clone());
@@ -710,7 +710,7 @@ async fn archive_article(
 async fn restore_article(
     State(state): State<AppState>,
     TenantExtractor(tenant): TenantExtractor,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, ApiError> {
     let repo = NewsArticleRepository::new(state.db.clone());
@@ -761,10 +761,12 @@ async fn restore_article(
 async fn delete_article(
     State(state): State<AppState>,
     TenantExtractor(tenant): TenantExtractor,
-    _user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, ApiError> {
     let repo = NewsArticleRepository::new(state.db.clone());
+
+    require_author_or_manager(&repo, id, tenant.tenant_id, &user, "delete this article").await?;
 
     let deleted = repo
         .delete(id, tenant.tenant_id)
@@ -796,7 +798,7 @@ async fn delete_article(
 async fn pin_article(
     State(state): State<AppState>,
     TenantExtractor(tenant): TenantExtractor,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<PinArticleRequest>,
 ) -> Result<impl IntoResponse, ApiError> {
@@ -837,6 +839,30 @@ async fn pin_article(
     }))
 }
 
+/// Allow the article's author or an org manager; 404 when the article is not
+/// in `org_id`, 403 otherwise. `user.role` is the membership role resolved by
+/// [`TenantAuthUser`].
+async fn require_author_or_manager(
+    repo: &NewsArticleRepository,
+    id: Uuid,
+    org_id: Uuid,
+    user: &AuthUser,
+    action: &str,
+) -> Result<(), ApiError> {
+    let article = repo
+        .find_by_id(id, org_id)
+        .await
+        .map_err(|e| internal_error(&format!("Failed to get article: {}", e)))?
+        .ok_or_else(|| not_found("Article not found"))?;
+    let is_manager = user.role.as_ref().is_some_and(|r| r.is_manager());
+    if !is_manager && article.author_id != user.user_id {
+        return Err(forbidden(&format!(
+            "Only the author or managers can {action}"
+        )));
+    }
+    Ok(())
+}
+
 // ============================================================================
 // Media Handlers
 // ============================================================================
@@ -845,7 +871,7 @@ async fn pin_article(
 async fn list_media(
     State(state): State<AppState>,
     TenantExtractor(tenant): TenantExtractor,
-    _user: AuthUser,
+    TenantAuthUser(_user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, ApiError> {
     let repo = NewsArticleRepository::new(state.db.clone());
@@ -862,11 +888,20 @@ async fn list_media(
 async fn add_media(
     State(state): State<AppState>,
     TenantExtractor(tenant): TenantExtractor,
-    _user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<AddMediaRequest>,
 ) -> Result<impl IntoResponse, ApiError> {
     let repo = NewsArticleRepository::new(state.db.clone());
+
+    require_author_or_manager(
+        &repo,
+        id,
+        tenant.tenant_id,
+        &user,
+        "add media to this article",
+    )
+    .await?;
 
     let data = CreateArticleMedia {
         media_type: req.media_type,
@@ -899,15 +934,25 @@ async fn add_media(
 async fn delete_media(
     State(state): State<AppState>,
     TenantExtractor(tenant): TenantExtractor,
-    _user: AuthUser,
-    Path((_id, media_id)): Path<(Uuid, Uuid)>,
+    TenantAuthUser(user): TenantAuthUser,
+    Path((id, media_id)): Path<(Uuid, Uuid)>,
 ) -> Result<impl IntoResponse, ApiError> {
     let repo = NewsArticleRepository::new(state.db.clone());
 
+    require_author_or_manager(
+        &repo,
+        id,
+        tenant.tenant_id,
+        &user,
+        "remove media from this article",
+    )
+    .await?;
+
     // SECURITY (issue #2314): scoped by the parent article's org so a caller
-    // cannot delete another org's media item by UUID.
+    // cannot delete another org's media item by UUID — and by the article in
+    // the path, so an author of article A cannot delete article B's media.
     let deleted = repo
-        .delete_media(media_id, tenant.tenant_id)
+        .delete_media(id, media_id, tenant.tenant_id)
         .await
         .map_err(|e| internal_error(&format!("Failed to delete media: {}", e)))?;
 
@@ -926,7 +971,7 @@ async fn delete_media(
 async fn toggle_reaction(
     State(state): State<AppState>,
     TenantExtractor(tenant): TenantExtractor,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<ToggleReactionRequest>,
 ) -> Result<impl IntoResponse, ApiError> {
@@ -962,7 +1007,7 @@ async fn toggle_reaction(
 async fn get_reaction_counts(
     State(state): State<AppState>,
     TenantExtractor(tenant): TenantExtractor,
-    _user: AuthUser,
+    TenantAuthUser(_user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, ApiError> {
     let repo = NewsArticleRepository::new(state.db.clone());
@@ -984,7 +1029,7 @@ async fn get_reaction_counts(
 async fn list_comments(
     State(state): State<AppState>,
     TenantExtractor(tenant): TenantExtractor,
-    _user: AuthUser,
+    TenantAuthUser(_user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, ApiError> {
     let repo = NewsArticleRepository::new(state.db.clone());
@@ -1005,7 +1050,7 @@ async fn list_comments(
 async fn list_comment_replies(
     State(state): State<AppState>,
     TenantExtractor(tenant): TenantExtractor,
-    _user: AuthUser,
+    TenantAuthUser(_user): TenantAuthUser,
     Path((id, comment_id)): Path<(Uuid, Uuid)>,
 ) -> Result<impl IntoResponse, ApiError> {
     let repo = NewsArticleRepository::new(state.db.clone());
@@ -1026,7 +1071,7 @@ async fn list_comment_replies(
 async fn create_comment(
     State(state): State<AppState>,
     TenantExtractor(tenant): TenantExtractor,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<CreateCommentRequest>,
 ) -> Result<impl IntoResponse, ApiError> {
@@ -1040,6 +1085,17 @@ async fn create_comment(
 
     let repo = NewsArticleRepository::new(state.db.clone());
     ensure_article_in_org(&repo, id, tenant.tenant_id).await?;
+
+    // Nested id: a reply's parent must be a comment on this same article.
+    if let Some(parent_id) = req.parent_id {
+        let same_article = repo
+            .comment_belongs_to_article(parent_id, id)
+            .await
+            .map_err(|e| internal_error(&format!("Failed to verify parent comment: {}", e)))?;
+        if !same_article {
+            return Err(not_found("Parent comment"));
+        }
+    }
 
     let data = CreateArticleComment {
         content: req.content,
@@ -1058,7 +1114,7 @@ async fn create_comment(
 async fn update_comment(
     State(state): State<AppState>,
     TenantExtractor(_tenant): TenantExtractor,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path((_id, comment_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateCommentRequest>,
 ) -> Result<impl IntoResponse, ApiError> {
@@ -1086,7 +1142,7 @@ async fn update_comment(
 async fn delete_comment(
     State(state): State<AppState>,
     TenantExtractor(_tenant): TenantExtractor,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path((_id, comment_id)): Path<(Uuid, Uuid)>,
 ) -> Result<impl IntoResponse, ApiError> {
     let repo = NewsArticleRepository::new(state.db.clone());
@@ -1107,7 +1163,7 @@ async fn delete_comment(
 async fn moderate_comment(
     State(state): State<AppState>,
     TenantExtractor(tenant): TenantExtractor,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path((_id, comment_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<ModerateCommentRequest>,
 ) -> Result<impl IntoResponse, ApiError> {
@@ -1144,7 +1200,7 @@ async fn moderate_comment(
 async fn record_view(
     State(state): State<AppState>,
     TenantExtractor(tenant): TenantExtractor,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<RecordViewRequest>,
 ) -> Result<impl IntoResponse, ApiError> {
@@ -1162,7 +1218,7 @@ async fn record_view(
 async fn get_statistics(
     State(state): State<AppState>,
     TenantExtractor(tenant): TenantExtractor,
-    _user: AuthUser,
+    TenantAuthUser(_user): TenantAuthUser,
 ) -> Result<impl IntoResponse, ApiError> {
     let repo = NewsArticleRepository::new(state.db.clone());
 

@@ -494,17 +494,12 @@ KEY POINTS:
         let max_context = 100_000; // Leave room for system prompt and response
 
         let content_to_summarize = if content_tokens > max_context {
-            // Take first and last portions for very long documents
+            // Take first and last portions for very long documents. Split on
+            // UTF-8 char boundaries so multibyte content (e.g. Slovak/Czech
+            // diacritics) never panics with "byte index N is not a char
+            // boundary".
             let char_limit = (max_context * 4) as usize; // ~4 chars per token
-            let half_limit = char_limit / 2;
-            let start = &request.content[..half_limit.min(request.content.len())];
-            let end_start = request.content.len().saturating_sub(half_limit);
-            let end = &request.content[end_start..];
-
-            format!(
-                "[Document truncated for length]\n\n{}\n\n[...]\n\n{}",
-                start, end
-            )
+            truncate_head_tail(&request.content, char_limit)
         } else {
             request.content.clone()
         };
@@ -904,6 +899,51 @@ The announcements should be ready for immediate publication after minimal editin
     }
 }
 
+/// Largest byte index `<= index` that lies on a UTF-8 char boundary.
+///
+/// Mirrors the unstable `str::floor_char_boundary`. Used to truncate a
+/// document head without splitting a multibyte character (Slovak/Czech
+/// diacritics), which would otherwise panic with
+/// "byte index N is not a char boundary".
+fn floor_char_boundary(s: &str, index: usize) -> usize {
+    if index >= s.len() {
+        s.len()
+    } else {
+        let mut i = index;
+        while i > 0 && !s.is_char_boundary(i) {
+            i -= 1;
+        }
+        i
+    }
+}
+
+/// Smallest byte index `>= index` that lies on a UTF-8 char boundary.
+///
+/// Mirrors the unstable `str::ceil_char_boundary`. Used to truncate a
+/// document tail on a valid boundary.
+fn ceil_char_boundary(s: &str, index: usize) -> usize {
+    let mut i = index.min(s.len());
+    while i < s.len() && !s.is_char_boundary(i) {
+        i += 1;
+    }
+    i
+}
+
+/// Build a head + tail excerpt of `content` fitting within roughly
+/// `char_limit` characters, splitting only on UTF-8 char boundaries so
+/// multibyte content never triggers a "byte index N is not a char boundary"
+/// panic.
+fn truncate_head_tail(content: &str, char_limit: usize) -> String {
+    let half_limit = char_limit / 2;
+    let head_end = floor_char_boundary(content, half_limit.min(content.len()));
+    let tail_start = ceil_char_boundary(content, content.len().saturating_sub(half_limit));
+    format!(
+        "[Document truncated for length]\n\n{}\n\n[...]\n\n{}",
+        &content[..head_end],
+        &content[tail_start..]
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -996,5 +1036,46 @@ TONE: Direct and clear"#;
 
         assert!(prompt.contains("CRITICAL"));
         assert!(prompt.contains("urgent"));
+    }
+
+    #[test]
+    fn test_truncate_head_tail_multibyte_no_panic() {
+        // Repeated 2-byte characters guarantee that most byte offsets land
+        // mid-character. Before the char-boundary fix this panicked with
+        // "byte index N is not a char boundary".
+        let content = "áéíóú".repeat(2000); // 10_000 chars, 20_000 bytes
+                                            // Odd char_limit forces half_limit to fall mid-character.
+        let out = truncate_head_tail(&content, 1001);
+
+        assert!(out.starts_with("[Document truncated for length]"));
+        assert!(out.contains("[...]"));
+        // Head and tail must be prefixes/suffixes of the original content —
+        // proving the split landed on a clean char boundary and produced no
+        // replacement/garbled characters.
+        let body = out.trim_start_matches("[Document truncated for length]\n\n");
+        let (head, tail) = body.split_once("\n\n[...]\n\n").expect("delimiter present");
+        assert!(!head.is_empty() && content.starts_with(head));
+        assert!(!tail.is_empty() && content.ends_with(tail));
+    }
+
+    #[test]
+    fn test_char_boundary_helpers_align() {
+        let s = "áéíóú"; // each char is 2 bytes: boundaries at 0,2,4,6,8,10
+                         // floor: 3 (mid-char) -> 2
+        assert_eq!(floor_char_boundary(s, 3), 2);
+        assert_eq!(floor_char_boundary(s, 2), 2);
+        assert_eq!(floor_char_boundary(s, 100), s.len());
+        assert_eq!(floor_char_boundary(s, 0), 0);
+        // ceil: 3 (mid-char) -> 4
+        assert_eq!(ceil_char_boundary(s, 3), 4);
+        assert_eq!(ceil_char_boundary(s, 4), 4);
+        assert_eq!(ceil_char_boundary(s, 100), s.len());
+        // The aligned indices are always valid slice points.
+        for i in 0..=s.len() {
+            let f = floor_char_boundary(s, i);
+            let c = ceil_char_boundary(s, i);
+            let _ = &s[..f];
+            let _ = &s[c..];
+        }
     }
 }

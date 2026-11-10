@@ -1,0 +1,39 @@
+{
+  "generated": "2026-10-30T00:00:00Z",
+  "generator": "dev-review",
+  "source_run": "Dispatcher Tier-1d demand-driven dev-review generator per .claude/skills/ppt-dev-review/SKILL.md - static single-segment rotating code review (no compilation, no test execution, no branch checkout; cloud runner = file reading + grep only). Claimable buffer starved (claimable=19 < floor=36), no backlog candidates. DISPATCHER_OWNED_COMMIT=1: this artifact was written into the working tree only; NO git add/commit/push and NO branch/checkout performed - the orchestrator folds .research/** deltas into its Phase 6 commit. Only .research/signals/** is touched; .research/management/** (assignments.json, action-list.json, review_cursor advance) left untouched. SEGMENT SELECTION: no CHURN_FILES this run (priority-1 churn-alignment empty), so selection falls to priority-2 oldest-unreviewed. state.json review_cursor dates ascending: ppt-web-ui=2026-10-22 (5 OPEN code-review-finding rows in backlog.json => saturated, SKIP per SKILL Step 1), reality-web=2026-10-23 (3 open => saturated, SKIP), mobile-native-kmp=2026-10-25 (2 open in backlog.json < 3 => eligible per the strict backlog.json saturation rule, SELECTED), then api-handlers=2026-10-26, api-core/ppt-web-core/mobile-rn=2026-10-27, reality-server=2026-10-28. Expert: kotlin (primary) + tester (secondary) per SKILL Step 2. Segment root: mobile-native/. NOTE: a sibling Tier-1d slice (2026-10-30-mobile-native-kmp-tier1d.json) already ran this same segment today and emitted 2 findings with exhaustive dedupe; this run writes to a distinct filename and emits only ONE genuinely net-new finding not covered by that file nor any prior slice.",
+  "segment_reviewed": "mobile-native-kmp",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["kotlin", "tester"],
+  "findings_count": 1,
+  "static_only": true,
+  "cloud_landable": true,
+  "landability_note": "Static-analysis review only; no code changes proposed. The single finding is a bounded-concurrency / resilience refactor inside one existing repository method (getPortfolioAnalytics); it needs no schema, OpenAPI, or server change - an implementer can cap the fan-out with a Semaphore or chunked awaitAll and add a large-portfolio test. Compounds the already-filed http-client-no-timeout finding.",
+  "review_notes": [
+    "HEAVY DEDUPE: a sibling slice (2026-10-30-mobile-native-kmp-tier1d.json) already reviewed this exact segment earlier today and filed/dismissed the obvious candidates. NOT re-filed here: create-listing-stub @ Navigation.kt:493 (already code-review-mobile-native-kmp-create-listing-stub, confirmed still present), the full `!!` cluster incl. ListingDetailScreen.kt:132 onCallClick re-read (already assessed as idiomatic Compose smart-cast nits - the `when` branch is dropped from composition when listing flips null), dead-placeholder-buttons (AccountScreen/FavoritesScreen/AgencyInquiriesScreen/ListingAnalyticsScreen/SearchScreen), 2fa-backup-code-noop @ TwoFactorScreen.kt:164, plus prior-slice items http-client-no-timeout, my-listings-pagination-cap, cancel-swallowed @ ListingRepository, ssoservice-untested, sso-error-body-unguarded @ SsoService.kt, nearby-tab-placeholder @ ListingDetailTabs.kt.",
+    "NET-NEW: PortalListingsRepository.getPortfolioAnalytics() (realtor portfolio analytics screen) performs an UNBOUNDED concurrent fan-out - not touched by any prior slice. listMyListings(limit = 100) then one async getListingAnalytics() per listing, awaitAll, no Semaphore/chunk cap => up to 100 simultaneous HTTP requests through the single shared Ktor client. Compounds the already-filed missing-HttpTimeout: a stalled analytics endpoint stalls up to 100 coroutines at once for a power-realtor.",
+    "ViewModel concurrency sweep (ListingDetailViewModel, PriceTrackingViewModel): NO finding. scope is a lifecycle-bound rememberCoroutineScope (cancelled on leave-composition); favorite/inquiry writes are session-pinned and documented; retry()->loadListing() sets isLoading=true which flips the UI state-machine off the error/retry branch, so the double-tap race is not reachable. Concurrency is carefully handled - consistent with the prior reviewer's judgment.",
+    "Network error-handling re-check on PortalListingsRepository: listMyListings/getListingAnalytics both wrap in try/catch -> Result.failure; getPortfolioAnalytics + toggleSearchAlert are not wrapped but only delegate to already-wrapped Result-returning calls, so no exception escapes. No swallow/throw finding.",
+    "Repository test coverage is strong (commonTest has per-repo + path-encoding + contract tests incl. getPortfolioAnalytics fold/date-merge cases); but there is no test exercising the large-portfolio fan-out behaviour (concurrency bound). Noted as part of the net-new finding rather than a separate test-gap row."
+  ],
+  "signals": [
+    {
+      "id": "code-review-mn-kmp-portfolio-analytics-fanout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-125 - getPortfolioAnalytics() calls listMyListings(limit = 100) then fans out one getListingAnalytics(listing.id) async per listing inside coroutineScope { listings.map { async { ... } }.awaitAll() } with NO concurrency cap (no Semaphore, no chunked().flatMap). A realtor with a large portfolio triggers up to 100 simultaneous HTTP requests through the single shared HttpClientProvider.client.",
+        "Impact: on the realtor ListingAnalytics portfolio screen this is a self-inflicted request storm - it can exhaust the Ktor client connection pool, trip server-side rate limits, and (because the shared client has no HttpTimeout plugin - see the already-filed code-review-mobile-native-kmp-http-client-no-timeout) leave up to 100 coroutines stalled at once on a slow analytics endpoint, with the whole portfolio view blocked on awaitAll.",
+        "Fix: bound the fan-out - a kotlinx.coroutines Semaphore(n) around each async, or listings.chunked(n).flatMap { it.map { async{} }.awaitAll() }, with a small n (e.g. 6-8); add a large-portfolio test asserting the concurrency cap. Net-new: not covered by the 2026-10-30 sibling slice nor any prior mobile-native-kmp review."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
+      ],
+      "expert": "kotlin"
+    }
+  ]
+}

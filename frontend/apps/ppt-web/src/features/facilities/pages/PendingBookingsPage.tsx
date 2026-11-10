@@ -7,14 +7,17 @@
 import type { BookingWithDetails } from '@ppt/api-client';
 import { approveBooking, listPendingBookings, rejectBooking } from '@ppt/api-client';
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { useParams } from 'react-router-dom';
+import { useToast } from '../../../components';
 import { BookingList, RejectBookingDialog } from '../components';
 
 const PAGE_SIZE = 10;
 
 export function PendingBookingsPage() {
+  const { t } = useTranslation();
   const { buildingId } = useParams<{ buildingId: string }>();
-  const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const [bookings, setBookings] = useState<BookingWithDetails[]>([]);
   const [total, setTotal] = useState(0);
@@ -37,7 +40,11 @@ export function PendingBookingsPage() {
       setBookings(response.items);
       setTotal(response.total);
     } catch (error) {
-      console.error('Failed to fetch pending bookings:', error);
+      showToast({
+        type: 'error',
+        title: t('facilities.bookings.loadPendingFailed'),
+        message: error instanceof Error ? error.message : t('facilities.errors.unexpected'),
+      });
     } finally {
       setIsLoading(false);
     }
@@ -48,17 +55,17 @@ export function PendingBookingsPage() {
     refreshBookings(page);
   }, [buildingId, page]);
 
-  const handleView = (id: string) => {
-    navigate(`/bookings/${id}`);
-  };
-
   const handleApprove = async (id: string) => {
     setIsProcessing(true);
     try {
       await approveBooking(id);
       await refreshBookings();
     } catch (error) {
-      console.error('Failed to approve booking:', error);
+      showToast({
+        type: 'error',
+        title: t('facilities.bookings.approveFailed'),
+        message: error instanceof Error ? error.message : t('facilities.errors.unexpected'),
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -80,7 +87,11 @@ export function PendingBookingsPage() {
       await refreshBookings();
       setRejectDialogBooking(null);
     } catch (error) {
-      console.error('Failed to reject booking:', error);
+      showToast({
+        type: 'error',
+        title: t('facilities.bookings.rejectFailed'),
+        message: error instanceof Error ? error.message : t('facilities.errors.unexpected'),
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -99,16 +110,15 @@ export function PendingBookingsPage() {
         pageSize={PAGE_SIZE}
         isLoading={isLoading || isProcessing}
         isManager={true}
-        title="Pending Booking Approvals"
+        title={t('facilities.bookings.pendingTitle')}
         onPageChange={handlePageChange}
-        onView={handleView}
         onApprove={handleApprove}
         onReject={handleRejectClick}
       />
 
       {bookings.length === 0 && !isLoading && (
         <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-md">
-          <p className="text-green-700">All caught up! No pending bookings to review.</p>
+          <p className="text-green-700">{t('facilities.bookings.allCaughtUp')}</p>
         </div>
       )}
 

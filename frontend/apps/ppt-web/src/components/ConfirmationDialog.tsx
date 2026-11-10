@@ -7,6 +7,7 @@
 
 import type React from 'react';
 import { useCallback, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import './ConfirmationDialog.css';
 
 export interface ConfirmationDialogProps {
@@ -28,6 +29,11 @@ export interface ConfirmationDialogProps {
   onCancel: () => void;
   /** Whether the confirm action is in progress */
   isLoading?: boolean;
+  /**
+   * Text shown on the confirm button while `isLoading` is true.
+   * Defaults to the shared `common.processing` translation.
+   */
+  loadingLabel?: string;
 }
 
 export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
@@ -40,7 +46,9 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   onConfirm,
   onCancel,
   isLoading = false,
+  loadingLabel,
 }) => {
+  const { t } = useTranslation();
   const dialogRef = useRef<HTMLDivElement>(null);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
   const previousActiveElement = useRef<Element | null>(null);
@@ -135,7 +143,7 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
             onClick={onConfirm}
             disabled={isLoading}
           >
-            {isLoading ? 'Processing...' : confirmLabel}
+            {isLoading ? (loadingLabel ?? t('common.processing')) : confirmLabel}
           </button>
         </div>
       </div>

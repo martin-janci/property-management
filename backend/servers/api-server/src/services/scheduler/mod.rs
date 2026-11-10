@@ -5,8 +5,9 @@
 
 use db::repositories::{
     AnnouncementRepository, ESignatureNonceRepository, FinancialRepository, LayoutRepository,
-    MeterRepository, OAuthTokenEventRepository, PlatformAdminRepository, ReportScheduleRepository,
-    SessionRepository, SignatureRequestRepository, UnitResidentRepository, VoteRepository,
+    LeaseRepository, MeterRepository, OAuthTokenEventRepository, PlatformAdminRepository,
+    ReportScheduleRepository, SessionRepository, SignatureRequestRepository,
+    UnitResidentRepository, UserRepository, VoteRepository,
 };
 use db::DbPool;
 use integrations::LightweightProvider;
@@ -31,6 +32,10 @@ mod retention;
 /// dedicated `impl Scheduler` block; behaviour is identical to the previous
 /// inline implementation.
 mod votes;
+
+/// Account / lease lifecycle jobs: GDPR erasure after the grace period and
+/// lease expiry (gap audit R6 P1-5, P2-13).
+mod lifecycle;
 
 /// Per-signer minimum interval between reminder emails sent by the
 /// background scheduler. Prevents the every-60s scheduler tick from
@@ -119,6 +124,10 @@ pub struct SchedulerMetrics {
     /// Aged `oauth_token_events` rows pruned by the daily retention job
     /// (Epic 10A, #2628).
     pub oauth_token_events_pruned: u64,
+    /// Accounts anonymized after their GDPR deletion grace period elapsed.
+    pub accounts_anonymized: u64,
+    /// Active leases flipped to `expired` after their end date.
+    pub leases_expired: u64,
     pub errors: u64,
 }
 
@@ -137,6 +146,8 @@ pub struct Scheduler {
     platform_admin_repo: PlatformAdminRepository,
     layout_repo: LayoutRepository,
     oauth_token_event_repo: OAuthTokenEventRepository,
+    user_repo: UserRepository,
+    lease_repo: LeaseRepository,
     notification_service: Arc<NotificationService>,
     email_service: EmailService,
     config: SchedulerConfig,
@@ -181,6 +192,8 @@ impl Scheduler {
             platform_admin_repo: PlatformAdminRepository::new(pool.clone()),
             layout_repo: LayoutRepository::new(),
             oauth_token_event_repo: OAuthTokenEventRepository::new(pool.clone()),
+            user_repo: UserRepository::new(pool.clone()),
+            lease_repo: LeaseRepository::new(pool.clone()),
             pool,
             announcement_repo,
             notification_service,
@@ -213,6 +226,8 @@ impl Scheduler {
             platform_admin_repo: PlatformAdminRepository::new(pool.clone()),
             layout_repo: LayoutRepository::new(),
             oauth_token_event_repo: OAuthTokenEventRepository::new(pool.clone()),
+            user_repo: UserRepository::new(pool.clone()),
+            lease_repo: LeaseRepository::new(pool.clone()),
             pool,
             announcement_repo,
             notification_service,
@@ -251,6 +266,8 @@ impl Scheduler {
             support_tooling_events_pruned: guard.support_tooling_events_pruned,
             layout_change_events_pruned: guard.layout_change_events_pruned,
             oauth_token_events_pruned: guard.oauth_token_events_pruned,
+            accounts_anonymized: guard.accounts_anonymized,
+            leases_expired: guard.leases_expired,
             errors: guard.errors,
         }
     }
@@ -289,9 +306,16 @@ impl Scheduler {
 
     /// Run all scheduled tasks.
     async fn run_scheduled_tasks(&self) {
-        // Story 106.1: Publish scheduled announcements and send notifications
+        // Story 106.1: Publish scheduled announcements (state flip only).
         if let Err(e) = self.publish_scheduled_announcements().await {
             tracing::error!("Failed to publish scheduled announcements: {}", e);
+            self.increment_errors();
+        }
+
+        // Issue #2612: dispatch pending published-announcement notifications
+        // (decoupled from publishing so a transient failure retries next tick).
+        if let Err(e) = self.dispatch_announcement_notifications().await {
+            tracing::error!("Failed to dispatch announcement notifications: {}", e);
             self.increment_errors();
         }
 
@@ -301,15 +325,29 @@ impl Scheduler {
             self.increment_errors();
         }
 
-        // Story 106.2: Activate scheduled votes
+        // Story 106.2: Activate scheduled votes (state flip only).
         if let Err(e) = self.activate_scheduled_votes().await {
             tracing::error!("Failed to activate scheduled votes: {}", e);
             self.increment_errors();
         }
 
-        // Story 106.2: Close expired votes and notify results
+        // Issue #2612: dispatch pending vote-started notifications (decoupled
+        // from activation so a transient failure retries next tick).
+        if let Err(e) = self.dispatch_vote_started_notifications().await {
+            tracing::error!("Failed to dispatch vote-started notifications: {}", e);
+            self.increment_errors();
+        }
+
+        // Story 106.2: Close expired votes (state flip only).
         if let Err(e) = self.close_expired_votes().await {
             tracing::error!("Failed to close expired votes: {}", e);
+            self.increment_errors();
+        }
+
+        // Issue #2612: dispatch pending closed-vote result notifications
+        // (decoupled from closing so a transient failure retries next tick).
+        if let Err(e) = self.dispatch_vote_closed_notifications().await {
+            tracing::error!("Failed to dispatch vote-closed notifications: {}", e);
             self.increment_errors();
         }
 
@@ -378,13 +416,34 @@ impl Scheduler {
             tracing::error!("Failed to fire due report schedules: {}", e);
             self.increment_errors();
         }
+
+        // Gap audit R6 P1-5: erase accounts whose GDPR grace period elapsed.
+        if let Err(e) = self.execute_scheduled_account_deletions().await {
+            tracing::error!("Failed to execute scheduled account deletions: {}", e);
+            self.increment_errors();
+        }
+
+        // Gap audit R6 P2-13: expire active leases past their end date.
+        if let Err(e) = self.expire_ended_leases().await {
+            tracing::error!("Failed to expire ended leases: {}", e);
+            self.increment_errors();
+        }
     }
 
     // ========================================================================
     // Story 106.1: Announcement Notification Triggers
     // ========================================================================
 
-    /// Publish all scheduled announcements that are due and send notifications.
+    /// Publish all scheduled announcements that are due.
+    ///
+    /// Issue #2612: this now ONLY flips due announcements to `published`
+    /// (leaving `notified_at = NULL`). Notification dispatch is decoupled into
+    /// [`Self::dispatch_announcement_notifications`], which selects
+    /// `published AND notified_at IS NULL`, resolves targets, dispatches, and
+    /// stamps `notified_at` only on success. Previously publish + notify shared
+    /// one loop, so a transient target-resolution/dispatch failure permanently
+    /// dropped the notification (the row was already committed as published and
+    /// never re-selected). Decoupling lets the next tick retry.
     async fn publish_scheduled_announcements(&self) -> Result<(), sqlx::Error> {
         // Note: Scheduler runs in background without user context.
         // These operations are privileged/admin-level and don't need RLS enforcement.
@@ -403,57 +462,104 @@ impl Scheduler {
                 let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
                 metrics.announcements_published += published.len() as u64;
             }
+        }
 
-            // Send notifications for each published announcement
-            for announcement in &published {
-                // Get target users based on target_type and target_ids.
-                // A DB error here must be surfaced (not coerced into an empty
-                // target set) so a failed dispatch is observable instead of
-                // silently sending zero notifications — mirrors the
-                // log-and-fall-back treatment in `send_vote_reminders`.
-                let target_user_ids = match self.get_announcement_target_users(announcement).await {
-                    Ok(ids) => ids,
+        Ok(())
+    }
+
+    /// Dispatch published-announcement notifications that have not yet been sent
+    /// (issue #2612 — the durability half of the decoupled publish/notify flow).
+    ///
+    /// Selects `published AND notified_at IS NULL`, resolves targets, dispatches,
+    /// and stamps `notified_at` ONLY on success — mirroring the "stamp only after
+    /// a successful run" pattern of the retention prunes and
+    /// `fire_due_report_schedules`. A transient failure (target resolution OR
+    /// dispatch) is logged and the row is LEFT unstamped, so the next ~60s tick
+    /// retries it instead of dropping the notification fire-once.
+    ///
+    /// A legitimately empty audience (`Ok(vec![])` — e.g. an unpopulated
+    /// building) IS stamped: there is genuinely nobody to notify, so the row is
+    /// "handled" and must not retry forever. Only a target-resolution `Err` or a
+    /// dispatch `Err` leaves it unstamped for retry.
+    async fn dispatch_announcement_notifications(&self) -> Result<(), sqlx::Error> {
+        let pending = self
+            .announcement_repo
+            .find_published_pending_notification()
+            .await?;
+
+        if pending.is_empty() {
+            return Ok(());
+        }
+
+        tracing::info!(
+            count = pending.len(),
+            "Dispatching pending announcement notifications"
+        );
+
+        for announcement in &pending {
+            // A query error resolving targets is NOT an empty audience — leave
+            // the row unstamped so it retries rather than being silently marked
+            // notified with zero recipients.
+            let target_user_ids = match self.get_announcement_target_users(announcement).await {
+                Ok(ids) => ids,
+                Err(e) => {
+                    tracing::error!(
+                        announcement_id = %announcement.id,
+                        target_type = %announcement.target_type,
+                        error = %e,
+                        "Failed to resolve announcement notification targets; \
+                         leaving notified_at NULL so the next tick retries"
+                    );
+                    continue;
+                }
+            };
+
+            if !target_user_ids.is_empty() {
+                match self
+                    .notification_service
+                    .notify_announcement_published(announcement, &target_user_ids)
+                    .await
+                {
+                    Ok(sent) => {
+                        tracing::info!(
+                            announcement_id = %announcement.id,
+                            sent_count = sent,
+                            "Sent announcement notifications"
+                        );
+                    }
                     Err(e) => {
                         tracing::error!(
                             announcement_id = %announcement.id,
-                            target_type = %announcement.target_type,
                             error = %e,
-                            "Failed to resolve announcement notification targets; \
-                             skipping dispatch for this announcement"
+                            "Failed to send announcement notifications; \
+                             leaving notified_at NULL so the next tick retries"
                         );
-                        Vec::new()
-                    }
-                };
-
-                if !target_user_ids.is_empty() {
-                    match self
-                        .notification_service
-                        .notify_announcement_published(announcement, &target_user_ids)
-                        .await
-                    {
-                        Ok(sent) => {
-                            tracing::info!(
-                                announcement_id = %announcement.id,
-                                sent_count = sent,
-                                "Sent announcement notifications"
-                            );
-                        }
-                        Err(e) => {
-                            tracing::error!(
-                                announcement_id = %announcement.id,
-                                error = %e,
-                                "Failed to send announcement notifications"
-                            );
-                        }
+                        continue;
                     }
                 }
+            }
 
-                tracing::info!(
-                    announcement_id = %announcement.id,
-                    title = %announcement.title,
-                    target_type = %announcement.target_type,
-                    "Scheduled announcement published"
-                );
+            // Stamp only after a successful dispatch (or a legitimately empty
+            // audience). A failed stamp is logged but not fatal — the row stays
+            // unstamped and the next tick re-dispatches (at worst a duplicate
+            // send, never a lost one).
+            match self.announcement_repo.mark_notified(announcement.id).await {
+                Ok(_) => {
+                    tracing::info!(
+                        announcement_id = %announcement.id,
+                        title = %announcement.title,
+                        target_type = %announcement.target_type,
+                        "Announcement notification dispatched and stamped"
+                    );
+                }
+                Err(e) => {
+                    tracing::error!(
+                        announcement_id = %announcement.id,
+                        error = %e,
+                        "Failed to stamp announcement notified_at after dispatch; \
+                         next tick may resend"
+                    );
+                }
             }
         }
 
@@ -1751,6 +1857,183 @@ mod tests {
     }
 
     // ------------------------------------------------------------------
+    // IG3 regression (issue #2612): a transient target-resolution error on the
+    // announcement notification dispatch must NOT drop the notification
+    // fire-once. Publishing and notifying are decoupled — publishing only flips
+    // `status = 'published'` (leaving `notified_at = NULL`); a separate dispatch
+    // pass resolves targets, notifies, and stamps `notified_at` ONLY on success.
+    //
+    // Before the fix the two shared one loop: the announcement was committed as
+    // published, and a target-resolution/dispatch failure (post-#2608: logged,
+    // not retried) left it published-but-never-notified with no way to re-select
+    // it. This test forces a target-resolution error on the FIRST dispatch tick
+    // (by transiently renaming `buildings` away, breaking the `"building"` leg's
+    // JOIN) and asserts `notified_at` stays NULL — i.e. the row is NOT stamped
+    // and remains eligible for retry. It then restores the table and asserts a
+    // LATER tick resolves targets, dispatches, and stamps `notified_at`.
+    //
+    // The pre-fix code cannot satisfy this: it never had a `notified_at`
+    // watermark nor a re-selecting dispatch pass, so the notification was gone
+    // after the first failed tick.
+    // ------------------------------------------------------------------
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_announcement_notification_retries_after_transient_error(pool: sqlx::PgPool) {
+        let org = seed_org(&pool, "retry-guard").await;
+        let author = seed_user(&pool, "author@retry-guard.test").await;
+        let building = seed_building(&pool, org, "RETRY").await;
+        let unit = seed_unit(&pool, building, "RETRY-1").await;
+        let resident = seed_user(&pool, "resident@retry-guard.test").await;
+        seed_resident(&pool, unit, resident).await;
+
+        // A scheduled, due announcement targeting the building above.
+        let scheduled_at = chrono::Utc::now() - chrono::Duration::minutes(1);
+        let announcement_id: Uuid = sqlx::query_scalar(
+            r#"
+            INSERT INTO announcements (
+                organization_id, author_id, title, content,
+                target_type, target_ids, status, scheduled_at
+            )
+            VALUES ($1, $2, $3, $4, 'building'::announcement_target_type, $5, 'scheduled'::announcement_status, $6)
+            RETURNING id
+            "#,
+        )
+        .bind(org)
+        .bind(author)
+        .bind("Retry guard")
+        .bind("body")
+        .bind(serde_json::json!([building]))
+        .bind(scheduled_at)
+        .fetch_one(&pool)
+        .await
+        .expect("seed scheduled announcement");
+
+        let scheduler = test_scheduler(pool.clone());
+
+        // Publish: flips to `published`, leaves `notified_at = NULL`.
+        scheduler
+            .publish_scheduled_announcements()
+            .await
+            .expect("publish scheduled announcements");
+        let (status, notified): (String, Option<chrono::DateTime<chrono::Utc>>) =
+            sqlx::query_as("SELECT status::text, notified_at FROM announcements WHERE id = $1")
+                .bind(announcement_id)
+                .fetch_one(&pool)
+                .await
+                .expect("read status/notified_at after publish");
+        assert_eq!(status, "published", "publish must flip status to published");
+        assert!(
+            notified.is_none(),
+            "publish must leave notified_at NULL (needs notification)"
+        );
+
+        // Tick 1 — sabotage ONLY target resolution: rename `buildings` away so
+        // the `"building"` leg's JOIN fails. `find_published_pending_notification`
+        // (announcements-only) still succeeds, so the failure is isolated to the
+        // dispatch's target resolution — the transient blip the fix defends.
+        sqlx::query("ALTER TABLE buildings RENAME TO buildings_hidden")
+            .execute(&pool)
+            .await
+            .expect("rename buildings away");
+
+        scheduler
+            .dispatch_announcement_notifications()
+            .await
+            .expect("dispatch tolerates a per-row target-resolution error");
+
+        let notified_after_fail: Option<chrono::DateTime<chrono::Utc>> =
+            sqlx::query_scalar("SELECT notified_at FROM announcements WHERE id = $1")
+                .bind(announcement_id)
+                .fetch_one(&pool)
+                .await
+                .expect("read notified_at after failed tick");
+        assert!(
+            notified_after_fail.is_none(),
+            "a transient target-resolution error must leave notified_at NULL so the \
+             announcement is retried, not dropped fire-once"
+        );
+
+        // Restore and re-tick: resolution now succeeds → dispatch → stamp.
+        sqlx::query("ALTER TABLE buildings_hidden RENAME TO buildings")
+            .execute(&pool)
+            .await
+            .expect("restore buildings");
+
+        scheduler
+            .dispatch_announcement_notifications()
+            .await
+            .expect("dispatch succeeds on retry");
+
+        let notified_after_retry: Option<chrono::DateTime<chrono::Utc>> =
+            sqlx::query_scalar("SELECT notified_at FROM announcements WHERE id = $1")
+                .bind(announcement_id)
+                .fetch_one(&pool)
+                .await
+                .expect("read notified_at after retry");
+        assert!(
+            notified_after_retry.is_some(),
+            "a later tick must re-attempt and stamp notified_at once dispatch succeeds"
+        );
+    }
+
+    // ------------------------------------------------------------------
+    // Issue #2612: a legitimately EMPTY audience (Ok(vec![]) — e.g. a target
+    // building with no residents) must be stamped as notified, NOT retried
+    // forever. This distinguishes "nobody to notify" (handled) from a
+    // target-resolution error (retry), which the dispatch pass treats
+    // differently.
+    // ------------------------------------------------------------------
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_announcement_notification_stamps_empty_audience(pool: sqlx::PgPool) {
+        let org = seed_org(&pool, "empty-aud").await;
+        let author = seed_user(&pool, "author@empty-aud.test").await;
+        // Building targeted but with NO residents → resolves to an empty set.
+        let building = seed_building(&pool, org, "EMPTY").await;
+
+        let scheduled_at = chrono::Utc::now() - chrono::Duration::minutes(1);
+        let announcement_id: Uuid = sqlx::query_scalar(
+            r#"
+            INSERT INTO announcements (
+                organization_id, author_id, title, content,
+                target_type, target_ids, status, scheduled_at
+            )
+            VALUES ($1, $2, $3, $4, 'building'::announcement_target_type, $5, 'scheduled'::announcement_status, $6)
+            RETURNING id
+            "#,
+        )
+        .bind(org)
+        .bind(author)
+        .bind("Empty audience")
+        .bind("body")
+        .bind(serde_json::json!([building]))
+        .bind(scheduled_at)
+        .fetch_one(&pool)
+        .await
+        .expect("seed scheduled announcement");
+
+        let scheduler = test_scheduler(pool.clone());
+        scheduler
+            .publish_scheduled_announcements()
+            .await
+            .expect("publish scheduled announcements");
+        scheduler
+            .dispatch_announcement_notifications()
+            .await
+            .expect("dispatch empty-audience announcement");
+
+        let notified: Option<chrono::DateTime<chrono::Utc>> =
+            sqlx::query_scalar("SELECT notified_at FROM announcements WHERE id = $1")
+                .bind(announcement_id)
+                .fetch_one(&pool)
+                .await
+                .expect("read notified_at");
+        assert!(
+            notified.is_some(),
+            "an announcement with a legitimately empty audience must be stamped \
+             notified so it is not retried on every tick forever"
+        );
+    }
+
+    // ------------------------------------------------------------------
     // IG3 regression: scheduler global-read RLS GUC must never ride back
     // into the pool, even when the global-read *teardown* itself errors.
     //
@@ -1947,6 +2230,116 @@ mod tests {
             scheduler.get_metrics().support_tooling_events_pruned,
             1,
             "a gated (skipped) prune must not advance the metric"
+        );
+    }
+
+    // ------------------------------------------------------------------
+    // IG3 regression (issue #2612): the vote-started notification path has the
+    // same fire-once shape as the announcement path — activation was committed
+    // in one tick and a transient target-resolution failure dropped the
+    // notification. Decoupling means activation only flips the vote to `active`
+    // (leaving `started_notified_at = NULL`) and a separate dispatch pass
+    // notifies + stamps only on success. This test activates a due vote, forces
+    // a target-resolution error on the first dispatch tick (renaming `units`
+    // away, breaking `get_vote_eligible_users`), asserts the watermark stays
+    // NULL (retryable), then restores and asserts a later tick stamps it.
+    // ------------------------------------------------------------------
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_vote_started_notification_retries_after_transient_error(pool: sqlx::PgPool) {
+        let org = seed_org(&pool, "vote-retry").await;
+        let author = seed_user(&pool, "author@vote-retry.test").await;
+        let building = seed_building(&pool, org, "VR").await;
+        let unit = seed_unit(&pool, building, "VR-1").await;
+        let owner = seed_user(&pool, "owner@vote-retry.test").await;
+        // get_vote_eligible_users only counts `resident_type = 'owner'`.
+        sqlx::query(
+            "INSERT INTO unit_residents (unit_id, user_id, resident_type) VALUES ($1, $2, 'owner')",
+        )
+        .bind(unit)
+        .bind(owner)
+        .execute(&pool)
+        .await
+        .expect("seed owner resident");
+
+        // A scheduled, due vote (start_at in the past, end_at in the future).
+        let start_at = chrono::Utc::now() - chrono::Duration::minutes(1);
+        let end_at = chrono::Utc::now() + chrono::Duration::days(1);
+        let vote_id: Uuid = sqlx::query_scalar(
+            r#"
+            INSERT INTO votes (organization_id, building_id, title, end_at, start_at, status, created_by)
+            VALUES ($1, $2, $3, $4, $5, 'scheduled'::vote_status, $6)
+            RETURNING id
+            "#,
+        )
+        .bind(org)
+        .bind(building)
+        .bind("Vote retry")
+        .bind(end_at)
+        .bind(start_at)
+        .bind(author)
+        .fetch_one(&pool)
+        .await
+        .expect("seed scheduled vote");
+
+        let scheduler = test_scheduler(pool.clone());
+
+        // Activate: flips to `active`, leaves started_notified_at NULL.
+        scheduler
+            .activate_scheduled_votes()
+            .await
+            .expect("activate scheduled votes");
+        let (status, started): (String, Option<chrono::DateTime<chrono::Utc>>) =
+            sqlx::query_as("SELECT status::text, started_notified_at FROM votes WHERE id = $1")
+                .bind(vote_id)
+                .fetch_one(&pool)
+                .await
+                .expect("read status/started_notified_at after activate");
+        assert_eq!(status, "active", "activation must flip status to active");
+        assert!(
+            started.is_none(),
+            "activation must leave started_notified_at NULL (needs notification)"
+        );
+
+        // Tick 1 — sabotage target resolution: rename `units` away so
+        // `get_vote_eligible_users` (JOIN units) fails.
+        sqlx::query("ALTER TABLE units RENAME TO units_hidden")
+            .execute(&pool)
+            .await
+            .expect("rename units away");
+        scheduler
+            .dispatch_vote_started_notifications()
+            .await
+            .expect("dispatch tolerates a per-vote target-resolution error");
+        let started_after_fail: Option<chrono::DateTime<chrono::Utc>> =
+            sqlx::query_scalar("SELECT started_notified_at FROM votes WHERE id = $1")
+                .bind(vote_id)
+                .fetch_one(&pool)
+                .await
+                .expect("read started_notified_at after failed tick");
+        assert!(
+            started_after_fail.is_none(),
+            "a transient target-resolution error must leave started_notified_at NULL \
+             so the vote-started notification is retried, not dropped fire-once"
+        );
+
+        // Restore and re-tick: resolution succeeds → dispatch → stamp.
+        sqlx::query("ALTER TABLE units_hidden RENAME TO units")
+            .execute(&pool)
+            .await
+            .expect("restore units");
+        scheduler
+            .dispatch_vote_started_notifications()
+            .await
+            .expect("dispatch succeeds on retry");
+        let started_after_retry: Option<chrono::DateTime<chrono::Utc>> =
+            sqlx::query_scalar("SELECT started_notified_at FROM votes WHERE id = $1")
+                .bind(vote_id)
+                .fetch_one(&pool)
+                .await
+                .expect("read started_notified_at after retry");
+        assert!(
+            started_after_retry.is_some(),
+            "a later tick must re-attempt and stamp started_notified_at once dispatch succeeds"
         );
     }
 
@@ -2164,5 +2557,174 @@ mod tests {
             "the warn must carry the announcement id so the broken row is \
              diagnosable; captured: {captured:?}"
         );
+    }
+
+    // ------------------------------------------------------------------
+    // Gap audit R6 P1-5 / P2-13: GDPR erasure + lease expiry jobs.
+    // ------------------------------------------------------------------
+
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_scheduler_anonymizes_accounts_after_grace_period(pool: sqlx::PgPool) {
+        let org = seed_org(&pool, "gdpr").await;
+        let due = seed_user(&pool, "due@gdpr.test").await;
+        let pending = seed_user(&pool, "pending@gdpr.test").await;
+        let building = seed_building(&pool, org, "gdpr").await;
+        let unit = seed_unit(&pool, building, "G1").await;
+        seed_resident(&pool, unit, due).await;
+        sqlx::query(
+            "INSERT INTO organization_members (organization_id, user_id, status) VALUES ($1, $2, 'active')",
+        )
+        .bind(org)
+        .bind(due)
+        .execute(&pool)
+        .await
+        .expect("seed member");
+        sqlx::query(
+            "INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES ($1, 'gdpr-hash', NOW() + INTERVAL '1 day')",
+        )
+        .bind(due)
+        .execute(&pool)
+        .await
+        .expect("seed refresh token");
+        // An audit row referencing the user must not block erasure (P1-4).
+        sqlx::query("INSERT INTO audit_logs (user_id, org_id, action) VALUES ($1, $2, 'login')")
+            .bind(due)
+            .bind(org)
+            .execute(&pool)
+            .await
+            .expect("seed audit log");
+        sqlx::query(
+            "UPDATE users SET scheduled_deletion_at = NOW() - INTERVAL '1 minute' WHERE id = $1",
+        )
+        .bind(due)
+        .execute(&pool)
+        .await
+        .unwrap();
+        sqlx::query(
+            "UPDATE users SET scheduled_deletion_at = NOW() + INTERVAL '29 days' WHERE id = $1",
+        )
+        .bind(pending)
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        let scheduler = test_scheduler(pool.clone());
+        scheduler
+            .execute_scheduled_account_deletions()
+            .await
+            .expect("erasure job");
+
+        let (email, name, status, phone, sched): (
+            String,
+            String,
+            String,
+            Option<String>,
+            Option<chrono::DateTime<chrono::Utc>>,
+        ) = sqlx::query_as(
+            "SELECT email, name, status, phone, scheduled_deletion_at FROM users WHERE id = $1",
+        )
+        .bind(due)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+        assert_eq!(email, format!("deleted-{due}@deleted.invalid"));
+        assert_eq!(name, "Deleted user");
+        assert_eq!(status, "deleted");
+        assert!(phone.is_none());
+        assert!(sched.is_none());
+
+        let live_tokens: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM refresh_tokens WHERE user_id = $1 AND revoked_at IS NULL",
+        )
+        .bind(due)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+        assert_eq!(live_tokens, 0, "sessions must be revoked");
+        let member_status: String =
+            sqlx::query_scalar("SELECT status FROM organization_members WHERE user_id = $1")
+                .bind(due)
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        assert_eq!(member_status, "removed");
+        let open_residencies: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM unit_residents WHERE user_id = $1 AND (end_date IS NULL OR end_date > CURRENT_DATE)",
+        )
+        .bind(due)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+        assert_eq!(open_residencies, 0);
+
+        // Still inside the grace period: untouched.
+        let pending_email: String = sqlx::query_scalar("SELECT email FROM users WHERE id = $1")
+            .bind(pending)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(pending_email, "pending@gdpr.test");
+        assert_eq!(scheduler.get_metrics().accounts_anonymized, 1);
+
+        // Idempotent: a second tick finds nothing to do.
+        scheduler
+            .execute_scheduled_account_deletions()
+            .await
+            .expect("second tick");
+        assert_eq!(scheduler.get_metrics().accounts_anonymized, 1);
+    }
+
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_scheduler_expires_leases_past_end_date(pool: sqlx::PgPool) {
+        let org = seed_org(&pool, "lease-exp").await;
+        let building = seed_building(&pool, org, "lease-exp").await;
+        let unit = seed_unit(&pool, building, "L1").await;
+
+        async fn seed_lease(
+            pool: &sqlx::PgPool,
+            org: Uuid,
+            unit: Uuid,
+            end_offset_days: i32,
+        ) -> Uuid {
+            sqlx::query_scalar::<_, Uuid>(
+                r#"
+                INSERT INTO leases (organization_id, unit_id, landlord_name, tenant_name, tenant_email,
+                                    start_date, end_date, term_months, monthly_rent, security_deposit, status)
+                VALUES ($1, $2, 'L', 'T', 't@lease.test', CURRENT_DATE - 365,
+                        CURRENT_DATE + $3, 12, 500, 500, 'active')
+                RETURNING id
+                "#,
+            )
+            .bind(org)
+            .bind(unit)
+            .bind(end_offset_days)
+            .fetch_one(pool)
+            .await
+            .expect("seed lease")
+        }
+
+        let ended = seed_lease(&pool, org, unit, -1).await;
+        let ends_today = seed_lease(&pool, org, unit, 0).await;
+
+        let scheduler = test_scheduler(pool.clone());
+        scheduler.expire_ended_leases().await.expect("lease job");
+
+        let status = |id: Uuid| {
+            let pool = pool.clone();
+            async move {
+                sqlx::query_scalar::<_, String>("SELECT status::text FROM leases WHERE id = $1")
+                    .bind(id)
+                    .fetch_one(&pool)
+                    .await
+                    .unwrap()
+            }
+        };
+        assert_eq!(status(ended).await, "expired");
+        assert_eq!(
+            status(ends_today).await,
+            "active",
+            "a lease is valid through its end date"
+        );
+        assert_eq!(scheduler.get_metrics().leases_expired, 1);
     }
 }

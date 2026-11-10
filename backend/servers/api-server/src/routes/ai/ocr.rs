@@ -100,6 +100,13 @@ fn not_found(msg: &str) -> (StatusCode, Json<ErrorResponse>) {
     )
 }
 
+fn service_unavailable(msg: &str) -> (StatusCode, Json<ErrorResponse>) {
+    (
+        StatusCode::SERVICE_UNAVAILABLE,
+        Json(ErrorResponse::new("STORAGE_UNAVAILABLE", msg)),
+    )
+}
+
 /// Process a meter image and persist a photo-backed reading.
 ///
 /// Accepts multipart/form-data with fields:
@@ -194,17 +201,69 @@ async fn process_meter_reading(
         return Err(not_found("Meter not found"));
     }
 
-    // Upload image to storage when available, otherwise use a placeholder.
-    let photo_url = if let (Some(bytes), Some(ref storage)) = (image_bytes, &state.storage_service)
-    {
-        let mime = image_content_type.as_deref().unwrap_or("image/jpeg");
-        let key = format!("ocr/meter-readings/{}/{}.jpg", meter_id, Uuid::new_v4());
-        storage.upload(&key, bytes, mime).await.map_err(|e| {
-            tracing::error!(error = ?e, "Failed to upload OCR image");
-            internal_err("Failed to store meter image")
-        })?
-    } else {
-        format!("pending-upload/{}/{}", meter_id, Uuid::new_v4())
+    // Managers may read any meter of the org; everyone else only the meters
+    // of a unit they own or live in (not other residents' or building meters).
+    let is_manager = state
+        .org_member_repo
+        .get_user_role_type(meter.organization_id, auth.user_id)
+        .await
+        .map_err(|_| internal_err("Database error"))?
+        .as_deref()
+        .and_then(common::TenantRole::from_role_type)
+        .is_some_and(|role| role.is_manager());
+    if !is_manager {
+        let linked = match meter.unit_id {
+            Some(unit_id) => state
+                .unit_repo
+                .is_user_linked_to_unit_in_org_pooled(meter.organization_id, unit_id, auth.user_id)
+                .await
+                .map_err(|_| internal_err("Database error"))?,
+            None => false,
+        };
+        if !linked {
+            return Err((
+                StatusCode::FORBIDDEN,
+                Json(ErrorResponse::new(
+                    "FORBIDDEN",
+                    "You can only submit readings for meters of your own unit",
+                )),
+            ));
+        }
+    }
+
+    // Resolve the photo URL. The three cases below must stay distinct — an
+    // earlier version collapsed them into a single `else` branch that
+    // fabricated a `pending-upload/{meter}/{uuid}` URL whenever the real
+    // upload didn't happen. That silently dropped the caller's image bytes
+    // (nothing was ever stored), returned 201 as if it had succeeded, and
+    // persisted a URL that no reconciler exists to fulfil — so the photo was
+    // lost with no trace and no recovery path.
+    let photo_url: Option<String> = match (image_bytes, &state.storage_service) {
+        // Image supplied and storage configured — persist it for real.
+        (Some(bytes), Some(storage)) => {
+            let mime = image_content_type.as_deref().unwrap_or("image/jpeg");
+            let key = format!("ocr/meter-readings/{}/{}.jpg", meter_id, Uuid::new_v4());
+            Some(storage.upload(&key, bytes, mime).await.map_err(|e| {
+                tracing::error!(error = ?e, "Failed to upload OCR image");
+                internal_err("Failed to store meter image")
+            })?)
+        }
+        // Image supplied but no storage backend — we cannot persist the bytes.
+        // Fail loudly (503) instead of dropping the image and lying with a 201.
+        (Some(_), None) => {
+            tracing::error!(
+                meter_id = %meter_id,
+                "OCR meter image was submitted but no storage backend is configured; \
+                 refusing to drop the image and fabricate a pending-upload URL"
+            );
+            return Err(service_unavailable(
+                "Image storage is not configured; the meter photo cannot be saved. \
+                 The reading was not recorded.",
+            ));
+        }
+        // No image supplied — a photo-source reading with no photo. Store NULL
+        // rather than a placeholder URL that points at nothing.
+        (None, _) => None,
     };
 
     let meter_reading = state
@@ -241,7 +300,8 @@ async fn process_meter_reading(
                 raw_text: extracted.to_string(),
                 processing_time_ms: 0,
             },
-            image_url: photo_url,
+            // Empty when no image was supplied; never a fabricated placeholder.
+            image_url: photo_url.unwrap_or_default(),
             reading_id: meter_reading.id,
         }),
     ))
@@ -263,9 +323,54 @@ async fn submit_correction(
     auth: AuthUser,
     Json(body): Json<OcrCorrectionRequest>,
 ) -> Result<(StatusCode, Json<OcrCorrectionResponse>), (StatusCode, Json<ErrorResponse>)> {
+    // Do not trust `body.organization_id` alone for authorization: it is
+    // client-supplied, and a caller who is a member of *some* org could
+    // point `meter_reading_id` at a different org's reading while still
+    // passing `is_member` for their own org (IDOR). When a target reading
+    // is referenced, derive the owning organization from that reading's
+    // meter and require the payload's organization_id to agree with it,
+    // rejecting any mismatch as cross-tenant access. With no target
+    // reading there is no other-tenant record to leak, so the caller's
+    // claimed org membership is the whole scope.
+    let scoped_organization_id = if let Some(meter_reading_id) = body.meter_reading_id {
+        let reading = state
+            .meter_repo
+            .get_reading(meter_reading_id)
+            .await
+            .map_err(|e| {
+                tracing::error!(error = ?e, "Meter reading lookup failed");
+                internal_err("Failed to verify meter reading access")
+            })?
+            .ok_or_else(|| not_found("Meter reading not found"))?;
+
+        let meter = state
+            .meter_repo
+            .get_meter(reading.meter_id)
+            .await
+            .map_err(|e| {
+                tracing::error!(error = ?e, "Meter lookup failed");
+                internal_err("Failed to verify meter reading access")
+            })?
+            .ok_or_else(|| not_found("Meter reading not found"))?;
+
+        if body.organization_id != meter.organization_id {
+            return Err((
+                StatusCode::FORBIDDEN,
+                Json(ErrorResponse::new(
+                    "FORBIDDEN",
+                    "organization_id does not match the meter reading's organisation",
+                )),
+            ));
+        }
+
+        meter.organization_id
+    } else {
+        body.organization_id
+    };
+
     let is_member = state
         .org_member_repo
-        .is_member(body.organization_id, auth.user_id)
+        .is_member(scoped_organization_id, auth.user_id)
         .await
         .map_err(|_| internal_err("Database error"))?;
     if !is_member {
@@ -288,7 +393,7 @@ async fn submit_correction(
         .create_ocr_correction(
             auth.user_id,
             CreateOcrCorrection {
-                organization_id: body.organization_id,
+                organization_id: scoped_organization_id,
                 meter_reading_id: body.meter_reading_id,
                 original_value: orig,
                 corrected_value: corr,

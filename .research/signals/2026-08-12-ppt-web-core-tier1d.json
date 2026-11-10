@@ -1,0 +1,74 @@
+{
+  "generated": "2026-08-12",
+  "segment": "ppt-web-core",
+  "source": "tier1d-generator",
+  "findings": [
+    {
+      "id": "code-review-ppt-web-core-api-401-no-refresh",
+      "title": "ppt-web-core: hand-rolled axios client's 401 handler is dead code — AuthContext wires it with getToken only, so expired-token requests fail without silent refresh or logout",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-12 (ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:219-221 — the response interceptor only calls onUnauthorizedCallback() on a 401 'if (... && onUnauthorizedCallback)', and 401 is not in RETRYABLE_STATUS_CODES so no retry either",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:337 — the only configureApiClient() call passes '{ getToken: getAccessToken }' with NO onUnauthorized, so onUnauthorizedCallback is permanently undefined and the 401 branch never fires",
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts:10 and frontend/apps/ppt-web/src/features/sentiment/hooks/useSentiment.ts:19 — both consume getApiClient() and their comments claim '401 -> onUnauthorized', but no refresh/logout is triggered; on access-token expiry these feature requests reject with an ApiError and the user is neither silently refreshed nor redirected to login until some other code path refreshes the token"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-perf-metrics-listener-leak",
+      "title": "ppt-web-core: usePerformanceMetrics adds window 'load' and 'visibilitychange' listeners that its cleanup never removes — listeners leak and duplicate on every effect re-run",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-12 (ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts:142 — window.addEventListener('load', collectNavigationTiming) is registered but never removed",
+        "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts:153-157 — window.addEventListener('visibilitychange', <inline fn>) is registered with an anonymous handler that cannot be removed later",
+        "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts:160-164 — the effect cleanup only disconnects PerformanceObservers; because the effect deps are [onReport, reportOnUnload] and onReport is typically an inline callback, each re-run stacks another visibilitychange listener, causing duplicated metric reports and unbounded listener growth"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-i18n",
+      "title": "ppt-web-core: errorHandler.ts hardcodes every user-facing error title/message in English — parseApiError has no i18n, so all error toasts/form banners are English-only for sk/cs/de",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-12 (ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:53-133 — the entire ERROR_MESSAGES catalogue ('Authentication Required', 'Invalid Credentials', 'You do not have permission...', etc.) is hardcoded English literals with no useTranslation/t() involvement",
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:149-227 — parseApiError() returns these raw English strings (title/message) directly; the module imports no i18n, so every consumer that surfaces parseApiError output shows English regardless of the active locale (sk/cs/de/en)",
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:270-347 — parseHttpStatusError() likewise emits hardcoded English for 400/401/403/404/409/429/5xx fallbacks"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    }
+  ]
+}

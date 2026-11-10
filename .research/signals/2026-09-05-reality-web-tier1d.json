@@ -1,0 +1,51 @@
+{
+  "generated": "2026-09-05T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven (buffer starved, LANDABLE-only) 2026-09-05",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "steered (dispatcher Tier-1d LANDABLE-only, non-mobile-native). ppt-web-core was my first-pick by review_cursor (four-way tie at 2026-08-29: ppt-web-ui/ppt-web-core/reality-web/mobile-rn, with mobile-native-kmp 2026-08-25 EXCLUDED as structurally unlandable in the cloud runner). On inspection ppt-web-core, ppt-web-ui and api-handlers ALREADY have signal files dated today 2026-09-05 (another Tier-1d generator claimed them this cycle), so per the skill's least-mined / anti-saturation principle I pivoted to reality-web — a cloud-landable Next.js segment with NO signal file today and last actually reviewed 2026-09-04. Saturation check passed: 0 open code-review-finding rows for reality-web in backlog.json (all prior reality-web findings are done/dropped). Scope: frontend/apps/reality-web/src — SSR pages under app/[locale]/**, the auth layer (lib/auth-context.tsx, lib/auth-token.ts, lib/auth-api.ts, lib/realtor-api.ts), middleware.ts, and the auth route pages. Verdict: the segment is heavily hardened (listings/[slug]/page.tsx fails closed via notFound() on null/#2341; middleware fail-opens the kill-switch fetch and returns a real 503; auth-token expiry-checks + SSR-guards + try/catch on every localStorage op; probeSsoSession dedups + never clobbers state on a network blip; realtor-api catches network + non-ok + 204; the auth CALLBACK page carries a fully-tested 3-way open-redirect guard). Two genuine net-new findings survived verification, both in the email/password auth route pages (Epic 10A-SSO) — a security-relevant open-redirect gap and a locale-loss navigation bug. No open-redirect or locale-drop finding exists anywhere in the reality-web backlog or the signals corpus.",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-reality-web-login-open-redirect-backslash",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-05 reality-web auth)",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/login/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.test.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/login/page.tsx:33,72-73 — the login form reads its post-login destination from a user-controlled query param (`const redirectTo = searchParams.get('redirect') ?? '/'`) and, after a successful `login()`, navigates to it with `const safe = redirectTo.startsWith('/') && !redirectTo.startsWith('//') ? redirectTo : '/'; router.replace(safe);`. The guard rejects absolute URLs (`http://…`) and protocol-relative `//evil.com`, but it does NOT reject the backslash-escape form `/\\evil.com`. Browsers normalise `\\` to `/` during URL resolution, so `router.replace('/\\evil.com')` resolves to `//evil.com` → a protocol-relative navigation to an attacker origin. An attacker who gets a victim to open `https://<tenant>/sk/auth/login?redirect=/%5Cevil.example.com` and log in is silently bounced to evil.example.com immediately after authenticating — a classic post-auth open-redirect / phishing primitive.",
+        "The SIBLING callback page proves this is a real, known vector and that the login page simply missed it: frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx:116-125 guards the same class of redirect param with THREE conditions — `rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') && !rawRedirect.startsWith('/\\\\')` — and its test file callback/page.test.tsx:122-135 has dedicated cases 'rejects a protocol-relative redirect_uri' AND 'rejects a backslash-escaped redirect_uri (`/%5Cevil.example.com`)'. The login page's guard is the same idea with the third (`/\\`) clause dropped, and no test exercises the login redirect at all.",
+        "Impact: open redirect on the primary email/password login flow across every tenant host. Severity medium (phishing enabler / reputational — requires the victim to follow a crafted link and complete login; no direct data compromise). Confidence high: the full path is traced from the user-controlled `searchParams.get('redirect')` to `router.replace(safe)`, the missing clause is confirmed by direct diff against the tested sibling guard, and reachability is trivial (any anonymous visit to the login URL). Fix: extract the callback's 3-way check into one shared `isSafeInternalRedirect(path)` helper (reject non-`/` prefixes, `//`, and `/\\`, and ideally decode-then-recheck) and use it in BOTH login/page.tsx:72 and callback/page.tsx:122-124; add the `/\\evil.com` rejection test to the login page mirroring callback/page.test.tsx:129."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-auth-nav-drops-locale",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-05 reality-web auth)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/register/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/reset-password/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/login/page.tsx"
+      ],
+      "evidence": [
+        "The three email/password auth pages do programmatic navigation with the raw, non-locale-aware router from `next/navigation` using unprefixed absolute paths, so the user's active locale (cs/de/en) is dropped on the post-auth hop and next-intl's middleware re-resolves to the DEFAULT locale (sk). register/page.tsx:9,26,81 — `import { useRouter } from 'next/navigation'` then `onClick={() => router.push('/auth/login')}` (no `/[locale]` prefix). reset-password/page.tsx:9,18,90 — same import, `router.replace('/auth/login')`. login/page.tsx:20,31,73 — `router.replace(safe)` where `safe` defaults to bare `'/'` when no redirect param is present.",
+        "This contradicts the app's own stated locale-routing convention: login/page.tsx:16-24 documents 'Internal links use the locale-aware `Link` from `src/i18n/routing`' and imports `Link` from `@/i18n/routing`, and that locale-aware navigation wrapper is used pervasively across the app (components/ui/Header.tsx, Footer.tsx, LanguageSwitcher.tsx, home/*, etc.). next-intl's createNavigation exports a locale-aware `useRouter`/`redirect`, but these auth pages pulled `useRouter` from `next/navigation` instead — so `Link`s stay in-locale while every programmatic `router.push`/`router.replace` silently falls back to sk.",
+        "Impact: a Czech/German/English visitor who registers, resets their password, or logs in without an explicit locale-carrying `redirect` param is bounced onto the Slovak (default-locale) login page or homepage, losing their language mid-flow. Severity low (i18n/UX regression, no data or auth-correctness impact). Confidence medium: the raw-router imports and unprefixed paths are confirmed by static read and contradict the documented convention + the locale-aware wrapper the rest of the app uses; the exact default-locale landing is inferred from next-intl routing behaviour rather than runtime-confirmed. Fix: import `useRouter` (and `redirect`) from the app's `@/i18n/routing` (or `@/i18n/navigation`) locale-aware navigation in all three auth pages so `router.push`/`router.replace` preserve the active locale, matching the `Link` usage already in login/page.tsx."
+      ]
+    }
+  ]
+}

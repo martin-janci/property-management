@@ -5,8 +5,15 @@
  * Handles the redirect from PM OAuth and validates the session.
  */
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { type CSSProperties, Suspense, useEffect, useState } from 'react';
+// Locale-aware navigation: `useRouter`/`Link` from `@/i18n/routing` keep the
+// active `/[locale]/…` prefix on redirects and links (matches the login page).
+// `next/navigation`'s router would drop the locale and bounce non-default
+// locales back to `sk`. `useSearchParams` still comes from `next/navigation`
+// (next-intl does not re-export it).
+import { Link, useRouter } from '@/i18n/routing';
 
 /**
  * sessionStorage key holding the one-shot CSRF nonce issued when the SSO flow
@@ -59,11 +66,12 @@ const styles: Record<string, CSSProperties> = {
 };
 
 function LoadingSpinner() {
+  const t = useTranslations('auth.callback');
   return (
     <main style={styles.container}>
       <div style={styles.content}>
         <div style={styles.spinner} />
-        <p style={styles.loadingText}>Loading...</p>
+        <p style={styles.loadingText}>{t('loading')}</p>
         <style>{`
           @keyframes spin {
             from { transform: rotate(0deg); }
@@ -76,6 +84,7 @@ function LoadingSpinner() {
 }
 
 function SsoCallbackContent() {
+  const t = useTranslations('auth.callback');
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
@@ -103,7 +112,7 @@ function SsoCallbackContent() {
     const savedState = sessionStorage.getItem(SSO_STATE_KEY);
 
     if (savedState && state !== savedState) {
-      setError('Invalid state token. Please try logging in again.');
+      setError(t('invalidState'));
       return;
     }
 
@@ -121,17 +130,17 @@ function SsoCallbackContent() {
       !rawRedirect.startsWith('//') &&
       !rawRedirect.startsWith('/\\');
     router.replace(isSafeRedirect ? rawRedirect : '/');
-  }, [router, searchParams]);
+  }, [router, searchParams, t]);
 
   if (error) {
     return (
       <main style={styles.container}>
         <div style={styles.content}>
-          <h1 style={styles.errorTitle}>Login Failed</h1>
+          <h1 style={styles.errorTitle}>{t('title')}</h1>
           <p style={styles.errorMessage}>{error}</p>
-          <a href="/" style={styles.button}>
-            Return Home
-          </a>
+          <Link href="/" style={styles.button}>
+            {t('returnHome')}
+          </Link>
         </div>
       </main>
     );
@@ -141,7 +150,7 @@ function SsoCallbackContent() {
     <main style={styles.container}>
       <div style={styles.content}>
         <div style={styles.spinner} />
-        <p style={styles.loadingText}>Completing login...</p>
+        <p style={styles.loadingText}>{t('completingLogin')}</p>
         <style>{`
           @keyframes spin {
             from { transform: rotate(0deg); }

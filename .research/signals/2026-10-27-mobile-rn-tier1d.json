@@ -1,0 +1,54 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-27",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "dispatcher-tier1d-demand-driven (buffer below floor; oldest-unreviewed segment per review_cursor = mobile-rn @ 2026-10-19)",
+  "experts_used": [
+    "frontend",
+    "tester"
+  ],
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-nfc-explicit-id-no-expiry",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:118-119 — startAccessSession(credentialId) resolves an explicitly-passed credential via credentialManager.getCredentialById(credentialId), which (NFCCredentialManager.ts:150-152) only matches on id and does NOT check status or validUntil. The auto-select branch (line 121) uses getActiveCredentials() which filters `status === 'active' && validUntil > now` (NFCCredentialManager.ts:140-144). So the explicit-id path starts an access session (and proceeds to transmit) with an expired or revoked credential that the auto-select path would reject — a client-side credential-validation gap / defense-in-depth inconsistency. Fix: have startAccessSession re-validate the resolved credential's status/validUntil regardless of whether the id was supplied explicitly."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-i18n-hardcoded-strings",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "improvement",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx:66,79 — user-facing Alert.alert titles/messages hardcoded in English ('Widget Added', 'Widgets Updated', 'All widgets have been refreshed.') while the same file uses t() for other strings (lines 92,165).",
+        "frontend/apps/mobile/src/screens/help/FeedbackScreen.tsx:216 — Alert.alert('Diagnostic Report', ...) hardcoded title in a file that otherwise uses t() for alerts (lines 64,69,75).",
+        "frontend/apps/mobile/src/screens/faults/FaultsListScreen.tsx:88 — reportedBy fallback hardcoded as English 'Resident'.",
+        "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx:169 — last-message placeholder hardcoded as 'No messages yet.'. App targets sk/cs/de/en; these bypass react-i18next."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-widget-silent-error-swallow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:376-380 — the request() catch block swallows every failure (non-2xx and network) and returns `{} as T` as a 'mock data fallback'. The empty object is cast across the API boundary and handed to widget renderers, so a failed/unauthorized fetch is indistinguishable from an empty-but-successful response: widgets silently render blank/default data instead of surfacing an error or stale-data state, and the only signal is a __DEV__-gated console.error. Consider returning a typed error/empty-state marker the widget layer can detect rather than an untyped `{} as T`."
+      ],
+      "expert": "tester"
+    }
+  ]
+}

@@ -9,9 +9,21 @@ use db::repositories::AccountingRepository;
 use rust_decimal::Decimal;
 use serde::Deserialize;
 use sqlx::PgConnection;
+use std::collections::HashMap;
 use std::io::Cursor;
 use std::str::FromStr;
 use uuid::Uuid;
+
+/// Normalise an IBAN for comparison: drop all whitespace and upper-case it, so
+/// `"sk11 1000"` and `"SK111000"` compare equal. Bank exports vary in casing
+/// and grouping; the counterparty IBAN on a statement line and the IBAN stored
+/// on a contact must be compared on their canonical form, not byte-for-byte.
+fn normalize_iban(raw: &str) -> String {
+    raw.chars()
+        .filter(|c| !c.is_whitespace())
+        .collect::<String>()
+        .to_uppercase()
+}
 
 #[derive(Debug, Deserialize)]
 struct CsvLine {
@@ -103,13 +115,13 @@ impl AccountingService {
     ) -> Result<(), AppError> {
         let lines = self
             .repo
-            .list_bank_statement_lines_rls(&mut *executor, statement_id)
+            .list_bank_statement_lines_for_tenant(&mut *executor, tenant_id, statement_id)
             .await
             .map_err(|e| AppError::Database(e.to_string()))?;
 
         let open_invoices = self
             .repo
-            .list_invoices_rls(&mut *executor)
+            .list_invoices_for_tenant(&mut *executor, tenant_id)
             .await
             .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -121,15 +133,60 @@ impl AccountingService {
             })
             .collect();
 
+        // Contact IBANs, keyed by contact id, for the counterparty-IBAN
+        // corroboration below. An invoice carries no IBAN of its own — the
+        // payer's account lives on its `Contact` — so we resolve it once here
+        // instead of per (line, invoice) pair. Only non-empty IBANs are kept,
+        // in canonical form.
+        let contact_iban: HashMap<Uuid, String> = self
+            .repo
+            .list_contacts_for_tenant(&mut *executor, tenant_id)
+            .await
+            .map_err(|e| AppError::Database(e.to_string()))?
+            .into_iter()
+            .filter_map(|c| {
+                c.iban
+                    .map(|i| normalize_iban(&i))
+                    .filter(|i| !i.is_empty())
+                    .map(|i| (c.id, i))
+            })
+            .collect();
+
+        let threshold = Decimal::from_str("0.5").unwrap();
+
         for line in lines {
             if line.match_state != "unmatched" && line.match_state != "suggested" {
                 continue;
             }
 
+            // Score every open invoice for this line, then surface only the
+            // best-scoring tier. Previously EVERY invoice that cleared the
+            // auto-suggest threshold was upserted as a suggestion with no
+            // `break`, so a line sharing a variable symbol with N open invoices
+            // was auto-suggested against all N — burying the genuinely-best
+            // candidate under strictly-worse ones and over-generating
+            // PaymentMatch rows a human then has to reject. We now keep the
+            // maximum-confidence candidates only, with ties retained so
+            // genuinely equally-good invoices are all surfaced for manual
+            // disambiguation.
+            let mut scored: Vec<(&Invoice, Decimal)> = Vec::new();
+
+            // The line's counterparty IBAN in canonical form, resolved once per
+            // line for the IBAN corroboration below.
+            let line_iban = line
+                .counterparty_iban
+                .as_deref()
+                .map(normalize_iban)
+                .filter(|i| !i.is_empty());
+
             for invoice in &open_invoices {
                 let mut confidence = Decimal::ZERO;
 
-                // 1. Variable Symbol match (highest weight)
+                // 1. Variable Symbol match (highest weight) — the primary
+                //    "auto-match by reference" signal (FR-16.8 / BR-16.8.1). It
+                //    is the only signal strong enough on its own to clear the
+                //    auto-suggest threshold; amount and IBAN below are
+                //    corroboration that breaks ties between VS-sharing invoices.
                 if let (Some(l_vs), Some(i_vs)) = (&line.variable_symbol, &invoice.variable_symbol)
                 {
                     if l_vs == i_vs && !l_vs.is_empty() {
@@ -137,7 +194,7 @@ impl AccountingService {
                     }
                 }
 
-                // 2. Amount match (corroboration)
+                // 2. Amount match (corroboration / tie-breaker)
                 let remaining_amount = invoice.total_amount - invoice.paid_amount;
                 if line.amount == remaining_amount {
                     confidence += Decimal::from_str("0.15").unwrap();
@@ -145,33 +202,62 @@ impl AccountingService {
                     confidence += Decimal::from_str("0.05").unwrap();
                 }
 
-                // TODO: Date proximity, IBAN match
-
-                if confidence >= Decimal::from_str("0.5").unwrap() {
-                    let p_match = PaymentMatch {
-                        id: Uuid::new_v4(),
-                        tenant_id,
-                        statement_line_id: line.id,
-                        invoice_id: invoice.id,
-                        confidence,
-                        decided_by: None,
-                        decided_at: None,
-                        state: PaymentMatchState::Suggested,
-                    };
-                    self.repo
-                        .upsert_payment_match_rls(&mut *executor, p_match)
-                        .await
-                        .map_err(|e| AppError::Database(e.to_string()))?;
-
-                    self.repo
-                        .update_bank_statement_line_match_state_rls(
-                            &mut *executor,
-                            line.id,
-                            "suggested".to_string(),
-                        )
-                        .await
-                        .map_err(|e| AppError::Database(e.to_string()))?;
+                // 3. Counterparty IBAN match (corroboration / tie-breaker).
+                //    When several invoices share a variable symbol (e.g. a
+                //    tenant's recurring monthly invoices), a matching payer
+                //    account promotes the invoice whose contact actually owns
+                //    the originating IBAN above its VS-only peers.
+                if let Some(l_iban) = &line_iban {
+                    if contact_iban.get(&invoice.contact_id) == Some(l_iban) {
+                        confidence += Decimal::from_str("0.05").unwrap();
+                    }
                 }
+
+                // TODO: Date proximity
+
+                // Confidence is a 0..1 score; the weights above sum to at most
+                // 1.0, but clamp defensively so future signals can't overflow
+                // the documented range.
+                let confidence = confidence.min(Decimal::ONE);
+
+                if confidence >= threshold {
+                    scored.push((invoice, confidence));
+                }
+            }
+
+            // Retain only the candidates at the highest confidence (ties kept).
+            let Some(best_confidence) = scored.iter().map(|(_, c)| *c).max() else {
+                continue;
+            };
+
+            let mut suggested_any = false;
+            for (invoice, confidence) in scored.iter().filter(|(_, c)| *c == best_confidence) {
+                let p_match = PaymentMatch {
+                    id: Uuid::new_v4(),
+                    tenant_id,
+                    statement_line_id: line.id,
+                    invoice_id: invoice.id,
+                    confidence: *confidence,
+                    decided_by: None,
+                    decided_at: None,
+                    state: PaymentMatchState::Suggested,
+                };
+                self.repo
+                    .upsert_payment_match_rls(&mut *executor, p_match)
+                    .await
+                    .map_err(|e| AppError::Database(e.to_string()))?;
+                suggested_any = true;
+            }
+
+            if suggested_any {
+                self.repo
+                    .update_bank_statement_line_match_state_rls(
+                        &mut *executor,
+                        line.id,
+                        "suggested".to_string(),
+                    )
+                    .await
+                    .map_err(|e| AppError::Database(e.to_string()))?;
             }
         }
 
@@ -182,13 +268,14 @@ impl AccountingService {
     pub async fn confirm_match(
         &self,
         executor: &mut PgConnection,
-        _tenant_id: Uuid,
+        tenant_id: Uuid,
         match_id: Uuid,
         user_id: Uuid,
     ) -> Result<(), AppError> {
+        // Explicit tenant predicate: a foreign match id is NotFound (404).
         let p_match = self
             .repo
-            .find_payment_match_rls(&mut *executor, match_id)
+            .find_payment_match_for_tenant(&mut *executor, tenant_id, match_id)
             .await
             .map_err(|e| AppError::Database(e.to_string()))?
             .ok_or_else(|| AppError::NotFound(format!("Match {} not found", match_id)))?;
@@ -260,12 +347,14 @@ impl AccountingService {
     pub async fn reject_match(
         &self,
         executor: &mut PgConnection,
+        tenant_id: Uuid,
         match_id: Uuid,
         user_id: Uuid,
     ) -> Result<(), AppError> {
+        // Explicit tenant predicate: a foreign match id is NotFound (404).
         let p_match = self
             .repo
-            .find_payment_match_rls(&mut *executor, match_id)
+            .find_payment_match_for_tenant(&mut *executor, tenant_id, match_id)
             .await
             .map_err(|e| AppError::Database(e.to_string()))?
             .ok_or_else(|| AppError::NotFound(format!("Match {} not found", match_id)))?;

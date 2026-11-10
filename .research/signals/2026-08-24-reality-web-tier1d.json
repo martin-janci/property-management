@@ -1,0 +1,57 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-24T10:40:00Z",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-reality-web-agency-slug-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx — the PUBLIC, SEO-indexed agency profile page imports NO next-intl (no useTranslations/getTranslations, grep count 0); its own header comment even claims strings are 'via next-intl' but nothing is wrapped. Every visible string is hardcoded Slovak on the 4-locale portal (sk/cs/de/en), so cs/de/en visitors and crawlers see Slovak-only content.",
+        "Hardcoded Slovak literals: L36 'Načítavam…' (loading state), L46 'Kancelária sa nenašla.' (not-found state), L223 'Žiadne aktívne ponuky.' (empty-listings state), L279 heading 'Kontakt', L302 link label '🌐 Navštíviť web'.",
+        "Higher impact than the prior (done) reality-web component i18n findings: this is a full public route (not a widget), SEO-relevant, and hardcoded in Slovak rather than English — so 3 of the 4 supported locales render the wrong language on a page indexed by search engines. Distinct file from ComparisonView/RealtorManagement/AgencyErrorStates already covered."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-checksession-5xx-logout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/auth-context.tsx:142-149 — checkSession() (runs on every mount) treats ANY non-ok /api/v1/users/me response as a definitive auth failure: `if (meResp.ok) {...return} clearStoredSession()`. A transient 5xx (500/502/503 backend blip, gateway restart) therefore wipes the stored bearer session and logs the user out.",
+        "The sibling refreshSession() at L221-237 handles the exact same call correctly: it only calls clearStoredSession()/setUser(null) on `meResp.status === 401 || 403` and explicitly leaves 5xx as transient ('Any other status (5xx, etc.) is treated as transient'). checkSession lacks that status discrimination, so the two entry points disagree on the same server response.",
+        "Effect: a momentary reality-server hiccup at page load silently signs valid users out (and drops them to the cookie/SSO path which, per the login() comment, isn't fully shipped). Fix: gate the clearStoredSession() in checkSession on 401/403 like refreshSession does."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-inquiry-cancel-no-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx:47-50 — handleCancel() fires `cancelInquiry.mutate(inquiry.id)` and immediately `setShowCancelConfirm(false)` with no error handling: the useCancelInquiry mutation has no onError, and the component renders no isError branch for it. A failed cancel (network error / 4xx-5xx) is swallowed — the confirm dialog closes, no toast/alert is shown, and the inquiry silently stays active while the user believes it was cancelled.",
+        "Contrast with the page's query error handling (L332 'Failed to load inquiries. Please try again.'), which does surface load failures — only the mutation path lacks equivalent feedback.",
+        "Low severity (no crash/data loss) but a real UX-correctness gap on an authenticated action. Fix: pass onError to mutate() (or read cancelInquiry.isError) and surface a retry/error message; keep the confirm open or re-open on failure."
+      ]
+    }
+  ]
+}

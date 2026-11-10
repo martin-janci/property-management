@@ -413,6 +413,7 @@ impl BuildingCertificationRepository {
         &self,
         executor: E,
         org_id: Uuid,
+        cert_id: Uuid,
         credit_id: Uuid,
     ) -> Result<Option<CertificationCredit>, sqlx::Error>
     where
@@ -421,11 +422,12 @@ impl BuildingCertificationRepository {
         sqlx::query_as::<_, CertificationCredit>(
             r#"
             SELECT * FROM certification_credits
-            WHERE organization_id = $1 AND id = $2
+            WHERE organization_id = $1 AND id = $2 AND certification_id = $3
             "#,
         )
         .bind(org_id)
         .bind(credit_id)
+        .bind(cert_id)
         .fetch_optional(executor)
         .await
     }
@@ -458,6 +460,7 @@ impl BuildingCertificationRepository {
         &self,
         executor: E,
         org_id: Uuid,
+        cert_id: Uuid,
         credit_id: Uuid,
         input: UpdateCertificationCredit,
     ) -> Result<Option<CertificationCredit>, sqlx::Error>
@@ -481,7 +484,7 @@ impl BuildingCertificationRepository {
                 responsible_user_id = COALESCE($14, responsible_user_id),
                 due_date = COALESCE($15, due_date),
                 updated_at = NOW()
-            WHERE organization_id = $1 AND id = $2
+            WHERE organization_id = $1 AND id = $2 AND certification_id = $16
             RETURNING *
             "#,
         )
@@ -504,6 +507,7 @@ impl BuildingCertificationRepository {
         .bind(&input.notes)
         .bind(input.responsible_user_id)
         .bind(input.due_date)
+        .bind(cert_id)
         .fetch_optional(executor)
         .await
     }
@@ -513,6 +517,7 @@ impl BuildingCertificationRepository {
         &self,
         executor: E,
         org_id: Uuid,
+        cert_id: Uuid,
         credit_id: Uuid,
     ) -> Result<bool, sqlx::Error>
     where
@@ -521,11 +526,12 @@ impl BuildingCertificationRepository {
         let result = sqlx::query(
             r#"
             DELETE FROM certification_credits
-            WHERE organization_id = $1 AND id = $2
+            WHERE organization_id = $1 AND id = $2 AND certification_id = $3
             "#,
         )
         .bind(org_id)
         .bind(credit_id)
+        .bind(cert_id)
         .execute(executor)
         .await?;
 
@@ -597,6 +603,7 @@ impl BuildingCertificationRepository {
         &self,
         executor: E,
         org_id: Uuid,
+        cert_id: Uuid,
         doc_id: Uuid,
     ) -> Result<bool, sqlx::Error>
     where
@@ -605,11 +612,12 @@ impl BuildingCertificationRepository {
         let result = sqlx::query(
             r#"
             DELETE FROM certification_documents
-            WHERE organization_id = $1 AND id = $2
+            WHERE organization_id = $1 AND id = $2 AND certification_id = $3
             "#,
         )
         .bind(org_id)
         .bind(doc_id)
+        .bind(cert_id)
         .execute(executor)
         .await?;
 
@@ -679,6 +687,7 @@ impl BuildingCertificationRepository {
         &self,
         executor: E,
         org_id: Uuid,
+        cert_id: Uuid,
         milestone_id: Uuid,
         input: UpdateCertificationMilestone,
     ) -> Result<Option<CertificationMilestone>, sqlx::Error>
@@ -698,7 +707,7 @@ impl BuildingCertificationRepository {
                 assigned_to = COALESCE($10, assigned_to),
                 notes = COALESCE($11, notes),
                 updated_at = NOW()
-            WHERE organization_id = $1 AND id = $2
+            WHERE organization_id = $1 AND id = $2 AND certification_id = $12
             RETURNING *
             "#,
         )
@@ -713,6 +722,7 @@ impl BuildingCertificationRepository {
         .bind(input.depends_on_milestone_id)
         .bind(input.assigned_to)
         .bind(&input.notes)
+        .bind(cert_id)
         .fetch_optional(executor)
         .await
     }
@@ -722,6 +732,7 @@ impl BuildingCertificationRepository {
         &self,
         executor: E,
         org_id: Uuid,
+        cert_id: Uuid,
         milestone_id: Uuid,
     ) -> Result<bool, sqlx::Error>
     where
@@ -730,11 +741,12 @@ impl BuildingCertificationRepository {
         let result = sqlx::query(
             r#"
             DELETE FROM certification_milestones
-            WHERE organization_id = $1 AND id = $2
+            WHERE organization_id = $1 AND id = $2 AND certification_id = $3
             "#,
         )
         .bind(org_id)
         .bind(milestone_id)
+        .bind(cert_id)
         .execute(executor)
         .await?;
 

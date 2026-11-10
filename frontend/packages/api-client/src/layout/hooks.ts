@@ -12,8 +12,21 @@ import {
   type ResolvedScreen,
   saveTenantLayoutOverride,
   type TenantLayoutEnvelope,
+  TenantLayoutError,
   type TenantOverride,
 } from './api';
+
+/**
+ * Retry once on transient failures, but never on a 4xx: a 404 from
+ * `/resolved` means "no published layout for this screen" and callers fall
+ * back to their default layout, so repeating the request only adds noise.
+ */
+export function retryLayoutQuery(failureCount: number, error: unknown): boolean {
+  if (error instanceof TenantLayoutError && error.status >= 400 && error.status < 500) {
+    return false;
+  }
+  return failureCount < 1;
+}
 
 export const layoutKeys = {
   all: ['layout'] as const,
@@ -29,7 +42,7 @@ export function useResolvedLayout(screen: string, platform: 'web' | 'mobile' = '
     queryKey: layoutKeys.resolved(screen, platform),
     queryFn: () => fetchResolvedLayout(screen, platform),
     staleTime: 60_000,
-    retry: 1,
+    retry: retryLayoutQuery,
   });
 }
 

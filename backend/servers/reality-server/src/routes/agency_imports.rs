@@ -4,7 +4,6 @@
 //! D1.2: handlers now use the unified `RequestPrincipal` extractor.
 
 use crate::state::AppState;
-use crate::util::url_validator::validate_fetch_url;
 use api_core::extractors::RequestPrincipal;
 use axum::{
     extract::{Path, State},
@@ -12,6 +11,7 @@ use axum::{
     Json, Router,
 };
 use chrono::{DateTime, Utc};
+use common::url_validation::validate_external_url;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use utoipa::ToSchema;
@@ -235,7 +235,7 @@ pub async fn test_connection(
     // must re-validate the resolved IP at fetch time to defend against
     // DNS rebinding.
     if let Some(url) = data.feed_url.as_deref() {
-        if let Err(err) = validate_fetch_url(url) {
+        if let Err(err) = validate_external_url(url) {
             return Err((axum::http::StatusCode::BAD_REQUEST, err.to_string()));
         }
     }
@@ -287,7 +287,7 @@ pub async fn run_import(
     // resolution, re-run this check on the resolved IP — a domain that
     // passes here can still resolve to a private IP (DNS rebinding).
     if let Some(url) = data.feed_url.as_deref() {
-        if let Err(err) = validate_fetch_url(url) {
+        if let Err(err) = validate_external_url(url) {
             return Err((axum::http::StatusCode::BAD_REQUEST, err.to_string()));
         }
     }

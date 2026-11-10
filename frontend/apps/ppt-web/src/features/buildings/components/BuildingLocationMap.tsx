@@ -12,6 +12,7 @@
  */
 
 import type { GeoLocation } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 
 interface BuildingLocationMapProps {
   location?: GeoLocation;
@@ -25,6 +26,8 @@ function fmt(value: number): string {
 }
 
 export function BuildingLocationMap({ location, name }: BuildingLocationMapProps) {
+  const { t } = useTranslation();
+
   if (!location || !Number.isFinite(location.latitude) || !Number.isFinite(location.longitude)) {
     return null;
   }
@@ -49,19 +52,21 @@ export function BuildingLocationMap({ location, name }: BuildingLocationMapProps
   return (
     <div className="bg-white rounded-lg shadow-md p-6 mb-6">
       <div className="flex items-start justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">Location</h2>
+        <h2 className="text-lg font-semibold text-gray-900">{t('buildings.map.title')}</h2>
         <a
           href={viewUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="text-sm text-blue-600 hover:text-blue-800"
         >
-          Open in OpenStreetMap
+          {t('buildings.map.openInOsm')}
         </a>
       </div>
       <div className="overflow-hidden rounded-lg border border-gray-200">
         <iframe
-          title={name ? `Map showing ${name}` : 'Building location map'}
+          title={
+            name ? t('buildings.map.iframeTitle', { name }) : t('buildings.map.iframeTitleFallback')
+          }
           src={embedUrl}
           className="w-full h-72 border-0"
           loading="lazy"

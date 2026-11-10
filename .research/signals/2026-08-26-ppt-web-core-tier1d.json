@@ -1,0 +1,31 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-26T19:20:00Z",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "oldest-unreviewed",
+  "selection_detail": "Dispatcher demand: claimable buffer starved and backlog parked on mobile-native/KMP (unlandable in cloud runner), so a NON-mobile, cloud-landable segment was required. CHURN_FILES not supplied (hotspot_history is stale May churn on api-server). Among non-mobile segments, today's (2026-08-26) tier1d runs already covered api-handlers + reality-web; reality-server/api-core/ppt-web-ui carry 2026-08-24/25 signal files. ppt-web-core is the genuinely oldest actually-reviewed non-mobile segment (last signal 2026-08-21, review_cursor.ppt-web-core=2026-08-21) and had no coverage today. Not saturated: 0 open code-review-finding rows for this segment in backlog.json. Prior ppt-web-core findings deliberately NOT re-flagged: authctx-no-token-expiry-check (08-21), errorhandler-i18n-gap (08-17). Scope = frontend/apps/ppt-web/src core dirs (lib/, hooks/, contexts/, routes/) excluding pages/components/features (those are ppt-web-ui).",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 1,
+  "note": "Segment is very mature: lib/api.ts (retry/idempotency), lib/websocket.ts (token-rotation teardown, backoff budget), lib/errorHandler.ts, hooks/useNetworkStatus.ts, lib/analytics.ts all read clean with prior-fix comments. The one real finding is a fully-traced dead feature: the WebSocket query-invalidation-on-server-push path (the stated purpose of WebSocketContext) never fires — App.tsx omits the onEntityEvent prop AND the client's colon-namespaced event names don't match the server's dotted event names. Frontend-only, landable in the cloud runner. Confidence high: traced entry (App.tsx authenticated shell, prod) -> WebSocketProvider(no onEntityEvent) -> invalidation effect early-return, plus server-vs-client event-name mismatch confirmed against api-server ws_notifications.rs.",
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-ws-query-invalidation-dead",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/App.tsx:94-99 — WebSocketWrapper renders <WebSocketProvider> with only the `auth` prop; it passes NO `onEntityEvent`. In frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:298-300 the entity-event subscription effect begins `if (!service || !onEntityEvent) return;` — so with onEntityEvent undefined it never subscribes to any entity event and never invalidates a TanStack Query cache. The file header advertises 'Query invalidation on server push' as the provider's purpose; in production that purpose is unwired.",
+        "Independent second defect on the same path — event-name mismatch: WebSocketContext.tsx:33-40 (`eventToQueryKeys`) keys on colon-namespaced names ('entity:announcement','entity:fault','entity:vote','entity:document','entity:message','entity:neighbor') and lines 313 subscribe to 'entity:updated'/'entity:created'/'entity:deleted'. But the api-server only ever emits DOTTED event names: backend/servers/api-server/src/routes/ws_notifications.rs:300-301 emits event='notification.created', line 219-220 passes msg.event_type through verbatim (e.g. 'announcements.notification'), and a repo-wide grep for a colon-style 'entity:' event in api-server/src finds none. parseServerMessage (websocket.ts:65-82) maps server `event` -> `type` verbatim with no colon conversion, and handleMessage dispatches on that raw type — so even if onEntityEvent WERE wired, no 'entity:*' subscription could ever match a real server frame.",
+        "Not a key-shape problem: the eventToQueryKeys VALUES (['announcements'],['faults'],['documents'],['messages'],['neighbors'],['votes']) do match the query-key roots in lib/queryKeys.ts (announcements.all=['announcements'], faults.all=['faults'], etc.), so a prefix invalidateQueries would work — the break is purely the missing prop + the event-name namespace mismatch.",
+        "User-facing effect (medium): the socket itself connects fine (ConnectionStatus shows 'live'), but a server push for a new announcement / fault / message / vote never refreshes any cached list — the user must manually refetch/navigate to see live data, silently defeating the realtime UX. Fix options: (a) wire onEntityEvent in App.tsx to queryClient.invalidateQueries, and (b) reconcile the event-name contract — either have the server emit the 'entity:*' names the client subscribes to, or remap eventToQueryKeys / the subscription keys onto the server's dotted 'notification.created'/'<domain>.notification' vocabulary. The JSDoc examples in useWebSocket.ts (message:new, notification:announcement, entity:updated) are also written against the non-existent colon vocabulary and should be corrected in the same pass.",
+        "Confidence high: fully traced from a production entry point (App.tsx WebSocketWrapper sits in the authenticated app shell) to the early-return, and the server-vs-client event-name mismatch is confirmed by direct read of ws_notifications.rs plus a negative grep for 'entity:' events across api-server/src."
+      ]
+    }
+  ]
+}

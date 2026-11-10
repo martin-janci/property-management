@@ -2,9 +2,17 @@
 
 use crate::common;
 
-use axum::{http::Method, Router};
+use api_core::middleware::TenantRateLimiterSet;
+use axum::{
+    body::Body,
+    http::{header, Method, Request, StatusCode},
+    Router,
+};
 use reality_server::routes;
 use sqlx::PgPool;
+use std::sync::Arc;
+use std::time::Duration;
+use tower::ServiceExt;
 use uuid::Uuid;
 
 fn reports_router(pool: PgPool) -> Router {
@@ -13,6 +21,96 @@ fn reports_router(pool: PgPool) -> Router {
     Router::new()
         .nest("/api/v1/reports", routes::reports::router())
         .with_state(state)
+}
+
+/// Router whose anonymous per-IP report throttle is capped at `rpm` requests
+/// per minute, so a regression test can trip it in a handful of calls instead
+/// of the production default. Reuses the same `inquiry_rate_limiters` slot the
+/// route enforces against.
+fn reports_router_rate_limited(pool: PgPool, rpm: u32) -> Router {
+    common::ensure_test_env();
+    let mut state = common::make_app_state(pool);
+    state.inquiry_rate_limiters = Arc::new(TenantRateLimiterSet::with_default_bounded(
+        rpm,
+        Duration::from_secs(3600),
+        1000,
+    ));
+    Router::new()
+        .nest("/api/v1/reports", routes::reports::router())
+        .with_state(state)
+}
+
+/// Seed an `active` listing and return its id (org + owner created inline).
+async fn seed_active_listing(pool: &PgPool, tag: &str) -> Uuid {
+    let owner = sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO users (email, password_hash, name, status, principal_kind)
+        VALUES ($1, 'hash', $2, 'active', 'platform')
+        RETURNING id
+        "#,
+    )
+    .bind(format!("{tag}@reports-rl.test"))
+    .bind(format!("Reports RL {tag}"))
+    .fetch_one(pool)
+    .await
+    .unwrap_or_else(|e| panic!("seed_user({tag}): {e}"));
+
+    let org = sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO organizations (name, slug, contact_email, status)
+        VALUES ($1, $2, $3, 'active')
+        RETURNING id
+        "#,
+    )
+    .bind(format!("Reports Org {tag}"))
+    .bind(format!("reports-org-{tag}"))
+    .bind(format!("{tag}@reports-org.test"))
+    .fetch_one(pool)
+    .await
+    .unwrap_or_else(|e| panic!("seed_org({tag}): {e}"));
+
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO listings
+            (organization_id, created_by, status, transaction_type,
+             title, property_type, price, currency,
+             street, city, postal_code, country)
+        VALUES ($1, $2, 'active', 'sale',
+                'Report Listing', 'apartment', 100000.00, 'EUR',
+                'Test Street 7', 'Bratislava', '81101', 'SK')
+        RETURNING id
+        "#,
+    )
+    .bind(org)
+    .bind(owner)
+    .fetch_one(pool)
+    .await
+    .unwrap_or_else(|e| panic!("seed_listing({tag}): {e}"))
+}
+
+/// POST /api/v1/reports for `listing_id` with a fixed `X-Forwarded-For`.
+async fn post_report_from_ip(router: &Router, listing_id: Uuid, xff: &str) -> StatusCode {
+    let body = serde_json::json!({
+        "listing_id": listing_id,
+        "problem_type": "fraudulent_listing",
+        "description": "spam report body",
+    });
+    let req = Request::builder()
+        .method(Method::POST)
+        .uri("/api/v1/reports")
+        .header(header::CONTENT_TYPE, "application/json")
+        .header("x-forwarded-for", xff)
+        .body(Body::from(serde_json::to_vec(&body).unwrap()))
+        .unwrap();
+    router.clone().oneshot(req).await.unwrap().status()
+}
+
+async fn reports_count(pool: &PgPool, listing_id: Uuid) -> i64 {
+    sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM listing_reports WHERE listing_id = $1")
+        .bind(listing_id)
+        .fetch_one(pool)
+        .await
+        .expect("count listing_reports")
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -62,4 +160,354 @@ async fn list_my_reports_authenticated_returns_200(pool: PgPool) {
     let token = common::mint_token(user_id);
     let status = common::send(&router, Method::GET, "/api/v1/reports/me", Some(&token)).await;
     assert_eq!(status, axum::http::StatusCode::OK);
+}
+
+/// Regression: `total` in the paginated response must be the full matching
+/// row count, not the length of the current page. Before the fix
+/// `list_my_reports` returned `total = reports.len()`, so any non-final page
+/// reported `total == limit` and `ceil(total / limit)` pagination broke.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn list_my_reports_total_reflects_full_count_not_page_len(pool: PgPool) {
+    // Seed an org + listing + reporter user, then 3 reports by that user.
+    let org_id = sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO organizations (name, slug, contact_email, status) \
+         VALUES ('Rep Org', 'rep-org-total', 'rep-total@org.test', 'active') RETURNING id",
+    )
+    .fetch_one(&pool)
+    .await
+    .expect("seed org");
+
+    let user_id = Uuid::new_v4();
+    sqlx::query(
+        "INSERT INTO users (id, email, password_hash, name, principal_kind, status) \
+         VALUES ($1, $2, 'x', 'Rep User', 'platform', 'active')",
+    )
+    .bind(user_id)
+    .bind(format!("reports-total-{user_id}@test.internal"))
+    .execute(&pool)
+    .await
+    .expect("seed user");
+
+    let listing_id = sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO listings \
+            (organization_id, created_by, status, transaction_type, title, \
+             property_type, price, currency, street, city, postal_code, country) \
+         VALUES ($1, $2, 'active', 'sale', 'Rep Listing', 'apartment', 100000.00, \
+                 'EUR', 'Test Street 1', 'Bratislava', '81101', 'SK') RETURNING id",
+    )
+    .bind(org_id)
+    .bind(user_id)
+    .fetch_one(&pool)
+    .await
+    .expect("seed listing");
+
+    for i in 0..3 {
+        sqlx::query(
+            "INSERT INTO listing_reports \
+                (listing_id, reporter_user_id, problem_type, description, status) \
+             VALUES ($1, $2, 'spam', $3, 'received')",
+        )
+        .bind(listing_id)
+        .bind(user_id)
+        .bind(format!("report {i}"))
+        .execute(&pool)
+        .await
+        .expect("seed report");
+    }
+
+    let router = reports_router(pool);
+    let token = common::mint_token(user_id);
+
+    // Ask for a page of 2 out of 3.
+    let req = axum::http::Request::builder()
+        .method(Method::GET)
+        .uri("/api/v1/reports/me?limit=2")
+        .header(axum::http::header::AUTHORIZATION, format!("Bearer {token}"))
+        .body(axum::body::Body::empty())
+        .unwrap();
+    let resp = router.clone().oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), axum::http::StatusCode::OK);
+
+    let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .expect("read body");
+    let json: serde_json::Value = serde_json::from_slice(&bytes).expect("parse body");
+
+    assert_eq!(
+        json["reports"].as_array().expect("reports array").len(),
+        2,
+        "page should hold exactly `limit` (2) rows"
+    );
+    assert_eq!(
+        json["total"].as_u64().expect("total is a number"),
+        3,
+        "total must report the full matching count (3), not the page length (2)"
+    );
+}
+
+/// Seed a reporter user + one `received` report and return `(user_id, token)`.
+/// Used by the status-filter validation regression below.
+async fn seed_reporter_with_one_report(pool: &PgPool, tag: &str) -> (Uuid, String) {
+    let org_id = sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO organizations (name, slug, contact_email, status) \
+         VALUES ($1, $2, $3, 'active') RETURNING id",
+    )
+    .bind(format!("Rep Org {tag}"))
+    .bind(format!("rep-org-{tag}"))
+    .bind(format!("{tag}@rep-org.test"))
+    .fetch_one(pool)
+    .await
+    .expect("seed org");
+
+    let user_id = Uuid::new_v4();
+    sqlx::query(
+        "INSERT INTO users (id, email, password_hash, name, principal_kind, status) \
+         VALUES ($1, $2, 'x', 'Rep User', 'platform', 'active')",
+    )
+    .bind(user_id)
+    .bind(format!("reports-status-{user_id}@test.internal"))
+    .execute(pool)
+    .await
+    .expect("seed user");
+
+    let listing_id = sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO listings \
+            (organization_id, created_by, status, transaction_type, title, \
+             property_type, price, currency, street, city, postal_code, country) \
+         VALUES ($1, $2, 'active', 'sale', 'Rep Listing', 'apartment', 100000.00, \
+                 'EUR', 'Test Street 1', 'Bratislava', '81101', 'SK') RETURNING id",
+    )
+    .bind(org_id)
+    .bind(user_id)
+    .fetch_one(pool)
+    .await
+    .expect("seed listing");
+
+    sqlx::query(
+        "INSERT INTO listing_reports \
+            (listing_id, reporter_user_id, problem_type, description, status) \
+         VALUES ($1, $2, 'other', 'status filter report', 'received')",
+    )
+    .bind(listing_id)
+    .bind(user_id)
+    .execute(pool)
+    .await
+    .expect("seed report");
+
+    (user_id, common::mint_token(user_id))
+}
+
+/// GET /api/v1/reports/me with a raw `status` query value, returning the
+/// response status. Keeps the query value un-encoded intentionally — the
+/// values exercised are already URL-safe.
+async fn get_my_reports_with_status(router: &Router, token: &str, status: &str) -> StatusCode {
+    let req = Request::builder()
+        .method(Method::GET)
+        .uri(format!("/api/v1/reports/me?status={status}"))
+        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+        .body(Body::empty())
+        .unwrap();
+    router.clone().oneshot(req).await.unwrap().status()
+}
+
+/// Regression: the `status` filter on GET /api/v1/reports/me must be validated
+/// against the documented enum (`received | in_review | resolved | rejected`).
+/// Before the fix an unrecognised value (typo, wrong case, non-existent status)
+/// was bound straight into `status = $4`, so it silently matched zero rows and
+/// returned a 200 empty page — indistinguishable from "you have no reports with
+/// this status". A bad filter must now be a clear 400, while a documented value
+/// (and an absent / blank filter) still yields 200.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn list_my_reports_rejects_unknown_status_filter(pool: PgPool) {
+    let (_user_id, token) = seed_reporter_with_one_report(&pool, "status-filter").await;
+    let router = reports_router(pool);
+
+    // Unknown value → 400, not a silent empty 200.
+    assert_eq!(
+        get_my_reports_with_status(&router, &token, "bogus").await,
+        StatusCode::BAD_REQUEST,
+        "unrecognised status filter must be rejected with 400"
+    );
+    // Wrong case is still invalid (status values are canonical lowercase).
+    assert_eq!(
+        get_my_reports_with_status(&router, &token, "RECEIVED").await,
+        StatusCode::BAD_REQUEST,
+        "wrong-case status filter must be rejected with 400"
+    );
+
+    // Every documented value is accepted.
+    for valid in ["received", "in_review", "resolved", "rejected"] {
+        assert_eq!(
+            get_my_reports_with_status(&router, &token, valid).await,
+            StatusCode::OK,
+            "documented status {valid:?} must be accepted"
+        );
+    }
+
+    // A blank filter means "no filter" → 200.
+    assert_eq!(
+        get_my_reports_with_status(&router, &token, "").await,
+        StatusCode::OK,
+        "blank status filter must be treated as no filter"
+    );
+}
+
+/// POST /api/v1/reports for `listing_id` with optional reporter contact
+/// fields, returning the response status. Used by the contact-validation
+/// regression below.
+async fn post_report_with_contact(
+    router: &Router,
+    listing_id: Uuid,
+    reporter_email: Option<&str>,
+    reporter_phone: Option<&str>,
+) -> StatusCode {
+    let mut body = serde_json::json!({
+        "listing_id": listing_id,
+        "problem_type": "fraudulent_listing",
+        "description": "contact validation report body",
+    });
+    if let Some(email) = reporter_email {
+        body["reporter_email"] = serde_json::json!(email);
+    }
+    if let Some(phone) = reporter_phone {
+        body["reporter_phone"] = serde_json::json!(phone);
+    }
+    let req = Request::builder()
+        .method(Method::POST)
+        .uri("/api/v1/reports")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(serde_json::to_vec(&body).unwrap()))
+        .unwrap();
+    router.clone().oneshot(req).await.unwrap().status()
+}
+
+/// Regression (input hygiene): `reporter_email` / `reporter_phone` are
+/// persisted verbatim and later shown to moderators, so a malformed value must
+/// be rejected with 400 BEFORE any INSERT, while a well-formed one (or an
+/// omitted field) still yields 201. Before the fix these fields were bound into
+/// the INSERT with no length or format checks.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn submit_report_validates_reporter_contact_fields(pool: PgPool) {
+    let listing_id = seed_active_listing(&pool, "contact-validate").await;
+    let router = reports_router(pool.clone());
+
+    // Malformed email → 400, no row written.
+    assert_eq!(
+        post_report_with_contact(&router, listing_id, Some("not-an-email"), None).await,
+        StatusCode::BAD_REQUEST,
+        "malformed reporter_email must be rejected"
+    );
+    // Malformed phone (too short / non-numeric) → 400.
+    assert_eq!(
+        post_report_with_contact(&router, listing_id, None, Some("abc")).await,
+        StatusCode::BAD_REQUEST,
+        "malformed reporter_phone must be rejected"
+    );
+    // Over-long email (> 254 chars) → 400 (length bound).
+    let long_email = format!("{}@example.com", "a".repeat(260));
+    assert_eq!(
+        post_report_with_contact(&router, listing_id, Some(&long_email), None).await,
+        StatusCode::BAD_REQUEST,
+        "over-long reporter_email must be rejected"
+    );
+    assert_eq!(
+        reports_count(&pool, listing_id).await,
+        0,
+        "no report row may be written for invalid contact input"
+    );
+
+    // Well-formed contact details → 201 and a row is written.
+    assert_eq!(
+        post_report_with_contact(
+            &router,
+            listing_id,
+            Some("reporter@example.com"),
+            Some("+421 900 123 456"),
+        )
+        .await,
+        StatusCode::CREATED,
+        "valid reporter contact must be accepted"
+    );
+    // Omitted contact fields remain valid (anonymous report) → 201.
+    assert_eq!(
+        post_report_with_contact(&router, listing_id, None, None).await,
+        StatusCode::CREATED,
+        "omitted reporter contact must still be accepted"
+    );
+    assert_eq!(
+        reports_count(&pool, listing_id).await,
+        2,
+        "both accepted reports must be persisted"
+    );
+}
+
+/// Regression (security: anonymous report flood): the anonymous POST is
+/// per-IP throttled. After the quota is exhausted from one IP, further requests
+/// get 429 and no new `listing_reports` rows are written.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn submit_report_is_rate_limited_per_ip(pool: PgPool) {
+    const RPM: u32 = 3;
+    let listing_id = seed_active_listing(&pool, "rl-single").await;
+    let router = reports_router_rate_limited(pool.clone(), RPM);
+    let ip = "203.0.113.5";
+
+    // First RPM requests are accepted and each inserts a row.
+    for i in 0..RPM {
+        let status = post_report_from_ip(&router, listing_id, ip).await;
+        assert_eq!(
+            status,
+            StatusCode::CREATED,
+            "request {i} within quota should be accepted"
+        );
+    }
+    // The next request from the same IP trips the throttle.
+    let denied = post_report_from_ip(&router, listing_id, ip).await;
+    assert_eq!(
+        denied,
+        StatusCode::TOO_MANY_REQUESTS,
+        "request over quota should be 429"
+    );
+
+    // The 429 short-circuits before the INSERT: only the accepted requests wrote rows.
+    assert_eq!(
+        reports_count(&pool, listing_id).await,
+        RPM as i64,
+        "rate-limited request must not touch the DB"
+    );
+}
+
+/// Regression: the throttle buckets by client IP — two distinct
+/// `X-Forwarded-For` values each get their own independent quota.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn submit_report_rate_limit_buckets_per_ip(pool: PgPool) {
+    const RPM: u32 = 2;
+    let listing_id = seed_active_listing(&pool, "rl-multi").await;
+    let router = reports_router_rate_limited(pool.clone(), RPM);
+    let ip_a = "198.51.100.10";
+    let ip_b = "198.51.100.20";
+
+    // Interleave two IPs: each should get RPM accepts then a 429, independently.
+    for _ in 0..RPM {
+        assert_eq!(
+            post_report_from_ip(&router, listing_id, ip_a).await,
+            StatusCode::CREATED
+        );
+        assert_eq!(
+            post_report_from_ip(&router, listing_id, ip_b).await,
+            StatusCode::CREATED
+        );
+    }
+    assert_eq!(
+        post_report_from_ip(&router, listing_id, ip_a).await,
+        StatusCode::TOO_MANY_REQUESTS,
+        "IP A over its own quota should be 429"
+    );
+    assert_eq!(
+        post_report_from_ip(&router, listing_id, ip_b).await,
+        StatusCode::TOO_MANY_REQUESTS,
+        "IP B over its own quota should be 429"
+    );
+
+    // Each bucket wrote exactly RPM rows ⇒ 2 * RPM total.
+    assert_eq!(reports_count(&pool, listing_id).await, (2 * RPM) as i64);
 }

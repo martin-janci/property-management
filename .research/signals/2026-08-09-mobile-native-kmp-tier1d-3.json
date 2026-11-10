@@ -1,0 +1,43 @@
+{
+  "generated": "2026-08-09T00:00:00Z",
+  "segment": "mobile-native-kmp",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": [
+    "kotlin",
+    "tester"
+  ],
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-decimal-serializer-nfe-crash",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/DecimalStringSerializers.kt:46 — DecimalAsLongSerializer.deserialize() does `raw.substringBefore('.').toLong()` on the raw JSON primitive with no guard. A degenerate-but-syntactically-valid decimal string throws NumberFormatException *inside* deserialize: e.g. \".50\" (no leading zero) -> substringBefore('.') == \"\" -> \"\".toLong() throws; \"2e5\" / \"1,000\" / an empty string / a non-numeric \"N/A\" all throw the same way.",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/DecimalStringSerializers.kt:62 — DecimalAsDoubleSerializer.deserialize() does `raw.toDouble()` with the same no-guard pattern; any non-Double string (empty, \"N/A\", thousands-separated) throws NumberFormatException.",
+        "Impact/scope: these serializers back the monetary fields of the favorites + price-tracking payload (PortalListingModels.kt, FavoritesModels.kt). A NumberFormatException on ONE field aborts the ENTIRE payload decode — the exact whole-payload-decode failure mode these serializers were introduced to eliminate (see the file's own doc comment referencing issue #2331 / PR #2350, which only hardened against *fractional* strings, not malformed ones). The exception is caught downstream (PriceTrackingViewModel injects an errorMapper + catch), so the user sees a generic error instead of the app crashing — hence severity medium, not high — but a single bad field still blanks the whole favorites/price-tracking screen. Fix: parse via toLongOrNull()/toDoubleOrNull() (or wrap in runCatching) and fall back to 0 / skip, matching the wire-tolerant intent already documented in the file header.",
+        "confidence medium: static analysis — the crash inputs are confirmed by reading the parse code, but whether reality-server can actually emit such a malformed rust_decimal serde-str string in production was not runtime-confirmed."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-decimal-wire-test-no-malformed",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test",
+      "evidence": [
+        "mobile-native/shared/src/commonTest/kotlin/three/two/bit/ppt/reality/api/DecimalWireContractTest.kt — the wire-contract guard for DecimalAsLong/DecimalAsDoubleSerializer covers only the happy paths: valid fractional string (\"200000.00\"/\"-7.50\"), valid numeric wire (200000/-7.5), and null. There is NO negative-input case, so the NumberFormatException crash path in DecimalStringSerializers.kt:46/62 (empty string, \".50\", \"2e5\", non-numeric) is completely untested.",
+        "This is the test-coverage half of the DecimalAsLong/Double robustness gap: a serializer whose whole documented purpose (file header, issue #2331) is wire-tolerance has no test pinning its behaviour on the degenerate inputs that still throw. Add cases asserting the chosen contract (either a defined fallback once the sibling finding is fixed, or an explicit expected-failure) for empty/non-numeric/leading-dot decimal strings, so a future regression in the parse path surfaces at CI rather than on-device on the favorites/price-tracking screen.",
+        "confidence medium: static analysis of the existing test file — the four @Test methods enumerate only string/number/null happy paths; no malformed-string assertion is present."
+      ],
+      "expert": "tester"
+    }
+  ]
+}

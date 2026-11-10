@@ -1,0 +1,51 @@
+[
+  {
+    "id": "code-review-api-core-accounting-line-multimatch",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-core",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/services/accounting.rs:124-176 — the payment auto-matcher's inner `for invoice in &open_invoices` loop (accounting.rs:129) creates a `PaymentMatch` for EVERY invoice whose confidence reaches the 0.5 threshold, with NO `break` after the first accepted match and NO in-memory update of `line.match_state`.",
+      "The outer per-line guard (`if line.match_state != \"unmatched\" && line.match_state != \"suggested\" { continue }`, accounting.rs:125-126) reads the DB-loaded `line` copy, which is never mutated inside the loop. The DB `update_bank_statement_line_match_state_rls(... \"suggested\")` call (accounting.rs:170) does not touch the local `line`, so subsequent iterations of the SAME line keep matching. Result: one bank statement line is suggested-matched to multiple invoices in a single pass.",
+      "Reachable precondition: two or more open invoices (status Issued/PartiallyPaid) that share the same non-empty `variable_symbol`. Variable Symbol alone contributes 0.8 (accounting.rs:135-138) which crosses the 0.5 acceptance threshold, so every open invoice carrying that VS produces a duplicate `PaymentMatch` (state Suggested) for the one incoming payment. Nothing in the schema enforces VS uniqueness across open invoices (partial payments, reissues, tenant data-entry errors make collisions plausible).",
+      "Consequence: duplicate/conflicting suggested matches for a single payment; a manager reconciling the statement sees the same incoming amount proposed against several invoices, and any downstream 'accept highest-confidence per invoice' step could book one payment against multiple invoices.",
+      "Fix: `break` after the first accepted match (or select the single best-confidence invoice for the line), and/or mark the line consumed in-memory so later iterations skip it."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-api-core-accounting-vs-only-amount-ignored",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-core",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/services/accounting.rs:135-150 — a Variable-Symbol match alone contributes 0.8 and crosses the 0.5 acceptance threshold (accounting.rs:150) with NO amount corroboration required. The amount branch only ADDS confidence (+0.15 exact, +0.05 within-range, accounting.rs:143-146); a gross amount mismatch subtracts nothing.",
+      "So a bank line whose `amount` is wildly different from the invoice's `remaining_amount = total_amount - paid_amount` (accounting.rs:142) — e.g. a large credit against a small invoice, or an amount far exceeding the outstanding balance — is still suggested at 0.8 purely on the VS. The amount-only path can never reach 0.5 on its own (max 0.15), so acceptance is effectively 'VS matches, amount ignored'.",
+      "Combined with the multi-match bug in the same loop, this widens the blast radius: an incoming payment with a shared/reused VS but an implausible amount is proposed against invoices it cannot plausibly settle.",
+      "Fix: gate acceptance on amount plausibility (e.g. require `line.amount <= remaining_amount`, or withhold the suggestion when the amount exceeds the outstanding balance by a large margin) rather than accepting on VS alone; VS should raise confidence, not bypass the amount check entirely."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-api-core-accounting-no-tests",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-core",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "test-gap",
+    "evidence": [
+      "backend/servers/api-server/src/services/accounting.rs (339 lines) has NO `#[cfg(test)]` module and no test cases anywhere (grep for `#[cfg(test)]` / `#[test]` / `fn test` in the file returns nothing) — the payment auto-matching logic is entirely untested.",
+      "Untested surface includes the confidence weighting constants (0.8 VS / 0.15 exact-amount / 0.05 in-range, accounting.rs:135-146), the 0.5 acceptance threshold (accounting.rs:150), and the per-line/per-invoice iteration that the two bug findings above concern — exactly the logic where a regression would silently mis-book money.",
+      "There is also an unfinished `// TODO: Date proximity, IBAN match` (accounting.rs:148) placeholder in the confidence scoring; that TODO should not be filled in without first pinning current behaviour behind regression tests.",
+      "Fix: add unit tests for `suggest_matches` covering (a) exact VS+amount match, (b) VS match with mismatched amount, (c) VS collision across two open invoices, (d) below-threshold no-match, using in-memory or fixture repo doubles."
+    ],
+    "expert": "rust"
+  }
+]

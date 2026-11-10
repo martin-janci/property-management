@@ -1,0 +1,41 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-29",
+  "segment_reviewed": "mobile-native-kmp",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable=19 < floor=36; no Phase 1 churn / backlog / retry candidates). Churn-aligned N/A (no per-run CHURN_FILES; state.json hotspots point at api-server routes, excluded by this run's AVOID api-core/api-server directive). Oldest-unreviewed per review_cursor with saturation-skip + already-reviewed-today skip + avoid-api: ppt-web-ui@2026-10-22 (5 open, saturated), reality-web@2026-10-23 (3 open, saturated), mobile-native-kmp@2026-10-25 (non-saturated, 2 open), api-handlers@2026-10-26 (avoid + 3 open saturated), api-core@2026-10-27 (avoid + done today x3), ppt-web-core@2026-10-27 (done today), mobile-rn@2026-10-27 (done today), reality-server@2026-10-28 (3 open, saturated). All non-saturated segments except mobile-native-kmp were already reviewed today; mobile-native-kmp is non-saturated and non-api, so it is the only viable slice. A prior 2026-10-29 mobile-native-kmp run already filed create-listing-stub (Navigation.kt:493) and portfolio-analytics-fanout; this -b slice emits ONLY net-new findings not covered there.",
+  "experts_used": [
+    "kotlin",
+    "tester"
+  ],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-mn-kmp-sso-error-body-unguarded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:49,77,104,129 — the error branches of createMobileToken / validateAndLogin / getSession / refreshSession call `response.body<SsoError>()` directly (no runCatching). If a non-2xx response body is not valid SsoError JSON (proxy 502 HTML, empty body, truncated payload), the deserialization throws and is swallowed by the outer try/catch, masking the real HTTP status with a generic 'Unknown error' and setting AuthState.Error to the parse-exception message instead of the server reason.",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:174,202,297 — the newer methods (loginWithPassword/register/updateProfile) correctly guard the same parse with `runCatching { response.body<SsoError>() }.getOrElse { ... HTTP status fallback }`. The four SSO-token methods are inconsistent with this pattern and lose the real failure detail on malformed error bodies (user-facing auth/SSO failure path)."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mn-kmp-nearby-tab-placeholder",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "completeness",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/listing/ListingDetailTabs.kt:171-197 — the listing-detail 'Nearby' tab renders only NearbyPreviewCard, a static card showing a Map icon + R.string.map_placeholder with no actual map/nearby data. The feature is non-functional in production (reachable from the listing-detail tab bar). Likely an intentional deferred stub, but there is no backing API wire-up and no tracking of the gap; flag as a completeness item so it is either backlogged for implementation or explicitly marked 'coming soon' in the UI.",
+        "No corresponding map/nearby data fetch exists in the KMP shared module (grep for nearby/map data in shared/ found none) — confirms the tab is a pure UI placeholder."
+      ],
+      "expert": "tester"
+    }
+  ]
+}

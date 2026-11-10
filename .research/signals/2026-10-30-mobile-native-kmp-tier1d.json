@@ -1,0 +1,40 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-30",
+  "segment_reviewed": "mobile-native-kmp",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable buffer below floor; no CHURN_FILES passed so oldest-unreviewed per review_cursor: ppt-web-ui @ 2026-10-22 and reality-web @ 2026-10-23 both saturation-skipped (>=3 open code-review-findings each), next is mobile-native-kmp @ 2026-10-25 with 2 open)",
+  "experts_used": [
+    "kotlin",
+    "tester"
+  ],
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-sso-service-no-tests",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:24 — SsoService is a 344-line security-critical auth state-machine (owns sessionToken lifecycle + the AuthState StateFlow) with 13 public methods (createMobileToken, validateAndLogin, getSession, refreshSession, logout, loginWithPassword, register, requestPasswordReset, confirmPasswordReset, updateProfile, isAuthenticated, getSessionToken, restoreSession) and has NO test file anywhere in the repo — no commonTest source references `SsoService` (sibling SsoInitiation/SsoStateStore ARE covered by SsoInitiationTest/SsoStateStoreTest). Untested auth-state transitions that silently break on regression: restoreSession() must roll sessionToken back to null + emit Unauthenticated on a failed getSession (lines 318-343); getSession()/refreshSession() must call logout() on a 401 (lines 101-103, 126-128); validateAndLogin() must drive Loading->Authenticated/Error and persist session.sessionToken (lines 62-85). Add a commonTest MockEngine-backed SsoServiceTest exercising these state transitions.",
+        "coverage check: python map of commonMain public types vs all commonTest sources shows SsoService unreferenced; only trivial *Exception subclasses are otherwise uncovered"
+      ],
+      "expert": "tester"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-layout-repo-println",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/layout/LayoutRepository.kt:48,57,68 — three raw println(...) debug-logging calls left in committed production commonMain code (the console.log equivalent). They log only HTTP status / echoed screen name / exception message (no tokens or PII, so not a security leak), but println in KMP shared code is swallowed on Android (no logcat tag/level) and clutters the iOS console; the codebase has no other println in commonMain. Route through a proper logging abstraction (expect/actual logger or Napier) or drop them.",
+        "grep -rni 'println' mobile-native/shared/src/commonMain --include='*.kt' returns only these three lines in the segment"
+      ],
+      "expert": "kotlin"
+    }
+  ]
+}

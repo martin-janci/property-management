@@ -9,10 +9,28 @@
 
 import { getApiBase } from './env';
 
+/**
+ * Stable, locale-independent discriminator for a {@link RealtorApiError}.
+ *
+ * The `message` carried by the error is developer-facing (logs, tests) and
+ * intentionally English. User-facing surfaces must translate off this `code`
+ * instead of rendering `message` — see `useRealtorErrorMessage` in
+ * `./realtor-error`. The one exception is a real server-provided message
+ * (`serverMessage`), which the backend owns and localizes itself.
+ */
+export type RealtorApiErrorCode = 'network' | 'malformed' | 'http';
+
 export class RealtorApiError extends Error {
   constructor(
     message: string,
-    public readonly status: number
+    public readonly status: number,
+    public readonly code: RealtorApiErrorCode = 'http',
+    /**
+     * The message the server returned in its JSON error body, when present.
+     * Only set for `code === 'http'` responses that carried a `message` field;
+     * `undefined` means the UI should fall back to a translated generic string.
+     */
+    public readonly serverMessage?: string
   ) {
     super(message);
     this.name = 'RealtorApiError';
@@ -32,20 +50,74 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       headers: { 'Content-Type': 'application/json', ...(callerHeaders ?? {}) },
     });
   } catch {
-    throw new RealtorApiError('Network error. Please try again.', 0);
+    throw new RealtorApiError('Network error. Please try again.', 0, 'network');
   }
   if (!response.ok) {
-    let message = `Request failed (${response.status})`;
+    let serverMessage: string | undefined;
     try {
       const data = await response.json();
-      if (typeof data?.message === 'string') message = data.message;
+      if (typeof data?.message === 'string') serverMessage = data.message;
     } catch {
       // ignore non-JSON
     }
-    throw new RealtorApiError(message, response.status);
+    // `message` stays developer-facing; the UI translates off `code` and only
+    // shows `serverMessage` (backend-owned copy) when the server provided one.
+    throw new RealtorApiError(
+      serverMessage ?? `Request failed (${response.status})`,
+      response.status,
+      'http',
+      serverMessage
+    );
   }
   if (response.status === 204) return undefined as T;
-  return (await response.json()) as T;
+  return parseJsonBody<T>(response);
+}
+
+/**
+ * Validate + return the parsed 200 body.
+ *
+ * `request<T>` used to return `(await response.json()) as T` — an unchecked
+ * cast that trusts the wire shape blindly. A malformed or partial 200 (an
+ * upstream/proxy partial body, an HTML error page served with a 200, or a
+ * `null`/primitive/array JSON body) is then handed back typed as `T`, so the
+ * first property deref (`profile.name`, `res.listings.map`) throws deep in a
+ * component with no hint that the API boundary was the culprit.
+ *
+ * Every endpoint this module wraps returns a JSON *object*, so the baseline
+ * boundary invariant is "the body is a non-null, non-array object". Guarding it
+ * here — the single point all helpers funnel through — mirrors the listing SSR
+ * path's `parseListingDetail` guard: reject the bad shape at the edge with a
+ * typed `RealtorApiError` instead of letting it crash downstream
+ * (#2276 / #2281 / #2341 class).
+ */
+async function parseJsonBody<T>(response: Response): Promise<T> {
+  let body: unknown;
+  try {
+    body = await response.json();
+  } catch {
+    throw new RealtorApiError('Malformed response from server.', response.status, 'malformed');
+  }
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    throw new RealtorApiError('Malformed response from server.', response.status, 'malformed');
+  }
+  return body as T;
+}
+
+/**
+ * Coerce a list-response collection field to a real array.
+ *
+ * `parseJsonBody` guarantees the outer body is a non-null, non-array object, but
+ * it is generic and cannot know which *fields* are supposed to be arrays. A
+ * malformed 200 can still carry a wrong-typed collection (`{ listings: null }`,
+ * `{ reviews: {} }`): truthy but not iterable, so the first `.length` / `.map`
+ * in a consumer (`profile` page, `realtor/[id]`, agency listings) throws deep in
+ * render with no hint the API boundary was the culprit. Coercing the field to
+ * `[]` here degrades to the existing empty-state instead of crashing — the same
+ * "coerce the wrong-typeable collection at the edge" stance as the listing SSR
+ * path's `parseListingDetail` (`photos` → array-or-`[]`).
+ */
+function asArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
 }
 
 export interface RealtorProfile {
@@ -86,7 +158,13 @@ export interface ListingDraft {
   street?: string;
   postalCode?: string;
   country?: string;
-  area?: number;
+  /**
+   * Living/usable area in m². Serializes to the server's `sizeSqm` field
+   * (`CreatePortalListingRequest.size_sqm`); sending the old `area` key made
+   * the server ignore the measure and, combined with a missing `postalCode`,
+   * 422'd the create (#3052).
+   */
+  sizeSqm?: number;
   rooms?: number;
   floor?: number;
   /**
@@ -115,23 +193,26 @@ export interface ListingResponse extends ListingDraft {
 }
 
 export function createListing(data: ListingDraft): Promise<ListingResponse> {
-  return request<ListingResponse>('/api/v1/listings', {
+  // Create goes to the authenticated owner route (`portal_listings::create_listing`,
+  // POST /api/v1/my/listings). `/api/v1/listings` is GET-only (public search),
+  // so POSTing there returns 405 Method Not Allowed (#3039).
+  return request<ListingResponse>('/api/v1/my/listings', {
     method: 'POST',
     body: JSON.stringify(data),
   });
 }
 
 export function getListing(id: string): Promise<ListingResponse> {
-  return request<ListingResponse>(`/api/v1/listings/${id}`);
+  return request<ListingResponse>(`/api/v1/listings/${encodeURIComponent(id)}`);
 }
 
 /** Get an owned listing for editing (includes drafts). Requires auth. */
 export function getMyListing(id: string): Promise<ListingResponse> {
-  return request<ListingResponse>(`/api/v1/my/listings/${id}`);
+  return request<ListingResponse>(`/api/v1/my/listings/${encodeURIComponent(id)}`);
 }
 
 export function updateListing(id: string, data: Partial<ListingDraft>): Promise<ListingResponse> {
-  return request<ListingResponse>(`/api/v1/my/listings/${id}`, {
+  return request<ListingResponse>(`/api/v1/my/listings/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
@@ -148,4 +229,152 @@ export interface RealtorAnalytics {
 export function getMyRealtorAnalytics(period?: string): Promise<RealtorAnalytics> {
   const query = period ? `?period=${encodeURIComponent(period)}` : '';
   return request<RealtorAnalytics>(`/api/v1/realtors/me/stats${query}`);
+}
+
+/**
+ * One of the authenticated user's own portal listings.
+ *
+ * camelCase wire mirror of reality-server's `PortalListingResponse`
+ * (`backend/servers/reality-server/src/routes/portal_listings.rs`). Note there
+ * is no image field on this contract, and `price` / `sizeSqm` are Decimals that
+ * can arrive as a number or a string depending on the serializer, so callers
+ * must coerce before formatting.
+ */
+export interface MyListing {
+  id: string;
+  title: string;
+  description?: string | null;
+  propertyType: string;
+  transactionType: string;
+  price: number | string;
+  currency: string;
+  street: string;
+  city: string;
+  postalCode: string;
+  country: string;
+  sizeSqm?: number | string | null;
+  rooms?: number | null;
+  floor?: number | null;
+  totalFloors?: number | null;
+  status: string;
+  isNegotiable: boolean;
+  isPublished: boolean;
+  slug?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MyListingsResponse {
+  listings: MyListing[];
+  total: number;
+}
+
+/** Lists the authenticated caller's own listings (`GET /api/v1/my/listings`). */
+export async function listMyListings(status?: string): Promise<MyListingsResponse> {
+  const query = status ? `?status=${encodeURIComponent(status)}` : '';
+  const res = await request<MyListingsResponse>(`/api/v1/my/listings${query}`);
+  // `listings` is typed as present, but a partial/malformed 200 can carry a
+  // wrong-typed value; coerce so consumers can `.map` / `.length` safely.
+  return { ...res, listings: asArray<MyListing>(res.listings) };
+}
+
+/**
+ * A single realtor review.
+ *
+ * snake_case wire mirror of reality-server's `RealtorReview`
+ * (`backend/servers/reality-server/src/routes/agent_reviews.rs`) — this
+ * endpoint is not camelCased, unlike the rest of realtor-api, so the fields are
+ * kept as-is.
+ */
+export interface RealtorReview {
+  id: string;
+  realtor_id: string;
+  reviewer_user_id: string;
+  reviewer_name: string;
+  rating: number;
+  body?: string | null;
+  verified_buyer: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RealtorReviewsResponse {
+  reviews: RealtorReview[];
+  total: number;
+  avg_rating?: number | null;
+}
+
+/** Lists reviews for a realtor (`GET /api/v1/realtors/{id}/reviews`). */
+export async function getRealtorReviews(
+  realtorId: string,
+  limit = 20
+): Promise<RealtorReviewsResponse> {
+  const res = await request<RealtorReviewsResponse>(
+    `/api/v1/realtors/${encodeURIComponent(realtorId)}/reviews?limit=${limit}`
+  );
+  // `reviews` is typed as present, but a partial/malformed 200 can carry a
+  // wrong-typed value; coerce so consumers can `.map` / `.length` safely.
+  return { ...res, reviews: asArray<RealtorReview>(res.reviews) };
+}
+
+/**
+ * Public realtor profile.
+ *
+ * snake_case wire mirror of reality-server's `RealtorProfile`
+ * (`backend/crates/db/src/models/reality_portal.rs`, served by
+ * `GET /api/v1/realtors/{user_id}/profile` → `ProfileResponse { profile }`).
+ * This endpoint is NOT camelCased, so the fields are kept as-is.
+ *
+ * Note the server intentionally does not expose a display name on this
+ * contract (the public profile is sourced from `realtor_profiles` only, not
+ * joined to the user record), so the UI falls back to the tagline / a generic
+ * label rather than fabricating one. Contact fields are gated server-side-ish
+ * via `show_phone` / `show_email`; the UI honours those flags.
+ */
+export interface PublicRealtorProfile {
+  id: string;
+  user_id: string;
+  photo_url?: string | null;
+  bio?: string | null;
+  tagline?: string | null;
+  specializations?: string[] | null;
+  experience_years?: number | null;
+  languages?: string[] | null;
+  license_number?: string | null;
+  license_verified_at?: string | null;
+  certifications?: string[] | null;
+  phone?: string | null;
+  whatsapp?: string | null;
+  email_public?: string | null;
+  linkedin_url?: string | null;
+  facebook_url?: string | null;
+  instagram_url?: string | null;
+  show_phone: boolean;
+  show_email: boolean;
+  accept_inquiries: boolean;
+  total_listings: number;
+  active_listings: number;
+  total_views: number;
+  total_inquiries: number;
+  avg_response_time_hours?: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ProfileResponse {
+  profile: PublicRealtorProfile;
+}
+
+/**
+ * Fetch a realtor's public profile by user id
+ * (`GET /api/v1/realtors/{id}/profile`).
+ *
+ * Throws `RealtorApiError` with `status === 404` when no profile exists for
+ * the id, which callers map to a not-found state (never a fabricated profile).
+ */
+export async function getRealtorPublicProfile(realtorId: string): Promise<PublicRealtorProfile> {
+  const res = await request<ProfileResponse>(
+    `/api/v1/realtors/${encodeURIComponent(realtorId)}/profile`
+  );
+  return res.profile;
 }

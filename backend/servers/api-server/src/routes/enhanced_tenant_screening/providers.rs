@@ -21,6 +21,11 @@ pub(super) async fn list_provider_configs(
     State(s): State<AppState>,
     mut rls: RlsConnection,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only; membership alone is not enough.
+    if !super::is_screening_manager(&rls) {
+        rls.release().await;
+        return super::manager_required();
+    }
     let org_id = rls.tenant_id();
     let result = s
         .enhanced_tenant_screening_repo
@@ -40,6 +45,11 @@ pub(super) async fn create_provider_config(
     mut rls: RlsConnection,
     Json(req): Json<CreateScreeningProviderConfig>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only; membership alone is not enough.
+    if !super::is_screening_manager(&rls) {
+        rls.release().await;
+        return super::manager_required();
+    }
     let org_id = rls.tenant_id();
     let result = s
         .enhanced_tenant_screening_repo
@@ -59,6 +69,11 @@ pub(super) async fn get_provider_config(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only; membership alone is not enough.
+    if !super::is_screening_manager(&rls) {
+        rls.release().await;
+        return super::manager_required();
+    }
     let org_id = rls.tenant_id();
     let result = s
         .enhanced_tenant_screening_repo
@@ -79,9 +94,15 @@ pub(super) async fn delete_provider_config(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only; membership alone is not enough.
+    if !super::is_screening_manager(&rls) {
+        rls.release().await;
+        return super::manager_required();
+    }
+    let org_id = rls.tenant_id();
     let result = s
         .enhanced_tenant_screening_repo
-        .delete_provider_config(&mut **rls.conn(), id)
+        .delete_provider_config(&mut **rls.conn(), org_id, id)
         .await;
     rls.release().await;
 
@@ -105,10 +126,17 @@ pub(super) async fn update_provider_status(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateProviderStatusRequest>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only; membership alone is not enough.
+    if !super::is_screening_manager(&rls) {
+        rls.release().await;
+        return super::manager_required();
+    }
+    let org_id = rls.tenant_id();
     let result = s
         .enhanced_tenant_screening_repo
         .update_provider_status(
             &mut **rls.conn(),
+            org_id,
             id,
             req.status,
             req.error_message.as_deref(),
@@ -117,7 +145,8 @@ pub(super) async fn update_provider_status(
     rls.release().await;
 
     match result {
-        Ok(()) => StatusCode::OK.into_response(),
+        Ok(true) => StatusCode::OK.into_response(),
+        Ok(false) => (StatusCode::NOT_FOUND, "Provider config not found").into_response(),
         Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
     }
 }

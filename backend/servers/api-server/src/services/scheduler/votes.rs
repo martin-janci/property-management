@@ -24,6 +24,12 @@ impl Scheduler {
     // ========================================================================
 
     /// Activate scheduled votes that have reached their start time.
+    ///
+    /// Issue #2612: this now ONLY flips due votes to `active` (leaving
+    /// `started_notified_at = NULL`). Dispatch is decoupled into
+    /// [`Self::dispatch_vote_started_notifications`] so a transient
+    /// target-resolution/dispatch failure retries on the next tick instead of
+    /// permanently dropping the vote-started notification.
     pub(super) async fn activate_scheduled_votes(&self) -> Result<(), sqlx::Error> {
         let activated = self.vote_repo.activate_scheduled_votes().await?;
 
@@ -35,59 +41,99 @@ impl Scheduler {
             );
 
             // Update metrics
-            {
-                let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
-                metrics.votes_activated += activated.len() as u64;
-            }
+            let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
+            metrics.votes_activated += activated.len() as u64;
+        }
 
-            // Send notifications for each activated vote
-            for vote in &activated {
-                // A DB error resolving the eligible voters must be surfaced
-                // (not coerced into an empty target set) so a failed dispatch
-                // is observable — mirrors `send_vote_reminders`.
-                let eligible_user_ids = match self.get_vote_eligible_users(vote.building_id).await {
-                    Ok(ids) => ids,
+        Ok(())
+    }
+
+    /// Dispatch vote-started notifications that have not yet been sent
+    /// (issue #2612 — durability half of the decoupled activate/notify flow).
+    ///
+    /// Selects `active AND started_notified_at IS NULL`, resolves eligible
+    /// owners, dispatches, and stamps `started_notified_at` ONLY on success. A
+    /// transient failure (target resolution OR dispatch) leaves the watermark
+    /// NULL so the next ~60s tick retries. An `Ok(vec![])` audience (building
+    /// with no eligible owners) IS stamped — there is nobody to notify, so the
+    /// vote is handled and must not retry forever.
+    pub(super) async fn dispatch_vote_started_notifications(&self) -> Result<(), sqlx::Error> {
+        let pending = self
+            .vote_repo
+            .find_active_pending_started_notification()
+            .await?;
+
+        if pending.is_empty() {
+            return Ok(());
+        }
+
+        tracing::info!(
+            count = pending.len(),
+            "Dispatching pending vote-started notifications"
+        );
+
+        for vote in &pending {
+            // A DB error resolving eligible voters is NOT an empty audience —
+            // leave the watermark NULL so it retries rather than being stamped
+            // with zero recipients.
+            let eligible_user_ids = match self.get_vote_eligible_users(vote.building_id).await {
+                Ok(ids) => ids,
+                Err(e) => {
+                    tracing::error!(
+                        vote_id = %vote.id,
+                        building_id = %vote.building_id,
+                        error = %e,
+                        "Failed to resolve vote-started notification targets; \
+                         leaving started_notified_at NULL so the next tick retries"
+                    );
+                    continue;
+                }
+            };
+
+            if !eligible_user_ids.is_empty() {
+                match self
+                    .notification_service
+                    .notify_vote_started(vote, &eligible_user_ids)
+                    .await
+                {
+                    Ok(sent) => {
+                        tracing::info!(
+                            vote_id = %vote.id,
+                            sent_count = sent,
+                            "Sent vote started notifications"
+                        );
+                    }
                     Err(e) => {
                         tracing::error!(
                             vote_id = %vote.id,
-                            building_id = %vote.building_id,
                             error = %e,
-                            "Failed to resolve vote-started notification targets; \
-                             skipping dispatch for this vote"
+                            "Failed to send vote started notifications; \
+                             leaving started_notified_at NULL so the next tick retries"
                         );
-                        Vec::new()
-                    }
-                };
-
-                if !eligible_user_ids.is_empty() {
-                    match self
-                        .notification_service
-                        .notify_vote_started(vote, &eligible_user_ids)
-                        .await
-                    {
-                        Ok(sent) => {
-                            tracing::info!(
-                                vote_id = %vote.id,
-                                sent_count = sent,
-                                "Sent vote started notifications"
-                            );
-                        }
-                        Err(e) => {
-                            tracing::error!(
-                                vote_id = %vote.id,
-                                error = %e,
-                                "Failed to send vote started notifications"
-                            );
-                        }
+                        continue;
                     }
                 }
+            }
+
+            if let Err(e) = self.vote_repo.mark_started_notified(vote.id).await {
+                tracing::error!(
+                    vote_id = %vote.id,
+                    error = %e,
+                    "Failed to stamp vote started_notified_at after dispatch; \
+                     next tick may resend"
+                );
             }
         }
 
         Ok(())
     }
 
-    /// Close expired votes and send result notifications.
+    /// Close expired votes (state flip only).
+    ///
+    /// Issue #2612: result-notification dispatch is decoupled into
+    /// [`Self::dispatch_vote_closed_notifications`]. `close_expired_votes` (repo)
+    /// clears `closed_notified_at` to NULL for the votes it closes so the
+    /// dispatch pass picks them up and can retry on a transient failure.
     pub(super) async fn close_expired_votes(&self) -> Result<(), sqlx::Error> {
         let closed_ids = self.vote_repo.close_expired_votes().await?;
 
@@ -99,86 +145,143 @@ impl Scheduler {
             );
 
             // Update metrics
-            {
-                let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
-                metrics.votes_closed += closed_ids.len() as u64;
-            }
+            let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
+            metrics.votes_closed += closed_ids.len() as u64;
+        }
 
-            // Batch-fetch participants for all closed votes in a single query
-            // (was N+1: one SELECT per closed vote). Group by vote_id so each
-            // iteration below has its participant list ready in memory.
-            let participants_by_vote: std::collections::HashMap<uuid::Uuid, Vec<uuid::Uuid>> =
-                match self.get_vote_participants_batch(&closed_ids).await {
-                    Ok(map) => map,
-                    Err(e) => {
-                        tracing::error!(
-                            error = %e,
-                            "Failed to batch-fetch vote participants; falling back to empty map"
-                        );
-                        std::collections::HashMap::new()
+        Ok(())
+    }
+
+    /// Dispatch closed-vote result notifications that have not yet been sent
+    /// (issue #2612 — durability half of the decoupled close/notify flow).
+    ///
+    /// Selects `closed AND closed_notified_at IS NULL`, loads each vote +
+    /// results + participants, dispatches, and stamps `closed_notified_at` ONLY
+    /// on success. A transient failure at any step (vote/result load, dispatch)
+    /// leaves the watermark NULL so the next ~60s tick retries. `Ok(None)` on
+    /// the vote/result load (row genuinely gone) IS stamped so the pass does not
+    /// spin on a permanently-missing row.
+    pub(super) async fn dispatch_vote_closed_notifications(&self) -> Result<(), sqlx::Error> {
+        let pending_ids = self.vote_repo.find_closed_pending_notification().await?;
+
+        if pending_ids.is_empty() {
+            return Ok(());
+        }
+
+        tracing::info!(
+            count = pending_ids.len(),
+            "Dispatching pending closed-vote result notifications"
+        );
+
+        // Batch-fetch participants for all pending votes in a single query
+        // (avoids N+1). A batch error leaves the whole set unstamped for retry.
+        let participants_by_vote: std::collections::HashMap<uuid::Uuid, Vec<uuid::Uuid>> =
+            match self.get_vote_participants_batch(&pending_ids).await {
+                Ok(map) => map,
+                Err(e) => {
+                    tracing::error!(
+                        error = %e,
+                        "Failed to batch-fetch vote participants; leaving \
+                         closed_notified_at NULL so the next tick retries"
+                    );
+                    return Ok(());
+                }
+            };
+
+        for vote_id in &pending_ids {
+            // Note: Scheduler runs in background without user context - RLS not applicable
+            #[allow(deprecated)]
+            let vote_result = self.vote_repo.find_by_id(*vote_id).await;
+            #[allow(deprecated)]
+            let results_result = self.vote_repo.get_results(*vote_id).await;
+
+            // A DB error loading the vote or its results leaves the watermark
+            // NULL for retry. `Ok(None)` (row genuinely gone) is stamped below
+            // so the pass does not spin forever on a missing row.
+            let vote = match vote_result {
+                Ok(Some(vote)) => vote,
+                Ok(None) => {
+                    tracing::warn!(
+                        vote_id = %vote_id,
+                        "Closed vote missing for result notification; stamping to \
+                         stop retrying a permanently-absent row"
+                    );
+                    if let Err(e) = self.vote_repo.mark_closed_notified(*vote_id).await {
+                        tracing::error!(vote_id = %vote_id, error = %e, "Failed to stamp closed_notified_at for missing vote");
                     }
-                };
-
-            // Send notifications for each closed vote
-            for vote_id in &closed_ids {
-                // Get the vote with results
-                // Note: Scheduler runs in background without user context - RLS not applicable
-                #[allow(deprecated)]
-                let vote_result = self.vote_repo.find_by_id(*vote_id).await;
-                #[allow(deprecated)]
-                let results_result = self.vote_repo.get_results(*vote_id).await;
-                // Surface DB errors on the vote/result lookups instead of
-                // letting `if let Ok(Some(..))` silently drop the `Err` arm —
-                // otherwise a failed closed-vote dispatch is invisible.
-                // `Ok(None)` (vote genuinely gone) stays a silent skip.
-                if let Err(e) = &vote_result {
+                    continue;
+                }
+                Err(e) => {
                     tracing::error!(
                         vote_id = %vote_id,
                         error = %e,
                         "Failed to load closed vote for result notification; \
-                         skipping dispatch for this vote"
+                         leaving closed_notified_at NULL so the next tick retries"
                     );
+                    continue;
                 }
-                if let Err(e) = &results_result {
+            };
+            let results = match results_result {
+                Ok(Some(results)) => results,
+                Ok(None) => {
+                    tracing::warn!(
+                        vote_id = %vote_id,
+                        "Closed vote results missing for result notification; \
+                         stamping to stop retrying a permanently-absent row"
+                    );
+                    if let Err(e) = self.vote_repo.mark_closed_notified(*vote_id).await {
+                        tracing::error!(vote_id = %vote_id, error = %e, "Failed to stamp closed_notified_at for missing results");
+                    }
+                    continue;
+                }
+                Err(e) => {
                     tracing::error!(
                         vote_id = %vote_id,
                         error = %e,
                         "Failed to load vote results for result notification; \
-                         skipping dispatch for this vote"
+                         leaving closed_notified_at NULL so the next tick retries"
                     );
+                    continue;
                 }
-                if let Ok(Some(vote)) = vote_result {
-                    if let Ok(Some(results)) = results_result {
-                        // Participants pre-fetched by batch query above.
-                        let participant_ids = participants_by_vote
-                            .get(vote_id)
-                            .cloned()
-                            .unwrap_or_default();
+            };
 
-                        if !participant_ids.is_empty() {
-                            match self
-                                .notification_service
-                                .notify_vote_closed(&vote, &results, &participant_ids)
-                                .await
-                            {
-                                Ok(sent) => {
-                                    tracing::info!(
-                                        vote_id = %vote_id,
-                                        sent_count = sent,
-                                        "Sent vote closed notifications"
-                                    );
-                                }
-                                Err(e) => {
-                                    tracing::error!(
-                                        vote_id = %vote_id,
-                                        error = %e,
-                                        "Failed to send vote closed notifications"
-                                    );
-                                }
-                            }
-                        }
+            let participant_ids = participants_by_vote
+                .get(vote_id)
+                .cloned()
+                .unwrap_or_default();
+
+            if !participant_ids.is_empty() {
+                match self
+                    .notification_service
+                    .notify_vote_closed(&vote, &results, &participant_ids)
+                    .await
+                {
+                    Ok(sent) => {
+                        tracing::info!(
+                            vote_id = %vote_id,
+                            sent_count = sent,
+                            "Sent vote closed notifications"
+                        );
+                    }
+                    Err(e) => {
+                        tracing::error!(
+                            vote_id = %vote_id,
+                            error = %e,
+                            "Failed to send vote closed notifications; \
+                             leaving closed_notified_at NULL so the next tick retries"
+                        );
+                        continue;
                     }
                 }
+            }
+
+            if let Err(e) = self.vote_repo.mark_closed_notified(*vote_id).await {
+                tracing::error!(
+                    vote_id = %vote_id,
+                    error = %e,
+                    "Failed to stamp vote closed_notified_at after dispatch; \
+                     next tick may resend"
+                );
             }
         }
 

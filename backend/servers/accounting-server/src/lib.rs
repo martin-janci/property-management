@@ -15,5 +15,6 @@
 #![allow(unused)]
 
 pub mod observability;
+pub mod pdf;
 pub mod routes;
 pub mod state;

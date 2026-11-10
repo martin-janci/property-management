@@ -1,0 +1,53 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-09-02T00:00:00Z",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "oldest-unreviewed",
+  "selection_detail": "Standalone Tier-1d demand-driven run (dispatcher claimable buffer starved: 8 claimable vs floor 36, and every open backlog item is mobile-native/KMP work that is structurally unlandable in the cloud runner). Fresh landable NON-mobile-native review vectors were required, so mobile-native-kmp was excluded despite being the strict cursor-oldest at 2026-08-25. Segment coverage already produced TODAY (2026-09-02) before this run: mobile-rn, ppt-web-core, ppt-web-ui, reality-web, reality-server (five tier1d signal files present). Among the landable Rust/frontend segments NOT yet covered today the remaining candidates were api-handlers (cursor 2026-08-31) and api-core (cursor 2026-09-01, freshest); api-handlers is the older cursor, so it was selected as oldest-unreviewed. Saturation check: backlog.json has only 4 OPEN code-review-finding rows total (none segment-tagged api-handlers), so no saturation skip. NOTE on the skill segment map: it lists the api-handlers root as backend/api-server/src/handlers/, but the real tree is backend/servers/api-server/src/routes/ (workspace has servers/ and crates/ subdirs, and handlers live under routes/) — root used = backend/servers/api-server/src/routes/. Primary expert = Rust, secondary = Security (per segment->expert map). Static-only: grep sweep for unwrap/expect/todo/unimplemented/panic (all production hits were investigated and are safe — signatures.rs:47 and ai/voice.rs:358/ai/llm.rs:1513 expects are documented startup-validated / infallible-serialize, the auth/mod.rs login-path expect was already removed per its own comment, and every unwrap under routes/integrations/*, ws_notifications.rs:308, market_pricing.rs, regional_compliance.rs, admin/audit.rs is inside #[cfg(test)] modules), dynamic-SQL/format!-injection (none — no format! into SELECT/INSERT/WHERE, all params .bind()-ed / sqlx macros), secrets-in-logs (voice.rs:204 OAuth error is logged server-side but deliberately NOT leaked to the client per its inline comment; mfa/auth token logs use error=%e handles not secret values), CORS AllowAny/mirror_request (none in routes/), wrong-status-on-error branches (none — no Err arm returns 2xx), and pagination-limit clamping (the divergence where budgets/voting/messaging/documents handlers pass client `limit` straight through was traced into the db crate and found to be clamped at the repository layer, e.g. document repo `query.limit.unwrap_or(50).min(100)` — so NOT a finding). Prior 2026-08-31 api-handlers run mined routes/compliance.rs (compliance-raw-db-error-leak), routes for user-audit pagination, and a data-export report stub — those files/handlers were deliberately avoided. gh CLI dep-version / dependabot-history checks not applicable (no manifest files touched this run). Both findings below are genuine, distinct, landable, non-mobile-native defects, each a self-contained fix confined to a single route file, neither overlapping the prior compliance.rs raw-error-leak finding.",
+  "experts_used": [
+    "rust",
+    "security"
+  ],
+  "findings_count": 2,
+  "note": "The dominant defect class surviving the sweep is the same information-disclosure anti-pattern flagged for routes/compliance.rs on 2026-08-31 (raw internal error string returned to the client via `Json(ErrorResponse::new(<code>, e.to_string()))`), but it is far more widespread than a single file: grep for `ErrorResponse::new([^)]*e.to_string())` matches 24 route files (budgets.rs, oauth.rs, ai/workflows.rs, features.rs, portfolio_performance.rs, subscriptions.rs, feature_packages.rs, board_meetings.rs, messaging.rs, government_portal.rs, legal.rs, granular_notifications.rs, neighbors.rs, outages.rs, and the whole emergency/* module: protocols/statistics/broadcasts/contacts/drills/incidents, plus portal_webhooks.rs, voice_webhooks.rs, regional_compliance.rs, signatures.rs). For sqlx errors, `e.to_string()` can contain table/column/constraint names and SQL fragments, so returning it in the HTTP body is a schema-disclosure leak. The two findings below pick the two highest-value exemplars: budgets.rs (the single worst offender — 37 handlers all leak on HTTP 500) and oauth.rs (the most security-sensitive surface — the OAuth-provider client-management endpoints). Both should be fixed by returning a static generic message to the client and keeping the detail in the existing server-side `tracing::error!`. A follow-up sweep can apply the same fix across the remaining ~22 files. Neither finding overlaps the accepted 2026-08-31 compliance.rs finding (different files, different handlers).",
+  "signals": [
+    {
+      "id": "code-review-api-handlers-budgets-raw-db-error-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02 api-handlers)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "expert": "security",
+      "files": [
+        "backend/servers/api-server/src/routes/budgets.rs"
+      ],
+      "evidence": [
+        "routes/budgets.rs returns the raw internal error string to the HTTP client on EVERY database-error branch: `Json(ErrorResponse::new(\"DB_ERROR\", e.to_string()))` appears 37 times (first at budgets.rs:260 in create_budget, then repeated across list_budgets/get_budget/update_budget/delete_budget/submit/approve/activate/close/summary/category_variance/variance_alerts/add_item/list_items/update_item/delete_item/record_actual/list_actuals/create_category/list_categories and the rest of the handlers), each paired with `StatusCode::INTERNAL_SERVER_ERROR` (grep counts 37 INTERNAL_SERVER_ERROR sites in the file). The error is ALSO already logged server-side (`tracing::error!(\"Failed to create budget: {:?}\", e)` etc.), so the client-body copy is pure over-exposure.",
+        "The `e` here is the repository error (sqlx-backed budget_repo calls such as create_budget_rls / list_budgets_rls). `sqlx::Error::Database(...).to_string()` renders the Postgres message, which routinely includes table names, column names, constraint names and SQL fragments — returning it verbatim in the response body is a schema/information-disclosure leak to any authenticated caller who can trip a DB error (e.g. a constraint violation), and it diverges from the codebase's own safe pattern (e.g. ai/voice.rs:204-213 deliberately logs the detail but returns a static OAUTH_EXCHANGE_FAILED_MESSAGE to the client).",
+        "Same defect CLASS as the accepted 2026-08-31 finding code-review-api-handlers-compliance-raw-db-error-leak, but a DISTINCT and much larger file: compliance.rs was one file; budgets.rs is the single worst offender with 37 leak sites and was not touched by that run. Fix: replace the `e.to_string()` body with a static message (e.g. `ErrorResponse::new(\"DB_ERROR\", \"Failed to process budget request\")`) and keep the existing `tracing::error!` for the detail. IG3: an integration test that forces a budget repo error (e.g. duplicate/constraint violation on create_budget) asserts the 500 response body does NOT contain SQL/schema tokens (table/column/constraint names).",
+        "Confidence medium: the 37 `e.to_string()` client-body sites and their 500 status are confirmed by static read; reachability to the client is certain (they are in the handler's Err arm returned directly via into_response()). Severity medium (+2) rather than high because it is information disclosure to an authenticated caller (no auth bypass, no data loss, no crash), and the exact sensitivity of the leaked strings depends on which sqlx error is surfaced."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-oauth-client-error-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02 api-handlers)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "expert": "security",
+      "files": [
+        "backend/servers/api-server/src/routes/oauth.rs"
+      ],
+      "evidence": [
+        "routes/oauth.rs leaks the raw internal error string to the client on the OAuth-provider client-management endpoints — the most security-sensitive surface in this segment: register_client (POST /clients) returns `Json(ErrorResponse::new(\"REGISTRATION_FAILED\", e.to_string()))` at oauth.rs:724, update_client (PUT /clients/{id}) at :874 (`UPDATE_FAILED`), revoke_client (DELETE /clients/{id}) at :954 (`REVOKE_FAILED`, HTTP 500), and regenerate_client_secret at :1024 (`REGENERATE_FAILED`, HTTP 500). Each already logs the detail server-side (`tracing::error!(error = %e, \"Failed to register OAuth client\")` etc.), so the client-body copy is redundant exposure.",
+        "These handlers wrap `state.oauth_service` calls (register_client/update_client/revoke_client/regenerate_client_secret), whose errors are sqlx/service errors; `e.to_string()` on them can expose oauth-client table/column/constraint internals to the API caller. Because this is the OAuth authorization-server admin surface (routes confirmed live: `.route(\"/clients\", post(register_client))` at oauth.rs:55, `.route(\"/clients/{id}\", ...)`), leaking backend error internals here is higher-value to an attacker probing the auth subsystem than on an ordinary CRUD route.",
+        "Distinct from the budgets.rs finding (different file, different endpoints, auth-provider surface) and from the accepted 2026-08-31 compliance.rs finding. Part of the broader 24-file `ErrorResponse::new(..., e.to_string())` surface noted in this run's `note`, but called out separately because the OAuth admin endpoints warrant their own fix/priority. Fix: return static messages (REGISTRATION_FAILED / UPDATE_FAILED / REVOKE_FAILED / REGENERATE_FAILED) with the detail kept only in the existing tracing logs. IG3: a test that forces an oauth_service error on register_client asserts the response body carries no SQL/schema tokens.",
+        "Confidence medium: the four `e.to_string()` client-body sites and their status codes are confirmed by static read, and the routes are confirmed reachable via the router builder in the same file. Severity medium (+2): information disclosure on the auth-provider surface (no auth bypass or token leak proven statically — the leaked strings are backend error messages, not credentials — so not high)."
+      ]
+    }
+  ]
+}

@@ -13,6 +13,7 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
+use common::url_validation::validate_external_url;
 use db::{
     models::{
         CreateFeedSubscription, CreatePortalImportJob, PortalImportJob, PortalImportJobWithStats,
@@ -58,12 +59,7 @@ async fn resolve_agency(
         .reality_portal_repo
         .get_active_agency_for_user(user_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to resolve agency: {}", e),
-            )
-        })?
+        .map_err(|e| crate::util::errors::db_error("resolve agency", e))?
         .ok_or_else(|| {
             (
                 axum::http::StatusCode::FORBIDDEN,
@@ -89,6 +85,7 @@ pub struct ImportJobResponse {
 #[derive(Debug, Deserialize, IntoParams, ToSchema)]
 pub struct ImportJobsQuery {
     pub status: Option<String>,
+    /// Page size (default 20, clamped to `1..=100` before reaching SQL).
     pub limit: Option<i32>,
     pub offset: Option<i32>,
 }
@@ -122,23 +119,31 @@ pub async fn list_import_jobs(
     principal: PortalPrincipal,
     Query(query): Query<ImportJobsQuery>,
 ) -> Result<Json<ImportJobsResponse>, (axum::http::StatusCode, String)> {
+    // Clamp the caller-supplied `limit` before it reaches SQL: a negative value
+    // binds into `LIMIT $3` as `LIMIT -1`, which Postgres rejects (surfacing as a
+    // 500), and an arbitrarily large value is a resource-exhaustion vector. Mirror
+    // the `1..=100` convention used by the sibling portal list handlers
+    // (see `routes::portal_listings`).
+    let limit = query.limit.unwrap_or(20).clamp(1, 100);
     let jobs = state
         .reality_portal_repo
         .list_import_jobs(
             principal.user_id,
-            query.status,
-            query.limit.unwrap_or(20),
-            query.offset.unwrap_or(0),
+            query.status.clone(),
+            limit,
+            crate::util::clamp_offset_i32(query.offset),
         )
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to list import jobs: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("list import jobs", e))?;
 
-    let total = jobs.len() as i64;
+    // `total` must be the full count of matching rows (over the same filter,
+    // ignoring limit/offset) so clients can paginate — not the length of the
+    // current page.
+    let total = state
+        .reality_portal_repo
+        .count_import_jobs(principal.user_id, query.status)
+        .await
+        .map_err(|e| crate::util::errors::db_error("count import jobs", e))?;
 
     Ok(Json(ImportJobsResponse { jobs, total }))
 }
@@ -159,19 +164,27 @@ pub async fn create_import_job(
     State(state): State<AppState>,
     principal: PortalPrincipal,
     Json(data): Json<CreatePortalImportJob>,
-) -> Result<Json<ImportJobResponse>, (axum::http::StatusCode, String)> {
+) -> Result<(axum::http::StatusCode, Json<ImportJobResponse>), (axum::http::StatusCode, String)> {
+    // SECURITY: reject SSRF-prone source URLs at submission time (parity with
+    // `agency_imports`). A domain that passes this static check can still
+    // resolve to a private IP (DNS rebinding) — the import worker must
+    // re-validate the resolved IP at fetch time.
+    if let Some(url) = data.source_url.as_deref() {
+        if let Err(err) = validate_external_url(url) {
+            return Err((axum::http::StatusCode::BAD_REQUEST, err.to_string()));
+        }
+    }
+
     let job = state
         .reality_portal_repo
         .create_import_job(principal.user_id, data)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to create import job: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("create import job", e))?;
 
-    Ok(Json(ImportJobResponse { job }))
+    Ok((
+        axum::http::StatusCode::CREATED,
+        Json(ImportJobResponse { job }),
+    ))
 }
 
 /// Get import job by ID.
@@ -194,12 +207,7 @@ pub async fn get_import_job(
         .reality_portal_repo
         .get_import_job(id, principal.user_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get import job: {}", e),
-            )
-        })?
+        .map_err(|e| crate::util::errors::db_error("get import job", e))?
         .ok_or_else(|| {
             (
                 axum::http::StatusCode::NOT_FOUND,
@@ -229,6 +237,16 @@ pub async fn update_import_job(
     Path(id): Path<Uuid>,
     Json(data): Json<UpdatePortalImportJob>,
 ) -> Result<Json<ImportJobResponse>, (axum::http::StatusCode, String)> {
+    // SECURITY: reject SSRF-prone source URLs at submission time (parity with
+    // `agency_imports` and `create_import_job`). A domain that passes this
+    // static check can still resolve to a private IP (DNS rebinding) — the
+    // import worker must re-validate the resolved IP at fetch time.
+    if let Some(url) = data.source_url.as_deref() {
+        if let Err(err) = validate_external_url(url) {
+            return Err((axum::http::StatusCode::BAD_REQUEST, err.to_string()));
+        }
+    }
+
     let job = state
         .reality_portal_repo
         .update_import_job(id, principal.user_id, data)
@@ -337,12 +355,7 @@ pub async fn list_feeds(
         .reality_portal_repo
         .list_feed_subscriptions(agency_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to list feeds: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("list feed subscriptions", e))?;
 
     let total = feeds.len() as i64;
 
@@ -365,20 +378,15 @@ pub async fn create_feed(
     State(state): State<AppState>,
     principal: PortalPrincipal,
     Json(data): Json<CreateFeedSubscription>,
-) -> Result<Json<FeedResponse>, (axum::http::StatusCode, String)> {
+) -> Result<(axum::http::StatusCode, Json<FeedResponse>), (axum::http::StatusCode, String)> {
     let agency_id = resolve_agency(&state, principal.user_id).await?;
     let feed = state
         .reality_portal_repo
         .create_feed_subscription(agency_id, data)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to create feed: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("create feed subscription", e))?;
 
-    Ok(Json(FeedResponse { feed }))
+    Ok((axum::http::StatusCode::CREATED, Json(FeedResponse { feed })))
 }
 
 /// Get feed subscription by ID.
@@ -402,12 +410,7 @@ pub async fn get_feed(
         .reality_portal_repo
         .get_feed_subscription(id, agency_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get feed: {}", e),
-            )
-        })?
+        .map_err(|e| crate::util::errors::db_error("get feed subscription", e))?
         .ok_or_else(|| {
             (
                 axum::http::StatusCode::NOT_FOUND,

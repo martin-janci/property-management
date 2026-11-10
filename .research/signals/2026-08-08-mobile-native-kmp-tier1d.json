@@ -1,0 +1,39 @@
+{
+  "generated": "2026-08-08T00:00:00Z",
+  "segment": "mobile-native-kmp",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["kotlin", "tester"],
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-submit-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — the Screen.CreateListing composable wires CreateListingScreen(onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }). The realtor 'Create Listing' screen is fully reachable in production navigation (composable(Screen.CreateListing.route) { ... }, reached from the MyListings flow), but every submit returns a hardcoded failure — a user fills in the create-listing form, taps submit, and always gets an error. This is a shipped, user-facing broken feature, not a hidden/disabled path.",
+        "The data layer to back it is entirely absent: PortalListingsRepository (mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt) exposes only listMyListings / getListingAnalytics / getPortfolioAnalytics — there is no create/submit method, and no other repository provides one (grep 'fun create' / 'fun submit' over mobile-native/shared/src/commonMain returns nothing). So the fix is not merely to swap the lambda; it requires building a create-listing repository call against the reality-server API and wiring it through.",
+        "Impact: the CreateListing route should either be gated behind a feature flag / hidden until the API exists, or the data-layer method built and wired. As-is it presents a functional-looking form that can never succeed. Recommend a follow-up implementer task to (a) add a createListing repository method, (b) wire onSubmit to it with proper Result handling in CreateListingScreen, or (c) hide the route until the endpoint lands."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-apiclient-dead-code-healthcheck-bug",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "cleanup",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt:27 — class ApiClient is never instantiated anywhere in production code. grep '\\bApiClient\\b' across mobile-native/**.kt returns only the class definition (ApiClient.kt:27) and a doc-comment reference in a test (ListingDetailRepositoryTest.kt:172). All live repositories (ListingRepository, FavoritesRepository, InquiryRepository, PortalListingsRepository, etc.) issue their own Ktor calls via HttpClientProvider.client and never route through ApiClient. It is ~100 lines of dead, duplicated API logic (listings search/detail, favorites, inquiry) that drifts from the real repositories and adds maintenance noise.",
+        "The dead class also carries a latent bug that would bite if it were ever wired: healthCheck() (ApiClient.kt:39) returns client.get(\"$baseUrl/health\") { configureRequest() }.toString() — .toString() on the Ktor HttpResponse object yields a debug string like 'HttpResponse[...]', not the health-endpoint body. It should await .body<String>() (or .bodyAsText()). Additionally healthCheck() is the only method in the class with no try/catch, so a network exception propagates uncaught instead of being folded into a Result like every sibling method (getListings/getListing wrap in try/catch → Result).",
+        "Recommend deleting ApiClient (and its exception type if unused elsewhere) to remove dead code and the duplication risk; if it is intended as the future canonical client, it should instead replace the ad-hoc per-repository HttpClientProvider calls and fix healthCheck first. Either way the current state — unreferenced + buggy — is pure liability."
+      ],
+      "expert": "tester"
+    }
+  ]
+}

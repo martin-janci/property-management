@@ -1,0 +1,48 @@
+[
+  {
+    "id": "code-review-reality-server-sso-token-cache-ignores-exp",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "reality-server",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "security",
+    "evidence": [
+      "backend/servers/reality-server/src/state.rs:735-748 — TokenValidationCache::set() stores every introspection result with `expires_at: Instant::now() + Duration::from_secs(self.ttl_seconds)`, a fixed TTL (default 60s, state.rs:947 `TokenValidationCache::new(60, 10000)`). The TTL is NOT derived from the PM access token's own `exp`.",
+      "The cache entry (CachedTokenValidation, state.rs:527-538) and the introspection response type (routes/sso.rs:644-652 TokenIntrospectionResponse: active/sub/client_id/scope) carry no expiry/`exp` field, so nothing re-checks token expiry on a cache hit.",
+      "routes/sso.rs:731-738 — introspect_pm_token() returns the cached `active` verbatim on a hit and short-circuits before contacting the PM introspection endpoint.",
+      "Consequence: a PM access token that is revoked upstream (user logs out of PM / admin revokes) or that expires within the caching window is still treated as `active=true` by reality-server for up to the full 60s TTL after revocation/expiry — a stale-auth acceptance window on the SSO validation path. Fix: bound each cache entry's expires_at by min(ttl, token_exp - now) and/or invalidate on logout."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-reality-server-sso-http-client-no-timeout",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "reality-server",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/reality-server/src/routes/sso.rs:682 (exchange_code_for_tokens), :706 (get_user_info), :743 (introspect_pm_token) each build a fresh `reqwest::Client::new()` and call `.send()` with NO `.timeout()`. reqwest's default client has no request timeout, so the outbound call can block indefinitely.",
+      "These are all on the auth-critical SSO path (OAuth callback token exchange, userinfo fetch, and token introspection). A slow or hung PM OAuth/introspection endpoint stalls the awaiting handler for as long as the upstream keeps the socket open, pinning the tokio task/connection and enabling upstream-induced resource exhaustion.",
+      "The codebase already has the correct pattern: state.rs:757-760 `PmApiClient::new` builds its client via `reqwest::Client::builder().timeout(Duration::from_secs(timeout_seconds)).build()`. The SSO helpers bypass it and also skip connection-pool reuse by minting a new client per request. Fix: reuse a shared client with an explicit `.timeout(...)` (and connect timeout) for all three PM calls."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-reality-server-sso-introspect-5xx-neg-cache",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "reality-server",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/reality-server/src/routes/sso.rs:753-762 — introspect_pm_token() treats ANY non-2xx introspection response as an inactive token: `if !response.status().is_success() { state.token_cache.set(token, false, None, None).await; return Err(...) }`. This does not distinguish an authoritative `401/200 active:false` from a transient upstream failure (500/502/503/504).",
+      "When the PM introspection endpoint has a transient outage or 5xx blip, a VALID user token is negatively cached as `active=false` for the full 60s TTL (state.rs:735-748). Because get() serves that cached `active=false` (sso.rs:731-738), the legitimate user keeps getting rejected for up to 60s AFTER the PM API has already recovered.",
+      "Consequence: an availability defect that amplifies a brief upstream hiccup into a 60s per-token lockout. Fix: only negative-cache authoritative inactive results (2xx with active=false, or 401); on 5xx/transport errors return an error WITHOUT caching (fail-open to a re-introspection, not a cached deny)."
+    ],
+    "expert": "rust"
+  }
+]

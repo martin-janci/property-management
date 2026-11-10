@@ -29,21 +29,45 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ---------------------------------------------------------------------------
-// Framework-boundary mock: next/navigation.
+// Framework-boundary mocks.
 //
-// The global setup (src/test/setup.tsx) mocks next/navigation with a static
-// useRouter/useSearchParams. Override it here so each test can (a) capture the
-// router.replace spy to assert redirect targets and (b) feed arbitrary query
-// params into useSearchParams.
+// The page navigates through the locale-aware `useRouter`/`Link` from
+// `@/i18n/routing` (so redirects keep the active `/[locale]/…` prefix) but
+// still reads query params through `next/navigation`'s `useSearchParams`.
+//
+//   - `@/i18n/routing`: capture the `router.replace` spy to assert redirect
+//     targets, and render `Link` as a plain <a> so `returnHome` is queryable.
+//   - `next/navigation`: feed arbitrary query params into `useSearchParams`.
+//
+// The global setup (src/test/setup.tsx) mocks both modules statically; these
+// per-file overrides make the router.replace spy and the query params
+// controllable.
 // ---------------------------------------------------------------------------
 
 const replaceSpy = vi.fn<(href: string) => void>();
 let currentParams = new URLSearchParams();
 
-vi.mock('next/navigation', () => ({
+vi.mock('@/i18n/routing', () => ({
   useRouter: () => ({
     push: vi.fn(),
     replace: replaceSpy,
+    back: vi.fn(),
+    forward: vi.fn(),
+    refresh: vi.fn(),
+    prefetch: vi.fn(),
+  }),
+  Link: ({ children, href }: { children: React.ReactNode; href: string }) => (
+    <a href={href}>{children}</a>
+  ),
+  usePathname: () => '/en/auth/callback',
+  getPathname: () => '/en/auth/callback',
+  redirect: vi.fn(),
+}));
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
     back: vi.fn(),
     forward: vi.fn(),
     refresh: vi.fn(),
@@ -80,7 +104,22 @@ describe('SsoCallbackPage — reality-web SSO /auth/callback flow (Story 79.2)',
     // The one-shot CSRF nonce is cleared after a successful callback.
     expect(sessionStorage.getItem(SSO_STATE_KEY)).toBeNull();
     // No error UI on the happy path.
-    expect(screen.queryByText('Login Failed')).not.toBeInTheDocument();
+    // With the global next-intl test mock, `t(key)` returns the key itself,
+    // so the error title renders as its i18n key `title`.
+    expect(screen.queryByText('title')).not.toBeInTheDocument();
+  });
+
+  it('renders the "completing login" status from an i18n key, not a hardcoded string', async () => {
+    // Regression: the progress copy used to be a hardcoded English literal
+    // ("Completing login..."), bypassing i18n. It must now come from the
+    // `auth.callback.completingLogin` message key. With the global next-intl
+    // test mock, `t(key)` returns the key itself, so the rendered text is the
+    // key — proving the string is no longer hardcoded.
+    renderCallback('');
+
+    await waitFor(() => expect(replaceSpy).toHaveBeenCalledWith('/'));
+    expect(screen.getByText('completingLogin')).toBeInTheDocument();
+    expect(screen.queryByText('Completing login...')).not.toBeInTheDocument();
   });
 
   it('redirects when NO nonce was issued (server-cookie-only flow, nothing to verify)', async () => {
@@ -89,7 +128,9 @@ describe('SsoCallbackPage — reality-web SSO /auth/callback flow (Story 79.2)',
     renderCallback('');
 
     await waitFor(() => expect(replaceSpy).toHaveBeenCalledWith('/'));
-    expect(screen.queryByText('Login Failed')).not.toBeInTheDocument();
+    // With the global next-intl test mock, `t(key)` returns the key itself,
+    // so the error title renders as its i18n key `title`.
+    expect(screen.queryByText('title')).not.toBeInTheDocument();
   });
 
   it('FAILS when a nonce was issued but the callback carries no state (CSRF bypass closed, #1826)', async () => {
@@ -101,9 +142,9 @@ describe('SsoCallbackPage — reality-web SSO /auth/callback flow (Story 79.2)',
     renderCallback('');
 
     await waitFor(() => {
-      expect(screen.getByText('Login Failed')).toBeInTheDocument();
+      expect(screen.getByText('title')).toBeInTheDocument();
     });
-    expect(screen.getByText(/invalid state token/i)).toBeInTheDocument();
+    expect(screen.getByText('invalidState')).toBeInTheDocument();
     expect(replaceSpy).not.toHaveBeenCalled();
   });
 
@@ -135,12 +176,12 @@ describe('SsoCallbackPage — reality-web SSO /auth/callback flow (Story 79.2)',
     renderCallback('?state=tampered');
 
     await waitFor(() => {
-      expect(screen.getByText('Login Failed')).toBeInTheDocument();
+      expect(screen.getByText('title')).toBeInTheDocument();
     });
-    expect(screen.getByText(/invalid state token/i)).toBeInTheDocument();
+    expect(screen.getByText('invalidState')).toBeInTheDocument();
     expect(replaceSpy).not.toHaveBeenCalled();
-    // A recovery affordance back to home is rendered.
-    expect(screen.getByRole('link', { name: /return home/i })).toBeInTheDocument();
+    // A recovery affordance back to home is rendered (i18n key `returnHome`).
+    expect(screen.getByRole('link', { name: 'returnHome' })).toBeInTheDocument();
   });
 
   it('surfaces a provider error_description and does not redirect', async () => {
@@ -149,7 +190,7 @@ describe('SsoCallbackPage — reality-web SSO /auth/callback flow (Story 79.2)',
     await waitFor(() => {
       expect(screen.getByText('User declined consent')).toBeInTheDocument();
     });
-    expect(screen.getByText('Login Failed')).toBeInTheDocument();
+    expect(screen.getByText('title')).toBeInTheDocument();
     expect(replaceSpy).not.toHaveBeenCalled();
   });
 

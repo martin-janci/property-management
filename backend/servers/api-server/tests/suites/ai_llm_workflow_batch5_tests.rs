@@ -11,8 +11,11 @@
 //! Skipped (require live external provider calls):
 //!   • POST /api/v1/ai/llm/lease/generate     (LLM call)
 //!   • POST /api/v1/ai/llm/listing/description (LLM call)
-//!   • POST /api/v1/ai/llm/chat/enhanced       (LLM call)
 //!   • POST /api/v1/ai/llm/voice/devices       (OAuth exchange)
+//!
+//! Note: POST /api/v1/ai/llm/chat/enhanced is covered below as a fail-closed
+//! (501 NOT_IMPLEMENTED) regression test — the handler no longer fabricates a
+//! success payload, so it needs no live provider.
 
 use axum::http::StatusCode;
 use serde_json::json;
@@ -628,6 +631,63 @@ async fn update_escalation_config_returns_ok(pool: PgPool) {
 }
 
 // =============================================================================
+// ai/llm.rs — enhanced (RAG) chat
+// =============================================================================
+
+// POST /api/v1/ai/llm/chat/enhanced → 501 NOT_IMPLEMENTED
+//
+// Regression guard (code-review-api-handlers-enhanced-chat-stub): this handler
+// used to return a 200 success payload with fabricated metrics (a canned echo
+// response, a hardcoded confidence of 0.85, tokens_used: 150, empty sources,
+// and an escalated flag derived from the fake confidence) despite doing no
+// embedding search and no LLM call. It now fails closed with 501 so clients
+// never act on invented data. Assert both the status AND the absence of the
+// fabricated fields.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn enhanced_chat_fails_closed_not_implemented(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+    let (token, org_id) =
+        create_authenticated_user_with_org(&app, &user, "llm-enhanced-chat").await;
+    let session = app.session(token, org_id);
+
+    let resp = app
+        .execute(
+            session
+                .post("/api/v1/ai/llm/chat/enhanced")
+                .json(json!({
+                    "message": "How do I report a leak in my unit?",
+                    "language": "en"
+                }))
+                .build(),
+        )
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::NOT_IMPLEMENTED,
+        "enhanced chat must fail closed with 501, not return fabricated success; body={}",
+        resp.text()
+    );
+
+    // The old stub leaked these invented metrics in a 200 body — none of them
+    // must ever appear in the fail-closed response.
+    let body = resp.text();
+    assert!(
+        !body.contains("\"confidence\""),
+        "response must not carry a fabricated confidence score; body={body}"
+    );
+    assert!(
+        !body.contains("\"tokens_used\""),
+        "response must not carry a fabricated token count; body={body}"
+    );
+    assert!(
+        !body.contains("\"escalated\""),
+        "response must not carry a fabricated escalation flag; body={body}"
+    );
+}
+
+// =============================================================================
 // ai/llm.rs — photo enhancement (3 endpoints)
 // =============================================================================
 
@@ -811,6 +871,94 @@ async fn delete_voice_device_returns_no_content(pool: PgPool) {
         "delete voice device must return 204 or 200; body={}",
         resp.text()
     );
+}
+
+// POST /api/v1/ai/llm/voice/devices — re-link keeps exactly one active row.
+//
+// Regression for #2807: PR #2796 added the global partial UNIQUE index
+// `uniq_voice_devices_active_org_user_platform` (WHERE is_active = TRUE,
+// migration 00231) but only converted the OAuth-exchange *webhook* path to the
+// atomic upsert. This second link path (`ai/voice.rs::link_voice_device`, the
+// React-Native voice-linking flow) still went through a plain
+// `INSERT ... RETURNING *`, so a re-link for an (org, user, platform) that
+// already had an active row hit a Postgres `23505` unique-violation which the
+// handler mapped to an opaque 500. Routing it through `upsert_active_voice_device`
+// makes the DB the single writer: the first link inserts, the re-link conflicts
+// on the index and rotates the row in place. This test links twice for the same
+// tuple and asserts both calls are non-500 (201) and leave exactly one active
+// row — it fails on the pre-fix plain-insert path with a 500 on the second call.
+//
+// The OAuth platform is intentionally left unconfigured in the test env, so
+// `exchange_voice_oauth_tokens` returns no tokens and the device is stored with
+// a NULL access token (the dev/testing path) — exercising the link write itself
+// without a live provider.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn link_voice_device_relink_keeps_single_active_row(pool: PgPool) {
+    create_llm_tables(&pool).await;
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "llm-voice-relink").await;
+    let user_id = user_id_for(&pool, &user.email).await;
+    let session = app.session(token, org_id);
+
+    let link = |name: &str| {
+        session
+            .post("/api/v1/ai/llm/voice/devices")
+            .json(json!({
+                "platform": "alexa",
+                "auth_code": "test-auth-code",
+                "device_name": name,
+                "unit_id": null,
+            }))
+            .build()
+    };
+
+    // First link: inserts the device row.
+    let resp1 = app.execute(link("Kitchen Echo")).await;
+    assert_eq!(
+        resp1.status,
+        StatusCode::CREATED,
+        "first voice-device link must return 201; body={}",
+        resp1.text()
+    );
+
+    // Re-link for the same (org, user, platform): pre-fix this hit the new
+    // partial UNIQUE index and returned a 500; the upsert must make it idempotent.
+    let resp2 = app.execute(link("Kitchen Echo v2")).await;
+    assert_eq!(
+        resp2.status,
+        StatusCode::CREATED,
+        "re-link must upsert (not 23505 -> 500); body={}",
+        resp2.text()
+    );
+
+    // The DB is the single writer of the invariant: exactly one active row.
+    let active_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM voice_assistant_devices \
+         WHERE organization_id = $1 AND user_id = $2 AND platform = $3 AND is_active = TRUE",
+    )
+    .bind(org_id)
+    .bind(user_id)
+    .bind("alexa")
+    .fetch_one(&pool)
+    .await
+    .expect("count active voice devices");
+    assert_eq!(
+        active_count, 1,
+        "re-link must not accumulate active device rows (found {active_count})"
+    );
+
+    // The device_id (row id) is stable across the re-link: the upsert rotated the
+    // existing row rather than minting a new one.
+    let id1: Uuid = resp1.json::<serde_json::Value>()["device_id"]
+        .as_str()
+        .and_then(|s| s.parse().ok())
+        .expect("first link returns a device_id");
+    let id2: Uuid = resp2.json::<serde_json::Value>()["device_id"]
+        .as_str()
+        .and_then(|s| s.parse().ok())
+        .expect("re-link returns a device_id");
+    assert_eq!(id1, id2, "re-link must preserve the existing device row id");
 }
 
 // =============================================================================

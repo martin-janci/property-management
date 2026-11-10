@@ -15,6 +15,7 @@ use api_core::extractors::RlsConnection;
 use db::models::enhanced_tenant_screening::*;
 use db::repositories::enhanced_tenant_screening::ComponentScores;
 
+use crate::routes::pagination::clamp_limit;
 use crate::state::AppState;
 
 #[derive(Debug, Deserialize)]
@@ -29,13 +30,18 @@ pub(super) async fn list_ai_results(
     mut rls: RlsConnection,
     Query(q): Query<ListResultsQuery>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only; membership alone is not enough.
+    if !super::is_screening_manager(&rls) {
+        rls.release().await;
+        return super::manager_required();
+    }
     let org_id = rls.tenant_id();
     let result = s
         .enhanced_tenant_screening_repo
         .list_ai_results(
             &mut **rls.conn(),
             org_id,
-            q.limit.unwrap_or(50),
+            clamp_limit(q.limit.map(i64::from), 50) as i32,
             q.offset.unwrap_or(0),
         )
         .await;
@@ -53,6 +59,11 @@ pub(super) async fn get_ai_result(
     mut rls: RlsConnection,
     Path(screening_id): Path<Uuid>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only; membership alone is not enough.
+    if !super::is_screening_manager(&rls) {
+        rls.release().await;
+        return super::manager_required();
+    }
     let org_id = rls.tenant_id();
     let result = s
         .enhanced_tenant_screening_repo
@@ -73,6 +84,11 @@ pub(super) async fn get_risk_factors(
     mut rls: RlsConnection,
     Path(screening_id): Path<Uuid>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only; membership alone is not enough.
+    if !super::is_screening_manager(&rls) {
+        rls.release().await;
+        return super::manager_required();
+    }
     let org_id = rls.tenant_id();
 
     // First get the (org-scoped) AI result to get its ID, then its factors.
@@ -105,6 +121,11 @@ pub(super) async fn get_complete_screening_data(
     mut rls: RlsConnection,
     Path(screening_id): Path<Uuid>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only; membership alone is not enough.
+    if !super::is_screening_manager(&rls) {
+        rls.release().await;
+        return super::manager_required();
+    }
     let org_id = rls.tenant_id();
     let result = s
         .enhanced_tenant_screening_repo
@@ -124,6 +145,15 @@ pub(super) async fn run_ai_scoring(
     mut rls: RlsConnection,
     Json(req): Json<RunAiScoringRequest>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only; membership alone is not enough.
+    if !super::is_screening_manager(&rls) {
+        rls.release().await;
+        return super::manager_required();
+    }
+    if let Some(denied) = super::reject_foreign_refs(&s, &mut rls, req.screening_id, None).await {
+        rls.release().await;
+        return denied;
+    }
     let org_id = rls.tenant_id();
 
     // Get the active model or specified model.

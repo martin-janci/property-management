@@ -1,12 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {
-  CACHE_PREFIX,
-  LAST_SYNC_KEY,
-  LAYOUT_PREFIX,
-  QUEUE_KEY,
-  WIDGET_CONFIG_KEY,
-  WIDGET_DATA_KEY,
-} from './localCacheKeys';
+import { NFCCredentialManager } from '../nfc/NFCCredentialManager';
+import { CACHE_PREFIX, LAYOUT_PREFIX, TENANT_SCOPED_EXACT_KEYS } from './localCacheKeys';
 
 /**
  * Purge every AsyncStorage namespace that holds tenant-scoped local data
@@ -23,6 +17,19 @@ import {
  *     dashboard customization activate for the next account on a shared device;
  *     issue #2486). The key is a function of a dynamic `scopeId`/`screen`, so it
  *     is swept by prefix rather than matched against a fixed key.
+ *   - the fixed feature-cache keys in `TENANT_SCOPED_EXACT_KEYS` — NFC access
+ *     log, QR scan history, offline feedback drafts + pending-flush queue, and
+ *     FAQ votes. Without these a prior tenant's physical-access/scan history
+ *     survives a handoff, and queued offline feedback can flush under the next
+ *     user's token (issue #2947, follow-up to #2361/#2399).
+ *   - NFC building-access credential material, via
+ *     `NFCCredentialManager.clearAllLocalCredentials()`. Unlike everything
+ *     above this lives in `expo-secure-store` (encrypted at rest), not
+ *     AsyncStorage, plus a legacy unencrypted AsyncStorage migration blob — so
+ *     the AsyncStorage sweep alone left the PRIOR tenant's actual credentials
+ *     readable, and the next tenant could adopt them before their own fetch
+ *     (issue #2953, follow-up to #2947). It runs in its own best-effort block
+ *     so an AsyncStorage failure above cannot skip the more sensitive purge.
  *
  * Server RLS still prevents an actual data breach on refetch, so the exposure
  * this closes is stale-display + queued-write misattribution (a prior user's
@@ -40,15 +47,10 @@ import {
  */
 export async function resetLocalData(): Promise<void> {
   try {
+    const exact = new Set<string>(TENANT_SCOPED_EXACT_KEYS);
     const keys = await AsyncStorage.getAllKeys();
     const toRemove = keys.filter(
-      (key) =>
-        key.startsWith(CACHE_PREFIX) ||
-        key.startsWith(LAYOUT_PREFIX) ||
-        key === QUEUE_KEY ||
-        key === LAST_SYNC_KEY ||
-        key === WIDGET_DATA_KEY ||
-        key === WIDGET_CONFIG_KEY
+      (key) => key.startsWith(CACHE_PREFIX) || key.startsWith(LAYOUT_PREFIX) || exact.has(key)
     );
 
     if (toRemove.length > 0) {
@@ -59,5 +61,15 @@ export async function resetLocalData(): Promise<void> {
     }
   } catch (error) {
     console.error('Failed to reset local data:', error);
+  }
+
+  // NFC credential material lives in SecureStore (+ a legacy AsyncStorage blob),
+  // which the sweep above does not cover. Purge it in a separate best-effort
+  // block so a failure in the AsyncStorage sweep can never leave the more
+  // sensitive building-access credentials behind (issue #2953).
+  try {
+    await NFCCredentialManager.clearAllLocalCredentials();
+  } catch (error) {
+    console.error('Failed to purge NFC credentials:', error);
   }
 }

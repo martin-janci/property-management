@@ -1,0 +1,72 @@
+{
+  "generated": "2026-09-26T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claim buffer STARVED: claimable=8 and all 8 open action-list items are mobile-native/KMP-gated — structurally unlandable in the cloud runner, AGP/Android-SDK egress-blocked #2652 — while coverage is exhausted at 49/49 done). Fresh LANDABLE code-review findings requested so the dispatcher can promote+claim+land them. 2026-09-26.",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "OLDEST-UNMINED-LANDABLE (churn-aligned pick declined as re-mine). Phase-1 hotspot_history's freshest application-code churn (last_seen 2026-09-20) is backend/servers/api-server/src/services/push_fanout.rs, which lives in api-core — but api-core was mined only yesterday (signals/2026-09-25-api-core-tier1d.json) and that pass explicitly VERIFIED push_fanout CLEAN (client-build expect() idiomatic, per-device error handling + best-effort stale-token purge documented), so re-mining it would add noise, not fresh vectors. Deduped against the recently-mined tier1d corpus: today (2026-09-26) already mined ppt-web-core, ppt-web-ui, reality-server; 2026-09-25 mined api-core, api-handlers, ppt-web-core, reality-web; 2026-09-24 mined shared/frontend-packages, reality-server, reality-web. Among the 7 landable segments in the skill's segment-map, mobile-rn is the OLDEST-mined (last tier1d 2026-09-17, 9 days stale; routine review_cursor.mobile-rn = 2026-09-09) and has a strong track record of producing claimable/landed vectors (see the mobile-rn-nfc-* rows now status=done in backlog.json). mobile-native-kmp skipped per directive (structurally unlandable, gated). Static analysis only (read + grep, no build/test) per skill contract.",
+  "experts_used": ["frontend", "tester"],
+  "landable_in_cloud": true,
+  "landability_note": "mobile-rn = frontend/apps/mobile/src/ — the Expo/React Native app, NOT the AGP-gated Kotlin Multiplatform mobile-native/ surface. It is part of the pnpm frontend workspace and gated by the frontend.yml CI (biome check + typecheck + jest-expo unit tests), all of which run in the cloud runner with no Android SDK / device / AGP egress dependency. The #2652 mobile-native gate does NOT apply here. All three findings below are self-contained TypeScript/React-Native changes (a queue dead-letter/notify path, an attachment-upload-or-warn fix, and an input-validation guard) that a specialist can implement and cover with jest-expo tests entirely in the cloud runner.",
+  "findings_count": 3,
+  "static_only": true,
+  "note": "mobile-rn is a broadly mature, heavily-hardened segment (much of the offline-sync core in hooks/useOfflineSupport.ts carries explicit issue references #1767/#2637/#2399 and correct retryable-vs-permanent HTTP classification; deep-link routing in services/deepLinkRouting.ts is safe because qrcode/DeepLinkHandler.ts only emits whitelisted screens from a fixed route table and returns success:false for unknown paths, so the `as Screen` cast cannot be abused; the DocumentUpload `as unknown as Blob` cast is the documented RN-FormData pattern with an eslint-disable; hooks/useApi.ts apiRequest correctly parses error bodies and throws; none of the 40 production console.* calls log tokens/secrets/PII — they log error objects and static strings). VERIFIED-CLEAN so future rotations are not re-mined speculatively: no sensitive-data logging, no unsafe deep-link/param pass-through, no swallowed-catch, no as-any at an API boundary, no TODO/FIXME in prod. The three net-new findings below are the substantive gaps, all on offline/data-submission paths: (1) permanent-4xx offline actions are dropped with only a console.error and are unrecoverable by the UI's own Retry affordance; (2) fault-report photos are captured, compressed and previewed with upload-promising copy but silently omitted from the submit payload and never uploaded; (3) meter-reading submission validates only non-empty, not numeric/non-negative/monotonic, and decimal-pad does not block paste.",
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-offline-permanent-4xx-silent-drop",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 mobile-rn hooks/useOfflineSupport.ts + components/sync/SyncProgressToast.tsx)",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts",
+        "frontend/apps/mobile/src/components/sync/SyncProgressToast.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:419-427 — in processQueue's catch, an action whose replay returns a PERMANENT 4xx (executeQueuedAction marks it `permanent` for any 4xx that is NOT in RETRYABLE_HTTP_STATUSES {401,408,429}, i.e. 400/403/404/409/422/…) is handled by: `failed++; terminalFailureIds.add(action.id); console.error('Action permanently failed (4xx), dropping:', action);` — and terminalFailureIds are then EXCLUDED from the carried-forward queue at :479 (`(a) => !succeededIds.has(a.id) && !terminalFailureIds.has(a.id)`). So the queued action — which is offline-created USER CONTENT (a fault report, a meter reading, a message the user composed while offline) — is permanently deleted from AsyncStorage with no persisted record and no user-facing notification. The only trace is a dev-console line that never reaches a released build's user.",
+        "The failure is invisible to the user AND the app's own recovery affordance cannot recover it: components/sync/SyncProgressToast.tsx renders a Retry button whenever `isComplete && failed > 0` (:129) and PendingSyncIndicator.tsx shows a per-item retry for status 'failed' (:87). But the permanently-dropped items were already removed from the queue (:479), so tapping Retry re-runs processQueue over a queue that no longer contains them — a guaranteed no-op for exactly the items the '⚠ N failed' badge is telling the user to retry. The UI thus actively implies the lost content is recoverable when it has already been discarded.",
+        "Impact: a resident who reports a fault or submits a meter reading while offline is shown a success/'saved offline, will sync when online' confirmation (e.g. screens/faults/ReportFaultScreen.tsx queueForLater Alert 'faults.queuedTitle', screens/meters/MeterReadingScreen.tsx 'meters.savedOffline'), then — if the replay hits a 422 validation error or a 403 (e.g. a permission/tenant edge, a since-deleted building, a server-side validation the client did not mirror) — the content silently vanishes with no way for the user to learn it was lost or to re-enter it. This is a data-loss-visibility gap that the surrounding code was otherwise carefully written to avoid (the same file goes to great lengths NOT to drop transient/5xx failures, issues #1767/#2637).",
+        "Fix (landable in isolation, jest-expo coverable): instead of silently discarding permanent-4xx actions, either (a) move them to a persisted dead-letter list (a new AsyncStorage key in services/localCacheKeys) and surface a 'these offline items could not be synced' screen/toast with the failing action + server message so the user can re-enter or dismiss, and/or (b) at minimum emit a user-visible notification (not console.error) naming what was dropped and why, and stop showing a Retry affordance for items that are no longer in the queue. Confidence medium: the drop + dequeue + console-only + Retry-no-op chain is statically certain and traced end-to-end; the medium (not high) rating reflects that a permanent-4xx-on-replay outcome is not runtime-confirmed to be common in production."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-fault-photos-silently-dropped",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 mobile-rn screens/faults/ReportFaultScreen.tsx)",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx:519-566 renders a full photo-attachment UX — camera + gallery pickers (pickImage), up to 5 photos (selectionLimit 5, :195/:200), in-place compression when over 10 MB (applyPhotos :211), thumbnail previews with remove buttons (:523-528), and warning copy — yet handleSubmit (:285) builds the CreateFaultVariables payload (:301-310) with only building_id/title/description/category/priority/location_description/idempotency_key and NEVER includes `photos`. The photos array (state at :96) is not referenced anywhere in the submit or queue path.",
+        "The omission is acknowledged in-code as unfinished: the comment at :297-300 says 'NOTE: `photos` holds local device URIs (compressed in-place when over 10 MB). Uploading attachments needs the presigned-URL pipeline (POST /faults/{id}/attachments), which has no shared mobile helper yet — tracked as a follow-up. The fault itself is created/queued here.' So the attachments are deliberately dropped, but nothing tells the user.",
+        "The user-facing copy actively promises an upload that never happens: locales/en.json 'faults.photosCompressedWarning' = '…were compressed to {{final}} MB so they upload faster…' and 'faults.photosStillLargeWarning' = '…so the upload may be slow or fail on a weak connection.' After submit the user sees 'faults.successSubmit' ('Fault reported successfully', Alert at :324) or the offline 'faults.queuedTitle' with no mention that the photos they attached, compressed and previewed were discarded. Photo evidence is exactly what makes a fault report actionable for a property manager, so silently dropping it while confirming success is a real data-integrity/trust problem, not a cosmetic one.",
+        "Fix (landable in isolation): either wire the attachment upload after the fault create resolves (POST /api/v1/faults/{id}/attachments via the presigned-URL pipeline; for the offline path, enqueue dependent attachment-upload actions keyed to the fault's temp localId, which useOfflineSupport already remaps to the server id — issue #1767) OR, as an honest interim, warn the user at submit time that photos are not yet uploaded (and/or hide the photo picker behind the missing capability) so no one believes evidence was filed when it was not. Confidence HIGH: the payload omission and the 'no shared mobile helper yet' comment are unambiguous and the reachable success/queued alerts contain no photo caveat — traced entirely within this one file."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-meter-reading-no-numeric-validation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 mobile-rn screens/meters/MeterReadingScreen.tsx)",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "tester",
+      "files": [
+        "frontend/apps/mobile/src/screens/meters/MeterReadingScreen.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/meters/MeterReadingScreen.tsx:99-133 — handleSubmit's only validation is `if (!reading.trim()) { Alert.alert(...'meters.readingRequired'); return; }`. There is no numeric parse, no non-negative check, and no monotonic (>= previous reading) check. The raw string is placed verbatim into the queued/POSTed body: `reading: reading.trim()` (:111 / :126, endpoint POST /api/v1/meter-readings). A value like '', ' 12.3.4', '-5', '1,234', 'abc' (see below), or a fat-fingered extra digit is submitted as-is.",
+        "keyboardType=\"decimal-pad\" (:224) only chooses the on-screen soft keyboard; it does NOT constrain the value. React Native TextInput still accepts PASTED text, hardware-keyboard input, and platform IMEs regardless of keyboardType, and decimal-pad permits multiple '.' separators on some Android IMEs — so non-numeric or malformed content can reach `reading` and be submitted. Contrast screens/meters/MeterDetailScreen.tsx:51-55, which defensively coerces incoming readings with a toNumber(Number.parseFloat) helper — the write path has no equivalent guard.",
+        "This compounds with the offline queue's silent permanent-4xx drop (see code-review-mobile-rn-offline-permanent-4xx-silent-drop): when offline, an unvalidated/malformed reading is queued, the user is shown 'meters.savedOffline / willSyncWhenOnline' success, and if the backend rejects the malformed value with a 422 on replay the reading is silently discarded — the user never learns their utility reading did not record. Even online, a lower-than-previous or mistyped reading corrupts consumption/billing calculations downstream.",
+        "Fix (small, jest-expo coverable): before enqueue/submit, parse the reading with Number.parseFloat, reject NaN / negative / non-finite with a localized error Alert (mirroring the existing 'meters.readingRequired' pattern), optionally warn when the new value is below the last known reading, and send a normalized numeric value rather than the raw string. Confidence medium; score_delta 1 (Low) because decimal-pad mitigates casual non-numeric entry, so the residual risk is paste/IME/format/monotonic rather than a guaranteed crash or security issue — a data-quality/validation gap."
+      ]
+    }
+  ]
+}

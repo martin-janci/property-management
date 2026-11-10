@@ -1,0 +1,50 @@
+[
+  {
+    "id": "code-review-ppt-web-core-api-401-onunauthorized-unwired",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "ppt-web-core",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "frontend/apps/ppt-web/src/lib/api.ts:213-221 — the hand-rolled axios response interceptor has an unauthorized branch `if (error.response?.status === 401 && onUnauthorizedCallback) { onUnauthorizedCallback(); }`. `onUnauthorizedCallback` is a module-level `let` (api.ts:180) set ONLY inside `createAxiosInstance` from `config.onUnauthorized` (api.ts:196).",
+      "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:337 — the sole production caller wires the client with `configureApiClient({ getToken: getAccessToken })` and passes NO `onUnauthorized`. Therefore `onUnauthorizedCallback` is `undefined` at runtime and the 401 branch (api.ts:220) is dead code in production — a 401 neither logs the user out nor triggers a token refresh; the request just rejects with a transformed ApiError.",
+      "The gap has real consumers: frontend/apps/ppt-web/src/features/sentiment/hooks/useSentiment.ts:35+ and frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts call `getApiClient()` directly, and their own header comments (useSentiment.ts:18-19, usePredictiveMaintenance.ts:9-10) advertise `401 -> onUnauthorized` as a benefit that never fires. When the access token expires, these production feature calls fail silently with an error instead of re-authenticating.",
+      "Impact / landable frontend-only fix: pass an `onUnauthorized` handler in the AuthContext.tsx:337 `configureApiClient({...})` call (e.g. invoke `logout()` or the queued `refreshToken()` + replay). Confidence medium: wiring is fully traced statically; net user impact depends on token TTL and whether the separate generated `@ppt/api-client` covers the main flows, so not upgraded to high."
+    ],
+    "expert": "frontend"
+  },
+  {
+    "id": "code-review-ppt-web-core-refresh-queue-never-invoked",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "ppt-web-core",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:449-462 — `refreshToken` implements a careful concurrency-safe silent-refresh: it de-duplicates concurrent callers via `isRefreshing`/`refreshPromise` refs so N parallel 401s coalesce into ONE `refreshTokenInternal()` round-trip. It is exposed on the context value (AuthContext.tsx:599 and dep array :610).",
+      "No production code path invokes it. A repo-wide grep for `refreshToken` consumers across apps/ppt-web/src returns only the definition, the context-value entries, and *.test.tsx files — no interceptor, hook, or component calls `useAuth().refreshToken()`. Combined with the dead `onUnauthorized` branch (see api-401 finding), ppt-web has NO 401 -> refresh -> retry pipeline for the hand-rolled `getApiClient()` client: an expired access token is never silently refreshed at request time.",
+      "So the queued-refresh machinery is effectively dead in production (exercised only by unit tests). Either it should be wired into the api.ts unauthorized branch (call `refreshToken()`, then replay the original request on success) or the runtime silent-refresh contract it implies is missing.",
+      "Impact: reliability/completeness gap on token expiry (low severity — sessions still work until the access token lapses, then the user hits errors/forced re-login instead of a transparent refresh). Landable frontend-only fix: connect `refreshToken()` to the 401 handler resolved by the api-401 finding above."
+    ],
+    "expert": "frontend"
+  },
+  {
+    "id": "code-review-ppt-web-core-api-default-export-stale-singleton",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "ppt-web-core",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "frontend/apps/ppt-web/src/lib/api.ts:321 — `export default getApiClient();` is evaluated at module-load time. `getApiClient()` lazily creates `apiInstance` via `createAxiosInstance()` with NO config, so the default export is permanently bound to an axios instance carrying the fallback `baseURL`/`timeout` (api.ts:63,68) and whatever the module-level getters were at import time.",
+      "Later, `configureApiClient(config)` (api.ts:298-300) REPLACES the module-level `apiInstance` with a brand-new `createAxiosInstance(config)` instance, and `resetApiClient()` (api.ts:307-311) sets it to null. Any importer of the `default` export keeps a reference to the ORIGINAL instance, which diverges from what `getApiClient()` returns afterward — a per-instance `baseURL`/`timeout` passed to `configureApiClient` would be silently ignored on the default-export instance (token injection happens to survive only because the getters are module-level `let`s read at request time).",
+      "Currently latent: no file imports the default (only named imports `{ configureApiClient, resetApiClient }` are used, AuthContext.tsx:39; lib/index.ts re-exports only named symbols). But it remains a footgun (a default export that is a stale, unconfigured singleton) plus an eager import-time side effect that constructs an axios instance nobody uses.",
+      "Impact: low — a trap for future callers, not an active bug. Landable frontend-only fix: drop the `export default getApiClient();` eager instantiation (prefer the explicit `getApiClient()` accessor), or make the default a lazy getter so it always resolves the current configured instance."
+    ],
+    "expert": "frontend"
+  }
+]

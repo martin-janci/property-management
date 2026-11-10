@@ -1,0 +1,65 @@
+{
+  "generated": "2026-10-10T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (research buffer starved: claimable=12 < floor=36, all cheaper refill tiers exhausted). Static single-segment rotating code review via ppt-dev-review skill — no compilation / no test execution (cloud runner has no toolchain). File reading + grep only. Produces fresh CLOUD-LANDABLE frontend backlog vectors for the ppt-web-ui segment. Written as the '-c' slice because two earlier same-day ppt-web-ui slices already exist (2026-10-10-ppt-web-ui-tier1d.json = toast-copy-timer-no-cleanup; 2026-10-10-ppt-web-ui-tier1d-b.json = voting cluster i18n x3). These 3 findings are disjoint from both and verified net-new against backlog.json ids, state.json seen_signals, and all prior ppt-web-ui signal files (no existing marketplace-orphan, registry-orphan, or RegistryPage silent-fail finding; the pre-existing registry-rules-save-silent-fail is a different file/handler — RegistryRulesPage). Theme of this slice: orphaned/unwired whole-feature detection (route-composition audit of AppRoutes.tsx vs features/*).",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed. CHURN_FILES empty (no Phase-1 list). From state.json review_cursor the oldest dates tie at 2026-10-01 between ppt-web-ui and mobile-rn; both cloud-landable (frontend). Tiebreak by skill segment-map table order picks ppt-web-ui. No saturation: 0 open code-review-finding items for ppt-web-ui in backlog.json (reality-server had 3 open and would have been skipped per the saturation rule). mobile-native-kmp (unlandable in cloud) excluded. Note: two earlier 2026-10-10 ppt-web-ui slices exist, but state.json review_cursor is routine-owned and still reads 2026-10-01, so ppt-web-ui remains the validly-tied oldest pick per the instructed selection input; this slice mines an orthogonal axis (whole-feature route wiring) the earlier slices did not touch.",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "findings_count": 3,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-marketplace-epic68-orphaned-routes",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "completeness",
+      "files": [
+        "frontend/apps/ppt-web/src/features/marketplace/pages/index.ts",
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/marketplace/ — the entire Epic 68 Service Provider Marketplace UI (6 pages: MarketplacePage, CreateRfqPage, ProviderDetailPage, ProviderProfilePage, QuoteComparisonPage, RfqListPage — see pages/index.ts barrel — plus ~14 components) is never mounted into the router. `grep -rn \"features/marketplace\" src --include=*.tsx --include=*.ts` returns ZERO references outside the feature directory, and none of the 6 page components are referenced in src/routes/** (CreateRfqPage/QuoteComparisonPage/RfqListPage/ProviderDetailPage/ProviderProfilePage → 0 route refs). src/routes/AppRoutes.tsx:38-68 composes 23 feature route-group fragments and NONE import features/marketplace; lazyRoutes.tsx has no marketplace entry. NOTE the trap: the only wired `MarketplacePage` is a DIFFERENT component, features/community/pages/MarketplacePage.tsx (community classifieds), exported at features/community/index.ts:32 and routed at routes/groups/community.tsx:254 as /community/marketplace — it is NOT the Epic 68 service-provider marketplace. Consequence: a fully-built, polished epic's UI is dead code — unreachable by users, invisible to route/screen-map coverage, and excluded from bundle route-splitting. Fix (frontend-only, cloud-landable): add a marketplaceRoutes() group under routes/groups/, wire the 6 pages to container route-wrappers (data hooks + API↔UI mappers) and register it in AppRoutes.tsx, or explicitly delete/park the feature if descoped. Medium: shipped feature functionally unreachable, no crash."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-feature-orphaned-routes",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "completeness",
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx",
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/ — the pet/vehicle Registry feature (RegistryPage, RegistryRulesPage + forms/lists/modal components) is imported nowhere outside its own directory: `grep -rn \"features/registry\" src` returns zero external refs, no registryRoutes() group exists, and src/routes/AppRoutes.tsx:38-68 registers no registry group. Yet RegistryPage's own handlers navigate via hard `window.location.href = '/registry/pets/new'` / '/registry/vehicles/{id}/edit' (RegistryPage.tsx:91,95,129,148,152,186) — routes that are never registered, so every such navigation lands on the NotFound/error route. The feature is therefore both unreachable (no entry route) and internally broken (its nav targets 404). Fix (frontend-only, cloud-landable): add a registryRoutes() group wiring RegistryPage + RegistryRulesPage (and the pet/vehicle detail/edit/new sub-routes the handlers already point at) and register it in AppRoutes.tsx; prefer react-router useNavigate over window.location.href so the SPA doesn't full-reload. Medium: shipped feature unreachable + dead internal links, no crash."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-page-mutations-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx — all four destructive/approval mutations swallow failures with only console.error and give the user NO feedback: handlePetDelete (98-109), handlePetReview (111-126), handleVehicleDelete (155-166), handleVehicleReview (168-183) each do `try { await mutation.mutateAsync(...) } catch (error) { console.error(...) }`. On a failed delete or approval (403/409/network) the user sees the row unchanged and no error toast/banner, so they assume success (or retry blindly) — a classic silent-failure UX trap on a manager-facing moderation surface. Distinct from the existing code-review-ppt-web-ui-registry-rules-save-silent-fail finding, which is RegistryRulesPage (rules save), not these RegistryPage registration handlers. Fix (frontend-only, cloud-landable): surface mutation errors via the app toast/error system (and ideally use the mutation's onError + isError state), and add a Vitest case asserting a visible error is rendered when mutateAsync rejects. Medium: unhandled error on a user-facing action path, no crash."
+      ]
+    }
+  ]
+}

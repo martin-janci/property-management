@@ -1,0 +1,25 @@
+{
+  "generated": "2026-08-15T00:00:00Z",
+  "segment": "mobile-native-kmp",
+  "source": "tier1d-dispatcher-generator",
+  "selection_reason": "oldest-unreviewed",
+  "selection_note": "Buffer-refill generator run (research backlog starved). No Phase-1 CHURN_FILES were provided (state.json hotspot_history is stale May-2026 api-server data, not current churn), so churn-alignment does not apply. Falling back to review_cursor: mobile-native-kmp (2026-08-11) is the oldest-reviewed segment; all other segments were reviewed 2026-08-12 or later. Saturation check passed: 0 open code-review-finding items for this segment in backlog.json, well below the >=3 skip threshold. Static analysis only, no compilation/tests. Findings deliberately scoped to avoid duplicating prior mobile-native-kmp findings (create-listing stub, mylistings paging, portfolio-analytics fan-out, ApiClient cancellation-swallowed, HttpClient no-timeout, SsoService test gap, LayoutRepository println, systemic barren catch(e), compose !! re-assertion). Reviewed a fresh area (monetary wire deserializers + favorites/price-tracking surface); one genuinely new finding emitted.",
+  "experts_used": ["kotlin", "tester"],
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-decimal-serializer-throws-malformed",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/DecimalStringSerializers.kt:44-47 and :60-63 — the wire-tolerant monetary deserializers finish by calling `raw.substringBefore('.').toLong()` (DecimalAsLongSerializer) and `raw.toDouble()` (DecimalAsDoubleSerializer) directly on the raw JSON primitive content. Both `String.toLong()` and `String.toDouble()` throw NumberFormatException on any content that is not a clean numeric literal: an empty string \"\", a thousands-separated value like \"1,000.00\", a leading-'+' value, whitespace, scientific notation, or any non-numeric string the backend might emit.",
+        "This defeats the exact purpose the serializers were introduced for. Their own doc comment (:12-32) says they exist because a fractional `serde-str` value like \"200000.00\" against a bare Long \"silently killed the whole price-tracking payload decode (see issue #2331)\". But an unexpected/malformed value now throws inside the serializer, which aborts the ENTIRE object decode — so a single bad monetary field still fails the whole favorites/price-tracking payload (`GET /api/v1/favorites`, `GET /api/v1/favorites/alerts`), reproducing the same all-or-nothing failure mode #2331 was meant to eliminate. The FavoritesRepository catch(e: Exception) (FavoritesRepository.kt:39,162) downgrades it to a failed Result rather than an app crash, so the user sees the whole Price-Tracking screen error out on one malformed field instead of a graceful per-field fallback.",
+        "Test gap confirming the exposure: DecimalWireContractTest.kt (the stated CI guard for these serializers, issue #2364) only pins happy-path shapes — fractional string, plain number, and JSON null (:44-152). There is NO test for empty-string, non-numeric, or otherwise malformed content, so this brittleness is unguarded. Fix: parse defensively — e.g. `raw.substringBefore('.').toLongOrNull() ?: 0L` and `raw.toDoubleOrNull() ?: 0.0` (or a documented sentinel), and add malformed-input cases to DecimalWireContractTest so the tolerance contract is actually enforced. Static-analysis finding: the throwing call is clear from source; runtime frequency depends on backend output."
+      ],
+      "expert": "kotlin"
+    }
+  ]
+}

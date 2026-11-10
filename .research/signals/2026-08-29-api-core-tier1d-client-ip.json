@@ -1,0 +1,33 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-29T08:29:00Z",
+  "segment_reviewed": "api-core",
+  "selection_reason": "oldest-unreviewed",
+  "selection_detail": "Standalone Tier-1d demand-driven run (research backlog starved: every open action-list item is mobile-native/KMP and therefore cloud-unlandable, claimable buffer below floor). runs=72 (even) selected the dev-review generator. A NON-mobile-native segment was required so the emitted vectors are landable in the cloud runner with no AGP/ADB dependency; api-core was chosen (mature, security-critical, highest landable value). Static-only Rust review (grep sweep + targeted reads, no compile/test). The segment is well-defended overall (JWT token_type gating, SSRF guard + DNS re-validation in api_call.rs, poison-recovering metrics mutexes, length-checked slice indexing, deliberate CSPRNG-failure panics). One genuine high-severity issue survived verification, in the trusted-proxy client-IP resolver.",
+  "experts_used": [
+    "rust"
+  ],
+  "findings_count": 1,
+  "note": "api-core (Rust). One net-new high-severity finding in the trusted-proxy client-IP resolver: CF-Connecting-IP header is trusted whenever the socket peer is in the DEFAULT private-range trusted set (loopback + RFC1918/RFC4193), which is the exact nginx/container-ingress deployment the module docs call the common case. A generic reverse proxy does not strip an inbound CF-Connecting-IP header, so any client can forge it, reintroducing the #2789 spoof class (audit-log poisoning + per-request throttle-bucket rotation) that the rightmost-untrusted-XFF logic otherwise closes. Fully landable in the cloud runner (pure Rust, no mobile-native/AGP dependency).",
+  "signals": [
+    {
+      "id": "code-review-api-core-client-ip-cf-spoof",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 api-core client-ip resolver)",
+      "segment": "api-core",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/client_ip.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/client_ip.rs:236-252 — resolve_client_ip trusts CF-Connecting-IP whenever the socket peer is in the trusted set, but the default trusted set (private_defaults at client_ip.rs:167-173: loopback + RFC1918/RFC4193) is the exact nginx/container-ingress deployment the module docs call the common case. A plain reverse proxy does NOT strip an inbound CF-Connecting-IP header, so any client can send `CF-Connecting-IP: <forged>`; the peer (nginx, private range) is trusted, so the forged value is returned as the client IP — reintroducing the #2789 spoof (audit-log poisoning + per-request throttle-bucket rotation) that the rightmost-untrusted-XFF logic (client_ip.rs:212-223) otherwise closes.",
+        "cf_connecting_ip (client_ip.rs:199-201) is preferred over XFF with no left/right disambiguation and no Cloudflare-specific gate: the header is consulted purely on socket-peer trust, not on any assertion that the trusted edge is actually Cloudflare.",
+        "Fix: only consult CF-Connecting-IP when the trusted edge is explicitly Cloudflare — gate it behind a dedicated flag / CF-ranges config, not on the generic private-range default set. When the edge is a generic reverse proxy, fall through to the existing rightmost-untrusted-XFF resolution. Add a unit test asserting that a forged CF-Connecting-IP from a private-range peer with no Cloudflare gate is NOT returned as the client IP. Landable as a self-contained change to resolve_client_ip + config plumbing + a test; no schema/migration, no mobile dependency.",
+        "Confidence medium: the trust-on-peer path and the private-range default set are confirmed by static read; 'medium' rather than 'high' because whether a live deployment is exploitable depends on whether the operator's real ingress is Cloudflare (safe) or a generic private-range reverse proxy (exploitable), a deployment fact not verifiable in this static Rust-only pass."
+      ]
+    }
+  ]
+}

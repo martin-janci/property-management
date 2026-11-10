@@ -395,7 +395,10 @@ async fn test_migration_exports(pool: PgPool) {
             .unwrap();
     assert_eq!(db_status.0, "pending");
 
-    // 2. Get export status (auto-transitions to ready in mock setup)
+    // 2. Get export status. Fetching status is a pure read: it must report the
+    //    export's true persisted state and must NOT fabricate a ready archive.
+    //    There is no asynchronous export worker yet, so the export stays
+    //    `pending` with no download URL and no fabricated record counts.
     let status_req = request(
         &token,
         tenant_id,
@@ -406,10 +409,34 @@ async fn test_migration_exports(pool: PgPool) {
     let status_resp = app.execute(status_req).await;
     assert_eq!(status_resp.status, StatusCode::OK);
     let status: MigrationExportStatusResponse = status_resp.json();
-    assert_eq!(status.status, MigrationExportStatus::Ready);
-    assert!(status.download_url.is_some());
+    assert_eq!(
+        status.status,
+        MigrationExportStatus::Pending,
+        "a GET must not silently flip the export to Ready"
+    );
+    assert!(
+        status.download_url.is_none(),
+        "no download URL until a real archive exists"
+    );
+    assert!(
+        status.record_counts.is_none(),
+        "record counts must not be fabricated"
+    );
+    assert!(
+        status.file_size_bytes.is_none(),
+        "file size must not be fabricated"
+    );
 
-    // 3. Download the export
+    // A GET must not mutate the record: it stays pending in the DB.
+    let db_status_after_get: (String,) =
+        sqlx::query_as("SELECT status::text FROM migration_exports WHERE id = $1")
+            .bind(export_id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    assert_eq!(db_status_after_get.0, "pending");
+
+    // 3. Download is rejected while the export is not ready (no fabricated URL).
     let download_req = request(
         &token,
         tenant_id,
@@ -418,17 +445,5 @@ async fn test_migration_exports(pool: PgPool) {
         None,
     );
     let download_resp = app.execute(download_req).await;
-    assert_eq!(download_resp.status, StatusCode::OK);
-
-    // Verify download count is incremented in DB
-    let db_download_count: (i32,) =
-        sqlx::query_as("SELECT download_count FROM migration_exports WHERE id = $1")
-            .bind(export_id)
-            .fetch_one(&pool)
-            .await
-            .unwrap();
-    assert_eq!(
-        db_download_count.0, 1,
-        "Download count should be 1 after download"
-    );
+    assert_eq!(download_resp.status, StatusCode::BAD_REQUEST);
 }

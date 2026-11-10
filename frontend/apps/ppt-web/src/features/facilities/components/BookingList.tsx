@@ -6,6 +6,7 @@
 
 import type { BookingStatus, BookingWithDetails } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { BookingCard } from './BookingCard';
 
 interface BookingListProps {
@@ -19,19 +20,20 @@ interface BookingListProps {
   onPageChange: (page: number) => void;
   onStatusFilter?: (status?: BookingStatus) => void;
   onDateRangeFilter?: (fromDate?: string, toDate?: string) => void;
-  onView: (id: string) => void;
+  /** Optional — the detail button is hidden when no handler is passed. */
+  onView?: (id: string) => void;
   onCancel?: (id: string) => void;
   onApprove?: (id: string) => void;
   onReject?: (id: string) => void;
 }
 
-const statusOptions: { value: BookingStatus; label: string }[] = [
-  { value: 'pending', label: 'Pending' },
-  { value: 'approved', label: 'Approved' },
-  { value: 'rejected', label: 'Rejected' },
-  { value: 'cancelled', label: 'Cancelled' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'no_show', label: 'No Show' },
+const statusOptions: readonly BookingStatus[] = [
+  'pending',
+  'approved',
+  'rejected',
+  'cancelled',
+  'completed',
+  'no_show',
 ];
 
 export function BookingList({
@@ -41,7 +43,7 @@ export function BookingList({
   pageSize,
   isLoading,
   isManager,
-  title = 'Bookings',
+  title,
   onPageChange,
   onStatusFilter,
   onDateRangeFilter,
@@ -50,6 +52,8 @@ export function BookingList({
   onApprove,
   onReject,
 }: BookingListProps) {
+  const { t } = useTranslation();
+  const displayTitle = title ?? t('facilities.bookings.listTitle');
   const [statusFilter, setStatusFilter] = useState<BookingStatus | ''>('');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
@@ -75,21 +79,22 @@ export function BookingList({
     <div>
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{displayTitle}</h1>
       </div>
 
       {/* Filters */}
       <div className="mb-6 flex flex-wrap gap-4">
         {onStatusFilter && (
           <select
+            aria-label={t('facilities.bookings.statusLabel')}
             value={statusFilter}
             onChange={(e) => handleStatusChange(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="">All Statuses</option>
+            <option value="">{t('facilities.bookings.allStatuses')}</option>
             {statusOptions.map((status) => (
-              <option key={status.value} value={status.value}>
-                {status.label}
+              <option key={status} value={status}>
+                {t(`facilities.bookings.status.${status}`)}
               </option>
             ))}
           </select>
@@ -99,7 +104,7 @@ export function BookingList({
           <>
             <div className="flex items-center gap-2">
               <label htmlFor="fromDate" className="text-sm text-gray-600">
-                From:
+                {t('facilities.bookings.from')}
               </label>
               <input
                 type="date"
@@ -111,7 +116,7 @@ export function BookingList({
             </div>
             <div className="flex items-center gap-2">
               <label htmlFor="toDate" className="text-sm text-gray-600">
-                To:
+                {t('facilities.bookings.to')}
               </label>
               <input
                 type="date"
@@ -146,7 +151,7 @@ export function BookingList({
               d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
             />
           </svg>
-          <p className="mt-4">No bookings found.</p>
+          <p className="mt-4">{t('facilities.bookings.empty')}</p>
         </div>
       ) : (
         <div className="grid gap-4">
@@ -168,7 +173,11 @@ export function BookingList({
       {totalPages > 1 && (
         <div className="mt-6 flex items-center justify-between">
           <p className="text-sm text-gray-500">
-            Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, total)} of {total}
+            {t('facilities.pagination.showing', {
+              from: (page - 1) * pageSize + 1,
+              to: Math.min(page * pageSize, total),
+              total,
+            })}
           </p>
           <div className="flex gap-2">
             <button
@@ -177,10 +186,10 @@ export function BookingList({
               disabled={page === 1}
               className="px-3 py-1 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
             >
-              Previous
+              {t('facilities.pagination.previous')}
             </button>
             <span className="px-3 py-1">
-              Page {page} of {totalPages}
+              {t('facilities.pagination.page', { page, totalPages })}
             </span>
             <button
               type="button"
@@ -188,7 +197,7 @@ export function BookingList({
               disabled={page === totalPages}
               className="px-3 py-1 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
             >
-              Next
+              {t('facilities.pagination.next')}
             </button>
           </div>
         </div>

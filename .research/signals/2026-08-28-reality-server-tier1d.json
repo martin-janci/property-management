@@ -1,0 +1,44 @@
+{
+  "generated": "2026-08-28",
+  "segment": "reality-server",
+  "source": "dispatcher-tier1d",
+  "signals": [
+    {
+      "id": "code-review-reality-server-sso-sessions-unbounded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/state.rs:855 — `sso_sessions: Arc<Mutex<HashMap<String, PendingSsoSession>>>` is an in-memory map of pending SSO login flows, initialized empty at state.rs:991 with no bound and no eviction task",
+        "backend/servers/reality-server/src/routes/sso.rs:94 — the unauthenticated `/api/v1/sso/login` handler inserts one entry (keyed by a fresh session_id) on EVERY call; entries are only ever removed at the callback (routes/sso.rs:243 `.remove(&session_id)`) when a user actually completes the round trip",
+        "backend/servers/reality-server/src/routes/sso.rs:252 — there is a 10-minute expiry CHECK, but it only runs when a matching callback arrives; an abandoned or spoofed login init (no callback) leaves its entry in the map permanently. No background reaper / retain() prunes stale entries anywhere (grep for sso_sessions shows only insert at :94 and remove at :243)",
+        "Contrast: the sibling OAuthTokens cache IS pruned — state.rs:461 `tokens.retain(|_, t| t.expires_at >= now)` — and price_map.rs:229 does `cache.retain(...)`, so the codebase already uses the eviction pattern everywhere except this map. This is an inconsistency/oversight, not a deliberate design",
+        "Impact: an unauthenticated attacker can spam `/api/v1/sso/login` (or ordinary users who bounce off the PM OAuth screen) to grow the map without bound → gradual memory exhaustion / OOM DoS on reality-server, with no operator signal",
+        "Fix: prune `sso_sessions` on insert (drop entries older than the 10-min TTL) or add a periodic reaper task mirroring the OAuthTokens `retain` at state.rs:461; optionally cap the map size"
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-sso-reqwest-no-timeout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:687 — `exchange_code_for_tokens()` does `let client = reqwest::Client::new();` to POST the PM OAuth token endpoint",
+        "backend/servers/reality-server/src/routes/sso.rs:711 — `get_user_info()` does the same `reqwest::Client::new()` to GET the PM userinfo endpoint",
+        "backend/servers/reality-server/src/routes/sso.rs:748 — `introspect_pm_token()` does the same `reqwest::Client::new()` to POST the PM introspection endpoint",
+        "`reqwest::Client::new()` has NO default request timeout. All three call sites sit on the SSO login / token-validation critical path and call the external PM OAuth server; if that upstream hangs, the awaiting reality-server task blocks indefinitely — an unauthenticated caller driving the SSO callback can pin server tasks (resource exhaustion) with no upper bound",
+        "The codebase already knows the correct pattern: PmApiClient at state.rs:757 builds its client with `.timeout(Duration::from_secs(timeout_seconds))`. The SSO paths bypass it",
+        "Secondary: constructing a fresh Client per request also creates a new connection pool each call, defeating TLS keep-alive/connection reuse to the PM OAuth host on the hot path",
+        "Fix: build one shared `reqwest::Client` with an explicit `.timeout(...)` (and connect timeout) once — e.g. store it on AppState alongside the existing PmApiClient — and reuse it across all three SSO calls instead of `Client::new()`"
+      ],
+      "expert": "rust"
+    }
+  ]
+}

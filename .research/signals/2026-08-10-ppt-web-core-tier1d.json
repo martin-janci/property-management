@@ -1,0 +1,27 @@
+{
+  "generated": "2026-08-10T00:00:00Z",
+  "segment": "ppt-web-core",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed",
+  "selection_note": "Cursor's true-oldest (mobile-native-kmp, 2026-08-04) plus api-handlers/ppt-web-ui/api-core/reality-server were all already reviewed today (same-day signal files present); ppt-web-core (cursor 2026-08-06) is the oldest segment with no signal file emitted today. Segment-table order broke the ppt-web-core vs mobile-rn tie (both 2026-08-06).",
+  "experts_used": ["frontend"],
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-auth-401-refresh-unwired",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:213-221 — the axios response interceptor has a reactive 401 hook: `if (error.response?.status === 401 && onUnauthorizedCallback) { onUnauthorizedCallback(); }`. `onUnauthorizedCallback` is a module-level var (api.ts:180) set only from `configureApiClient({ onUnauthorized })` (api.ts:196). This is the ONLY reactive session-expiry recovery path in the axios layer (401 is not in the retryable set, so the request otherwise just rejects at api.ts:255).",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:337 — the sole production `configureApiClient(...)` call passes ONLY `{ getToken: getAccessToken }` and omits `onUnauthorized`. `grep -rn onUnauthorized` across ppt-web/src (excluding lib/api.ts) returns zero wiring — only two comment references in feature hooks. So `onUnauthorizedCallback` is permanently `undefined` in production and the 401 branch at api.ts:220 is dead code.",
+        "There is no proactive refresh fallback to cover the gap: AuthContext has NO setInterval/setTimeout refresh scheduler (`grep setInterval|setTimeout contexts/AuthContext.tsx` -> none) and the exposed `refreshToken` context method (AuthContext.tsx:449, with a correct isRefreshing/refreshPromise dedup guard at 451-461) has no reactive call site (`grep '.refreshToken('` non-test -> none). Refresh runs only at cold boot (AuthContext.tsx:427, init effect). No global QueryCache/MutationCache onError bridges 401s to it either.",
+        "Impact: once the access token expires mid-session, the next request 401s and NOTHING happens automatically — no token refresh (despite a valid refresh token in storage), no logout, and no redirect to login. The UI silently shows failed/empty data until a full page reload triggers the cold-boot refresh. Reachable in normal production use (token TTL elapses, or tab resumes from sleep past expiry).",
+        "Fix: pass `onUnauthorized` into the AuthContext.tsx:337 `configureApiClient` call, routing it to the existing dedup-guarded `refreshToken()` (retry the original request on success, hard-logout + redirect on failure); or add a proactive scheduled refresh keyed off the access-token TTL. The dedup machinery (refreshPromise/isRefreshing) and the interceptor hook already exist — they are simply not connected."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

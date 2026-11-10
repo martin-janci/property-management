@@ -1,0 +1,33 @@
+{
+  "generated": "2026-10-05",
+  "source_run": "dispatcher Tier-1d demand-driven finding generator (backlog starved: claimable=15 < floor=36). ppt-dev-review static-analysis slice, DISPATCHER_OWNED_COMMIT=1 (artifact written to working tree only; no git add/commit/push).",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "OLDEST-UNREVIEWED. No CHURN_FILES handed in this demand-driven cycle, so fell through to state.review_cursor ordering: ppt-web-core (2026-09-27) is the oldest segment ahead of ppt-web-ui (2026-10-01), mobile-rn (2026-10-01), reality-web (2026-10-02), and the four 2026-10-03 segments. ppt-web-core carries 0 OPEN code-review-finding rows in backlog.json (not saturated) -> selected. Note the skill's segment-map root (frontend/ppt-web/src/) predates the repo restructure to frontend/apps/ppt-web/src/; reviewed the actual path, core subdirs only (lib/, hooks/, contexts/, routes/, i18n/, App.tsx, main.tsx), excluding pages/ + components/ (= ppt-web-ui). This finding is DISJOINT from all prior ppt-web-core Tier-1d signals (2026-10-03 disputes-draft-leak / analytics-datalayer / cmd-palette; 2026-10-03-b mgmt-routes-unguarded / route-toasts-i18n; 2026-10-04 disputes-nonnull / reports-stub / leases-empty-pickers) — none touch API base-URL env configuration.",
+  "experts_used": [
+    "frontend"
+  ],
+  "landable_in_cloud": true,
+  "landability_note": "Frontend-only config consolidation in ppt-web; no backend/migration/openapi changes. Fix touches contexts/AuthContext.tsx, the 6 feature modules reading VITE_API_BASE_URL, and vite-env.d.ts. pnpm typecheck/biome run in cloud. Primary risk is choosing the canonical var name and updating any deploy .env templates (none are committed in-repo), so IG3 is a unit/typecheck assertion that all API-base reads resolve from one declared env key.",
+  "findings_count": 1,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-api-base-url-env-split",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:97 — const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '' ; this feeds getAuthApi() -> createAuthApi({ baseUrl: API_BASE_URL }) for login/refresh/logout/SSO-callback (lines 303-307).",
+        "frontend/apps/ppt-web/src/lib/api.ts:76-77 — the hand-rolled axios client used by feature hooks reads a DIFFERENT var: DEFAULT_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1', and its doc comment states 'In production VITE_API_URL must be set.'",
+        "frontend/apps/ppt-web/src/main.tsx:18-19 — the generated @ppt/api-client global client is configured with client.setConfig({ baseUrl: import.meta.env.VITE_API_URL || '' }) — again VITE_API_URL, not VITE_API_BASE_URL.",
+        "VITE_API_BASE_URL (not VITE_API_URL) is also read by 6 more modules that each build their own client: features/auth/authApiClient.ts:10, features/buildings/hooks/useBuildings.ts:19, features/messaging/hooks/useMessaging.ts:38, features/registry/pages/RegistryPage.tsx:15, features/registry/pages/RegistryRulesPage.tsx:16, features/neighbors/hooks/useNeighbors.ts:31.",
+        "frontend/apps/ppt-web/src/vite-env.d.ts:3-13 — ImportMetaEnv declares VITE_API_URL (and VITE_WS_URL, VITE_API_DEFAULT) but NOT VITE_API_BASE_URL, so every VITE_API_BASE_URL read is untyped and a typo in the var name is invisible to tsc.",
+        "IMPACT: the app resolves its API base from TWO divergent env vars with divergent fallbacks ('/api/v1' and '' for VITE_API_URL vs '' for VITE_API_BASE_URL). In a deploy that follows the documented prod convention (VITE_API_URL set to an absolute API host) but leaves VITE_API_BASE_URL unset, AuthContext login/refresh/logout and the buildings/messaging/registry/neighbors clients silently fall back to '' (same-origin relative) and send requests to the WEB origin instead of the API host -> broken auth + broken features, while the rest of the app (axios client + generated client) correctly uses the absolute host. Benign only when web and API share an origin.",
+        "FIX: consolidate on one canonical var (VITE_API_URL) across AuthContext + the 6 feature modules (or alias VITE_API_BASE_URL -> VITE_API_URL in one shared accessor), and declare the canonical key in ImportMetaEnv so tsc guards future typos."
+      ]
+    }
+  ]
+}

@@ -58,24 +58,20 @@ pub async fn get_resolved(
     let mut conn = state
         .acquire_public_conn()
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("db error: {e}")))?;
+        .map_err(|e| crate::util::errors::db_error("acquire db connection", e))?;
     let repo = LayoutRepository::new();
 
     let cfg = repo
         .get_config(&mut *conn, &screen)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("db error: {e}")))?
+        .map_err(|e| crate::util::errors::db_error("get layout config", e))?
         .ok_or((StatusCode::NOT_FOUND, "unknown screen".to_string()))?;
     let published = cfg.published.ok_or((
         StatusCode::NOT_FOUND,
         "screen has no published config".to_string(),
     ))?;
-    let base: layout_core::ScreenConfig = serde_json::from_value(published).map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("stored config invalid: {e}"),
-        )
-    })?;
+    let base: layout_core::ScreenConfig = serde_json::from_value(published)
+        .map_err(|e| crate::util::errors::db_error("parse stored layout config", e))?;
 
     let platform_key = match platform {
         layout_core::Platform::Web => "web",
@@ -84,23 +80,18 @@ pub async fn get_resolved(
     let manifest_row = repo
         .get_manifest(&mut *conn, platform_key)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("db error: {e}")))?
+        .map_err(|e| crate::util::errors::db_error("get layout manifest", e))?
         .ok_or((
             StatusCode::NOT_FOUND,
             "no registry manifest for platform".to_string(),
         ))?;
     let manifest: layout_core::RegistryManifest = serde_json::from_value(manifest_row.manifest)
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("stored manifest invalid: {e}"),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("parse stored layout manifest", e))?;
 
     let kills: BTreeSet<layout_core::SectionType> = repo
         .list_kills(&mut *conn, &screen)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("db error: {e}")))?
+        .map_err(|e| crate::util::errors::db_error("list layout kills", e))?
         .into_iter()
         .map(|k| layout_core::SectionType(k.section_type))
         .collect();

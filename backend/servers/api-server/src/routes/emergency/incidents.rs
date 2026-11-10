@@ -15,7 +15,8 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use super::shared::{
-    is_emergency_manager, CreateIncidentRequest, IncidentListQuery, OrgQuery, UpdateIncidentRequest,
+    is_emergency_manager, manager_required_response, CreateIncidentRequest, IncidentListQuery,
+    OrgQuery, UpdateIncidentRequest,
 };
 use crate::state::AppState;
 
@@ -159,6 +160,11 @@ async fn update_incident(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateIncidentRequest>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only action; membership alone is not enough.
+    if !is_emergency_manager(rls.role()) {
+        rls.release().await;
+        return manager_required_response();
+    }
     let org = rls.tenant_id();
     let result = state
         .emergency_repo
@@ -238,6 +244,11 @@ async fn resolve_incident(
     Path(id): Path<Uuid>,
     Json(req): Json<ResolveIncidentRequest>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only action; membership alone is not enough.
+    if !is_emergency_manager(rls.role()) {
+        rls.release().await;
+        return manager_required_response();
+    }
     let org = rls.tenant_id();
     let user = rls.user_id();
     let result = state
@@ -269,6 +280,11 @@ async fn close_incident(
     Path(id): Path<Uuid>,
     Query(_): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only action; membership alone is not enough.
+    if !is_emergency_manager(rls.role()) {
+        rls.release().await;
+        return manager_required_response();
+    }
     let org = rls.tenant_id();
     let result = state
         .emergency_repo

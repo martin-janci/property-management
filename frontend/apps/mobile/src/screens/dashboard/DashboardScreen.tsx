@@ -7,6 +7,7 @@ import { LayoutSections } from '../../features/layout/LayoutSections';
 import { dashboardRegistry, NavigateContext } from '../../features/layout/registry';
 import { useDashboardLayout } from '../../features/layout/useDashboardLayout';
 import { useApiQuery } from '../../hooks/useApi';
+import { formatDate as formatLocaleDate } from '../../i18n/format';
 import { colors } from '../shared/screenStyles';
 
 interface Announcement {
@@ -51,7 +52,7 @@ interface DashboardScreenProps {
 }
 
 export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const { layout } = useDashboardLayout('ppt/dashboard');
 
@@ -117,10 +118,8 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
 
   // Localize dates to the active UI language (mirrors VotingScreen). Previously
   // hardcoded `'en-US'`, so dates never localized for sk/cs/de/hu/pl users (#2282).
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString(i18n.language, { month: 'short', day: 'numeric' });
-  };
+  const formatDate = (dateString: string): string =>
+    formatLocaleDate(dateString, { month: 'short', day: 'numeric' });
 
   const getCategoryColor = (category: Announcement['category']): string => {
     switch (category) {

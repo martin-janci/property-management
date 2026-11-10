@@ -1,20 +1,26 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { sanitizeHref } from '@/lib/sanitize-url';
 import type { ListingSectionProps } from './registry';
 
 export function Resources({ listing }: ListingSectionProps) {
   const t = useTranslations('listing');
 
-  if (!listing.virtualTourUrl && !listing.floorPlanUrl) return null;
+  // Listing-authored resource URLs land in an `href`; enforce an http(s)-only
+  // scheme allowlist so a `javascript:` / `data:` URL can't execute (XSS).
+  const virtualTourUrl = sanitizeHref(listing.virtualTourUrl);
+  const floorPlanUrl = sanitizeHref(listing.floorPlanUrl);
+
+  if (!virtualTourUrl && !floorPlanUrl) return null;
 
   return (
     <section className="section">
       <h2 className="section-title">{t('additionalResources')}</h2>
       <div className="resources">
-        {listing.virtualTourUrl && (
+        {virtualTourUrl && (
           <a
-            href={listing.virtualTourUrl}
+            href={virtualTourUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="resource-link"
@@ -34,9 +40,9 @@ export function Resources({ listing }: ListingSectionProps) {
             {t('virtualTour')}
           </a>
         )}
-        {listing.floorPlanUrl && (
+        {floorPlanUrl && (
           <a
-            href={listing.floorPlanUrl}
+            href={floorPlanUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="resource-link"

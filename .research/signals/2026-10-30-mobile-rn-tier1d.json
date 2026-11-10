@@ -1,0 +1,40 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-30",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable=17 < floor=36; automated refills produced nothing). Churn-aligned selection and the state.json review_cursor both resolve to segments that are either backlog-saturated or ALREADY reviewed earlier in this same dispatcher cycle: Phase-1 churn's freshest in-segment src files (2026-10-28) are backend/servers/api-server/src/routes/* => api-handlers (3 OPEN code-review-findings, saturated SKIP per SKILL Step 1); next churn segments reality-server (3 open, SKIP) and api-core are already mined — api-core has tier1d signal files for 2026-10-28, 2026-10-29 (x4) AND 2026-10-30, and mobile-native-kmp already has two 2026-10-30 files. The review_cursor is stale within-cycle (dispatcher folds state in Phase 6, single-writer), so cursor-oldest (ppt-web-ui@10-22, reality-web@10-23) also points at saturated segments. To PRODUCE genuinely fresh (non-duplicate) vectors rather than re-mine api-core a 7th time, selected mobile-rn: it is non-saturated (0 OPEN code-review-findings in backlog.json), NOT reviewed today, and least-recently mined among non-saturated segments (prior files only 2026-10-27 and 2026-10-29). Prior mobile-rn findings clustered on nfc/ credential-expiry, hardcoded-i18n Alert strings, and widget error-swallowing — this pass deliberately avoided those files/themes. Static scan (frontend + completeness, no compile/test): console.* hits are all __DEV__-guarded or intentional error logging; the two `as unknown as` casts are a documented RN FormData-Blob idiom and a prior-fixed comment; all write-mutation screens (lease signature, vote cast, document folder sheets, fault report) have proper try/catch+Alert or onError with i18n keys; the offline-queue permanent-vs-transient 4xx classifier correctly excludes 401/408/429 via RETRYABLE_HTTP_STATUSES; auth tokens use SecureStore; DeepLinkHandler is correctly auth-gated. The two genuine findings below are completeness gaps: whole Epic-49 feature libraries present but wired to nothing.",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-qrscan-no-consumer-no-camera",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "completeness",
+      "evidence": [
+        "frontend/apps/mobile/src/qrcode/QRCodeScanner.ts exports parseQRCode (line 29), getQRCodeAction (line 247) and provideScanFeedback (line 333); QRCodeGenerator.ts exports the generator — all tagged 'Epic 49 - Story 49.3: QR Code Scanning'. An app-wide grep (excluding the qrcode/ dir itself and *.test.*) finds ZERO consumers of parseQRCode / getQRCodeAction / QRCodeGenerator / provideScanFeedback anywhere in frontend/apps/mobile/src. The parse+action library is dead code from the app's perspective.",
+        "There is NO camera/scanner capability wired in: a grep for expo-camera / expo-barcode-scanner / BarCodeScanner / CameraView / useCameraPermissions across src returns nothing, and frontend/apps/mobile/package.json declares no camera|barcode|scanner|vision dependency. So even though the parsing logic exists, the app physically cannot scan a QR code — there is no scanner screen and no camera module. Story 49.3's user-facing capability is unimplemented despite the supporting library being present (a feature that looks shipped by file presence but is not reachable).",
+        "Contrast confirms this is a genuine omission, not a static-analysis artifact: the sibling module qrcode/DeepLinkHandler.ts IS wired at runtime (consumed via hooks/useDeepLinkRouting.ts -> App.tsx, and Linking.addEventListener), so the unused-ness of the scanner/generator is specific, not a whole-dir quirk. Secondary latent concern for when it is eventually wired: getQRCodeAction's external_url branch (QRCodeScanner.ts:314-319) returns {action:'open_url'} for ANY http(s) URL with only a textual confirmation string and no host allowlist/scheme hardening — a scanned malicious QR would map straight to an open-URL action once a consumer exists. Suggested vector: either wire a camera scanner screen (add expo-camera, build the scan UI, consume parseQRCode + enforce getQRCodeAction confirmations with a host allowlist) or remove the dead qrcode scan/generate library and mark Story 49.3 incomplete."
+      ],
+      "expert": "completeness"
+    },
+    {
+      "id": "code-review-mobile-rn-voice-module-unwired",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "completeness",
+      "evidence": [
+        "frontend/apps/mobile/src/voice/ ships VoiceAssistant.ts and VoiceCommands.ts (plus types.ts, index.ts, VoiceCommands.i18n.test.ts). An app-wide grep for VoiceAssistant / VoiceCommands (excluding the voice/ dir and *.test.*) finds ZERO consumers across frontend/apps/mobile/src — no screen, navigation entry, or App.tsx imports the voice module.",
+        "This is a cross-stack completeness gap, not merely dead FE code: the backend implements the counterpart service at backend/servers/api-server/src/services/voice_commands.rs (VoiceCommandProcessor: parse_command, process_command, action_report_fault/check_balance/check_meter/etc., persisted via llm_document_repo.create_voice_command). So the server side of voice assistant is built and RLS-scoped, but the mobile client that would drive it is present-yet-unwired — the feature cannot be exercised end-to-end from the app.",
+        "Impact low-medium: no runtime crash (the module simply never runs), but a built feature library with a live backend is silently inert, which both misrepresents delivery status and risks bit-rot. Confidence medium: verified no static consumer via app-wide grep; RN does not use dynamic require for these modules. Suggested vector: either wire the voice entry point (a screen/button that instantiates VoiceAssistant and calls the /voice backend) or explicitly defer and mark the mobile voice story incomplete so the backend endpoint isn't left as an untested surface."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

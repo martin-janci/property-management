@@ -113,19 +113,7 @@ fn make_adapter(
 ) -> FcmHttpAdapter {
     let config = FcmConfig {
         project_id: Some(project_id.to_string()),
-        server_key: None,
         oauth_token: Some(oauth_token.to_string()),
-        fcm_base_url: Some(base_url),
-    };
-    FcmHttpAdapter::new(pool, config)
-}
-
-/// Build an `FcmHttpAdapter` using the legacy server-key path.
-fn make_legacy_adapter(pool: PgPool, base_url: String, server_key: &str) -> FcmHttpAdapter {
-    let config = FcmConfig {
-        project_id: None,
-        server_key: Some(server_key.to_string()),
-        oauth_token: None,
         fcm_base_url: Some(base_url),
     };
     FcmHttpAdapter::new(pool, config)
@@ -356,92 +344,5 @@ async fn fcm_failure_with_apns_token_returns_err_not_silent_ok(pool: PgPool) {
     assert!(
         token_exists(&pool, &apns_token).await,
         "APNs token must not be touched by the FCM failure path"
-    );
-}
-
-// ---------------------------------------------------------------------------
-// Test 5: Legacy FCM path — successful delivery via server key
-// ---------------------------------------------------------------------------
-
-/// Verifies the legacy FCM send path (`/fcm/send` with `Authorization: key=…`)
-/// when no `oauth_token` is present but a `server_key` is configured.
-///
-/// The adapter falls back to `send_fcm_legacy` when `oauth_token` is `None`,
-/// which POSTs to `{base_url}/fcm/send`.  A legacy success response
-/// (`{"success":1,"failure":0,…}`) must be decoded as `(success=true, expired=false)`.
-#[sqlx::test(migrator = "db::MIGRATOR")]
-async fn legacy_fcm_successful_delivery_returns_ok(pool: PgPool) {
-    let server = MockServer::start().await;
-
-    Mock::given(matchers::method("POST"))
-        .and(matchers::path("/fcm/send"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-            "multicast_id": 123456,
-            "success": 1,
-            "failure": 0,
-            "results": [{"message_id": "legacy-msg-001"}]
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    let user_id = seed_user(&pool, "fcm-legacy-ok@delivery.test").await;
-    let token_value = format!("fcm-legacy-token-{}", Uuid::new_v4());
-    seed_token(&pool, user_id, &token_value, "fcm").await;
-
-    let adapter = make_legacy_adapter(pool.clone(), server.uri(), "AAAA-legacy-server-key");
-    let notification = make_notification(user_id);
-
-    let result = adapter.send(user_id, &notification).await;
-
-    assert!(
-        result.is_ok(),
-        "legacy FCM success response must yield Ok(()); got: {result:?}"
-    );
-    assert!(
-        token_exists(&pool, &token_value).await,
-        "successful legacy delivery must not delete the token"
-    );
-}
-
-// ---------------------------------------------------------------------------
-// Test 6: Legacy FCM path — NotRegistered deletes stale token
-// ---------------------------------------------------------------------------
-
-/// The legacy FCM path must also trigger `delete_stale_token` when the
-/// response results contain `"error":"NotRegistered"`.
-#[sqlx::test(migrator = "db::MIGRATOR")]
-async fn legacy_fcm_not_registered_deletes_stale_token(pool: PgPool) {
-    let server = MockServer::start().await;
-
-    Mock::given(matchers::method("POST"))
-        .and(matchers::path("/fcm/send"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-            "multicast_id": 654321,
-            "success": 0,
-            "failure": 1,
-            "results": [{"error": "NotRegistered"}]
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    let user_id = seed_user(&pool, "fcm-legacy-stale@delivery.test").await;
-    let stale_token = format!("fcm-legacy-stale-{}", Uuid::new_v4());
-    seed_token(&pool, user_id, &stale_token, "fcm").await;
-
-    assert!(
-        token_exists(&pool, &stale_token).await,
-        "token must exist before send"
-    );
-
-    let adapter = make_legacy_adapter(pool.clone(), server.uri(), "AAAA-legacy-server-key");
-    let notification = make_notification(user_id);
-
-    let _ = adapter.send(user_id, &notification).await;
-
-    assert!(
-        !token_exists(&pool, &stale_token).await,
-        "legacy NotRegistered must trigger delete_stale_token and remove the DB row"
     );
 }

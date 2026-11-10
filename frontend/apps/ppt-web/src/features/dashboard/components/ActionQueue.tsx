@@ -13,7 +13,7 @@ import type {
   ActionItem as ActionItemType,
   ActionQueueFilters,
 } from '../hooks/useActionQueue';
-import { useActionQueue } from '../hooks/useActionQueue';
+import { isActionQueueAvailable, useActionQueue } from '../hooks/useActionQueue';
 import { ActionFilters } from './ActionFilters';
 import { ActionItem } from './ActionItem';
 import { KeyboardShortcutsHelp } from './KeyboardShortcutsHelp';
@@ -24,7 +24,57 @@ interface ActionQueueProps {
   onItemAction?: (itemId: string, action: ActionButton['action'], item: ActionItemType) => void;
 }
 
-export function ActionQueue({ userRole, onItemAction }: ActionQueueProps) {
+/**
+ * Detail route for an action item's "view" action, or `undefined` when the
+ * entity has no detail page in the router (budget approvals, person-months
+ * declarations — the latter only exist per building/unit). Items without a
+ * route render without a "view" link instead of navigating to a 404.
+ */
+export function actionItemRoute(
+  item: Pick<ActionItemType, 'entityType' | 'entityId'> & Pick<Partial<ActionItemType>, 'metadata'>
+) {
+  switch (item.entityType) {
+    case 'booking': {
+      const buildingId = item.metadata?.buildingId;
+      return typeof buildingId === 'string'
+        ? `/buildings/${buildingId}/facilities/pending`
+        : undefined;
+    }
+    case 'fault':
+      return `/faults/${item.entityId}`;
+    case 'vote':
+      return `/voting/${item.entityId}`;
+    case 'message':
+      return `/messages/${item.entityId}`;
+    case 'meter_reading':
+      return '/meters';
+    case 'announcement':
+      return `/announcements/${item.entityId}`;
+    default:
+      return undefined;
+  }
+}
+
+/** Drop the "view" button from items that have no detail route. */
+function withoutDeadViewAction(item: ActionItemType): ActionItemType {
+  if (actionItemRoute(item)) return item;
+  return { ...item, actions: item.actions.filter((a) => a.action !== 'view') };
+}
+
+/**
+ * Action queue widget.
+ *
+ * The manager queue is composed on the client from real endpoints (new
+ * faults, pending facility bookings). Roles without a real source would only
+ * ever see an empty queue, and "all caught up" would be a false statement, so
+ * the widget renders nothing for them outside the DEV mock.
+ */
+export function ActionQueue(props: ActionQueueProps) {
+  if (!isActionQueueAvailable(props.userRole)) return null;
+  return <ActionQueueContent {...props} />;
+}
+
+function ActionQueueContent({ userRole, onItemAction }: ActionQueueProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -79,22 +129,12 @@ export function ActionQueue({ userRole, onItemAction }: ActionQueueProps) {
         onItemAction(itemId, action, item);
       }
 
-      // Navigate to detail pages for 'view' action
+      // Navigate to detail pages for 'view' action; items with no detail
+      // route have no view action to execute.
       if (action === 'view') {
-        const routeMap: Record<string, string> = {
-          fault: `/faults/${item.entityId}`,
-          budget_approval: `/approvals/${item.entityId}`,
-          vote: `/votes/${item.entityId}`,
-          message: `/messages/${item.entityId}`,
-          meter_reading: '/meters/reading',
-          person_months: '/person-months',
-          announcement: `/announcements/${item.entityId}`,
-        };
-        const route = routeMap[item.entityType];
-        if (route) {
-          navigate(route);
-          return;
-        }
+        const route = actionItemRoute(item);
+        if (route) navigate(route);
+        return;
       }
 
       // Execute inline action
@@ -167,7 +207,7 @@ export function ActionQueue({ userRole, onItemAction }: ActionQueueProps) {
       <div className="action-queue__error">
         <h3 className="action-queue__error-title">{t('dashboard.errorLoadingQueue')}</h3>
         <p className="action-queue__error-message">
-          {error instanceof Error ? error.message : t('errors.unknown')}
+          {error instanceof Error ? error.message : t('common.unknownError')}
         </p>
         <button type="button" onClick={() => refetch()} className="action-queue__retry-btn">
           {t('common.tryAgain')}
@@ -214,7 +254,7 @@ export function ActionQueue({ userRole, onItemAction }: ActionQueueProps) {
             onClick={() => refetch()}
             disabled={isLoading}
             className="action-queue__btn"
-            aria-label={t('common.refresh')}
+            aria-label={t('dashboard.refresh')}
           >
             <span className={isLoading ? 'action-queue__spin' : ''} aria-hidden="true">
               🔄
@@ -260,7 +300,7 @@ export function ActionQueue({ userRole, onItemAction }: ActionQueueProps) {
                   itemRefs.current.delete(item.id);
                 }
               }}
-              item={item}
+              item={withoutDeadViewAction(item)}
               isSelected={index === selectedIndex}
               isHighlighted={item.id === highlightedItemId}
               isExecuting={isExecuting}

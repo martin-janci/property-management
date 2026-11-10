@@ -12,9 +12,12 @@ import {
   useUpdateNotificationPreference,
 } from '@ppt/api-client';
 import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { ChannelToggle, DisableAllWarningDialog } from './components';
 
 export function NotificationSettingsPage() {
+  const { t, i18n } = useTranslation();
   const [showWarningDialog, setShowWarningDialog] = useState(false);
   const [pendingChannel, setPendingChannel] = useState<NotificationChannel | null>(null);
   const [updateError, setUpdateError] = useState<string | null>(null);
@@ -36,11 +39,11 @@ export function NotificationSettingsPage() {
           setPendingChannel(channel);
           setShowWarningDialog(true);
         } else {
-          setUpdateError('Failed to update preference. Please try again.');
+          setUpdateError(t('settings.notifications.updateError'));
         }
       }
     },
-    [updatePreference]
+    [updatePreference, t]
   );
 
   const handleConfirmDisableAll = useCallback(async () => {
@@ -53,12 +56,12 @@ export function NotificationSettingsPage() {
         request: { enabled: false, confirmDisableAll: true },
       });
     } catch (_err) {
-      setUpdateError('Failed to disable notifications. Please try again.');
+      setUpdateError(t('settings.notifications.disableError'));
     } finally {
       setShowWarningDialog(false);
       setPendingChannel(null);
     }
-  }, [pendingChannel, updatePreference]);
+  }, [pendingChannel, updatePreference, t]);
 
   const handleCancelDisableAll = useCallback(() => {
     setShowWarningDialog(false);
@@ -84,7 +87,7 @@ export function NotificationSettingsPage() {
     return (
       <div className="max-w-2xl mx-auto p-6">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-700">Failed to load notification preferences. Please try again.</p>
+          <p className="text-red-700">{t('settings.notifications.loadError')}</p>
         </div>
       </div>
     );
@@ -92,8 +95,13 @@ export function NotificationSettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">Notification Settings</h1>
-      <p className="text-gray-600 mb-6">Choose how you want to receive notifications.</p>
+      <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('settings.notifications.title')}</h1>
+      <p className="text-gray-600 mb-2">{t('settings.notifications.subtitle')}</p>
+      <p className="mb-6 text-sm">
+        <Link to="/settings/notifications/advanced" className="text-blue-600 hover:underline">
+          {t('settings.notifications.advanced.title')}
+        </Link>
+      </p>
 
       {/* Update error alert */}
       {updateError && (
@@ -121,7 +129,7 @@ export function NotificationSettingsPage() {
               onClick={() => setUpdateError(null)}
               className="ml-3 inline-flex text-red-400 hover:text-red-500"
             >
-              <span className="sr-only">Dismiss</span>
+              <span className="sr-only">{t('settings.notifications.dismiss')}</span>
               <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
               </svg>
@@ -173,10 +181,11 @@ export function NotificationSettingsPage() {
       {/* Last updated info */}
       {data?.preferences && data.preferences.length > 0 && (
         <p className="mt-4 text-xs text-gray-500">
-          Last updated:{' '}
-          {new Date(
-            Math.max(...data.preferences.map((p) => new Date(p.updatedAt).getTime()))
-          ).toLocaleString()}
+          {t('settings.notifications.lastUpdated', {
+            when: new Date(
+              Math.max(...data.preferences.map((p) => new Date(p.updatedAt).getTime()))
+            ).toLocaleString(i18n.language),
+          })}
         </p>
       )}
 

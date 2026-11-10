@@ -7,13 +7,15 @@
 import type { BookingStatus, BookingWithDetails } from '@ppt/api-client';
 import { cancelBooking, getMyBookings } from '@ppt/api-client';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { useToast } from '../../../components';
 import { BookingList, CancelBookingDialog } from '../components';
 
 const PAGE_SIZE = 10;
 
 export function MyBookingsPage() {
-  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { showToast } = useToast();
 
   const [bookings, setBookings] = useState<BookingWithDetails[]>([]);
   const [total, setTotal] = useState(0);
@@ -36,7 +38,11 @@ export function MyBookingsPage() {
       setBookings(response.items);
       setTotal(response.total);
     } catch (error) {
-      console.error('Failed to fetch bookings:', error);
+      showToast({
+        type: 'error',
+        title: t('facilities.bookings.loadFailed'),
+        message: error instanceof Error ? error.message : t('facilities.errors.unexpected'),
+      });
     } finally {
       setIsLoading(false);
     }
@@ -50,10 +56,6 @@ export function MyBookingsPage() {
   const handleStatusFilter = (status?: BookingStatus) => {
     setStatusFilter(status);
     setPage(1); // Reset to first page when filter changes
-  };
-
-  const handleView = (id: string) => {
-    navigate(`/bookings/${id}`);
   };
 
   const handleCancelClick = (id: string) => {
@@ -73,7 +75,11 @@ export function MyBookingsPage() {
       await fetchBookings(page, statusFilter);
       setCancelDialogBooking(null);
     } catch (error) {
-      console.error('Failed to cancel booking:', error);
+      showToast({
+        type: 'error',
+        title: t('facilities.bookings.cancelFailed'),
+        message: error instanceof Error ? error.message : t('facilities.errors.unexpected'),
+      });
     } finally {
       setIsCancelling(false);
     }
@@ -92,10 +98,9 @@ export function MyBookingsPage() {
         pageSize={PAGE_SIZE}
         isLoading={isLoading}
         isManager={false}
-        title="My Bookings"
+        title={t('facilities.bookings.myTitle')}
         onPageChange={handlePageChange}
         onStatusFilter={handleStatusFilter}
-        onView={handleView}
         onCancel={handleCancelClick}
       />
 

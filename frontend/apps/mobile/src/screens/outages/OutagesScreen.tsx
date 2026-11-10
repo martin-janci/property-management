@@ -8,6 +8,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
+import { formatDate, formatTime } from '../../i18n/format';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
 export type OutageCommodity = 'water' | 'electricity' | 'gas' | 'heat' | 'internet';
@@ -25,7 +26,7 @@ export interface Outage {
   endsAt: string;
 }
 
-interface ApiOutage {
+export interface ApiOutage {
   id: string;
   commodity: string;
   title: string;
@@ -54,13 +55,13 @@ const OUTAGE_SEVERITIES: readonly OutageSeverity[] = ['low', 'medium', 'high'];
 // `as Foo ?? default` doesn't actually guard at runtime — an unknown value
 // flows through and then blows up `commodityIcon` / `severityColor` /
 // `statusBadgeColor`. Narrow against the allow-list instead.
-const narrow = <T extends string>(
+export const narrow = <T extends string>(
   value: string | null | undefined,
   allowed: readonly T[],
   fallback: T
 ): T => (value && (allowed as readonly string[]).includes(value) ? (value as T) : fallback);
 
-function toUiOutage(o: ApiOutage): Outage {
+export function toUiOutage(o: ApiOutage): Outage {
   return {
     id: o.id,
     commodity: narrow(o.commodity, OUTAGE_COMMODITIES, 'water'),
@@ -96,22 +97,19 @@ function severityColor(severity: OutageSeverity): string {
       : colors.success;
 }
 
-function formatRange(startsAt: string, endsAt: string): string {
+export function formatRange(startsAt: string, endsAt: string): string {
   const start = new Date(startsAt);
   const end = new Date(endsAt);
   const sameDay = start.toDateString() === end.toDateString();
   const dateOpts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
   const timeOpts: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit' };
   if (sameDay) {
-    return `${start.toLocaleDateString('en-US', dateOpts)} · ${start.toLocaleTimeString(
-      'en-US',
+    return `${formatDate(start, dateOpts)} · ${formatTime(start, timeOpts)} – ${formatTime(
+      end,
       timeOpts
-    )} – ${end.toLocaleTimeString('en-US', timeOpts)}`;
+    )}`;
   }
-  return `${start.toLocaleDateString('en-US', dateOpts)} – ${end.toLocaleDateString(
-    'en-US',
-    dateOpts
-  )}`;
+  return `${formatDate(start, dateOpts)} – ${formatDate(end, dateOpts)}`;
 }
 
 interface OutagesScreenProps {
@@ -140,17 +138,17 @@ export function OutagesScreen({ onNavigate }: OutagesScreenProps) {
   );
 
   const filters: ReadonlyArray<{ value: 'all' | OutageStatus; label: string }> = [
-    { value: 'all', label: 'All' },
-    { value: 'scheduled', label: 'Scheduled' },
-    { value: 'in_progress', label: 'Active' },
-    { value: 'resolved', label: 'Resolved' },
+    { value: 'all', label: t('outages.filters.all') },
+    { value: 'scheduled', label: t('outages.filters.scheduled') },
+    { value: 'in_progress', label: t('outages.filters.active') },
+    { value: 'resolved', label: t('outages.filters.resolved') },
   ];
 
   return (
     <View style={s.container}>
       <View style={s.header}>
-        <Text style={s.headerTitle}>Outages</Text>
-        <Text style={s.headerSubtitle}>Planned and active utility interruptions.</Text>
+        <Text style={s.headerTitle}>{t('outages.title')}</Text>
+        <Text style={s.headerSubtitle}>{t('outages.subtitle')}</Text>
       </View>
 
       <View style={s.filtersWrapper}>
@@ -208,7 +206,7 @@ export function OutagesScreen({ onNavigate }: OutagesScreenProps) {
               <View style={s.cardFooter}>
                 <Text style={s.cardMeta}>{formatRange(outage.startsAt, outage.endsAt)}</Text>
                 <View style={s.badge}>
-                  <Text style={s.badgeText}>{outage.status.replace('_', ' ')}</Text>
+                  <Text style={s.badgeText}>{t(`outages.status.${outage.status}`)}</Text>
                 </View>
               </View>
             </Pressable>

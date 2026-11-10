@@ -1,0 +1,48 @@
+{
+  "generated": "2026-09-09T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven (claim buffer starved) 2026-09-09",
+  "segment_reviewed": "api-core",
+  "selection_reason": "oldest-unreviewed after saturation-skip. Rotation input: a prior run today already produced 2026-09-09-ppt-web-core-tier1d.json for ppt-web-core, so that segment is excluded. Per-segment last-reviewed dates were computed from the signals corpus (state.json review_cursor is stale — last_run 2026-09-01): mobile-native-kmp 2026-09-03, api-core 2026-09-04, api-handlers 2026-09-05, reality-server/ppt-web-ui/mobile-rn 2026-09-06, reality-web 2026-09-07, ppt-web-core 2026-09-09. Oldest is mobile-native-kmp, but SATURATION-SKIP applies: backlog.json holds 4 open code-review-finding rows for mobile-native-kmp (portfolio-analytics-caps-100, cancellation-swallowed, httpclient-no-timeout, create-listing-not-wired; plus 1 ready) which is >=3, so it is skipped per the skill's saturation rule. Next in priority is api-core, saturation check PASSED (0 open code-review-finding rows for api-core in backlog.json). Note on the Tier-1d LANDABLE-only preference: api-core maps to the api-server binary crate, which cannot be COMPILED in the cloud runner (utoipa-swagger-ui build script egress-blocked, #2949) — but this pass is static-only (no build), the skill's own rotation logic governs segment choice, and findings are backlog signals whose landability is resolved at implementer time; recorded here for the dispatcher's routing. Segment scope per skill map = backend/servers/api-server/src/ EXCLUDING routes/ (routes/ is the api-handlers segment). This pass swept the service layer + top-level (services/, state.rs, main.rs, client_ip.rs, preflight.rs, observability.rs, bin/). Findings: unwrap/expect are essentially all in #[cfg(test)] modules or startup/RNG-init (accepted fail-fast); no unsafe; totp.rs/main.rs panics are boot-time config validation (intentional); services/actions/api_call.rs SSRF surface is well-hardened (validate_external_url + IP resolver + same-origin redirect pinning); notification_pipeline quiet-hours gate and the scheduler jobs are fail-CLOSED with documented retry semantics; no secrets in tracing/log calls; RLS global-read teardown in fire_due_report_schedules is carefully guarded (migration 00218). The segment is mature/previously-hardened; the two net-new findings below are LOW-severity robustness/consistency smells in the scheduler, both frontend-of-mind for a future implementer. Cap-at-3 honored; nits skipped.",
+  "experts_used": ["rust"],
+  "findings_count": 2,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-api-core-payment-reminders-batch-abort",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-09 api-core scheduler)",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs:1049 — inside `send_payment_reminders`, the per-invoice loop resolves recipients with `let user_ids = self.get_unit_resident_user_ids(invoice.unit_id).await?;`. The `?` propagates any transient DB error for a SINGLE unit out of the whole function, aborting reminder processing for every remaining invoice in the batch for that ~60s tick.",
+        "This is inconsistent with the error handling used everywhere else in the same file: the inner notification-send loop (mod.rs:1062-1088) uses `match { Ok(()) => .., Err(e) => { warn!; } }` and never aborts the batch, and the sibling jobs (dispatch_vote_closed_notifications votes.rs:214-245, fire_due_report_schedules mod.rs:1305-1352) all `continue` past a per-item error rather than `?`-aborting. One bad unit's resident lookup should skip that invoice, not the rest.",
+        "Impact: LOW / self-healing — invoices already processed earlier in the batch were stamped via `mark_payment_reminder_sent` (mod.rs:1094) so they are not re-sent; invoices after the failing one are simply delayed until the next ~60s tick when the transient error clears. No data loss, no duplicate. It is a robustness/consistency smell: a single unit with (e.g.) an orphaned membership row can repeatedly stall the tail of the reminder batch. Confidence medium: the abort is confirmed by static read; the trigger (a transient/permanent error from get_unit_resident_user_ids) is inferred, not runtime-confirmed. Fix (backend-only): replace the `?` at 1049 with `match { Ok(v) => v, Err(e) => { tracing::warn!(invoice_id=%invoice.id, error=%e, \"failed to resolve residents; skipping invoice this tick\"); continue; } }` to match the file's prevailing pattern."
+      ]
+    },
+    {
+      "id": "code-review-api-core-notify-send-before-stamp-dup",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-09 api-core scheduler)",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/votes.rs",
+        "backend/servers/api-server/src/services/scheduler/mod.rs"
+      ],
+      "evidence": [
+        "Cross-cutting send-then-stamp ordering with no downstream idempotency: the scheduler dispatch jobs send notifications FIRST and stamp the dedup watermark SECOND, so a stamp-write failure after a successful send causes the next ~60s tick to re-send to all recipients. votes.rs:246-285 — `notify_vote_closed(...)` is awaited, then `mark_closed_notified(*vote_id)` is called and, on error, only logs `\"next tick may resend\"` (votes.rs:278-285). Same shape in send_payment_reminders mod.rs:1062-1101 (`notify_payment_due` per user, then `mark_payment_reminder_sent`, error logged `\"next tick may resend\"`) and dispatch_announcement_notifications / dispatch_vote_started_notifications.",
+        "The individual notify_* calls carry no idempotency key that would let a repeat delivery be de-duplicated downstream (contrast: CreateFault in voice_commands.rs threads an `idempotency_key`, and the OAuth/notification pipelines elsewhere do dedup). So a resend is a genuine duplicate push/email, not a downstream no-op. For payment reminders this means duplicate dunning emails to residents; for vote-closed it means duplicate result notifications to every participant.",
+        "Impact: LOW and narrow — it only triggers when the notification transport succeeds but the immediately-following watermark UPDATE fails (a small DB-failure window), and the behaviour is an explicitly-acknowledged at-least-once tradeoff (in-code comments say \"next tick may resend\"). Filed as a signal because the mitigation is real and unimplemented: thread a deterministic idempotency key (e.g. notification_type + vote_id/invoice_id + user_id) through notify_* so a resend collapses at the delivery layer, upgrading the pattern from at-least-once to effectively-once. Confidence medium (static; failure path not runtime-forced). No fix asserted beyond the idempotency-key direction; this is a hardening backlog item, not a crash/security bug."
+      ]
+    }
+  ]
+}

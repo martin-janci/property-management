@@ -1,0 +1,43 @@
+{
+  "generated": "2026-09-06T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven (buffer starved, cloud-claimable-only) 2026-09-06 (second ppt-web-core pass)",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "Rotation resolution + non-duplication sweep. review_cursor asc: mobile-native-kmp 2026-08-25 (EXCLUDED: structurally unbuildable in cloud runner, #2652), then a tie at 2026-08-29 among cloud-claimable segments (ppt-web-core, reality-web, mobile-rn). Churn strongly favors ppt-web (Phase-1 churn: frontend/apps/ppt-web/src = 859, far above reality-web 221); ppt-web-ui cursor=2026-09-06 (freshly reviewed today) so the churn-aligned pick within ppt-web is ppt-web-core. A prior Tier-1d generator run already emitted signals/2026-09-06-ppt-web-core-tier1d.json today (3 findings: authctx-no-boot-expiry-check, api-401-no-request-replay, logout-purge-allowlist-fragile). To avoid duplicate output I first pivoted to reality-web (Next.js, cloud-claimable) and reviewed its under-covered core: middleware.ts, app/api/layout-revalidate/route.ts (HMAC + replay + body-cap + timing-safe compare = exemplary), lib/auth-token.ts, lib/auth-api.ts, lib/realtor-api.ts — all found already hardened by ~9 prior reality-web passes; the only reality-web gap (dead password-reset UX) is a gracefully-degraded, documented backend roadmap item, not a defect. Rather than emit nits or nothing into a starved backlog, this pass reports two GENUINE, actionable, cloud-claimable ppt-web-core defects that are DISTINCT from the morning pass's three findings (verified absent from backlog.json). Saturation check: 0 OPEN code-review-finding rows for ppt-web-core in backlog.json (all prior are status=done). Both findings are net-new IDs.",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-mfa-verify-hardcoded-path",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-06 ppt-web-core App.tsx MfaWrapper)",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/ppt-web/src/App.tsx"],
+      "evidence": [
+        "frontend/apps/ppt-web/src/App.tsx:72 — MfaWrapper.verify() calls raw `fetch('/api/v1/auth/mfa/verify', ...)` with a HARDCODED root-relative path, bypassing the app's configured API base URL. Every other API call in ppt-web routes through a configured base: lib/api.ts:64 `DEFAULT_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1'` (comment: 'In production VITE_API_URL must be set'), and contexts/AuthContext.tsx:97 `API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''` for the generated @ppt/api-client. The MFA verify fetch uses NEITHER env var.",
+        "Impact: in any deployment where the api-server is served from a different origin than the SPA (VITE_API_URL points at e.g. https://api.example.com/api/v1), the MFA challenge verification request is sent to the SPA's own web origin (`/api/v1/auth/mfa/verify`) instead of the api-server, so it 404s and `response.ok` is false — MfaChallengeProvider treats every correct code as a failure and the user can never clear an MFA-gated mutation. MFA (N9) is a security-critical, user-facing auth path. Works only in same-origin/reverse-proxy deploys, silently breaks on split-origin deploys — a latent config-coupling bug and an inconsistency with the rest of the app.",
+        "Confidence medium: the hardcoded relative path is unambiguous on static read; whether it breaks depends on the deployment's VITE_API_URL being cross-origin (runtime/deploy-dependent). Fix: build the URL from the same base the rest of the app uses (VITE_API_URL / getApiClient()), e.g. `fetch(\\`${import.meta.env.VITE_API_URL || '/api/v1'}/auth/mfa/verify\\`, ...)` or route the verify call through getApiClient()/the generated api-client so the Authorization header and base URL come from one source of truth (mirrors the lib/api.ts request interceptor)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export-stale-instance",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-06 ppt-web-core lib/api.ts)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/ppt-web/src/lib/api.ts"],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:321 — `export default getApiClient();` is evaluated eagerly at module import. getApiClient() (lines 273-278) lazily creates `apiInstance` via createAxiosInstance() with NO config, so the default-exported instance has `tokenGetter === undefined` and `onUnauthorizedCallback === undefined`. Later, AuthProvider calls configureApiClient() (AuthContext.tsx:352) which does `apiInstance = createAxiosInstance(config)` (api.ts:299) — a BRAND-NEW AxiosInstance. getApiClient() now returns the configured instance, but the default export still references the original, token-less one.",
+        "Consequence: any consumer that does `import api from '../lib/api'` (the natural default import for a file literally named `api`) holds an axios instance whose request interceptor has no token getter (no `Authorization: Bearer` header, api.ts:201-206) and whose response interceptor has no 401 handler (no silent refresh, api.ts:219-221). Its requests go out unauthenticated and 401s are never recovered — diverging from every feature hook that correctly uses getApiClient(). The module's own design (AuthContext.tsx:340-344 warns 'getApiClient() falls back to a default instance with no token getter') documents exactly this hazard, then re-introduces it via the eager default export.",
+        "Currently LATENT: a repo-wide grep found no default-import consumers of lib/api (all callers use the named getApiClient()), so no live request is affected today — hence severity low (+1). But it is a real foot-gun that will silently break auth the moment any future code adds `import api from './lib/api'`. Confidence medium (static-confirmed divergence; impact gated on a future import). Fix: remove the eager `export default getApiClient();` and either drop the default export or make it a lazy getter/proxy that always resolves the current `apiInstance` (e.g. export a Proxy delegating to getApiClient()), so there is a single configured instance."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,311 @@
+{
+  "generated_at": "2026-10-17T22:41:33Z",
+  "signals": [
+    {
+      "id": "code-review-api-core-totp-rng-expect-panic",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-17 api-core)",
+      "segment": "api-core",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/totp.rs",
+        "backend/servers/api-server/src/routes/mfa.rs",
+        "backend/servers/api-server/src/routes/admin/mfa/enroll.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/totp.rs:153 — TotpService::encrypt_secret() fills its 12-byte AES-GCM nonce with `rand::rngs::SysRng.try_fill_bytes(&mut nonce_bytes).expect(\"OS rng failed\")`. This .expect() panics the request-handling task if the OS CSPRNG errors, instead of returning the function's own error type. The function signature is `pub fn encrypt_secret(&self, plaintext: &str) -> Result<String, TotpError>` and every OTHER fallible step in the same body already threads errors through that channel: `Aes256Gcm::new_from_slice(&key).map_err(|e| TotpError::EncryptionError(e.to_string()))?` (totp.rs:149) and `cipher.encrypt(&nonce, ...).map_err(|e| TotpError::EncryptionError(e.to_string()))?` (totp.rs:162). The nonce-fill is the lone branch that aborts via panic rather than `?`.",
+        "Contract violation (why this is a finding, not a nit): both production call sites consume encrypt_secret's Result gracefully and depend on it never panicking — backend/servers/api-server/src/routes/mfa.rs:228 does `state.totp_service.encrypt_secret(&secret).map_err(|e| { tracing::error!(...); <HTTP error> })?` and backend/servers/api-server/src/routes/admin/mfa/enroll.rs:130-131 does the same with `tracing::error!(error = %e, \"enroll/start: encrypt_secret failed\")`. A panic at totp.rs:153 bypasses both callers' careful map_err->logged-500 path on the MFA-enrollment endpoint, unwinding the task instead of returning a diagnosable error.",
+        "Landable Rust-only remedy: replace `.expect(\"OS rng failed\")` with `.map_err(|e| TotpError::EncryptionError(format!(\"OS rng failed: {e}\")))?`, matching the two adjacent map_err lines, so a CSPRNG failure flows out as TotpError::EncryptionError like every other error in the function. Verifiable via `cargo check -p api-server` + a unit test asserting encrypt_secret returns Err(TotpError::EncryptionError) rather than panicking under an injected failing RNG. Severity low (OS CSPRNG failure is vanishingly rare), confidence medium: the panic branch and the function's existing Result error channel are both statically confirmed, but the trigger is not reachable under normal operation. candidate_vector=bug (latent panic on an auth/MFA request path that contradicts the surrounding error-handling contract).",
+        "[re-emit 2026-10-17 22:41 UTC re-fire: score_delta zeroed — morning run already applied original delta to backlog; re-listed for audit trail]"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-aml-risk-factors-unguarded-map",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/hooks/useAmlDashboard.ts",
+        "frontend/packages/api-client/src/compliance/types.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/hooks/useAmlDashboard.ts:103 — the AML dashboard data transform calls `a.risk_factors.map((f) => ...)` with NO null/undefined guard, while the two sibling array transforms in the same function defensively guard their source with `?? []`: :96 `(assessmentsData?.assessments ?? []).map(...)` and :130 `(countryRisksData?.countries ?? []).map(...)`. The inconsistency means the author knows API collection fields can be absent at runtime, yet the nested per-assessment `risk_factors` array is dereferenced unguarded. The generated client type declares it non-optional (frontend/packages/api-client/src/compliance/types.ts:111 `risk_factors: AmlRiskFactor[];`), so TypeScript will NOT flag a missing-field case — but a real API/proxy response that omits the field or sends `risk_factors: null` for any single assessment throws `TypeError: Cannot read properties of null (reading 'map')`. This transform runs synchronously in the hook body (not inside the TanStack queryFn and not inside any try/catch), so the throw surfaces as a React render crash of the whole AmlDashboardPage, not as a recoverable query `error` state. Severity MEDIUM (+2): crash path on a user-facing compliance screen, triggered by a single malformed row. Confidence MEDIUM: statically certain the guard is missing; not upgraded to high because it depends on the backend actually emitting a null/absent `risk_factors`. Fix: `(a.risk_factors ?? []).map(...)`. NET-NEW vs backlog: existing aml rows (code-review-ppt-web-aml-review-decision-untrusted-cast, code-review-ppt-web-ui-aml-dashboard-prompt-alert-flow, both done) are in AmlDashboardPage.tsx / moderation code, a different file and defect class; nothing covers this hook transform. Cloud-landable (ppt-web React SPA, frontend.yml CI + vitest verifiable).",
+        "[re-emit 2026-10-17 22:41 UTC re-fire: score_delta zeroed — morning run already applied original delta to backlog; re-listed for audit trail]"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-aml-checks-hardcoded-false",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/hooks/useAmlDashboard.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/hooks/useAmlDashboard.ts:112-117 — the per-assessment transform hard-codes five compliance-critical fields to falsy constants on EVERY assessment regardless of backend state: `id_verified: false`, `source_of_funds_documented: false`, `pep_check_completed: false`, `sanctions_check_completed: false`, `recommendations: []`. The AML risk dashboard therefore always renders every subject as PEP-check-not-completed, sanctions-check-not-completed and ID-not-verified. On a regulated AML/KYC surface this is a data-integrity/accuracy problem: a compliance officer reading the dashboard cannot distinguish 'check genuinely outstanding' from 'UI cannot yet show the result', which can drive wrong remediation decisions or mask completed screening. It is acknowledged as a phased gap by the inline `// TODO(Phase-2): Extend API to include these fields` / `// Phase 1: Default values for missing fields` at :110-111, so it is a known/tracked limitation rather than an accidental bug. Severity LOW (+1): no crash or auth impact, documented, but user-facing inaccurate compliance status. Confidence MEDIUM. Fix path: surface these fields from the AML assessment API (TypeSpec contract + generated client) and map real values, or render them as an explicit 'not available yet' state instead of a definitive `false`. Cloud-landable (ppt-web React SPA, frontend.yml CI verifiable); the API-extension portion is reality-independent on the frontend side but ultimately needs the backend field to carry real data.",
+        "[re-emit 2026-10-17 22:41 UTC re-fire: score_delta zeroed — morning run already applied original delta to backlog; re-listed for audit trail]"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-register-account-enumeration",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/users.rs"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/users.rs:150-176 (pub async fn register, POST /api/v1/users/register) — on an email that is already registered the handler returns a distinct HTTP 409 CONFLICT with body \"An account with this email already exists\", whereas a fresh email returns HTTP 200 \"Registration successful. Please check your email to verify your account.\". The status + body differ by account existence, so an unauthenticated attacker can enumerate which emails have portal accounts by POSTing candidate emails and observing 409 vs 200. This is a PUBLIC, unauthenticated endpoint (users.rs:45-47 mount it alongside login, already flagged for no-rate-limit) so enumeration is cheap and unthrottled.",
+        "INCONSISTENCY with this same file's deliberate anti-enumeration posture: request_password_reset (users.rs:405-458) is explicitly documented \"the response is intentionally identical regardless of whether the email exists, to avoid letting attackers enumerate accounts\" and returns a uniform 200. The register path leaks the exact signal that password-reset was hardened to hide, so an attacker simply uses /register instead of /password-reset to enumerate. The already-tracked finding code-review-reality-server-login-sso-account-enum (2026-07-16, handlers/users/mod.rs:251, the LOGIN path) is a DIFFERENT endpoint — no prior signal or backlog row covers the register endpoint. Verified net-new against all 61 reality-server signal files and backlog ids.",
+        "Impact: account/email enumeration (OWASP WSTG-IDNT-04) — privacy leak + reconnaissance for credential-stuffing/phishing against confirmed portal users. Severity medium (info-disclosure, not a direct bypass); registration enumeration is a frequently-accepted tradeoff, but here the codebase's own password-reset flow establishes the enumeration-safe contract, and register already issues an email-verification step so it can adopt the same pattern cleanly.",
+        "Suggested fix (implementer): make register enumeration-safe to match password-reset — always return the same 200 \"check your email\" envelope regardless of whether the email is new or already registered; when the email already exists, send an \"account already exists / sign in or reset password\" email instead of a verification email (so a real owner is still informed out-of-band), and never surface the 409 existence signal to the HTTP caller. Alternatively, if product requires the inline \"email taken\" UX, gate the register endpoint behind the same rate limiter + CAPTCHA and document the accepted-enumeration decision. Regenerate the OpenAPI/clients if the 409 response is removed from the contract.",
+        "[re-emit 2026-10-17 22:41 UTC re-fire: score_delta zeroed — morning run already applied original delta to backlog; re-listed for audit trail]"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-auth-ctx-transient-logout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/lib/auth-context.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/auth-context.tsx:142-152 — in checkSession(), the bearer-token path treats ANY non-ok /api/v1/users/me response as a definitive auth failure: `if (meResp.ok) {...return;} clearStoredSession();` runs on every non-200 (including a transient 5xx), wiping the stored session and falling through to the cookie probe, which then sets user=null on a server blip.",
+        "Inconsistent with refreshSession() in the SAME file (auth-context.tsx:225-237), which for the identical /users/me call only clears on a definitive auth failure — `if (meResp.status === 401 || meResp.status === 403) { clearStoredSession(); setUser(null); }` — and explicitly documents (lines 230-233) that 'Any other status (5xx, etc.) is treated as transient: leave optimistic state intact'. checkSession lacks that status guard.",
+        "Impact: a single 5xx / gateway hiccup on /users/me during the mount-time checkSession() spuriously logs a form-login user out (token discarded, header flips to 'Sign in'), where refreshSession would have preserved the session. Fix: gate checkSession's clearStoredSession() on `meResp.status === 401 || meResp.status === 403` to match refreshSession's documented transient-vs-definitive policy.",
+        "[re-emit 2026-10-17 22:41 UTC re-fire: score_delta zeroed — morning run already applied original delta to backlog; re-listed for audit trail]"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-formatprice-hardcoded-locale",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/sections/ListingHeader.tsx",
+        "frontend/apps/reality-web/src/components/agency/AgencyListings.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/listings/sections/ListingHeader.tsx:6-16 and frontend/apps/reality-web/src/components/agency/AgencyListings.tsx:373-378 each define a LOCAL formatPrice that hardcodes the locale to 'en-US' in `new Intl.NumberFormat('en-US', { style: 'currency', currency, ... })`, so the price number grouping/format ignores the active next-intl locale on a 4-language portal (sk, cs, de, en).",
+        "Diverges from the canonical helper frontend/apps/reality-web/src/lib/format.ts:48 `formatPrice(value, locale, options)`, which takes the locale precisely so output follows the user's language; ListingCard.tsx:106 uses it correctly (`formatPrice(listing.price, locale, { currency: listing.currency })`). The two local copies are both a locale/i18n gap and a duplication smell (three parallel formatPrice implementations).",
+        "Impact (low): on sk/cs/de locales the listing-detail header price and the agency-listings table price render with en-US number conventions instead of the active locale, inconsistent with the locale-aware price shown everywhere ListingCard is used. Fix: delete the two local formatPrice helpers and call lib/format.ts formatPrice with the component's active locale (useLocale()/useTranslations locale).",
+        "[re-emit 2026-10-17 22:41 UTC re-fire: score_delta zeroed — morning run already applied original delta to backlog; re-listed for audit trail]"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-dashboard-dead-buttons",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-17 ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "completeness",
+      "files": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:190-201 — the page header renders two primary action buttons, `Export Report` (:190-195) and `Calculate Metrics` (:196-201), each declared `type=\"button\"` with NO `onClick` handler and no disabled attribute. They are fully interactive, visually prominent (the `Calculate Metrics` one is styled as the page's primary blue CTA) controls that do absolutely nothing when clicked. There is no handler prop threaded in either (the component's only prop is `portfolioId`, PortfolioDashboardPageProps at :25-27), so they cannot be wired from a parent — they are dead placeholders shipped on a user-facing Epic-144 analytics dashboard. A manager clicking `Export Report`/`Calculate Metrics` gets silent no-op with zero feedback.",
+        "Severity MEDIUM (+2): non-functional user-facing controls on a shipped dashboard (completeness/stub defect, no crash). Confidence MEDIUM: statically certain the buttons have no handler; not upgraded to high because whether these are intended-future vs. abandoned is a product call. Fix: wire to an export/metrics-recompute action, or remove/disable them until backed. NET-NEW vs backlog: distinct from the TODO-scan signal `unchecked-todo-portfolio-dashboard-stubs` (comment-level) and from `code-review-ppt-web-ui-content-mod-overdue-noop` (different page/feature); no existing row covers these two concrete dead buttons. Cloud-landable (ppt-web React SPA, frontend.yml CI + vitest verifiable).",
+        "[re-emit 2026-10-17 22:41 UTC re-fire: score_delta zeroed — morning run already applied original delta to backlog; re-listed for audit trail]"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-alert-mutations-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-17 ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:226-227 — the per-alert actions are fired as `onMarkRead={() => markRead.mutate(alert.id)}` and `onResolve={() => resolve.mutate(alert.id)}` with NO `onError` callback, no second-arg options object, and no surfacing of `markRead.isError` / `resolve.isError` anywhere in the render tree (the hooks are `useMarkAlertRead`/`useResolveAlert` at :141-142). If the mutation rejects (network/5xx/permission), the failure is swallowed: the alert row stays in its old state, no toast/inline error is shown, and the user has no signal their mark-read/resolve did not persist. On a reload the alert reappears, making it look like the action silently reverted.",
+        "Severity MEDIUM (+2): unhandled error on a user-facing mutation path (stale UI + silent data-state divergence, no user feedback). Confidence MEDIUM: statically certain no error path is wired at the call site; not high because exact UX impact depends on the generated hook's retry/toast defaults (none are configured here). Fix: pass `{ onError }` to show a toast/inline error, or render `markRead.isError`/`resolve.isError`. NET-NEW vs backlog: same defect CLASS as `code-review-ppt-web-ui-accounting-invoice-silent-fail` and `code-review-ppt-web-ui-registry-rules-save-silent-fail`, but a different file/feature (portfolio-performance) not yet covered. Cloud-landable (ppt-web React SPA, frontend.yml CI + vitest verifiable).",
+        "[re-emit 2026-10-17 22:41 UTC re-fire: score_delta zeroed — morning run already applied original delta to backlog; re-listed for audit trail]"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-dashboard-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-17 ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx — the entire page hard-codes English user-facing strings and never imports `useTranslation`/`t()` (no react-i18next usage in the file at all). Examples: `Portfolio Dashboard` (:184), `Portfolio ID: ... | As of: ...` (:185-187), `Export Report` (:194), `Calculate Metrics` (:200), `Alerts` (:211), loading text `Loading portfolio dashboard…` (:148), `Loading cash-flow trend…` (:237), `Failed to load cash-flow trend.` (:241), error heading `Failed to load portfolio dashboard` (:156) and `Retry` (:167); the SummaryCards titles `Portfolio Value`/`Total Equity`/`YTD NOI`/`YTD Cash Flow`/`LTV Ratio` and labels `YTD return` are literal English (:96-124). The app is multilingual and sibling features route all copy through `t('...')`; this Epic-144 surface is untranslated end to end.",
+        "Severity LOW (+1): i18n gap, no crash/auth impact, but a shipped page unreadable in non-English locales. Confidence MEDIUM. Fix: wire `useTranslation` and move strings into the ppt-web message catalogs. NET-NEW vs backlog: the generic `code-review-ppt-web-ui-untranslated-strings` row does not enumerate this feature; portfolio-performance was not previously reviewed. Cloud-landable (ppt-web React SPA, frontend.yml CI verifiable).",
+        "[re-emit 2026-10-17 22:41 UTC re-fire: score_delta zeroed — morning run already applied original delta to backlog; re-listed for audit trail]"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches '# YYYY-MM-DD'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced vs HEAD",
+      "observed": "true (last_commit_sha changed 81eb1378 → 830f193d; seen_signals 586 → 589; stats.runs 96 → 97)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "re-emit discipline (cumulative types or score_delta==0 for ids in prior seen_signals)",
+      "observed": "true — all 9 re-emitted signals have score_delta=0 (morning run's 6 were already in HEAD seen_signals + 3 freshly added to seen_signals this run)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no item score > 8",
+      "observed": "0 items > 8",
+      "expected": "0"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "every open item >14d decayed or dropped",
+      "observed": "0 open items older than 14d (all 10 open items were updated within the last 14 days)",
+      "expected": "0 undecayed"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "every new plan has adversarial-pass annotation",
+      "observed": "0 new plans this run (vacuous)",
+      "expected": "0 missing annotations"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "at most 2 new plans this run",
+      "observed": "0 new plans",
+      "expected": "≤ 2"
+    },
+    {
+      "goal": "G7-metadata/headings/capability/mode/files",
+      "passed": true,
+      "command": "all 15 required sections for new plans",
+      "observed": "0 new plans (vacuous)",
+      "expected": "all required sections"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged files all under .research/",
+      "observed": "0 non-research paths staged",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames",
+      "observed": "0 hits",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md matches regen from backlog.json",
+      "observed": "diff exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase-failure dishonesty",
+      "observed": "no failures; brief notes Phase 1.5 and 1.6 explicitly skipped (re-fire)",
+      "expected": "truth"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present (plans/ or plans/_archive/)",
+      "observed": "16/16 prior slugs present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "staged=22 head=22 (unchanged, ≥ required)",
+      "expected": "staged ≥ head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md matches regen",
+      "observed": "diff exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (caps + kill switch + idempotency)",
+      "observed": "0 auto-fix actions this run; kill switch unset; no new ids in auto_fix_history",
+      "expected": "all caps respected"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid (if Phase 1.6 ran)",
+      "observed": "vacuous — Phase 1.6 skipped (pm_cursor unchanged: 7==7)",
+      "expected": "vacuous"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token value in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_skipped_reason": "no candidate — re-fire derived 0 new signals (0 app activity since 14:43 UTC); no allowlist signal types eligible"
+}

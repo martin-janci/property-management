@@ -1,0 +1,46 @@
+{
+  "segment": "reality-web",
+  "date": "2026-09-06",
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-reality-web-edit-price-zero",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx:198 — handleSave does `price: typeof form.price === 'number' ? form.price : Number(form.price) || 0`. The price <input> writes '' when cleared (line 629: `e.target.value === '' ? '' : Number(...)`), so clearing the field and saving coerces `Number('') || 0` => 0 and silently persists the listing at price 0. handleSave has no price validation (no required / positive / NaN check), unlike the public sell wizard and realtor ListingForm. Data-integrity bug on an owner-facing edit path: an accidental clear publishes a €0 listing with no error surfaced."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-cmp-ls-unchecked",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/comparison-context.tsx:40-41 — `const parsed = JSON.parse(stored); setListings(parsed);` on mount trusts the localStorage payload's shape. The try/catch only guards malformed JSON, not a wrong-typed-but-valid JSON value (a legacy/corrupted entry that parses to a non-array object). listings is then consumed unguarded by `.some((l)=>l.id===...)` (line 65) and `.map(...)` (line 93/generateShareUrl), which throw TypeError on a non-array, crashing every ComparisonProvider consumer with no recovery. Compare lib/auth-token.ts which validates its parsed session before use. Fix: guard `Array.isArray(parsed)` (and ideally shape) before setListings, else removeItem."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-sell-price-nan",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx:127-128 — step-4 price validation is `if (form.price === '' || form.price === null) required; else if (Number(form.price) <= 0) positive;`. It omits the `Number.isNaN(...)` guard that the area/rooms rules on lines 120-125 include, so a non-finite value (NaN / Infinity from a pathological number-input value) satisfies neither branch (`NaN <= 0` is false) and passes the wizard step. Inconsistent with the sibling numeric validators in the same function; align by adding the isNaN/finite check to price."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

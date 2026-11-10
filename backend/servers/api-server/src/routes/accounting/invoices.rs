@@ -109,9 +109,10 @@ pub async fn list_invoices(
         return Err(StatusCode::FORBIDDEN);
     }
 
+    let tenant_id = rls.tenant_id();
     let invoices = state
         .accounting_repo
-        .list_invoices_rls(&mut **rls)
+        .list_invoices_for_tenant(&mut **rls, tenant_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to list invoices: {}", e);
@@ -148,9 +149,10 @@ pub async fn get_invoice(
         return Err(StatusCode::FORBIDDEN);
     }
 
+    let tenant_id = rls.tenant_id();
     let invoice = state
         .accounting_repo
-        .find_invoice_rls(&mut **rls, id)
+        .find_invoice_for_tenant(&mut **rls, tenant_id, id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to find invoice {}: {}", id, e);
@@ -187,9 +189,10 @@ pub async fn list_invoice_items(
         return Err(StatusCode::FORBIDDEN);
     }
 
+    let tenant_id = rls.tenant_id();
     let items = state
         .accounting_repo
-        .find_invoice_items_rls(&mut **rls, id)
+        .find_invoice_items_for_tenant(&mut **rls, tenant_id, id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to list invoice items for {}: {}", id, e);
@@ -218,13 +221,14 @@ pub async fn create_invoice(
     mut rls: RlsConnection,
     State(state): State<AppState>,
     AuthUser {
-        user_id: _user_id,
-        tenant_id,
-        ..
+        user_id: _user_id, ..
     }: AuthUser,
     Json(mut data): Json<CreateInvoice>,
 ) -> Result<(StatusCode, Json<Invoice>), StatusCode> {
-    let tenant_id = tenant_id.ok_or(StatusCode::FORBIDDEN)?;
+    // The tenant is the one `RlsConnection` validated membership against
+    // (X-Tenant-ID / host), not the optional JWT `tenant_id` claim, which
+    // login tokens do not carry.
+    let tenant_id = rls.tenant_id();
 
     // Role check: Accounting is manager-only
     if !rls.is_super_admin() && !rls.has_role(TenantRole::Manager) {
@@ -246,7 +250,7 @@ pub async fn create_invoice(
     // Validate contact_id ownership
     let contact = state
         .accounting_repo
-        .find_contact_rls(&mut *tx, data.contact_id)
+        .find_contact_for_tenant(&mut *tx, tenant_id, data.contact_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to find contact: {}", e);
@@ -308,10 +312,11 @@ pub async fn update_invoice(
     // Semantic validation
     validate_update_invoice(&data)?;
 
+    let tenant_id = rls.tenant_id();
     if let Some(contact_id) = data.contact_id {
         let contact = state
             .accounting_repo
-            .find_contact_rls(&mut **rls, contact_id)
+            .find_contact_for_tenant(&mut **rls, tenant_id, contact_id)
             .await
             .map_err(|e| {
                 tracing::error!("Failed to find contact: {}", e);
@@ -325,7 +330,7 @@ pub async fn update_invoice(
 
     let invoice = state
         .accounting_repo
-        .update_invoice_rls(&mut **rls, id, data)
+        .update_invoice_for_tenant(&mut **rls, tenant_id, id, data)
         .await
         .map_err(|e| {
             tracing::error!("Failed to update invoice {}: {}", id, e);
@@ -364,14 +369,19 @@ pub async fn delete_invoice(
         return Err(StatusCode::FORBIDDEN);
     }
 
-    state
+    let tenant_id = rls.tenant_id();
+    let deleted = state
         .accounting_repo
-        .delete_invoice_rls(&mut **rls, id)
+        .delete_invoice_for_tenant(&mut **rls, tenant_id, id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to delete invoice {}: {}", id, e);
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
+    if !deleted {
+        rls.release().await;
+        return Err(StatusCode::NOT_FOUND);
+    }
 
     rls.release().await;
     Ok(StatusCode::NO_CONTENT)

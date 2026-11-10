@@ -1,0 +1,60 @@
+{
+  "generated_at": "2026-08-09T00:00:00Z",
+  "generated": "2026-08-09T00:00:00Z",
+  "segment": "ppt-web-ui",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "churn-aligned",
+  "selection_note": "Segment selected by churn-alignment: git-log churn since 2026-07-20 shows ppt-web-ui by far the hottest segment (747 file-touches vs. next reality-web 223, api-handlers 214). The recently-added workflow-automation feature (frontend/apps/ppt-web/src/features/workflow-automation/, Story 43.x) is the dominant fresh churn and had NOT been covered by any prior code-review slice (prior ppt-web-ui 2026-08-06 covered insurance/meters/error-pages only). Backlog saturation check: only 1 open code-review-finding repo-wide (mobile-native-kmp), so ppt-web-ui is not saturated (0 open). Distinct domain from today's other slices. Static analysis only; no compile/test run.",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-automationrules-mutation-no-catch",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx:56-72 — confirmDelete/handleToggle/handleRun each `await <mutation>.mutateAsync(...)` with NO try/catch, and the page renders error UI only for the list query (`error` at :178) — deleteRule.error / updateRule.error / runRule.error are never surfaced anywhere in the component.",
+        "There is no global mutation error handler to catch the rejection: frontend/apps/ppt-web/src/main.tsx:28-35 configures QueryClient defaultOptions with `queries` only (staleTime, retry) — no `mutations` / MutationCache onError. So a rejected mutateAsync becomes an unhandled promise rejection with zero user feedback.",
+        "Concrete failure: confirmDelete (:56-61) — if deleteRule.mutateAsync rejects (network drop / 409 / 500), the throw skips `setDeleteConfirm(null)` (:59) so the delete-confirmation modal stays open indefinitely with the button re-enabled and no error message; the user cannot tell the delete failed. handleToggle (:63-68) — a failed enable/disable toggle reverts the switch visually on the next render with no indication the change was rejected, so the manager believes a rule is paused when it is still live (or vice-versa). handleRun (:70-72) and ExecutionMonitoringPage.handleRetry (ExecutionMonitoringPage.tsx:74-77) share the same no-catch/no-error-surface pattern.",
+        "Fix: wrap each handler in try/catch and render the mutation error (or add a MutationCache onError toast in main.tsx). Note CreateRulePage.tsx:62 and EditRulePage.tsx:113 DO render `createRule.error`/`updateRule.error`, so the list page is the inconsistent outlier."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-conditionbuilder-number-coerce-zero",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/components/ConditionBuilder.tsx:211-218 — the number-typed value input does `onChange={(e) => updateCondition(index, { value: Number(e.target.value) })}`. `Number('')` is `0`, so clearing the field silently persists the condition value as 0 rather than empty/unset.",
+        "addCondition (ConditionBuilder.tsx:81) seeds every new condition with `value: ''`. When the selected field is numeric (e.g. 'payment.amount', 'payment.daysOverdue', 'document.size' — getFieldType==='number', lines 21-24), a user who adds a condition and never types a value, or types then deletes it, ends up saving `value: 0` with no validation gate anywhere in the builder.",
+        "Effect: a rule like 'Payment Amount greater_than 0' or 'Days Overdue greater_than_or_equals 0' silently matches essentially every record instead of the intended threshold — an automation that fires far more broadly than the author expects (e.g. dunning/notification actions sent to all payers). There is no min/required check and no distinction between 'blank' and 'zero' in the persisted TriggerCondition.",
+        "Fix: keep the raw string in state (or use `e.target.value === '' ? '' : Number(e.target.value)`) and block save (RuleBuilder canProceed) when a non-empty operator has an empty/NaN numeric value; mirror the string-input branch (:220-227) which correctly preserves ''."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-workflow-automation-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "chore",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/ — only 3 of 15 .tsx files call useTranslation (RuleCard, RuleBuilder, TemplatePreviewModal, TriggerSelector, ExecutionDetailsModal, ExecutionMonitoringPage partial); every page renders hardcoded English. This is a react-i18next-enabled app (root CLAUDE.md: react-i18next 16), so these strings never localize.",
+        "AutomationRulesPage.tsx: 'Automation Rules' (:82), 'Create and manage automated workflows...' (:84), 'Create Rule' (:101), 'Search rules...' (:133), 'All Status'/'Active'/'Paused' (:150-152), 'No automation rules yet' (:217), 'Failed to load automation rules. Please try again.' (:180), 'Delete Automation Rule'/'This action cannot be undone.' (:285-286), 'Deleting...'/'Delete' (:306) — all raw literals, no t().",
+        "ExecutionMonitoringPage.tsx: 'Execution Monitoring' (:93), 'No execution logs' (:230), 'No executions match your current filters.' (:234), 'Clear filters' (:246), 'Retrying execution...' (:296). CreateRulePage.tsx: 'Create Automation Rule' (:53), 'Back to Rules' (:57), 'Failed to create automation rule...' (:64). EditRulePage.tsx: 'Loading...'/'Edit: ...' (:79). TemplateLibraryPage.tsx: 'No templates found' (:197).",
+        "Consistent with prior finding code-review-ppt-web-ui-error-pages-i18n (2026-08-06) — same systemic gap, distinct feature. Fix: extract to the app's message catalog and wrap with t(); add the workflow-automation keys to frontend/apps/ppt-web/messages/en.json plus the sk/cs/de locales."
+      ],
+      "expert": "completeness"
+    }
+  ]
+}

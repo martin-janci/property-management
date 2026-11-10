@@ -8,14 +8,11 @@ import { useNavigate } from 'react-router-dom';
 import { DocumentUpload } from '../components/DocumentUpload';
 
 interface DocumentUploadPageProps {
-  organizationId?: string;
+  organizationId: string;
   buildingId?: string;
 }
 
-export function DocumentUploadPage({
-  organizationId = 'default-org',
-  buildingId,
-}: DocumentUploadPageProps) {
+export function DocumentUploadPage({ organizationId, buildingId }: DocumentUploadPageProps) {
   const navigate = useNavigate();
 
   const handleUploadComplete = (documentId: string) => {

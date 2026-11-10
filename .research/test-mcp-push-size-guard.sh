@@ -14,6 +14,12 @@
 #       any commit) — catches an oversize staged file. This is the regression
 #       the #2126 reorder fixes: run the guard while the index still differs
 #       from HEAD.
+#   (d) archive-routing (#1162/#2743): when the ONLY oversize staged file is a
+#       known append-only archive (assignments-archive.json / action-list-
+#       archive.json), the guard exits 4 ("route via git push") — NOT 3 — so a
+#       legit archive append can never fail-close-wedge a Phase 6 push.
+#   (e) an oversize ACTIVE state file alongside an oversize archive STILL trips
+#       exit 3 — the #1014 corruption class fail-closes hard regardless.
 #
 # Plus a few guardrails: a small staged file passes; explicit-file mode still
 # trips on an oversize arg; and (the dead-guard regression itself) running the
@@ -82,6 +88,32 @@ mk_file "$REPO/assignments.json" $((CEIL + 20000))   # a 2nd oversize state file
 # BEFORE `git commit`.
 git -C "$REPO" add assignments.json small.json
 expect_rc 3 "(c) Phase-6 add->guard (pre-commit) catches oversize staged file" \
+  bash -c "cd '$REPO' && PUSH_METHOD=mcp bash '$GUARD' --staged"
+
+# =============================================================================
+# (d) archive-routing (#1162/#2743): an oversize APPEND-ONLY ARCHIVE is the ONLY
+#     oversize staged file -> exit 4 ("route via git push"), NOT the fail-closed
+#     exit 3. This is the regression that wedged the pipeline: a legit archive
+#     append must never abort the whole push.
+# =============================================================================
+git -C "$REPO" reset -q
+BIGARCH="$REPO/assignments-archive.json" ; mk_file "$BIGARCH" $((CEIL + 200000))  # ~256 KiB archive
+git -C "$REPO" add assignments-archive.json small.json
+expect_rc 4 "(d) oversize archive-only staged set routes to git (exit 4)" \
+  bash -c "cd '$REPO' && PUSH_METHOD=mcp bash '$GUARD' --staged"
+
+# The 2nd known archive basename routes too (explicit-file mode, exit 4).
+BIGARCH2="$REPO/action-list-archive.json" ; mk_file "$BIGARCH2" $((CEIL + 100000))
+expect_rc 4 "(d) oversize action-list-archive arg routes to git (exit 4)" \
+  bash -c "PUSH_METHOD=mcp bash '$GUARD' '$BIGARCH2'"
+
+# =============================================================================
+# (e) an oversize ACTIVE state file ALONGSIDE an oversize archive STILL trips
+#     exit 3 — the #1014 corruption class fail-closes hard and dominates routing.
+# =============================================================================
+git -C "$REPO" reset -q
+git -C "$REPO" add assignments-archive.json action-list.json    # archive(4) + active(3)
+expect_rc 3 "(e) oversize active file dominates: archive+active staged trips exit 3" \
   bash -c "cd '$REPO' && PUSH_METHOD=mcp bash '$GUARD' --staged"
 
 # =============================================================================

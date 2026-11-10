@@ -5,6 +5,7 @@
  */
 
 import type React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface RiskFactor {
   factor_type: string;
@@ -70,25 +71,6 @@ const getRiskLevelColor = (level: AmlRiskLevel): string => {
   }
 };
 
-const getStatusLabel = (status: AmlAssessmentStatus): string => {
-  switch (status) {
-    case 'pending':
-      return 'Pending';
-    case 'in_progress':
-      return 'In Progress';
-    case 'completed':
-      return 'Completed';
-    case 'requires_review':
-      return 'Requires Review';
-    case 'approved':
-      return 'Approved';
-    case 'rejected':
-      return 'Rejected';
-    default:
-      return status;
-  }
-};
-
 const formatAmount = (cents: number, currency?: string): string => {
   const amount = cents / 100;
   return new Intl.NumberFormat('en-EU', {
@@ -103,20 +85,23 @@ export const AmlRiskAssessmentCard: React.FC<AmlRiskAssessmentCardProps> = ({
   onReview,
   showActions = true,
 }) => {
+  const { t } = useTranslation();
   const riskLevelClass = getRiskLevelColor(assessment.risk_level);
 
   return (
     <div className="aml-risk-assessment-card">
       <div className="aml-risk-assessment-header">
         <div className="aml-risk-assessment-title">
-          <h3>AML Risk Assessment</h3>
+          <h3>{t('aml.card.title')}</h3>
           <span className={`aml-status-badge ${assessment.status}`}>
-            {getStatusLabel(assessment.status)}
+            {t(`aml.status.${assessment.status}`)}
           </span>
         </div>
         <div className="aml-risk-assessment-meta">
-          <span>Party: {assessment.party_type}</span>
-          {assessment.country_code && <span>Country: {assessment.country_code}</span>}
+          <span>{t('aml.card.party', { type: assessment.party_type })}</span>
+          {assessment.country_code && (
+            <span>{t('aml.card.country', { code: assessment.country_code })}</span>
+          )}
         </div>
       </div>
 
@@ -135,7 +120,7 @@ export const AmlRiskAssessmentCard: React.FC<AmlRiskAssessmentCardProps> = ({
 
       {assessment.transaction_amount_cents && (
         <div className="aml-transaction-info">
-          <span className="aml-transaction-label">Transaction Amount:</span>
+          <span className="aml-transaction-label">{t('aml.card.transactionAmount')}</span>
           <span className="aml-transaction-value">
             {formatAmount(assessment.transaction_amount_cents, assessment.currency)}
           </span>
@@ -143,50 +128,54 @@ export const AmlRiskAssessmentCard: React.FC<AmlRiskAssessmentCardProps> = ({
       )}
 
       <div className="aml-verification-status">
-        <h4>Verification Status</h4>
+        <h4>{t('aml.card.verificationStatus')}</h4>
         <div className="aml-verification-grid">
           <div
             className={`aml-verification-item ${assessment.id_verified ? 'verified' : 'pending'}`}
           >
-            <span className="aml-verification-icon">{assessment.id_verified ? 'Y' : 'N'}</span>
-            <span className="aml-verification-label">ID Verified</span>
+            <span className="aml-verification-icon">
+              {assessment.id_verified ? t('aml.card.yes') : t('aml.card.no')}
+            </span>
+            <span className="aml-verification-label">{t('aml.card.idVerified')}</span>
           </div>
           <div
             className={`aml-verification-item ${assessment.source_of_funds_documented ? 'verified' : 'pending'}`}
           >
             <span className="aml-verification-icon">
-              {assessment.source_of_funds_documented ? 'Y' : 'N'}
+              {assessment.source_of_funds_documented ? t('aml.card.yes') : t('aml.card.no')}
             </span>
-            <span className="aml-verification-label">Source of Funds</span>
+            <span className="aml-verification-label">{t('aml.card.sourceOfFunds')}</span>
           </div>
           <div
             className={`aml-verification-item ${assessment.pep_check_completed ? 'verified' : 'pending'}`}
           >
             <span className="aml-verification-icon">
-              {assessment.pep_check_completed ? 'Y' : 'N'}
+              {assessment.pep_check_completed ? t('aml.card.yes') : t('aml.card.no')}
             </span>
-            <span className="aml-verification-label">PEP Check</span>
+            <span className="aml-verification-label">{t('aml.card.pepCheck')}</span>
           </div>
           <div
             className={`aml-verification-item ${assessment.sanctions_check_completed ? 'verified' : 'pending'}`}
           >
             <span className="aml-verification-icon">
-              {assessment.sanctions_check_completed ? 'Y' : 'N'}
+              {assessment.sanctions_check_completed ? t('aml.card.yes') : t('aml.card.no')}
             </span>
-            <span className="aml-verification-label">Sanctions Check</span>
+            <span className="aml-verification-label">{t('aml.card.sanctionsCheck')}</span>
           </div>
         </div>
       </div>
 
       {assessment.risk_factors.length > 0 && (
         <div className="aml-risk-factors">
-          <h4>Risk Factors</h4>
+          <h4>{t('aml.card.riskFactors')}</h4>
           <ul className="aml-risk-factors-list">
             {assessment.risk_factors.map((factor, index) => (
               <li key={index} className={`aml-risk-factor ${factor.mitigated ? 'mitigated' : ''}`}>
                 <span className="aml-risk-factor-type">{factor.factor_type}</span>
                 <span className="aml-risk-factor-description">{factor.description}</span>
-                <span className="aml-risk-factor-weight">Weight: {factor.weight}</span>
+                <span className="aml-risk-factor-weight">
+                  {t('aml.card.weight', { weight: factor.weight })}
+                </span>
               </li>
             ))}
           </ul>
@@ -195,7 +184,7 @@ export const AmlRiskAssessmentCard: React.FC<AmlRiskAssessmentCardProps> = ({
 
       {assessment.recommendations.length > 0 && (
         <div className="aml-recommendations">
-          <h4>Recommendations</h4>
+          <h4>{t('aml.card.recommendations')}</h4>
           <ul className="aml-recommendations-list">
             {assessment.recommendations.map((rec, index) => (
               <li key={index}>{rec}</li>
@@ -206,7 +195,7 @@ export const AmlRiskAssessmentCard: React.FC<AmlRiskAssessmentCardProps> = ({
 
       {assessment.flagged_for_review && (
         <div className="aml-review-alert">
-          <strong>Flagged for Review</strong>
+          <strong>{t('aml.card.flaggedForReview')}</strong>
           {assessment.review_reason && <p>{assessment.review_reason}</p>}
         </div>
       )}
@@ -219,7 +208,7 @@ export const AmlRiskAssessmentCard: React.FC<AmlRiskAssessmentCardProps> = ({
               className="aml-action-button primary"
               onClick={() => onInitiateEdd(assessment.id)}
             >
-              Initiate EDD
+              {t('aml.card.initiateEdd')}
             </button>
           )}
           {assessment.status === 'requires_review' && onReview && (
@@ -228,7 +217,7 @@ export const AmlRiskAssessmentCard: React.FC<AmlRiskAssessmentCardProps> = ({
               className="aml-action-button secondary"
               onClick={() => onReview(assessment.id)}
             >
-              Review Assessment
+              {t('aml.card.reviewAssessment')}
             </button>
           )}
         </div>

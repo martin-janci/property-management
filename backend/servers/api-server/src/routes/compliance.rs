@@ -5,7 +5,7 @@
 #![allow(clippy::type_complexity)]
 
 use crate::state::AppState;
-use api_core::extractors::{AuthUser, RlsConnection};
+use api_core::extractors::{AuthUser, RlsConnection, TenantAuthUser};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -13,20 +13,63 @@ use axum::{
     Json, Router,
 };
 use chrono::{DateTime, Utc};
-use common::TenantRole;
 use db::models::{AuditAction, AuditLogQuery};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-/// Check if user is a super admin.
-fn require_super_admin(user: &AuthUser) -> Result<(), (StatusCode, String)> {
-    match user.role {
-        Some(TenantRole::SuperAdmin) => Ok(()),
-        _ => Err((
+/// Require platform-tier (SuperAdmin **or** PlatformAdmin) privileges.
+///
+/// These compliance reports (audit trails, GDPR, security) are platform-wide,
+/// so the whole platform tier must reach them. Previously this gated on an
+/// exact `SuperAdmin` match, which locked out `PlatformAdmin` — the
+/// infrastructure/operations role that sits directly below `SuperAdmin` in the
+/// role hierarchy (`TenantRole::level()`: 100 vs 95) and is classified as
+/// platform-tier by [`AuthUser::is_platform_admin`]. Reuse that canonical
+/// helper rather than hard-coding the variant list so the two cannot drift
+/// (mirrors `aml_dsa::shared::require_compliance_role`).
+fn require_platform_admin(user: &AuthUser) -> Result<(), (StatusCode, String)> {
+    if user.is_platform_admin() {
+        Ok(())
+    } else {
+        Err((
             StatusCode::FORBIDDEN,
-            "This endpoint requires SUPER_ADMIN privileges".to_string(),
-        )),
+            "This endpoint requires platform administrator privileges".to_string(),
+        ))
     }
+}
+
+/// Require the exact top-tier `SuperAdmin` role.
+///
+/// Stricter than [`require_platform_admin`]: the audit-log endpoints expose the
+/// platform-wide tamper-evident audit trail (who did what, integrity proofs),
+/// which must be readable only by `SuperAdmin` — not the operations-tier
+/// `PlatformAdmin` that `is_platform_admin` also admits. Match the exact variant
+/// (`TenantRole::SuperAdmin`, `level() == 100`) rather than a level threshold so
+/// no lower role can ever satisfy this gate.
+fn require_super_admin(user: &AuthUser) -> Result<(), (StatusCode, String)> {
+    if matches!(user.role, Some(common::TenantRole::SuperAdmin)) {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::FORBIDDEN,
+            "This endpoint requires super administrator privileges".to_string(),
+        ))
+    }
+}
+
+/// Map a data-layer error to a sanitized client response.
+///
+/// Compliance handlers must never surface raw SQLx / DB errors to the caller:
+/// their `Display` output leaks table and column names, SQL fragments, and
+/// connection details. Log the full error server-side (`tracing::error!`) for
+/// operators and return an opaque 500 to the client — mirroring how the other
+/// api-server routes handle DB failures (e.g. `my_units`, `unit_residents`).
+fn db_error(e: impl std::fmt::Display) -> (StatusCode, String) {
+    tracing::error!(error = %e, "compliance report query failed");
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        "Internal server error".to_string(),
+    )
 }
 
 /// Create the compliance router.
@@ -114,7 +157,7 @@ pub struct AuditLogListResponse {
 /// Get paginated audit logs.
 async fn get_audit_logs(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(params): Query<AuditLogQueryParams>,
 ) -> Result<Json<AuditLogListResponse>, (StatusCode, String)> {
     require_super_admin(&user)?;
@@ -136,13 +179,9 @@ async fn get_audit_logs(
         .audit_log_repo
         .query(query.clone())
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(db_error)?;
 
-    let total = state
-        .audit_log_repo
-        .count(query)
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    let total = state.audit_log_repo.count(query).await.map_err(db_error)?;
 
     let log_responses: Vec<AuditLogResponse> = logs
         .into_iter()
@@ -189,7 +228,7 @@ pub struct ActionCountResponse {
 /// Get audit log summary.
 async fn get_audit_summary(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(params): Query<ReportQueryParams>,
 ) -> Result<Json<AuditSummaryResponse>, (StatusCode, String)> {
     require_super_admin(&user)?;
@@ -197,7 +236,7 @@ async fn get_audit_summary(
         .audit_log_repo
         .get_action_counts(params.from_date, params.to_date, params.org_id)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(db_error)?;
 
     let total_entries: i64 = action_counts.iter().map(|c| c.count).sum();
 
@@ -228,7 +267,7 @@ async fn get_audit_summary(
 /// Get audit logs for a specific user.
 async fn get_user_audit_logs(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(user_id): Path<Uuid>,
     Query(params): Query<AuditLogQueryParams>,
 ) -> Result<Json<AuditLogListResponse>, (StatusCode, String)> {
@@ -241,7 +280,7 @@ async fn get_user_audit_logs(
             params.offset.unwrap_or(0),
         )
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(db_error)?;
 
     let log_responses: Vec<AuditLogResponse> = logs
         .into_iter()
@@ -260,7 +299,24 @@ async fn get_user_audit_logs(
         })
         .collect();
 
-    let total = log_responses.len() as i64;
+    // Count the full result set (not just this page) so the paginator can
+    // reach pages 2..N. `get_user_logs` filters purely by user_id, so mirror
+    // that with a user_id-only count query (reuses AuditLogRepository::count).
+    let total = state
+        .audit_log_repo
+        .count(AuditLogQuery {
+            user_id: Some(user_id),
+            action: None,
+            resource_type: None,
+            resource_id: None,
+            org_id: None,
+            from_date: None,
+            to_date: None,
+            limit: None,
+            offset: None,
+        })
+        .await
+        .map_err(db_error)?;
 
     Ok(Json(AuditLogListResponse {
         logs: log_responses,
@@ -282,7 +338,7 @@ pub struct IntegrityResponse {
 /// Verify audit log integrity.
 async fn verify_audit_integrity(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
 ) -> Result<Json<IntegrityResponse>, (StatusCode, String)> {
     require_super_admin(&user)?;
     let entries_to_check: i64 = 10000;
@@ -291,7 +347,7 @@ async fn verify_audit_integrity(
         .audit_log_repo
         .verify_integrity(Some(entries_to_check))
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(db_error)?;
 
     let message = if verified {
         "All audit log entries passed integrity verification".to_string()
@@ -336,26 +392,42 @@ pub struct DataExportReportResponse {
 /// Get data export report.
 async fn get_data_export_report(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(params): Query<ReportQueryParams>,
 ) -> Result<Json<DataExportReportResponse>, (StatusCode, String)> {
-    require_super_admin(&user)?;
-    // For now, return a summary (in production, this would query with filters)
-    let _ = params;
+    require_platform_admin(&user)?;
 
-    // Get all pending exports to give a count
-    let pending = state
+    // GDPR compliance figures come straight from `data_export_requests` so the
+    // report reflects true platform activity (this endpoint previously returned
+    // an empty list and hard-coded zeros for the completed/downloaded counts).
+    // `org_id` is not applied here — export requests are user-scoped, not
+    // org-scoped; `from_date`/`to_date` bound `created_at`.
+    let summary = state
         .data_export_repo
-        .get_pending(1000)
+        .report_summary(params.from_date, params.to_date, 1000)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(db_error)?;
+
+    let exports = summary
+        .entries
+        .into_iter()
+        .map(|r| DataExportReportEntry {
+            id: r.id,
+            user_id: r.user_id,
+            status: r.status.as_str().to_string(),
+            format: r.format,
+            created_at: r.created_at,
+            completed_at: r.completed_at,
+            downloaded: r.downloaded_at.is_some(),
+        })
+        .collect();
 
     Ok(Json(DataExportReportResponse {
-        exports: vec![],
-        total_requests: pending.len() as i64,
-        completed_count: 0,
-        pending_count: pending.len() as i64,
-        downloaded_count: 0,
+        exports,
+        total_requests: summary.total_requests,
+        completed_count: summary.completed_count,
+        pending_count: summary.pending_count,
+        downloaded_count: summary.downloaded_count,
     }))
 }
 
@@ -378,10 +450,10 @@ pub struct DeletionRequestsReportResponse {
 /// Get deletion requests report.
 async fn get_deletion_requests_report(
     State(_state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
 ) -> Result<Json<DeletionRequestsReportResponse>, (StatusCode, String)> {
-    require_super_admin(&user)?;
+    require_platform_admin(&user)?;
     // Query users with scheduled_deletion_at set
     let rows: Vec<(Uuid, String, DateTime<Utc>)> = sqlx::query_as(
         r#"
@@ -393,7 +465,7 @@ async fn get_deletion_requests_report(
     )
     .fetch_all(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     let now = Utc::now();
     let requests: Vec<DeletionRequestReportEntry> = rows
@@ -436,10 +508,10 @@ pub struct PrivacySettingsReportResponse {
 /// Get privacy settings report.
 async fn get_privacy_settings_report(
     State(_state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
 ) -> Result<Json<PrivacySettingsReportResponse>, (StatusCode, String)> {
-    require_super_admin(&user)?;
+    require_platform_admin(&user)?;
     // Get visibility distribution
     let visibility_rows: Vec<(String, i64)> = sqlx::query_as(
         r#"
@@ -451,7 +523,7 @@ async fn get_privacy_settings_report(
     )
     .fetch_all(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     let visibility_distribution: Vec<PrivacySettingsReportEntry> = visibility_rows
         .into_iter()
@@ -467,7 +539,7 @@ async fn get_privacy_settings_report(
     )
     .fetch_one(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     // Get total users
     let (total_users,): (i64,) = sqlx::query_as(
@@ -477,7 +549,7 @@ async fn get_privacy_settings_report(
     )
     .fetch_one(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     rls.release().await;
     Ok(Json(PrivacySettingsReportResponse {
@@ -511,11 +583,11 @@ pub struct LoginActivityReportResponse {
 /// Get login activity report.
 async fn get_login_activity_report(
     State(_state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Query(params): Query<ReportQueryParams>,
 ) -> Result<Json<LoginActivityReportResponse>, (StatusCode, String)> {
-    require_super_admin(&user)?;
+    require_platform_admin(&user)?;
     let from_date = params
         .from_date
         .unwrap_or_else(|| Utc::now() - chrono::Duration::days(30));
@@ -537,7 +609,7 @@ async fn get_login_activity_report(
     .bind(to_date)
     .fetch_all(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     // Aggregate by date
     let mut activity_map: std::collections::HashMap<String, (i64, i64)> =
@@ -598,10 +670,10 @@ pub struct MfaStatusReportResponse {
 /// Get MFA status report.
 async fn get_mfa_status_report(
     State(_state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
 ) -> Result<Json<MfaStatusReportResponse>, (StatusCode, String)> {
-    require_super_admin(&user)?;
+    require_platform_admin(&user)?;
     // Count users with MFA enabled
     let (mfa_enabled,): (i64,) = sqlx::query_as(
         r#"
@@ -610,7 +682,7 @@ async fn get_mfa_status_report(
     )
     .fetch_one(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     // Count total active users
     let (total_users,): (i64,) = sqlx::query_as(
@@ -620,7 +692,7 @@ async fn get_mfa_status_report(
     )
     .fetch_one(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     let mfa_disabled = total_users - mfa_enabled;
     let adoption_rate = if total_users > 0 {
@@ -658,11 +730,11 @@ pub struct FailedLoginsReportResponse {
 /// Get failed logins report.
 async fn get_failed_logins_report(
     State(_state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Query(params): Query<ReportQueryParams>,
 ) -> Result<Json<FailedLoginsReportResponse>, (StatusCode, String)> {
-    require_super_admin(&user)?;
+    require_platform_admin(&user)?;
     let from_date = params
         .from_date
         .unwrap_or_else(|| Utc::now() - chrono::Duration::days(7));
@@ -683,7 +755,7 @@ async fn get_failed_logins_report(
     .bind(from_date)
     .fetch_all(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     let failed_logins: Vec<FailedLoginEntry> = rows
         .into_iter()
@@ -707,7 +779,7 @@ async fn get_failed_logins_report(
     .bind(from_date)
     .fetch_one(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     // Get unique IPs
     let (unique_ips,): (i64,) = sqlx::query_as(
@@ -719,7 +791,7 @@ async fn get_failed_logins_report(
     .bind(from_date)
     .fetch_one(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     rls.release().await;
     Ok(Json(FailedLoginsReportResponse {
@@ -768,5 +840,111 @@ fn parse_audit_action(s: &str) -> Option<AuditAction> {
         "resource_deleted" => Some(AuditAction::ResourceDeleted),
         "resource_accessed" => Some(AuditAction::ResourceAccessed),
         _ => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use common::TenantRole;
+
+    fn user_with_role(role: Option<TenantRole>) -> AuthUser {
+        AuthUser {
+            user_id: Uuid::nil(),
+            email: "compliance@example.test".to_string(),
+            name: "Compliance Officer".to_string(),
+            tenant_id: None,
+            role,
+        }
+    }
+
+    #[test]
+    fn platform_tier_roles_pass_the_guard() {
+        // Both platform-tier roles must reach the platform-wide compliance
+        // reports. Regression: the guard previously matched SuperAdmin exactly
+        // and returned 403 for PlatformAdmin, breaking the platform-tier
+        // hierarchy (SuperAdmin=100, PlatformAdmin=95).
+        assert!(require_platform_admin(&user_with_role(Some(TenantRole::SuperAdmin))).is_ok());
+        assert!(require_platform_admin(&user_with_role(Some(TenantRole::PlatformAdmin))).is_ok());
+    }
+
+    #[test]
+    fn tenant_scoped_roles_and_anonymous_get_403() {
+        for role in [
+            Some(TenantRole::OrgAdmin),
+            Some(TenantRole::Manager),
+            Some(TenantRole::Owner),
+            Some(TenantRole::Tenant),
+            Some(TenantRole::Guest),
+            None,
+        ] {
+            let err = require_platform_admin(&user_with_role(role)).unwrap_err();
+            assert_eq!(err.0, StatusCode::FORBIDDEN);
+        }
+    }
+
+    #[test]
+    fn super_admin_guard_accepts_only_super_admin() {
+        // Audit-log endpoints are super-admin only: even the platform-tier
+        // PlatformAdmin must be rejected. (#2906)
+        assert!(require_super_admin(&user_with_role(Some(TenantRole::SuperAdmin))).is_ok());
+
+        for role in [
+            Some(TenantRole::PlatformAdmin),
+            Some(TenantRole::OrgAdmin),
+            Some(TenantRole::Manager),
+            Some(TenantRole::Owner),
+            Some(TenantRole::Tenant),
+            Some(TenantRole::Guest),
+            None,
+        ] {
+            let err = require_super_admin(&user_with_role(role)).unwrap_err();
+            assert_eq!(err.0, StatusCode::FORBIDDEN);
+        }
+    }
+
+    #[test]
+    fn db_error_does_not_leak_raw_detail_to_client() {
+        // Regression: compliance handlers previously bubbled `e.to_string()`
+        // straight to the client, leaking table/column names and SQL fragments.
+        // The sanitizer must return an opaque 500 and drop the raw detail.
+        let raw = sqlx::Error::ColumnNotFound("users.scheduled_deletion_at".to_string());
+        let (status, body) = db_error(raw);
+
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(body, "Internal server error");
+        assert!(
+            !body.contains("scheduled_deletion_at") && !body.contains("users"),
+            "sanitized body must not contain DB identifiers, got: {body}"
+        );
+    }
+
+    #[test]
+    fn no_handler_bubbles_raw_db_error_to_client() {
+        // Regression for the #2915 re-leak: the audit-log count query was added
+        // with a raw `.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR,
+        // e.to_string()))` that undid the #2920 sweep to `db_error`. Every DB
+        // fallible call in this module must route through `db_error` so raw
+        // driver text (table/column names, SQL fragments) never reaches clients.
+        // Guard the whole source file so a future handler can't reintroduce it.
+        let src = include_str!("compliance.rs");
+        let leak = "e.to_string()";
+        for (idx, line) in src.lines().enumerate() {
+            // Ignore comments (including the doc paragraphs above) so only real
+            // code lines are checked.
+            if line.trim_start().starts_with("//") {
+                continue;
+            }
+            let is_map_err_leak = line.contains("map_err")
+                && line.contains(leak)
+                && line.contains("INTERNAL_SERVER_ERROR");
+            assert!(
+                !is_map_err_leak,
+                "line {}: raw DB error leaked to client via map_err — route it \
+                 through db_error() instead: {}",
+                idx + 1,
+                line.trim()
+            );
+        }
     }
 }

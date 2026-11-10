@@ -1,0 +1,82 @@
+{
+  "generated": "2026-10-01",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (backlog starved: claimable=17 < floor=36, planned coverage exhausted)",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "OLDEST-UNREVIEWED among genuinely-untouched segments. No CHURN_FILES handed in from Phase 1 (demand-driven refill). review_cursor oldest-first is reality-web (2026-08-29) then reality-server (2026-08-31) then api-core (2026-09-01) — but all three were just mined by Tier-1d runs in the last 48h (signals/2026-09-30-reality-web-tier1d.json, signals/2026-10-01-reality-server-tier1d.json, signals/2026-10-01-api-core-tier1d.json; their cursors are not yet advanced because the dispatcher has not folded those runs). The next genuinely-unreviewed segment by cursor is mobile-rn (2026-09-27 last Tier-1d? no — cursor 2026-09-09; no mobile-rn Tier-1d signal exists in the recent history). mobile-rn carries 0 OPEN code-review-finding items in backlog.json (all 3 prior mobile-rn crf rows are status=done) -> not saturated -> selected.",
+  "experts_used": [
+    "frontend",
+    "tester"
+  ],
+  "landable_in_cloud": true,
+  "landability_note": "All findings are frontend-only React Native TypeScript edits confined to a single file each under frontend/apps/mobile/src/, no backend/migration/openapi involvement. (1) NFCAccessController.ts validateAccess: change the expiry comparison so a non-finite parsed validUntil fails CLOSED (deny) instead of OPEN, matching the sibling getActiveCredentials/isCredentialExpiringSoon pattern; verifiable with a jest-expo unit test passing a credential whose validUntil is '' / 'not-a-date' and asserting granted:false with denialReason 'credential_expired' (or 'invalid_credential'). (2) QRCodeScanner.ts getScanHistory: wrap the JSON.parse in try/catch returning [] (and ideally remove the corrupt key), matching the already-landed nfc-accesslog-parse-unguarded remedy; verifiable by seeding AsyncStorage SCAN_HISTORY_KEY with a non-JSON string and asserting getScanHistory() resolves to [] rather than rejecting. (3) i18n header titles: wrap the hardcoded header strings in t(...) + add keys; verifiable via biome + a snapshot/translation-key test. Each independently landable by separate implementers; (1) and (2) are the highest-value.",
+  "findings_count": 3,
+  "static_only": true,
+  "note": "Static analysis only (no compilation, no test execution) per skill. Segment root is frontend/apps/mobile/src/ (199 ts/tsx files). This is a HEAVILY-MINED segment: backlog.json already carries ~9 done mobile-rn code-review-finding rows (nfc-revoke-local-persists-offline, nfc-securestore-2kb-blob, nfc-accesslog-parse-unguarded, screens-mock-data, hardcoded-empty-error-i18n, meterdetail-i18n, thread-detail-hardcoded-en, voice-cmd-hardcoded-en, biometric-prompt-i18n, push-debug-console-log). Several speculative patterns came up CLEAN this pass (recorded so future rotations don't re-mine): (a) the central API layer hooks/useApi.ts is clean — apiRequest maps !response.ok to a thrown Error with server message, 204 handled, tenant header sourced from the JWT claim; (b) utils/jwt.ts decode is try/catch-guarded and isJwtExpired deliberately fails-safe-to-server-401 on malformed exp (documented); (c) contexts/AuthContext.tsx both JSON.parse sites (biometric unlock :266 and cold-start initialize :317) are inside try/catch; (d) hooks/useOfflineSupport.ts is exemplary — strict-FIFO head-of-line queue, permanent(4xx)-vs-transient(5xx) drop classification with user-surfaced permanentFailures, temp->server id remap, all JSON.parse guarded; (e) features/layout/layoutCache.ts parse is guarded AND self-heals (removes the corrupt key); (f) usePushNotifications console.log lines are __DEV__-guarded (the filed push-debug-console-log finding is already resolved) and explicitly never log the raw token; (g) qrcode/DeepLinkHandler.ts parseDeepLink is fully try/catch-wrapped and QRCodeScanner external_url is restricted to http(s) + gated behind a user-confirmation action object (no arbitrary-scheme openURL). The three findings below are the genuine net-new items. #1 (NFC expiry fail-open) is the strongest and is NOT covered by any existing nfc finding. #2 (scan-history unguarded parse) is the same CLASS as the done nfc-accesslog-parse-unguarded row but in a DIFFERENT file (qrcode/QRCodeScanner.ts, not nfc/). #3 (universal header-title i18n) overlaps thematically with the done empty/error-state + per-subscreen i18n rows but targets a DISTINCT, broader surface (the headerTitle/headerSubtitle of ~13 top-level screens); flagged because the backlog is starved and it is cheaply actionable — the dispatcher may fold it into the broader mobile i18n cluster if it prefers.",
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-nfc-validuntil-expiry-fail-open",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-01 mobile-rn)",
+      "segment": "mobile-rn",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:275 — validateAccess() gates a physical-access NFC credential with `if (new Date(credential.validUntil) < now) { return { granted:false, denialReason:'credential_expired' } }`. `credential.validUntil` is typed `string` (nfc/types.ts:26) and is deserialized from a stored JSON blob. When that string is empty/missing/malformed, `new Date(validUntil)` is an Invalid Date, and `InvalidDate < now` evaluates to `false` (every relational comparison with NaN is false). The expiry branch is therefore SKIPPED, and — provided status==='active' and the access point matches — validateAccess returns granted:true. This is a FAIL-OPEN on a building-access decision: a credential with a corrupted/absent expiry is treated as not-expired rather than denied.",
+        "Asymmetry confirms intent: the sibling methods in nfc/NFCCredentialManager.ts use the opposite, fail-CLOSED idiom — getActiveCredentials (:143) keeps a credential only when `new Date(c.validUntil).getTime() > nowMs` (NaN > nowMs === false -> excluded), and isCredentialExpiringSoon (:319) computes `new Date(credential.validUntil).getTime()` likewise. Only the actual access-GRANT path (validateAccess) is written as `date < now`, which inverts the safe default exactly where it matters most.",
+        "Reachability: validateAccess is the tap-to-enter authorization check; credential.validUntil originates from persisted/offline-cached credential data (SecureStore/AsyncStorage JSON), which the same segment's other findings already show can be corrupted or legacy-shaped (see done rows nfc-securestore-2kb-blob, nfc-accesslog-parse-unguarded). Net-new: grep of .research/backlog.json for validuntil / fail-open / validateAccess returned no existing finding (the nfc rows on file cover revoke-offline-persistence, the 2KB SecureStore cap, and access-LOG parse — not the expiry comparison). Landable frontend-only remedy confined to NFCAccessController.ts: parse once to a timestamp and deny when non-finite, e.g. `const exp = new Date(credential.validUntil).getTime(); if (!Number.isFinite(exp) || exp < now.getTime()) return credential_expired;`. Confidence medium: the fail-open is proven by static read of JS NaN-comparison semantics; whether a malformed validUntil actually reaches the device is data-dependent, so the trigger is latent rather than runtime-confirmed — but the blast radius (physical access granted on bad data) warrants the high score."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-scanhistory-unguarded-parse",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-01 mobile-rn)",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "tester",
+      "files": [
+        "frontend/apps/mobile/src/qrcode/QRCodeScanner.ts"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/qrcode/QRCodeScanner.ts:366-369 — getScanHistory() does `const stored = await AsyncStorage.getItem(SCAN_HISTORY_KEY); return stored ? JSON.parse(stored) : [];` with NO try/catch. A corrupted/partially-written SCAN_HISTORY_KEY blob makes JSON.parse throw, so getScanHistory() REJECTS.",
+        "Blast radius: getScanHistory is the single read path for scan history and is awaited by saveScanToHistory (:344-345, reads existing history before unshifting the new entry), getRecentScansCount (:382), and clearScanHistory's siblings. A corrupt blob therefore not only breaks the history view but also prevents RECORDING any new scan (saveScanToHistory throws before it can rewrite the key), and the only recovery is an uncaught rejection surfacing to the caller — the store never self-heals.",
+        "This is the same CLASS as the already-landed done row code-review-mobile-rn-nfc-accesslog-parse-unguarded but in a DIFFERENT file (qrcode/QRCodeScanner.ts vs nfc/), and the self-healing remedy is already modeled in-repo by features/layout/layoutCache.ts:22-26 (catch -> removeItem -> return null). Net-new for this file: grep of .research/backlog.json for scanhistory / QRCodeScanner / getScanHistory returned nothing. Landable frontend-only remedy confined to QRCodeScanner.ts: wrap the parse in try/catch, `await AsyncStorage.removeItem(SCAN_HISTORY_KEY)` on failure, and return []. Verifiable by seeding AsyncStorage with a non-JSON SCAN_HISTORY_KEY and asserting getScanHistory()/saveScanToHistory() resolve rather than reject. Confidence medium (crash path proven statically; needs a corrupt blob to trigger)."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-screen-header-titles-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-01 mobile-rn)",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n-gap",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/mobile/src/screens/meters/MetersScreen.tsx",
+        "frontend/apps/mobile/src/screens/faults/FaultsListScreen.tsx",
+        "frontend/apps/mobile/src/screens/buildings/BuildingsScreen.tsx",
+        "frontend/apps/mobile/src/screens/news/NewsScreen.tsx",
+        "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx",
+        "frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx",
+        "frontend/apps/mobile/src/screens/leases/LeasesScreen.tsx",
+        "frontend/apps/mobile/src/screens/notifications/NotificationsScreen.tsx",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx",
+        "frontend/apps/mobile/src/screens/forms/FormsScreen.tsx",
+        "frontend/apps/mobile/src/screens/neighbors/NeighborsScreen.tsx",
+        "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx"
+      ],
+      "evidence": [
+        "The primary top-level screens render their `<Text style={s.headerTitle}>` (and the adjacent headerSubtitle) as hardcoded English literals: MetersScreen.tsx:148 'Meters' / :149 'Meters registered to your unit.', FaultsListScreen.tsx:158 'Faults', BuildingsScreen.tsx:118 'Buildings', NewsScreen.tsx:91 'News', MessagesScreen.tsx:114 'Messages', OutagesScreen.tsx:150 'Outages', LeasesScreen.tsx:161 'Leases', LeaseDetailScreen.tsx:164 'Lease', NotificationsScreen.tsx:138 'Notifications', AnnouncementsScreen.tsx:209 'Announcements', FormsScreen.tsx:118 'Forms', NeighborsScreen.tsx:184 'Neighbours', PersonMonthsScreen.tsx:93 'Person-months'. These are the main navigation screen headers of a product the repo CLAUDE.md documents as i18n'd (react-i18next 16).",
+        "The gap is not a missing i18n setup — it is inconsistent usage: 39 screen files already `import { useTranslation }` and MetersScreen.tsx itself calls `t(...)` 6 times elsewhere while leaving its own header title/subtitle in English. So the translation infrastructure and keys machinery are present; the top-level headers were simply never wrapped.",
+        "Dedup note (transparent): this overlaps thematically with the done mobile-rn i18n rows but targets a DISTINCT surface. The filed rows are narrow — hardcoded-empty-error-i18n (empty/error/loading STATE strings), meterdetail-i18n (MeterDetailScreen body), thread-detail-hardcoded-en (ThreadDetailScreen composer/labels), voice-cmd-hardcoded-en, biometric-prompt-i18n. None covers the universal headerTitle/headerSubtitle of the ~13 LIST/top-level screens enumerated above. Flagged at low score because the backlog is starved and the remedy is cheap/mechanical (wrap each header in t('screens.<name>.title') + add keys to the locale bundles). The dispatcher may legitimately fold this into the broader mobile i18n cluster. Confidence medium: strings are confirmed hardcoded by static read; impact is UX/localization only."
+      ]
+    }
+  ]
+}

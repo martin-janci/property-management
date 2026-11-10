@@ -1,6 +1,7 @@
 //! AI chat sessions (Story 13.1) and sentiment analysis (Story 13.2).
 
 use crate::routes::ai::{AlertsQuery, PaginationQuery};
+use crate::routes::pagination::clamp_limit;
 use crate::state::AppState;
 use api_core::extractors::RlsConnection;
 use axum::{
@@ -98,7 +99,7 @@ async fn list_sessions(
         .list_user_sessions(
             &mut **rls.conn(),
             user_id,
-            query.limit.unwrap_or(50),
+            clamp_limit(query.limit, 50),
             query.offset.unwrap_or(0),
         )
         .await;
@@ -202,7 +203,7 @@ async fn list_messages(
             session_id,
             org_id,
             user_id,
-            query.limit.unwrap_or(100),
+            clamp_limit(query.limit, 100),
             query.offset.unwrap_or(0),
         )
         .await;
@@ -921,7 +922,7 @@ async fn list_escalated(
         .list_escalated_messages(
             &mut **rls.conn(),
             tenant_id,
-            query.limit.unwrap_or(50),
+            clamp_limit(query.limit, 50),
             query.offset.unwrap_or(0),
         )
         .await;
@@ -960,6 +961,7 @@ async fn get_trends(
     mut rls: RlsConnection,
     Query(query): Query<SentimentTrendQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     // RLS context (org GUC) is set on rls.conn(); tenant_id is the authoritative org.
     let tenant_id = rls.tenant_id();
 
@@ -986,6 +988,7 @@ async fn list_alerts(
     mut rls: RlsConnection,
     Query(query): Query<AlertsQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let tenant_id = rls.tenant_id();
 
     let result = state
@@ -994,7 +997,7 @@ async fn list_alerts(
             &mut **rls.conn(),
             tenant_id,
             query.acknowledged,
-            query.limit.unwrap_or(50),
+            clamp_limit(query.limit, 50),
             query.offset.unwrap_or(0),
         )
         .await;
@@ -1020,6 +1023,7 @@ async fn acknowledge_alert(
     mut rls: RlsConnection,
     Path(alert_id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
 
@@ -1052,6 +1056,7 @@ async fn get_thresholds(
     State(state): State<AppState>,
     mut rls: RlsConnection,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let tenant_id = rls.tenant_id();
 
     let result = state
@@ -1080,6 +1085,7 @@ async fn update_thresholds(
     mut rls: RlsConnection,
     Json(req): Json<UpdateSentimentThresholds>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let tenant_id = rls.tenant_id();
 
     let result = state
@@ -1104,6 +1110,7 @@ async fn get_dashboard(
     State(state): State<AppState>,
     mut rls: RlsConnection,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let today = chrono::Utc::now().date_naive();
     let thirty_days_ago = today - chrono::Duration::days(30);

@@ -1,0 +1,55 @@
+{
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed (api-core/ppt-web-ui/mobile-native-kmp tied at 2026-08-16; mobile-native-kmp excluded as not cloud-landable, api-core already covered by 2026-08-20-api-core-tier1d.json, so ppt-web-ui selected)",
+  "generator": "dispatcher-tier1d",
+  "generated_at": "2026-08-20T00:00:00Z",
+  "experts_used": ["frontend"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-ai-chat-ocr-fetch-no-auth",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts:31-46 (apiFetch) and frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.ts:26-35 (ocrFetch) issue requests with the native browser `fetch()` and set only `Content-Type` — they never attach an `Authorization: Bearer <token>` header. The whole ai-chat feature (sessions/messages/feedback/escalated at API_BASE `/api/v1/ai/chat`, useAiChat.ts:19) and the OCR meter-reading endpoints thus call the management API unauthenticated.",
+        "Auth in this app is injected exclusively by the axios request interceptor (frontend/apps/ppt-web/src/lib/api.ts:198 — \"Request interceptor: Add JWT token to requests\", token read from localStorage) and by the generated @ppt/api-client. Sibling raw-fetch data layers correctly compensate by injecting the token themselves: accounting/api/paymentMatching.ts:63-66 (`if (token) headers.Authorization = \\`Bearer ${token}\\``) and notification-analytics/hooks/useNotificationAnalytics.ts:35-39. The ai-chat and OCR helpers do neither.",
+        "A repo-wide grep for a global fetch override (`window.fetch`/`globalThis.fetch` reassignment) in apps/ppt-web/src returns no hits, so native `fetch` calls are NOT wrapped — the axios interceptor cannot apply to them. Since the api-server is Bearer-JWT based (no cookie session), these requests reach the backend with no credential and should be rejected with 401, breaking AI-chat and OCR for authenticated users. Fix: route these through the shared axios client / @ppt/api-client, or inject `getToken()` into the fetch headers like paymentMatching.ts does. (The news pages — features/news/pages/*.tsx — use the same header-less native-fetch pattern and are likely affected too.)"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-ai-chat-delete-swallows-err",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts:131-142 (useDeleteSession) calls `await fetch(\\`${API_BASE}/sessions/${sessionId}\\`, { method: 'DELETE' })` directly and never checks `response.ok`, unlike every other call in the file which routes through `apiFetch` (L31-46) that throws on a non-2xx status. The mutationFn's return value is discarded, so a 403/404/500 DELETE resolves as a SUCCESS.",
+        "On that false success `onSuccess` (L138) runs `invalidateQueries({ queryKey: aiChatKeys.sessions() })`, which refetches the session list. Net user-visible effect: the session row briefly disappears (optimistic-looking) then reappears when the refetch returns the still-present session, and no error toast / isError branch ever fires — the deletion silently failed with zero feedback.",
+        "Fix: wrap the DELETE in the existing `apiFetch` helper (or add an explicit `if (!response.ok) throw ...`) so failures propagate to the mutation's error state and the UI can surface them, consistent with useCreateSession/useSendMessage/useMessageFeedback in the same file."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-ai-chat-querykey-paging",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts — useAiChatSessions(limit=50, offset=0) (L49-60), useAiChatMessages(sessionId, limit=100, offset=0) (L75-88) and useEscalatedMessages(limit=50, offset=0) (L161-172) each take `limit`/`offset` params that are interpolated into the request URL, but their TanStack Query keys omit them: the keys are `aiChatKeys.sessions()`, `aiChatKeys.messages(sessionId)`, `aiChatKeys.escalated()` (L22-28) with no page component.",
+        "Because the cache key is identical across pages, calling any of these hooks with a different limit/offset returns the cached first page instead of refetching — classic stale-pagination bug. The correct pattern is used right next door in notification-analytics: `notificationAnalyticsKeys.query(filters)` (useNotificationAnalytics.ts:53-57) folds every input that affects the response into the key.",
+        "Latent today only insofar as no current caller passes non-default paging; it becomes a silent data-correctness bug the moment pagination is wired up. Fix: include limit/offset in the query-key factory (e.g. `messages: (id, limit, offset) => [...all,'messages',id,limit,offset]`)."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

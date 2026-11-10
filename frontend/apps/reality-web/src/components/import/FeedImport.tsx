@@ -25,6 +25,7 @@ import {
 } from '@ppt/reality-api-client';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { toSafeLogMessage } from '@/lib/safe-error';
 
 const DEFAULT_FIELD_MAPPING: FeedFieldMapping = {
   title: 'title',
@@ -144,6 +145,7 @@ function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
   const t = useTranslations('import.feed');
   const tHist = useTranslations('import.schedule.historyStatus');
   const [showHistory, setShowHistory] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const deleteMutation = useDeleteFeedSource(agencyId);
   const syncMutation = useSyncFeedSource(agencyId, feed.id);
   const updateMutation = useUpdateFeedSource(agencyId, feed.id);
@@ -152,14 +154,33 @@ function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
   const statusConfig = getFeedStatusConfig(feed.status);
 
   const handleTogglePause = async () => {
-    await updateMutation.mutateAsync({
-      status: feed.status === 'active' ? 'paused' : 'active',
-    });
+    setActionError(null);
+    try {
+      await updateMutation.mutateAsync({
+        status: feed.status === 'active' ? 'paused' : 'active',
+      });
+    } catch {
+      setActionError(t('updateError'));
+    }
   };
 
   const handleDelete = async () => {
     if (confirm(t('confirmRemove'))) {
-      await deleteMutation.mutateAsync(feed.id);
+      setActionError(null);
+      try {
+        await deleteMutation.mutateAsync(feed.id);
+      } catch {
+        setActionError(t('removeError'));
+      }
+    }
+  };
+
+  const handleSync = async () => {
+    setActionError(null);
+    try {
+      await syncMutation.mutateAsync();
+    } catch {
+      setActionError(t('syncError'));
     }
   };
 
@@ -204,7 +225,7 @@ function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
         <button
           type="button"
           className="action-button sync"
-          onClick={() => syncMutation.mutate()}
+          onClick={handleSync}
           disabled={syncMutation.isPending || feed.status === 'error'}
         >
           {syncMutation.isPending ? t('syncing') : t('syncNow')}
@@ -233,6 +254,12 @@ function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
           {t('remove')}
         </button>
       </div>
+
+      {actionError && (
+        <div className="feed-error" role="alert" aria-live="assertive">
+          {actionError}
+        </div>
+      )}
 
       {showHistory && history && (
         <div className="history-section">
@@ -381,6 +408,15 @@ function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
           background: var(--ppt-color-danger-light);
         }
 
+        .feed-error {
+          margin: 0 20px 16px;
+          padding: 12px 16px;
+          background: var(--ppt-color-danger-light);
+          color: var(--ppt-color-danger-dark);
+          border-radius: 8px;
+          font-size: 14px;
+        }
+
         .history-section {
           padding: 16px 20px;
           border-top: 1px solid var(--ppt-border-default);
@@ -452,7 +488,7 @@ function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
   );
 }
 
-function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => void }) {
+export function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => void }) {
   const t = useTranslations('import.feed');
   const tFreq = useTranslations('import.feed.frequency');
   const [step, setStep] = useState<'url' | 'preview' | 'mapping'>('url');
@@ -461,6 +497,7 @@ function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => 
   const [frequency, setFrequency] = useState<SyncFrequency>('daily');
   const [fieldMapping, setFieldMapping] = useState<FeedFieldMapping>(DEFAULT_FIELD_MAPPING);
   const [previewData, setPreviewData] = useState<FeedPreview | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   const previewMutation = useFeedPreview(agencyId);
   const createMutation = useCreateFeedSource(agencyId);
@@ -478,14 +515,20 @@ function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => 
   };
 
   const handleCreate = async () => {
-    await createMutation.mutateAsync({
-      name: name || t('defaultName'),
-      url,
-      format: previewData?.format,
-      fieldMapping,
-      syncFrequency: frequency,
-    });
-    onClose();
+    setCreateError(null);
+    try {
+      await createMutation.mutateAsync({
+        name: name || t('defaultName'),
+        url,
+        format: previewData?.format,
+        fieldMapping,
+        syncFrequency: frequency,
+      });
+      onClose();
+    } catch (error) {
+      console.error('Failed to create feed source:', toSafeLogMessage(error));
+      setCreateError(t('createError'));
+    }
   };
 
   return (
@@ -620,6 +663,11 @@ function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => 
                   />
                 </div>
               ))}
+              {createError && (
+                <div className="error-message" role="alert" aria-live="assertive">
+                  {createError}
+                </div>
+              )}
             </div>
           )}
         </div>

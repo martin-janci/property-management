@@ -43,7 +43,7 @@ describe('AgencyDashboard — agency load error handling (Issue #2277)', () => {
     // The distinct error state is present…
     expect(screen.getByRole('alert')).toHaveTextContent('loadErrorTitle');
     // …and the misleading empty-state must NOT be shown on a fetch failure.
-    expect(screen.queryByText(/No Agency Found/i)).not.toBeInTheDocument();
+    expect(screen.queryByText('noAgencyTitle')).not.toBeInTheDocument();
   });
 
   it('calls refetch when the retry button is clicked', () => {
@@ -75,7 +75,7 @@ describe('AgencyDashboard — agency load error handling (Issue #2277)', () => {
 
     render(<AgencyDashboard />);
 
-    expect(screen.getByText(/No Agency Found/i)).toBeInTheDocument();
+    expect(screen.getByText('noAgencyTitle')).toBeInTheDocument();
     expect(screen.queryByText('loadErrorTitle')).not.toBeInTheDocument();
   });
 
@@ -91,7 +91,7 @@ describe('AgencyDashboard — agency load error handling (Issue #2277)', () => {
     render(<AgencyDashboard />);
 
     expect(screen.getByRole('alert')).toHaveTextContent('loadErrorTitle');
-    expect(screen.queryByText(/No Agency Found/i)).not.toBeInTheDocument();
+    expect(screen.queryByText('noAgencyTitle')).not.toBeInTheDocument();
   });
 
   it('still shows the "No Agency Found" empty state when the query succeeds with no agency', () => {
@@ -104,7 +104,7 @@ describe('AgencyDashboard — agency load error handling (Issue #2277)', () => {
 
     render(<AgencyDashboard />);
 
-    expect(screen.getByText(/No Agency Found/i)).toBeInTheDocument();
+    expect(screen.getByText('noAgencyTitle')).toBeInTheDocument();
     expect(screen.queryByText('loadErrorTitle')).not.toBeInTheDocument();
   });
 
@@ -119,6 +119,6 @@ describe('AgencyDashboard — agency load error handling (Issue #2277)', () => {
     render(<AgencyDashboard />);
 
     expect(screen.getByRole('heading', { name: 'Acme Realty' })).toBeInTheDocument();
-    expect(screen.queryByText(/No Agency Found/i)).not.toBeInTheDocument();
+    expect(screen.queryByText('noAgencyTitle')).not.toBeInTheDocument();
   });
 });

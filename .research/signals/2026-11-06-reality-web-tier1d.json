@@ -1,0 +1,25 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-06",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "oldest-unreviewed (dispatcher-tier1d-demand-driven; claimable backlog below floor, 12 < 36). review_cursor: reality-web 2026-11-03 tied with mobile-rn for oldest; reality-web picked (frontend expert, cleanly claimable code-review-reality-web-* vector). Saturation check: reality-web=1 open finding (<3, not saturated). Frontend expert primary only per Step 2.",
+  "experts_used": ["frontend"],
+  "findings_count": 1,
+  "signals": [
+    {
+      "id": "code-review-reality-web-realtor-listing-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/new/page.tsx:37-44 — create-listing page has no useTranslations; hardcoded English UI ('Create listing', 'Publish a new property to Reality Portal.', submitLabel='Publish listing') and hardcoded error 'Could not create listing. Please try again.' (line 27) render verbatim for sk/cs/de/pl/hu realtors",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/[id]/edit/page.tsx:74-93 — same gap: no next-intl wiring; hardcoded 'Edit listing', 'Update the details of your listing.', '← Back to listings', 'Loading listing…', 'Listing saved.', 'Save changes', 'Missing listing id.' plus error fallbacks 'Could not load listing.'/'Could not save listing.' (lines 42,61)",
+        "Contrast: peer pages (realtor/[id]/page.tsx, agency/[slug]/page.tsx, favorites/PriceAlerts.tsx) all use useTranslations('...'); these two listing-management routes are the only un-internationalized user-facing pages found"
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

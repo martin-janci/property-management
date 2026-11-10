@@ -1,0 +1,58 @@
+{
+  "generated": "2026-08-11T18:00:00Z",
+  "segment": "reality-web",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed",
+  "selection_note": "mobile-native-kmp hard-excluded (AGP egress-blocked in cloud runner + already saturated: 2 signal files 2026-08-11, 1 open backlog finding). Among remaining non-excluded segments, ppt-web-ui/ppt-web-core/mobile-rn were all reviewed today (2026-08-11 signal files present) so they were skipped. By review_cursor ascending, reality-web (cursor 2026-08-07) is the oldest segment NOT reviewed today. Saturation check clean: 0 open code-review-findings for reality-web in backlog.json (10 total, all closed). Path root resolved to frontend/apps/reality-web/src (SKILL table lists frontend/reality-web/src, stale).",
+  "experts_used": ["frontend"],
+  "signals": [
+    {
+      "id": "code-review-reality-web-listings-page-no-error-state",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx:145 — `const { data, isLoading } = useListings(filters, currentPage);` destructures ONLY data + isLoading. The TanStack Query result's `isError`/`error` are dropped and there is no error branch anywhere in the file (`grep -c isError page.tsx` -> 0).",
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx:338,341 — on a failed query `data` is undefined and `isLoading` is false, so `<ListingGrid listings={data?.data ?? []} isLoading={isLoading} />` receives `[]` with isLoading=false.",
+        "frontend/apps/reality-web/src/components/listings/ListingGrid.tsx:61,76 — with an empty array and isLoading=false ListingGrid renders the hardcoded empty state `<h3 className=\"empty-title\">No listings found</h3>`. Net effect: a reality-server outage / 5xx / network failure on the public search page is indistinguishable from a legitimate zero-results search — the user sees 'No listings found' with no error message and no retry affordance, and crawlers may index the soft-empty page.",
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx:185 — `toggleFavorite.mutate({ listingId, isFavorite });` (useToggleFavorite) is fire-and-forget with no onError/onSettled; a failed favorite toggle silently no-ops with no user feedback and no optimistic-state rollback.",
+        "Fix: destructure `isError`/`error` from useListings and render a distinct error state (message + retry button) when isError is true, before falling through to the empty state; and pass an `onError` to `toggleFavorite.mutate` (or the useToggleFavorite hook) to surface/roll back a failed toggle."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-layoutsections-dup-key",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/listings/LayoutSections.tsx:125 and :136 — both the placeholder branch and the real-component branch render each row with `key={section.type}` while mapping over `layout.sections`.",
+        "frontend/apps/reality-web/src/lib/layout.ts:85-108 — `layout.sections` is a server-resolved list of `ResolvedSection` objects distinguished by `type` + `presentation` + `mode` + `props`; nothing enforces `type` uniqueness, and multiple sections of the same type (e.g. repeated 'custom'/'spacer'/'gallery' blocks differentiated by props) are a valid, expected payload. `getResolvedLayout` only filters non-object elements and clamps to MAX_SECTIONS — it does not dedupe or index types.",
+        "Impact: when a layout contains two sections of the same type, React sees duplicate sibling keys — it emits a dev warning and, on re-resolve/re-order of the sections list, reconciliation collides the duplicates: section-local state (e.g. a section's ErrorBoundary hasError, gallery index) can bleed between them or an update can be dropped. The `onClickCapture`/`data-layout-section={section.type}` preview bridge also targets ambiguously when two rows share the same type.",
+        "Fix: key on a stable unique id — prefer a server-provided section id if present, otherwise `key={`${section.type}-${index}`}` using the map index — at both LayoutSections.tsx:125 and :136."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-maint-fallback-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/layout.tsx:158-159 — the `building_disabled` defense-in-depth branch renders hardcoded English: `<h1>Service temporarily unavailable</h1>` and `<p>{tenantConfig.name} is offline for maintenance. Please check back shortly.</p>` (plus the `<title>` at layout.tsx:146), even though `locale` is in scope and applied at `<html lang={locale}>` (layout.tsx:140). This is a 6-locale portal (en/sk/cs/de/pl/hu per layout.tsx generateMetadata title/description maps).",
+        "frontend/apps/reality-web/src/lib/kill-switch.ts:90-96 — localized maintenance copy ALREADY exists as `COPY[locale]` (used by the canonical middleware kill-switch path, src/middleware.ts:37-49, which emits a real 503). The SSR fallback branch in layout.tsx duplicates the maintenance UI but hardcodes English instead of reusing that COPY table, so a Slovak/Czech/German user hitting the rare edge-fetch-failed-but-SSR-succeeded fallback gets English.",
+        "Fix: reuse the `kill-switch.ts` `COPY` strings (or the shared normalizeKillSwitchLocale + COPY lookup) keyed by `locale` in the layout.tsx:154-160 fallback, so the defense-in-depth path matches the localized middleware path."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

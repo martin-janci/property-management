@@ -1,0 +1,40 @@
+{
+  "generated": "2026-08-10T00:00:00Z",
+  "segment": "mobile-native-kmp",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["kotlin", "tester"],
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — the production nav graph wires the CreateListing route's submit callback to a hardwired stub: `CreateListingScreen(onBackClick = ..., onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }, onCreated = ...)`. The onSubmit is not connected to any repository call; it unconditionally returns failure.",
+        "There is NO createListing method anywhere in the shared module: `grep -rn 'fun createListing' shared/src/commonMain` returns nothing, and PortalListingsRepository (which owns `/api/v1/my/listings`) exposes only listMyListings / getListingAnalytics / getPortfolioAnalytics — no POST/create. So the failure is permanent, not a transient wiring gap.",
+        "This route is reachable in the shipped app: MyListings (Navigation.kt:480-485) has an `onCreateClick` that navigates to `Screen.CreateListing.route`. A realtor who taps 'create listing', fills the validated form (title/city/price), and submits always lands in CreateListingScreen.kt:122 `onFailure` and sees the generic `publishFailedMsg` ('publish failed') error — the entire Create-Listing feature is an inert dead-end in production.",
+        "Fix: add a `createListing(input): Result<Unit>` (POST /api/v1/my/listings) to PortalListingsRepository and wire it into the Navigation onSubmit, or gate/remove the CreateListing entry point until the API is wired so users are not offered a flow that can never succeed."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-ssoservice-no-unit-test",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt is the most security-critical class in the shared module — it owns the session-token lifecycle (validateAndLogin, restoreSession, login, register, requestPasswordReset, confirmPasswordReset, getSession, logout) and the mutable `sessionToken` used for every authenticated request via `Authorization: Bearer`. It has NO dedicated unit test: there is no SsoServiceTest.kt anywhere under shared/src/commonTest, and the only references (`grep -rln SsoService commonTest`) are the navigation tests AuthGuardNavigationTest.kt and AndroidDeepLinkDispatchTest.kt, which exercise routing, not the service's own behavior.",
+        "Untested behavior worth locking down: restoreSession (SsoService.kt:318-345) sets `sessionToken = token` BEFORE calling getSession(), and on failure must clear it (`onFailure { sessionToken = null; _authState.value = Unauthenticated }`). There is no test asserting that a failed restore leaves no stale token behind — precisely the class of regression flagged for the RN app (code-review-mobile-rn-auth-restore-stale-token). The KMP counterpart has the correct clear-on-failure code but zero coverage guarding it.",
+        "The sibling repositories are all directly tested (PortalListingsRepositoryTest, FavoritesRepositoryTest, NotificationRepositoryTest, LayoutRepositoryTest, etc.), which makes SsoService's absence an inconsistent coverage hole rather than a project-wide policy. Fix: add SsoServiceTest covering validateAndLogin success/failure -> AuthState transitions and restoreSession's clear-on-failure token invariant (MockEngine-backed, same pattern as the existing repository tests)."
+      ],
+      "expert": "tester"
+    }
+  ]
+}

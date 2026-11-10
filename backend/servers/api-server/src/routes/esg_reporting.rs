@@ -110,6 +110,7 @@ async fn upsert_configuration(
     mut rls: RlsConnection,
     Json(input): Json<CreateEsgConfiguration>,
 ) -> Result<Json<EsgConfiguration>, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .esg_reporting_repo
@@ -146,6 +147,7 @@ async fn create_metric(
     mut rls: RlsConnection,
     Json(input): Json<CreateEsgMetric>,
 ) -> Result<(StatusCode, Json<EsgMetric>), (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let out = state
@@ -181,6 +183,7 @@ async fn update_metric(
     Path(id): Path<Uuid>,
     Json(input): Json<UpdateEsgMetric>,
 ) -> Result<Json<EsgMetric>, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .esg_reporting_repo
@@ -204,6 +207,7 @@ async fn verify_metric(
     Path(id): Path<Uuid>,
     Json(input): Json<VerifyMetricRequest>,
 ) -> Result<Json<EsgMetric>, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let out = state
@@ -222,6 +226,7 @@ async fn delete_metric(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .esg_reporting_repo
@@ -264,6 +269,7 @@ async fn create_carbon_footprint(
     mut rls: RlsConnection,
     Json(input): Json<CreateCarbonFootprint>,
 ) -> Result<(StatusCode, Json<CarbonFootprint>), (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .esg_reporting_repo
@@ -318,6 +324,7 @@ async fn delete_carbon_footprint(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .esg_reporting_repo
@@ -365,6 +372,7 @@ async fn create_benchmark(
     mut rls: RlsConnection,
     Json(input): Json<CreateEsgBenchmark>,
 ) -> Result<(StatusCode, Json<EsgBenchmark>), (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .esg_reporting_repo
@@ -381,6 +389,7 @@ async fn delete_benchmark(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .esg_reporting_repo
@@ -428,6 +437,7 @@ async fn create_target(
     mut rls: RlsConnection,
     Json(input): Json<CreateEsgTarget>,
 ) -> Result<(StatusCode, Json<EsgTarget>), (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .esg_reporting_repo
@@ -462,6 +472,7 @@ async fn update_target(
     Path(id): Path<Uuid>,
     Json(input): Json<UpdateEsgTarget>,
 ) -> Result<Json<EsgTarget>, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .esg_reporting_repo
@@ -479,6 +490,7 @@ async fn delete_target(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .esg_reporting_repo
@@ -526,6 +538,7 @@ async fn create_report(
     mut rls: RlsConnection,
     Json(input): Json<CreateEsgReport>,
 ) -> Result<(StatusCode, Json<EsgReport>), (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let out = state
@@ -561,6 +574,7 @@ async fn update_report(
     Path(id): Path<Uuid>,
     Json(input): Json<UpdateEsgReport>,
 ) -> Result<Json<EsgReport>, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .esg_reporting_repo
@@ -578,6 +592,7 @@ async fn submit_report(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<EsgReport>, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .esg_reporting_repo
@@ -600,6 +615,7 @@ async fn approve_report(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<EsgReport>, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let out = state
@@ -623,6 +639,7 @@ async fn delete_report(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .esg_reporting_repo
@@ -673,6 +690,7 @@ async fn create_eu_taxonomy_assessment(
     mut rls: RlsConnection,
     Json(input): Json<CreateEuTaxonomyAssessment>,
 ) -> Result<(StatusCode, Json<EuTaxonomyAssessment>), (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .esg_reporting_repo
@@ -707,6 +725,7 @@ async fn update_eu_taxonomy_assessment(
     Path(id): Path<Uuid>,
     Json(input): Json<UpdateEuTaxonomyAssessment>,
 ) -> Result<Json<EuTaxonomyAssessment>, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .esg_reporting_repo
@@ -751,6 +770,7 @@ async fn refresh_dashboard(
     Path(year): Path<i32>,
     Query(params): Query<DashboardQueryParams>,
 ) -> Result<Json<EsgDashboardMetrics>, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .esg_reporting_repo
@@ -786,6 +806,7 @@ async fn create_import_job(
     mut rls: RlsConnection,
     Json(input): Json<CreateEsgImportJob>,
 ) -> Result<(StatusCode, Json<EsgImportJob>), (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let out = state

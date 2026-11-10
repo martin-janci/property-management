@@ -83,41 +83,45 @@ export function ConnectionStatus({
     setShowTooltip(false);
   }, []);
 
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        if (!isConnected && !isConnecting) {
-          reconnect();
-        }
-      }
-    },
-    [isConnected, isConnecting, reconnect]
-  );
+  const canReconnect = !isConnected && !isConnecting;
 
   const handleClick = useCallback(() => {
-    if (!isConnected && !isConnecting) {
-      reconnect();
-    }
-  }, [isConnected, isConnecting, reconnect]);
+    reconnect();
+  }, [reconnect]);
+
+  // The colored dot (and optional label) form the visual indicator. Native
+  // keyboard handling (Enter/Space) comes from the real <button> below when a
+  // reconnect is available, so no manual key handler is needed.
+  const indicator = (
+    <>
+      <span
+        className={`connection-status__dot connection-status__dot--${status}`}
+        aria-hidden="true"
+      />
+      {showLabel && <span className="connection-status__label">{statusLabel}</span>}
+    </>
+  );
 
   return (
     <div
       className={`connection-status ${className}`.trim()}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
       role="status"
       aria-label={`${resolvedAriaLabel}: ${statusLabel}`}
-      tabIndex={!isConnected && !isConnecting ? 0 : -1}
     >
-      <span
-        className={`connection-status__dot connection-status__dot--${status}`}
-        aria-hidden="true"
-      />
-
-      {showLabel && <span className="connection-status__label">{statusLabel}</span>}
+      {canReconnect ? (
+        <button
+          type="button"
+          className="connection-status__reconnect"
+          onClick={handleClick}
+          aria-label={t('connectionStatus.clickToReconnect')}
+        >
+          {indicator}
+        </button>
+      ) : (
+        indicator
+      )}
 
       {showTooltip && (
         <div className="connection-status__tooltip" role="tooltip">

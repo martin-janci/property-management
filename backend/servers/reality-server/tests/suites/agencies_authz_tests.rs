@@ -3,11 +3,11 @@
 //! Drives the real Axum router (routes::agencies) end-to-end via `oneshot`.
 //!
 //! Public endpoints (no RequestPrincipal): list_agencies, get_agency,
-//! get_agency_by_slug, list_members — return non-401 without a token.
+//! get_agency_by_slug — return non-401 without a token.
 //!
 //! Protected endpoints (RequestPrincipal): create_agency, update_agency,
-//! create_invitation, accept_invitation — return 401 without a token and
-//! non-401 with a seeded user token.
+//! list_members, create_invitation, accept_invitation — return 401 without a
+//! token and non-401 with a seeded user token.
 
 use crate::common::{make_app_state, mint_token, send, send_json};
 use axum::{http::Method, Router};
@@ -83,6 +83,41 @@ async fn seed_membership(pool: &PgPool, agency_id: Uuid, user_id: Uuid) {
     .expect("seed_membership failed");
 }
 
+/// Seed a pending, unexpired invitation bound to `email`, returning its token.
+async fn seed_invitation(
+    pool: &PgPool,
+    agency_id: Uuid,
+    invited_by: Uuid,
+    email: &str,
+    token: &str,
+) {
+    sqlx::query(
+        r#"
+        INSERT INTO reality_agency_invitations
+            (agency_id, email, role, invited_by, token, expires_at)
+        VALUES ($1, $2, 'realtor', $3, $4, NOW() + INTERVAL '7 days')
+        "#,
+    )
+    .bind(agency_id)
+    .bind(email)
+    .bind(invited_by)
+    .bind(token)
+    .execute(pool)
+    .await
+    .expect("seed_invitation failed");
+}
+
+async fn membership_count(pool: &PgPool, agency_id: Uuid, user_id: Uuid) -> i64 {
+    sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM reality_agency_members WHERE agency_id = $1 AND user_id = $2",
+    )
+    .bind(agency_id)
+    .bind(user_id)
+    .fetch_one(pool)
+    .await
+    .expect("membership_count failed")
+}
+
 // ── list_agencies (public) ────────────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -126,10 +161,14 @@ async fn get_agency_by_slug_unauthenticated_returns_non_401(pool: PgPool) {
     );
 }
 
-// ── list_members (public) ─────────────────────────────────────────────────────
+// ── list_members (protected) ──────────────────────────────────────────────────
 
+// SECURITY regression (members-idor audit): the member roster is agency-internal
+// PII. `list_members` had NO auth extractor and NO membership gate, so anyone on
+// the internet could enumerate any agency's members. An unauthenticated request
+// must now be rejected with 401 (auth required), not served the roster.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-async fn list_members_unauthenticated_returns_non_401(pool: PgPool) {
+async fn list_members_unauthenticated_returns_401(pool: PgPool) {
     let id = Uuid::new_v4();
     let app = agencies_router(pool);
     let status = send(
@@ -139,9 +178,56 @@ async fn list_members_unauthenticated_returns_non_401(pool: PgPool) {
         None,
     )
     .await;
-    assert_ne!(
+    assert_eq!(
         status, 401,
-        "list_members must not require auth (may return empty list or 404)"
+        "list_members must require auth (member roster is agency-internal PII), got {status}"
+    );
+}
+
+// SECURITY regression (members-idor audit): an authenticated user who is NOT a
+// member of the target agency must NOT be able to enumerate its members — the
+// cross-agency IDOR. Uses a `platform` caller so the request clears the
+// `RequestPrincipal` extractor and the 403 can only come from the handler's own
+// `check_agency_membership` gate.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn list_members_non_member_returns_403(pool: PgPool) {
+    let outsider = seed_platform_user(&pool, "members-outsider").await;
+    let agency_id = seed_agency(&pool, "members-403").await;
+    // NB: no membership seeded for `outsider` in this agency.
+    let token = mint_token(outsider);
+    let app = agencies_router(pool);
+    let status = send(
+        &app,
+        Method::GET,
+        &format!("/api/v1/agencies/{agency_id}/members"),
+        Some(&token),
+    )
+    .await;
+    assert_eq!(
+        status, 403,
+        "a non-member must NOT be able to enumerate an agency's members, got {status}"
+    );
+}
+
+// Companion: the gate must not over-reject — an active member of the agency is
+// allowed past the membership check and receives the roster (200).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn list_members_member_returns_200(pool: PgPool) {
+    let member = seed_platform_user(&pool, "members-member").await;
+    let agency_id = seed_agency(&pool, "members-ok").await;
+    seed_membership(&pool, agency_id, member).await;
+    let token = mint_token(member);
+    let app = agencies_router(pool);
+    let status = send(
+        &app,
+        Method::GET,
+        &format!("/api/v1/agencies/{agency_id}/members"),
+        Some(&token),
+    )
+    .await;
+    assert_eq!(
+        status, 200,
+        "an active member must be able to list the agency's members, got {status}"
     );
 }
 
@@ -340,5 +426,83 @@ async fn accept_invitation_authenticated_unknown_token_returns_non_401(pool: PgP
     assert_ne!(
         status, 401,
         "authenticated accept_invitation must not return 401"
+    );
+}
+
+/// SECURITY regression (invite-email-match): a different logged-in user who
+/// obtains a valid, unexpired invite token must NOT be able to join the agency.
+/// The recipient gate must reject with 403 and create no membership. Before the
+/// fix this returned 200 and added the wrong user as a member.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn accept_invitation_email_mismatch_returns_403_and_adds_no_member(pool: PgPool) {
+    let inviter = seed_user(&pool, "mismatch-inviter").await;
+    let agency = seed_agency(&pool, "mismatch").await;
+    let token = "invite-token-mismatch";
+    // Invitation issued to a target that is NOT the accepting user.
+    seed_invitation(
+        &pool,
+        agency,
+        inviter,
+        "intended@agencies-authz.test",
+        token,
+    )
+    .await;
+
+    // A different, unrelated logged-in user holding the token.
+    let attacker = seed_platform_user(&pool, "mismatch-attacker").await;
+    let attacker_token = mint_token(attacker);
+
+    let app = agencies_router(pool.clone());
+    let status = send(
+        &app,
+        Method::POST,
+        &format!("/api/v1/agencies/invitations/{token}/accept"),
+        Some(&attacker_token),
+    )
+    .await;
+
+    assert_eq!(
+        status, 403,
+        "accept_invitation must reject a non-recipient with 403, got {status}"
+    );
+    assert_eq!(
+        membership_count(&pool, agency, attacker).await,
+        0,
+        "a rejected accept must not create membership for the wrong user"
+    );
+}
+
+/// Happy path for the recipient gate: the invited email's owner accepts and
+/// becomes a member (200). Guards against the fix over-rejecting legitimate
+/// acceptances.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn accept_invitation_matching_email_succeeds(pool: PgPool) {
+    let inviter = seed_user(&pool, "match-inviter").await;
+    let agency = seed_agency(&pool, "match").await;
+    // `seed_platform_user` stores email `{tag}@agencies-authz.test`; issue the
+    // invitation to that exact address so the recipient gate passes.
+    let recipient = seed_platform_user(&pool, "match-recipient").await;
+    let recipient_email = "match-recipient@agencies-authz.test";
+    let token = "invite-token-match";
+    seed_invitation(&pool, agency, inviter, recipient_email, token).await;
+
+    let recipient_token = mint_token(recipient);
+    let app = agencies_router(pool.clone());
+    let status = send(
+        &app,
+        Method::POST,
+        &format!("/api/v1/agencies/invitations/{token}/accept"),
+        Some(&recipient_token),
+    )
+    .await;
+
+    assert_eq!(
+        status, 200,
+        "the invited recipient must be able to accept, got {status}"
+    );
+    assert_eq!(
+        membership_count(&pool, agency, recipient).await,
+        1,
+        "a successful accept must create exactly one membership row"
     );
 }

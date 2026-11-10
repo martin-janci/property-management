@@ -1,0 +1,33 @@
+[
+  {
+    "id": "code-review-api-handlers-list-limit-unclamped",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-handlers",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "Multiple list handlers under backend/servers/api-server/src/routes/ take a user-controlled `limit` query param and forward it to the DB with only a default fill-in and NO upper-bound clamp: automation.rs:395 `.get_rule_logs_for_org(path.id, org_id, query.limit)` (limit: i32, default_limit at :156, no `.min()`), disputes.rs:928 `query.limit.unwrap_or(50)`, faults.rs:647, legal.rs:906, listings.rs:300 & :1050, building_certifications.rs:167 & :699, budgets.rs:61/86/107 (`limit: q.limit` passed straight through), community.rs:545/696/812.",
+      "The value reaches SQL LIMIT unclamped. Confirmed downstream: crates/db/src/repositories/automation.rs:324-355 `get_rule_logs_for_org` binds the caller's `limit` directly into `... ORDER BY started_at DESC LIMIT $2` (`.bind(limit)` at :348) with no clamp. So `GET ...?limit=2000000000` makes Postgres attempt to materialize up to ~2.1B rows -> unbounded memory/latency, a resource-exhaustion DoS on an authenticated but low-privilege endpoint.",
+      "Negative values are a second hazard on the same path: `limit: i32`/`Option<i64>` accepts `?limit=-1`, and Postgres rejects a negative LIMIT with an error, so the handler returns an unhandled 500 instead of a 400.",
+      "This is demonstrably an oversight, not a convention: sibling handlers in the SAME directory clamp correctly. buildings.rs:29-32 defines `DEFAULT_LIST_LIMIT=50` / `MAX_LIST_LIMIT=100` and applies `.unwrap_or(DEFAULT_LIST_LIMIT).min(MAX_LIST_LIMIT)` at :613-616; energy.rs, financial.rs, market_pricing.rs, meters.rs, operations.rs also clamp. The listed files simply omit the `.min(MAX)` step. Landable backend-only fix: clamp each `limit` to a shared MAX (and floor at >=0, or 400 on negative) before it reaches the repository, mirroring buildings.rs."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-api-handlers-financial-error-swallow",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-handlers",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/routes/financial.rs:561-571 (unit-ledger handler) matches on `state.financial_repo.get_account_with_transactions(account.id, 20).await` with only two arms: `Ok(Some(response)) => Ok(Json(response))` and a catch-all `_ => Ok(Json(FinancialAccountResponse { account, recent_transactions: vec![] }))`.",
+      "The `_ =>` arm collapses `Ok(None)` (legitimately empty) together with `Err(e)` (a real DB failure). A transient DB error therefore returns HTTP 200 with `recent_transactions: []` instead of surfacing a 500 -- the client is shown a financial account that appears to have zero recent transactions when in fact the fetch failed. On a money/ledger endpoint this is misleading financial data plus a swallowed error (no tracing on the error branch, so the failure is also invisible in logs).",
+      "Matches the reviewer pattern 'Axum handler that returns StatusCode::OK on an error branch'. Landable backend-only fix: split the arms so `Err(e)` maps to a 500 (with a `tracing::error!`) and only `Ok(None)` yields the empty-transactions fallback."
+    ],
+    "expert": "rust"
+  }
+]

@@ -1,0 +1,164 @@
+{
+  "generated_at": "2026-08-19T04:36:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-19",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": "last_run_iso=2026-08-17T03:17:10Z (49h ago) — routine skipped an expected daily slot; nothing missed on dev (13 non-dispatcher merges tracked below).",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "code-review-reality-server-submit-report-no-rate-limit",
+      "type": "code-review-finding",
+      "source": "reality-server segment review 2026-08-19",
+      "score_delta": 2,
+      "evidence": "backend/servers/reality-server/src/routes/reports.rs:149 submit_report is OptionalRequestPrincipal (auth-optional); no rate-limit call. Its own doc-comment (:120) says 'should be rate-limited by IP'. Sibling anonymous POSTs (send_contact_message, request_viewing) call enforce_inquiry_rate_limit(&state, &headers, listing_id) using state.inquiry_rate_limiters + client_ip_bucket. Unauth flood → unbounded listing_reports + moderation-queue bloat.",
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-reality-server-list-my-reports-total-page-length",
+      "type": "code-review-finding",
+      "source": "reality-server segment review 2026-08-19",
+      "score_delta": 2,
+      "evidence": "backend/servers/reality-server/src/routes/reports.rs:342 list_my_reports returns MyReportsResponse { reports, total } where `let total = reports.len();` (page size, not filtered total). Response schema at :119 documents `pub total: usize` as real total. Same regression class as PR #919 for inquiries. Peer list_my_inquiries / list_buyer_inquiries in routes/inquiries.rs run count queries in tokio::try_join!.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-server-create-review-body-length-uncapped",
+      "type": "code-review-finding",
+      "source": "reality-server segment review 2026-08-19",
+      "score_delta": 1,
+      "evidence": "backend/servers/reality-server/src/routes/agent_reviews.rs:190 validates rating 1..=5 but never bounds data.body: Option<String>; INSERT at :265 accepts any length up to DefaultBodyLimit=4MiB (main.rs:527). Peer paths cap text (MAX_INQUIRY_MESSAGE_LEN=5000, MAX_REPORT_DESCRIPTION_LEN=5000). Review body is the outlier — feeds public realtor profile page.",
+      "confidence": "high",
+      "candidate_vector": "security"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-19.md && head -1 matches",
+      "observed": "will pass after brief write",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state cursors advance",
+      "observed": "last_pr_seen 2772→2798, last_run_iso advanced, seen_signals +4, hotspot_history +0, review_cursor.reality-server 2026-08-13→2026-08-19",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique backlog ids",
+      "observed": "no duplicates",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no prior signal re-emitted with score_delta≠0",
+      "observed": "4 signal ids all new",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap 8 + 14d decay",
+      "observed": "no score >8; decay applied to portfolio-analytics-caps-100 (2→1)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "each new plan has 'adversarial pass' annotation in brief",
+      "observed": "1 new plan, annotated 'passed'",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans + 15 required sections + Mode declared + files exist",
+      "observed": "1 new plan; all sections present; Mode: cloud-ok; 4/4 files exist",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths in diff",
+      "observed": "will verify at stage time",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets / private hostnames",
+      "observed": "no matches in staged diff",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md == regen(backlog.json)",
+      "observed": "match: True (regen script check-mode confirmed)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failure honesty",
+      "observed": "Phase 1.6 skipped (single-purpose run — buffer-refill for landable vectors); recorded in brief; pm_cursor NOT advanced",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present or archived",
+      "observed": "no plan deleted this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count non-decreasing",
+      "observed": "archive count unchanged (7)",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md == regen(backlog.json triage)",
+      "observed": "match: True",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps + idempotency + kill switch",
+      "observed": "no candidate — auto_fix_actions=[]",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + coverage_cursor advance (when Phase 1.6 ran)",
+      "observed": "Phase 1.6 skipped this run → gate is no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token literal",
+      "observed": "no matches",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate (no signal met confidence=high + score≥3 + allowlist this run)"
+}

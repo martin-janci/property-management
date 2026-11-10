@@ -123,10 +123,13 @@ UC-08 central document repository. Manager-side CRUD; resident-side filtered rea
 - Mobile (RN) docs list: `mobile-documents` sitemap ref exists but no design in this bundle iteration. Mobile redesign-status stays `not-started` until a mobile-specific artboard ships.
 - Filter "Status" 3-state (Publikované / Návrhy / Archivované) maps to the document state machine — Návrhy are visible only to managers and reviewers, Archivované are read-only and excluded from default search.
 - 5-category default segmented (Všetky / AGM / Ročné / Poistenie / Faktúry) covers ~75% of typical building documents. Zmluvy + Technická dokumentácia accessed via sidebar checkbox or "+ ďalšie" overflow chip.
+- 2026-08-31 — realtime sync (PR #2889): the `documents` query root now auto-refetches on a `notification.created` frame with `category: documents`. Previously `WebSocketContext.eventToQueryKeys` keyed on dead `entity:*` names the api-server never emits (100% dead sync); PR #2889 added `categoryToQueryKeys.documents → ['documents']` and wired `App.tsx`'s `onEntityEvent`. REST wiring unchanged.
 
 ## Agent Log
 
 <!-- newest entries on top -->
+
+- 2026-08-31 — agent: screen-map-drift-pr-2889-ppt — reconcile drift from PR #2889 (realtime ws→query-invalidation fix). ppt-web `WebSocketContext` re-keyed cache invalidation to canonical `domain.action` events and its `notification.created` subscriber routes by `payload.category`, so `category=documents` now invalidates the `documents` root; `App.tsx` wires `onEntityEvent → queryClient.invalidateQueries`. No route/component/endpoint/status change — frontmatter unchanged; docs-only.
 
 - 2026-05-27 — agent: gap-7a-4 review fixes — extracted useDocumentDownload hook (error toast on failure, blob URL); download now shared between RowDownloadButton and DownloadButton via single hook
 - 2026-05-27 — agent: gap-7a-4 — added preview (eye) + download action buttons to each doc row in DocumentsBrowse; DocumentPreviewModal renders PDF inline (react-pdf via PdfPreview) or image (<img>) with download button in header; action buttons hidden by default, revealed on row hover/focus/selected via CSS opacity transition

@@ -1,0 +1,41 @@
+{
+  "generated": "2026-08-13T19:30:00Z",
+  "segment": "api-handlers",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "churn-aligned",
+  "selection_note": "Demand-driven Tier 1d refill (claimable backlog below floor), no CHURN_FILES passed explicitly but state.json hotspot_history ranks backend/servers/api-server/src/routes/{integrations.rs #1/#2, documents.rs #3, ai.rs #4} as the top churn subtrees -> churn-aligned to api-handlers (also tied-oldest-unreviewed at review_cursor 2026-08-10). Path root resolved to backend/servers/api-server/src/routes (SKILL table lists backend/api-server/src/handlers, stale). An earlier Tier 1d run today (2026-08-13-api-handlers-tier1d.json) reviewed the ai/* and auth/* subtrees (2 findings: AI unclamped ?limit=, auth inactive-user revoke swallowed). Saturation check: 0 open code-review-finding items for api-handlers in backlog.json -> not saturated. This second slice covers the UNREVIEWED, churn-hot documents/* subtree, focusing on the public (unauthenticated) document-share surface routes/documents/shares.rs (public_router: GET /documents/shared/{token}, POST /documents/shared/{token}/access). Findings are distinct from the earlier run. Static analysis only; the integrations/* unwrap/expect hits were all test-module or the OAuthStateStore test-double (dismissed); webhook.rs signature/idempotency branches are correctly guarded (401 before the Ok(StatusCode::OK) idempotency returns).",
+  "experts_used": ["rust", "security"],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-api-handlers-share-pw-no-throttle",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/documents/shares.rs:574 access_protected_share -- public, unauthenticated endpoint (mounted via shares::public_router at POST /api/v1/documents/shared/{token}/access, lib.rs:165 merge) verifies a caller-supplied share password (verify_share_password_for_share at ~L617) with NO brute-force protection: no failed-attempt counter, no per-token/per-IP lockout, no throttle. grep for rate.?limit|throttle|attempt|lockout across routes/documents/ returns 0 hits.",
+        "The only rate limiter in api-server is a per-TENANT set (state.tenant_rate_limiters: TenantRateLimiterSet, applied through host_tenant_middleware keyed on org context). The share handler comment explicitly states 'This public endpoint has no caller org context', so the per-tenant limiter cannot key these unauthenticated requests -> the password endpoint is effectively unthrottled. An attacker holding a share token can brute-force the share password at request speed.",
+        "The parallel signer endpoint (routes/signatures::public_sign_router) and other public flows should be checked for the same gap. Fix: add per-token (and/or per-IP) attempt throttling + exponential backoff/lockout on access_protected_share before verify, or gate the public_router behind a dedicated unauthenticated-rate-limit layer."
+      ],
+      "expert": "security"
+    },
+    {
+      "id": "code-review-api-handlers-share-log-proxy-ip",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/documents/shares.rs:437 & :574 -- both public share handlers derive the audit ip_address from axum ConnectInfo<SocketAddr> (let ip_address = addr.ip().to_string()) and persist it via log_share_access_for_share(LogShareAccess{ ip_address, .. }).",
+        "ConnectInfo is the DIRECT TCP peer. In this deployment the api-server sits behind a reverse proxy / load balancer (per repo architecture: nginx + *.dev.ppt.rlt.sk), so addr.ip() is the proxy's address for every request -- the share-access audit log records the proxy IP, not the real client, for all public document-share accesses.",
+        "The code comments call this write 'important for audit trail', but the recorded IP is not attacker-attributable and is identical across all clients, undermining the audit value and defeating any future IP-based abuse detection. Fix: resolve the client IP from a validated forwarded-for chain (trusted-proxy-aware, e.g. axum-client-ip / a checked X-Forwarded-For) instead of the raw socket peer."
+      ],
+      "expert": "rust"
+    }
+  ]
+}

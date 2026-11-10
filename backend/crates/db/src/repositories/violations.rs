@@ -446,15 +446,27 @@ impl ViolationRepository {
         .ok_or(sqlx::Error::RowNotFound)
     }
 
-    /// List evidence for a violation.
+    /// List evidence for a violation (tenant-scoped via parent violation).
+    ///
+    /// `violation_evidence` carries no `organization_id` of its own, so the read
+    /// is gated on the parent `violations` row matching `org_id`. An Org B caller
+    /// passing an Org A `violation_id` gets an empty list, not the rows (IDOR fix,
+    /// issue #2944).
     pub async fn list_evidence(
         &self,
         violation_id: Uuid,
+        org_id: Uuid,
     ) -> Result<Vec<ViolationEvidence>, sqlx::Error> {
         sqlx::query_as::<_, ViolationEvidence>(
-            "SELECT * FROM violation_evidence WHERE violation_id = $1 ORDER BY created_at",
+            r#"
+            SELECT ve.* FROM violation_evidence ve
+            JOIN violations v ON v.id = ve.violation_id
+            WHERE ve.violation_id = $1 AND v.organization_id = $2
+            ORDER BY ve.created_at
+            "#,
         )
         .bind(violation_id)
+        .bind(org_id)
         .fetch_all(&self.pool)
         .await
     }
@@ -486,7 +498,15 @@ impl ViolationRepository {
     // ENFORCEMENT ACTIONS
     // =========================================================================
 
-    /// Create an enforcement action.
+    /// Create an enforcement action (tenant-scoped via parent violation).
+    ///
+    /// The INSERT is gated on the parent `violations` row matching `org_id` (an
+    /// `INSERT ... SELECT ... WHERE v.organization_id = $2`), so an Org B caller
+    /// cannot issue a fine / enforcement action against an Org A violation —
+    /// which would otherwise write a row whose `organization_id` disagrees with
+    /// its parent violation's. If no parent row matches, no row is inserted and
+    /// `RowNotFound` is returned (surfaced as 404 by the route, same class as
+    /// `add_evidence` / `add_comment`; cross-tenant IDOR fix).
     pub async fn create_enforcement_action(
         &self,
         violation_id: Uuid,
@@ -501,7 +521,9 @@ impl ViolationRepository {
                 fine_amount, due_date, description, notes,
                 suspended_privileges, suspension_start, suspension_end, issued_by
             )
-            VALUES ($1, $2, $3, 'pending', $4, $5, $6, $7, $8, $9, $10, $11)
+            SELECT $1, $2, $3, 'pending', $4, $5, $6, $7, $8, $9, $10, $11
+            FROM violations v
+            WHERE v.id = $1 AND v.organization_id = $2
             RETURNING *
             "#,
         )
@@ -516,8 +538,9 @@ impl ViolationRepository {
         .bind(req.suspension_start)
         .bind(req.suspension_end)
         .bind(issued_by)
-        .fetch_one(&self.pool)
-        .await
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(sqlx::Error::RowNotFound)
     }
 
     /// Get an enforcement action by ID.
@@ -897,27 +920,37 @@ impl ViolationRepository {
         .ok_or(sqlx::Error::RowNotFound)
     }
 
-    /// List comments for a violation.
+    /// List comments for a violation (tenant-scoped via parent violation).
+    ///
+    /// `violation_comments` carries no `organization_id` of its own, so the read
+    /// is gated on the parent `violations` row matching `org_id`. An Org B caller
+    /// passing an Org A `violation_id` gets an empty list (IDOR fix, issue #2944).
+    ///
+    /// `include_internal` controls whether `is_internal` notes are returned. The
+    /// caller (route layer) is responsible for only setting it for privileged
+    /// roles — see `list_comments` in `routes/violations.rs` (internal-notes
+    /// privilege-leak fix, issue #2944).
     pub async fn list_comments(
         &self,
         violation_id: Uuid,
+        org_id: Uuid,
         include_internal: bool,
     ) -> Result<Vec<ViolationComment>, sqlx::Error> {
-        if include_internal {
-            sqlx::query_as::<_, ViolationComment>(
-                "SELECT * FROM violation_comments WHERE violation_id = $1 ORDER BY created_at",
-            )
-            .bind(violation_id)
-            .fetch_all(&self.pool)
-            .await
-        } else {
-            sqlx::query_as::<_, ViolationComment>(
-                "SELECT * FROM violation_comments WHERE violation_id = $1 AND is_internal = false ORDER BY created_at",
-            )
-            .bind(violation_id)
-            .fetch_all(&self.pool)
-            .await
-        }
+        sqlx::query_as::<_, ViolationComment>(
+            r#"
+            SELECT c.* FROM violation_comments c
+            JOIN violations v ON v.id = c.violation_id
+            WHERE c.violation_id = $1
+              AND v.organization_id = $2
+              AND ($3 OR c.is_internal = false)
+            ORDER BY c.created_at
+            "#,
+        )
+        .bind(violation_id)
+        .bind(org_id)
+        .bind(include_internal)
+        .fetch_all(&self.pool)
+        .await
     }
 
     // =========================================================================
@@ -932,16 +965,30 @@ impl ViolationRepository {
         req: RecordFinePayment,
         recorded_by: Uuid,
     ) -> Result<FinePayment, sqlx::Error> {
+        // The ownership check, the `fine_payments` INSERT, and the
+        // `enforcement_actions` running-balance UPDATE must be atomic. Running
+        // them as three independent pool checkouts (the pre-fix behaviour)
+        // meant a failure between the INSERT and the UPDATE recorded money in
+        // `fine_payments` without advancing `paid_amount` — a partial write
+        // that leaves the fine looking unpaid. Wrapping them in one transaction
+        // makes the write all-or-nothing. The `FOR UPDATE` row lock additionally
+        // serializes concurrent payments against the same action, so the
+        // read-modify-write on `paid_amount` can't lose an increment
+        // (lost-update race, follow-up #1361).
+        let mut tx = self.pool.begin().await?;
+
         // Verify the enforcement action belongs to this org before recording a
-        // payment against it (prevents cross-tenant payment injection).
-        let owns_action: bool = sqlx::query_scalar(
-            "SELECT EXISTS(SELECT 1 FROM enforcement_actions WHERE id = $1 AND organization_id = $2)",
+        // payment against it (prevents cross-tenant payment injection), and take
+        // a row lock so concurrent payments serialize on the balance update.
+        let owns_action: Option<Uuid> = sqlx::query_scalar(
+            "SELECT id FROM enforcement_actions WHERE id = $1 AND organization_id = $2 FOR UPDATE",
         )
         .bind(action_id)
         .bind(org_id)
-        .fetch_one(&self.pool)
+        .fetch_optional(&mut *tx)
         .await?;
-        if !owns_action {
+        if owns_action.is_none() {
+            // `tx` is dropped here, rolling back — nothing was written.
             return Err(sqlx::Error::RowNotFound);
         }
 
@@ -965,7 +1012,7 @@ impl ViolationRepository {
         .bind(&req.payer_name)
         .bind(&req.notes)
         .bind(recorded_by)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *tx)
         .await?;
 
         // Update enforcement action paid amount (tenant-scoped)
@@ -982,18 +1029,28 @@ impl ViolationRepository {
         .bind(action_id)
         .bind(req.amount)
         .bind(org_id)
-        .execute(&self.pool)
+        .execute(&mut *tx)
         .await?;
 
+        tx.commit().await?;
         Ok(payment)
     }
 
-    /// List payments for an enforcement action.
-    pub async fn list_payments(&self, action_id: Uuid) -> Result<Vec<FinePayment>, sqlx::Error> {
+    /// List payments for an enforcement action (tenant-scoped).
+    ///
+    /// `fine_payments` carries its own `organization_id`, so the read is gated on
+    /// it directly. An Org B caller passing an Org A `action_id` gets an empty
+    /// list, not the payment records (IDOR fix, issue #2944).
+    pub async fn list_payments(
+        &self,
+        action_id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Vec<FinePayment>, sqlx::Error> {
         sqlx::query_as::<_, FinePayment>(
-            "SELECT * FROM fine_payments WHERE enforcement_action_id = $1 ORDER BY created_at",
+            "SELECT * FROM fine_payments WHERE enforcement_action_id = $1 AND organization_id = $2 ORDER BY created_at",
         )
         .bind(action_id)
+        .bind(org_id)
         .fetch_all(&self.pool)
         .await
     }
@@ -1031,15 +1088,29 @@ impl ViolationRepository {
         .await
     }
 
-    /// List notifications for a violation.
+    /// List notifications for a violation (tenant-scoped via parent violation).
+    ///
+    /// `violation_notifications` carries no `organization_id` of its own, so the
+    /// read is gated on the parent `violations` row matching `org_id`. An Org B
+    /// caller passing an Org A `violation_id` gets an empty list, not the
+    /// notification rows (which hold recipient PII) — same cross-tenant IDOR
+    /// class as `list_evidence` / `list_comments` / `list_payments` (issue
+    /// #2944, follow-up #3069).
     pub async fn list_notifications(
         &self,
         violation_id: Uuid,
+        org_id: Uuid,
     ) -> Result<Vec<ViolationNotification>, sqlx::Error> {
         sqlx::query_as::<_, ViolationNotification>(
-            "SELECT * FROM violation_notifications WHERE violation_id = $1 ORDER BY sent_at DESC",
+            r#"
+            SELECT n.* FROM violation_notifications n
+            JOIN violations v ON v.id = n.violation_id
+            WHERE n.violation_id = $1 AND v.organization_id = $2
+            ORDER BY n.sent_at DESC
+            "#,
         )
         .bind(violation_id)
+        .bind(org_id)
         .fetch_all(&self.pool)
         .await
     }

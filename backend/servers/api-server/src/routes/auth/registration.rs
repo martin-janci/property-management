@@ -58,12 +58,13 @@ const REGISTER_GENERIC_MESSAGE: &str = "Check your email to verify your account"
 pub async fn register(
     State(state): State<AppState>,
     Json(req): Json<RegisterRequest>,
-) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<impl IntoResponse, AuthError> {
     // Validate email format
     if !AuthService::validate_email(&req.email) {
-        return Err((
+        return Err(err_response(
             StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new("INVALID_EMAIL", "Invalid email format")),
+            "INVALID_EMAIL",
+            "Invalid email format",
         ));
     }
 
@@ -88,9 +89,10 @@ pub async fn register(
 
     // Validate name is not empty
     if req.name.trim().is_empty() {
-        return Err((
+        return Err(err_response(
             StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new("INVALID_NAME", "Name cannot be empty")),
+            "INVALID_NAME",
+            "Name cannot be empty",
         ));
     }
 
@@ -116,12 +118,10 @@ pub async fn register(
         Ok(false) => {}
         Err(e) => {
             tracing::error!(error = %e, "Database error checking email");
-            return Err((
+            return Err(err_response(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to check email",
-                )),
+                "DATABASE_ERROR",
+                "Failed to check email",
             ));
         }
     }
@@ -131,12 +131,10 @@ pub async fn register(
         Ok(hash) => hash,
         Err(e) => {
             tracing::error!(error = %e, "Failed to hash password");
-            return Err((
+            return Err(err_response(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to process password",
-                )),
+                "INTERNAL_ERROR",
+                "Failed to process password",
             ));
         }
     };
@@ -165,12 +163,10 @@ pub async fn register(
                 email_hash = %common::email_log_hash(&req.email),
                 "Failed to create user"
             );
-            return Err((
+            return Err(err_response(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to create account",
-                )),
+                "DATABASE_ERROR",
+                "Failed to create account",
             ));
         }
     };
@@ -245,7 +241,7 @@ pub struct VerifyEmailResponse {
 pub async fn verify_email(
     State(state): State<AppState>,
     axum::extract::Query(query): axum::extract::Query<VerifyEmailQuery>,
-) -> Result<Json<VerifyEmailResponse>, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<Json<VerifyEmailResponse>, AuthError> {
     // Hash the token to look it up
     let token_hash = state.auth_service.hash_token(&query.token);
 
@@ -253,34 +249,28 @@ pub async fn verify_email(
     let verification_token = match state.user_repo.find_verification_token(&token_hash).await {
         Ok(Some(token)) => token,
         Ok(None) => {
-            return Err((
+            return Err(err_response(
                 StatusCode::BAD_REQUEST,
-                Json(ErrorResponse::new(
-                    "INVALID_TOKEN",
-                    "This verification link is invalid or has already been used",
-                )),
+                "INVALID_TOKEN",
+                "This verification link is invalid or has already been used",
             ));
         }
         Err(e) => {
             tracing::error!(error = %e, "Database error finding verification token");
-            return Err((
+            return Err(err_response(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to verify token",
-                )),
+                "DATABASE_ERROR",
+                "Failed to verify token",
             ));
         }
     };
 
     // Check if token is expired
     if verification_token.is_expired() {
-        return Err((
+        return Err(err_response(
             StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new(
-                "TOKEN_EXPIRED",
-                "This verification link has expired. Please request a new one.",
-            )),
+            "TOKEN_EXPIRED",
+            "This verification link has expired. Please request a new one.",
         ));
     }
 
@@ -305,27 +295,41 @@ pub async fn verify_email(
                 message: "Your email has been verified. You can now log in.".to_string(),
             }))
         }
-        Ok(None) => Err((
+        Ok(None) => Err(err_response(
             StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new(
-                "USER_NOT_FOUND",
-                "User account not found or already verified",
-            )),
+            "USER_NOT_FOUND",
+            "User account not found or already verified",
         )),
         Err(e) => {
             tracing::error!(error = %e, "Failed to verify email");
-            Err((
+            Err(err_response(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to verify email",
-                )),
+                "DATABASE_ERROR",
+                "Failed to verify email",
             ))
         }
     }
 }
 
 // ==================== Resend Verification (Story 1.1) ====================
+
+/// Decide how the resend-verification handler reacts to the result of
+/// invalidating a user's outstanding email-verification tokens.
+///
+/// Issuing a fresh verification token while a previous one remains valid widens
+/// the window in which a stale link can be used, so a DB failure while
+/// invalidating the old tokens must be surfaced (propagated as a 500) rather
+/// than swallowed — matching the error convention of the surrounding handlers.
+fn invalidation_outcome(result: Result<u64, sqlx::Error>) -> Result<(), AuthError> {
+    result.map(|_| ()).map_err(|e| {
+        tracing::error!(error = %e, "Failed to invalidate old verification tokens");
+        err_response(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "DATABASE_ERROR",
+            "Failed to resend verification email",
+        )
+    })
+}
 
 /// Resend verification request.
 #[derive(Debug, Deserialize, ToSchema)]
@@ -356,7 +360,7 @@ pub struct ResendVerificationResponse {
 pub async fn resend_verification(
     State(state): State<AppState>,
     Json(req): Json<ResendVerificationRequest>,
-) -> Result<Json<ResendVerificationResponse>, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<Json<ResendVerificationResponse>, AuthError> {
     // Throttle per email before doing any work: this endpoint sends an email
     // and rotates the recipient's verification token on every call, so it is a
     // mailbomb / token-clobber surface (see limiter docs above).
@@ -378,8 +382,10 @@ pub async fn resend_verification(
     // Try to find user and send email
     match state.user_repo.find_by_email(&req.email).await {
         Ok(Some(user)) if user.status == "pending" => {
-            // Invalidate old tokens
-            let _ = state.user_repo.invalidate_user_tokens(user.id).await;
+            // Invalidate old verification tokens before issuing a new one. A
+            // failure here must not be swallowed: proceeding would issue a
+            // fresh token while leaving the prior token(s) valid.
+            invalidation_outcome(state.user_repo.invalidate_user_tokens(user.id).await)?;
 
             // Generate new token
             let token = state.auth_service.generate_token();
@@ -416,4 +422,35 @@ pub async fn resend_verification(
     }
 
     Ok(Json(response))
+}
+
+#[cfg(test)]
+mod resend_verification_token_tests {
+    use super::invalidation_outcome;
+    use axum::http::StatusCode;
+
+    /// Regression: a DB failure while invalidating a user's existing
+    /// email-verification tokens must NOT be silently swallowed. Before the
+    /// fix the handler did `let _ = state.user_repo.invalidate_user_tokens(..)`,
+    /// so a failed invalidation left the prior verification token(s) valid
+    /// while a brand-new token was issued (security issue: old verification
+    /// tokens must be invalidated when a new one is issued). The invalidation
+    /// outcome must surface as an error so the handler aborts instead of
+    /// proceeding as if invalidation succeeded.
+    #[test]
+    fn invalidation_db_error_is_surfaced_not_swallowed() {
+        let outcome = invalidation_outcome(Err(sqlx::Error::PoolClosed));
+        assert!(
+            outcome.is_err(),
+            "a DB failure while invalidating old verification tokens must be surfaced, not swallowed"
+        );
+        let (status, _) = outcome.unwrap_err();
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    /// A successful invalidation lets the handler proceed to issue the new token.
+    #[test]
+    fn invalidation_success_proceeds() {
+        assert!(invalidation_outcome(Ok(2)).is_ok());
+    }
 }

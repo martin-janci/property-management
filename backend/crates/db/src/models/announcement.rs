@@ -234,6 +234,35 @@ pub struct AcknowledgmentStats {
     pub pending_count: i64,
 }
 
+/// Delivered / read / acknowledged fan-out metrics for a single announcement,
+/// implicitly bucketed by its **targeting scope** (`scope` = the announcement's
+/// `target_type`: `all` | `building` | `units` | `roles`).
+///
+/// `delivered` is the *scope-aware* audience — the set of active organization
+/// members the announcement's targeting actually resolves to, computed with the
+/// same cross-tenant-safe joins the notification fan-out uses (issue #2484).
+/// This is deliberately narrower than [`AcknowledgmentStats::total_targeted`],
+/// which counts every active org member regardless of `target_type` and so
+/// over-counts a building/unit/role-targeted announcement. `read` and
+/// `acknowledged` come from `announcement_reads` for the same announcement.
+///
+/// Emitting delivered per scope from the real targeting SQL (rather than a
+/// pure-Rust re-model of the audience) is the data-quality guard #2484 asks for:
+/// the count the metric reports is the count the query actually resolves, so a
+/// regression in the cross-tenant scoping surfaces as a metric mismatch.
+#[derive(Debug, Clone, PartialEq, Eq, FromRow, Serialize, Deserialize, ToSchema)]
+pub struct AnnouncementFanoutMetrics {
+    pub announcement_id: Uuid,
+    /// The announcement's `target_type` — the targeting scope the counts apply to.
+    pub scope: String,
+    /// Scope-aware audience size (cross-tenant-safe), i.e. the fan-out reach.
+    pub delivered: i64,
+    /// Number of users who have a read record for this announcement.
+    pub read: i64,
+    /// Number of users who acknowledged this announcement.
+    pub acknowledged: i64,
+}
+
 /// Individual user's acknowledgment status for an announcement (Story 6.2).
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct UserAcknowledgmentStatus {

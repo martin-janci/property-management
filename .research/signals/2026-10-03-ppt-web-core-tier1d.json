@@ -1,0 +1,52 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-03",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "dispatcher-tier1d demand-driven (claim buffer starved: claimable=18 < floor=36). Forced to a cloud-verifiable FRONTEND segment (pnpm works here); api-handlers/api-core/reality-server (utoipa-swagger-ui egress 403, #2966), mobile-native-kmp (dl.google.com 403) and mobile-rn (jest-expo@56 rot, #2951) are all structurally unlandable in the cloud runner and were excluded. Picked ppt-web-core: it is the oldest-unreviewed among the landable frontend segments (review cursor 2026-09-27) and NOT saturated — 0 open `code-review-finding` items for this segment in backlog.json (24 historical, all done/dropped), so < 3 open floor, no saturation-skip. Deliberately avoided the heavily-covered api.ts / AuthContext / websocket / routes / errorHandler / OrganizationProvider surfaces (100+ prior finding ids) and reviewed under-covered core + feature-core files instead.",
+  "experts_used": ["frontend"],
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-dispute-draft-crossuser-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/hooks/useDraftStorage.ts:56-66 — on first render the hook unconditionally reads window.localStorage.getItem(key), JSON.parses it and seeds the form via `restored`. The key is caller-supplied and FIXED, not user/tenant-namespaced.",
+        "frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePage.tsx:23,124 — the only caller passes DISPUTE_DRAFT_KEY = 'ppt-dispute-filing-draft' (a constant), persisting the full dispute-filing form (a 'long, legally-meaningful form' per the hook doc) to that one shared localStorage slot.",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:614-639 (logout) + tokenStorage.clear() at :188-191 — logout clears ONLY the 4 token/user keys (ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY, TENANTS_KEY) and then purges the TanStack Query cache via AUTHED_QUERY_KEY_ROOTS. It never touches 'ppt-dispute-filing-draft'. Full traced path: User A fills the dispute form (auto-saved on debounce, useDraftStorage.ts:84-97) -> A logs out (draft survives) -> User B logs in on the same browser and opens /disputes/new -> useDraftStorage restore (lines 56-66) rehydrates B's form with A's legally-sensitive draft content. Cross-user data leak on a shared workstation — the same 'must never survive logout on a shared workstation' bar the queryKeys.ts:347-351 comment sets for financial caches. Fix: namespace the key by user/org id and/or clear draft keys in logout. The hook is documented as generic for reuse, so every future long-form adopter inherits the leak."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-analytics-datalayer-collision",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/analytics.ts:70 — `dl.push({ event, ...properties, timestamp: payload.timestamp })` spreads caller-supplied `properties` AFTER the canonical `event` field, so a property named `event` silently overwrites the real event name in the GTM dataLayer record that the deploy-time tag manager consumes (and a property named `timestamp` is instead clobbered by the explicit one). `trackEvent(event, properties)` accepts an open `Record<string, unknown>` (analytics.ts:59), so any caller using the reserved key `event` corrupts the funnel the data team stitches across ppt-web + admin-web. The in-process sink leg (payload at :60-63/:77-83) is unaffected because it keeps `event`/`properties` as separate fields — only the dataLayer leg is corruptible, making the divergence silent and hard to spot. Reserve/strip `event`/`timestamp` from `properties` or nest them (e.g. `{ event, timestamp, ...rest, properties }`)."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-cmd-palette-recent-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/command-palette/hooks/useCommandPalette.tsx:18,26-34,54-62 — recent-command history is persisted to the FIXED, non-user-namespaced localStorage key 'ppt-command-palette-recent' and rehydrated on provider mount (:26-34). Like the dispute-draft key, it is never cleared by AuthContext.logout (tokenStorage.clear at AuthContext.tsx:188-191 touches only the 4 token/user keys; the logout query purge at :624-626 is TanStack-cache-only). On a shared workstation the previous user's recent navigation intents (e.g. 'created dispute', 'went to privacy settings') survive logout and surface to the next user. Lower sensitivity than the dispute draft, but the same systemic gap: app localStorage keys outlive the session. Recommend a central registry of session-scoped localStorage keys that logout iterates, mirroring AUTHED_QUERY_KEY_ROOTS for the query cache."
+      ],
+      "expert": "frontend"
+    }
+  ],
+  "deferred_findings": [],
+  "findings_count": 3
+}

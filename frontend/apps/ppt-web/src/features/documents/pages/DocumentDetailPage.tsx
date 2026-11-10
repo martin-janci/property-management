@@ -4,6 +4,7 @@
  * Standalone page wrapper for document detail view.
  */
 
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { DocumentDetail } from './DocumentDetail';
 
@@ -12,6 +13,7 @@ interface DocumentDetailPageProps {
 }
 
 export function DocumentDetailPage({ documentId }: DocumentDetailPageProps) {
+  const { t } = useTranslation();
   return (
     <div className="document-detail-page">
       <div className="page-header">
@@ -28,7 +30,7 @@ export function DocumentDetailPage({ documentId }: DocumentDetailPageProps) {
             <path d="M19 12H5" />
             <polyline points="12 19 5 12 12 5" />
           </svg>
-          Back to Documents
+          {t('common.backToDocuments')}
         </Link>
       </div>
 

@@ -73,3 +73,16 @@ Endpoints (not yet registered in `@ppt/sitemap`, so listed here in prose):
   values, so the page can rely on `building.location` regardless of transport.
 - The map uses the OpenStreetMap keyless embed (`/export/embed.html`) — no API
   key and no extra dependency, so it works in CI and offline dev.
+
+## Agent Log
+
+- 2026-11-05 — agent: screen-map-drift-pr-3242-ppt — reconcile i18n drift from PR #3242 (`fix(ppt-web): localize financial, buildings and my-unit pages`, merged 2026-11-04). `BuildingDetailPage` + `BuildingCard`/`BuildingList`/`BuildingLocationMap`/`UnitForm`/`UnitsSection` moved hardcoded English into `buildings.*` i18n keys across en/sk/cs/de/pl/hu; building- and unit-type enums map to keys with a raw-value fallback; dates/areas format via `i18n.language`. No route/component/status change — docs-only.
+- 2026-11-04 — agent: r3-nav-roles follow-up — common-areas query disabled (`COMMON_AREAS_API_AVAILABLE = false`) so the page stops logging a 404 on every load; section stays hidden until the backend endpoint exists (audit r3 #39).
+- 2026-08-18 — agent: screen-map-drift-pr-2647 — noted i18n update in PR #2647: `BuildingDetailPageRoute` in `frontend/apps/ppt-web/src/routes/groups/buildings.tsx` now renders its missing-param fallback via `t('errors.buildingNotFound', 'Building not found')` (was a hardcoded English literal); locale bundles gained the `errors.buildingNotFound` key across en/sk/cs/de/hu/pl. No route or component change.
+
+## Agent Log
+
+<!-- newest entries on top -->
+
+- 2026-11-04 — agent: added Facilities quick link → /buildings/:id/facilities (previously no inbound link)
+- 2026-11-06 — agent: manager-only "Edit building" link (→ /buildings/:id/edit) and per-unit Residents dialog (owners/tenants via /units/{u}/residents).

@@ -27,7 +27,7 @@ export function ReadingValidationCard({
   onValidate,
   isProcessing,
 }: ReadingValidationCardProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [showCorrectForm, setShowCorrectForm] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
@@ -101,7 +101,9 @@ export function ReadingValidationCard({
           <div className="grid grid-cols-2 gap-2 text-sm">
             <div>
               <span className="text-gray-500">{t('meters.readingDate')}:</span>
-              <p className="font-medium">{new Date(reading.readingDate).toLocaleDateString()}</p>
+              <p className="font-medium">
+                {new Date(reading.readingDate).toLocaleDateString(i18n.language)}
+              </p>
             </div>
             <div>
               <span className="text-gray-500">{t('meters.submittedBy')}:</span>
@@ -109,7 +111,9 @@ export function ReadingValidationCard({
             </div>
             <div>
               <span className="text-gray-500">{t('meters.submittedAt')}:</span>
-              <p className="font-medium">{new Date(reading.submittedAt).toLocaleString()}</p>
+              <p className="font-medium">
+                {new Date(reading.submittedAt).toLocaleString(i18n.language)}
+              </p>
             </div>
           </div>
 

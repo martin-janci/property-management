@@ -22,6 +22,7 @@
 //! templates keep the lighter `RequestPrincipal` auth gate.
 
 use crate::routes::ai::not_found;
+use crate::routes::pagination::clamp_limit;
 use crate::state::AppState;
 use api_core::extractors::principal::RequestPrincipal;
 use api_core::extractors::RlsConnection;
@@ -79,6 +80,7 @@ async fn create_workflow(
     mut rls: RlsConnection,
     Json(req): Json<CreateWorkflow>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     // SECURITY: owning org and creator are derived from the validated tenant
     // context, never from the request body.
     let organization_id = rls.tenant_id();
@@ -163,6 +165,7 @@ async fn update_workflow(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateWorkflow>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let result = state
         .workflow_repo
@@ -184,6 +187,7 @@ async fn delete_workflow(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let result = state
         .workflow_repo
@@ -227,6 +231,7 @@ async fn add_action(
     Path(id): Path<Uuid>,
     Json(mut req): Json<CreateWorkflowAction>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     // Pin the workflow_id to the path parameter so a caller can't
     // shadow-target a different workflow via the JSON body.
@@ -251,6 +256,7 @@ async fn delete_action(
     mut rls: RlsConnection,
     Path(action_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let result = state
         .workflow_repo
@@ -273,6 +279,7 @@ async fn trigger_workflow(
     Path(id): Path<Uuid>,
     Json(req): Json<TriggerWorkflow>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     use crate::services::WorkflowExecutor;
 
     let org_id = rls.tenant_id();
@@ -427,6 +434,7 @@ async fn handle_workflow_event(
     mut rls: RlsConnection,
     Json(req): Json<WorkflowEventRequest>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     use crate::services::{WorkflowEvent, WorkflowExecutor};
 
     // The RlsConnection validated tenant membership; the executor acquires
@@ -542,9 +550,10 @@ async fn list_workflow_templates(
         })
         .collect();
 
-    // Apply pagination
-    let limit = query.limit.unwrap_or(50) as usize;
-    let offset = query.offset.unwrap_or(0) as usize;
+    // Apply pagination (clamp before the `as usize` cast so a hostile
+    // negative/huge limit can't wrap into an unbounded `take`).
+    let limit = clamp_limit(query.limit, 50) as usize;
+    let offset = query.offset.unwrap_or(0).max(0) as usize;
     let paginated: Vec<_> = templates.into_iter().skip(offset).take(limit).collect();
 
     Ok(Json(serde_json::json!({
@@ -613,6 +622,7 @@ async fn import_workflow_template(
     Path(id): Path<String>,
     Json(req): Json<ImportTemplateRequest>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let tenant_id = rls.tenant_id();
     let user_id = rls.user_id();
 

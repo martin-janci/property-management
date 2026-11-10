@@ -1,0 +1,20 @@
+{
+  "signals": [
+    {
+      "id": "code-review-api-core-listings-detail-swallows-db-err",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/listings.rs:338 — in `get_listing` (the tenant-scoped GET /api/v1/listings/{id} detail handler, listings.rs:316-345), the photos sub-fetch swallows all repository errors: `let photos = state.listing_repo.get_photos(id).await.unwrap_or_default();`. `.unwrap_or_default()` collapses an `Err(sqlx/pool error)` into an empty `Vec`, which is indistinguishable from 'this listing genuinely has no photos'.",
+        "backend/servers/api-server/src/routes/listings.rs:340-342 — the very next call has the identical defect for syndications: `state.listing_repo.get_syndications(id).await.unwrap_or_default()`. Both feed directly into the `ListingWithDetails` response (listings.rs:344+).",
+        "Consequence: on a transient DB/pool error while fetching photos or syndications, the handler still returns HTTP 200 with an empty `photos`/`syndications` array instead of surfacing a 500. The caller (manager UI / API consumer) sees a listing that appears to have lost its photos and syndication targets — a silent, un-loggable partial-data response. Contrast with the primary `find_by_id_and_org` fetch two lines above (listings.rs:322-330), which correctly maps its error to `INTERNAL_SERVER_ERROR`; the two sub-fetches are the inconsistent outliers.",
+        "There is no `tracing::warn!`/`error!` on the swallowed branch, so the failure is invisible in logs and cannot be monitored — same fail-quiet class as the previously-tracked quiet-hours `.ok()` swallow, but on a user-facing read path. Fix: match on the `Result` and propagate the error to `INTERNAL_SERVER_ERROR` (or at minimum log the `Err` before defaulting), rather than discarding it with `.unwrap_or_default()`."
+      ],
+      "expert": "rust"
+    }
+  ]
+}

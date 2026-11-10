@@ -1,0 +1,59 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-02",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed (dispatcher Tier-1d demand-driven; claimable buffer starved, 7 < floor 36). CHURN_FILES not supplied by the dispatcher this slice, and state.json hotspot_history is stale (mostly 2026-05; most recent entry 2026-10-25), so SKILL Step 1 priority 2 (oldest-unreviewed) applies. review_cursor (from .research/state.json), sorted ascending: ppt-web-ui 2026-10-22, reality-web 2026-10-23, mobile-native-kmp 2026-10-25, api-handlers 2026-10-26, api-core/ppt-web-core/mobile-rn 2026-10-27, reality-server 2026-10-28. Saturation check against open code-review-finding rows in backlog.json: ppt-web-ui=0 open (<3, not saturated; api-handlers=3, mobile-native-kmp=2). Oldest non-saturated segment is ppt-web-ui (2026-10-22) => selected. Frontend expert primary + Completeness secondary per Step 2. Scope reviewed: frontend/apps/ppt-web/src/pages/ + components/ (only 13 files; all clean) plus the UI that actually lives under features/**/{pages,components} (435 UI files) with focus on the churn-flagged disputes feature and feature forms. Static analysis only; no compile, no test run. Dedup: distinct from the 5 ppt-web-ui signal files already written 2026-11-01 (accounting payment-matching, documents DocumentSearch, buildings BuildingsPage, registry nav, portfolio-performance dashboard, ai-chat ChatInterface/SuggestedQuestions, disputes CARD layer). Neither finding below overlaps those: the disputes card-layer finding covered DisputeCard/ResolutionCard/etc., NOT the EvidenceUploader; and the whole community feature was never flagged.",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-community-feature-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-02 ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/community/components/EventForm.tsx",
+        "frontend/apps/ppt-web/src/features/community/components/GroupForm.tsx",
+        "frontend/apps/ppt-web/src/features/community/components/CreatePostForm.tsx",
+        "frontend/apps/ppt-web/src/features/community/components/ItemForm.tsx",
+        "frontend/apps/ppt-web/src/features/community/components/GroupList.tsx",
+        "frontend/apps/ppt-web/src/features/community/components/CommentList.tsx",
+        "frontend/apps/ppt-web/src/features/community/pages/MarketplacePage.tsx",
+        "frontend/apps/ppt-web/src/features/community/pages/EventsPage.tsx",
+        "frontend/apps/ppt-web/src/features/community/pages/CreateGroupPage.tsx"
+      ],
+      "evidence": [
+        "The entire ppt-web community feature (posts, groups, events, marketplace, comments) is shipped English-only: only 1 of its 17 .tsx files (components/PostCard.tsx) imports useTranslation / react-i18next. ppt-web ships react-i18next with sk/cs/de/en locales, so every other string in this feature is an i18n gap, not a missing capability — sibling features (disputes pages, buildings, etc.) are t()-wrapped.",
+        "frontend/apps/ppt-web/src/features/community/components/EventForm.tsx:137,154,274 — hardcoded placeholders 'Enter event title', \"What's this event about?\", 'Leave empty for unlimited'; :291 button 'Cancel'; :297-304 button label 'Creating...' / 'Updating...' / 'Update Event' / 'Create Event' — all literal English, no useTranslation import in the file.",
+        "frontend/apps/ppt-web/src/features/community/components/GroupForm.tsx:125,142 placeholders 'Enter group name' / 'Describe what your group is about...'; :251 button 'Create Group'. GroupList.tsx:135,276 'Create Group'; :153 placeholder 'Search groups...'. CreatePostForm.tsx:160,178 placeholders \"What's on your mind?\" / 'Enter image URL'. CommentList.tsx:140 placeholder 'Write a reply...'.",
+        "frontend/apps/ppt-web/src/features/community/pages/MarketplacePage.tsx:194,265,274 placeholders 'Search items...' / 'Min €' / 'Max €'; ItemForm.tsx:180,204,221 placeholders 'Enter image URL' / 'What are you selling?' / 'Describe your item in detail...'. EventsPage.tsx:153,254 'Create Event'. CreateGroupPage.tsx:45 heading 'Create New Group'.",
+        "Landable frontend-only remedy: add useTranslation to the community components/pages and move the literals behind t('community.*') keys (add the keys to each locale file). Verifiable via `pnpm --filter @ppt/web typecheck` and Vitest/RTL render assertions that non-en locales render localized labels. Confidence medium (static): confirmed only PostCard.tsx uses i18n via grep across all 17 files; breadth (whole feature) makes this a systemic gap rather than one stray string."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-evidence-uploader-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-02 ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.tsx:71,74 — the validate() helper returns hardcoded English error strings `Unsupported file type: ${...}` and `File too large (max 50 MB): ${file.name}`. These are user-facing: they are stored on item.error and rendered to the user at :266-268 (`{item.error}`). The component already imports useTranslation and uses t() for every aria-label (:167,185,225,288,297), so the visible validation messages are an inconsistent i18n gap, not an untranslated-everywhere file.",
+        "frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.tsx:213-218 — drop-zone visible text 'Drop files here or browse' and the hint 'JPG, PNG, PDF, MP3, MP4 · max 50 MB per file · up to {MAX_FILES} files' are hardcoded English; :274 input placeholder 'Short description (optional)'; :278,312 the `Description for ${name}` and `Remove ${name}` aria-labels are raw template strings (not t()), unlike the other aria-labels in the same file.",
+        "Distinct from the 2026-11-01 disputes finding (code-review-ppt-web-ui-disputes-cards-no-i18n), which covered the presentational CARD layer (DisputeCard/ResolutionCard/etc.) and did not include EvidenceUploader. Landable frontend-only remedy: wrap the validate() messages, drop-zone copy and placeholder in t('disputes.evidence.*') and pass interpolation params for the file name / limits. Verifiable via `pnpm --filter @ppt/web typecheck` + an RTL test asserting a non-en locale renders localized validation text. Confidence medium (static analysis; not runtime-confirmed)."
+      ]
+    }
+  ]
+}

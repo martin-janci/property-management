@@ -5,8 +5,14 @@
  * - Authentication via JWT token
  * - Automatic reconnection with exponential backoff
  * - Connection state machine
- * - Heartbeat/ping-pong mechanism
  * - Event emitter pattern for message handling
+ *
+ * Liveness is handled entirely at the WebSocket protocol layer: the api-server
+ * sends protocol-level `Ping` frames (`Message::Ping` in `ws_notifications.rs`)
+ * and the browser answers them with an automatic protocol-level `Pong`. The
+ * client does NOT run any application-level `{type:'ping'}`/`{type:'pong'}`
+ * heartbeat — that redundant mechanism used to force-close the socket every
+ * ~40 s because the server never emits an app-level `{type:'pong'}` reply.
  */
 
 /**
@@ -49,8 +55,8 @@ export interface ServerWsEnvelope {
  * Normalise one decoded server frame into the client's internal
  * {@link WebSocketMessage} shape.
  *
- * Returns `null` for frames that are not a recognised event envelope (e.g. a
- * bare `pong` heartbeat or malformed JSON) so callers can short-circuit.
+ * Returns `null` for frames that are not a recognised event envelope (e.g.
+ * malformed JSON or a stray non-event frame) so callers can short-circuit.
  *
  * The server emits `{ event, payload }`; we map `event` -> `type` and supply a
  * client-side receive `timestamp` (the server envelope carries none) so gap
@@ -76,23 +82,52 @@ export function parseServerMessage(raw: unknown): WebSocketMessage | null {
 }
 
 /**
- * Build the full WebSocket connection URL: base origin + canonical path +
- * `?token=<jwt>` query param.
+ * Build the full WebSocket connection URL: base origin + canonical path.
  *
- * Browsers cannot set an `Authorization` header on a WebSocket handshake, so
- * the api-server reads the JWT from the `token` query parameter (see
- * `WsQuery` in `ws_notifications.rs`). The `base` may be a bare origin
- * (`ws://localhost:8080`) or already include the path — in either case we
- * normalise to the canonical path and attach the token.
+ * The JWT access token is deliberately NOT placed in the URL. A query-string
+ * token (`?token=<jwt>`) leaks the bearer credential into api-server access
+ * logs and any intermediary proxy logs — a single captured log line is enough
+ * for session takeover. The token is instead carried in the
+ * `Sec-WebSocket-Protocol` handshake header via {@link buildWsSubprotocols},
+ * which the api-server reads (see `ws_notifications.rs`). The `base` may be a
+ * bare origin (`ws://localhost:8080`) or already include a path — in either
+ * case we normalise to the canonical handler path.
  */
-export function buildWebSocketUrl(base: string, token: string): string {
+export function buildWebSocketUrl(base: string): string {
   // `URL` needs an absolute base; ws/wss are valid absolute schemes.
   const url = new URL(base);
   // Force the canonical path regardless of what the base carried, so a
   // legacy `/ws` (or empty) path is corrected to the mounted handler.
   url.pathname = WS_NOTIFICATIONS_PATH;
-  url.searchParams.set('token', token);
   return url.toString();
+}
+
+/**
+ * Subprotocol token that prefixes the JWT in the `Sec-WebSocket-Protocol`
+ * handshake header. The api-server strips this prefix to recover the raw JWT
+ * (see `WS_BEARER_SUBPROTOCOL_PREFIX` in `ws_notifications.rs`). Keep the two
+ * in sync.
+ */
+export const WS_BEARER_SUBPROTOCOL_PREFIX = 'bearer.';
+
+/**
+ * Protocol-version subprotocol. The api-server echoes this one back to
+ * complete the handshake (Issue #438) — the browser aborts the connection
+ * with a silent network error if the server selects none of the offered
+ * subprotocols, so it must always be offered alongside the bearer token.
+ */
+export const WS_PROTOCOL_VERSION = 'ppt.v1';
+
+/**
+ * Build the `Sec-WebSocket-Protocol` offer list for an authenticated WS
+ * handshake: the bearer-token subprotocol followed by the protocol-version
+ * subprotocol the server echoes.
+ *
+ * JWTs are base64url (`[A-Za-z0-9-_]`) with `.` segment separators — all valid
+ * subprotocol token characters per RFC 6455 — so no escaping is required.
+ */
+export function buildWsSubprotocols(token: string): string[] {
+  return [`${WS_BEARER_SUBPROTOCOL_PREFIX}${token}`, WS_PROTOCOL_VERSION];
 }
 
 /**
@@ -116,7 +151,41 @@ export type WebSocketEventType =
  * and emits a `connection:max-retries-exceeded` event so callers can
  * surface a UI-level "offline" state instead of silently retrying forever.
  */
-const DEFAULT_MAX_RECONNECT_ATTEMPTS = 10;
+export const DEFAULT_MAX_RECONNECT_ATTEMPTS = 10;
+
+/**
+ * Default minimum reconnection delay in milliseconds (the first-attempt base
+ * before jitter).
+ */
+export const DEFAULT_MIN_RECONNECT_DELAY_MS = 1000;
+
+/**
+ * Default maximum reconnection delay in milliseconds — the exponential backoff
+ * is capped here so a long outage settles into a steady (jittered) poll rather
+ * than growing unbounded.
+ */
+export const DEFAULT_MAX_RECONNECT_DELAY_MS = 30000;
+
+/**
+ * Compute the reconnect delay for a given zero-based `attempt` using
+ * exponential backoff capped at `maxDelay`, plus random jitter in `[0.5, 1.0)`
+ * to avoid a thundering-herd on shared outages.
+ *
+ * This is the single source of truth for the project's WS reconnect backoff
+ * curve: {@link WebSocketService} (the shared notification socket) and the
+ * IoT sensor hook (`features/iot/hooks/useIotWebSocket`) both call it so their
+ * retry behaviour stays identical. Each caller still owns its own attempt
+ * counter and give-up handling (they live on different transports), but the
+ * delay math — the part worth not duplicating — is shared here.
+ */
+export function computeReconnectDelay(
+  attempt: number,
+  minDelay: number = DEFAULT_MIN_RECONNECT_DELAY_MS,
+  maxDelay: number = DEFAULT_MAX_RECONNECT_DELAY_MS
+): number {
+  const baseDelay = Math.min(minDelay * 2 ** attempt, maxDelay);
+  return baseDelay * (0.5 + Math.random() * 0.5);
+}
 
 /**
  * Connection states for the WebSocket.
@@ -166,18 +235,6 @@ export interface WebSocketServiceConfig {
   maxReconnectDelay?: number;
 
   /**
-   * Heartbeat interval in milliseconds.
-   * @default 30000
-   */
-  heartbeatInterval?: number;
-
-  /**
-   * Pong timeout in milliseconds (how long to wait for pong after ping).
-   * @default 10000
-   */
-  pongTimeout?: number;
-
-  /**
    * Maximum number of reconnect attempts before giving up.
    * After exceeding this, the client emits a `connection:max-retries-exceeded`
    * message and stops retrying. Call `connect()` again to resume.
@@ -189,9 +246,10 @@ export interface WebSocketServiceConfig {
 /**
  * Compute the default WebSocket base origin (scheme + host, no path).
  *
- * The canonical handler path ({@link WS_NOTIFICATIONS_PATH}) and `?token=`
- * query param are appended by {@link buildWebSocketUrl} at connect time, so
- * this only needs to resolve the origin.
+ * The canonical handler path ({@link WS_NOTIFICATIONS_PATH}) is appended by
+ * {@link buildWebSocketUrl} at connect time and the JWT travels in the
+ * handshake subprotocol ({@link buildWsSubprotocols}), so this only needs to
+ * resolve the origin.
  *
  * In dev we keep the explicit cleartext `ws://localhost:8080` so the local
  * Vite stack works without TLS. In production we never default to cleartext:
@@ -216,8 +274,8 @@ function defaultWebSocketUrl(): string {
 /**
  * Dev-only diagnostic logging for the WebSocket client.
  *
- * The connection diagnostics below (send failures, handler errors, pong
- * timeouts, reconnect give-up) are valuable while developing but must not
+ * The connection diagnostics below (send failures, handler errors, reconnect
+ * give-up) are valuable while developing but must not
  * leak to the browser console in production builds: they surface internal
  * connection state and add noise for end users. Gating on `import.meta.env.DEV`
  * — the same convention `lib/api.ts` uses for its retry logging — lets Vite
@@ -259,19 +317,12 @@ export class WebSocketService {
   private readonly getToken: () => string | null;
   private readonly minReconnectDelay: number;
   private readonly maxReconnectDelay: number;
-  private readonly heartbeatInterval: number;
-  private readonly pongTimeout: number;
   private readonly maxReconnectAttempts: number;
 
   // Reconnection state
   private reconnectAttempts = 0;
   private reconnectTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private shouldReconnect = true;
-
-  // Heartbeat state
-  private heartbeatIntervalId: ReturnType<typeof setInterval> | null = null;
-  private pongTimeoutId: ReturnType<typeof setTimeout> | null = null;
-  private awaitingPong = false;
 
   // Event handlers
   private messageHandlers: Map<string, Set<MessageHandler>> = new Map();
@@ -283,10 +334,8 @@ export class WebSocketService {
   constructor(config: WebSocketServiceConfig) {
     this.url = config.url ?? import.meta.env.VITE_WS_URL ?? defaultWebSocketUrl();
     this.getToken = config.getToken;
-    this.minReconnectDelay = config.minReconnectDelay ?? 1000;
-    this.maxReconnectDelay = config.maxReconnectDelay ?? 30000;
-    this.heartbeatInterval = config.heartbeatInterval ?? 30000;
-    this.pongTimeout = config.pongTimeout ?? 10000;
+    this.minReconnectDelay = config.minReconnectDelay ?? DEFAULT_MIN_RECONNECT_DELAY_MS;
+    this.maxReconnectDelay = config.maxReconnectDelay ?? DEFAULT_MAX_RECONNECT_DELAY_MS;
     this.maxReconnectAttempts = config.maxReconnectAttempts ?? DEFAULT_MAX_RECONNECT_ATTEMPTS;
   }
 
@@ -320,8 +369,28 @@ export class WebSocketService {
 
   /**
    * Connect to the WebSocket server.
+   *
+   * An explicit `connect()` is a fresh (re)start request, so it resets the
+   * reconnect-attempt budget via {@link resetReconnectAttempts}. This is what
+   * makes a resume after a previous give-up work: once
+   * {@link scheduleReconnect} has hit `maxReconnectAttempts` and flipped
+   * `shouldReconnect` off, the budget is stuck at the cap; without the reset a
+   * subsequent `connect()` would open one socket and then immediately give up
+   * again on the first unclean close. The internal backoff loop deliberately
+   * calls {@link openConnection} directly (NOT `connect()`) so a mid-backoff
+   * retry does not reset the budget — otherwise the cap could never be reached.
    */
   connect(): void {
+    this.resetReconnectAttempts();
+    this.openConnection();
+  }
+
+  /**
+   * Open (or re-open) the underlying socket without touching the reconnect
+   * budget. Shared by the public {@link connect} entry point and the internal
+   * exponential-backoff reconnect loop.
+   */
+  private openConnection(): void {
     const token = this.getToken();
     if (!token) {
       this.setConnectionState('error', new Error('No auth token available'));
@@ -352,16 +421,17 @@ export class WebSocketService {
     this.shouldReconnect = true;
     this.clearReconnectTimeout();
 
-    // Auth transport: the api-server reads the JWT from the `token` query
-    // parameter (see `WsQuery` in `ws_notifications.rs`). Browsers cannot set
-    // an `Authorization` header on a WS handshake, so the query param is the
-    // contract the server validates. We still offer the `ppt.v1` subprotocol
-    // because the server echoes it (Issue #438) to complete the handshake and
-    // to leave room for future protocol-version negotiation.
+    // Auth transport: browsers cannot set an `Authorization` header on a WS
+    // handshake, so the JWT is carried in the `Sec-WebSocket-Protocol` header
+    // as `bearer.<jwt>` (see `buildWsSubprotocols`). The api-server reads it
+    // from there (see `ws_notifications.rs`). This replaces the previous
+    // `?token=<jwt>` query param, which leaked the bearer token into access
+    // logs. The `ppt.v1` subprotocol is offered alongside it because the
+    // server echoes it (Issue #438) to complete the handshake.
     this.setConnectionState('connecting');
 
     try {
-      this.socket = new WebSocket(buildWebSocketUrl(this.url, token), ['ppt.v1']);
+      this.socket = new WebSocket(buildWebSocketUrl(this.url), buildWsSubprotocols(token));
       this.setupSocketHandlers();
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Failed to create WebSocket');
@@ -372,17 +442,20 @@ export class WebSocketService {
 
   /**
    * Disconnect from the WebSocket server.
+   *
+   * The current socket's handlers are detached before it is closed (via
+   * {@link detachAndCloseSocket}) so that the browser's asynchronous `close`
+   * event on this socket cannot fire back into the service. Without that
+   * detach, a `connect()` that races the pending close (logout->login, token
+   * rotation) would let the stale socket's `onclose` run against the live
+   * service and drive a spurious `scheduleReconnect()` — the reconnect branch
+   * runs regardless of `wasClean`, so even the clean 1000 close below would
+   * re-arm reconnection against a service the caller asked to disconnect.
    */
   disconnect(): void {
     this.shouldReconnect = false;
     this.clearReconnectTimeout();
-    this.stopHeartbeat();
-
-    if (this.socket) {
-      this.socket.close(1000, 'Client disconnecting');
-      this.socket = null;
-    }
-
+    this.detachAndCloseSocket('Client disconnecting');
     this.currentToken = null;
     this.setConnectionState('disconnected');
   }
@@ -393,15 +466,26 @@ export class WebSocketService {
    * Unlike {@link disconnect}, this does NOT flip `shouldReconnect` or emit a
    * `disconnected` state — it is an internal replace step used by
    * {@link connect} when re-establishing the connection (e.g. after a token
-   * rotation) or when the previous socket is already closed. The stale socket's
-   * handlers are detached first so its imminent `close` event cannot drive a
-   * spurious reconnect or state transition on the service that is about to own
-   * a fresh socket.
+   * rotation) or when the previous socket is already closed. Handler detach and
+   * close are delegated to {@link detachAndCloseSocket}.
    */
   private teardownStaleSocket(): void {
-    if (!this.socket) return;
+    this.detachAndCloseSocket('Reconnecting with a new token');
+  }
 
-    this.stopHeartbeat();
+  /**
+   * Detach the current socket's event handlers, close it, and drop the
+   * reference. Shared by {@link disconnect} and {@link teardownStaleSocket}.
+   *
+   * Detaching the handlers first is the load-bearing step: it guarantees the
+   * socket's imminent (and, in real browsers, asynchronous) `close`/`error`
+   * events cannot drive a state transition or reconnect on a service that has
+   * already moved on to a fresh socket or been shut down. Closing an
+   * already-closed/closing socket can throw in some engines, so the `close()`
+   * call is guarded — the socket is being discarded regardless.
+   */
+  private detachAndCloseSocket(reason: string): void {
+    if (!this.socket) return;
 
     const stale = this.socket;
     stale.onopen = null;
@@ -410,7 +494,7 @@ export class WebSocketService {
     stale.onmessage = null;
 
     try {
-      stale.close(1000, 'Reconnecting with a new token');
+      stale.close(1000, reason);
     } catch {
       // Closing an already-closed/closing socket can throw in some engines;
       // the socket is being discarded regardless, so the error is irrelevant.
@@ -489,12 +573,9 @@ export class WebSocketService {
       this.reconnectAttempts = 0;
       this.lastError = null;
       this.setConnectionState('connected');
-      this.startHeartbeat();
     };
 
     this.socket.onclose = (event) => {
-      this.stopHeartbeat();
-
       if (event.wasClean) {
         this.setConnectionState('disconnected');
       } else {
@@ -522,14 +603,6 @@ export class WebSocketService {
   private handleMessage(event: MessageEvent): void {
     try {
       const data = JSON.parse(event.data as string);
-
-      // Handle pong response. The client emits `{ type: 'ping' }` and the
-      // server may echo `{ type: 'pong' }`; either heartbeat reply is matched
-      // here before the canonical-envelope path below.
-      if (data && typeof data === 'object' && data.type === 'pong') {
-        this.handlePong();
-        return;
-      }
 
       // Server speaks the canonical `{ event, payload }` envelope. Normalise
       // it into the internal message shape (event -> type) so subscribers can
@@ -611,18 +684,20 @@ export class WebSocketService {
       return;
     }
 
-    // Exponential backoff capped at maxReconnectDelay, plus random jitter
-    // in [0.5, 1.0) to avoid a thundering-herd on shared outages.
-    const baseDelay = Math.min(
-      this.minReconnectDelay * 2 ** this.reconnectAttempts,
+    // Exponential backoff capped at maxReconnectDelay, plus random jitter —
+    // shared with the IoT hook via computeReconnectDelay().
+    const delay = computeReconnectDelay(
+      this.reconnectAttempts,
+      this.minReconnectDelay,
       this.maxReconnectDelay
     );
-    const delay = baseDelay * (0.5 + Math.random() * 0.5);
 
     this.reconnectAttempts++;
 
     this.reconnectTimeoutId = setTimeout(() => {
-      this.connect();
+      // Continue the backoff loop via openConnection() so this retry does NOT
+      // reset the attempt budget — only an explicit connect() does that.
+      this.openConnection();
     }, delay);
   }
 
@@ -660,60 +735,6 @@ export class WebSocketService {
     if (this.reconnectTimeoutId) {
       clearTimeout(this.reconnectTimeoutId);
       this.reconnectTimeoutId = null;
-    }
-  }
-
-  private startHeartbeat(): void {
-    this.stopHeartbeat();
-
-    this.heartbeatIntervalId = setInterval(() => {
-      this.sendPing();
-    }, this.heartbeatInterval);
-  }
-
-  private stopHeartbeat(): void {
-    if (this.heartbeatIntervalId) {
-      clearInterval(this.heartbeatIntervalId);
-      this.heartbeatIntervalId = null;
-    }
-
-    if (this.pongTimeoutId) {
-      clearTimeout(this.pongTimeoutId);
-      this.pongTimeoutId = null;
-    }
-
-    this.awaitingPong = false;
-  }
-
-  private sendPing(): void {
-    if (!this.isConnected() || this.awaitingPong) {
-      return;
-    }
-
-    const pingMessage: WebSocketMessage = {
-      type: 'ping',
-      payload: null,
-      timestamp: new Date().toISOString(),
-    };
-
-    if (this.send(pingMessage)) {
-      this.awaitingPong = true;
-
-      this.pongTimeoutId = setTimeout(() => {
-        if (this.awaitingPong) {
-          wsWarn('[WebSocket] Pong timeout - closing connection');
-          this.socket?.close(4000, 'Pong timeout');
-        }
-      }, this.pongTimeout);
-    }
-  }
-
-  private handlePong(): void {
-    this.awaitingPong = false;
-
-    if (this.pongTimeoutId) {
-      clearTimeout(this.pongTimeoutId);
-      this.pongTimeoutId = null;
     }
   }
 }

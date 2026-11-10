@@ -1,0 +1,41 @@
+{
+  "generated": "2026-08-06",
+  "segment": "mobile-rn",
+  "source": "tier1d-dispatcher-generator",
+  "selection_reason": "oldest-unreviewed",
+  "selection_note": "No CHURN_FILES supplied (hotspot_history is stale, last entries May/Jun). By review_cursor the oldest segment is reality-server (2026-08-02), but reality-server is saturated for today: it already has TWO tier1d files dated 2026-08-06 (2026-08-06-reality-server-tier1d.json + 2026-08-06-reality-server-inquiries-tier1d.json, 5 findings combined) plus files on 08-04/08-05 — its per-run cap is filled, so per the skill's saturation rule I skipped it. (Note: the genuine issue my Rust sweep surfaced there — the three OAuth server-to-server calls in routes/sso.rs:682/706/743 using reqwest::Client::new() with no .timeout() — is already captured as code-review-reality-server-sso-client-no-timeout from 2026-07-29, so it would have been a duplicate anyway.) Among the tied-oldest cursor=2026-08-03 candidates (ppt-web-ui, ppt-web-core, reality-web, mobile-rn), ppt-web-core also has a file dated today (skip) and ppt-web-ui/reality-web were both covered 2026-08-05; mobile-rn is the genuinely stalest — its newest prior file is 2026-08-03 — so mobile-rn was selected. The segment is high quality with 29 prior findings; the document sheets (Rename/New/Move folder+doc), LeaseSignatureScreen, VoteDetailScreen, and utils/jwt.ts were all reviewed and found clean (every mutateAsync/mutate has onError/try-catch with i18n alerts; jwt decode is guarded + tested). Findings below come from the auth boundary (contexts/AuthContext.tsx), which prior i18n/error findings did not touch. Deduplicated against all prior mobile-rn IDs including hardcoded-i18n-screens, alert-i18n-gap, useapi-no-refresh-retry, offline-* and nfc-* — neither finding below overlaps.",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-auth-restore-stale-token",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/contexts/AuthContext.tsx:85-95 — the cold-start `initialize()` effect reads the stored access token (`SecureStore.getItemAsync(ACCESS_TOKEN_KEY)`) and, whenever both `accessToken` and `userJson` are present, unconditionally sets `{ isLoading:false, isAuthenticated:true, user, accessToken }`. It never decodes/checks the token's `exp` claim and never calls the existing `refreshToken()`. Because access tokens are short-lived (refresh tokens are the long-lived credential — see REFRESH_TOKEN_KEY / the /auth/refresh flow at :209-231), any app cold-start that happens after the stored access token's TTL has elapsed restores the user into an `isAuthenticated:true` state holding an already-expired bearer token.",
+        "frontend/apps/mobile/src/contexts/AuthContext.tsx:296-312 — `authenticateWithBiometric` has the identical gap on the unlock path: after `LocalAuthentication.authenticateAsync` succeeds it reads the stored `accessToken`/`userJson` and sets `isAuthenticated:true` with that token, with an explicit comment (\":296\") that it deliberately does NOT refetch/reset (issue #2399) — but it also performs no `exp` validation and no proactive `refreshToken()`, so a biometric unlock after the access token expired lands the user authenticated-but-with-an-expired-token.",
+        "This compounds the already-filed `code-review-mobile-rn-useapi-no-refresh-retry` (the API layer does not transparently refresh + retry on 401): with no proactive refresh at restore/unlock AND no reactive refresh-retry in useApi, the first request after an expired restore 401s and the user is stuck in a broken 'logged in but everything fails' state until a manual logout/login. `refreshToken()` already exists in this same context (:209) and is simply never invoked on the two restore paths. Fix: on `initialize()` and on successful biometric unlock, decode the access token's `exp` (utils/jwt.ts already ships a guarded `decodeJwtPayload`) and, if expired/near-expiry, `await refreshToken()` before setting `isAuthenticated:true` (fall back to the login screen if refresh fails)."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-biometric-prompt-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/contexts/AuthContext.tsx:252-256 — `enableBiometric` passes hardcoded English strings to the OS biometric dialog: `promptMessage: 'Enable biometric login'`, `cancelLabel: 'Cancel'`, `fallbackLabel: 'Use passcode'`. None are wrapped in `t()`, so non-English users (this app ships sk/cs/de/en) see English in the native Face ID / fingerprint prompt.",
+        "frontend/apps/mobile/src/contexts/AuthContext.tsx:284-287 — `authenticateWithBiometric` repeats it: `promptMessage: 'Login to Property Management'`, `cancelLabel: 'Cancel'`, `fallbackLabel: 'Use password'` — all hardcoded English on the unlock prompt.",
+        "Distinct location from the prior mobile-rn i18n findings (`hardcoded-i18n-screens`, `alert-i18n-gap`, `announcements-i18n`, `fault-category-i18n`, `hardcoded-empty-error-i18n`), which covered screen copy / Alert bodies — none touched the AuthContext biometric prompt strings. Fix: route these six strings through `t('auth.biometric.*')` keys so the login/unlock prompts localise with the rest of the app."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

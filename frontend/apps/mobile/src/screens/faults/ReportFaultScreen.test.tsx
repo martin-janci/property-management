@@ -37,6 +37,13 @@ jest.mock('../../hooks', () => ({
   useOfflineSupport: jest.fn(),
 }));
 
+// The presigned photo-upload pipeline (issue #2999) is unit-tested in
+// faultAttachments.test.ts; here we mock it and assert the screen drives it with
+// the new fault id and reacts to its outcome.
+jest.mock('./faultAttachments', () => ({
+  uploadFaultPhotos: jest.fn(),
+}));
+
 const FIXED_KEY = 'idem-test-key';
 jest.mock('../../utils', () => ({
   generateIdempotencyKey: () => FIXED_KEY,
@@ -68,6 +75,7 @@ const mockUseApiQuery = useApiMock.useApiQuery as jest.Mock;
 const mockUseTenantId = useApiMock.useTenantId as jest.Mock;
 const mockApiRequest = useApiMock.apiRequest as jest.Mock;
 const mockUseOfflineSupport = jest.requireMock('../../hooks').useOfflineSupport as jest.Mock;
+const mockUploadFaultPhotos = jest.requireMock('./faultAttachments').uploadFaultPhotos as jest.Mock;
 
 // --- Helpers ---
 
@@ -131,6 +139,7 @@ describe('ReportFaultScreen', () => {
     jest.clearAllMocks();
     addToQueue = jest.fn().mockResolvedValue(undefined);
     mockApiRequest.mockResolvedValue({ id: 'fault-1', message: 'ok' });
+    mockUploadFaultPhotos.mockResolvedValue({ total: 1, uploaded: 1, failed: 0 });
     mockUseTenantId.mockReturnValue({ tenantId: TENANT_ID, isLoading: false });
     mockUseApiQuery.mockReturnValue({
       data: { buildings: BUILDINGS },
@@ -240,6 +249,107 @@ describe('ReportFaultScreen', () => {
     expect(alertSpy).toHaveBeenCalledWith(
       'faults.queuedTitle',
       'faults.queuedMessage',
+      expect.any(Array)
+    );
+  });
+
+  /** Attach one gallery photo to the (already-filled) form. */
+  async function attachOnePhoto(uri = 'file:///leak-1.jpg') {
+    const pickerMock = jest.requireMock('expo-image-picker');
+    pickerMock.requestMediaLibraryPermissionsAsync.mockResolvedValue({ status: 'granted' });
+    pickerMock.launchImageLibraryAsync.mockResolvedValue({
+      canceled: false,
+      assets: [{ uri }],
+    });
+    // Attach from the gallery, then wait until the photo renders (the '✕' remove
+    // control only appears once the photo state has settled).
+    fireEvent.press(screen.getByText('faults.galleryButton'));
+    await waitFor(() => expect(screen.getByText('✕')).toBeTruthy());
+  }
+
+  it('uploads picked photos via the presigned pipeline after an online create (#2999)', async () => {
+    // Regression: photos used to be dropped silently after create. They must now
+    // be uploaded — the screen creates the fault, then hands the picked URIs to
+    // uploadFaultPhotos keyed on the NEW fault id.
+    const onSuccess = jest.fn();
+    renderScreen({ onSuccess });
+    fillValidForm();
+    await attachOnePhoto();
+
+    fireEvent.press(screen.getByText('faults.submitButton'));
+
+    // The fault is created online, then its photos are uploaded against its id.
+    await waitFor(() => expect(mockApiRequest).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(mockUploadFaultPhotos).toHaveBeenCalledTimes(1));
+    expect(mockUploadFaultPhotos).toHaveBeenCalledWith('fault-1', ['file:///leak-1.jpg']);
+
+    // With every photo attached, the success alert reflects that (not the
+    // "photos not attached" warning).
+    await waitFor(() =>
+      expect(alertSpy).toHaveBeenCalledWith(
+        'common.done',
+        'faults.successSubmitWithPhotos',
+        expect.any(Array)
+      )
+    );
+    expect(alertSpy).not.toHaveBeenCalledWith(
+      'faults.photosNotUploadedTitle',
+      'faults.photosNotUploadedWarning',
+      expect.any(Array)
+    );
+    expect(addToQueue).not.toHaveBeenCalled();
+  });
+
+  it('warns with a partial-upload message when some photos fail to upload', async () => {
+    mockUploadFaultPhotos.mockResolvedValue({ total: 2, uploaded: 1, failed: 1 });
+    renderScreen();
+    fillValidForm();
+    await attachOnePhoto();
+
+    fireEvent.press(screen.getByText('faults.submitButton'));
+
+    await waitFor(() =>
+      expect(alertSpy).toHaveBeenCalledWith(
+        'faults.photosPartialTitle',
+        'faults.photosPartialWarning',
+        expect.any(Array)
+      )
+    );
+  });
+
+  it('warns that photos were not uploaded when every upload fails', async () => {
+    mockUploadFaultPhotos.mockResolvedValue({ total: 1, uploaded: 0, failed: 1 });
+    renderScreen();
+    fillValidForm();
+    await attachOnePhoto();
+
+    fireEvent.press(screen.getByText('faults.submitButton'));
+
+    await waitFor(() =>
+      expect(alertSpy).toHaveBeenCalledWith(
+        'faults.photosNotUploadedTitle',
+        'faults.photosNotUploadedWarning',
+        expect.any(Array)
+      )
+    );
+  });
+
+  it('does not upload photos on the offline-queued path and warns they were dropped', async () => {
+    // Offline: the create is only queued (no fault id exists yet), so photos
+    // can't be uploaded — the user is warned rather than led to believe they
+    // were attached.
+    setConnectivity(false);
+    renderScreen();
+    fillValidForm();
+    await attachOnePhoto();
+
+    fireEvent.press(screen.getByText('faults.submitButtonOffline'));
+
+    await waitFor(() => expect(addToQueue).toHaveBeenCalledTimes(1));
+    expect(mockUploadFaultPhotos).not.toHaveBeenCalled();
+    expect(alertSpy).toHaveBeenCalledWith(
+      'faults.photosNotUploadedTitle',
+      'faults.photosNotUploadedWarning',
       expect.any(Array)
     );
   });

@@ -1,0 +1,37 @@
+{
+  "generated": "2026-10-24T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable=12 < floor=36, both deterministic refills avail=0). Static single-segment rotating code review per .claude/skills/ppt-dev-review/SKILL.md — no compilation, no test execution, no branch checkout (cloud runner: file reading + grep only). DISPATCHER_OWNED_COMMIT=1: this artifact was written into the working tree only; no git add/commit/push and no branch/checkout performed — the orchestrator folds .research deltas into its Phase 6 commit. Segment selection: no Phase-1 CHURN_FILES list was handed to this invocation, so skill priority-1 (churn-alignment) is empty and selection falls to priority-2 oldest-unreviewed, consistent with the 2026-10-23 run's handling of the same no-churn-list case. state.json review_cursor dates: mobile-native-kmp=2026-10-18 is the single oldest (api-handlers=2026-10-19 [SATURATED: 3 open code-review-finding rows in backlog → skip per Step 1 saturation rule], mobile-rn=2026-10-19, api-core/reality-server/ppt-web-ui/ppt-web-core=2026-10-22, reality-web=2026-10-23 [reviewed yesterday, now most-recent]). mobile-native-kmp selected: oldest + not saturated (0 open code-review-finding rows for segment==mobile-native-kmp in backlog.json; only api-handlers=3 carries open rows). Scope: the whole mobile-native/ tree (103 kt files). Primary expert Kotlin + secondary Tester (per Step 2). Overall the segment is high quality: no GlobalScope usage (all coroutines use rememberCoroutineScope lifecycle), no @Ignore/@Disabled skipped tests, no empty/swallowing catch blocks in commonMain, and the eight non-test `!!` sites are idiomatic smart-cast workarounds fully guarded by enclosing `when`/`if (state.x != null)` branches (delegated Compose state cannot smart-cast across lambdas) — not findings. The SSO deep-link CSRF contract (state-nonce, default-reject) is intact. Only ONE finding survived: a reachable non-functional production feature (Create Listing).",
+  "segment_reviewed": "mobile-native-kmp",
+  "selection_reason": "oldest-unreviewed (state.json review_cursor: mobile-native-kmp=2026-10-18 is the single oldest; api-handlers=2026-10-19 would otherwise tie-break earlier but is saturated with 3 open findings and skipped per Step 1; reality-web was reviewed 2026-10-23. No Phase-1 CHURN_FILES handed to this invocation, so priority-1 churn-alignment is empty). Not saturated: 0 open code-review-finding rows for segment==mobile-native-kmp in backlog.json.",
+  "experts_used": [
+    "kotlin",
+    "tester"
+  ],
+  "findings_count": 1,
+  "static_only": true,
+  "cloud_landable": false,
+  "landability_note": "Not cloud-landable as a mechanical edit: closing this finding requires (1) adding a create-listing endpoint method to PortalListingsRepository.kt wired to the reality-server realtor listings API, and (2) replacing the hardwired Result.failure stub at Navigation.kt:493 with a real suspend call. That needs the reality-server endpoint to exist and the generated Kotlin client to expose it; if the endpoint is absent it also implies a backend + OpenAPI/TypeSpec change and client regen. Verification would need `./gradlew :shared:build` + `:shared:allTests` and an emulator/ADB path the cloud runner lacks. Route to an implementer with mobile-native + (likely) backend scope, not a one-line autofix.",
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-nav-create-listing-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-24 mobile-native-kmp",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "kotlin",
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — the Screen.CreateListing composable wires CreateListingScreen's onSubmit to a hardcoded stub: `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`. Every submit of the realtor Create-Listing form therefore fails unconditionally. This is the skill's Kotlin pattern 'todo!()/unimplemented reachable from a production path' and 'no-op stub' — it is live in the committed navigation graph, not behind a flag.",
+        "Reachability traced end-to-end (confidence HIGH): Navigation.kt:461 Screen.MyListings composable renders MyListingsScreen with `onCreateClick = { navController.navigate(Screen.CreateListing.route) }` (Navigation.kt:484), which routes to the composable at 490-496. So any realtor who opens 'My Listings' and taps the create button reaches this stub. CreateListingScreen.kt:41 declares `onSubmit: suspend (CreateListingInput) -> Result<Unit>` and at :109/:121 invokes it then handles `onSuccess = { onCreated() }`, with the failure path surfacing a generic `R.string.error_network` message (CreateListingScreen.kt:92). Net user-visible effect: a realtor fills out the entire validated form (title/city/price with inline validation at :198/:226/:245), taps submit, and always gets a misleading 'network error' — the feature is non-functional and the error message mis-attributes the cause.",
+        "Root-cause confirmation that this is an incomplete feature, not just an unwired call: PortalListingsRepository.kt exposes only `listMyListings` (:40), `getListingAnalytics` (:74), and `getPortfolioAnalytics` (:111) — there is NO create-listing method anywhere in shared/commonMain (grep for create-listing repository methods returns none; the only `fun create(` is ListingDetailViewModel.kt:243, an unrelated VM factory). So the stub cannot be fixed by swapping in an existing call; a repository method (and likely the reality-server endpoint + generated client surface) must be added.",
+        "Severity MEDIUM (+2): user-facing realtor feature is non-functional in production, but it fails gracefully via Result.failure (handled by the screen) rather than crashing, so no data loss / no hard crash — hence +2, not +3. Confidence HIGH: the unreachable-success path and the missing repository method are both statically confirmed and the navigation reachability is fully traced from an entry screen. Fix scope: add create-listing to PortalListingsRepository wired to the reality-server realtor API, then replace the Navigation.kt:493 lambda with a real suspend call (plus a matching test alongside the existing PortalListingsRepositoryTest.kt)."
+      ]
+    }
+  ]
+}

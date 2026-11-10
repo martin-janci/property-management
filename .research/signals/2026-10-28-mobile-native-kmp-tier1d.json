@@ -1,0 +1,25 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-28",
+  "segment_reviewed": "mobile-native-kmp",
+  "selection_reason": "oldest-unreviewed after 2 saturation-skips (dispatcher-tier1d-demand-driven; buffer starved, claimable=24 < floor=36, deterministic refill tiers found nothing). Phase-1 churn is all .research/** (no code churn aligns to any segment), so selection falls to REVIEW_CURSOR oldest-unreviewed. Sorted ascending: ppt-web-ui (2026-10-22) has 5 OPEN code-review-finding rows => saturated, SKIP per SKILL Step 1; reality-web (2026-10-23) has 3 open => saturated, SKIP; mobile-native-kmp (2026-10-25) has only 2 open (<3) => eligible, SELECTED. Static scan (no compile, no tests): zero GlobalScope/MainScope; all 8 `!!` sites are idiomatic Compose smart-cast workarounds immediately guarded by a null-check (`errorMessage != null ->`, `if (notificationPrefs != null)`, sealed-state `when` success branch) => nits, not findings; network errors are handled via the repository try/catch -> Result.failure pattern (already captured by the existing open HttpClient-timeout finding); the iOS `generateSsoNonce` actual is a proper NSUUID implementation, not a no-op stub (SSO CSRF contract intact). Avoided duplicating the 2 existing open findings (HttpClient timeout; MyListings pagination cap). The single finding below is the one genuine reachable issue: the realtor Create Listing feature is wired to an unconditional NotImplementedError stub.",
+  "experts_used": ["kotlin", "completeness"],
+  "findings_count": 1,
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:490-495 — the Screen.CreateListing composable wires CreateListingScreen's onSubmit to `{ _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`, so submitting the Create Listing form ALWAYS fails and `onCreated()` (the navigate-back-to-MyListings success callback) is never reached.",
+        "CreateListingScreen (mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt:41-42, 95-121) declares `onSubmit: suspend (CreateListingInput) -> Result<Unit>` and calls `onCreated()` on `onSuccess`; the UI is fully built (form + footer submit button) but the backing action is a hardcoded failure. No `createListing`/`create` method exists anywhere in PortalListingsRepository (shared) — the create-listing API call was never implemented.",
+        "Reachability traced entry->issue: MyListingsScreen's `onCreateClick` navigates to Screen.CreateListing.route (Navigation.kt:484), which renders this composable, so a realtor can open the form, fill it out, and tap submit — and every attempt surfaces the NotImplementedError. User-facing realtor feature is non-functional (graceful failure, not a crash/data-loss). Fix vector: add a createListing(CreateListingInput) -> Result<Unit> method to PortalListingsRepository (POST to the reality-server listing endpoint) and pass it as onSubmit instead of the stub."
+      ],
+      "expert": "completeness"
+    }
+  ]
+}

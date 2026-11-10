@@ -1,0 +1,51 @@
+{
+  "generated": "2026-09-18T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable backlog starved of CLOUD-LANDABLE work: entire current pool is structurally cloud-unlandable — mobile-native/KMP AGP-egress-blocked #2652, api-server utoipa-swagger-ui-egress-blocked #2966). This run produces fresh cloud-LANDABLE frontend findings. 2026-09-18 (second ppt-web-core pass of the day).",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "oldest-unreviewed + cloud-landable preference. state.json review_cursor ties ppt-web-core (2026-08-29) and reality-web (2026-08-29) as oldest; both are cloud-landable frontend segments (dispatcher-preferred over the blocked mobile-native/KMP + api-server segments). No CHURN_FILES were passed by the dispatcher, so churn-alignment did not apply. SATURATION CHECK: backlog.json holds 0 OPEN code-review-finding rows for ppt-web-core (the only open code-review-finding rows are 4 mobile-native-kmp items), so the >=3-open skip rule does not trigger. NOTE: a separate Tier-1d ppt-web-core pass already ran earlier today (2026-09-18-ppt-web-core-tier1d.json: ocr-fetch-no-auth, needing-maint-key, iot-ws-no-backoff) — this pass deliberately reviews DIFFERENT core files (lib/queryKeys.ts, contexts/AuthContext.tsx, lib/api.ts) and returns 2 NON-duplicate findings. Static-only (no build/test): the ppt-web SPA is not compiled here; findings are backlog signals, both cloud-landable (single-file frontend edits under frontend/apps/ppt-web/src/, which verify cleanly in the cloud runner). Reviewed and found clean/not-findings: lib/websocket.ts (token-in-URL is a documented browser-handshake constraint; reconnect/backoff/teardown all sound), contexts/WebSocketContext.tsx, lib/errorHandler.ts (i18n catalogue fully covered in en.json + fallbackLng:'en' covers other locales — no raw-key leak), hooks/usePerformanceMetrics.ts (console.* is import.meta.env.DEV-gated), hooks/useNetworkStatus.ts, hooks/useWebSocket.ts, routes/lazyRoutes.tsx (stale-chunk lazy() rejection is explicitly caught by RouteErrorBoundary in App.tsx with a reload affordance), lib/analytics.ts, contexts/OrganizationProvider.tsx, hooks/useOrganization.ts, routes/AppRoutes.tsx. Cap-at-3 honored; 2 net-new findings (1 HIGH, 1 LOW); nits skipped.",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-logout-purge-disputes-leases-iot",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-18 ppt-web-core queryKeys/AuthContext logout purge)",
+      "segment": "ppt-web-core",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts:354-392 — AUTHED_QUERY_KEY_ROOTS is the explicit allow-list that logout() iterates (contexts/AuthContext.tsx:624-626: `for (const root of AUTHED_QUERY_KEY_ROOTS) queryClient.removeQueries({ queryKey: [root] })`). logout() does NOT call queryClient.clear() (issue #712 replaced clear() with this scoped removal), so ANY authed TanStack Query root not present in this list survives logout and is served to the NEXT user who logs in on the same browser until a refetch — a cross-user tenant-data leak on shared/kiosk workstations, exactly the risk the queryKeys.ts:331-352 doc-comment warns about.",
+        "RECURRING BUG — this is the same defect class as two ALREADY-FIXED findings: code-review-ppt-web-core-logout-cache-purge-gap (done; added predictive-maintenance/sentiment/notification-analytics) and code-review-ppt-web-core-logout-purge-notif-triggers (done; added notification-triggers, PR #2650 having been incomplete). Each fix patched only the specific roots then known; NEW routed features have since added query hooks under roots that are STILL missing from the allow-list.",
+        "STILL-MISSING roots, each confirmed used by a routed, authed ppt-web page via a @ppt/api-client query hook (grep of frontend/apps/ppt-web/src, non-test): 'disputes' — useDispute/useDisputeTimeline/useDisputeSubmissions/useMediationNotes/useMediationSessions (features/disputes/pages/MediationWorkspacePage.tsx, features/disputes/components/MediationChatThread.tsx, routes/groups/disputes.tsx; api-client all:['disputes'] at packages/api-client/src/disputes/hooks.ts:29) — leaks PRIVATE mediation notes + dispute detail; 'leases' + 'violations' — useLease/useLeases/useExpiringLeases/useViolation (routes/groups/leases.tsx; api-client all:['leases'] leases/hooks.ts:23, all:['violations'] leases/hooks.ts:39) — leaks tenant PII / lease financials; 'iot' — useIotDashboard/useSensorReadings (routes/groups/iot.tsx, features/iot/pages/IotAlertsPage.tsx, features/iot/hooks/useIotWebSocket.ts; api-client all:['iot'] iot/hooks.ts:42); 'my-units' — useMyUnits (features/my-unit/pages/MyUnitPage.tsx, routes/groups/buildings.tsx; api-client all:['my-units'] my-units/hooks.ts:9) — leaks resident's own-unit data; 'templates' — useTemplates (features/document-templates/pages/DocumentTemplatesPage.tsx; api-client all:['templates'] templates/hooks.ts:16).",
+        "Impact: HIGH (cross-session tenant/PII data exposure on shared workstations); disputes + leases roots are the most sensitive. Confidence HIGH — full static trace from routed page -> imported @ppt/api-client query hook -> confirmed key-factory root -> confirmed absence from AUTHED_QUERY_KEY_ROOTS -> logout confirmed to purge only the listed roots (no queryClient.clear()).",
+        "Fix (cloud-landable, single-file): (a) immediate — add 'disputes','leases','violations','iot','my-units','templates' to AUTHED_QUERY_KEY_ROOTS in lib/queryKeys.ts. (b) STRUCTURAL to end the recurrence — stop maintaining a hand-curated allow-list: either derive the purge set from every registered key factory (a single registry of *.all[0] roots across queryKeys + the consumed @ppt/api-client key factories), or invert to a small non-session DENY-list and call queryClient.removeQueries() for everything else, so a newly-added feature root is purged by default instead of leaking until someone remembers to append it."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export-unconfigured",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-18 ppt-web-core lib/api.ts default export)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:370 — `export default getApiClient()` is evaluated at MODULE-LOAD time. getApiClient() (:322-327) lazily creates the singleton via createAxiosInstance() with NO config, so the default-exported instance has tokenGetter=undefined and onUnauthorizedCallback=undefined. configureApiClient() (:347-350) — the only thing that wires getToken + onUnauthorized, called once from contexts/AuthContext.tsx:380 — runs LATER (inside a React effect), and rebinds the module-level `apiInstance` but cannot retroactively fix the value already captured by the default export.",
+        "Consequence: any consumer doing `import apiClient from '../lib/api'` (default) gets a client that sends every request WITHOUT an Authorization header and never runs the 401 refresh-and-replay branch — i.e. it silently re-introduces the exact defects already fixed under code-review-ppt-web-core-api-token-provider-unset and -api-onunauthorized-unwired (both done). Currently DORMANT: a grep of frontend/apps/ppt-web/src confirms all production consumers import the NAMED getApiClient()/configureApiClient() (features/predictive-maintenance, features/sentiment, routes/groups/person-months, contexts/AuthContext), so nothing imports the default today — this is a latent footgun, not a live break.",
+        "Impact: LOW (latent refactor smell / re-introduction trap on an auth-critical module). Fix (cloud-landable, single-file): remove the eager `export default getApiClient()` at :370 (force callers onto getApiClient() which resolves the configured singleton at call time), or make the default a lazy getter/proxy that reads the current apiInstance rather than snapshotting an unconfigured one at import."
+      ]
+    }
+  ]
+}

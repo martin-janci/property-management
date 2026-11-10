@@ -277,3 +277,91 @@ async fn concurrent_payments_accumulate_without_lost_update(pool: PgPool) {
     );
     assert!(action.paid_at.is_some(), "paid_at must be stamped");
 }
+
+// ---------------------------------------------------------------------------
+// Partial-write regression — the live #1361 bug this fix targets.
+//
+// `record_payment` does (2) INSERT INTO fine_payments and (3) UPDATE
+// enforcement_actions.paid_amount. Pre-fix these ran as two independent pool
+// checkouts with no surrounding transaction, so each statement auto-committed
+// on its own connection: a failure in (3) left the (2) row behind — money
+// recorded in the ledger without the fine's running balance ever advancing.
+//
+// This test forces (3) to fail deterministically with a BEFORE UPDATE trigger
+// that raises, then asserts NO fine_payments row survives. It is the IG3
+// "failing-on-main" regression: it FAILS on `dev` (the orphaned INSERT
+// persists → count == 1) and PASSES once (1)–(3) share one transaction that
+// rolls back as a unit.
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-351 quarantine: DB-backed sqlx::test; needs a live Postgres so it can't run on the DB-less PR gate (same class as its siblings). Repair tracked in BIT-352."]
+async fn partial_write_rolls_back_payment_when_balance_update_fails(pool: PgPool) {
+    let (repo, org, user, action_id) = seed_action(&pool, "partial").await;
+
+    // Make step (3) — the enforcement_actions balance UPDATE — fail, while
+    // leaving step (2) — the fine_payments INSERT — able to succeed, by
+    // installing a BEFORE UPDATE trigger on enforcement_actions that raises.
+    sqlx::query(
+        r#"
+        CREATE OR REPLACE FUNCTION ppt_test_block_ea_update() RETURNS trigger AS $$
+        BEGIN
+            RAISE EXCEPTION 'simulated balance-update failure';
+        END;
+        $$ LANGUAGE plpgsql;
+        "#,
+    )
+    .execute(&pool)
+    .await
+    .expect("create trigger fn");
+    sqlx::query(
+        "CREATE TRIGGER ppt_test_block_ea_update BEFORE UPDATE ON enforcement_actions \
+         FOR EACH ROW EXECUTE FUNCTION ppt_test_block_ea_update()",
+    )
+    .execute(&pool)
+    .await
+    .expect("create trigger");
+
+    // The payment must surface the balance-update failure rather than swallow it.
+    let res = repo
+        .record_payment(action_id, org, payment(Decimal::new(5000, 2), "p1"), user)
+        .await;
+    assert!(
+        res.is_err(),
+        "record_payment must propagate the failed balance UPDATE, got {res:?}"
+    );
+
+    // Remove the trigger before the read-back assertions (tidiness — the reads
+    // below don't UPDATE, but keep the fixture clean).
+    sqlx::query("DROP TRIGGER ppt_test_block_ea_update ON enforcement_actions")
+        .execute(&pool)
+        .await
+        .expect("drop trigger");
+
+    // The crux: INSERT and UPDATE must be atomic, so a failed UPDATE leaves NO
+    // fine_payments row. On the non-transactional impl the auto-committed
+    // INSERT survives and this count is 1 — money recorded without advancing
+    // the fine (#1361 partial write).
+    assert_eq!(
+        payments_count(&pool, action_id).await,
+        0,
+        "a failed balance update must roll back the fine_payments INSERT"
+    );
+
+    // And the aggregate balance stayed at its initial unpaid state.
+    let action = repo
+        .get_enforcement_action_for_org(action_id, org)
+        .await
+        .expect("query ok")
+        .expect("action exists");
+    assert_eq!(
+        action.paid_amount.unwrap_or_default(),
+        Decimal::ZERO,
+        "paid_amount must be untouched after a rolled-back payment"
+    );
+    assert_eq!(
+        action.status,
+        EnforcementStatus::Pending,
+        "status must stay Pending when the payment rolled back"
+    );
+}

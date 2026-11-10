@@ -31,6 +31,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -225,11 +226,43 @@ function decodeJwtPayload(token: string | null | undefined): Record<string, unkn
   try {
     const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
     const padded = b64 + '==='.slice((b64.length + 3) % 4);
-    const json = atob(padded);
+    // JWT payloads are UTF-8; `atob` yields one char per byte, so decode the
+    // bytes explicitly or names with diacritics come out mangled.
+    const binary = atob(padded);
+    const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+    const json = new TextDecoder().decode(bytes);
     return JSON.parse(json) as Record<string, unknown>;
   } catch {
     return null;
   }
+}
+
+/**
+ * Clock-skew / near-expiry buffer (seconds). An access token whose `exp` claim
+ * is within this window of "now" is treated as already expired at cold boot, so
+ * the init path routes through the silent refresh instead of marking the
+ * session authenticated with a token the very next request would 401 on.
+ */
+const TOKEN_EXPIRY_SKEW_SECONDS = 30;
+
+/**
+ * True when the JWT is expired, or within TOKEN_EXPIRY_SKEW_SECONDS of expiring.
+ *
+ * Used at cold boot to decide whether a stored access token can be trusted to
+ * mark the session authenticated, or whether we must route through the silent
+ * refresh path first (avoiding an authenticated -> 401 -> refresh flicker).
+ *
+ * A token we cannot decode, or one that carries no numeric `exp` claim, is
+ * treated as NOT expired here: we can't prove it is stale (it may be an opaque
+ * token), and the runtime 401 interceptor remains the backstop for such cases.
+ */
+function isAccessTokenExpired(token: string | null | undefined): boolean {
+  const claims = decodeJwtPayload(token);
+  if (!claims) return false;
+  const exp = claims.exp;
+  if (typeof exp !== 'number') return false;
+  const nowSeconds = Date.now() / 1000;
+  return exp <= nowSeconds + TOKEN_EXPIRY_SKEW_SECONDS;
 }
 
 /**
@@ -262,6 +295,53 @@ export function deriveActiveRole(
     if (tenants.some((t) => t.role === role)) return role;
   }
   return tenants[0].role;
+}
+
+/**
+ * Build the session user from a login / SSO token response.
+ *
+ * api-server's `POST /auth/login` (and the SSO exchange) return only the token
+ * pair plus `tenants` — there is no embedded `user` object. Reading
+ * `response.user.role` therefore threw "Cannot read properties of undefined"
+ * and made every real (non-mock) sign-in fail. When `user` is absent we derive
+ * it from the access-token claims (`sub`, `email`, `name`) and the active
+ * tenant membership, which also supplies the organization used for the
+ * `X-Tenant-ID` header.
+ */
+export function buildSessionUser(response: {
+  accessToken: string;
+  tenants?: TenantMembership[];
+  user?: AuthUser | null;
+}): AuthUser {
+  const role = response.user?.role ?? deriveActiveRole(response.accessToken, response.tenants);
+  const tenants = response.tenants ?? [];
+  const claims = decodeJwtPayload(response.accessToken) ?? {};
+  const claimTenantId = typeof claims.tenant_id === 'string' ? claims.tenant_id : undefined;
+  const activeTenant =
+    tenants.find((t) => t.tenantId === claimTenantId) ??
+    tenants.find((t) => t.role === role) ??
+    tenants[0];
+
+  if (response.user) {
+    return {
+      ...response.user,
+      ...(role != null ? { role } : {}),
+      organizationId: response.user.organizationId ?? activeTenant?.tenantId,
+      organizationName: response.user.organizationName ?? activeTenant?.tenantName,
+    };
+  }
+
+  const name = typeof claims.name === 'string' ? claims.name.trim() : '';
+  const [firstName, ...rest] = name ? name.split(/\s+/) : [];
+  return {
+    id: typeof claims.sub === 'string' ? claims.sub : '',
+    email: typeof claims.email === 'string' ? claims.email : '',
+    firstName: firstName || undefined,
+    lastName: rest.length > 0 ? rest.join(' ') : undefined,
+    role,
+    organizationId: activeTenant?.tenantId,
+    organizationName: activeTenant?.tenantName,
+  };
 }
 
 // ============================================================================
@@ -307,6 +387,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const isRefreshing = useRef(false);
   const refreshPromise = useRef<Promise<string | null> | null>(null);
 
+  // Holds the latest 401 handler so the configureApiClient effect below can be
+  // registered exactly once (stable deps) yet always invoke the current logic.
+  // `handleUnauthorized` closes over `refreshToken`/`logout`, whose identities
+  // change across renders; routing through a ref avoids re-running the
+  // configure effect (which would tear down and recreate the axios instance)
+  // on every one of those changes.
+  const onUnauthorizedRef = useRef<() => Promise<string | null>>(async () => null);
+
   // Derived state
   const isAuthenticated = user !== null;
 
@@ -321,8 +409,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
   /**
    * Set up the token provider for all API modules.
    * This ensures that all API calls automatically include the auth token.
+   *
+   * A *layout* effect on purpose: React runs passive effects child-first, and
+   * TanStack Query starts a mounted query's fetch from a passive effect. With
+   * `useEffect` here, a hard reload / deep link fired the page's first request
+   * before the provider existed — it went out without `Authorization` (401)
+   * and only the query retry recovered. Layout effects all run before any
+   * passive effect, so the provider is in place for the first request.
    */
-  useEffect(() => {
+  useLayoutEffect(() => {
     // Register the token provider with the generated @ppt/api-client modules.
     setTokenProvider(getAccessToken);
 
@@ -334,7 +429,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // with no token getter and every request goes out WITHOUT an Authorization
     // header. Wiring it here — alongside setTokenProvider — keeps a single
     // source of truth for the access token (getAccessToken).
-    configureApiClient({ getToken: getAccessToken });
+    //
+    // `onUnauthorized` fires from the response interceptor on a 401. It is
+    // routed through `onUnauthorizedRef` (kept current by the effect below) so
+    // this effect stays single-run: the actual handler attempts a silent token
+    // refresh and, failing that, tears down the session so ProtectedRoute
+    // redirects to login. Without this, the interceptor's 401 branch was dead
+    // and getApiClient() consumers stayed stuck on an expired access token.
+    configureApiClient({
+      getToken: getAccessToken,
+      onUnauthorized: () => onUnauthorizedRef.current(),
+    });
 
     // Clean up on unmount
     return () => {
@@ -345,8 +450,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Register the active-org provider so the api-client's auth interceptor can
   // send X-Tenant-ID (#1522). Re-registered when the user/org changes so the
-  // provider always reports the current organization.
-  useEffect(() => {
+  // provider always reports the current organization. Layout effect for the
+  // same reason as the token provider above: the pages mounted by the render
+  // that restores `user` fetch from passive effects, which would otherwise
+  // run before this registration and go out without X-Tenant-ID.
+  useLayoutEffect(() => {
     setOrgProvider(() => user?.organizationId ?? null);
     return () => {
       clearOrgProvider();
@@ -409,25 +517,38 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const accessToken = tokenStorage.getAccessToken();
         const refreshTokenValue = tokenStorage.getRefreshToken();
 
-        if (storedUser && accessToken) {
-          // Validate the token is not expired (basic check)
-          // In production, we might verify with the server
+        if (storedUser && accessToken && !isAccessTokenExpired(accessToken)) {
+          // Stored access token is present AND still valid (its `exp` claim is
+          // in the future, past the clock-skew buffer). Safe to mark the
+          // session authenticated without a network round-trip.
           setUser(storedUser);
         } else if (refreshTokenValue) {
-          // Cold-boot refresh: route through refreshTokenInternal (the SAME
-          // routine used by the runtime silent-refresh path) rather than
-          // calling authApi.refreshToken inline. The inline version persisted
-          // the rotated tokens but re-hydrated `user` straight from storage,
-          // so a server-side role change was NOT picked up on a cold boot —
-          // the user kept a stale role until the next runtime refresh or a
-          // full re-login. refreshTokenInternal re-derives the role from the
-          // fresh access token + persisted tenant memberships (#574) and owns
-          // its own failure cleanup (clear + de-auth + rethrow).
+          // Cold-boot refresh. Two cases funnel here:
+          //   1. No live access token at all (tab closed past its lifetime, or
+          //      the access token was cleared) — the classic cold boot.
+          //   2. A stored access token that is expired or near-expiry — before
+          //      this guard, initializeAuth marked the session authenticated
+          //      from the stale token (the comment claimed an `exp` check that
+          //      did not exist), so the first authenticated request 401'd and
+          //      only THEN triggered a refresh: an authenticated -> 401 ->
+          //      refresh flicker on every cold boot with an expired token.
+          //      Routing through the silent refresh up front avoids it.
+          //
+          // Either way we go through refreshTokenInternal (the SAME routine the
+          // runtime silent-refresh path uses) rather than calling
+          // authApi.refreshToken inline: it re-derives the role from the fresh
+          // access token + persisted tenant memberships (#574) and owns its own
+          // failure cleanup (clear + de-auth + rethrow).
           try {
             await refreshTokenInternal();
           } catch {
             // refreshTokenInternal already cleared storage and reset the user.
           }
+        } else if (accessToken) {
+          // An expired/near-expiry access token with NO refresh token can't be
+          // recovered — leave the session anonymous rather than authenticating
+          // on a token the next request would 401 on. Purge the stale tokens.
+          tokenStorage.clear();
         }
       } catch {
         // Clear any invalid stored data
@@ -473,10 +594,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // Derive role from the JWT `tenant_id` claim (or, failing that, the
       // highest-privilege membership) instead of `tenants[0]`. See #482.
-      const derivedRole =
-        response.user.role ?? deriveActiveRole(response.accessToken, response.tenants);
-      const userWithRole: AuthUser =
-        derivedRole != null ? { ...response.user, role: derivedRole } : response.user;
+      const userWithRole: AuthUser = buildSessionUser(response);
 
       // Store tokens, user, and tenant memberships.
       // Tenants are persisted so that refreshTokenInternal can call
@@ -510,10 +628,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const authApi = getAuthApi();
       const response = await authApi.exchangeSsoCode(request);
 
-      const derivedRole =
-        response.user.role ?? deriveActiveRole(response.accessToken, response.tenants);
-      const userWithRole: AuthUser =
-        derivedRole != null ? { ...response.user, role: derivedRole } : response.user;
+      const userWithRole: AuthUser = buildSessionUser(response);
 
       tokenStorage.setAccessToken(response.accessToken);
       tokenStorage.setRefreshToken(response.refreshToken);
@@ -578,6 +693,45 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [queryClient]);
 
   /**
+   * Handle a 401 surfaced by the shared axios client (getApiClient). The
+   * access token has expired or been revoked, so every in-flight feature-hook
+   * request is failing. Recovery mirrors the intended `onUnauthorized` design:
+   *
+   *  - If a refresh token is available, perform a single silent refresh
+   *    (deduplicated via `refreshToken`'s in-flight guard, so concurrent 401s
+   *    all await one refresh round-trip) and return the rotated access token.
+   *    The interceptor awaits this and replays the failed request once with the
+   *    new token; on failure `refreshTokenInternal` has already cleared storage
+   *    and de-authenticated the user, and we resolve `null` so the interceptor
+   *    lets the original request reject.
+   *  - If there is no refresh token, nothing can recover the session — log out
+   *    so ProtectedRoute redirects to the login screen, and resolve `null`.
+   *
+   * Returns the rotated access token on success, or `null` when the session
+   * could not be recovered.
+   */
+  const handleUnauthorized = useCallback(async (): Promise<string | null> => {
+    if (tokenStorage.getRefreshToken()) {
+      try {
+        // Single-flight: concurrent 401s share the one in-flight refresh.
+        return await refreshToken();
+      } catch {
+        // refreshTokenInternal already cleared storage + de-authenticated.
+        return null;
+      }
+    }
+    await logout();
+    return null;
+  }, [refreshToken, logout]);
+
+  // Keep the ref read by the configureApiClient effect pointed at the current
+  // handler, so a 401 always runs the latest refresh/logout closures without
+  // re-registering the axios interceptors.
+  useEffect(() => {
+    onUnauthorizedRef.current = handleUnauthorized;
+  }, [handleUnauthorized]);
+
+  /**
    * Update the in-memory user and persist to storage. Lets profile-edit
    * surfaces refresh the cached `user` so the UI doesn't show stale data
    * until the next reload.
@@ -638,7 +792,7 @@ AuthProvider.displayName = 'AuthProvider';
  *   }
  *
  *   return <div>Welcome, {user.firstName}!</div>;
- * }
+ *   }
  * ```
  */
 export function useAuth(): AuthContextValue {

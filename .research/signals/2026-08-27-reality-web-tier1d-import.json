@@ -1,0 +1,60 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-27T00:00:00Z",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "oldest-unreviewed (Tier-1d demand-driven; no CHURN_FILES passed for this run. state.review_cursor.reality-web = 2026-08-18 is the oldest across all 8 segments and demand-driven runs do not advance state.json, so the literal skill selection rule still resolves to reality-web; segment has 0 open code-review-finding items in backlog.json -> no saturation-skip. An earlier 2026-08-27 Tier-1d run covered a DIFFERENT reality-web file cluster (account/listings edit i18n); this run targets the non-overlapping components/import/* write flows. reality-server (next-oldest, 2026-08-19) was also statically reviewed and found hardened -- safe unwraps, membership-gated agency SQL, issue-#820 redirect hardening, no unsafe/todo -- so it produced no landable findings.)",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 3,
+  "note": "Import wizard write flows in reality-web (Epic 46) share a systemic error-handling gap: the create/delete/toggle handlers await useMutation.mutateAsync(...) with no try/catch and never render mutation.error. The underlying hooks (packages/reality-api-client/src/import/hooks.ts useCreateFeedSource/useCreateCrmConnection/useUpdate*/useDelete*) define onSuccess invalidation but NO onError, so error surfacing is entirely the caller's responsibility -- which CsvImport does correctly (renders importMutation.error via <ErrorState> at CsvImport.tsx:174) but FeedImport and CrmConnection do not. mutateAsync (unlike mutate) rejects on failure, so each unguarded call is also an unhandled promise rejection. All three are landable React fixes contained to frontend/apps/reality-web (no backend/API/schema change). The rest of the segment reviewed (import upload/mapping validation, listing-detail SSR null-checking, comparison URL handler, RealtorManagement, i18n adoption 67/126) is in good shape.",
+  "signals": [
+    {
+      "id": "code-review-reality-web-feedimport-create-no-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/FeedImport.tsx:480-489 handleCreate() does `await createMutation.mutateAsync({...}); onClose();` with NO try/catch.",
+        "createMutation (useCreateFeedSource, FeedImport.tsx:466) is referenced only for `.isPending` (button label at L659/661); `createMutation.error` is NEVER rendered anywhere in the file. On a failed feed-source creation the modal stays open (onClose never runs) and the user sees no error message.",
+        "The backing hook packages/reality-api-client/src/import/hooks.ts:280 useCreateFeedSource defines onSuccess (invalidateQueries) but NO onError, so error surfacing is the caller's job -- and mutateAsync (not mutate) rejects on failure, making the unguarded call an unhandled promise rejection.",
+        "Inconsistent with the sibling CsvImport.tsx:174 which correctly renders `{importMutation.error && <ErrorState message={t('csv.importFailed')} .../>}`. Fix: wrap mutateAsync in try/catch (only call onClose() on success) and/or render `createMutation.error` as an inline error state, mirroring CsvImport."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-crmconn-create-no-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/CrmConnection.tsx:389-404 handleCreate() does `await createMutation.mutateAsync({ provider, name, credentials: { apiKey, instanceUrl }, ... }); onClose();` with NO try/catch.",
+        "createMutation (useCreateCrmConnection, CrmConnection.tsx:367) is used only for `.isPending` (button at L557/559); `createMutation.error` is never rendered. A failed connection persist (e.g. credentials rejected server-side) gives the user zero feedback -- the earlier `testMutation` result is shown, but the actual create failure is silent -- plus an unhandled promise rejection.",
+        "Backing hook packages/reality-api-client/src/import/hooks.ts:144 useCreateCrmConnection has onSuccess only, no onError.",
+        "This is the credential-carrying write path (apiKey typed at CrmConnection.tsx:361/483), so a silent create failure is the worst UX case -- the realtor believes the CRM is connected. Fix: try/catch around mutateAsync (onClose only on success) and render createMutation.error inline, matching CsvImport.tsx:174."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-import-delete-toggle-unhandled",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/FeedImport.tsx:154-158 handleTogglePause() and :160-165 handleDelete() both `await updateMutation/deleteMutation.mutateAsync(...)` with no try/catch and no error surface.",
+        "frontend/apps/reality-web/src/components/import/CrmConnection.tsx:168-172 handleDelete() `await deleteMutation.mutateAsync(connection.id)` with no try/catch and no error surface.",
+        "These hooks (useUpdateFeedSource/useDeleteFeedSource/useDeleteCrmConnection in packages/reality-api-client/src/import/hooks.ts) have no onError, so a failed pause/remove rejects mutateAsync (unhandled promise rejection) and, from the user's view, the row silently fails to change state with no toast/error. Fix: add try/catch with a user-visible error (toast or inline) on these destructive/state-changing actions."
+      ]
+    }
+  ]
+}

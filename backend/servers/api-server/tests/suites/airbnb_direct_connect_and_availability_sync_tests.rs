@@ -154,6 +154,17 @@ async fn seed_user(pool: &PgPool) -> Uuid {
     .expect("seed user")
 }
 
+/// Seed a real user who is an active `role` member of `org_id`.
+///
+/// The handlers resolve the caller's org access and role from
+/// `organization_members` for the path org (login JWTs carry neither claim),
+/// so the token claims alone no longer authorize anything.
+async fn seed_member(pool: &PgPool, org_id: Uuid, role: &str) -> Uuid {
+    let user_id = seed_user(pool).await;
+    crate::common::seed_membership(pool, org_id, user_id, role).await;
+    user_id
+}
+
 // ---------------------------------------------------------------------------
 // Request helpers
 // ---------------------------------------------------------------------------
@@ -272,7 +283,7 @@ async fn direct_connect_rejects_mismatched_tenant(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_a = seed_org(&pool, "dc-idor-a").await; // target org
     let org_b = seed_org(&pool, "dc-idor-b").await; // caller's JWT tenant
-    let user_id = Uuid::new_v4();
+    let user_id = seed_member(&pool, org_b, "manager").await;
 
     let token = mint_manager_token(user_id, org_b);
     let resp = app
@@ -311,9 +322,8 @@ async fn direct_connect_rejects_mismatched_tenant(pool: PgPool) {
     );
 }
 
-/// A missing `tenant_id` claim (token never scoped to an org) must also be
-/// rejected: `auth.tenant_id != Some(path.org_id)` is true when the claim is
-/// `None`.
+/// A caller with no membership in the path org (token without a `tenant_id`
+/// claim, like a login token) must be rejected.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn direct_connect_rejects_missing_tenant_claim(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -345,7 +355,7 @@ async fn direct_connect_rejects_missing_tenant_claim(pool: PgPool) {
 async fn direct_connect_rejects_insufficient_role(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "dc-role").await;
-    let user_id = Uuid::new_v4();
+    let user_id = seed_member(&pool, org_id, "tenant").await;
 
     let token = mint_token_with_role(user_id, Some(org_id), "tenant");
     let resp = app
@@ -415,7 +425,7 @@ async fn direct_connect_platform_admin_bypasses_tenant_mismatch(pool: PgPool) {
 async fn direct_connect_authorized_request_reaches_not_configured(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "dc-notconfigured").await;
-    let user_id = Uuid::new_v4();
+    let user_id = seed_member(&pool, org_id, "manager").await;
 
     let token = mint_manager_token(user_id, org_id);
     let resp = app
@@ -525,7 +535,7 @@ async fn direct_connect_happy_path_upserts_connection(pool: PgPool) {
 
     let app = TestApp::with_airbnb_config(pool.clone(), airbnb_config).await;
     let org_id = seed_org(&pool, "dc-happy").await;
-    let user_id = Uuid::new_v4();
+    let user_id = seed_member(&pool, org_id, "manager").await;
     let token = mint_manager_token(user_id, org_id);
 
     let resp = app
@@ -640,7 +650,7 @@ async fn availability_sync_rejects_mismatched_tenant(pool: PgPool) {
     let org_a = seed_org(&pool, "as-idor-a").await;
     let org_b = seed_org(&pool, "as-idor-b").await;
     seed_org_level_airbnb_connection(&pool, org_a).await;
-    let user_id = Uuid::new_v4();
+    let user_id = seed_member(&pool, org_b, "manager").await;
 
     let token = mint_manager_token(user_id, org_b);
     let resp = app
@@ -675,7 +685,7 @@ async fn availability_sync_rejects_insufficient_role(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "as-role").await;
     seed_org_level_airbnb_connection(&pool, org_id).await;
-    let user_id = Uuid::new_v4();
+    let user_id = seed_member(&pool, org_id, "resident").await;
 
     let token = mint_token_with_role(user_id, Some(org_id), "resident");
     let resp = app
@@ -705,7 +715,7 @@ async fn availability_sync_rejects_insufficient_role(pool: PgPool) {
 async fn availability_sync_returns_404_when_no_connection(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "as-noconn").await;
-    let user_id = Uuid::new_v4();
+    let user_id = seed_member(&pool, org_id, "manager").await;
 
     let token = mint_manager_token(user_id, org_id);
     let resp = app
@@ -750,7 +760,7 @@ async fn availability_sync_happy_path_enqueues_job(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "as-happy").await;
     let conn_id = seed_org_level_airbnb_connection(&pool, org_id).await;
-    let user_id = seed_user(&pool).await;
+    let user_id = seed_member(&pool, org_id, "manager").await;
 
     let token = mint_manager_token(user_id, org_id);
     let resp = app

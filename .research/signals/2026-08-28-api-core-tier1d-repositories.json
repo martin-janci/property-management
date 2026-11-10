@@ -1,0 +1,61 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-28T00:00:00Z",
+  "segment_reviewed": "api-core",
+  "selection_reason": "oldest-unreviewed",
+  "selection_detail": "Standalone Tier-1d demand-driven run (buffer starved: honest_claimable=6, all mobile-native/KMP-gated and AGP-egress-blocked in the cloud runner, so a NON-mobile-native segment was required to produce landable vectors). No CHURN_FILES passed. REVIEW_CURSOR oldest entries were api-core (2026-08-21) tied with ppt-web-core (2026-08-21); tie broken toward api-core by segment-map order and higher security value. Saturation check passed: zero open code-review-sourced backlog items in ANY segment (all prior are done/dropped), so no saturation-skip. By run time every non-mobile segment already had a 2026-08-28 Tier-1d file and api-core already had TWO (2026-08-28-api-core-tier1d.json = middleware idempotency.rs + rls_context.rs; 2026-08-28-api-core-tier1d-services.json = services/push_fanout.rs + services/scheduler/mod.rs), so the marginal value is net-new distinct findings in an UNCOVERED sub-layer. This supplement reviews the DB REPOSITORIES layer (backend/crates/db/src/repositories/), which the api-core convention has historically owned (prior security-equipment-idor / security-voice-device-idor / security-llm-doc-idor were all sourced 'code-review api-core' while citing crates/db repositories). Both findings below land in the rental repository cluster (rental/connections.rs, rental/ical.rs, rental/guests.rs, rental/calendar.rs, rental/bookings.rs, rental/reports.rs) plus one test-dir gap — entirely distinct files and ids from the four earlier api-core signals, so they are additive rather than duplicative. Static-only Rust review: grep sweep of the full services + core layer for unwrap/expect/unsafe/todo/panic/mutex-poison/secrets-in-logs (all clean — the backend is disciplined: startup-only unwraps, poison-safe .lock().unwrap_or_else(|e| e.into_inner()), a mature TOCTOU-aware SSRF guard in services/actions/api_call.rs), then an IDOR-scoping sweep of DELETE/UPDATE ... WHERE id = $1 across all 114 repository files. Distinguished the SAFE _rls/Executor pattern (outage.rs delete_rls, sensor/*.rs — rely on RLS session context on the passed executor) and the SAFE lookup-then-mutate pattern (organization_member.update is id-only but every route caller pre-scopes via find_by_org_and_user(org_id, ...)) from the UNSAFE &self.pool + id-only pattern that the #804/#887 remediation was created to fix.",
+  "experts_used": ["rust"],
+  "findings_count": 2,
+  "note": "api-core (Rust, DB repositories layer) — both findings land in backend/crates/db/src/repositories/rental/ (+ crates/db/tests/), fully landable in the cloud runner (no mobile-native/AGP dependency). Distinct from the four earlier 2026-08-28 api-core signals (middleware + services).",
+  "signals": [
+    {
+      "id": "code-review-api-core-rental-dead-unscoped-idor",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-28 api-core repositories)",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "rust",
+      "files": [
+        "backend/crates/db/src/repositories/rental/connections.rs",
+        "backend/crates/db/src/repositories/rental/ical.rs",
+        "backend/crates/db/src/repositories/rental/guests.rs",
+        "backend/crates/db/src/repositories/rental/calendar.rs",
+        "backend/crates/db/src/repositories/rental/bookings.rs",
+        "backend/crates/db/src/repositories/rental/reports.rs"
+      ],
+      "evidence": [
+        "The #804/#887 cross-org IDOR remediation added org-scoped `*_for_org` variants across the rental repository cluster (delete_connection_for_org, update_connection_for_org, delete_ical_feed_for_org, update_ical_feed_for_org, delete_guest_for_org, update_guest_for_org, register_guest_for_org, delete_calendar_block_for_org, update_booking_for_org, submit_report_for_org, get_booking_with_guests_for_org) and rewired every rental route handler to the scoped variants (rentals.rs calls `_for_org` 20x; delete handlers at rentals.rs:385 delete_connection_for_org, :1037 delete_guest_for_org, :1841 delete_ical_feed_for_org). Each scoped method carries an explicit SECURITY (#804/#887) comment stating the `AND organization_id = $2` guard is what prevents a tenant from mutating another org's row.",
+        "BUT the original UNSCOPED pool-based siblings were never removed and remain pub on the repository API surface: rental/connections.rs:227 `DELETE FROM rental_platform_connections WHERE id = $1` (delete_connection) and update_connection; rental/ical.rs:171 `DELETE FROM rental_ical_feeds WHERE id = $1` (delete_ical_feed) and update_ical_feed (ical.rs UPDATE ... WHERE id = $1); rental/guests.rs:336 `DELETE FROM rental_guests WHERE id = $1` (delete_guest), plus update_guest / register_guest / get_booking_with_guests; rental/calendar.rs delete_calendar_block; rental/bookings.rs update_booking; rental/reports.rs submit_report.",
+        "Critically, these unscoped methods execute against `&self.pool` (NOT an RLS-scoped Executor), so unlike the outage.rs `delete_rls`/sensor `_rls` methods they get NO row-level-security protection — that absence is exactly why the remediation had to add a manual `AND organization_id = $2`. A caller of the shorter unscoped name deletes/updates ANY tenant's row by guessing a UUID.",
+        "Reachability: confirmed DEAD as of HEAD (origin/dev) — a repo-wide grep for callers of each unscoped rental method (excluding the definition and the `_for_org` name) finds no production route caller (delete_connection/update_connection callers resolve to the government_portal repo's 2-arg method; update_booking to the facilities repo; submit_report to the esg_reporting repo with an rls executor; the rental-specific delete_calendar_block / delete_ical_feed / delete_guest / update_ical_feed / register_guest / update_guest / get_booking_with_guests have ZERO callers). So there is no live IDOR today — this is a latent footgun, not an active vuln.",
+        "Risk = reintroduction: a fixed IDOR-class bug is one autocomplete away from returning. A future handler that calls `delete_guest(id)` instead of `delete_guest_for_org(org, id)` silently reopens the #804/#887 vulnerability with no compiler or reviewer signal, because both methods compile and the unsafe one has the shorter, more obvious name. Fix: delete the unscoped pool-based mutation siblings outright (nothing calls them), OR if any must stay for an internal/admin path, make them private + rename to an explicit `*_unscoped_admin` and add a doc comment stating the RLS/org-guard requirement. Landable as a single self-contained cleanup PR touching only the rental repo files (+ any now-unused imports); IG3 can assert via `grep` that no production route references an unscoped rental mutation.",
+        "Confidence medium: the scoped/unscoped sibling pairs, the `&self.pool` (non-RLS) execution, the id-only WHERE clauses, and the absence of production callers are all confirmed by static read + repo-wide grep; 'medium' rather than 'high' only because dead-code reachability is a point-in-time fact and the severity is latent-reintroduction rather than live-exploit."
+      ]
+    },
+    {
+      "id": "code-review-api-core-rental-idor-test-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-28 api-core repositories)",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "expert": "rust",
+      "files": [
+        "backend/crates/db/src/repositories/rental/connections.rs",
+        "backend/crates/db/src/repositories/rental/ical.rs",
+        "backend/crates/db/src/repositories/rental/guests.rs",
+        "backend/crates/db/tests/suites/"
+      ],
+      "evidence": [
+        "The #804/#887 rental IDOR fix added org-scoped `delete_connection_for_org`, `delete_ical_feed_for_org`, `delete_guest_for_org`, `update_connection_for_org`, `update_guest_for_org`, `delete_calendar_block_for_org`, `update_booking_for_org`, and `submit_report_for_org`, but there is NO cross-org regression test asserting that these scoped mutations refuse to touch another org's row (i.e. that calling `delete_*_for_org(org_B, id_owned_by_org_A)` returns rows_affected==0 / false and leaves the row intact).",
+        "Evidence of the gap: the db test suite HAS dedicated cross-org IDOR suites for adjacent domains — government_portal_connection_cross_org_idor_tests.rs, portal_imports_cross_org_idor_tests.rs, violations_cross_org_idor_tests.rs, inquiry_mark_read_idor_tests.rs, document_template_cross_tenant_tests.rs, esg_force_rls_cross_tenant_tests.rs — and the rental area has cross-tenant coverage for a DIFFERENT operation (rental_cross_tenant_upsert_tests.rs) and enum-decode coverage that happens to call update_guest_for_org (rental_guest_ical_enum_decode_tests.rs:227, asserting decode not scoping). But a grep across crates/db/tests + servers/api-server/tests for `delete_connection_for_org` / `delete_ical_feed_for_org` / `delete_guest_for_org` returns NO hit — the security-critical org guard on the rental DELETE/UPDATE paths is unverified.",
+        "This is the exact class of gap that the repo already treats as a first-class backlog item (see prior test-gap-inquiry-idor-regression: 'PR #497 fixed inquiry mark_as_read IDOR but shipped with NO test file'). The rental #804/#887 fix has the same shape: security guard shipped, regression test not.",
+        "Fix: add a `rental_mutation_cross_org_idor_tests.rs` suite that seeds org A + org B, creates a connection / ical feed / guest under org A, then asserts each `*_for_org(org_B, a_id)` mutation returns false/0-rows and the row still exists, and each `*_for_org(org_A, a_id)` succeeds. Pairs naturally with the dead-code removal in the sibling finding (the same PR that deletes the unscoped methods should lock in the scoped guard with a test). Landable in the cloud runner (db integration test, no mobile/AGP dependency); satisfies IG3 by failing on any branch where the `AND organization_id` guard is dropped.",
+        "Confidence medium: the absence of a rental delete/update cross-org test is confirmed by grep over the two test directories; 'medium' because a scoping assertion could in principle be buried inside a broader rental suite under a non-obvious name, though the naming convention (every other domain uses an explicit *_cross_org_idor / *_cross_tenant file) makes that unlikely."
+      ]
+    }
+  ]
+}

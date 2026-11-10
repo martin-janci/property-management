@@ -1,0 +1,58 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-24T06:30:00Z",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "churn-aligned",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-bookfacility-silent-availability",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx:49-56 — the checkAvailability fetch effect swallows failures with only console.error('Failed to fetch availability', err); no error state is set and no user-facing message is shown. On an availability API/network failure the booking form renders an empty slot list, indistinguishable from a facility that genuinely has no free slots (silent failure on a user-facing path, Epic 56).",
+        "Same effect (BookFacilityPage.tsx:52) never resets availableSlots before/on the failed fetch: setAvailableSlots(slots) is only reached on success. When the user changes selectedDate (dependency at :59) and the new date's checkAvailability call throws, the previously loaded slots for the OLD date remain in state and stay rendered and bookable — a stale-data correctness bug that can let a resident submit a booking against a slot that does not apply to the selected date.",
+        "Contrast BookFacilityPage.tsx:70-71 (submit path) and :91-105 (facility-load path) which DO surface an error via setError(...)/error UI — only the availability branch is silent, so this is an inconsistency within the same file rather than an app-wide pattern.",
+        "BookFacilityPage.tsx is a current churn hotspot (2 touches since 2026-08-15); no useQuery/useMutation here — the feature hand-rolls fetch + useState, so there is no TanStack Query isError fallback to catch this."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-silent-load-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx:68-71 — the listFacilities fetch catch block only calls console.error('Failed to fetch facilities', error) and then setIsLoading(false); it sets no error state and does not clear facilities. On a list-load failure the page transitions loading->empty and shows its normal empty/list UI, so an API/network error is presented to the manager as 'this building has no facilities'.",
+        "Recurring silent-load-error pattern in the same feature: BookFacilityPage.tsx:53-55 (checkAvailability) has the identical console.error-only branch. Both are user-facing GET paths in Epic 56 that hand-roll fetch+useState without TanStack Query, so there is no shared isError boundary — each page must surface its own error and none of these does.",
+        "Sibling pages that DO surface load errors (PendingBookingsPage.tsx:43-48, MyBookingsPage.tsx:42-47 both showToast on catch) show the correct pattern already exists in the feature; FacilitiesPage and BookFacilityPage's availability branch are the outliers.",
+        "FacilitiesPage.tsx is a current churn hotspot (list route /buildings/:id/facilities)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-hardcoded-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "expert": "completeness",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx:95,101,112,118 — user-facing fallback strings 'Facility not found', 'Go back' (x2), and 'This facility is not available for booking' are hardcoded English JSX, while the rest of the same file uses t('facilities.bookings.*'). The app ships 6 locales (en/de/cs/sk/pl/hu — see frontend/apps/ppt-web/messages/*.json), so these render English regardless of the active locale.",
+        "frontend/apps/ppt-web/src/features/facilities/pages/EditFacilityPage.tsx:74,80 — same hardcoded 'Facility not found' / 'Go back' fallback UI, same gap.",
+        "frontend/apps/ppt-web/src/features/facilities/pages/PendingBookingsPage.tsx:46,71,97 and MyBookingsPage.tsx:45,71,87 — error toast titles ('Failed to load pending bookings', 'Failed to approve booking', 'Failed to reject booking', 'Failed to load bookings', 'Failed to cancel booking') and the generic message 'An unexpected error occurred.' are hardcoded English even though these pages already import and use useTranslation for their list titles.",
+        "Low severity (no functional break) but a consistent localization gap concentrated in the facilities feature; batchable into one i18n key sweep."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-18",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable=0 < floor=36); CHURN_FILES empty so oldest-unreviewed rule — review_cursor.reality-web=2026-08-12 is the oldest among cloud-verifiable segments (mobile-native-kmp excluded per issue #2652 unlandable-in-cloud steer); reality-web has 0 open code-review-finding rows in backlog.json so not saturated",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-reality-web-inquiry-cancel-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx:47-50 — handleCancel fires cancelInquiry.mutate(inquiry.id) as fire-and-forget then immediately closes the confirm dialog (setShowCancelConfirm(false)); the useCancelInquiry mutation has no onError, and nothing renders cancelInquiry.isError, so a failed cancellation (network/409/permission) leaves the user believing the inquiry was cancelled while it still stands — a silent user-facing failure on a state-changing action. The list query on the same page does handle isLoading/error, so the mutation path is the gap."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-inquiries-page-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx — the entire Inquiries page has zero next-intl usage (no useTranslations import) despite living under app/[locale] on a sk/cs/de/en portal; user-facing strings are hardcoded English: statusConfig labels 'Pending'/'Responded'/'Scheduled'/'Completed'/'Cancelled' (lines 17-36), 'Viewing scheduled:' (95), 'Agent response:' (102), 'Cancel this inquiry?'/'Yes, cancel'/'No'/'Cancel inquiry' (114-135), 'No inquiries yet' empty state, and 'Failed to load inquiries. Please try again.' error state (331) — all render raw English in every non-English locale."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-savedsearches-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx — no next-intl usage at all; hardcoded English filter/status strings render across all four locales: 'For Sale'/'For Rent' (line 38), 'All listings' (55), 'Alerts on'/'Alerts off' toggle (86). Mirrors the inquiries-page gap; both account-area pages were built without the useTranslations pattern the agency components already use."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

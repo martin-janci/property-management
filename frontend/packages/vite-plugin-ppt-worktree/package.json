@@ -20,9 +20,9 @@
     "vite": "^7.0.0 || ^8.0.0"
   },
   "devDependencies": {
-    "vite": "^8.1.5",
+    "vite": "^8.2.2",
     "typescript": "^5.4.0",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.11"
   },
   "scripts": {
     "test": "vitest run"

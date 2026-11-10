@@ -1,0 +1,50 @@
+{
+  "generated": "2026-10-11T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (research buffer starved: claimable=7 < floor=36, backlog empty). Static single-segment rotating code review via the ppt-dev-review skill — no compilation / no test execution (cloud runner has no toolchain). File reading + grep only. Produces fresh CLOUD-LANDABLE frontend backlog vectors for the reality-web segment (frontend/apps/reality-web/src). Per the skill's >40-file narrowing rule (228 ts/tsx files) the slice targeted the recently-churned hotspots from the last ~20 commits — listings/[slug]/page.tsx (SSR detail), lib/realtor-api.ts (#3065), sell/page.tsx (#3066), report/page.tsx (#3067), app/[locale]/layout.tsx + api/layout-revalidate/route.ts, auth/callback/page.tsx, lib/auth-token.ts, lib/comparison-context.tsx — plus the two largest unreviewed files (RealtorManagement 1366L, CsvImport 1208L) and an i18n/error-surface sweep of components/import + components/agency + the account/listings edit page. VERIFIED CLEAN (dropped, not findings): listings/[slug]/page.tsx (robust — parseListingDetail normalizes body, !response.ok->null, notFound() emits real 404), realtor-api.ts (RealtorApiError wraps network+non-ok, all ids encodeURIComponent'd), layout.tsx bootstrap scripts (host-derived tenant config passed through serializeForScript, not raw JSON.stringify), api/layout-revalidate (HMAC sha256 + timingSafeEqual + timestamp-freshness + body-shape validation), auth/callback (CSRF nonce required when saved, open-redirect guard rejects // and /\\), auth-token.ts + comparison-context.tsx JSON.parse (both inside try/catch, corrupt entry wiped), import/agency mutation catch blocks (all set a user-facing i18n error state — FeedImport setActionError/setCreateError, CrmConnection setCreateError, RealtorManagement setInviteError, PriceAlerts setActionError; the adjacent console.error is intentional logging, a nit). price-map/profile/journal TODOs are ui-kit-swap design-debt markers, not reachable bugs.",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "churn-aligned + oldest-unreviewed (CHURN_FILES this cycle concentrate under frontend/apps/reality-web/src = 9 hits; review_cursor.reality-web = 2026-10-02 is the oldest of all 8 segments). No saturation: 0 open code-review-finding items in backlog.json for reality-web (only api-handlers has 3 open), so no saturation-skip — reality-web is both the churn pick and the oldest pick.",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-reality-web-listing-edit-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx — the authenticated listing-edit page renders almost entirely hardcoded Slovak strings in a 4-locale portal (en/sk/cs/de, routed under [locale]). The file only resolves i18n 5 times yet the whole form is Slovak-literal: L166 load-error fallback 'Načítanie inzerátu zlyhalo.', L213 save-error fallback 'Uloženie zlyhalo, skúste znova.', L429 label 'Adresa' / placeholder 'Ulica a číslo', L432 'Mesto / Obec', L465 'Plocha (m²)', L466 'Počet izieb', L469 'Rok výstavby', L827 button 'Ukladám…' / 'Uložiť zmeny'.",
+        "Reachable in production: this is the owner's primary listing-edit screen (UC-51). An en/cs/de user who opens /en/account/listings/<id>/edit sees Slovak-only labels, placeholders and error copy — a real i18n regression against the portal's multi-language requirement. Net-new: 0 prior reality-web signal/backlog mentions of this file; it is not in any earlier Tier-1d signal set.",
+        "Fix (frontend-only, cloud-landable, no backend/DB): move the heading, field labels/placeholders, the two error fallbacks and the save-button copy into the reality-web messages namespace for en/sk/cs/de and resolve via next-intl useTranslations (already used elsewhere in this app). Severity low (i18n gap, +1)."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-csvimport-fileselect-noval",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/components/import/CsvImport.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/CsvImport.tsx:58-64 — handleFileSelect (the <input type=file> onChange path) accepts ANY selected file and advances straight to the mapping step with no type check: `const selectedFile = e.target.files?.[0]; if (selectedFile) { setFile(selectedFile); setStep('mapping'); }`. The sibling drag-drop handler handleDrop (L47-56) DOES guard with `droppedFile?.type === 'text/csv' || droppedFile?.name.endsWith('.csv')`, so the two entry points are inconsistent.",
+        "The file input carries accept='.csv,text/csv' (L338) but `accept` is only a picker hint — a user can switch the dialog to All Files and pick a .xlsx/.png, which then flows into useCsvPreview/useCsvImport with an empty-id guard `agency?.id || ''`. Not a crash (server + preview surface a parse error downstream), but a validation gap and a drop-vs-select behavioral inconsistency.",
+        "Fix (frontend-only, cloud-landable): apply the same type/extension guard used in handleDrop inside handleFileSelect, and surface a non-CSV rejection message instead of silently advancing. Severity low (+1)."
+      ]
+    }
+  ]
+}

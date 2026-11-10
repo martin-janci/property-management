@@ -1,0 +1,31 @@
+[
+  {
+    "id": "code-review-api-core-fault-report-csv-injection",
+    "type": "code-review-finding",
+    "source": "rotating-expert-review",
+    "segment": "api-core",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/routes/reports/helpers.rs:188 — the fault-report CSV branch of generate_sync_csv_report embeds `cat.category` (and the neighbouring `status.status` / `priority.priority`) straight into the CSV via format! with no escaping: `csv.push_str(&format!(\"By Category,All,{},{},N/A,N/A\\n\", cat.category, cat.count))`.",
+      "backend/servers/api-server/src/routes/reports/helpers.rs:113 — the sibling voting export in the SAME file routes user text through `sanitize_csv_cell(&v.title)` (imported line 15) to neutralize CSV formula-injection and CR/LF row-spill (regression #2822); the fault branch never calls it, so the two export paths are inconsistent and the fault path is unguarded.",
+      "backend/servers/api-server/src/routes/faults.rs:466 — `category: req.category` is copied from the create-fault request into CreateFault with no enum/allowlist validation, so a tenant can persist an arbitrary category string (e.g. `=cmd|'/c calc'!A1`, or one containing `,` / CRLF). That string flows through the by_category GROUP BY aggregate (crates/db fault repo) into the unescaped CSV cell above, giving a stored CSV formula-injection / column-spill vector when a manager opens the exported report in Excel/LibreOffice."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-api-core-market-pricing-db-error-swallow",
+    "type": "code-review-finding",
+    "source": "rotating-expert-review",
+    "segment": "api-core",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/routes/market_pricing.rs:459 — `list_regions(org_id).await.unwrap_or_default()` swallows any DB error into an empty region list, so a transient DB failure is indistinguishable from 'no regions configured'.",
+      "backend/servers/api-server/src/routes/market_pricing.rs:471 — `get_market_comparables(...).await.unwrap_or_default()` similarly turns a DB error into zero comparables; the downstream generate_statistical_pricing then silently falls back to the size-based estimate (market_pricing.rs:744) and returns a fabricated confidence, so a money-relevant pricing recommendation can be computed on empty data caused by an error while presenting as authoritative — the failure is neither surfaced to the caller nor logged as an error."
+    ],
+    "expert": "rust"
+  }
+]

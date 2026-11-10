@@ -200,11 +200,26 @@ export class DeepLinkManager {
   private handlers: Set<DeepLinkHandler> = new Set();
   private pendingLink: ParsedDeepLink | null = null;
   private isAuthenticated = false;
+  /**
+   * The `'url'` event subscription. Kept so re-initialisation and teardown can
+   * remove the previous listener instead of leaking it (a discarded
+   * subscription keeps firing, so a second `initialize()` would stack a second
+   * listener and double-dispatch every incoming URL).
+   */
+  private urlSubscription: ReturnType<typeof Linking.addEventListener> | null = null;
 
   /**
    * Initialize deep link handling.
+   *
+   * Idempotent: calling `initialize()` again removes the previous `'url'`
+   * listener before registering a fresh one, so listeners never stack and
+   * `handleUrl` fires exactly once per incoming URL.
    */
   async initialize(): Promise<void> {
+    // Drop any listener from a previous initialize() so we don't stack them.
+    this.urlSubscription?.remove();
+    this.urlSubscription = null;
+
     // Handle initial URL (app opened via deep link)
     const initialUrl = await Linking.getInitialURL();
     if (initialUrl) {
@@ -212,9 +227,19 @@ export class DeepLinkManager {
     }
 
     // Listen for incoming deep links
-    Linking.addEventListener('url', (event) => {
+    this.urlSubscription = Linking.addEventListener('url', (event) => {
       this.handleUrl(event.url);
     });
+  }
+
+  /**
+   * Tear down deep link handling: remove the `'url'` listener.
+   *
+   * Safe to call multiple times and before `initialize()`.
+   */
+  cleanup(): void {
+    this.urlSubscription?.remove();
+    this.urlSubscription = null;
   }
 
   /**

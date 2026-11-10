@@ -1,0 +1,61 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-16",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claim buffer starved; only open backlog items are mobile-native-kmp, structurally unlandable in the cloud runner — AGP egress 403-blocked). SEGMENT-SELECTION OVERRIDE from dispatcher: exclude mobile-native-kmp (reviewed today, unlandable). Oldest-unreviewed LANDABLE per state.json review_cursor is a 4-way tie at 2026-08-12 (ppt-web-ui, ppt-web-core, reality-web, mobile-rn); all four already received 2026-08-16 tier1d signal files this run-day, so no un-touched landable segment remains. Stayed on ppt-web-ui (tie-broken by segment-map order; NOT saturated — 0 open code-review-finding rows for it in backlog.json, the today signal files are not yet ingested) and deliberately covered FRESH ground the three earlier 2026-08-16 ppt-web-ui passes did not touch: they hit the compliance cluster + shared ConfirmationDialog/LanguageSwitcher; this pass targets features/facilities/, features/portfolio-performance/, and features/workflow-automation/. Verified each finding is not a duplicate of any seen_signals id or any 2026-08-16 sibling signal file. Experts: frontend (primary) + completeness (secondary). Static-only: file reads + grep, no compile/test. Landable via the frontend verify gate (biome + typecheck + vitest).",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-facilities-swallowed-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/PendingBookingsPage.tsx — the manager-facing approve/reject actions swallow API failures with no user-facing feedback. handleApprove (L54-63) and handleRejectConfirm (L74-89) wrap approveBooking/rejectBooking in try/catch whose only failure handling is `console.error(...)`; on error the in-try `refreshBookings()` is skipped so the list is not even reloaded. A manager who clicks Approve on a booking that fails server-side sees the row unchanged and NO error — indistinguishable from a slow success — and may believe the booking was approved when it was not.",
+        "Same file, refreshBookings (L30-44): a failed listPendingBookings is caught to console.error only, then isLoading is set false with bookings left as the previous/empty array. On the initial load path this renders the BookingList empty-state, so a fetch error is shown to the manager as 'no pending bookings' — actively hiding pending approvals. Identical masking in features/facilities/pages/FacilitiesPage.tsx (fetchFacilities L58-72: catch → console.error only → empty FacilityList) and features/facilities/pages/MyBookingsPage.tsx (fetch L38-39 and cancel L75-76: catch → console.error only).",
+        "Confirmed no error surface exists in the whole feature: grep for setError|toast|ErrorBanner|<Alert|errorMessage across PendingBookingsPage.tsx, MyBookingsPage.tsx, FacilitiesPage.tsx returns nothing. The codebase already has the correct pattern to copy — features/emergency/pages/EmergencyContactDirectoryPage.tsx handleCreate/handleUpdate (L97-133) set an error state AND use i18n: `setError(err instanceof Error ? err.message : t('emergency.errors.failedToCreate'))`. Fix: give the facilities pages the same error state (surface a banner/toast on load + action failure, and do not render the empty-state when the last load errored), reusing t('...') keys. Confidence medium: reachability is certain; whether the backend can realistically 4xx these calls in normal use was not runtime-confirmed.",
+        "expert: frontend"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfoliolist-mock-data",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioListPage.tsx:11-49 ships a shipped, route-mounted page that renders a HARDCODED `mockPortfolios` constant instead of real data. The comment on L10 says '// Mock data - would be fetched from API'. The page imports only React, useState, and PortfolioCard (L2-4) — there is no API client, no useQuery, no loading/error state — so every manager who opens the Portfolio list is shown three fabricated portfolios with fake financials (e.g. 'Core Investment Portfolio' €2,500,000 value / €1,200,000 equity / 4 properties, L14-23).",
+        "The fake data drives real UI math: the summary tiles are computed from the mock via `mockPortfolios.filter(p => p.isActive).reduce(...)` (L60-71, totalValue/totalEquity/propertyCount) and the show-inactive toggle filters the mock (L57-58). Nothing here degrades gracefully to real data — the API wiring simply does not exist, so this is fabricated business data presented as genuine, not a stub placeholder.",
+        "Distinct from the existing (dropped) `dx-portfolio-dashboard-stubs` signal, which concerns PortfolioDashboardPage.tsx no-op alert mutations + navigation TODOs — a different file and different concern. Fix: replace mockPortfolios with the real portfolios list query (mirror the useQuery + loading/empty/error pattern used elsewhere in the feature) and delete the constant. Confidence medium: the mock rendering is certain from static read; whether a backing portfolios list endpoint/client already exists was not fully traced.",
+        "expert: completeness"
+      ],
+      "expert": "completeness"
+    },
+    {
+      "id": "code-review-ppt-web-ui-workflow-builder-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/components/ActionBuilder.tsx and .../ConditionBuilder.tsx render user-facing copy as hardcoded English string literals with no useTranslation/t() — 16+ instances across the two files. Examples in ActionBuilder.tsx: placeholder=\"Describe what this automation does...\" (L237), placeholder=\"Notification title\" (L181), placeholder=\"Recipient email(s)\" (L208), placeholder=\"Webhook URL (must start with https://)\" (L263), <option> labels Minutes/Hours/Days (L248-250), and title tooltips 'Move up'/'Move down'/'Remove action' (L278/L300/L322). ConditionBuilder.tsx: <option value=\"\">Select...</option> (L203), placeholder=\"Value\" (L216/L225), title=\"Remove condition\" (L236).",
+        "This is a shipped Epic feature (workflow automation rule builder) whose sibling components DO use i18n (RuleCard.tsx, RuleBuilder.tsx, TriggerSelector.tsx, TemplatePreviewModal.tsx all import useTranslation per grep), so the builder inputs are an inconsistent i18n gap in a product that ships sk/cs/de/en. Non-English users see raw English placeholders and tooltips throughout the action/condition editors.",
+        "Distinct from the 2026-08-16 sibling i18n findings (confirm-dialog-i18n, langswitcher-aria-i18n, compliance-prompt-i18n-gap) — those cover shared components and the compliance cluster; this is the workflow-automation builder cluster. Fix: wrap the literals in t('...') and add the keys to messages/en.json (+ translations). Low severity (no crash/data issue), landable via frontend verify.",
+        "expert: completeness"
+      ],
+      "expert": "completeness"
+    }
+  ]
+}

@@ -127,6 +127,15 @@ impl MembershipRepository {
     }
 
     /// All ACTIVE rows for a user, across orgs.
+    ///
+    /// Rows are returned in a deterministic order (`granted_at ASC,
+    /// organization_id ASC, role ASC` — a total order given the
+    /// `(user_id, organization_id, role)` primary key). Union callers
+    /// (`check_login`, `check_password_change`,
+    /// `check_capability_grant_for_user`) are order-insensitive, but
+    /// `.first()` callers (e.g. `check_principal_kind_change`'s liveness
+    /// policy load) rely on this tiebreak so their behavior does not depend
+    /// on Postgres's arbitrary physical row order (issue #2861).
     pub async fn list_for_user(&self, user_id: Uuid) -> Result<Vec<UserMembership>, SqlxError> {
         sqlx::query_as::<_, UserMembership>(
             r#"
@@ -134,6 +143,7 @@ impl MembershipRepository {
             WHERE user_id = $1
               AND revoked_at IS NULL
               AND (expires_at IS NULL OR expires_at > NOW())
+            ORDER BY granted_at ASC, organization_id ASC, role ASC
             "#,
         )
         .bind(user_id)

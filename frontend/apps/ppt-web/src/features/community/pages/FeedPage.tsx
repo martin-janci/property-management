@@ -1,227 +1,179 @@
 /**
- * FeedPage
+ * FeedPage — `/community`.
  *
- * Main community feed page showing posts from all groups.
- * Part of Story 42.2: Community Feed.
+ * The newest posts from every group the caller belongs to in the selected
+ * building, merged newest-first (`GET /community/buildings/{id}/groups`, then
+ * `GET /community/groups/{id}/posts` per member group). The composer posts to
+ * one of those groups; Like calls `POST /community/posts/{id}/reactions`.
  */
 
-import type { CommunityPost, CreatePostRequest, ListPostsParams, PostType } from '@ppt/api-client';
-import { useState } from 'react';
+import {
+  type CreateCommunityPostRequest,
+  useAddPostReaction,
+  useCreatePost,
+  useFeedPosts,
+  useGroups,
+} from '@ppt/api-client';
+import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '../../../components';
+import { useAuth } from '../../../contexts';
+import { getErrorMessage } from '../../../lib/api';
+import { CommunityLayout } from '../components/CommunityLayout';
 import { CreatePostForm } from '../components/CreatePostForm';
 import { PostCard } from '../components/PostCard';
+import { EmptyState, ErrorState, LoadingState } from '../components/StateViews';
+import { useCommunityBuilding, withBuilding } from '../hooks/useCommunityBuilding';
 
-interface FeedPageProps {
-  posts: CommunityPost[];
-  total: number;
-  isLoading?: boolean;
-  currentUserId?: string;
-  userAvatar?: string;
-  userName: string;
-  selectedGroupId?: string;
-  isCreatingPost?: boolean;
-  likingPostId?: string;
-  onCreatePost: (data: CreatePostRequest) => void;
-  onLikePost: (postId: string) => void;
-  onViewPost: (postId: string) => void;
-  onCommentPost: (postId: string) => void;
-  onSharePost: (postId: string) => void;
-  onEditPost: (postId: string) => void;
-  onDeletePost: (postId: string) => void;
-  onFilterChange: (params: ListPostsParams) => void;
-  onLoadMore: () => void;
-  hasMore?: boolean;
-}
-
-type FeedFilter = 'all' | 'my_groups' | 'building';
-
-const feedFilters: { value: FeedFilter; label: string }[] = [
-  { value: 'all', label: 'All Posts' },
-  { value: 'my_groups', label: 'My Groups' },
-  { value: 'building', label: 'Building' },
-];
-
-const postTypeFilters: { value: PostType | ''; label: string }[] = [
-  { value: '', label: 'All Types' },
-  { value: 'text', label: 'Text' },
-  { value: 'image', label: 'Photos' },
-  { value: 'poll', label: 'Polls' },
-  { value: 'event', label: 'Events' },
-  { value: 'item', label: 'Items' },
-];
-
-export function FeedPage({
-  posts,
-  total,
-  isLoading,
-  currentUserId,
-  userAvatar,
-  userName,
-  selectedGroupId,
-  isCreatingPost,
-  likingPostId,
-  onCreatePost,
-  onLikePost,
-  onViewPost,
-  onCommentPost,
-  onSharePost,
-  onEditPost,
-  onDeletePost,
-  onFilterChange,
-  onLoadMore,
-  hasMore,
-}: FeedPageProps) {
-  const [feedFilter, setFeedFilter] = useState<FeedFilter>('all');
-  const [typeFilter, setTypeFilter] = useState<PostType | ''>('');
-
-  const handleFeedFilterChange = (filter: FeedFilter) => {
-    setFeedFilter(filter);
-    onFilterChange({
-      feed: filter,
-      type: typeFilter || undefined,
-      page: 1,
-    });
-  };
-
-  const handleTypeFilterChange = (type: PostType | '') => {
-    setTypeFilter(type);
-    onFilterChange({
-      feed: feedFilter,
-      type: type || undefined,
-      page: 1,
-    });
-  };
+export function FeedPage() {
+  const { t } = useTranslation();
+  const building = useCommunityBuilding();
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Community Feed</h1>
-        <p className="mt-1 text-sm text-gray-500">See what's happening in your community</p>
-      </div>
+    <CommunityLayout
+      active="feed"
+      title={t('community.feed.title')}
+      subtitle={t('community.feed.subtitle')}
+      building={building}
+    >
+      {(buildingId) => <FeedContent buildingId={buildingId} />}
+    </CommunityLayout>
+  );
+}
 
-      {/* Create Post */}
-      {selectedGroupId && (
-        <div className="mb-6">
-          <CreatePostForm
-            groupId={selectedGroupId}
-            userAvatar={userAvatar}
-            userName={userName}
-            isSubmitting={isCreatingPost}
-            onSubmit={onCreatePost}
-          />
+function FeedContent({ buildingId }: { buildingId: string }) {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { showToast } = useToast();
+  const [groupFilter, setGroupFilter] = useState('');
+
+  const groupsQuery = useGroups(buildingId);
+  const memberGroups = useMemo(
+    () => (groupsQuery.data ?? []).filter((g) => g.isMember),
+    [groupsQuery.data]
+  );
+  const groupNames = useMemo(
+    () => new Map(memberGroups.map((g) => [g.id, g.name])),
+    [memberGroups]
+  );
+  const feed = useFeedPosts(memberGroups.map((g) => g.id));
+  const createPost = useCreatePost();
+  const react = useAddPostReaction();
+
+  const openGroup = (groupId: string) =>
+    navigate(withBuilding(`/community/groups/${groupId}`, buildingId));
+
+  if (groupsQuery.isLoading) return <LoadingState />;
+  if (groupsQuery.error) {
+    return (
+      <ErrorState message={t('community.hub.loadError')} onRetry={() => groupsQuery.refetch()} />
+    );
+  }
+  if (memberGroups.length === 0) {
+    return (
+      <EmptyState
+        title={t('community.hub.feedNoGroupsTitle')}
+        body={t('community.hub.feedNoGroupsBody')}
+        action={
+          <button
+            type="button"
+            onClick={() => navigate(withBuilding('/community/groups', buildingId))}
+            className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            {t('community.hub.browseGroups')}
+          </button>
+        }
+      />
+    );
+  }
+
+  const posts = groupFilter ? feed.posts.filter((p) => p.groupId === groupFilter) : feed.posts;
+
+  const handleCreate = (groupId: string, data: CreateCommunityPostRequest) =>
+    createPost.mutateAsync(
+      { groupId, data },
+      {
+        onSuccess: () =>
+          showToast({
+            type: 'success',
+            title: t('common.success'),
+            message: t('community.hub.postCreated'),
+          }),
+        onError: (err) =>
+          showToast({
+            type: 'error',
+            title: t('community.hub.postFailed'),
+            message: getErrorMessage(err),
+          }),
+      }
+    );
+
+  const handleLike = (postId: string) =>
+    react.mutate(
+      { postId },
+      {
+        onError: (err) =>
+          showToast({
+            type: 'error',
+            title: t('community.hub.likeFailed'),
+            message: getErrorMessage(err),
+          }),
+      }
+    );
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-6">
+      <CreatePostForm
+        groups={memberGroups.map((g) => ({ id: g.id, name: g.name }))}
+        isSubmitting={createPost.isPending}
+        onSubmit={handleCreate}
+      />
+
+      {memberGroups.length > 1 && (
+        <div className="flex items-center justify-between gap-3">
+          <label className="flex items-center gap-2 text-sm text-gray-600">
+            <span>{t('community.hub.filterByGroup')}</span>
+            <select
+              value={groupFilter}
+              onChange={(e) => setGroupFilter(e.target.value)}
+              className="px-2 py-1 text-sm border border-gray-300 rounded-md"
+            >
+              <option value="">{t('community.feed.filters.myGroups')}</option>
+              {memberGroups.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <span className="text-sm text-gray-500">
+            {posts.length}{' '}
+            {posts.length === 1 ? t('community.feed.post') : t('community.feed.posts')}
+          </span>
         </div>
       )}
 
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4 mb-6">
-        <div className="flex flex-wrap items-center gap-4">
-          {/* Feed Filter */}
-          <div className="flex items-center gap-1 border rounded-lg p-1">
-            {feedFilters.map((filter) => (
-              <button
-                key={filter.value}
-                type="button"
-                onClick={() => handleFeedFilterChange(filter.value)}
-                className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                  feedFilter === filter.value
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                {filter.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Type Filter */}
-          <select
-            value={typeFilter}
-            onChange={(e) => handleTypeFilterChange(e.target.value as PostType | '')}
-            className="px-3 py-1 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-          >
-            {postTypeFilters.map((type) => (
-              <option key={type.value} value={type.value}>
-                {type.label}
-              </option>
-            ))}
-          </select>
-
-          <span className="ml-auto text-sm text-gray-500">
-            {total} {total === 1 ? 'post' : 'posts'}
-          </span>
-        </div>
-      </div>
-
-      {/* Posts */}
-      {isLoading && posts.length === 0 ? (
-        <div className="space-y-4">
-          {['skeleton-1', 'skeleton-2', 'skeleton-3'].map((key) => (
-            <div key={key} className="bg-white rounded-lg shadow p-4 animate-pulse">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-gray-200" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-1/4" />
-                  <div className="h-3 bg-gray-200 rounded w-1/6" />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="h-4 bg-gray-200 rounded w-full" />
-                <div className="h-4 bg-gray-200 rounded w-3/4" />
-              </div>
-            </div>
-          ))}
-        </div>
+      {feed.isLoading && feed.posts.length === 0 ? (
+        <LoadingState />
+      ) : feed.error && feed.posts.length === 0 ? (
+        <ErrorState message={t('community.hub.loadError')} onRetry={() => feed.refetch()} />
       ) : posts.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-8 text-center">
-          <svg
-            className="mx-auto h-12 w-12 text-gray-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
-            />
-          </svg>
-          <h3 className="mt-4 text-lg font-medium text-gray-900">No posts yet</h3>
-          <p className="mt-2 text-sm text-gray-500">
-            Be the first to share something with your community!
-          </p>
-        </div>
+        <EmptyState title={t('community.feed.emptyTitle')} body={t('community.feed.emptyBody')} />
       ) : (
         <div className="space-y-4">
           {posts.map((post) => (
             <PostCard
               key={post.id}
               post={post}
-              isCurrentUser={post.authorId === currentUserId}
-              isLiking={likingPostId === post.id}
-              onView={onViewPost}
-              onLike={onLikePost}
-              onComment={onCommentPost}
-              onShare={onSharePost}
-              onEdit={onEditPost}
-              onDelete={onDeletePost}
+              currentUserId={user?.id}
+              groupName={groupNames.get(post.groupId)}
+              onOpenGroup={openGroup}
+              onLike={handleLike}
+              isLiking={react.isPending && react.variables?.postId === post.id}
             />
           ))}
-
-          {/* Load More */}
-          {hasMore && (
-            <div className="text-center pt-4">
-              <button
-                type="button"
-                onClick={onLoadMore}
-                disabled={isLoading}
-                className="px-6 py-2 text-sm text-blue-600 hover:text-blue-800 font-medium disabled:opacity-50"
-              >
-                {isLoading ? 'Loading...' : 'Load More'}
-              </button>
-            </div>
-          )}
         </div>
       )}
     </div>

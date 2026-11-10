@@ -1,0 +1,244 @@
+{
+  "generated_at": "2026-08-28T03:12:28Z",
+  "run_id": "routine-2026-08-28-daily",
+  "phases": {
+    "phase_1": "ran",
+    "phase_1_5": "skipped-consumed-dispatcher-tier1d (api-handlers, 3 findings)",
+    "phase_1_6": "skipped (skill invocation deferred; management artifacts already valid; pm_cursor unchanged, coverage_cursor unchanged \u2014 G16 no-op path)",
+    "phase_2": "ran",
+    "phase_3": "no candidate met readiness gate (top open score=2, security fast-track requires score>=2 with high confidence; current items are medium)",
+    "phase_3_5": "n/a (no promotions)",
+    "phase_4": "ran",
+    "phase_5": "no candidate (no allowlisted signal type fired at confidence=high + score>=3 this run)",
+    "phase_6": "in-progress"
+  },
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no allowlisted signal met certainty bar",
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-28",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "candidate_vector": "dx",
+      "confidence": "high",
+      "evidence": [
+        "routine has not run in 2d 18h (last_run_iso 2026-08-25T08:50:37Z; threshold 36h); dispatcher on session branch has been ticking every 2h in the interim"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-decide-appeal-unvalidated",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-28 api-handlers)",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "files": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs",
+        "backend/crates/db/src/repositories/compliance.rs"
+      ],
+      "evidence": [
+        "moderation.rs:556 decide_appeal: free-form req.decision String passed to compliance_repo.decide_appeal which match-falls-through to AppealRejected for anything != exact literal 'upheld' (compliance.rs:837) \u2014 typo/casing silently rejects a DSA Art.17 appeal.",
+        "Same handler: req.rationale is NOT length-validated (unlike take_moderation_action at :380 and file_appeal at :462 which call validate_text_field). Persisted verbatim into audit JSON at :581 \u2014 unbounded write for authenticated moderator.",
+        "Fix: allow-list decision + add validate_text_field(&req.rationale, MAX_RATIONALE_LEN, 'rationale')."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-report-content-unbounded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-28 api-handlers)",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "files": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs"
+      ],
+      "evidence": [
+        "moderation.rs:634 report_content is intentionally open to any authenticated user (no require_moderator_role guard) yet req.reason:Option<String> is stored via create_moderation_case (:660-669) with NO length validation.",
+        "Every other user-writable text field in this file uses validate_text_field (rationale MAX=10_000, appeal reason MAX=5_000 per routes/aml_dsa/shared.rs:137-139).",
+        "Low-effort storage-abuse / DoS amplification: any caller can persist MB-scale strings into moderation_cases rows that are then loaded and serialised on every get_moderation_queue / get_moderation_case call.",
+        "Fix: add validate_text_field(reason, MAX_REPORT_REASON_LEN, 'reason') before building CreateModerationCase."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-capabilities-list-cross-org",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-28 api-handlers)",
+      "score_delta": 2,
+      "candidate_vector": "security",
+      "confidence": "medium",
+      "files": [
+        "backend/servers/api-server/src/routes/admin/capabilities.rs"
+      ],
+      "evidence": [
+        "capabilities.rs:111 list_for_user \u2014 GET /admin/capabilities/users/{user_id} takes arbitrary user_id from path and calls grants.list_for_user(user_id) with NO org/tenant scoping and no check that target user shares an org with caller. Only gate is route-level require_capability(Capability::AuditRead) at :52.",
+        "If AuditRead is org-scoped (as the sibling grant/revoke routes suggest), holder in org A can enumerate the full capability-grant set of any user in any other org by id \u2014 exactly the cross-tenant read class the concurrent aml_dsa_cross_org_idor_tests churn is guarding elsewhere.",
+        "Contrast: list_for_me (:171) is self-scoped, and moderation.rs handlers in the same segment were just hardened to load tenant-scoped.",
+        "Fix (if AuditRead is org-scoped): thread caller's org/membership into list_for_user and filter grants to users visible within the caller's org, 404 for out-of-scope ids."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx",
+      "type": "churn-hotspot",
+      "source": "commits 142ae17..origin/dev",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx"
+      ],
+      "evidence": [
+        "4 touches across the window: gh-issue-2853 server-side overdue filter (#2856), gh-issue-2854 window.alert\u2192toast (#2855), gh-issue-2859 truncation notice (#2860), gh-issue-2862 exact-200 boundary (#2863) \u2014 content-moderation compliance page hot with regression/UX fixes."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/auth_policy.rs",
+      "type": "churn-hotspot",
+      "source": "commits 142ae17..origin/dev",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "files": [
+        "backend/servers/api-server/src/services/auth_policy.rs"
+      ],
+      "evidence": [
+        "3 touches across the window: fix(api-server) email-verification policy across grantee orgs (#2858), gh-issue-2861 membership ordering + dead capability-grant path (#2864) \u2014 auth policy layer being iterated on for capability-grant correctness."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/aml_dsa/moderation.rs",
+      "type": "churn-hotspot",
+      "source": "commits 142ae17..origin/dev",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "files": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs"
+      ],
+      "evidence": [
+        "2 touches this window (#2856 server-side overdue filter, #2860 truncation notice) \u2014 same file the Tier-1d review just surfaced 2 unvalidated-input findings on; risk-adjacent to auth_policy churn."
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-08-28.md && head -1 | grep -q '^# 2026-08-28$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev vs HEAD .research/state.json (cursor/seen_signals change)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | length == (unique | length)'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq -s check no non-cumulative signal reprocessed with score_delta != 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq '[.items[] | select(.score > 8)] | length == 0' AND no open item >14d not decayed",
+      "observed": "true (no open item is >14d stale this run \u2014 3 mobile-native-kmp bugs updated 2026-08-16/-19/-25)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans/ files this run \u2014 vacuously satisfied",
+      "observed": "0 new plan files",
+      "expected": "\u22642 with adversarial-pass line each"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count of new plans staged",
+      "observed": "0",
+      "expected": "\u22642 with required sections"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep -E 'sk-ant-|ANTHROPIC_API_KEY|Authorization: Bearer|.rlt.sk|192.168.13.|10.8.0.|$2y$05$' on staged non-baseline files",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief's Phases-that-failed line vs cursor advance",
+      "observed": "no phase reported failure; cursors advanced (last_pr_seen 2847\u21922864, last_commit_sha 142ae17\u2192b67552b)",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs still in plans/ or plans/_archive/",
+      "observed": "29 slugs preserved",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now vs HEAD",
+      "observed": "now=9 head=9",
+      "expected": "now >= head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions | length caps + idempotency",
+      "observed": "0 actions this run (no allowlisted signal met certainty bar)",
+      "expected": "\u22641 PR, \u22641 issue, \u22641 comment"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm_cursor + coverage_cursor liveness",
+      "observed": "action-list.json/risks.json/project-state.md valid; pm_cursor.next_index=4 in [0..7]; coverage_cursor.next_index=6 in [0,13); pm_cursor NOT advanced this run (Phase 1.6 skipped) \u2014 GC7 advance requirement is no-op",
+      "expected": "all valid; advance only when Phase 1.6 ran"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep Telegram token pattern on staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

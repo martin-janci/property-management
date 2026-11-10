@@ -2,8 +2,9 @@
 //! API endpoints for portfolio configuration, income/expense tracking,
 //! ROI calculations, benchmarking, and analytics dashboard.
 
+use crate::routes::pagination::clamp_limit;
 use crate::state::AppState;
-use api_core::extractors::AuthUser;
+use api_core::extractors::{AuthUser, TenantAuthUser};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -52,6 +53,48 @@ fn get_org_id(auth: &AuthUser) -> ApiResult<Uuid> {
             )),
         )
     })
+}
+
+/// Manager-class role (from the caller's membership via `TenantAuthUser`) for
+/// every portfolio / benchmark mutation.
+fn require_manager(auth: &AuthUser) -> ApiResult<()> {
+    if auth.role.is_some_and(|r| r.is_manager()) {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Manager role required for this action",
+            )),
+        ))
+    }
+}
+
+/// 404 unless `portfolio_id` belongs to the caller's org. The sub-resource
+/// repo calls key only on `portfolio_id` (+ child id), so every
+/// `/portfolios/{id}/...` handler must run this first.
+async fn verify_portfolio(state: &AppState, auth: &AuthUser, portfolio_id: Uuid) -> ApiResult<()> {
+    let org_id = get_org_id(auth)?;
+    state
+        .portfolio_performance_repo
+        .get_portfolio(portfolio_id, org_id)
+        .await
+        .map_err(internal_error)?
+        .ok_or_else(|| not_found("Portfolio"))?;
+    Ok(())
+}
+
+/// 404 unless the body-supplied `property_id` is a property of `portfolio_id`
+/// (which `verify_portfolio` has already tied to the caller's org).
+async fn verify_property(state: &AppState, portfolio_id: Uuid, property_id: Uuid) -> ApiResult<()> {
+    state
+        .portfolio_performance_repo
+        .get_property(property_id, portfolio_id)
+        .await
+        .map_err(internal_error)?
+        .ok_or_else(|| not_found("Property"))?;
+    Ok(())
 }
 
 // =============================================================================
@@ -201,9 +244,10 @@ pub struct DashboardQuery {
 
 async fn create_portfolio(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Json(req): Json<CreatePerformancePortfolio>,
 ) -> ApiResult<Json<PerformancePortfolio>> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
     let portfolio = state
         .portfolio_performance_repo
@@ -216,7 +260,7 @@ async fn create_portfolio(
 
 async fn list_portfolios(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Query(query): Query<ListPortfoliosQuery>,
 ) -> ApiResult<Json<Vec<PerformancePortfolio>>> {
     let org_id = get_org_id(&auth)?;
@@ -231,7 +275,7 @@ async fn list_portfolios(
 
 async fn get_portfolio(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<PerformancePortfolio>> {
     let org_id = get_org_id(&auth)?;
@@ -247,10 +291,11 @@ async fn get_portfolio(
 
 async fn update_portfolio(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdatePerformancePortfolio>,
 ) -> ApiResult<Json<PerformancePortfolio>> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
     let portfolio = state
         .portfolio_performance_repo
@@ -264,9 +309,10 @@ async fn update_portfolio(
 
 async fn delete_portfolio(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
     let deleted = state
         .portfolio_performance_repo
@@ -283,10 +329,21 @@ async fn delete_portfolio(
 
 async fn add_property(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(portfolio_id): Path<Uuid>,
     Json(req): Json<CreatePortfolioProperty>,
 ) -> ApiResult<Json<PortfolioProperty>> {
+    require_manager(&auth)?;
+    verify_portfolio(&state, &auth, portfolio_id).await?;
+    let org_id = get_org_id(&auth)?;
+    if !state
+        .building_repo
+        .belongs_to_organization(req.building_id, org_id)
+        .await
+        .map_err(internal_error)?
+    {
+        return Err(not_found("Building"));
+    }
     let property = state
         .portfolio_performance_repo
         .add_property(portfolio_id, req)
@@ -298,9 +355,10 @@ async fn add_property(
 
 async fn list_properties(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(portfolio_id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<PortfolioProperty>>> {
+    verify_portfolio(&state, &auth, portfolio_id).await?;
     let properties = state
         .portfolio_performance_repo
         .list_properties(portfolio_id)
@@ -312,9 +370,10 @@ async fn list_properties(
 
 async fn get_property(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path((portfolio_id, property_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResult<Json<PortfolioProperty>> {
+    verify_portfolio(&state, &auth, portfolio_id).await?;
     let property = state
         .portfolio_performance_repo
         .get_property(property_id, portfolio_id)
@@ -327,10 +386,12 @@ async fn get_property(
 
 async fn update_property(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path((portfolio_id, property_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdatePortfolioProperty>,
 ) -> ApiResult<Json<PortfolioProperty>> {
+    require_manager(&auth)?;
+    verify_portfolio(&state, &auth, portfolio_id).await?;
     let property = state
         .portfolio_performance_repo
         .update_property(property_id, portfolio_id, req)
@@ -343,9 +404,11 @@ async fn update_property(
 
 async fn remove_property(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path((portfolio_id, property_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResult<StatusCode> {
+    require_manager(&auth)?;
+    verify_portfolio(&state, &auth, portfolio_id).await?;
     let removed = state
         .portfolio_performance_repo
         .remove_property(property_id, portfolio_id)
@@ -365,10 +428,13 @@ async fn remove_property(
 
 async fn create_transaction(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(portfolio_id): Path<Uuid>,
     Json(req): Json<CreatePropertyTransaction>,
 ) -> ApiResult<Json<PropertyTransaction>> {
+    require_manager(&auth)?;
+    verify_portfolio(&state, &auth, portfolio_id).await?;
+    verify_property(&state, portfolio_id, req.property_id).await?;
     let transaction = state
         .portfolio_performance_repo
         .create_transaction(portfolio_id, req, auth.user_id)
@@ -380,10 +446,11 @@ async fn create_transaction(
 
 async fn list_transactions(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(portfolio_id): Path<Uuid>,
     Query(query): Query<TransactionQuery>,
 ) -> ApiResult<Json<Vec<PropertyTransaction>>> {
+    verify_portfolio(&state, &auth, portfolio_id).await?;
     let transactions = state
         .portfolio_performance_repo
         .list_transactions(portfolio_id, query)
@@ -395,9 +462,10 @@ async fn list_transactions(
 
 async fn get_transaction(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path((portfolio_id, transaction_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResult<Json<PropertyTransaction>> {
+    verify_portfolio(&state, &auth, portfolio_id).await?;
     let transaction = state
         .portfolio_performance_repo
         .get_transaction(transaction_id, portfolio_id)
@@ -410,10 +478,12 @@ async fn get_transaction(
 
 async fn update_transaction(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path((portfolio_id, transaction_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdatePropertyTransaction>,
 ) -> ApiResult<Json<PropertyTransaction>> {
+    require_manager(&auth)?;
+    verify_portfolio(&state, &auth, portfolio_id).await?;
     let transaction = state
         .portfolio_performance_repo
         .update_transaction(transaction_id, portfolio_id, req)
@@ -426,9 +496,11 @@ async fn update_transaction(
 
 async fn delete_transaction(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path((portfolio_id, transaction_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResult<StatusCode> {
+    require_manager(&auth)?;
+    verify_portfolio(&state, &auth, portfolio_id).await?;
     let deleted = state
         .portfolio_performance_repo
         .delete_transaction(transaction_id, portfolio_id)
@@ -444,10 +516,13 @@ async fn delete_transaction(
 
 async fn upsert_cash_flow(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(portfolio_id): Path<Uuid>,
     Json(req): Json<UpsertPropertyCashFlow>,
 ) -> ApiResult<Json<PropertyCashFlow>> {
+    require_manager(&auth)?;
+    verify_portfolio(&state, &auth, portfolio_id).await?;
+    verify_property(&state, portfolio_id, req.property_id).await?;
     let cash_flow = state
         .portfolio_performance_repo
         .upsert_cash_flow(portfolio_id, req)
@@ -459,10 +534,11 @@ async fn upsert_cash_flow(
 
 async fn get_cash_flows(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(portfolio_id): Path<Uuid>,
     Query(query): Query<CashFlowQuery>,
 ) -> ApiResult<Json<Vec<PropertyCashFlow>>> {
+    verify_portfolio(&state, &auth, portfolio_id).await?;
     let cash_flows = state
         .portfolio_performance_repo
         .get_cash_flows(
@@ -485,10 +561,15 @@ async fn get_cash_flows(
 
 async fn calculate_metrics(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(portfolio_id): Path<Uuid>,
     Json(req): Json<CalculateMetricsRequest>,
 ) -> ApiResult<Json<FinancialMetrics>> {
+    require_manager(&auth)?;
+    verify_portfolio(&state, &auth, portfolio_id).await?;
+    if let Some(property_id) = req.property_id {
+        verify_property(&state, portfolio_id, property_id).await?;
+    }
     let metrics = state
         .portfolio_performance_repo
         .calculate_metrics(portfolio_id, req)
@@ -500,10 +581,11 @@ async fn calculate_metrics(
 
 async fn get_latest_metrics(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(portfolio_id): Path<Uuid>,
     Query(query): Query<MetricsQuery>,
 ) -> ApiResult<Json<Option<FinancialMetrics>>> {
+    verify_portfolio(&state, &auth, portfolio_id).await?;
     let metrics = state
         .portfolio_performance_repo
         .get_latest_metrics(portfolio_id, query.property_id)
@@ -515,10 +597,11 @@ async fn get_latest_metrics(
 
 async fn get_metrics_summary(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(portfolio_id): Path<Uuid>,
     Query(query): Query<MetricsSummaryQuery>,
 ) -> ApiResult<Json<PortfolioMetricsSummary>> {
+    verify_portfolio(&state, &auth, portfolio_id).await?;
     let period_start =
         chrono::NaiveDate::parse_from_str(&query.period_start, "%Y-%m-%d").map_err(|_| {
             (
@@ -555,9 +638,10 @@ async fn get_metrics_summary(
 
 async fn create_benchmark(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Json(req): Json<CreateMarketBenchmark>,
 ) -> ApiResult<Json<MarketBenchmark>> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
     let benchmark = state
         .portfolio_performance_repo
@@ -570,7 +654,7 @@ async fn create_benchmark(
 
 async fn list_benchmarks(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Query(query): Query<BenchmarkListQuery>,
 ) -> ApiResult<Json<Vec<MarketBenchmark>>> {
     let org_id = get_org_id(&auth)?;
@@ -585,7 +669,7 @@ async fn list_benchmarks(
 
 async fn get_benchmark(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<MarketBenchmark>> {
     let org_id = get_org_id(&auth)?;
@@ -601,10 +685,11 @@ async fn get_benchmark(
 
 async fn update_benchmark(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMarketBenchmark>,
 ) -> ApiResult<Json<MarketBenchmark>> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
     let benchmark = state
         .portfolio_performance_repo
@@ -618,9 +703,10 @@ async fn update_benchmark(
 
 async fn delete_benchmark(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
     let deleted = state
         .portfolio_performance_repo
@@ -637,10 +723,15 @@ async fn delete_benchmark(
 
 async fn create_comparison(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(portfolio_id): Path<Uuid>,
     Json(req): Json<CreateBenchmarkComparison>,
 ) -> ApiResult<Json<BenchmarkComparison>> {
+    require_manager(&auth)?;
+    verify_portfolio(&state, &auth, portfolio_id).await?;
+    if let Some(property_id) = req.property_id {
+        verify_property(&state, portfolio_id, property_id).await?;
+    }
     let comparison = state
         .portfolio_performance_repo
         .create_comparison(portfolio_id, req)
@@ -652,9 +743,10 @@ async fn create_comparison(
 
 async fn list_comparisons(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(portfolio_id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<BenchmarkComparison>>> {
+    verify_portfolio(&state, &auth, portfolio_id).await?;
     let comparisons = state
         .portfolio_performance_repo
         .list_comparisons(portfolio_id)
@@ -666,9 +758,10 @@ async fn list_comparisons(
 
 async fn get_comparison(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path((portfolio_id, comparison_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResult<Json<BenchmarkComparison>> {
+    verify_portfolio(&state, &auth, portfolio_id).await?;
     let comparison = state
         .portfolio_performance_repo
         .get_comparison(comparison_id, portfolio_id)
@@ -685,10 +778,11 @@ async fn get_comparison(
 
 async fn get_dashboard_summary(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(portfolio_id): Path<Uuid>,
     Query(query): Query<DashboardQuery>,
 ) -> ApiResult<Json<DashboardSummary>> {
+    verify_portfolio(&state, &auth, portfolio_id).await?;
     let as_of_date = query
         .as_of_date
         .and_then(|s| chrono::NaiveDate::parse_from_str(&s, "%Y-%m-%d").ok())
@@ -705,9 +799,10 @@ async fn get_dashboard_summary(
 
 async fn get_property_cards(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(portfolio_id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<PropertyPerformanceCard>>> {
+    verify_portfolio(&state, &auth, portfolio_id).await?;
     let cards = state
         .portfolio_performance_repo
         .get_property_performance_cards(portfolio_id)
@@ -719,10 +814,11 @@ async fn get_property_cards(
 
 async fn get_cash_flow_trend(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(portfolio_id): Path<Uuid>,
     Query(query): Query<CashFlowTrendQuery>,
 ) -> ApiResult<Json<Vec<CashFlowTrendPoint>>> {
+    verify_portfolio(&state, &auth, portfolio_id).await?;
     let months = query.months.unwrap_or(12);
 
     let trend = state
@@ -736,10 +832,15 @@ async fn get_cash_flow_trend(
 
 async fn create_alert(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(portfolio_id): Path<Uuid>,
     Json(req): Json<CreatePerformanceAlert>,
 ) -> ApiResult<Json<PerformanceAlert>> {
+    require_manager(&auth)?;
+    verify_portfolio(&state, &auth, portfolio_id).await?;
+    if let Some(property_id) = req.property_id {
+        verify_property(&state, portfolio_id, property_id).await?;
+    }
     let alert = state
         .portfolio_performance_repo
         .create_alert(portfolio_id, req)
@@ -751,16 +852,17 @@ async fn create_alert(
 
 async fn list_alerts(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(portfolio_id): Path<Uuid>,
     Query(query): Query<AlertsQuery>,
 ) -> ApiResult<Json<Vec<PerformanceAlert>>> {
+    verify_portfolio(&state, &auth, portfolio_id).await?;
     let alerts = state
         .portfolio_performance_repo
         .list_alerts(
             portfolio_id,
             query.unread_only.unwrap_or(false),
-            query.limit.unwrap_or(50),
+            clamp_limit(query.limit.map(i64::from), 50) as i32,
         )
         .await
         .map_err(internal_error)?;
@@ -770,9 +872,11 @@ async fn list_alerts(
 
 async fn mark_alert_read(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path((portfolio_id, alert_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResult<StatusCode> {
+    require_manager(&auth)?;
+    verify_portfolio(&state, &auth, portfolio_id).await?;
     state
         .portfolio_performance_repo
         .mark_alert_read(alert_id, portfolio_id)
@@ -784,9 +888,11 @@ async fn mark_alert_read(
 
 async fn resolve_alert(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path((portfolio_id, alert_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResult<StatusCode> {
+    require_manager(&auth)?;
+    verify_portfolio(&state, &auth, portfolio_id).await?;
     state
         .portfolio_performance_repo
         .resolve_alert(alert_id, portfolio_id)

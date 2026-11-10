@@ -19,10 +19,14 @@ mod payment_reminder_dedup_tests;
 mod portal_imports_cross_org_idor_tests;
 #[path = "suites/portal_listing_analytics_force_rls_tests.rs"]
 mod portal_listing_analytics_force_rls_tests;
+#[path = "suites/portal_listing_view_count_force_rls_tests.rs"]
+mod portal_listing_view_count_force_rls_tests;
 #[path = "suites/portal_track_listing_view_force_rls_tests.rs"]
 mod portal_track_listing_view_force_rls_tests;
 #[path = "suites/portal_user_merge_tests.rs"]
 mod portal_user_merge_tests;
+#[path = "suites/portfolio_alert_rules_schema_tests.rs"]
+mod portfolio_alert_rules_schema_tests;
 #[path = "suites/portfolio_performance_test.rs"]
 mod portfolio_performance_test;
 #[path = "suites/predictive_maintenance_rls_repo_tests.rs"]
@@ -47,6 +51,8 @@ mod registry_enum_decode_tests;
 mod registry_parking_spot_cross_tenant_tests;
 #[path = "suites/registry_rules_enum_decode_tests.rs"]
 mod registry_rules_enum_decode_tests;
+#[path = "suites/rental_booking_external_id_unique_tests.rs"]
+mod rental_booking_external_id_unique_tests;
 #[path = "suites/rental_booking_nullable_decimal_tests.rs"]
 mod rental_booking_nullable_decimal_tests;
 #[path = "suites/rental_cross_tenant_upsert_tests.rs"]

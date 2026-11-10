@@ -1,0 +1,50 @@
+{
+  "generated": "2026-09-04T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven (buffer starved, LANDABLE-only) 2026-09-04",
+  "segment_reviewed": "api-core",
+  "selection_reason": "steered (dispatcher Tier-1d LANDABLE-only). api-core (backend Rust, cloud-landable) selected; mobile-native-kmp excluded as structurally unlandable in the cloud runner per dispatcher guidance. Among cloud-landable segments api-core is the least-recently *actually* reviewed by signal recency (last api-core signal 2026-09-01; api-handlers/reality-web last 2026-09-03, mobile-rn 2026-09-02, and ppt-web-core/ppt-web-ui/reality-server already have signal files dated today 2026-09-04). Saturation check passed: 0 open code-review-finding rows for api-core in backlog.json. Scope mapped per docs/repo-map.md: api-core = backend/servers/api-server/src excluding routes/ (i.e. services/, services/scheduler/, services/actions/, core src). This pass targeted the freshest UNREVIEWED files in the segment — the notification/quiet-hours worker cluster and adjacent service files (totp.rs, id_ocr.rs, feature_service.rs, notification_pipeline.rs, notification_digest.rs, quiet_hours_drain.rs, scheduler/retention.rs, auth.rs, email.rs, notification.rs). Verdict: the segment is heavily hardened (totp legacy-plaintext already rejected + AES-GCM enforced; id_ocr fails closed; notification_pipeline + quiet_hours_drain carry explicit fail-closed + atomic-claim + dead-letter designs with issue refs #980/#2823/#2831; retention.rs daily-gate is pure-fn tested; auth.rs argon2id above OWASP floor; email.rs escapes via html_escape/ammonia). The prior 2026-08-30 api-core run explicitly *swept* notification_digest.rs but filed both its findings on notification.rs, missing the sibling-worker contrast below. Two genuine net-new findings survived verification, both in notification_digest.rs (Story 2B.3), a live background worker started on every api-server replica — no `digest`-scoped finding exists anywhere in the signals corpus.",
+  "experts_used": ["rust"],
+  "findings_count": 2,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-api-core-digest-worker-no-replica-claim",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-04 api-core notification_digest)",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/notification_digest.rs",
+        "backend/crates/db/src/repositories/granular_notification.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/notification_digest.rs:130-154 — NotificationDigestWorker::start() spawns the sweep on every process, and its own module doc (lines 6-9) states it 'mirrors the PushFanoutWorker / QuietHoursDrainWorker lifecycle', i.e. it runs on every api-server replica. Unlike the sibling QuietHoursDrainWorker — which delivers each held row exactly once across replicas by *atomically claiming* rows via GranularNotificationRepository::claim_notifications_to_release (FOR UPDATE SKIP LOCKED, issue #2831, drain code at quiet_hours_drain.rs:150-172) — the digest worker fetches rows with plain, unlocked SELECTs and never claims them, so concurrent replicas process the same rows.",
+        "Retry path double-sends: notification_digest.rs:176-217 retry_unsent() calls GranularNotificationRepository::get_unsent_digests (granular_notification.rs:973-1002), which is a plain `SELECT ... WHERE d.email_sent_at IS NULL AND d.created_at > $1 ... LIMIT $2` with no FOR UPDATE / SKIP LOCKED / claim stamp. Two replicas ticking within the same window both fetch the identical set of unsent digest rows and both call email_service.send_digest_email before either calls mark_digest_email_sent (the mark happens only after a successful async send, lines 205-210) — so the same user receives the digest email N times, once per replica.",
+        "New-digest path is a check-then-act (TOCTOU) race: notification_digest.rs:222-300 send_new() relies on the `NOT EXISTS (SELECT 1 FROM notification_digests d WHERE d.user_id = u.id AND d.created_at > $2)` guard inside find_inactive_digest_candidates (granular_notification.rs:908-965) to avoid re-digesting a user within the resend window. That SELECT and the subsequent create_digest INSERT (line 259-272) are not atomic and take no row lock, and create_digest (granular_notification.rs:824+) shows no ON CONFLICT / unique-constraint guard — so two replicas that both evaluate the candidate query before either INSERTs both see NOT EXISTS = true, both persist a digest row, and both email it.",
+        "Impact: under the project's documented multi-replica api-server deployment (the exact scenario #2831 hardened the held-notification drain against) inactive users receive duplicate 24h-inactivity digest emails. Severity medium (annoyance / spam-perception, not data loss; single-replica deploys are unaffected). Confidence medium: the absence of any claim/lock/ON-CONFLICT is confirmed by static read of both the worker and the two repository queries; the duplicate delivery is inferred from concurrent execution, not runtime-confirmed. Fix: give the digest worker the same exactly-once discipline as QuietHoursDrainWorker — claim rows with FOR UPDATE SKIP LOCKED (or an atomic UPDATE ... RETURNING that stamps a claim/sent marker) in get_unsent_digests, and make create_digest idempotent via a unique constraint on (user_id, digest_type, period) + ON CONFLICT DO NOTHING so the send_new race collapses to a single row."
+      ]
+    },
+    {
+      "id": "code-review-api-core-digest-send-failure-abandoned",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-04 api-core notification_digest)",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/notification_digest.rs",
+        "backend/crates/db/src/repositories/granular_notification.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/notification_digest.rs:176-217 — retry_unsent() re-attempts only the digest rows returned by get_unsent_digests(resend_cutoff, ...), and get_unsent_digests (granular_notification.rs:973-1002) filters `d.created_at > $1` where $1 = now - resend_window_hours (default 20h, config at notification_digest.rs:52/63/89-92). A digest row whose email send keeps failing (permanently-invalid recipient address, SMTP hard-reject, provider outage longer than the window) is retried each tick only until its created_at ages past resend_cutoff; after that it is never selected again, so email_sent_at stays NULL forever.",
+        "There is no terminal handling for such a row: no attempt counter, no dead-letter, no error metric, and no alert — the row is simply left email_sent_at = NULL and silently forgotten. The only trace is a per-attempt tracing::warn! at line 212-214 ('will retry next tick'), which stops firing once the row ages out. The user's unread notifications therefore never produce a delivered digest for that window, with no operator signal that a digest was dropped.",
+        "This is the exact failure mode the sibling held-notification drain path was hardened against: quiet_hours_drain.rs:226-279 (record_failure/dead_letter) bumps an attempt counter and dead-letters a permanently-failing row after max_attempts (issue #2823) instead of dropping it. The digest worker adopted that cluster's lifecycle and retry-in-place idea but not its give-up/dead-letter accounting. Severity low (a digest is a redundant convenience — the underlying notifications remain available in-app — and a fresh digest may be generated in a later window once the row ages out), confidence medium (the silent-abandon boundary is confirmed by static read of the worker + the created_at>cutoff query filter; the permanent-failure trigger is inferred, not runtime-confirmed). Fix: track attempts on notification_digests and dead-letter / emit a metric when a digest exhausts its retry budget, mirroring the #2823 held-notification treatment."
+      ]
+    }
+  ]
+}

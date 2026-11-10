@@ -107,10 +107,16 @@ UC-03 faults list — the manager's working surface for the 8-state fault machin
 - Mobile nav shouldn't carry the legacy emoji `🔧` — substitute Lucide `wrench` per SKILL.md non-negotiable.
 - Sidebar group headers use uppercase 11/600/.06em — matches the spec for "category eyebrow" type.
 - **Test follow-up (PR #1418):** `faults.route.test.tsx` (the `FaultsPageRoute` API-wiring suite, gap-79-1) was missing a `beforeEach` import from `vitest`; PR #1418 added it. Test-import fix only — no change to route/component behavior, API wiring, or status (build/api unchanged).
+- 2026-08-31 — realtime sync (PR #2889): the `faults` query root now auto-refetches on a `notification.created` frame with `category: faults`. Previously `WebSocketContext.eventToQueryKeys` keyed on dead `entity:*` names the api-server never emits (100% dead sync); PR #2889 added `categoryToQueryKeys.faults → ['faults']` and wired `App.tsx`'s `onEntityEvent`. Invalidation wiring only — does not advance this screen's own `ppt-web.buildStatus: planned` / `apiStatus: partial`; REST wiring unchanged.
 
 ## Agent Log
 
 <!-- newest entries on top -->
+
+- 2026-11-05 — agent: screen-map-drift-pr-3244-ppt — reconcile i18n drift from PR #3244 (`fix(ppt-web): localize faults, news, settings and error pages`). `FaultsPage` / `FaultCard` / `FaultList` moved hardcoded English UI copy into react-i18next (`faults.*`); new `features/faults/utils/faultLabels.ts` maps fault status/priority/category enum values to i18n keys shared by the list, card and triage components, so status-pill + priority labels now render per-locale across all 6 locales (sk/cs native, de/pl/hu). i18n only — no route/component/endpoint/status change; frontmatter unchanged.
+- 2026-11-04 — agent: r3-nav-roles — Edit and Triage are passed to the cards only for `isManagerRole` users; residents get View only (audit r3 #14).
+- 2026-11-04 — agent: hid Delete action — API has no DELETE /faults/{id} (405); FaultCard renders Delete only when onDelete is wired
+- 2026-08-31 — agent: screen-map-drift-pr-2889-ppt — reconcile drift from PR #2889 (realtime ws→query-invalidation fix). ppt-web `WebSocketContext` re-keyed cache invalidation to canonical `domain.action` events and its `notification.created` subscriber routes by `payload.category`, so `category=faults` now invalidates the `faults` root; `App.tsx` wires `onEntityEvent → queryClient.invalidateQueries`. No route/component/endpoint/status change — frontmatter unchanged; docs-only.
 
 - 2026-06-22 — agent: screen-map-drift-pr-1418-ppt — reconcile drift from PR #1418 (BIT-21): the PR touched `routes/groups/faults.route.test.tsx` (added missing `beforeEach` import from `vitest`) without a screen-map update. Test-import fix only on the `FaultsPageRoute` gap-79-1 suite — no behavior/API/status change. Added Notes entry; frontmatter unchanged; docs-only
 

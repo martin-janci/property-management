@@ -358,16 +358,51 @@ impl GranularNotificationRepository {
         .await
     }
 
-    /// Get held notifications ready for release.
-    pub async fn get_notifications_to_release(&self) -> Result<Vec<HeldNotification>, SqlxError> {
+    /// Atomically claim up to `batch_limit` held notifications that are ready
+    /// for release, returning the rows this caller now owns (issue #2831).
+    ///
+    /// The drain worker runs in every api-server process. A plain
+    /// `SELECT ... WHERE released_at IS NULL` let every replica pick up the same
+    /// due rows and deliver them, so a held notification was delivered once per
+    /// replica (double-delivery under >1 replica). This claims each row instead:
+    /// a single `UPDATE ... WHERE id IN (SELECT ... FOR UPDATE SKIP LOCKED)
+    /// RETURNING *` stamps `claimed_at` and hands back only the rows this
+    /// UPDATE won. Concurrent claimers `SKIP LOCKED` past a row another replica
+    /// is claiming and, once that claim commits, see a fresh `claimed_at` that
+    /// excludes the row for the lease window — so each due row is delivered by
+    /// at most one replica.
+    ///
+    /// `claim_lease_secs` makes the claim self-healing: a claim older than the
+    /// lease is treated as unclaimed, so a worker that crashed mid-delivery does
+    /// not strand the row — another replica re-claims it once the lease expires.
+    ///
+    /// Still excludes released and dead-lettered rows (issue #2823): both are
+    /// terminal and must never be re-selected.
+    pub async fn claim_notifications_to_release(
+        &self,
+        batch_limit: i64,
+        claim_lease_secs: i64,
+    ) -> Result<Vec<HeldNotification>, SqlxError> {
         sqlx::query_as::<_, HeldNotification>(
             r#"
-            SELECT * FROM held_notifications
-            WHERE released_at IS NULL AND release_at <= $1
-            ORDER BY release_at
+            UPDATE held_notifications AS h
+            SET claimed_at = now()
+            WHERE h.id IN (
+                SELECT id FROM held_notifications
+                WHERE released_at IS NULL
+                  AND dead_lettered_at IS NULL
+                  AND release_at <= now()
+                  AND (claimed_at IS NULL
+                       OR claimed_at <= now() - make_interval(secs => $1))
+                ORDER BY release_at
+                LIMIT $2
+                FOR UPDATE SKIP LOCKED
+            )
+            RETURNING h.*
             "#,
         )
-        .bind(Utc::now())
+        .bind(claim_lease_secs as f64)
+        .bind(batch_limit)
         .fetch_all(&self.pool)
         .await
     }
@@ -375,6 +410,44 @@ impl GranularNotificationRepository {
     /// Mark held notification as released.
     pub async fn mark_notification_released(&self, id: Uuid) -> Result<(), SqlxError> {
         sqlx::query("UPDATE held_notifications SET released_at = now() WHERE id = $1")
+            .bind(id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    /// Persist progress after a partial-failure drain tick (issue #2823):
+    /// record the channels delivered so far and the bumped attempt counter so
+    /// the next retry skips already-delivered channels and the retry budget is
+    /// enforced. The row stays held (`released_at`/`dead_lettered_at` untouched).
+    ///
+    /// Clears `claimed_at` (issue #2831): the row was handled this tick but must
+    /// be retried, so releasing the claim lets the next tick re-claim it
+    /// promptly (from any replica) instead of waiting out the lease. The retry
+    /// is safe across replicas because the persisted `delivered_channels` makes
+    /// `deliver_held` skip the channels that already succeeded.
+    pub async fn record_held_attempt(
+        &self,
+        id: Uuid,
+        delivered_channels: &[String],
+        attempts: i32,
+    ) -> Result<(), SqlxError> {
+        sqlx::query(
+            "UPDATE held_notifications SET delivered_channels = $2, attempts = $3, claimed_at = NULL WHERE id = $1",
+        )
+        .bind(id)
+        .bind(delivered_channels)
+        .bind(attempts)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    /// Give up on a held row that has exhausted its retry budget (issue #2823):
+    /// stamp `dead_lettered_at` so it is no longer re-selected for release,
+    /// instead of looping forever and re-delivering its healthy channels.
+    pub async fn mark_notification_dead_lettered(&self, id: Uuid) -> Result<(), SqlxError> {
+        sqlx::query("UPDATE held_notifications SET dead_lettered_at = now() WHERE id = $1")
             .bind(id)
             .execute(&self.pool)
             .await?;

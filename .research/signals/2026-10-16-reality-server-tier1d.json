@@ -1,0 +1,40 @@
+{
+  "generated": "2026-10-16T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claim buffer starved: claimable=6 < floor=36; deterministic refill tiers found nothing). Static single-segment rotating code review per .claude/skills/ppt-dev-review/SKILL.md — file reading + grep only, no compilation, no test execution, no branch checkout (cloud runner). DISPATCHER_OWNED_COMMIT=1: artifact written into the working tree only; no git add/commit/push/checkout and assignments.json untouched — the dispatcher folds .research deltas into its own Phase 6 commit. SEGMENT SELECTION: no fresh Phase-1 churn list was handed to this demand-driven invocation, so priority-1 churn-alignment was empty and selection fell to priority-2 oldest-unreviewed. review_cursor oldest date is 2026-10-11 (tie: api-handlers + reality-web). api-handlers SKIPPED by the skill's saturation rule (3 open code-review-finding rows with status==open in backlog.json == the >=3 floor). reality-web, api-core and ppt-web-core were ALREADY reviewed earlier in THIS 2026-10-16 cloud cycle (signal files 2026-10-16-reality-web-tier1d.json, 2026-10-16-api-core-tier1d.json, 2026-10-16-ppt-web-core-tier1d.json already present). mobile-rn and mobile-native-kmp are excluded as structurally unclaimable in the cloud runner (no RN/KMP toolchain — steer to backend/frontend-web). To avoid redundant intra-cycle double-review, selection advanced to the next oldest-unreviewed, not-reviewed-today, non-saturated, cloud-landable segment: reality-server (review_cursor.reality-server = 2026-10-13, 0 open code-review-finding rows in backlog.json). Both segments are EXTREMELY heavily mined (reality-server: 105 distinct code-review-reality-server-* ids; reality-web: 156) — every finding below was verified net-new by enumerating all prior finding ids in backlog.json + the full signals corpus. Discarded as duplicates during this pass: reality-server compare.rs count-then-insert race (== code-review-reality-server-add-to-compare-toctou-max-cap), all unwrap()/expect() hits were either in #[cfg(test)] modules or guarded (inquiries::is_valid_phone unwrap is preceded by an is_empty() early-return; extractors/auth.rs strip_prefix unwrap is preceded by a starts_with() check in the .find() predicate), the serde_json parse-error paths in layout.rs route through util::errors::db_error which is proven to return a generic 500 (no leak — see util/errors.rs tests), and the state.rs JWT_SECRET panic!()s are intentional fail-fast startup config validation. BONUS cross-segment finding: while mapping reality-web during selection (before confirming it was already done today) a net-new reality-web SSR-resolver duplication was independently derived and is included here to help the starved buffer — its own `segment` field is reality-web; it does NOT advance review_cursor.reality-server.",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["rust", "frontend"],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-reality-server-layout-resolved-no-ratelimit-cache",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/layout.rs:39-102 — public, UNAUTHENTICATED GET /api/v1/layout/resolved/{*screen} (router has no auth/tenant layer, doc-comment line 3-4) issues 3 sequential DB round-trips per request — repo.get_config (l.64-68), repo.get_manifest (l.80-87), repo.list_kills (l.91-97) — with NO server-side result cache and NO rate limiting.",
+        "The only throttle in front of this endpoint is reality-web's Next.js ISR (next:{revalidate:60} in frontend/apps/reality-web/src/lib/layout.ts:108-112); a direct client that bypasses the CDN/ISR hits the DB on every request. This is a read-amplification / availability surface on an unauth public route.",
+        "Inconsistent with the server's own hardening taxonomy: other public endpoints carry explicit rate-limit findings (code-review-reality-server-inquiries-no-rate-limit, -record-view-no-rate-limit, -submit-report-no-rate-limit, -users-login-no-rate-limit) and a cache-DoS finding (-price-map-cache-unbounded), but routes/layout.rs has neither and no prior code-review-reality-server-layout-* id exists."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-web-ssr-apibase-resolver-triplicated",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx:21-43 — resolveApiBase/inferApiBaseFromHost defined module-private; the comment at l.33-43 documents that the inference-before-NEXT_PUBLIC_API_URL ordering is load-bearing (it stops a baked-in/misconfigured http://localhost:8081 from taking down SSR on staging/prod).",
+        "frontend/apps/reality-web/src/lib/layout.ts:9-12,57-76 — the file's own ADAPT note states resolveApiBase/inferApiBaseFromHost are 'replicated verbatim' from page.tsx because the originals are not exported; a 2nd verbatim copy of the same security-sensitive SSR URL resolver.",
+        "frontend/apps/reality-web/src/lib/env.ts:39-47 — a 3rd copy of inferApiBaseFromHost that has already DRIFTED: it omits the `host.split(':')[0]?.toLowerCase()` port-strip + lowercase normalization present in the two SSR copies. A future one-sided edit to this triplicated resolver risks silently reintroducing the SSR-takedown bug the page.tsx comment guards against. Fix: hoist a single exported helper and import it in all three sites."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

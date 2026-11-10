@@ -6,6 +6,7 @@
 
 import { useRequestSummarization } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface DocumentSummaryProps {
   documentId: string;
@@ -22,13 +23,14 @@ export function DocumentSummary({
   wordCount = 0,
   onSummaryGenerated,
 }: DocumentSummaryProps) {
+  const { t, i18n } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
   const [summaryStyle, setSummaryStyle] = useState<'brief' | 'detailed' | 'bullets'>('brief');
   const requestSummary = useRequestSummarization();
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
-    return date.toLocaleString('en-US', {
+    return date.toLocaleString(i18n.language, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -94,16 +96,16 @@ export function DocumentSummary({
         <div className="summary-header">
           <h4 className="summary-title">
             <span className="ai-icon">AI</span>
-            Summary
+            {t('documents.summary.title')}
           </h4>
         </div>
 
         {showGenerateOption ? (
           <div className="generate-section">
-            <p className="generate-prompt">Generate an AI summary of this document?</p>
+            <p className="generate-prompt">{t('documents.summary.generatePrompt')}</p>
 
             <fieldset className="style-selector">
-              <legend className="style-label">Summary style:</legend>
+              <legend className="style-label">{t('documents.summary.styleLabel')}</legend>
               <div className="style-options">
                 {(['brief', 'detailed', 'bullets'] as const).map((style) => (
                   <button
@@ -112,7 +114,7 @@ export function DocumentSummary({
                     onClick={() => setSummaryStyle(style)}
                     className={`style-button ${summaryStyle === style ? 'active' : ''}`}
                   >
-                    {style.charAt(0).toUpperCase() + style.slice(1)}
+                    {t(`documents.summary.style.${style}`)}
                   </button>
                 ))}
               </div>
@@ -127,27 +129,23 @@ export function DocumentSummary({
               {requestSummary.isPending ? (
                 <>
                   <span className="spinner" />
-                  Generating...
+                  {t('documents.summary.generating')}
                 </>
               ) : (
-                'Generate Summary'
+                t('documents.summary.generate')
               )}
             </button>
           </div>
         ) : (
-          <p className="no-summary-text">
-            Document is too short for summarization (minimum 100 words required).
-          </p>
+          <p className="no-summary-text">{t('documents.summary.tooShort', { count: 100 })}</p>
         )}
 
         {requestSummary.isError && (
-          <div className="error-message">Failed to generate summary. Please try again.</div>
+          <div className="error-message">{t('documents.summary.generateFailed')}</div>
         )}
 
         {requestSummary.isSuccess && !summary && (
-          <div className="processing-message">
-            Summary is being generated. It will appear shortly...
-          </div>
+          <div className="processing-message">{t('documents.summary.inProgress')}</div>
         )}
 
         <style>{summaryStyles}</style>
@@ -162,7 +160,7 @@ export function DocumentSummary({
       <div className="summary-header">
         <h4 className="summary-title">
           <span className="ai-icon">AI</span>
-          Summary
+          {t('documents.summary.title')}
         </h4>
         <div className="summary-actions">
           <button
@@ -170,14 +168,14 @@ export function DocumentSummary({
             onClick={() => setIsExpanded(!isExpanded)}
             className="toggle-button"
           >
-            {isExpanded ? 'Collapse' : 'Expand'}
+            {isExpanded ? t('documents.folder.collapse') : t('documents.folder.expand')}
           </button>
           <button
             type="button"
             onClick={handleRegenerateSummary}
             disabled={requestSummary.isPending}
             className="regenerate-button"
-            title="Generate a new summary"
+            title={t('documents.summary.regenerate')}
           >
             {requestSummary.isPending ? '...' : '↻'}
           </button>
@@ -200,7 +198,9 @@ export function DocumentSummary({
 
       {summaryGeneratedAt && (
         <div className="summary-footer">
-          <span className="generated-date">Generated: {formatDate(summaryGeneratedAt)}</span>
+          <span className="generated-date">
+            {t('documents.summary.generatedAt', { date: formatDate(summaryGeneratedAt) })}
+          </span>
         </div>
       )}
 

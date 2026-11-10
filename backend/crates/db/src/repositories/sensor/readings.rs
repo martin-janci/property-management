@@ -7,20 +7,32 @@ use sqlx::{Executor, PgConnection, Postgres};
 use uuid::Uuid;
 
 impl SensorRepository {
-    /// Create a sensor reading.
+    /// Create a sensor reading, scoped to `org_id`.
+    ///
+    /// The sensor-in-org guard is folded INTO the INSERT (`INSERT … SELECT …
+    /// WHERE EXISTS(… sensors WHERE id=$sensor AND organization_id=$org)`), so a
+    /// cross-org or missing sensor writes zero rows and returns `Ok(None)` in a
+    /// single statement — no separate `SELECT EXISTS` round-trip and no
+    /// check-then-insert TOCTOU window (issue #3305). This matches the
+    /// folded-predicate pattern already used by the sensor CRUD queries and
+    /// holds even when the connection's role bypasses RLS.
     ///
     /// Multi-statement (INSERT reading + UPDATE parent sensor), so it takes a
-    /// connection and reborrows it for each query.
+    /// connection and reborrows it for each query. The parent UPDATE runs only
+    /// when a row was actually inserted.
     pub async fn create_reading(
         &self,
         conn: &mut PgConnection,
+        org_id: Uuid,
         data: CreateSensorReading,
-    ) -> Result<SensorReading, sqlx::Error> {
-        // Also update the sensor's last_reading_at
-        let reading: SensorReading = sqlx::query_as(
+    ) -> Result<Option<SensorReading>, sqlx::Error> {
+        let reading: Option<SensorReading> = sqlx::query_as(
             r#"
             INSERT INTO sensor_readings (sensor_id, value, unit, quality, raw_data, timestamp)
-            VALUES ($1, $2, $3, $4, $5, COALESCE($6, NOW()))
+            SELECT $1, $2, $3, $4, $5, COALESCE($6, NOW())
+            WHERE EXISTS (
+                SELECT 1 FROM sensors WHERE id = $1 AND organization_id = $7
+            )
             RETURNING *
             "#,
         )
@@ -30,10 +42,16 @@ impl SensorRepository {
         .bind(data.quality.unwrap_or_else(|| "good".to_string()))
         .bind(data.raw_data.map(sqlx::types::Json))
         .bind(data.timestamp)
-        .fetch_one(&mut *conn)
+        .bind(org_id)
+        .fetch_optional(&mut *conn)
         .await?;
 
-        // Update sensor status
+        let Some(reading) = reading else {
+            return Ok(None);
+        };
+
+        // Update sensor status (the parent sensor is guaranteed in-org by the
+        // folded guard above).
         sqlx::query(
             "UPDATE sensors SET last_reading_at = $2, last_seen_at = NOW(), status = 'active' WHERE id = $1",
         )
@@ -42,7 +60,7 @@ impl SensorRepository {
         .execute(&mut *conn)
         .await?;
 
-        Ok(reading)
+        Ok(Some(reading))
     }
 
     /// Get readings for a sensor.
@@ -146,29 +164,38 @@ impl SensorRepository {
         .await
     }
 
-    /// Create batch readings using efficient bulk insert.
+    /// Create batch readings using an efficient bulk insert, scoped to `org_id`.
+    ///
+    /// Like [`create_reading`](Self::create_reading), the sensor-in-org guard is
+    /// folded into the bulk INSERT (`INSERT … SELECT … FROM (VALUES …) WHERE
+    /// EXISTS(…)`), so a cross-org or missing sensor writes zero rows. Returns
+    /// `Ok(None)` when a non-empty batch wrote nothing (sensor not in org →
+    /// 404), `Ok(Some(n))` for the number of rows inserted otherwise (issue
+    /// #3305). The VALUES parameters are explicitly cast because the derived
+    /// table's column types can't be inferred from the INSERT target columns.
     ///
     /// Multi-statement (bulk INSERT + UPDATE parent sensor), so it takes a
-    /// connection and reborrows it for each query.
+    /// connection and reborrows it for each query. The parent UPDATE runs only
+    /// when rows were actually inserted.
     pub async fn create_batch_readings(
         &self,
         conn: &mut PgConnection,
         sensor_id: Uuid,
+        org_id: Uuid,
         readings: Vec<crate::models::SingleReading>,
-    ) -> Result<i64, sqlx::Error> {
+    ) -> Result<Option<i64>, sqlx::Error> {
         if readings.is_empty() {
-            return Ok(0);
+            return Ok(Some(0));
         }
 
-        let count = readings.len() as i64;
-
-        // Build bulk INSERT with multiple VALUES for efficiency (single round-trip)
+        // Build the VALUES rows for the derived table; casts give Postgres the
+        // column types it can't infer through the EXISTS-guarded SELECT.
         let mut values_parts = Vec::with_capacity(readings.len());
         let mut param_idx = 1;
 
         for _ in &readings {
             values_parts.push(format!(
-                "(${}, ${}, ${}, ${}, ${})",
+                "(${}::uuid, ${}::float8, ${}::text, ${}::text, ${}::timestamptz)",
                 param_idx,
                 param_idx + 1,
                 param_idx + 2,
@@ -178,9 +205,15 @@ impl SensorRepository {
             param_idx += 5;
         }
 
+        // The sensor-id and org-id binds for the EXISTS guard follow the row binds.
         let query = format!(
-            "INSERT INTO sensor_readings (sensor_id, value, unit, quality, timestamp) VALUES {}",
-            values_parts.join(", ")
+            "INSERT INTO sensor_readings (sensor_id, value, unit, quality, timestamp) \
+             SELECT v.sensor_id, v.value, v.unit, v.quality, v.timestamp \
+             FROM (VALUES {}) AS v(sensor_id, value, unit, quality, timestamp) \
+             WHERE EXISTS (SELECT 1 FROM sensors WHERE id = ${} AND organization_id = ${})",
+            values_parts.join(", "),
+            param_idx,
+            param_idx + 1,
         );
 
         let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(query));
@@ -192,10 +225,15 @@ impl SensorRepository {
                 .bind(reading.quality.as_deref().unwrap_or("good"))
                 .bind(reading.timestamp);
         }
+        query_builder = query_builder.bind(sensor_id).bind(org_id);
 
-        query_builder.execute(&mut *conn).await?;
+        let inserted = query_builder.execute(&mut *conn).await?.rows_affected() as i64;
+        if inserted == 0 {
+            // Non-empty batch wrote nothing: the sensor is not in the caller's org.
+            return Ok(None);
+        }
 
-        // Update sensor status
+        // Update sensor status (the parent sensor is guaranteed in-org).
         sqlx::query(
             "UPDATE sensors SET last_reading_at = NOW(), last_seen_at = NOW(), status = 'active' WHERE id = $1",
         )
@@ -203,6 +241,6 @@ impl SensorRepository {
         .execute(&mut *conn)
         .await?;
 
-        Ok(count)
+        Ok(Some(inserted))
     }
 }

@@ -1,0 +1,54 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-30T00:00:00Z",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "oldest-unreviewed",
+  "selection_detail": "Standalone Tier-1d demand-driven run (claimable backlog starved: only mobile-native-kmp-gated items remain, structurally unlandable in the cloud runner). No CHURN_FILES passed by the dispatcher (state.json hotspot_history is stale, dated 2026-05, all pointing at api-server routes that map to already-reviewed segments). Selection followed the skill's deterministic Step-1 cursor rotation from state.review_cursor: mobile-native-kmp (2026-08-25) is the true oldest but is BOTH (a) saturation-skipped -- it holds exactly 3 open code-review-finding rows in backlog.json (code-review-mobile-native-kmp-{portfolio-analytics-caps-100, cancellation-swallowed, httpclient-no-timeout}), meeting the skill's >=3-open skip threshold -- AND (b) cloud-unlandable per assignment (AGP egress-403, KMP fix cannot be verified in the cloud runner). Next oldest is reality-server (cursor 2026-08-28); every other landable segment (api-handlers, api-core, ppt-web-ui, ppt-web-core, reality-web, mobile-rn) is at 2026-08-29. reality-server has ZERO open code-review-finding rows in backlog.json -> not saturated -> selected. NOTE: an earlier Tier-1d run today already wrote 2026-08-30-reality-server-tier1d.json (two findings: byte-vs-char length validation; unvalidated report contact fields). Per the established same-day multi-file precedent (2026-08-29-api-core-tier1d-client-ip.json + 2026-08-29-api-core-tier1d-workflow-docgen.json), this is a second, suffixed reality-server file carrying two DISTINCT, previously-unreported findings that survived a fresh SSO-focused sweep -- neither overlaps the earlier file. Primary expert = Rust, no secondary (per segment->expert map for reality-server). Static-only: grep sweep of backend/servers/reality-server/src (43 .rs files) for unwrap/expect/unsafe/todo/panic/secret-logging/error-swallowing, then targeted read of the security hot spots (routes/sso.rs 1922 lines, services/*, util/url_validator.rs, routes/inquiries.rs, routes/users.rs).",
+  "experts_used": ["rust"],
+  "findings_count": 2,
+  "note": "reality-server remains a mature, security-audited codebase and the obvious high-severity classes are CLEAN on this pass: all non-test unwrap/expect are startup-config fail-fast (state.rs JWT_SECRET panics), fatal OS-rng failures, or guarded (extractors/auth.rs:63 strip_prefix unwrap is gated by the starts_with check in the same closure; handlers/inquiries/mod.rs:266 chars().next().unwrap() is gated by an earlier is_empty() early-return). No unsafe blocks. SSRF is well-defended: util/url_validator.rs blocks private/reserved/loopback IPv4+IPv6 (incl. IPv4-mapped IPv6 re-encoding) and documents the DNS-rebinding caveat, and validate_fetch_url is applied at both agency-import submission sites (routes/agency_imports.rs:238,290). The password-reset flow is enumeration-safe and its confirm path enforces expiry + single-use (handlers/users/mod.rs:562 TTL, distinct Expired/InvalidToken results). The background alert drainer commits enqueue+watermark atomically (#983 fix, services/saved_search_alerts.rs:223). The email logging fallback's `let _ = (token, locale)` is an intentional, documented no-delivery path. The two findings below both live entirely in routes/sso.rs (the SSO consumer hot path), are self-contained landable Rust fixes with no KMP/build-gated dependency, and are distinct from the two findings in the earlier 2026-08-30-reality-server-tier1d.json.",
+  "signals": [
+    {
+      "id": "code-review-reality-server-sso-introspect-negcache-poison",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 reality-server, sso sweep)",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs",
+        "backend/servers/reality-server/src/state.rs"
+      ],
+      "evidence": [
+        "introspect_pm_token (routes/sso.rs:729-786) caches PM token-introspection results in state.token_cache (TokenValidationCache, 60s TTL, 10000 entries -- state.rs:947 `TokenValidationCache::new(60, 10000)`). On the FAILURE branch at routes/sso.rs:759-766, when the PM introspection endpoint returns a NON-SUCCESS HTTP status (`if !response.status().is_success()`), the code does `state.token_cache.set(token, false, None, None).await` (sso.rs:762) and then returns Err. This caches active=false for a token whose real status is UNKNOWN.",
+        "This conflates two very different conditions. Per RFC 7662, a genuinely inactive token is signalled by HTTP 200 with a body `{\"active\": false}` (handled correctly further down at sso.rs:770-784). A 4xx/5xx from the introspection endpoint instead means a client-config or upstream error -- PM API down/redeploying, a 502/503 from its proxy, bad client_credentials, etc. -- and is NOT evidence that the user's token is inactive. Caching false on `!is_success()` treats an upstream outage as an authoritative negative.",
+        "The poisoning is observable on SUBSEQUENT requests, not the failing one. The cache-hit path (sso.rs:735-745) returns `Ok(TokenIntrospectionResponse { active: cached.active, .. })` for any non-expired entry with NO error surfaced, and TokenValidationCache::get (state.rs:656-673) returns any entry while `Instant::now() < cached.expires_at` regardless of how it was set (state.rs:675-716 stores `active` with a uniform `ttl_seconds` expiry). So during a PM introspection blip, the first request with a valid token 5xx-fails and writes active=false; every following request with that SAME valid token for up to 60s hits the cache and is told the token is inactive -- denying an otherwise-valid Reality Portal session. Common because a browser fires several API calls per page with the same bearer token.",
+        "Impact: availability/correctness defect on the SSO auth hot path -- a transient PM introspection failure (deploy, 5xx, proxy timeout) is amplified into up-to-60s of spurious session denials for valid users. It fails CLOSED (denies rather than grants), so it is not a security bypass, which is why this is scored medium (+2) rather than high.",
+        "Fix (self-contained, routes/sso.rs only): populate the cache ONLY from a successfully-parsed 200 introspection body -- cache both active=true and the genuine active=false that PM returns in the JSON. On any transport error or non-2xx status, return Err WITHOUT calling token_cache.set, so the next request re-validates instead of reading a poisoned negative. IG3: unit test that a 503 introspection response leaves state.token_cache empty for that token and that a following 200 introspection re-validates (active=true).",
+        "Confidence medium: the set(false)-on-!is_success() -> get()-returns-Ok(active:false)-within-TTL path is confirmed by static read of sso.rs:735-766 and state.rs:656-716; not upgraded to high because runtime confirmation of the exact caller re-entry within the 60s window was not executed (static-only pass)."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-sso-per-call-client-no-timeout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 reality-server, sso sweep)",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs",
+        "backend/servers/reality-server/src/state.rs"
+      ],
+      "evidence": [
+        "All three PM-facing SSO helpers construct a brand-new HTTP client per request via `reqwest::Client::new()`: exchange_pm_token (routes/sso.rs:687), get_user_info (routes/sso.rs:711), and introspect_pm_token (routes/sso.rs:748). Each call therefore builds a fresh connection pool and re-runs TLS setup instead of reusing a keep-alive connection to the PM API -- on the SSO login/validation hot path that runs on effectively every authenticated portal request.",
+        "More importantly for robustness: `reqwest::Client::new()` applies NO request timeout. A hung or slow PM endpoint (the very outage scenario in the sibling finding) can stall these SSO helpers indefinitely, holding the portal request open. Contrast state.rs:756-762, where PmApiClient::new deliberately builds its reqwest client with `.timeout(Duration::from_secs(timeout_seconds))` -- the timeout discipline exists in the codebase but is not applied to the SSO client calls.",
+        "Fix (self-contained): build a single shared `reqwest::Client` once (with an explicit `.timeout(...)`, mirroring PmApiClient) -- either store it on AppState alongside the existing PmApiClient or pass the already-pooled client in -- and reuse it across exchange_pm_token / get_user_info / introspect_pm_token instead of `reqwest::Client::new()` at each call site. IG3: a test asserting the SSO helpers use a client with a configured timeout (or a construction-site assertion that no bare Client::new() remains in sso.rs).",
+        "Confidence medium; severity low (+1): the missing pooling is a pure efficiency smell, but the missing timeout is a genuine robustness gap that compounds the introspection-outage scenario, so this is worth landing rather than dropping as a nit. Both aspects are confirmed by static read of the three Client::new() sites vs the timeout-configured PmApiClient."
+      ]
+    }
+  ]
+}

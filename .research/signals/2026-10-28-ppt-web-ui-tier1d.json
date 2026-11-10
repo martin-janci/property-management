@@ -1,0 +1,58 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-28",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "dispatcher-tier1d-demand-driven (buffer starved, claimable=8 < floor=36; no CHURN_FILES supplied so defaulted to oldest-unreviewed per state.review_cursor: ppt-web-ui @ 2026-10-22 is the oldest. 0 open code-review-finding items for ppt-web-ui in backlog.json => not saturated. Yesterday's sibling ppt-web-ui run (2026-10-27-ppt-web-ui-tier1d.json) covered the registry feature; this run targets the distinct, uncovered accounting-invoice feature.)",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-invoice-vat-rate-payload-drift",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx:49-70 — the displayed totals recompute the effective VAT rate from vatRateType AND the selected country (standard => CZ 21 / SK 20; first_reduced => CZ 15 / SK 10), so the user sees a country-correct total.",
+        "AccountingInvoiceForm.tsx:44-46,80-89 — but each item's stored numeric field `item.vatRate` is initialized to 21 and is NEVER updated when vatRateType or `country` changes (updateItem only writes the field the UI event targets). handleSubmit sends the raw `items` array (line 87) with the stale `vatRate: 21` plus `vatRateType`. Result: for country=SK + standard rate the UI shows 20% VAT in the totals panel while the persisted AccountingCreateInvoiceRequest carries vatRate=21 — the invoice is created with a VAT rate different from what the user reviewed. A financial-document correctness bug (which value the server trusts, vatRate vs vatRateType, determines the booked tax).",
+        "Confidence medium: the exact server resolution of the vatRate-vs-vatRateType ambiguity was not traced; either the UI total or the booked amount is wrong, and they disagree whenever country=SK or a reduced rate is picked."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-invoice-qty-price-nan",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx:258,266,294 — the Qty, Unit Price and custom VAT % inputs call `parseFloat(e.target.value)` directly into state. Clearing the field (empty string) yields NaN; parseFloat of any non-numeric paste also yields NaN.",
+        "AccountingInvoiceForm.tsx:49-70,300-337 — NaN then propagates: the per-row total `(item.qty * item.unitPrice).toFixed(2)` and the base/VAT/Total summary all render the literal string 'NaN', and the useMemo totals become NaN.",
+        "AccountingInvoiceForm.tsx:72-90 — handleSubmit's only guard (line 75) checks presence of contactId/number/dueDate and items.length, NOT numeric validity, so an item with qty=NaN or unitPrice=NaN is submitted in the AccountingCreateInvoiceRequest body. Invoice creation proceeds with NaN line amounts (serialized as null/NaN) — data-integrity bug on a financial record with no client-side block."
+      ],
+      "expert": "completeness"
+    },
+    {
+      "id": "code-review-ppt-web-ui-invoice-feature-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "improvement",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx — never imports useTranslation; every user-facing string is hardcoded English: field labels ('Contact *', 'Invoice Number *', 'Due Date *', line 121-202), table headers ('Description'/'Qty'/'Unit Price'/'VAT Rate', 253-238), buttons ('+ Add Item', 'Remove', 'Cancel', 'Saving...'/'Create Invoice'/'Update Invoice', 217/309/357), and the VAT_RATE_OPTIONS labels (14-19).",
+        "AccountingInvoiceForm.tsx:76 — validation uses the native `alert('Please fill all required fields')` (hardcoded English) instead of the app's toast/inline-error convention.",
+        "frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx:74-84,90,108 — same feature-wide gap: headings 'Issued Invoices'/'Native accounting MVP', 'Create Invoice'/'New Invoice' buttons, toast titles 'Failed to create invoice'/'Failed to delete invoice' (lines 49,63), and a native `confirm('Are you sure you want to delete this invoice?')` (line 108) are all hardcoded English. ppt-web ships react-i18next with sk/cs/de/en locales (root CLAUDE.md), so the entire accounting-invoice feature is untranslatable."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

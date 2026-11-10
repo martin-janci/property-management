@@ -150,7 +150,9 @@ impl TotpService {
         let mut nonce_bytes = [0u8; 12];
         rand::rngs::SysRng
             .try_fill_bytes(&mut nonce_bytes)
-            .expect("OS rng failed");
+            .map_err(|e| {
+                TotpError::EncryptionError(format!("secure RNG failed to generate nonce: {e}"))
+            })?;
         let nonce = Nonce::from(nonce_bytes);
 
         // Encrypt the secret

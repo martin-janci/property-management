@@ -1,0 +1,69 @@
+{
+  "generated": "2026-09-01T16:35:00Z",
+  "segment": "mobile-native-kmp",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["kotlin", "tester"],
+  "note": "Dispatcher Tier-1d demand-driven review. Static analysis only, no compile/test run. Segment root mobile-native/ (KMP shared + androidApp). review_cursor.mobile-native-kmp was 2026-08-25 (oldest); no CHURN_FILES aligned to this segment; 0 open code-review-findings for it so no saturation skip.",
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-createlisting-notimpl",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-01 mobile-native-kmp realtor create-listing wiring)",
+      "segment": "mobile-native-kmp",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "kotlin",
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/.../navigation/Navigation.kt:490-495 — the composable for Screen.CreateListing wires CreateListingScreen with `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`. This is the ONLY (production) wiring of the create-listing submit callback — not a test stub, not a preview.",
+        "The screen is a fully built, reachable feature: MyListingsScreen (Navigation.kt:480-488) exposes `onCreateClick = { navController.navigate(Screen.CreateListing.route) }`, and CreateListingScreen.kt:39-131 is a complete form (title/description/city/price/currency/transactionType) with field validation (titleError/cityError/priceError, CreateListingScreen.kt:96-104), an isSubmitting spinner (CreateListingScreen.kt:105-129, 375), and a real Result.fold handler.",
+        "Because onSubmit ALWAYS returns Result.failure, the fold at CreateListingScreen.kt:120-126 always takes the onFailure branch and renders `publishFailedMsg` (\"publish failed\") — or networkErrorMsg if it.isNetworkError(), which NotImplementedError is not. A realtor who fills the form and taps Publish is guaranteed to see a failure toast every time; the listing is never created.",
+        "Root cause: PortalListingsRepository (shared/.../realtor/PortalListingsRepository.kt) exposes only listMyListings (:40), getListingAnalytics (:74) and getPortfolioAnalytics (:111) — there is NO create/publish method to back the screen. The UI shipped ahead of the repository + API call.",
+        "Fix: add `suspend fun createListing(input: CreateListingInput): Result<Unit>` to PortalListingsRepository (POST to the reality-server realtor listings endpoint via ApiClient, wrapped in the same Result/onFailure convention as the other repo methods), then wire `onSubmit = { input -> portalListingsRepository.createListing(input) }` in Navigation.kt:493. Add a commonTest for the repository path encoding + success/failure mapping (mirrors PortalListingsRepositoryTest). Confidence high: full call path traced entry(MyListings onCreateClick) -> CreateListing route -> onSubmit -> NotImplementedError -> publishFailedMsg, reachable in the shipped android build; no runtime needed to confirm the callback is hardcoded to fail."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-nav-onfailure-empty-swallow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-01 mobile-native-kmp navigation error-swallow)",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "tester",
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/.../navigation/Navigation.kt — four list-loading composables collapse a repository failure into an empty list with no error surface: SavedSearches `.onFailure { searches = emptyList() }` (:380), Inquiries `.onFailure { inquiries = emptyList() }` (:450), MyListings `.onFailure { listings = emptyList() }` (:476), and ListingAnalytics `.onFailure { metrics = emptyList() }` (:541).",
+        "In every case the child screen is then handed the same empty list it would receive when the account genuinely has no data, so a network/auth/5xx failure is rendered as the benign empty-state ('You have no listings yet' / 'No saved searches'). The user is told they have nothing when in fact the load failed, and there is no retry affordance — the LaunchedEffect only runs once per key, so a transient failure is sticky until the screen is left and re-entered.",
+        "This diverges from the pattern the rest of the app uses: ListingDetailScreen distinguishes state.errorMessage != null -> ErrorContent(onRetry = viewModel::retry) (ListingDetailScreen.kt:120-121), and CreateListingScreen shows a distinct networkError vs generic failure. The realtor/saved-search/inquiry list screens should do the same rather than masking failure as emptiness.",
+        "Fix: track a load-error flag alongside the list (e.g. `var loadError by remember { mutableStateOf(false) }`), set it in onFailure instead of overwriting the list, and have each *Screen render an error+retry state when it is set. Add commonTest / UI coverage asserting that a repository Result.failure yields an error state, not an empty list. Confidence medium: the swallow is confirmed by static read; the exact UX impact per screen depends on each *Screen's empty-state copy which was not exhaustively read."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-listingdetail-oncall-bang",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-01 mobile-native-kmp listing-detail deferred !!)",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "kotlin",
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/listing/ListingDetailScreen.kt"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/.../ui/listing/ListingDetailScreen.kt:131-139 — the onCallClick lambda dereferences `state.listing!!.realtor?.phone` with a non-null assertion. Unlike the sibling `!!` sites (L121 errorMessage, L125/149/160 listing) which are guarded by an immediately-enclosing `when { state.listing != null -> ... }` / `if (state.listing != null)` in the SAME scope (safe smart-cast, `!!` is only needed because Kotlin cannot smart-cast a delegated `by collectAsState()` property), onCallClick is a DEFERRED callback: it captures `state` and runs on a later user tap.",
+        "`state` is a `by collectAsState()` delegate, so `state.listing` is re-read from the current StateFlow value at click time. If the ViewModel emits a new state whose listing is null (e.g. a retry/reload transition, or an inquiry-submitted event that resets state) between the phone button becoming visible and the tap, `state.listing!!` throws NullPointerException and crashes the screen.",
+        "Likelihood is low (the button is only composed inside the listing != null branch, so state must flip null after render but before tap), which is why this is scored Low, but it is a genuine crash path rather than a smart-cast nicety.",
+        "Fix: capture the listing into a local val at composition and null-check it, or read `state.listing?.realtor?.phone?.let { ... }` inside the lambda instead of `state.listing!!...`. Confidence medium: the deferred-read crash is confirmed by static read of the delegate + lambda capture; whether a live state transition can actually null the listing while the button is on screen was not runtime-verified."
+      ]
+    }
+  ]
+}

@@ -20,6 +20,7 @@ import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { apiRequest, useApiMutation, useApiQuery } from '../../hooks/useApi';
+import { formatDate as formatLocaleDate } from '../../i18n/format';
 import { colors } from '../shared/screenStyles';
 
 // ─── API shapes ──────────────────────────────────────────────────────────────
@@ -71,7 +72,7 @@ export function AnnouncementDetailScreen({
   onBack,
 }: AnnouncementDetailScreenProps) {
   const queryClient = useQueryClient();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const markReadFired = useRef(false);
 
   // Fetch announcement detail
@@ -116,7 +117,7 @@ export function AnnouncementDetailScreen({
 
   const formatDate = (dateString?: string | null): string => {
     if (!dateString) return '';
-    return new Date(dateString).toLocaleDateString(i18n.language, {
+    return formatLocaleDate(dateString, {
       year: 'numeric',
       month: 'long',
       day: 'numeric',

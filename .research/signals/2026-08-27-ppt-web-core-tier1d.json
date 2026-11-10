@@ -1,0 +1,60 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-27T00:00:00Z",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "oldest-unreviewed",
+  "selection_detail": "Dispatcher Tier-1d demand: claimable buffer starved (claimable=6 < floor=36) and all remaining backlog is mobile-native-gated / unlandable in the cloud runner, so a cloud-LANDABLE (backend/frontend) segment was required. CHURN_FILES not supplied (hotspot_history is stale May churn on api-server). Today's (2026-08-27) tier1d runs already covered api-core, reality-server and reality-web (x2). Among non-mobile, cloud-landable segments with no coverage today, ppt-web-core is the oldest by review_cursor (review_cursor.ppt-web-core=2026-08-21; api-handlers=2026-08-22 is newer). Not saturated: 0 open code-review-finding rows for this segment in backlog.json. Scope = frontend/apps/ppt-web/src core (lib/, hooks/, contexts/, routes/) excluding pages/components/features (those are ppt-web-ui). Prior ppt-web-core findings deliberately NOT re-flagged: ws-query-invalidation-dead (2026-08-26), authctx-no-token-expiry-check (2026-08-21), errorhandler-i18n-gap (2026-08-17) — all three re-confirmed still present in this pass but excluded as duplicates.",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 3,
+  "note": "Segment core (lib/api.ts retry/idempotency, lib/websocket.ts token-rotation/backoff, lib/errorHandler.ts, hooks/*, contexts/AuthContext.tsx) is very mature and reads clean with prior-fix comments. All three NEW findings are in the route-group wrappers (routes/groups/) and OrganizationProvider, which are thinner and less-reviewed than the lib/ core. Highest-value finding: person-months.tsx uses a hand-rolled raw fetch() that bypasses the @ppt/api-client auth interceptor entirely (no Authorization / X-Tenant-ID header) — the ONLY raw fetch in the whole core scope. All findings are frontend-only and landable in the cloud runner.",
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-personmonths-raw-fetch-noauth",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:75-91 — useBuildingUnits() calls a hand-rolled `fetch(\\`/api/v1/units?buildingId=${buildingId}&limit=500\\`, { headers: { 'Content-Type': 'application/json' } })` with NO Authorization header and NO X-Tenant-ID header. This is the ONLY raw fetch() in the entire ppt-web-core scope (routes/, lib/, hooks/, contexts/) — a repo grep confirms every other data path goes through the generated @ppt/api-client hooks or lib/api.ts's axios instance, both of which inject the bearer token (contexts/AuthContext.tsx:325-344 wires setTokenProvider + configureApiClient) and X-Tenant-ID (setOrgProvider, #1522).",
+        "ppt-web authenticates with a localStorage bearer token, not cookies: AuthContext stores ppt_access_token in localStorage and the api-client interceptor sets `Authorization: Bearer <token>`; there is no `credentials: 'include'` cookie session anywhere. So this bare fetch reaches the authenticated GET /api/v1/units endpoint with no credentials and is rejected (401). The error is swallowed: `if (!res.ok) throw new Error(...)` -> TanStack Query catches it -> `data` is undefined -> the hook returns `units: []`.",
+        "User-facing effect (high): every person-months surface that lists units is driven by useBuildingUnits — PersonMonthsPageRoute (building summary), BulkEntryPageRoute (bulk grid), UnitPersonMonthsPageRoute (unit designation lookup). With units=[] the building summary shows ZERO units, bulk entry shows an empty grid, and unit designations render blank — the feature (Epic 3 Story 3.5) is effectively non-functional in an authenticated production session even though the page renders without an error.",
+        "Second defect on the same fetch: the response is hand-typed inline as `{ data: Array<{ id: string; unitNumber: string }> }`, bypassing the generated Unit type. If the /units envelope or field casing changes, this silently breaks with no compile-time signal — the whole reason the rest of the app uses @ppt/api-client. The query key `['person-months','building-units', ...]` also namespaces a units resource under person-months, so a units-scoped cache invalidation won't reach it.",
+        "Fix: replace the raw fetch with the generated units hook/list function from @ppt/api-client (the same module person-months already imports useBuilding/useBuildingPersonMonths from), so the request carries the bearer token + X-Tenant-ID and is typed. Confidence medium: the missing-auth-header and swallow-to-empty path are traced statically; not runtime-confirmed against a live server, but ppt-web's bearer-token contract is explicit in AuthContext."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-financial-dash-no-error-state",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx:70-86 — FinancialDashboardPageRoute runs three useQuery calls (getARAgingReport, getOverdueInvoices, listInvoices) and destructures ONLY `isLoading` from each; no `isError`/`error` is read. Line 132 passes just `isLoading={isLoading}` to <FinancialDashboardPage>; no error prop is passed and the page has no error branch.",
+        "On any of the three queries failing, the defaults kick in silently: `totals` falls back to all-zeros (lines 88-94), `invoices` to [] (95), `overdueInvoices` to [] (96). The dashboard then renders a fully 'healthy' financial picture — total balance 0, outstanding 0, overdue 0, empty invoice counts — with no indication the data failed to load. On a money-facing manager dashboard that is actively misleading (a failed AR-aging load looks identical to a genuinely clean ledger).",
+        "The correct pattern already exists a few routes down in the same file: financial.tsx:457-458 passes `error={activeQuery.error instanceof Error ? activeQuery.error.message : null}` to its page. The dashboard route should surface `isError`/`error` (aggregated across the three queries) the same way. Score 2 (unhandled error on a user-facing, financially sensitive path). New finding — distinct from the mutation onError handlers already present at lines 179/204/306/319, which cover writes, not these reads."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-orgprovider-unmemoized-value",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/OrganizationProvider.tsx:8-12 — the context value is built as a fresh object literal on every render (`const value = user?.organizationId ? { organizationId, organizationName } : null`) and passed straight to <OrganizationContext.Provider value={value}>. Because a new reference is produced each render, every consumer of OrganizationContext re-renders whenever OrganizationProvider re-renders, even when organizationId/organizationName are unchanged.",
+        "OrganizationProvider sits high in the tree (fed by useAuth()), so it re-renders on any AuthContext value change (isLoading toggles, token refresh re-deriving user, etc.), fanning unnecessary re-renders to all org-context consumers. Fix: wrap `value` in useMemo keyed on [user?.organizationId, user?.organizationName] — matching the useMemo pattern AuthContext itself uses for its own context value (AuthContext.tsx:591). Low severity (perf/refactor smell), but a clean, landable, zero-risk fix."
+      ]
+    }
+  ]
+}

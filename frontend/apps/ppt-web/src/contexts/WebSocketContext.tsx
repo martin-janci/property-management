@@ -18,6 +18,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { useNetworkStatusEffect } from '../hooks/useNetworkStatus';
 import {
   type ConnectionState,
   type MessageHandler,
@@ -26,16 +27,58 @@ import {
 } from '../lib/websocket';
 
 /**
- * Query key mapping for entity events.
- * Used to invalidate TanStack Query caches when entities change.
+ * Query key mapping for realtime events emitted by the api-server.
+ *
+ * The api-server pushes canonical `domain.action` event envelopes on the
+ * per-user `notifications:{user_id}` channel (see `ws_notifications.rs` and its
+ * publishers). It never emits the legacy `entity:*` names this map used to key
+ * on, so before this mapping was corrected every realtime frame missed the
+ * lookup and no TanStack Query cache was ever invalidated (100% dead sync).
+ *
+ * Keys are the exact `event` strings the server sends; values are the
+ * first-segment query roots (see `lib/queryKeys.ts`) to invalidate. The
+ * polymorphic `notification.created` event is handled separately — its
+ * affected entity list is carried in `payload.category`, see
+ * {@link categoryToQueryKeys}.
  */
 export const eventToQueryKeys: Record<string, string[]> = {
-  'entity:announcement': ['announcements'],
-  'entity:fault': ['faults'],
-  'entity:vote': ['votes'],
-  'entity:document': ['documents'],
-  'entity:message': ['messages'],
-  'entity:neighbor': ['neighbors'],
+  // Direct message sent to the user (`messaging.rs::dispatch_new_message_event`).
+  'message.created': ['messages'],
+  // Notification-preference toggled (`notification_preferences.rs`).
+  'preference.updated': ['notifications'],
+};
+
+/**
+ * Map a `notification.created` payload `category` to the query roots to
+ * invalidate alongside the `notifications` root.
+ *
+ * `notification.created` (`notification_pipeline.rs::DbInAppAdapter::send`) is
+ * polymorphic: a single event type covers every domain, and its
+ * `payload.category` (serialized snake_case, see `NotificationCategory`) pins
+ * which entity list just changed. A new announcement notification, for example,
+ * should refresh both the notification list and the announcements list.
+ *
+ * This map MUST cover every `NotificationCategory` variant the server can emit
+ * (`common::notifications::NotificationCategory`, serialized snake_case).
+ * A missing key silently degrades to the `notifications`-only fallback, so the
+ * corresponding entity feed goes stale on push — that was the community + system
+ * gap this map originally shipped with. Invalidating a root that no active query
+ * uses is a harmless no-op, so it is safe to keep the map in lock-step with the
+ * backend enum.
+ */
+export const categoryToQueryKeys: Record<string, string[]> = {
+  announcements: ['announcements'],
+  faults: ['faults'],
+  // The live vote queries are keyed under the `voting` root (`votingKeys.all`
+  // in `@ppt/api-client`), NOT the legacy local `queryKeys.votes` factory root
+  // (`votes`). Keying this on `['votes']` invalidated a root no active query
+  // uses, so a votes push left the on-screen vote lists/details stale.
+  votes: ['voting'],
+  messages: ['messages'],
+  community: ['community'],
+  financial: ['financial'],
+  documents: ['documents'],
+  system: ['system'],
 };
 
 /**
@@ -70,6 +113,15 @@ export interface WebSocketContextValue {
    * The last connection error, if any.
    */
   error: Error | null;
+
+  /**
+   * Whether the client has exhausted its reconnect-attempt budget and given up
+   * retrying for now. Cleared automatically once a connection is
+   * re-established (e.g. after the browser regains connectivity, or a manual
+   * {@link reconnect}). UIs can use this to surface an explicit "reconnect"
+   * affordance instead of a transient error.
+   */
+  maxRetriesExceeded: boolean;
 
   /**
    * Subscribe to WebSocket events of a specific type.
@@ -177,6 +229,7 @@ export function WebSocketProvider({
 }: WebSocketProviderProps) {
   const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
   const [error, setError] = useState<Error | null>(null);
+  const [maxRetriesExceeded, setMaxRetriesExceeded] = useState(false);
   const serviceRef = useRef<WebSocketService | null>(null);
   const wasConnectedRef = useRef(false);
   const previousStateRef = useRef<ConnectionState>('disconnected');
@@ -222,6 +275,8 @@ export function WebSocketProvider({
       setError(err ?? null);
 
       if (state === 'connected') {
+        // A live connection clears any prior give-up state.
+        setMaxRetriesExceeded(false);
         if (wasConnectedRef.current) {
           // This is a reconnection
           onReconnectedRef.current?.();
@@ -236,11 +291,37 @@ export function WebSocketProvider({
       }
     });
 
+    // Surface the terminal give-up state so the UI can offer an explicit
+    // reconnect affordance rather than silently losing realtime for the
+    // session. Cleared again on the next successful 'connected' transition.
+    const unsubscribeMaxRetries = service.subscribe('connection:max-retries-exceeded', () => {
+      setMaxRetriesExceeded(true);
+    });
+
     return () => {
       unsubscribe();
+      unsubscribeMaxRetries();
       service.disconnect();
     };
   }, []);
+
+  // Resume the socket when the browser regains connectivity. The service's
+  // exponential-backoff budget (default ~3 min) can be exhausted by a longer
+  // outage — sleep/resume, a VPN drop, or a server redeploy — after which the
+  // service gives up permanently for the session and nothing re-arms it.
+  // A regained-connectivity signal is exactly when to retry: connect() resets
+  // the reconnect budget and re-establishes the socket.
+  useNetworkStatusEffect(
+    useCallback(() => {
+      const service = serviceRef.current;
+      if (!service) return;
+      // Only resume while still authenticated — otherwise connect() would just
+      // error out on a missing token.
+      if (authRef.current.isAuthenticated && authRef.current.accessToken) {
+        service.connect();
+      }
+    }, [])
+  );
 
   // Handle auth changes - connect when authenticated, disconnect when not
   useEffect(() => {
@@ -262,7 +343,8 @@ export function WebSocketProvider({
 
     const unsubscribers: (() => void)[] = [];
 
-    // Subscribe to all entity events
+    // Subscribe to the fixed `domain.action` events whose query roots are known
+    // up front.
     for (const [eventType, queryKeys] of Object.entries(eventToQueryKeys)) {
       const unsubscribe = service.subscribe(eventType, (message) => {
         onEntityEvent(eventType, queryKeys, message);
@@ -270,25 +352,17 @@ export function WebSocketProvider({
       unsubscribers.push(unsubscribe);
     }
 
-    // Also subscribe to the generic entity events
-    const entityEvents = ['entity:updated', 'entity:created', 'entity:deleted'] as const;
-    for (const eventType of entityEvents) {
-      const unsubscribe = service.subscribe(eventType, (message) => {
-        // Try to extract entity type from payload
-        const payload = message.payload as { entityType?: string } | null;
-        const entityType = payload?.entityType;
-
-        if (entityType) {
-          const mappedKey = `entity:${entityType}`;
-          const queryKeys = eventToQueryKeys[mappedKey];
-
-          if (queryKeys) {
-            onEntityEvent(eventType, queryKeys, message);
-          }
-        }
-      });
-      unsubscribers.push(unsubscribe);
-    }
+    // `notification.created` is polymorphic: one event type spans every domain,
+    // with `payload.category` naming the affected entity list. Refresh the
+    // `notifications` root (list + unread count) plus that entity's list.
+    const unsubscribeNotification = service.subscribe('notification.created', (message) => {
+      const payload = message.payload as { category?: string } | null;
+      const category = payload?.category;
+      const entityKeys = category ? categoryToQueryKeys[category] : undefined;
+      const queryKeys = entityKeys ? ['notifications', ...entityKeys] : ['notifications'];
+      onEntityEvent('notification.created', queryKeys, message);
+    });
+    unsubscribers.push(unsubscribeNotification);
 
     return () => {
       for (const unsubscribe of unsubscribers) {
@@ -335,12 +409,13 @@ export function WebSocketProvider({
       isConnecting: connectionState === 'connecting',
       connectionState,
       error,
+      maxRetriesExceeded,
       subscribe,
       send,
       getLastEventTimestamp,
       reconnect,
     }),
-    [connectionState, error, subscribe, send, getLastEventTimestamp, reconnect]
+    [connectionState, error, maxRetriesExceeded, subscribe, send, getLastEventTimestamp, reconnect]
   );
 
   return <WebSocketContext.Provider value={value}>{children}</WebSocketContext.Provider>;

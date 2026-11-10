@@ -90,6 +90,7 @@ vi.mock('../../../contexts/AuthContext', () => ({
 
 // Stub useActionQueue for ManagerDashboardPage
 vi.mock('../dashboard/hooks/useActionQueue', () => ({
+  isActionQueueMockEnabled: () => true,
   useActionQueue: vi.fn(() => ({
     items: [],
     total: 0,

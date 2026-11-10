@@ -7,6 +7,12 @@
 
 mod common;
 
+#[path = "suites/finance_r4_authz_tests.rs"]
+mod finance_r4_authz_tests;
+#[path = "suites/mobile_config_route_tests.rs"]
+mod mobile_config_route_tests;
+#[path = "suites/platform_r4_authz_tests.rs"]
+mod platform_r4_authz_tests;
 #[path = "suites/reports_export_org_scope_tests.rs"]
 mod reports_export_org_scope_tests;
 #[path = "suites/reports_get_execution_happy_path_tests.rs"]
@@ -41,8 +47,16 @@ mod vendor_portal_stub_removal_tests;
 mod violations_cross_org_idor_tests;
 #[path = "suites/violations_happy_path_tests.rs"]
 mod violations_happy_path_tests;
+#[path = "suites/violations_mutation_cross_org_idor_tests.rs"]
+mod violations_mutation_cross_org_idor_tests;
+#[path = "suites/violations_role_authz_tests.rs"]
+mod violations_role_authz_tests;
 #[path = "suites/voice_oauth_exchange_auth_tests.rs"]
 mod voice_oauth_exchange_auth_tests;
+#[path = "suites/voice_oauth_refresh_auth_tests.rs"]
+mod voice_oauth_refresh_auth_tests;
+#[path = "suites/voice_oauth_token_encryption_roundtrip_tests.rs"]
+mod voice_oauth_token_encryption_roundtrip_tests;
 #[path = "suites/voting_behaviour_tests.rs"]
 mod voting_behaviour_tests;
 #[path = "suites/voting_happy_path_tests.rs"]
@@ -55,5 +69,7 @@ mod voting_tests;
 mod work_order_cross_org_idor_tests;
 #[path = "suites/work_orders_happy_path_tests.rs"]
 mod work_orders_happy_path_tests;
+#[path = "suites/work_orders_round4_role_tests.rs"]
+mod work_orders_round4_role_tests;
 #[path = "suites/workflow_cross_tenant_idor_tests.rs"]
 mod workflow_cross_tenant_idor_tests;

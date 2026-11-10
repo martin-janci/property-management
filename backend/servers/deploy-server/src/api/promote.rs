@@ -85,12 +85,18 @@ pub async fn promote_handler(
     // serve the target's apex hostnames. Compute once and reuse on the
     // rollback path (where we re-deploy the previous Release).
     let service_envs = build_service_envs(target.as_str(), target_cfg)?;
+    // The ONE strict path: a promote deploys a candidate that `release.yml`
+    // registered from a single `v*` tag, so all five images must come from one
+    // commit. A disagreement here means a build leg silently failed or an
+    // image was hand-pushed, and refusing costs nothing — nothing has been
+    // torn down yet. See `BlueGreenSpec::require_single_revision`.
     let spec = BlueGreenSpec::from_release(
         &candidate,
         target.as_str(),
         target_cfg,
         service_envs.clone(),
-    )?;
+    )?
+    .require_single_revision(true);
     let docker = svc
         .release_svc
         .docker_pool
@@ -122,12 +128,20 @@ pub async fn promote_handler(
                 tracing::warn!(error = %e, auto = auto, "health grace failed");
                 if auto {
                     if let Some(prev) = &prev_release {
+                        // RECOVERY PATH — deliberately NOT strict. The
+                        // previous release is frequently a branch-tag row
+                        // written by the auto-deploy, whose images are allowed
+                        // to disagree; refusing it would turn a failed health
+                        // grace into "AUTO-ROLLBACK FAILED — system in
+                        // indeterminate state" and leave the bad colour live.
+                        // Restoring service beats proving provenance.
                         let prev_spec = BlueGreenSpec::from_release(
                             prev,
                             target.as_str(),
                             target_cfg,
                             service_envs.clone(),
-                        )?;
+                        )?
+                        .require_single_revision(false);
                         match deployer.deploy(&prev_spec).await {
                             Ok(_) => {
                                 tracing::warn!(prev_tag = %prev.tag, "auto-rolled back after health grace failure");
@@ -296,8 +310,13 @@ pub async fn rollback_handler(
         .await?;
 
     let service_envs = build_service_envs(target.as_str(), target_cfg)?;
+    // RECOVERY PATH — deliberately NOT strict, same reasoning as the
+    // auto-rollback above: an explicit `pmctl rollback` must be able to
+    // restore any recorded release, including a branch-tag row whose images
+    // disagree and a pre-T6 row that carries no revision label at all.
     let spec =
-        BlueGreenSpec::from_release(&target_release, target.as_str(), target_cfg, service_envs)?;
+        BlueGreenSpec::from_release(&target_release, target.as_str(), target_cfg, service_envs)?
+            .require_single_revision(false);
     let docker = svc
         .release_svc
         .docker_pool

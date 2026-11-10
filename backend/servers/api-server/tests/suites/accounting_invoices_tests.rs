@@ -255,3 +255,108 @@ async fn accounting_invoices_happy_path_and_idor(pool: PgPool) {
         resp.text()
     );
 }
+
+/// Round-5: the by-id accounting lookups carry an explicit tenant predicate,
+/// so isolation holds even on a connection that bypasses RLS (TestApp runs
+/// as superuser). Org B's manager must get 404 for every by-id route on an
+/// Org A invoice, and Org A's invoice must be untouched afterwards.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn accounting_invoice_by_id_cross_org_returns_404(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let user_a = TestUser::new();
+    let (_login_a, org_a) = create_authenticated_user_with_org(&app, &user_a, "acc-xa").await;
+    let user_b = TestUser::new();
+    let (_login_b, org_b) = create_authenticated_user_with_org(&app, &user_b, "acc-xb").await;
+    let user_b_id = resolve_user_id(&app, &user_b.email).await;
+    let token_b = mint(user_b_id, &user_b.email, org_b);
+
+    let contact_a = sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO contact (tenant_id, name) VALUES ($1, 'Contact A') RETURNING id",
+    )
+    .bind(org_a)
+    .fetch_one(&app.pool)
+    .await
+    .unwrap();
+    let invoice_a = sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO invoice (tenant_id, contact_id, number, issue_date, due_date, currency) \
+         VALUES ($1, $2, 'INV-A', NOW(), NOW(), 'EUR') RETURNING id",
+    )
+    .bind(org_a)
+    .bind(contact_a)
+    .fetch_one(&app.pool)
+    .await
+    .unwrap();
+
+    let path = format!("/api/v1/accounting/invoices/{invoice_a}");
+    let resp = app
+        .execute(app.get(&path).bearer(&token_b).tenant(org_b).build())
+        .await;
+    assert_eq!(resp.status, StatusCode::NOT_FOUND, "get: {}", resp.text());
+
+    let resp = app
+        .execute(
+            app.get(&format!("{path}/items"))
+                .bearer(&token_b)
+                .tenant(org_b)
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::OK, "items: {}", resp.text());
+    assert_eq!(resp.json_value(), json!([]), "foreign items must not leak");
+
+    let resp = app
+        .execute(
+            app.patch(&path)
+                .bearer(&token_b)
+                .tenant(org_b)
+                .json(json!({ "number": "HIJACKED" }))
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::NOT_FOUND, "patch: {}", resp.text());
+
+    let resp = app
+        .execute(app.delete(&path).bearer(&token_b).tenant(org_b).build())
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::NOT_FOUND,
+        "delete: {}",
+        resp.text()
+    );
+
+    // Org B cannot attach Org A's contact to its own invoice.
+    let resp = app
+        .execute(
+            app.post("/api/v1/accounting/invoices")
+                .bearer(&token_b)
+                .tenant(org_b)
+                .json(json!({
+                    "tenant_id": org_b,
+                    "contact_id": contact_a,
+                    "number": "INV-B",
+                    "issue_date": "2026-06-27",
+                    "due_date": "2026-07-27",
+                    "currency": "EUR",
+                    "items": [{
+                        "description": "x", "qty": "1", "unit_price": "1.00", "vat_rate": "20.00"
+                    }]
+                }))
+                .build(),
+        )
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::BAD_REQUEST,
+        "create: {}",
+        resp.text()
+    );
+
+    let number: String = sqlx::query_scalar("SELECT number FROM invoice WHERE id = $1")
+        .bind(invoice_a)
+        .fetch_one(&app.pool)
+        .await
+        .expect("org A invoice must still exist");
+    assert_eq!(number, "INV-A");
+}

@@ -1,0 +1,50 @@
+[
+  {
+    "id": "code-review-ppt-web-ui-moderation-prompt-cast-unvalidated",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "ppt-web-ui",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:129,139 — handleTakeAction reads free-text `window.prompt(t('moderation.prompts.actionType'), 'approve')` and then blindly casts it `action_type: actionType as 'remove' | 'restrict' | 'warn' | 'approve'` into the takeAction mutation with NO allowlist/type-guard check. A moderator typo ('aprove', 'delete') is sent verbatim to the moderation-action API as an invalid enum.",
+      "Same defect in the appeal path, ContentModerationPage.tsx:165,175 — `const decision = window.prompt(t('moderation.prompts.decision'), 'uphold')` cast `decision: decision as 'uphold' | 'overturn'` with no validation before decideAppeal.mutate.",
+      "The safe pattern already exists in the SAME feature folder and was simply not applied here: frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx:39 defines `const isAmlReviewDecision = (value): value is AmlReviewDecision => ...` and AmlDashboardPage.tsx:149 guards `if (!isAmlReviewDecision(decision)) { alert(...); return; }` before submitting. ContentModerationPage has no equivalent guard for its action_type / appeal-decision unions.",
+      "Impact: unvalidated user input crosses the client->API boundary for a security-sensitive content-moderation decision (remove/restrict/warn on user content, uphold/overturn on appeals). Landable frontend-only fix: add `is`-narrowing guards for the moderation action-type and appeal-decision unions mirroring isAmlReviewDecision, rejecting out-of-set prompt input before mutate. The `as` casts (ContentModerationPage.tsx:139,175) are the TS smell — an `as` cast on a `window.prompt(): string | null` result is a false type assertion."
+    ],
+    "expert": "frontend"
+  },
+  {
+    "id": "code-review-ppt-web-ui-dsa-download-no-onsuccess",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "ppt-web-ui",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:119-127 — handleDownload calls `downloadPdf.mutate(reportId, { onError: ... })` with ONLY an onError callback and NO onSuccess. The mutation's resolved value (the fetched PDF payload) is never consumed.",
+      "downloadPdf is `useDownloadDsaReportPdf()` imported from the generated '@ppt/api-client' (DsaReportsPage.tsx:9,45). A generated mutation hook performs the HTTP request and returns the response body; it does not itself trigger a browser save. So without an onSuccess that turns the response into a Blob + object-URL anchor click (or opens the URL), clicking Download fires the request and silently discards the PDF — the user gets nothing on the happy path.",
+      "Contrast the sibling handlers in the same file which DO wire onSuccess for their side effects: handleGenerate (DsaReportsPage.tsx:91) resets the form, handlePublish (DsaReportsPage.tsx:107) alerts success. Only the download path — the one that must materialise a file — has no success handling.",
+      "Impact: the DSA transparency-report Download button is a functional no-op on success (completeness gap); a compliance officer cannot obtain the PDF. Landable frontend-only fix: add onSuccess to save the returned blob (createObjectURL + programmatic <a download> click, then revokeObjectURL), or navigate to the report's `download_url` (already mapped at DsaReportsPage.tsx:62). Confidence medium: hook internals live in generated client and were not compiled, but the handler unconditionally drops the success value regardless."
+    ],
+    "expert": "frontend"
+  },
+  {
+    "id": "code-review-ppt-web-ui-compliance-hardcoded-i18n",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "ppt-web-ui",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx hardcodes English user-facing strings instead of react-i18next `t(...)`: window.prompt copy at :116 ('Enter reason for initiating Enhanced Due Diligence:'), :143 ('Enter decision (approve, reject, escalate):'), :156 ('Enter review notes:') and alert copy at :127,:131,:169,:173.",
+      "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx does the same: alert() copy at :108,:112,:124; page `<h1>DSA Transparency Reports</h1>` repeated at :144,:157,:177; loading text 'Loading reports...' at :147; and a locale hardcoded to 'en-GB' in toLocaleDateString at :132.",
+      "This is inconsistent with the rest of the app and the same feature folder — ContentModerationPage.tsx wraps its equivalent prompts/errors in t('moderation.prompts.*') (e.g. :129,:118) — and violates the project's multi-locale requirement (react-i18next 16; app targets sk/cs/de/en). Slovak/Czech/German managers see raw English for AML and DSA compliance flows, and the 'en-GB' date format is wrong for those locales.",
+      "Impact: i18n regression on two compliance pages (low severity, no functional break). Landable frontend-only fix: move the hardcoded prompt/alert/title/loading strings into the i18n resource bundles and call t(...); replace the hardcoded 'en-GB' with the active i18n language for date formatting."
+    ],
+    "expert": "frontend"
+  }
+]

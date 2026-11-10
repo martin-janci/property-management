@@ -1,0 +1,57 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-23T10:30:00Z",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-reality-web-comparison-tray-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonTray.tsx — the persistent floating comparison tray (Epic 51 Story 51.1) imports NO next-intl (no useTranslations/getTranslations, grep count 0); every visible string is hardcoded English on a 4-locale public portal (sk/cs/de/en), so non-EN visitors always see English.",
+        "Hardcoded strings: L23 '{n}/4 properties to compare', L24 'Clear all', L37 alt 'Thumbnail for {title}', L46 aria-label 'Remove {title} from comparison', L68 'Compare' + '(need at least 2)' / '{n} properties'.",
+        "This tray is fixed-position and rendered across all listing/search pages whenever items are queued, so the untranslated text is broadly visible. Distinct from the prior (done) reality-web ComparisonView i18n finding — different file, the /compare detail view vs. this always-on tray."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-compare-button-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/CompareButton.tsx — per-listing-card 'add to comparison' button (Epic 51 Story 51.1) imports NO next-intl; all user-facing strings are hardcoded English on the 4-locale portal.",
+        "Hardcoded strings: L47 title 'Remove from comparison' / 'Add to comparison', L62 button label 'Comparing' / 'Compare', L66 role=alert warning 'Maximum 4 properties. Remove one first.'",
+        "Rendered on every ListingCard in search results/grids, so the English button label and the max-4 warning toast show untranslated to sk/cs/de visitors. Sibling untranslated component to ComparisonTray — same Epic 51 feature, distinct file/fix."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-listing-grid-empty-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/listings/ListingGrid.tsx — the search-results empty state (Epic 44 Story 44.2) is hardcoded English; the component imports NO next-intl (grep count 0).",
+        "L76 '<h3>No listings found</h3>' and L77-79 'Try adjusting your filters or search criteria to find more properties.' render in English for all locales.",
+        "This is the primary zero-results surface for the public search on a 4-locale portal (sk/cs/de/en); a Slovak/Czech/German visitor with no matches sees English-only guidance. The sibling isLoading skeleton and populated states carry no text, so only the empty branch needs wrapping in useTranslations."
+      ]
+    }
+  ]
+}

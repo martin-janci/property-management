@@ -18,7 +18,7 @@ use serde_json::{json, Value};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::common::{seed_org, TestApp, TestConfig, TestResponse};
+use crate::common::{seed_membership, seed_org, TestApp, TestConfig, TestResponse};
 
 #[derive(Serialize)]
 struct TestClaims {
@@ -85,6 +85,9 @@ async fn setup(pool: PgPool, tag: &str) -> Ctx {
         &format!("{tag}-b-{}@disputes-hp.test", Uuid::new_v4()),
     )
     .await;
+    // Disputes resolve org + role from the active membership (TenantAuthUser).
+    seed_membership(&pool, org_id, user_id, "manager").await;
+    seed_membership(&pool, org_id, respondent_id, "tenant").await;
     let token = mint_token(user_id, org_id);
     Ctx {
         app,
@@ -555,8 +558,17 @@ async fn dispute_sessions_happy_path(pool: PgPool) {
 /// GET /api/v1/disputes/kpis returns the DisputeKpis JSON contract for the
 /// caller's org cohort. Files one dispute inside the window and asserts the
 /// full funnel + TTR shape, plus that the filed dispute is counted.
+///
+/// Issue #2575: this `#[sqlx::test]` DB-contract case remains under the
+/// systemic BIT-440 dev-hostage quarantine (un-quarantining it in isolation,
+/// while BIT-440 is unresolved, reintroduces the failing test that PR #1984
+/// quarantined to unblock the gate — see the BIT-417 de-quarantine precedent,
+/// which only lifted the marker once BIT-440 cleared). It must be
+/// de-quarantined together with the rest of the BIT-440 suite when that
+/// ticket clears. The endpoint's *executing* coverage now lives in
+/// `dispute_kpis_rejects_inverted_window` below, which is not quarantined.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
+#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440 (de-quarantine tracked by #2575 when BIT-440 clears)"]
 async fn dispute_kpis_happy_path(pool: PgPool) {
     let ctx = setup(pool, "kpis").await;
     // Seed a cohort member (created_at defaults to NOW(), inside the window).
@@ -618,6 +630,96 @@ async fn dispute_kpis_happy_path(pool: PgPool) {
         ttr["count"].as_i64().is_some(),
         "ttr.count is an integer: {ttr}"
     );
+
+    // Issue #2575: an inverted window (start after end) is rejected with a
+    // 422 VALIDATION_ERROR rather than silently returning a degenerate
+    // zero-count 200. Asserted here too so the DB-contract case covers the
+    // validation branch once BIT-440 clears and this test runs.
+    let inverted = ctx
+        .get(&format!(
+            "/api/v1/disputes/kpis?window_start={end}&window_end={start}"
+        ))
+        .send()
+        .await;
+    assert_eq!(
+        inverted.status.as_u16(),
+        422,
+        "inverted window should be rejected with 422, got {}: {}",
+        inverted.status,
+        inverted.text()
+    );
+    assert_eq!(
+        inverted.json_value().get("code").and_then(|c| c.as_str()),
+        Some("VALIDATION_ERROR"),
+        "inverted-window error code should be VALIDATION_ERROR: {}",
+        inverted.text()
+    );
+}
+
+/// Validation guard (issue #2575): an inverted or empty reporting window
+/// (`window_start >= window_end`) is rejected with `422 VALIDATION_ERROR`
+/// *before* the repository is consulted, so a caller gets an explicit error
+/// instead of a degenerate zero-count `DisputeKpis` with a `200`.
+///
+/// The org and role now come from the caller's membership row
+/// (`TenantAuthUser`), so this needs a live Postgres with a seeded member; it
+/// only seeds an org + member and never touches the dispute tables.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn dispute_kpis_rejects_inverted_window(pool: PgPool) {
+    let Ctx {
+        app,
+        user_id,
+        org_id,
+        ..
+    } = setup(pool, "kpi-window").await;
+    let token = mint_token(user_id, org_id);
+
+    // Z-suffixed RFC3339 avoids `+00:00` query encoding (mirrors the happy path).
+    let later = (chrono::Utc::now() + chrono::Duration::days(1))
+        .format("%Y-%m-%dT%H:%M:%SZ")
+        .to_string();
+    let earlier = (chrono::Utc::now() - chrono::Duration::days(1))
+        .format("%Y-%m-%dT%H:%M:%SZ")
+        .to_string();
+
+    // Inverted bounds: window_start strictly AFTER window_end.
+    let inverted = app
+        .get(&format!(
+            "/api/v1/disputes/kpis?window_start={later}&window_end={earlier}"
+        ))
+        .bearer(&token)
+        .send()
+        .await;
+    assert_eq!(
+        inverted.status.as_u16(),
+        422,
+        "inverted window should be rejected with 422, got {}: {}",
+        inverted.status,
+        inverted.text()
+    );
+    assert_eq!(
+        inverted.json_value().get("code").and_then(|c| c.as_str()),
+        Some("VALIDATION_ERROR"),
+        "error code should be VALIDATION_ERROR: {}",
+        inverted.text()
+    );
+
+    // Empty bounds: `[t, t)` is empty, so equal start/end is rejected too.
+    let same = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
+    let empty = app
+        .get(&format!(
+            "/api/v1/disputes/kpis?window_start={same}&window_end={same}"
+        ))
+        .bearer(&token)
+        .send()
+        .await;
+    assert_eq!(
+        empty.status.as_u16(),
+        422,
+        "empty window (start == end) should be rejected with 422, got {}: {}",
+        empty.status,
+        empty.text()
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -632,5 +734,97 @@ async fn dispute_withdraw_happy_path(pool: PgPool) {
     ok(
         &ctx.delete(&format!("/api/v1/disputes/{id}")).send().await,
         "withdraw_dispute",
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Org scoping of collection endpoints (list / statistics / actions / filing)
+// ---------------------------------------------------------------------------
+
+/// A client-supplied `organization_id` that differs from the caller's JWT
+/// tenant is rejected with 403 on every org-scoped collection endpoint, before
+/// any DB access (so this runs without Postgres, like the KPI validation test).
+#[tokio::test]
+async fn dispute_collections_reject_foreign_organization_id() {
+    let pool = sqlx::PgPool::connect_lazy("postgres://never-used:never@127.0.0.1:1/never")
+        .expect("connect_lazy builds without connecting");
+    let app = TestApp::new(pool).await;
+    let own_org = Uuid::new_v4();
+    let foreign_org = Uuid::new_v4();
+    let token = mint_token(Uuid::new_v4(), own_org);
+
+    for uri in [
+        format!("/api/v1/disputes?organization_id={foreign_org}"),
+        format!("/api/v1/disputes/statistics?organization_id={foreign_org}"),
+        format!("/api/v1/disputes/my-actions?organization_id={foreign_org}"),
+        format!("/api/v1/disputes/overdue-actions?organization_id={foreign_org}"),
+    ] {
+        let resp = app.get(&uri).bearer(&token).send().await;
+        assert_eq!(
+            resp.status.as_u16(),
+            403,
+            "{uri} with a foreign organization_id should be 403, got {}: {}",
+            resp.status,
+            resp.text()
+        );
+    }
+
+    let filed = app
+        .post("/api/v1/disputes")
+        .bearer(&token)
+        .json(json!({
+            "organization_id": foreign_org,
+            "category": "noise",
+            "title": "Cross-org filing attempt",
+            "description": "Should never reach the database",
+            "respondent_ids": []
+        }))
+        .send()
+        .await;
+    assert_eq!(
+        filed.status.as_u16(),
+        403,
+        "filing into a foreign organization should be 403, got {}: {}",
+        filed.status,
+        filed.text()
+    );
+}
+
+/// `GET /api/v1/disputes` without `organization_id` lists the caller's own
+/// org (taken from the JWT) and never another org's disputes.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn dispute_list_defaults_to_jwt_tenant(pool: PgPool) {
+    let ctx = setup(pool.clone(), "scope").await;
+    let other_org = seed_org(&pool, "scope-other").await;
+
+    let insert = r#"
+        INSERT INTO disputes (organization_id, reference_number, category,
+                              title, description, status, priority, filed_by)
+        VALUES ($1, $2, 'noise', $3, 'desc', 'filed', 'medium', $4)
+    "#;
+    for (org, title) in [(ctx.org_id, "own dispute"), (other_org, "foreign dispute")] {
+        sqlx::query(insert)
+            .bind(org)
+            .bind(format!("DISP-SCOPE-{}", Uuid::new_v4()))
+            .bind(title)
+            .bind(ctx.user_id)
+            .execute(&pool)
+            .await
+            .expect("seed dispute");
+    }
+
+    let resp = ctx.get("/api/v1/disputes").send().await;
+    ok(&resp, "list_disputes (no organization_id)");
+    let titles: Vec<String> = resp
+        .json_value()
+        .as_array()
+        .expect("list returns an array")
+        .iter()
+        .filter_map(|d| d.get("title").and_then(|t| t.as_str()).map(str::to_owned))
+        .collect();
+    assert_eq!(
+        titles,
+        vec!["own dispute".to_string()],
+        "only own-org disputes"
     );
 }

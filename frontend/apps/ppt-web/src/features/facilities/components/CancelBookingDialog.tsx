@@ -5,6 +5,7 @@
  */
 
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useFocusTrap } from '../../../hooks/useFocusTrap';
 
 interface CancelBookingDialogProps {
@@ -16,9 +17,9 @@ interface CancelBookingDialogProps {
   isSubmitting?: boolean;
 }
 
-function formatDateTime(dateStr: string): string {
+function formatDateTime(dateStr: string, locale: string): string {
   const date = new Date(dateStr);
-  return date.toLocaleString('en-US', {
+  return date.toLocaleString(locale, {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
@@ -34,6 +35,7 @@ export function CancelBookingDialog({
   onCancel,
   isSubmitting,
 }: CancelBookingDialogProps) {
+  const { t, i18n } = useTranslation();
   const [reason, setReason] = useState('');
   const dialogRef = useRef<HTMLDivElement>(null);
   useFocusTrap(dialogRef, onCancel);
@@ -65,7 +67,7 @@ export function CancelBookingDialog({
           {/* Header */}
           <div className="px-6 py-4 border-b">
             <h3 id="dialog-title" className="text-lg font-semibold text-gray-900">
-              Cancel Booking
+              {t('facilities.bookings.cancelDialog.title')}
             </h3>
           </div>
 
@@ -88,7 +90,7 @@ export function CancelBookingDialog({
                   </svg>
                   <div className="ml-3">
                     <p className="text-sm text-yellow-700">
-                      Are you sure you want to cancel this booking?
+                      {t('facilities.bookings.cancelDialog.confirm')}
                     </p>
                   </div>
                 </div>
@@ -96,18 +98,18 @@ export function CancelBookingDialog({
 
               <div className="mb-4 p-3 bg-gray-50 rounded-md">
                 <p className="font-medium text-gray-900">{facilityName}</p>
-                <p className="text-sm text-gray-600">{formatDateTime(startTime)}</p>
+                <p className="text-sm text-gray-600">{formatDateTime(startTime, i18n.language)}</p>
               </div>
 
               <label htmlFor="reason" className="block text-sm font-medium text-gray-700">
-                Reason for Cancellation (optional)
+                {t('facilities.bookings.cancelDialog.reason')}
               </label>
               <textarea
                 id="reason"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 rows={3}
-                placeholder="Let others know why you're cancelling..."
+                placeholder={t('facilities.bookings.cancelDialog.reasonPlaceholder')}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -119,14 +121,16 @@ export function CancelBookingDialog({
                 onClick={onCancel}
                 className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors"
               >
-                Keep Booking
+                {t('facilities.bookings.cancelDialog.keep')}
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
                 className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isSubmitting ? 'Cancelling...' : 'Cancel Booking'}
+                {isSubmitting
+                  ? t('facilities.bookings.cancelDialog.submitting')
+                  : t('facilities.bookings.cancelDialog.submit')}
               </button>
             </div>
           </form>

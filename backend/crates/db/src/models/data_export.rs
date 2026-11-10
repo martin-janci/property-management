@@ -17,6 +17,21 @@ pub enum DataExportStatus {
     Failed,
 }
 
+impl DataExportStatus {
+    /// Stable snake_case string form — matches the `data_export_status`
+    /// Postgres enum labels and the serde representation.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Pending => "pending",
+            Self::Processing => "processing",
+            Self::Ready => "ready",
+            Self::Downloaded => "downloaded",
+            Self::Expired => "expired",
+            Self::Failed => "failed",
+        }
+    }
+}
+
 /// Export format options.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -63,6 +78,29 @@ pub struct DataExportRequest {
     pub created_at: DateTime<Utc>,
     /// When request was last updated
     pub updated_at: DateTime<Utc>,
+}
+
+/// Aggregate figures for the platform GDPR data-export compliance report.
+///
+/// Returned by [`crate::repositories::data_export::DataExportRepository::report_summary`].
+/// All counts are computed in a single pass over `data_export_requests` so they
+/// stay mutually consistent — the compliance endpoint previously reported
+/// hard-coded zeros for the completed/downloaded figures, materially
+/// understating GDPR activity to platform admins.
+#[derive(Debug, Clone)]
+pub struct DataExportReportSummary {
+    /// All export requests in range.
+    pub total_requests: i64,
+    /// Requests still in flight (`pending` or `processing`).
+    pub pending_count: i64,
+    /// Requests whose export file was successfully generated at some point
+    /// (`ready`, `downloaded`, or `expired`).
+    pub completed_count: i64,
+    /// Requests that were actually downloaded at least once (`downloaded_at`
+    /// set), regardless of current status.
+    pub downloaded_count: i64,
+    /// Most-recent requests in range (bounded by the caller's limit).
+    pub entries: Vec<DataExportRequest>,
 }
 
 /// Data for creating a new export request.

@@ -27,6 +27,11 @@ interface ReadingComparisonPageProps {
   onBack: () => void;
   onCompare: (params: ComparisonParams) => void;
   onExport?: (options: ExportOptions) => void;
+  /**
+   * Shown in the empty chart area instead of the "select meters" prompt — e.g.
+   * after a comparison ran but the selected range has no consumption data.
+   */
+  emptyMessage?: string;
 }
 
 export function ReadingComparisonPage({
@@ -37,8 +42,9 @@ export function ReadingComparisonPage({
   onBack,
   onCompare,
   onExport,
+  emptyMessage,
 }: ReadingComparisonPageProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const [selectedMeterIds, setSelectedMeterIds] = useState<string[]>([]);
   const [startDate, setStartDate] = useState(() => {
@@ -105,7 +111,7 @@ export function ReadingComparisonPage({
 
   const formatDate = (dateStr: string): string => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return date.toLocaleDateString(i18n.language, { month: 'short', day: 'numeric' });
   };
 
   // Y-axis labels
@@ -312,7 +318,7 @@ export function ReadingComparisonPage({
                     d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                   />
                 </svg>
-                <p>{t('meters.comparison.selectToCompare')}</p>
+                <p>{emptyMessage ?? t('meters.comparison.selectToCompare')}</p>
               </div>
             )}
 
@@ -478,7 +484,8 @@ export function ReadingComparisonPage({
                         </svg>
                       </div>
                       <div className="mt-2 text-xs text-gray-500">
-                        {meterData.dataPoints.length} {t('meters.readings')} | {meterData.unit}
+                        {t('meters.readings', { count: meterData.dataPoints.length })} |{' '}
+                        {meterData.unit}
                       </div>
                     </div>
                   );

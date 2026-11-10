@@ -1,0 +1,30 @@
+{
+  "generated": "2026-09-09T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven (claim buffer starved) 2026-09-09",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "oldest-unreviewed LANDABLE segment. state.json review_cursor is stale (last_run 2026-09-01), so per-segment last-reviewed dates were recomputed from the signals corpus filenames: mobile-native-kmp 2026-09-03, api-handlers 2026-09-05, reality-server/ppt-web-ui/mobile-rn 2026-09-06, reality-web 2026-09-07, api-core 2026-09-09, ppt-web-core 2026-09-09 (both already reviewed earlier today). Oldest overall is mobile-native-kmp (2026-09-03) but it is AVOIDED per the Tier-1d LANDABLE-only mandate (cloud runner cannot build KMP: AGP egress-blocked). Next oldest LANDABLE is api-handlers (2026-09-05) -> selected. Saturation check PASSED: backlog.json holds 0 OPEN code-review-finding rows for api-handlers (28 prior api-handlers code-review rows are all status=done/dropped). Segment scope per skill map (adapted to this repo's layout) = backend/servers/api-server/src/routes/ (76 route files). This pass swept the unwrap/expect + todo + secrets-in-log grep hit-list plus a targeted authz read of the less-reviewed handlers (delegations, listings pagination, signatures, password_reset). Findings triaged out (verified NOT bugs): listings.rs:300/1050 `query.limit.unwrap_or(20)` is only the response ECHO — the actual SQL LIMIT is clamped `.min(100)` in ListingRepository::list (crates/db/src/repositories/listing.rs:136), so no unbounded-pagination DoS; password_reset.rs is hardened (per-email rate limit, email-enumeration-safe, hashed tokens, email_log_hash — no secret leak); signatures.rs verification is hardened (HMAC token verify_and_load, SSRF gate validate_external_url on signed_url, webhook X-Webhook-Secret check, startup-validated ESIGN_TOKEN_SECRET); the `.expect(...)` hits are all in #[cfg(test)] modules, infallible static-serialize, RNG-init, or boot-time config validation (accepted fail-fast). One net-new access-control finding below. Cap-at-3 honored; nits skipped.",
+  "experts_used": ["rust", "security"],
+  "findings_count": 1,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-api-handlers-delegation-null-unit-no-owner-check",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-09 api-handlers delegations)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "security",
+      "files": [
+        "backend/servers/api-server/src/routes/delegations.rs",
+        "backend/crates/db/src/repositories/delegation.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/delegations.rs:207-236 — create_delegation only verifies unit ownership INSIDE `if let Some(unit_id) = req.unit_id { ... get_owners_rls ... is_owner ... 403 NOT_OWNER }`. When the client omits `unit_id` (req.unit_id == None), that whole ownership gate is skipped: the handler validates scopes and that the delegate user exists, then calls `delegation_repo.create(auth.user_id, create_data)` with `unit_id: None` and arbitrary scopes (up to `[\"all\"]`) — with NO check that the delegator has any authority to delegate. A caller can thus mint a unit-less delegation to any delegate_user_id.",
+        "backend/crates/db/src/repositories/delegation.rs:277-303 — has_delegation() treats a NULL unit_id row as a WILDCARD over every unit: `WHERE delegate_user_id = $1 AND status = 'active' AND (unit_id = $2 OR unit_id IS NULL) AND ($3 = ANY(scopes) OR 'all' = ANY(scopes)) AND start_date <= CURRENT_DATE AND (end_date IS NULL OR end_date >= CURRENT_DATE)`. So the unit-less delegation created above answers `has_delegation(delegate, <ANY unit_id>, <ANY scope>) = true`. The query runs against `&self.pool` directly (not an RLS-scoped connection), so the wildcard is effectively global/cross-tenant, and `'all'` in scopes is itself a second wildcard over the scope check.",
+        "Chain: delegations.rs:676-694 check_delegation exposes this via GET /api/v1/delegations/check/{unit_id}/{scope}, which returns `has_delegation: true` for a delegate holding an ownerless unit-less delegation, for units the delegator never owned. Impact today = MEDIUM: has_delegation/check_delegation is currently only consumed by the informational check endpoint (grep confirms no server-side voting/financial/document write yet gates on it), so it is a delegation-model INTEGRITY break (a user can confer authority — voting/financial/documents/faults/all — that they do not themselves hold, over resources they do not own) rather than an already-wired privilege escalation. It becomes a direct broken-access-control escalation the moment any handler starts trusting check_delegation/has_delegation to authorize an action. Confidence HIGH: full path traced entry->issue (create_delegation None branch -> repo create -> has_delegation NULL-wildcard SQL on &self.pool); reachable in production. Fix (backend-only, no schema change needed): in create_delegation require `unit_id` to be Some, OR when it is None constrain the grant to units the delegator actually owns; alternatively narrow has_delegation so a NULL-unit delegation only matches units the DELEGATOR (owner_user_id) owns rather than every unit. Mirror the existing get_owners_rls ownership check already used on the Some(unit_id) branch."
+      ]
+    }
+  ]
+}

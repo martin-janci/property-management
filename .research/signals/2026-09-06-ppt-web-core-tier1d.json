@@ -1,0 +1,69 @@
+{
+  "run_iso": "2026-09-06T00:00:00Z",
+  "trigger_payload": "Tier-1d demand-driven vector generation: dispatcher claimable buffer starved (all remaining open backlog rows are mobile-native/KMP-gated -> structurally unlandable in the cloud runner). Rotating static-analysis review of ONE non-mobile-native segment to produce fresh, LANDABLE code-review findings. No compilation, no test execution. CHURN_FILES empty (invoked standalone by dispatcher), so selection fell to oldest-unreviewed by state.review_cursor.",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "oldest-unreviewed among CLAIMABLE (cloud-landable) segments. review_cursor sorted asc: mobile-native-kmp 2026-08-25 (oldest, EXCLUDED: structurally unclaimable in cloud runner per task directive), then a three-way tie at 2026-08-29 among claimable segments (ppt-web-core, reality-web, mobile-rn); ppt-web-ui=2026-09-06 and api-core=2026-09-01 are more recently reviewed. Picked ppt-web-core. Saturation check passed: 0 OPEN code-review-finding rows for ppt-web-core in backlog.json (skill's >=3-open skip rule not triggered). Dedup performed against prior ppt-web-core passes: 2026-09-05 (locale-bundles-incomplete i18n, route-group-toasts-i18n), 2026-09-03 (api.ts default-export eager-eval, ws send envelope), 2026-09-02 (route-groups-no-ProtectedRoute security), 2026-08-14 (person-months toast i18n). All three findings below are confirmed non-duplicate (auth session-init, 401 recovery semantics, and logout cache-purge allowlist were not previously flagged).",
+  "experts_used": ["frontend"],
+  "findings_count": 3,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-authctx-no-boot-expiry-check",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-06 ppt-web-core AuthContext session init)",
+      "segment": "ppt-web-core",
+      "expert": "frontend",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:423-461 (initializeAuth cold-boot path): when a stored user AND an access token are both present, the code calls setUser(storedUser) and treats the session as authenticated. The inline comment at lines 431-432 claims 'Validate the token is not expired (basic check)' but NO expiry check is performed — the access token's `exp` claim is never inspected. decodeJwtPayload() already exists in this same file (lines 220-233) and is used by deriveActiveRole, so the payload/`exp` is trivially readable without a network round-trip.",
+        "Consequence: on a cold boot with an expired-but-present access token, the app immediately renders as authenticated (ProtectedRoute lets the user through, protected screens mount and fire queries). The proactive silent-refresh branch (lines 434-449) is only entered when the access token is ABSENT (`else if (refreshTokenValue)`), so a present-but-expired access token SKIPS the boot-time refresh entirely. Recovery is deferred to the first protected API call returning 401, which then routes through handleUnauthorized (lines 614-622) to attempt a refresh. This produces an avoidable authenticated->401->refresh flicker on every cold boot after the access-token TTL elapses (typical short access-token TTLs make this the common case for returning users).",
+        "Landable remedy (frontend-only, no backend/KMP): in the `storedUser && accessToken` branch, decode the access token's `exp` via the existing decodeJwtPayload() and, if expired/near-expiry, fall through to the refreshTokenInternal() branch instead of blindly setUser()-ing; or unconditionally attempt refresh when a refresh token exists. Either fixes the misleading comment and removes the boot flicker. Confidence medium: the missing check and the branch structure are code-verified statically; the exact runtime flicker window depends on the deployed access-token TTL (see docs/api/README.md) which was not executed."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-api-401-no-request-replay",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-06 ppt-web-core axios 401 recovery)",
+      "segment": "ppt-web-core",
+      "expert": "frontend",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:213-256 (response interceptor): on a 401 it invokes onUnauthorizedCallback() (line 219) but then does NOT replay the original request — 401 is not in RETRYABLE_STATUS_CODES (line 76), so the retry loop (227-252) is skipped and the request rejects with the transformed ApiError. The wired callback is AuthContext.handleUnauthorized (AuthContext.tsx:614-622), which kicks off a silent refresh via `void refreshToken()` WITHOUT awaiting it (comment at 611-612 confirms this is deliberate: 'invokes this without awaiting it ... recovery happens in the background').",
+        "Effect: the request that triggered the 401 always fails at the caller even when a valid refresh token is present. The design relies on 'the query layer's next run' picking up the rotated token, but there is a race: TanStack Query's own retry attempts can fire (and be exhausted) against the still-expired token BEFORE the background refresh completes and writes the new token to storage, surfacing a spurious error to the user. Feature hooks that call the raw axios getApiClient() directly rather than through useQuery (the comment at AuthContext.tsx:339-344 names sentiment and predictive-maintenance as getApiClient() consumers) get a hard one-shot rejection with no refetch semantics to save them.",
+        "Distinct from the 2026-09-03 ppt-web-core api.ts findings (eager default-export evaluation; websocket send-envelope), which do not touch 401/refresh semantics.",
+        "Landable remedy (frontend-only): make the interceptor await a single de-duplicated refresh on 401 and, on success, replay the original request once with the rotated Authorization header (guard with a per-request __retriedAfterRefresh flag to avoid loops, and skip replay for the refresh endpoint itself). Confidence medium: control flow and the non-awaited refresh are code-verified; the retry-vs-refresh race timing was not executed."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-logout-purge-allowlist-fragile",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-06 ppt-web-core logout cache purge)",
+      "segment": "ppt-web-core",
+      "expert": "frontend",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts:354-392 defines AUTHED_QUERY_KEY_ROOTS, a hand-maintained flat allowlist of query-key roots that AuthContext.logout (AuthContext.tsx:583-585) iterates to removeQueries() on logout. Any tenant-/user-scoped query whose root is NOT in this list survives logout and leaks into the next user's session on a shared workstation — the file's own doc-comment (lines 331-352) flags the financial roots as 'the most sensitive and must never survive logout'.",
+        "The pattern has a documented history of silent misses: the comment records that issue #712 replaced an over-aggressive queryClient.clear(), and that PR #2650's fix was INCOMPLETE — the 'notification-triggers' root was missed and leaked until caught later (lines 387-391). There is no compile-time or test-time enforcement that ties a newly-added query-key factory root (queryKeys.* in this file, the @ppt/api-client key factories such as messagingKeys, or ad-hoc `queryKey: ['root', ...]` literals in feature hooks) back to this allowlist, so the next added root will again leak by default.",
+        "Static cross-check performed this pass (grep of `all: ['..']` factory roots and ad-hoc `queryKey: ['..']` literals under ppt-web/src/features + hooks, plus messagingKeys.all='messages' in @ppt/api-client) found the CURRENT allowlist complete — this finding is about the fragile un-enforced pattern, not a confirmed live leak.",
+        "Landable remedy (frontend-only): add a unit test / lint check that enumerates every query-key factory root (queryKeys object keys + imported @ppt/api-client *Keys.all roots) and asserts each is present in AUTHED_QUERY_KEY_ROOTS (with an explicit opt-out list for genuinely public/lookup caches), failing CI when a new root is introduced without a purge decision. Low severity today (allowlist currently complete) but high blast-radius on regression (cross-session data leak). Confidence medium: allowlist completeness verified statically, not at runtime."
+      ]
+    }
+  ]
+}

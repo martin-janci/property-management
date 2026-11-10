@@ -40,6 +40,7 @@ Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, e
 
 <!-- newest entries on top -->
 
+- 2026-11-05 — agent: screen-map-drift-pr-3244-ppt — reconcile i18n drift from PR #3244 (`fix(ppt-web): localize faults, news, settings and error pages`). `SessionExpiredPage` copy localized across all 6 locales — `errors.pages.sessionExpired.{title,description,signIn}`. i18n only — still shipped; frontmatter unchanged. (Sibling 404 `NotFoundPage` was localized in the same PR via `errors.pages.notFound.*` but has no screen-map yet — pre-existing coverage gap, left for a future `/screens init --add`.)
 - 2026-06-03 — agent: test-gap-screen-map-drift-pr-922-ppt — noted PR #922 return-URL sanitization in `@ppt/shared` `setReturnUrl` (open-redirect hardening). No frontmatter change (still shipped).
 - 2026-05-24 — agent: gap-79-2 login-flow-wiring — removed local RETURN_URL_KEY constant; now imports setReturnUrl from @ppt/shared to align return-URL storage with LoginPage and prevent key drift
 - 2026-05-18 — agent: created stub for unmapped route.

@@ -1,0 +1,73 @@
+{
+  "generated": "2026-09-02T08:33:34Z",
+  "source_run": "dispatcher-tier1d-2026-09-02",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "tier1d starvation generator; reality-web oldest-cursor landable segment not covered today",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 3,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-reality-web-realtor-detail-modal-no-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx",
+        "frontend/packages/reality-api-client/src/agency/hooks.ts"
+      ],
+      "evidence": [
+        "RealtorManagement.tsx RealtorDetailModal has three destructive/state-changing handlers that await mutateAsync with NO try/catch: handleSave (updateRealtor.mutateAsync, L829-834 then setIsEditing(false)), handleRemove (removeRealtor.mutateAsync, L838-839 then onClose()), handleStatusChange (updateRealtor.mutateAsync, L843-847).",
+        "updateRealtor.error / removeRealtor.error are NEVER read or rendered anywhere in the file (grep for '.error'/'.isError' finds only the mutateAsync call sites). On a failed remove-realtor or status-change the row/modal silently fails to update, the follow-up setState (setIsEditing(false)/onClose) never runs, and mutateAsync (unlike mutate) rejects -> unhandled promise rejection in a React event handler (React does not surface those).",
+        "The backing hooks useUpdateRealtor (agency/hooks.ts:307) and useRemoveRealtor (:333) define onSuccess (invalidateQueries) only, NO onError, so error surfacing is entirely the caller's responsibility.",
+        "The invite modal in the SAME file (handleSubmit, L568-580) already shows the correct pattern: try/catch around inviteRealtor.mutateAsync with setInviteError(t('inviteError')) rendered inline. Fix: mirror that pattern in the DetailModal handlers (try/catch, only run the follow-up setState on success, render an inline error using the existing t('inviteError')/agency namespace). removeRealtor is an irreversible action, so silent failure is the worst case."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-agency-branding-save-no-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx",
+        "frontend/packages/reality-api-client/src/agency/hooks.ts"
+      ],
+      "evidence": [
+        "AgencyBranding.tsx handleSave (L79-95) does `await updateBranding.mutateAsync({ agencyId, data: { logo, coverImage, primaryColor, ... } })` with NO try/catch, then resets hasChanges/logoFile/coverFile.",
+        "updateBranding is consumed only for `.isPending` (button label at L126/128); `updateBranding.error` is NEVER rendered. On a failed branding save the follow-up state resets never run (mutateAsync rejects), the user gets zero feedback, and it is an unhandled promise rejection.",
+        "The backing hook useUpdateBranding (agency/hooks.ts:258) posts multipart FormData (logo/coverImage uploads) and `throw new ApiError(response.status)` on !response.ok (L276-278), with onSuccess-only (no onError) at L282. Image uploads are exactly the path that fails with 413 (payload too large) / 415 / 500, so a silent failure here is likely in practice.",
+        "This file already distinguishes load errors carefully (AgencyLoadError on agencyError, Issue #2343) but the write path has no equivalent handling. Fix: wrap mutateAsync in try/catch, keep hasChanges true on failure, and render an inline error (updateBranding.error / a caught message) near the save button, consistent with the sibling error-state handling in the same component."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-agent-profile-mock-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/_mock.ts"
+      ],
+      "evidence": [
+        "realtor/[id]/page.tsx is a PUBLIC, per-agent dynamic route but ignores the [id] param entirely: `const agent = MOCK_AGENT;` (L20), rendering MOCK_AGENT/MOCK_AGENT_LISTINGS/MOCK_AGENT_REVIEWS (imported from ./_mock, L11) regardless of which agent id is requested. Every agent URL renders the same fabricated agent, listings and reviews — a public page serving mock data.",
+        "The contact form on this page is a no-op stub: handleSendMessage (L22-28) only does `setMessageSent(true); setContactOpen(false)` with no API call, so lead-capture messages to the agent are silently discarded.",
+        "The file has NO useTranslations import and hardcodes Slovak user-facing strings directly in JSX: 'Kontaktovať' (L154), 'Aktívne ponuky' (L227), 'Hodnotenia' (L330), 'Odoslať správu' (L530), 'Kontaktovať {agent.name}' (L588), placeholder 'Dobrý deň, mám záujem o Vaše služby...' (L597), aria-label 'Kontaktovať makléra' (L556), 'Odoslať' (L638) — breaking i18n on a locale-prefixed ([locale]) public route.",
+        "Landable in stages: (a) wrap the visible strings in next-intl t() under a pages.agent-profile namespace (the root already carries data-i18n='pages.agent-profile.root'), and (b) replace MOCK_AGENT with a real fetch keyed on the route id + wire the contact form to the inquiry/realtor-message endpoint (mirroring ContactForm.tsx's createInquiry usage). At minimum the mock-data + dead-form state should be tracked so this public route is not shipped as a scaffold."
+      ]
+    }
+  ]
+}

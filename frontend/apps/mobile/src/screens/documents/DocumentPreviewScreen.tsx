@@ -30,6 +30,7 @@ import {
   View,
 } from 'react-native';
 import { apiRequest } from '../../hooks/useApi';
+import { formatDate, formatTime } from '../../i18n/format';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 import type { Document } from './DocumentsScreen';
 
@@ -244,7 +245,7 @@ export function DocumentPreviewScreen({ document, onBack }: DocumentPreviewScree
               <Text style={s.cardMeta}>{formatBytes(document.size)}</Text>
             )}
             <Text style={s.cardMeta}>
-              {t('documents.preview.updated')} {new Date(document.updatedAt).toLocaleDateString()}
+              {t('documents.preview.updated')} {formatDate(document.updatedAt)}
             </Text>
           </View>
         </View>
@@ -281,7 +282,7 @@ export function DocumentPreviewScreen({ document, onBack }: DocumentPreviewScree
               <Text style={styles.urlLabel}>{t('documents.preview.urlReady')}</Text>
               <Text style={styles.urlExpiry}>
                 {t('documents.preview.expiresAt')}{' '}
-                {state.expiresAt.toLocaleTimeString([], {
+                {formatTime(state.expiresAt, {
                   hour: '2-digit',
                   minute: '2-digit',
                 })}

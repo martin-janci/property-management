@@ -1,0 +1,49 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-04",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable buffer starved 21 < floor 36). SKILL Step 1 priority 2 (oldest-unreviewed): CHURN_FILES not supplied this slice. review_cursor from .research/state.json sorted ascending: ppt-web-ui 2026-11-02 (oldest), reality-web 2026-11-03, mobile-rn 2026-11-03, then {api-handlers, api-core, reality-server, ppt-web-core, mobile-native-kmp} 2026-11-04. ppt-web-ui is the unambiguous oldest and was NOT covered by a Tier-1d run earlier today (only 2026-11-04-api-handlers-tier1d.json exists for today). Saturation check against open code-review-finding rows in backlog.json: ppt-web-ui = 0 open (not saturated; selected). Scope per SKILL segment map: frontend/apps/ppt-web/src/{pages,components} + features/. Static analysis only; no compile, no test run. Frontend + Completeness experts. NOTE: segment is mature and heavily pre-mined (12 ppt-web-ui findings already in backlog, 25+ prior ppt-web-ui signal files). The strongest candidate this pass (RegistryPage.tsx window.location.href full-reload nav) was intentionally dropped as a duplicate: already emitted as code-review-ppt-web-ui-registry-full-reload-nav (2026-11-01-tier1d-3) and code-review-ppt-web-ui-registry-full-page-reload (2026-10-29). Verified clean (no finding) during the pass: all 3 dangerouslySetInnerHTML sites (news/ArticleDetailPage, announcements/ViewAnnouncementPage, documents/DocumentSearchResult) are DOMPurify/renderMarkdownSafe-sanitized with explicit allowlists; dashboard/useActionQueue mock is guarded (empty queue + fail-loud mutation out of DEV mock mode); settings/notifications/advanced + emergency/EmergencyContactDirectoryPage + documents/MoveFolderDialog all surface errors via i18n setError/role=alert with full ARIA and loading/empty/error states.",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-reading-form-ocr-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-04 ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/meters/components/ReadingForm.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/meters/components/ReadingForm.tsx:107-116 — when `enableOcr` is set and the user attaches a meter photo, the form calls `await processOcr(file)` inside a try/catch whose catch body is ONLY `console.error('OCR processing failed')` (line 115) with no user-facing feedback. On OCR failure the component sets none of its OCR state (setOcrResult / setOcrImageUrl / setShowOcrPreview are skipped), so the OCR preview panel simply never appears and `showOcrPreview` stays false. The user who opted into OCR gets zero signal that it ran and failed — they are left staring at a form that silently did nothing, with the only trace in the browser console.",
+        "The inline comment `// OCR failed, user can still enter value manually` documents the intended graceful-degradation behavior, but the degradation is not communicated: there is no toast, no inline hint ('OCR unavailable, enter the reading manually'), and no i18n key for the failure. Every other error surface in this segment (settings/notifications/advanced errors.*, emergency/errors.failedTo*, documents/folder.loadError) uses a user-visible i18n'd message; this OCR path is the outlier.",
+        "Landable frontend-only remedy: set a small non-blocking OCR-status state in the catch (e.g. setOcrError(t('meters.reading.ocrFailed'))) and render it near the photo field, with a new i18n key under meters.reading. Severity low: the form remains fully usable via manual entry and no data is lost or corrupted; the gap is purely a missing user-feedback/i18n affordance on an optional convenience path. Confidence medium: statically confirmed the catch body logs only and leaves OCR preview state untouched; not runtime-executed."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-full-reload-nav",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-04 ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:205-208 — handleViewContent navigates to an internal SPA route via a full page reload: `window.location.href = `/compliance/moderation/cases/${caseId}``. ppt-web is a react-router-dom SPA; assigning window.location.href for an in-app route forces a full document reload, re-downloads the JS bundle, tears down all TanStack Query cache and React state, and drops the moderation list scroll/filter position. The code self-documents the shortcut: `// TODO(Phase-2): Use React Router's useNavigate for SPA navigation` / `// Phase 1: Full page reload for simplicity`.",
+        "Same window.location.href-for-SPA-route anti-pattern already flagged for RegistryPage.tsx (code-review-ppt-web-ui-registry-full-reload-nav, 2026-11-01). This is a DISTINCT file/handler not previously surfaced; emitted separately so it is independently landable. The compliance moderation queue is a manager-facing list where full-reload-on-view is a more noticeable regression than usual (reviewers click through many cases in sequence).",
+        "Landable frontend-only remedy: replace with react-router's useNavigate — `const navigate = useNavigate(); ... navigate(`/compliance/moderation/cases/${caseId}`)` — matching the convention used across the other 14 route groups. Severity low: navigation still functions, only the UX/perf degrades (lost SPA state, full reload). Confidence medium: statically confirmed the assignment targets an internal route and the file does not import useNavigate; not runtime-executed."
+      ]
+    }
+  ]
+}

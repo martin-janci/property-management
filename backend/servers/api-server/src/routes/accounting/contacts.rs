@@ -28,9 +28,10 @@ pub async fn list_contacts(
         return Err(StatusCode::FORBIDDEN);
     }
 
+    let tenant_id = rls.tenant_id();
     let contacts = state
         .accounting_repo
-        .list_contacts_rls(&mut **rls)
+        .list_contacts_for_tenant(&mut **rls, tenant_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to list contacts: {}", e);

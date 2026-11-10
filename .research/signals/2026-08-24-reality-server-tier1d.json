@@ -1,0 +1,25 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-24T05:00:00Z",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "oldest-unreviewed (landable-preferred: co-oldest ppt-web-ui already has 3+ same-day signal files; mobile-native-kmp skipped as non-landable per Tier-1d cloud-runner constraint; next oldest landable segment with no same-day coverage = reality-server)",
+  "experts_used": ["rust"],
+  "findings_count": 1,
+  "signals": [
+    {
+      "id": "code-review-reality-server-sso-http-no-timeout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:687, :711, :748 — the three PM-OAuth helper fns exchange_pm_token (687), get_user_info (711) and introspect_pm_token (748) each build a fresh `reqwest::Client::new()` with NO `.timeout(...)`. reqwest's default client has no request timeout, so a slow/hung PM OAuth server leaves the awaiting reality-server task blocked indefinitely — tasks and their held DB/socket resources pile up → resource-exhaustion / cascading unavailability on the reality-server process.",
+        "This path is reachable from PUBLIC/unauthenticated SSO entry points: introspect_pm_token is invoked at sso.rs:417 (POST /api/v1/sso/exchange), :899 and :1073 (session-sync), and get_user_info at :270/:434/:917/:1109 on the OAuth callback path. A browser/attacker can drive these endpoints, so a degraded PM API turns into a reality-server outage with no upper bound on wait time.",
+        "The codebase already knows to bound these calls: state.rs:754-762 (PmApiClient::new, Story 104.1) builds its reqwest client via `Client::builder().timeout(Duration::from_secs(timeout_seconds)).build()`. The SSO OAuth helpers bypass that shared, timeout-configured client and construct raw per-call clients instead — which additionally defeats connection pooling / keep-alive to the PM API on the per-request introspection hot path (only 60s-cached via token_cache). Fix: route these calls through a shared `reqwest::Client` built with an explicit timeout (mirror PmApiClient), or add `.timeout(...)` + reuse one client stored on AppState."
+      ]
+    }
+  ]
+}

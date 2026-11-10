@@ -44,6 +44,13 @@ export function usePerformanceMetrics(
   const metricsRef = useRef<PerformanceMetrics>({});
   const { reportOnUnload = true } = options;
 
+  // Keep the latest onReport in a ref so the effect does not need it as a
+  // dependency. Passing onReport inline (a fresh function each render) would
+  // otherwise re-run the effect on every render, tearing down and re-adding
+  // observers and event listeners repeatedly.
+  const onReportRef = useRef<MetricsCallback | undefined>(onReport);
+  onReportRef.current = onReport;
+
   useEffect(() => {
     // Skip if PerformanceObserver is not available
     if (typeof PerformanceObserver === 'undefined') {
@@ -135,34 +142,48 @@ export function usePerformanceMetrics(
       }
     };
 
-    // Collect after page load
+    // Collect after page load. Track whether we registered the listener so
+    // cleanup can remove exactly what it added.
+    let loadListenerAdded = false;
     if (document.readyState === 'complete') {
       collectNavigationTiming();
     } else {
       window.addEventListener('load', collectNavigationTiming);
+      loadListenerAdded = true;
     }
 
     // Report metrics on page unload
     const reportMetrics = () => {
+      const onReport = onReportRef.current;
       if (onReport && Object.keys(metricsRef.current).length > 0) {
         onReport(metricsRef.current);
       }
     };
 
+    // Named handler (not an inline closure) so removeEventListener can target
+    // the exact same reference on cleanup.
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        reportMetrics();
+      }
+    };
+
     if (reportOnUnload) {
-      window.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'hidden') {
-          reportMetrics();
-        }
-      });
+      window.addEventListener('visibilitychange', handleVisibilityChange);
     }
 
     return () => {
       for (const observer of observers) {
         observer.disconnect();
       }
+      if (loadListenerAdded) {
+        window.removeEventListener('load', collectNavigationTiming);
+      }
+      if (reportOnUnload) {
+        window.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
     };
-  }, [onReport, reportOnUnload]);
+  }, [reportOnUnload]);
 
   return metricsRef.current;
 }

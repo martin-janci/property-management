@@ -1,0 +1,47 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-27T00:00:00Z",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "oldest-unreviewed (no CHURN_FILES passed by dispatcher Tier 1d; review_cursor.reality-web = 2026-08-18 was the oldest across all 8 segments; segment has 0 open code-review-finding items in backlog.json so no saturation-skip)",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 2,
+  "note": "reality-web's public/SSR surface is notably well-hardened and NOT the source of findings: the listing-detail SSR path (app/[locale]/listings/[slug]/page.tsx) normalizes every 200 body through parseListingDetail and emits a real notFound() 404 on missing/malformed data; serializeForScript (lib/serialize-script.ts) correctly escapes <, >, &, U+2028/U+2029 for every dangerouslySetInnerHTML JSON-LD/bootstrap sink; middleware kill-switch + tenant-config fetches fail open with try/catch; realtor-api.ts request<T>() wraps network + non-OK + non-JSON; ComparisonUrlHandler uses Promise.allSettled for graceful partial degradation; auth-context probe treats network blips as transient, not logout. The real, systemic gap is i18n: several signed-in [locale]-scoped routes (account / realtor / inquiries / listing-edit) ship user-facing copy hardcoded instead of routed through next-intl useTranslations, so the locale segment in the URL is ignored for those screens. Two findings capture this: the listing-edit wizard (hardcoded Slovak — worst, since non-sk users get a foreign-language form) and the broader English-hardcoded account/realtor/inquiries cluster.",
+  "signals": [
+    {
+      "id": "code-review-reality-web-listing-edit-slovak-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx (930 lines) is a [locale]-scoped route in a 4-locale portal (sk, cs, de, en) but imports NO next-intl helper and has no `useTranslations` binding anywhere (grep for `= useTranslations` returns nothing; the `t` at L384/L725 is a local `.map((t) => ...)` variable, not the translation function).",
+        "Every user-facing string in the edit wizard is hardcoded Slovak: form field labels ('Typ nehnuteľnosti' L399, 'Počet izieb' L466, 'Celkový počet poschodí' L468, 'Rok výstavby' L469, 'Adresa' L429), buttons/links ('← Späť na účet' L233, 'Zobraziť inzerát' L268, 'Ďalšie úpravy' L285), status labels ('Aktívny'/'Neaktívny' L665-666), the loading text ('Načítavam inzerát…' L223), the success panel ('Inzerát bol uložený!' L251) and the summary ('Súhrn zmien' L710).",
+        "Both error fallbacks are hardcoded Slovak too: L166 `setLoadError(err instanceof RealtorApiError ? err.message : 'Načítanie inzerátu zlyhalo.')` and L213 `'Uloženie zlyhalo, skúste znova.'`.",
+        "Consequence: a de/en/cs user reaching /en/account/listings/{id}/edit (or /de/..., /cs/...) sees the entire listing-edit flow — field labels, statuses, validation errors — rendered in Slovak, an effectively unusable form for a non-Slovak owner. The locale in the URL is silently ignored for this screen.",
+        "Fix: add `const t = useTranslations('...')` (or getTranslations for any server portion) and move all copy into the reality-web messages/ catalogs (en/sk/cs/de), matching the pattern already used by app/[locale]/sell/page.tsx (which correctly calls useTranslations twice)."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-account-routes-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "Systemic i18n gap across the signed-in account/realtor route cluster: multiple [locale]-scoped pages hardcode English user-facing copy with no `useTranslations` (grep `useTranslations` returns 0 in each), so the URL locale segment is ignored and sk/cs/de users see English.",
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx: hardcoded 'My Inquiries' (L541), 'Track your property inquiries and viewing requests.' (L542), 'No inquiries yet' (L387), 'Failed to load inquiries. Please try again.' (L332), 'Cancel this inquiry?' (L116). (Error + empty states themselves are present and correct — the gap is only i18n.)",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/page.tsx: hardcoded 'My listings' (L77), 'Manage the properties you have published.' (L78), 'Failed to load listings.' (L86), \"You haven't published any listings yet.\" (L89).",
+        "frontend/apps/reality-web/src/app/[locale]/account/page.tsx: hardcoded 'Account' (L52) with no useTranslations.",
+        "Fix: wire each page through next-intl `useTranslations` and add the corresponding keys to messages/{en,sk,cs,de}.json, matching app/[locale]/sell/page.tsx. Treat as one cleanup sweep across the account/realtor/inquiries screens (the listing-edit wizard, tracked as a separate finding, is the most severe instance and can share the sweep)."
+      ]
+    }
+  ]
+}

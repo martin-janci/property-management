@@ -1,0 +1,55 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-29T00:00:00Z",
+  "segment_reviewed": "api-core",
+  "selection_reason": "oldest-unreviewed",
+  "selection_detail": "Standalone Tier-1d demand-driven run (research backlog starved, claimable buffer below floor; a NON-mobile-native segment was required so the vectors are landable in the cloud runner with no AGP/ADB dependency). No fresh Phase-1 CHURN_FILES were passed; state.review_cursor oldest entries were api-core (2026-08-21) tied with ppt-web-core (2026-08-21), tie broken toward api-core by segment-map order and higher security value. Saturation check passed: ZERO open code-review-sourced backlog items in ANY segment (all prior are done/dropped), so no saturation-skip. Although the review_cursor still reads 2026-08-21, api-core actually received heavy Tier-1d coverage on 2026-08-28 (middleware idempotency.rs/rls_context.rs; services/push_fanout.rs + services/scheduler/mod.rs; crates/db rental repositories) — so this run deliberately targets api-core sub-files NOT touched by any prior signal. Static-only Rust review (grep sweep + targeted reads, no compile/test): the security-critical surfaces are all CLEAN and confirmed well-maintained — jwt.rs (validate_access_token/refresh gate token_type after decode with validate_exp), client_ip.rs (mature trusted-proxy X-Forwarded-For resolver, rightmost-untrusted hop, #2789), services/stripe.rs verify_signature (constant-time ct_eq over the v1 HMAC, overflow-proof replay window), totp.rs (AES-GCM, fail-closed startup panics only on missing prod key), services/actions/api_call.rs (TOCTOU-aware SSRF resolver + same-origin redirect pinning), push_fanout.rs (expired push tokens ARE purged at :560, detached analytics spawn logs errors). The two known stub/false-success defects in this segment are ALREADY captured and were NOT re-emitted: services/actions/email.rs no-op (code-review-api-core-email-action-stub-drops-mail, 2026-08-21) and services/syndication.rs::process_syndication_job fake-SYNCED (code-review-api-core-syndication-fake-synced, 2026-08-09). Prior workflow-condition findings (workflow-notin-fail-open, workflow-not-group-drops-conds, workflow-cond-parse-failopen, regex-recompile) are all distinct from and mostly already fixed relative to the two findings below. Both findings here are net-new distinct locations/defect classes: services/workflow_executor.rs condition equality operators and services/document_generation.rs summarize truncation.",
+  "experts_used": ["rust"],
+  "findings_count": 2,
+  "note": "api-core (Rust). Two net-new bugs in the workflow engine + AI document-generation service, both in files/locations untouched by the four earlier api-core signals and both fully landable in the cloud runner (pure Rust, no mobile-native/AGP dependency). Distinct from prior docgen findings (which flagged the empty-LLM unwrap_or_default at :536-540) and prior workflow findings (In/NotIn fail-open, NOT-group, parse-fail-open).",
+  "signals": [
+    {
+      "id": "code-review-api-core-workflow-eq-type-strict-no-coercion",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 api-core workflow engine)",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/workflow_executor.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:611-652 — the workflow condition comparators are inconsistent about JSON type coercion. Eq (:612 `Ok(field_value == *compare_value)`), Ne (:613), In (:639-645 `arr.contains(&field_value)`) and NotIn (:646-652) use serde_json::Value's STRICT structural equality, where `json!(100) != json!(\"100\")` and `json!(true) != json!(\"true\")` — no string<->number/bool coercion.",
+        "But the ordering comparators on the SAME field DO coerce: Gt/Gte/Lt/Lte (:614-617) route through compare_numeric -> coerce_finite_f64 (:727-731), which parses numeric strings, and Contains/StartsWith/EndsWith (:618-638) stringify both sides via to_string()/as_str(). So `amount >= 100` matches whether the trigger field or the stored condition value is the number 100 or the string \"100\", while `amount == 100` matches ONLY when both sides are the exact same JSON type.",
+        "Impact: workflow conditions are authored in a UI form and stored as JSON in workflow.conditions; form inputs commonly serialize scalar values as STRINGS (e.g. condition value \"3\", \"true\", \"100\"), whereas trigger_event fields (get_field_value at :671-694, traverse_json :697-715) carry the natively-typed JSON emitted by the event producer (a numeric amount/priority/count is a JSON number). An equality guard such as priority == 3 (stored value \"3\") then NEVER matches the numeric trigger field, so an Eq-guarded automation silently never fires; symmetrically a Ne / NotIn guard is always-true and lets actions run unguarded. A `>=`/`contains` guard on the very same field behaves correctly, which makes the failure look non-deterministic to an operator and hard to diagnose.",
+        "Distinct from the prior workflow findings: code-review-api-core-workflow-notin-fail-open covered NotIn returning true when compare_value is NOT an array (a different branch — the `else` arm at :649-651); this finding is about the strict-vs-coercing TYPE mismatch inside the happy path of Eq/Ne/In/NotIn. Both can bite the same condition.",
+        "Fix: make Eq/Ne/In/NotIn coerce consistently with the ordering/string operators — e.g. attempt numeric equality via coerce_finite_f64 first (so 100 == \"100\"), fall back to case-consistent string comparison, and for In/NotIn apply the same element-wise coercion — OR normalize condition values to their typed JSON at store time and document that conditions are type-strict. Add a unit test asserting `{field: \"trigger.amount\" (number 100), op: Eq, value: \"100\"}` evaluates true (fails on current code). Landable as a self-contained change to evaluate_single_condition + a test; no schema/migration, no mobile dependency.",
+        "Confidence medium: the operator asymmetry, the strict serde_json::Value equality, and the coercing compare_numeric/to_string paths are all confirmed by static read; 'medium' rather than 'high' because whether a live workflow trips it depends on how the condition-builder UI serializes scalar values (string vs typed), which is a frontend-side fact not verified in this static Rust-only pass."
+      ]
+    },
+    {
+      "id": "code-review-api-core-docgen-summarize-char-boundary-panic",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 api-core document-generation)",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/document_generation.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/document_generation.rs:496-502 — in summarize_document's very-long-document branch, request.content (a String) is sliced by BYTE offset with no UTF-8 char-boundary check: `let half_limit = char_limit / 2;` then `let start = &request.content[..half_limit.min(request.content.len())];`, `let end_start = request.content.len().saturating_sub(half_limit);`, `let end = &request.content[end_start..];`. Indexing a str/String by a byte range that does not fall on a char boundary PANICS ('byte index N is not a char boundary').",
+        "The `.min(len())` / saturating_sub only guard the RANGE bounds (out-of-range), not char-boundary ALIGNMENT. half_limit is char_limit/2 = (max_context*4)/2 = 200_000 bytes; byte offsets 200_000 (from the front) and len-200_000 (from the back) are arbitrary positions that in practice land mid-character.",
+        "This product is Slovak/Czech/German-first (i18n sk, cs, de, en per the repo architecture). Real lease agreements, contracts, and long documents fed to summarize_document are full of multi-byte UTF-8 (á č ď é í ľ ň ó š ť ž ä ö ü ß …). Any document large enough to enter this branch (content_tokens > max_context = 100_000 tokens, ~400_000 chars at the code's own ~4-chars/token estimate) that contains a multi-byte char adjacent to either 200_000-byte cut point panics — which for non-ASCII long documents is the common case, not an edge case.",
+        "Reachability/severity: this is on a user-facing feature (document summarization) reachable from an api-server request handler. Axum isolates a handler-task panic into a 500 for that one request rather than crashing the process, so it is not a server-wide DoS — but the specific document can NEVER be summarized (every retry re-panics), and it surfaces as an opaque 500 with a panic in the logs rather than a handled error. Bounded blast radius = request-scoped, hence score_delta 2 (not 3).",
+        "Distinct from the prior document_generation findings code-review-api-core-docgen-empty-llm-ok / docgen-empty-llm-blank-doc, which both concern the `unwrap_or_default()` collapse of a missing LLM completion at :536-540 — a different location and defect class from this input-side slicing panic at :496-502.",
+        "Fix: cut on char boundaries instead of raw byte offsets — e.g. use `str::char_indices()` / `floor_char_boundary` (or take/rev-take over `.chars()`) to pick the nearest boundary <= half_limit, or operate on `char` counts (`content.chars().take(n)` for the head and a matching tail). Add a regression test that summarizes a >400k-char string containing multi-byte chars straddling both cut points and asserts no panic. Self-contained Rust change + test; no mobile/AGP dependency.",
+        "Confidence medium: the byte-offset String slicing and the absence of any char-boundary alignment are confirmed by static read; 'medium' rather than 'high' only because triggering requires an input that both exceeds the ~400k-char truncation threshold AND has a multi-byte char at a cut point — realistic for this locale but not confirmed at runtime in this static-only pass."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+[
+  {
+    "id": "code-review-ppt-web-core-api-onunauthorized-unwired",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "ppt-web-core",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:337 — the hand-rolled axios client is configured with ONLY the token getter: `configureApiClient({ getToken: getAccessToken })`. The `onUnauthorized` callback is never passed, so the 401 recovery hook in lib/api.ts is dead.",
+      "frontend/apps/ppt-web/src/lib/api.ts:219-221 — the response interceptor's `if (error.response?.status === 401 && onUnauthorizedCallback) onUnauthorizedCallback();` branch can never fire: `onUnauthorizedCallback` (module var, line 180) is only assigned from `config.onUnauthorized` (line 196), which AuthContext never provides. On an expired/invalid access token the request just rejects with an ApiError — no silent refresh, no redirect-to-login, no logout.",
+      "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts:9-10 and frontend/apps/ppt-web/src/features/sentiment/hooks/useSentiment.ts:18-19 — both consumers of getApiClient() carry a header comment explicitly promising `401 → onUnauthorized` as a guaranteed shared-interceptor behavior. That documented contract is false: these AI feature surfaces get no session recovery on 401, diverging from the generated @ppt/api-client path which does handle auth failure.",
+      "Fix: pass `onUnauthorized` in the configureApiClient call at AuthContext.tsx:337 (wire it to the same silent-refresh / logout path used by setTokenProvider), or remove the dead 401 branch + the misleading consumer comments so the two clients don't silently disagree on auth-failure handling."
+    ],
+    "expert": "frontend"
+  },
+  {
+    "id": "code-review-ppt-web-core-ws-token-snapshot",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "ppt-web-core",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "frontend/apps/ppt-web/src/App.tsx:94-99 — WebSocketWrapper passes `auth={{ accessToken: getAccessToken(), isAuthenticated }}`, i.e. a point-in-time token VALUE evaluated at render, instead of threading the live getter. Contrast AuthContext.tsx:337, where the rest of the app is wired with the getter function `getToken: getAccessToken` so every request reads live localStorage.",
+      "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:223 + 208-211 — the WebSocketService is created with `getToken: () => authRef.current.accessToken`, and authRef is only refreshed by the effect on the `auth` prop (line 209-211). So the socket's getToken serves the snapshot captured at the last WebSocketWrapper render, not the current stored token.",
+      "Consequence: after a silent token rotation (refreshTokenInternal writes localStorage but only re-renders WebSocketWrapper as a side effect of setUser at AuthContext.tsx:388-389), WS token freshness depends on an incidental re-render. Any refresh path that rotates the token without calling setUser (or a reconnect that fires before the re-render lands) would open/re-open the socket with a stale `?token=` and be dropped by the server on the next auth check.",
+      "Fix: thread the live getter into the WS layer (e.g. pass `getAccessToken` and have WebSocketService call it) rather than snapshotting `getAccessToken()` into the auth prop, mirroring how lib/api.ts and setTokenProvider consume the getter."
+    ],
+    "expert": "frontend"
+  },
+  {
+    "id": "code-review-ppt-web-core-errorhandler-i18n-gap",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "ppt-web-core",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "quality",
+    "evidence": [
+      "frontend/apps/ppt-web/src/lib/errorHandler.ts:53-141 — the entire ERROR_MESSAGES map plus DEFAULT_ERROR are hardcoded English title/message strings ('Authentication Required', 'Too Many Requests', 'An unexpected error occurred.', etc.). parseApiError returns these strings directly for display (ParsedApiError.title/message), with no t()/i18n-key indirection.",
+      "ppt-web ships react-i18next (see root CLAUDE.md frontend table; App.tsx uses useTranslation throughout, e.g. nav labels App.tsx:118-172). Every user-facing API error surface therefore renders English-only regardless of the active locale — a real i18n gap for the same user base the nav/labels are already translated for.",
+      "Fix: key the ERROR_MESSAGES table by i18n message id and resolve via t() at the display sites (or have parseApiError return codes + i18n keys rather than baked English), so error titles/messages localize with the rest of the app."
+    ],
+    "expert": "frontend"
+  }
+]

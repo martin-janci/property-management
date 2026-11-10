@@ -33,5 +33,15 @@ Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, e
 - 2026-05-18 — audit: stub created from `frontend/apps/ppt-web/src/App.tsx:501`.
 
 ## Agent Log
+
+- 2026-11-04 — agent: r3-nav-roles — route wrapped in `ProtectedRoute requiredRoles={MANAGER_ROLES}`; residents get Access Denied instead of a form that 403s on save (audit r3 #14).
 - 2026-05-18 — agent: created stub for unmapped route.
 - 2026-06-02 — agent (gap-sweep): wired EditFaultPageRoute to `useFault` (load initial data) + `useUpdateFault` + `useBuildings` in App.tsx (was initialData={{}} + no-op toast). apiStatus stub→complete.
+- 2026-08-18 — agent: screen-map-drift-pr-2647 — noted i18n update in PR #2647: `EditFaultPageRoute` in `frontend/apps/ppt-web/src/routes/groups/faults.tsx` now renders its missing-param fallback via `t('errors.faultNotFound', 'Fault not found')` (was hardcoded English); `useTranslation()` hook added before the early return to keep hook order stable; `errors.faultNotFound` key added to all locale bundles. No route or component change.
+
+## Agent Log
+
+<!-- newest entries on top -->
+
+- 2026-11-05 — agent: screen-map-drift-pr-3244-ppt — reconcile i18n drift from PR #3244. `EditFaultPage` moved hardcoded English copy into react-i18next (`faults.*`) across all 6 locales, extending the PR #2647 missing-param fallback i18n already logged below. i18n only — no route/component/endpoint/status change.
+- 2026-11-04 — agent: unit dropdown filled from the fault's building units (GET /buildings/{id}/units)

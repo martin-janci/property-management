@@ -5,6 +5,7 @@
  */
 
 import type React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export type ModerationStatus =
   | 'pending'
@@ -52,7 +53,8 @@ export type ModerationActionType =
 export interface ContentOwnerInfo {
   user_id: string;
   name: string;
-  previous_violations: number;
+  // `previous_violations` is intentionally omitted: the moderation API does not
+  // return a prior-violation count, so it must not be surfaced (or defaulted) here.
 }
 
 export interface ModerationCase {
@@ -61,7 +63,6 @@ export interface ModerationCase {
   content_id: string;
   content_preview?: string;
   content_owner: ContentOwnerInfo;
-  report_source: string;
   violation_type?: ViolationType;
   report_reason?: string;
   status: ModerationStatus;
@@ -85,67 +86,12 @@ export interface ModerationCaseCardProps {
   isModerator?: boolean;
 }
 
-const getStatusLabel = (status: ModerationStatus): string => {
-  switch (status) {
-    case 'pending':
-      return 'Pending';
-    case 'under_review':
-      return 'Under Review';
-    case 'approved':
-      return 'Approved';
-    case 'removed':
-      return 'Removed';
-    case 'restricted':
-      return 'Restricted';
-    case 'warned':
-      return 'Warned';
-    case 'appealed':
-      return 'Appealed';
-    case 'appeal_approved':
-      return 'Appeal Approved';
-    case 'appeal_rejected':
-      return 'Appeal Rejected';
-    default:
-      return status;
-  }
-};
-
-const getContentTypeLabel = (type: ModeratedContentType): string => {
-  return type
+// Fallback humanizer for enum values that lack an explicit translation key.
+const humanize = (value: string): string =>
+  value
     .split('_')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
-};
-
-const getViolationTypeLabel = (type?: ViolationType): string => {
-  if (!type) return 'Not specified';
-  return type
-    .split('_')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-};
-
-const getActionLabel = (action?: ModerationActionType): string => {
-  if (!action) return '';
-  return action.charAt(0).toUpperCase() + action.slice(1);
-};
-
-const getPriorityLabel = (priority: number): string => {
-  switch (priority) {
-    case 1:
-      return 'Critical';
-    case 2:
-      return 'High';
-    case 3:
-      return 'Medium';
-    case 4:
-      return 'Low';
-    case 5:
-      return 'Lowest';
-    default:
-      return `P${priority}`;
-  }
-};
 
 const formatAge = (hours: number): string => {
   if (hours < 1) {
@@ -177,6 +123,21 @@ export const ModerationCaseCard: React.FC<ModerationCaseCardProps> = ({
   showActions = true,
   isModerator = false,
 }) => {
+  const { t } = useTranslation();
+
+  const getStatusLabel = (status: ModerationStatus): string =>
+    t(`moderation.status.${status}`, humanize(status));
+  const getContentTypeLabel = (type: ModeratedContentType): string =>
+    t(`moderation.contentType.${type}`, humanize(type));
+  const getViolationTypeLabel = (type?: ViolationType): string =>
+    type
+      ? t(`moderation.violationType.${type}`, humanize(type))
+      : t('moderation.violationType.notSpecified');
+  const getActionLabel = (action?: ModerationActionType): string =>
+    action ? t(`moderation.actionType.${action}`, humanize(action)) : '';
+  const getPriorityLabel = (priority: number): string =>
+    t(`moderation.priorityLabel.${priority}`, t('moderation.priorityLabel.fallback', { priority }));
+
   const isOverdue = case_.age_hours >= 24 && case_.status === 'pending';
   const canTakeAction =
     isModerator && (case_.status === 'pending' || case_.status === 'under_review');
@@ -196,7 +157,7 @@ export const ModerationCaseCard: React.FC<ModerationCaseCardProps> = ({
             {getStatusLabel(case_.status)}
           </span>
           <span className={`moderation-case-age ${isOverdue ? 'overdue' : ''}`}>
-            {formatAge(case_.age_hours)} ago
+            {t('moderation.card.ageAgo', { age: formatAge(case_.age_hours) })}
           </span>
         </div>
       </div>
@@ -204,8 +165,10 @@ export const ModerationCaseCard: React.FC<ModerationCaseCardProps> = ({
       <div className="moderation-case-content">
         <div className="moderation-content-info">
           <span className="moderation-content-type">{getContentTypeLabel(case_.content_type)}</span>
-          {case_.content_preview && (
+          {case_.content_preview ? (
             <p className="moderation-content-preview">{case_.content_preview}</p>
+          ) : (
+            <p className="moderation-content-preview unavailable">No content preview available</p>
           )}
         </div>
 
@@ -219,29 +182,13 @@ export const ModerationCaseCard: React.FC<ModerationCaseCardProps> = ({
 
       <div className="moderation-case-details">
         <div className="moderation-owner-info">
-          <h5>Content Owner</h5>
+          <h5>{t('moderation.card.contentOwner')}</h5>
           <span className="moderation-owner-name">{case_.content_owner.name}</span>
-          {case_.content_owner.previous_violations > 0 && (
-            <span className="moderation-previous-violations">
-              {case_.content_owner.previous_violations} previous violations
-            </span>
-          )}
-        </div>
-
-        <div className="moderation-report-info">
-          <h5>Reported By</h5>
-          <span className="moderation-report-source">
-            {case_.report_source === 'user'
-              ? 'User Report'
-              : case_.report_source === 'automated'
-                ? 'Automated Detection'
-                : case_.report_source}
-          </span>
         </div>
 
         {case_.assigned_to_name && (
           <div className="moderation-assigned-info">
-            <h5>Assigned To</h5>
+            <h5>{t('moderation.card.assignedTo')}</h5>
             <span className="moderation-assignee">{case_.assigned_to_name}</span>
           </div>
         )}
@@ -250,7 +197,7 @@ export const ModerationCaseCard: React.FC<ModerationCaseCardProps> = ({
       {/* Decision Info */}
       {case_.decision && (
         <div className="moderation-decision-info">
-          <h5>Decision</h5>
+          <h5>{t('moderation.card.decision')}</h5>
           <span className={`moderation-decision ${case_.decision}`}>
             {getActionLabel(case_.decision)}
           </span>
@@ -263,13 +210,17 @@ export const ModerationCaseCard: React.FC<ModerationCaseCardProps> = ({
       {/* Appeal Info */}
       {case_.appeal_filed && (
         <div className="moderation-appeal-info">
-          <h5>Appeal Filed</h5>
+          <h5>{t('moderation.card.appealFiled')}</h5>
           {case_.appeal_reason && <p className="moderation-appeal-reason">{case_.appeal_reason}</p>}
           {case_.status === 'appeal_approved' && (
-            <span className="moderation-appeal-outcome approved">Appeal Upheld</span>
+            <span className="moderation-appeal-outcome approved">
+              {t('moderation.card.appealUpheld')}
+            </span>
           )}
           {case_.status === 'appeal_rejected' && (
-            <span className="moderation-appeal-outcome rejected">Appeal Rejected</span>
+            <span className="moderation-appeal-outcome rejected">
+              {t('moderation.card.appealRejected')}
+            </span>
           )}
         </div>
       )}
@@ -283,7 +234,7 @@ export const ModerationCaseCard: React.FC<ModerationCaseCardProps> = ({
               className="moderation-action-button secondary"
               onClick={() => onViewContent(case_.id)}
             >
-              View Content
+              {t('moderation.card.viewContent')}
             </button>
           )}
           {!case_.assigned_to_name && isModerator && onAssign && (
@@ -292,7 +243,7 @@ export const ModerationCaseCard: React.FC<ModerationCaseCardProps> = ({
               className="moderation-action-button secondary"
               onClick={() => onAssign(case_.id)}
             >
-              Assign to Me
+              {t('moderation.card.assignToMe')}
             </button>
           )}
           {canTakeAction && onTakeAction && (
@@ -301,7 +252,7 @@ export const ModerationCaseCard: React.FC<ModerationCaseCardProps> = ({
               className="moderation-action-button primary"
               onClick={() => onTakeAction(case_.id)}
             >
-              Take Action
+              {t('moderation.card.takeAction')}
             </button>
           )}
           {canDecideAppeal && onDecideAppeal && (
@@ -310,14 +261,16 @@ export const ModerationCaseCard: React.FC<ModerationCaseCardProps> = ({
               className="moderation-action-button primary"
               onClick={() => onDecideAppeal(case_.id)}
             >
-              Decide Appeal
+              {t('moderation.card.decideAppeal')}
             </button>
           )}
         </div>
       )}
 
       <div className="moderation-case-footer">
-        <span className="moderation-case-created">Created: {formatDate(case_.created_at)}</span>
+        <span className="moderation-case-created">
+          {t('moderation.card.created', { date: formatDate(case_.created_at) })}
+        </span>
       </div>
     </div>
   );

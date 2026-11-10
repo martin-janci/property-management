@@ -11,8 +11,10 @@ use std::sync::Arc;
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Extension, Json};
 use serde::{Deserialize, Serialize};
 
-use admin_core::{AuditOutcome, AuditWriter, Capability};
+use admin_core::{AuditOutcome, AuditWriter};
 use api_core::extractors::principal::RequestPrincipal;
+
+use super::audit_mfa_event;
 
 use crate::state::AppState;
 
@@ -87,18 +89,15 @@ pub async fn use_recovery(
     })?;
 
     if rows.is_empty() {
-        let _ = audit
-            .record(
-                Some(user_id),
-                Capability::UsersWrite,
-                AuditOutcome::Denied,
-                Some("mfa_recovery_no_codes"),
-                Some(user_id),
-                None,
-                None,
-                None,
-            )
-            .await;
+        audit_mfa_event(
+            &audit,
+            user_id,
+            AuditOutcome::Denied,
+            "mfa_recovery_no_codes",
+            user_id,
+            None,
+        )
+        .await;
         return Err((
             StatusCode::GONE,
             Json(serde_json::json!({
@@ -120,18 +119,15 @@ pub async fn use_recovery(
         })?;
 
     let Some(idx) = matched_idx else {
-        let _ = audit
-            .record(
-                Some(user_id),
-                Capability::UsersWrite,
-                AuditOutcome::Denied,
-                Some("mfa_recovery_invalid"),
-                Some(user_id),
-                None,
-                None,
-                None,
-            )
-            .await;
+        audit_mfa_event(
+            &audit,
+            user_id,
+            AuditOutcome::Denied,
+            "mfa_recovery_invalid",
+            user_id,
+            None,
+        )
+        .await;
         return Err((
             StatusCode::UNPROCESSABLE_ENTITY,
             Json(serde_json::json!({
@@ -168,18 +164,15 @@ pub async fn use_recovery(
         // Lost the race to a concurrent caller. Treat as invalid to keep the
         // single-use guarantee — the legitimate winner already opened their
         // recency window, this duplicate must fail closed.
-        let _ = audit
-            .record(
-                Some(user_id),
-                Capability::UsersWrite,
-                AuditOutcome::Denied,
-                Some("mfa_recovery_codes"),
-                Some(matched_id),
-                Some(&serde_json::json!({ "reason": "race_lost_already_used" })),
-                None,
-                None,
-            )
-            .await;
+        audit_mfa_event(
+            &audit,
+            user_id,
+            AuditOutcome::Denied,
+            "mfa_recovery_codes",
+            matched_id,
+            Some(&serde_json::json!({ "reason": "race_lost_already_used" })),
+        )
+        .await;
         return Err((
             StatusCode::UNPROCESSABLE_ENTITY,
             Json(serde_json::json!({
@@ -217,18 +210,15 @@ pub async fn use_recovery(
     })?;
 
     // Audit success.
-    let _ = audit
-        .record(
-            Some(user_id),
-            Capability::UsersWrite,
-            AuditOutcome::Allowed,
-            Some("mfa_recovery_used"),
-            Some(user_id),
-            None,
-            None,
-            None,
-        )
-        .await;
+    audit_mfa_event(
+        &audit,
+        user_id,
+        AuditOutcome::Allowed,
+        "mfa_recovery_used",
+        user_id,
+        None,
+    )
+    .await;
 
     tracing::info!(user_id = %user_id, remaining, "admin mfa recovery code consumed");
     Ok(Json(UseRecoveryResponse {

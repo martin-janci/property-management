@@ -1,0 +1,58 @@
+{
+  "generated": "2026-09-19T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claim buffer starved). Static single-segment code review via ppt-dev-review skill; no compilation / no test execution. Produces fresh CLOUD-LANDABLE frontend backlog vectors.",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "oldest-unreviewed (deterministic, per state.json review_cursor). review_cursor ties reality-web (2026-08-29) and ppt-web-core (2026-08-29) as the two oldest segments; both cloud-landable frontend. This run FIRST reviewed the strict tie-break winner ppt-web-core (segment-map order) and found every genuine defect on its uncovered surface already filed (financial route-group guards -> 2026-09-02; OrganizationProvider unmemoized context value -> 2026-09-07 + 2026-09-18); ppt-web-core is exhausted of net-new landable findings. Moved to the co-oldest tied segment reality-web (also cloud-landable, larger surface) for net-new value. reality-web already received a same-day Tier-1d pass (2026-09-19-reality-web-tier1d.json, href url-scheme sink); this pass deliberately targets the UNMINED data-flow surface (bulk-import entry, URL-param-driven fetch) and clears every candidate against 2026-07..2026-09 reality-web signals + backlog.json. Written to a non-colliding -2 filename so the earlier same-day generator's file is not clobbered (single-writer guest; no git ops). SATURATION CHECK: backlog.json holds 0 OPEN code-review-finding rows for reality-web, so the >=3-open skip rule does not trigger. No CHURN_FILES handed to this slice, so churn-alignment did not apply.",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": true,
+  "reviewed_clean": [
+    "app/env.js/route.ts (runtime env exposed via an EXPLICIT allow-list of only NEXT_PUBLIC_API_URL / NEXT_PUBLIC_SITE_URL, escaped through serializeForScript — no broad process.env dump, no leak)",
+    "lib/serialize-script.ts (escapes <, >, &, U+2028, U+2029 to \\uXXXX — correct hardened <script> inlining primitive)",
+    "app/[locale]/listings/[slug]/jsonLd.ts + components/listings/ListingDetailContent.tsx (JSON-LD built from user-authored listing data is injected via serializeForScript inside dangerouslySetInnerHTML, NOT bare JSON.stringify — the </script> breakout class is covered)",
+    "lib/realtor-api.ts + lib/auth-api.ts (thin fetch wrappers: network try/catch, response.ok guard, error-body JSON.parse wrapped in try/catch that ignores non-JSON, 204 handled)",
+    "components/agency/RealtorManagement.tsx InviteRealtorModal (mutateAsync in try/catch, onClose only on success, inviteError surfaced via t('inviteError'))",
+    "components/comparison/ComparisonUrlHandler.tsx uses Promise.allSettled for graceful per-id degradation + loading/error states (the response-cast + localStorage-shape gaps here are ALREADY FILED as code-review-reality-web-comparison-fetch-unvalidated-cast / -comparison-localstorage-unvalidated 2026-08-18 — NOT re-emitted)"
+  ],
+  "signals": [
+    {
+      "id": "code-review-reality-web-csv-import-filepick-no-type-guard",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-19 reality-web csv-import file-type guard)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/components/import/CsvImport.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/CsvImport.tsx:47-56 handleDrop() validates the dropped file before accepting it: `if (droppedFile?.type === 'text/csv' || droppedFile?.name.endsWith('.csv')) { setFile(droppedFile); setStep('mapping'); }` — a non-CSV drop is silently ignored (no state change).",
+        "frontend/apps/reality-web/src/components/import/CsvImport.tsx:58-64 handleFileSelect() (the file-picker path) applies NO such guard: `const selectedFile = e.target.files?.[0]; if (selectedFile) { setFile(selectedFile); setStep('mapping'); }` — it accepts ANY selected file and advances to the mapping step. The `<input type=\"file\" accept=\".csv,text/csv\" ...>` at CsvImport.tsx:338 is only an advisory OS-dialog filter; a user can switch the dialog to 'All files' and pick a .xlsx/.pdf/.zip, which is then handed straight to useCsvPreview (CsvImport.tsx:44).",
+        "Impact: LOW — inconsistent client-side validation between the two upload entry points on the bulk listing-import surface (Epic 46). A picker-selected non-CSV isn't blocked at the source; it round-trips to the server preview and only surfaces later as the generic previewError -> ErrorState (CsvImport.tsx:153-155), a worse and slower failure than the drag-drop path which rejects up front. No security impact (server validates the CSV), so this is a data-quality / UX-consistency defect, not a vuln. Confidence MEDIUM (static-only): the asymmetry between handleDrop and handleFileSelect is confirmed by direct read; not runtime-reproduced.",
+        "Fix (cloud-landable, single-file frontend edit): extract the handleDrop type/extension check into a small `isCsvFile(file: File): boolean` helper and call it in handleFileSelect before setFile/setStep; on a non-CSV pick, surface the existing t('csv.parseFailed')/ErrorState (or an inline hint) instead of advancing. Verifies cleanly in the cloud runner (single @ppt/reality-web change, no backend coupling)."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-comparison-share-id-unencoded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-19 reality-web comparison share-id url encoding)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:38-43 maps the caller-supplied `sharedIds` (parsed from the ?compare= share-link URL param on the compare page) directly into a request path with NO encoding: `sharedIds.slice(0, 4).map(async (id) => { const response = await fetch(`${getApiBase()}/api/v1/listings/${id}`); ... })`. An `id` value containing `/`, `?`, `#`, or `%` (e.g. a hand-crafted or corrupted shared link such as `?compare=abc%23,../foo,x?limit=999`) changes the effective request target rather than being sent as a single opaque path segment.",
+        "This is DISTINCT from the already-filed code-review-reality-web-comparison-fetch-unvalidated-cast (2026-08-18), which concerns the RESPONSE side (`response.json() as Promise<ListingSummary>` cast with no shape validation). This finding is the REQUEST side: the un-encoded interpolation of an attacker-influenceable URL param into the fetch path. The two do not overlap and both live in the same loadSharedListings effect.",
+        "Impact: LOW — client-side request-integrity / path-injection on a fetch the visitor makes on their own behalf against the public listings API (bounded: no privilege escalation, and Promise.allSettled already drops failed ids gracefully at ComparisonUrlHandler.tsx:54-66). Worst realistic effect is a malformed request / wrong-endpoint hit or a broken shared-comparison for links whose ids contain reserved characters. Confidence MEDIUM (static-only): the raw interpolation is confirmed by direct read; the exact reachable id values depend on the compare page's param parsing (not traced in this pass).",
+        "Fix (cloud-landable, single-file frontend edit): wrap the id in encodeURIComponent — `fetch(`${getApiBase()}/api/v1/listings/${encodeURIComponent(id)}`)` — matching standard safe path interpolation. Optionally pre-filter sharedIds to the expected id shape before fetching. Verifies cleanly in the cloud runner (single @ppt/reality-web change, no backend coupling)."
+      ]
+    }
+  ]
+}
