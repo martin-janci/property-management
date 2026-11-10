@@ -66,7 +66,7 @@ test.describe('OAuth callback flow (AuthCallbackPage)', () => {
   // -------------------------------------------------------------------------
   // Scenario 1 — Happy path
   // -------------------------------------------------------------------------
-  test('stores access + refresh tokens and redirects to /dashboard on success', async ({
+  test('stores the access token (not the refresh token) and redirects to /dashboard on success', async ({
     page,
   }) => {
     const validAccessToken = makeJwt({ sub: MOCK_USER.id, exp: nowPlus(900) });
@@ -111,7 +111,8 @@ test.describe('OAuth callback flow (AuthCallbackPage)', () => {
     const storedUserRaw = await page.evaluate((k) => localStorage.getItem(k), USER_KEY);
 
     expect(storedAccess).toBe(validAccessToken);
-    expect(storedRefresh).toBe(validRefreshToken);
+    // The refresh token is held in memory only, never in localStorage.
+    expect(storedRefresh).toBeNull();
     expect(storedUserRaw).not.toBeNull();
 
     const storedUser = JSON.parse(storedUserRaw as string) as typeof MOCK_USER;

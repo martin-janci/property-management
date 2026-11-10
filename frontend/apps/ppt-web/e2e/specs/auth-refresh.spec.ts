@@ -68,8 +68,10 @@ test.describe('Token Refresh Flow (AuthProvider)', () => {
     let refreshCallCount = 0;
     await page.route(REFRESH_ENDPOINT, async (route) => {
       refreshCallCount += 1;
-      // The request must carry the OLD refresh token.
-      expect(sentRefreshToken(route)).toBe(oldRefresh);
+      // The refresh token no longer lives in localStorage: on a cold boot the
+      // body carries an empty value and the HttpOnly cookie authenticates the
+      // refresh. A legacy token left in storage must never be sent.
+      expect(sentRefreshToken(route)).toBe('');
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -87,15 +89,16 @@ test.describe('Token Refresh Flow (AuthProvider)', () => {
     await expect(page).toHaveURL(new RegExp(`${PROTECTED_ROUTE}$`), { timeout: 8000 });
     expect(page.url()).not.toContain('/login');
 
-    // The refresh endpoint was hit at least once, every call carried the OLD
-    // token (asserted in the route handler), and the rotated pair was persisted.
+    // The refresh endpoint was hit at least once, no call leaked the legacy
+    // stored token (asserted in the route handler), the new access token was
+    // persisted and the refresh token was kept out of localStorage.
     // We assert >= 1 rather than === 1 because the suite runs against `pnpm dev`,
     // where React StrictMode intentionally double-invokes mount effects — so
     // initializeAuth() fires the refresh twice. Production (single invoke) hits
     // it once; either way the rotation contract below is what actually matters.
     expect(refreshCallCount).toBeGreaterThanOrEqual(1);
     await expectLocalStorage(page, ACCESS_TOKEN_KEY, newAccess);
-    await expectLocalStorage(page, REFRESH_TOKEN_KEY, newRefresh);
+    await expectLocalStorage(page, REFRESH_TOKEN_KEY, null);
   });
 
   // -------------------------------------------------------------------------
@@ -126,12 +129,11 @@ test.describe('Token Refresh Flow (AuthProvider)', () => {
   });
 
   // -------------------------------------------------------------------------
-  // Scenario 3 — Token rotation: the NEW refresh token replaces the old one.
+  // Scenario 3 — Rotation stays out of localStorage: the legacy token is
+  //              purged and the rotated one is held in memory only.
   // -------------------------------------------------------------------------
 
-  test('rotates the refresh token (new value replaces old) after a successful refresh', async ({
-    page,
-  }) => {
+  test('purges the legacy refresh token and never persists the rotated one', async ({ page }) => {
     const oldRefresh = 'refresh-token-rotate-old';
     const newAccess = managerAccessToken();
     const newRefresh = 'refresh-token-rotate-new';
@@ -148,8 +150,10 @@ test.describe('Token Refresh Flow (AuthProvider)', () => {
 
     await page.goto(PROTECTED_ROUTE);
 
-    // The old refresh token must be replaced by the rotated one (not reused).
-    await expectLocalStorage(page, REFRESH_TOKEN_KEY, newRefresh);
+    // Wait for the refresh to land, then confirm neither the legacy nor the
+    // rotated refresh token is readable from localStorage.
+    await expectLocalStorage(page, ACCESS_TOKEN_KEY, newAccess);
+    await expectLocalStorage(page, REFRESH_TOKEN_KEY, null);
   });
 
   // -------------------------------------------------------------------------
