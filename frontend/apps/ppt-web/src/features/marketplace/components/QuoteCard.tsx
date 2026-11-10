@@ -3,6 +3,9 @@
  * Epic 68: Service Provider Marketplace (Story 68.3)
  */
 
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
+
 export type QuoteStatus =
   | 'pending'
   | 'submitted'
@@ -41,15 +44,6 @@ interface QuoteCardProps {
   onViewProvider?: (providerId: string) => void;
 }
 
-const statusLabels: Record<QuoteStatus, string> = {
-  pending: 'Pending',
-  submitted: 'Submitted',
-  accepted: 'Accepted',
-  rejected: 'Rejected',
-  withdrawn: 'Withdrawn',
-  expired: 'Expired',
-};
-
 const statusColors: Record<QuoteStatus, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
   submitted: 'bg-blue-100 text-blue-800',
@@ -66,8 +60,8 @@ function formatPrice(price: number, currency: string): string {
   }).format(price);
 }
 
-function formatDate(dateString?: string): string {
-  if (!dateString) return 'Not specified';
+function formatDate(t: TFunction, dateString?: string): string {
+  if (!dateString) return t('marketplace.quoteCard.notSpecified');
   return new Date(dateString).toLocaleDateString('en-EU', {
     month: 'short',
     day: 'numeric',
@@ -75,8 +69,11 @@ function formatDate(dateString?: string): string {
   });
 }
 
-function getValidityStatus(validUntil?: string): { text: string; isExpired: boolean } {
-  if (!validUntil) return { text: 'No expiry', isExpired: false };
+function getValidityStatus(
+  t: TFunction,
+  validUntil?: string
+): { text: string; isExpired: boolean } {
+  if (!validUntil) return { text: t('marketplace.quoteCard.noExpiry'), isExpired: false };
 
   const expiryDate = new Date(validUntil);
   const now = new Date();
@@ -84,15 +81,15 @@ function getValidityStatus(validUntil?: string): { text: string; isExpired: bool
   const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
   if (diffDays < 0) {
-    return { text: 'Expired', isExpired: true };
+    return { text: t('marketplace.quoteCard.expired'), isExpired: true };
   }
   if (diffDays === 0) {
-    return { text: 'Expires today', isExpired: false };
+    return { text: t('marketplace.quoteCard.expiresToday'), isExpired: false };
   }
   if (diffDays === 1) {
-    return { text: 'Expires tomorrow', isExpired: false };
+    return { text: t('marketplace.quoteCard.expiresTomorrow'), isExpired: false };
   }
-  return { text: `Valid for ${diffDays} days`, isExpired: false };
+  return { text: t('marketplace.quoteCard.validForDays', { count: diffDays }), isExpired: false };
 }
 
 export function QuoteCard({
@@ -104,9 +101,10 @@ export function QuoteCard({
   onSelect,
   onViewProvider,
 }: QuoteCardProps) {
+  const { t } = useTranslation();
   const canAccept = quote.status === 'submitted';
   const canReject = quote.status === 'submitted';
-  const validity = getValidityStatus(quote.validUntil);
+  const validity = getValidityStatus(t, quote.validUntil);
 
   return (
     <div
@@ -131,7 +129,7 @@ export function QuoteCard({
                 stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <title>Company placeholder</title>
+                <title>{t('marketplace.common.companyPlaceholder')}</title>
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -152,7 +150,7 @@ export function QuoteCard({
               </button>
               {quote.providerIsVerified && (
                 <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                  <title>Verified</title>
+                  <title>{t('marketplace.common.verified')}</title>
                   <path
                     fillRule="evenodd"
                     d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -164,7 +162,7 @@ export function QuoteCard({
             {quote.providerRating && (
               <div className="flex items-center gap-1 mt-0.5">
                 <svg className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                  <title>Rating star</title>
+                  <title>{t('marketplace.common.ratingStar')}</title>
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                 </svg>
                 <span className="text-sm text-gray-600">{quote.providerRating.toFixed(1)}</span>
@@ -173,7 +171,7 @@ export function QuoteCard({
           </div>
         </div>
         <span className={`px-2 py-1 text-xs font-medium rounded ${statusColors[quote.status]}`}>
-          {statusLabels[quote.status]}
+          {t(`marketplace.quoteStatus.${quote.status}`)}
         </span>
       </div>
 
@@ -184,7 +182,7 @@ export function QuoteCard({
         </p>
         {quote.warrantyPeriodDays && (
           <p className="text-sm text-gray-500 mt-1">
-            {quote.warrantyPeriodDays} day warranty included
+            {t('marketplace.quoteCard.warrantyIncluded', { count: quote.warrantyPeriodDays })}
           </p>
         )}
       </div>
@@ -192,21 +190,25 @@ export function QuoteCard({
       {/* Details */}
       <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
         <div>
-          <span className="text-gray-500">Start Date:</span>{' '}
-          <span className="font-medium text-gray-900">{formatDate(quote.estimatedStartDate)}</span>
+          <span className="text-gray-500">{t('marketplace.quoteCard.startDate')}</span>{' '}
+          <span className="font-medium text-gray-900">
+            {formatDate(t, quote.estimatedStartDate)}
+          </span>
         </div>
         <div>
-          <span className="text-gray-500">End Date:</span>{' '}
-          <span className="font-medium text-gray-900">{formatDate(quote.estimatedEndDate)}</span>
+          <span className="text-gray-500">{t('marketplace.quoteCard.endDate')}</span>{' '}
+          <span className="font-medium text-gray-900">{formatDate(t, quote.estimatedEndDate)}</span>
         </div>
         {quote.estimatedDurationDays && (
           <div>
-            <span className="text-gray-500">Duration:</span>{' '}
-            <span className="font-medium text-gray-900">{quote.estimatedDurationDays} days</span>
+            <span className="text-gray-500">{t('marketplace.quoteCard.duration')}</span>{' '}
+            <span className="font-medium text-gray-900">
+              {t('marketplace.quoteCard.durationDays', { count: quote.estimatedDurationDays })}
+            </span>
           </div>
         )}
         <div>
-          <span className="text-gray-500">Validity:</span>{' '}
+          <span className="text-gray-500">{t('marketplace.quoteCard.validity')}</span>{' '}
           <span className={`font-medium ${validity.isExpired ? 'text-red-600' : 'text-gray-900'}`}>
             {validity.text}
           </span>
@@ -220,7 +222,9 @@ export function QuoteCard({
         </div>
       )}
 
-      <p className="mt-2 text-xs text-gray-400">Submitted: {formatDate(quote.submittedAt)}</p>
+      <p className="mt-2 text-xs text-gray-400">
+        {t('marketplace.quoteCard.submittedOn', { date: formatDate(t, quote.submittedAt) })}
+      </p>
 
       {/* Actions */}
       <div className="mt-4 flex items-center gap-3 pt-4 border-t">
@@ -229,7 +233,7 @@ export function QuoteCard({
           onClick={() => onView?.(quote.id)}
           className="text-sm font-medium text-blue-600 hover:text-blue-800"
         >
-          View Details
+          {t('marketplace.common.viewDetails')}
         </button>
         {onSelect && (
           <button
@@ -239,7 +243,9 @@ export function QuoteCard({
               isSelected ? 'text-blue-600 hover:text-blue-800' : 'text-gray-600 hover:text-gray-800'
             }`}
           >
-            {isSelected ? 'Selected' : 'Select to Compare'}
+            {isSelected
+              ? t('marketplace.common.selected')
+              : t('marketplace.quoteCard.selectToCompare')}
           </button>
         )}
         {canAccept && (
@@ -248,7 +254,7 @@ export function QuoteCard({
             onClick={() => onAccept?.(quote.id)}
             className="text-sm font-medium text-green-600 hover:text-green-800"
           >
-            Accept Quote
+            {t('marketplace.quoteCard.acceptQuote')}
           </button>
         )}
         {canReject && (
@@ -257,7 +263,7 @@ export function QuoteCard({
             onClick={() => onReject?.(quote.id)}
             className="text-sm font-medium text-red-600 hover:text-red-800"
           >
-            Reject
+            {t('marketplace.quoteCard.reject')}
           </button>
         )}
       </div>

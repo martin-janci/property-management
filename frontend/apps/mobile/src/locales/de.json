@@ -196,7 +196,43 @@
     "submit": "Stimme abgeben",
     "moveUp": "Nach oben verschieben",
     "moveDown": "Nach unten verschieben",
-    "rankHint": "Ordnen Sie die Optionen nach Präferenz (1 = am meisten bevorzugt)."
+    "rankHint": "Ordnen Sie die Optionen nach Präferenz (1 = am meisten bevorzugt).",
+    "activeCount_one": "{{count}} aktiv",
+    "activeCount_other": "{{count}} aktiv",
+    "ended": "Beendet",
+    "timeLeftDaysHours": "Noch {{days}} T {{hours}} Std",
+    "timeLeftHours": "Noch {{hours}} Std",
+    "timeLeftMinutes": "Noch {{minutes}} Min",
+    "filter": {
+      "all": "Alle",
+      "active": "Aktiv",
+      "closed": "Beendet"
+    },
+    "loadError": "Abstimmungen konnten nicht geladen werden",
+    "emptyTitle": "Noch keine Abstimmungen",
+    "emptyText": "Derzeit sind keine Abstimmungen vorhanden.",
+    "openDetail": "Abstimmungsdetails öffnen",
+    "quorum": "Quorum",
+    "quorumVotes": "{{current}} / {{required}} Stimmen",
+    "tapToVote": "Tippen, um anzusehen und abzustimmen",
+    "tapToView": "Tippen, um Ergebnisse anzusehen",
+    "createdBy": "Von {{name}}",
+    "missingId": "Keine Abstimmung ausgewählt",
+    "confirmVoteTitle": "Stimme bestätigen",
+    "answerRequired": "Bitte beantworten Sie alle Pflichtfragen",
+    "confirmVoteMessage": "Stimme abgeben? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "voteSubmitted": "Stimme abgegeben",
+    "confirmationNumber": "Bestätigung",
+    "castError": "Stimme konnte nicht abgegeben werden",
+    "noQuestions": "Noch keine Fragen",
+    "youHaveVoted": "Sie haben bei dieser Abstimmung bereits abgestimmt.",
+    "notActive": "Diese Abstimmung ist derzeit nicht aktiv.",
+    "votingAs": "Abstimmen als",
+    "eligibilityReason": {
+      "voteNotAcceptingBallots": "Die Abstimmung nimmt derzeit keine Stimmen an.",
+      "notEligibleInBuilding": "Sie sind in diesem Gebäude nicht stimmberechtigt.",
+      "allUnitsVoted": "Alle Ihre stimmberechtigten Einheiten haben bereits abgestimmt."
+    }
   },
   "documents": {
     "title": "Dokumente",
@@ -586,7 +622,12 @@
     "emptyTitle": "Noch keine Nachbarn",
     "noMatches": "Keine Treffer",
     "emptyText": "Bewohner, die sich für das Verzeichnis anmelden, erscheinen hier.",
-    "noMatchesText": "Versuchen Sie einen anderen Namen oder eine andere Wohnungsnummer."
+    "noMatchesText": "Versuchen Sie einen anderen Namen oder eine andere Wohnungsnummer.",
+    "title": "Nachbarn",
+    "subtitle": "{{count}} Bewohner in {{building}}",
+    "subtitleGeneric": "{{count}} Bewohner in Ihrem Gebäude",
+    "searchPlaceholder": "Nach Name oder Wohnung suchen…",
+    "owner": "Eigentümer"
   },
   "voice": {
     "confirmations": {

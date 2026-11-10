@@ -11,6 +11,7 @@ import type {
   UpdatePetRegistrationRequest,
 } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface PetRegistrationFormProps {
   initialData?: UpdatePetRegistrationRequest;
@@ -19,22 +20,9 @@ interface PetRegistrationFormProps {
   isSubmitting?: boolean;
 }
 
-const petTypes: { value: PetType; label: string }[] = [
-  { value: 'dog', label: 'Dog' },
-  { value: 'cat', label: 'Cat' },
-  { value: 'bird', label: 'Bird' },
-  { value: 'fish', label: 'Fish' },
-  { value: 'reptile', label: 'Reptile' },
-  { value: 'rodent', label: 'Rodent' },
-  { value: 'other', label: 'Other' },
-];
+const petTypes: PetType[] = ['dog', 'cat', 'bird', 'fish', 'reptile', 'rodent', 'other'];
 
-const petSizes: { value: PetSize; label: string }[] = [
-  { value: 'small', label: 'Small (< 10 kg)' },
-  { value: 'medium', label: 'Medium (10-25 kg)' },
-  { value: 'large', label: 'Large (25-45 kg)' },
-  { value: 'extra_large', label: 'Extra Large (> 45 kg)' },
-];
+const petSizes: PetSize[] = ['small', 'medium', 'large', 'extra_large'];
 
 export function PetRegistrationForm({
   initialData,
@@ -42,6 +30,7 @@ export function PetRegistrationForm({
   onCancel,
   isSubmitting,
 }: PetRegistrationFormProps) {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<CreatePetRegistrationRequest>({
     petType: initialData?.petType || 'dog',
     petSize: initialData?.petSize || 'medium',
@@ -68,7 +57,7 @@ export function PetRegistrationForm({
         {/* Pet Type */}
         <div>
           <label htmlFor="petType" className="block text-sm font-medium text-gray-700 mb-1">
-            Pet Type *
+            {t('registry.pet.form.petType')} *
           </label>
           <select
             id="petType"
@@ -78,8 +67,8 @@ export function PetRegistrationForm({
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             {petTypes.map((type) => (
-              <option key={type.value} value={type.value}>
-                {type.label}
+              <option key={type} value={type}>
+                {t(`registry.pet.types.${type}`)}
               </option>
             ))}
           </select>
@@ -88,7 +77,7 @@ export function PetRegistrationForm({
         {/* Pet Size */}
         <div>
           <label htmlFor="petSize" className="block text-sm font-medium text-gray-700 mb-1">
-            Pet Size *
+            {t('registry.pet.form.petSize')} *
           </label>
           <select
             id="petSize"
@@ -98,8 +87,8 @@ export function PetRegistrationForm({
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             {petSizes.map((size) => (
-              <option key={size.value} value={size.value}>
-                {size.label}
+              <option key={size} value={size}>
+                {t(`registry.pet.sizes.${size}`)}
               </option>
             ))}
           </select>
@@ -108,7 +97,7 @@ export function PetRegistrationForm({
         {/* Name */}
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-            Pet Name *
+            {t('registry.pet.form.name')} *
           </label>
           <input
             id="name"
@@ -117,14 +106,14 @@ export function PetRegistrationForm({
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter pet name"
+            placeholder={t('registry.pet.form.namePlaceholder')}
           />
         </div>
 
         {/* Breed */}
         <div>
           <label htmlFor="breed" className="block text-sm font-medium text-gray-700 mb-1">
-            Breed
+            {t('registry.pet.form.breed')}
           </label>
           <input
             id="breed"
@@ -132,14 +121,14 @@ export function PetRegistrationForm({
             value={formData.breed || ''}
             onChange={(e) => setFormData({ ...formData, breed: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter breed (optional)"
+            placeholder={t('registry.pet.form.breedPlaceholder')}
           />
         </div>
 
         {/* Age */}
         <div>
           <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-1">
-            Age (years)
+            {t('registry.pet.form.age')}
           </label>
           <input
             id="age"
@@ -151,14 +140,14 @@ export function PetRegistrationForm({
               setFormData({ ...formData, age: e.target.value ? Number(e.target.value) : undefined })
             }
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter age"
+            placeholder={t('registry.pet.form.agePlaceholder')}
           />
         </div>
 
         {/* Weight */}
         <div>
           <label htmlFor="weight" className="block text-sm font-medium text-gray-700 mb-1">
-            Weight (kg)
+            {t('registry.pet.form.weight')}
           </label>
           <input
             id="weight"
@@ -174,7 +163,7 @@ export function PetRegistrationForm({
               })
             }
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter weight"
+            placeholder={t('registry.pet.form.weightPlaceholder')}
           />
         </div>
       </div>
@@ -182,7 +171,7 @@ export function PetRegistrationForm({
       {/* Description */}
       <div>
         <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-          Description
+          {t('registry.pet.form.description')}
         </label>
         <textarea
           id="description"
@@ -190,20 +179,22 @@ export function PetRegistrationForm({
           value={formData.description || ''}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Any additional information about your pet"
+          placeholder={t('registry.pet.form.descriptionPlaceholder')}
         />
       </div>
 
       {/* Veterinarian Information */}
       <div className="border-t pt-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Veterinarian Information</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">
+          {t('registry.pet.form.veterinarianSection')}
+        </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label
               htmlFor="veterinarianName"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Veterinarian Name
+              {t('registry.pet.form.veterinarianName')}
             </label>
             <input
               id="veterinarianName"
@@ -211,7 +202,7 @@ export function PetRegistrationForm({
               value={formData.veterinarianName || ''}
               onChange={(e) => setFormData({ ...formData, veterinarianName: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Dr. Jane Smith"
+              placeholder={t('registry.pet.form.veterinarianNamePlaceholder')}
             />
           </div>
 
@@ -220,7 +211,7 @@ export function PetRegistrationForm({
               htmlFor="veterinarianContact"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Veterinarian Contact
+              {t('registry.pet.form.veterinarianContact')}
             </label>
             <input
               id="veterinarianContact"
@@ -228,7 +219,7 @@ export function PetRegistrationForm({
               value={formData.veterinarianContact || ''}
               onChange={(e) => setFormData({ ...formData, veterinarianContact: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Phone or email"
+              placeholder={t('registry.pet.form.veterinarianContactPlaceholder')}
             />
           </div>
         </div>
@@ -236,14 +227,16 @@ export function PetRegistrationForm({
 
       {/* Documents */}
       <div className="border-t pt-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Documents</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">
+          {t('registry.pet.form.documentsSection')}
+        </h3>
         <div className="space-y-4">
           <div>
             <label
               htmlFor="vaccinationRecordUrl"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Vaccination Record URL
+              {t('registry.pet.form.vaccinationRecordUrl')}
             </label>
             <input
               id="vaccinationRecordUrl"
@@ -251,7 +244,7 @@ export function PetRegistrationForm({
               value={formData.vaccinationRecordUrl || ''}
               onChange={(e) => setFormData({ ...formData, vaccinationRecordUrl: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="https://..."
+              placeholder={t('registry.pet.form.urlPlaceholder')}
             />
           </div>
 
@@ -260,7 +253,7 @@ export function PetRegistrationForm({
               htmlFor="registrationDocumentUrl"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Registration Document URL
+              {t('registry.pet.form.registrationDocumentUrl')}
             </label>
             <input
               id="registrationDocumentUrl"
@@ -270,13 +263,13 @@ export function PetRegistrationForm({
                 setFormData({ ...formData, registrationDocumentUrl: e.target.value })
               }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="https://..."
+              placeholder={t('registry.pet.form.urlPlaceholder')}
             />
           </div>
 
           <div>
             <label htmlFor="photoUrl" className="block text-sm font-medium text-gray-700 mb-1">
-              Pet Photo URL
+              {t('registry.pet.form.photoUrl')}
             </label>
             <input
               id="photoUrl"
@@ -284,7 +277,7 @@ export function PetRegistrationForm({
               value={formData.photoUrl || ''}
               onChange={(e) => setFormData({ ...formData, photoUrl: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="https://..."
+              placeholder={t('registry.pet.form.urlPlaceholder')}
             />
           </div>
         </div>
@@ -298,7 +291,7 @@ export function PetRegistrationForm({
           disabled={isSubmitting}
           className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
         >
-          Cancel
+          {t('registry.pet.form.cancel')}
         </button>
         <button
           type="submit"
@@ -308,7 +301,7 @@ export function PetRegistrationForm({
           {isSubmitting && (
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
           )}
-          {isSubmitting ? 'Submitting...' : 'Submit Registration'}
+          {isSubmitting ? t('registry.pet.form.submitting') : t('registry.pet.form.submit')}
         </button>
       </div>
     </form>

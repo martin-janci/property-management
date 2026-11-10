@@ -370,6 +370,58 @@ async fn platform_admin_health_alerts_2xx(pool: PgPool) {
     get_2xx(&app, url, &token, "health_alerts").await;
 }
 
+/// IG3 regression — code-review-api-handlers-health-alerts-page-size-uncapped.
+///
+/// `GET /platform-admin/health/alerts?page_size=<n>` fed the caller-supplied
+/// `page_size` straight into the SQL `LIMIT`. The query param is documented
+/// "max 100", but nothing clamped it, so an over-max `page_size` produced an
+/// effectively unbounded query — a DoS vector. The sibling platform-admin
+/// paginated handlers (`tenants.rs`, `audit.rs`) clamp with
+/// `query.page_size.clamp(1, 100)`; this handler must match.
+///
+/// With 101 alerts seeded, a `page_size=1000` request returns 101 rows before
+/// the fix (uncapped) and exactly 100 after (clamped to the documented max).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn platform_admin_health_alerts_page_size_clamped_to_max(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let token = authorized_admin_token(&pool, "haclamp", "audit_read").await;
+
+    // Seed 101 alerts — one past the documented maximum page size of 100.
+    for i in 0..101 {
+        sqlx::query(
+            "INSERT INTO metric_alerts (metric_name, threshold_type, value) \
+             VALUES ($1, 'warning', 1.0)",
+        )
+        .bind(format!("cpu_{i}"))
+        .execute(&pool)
+        .await
+        .expect("seed metric alert");
+    }
+
+    let resp = app
+        .get("/api/v1/platform-admin/health/alerts?page_size=1000")
+        .bearer(&token)
+        .send()
+        .await;
+    assert!(
+        resp.status.is_success(),
+        "expected 2xx, got {} — body: {}",
+        resp.status,
+        resp.text()
+    );
+
+    let len = resp
+        .json_value()
+        .as_array()
+        .expect("alerts response is a JSON array")
+        .len();
+    assert_eq!(
+        len, 100,
+        "page_size=1000 must be clamped to the documented maximum of 100; \
+         got {len} rows (an unbounded LIMIT is a DoS vector)"
+    );
+}
+
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn platform_admin_health_thresholds_2xx(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;

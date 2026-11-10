@@ -440,19 +440,21 @@ pub struct UpdateAlertRule {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct PortfolioAlert {
     pub id: Uuid,
-    pub rule_id: Uuid,
+    /// NULL once the rule that raised the alert is deleted
+    /// (`portfolio_alerts.rule_id ... ON DELETE SET NULL`).
+    pub rule_id: Option<Uuid>,
     pub organization_id: Uuid,
     pub building_id: Option<Uuid>,
 
-    pub metric_name: String,
+    pub metric_name: Option<String>,
     pub current_value: Decimal,
-    pub threshold_value: Decimal,
+    pub threshold_value: Option<Decimal>,
     pub deviation_pct: Option<Decimal>,
 
     pub severity: String,
 
     pub title: String,
-    pub message: String,
+    pub message: Option<String>,
 
     pub is_read: bool,
     pub is_resolved: bool,

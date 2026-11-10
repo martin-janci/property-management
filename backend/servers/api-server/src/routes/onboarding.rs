@@ -61,9 +61,14 @@ pub struct CompleteStepRequest {
 /// Extract user from token.
 ///
 /// Roles used for role-targeted tours come from the caller's active
-/// organization memberships in the database (login tokens carry no `roles`
-/// claim): each membership contributes its `role_type`, its role name and the
-/// display name of the canonical role (e.g. "Manager"), which is how
+/// membership in the **current** organization when one is given (the
+/// `X-Tenant-ID` header or the token's `org_id` claim; they must agree) — a
+/// manager elsewhere is not a manager here. Without an org context (login
+/// tokens carry no org claim and the onboarding client sends no header) the
+/// user's active memberships across orgs are used. The token's `roles` claim
+/// is never consulted. Each matching
+/// membership contributes its `role_type`, its role name and the display
+/// name of the canonical role (e.g. "Manager"), which is how
 /// `onboarding_tours.target_roles` is written.
 async fn extract_user_token(
     headers: &axum::http::HeaderMap,
@@ -111,7 +116,25 @@ async fn extract_user_token(
         )
     })?;
 
-    let mut roles = claims.roles.unwrap_or_default();
+    let header_org: Option<Uuid> = headers
+        .get("X-Tenant-ID")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.parse().ok());
+    let claim_org: Option<Uuid> = claims.org_id.as_ref().and_then(|id| id.parse().ok());
+    if let (Some(h), Some(c)) = (header_org, claim_org) {
+        if h != c {
+            return Err((
+                StatusCode::FORBIDDEN,
+                Json(ErrorResponse::new("TENANT_MISMATCH", "Tenant mismatch")),
+            ));
+        }
+    }
+    // With an org context, only that org's membership counts. Without one
+    // (login tokens carry no org claim and the onboarding client sends no
+    // X-Tenant-ID), fall back to all of the user's active memberships.
+    let org_scope = header_org.or(claim_org);
+
+    let mut roles = Vec::new();
     let memberships = state
         .org_member_repo
         .get_user_memberships(user_id)
@@ -123,7 +146,10 @@ async fn extract_user_token(
                 Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
             )
         })?;
-    for m in memberships.into_iter().filter(|m| m.status == "active") {
+    for m in memberships
+        .into_iter()
+        .filter(|m| m.status == "active" && org_scope.is_none_or(|org| m.organization_id == org))
+    {
         if let Some(role) = common::TenantRole::from_role_type(&m.role_type) {
             roles.push(role.to_string());
         }

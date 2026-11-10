@@ -31,6 +31,32 @@ impl RegistryRepository {
     // Tenant scoping helpers
     // ========================================================================
 
+    /// Whether `user_id` is linked to `unit_id` as an active owner or a
+    /// current resident. Same link semantics as
+    /// `UnitRepository::is_user_linked_to_unit_in_org` (used by the create
+    /// path); the registry read filters inline the same predicate in SQL.
+    pub async fn user_linked_to_unit(
+        &self,
+        unit_id: Uuid,
+        user_id: Uuid,
+    ) -> Result<bool, sqlx::Error> {
+        sqlx::query_scalar::<_, bool>(
+            r#"
+            SELECT EXISTS (
+                SELECT 1 FROM unit_owners uo
+                WHERE uo.unit_id = $1 AND uo.user_id = $2 AND uo.status = 'active'
+            ) OR EXISTS (
+                SELECT 1 FROM unit_residents ur
+                WHERE ur.unit_id = $1 AND ur.user_id = $2 AND ur.end_date IS NULL
+            )
+            "#,
+        )
+        .bind(unit_id)
+        .bind(user_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
     /// Returns `true` iff `unit_id` is a unit of a building owned by `tenant_id`.
     pub async fn unit_in_tenant(
         &self,
@@ -62,6 +88,21 @@ impl RegistryRepository {
             "SELECT EXISTS(SELECT 1 FROM buildings WHERE id = $1 AND organization_id = $2)",
         )
         .bind(building_id)
+        .bind(tenant_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
+    /// Returns `true` iff parking spot `id` belongs to `tenant_id`.
+    pub async fn parking_spot_in_tenant(
+        &self,
+        tenant_id: Uuid,
+        id: Uuid,
+    ) -> Result<bool, sqlx::Error> {
+        sqlx::query_scalar(
+            "SELECT EXISTS(SELECT 1 FROM parking_spots WHERE id = $1 AND tenant_id = $2)",
+        )
+        .bind(id)
         .bind(tenant_id)
         .fetch_one(&self.pool)
         .await
@@ -145,15 +186,28 @@ impl RegistryRepository {
     }
 
     /// Gets a pet registration with all details.
+    ///
+    /// With `linked_user_id = Some(user)`, a registration on a unit the user
+    /// is not linked to (see [`Self::user_linked_to_unit`]) is reported as
+    /// not found. Pass `None` only for manager-tier callers.
     pub async fn get_pet_registration_with_details(
         &self,
         tenant_id: Uuid,
         id: Uuid,
+        linked_user_id: Option<Uuid>,
     ) -> Result<Option<PetRegistrationWithDetails>, sqlx::Error> {
         let registration = match self.get_pet_registration(tenant_id, id).await? {
             Some(r) => r,
             None => return Ok(None),
         };
+        if let Some(user_id) = linked_user_id {
+            if !self
+                .user_linked_to_unit(registration.unit_id, user_id)
+                .await?
+            {
+                return Ok(None);
+            }
+        }
 
         // `units` has no `unit_number` column — the display value is `designation`
         // (NOT NULL). `buildings.name` is nullable ("Optional building name",
@@ -197,10 +251,15 @@ impl RegistryRepository {
     }
 
     /// Lists pet registrations with filtering.
+    ///
+    /// With `linked_user_id = Some(user)`, only registrations on units the
+    /// user is linked to (active owner or current resident) are counted and
+    /// returned. Pass `None` only for manager-tier callers.
     pub async fn list_pet_registrations(
         &self,
         tenant_id: Uuid,
         query: PetRegistrationQuery,
+        linked_user_id: Option<Uuid>,
     ) -> Result<(Vec<PetRegistrationSummary>, i64), sqlx::Error> {
         let limit = query.limit.unwrap_or(50).min(100);
         let offset = query.offset.unwrap_or(0);
@@ -216,6 +275,13 @@ impl RegistryRepository {
                 AND ($4::uuid IS NULL OR pr.owner_id = $4)
                 AND ($5::text IS NULL OR pr.status::text = $5)
                 AND ($6::text IS NULL OR pr.pet_type::text = $6)
+                AND ($7::uuid IS NULL OR EXISTS (
+                    SELECT 1 FROM unit_owners uo
+                    WHERE uo.unit_id = pr.unit_id AND uo.user_id = $7 AND uo.status = 'active'
+                ) OR EXISTS (
+                    SELECT 1 FROM unit_residents ur
+                    WHERE ur.unit_id = pr.unit_id AND ur.user_id = $7 AND ur.end_date IS NULL
+                ))
             "#,
         )
         .bind(tenant_id)
@@ -224,6 +290,7 @@ impl RegistryRepository {
         .bind(query.owner_id)
         .bind(&query.status)
         .bind(&query.pet_type)
+        .bind(linked_user_id)
         .fetch_one(&self.pool)
         .await?;
 
@@ -242,6 +309,13 @@ impl RegistryRepository {
                 AND ($4::uuid IS NULL OR pr.owner_id = $4)
                 AND ($5::text IS NULL OR pr.status::text = $5)
                 AND ($6::text IS NULL OR pr.pet_type::text = $6)
+                AND ($9::uuid IS NULL OR EXISTS (
+                    SELECT 1 FROM unit_owners uo
+                    WHERE uo.unit_id = pr.unit_id AND uo.user_id = $9 AND uo.status = 'active'
+                ) OR EXISTS (
+                    SELECT 1 FROM unit_residents ur
+                    WHERE ur.unit_id = pr.unit_id AND ur.user_id = $9 AND ur.end_date IS NULL
+                ))
             ORDER BY pr.created_at DESC
             LIMIT $7 OFFSET $8
             "#,
@@ -254,6 +328,7 @@ impl RegistryRepository {
         .bind(&query.pet_type)
         .bind(limit)
         .bind(offset)
+        .bind(linked_user_id)
         .fetch_all(&self.pool)
         .await?;
 
@@ -436,15 +511,28 @@ impl RegistryRepository {
     }
 
     /// Gets a vehicle registration with all details.
+    ///
+    /// With `linked_user_id = Some(user)`, a registration on a unit the user
+    /// is not linked to (see [`Self::user_linked_to_unit`]) is reported as
+    /// not found. Pass `None` only for manager-tier callers.
     pub async fn get_vehicle_registration_with_details(
         &self,
         tenant_id: Uuid,
         id: Uuid,
+        linked_user_id: Option<Uuid>,
     ) -> Result<Option<VehicleRegistrationWithDetails>, sqlx::Error> {
         let registration = match self.get_vehicle_registration(tenant_id, id).await? {
             Some(r) => r,
             None => return Ok(None),
         };
+        if let Some(user_id) = linked_user_id {
+            if !self
+                .user_linked_to_unit(registration.unit_id, user_id)
+                .await?
+            {
+                return Ok(None);
+            }
+        }
 
         // `units` has no `unit_number` column — the display value is `designation`
         // (NOT NULL). `buildings.name` is nullable ("Optional building name",
@@ -504,10 +592,15 @@ impl RegistryRepository {
     }
 
     /// Lists vehicle registrations with filtering.
+    ///
+    /// With `linked_user_id = Some(user)`, only registrations on units the
+    /// user is linked to (active owner or current resident) are counted and
+    /// returned. Pass `None` only for manager-tier callers.
     pub async fn list_vehicle_registrations(
         &self,
         tenant_id: Uuid,
         query: VehicleRegistrationQuery,
+        linked_user_id: Option<Uuid>,
     ) -> Result<(Vec<VehicleRegistrationSummary>, i64), sqlx::Error> {
         let limit = query.limit.unwrap_or(50).min(100);
         let offset = query.offset.unwrap_or(0);
@@ -523,6 +616,13 @@ impl RegistryRepository {
                 AND ($4::uuid IS NULL OR vr.owner_id = $4)
                 AND ($5::text IS NULL OR vr.status::text = $5)
                 AND ($6::text IS NULL OR vr.vehicle_type::text = $6)
+                AND ($7::uuid IS NULL OR EXISTS (
+                    SELECT 1 FROM unit_owners uo
+                    WHERE uo.unit_id = vr.unit_id AND uo.user_id = $7 AND uo.status = 'active'
+                ) OR EXISTS (
+                    SELECT 1 FROM unit_residents ur
+                    WHERE ur.unit_id = vr.unit_id AND ur.user_id = $7 AND ur.end_date IS NULL
+                ))
             "#,
         )
         .bind(tenant_id)
@@ -531,6 +631,7 @@ impl RegistryRepository {
         .bind(query.owner_id)
         .bind(&query.status)
         .bind(&query.vehicle_type)
+        .bind(linked_user_id)
         .fetch_one(&self.pool)
         .await?;
 
@@ -553,6 +654,13 @@ impl RegistryRepository {
                 AND ($4::uuid IS NULL OR vr.owner_id = $4)
                 AND ($5::text IS NULL OR vr.status::text = $5)
                 AND ($6::text IS NULL OR vr.vehicle_type::text = $6)
+                AND ($9::uuid IS NULL OR EXISTS (
+                    SELECT 1 FROM unit_owners uo
+                    WHERE uo.unit_id = vr.unit_id AND uo.user_id = $9 AND uo.status = 'active'
+                ) OR EXISTS (
+                    SELECT 1 FROM unit_residents ur
+                    WHERE ur.unit_id = vr.unit_id AND ur.user_id = $9 AND ur.end_date IS NULL
+                ))
             ORDER BY vr.created_at DESC
             LIMIT $7 OFFSET $8
             "#,
@@ -565,6 +673,7 @@ impl RegistryRepository {
         .bind(&query.vehicle_type)
         .bind(limit)
         .bind(offset)
+        .bind(linked_user_id)
         .fetch_all(&self.pool)
         .await?;
 

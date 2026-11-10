@@ -9,3 +9,4 @@ export { ProfileEditPage } from './pages/ProfileEditPage';
 export { RegisterPage } from './pages/RegisterPage';
 export { ResetPasswordPage } from './pages/ResetPasswordPage';
 export { TwoFactorAuthPage } from './pages/TwoFactorAuthPage';
+export { VerifyEmailPage } from './pages/VerifyEmailPage';

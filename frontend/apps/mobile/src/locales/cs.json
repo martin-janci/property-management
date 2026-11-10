@@ -196,7 +196,45 @@
     "submit": "Odeslat hlasování",
     "moveUp": "Posunout nahoru",
     "moveDown": "Posunout dolů",
-    "rankHint": "Seřaďte možnosti podle preference (1 = nejvíce preferovaná)."
+    "rankHint": "Seřaďte možnosti podle preference (1 = nejvíce preferovaná).",
+    "activeCount_one": "{{count}} aktivní",
+    "activeCount_few": "{{count}} aktivní",
+    "activeCount_many": "{{count}} aktivních",
+    "activeCount_other": "{{count}} aktivních",
+    "ended": "Ukončeno",
+    "timeLeftDaysHours": "Zbývá {{days}} d {{hours}} h",
+    "timeLeftHours": "Zbývá {{hours}} h",
+    "timeLeftMinutes": "Zbývá {{minutes}} min",
+    "filter": {
+      "all": "Všechna",
+      "active": "Aktivní",
+      "closed": "Ukončená"
+    },
+    "loadError": "Hlasování se nepodařilo načíst",
+    "emptyTitle": "Zatím žádná hlasování",
+    "emptyText": "Momentálně nejsou k dispozici žádná hlasování.",
+    "openDetail": "Otevřít detail hlasování",
+    "quorum": "Kvórum",
+    "quorumVotes": "{{current}} / {{required}} hlasů",
+    "tapToVote": "Klepnutím zobrazíte a odevzdáte hlas",
+    "tapToView": "Klepnutím zobrazíte výsledky",
+    "createdBy": "Vytvořil {{name}}",
+    "missingId": "Není vybráno žádné hlasování",
+    "confirmVoteTitle": "Potvrdit hlas",
+    "answerRequired": "Odpovězte prosím na všechny povinné otázky",
+    "confirmVoteMessage": "Odeslat hlas? Tuto akci nelze vrátit zpět.",
+    "voteSubmitted": "Hlas odeslán",
+    "confirmationNumber": "Potvrzení",
+    "castError": "Hlas se nepodařilo odeslat",
+    "noQuestions": "Zatím žádné otázky",
+    "youHaveVoted": "V tomto hlasování jste již hlasovali.",
+    "notActive": "Toto hlasování není momentálně aktivní.",
+    "votingAs": "Hlasujete jako",
+    "eligibilityReason": {
+      "voteNotAcceptingBallots": "Hlasování momentálně nepřijímá hlasy.",
+      "notEligibleInBuilding": "V této budově nemáte oprávnění hlasovat.",
+      "allUnitsVoted": "Všechny vaše oprávněné jednotky již hlasovaly."
+    }
   },
   "documents": {
     "title": "Dokumenty",
@@ -628,7 +666,12 @@
     "emptyTitle": "Zatím žádní sousedé",
     "noMatches": "Žádné shody",
     "emptyText": "Obyvatelé, kteří se přihlásí do seznamu, se zobrazí zde.",
-    "noMatchesText": "Zkuste jiné jméno nebo číslo bytu."
+    "noMatchesText": "Zkuste jiné jméno nebo číslo bytu.",
+    "title": "Sousedé",
+    "subtitle": "{{count}} obyvatel v budově {{building}}",
+    "subtitleGeneric": "{{count}} obyvatel ve vaší budově",
+    "searchPlaceholder": "Hledat podle jména nebo bytu…",
+    "owner": "Vlastník"
   },
   "voice": {
     "confirmations": {

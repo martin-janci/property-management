@@ -45,4 +45,6 @@ Note: existing `ppt/dashboard` screen-map is mobile-only — this is the web-onl
 
 <!-- newest entries on top -->
 
+- 2026-11-09 — agent: gap-audit-r7 — Action Queue now composed from real endpoints for managers (new faults + pending facility bookings, inline booking approve); no longer hidden outside DEV mock.
+
 - 2026-11-04 — agent: action queue: View → /voting/:id (was /votes/:id); budget approvals/person-months render without a View link (no route); widget hidden outside DEV mock mode (no /api/v1/action-queue) instead of a false 'all caught up'

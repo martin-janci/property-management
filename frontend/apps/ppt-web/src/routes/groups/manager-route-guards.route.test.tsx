@@ -77,6 +77,8 @@ vi.mock('../lazyRoutes', () => {
     'SessionExpiredPage',
     'TemplateLibraryPage',
     'TwoFactorAuthPage',
+    'OrganizationMembersPage',
+    'VerifyEmailPage',
   ];
   return Object.fromEntries(names.map((name) => [name, stub]));
 });

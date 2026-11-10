@@ -188,6 +188,46 @@ fn city_like_pattern(city: &str) -> String {
     format!("%{escaped}%")
 }
 
+/// Validate the `mode` query parameter against the allowed transaction types.
+///
+/// Mirrors the `time_window` validation in [`get_price_map`]: an unsupported
+/// value must be rejected up-front with 400 rather than bound as an unknown
+/// `transaction_type = $1` (which matches zero rows, then echoes the bogus
+/// `mode` back and caches that empty aggregation for the full TTL). Allowed
+/// values are the canonical `transaction_type` enum (`sale`, `rent`).
+fn validate_mode(mode: &str) -> Result<(), String> {
+    use db::models::transaction_type as tx;
+    match mode {
+        tx::SALE | tx::RENT => Ok(()),
+        other => Err(format!(
+            "Unsupported mode {other:?} — expected one of sale, rent"
+        )),
+    }
+}
+
+/// Validate the optional `property_type` query parameter against the canonical
+/// listing `property_type` enum. `None` (no filter) is always valid; any present
+/// value must be a known type, otherwise 400 — consistent with [`validate_mode`]
+/// and the `time_window` check.
+fn validate_property_type(property_type: Option<&str>) -> Result<(), String> {
+    use db::models::property_type as pt;
+    match property_type {
+        None => Ok(()),
+        Some(
+            pt::APARTMENT
+            | pt::HOUSE
+            | pt::COMMERCIAL
+            | pt::LAND
+            | pt::PARKING
+            | pt::STORAGE
+            | pt::OTHER,
+        ) => Ok(()),
+        Some(other) => Err(format!(
+            "Unsupported property_type {other:?} — expected one of apartment, house, commercial, land, parking, storage, other"
+        )),
+    }
+}
+
 /// Create price map router.
 pub fn router() -> Router<AppState> {
     Router::new().route("/", get(get_price_map))
@@ -269,6 +309,15 @@ pub async fn get_price_map(
             ));
         }
     };
+
+    // Validate mode and property_type up-front, mirroring the time_window check
+    // above: reject unsupported values with 400 rather than binding an unknown
+    // value that matches zero rows and then caching that empty aggregation for
+    // the full TTL. Runs BEFORE the cache read, the DB query, and the cache
+    // write.
+    validate_mode(&mode).map_err(|msg| (axum::http::StatusCode::BAD_REQUEST, msg))?;
+    validate_property_type(query.property_type.as_deref())
+        .map_err(|msg| (axum::http::StatusCode::BAD_REQUEST, msg))?;
 
     let cache_key = format!(
         "{}:{}:{}:{}",
@@ -401,6 +450,58 @@ pub async fn get_price_map(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Regression: an unsupported `mode` must be rejected up-front (→ 400),
+    /// mirroring the `time_window` validation. Before the fix, `validate_mode`
+    /// accepted ANY string, so `?mode=foo` bound `transaction_type = 'foo'`,
+    /// matched zero rows, returned HTTP 200 with an empty `districts` list while
+    /// echoing `mode: "foo"`, and cached that empty result for the 1 h TTL. Only
+    /// the canonical `sale` / `rent` transaction types are valid.
+    #[test]
+    fn validate_mode_rejects_unknown_and_accepts_known() {
+        assert!(validate_mode("sale").is_ok());
+        assert!(validate_mode("rent").is_ok());
+
+        let err = validate_mode("foo").expect_err("unknown mode must be rejected");
+        assert!(
+            err.contains("Unsupported mode"),
+            "message should mirror the time_window style, got: {err}"
+        );
+        // Validation is case-sensitive — the DB column stores lowercase values.
+        assert!(validate_mode("SALE").is_err());
+        assert!(validate_mode("").is_err());
+    }
+
+    /// Regression: an unsupported `property_type` must be rejected (→ 400), while
+    /// `None` (no filter) and every canonical listing `property_type` are
+    /// accepted. Before the fix, an unknown `property_type` was bound as
+    /// `property_type = $2`, silently matched nothing, and cached the empty
+    /// aggregation for the TTL — the same consistency gap as `mode`.
+    #[test]
+    fn validate_property_type_rejects_unknown_and_accepts_known_or_none() {
+        assert!(validate_property_type(None).is_ok());
+        for ok in [
+            "apartment",
+            "house",
+            "commercial",
+            "land",
+            "parking",
+            "storage",
+            "other",
+        ] {
+            assert!(
+                validate_property_type(Some(ok)).is_ok(),
+                "{ok} must be accepted"
+            );
+        }
+
+        let err = validate_property_type(Some("mansion"))
+            .expect_err("unknown property_type must be rejected");
+        assert!(
+            err.contains("Unsupported property_type"),
+            "message should mirror the time_window style, got: {err}"
+        );
+    }
 
     /// Regression: the `city` substring filter must treat LIKE/ILIKE
     /// metacharacters in the *user's* input literally. Before the escape fix,

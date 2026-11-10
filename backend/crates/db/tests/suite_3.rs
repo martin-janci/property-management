@@ -25,6 +25,8 @@ mod portal_listing_view_count_force_rls_tests;
 mod portal_track_listing_view_force_rls_tests;
 #[path = "suites/portal_user_merge_tests.rs"]
 mod portal_user_merge_tests;
+#[path = "suites/portfolio_alert_rules_schema_tests.rs"]
+mod portfolio_alert_rules_schema_tests;
 #[path = "suites/portfolio_performance_test.rs"]
 mod portfolio_performance_test;
 #[path = "suites/predictive_maintenance_rls_repo_tests.rs"]

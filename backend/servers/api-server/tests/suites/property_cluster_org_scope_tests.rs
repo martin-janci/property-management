@@ -637,6 +637,23 @@ async fn person_months_resident_cannot_write_manager_can(pool: PgPool) {
     expect(&resp, StatusCode::OK, "resident list person months");
     let resp = call(&app, "POST", &base, &w.mgr_a, Some(body)).await;
     expect(&resp, StatusCode::OK, "manager upsert person month");
+
+    // Bulk entry is building-wide data entry: residents get 403 (role from
+    // DB membership), managers succeed.
+    let bulk = format!("/api/v1/buildings/{}/person-months/bulk", w.bld_a);
+    let bulk_body = json!({
+        "year": 2026,
+        "month": 3,
+        "entries": [{ "unit_id": w.unit_a, "count": 4 }]
+    });
+    let resp = call(&app, "POST", &bulk, &w.res_a, Some(bulk_body.clone())).await;
+    expect(
+        &resp,
+        StatusCode::FORBIDDEN,
+        "resident bulk upsert person months",
+    );
+    let resp = call(&app, "POST", &bulk, &w.mgr_a, Some(bulk_body)).await;
+    expect(&resp, StatusCode::OK, "manager bulk upsert person months");
 }
 
 // ---------------------------------------------------------------------------
@@ -899,7 +916,16 @@ async fn registry_scope_and_roles(pool: PgPool) {
         expect(&resp, StatusCode::FORBIDDEN, &format!("resident {m} {uri}"));
     }
 
-    // Residents still own their own registrations.
+    // Residents still own their own registrations. Round 5: a non-manager may
+    // only register on a unit they live in / own, so link res_a to unit_a.
+    sqlx::query(
+        "INSERT INTO unit_residents (unit_id, user_id, resident_type) VALUES ($1, $2, 'tenant')",
+    )
+    .bind(w.unit_a)
+    .bind(w.res_a.user_id)
+    .execute(&pool)
+    .await
+    .expect("link resident to unit");
     let resp = create_pet(&app, &w.res_a, w.unit_a).await;
     expect(&resp, StatusCode::CREATED, "resident create own pet");
     let own: Uuid = resp.json_value()["registration"]["id"]

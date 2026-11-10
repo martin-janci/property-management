@@ -67,6 +67,12 @@ export const NAV_SECTIONS: NavSection[] = [
         end: true,
       },
       { to: '/emergency', labelKey: 'nav.emergency', defaultLabel: 'Emergency contacts' },
+      {
+        to: '/settings/members',
+        labelKey: 'nav.members',
+        defaultLabel: 'People & roles',
+        audience: 'manager',
+      },
     ],
   },
   {
@@ -159,6 +165,11 @@ export const ACCOUNT_ITEMS: NavItem[] = [
     defaultLabel: 'Notification preferences',
   },
   { to: '/settings/privacy', labelKey: 'nav.privacy', defaultLabel: 'Privacy' },
+  {
+    to: '/settings/oauth-grants',
+    labelKey: 'nav.oauthGrants',
+    defaultLabel: 'Connected apps',
+  },
   { to: '/settings/accessibility', labelKey: 'nav.accessibility', defaultLabel: 'Accessibility' },
   {
     to: '/settings/integrations',

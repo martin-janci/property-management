@@ -13,6 +13,7 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
+use common::url_validation::validate_external_url;
 use db::{
     models::{
         CreateFeedSubscription, CreatePortalImportJob, PortalImportJob, PortalImportJobWithStats,
@@ -84,6 +85,7 @@ pub struct ImportJobResponse {
 #[derive(Debug, Deserialize, IntoParams, ToSchema)]
 pub struct ImportJobsQuery {
     pub status: Option<String>,
+    /// Page size (default 20, clamped to `1..=100` before reaching SQL).
     pub limit: Option<i32>,
     pub offset: Option<i32>,
 }
@@ -117,18 +119,31 @@ pub async fn list_import_jobs(
     principal: PortalPrincipal,
     Query(query): Query<ImportJobsQuery>,
 ) -> Result<Json<ImportJobsResponse>, (axum::http::StatusCode, String)> {
+    // Clamp the caller-supplied `limit` before it reaches SQL: a negative value
+    // binds into `LIMIT $3` as `LIMIT -1`, which Postgres rejects (surfacing as a
+    // 500), and an arbitrarily large value is a resource-exhaustion vector. Mirror
+    // the `1..=100` convention used by the sibling portal list handlers
+    // (see `routes::portal_listings`).
+    let limit = query.limit.unwrap_or(20).clamp(1, 100);
     let jobs = state
         .reality_portal_repo
         .list_import_jobs(
             principal.user_id,
-            query.status,
-            query.limit.unwrap_or(20),
+            query.status.clone(),
+            limit,
             crate::util::clamp_offset_i32(query.offset),
         )
         .await
         .map_err(|e| crate::util::errors::db_error("list import jobs", e))?;
 
-    let total = jobs.len() as i64;
+    // `total` must be the full count of matching rows (over the same filter,
+    // ignoring limit/offset) so clients can paginate — not the length of the
+    // current page.
+    let total = state
+        .reality_portal_repo
+        .count_import_jobs(principal.user_id, query.status)
+        .await
+        .map_err(|e| crate::util::errors::db_error("count import jobs", e))?;
 
     Ok(Json(ImportJobsResponse { jobs, total }))
 }
@@ -150,6 +165,16 @@ pub async fn create_import_job(
     principal: PortalPrincipal,
     Json(data): Json<CreatePortalImportJob>,
 ) -> Result<(axum::http::StatusCode, Json<ImportJobResponse>), (axum::http::StatusCode, String)> {
+    // SECURITY: reject SSRF-prone source URLs at submission time (parity with
+    // `agency_imports`). A domain that passes this static check can still
+    // resolve to a private IP (DNS rebinding) — the import worker must
+    // re-validate the resolved IP at fetch time.
+    if let Some(url) = data.source_url.as_deref() {
+        if let Err(err) = validate_external_url(url) {
+            return Err((axum::http::StatusCode::BAD_REQUEST, err.to_string()));
+        }
+    }
+
     let job = state
         .reality_portal_repo
         .create_import_job(principal.user_id, data)
@@ -212,6 +237,16 @@ pub async fn update_import_job(
     Path(id): Path<Uuid>,
     Json(data): Json<UpdatePortalImportJob>,
 ) -> Result<Json<ImportJobResponse>, (axum::http::StatusCode, String)> {
+    // SECURITY: reject SSRF-prone source URLs at submission time (parity with
+    // `agency_imports` and `create_import_job`). A domain that passes this
+    // static check can still resolve to a private IP (DNS rebinding) — the
+    // import worker must re-validate the resolved IP at fetch time.
+    if let Some(url) = data.source_url.as_deref() {
+        if let Err(err) = validate_external_url(url) {
+            return Err((axum::http::StatusCode::BAD_REQUEST, err.to_string()));
+        }
+    }
+
     let job = state
         .reality_portal_repo
         .update_import_job(id, principal.user_id, data)

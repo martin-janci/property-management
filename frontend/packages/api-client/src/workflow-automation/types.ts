@@ -127,6 +127,8 @@ export type TemplateCategory =
 
 export interface AutomationTemplate {
   id: string;
+  /** Stable key of a built-in template; clients translate `name`/`description` by it. */
+  slug?: string;
   name: string;
   description: string;
   category: TemplateCategory;

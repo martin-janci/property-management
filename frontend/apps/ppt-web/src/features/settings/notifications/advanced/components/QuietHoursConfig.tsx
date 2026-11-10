@@ -186,8 +186,7 @@ export function QuietHoursConfig({ config, loading, onUpdate }: QuietHoursConfig
           </div>
 
           <p className="text-xs text-gray-500">
-            Push notifications that arrive during quiet hours are held and delivered once the quiet
-            period ends.
+            {t('settings.notifications.advanced.quietHours.heldNote')}
           </p>
         </div>
       )}

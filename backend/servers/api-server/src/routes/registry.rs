@@ -4,6 +4,7 @@
 //! parking spots, and building registry rules.
 
 use crate::state::AppState;
+use api_core::extractors::RlsConnection;
 use api_core::{AuthUser, ValidatedTenantExtractor};
 use axum::{
     extract::{Path, Query, State},
@@ -122,6 +123,19 @@ fn require_manager(tenant: &ValidatedTenantExtractor) -> Result<(), RegistryApiE
     }
 }
 
+/// Read scope for pet/vehicle registrations. Managers (DB role) see every
+/// registration in the organization; everyone else only sees registrations on
+/// units they are linked to (active owner or current resident). The filter is
+/// applied in the repository query, and a registration outside the caller's
+/// units reads as 404.
+fn linked_user_filter(tenant: &ValidatedTenantExtractor) -> Option<Uuid> {
+    if tenant.role.is_manager() {
+        None
+    } else {
+        Some(tenant.user_id)
+    }
+}
+
 fn registry_db_error(e: sqlx::Error) -> RegistryApiError {
     tracing::error!("Registry authorization lookup failed: {:?}", e);
     (
@@ -168,6 +182,93 @@ async fn ensure_building_in_tenant(
         Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
+        ))
+    }
+}
+
+/// A non-manager may only register a pet/vehicle on a unit they are linked
+/// to (active owner or current resident). Managers may register on any unit
+/// of their organization. The unit must already be known to be in-tenant.
+async fn ensure_own_unit_or_manager(
+    state: &AppState,
+    tenant: &ValidatedTenantExtractor,
+    unit_id: Uuid,
+) -> Result<(), RegistryApiError> {
+    if tenant.role.is_manager() {
+        return Ok(());
+    }
+    let linked = state
+        .unit_repo
+        .is_user_linked_to_unit_in_org_pooled(tenant.tenant_id, unit_id, tenant.user_id)
+        .await
+        .map_err(registry_db_error)?;
+    if linked {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "NOT_AUTHORIZED",
+                "You can only register on your own unit",
+            )),
+        ))
+    }
+}
+
+/// Ensure every referenced document id belongs to the caller's organization.
+///
+/// `documents` is FORCE-RLS, so the lookup runs on the request's RLS
+/// connection, which is released before returning (registry writes use the
+/// repository pool).
+async fn ensure_documents_in_tenant(
+    state: &AppState,
+    mut rls: RlsConnection,
+    ids: &[Option<Uuid>],
+) -> Result<(), RegistryApiError> {
+    let tenant_id = rls.tenant_id();
+    let mut result = Ok(());
+    for id in ids.iter().flatten() {
+        match state
+            .document_repo
+            .exists_in_org_rls(&mut **rls.conn(), tenant_id, *id)
+            .await
+        {
+            Ok(true) => {}
+            Ok(false) => {
+                result = Err((
+                    StatusCode::NOT_FOUND,
+                    Json(ErrorResponse::new("NOT_FOUND", "Document not found")),
+                ));
+                break;
+            }
+            Err(e) => {
+                result = Err(registry_db_error(e));
+                break;
+            }
+        }
+    }
+    rls.release().await;
+    result
+}
+
+/// Ensure a referenced parking spot belongs to the caller's organization.
+async fn ensure_parking_spot_in_tenant(
+    state: &AppState,
+    tenant_id: Uuid,
+    id: Option<Uuid>,
+) -> Result<(), RegistryApiError> {
+    let Some(id) = id else { return Ok(()) };
+    if state
+        .registry_repo
+        .parking_spot_in_tenant(tenant_id, id)
+        .await
+        .map_err(registry_db_error)?
+    {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Parking spot not found")),
         ))
     }
 }
@@ -255,10 +356,13 @@ async fn require_vehicle_owner_or_manager(
 async fn create_pet_registration(
     State(state): State<AppState>,
     tenant: ValidatedTenantExtractor,
+    rls: RlsConnection,
     auth: AuthUser,
     Json(data): Json<CreatePetRegistration>,
 ) -> Result<(StatusCode, Json<PetRegistrationActionResponse>), (StatusCode, Json<ErrorResponse>)> {
     ensure_unit_in_tenant(&state, tenant.tenant_id, data.unit_id).await?;
+    ensure_own_unit_or_manager(&state, &tenant, data.unit_id).await?;
+    ensure_documents_in_tenant(&state, rls, &[data.vaccination_document_id]).await?;
 
     let registration = state
         .registry_repo
@@ -306,7 +410,7 @@ async fn get_pet_registration(
 ) -> Result<Json<PetRegistrationDetailResponse>, (StatusCode, Json<ErrorResponse>)> {
     let registration = state
         .registry_repo
-        .get_pet_registration_with_details(tenant.tenant_id, id)
+        .get_pet_registration_with_details(tenant.tenant_id, id, linked_user_filter(&tenant))
         .await
         .map_err(|e| {
             tracing::error!("Failed to get pet registration: {:?}", e);
@@ -358,7 +462,7 @@ async fn list_pet_registrations(
 ) -> Result<Json<PetRegistrationListResponse>, (StatusCode, Json<ErrorResponse>)> {
     let (registrations, total) = state
         .registry_repo
-        .list_pet_registrations(tenant.tenant_id, query)
+        .list_pet_registrations(tenant.tenant_id, query, linked_user_filter(&tenant))
         .await
         .map_err(|e| {
             tracing::error!("Failed to list pet registrations: {:?}", e);
@@ -396,10 +500,12 @@ async fn list_pet_registrations(
 async fn update_pet_registration(
     State(state): State<AppState>,
     tenant: ValidatedTenantExtractor,
+    rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdatePetRegistration>,
 ) -> Result<Json<PetRegistrationActionResponse>, (StatusCode, Json<ErrorResponse>)> {
     require_pet_owner_or_manager(&state, &tenant, id).await?;
+    ensure_documents_in_tenant(&state, rls, &[data.vaccination_document_id]).await?;
 
     let registration = state
         .registry_repo
@@ -563,11 +669,19 @@ async fn delete_pet_registration(
 async fn create_vehicle_registration(
     State(state): State<AppState>,
     tenant: ValidatedTenantExtractor,
+    rls: RlsConnection,
     auth: AuthUser,
     Json(data): Json<CreateVehicleRegistration>,
 ) -> Result<(StatusCode, Json<VehicleRegistrationActionResponse>), (StatusCode, Json<ErrorResponse>)>
 {
     ensure_unit_in_tenant(&state, tenant.tenant_id, data.unit_id).await?;
+    ensure_own_unit_or_manager(&state, &tenant, data.unit_id).await?;
+    ensure_documents_in_tenant(
+        &state,
+        rls,
+        &[data.registration_document_id, data.insurance_document_id],
+    )
+    .await?;
 
     let registration = state
         .registry_repo
@@ -615,7 +729,7 @@ async fn get_vehicle_registration(
 ) -> Result<Json<VehicleRegistrationDetailResponse>, (StatusCode, Json<ErrorResponse>)> {
     let registration = state
         .registry_repo
-        .get_vehicle_registration_with_details(tenant.tenant_id, id)
+        .get_vehicle_registration_with_details(tenant.tenant_id, id, linked_user_filter(&tenant))
         .await
         .map_err(|e| {
             tracing::error!("Failed to get vehicle registration: {:?}", e);
@@ -667,7 +781,7 @@ async fn list_vehicle_registrations(
 ) -> Result<Json<VehicleRegistrationListResponse>, (StatusCode, Json<ErrorResponse>)> {
     let (registrations, total) = state
         .registry_repo
-        .list_vehicle_registrations(tenant.tenant_id, query)
+        .list_vehicle_registrations(tenant.tenant_id, query, linked_user_filter(&tenant))
         .await
         .map_err(|e| {
             tracing::error!("Failed to list vehicle registrations: {:?}", e);
@@ -705,10 +819,18 @@ async fn list_vehicle_registrations(
 async fn update_vehicle_registration(
     State(state): State<AppState>,
     tenant: ValidatedTenantExtractor,
+    rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateVehicleRegistration>,
 ) -> Result<Json<VehicleRegistrationActionResponse>, (StatusCode, Json<ErrorResponse>)> {
     require_vehicle_owner_or_manager(&state, &tenant, id).await?;
+    ensure_documents_in_tenant(
+        &state,
+        rls,
+        &[data.registration_document_id, data.insurance_document_id],
+    )
+    .await?;
+    ensure_parking_spot_in_tenant(&state, tenant.tenant_id, data.parking_spot_id).await?;
 
     let registration = state
         .registry_repo

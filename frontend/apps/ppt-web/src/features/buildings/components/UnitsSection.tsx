@@ -12,6 +12,7 @@ import { useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { useUnit, useUnitMutations, useUnits } from '../hooks';
 import { UnitForm, type UnitFormValues } from './UnitForm';
+import { UnitResidentsDialog } from './UnitResidentsDialog';
 
 interface UnitsSectionProps {
   buildingId: string;
@@ -35,6 +36,7 @@ export function UnitsSection({ buildingId }: UnitsSectionProps) {
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | null>(null);
   const [editingUnitId, setEditingUnitId] = useState<string | null>(null);
   const [unitToArchive, setUnitToArchive] = useState<UnitSummary | null>(null);
+  const [residentsUnit, setResidentsUnit] = useState<UnitSummary | null>(null);
 
   const {
     data: unitsResponse,
@@ -203,6 +205,13 @@ export function UnitsSection({ buildingId }: UnitsSectionProps) {
                       <>
                         <button
                           type="button"
+                          onClick={() => setResidentsUnit(unit)}
+                          className="mr-4 text-blue-600 hover:text-blue-800"
+                        >
+                          {t('buildings.residents.manage')}
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => {
                             setDialogMode('edit');
                             setEditingUnitId(unit.id);
@@ -226,6 +235,15 @@ export function UnitsSection({ buildingId }: UnitsSectionProps) {
             </tbody>
           </table>
         </div>
+      )}
+
+      {residentsUnit && (
+        <UnitResidentsDialog
+          buildingId={buildingId}
+          unitId={residentsUnit.id}
+          unitLabel={residentsUnit.designation}
+          onClose={() => setResidentsUnit(null)}
+        />
       )}
 
       {/* Create dialog */}

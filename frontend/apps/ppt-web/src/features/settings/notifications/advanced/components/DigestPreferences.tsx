@@ -181,7 +181,7 @@ export function DigestPreferences({ config, loading, onUpdate }: DigestPreferenc
           </div>
 
           <p className="text-xs text-gray-500">
-            The digest summarises notifications from all categories.
+            {t('settings.notifications.advanced.digest.allCategoriesNote')}
           </p>
         </div>
       )}

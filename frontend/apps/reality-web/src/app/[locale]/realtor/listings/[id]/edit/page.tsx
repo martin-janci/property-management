@@ -5,6 +5,7 @@
  */
 
 import { useParams, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { ListingForm } from '@/components/realtor/ListingForm';
@@ -13,18 +14,22 @@ import {
   getMyListing,
   type ListingDraft,
   type ListingResponse,
-  RealtorApiError,
   updateListing,
 } from '@/lib/realtor-api';
+import { useRealtorErrorMessage } from '@/lib/realtor-error';
 
 function EditListingContent() {
+  const t = useTranslations('realtor');
+  const describeError = useRealtorErrorMessage();
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const id = params?.id ?? '';
 
   const [listing, setListing] = useState<ListingResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string>();
+  // Raw thrown value; translated at render (locale-reactive, keeps the load
+  // effect free of the unstable `describeError` closure).
+  const [loadError, setLoadError] = useState<unknown>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string>();
   const [savedAt, setSavedAt] = useState<number>();
@@ -38,8 +43,7 @@ function EditListingContent() {
         if (!cancelled) setListing(value);
       })
       .catch((err) => {
-        if (!cancelled)
-          setLoadError(err instanceof RealtorApiError ? err.message : 'Could not load listing.');
+        if (!cancelled) setLoadError(err);
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);
@@ -58,14 +62,14 @@ function EditListingContent() {
       setListing(updated);
       setSavedAt(Date.now());
     } catch (err) {
-      setSubmitError(err instanceof RealtorApiError ? err.message : 'Could not save listing.');
+      setSubmitError(describeError(err, 'errorSaveListing'));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   if (!id) {
-    return <p className="state">Missing listing id.</p>;
+    return <p className="state">{t('errorMissingListingId')}</p>;
   }
 
   return (
@@ -79,7 +83,9 @@ function EditListingContent() {
       </header>
 
       {isLoading && <p className="state">Loading listing…</p>}
-      {loadError && <p className="state error">{loadError}</p>}
+      {loadError != null && (
+        <p className="state error">{describeError(loadError, 'errorLoadListing')}</p>
+      )}
       {savedAt && (
         <p className="success" role="status">
           Listing saved.

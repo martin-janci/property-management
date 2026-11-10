@@ -461,13 +461,8 @@ async fn list_budgets(
             Json(budgets).into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to list budgets: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("list budgets", e)
         }
     }
 }
@@ -498,13 +493,8 @@ async fn get_budget(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to get budget: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("get budget", e)
         }
     }
 }
@@ -535,13 +525,8 @@ async fn update_budget(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to update budget: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("update budget", e)
         }
     }
 }
@@ -576,13 +561,8 @@ async fn delete_budget(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to delete budget: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("delete budget", e)
         }
     }
 }
@@ -617,13 +597,8 @@ async fn submit_budget(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to submit budget: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("submit budget", e)
         }
     }
 }
@@ -687,13 +662,8 @@ async fn approve_budget(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to approve budget: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("approve budget", e)
         }
     }
 }
@@ -728,13 +698,8 @@ async fn activate_budget(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to activate budget: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("activate budget", e)
         }
     }
 }
@@ -769,13 +734,8 @@ async fn close_budget(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to close budget: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("close budget", e)
         }
     }
 }
@@ -1098,13 +1058,8 @@ async fn list_categories(
             Json(categories).into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to list categories: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("list categories", e)
         }
     }
 }
@@ -1135,13 +1090,8 @@ async fn update_category(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to update category: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("update category", e)
         }
     }
 }
@@ -1172,13 +1122,8 @@ async fn delete_category(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to delete category: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("delete category", e)
         }
     }
 }
@@ -1229,13 +1174,8 @@ async fn acknowledge_alert(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to acknowledge alert: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("acknowledge alert", e)
         }
     }
 }
@@ -1263,13 +1203,8 @@ async fn get_dashboard(
             Json(dashboard).into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to get dashboard: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("get dashboard", e)
         }
     }
 }
@@ -1300,13 +1235,8 @@ async fn create_capital_plan(
             (StatusCode::CREATED, Json(plan)).into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to create capital plan: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("create capital plan", e)
         }
     }
 }
@@ -1332,13 +1262,8 @@ async fn list_capital_plans(
             Json(plans).into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to list capital plans: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("list capital plans", e)
         }
     }
 }
@@ -1360,13 +1285,8 @@ async fn get_yearly_capital_summary(
             Json(summary).into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to get yearly capital summary: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("get yearly capital summary", e)
         }
     }
 }
@@ -1397,13 +1317,8 @@ async fn get_capital_plan(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to get capital plan: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("get capital plan", e)
         }
     }
 }
@@ -1434,13 +1349,8 @@ async fn update_capital_plan(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to update capital plan: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("update capital plan", e)
         }
     }
 }
@@ -1474,13 +1384,8 @@ async fn delete_capital_plan(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to delete capital plan: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("delete capital plan", e)
         }
     }
 }
@@ -1514,13 +1419,8 @@ async fn start_capital_plan(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to start capital plan: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("start capital plan", e)
         }
     }
 }
@@ -1554,13 +1454,8 @@ async fn complete_capital_plan(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to complete capital plan: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("complete capital plan", e)
         }
     }
 }
@@ -1591,13 +1486,8 @@ async fn create_forecast(
             (StatusCode::CREATED, Json(forecast)).into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to create forecast: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("create forecast", e)
         }
     }
 }
@@ -1623,13 +1513,8 @@ async fn list_forecasts(
             Json(forecasts).into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to list forecasts: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("list forecasts", e)
         }
     }
 }
@@ -1660,13 +1545,8 @@ async fn get_forecast(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to get forecast: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("get forecast", e)
         }
     }
 }
@@ -1697,13 +1577,8 @@ async fn update_forecast(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to update forecast: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("update forecast", e)
         }
     }
 }
@@ -1734,13 +1609,42 @@ async fn delete_forecast(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to delete forecast: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("delete forecast", e)
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::body::to_bytes;
+
+    /// Every budget handler funnels DB failures through [`db_error`]. It must
+    /// return a generic body and never echo the raw sqlx error (table/column
+    /// names, query fragments, connection detail) back to the client — the
+    /// regression guard for the `e.to_string()` leak on the `DB_ERROR` paths.
+    #[tokio::test]
+    async fn db_error_never_leaks_raw_sqlx_detail() {
+        // A sqlx error whose Display carries internals a client must not see.
+        let secret = "secret_table.secret_column: internal constraint detail";
+        let resp = db_error("list budgets", sqlx::Error::Protocol(secret.to_string()));
+
+        assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
+
+        let body = to_bytes(resp.into_body(), usize::MAX)
+            .await
+            .expect("collect body");
+        let body = String::from_utf8(body.to_vec()).expect("utf8 body");
+
+        assert!(
+            !body.contains(secret),
+            "DB error body leaked raw sqlx detail: {body}"
+        );
+        assert!(body.contains("DB_ERROR"), "unexpected error code: {body}");
+        assert!(
+            body.contains("Database error"),
+            "expected the generic message: {body}"
+        );
     }
 }

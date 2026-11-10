@@ -450,7 +450,8 @@ async fn add_attachment_succeeds(pool: PgPool) {
             app.session(token, org_id)
                 .post(&format!("/api/v1/announcements/{ann_id}/attachments"))
                 .json(json!({
-                    "file_key": "org/files/doc.pdf",
+                    // Must live in the org's storage namespace (`{org_id}/…`).
+                    "file_key": format!("{org_id}/files/doc.pdf"),
                     "file_name": "doc.pdf",
                     "file_type": "application/pdf",
                     "file_size": 2048

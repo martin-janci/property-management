@@ -8,6 +8,30 @@ use sqlx::FromRow;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
+/// Serialize custom outbound HTTP headers with their values masked.
+///
+/// Webhook and connector headers commonly carry credentials
+/// (`Authorization`, `X-Api-Key`, ...). Header names are kept so clients can
+/// see what is configured; values are write-only, like `auth_config`.
+fn serialize_masked_headers<S>(
+    headers: &Option<serde_json::Value>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    let masked = headers.as_ref().map(|value| match value {
+        serde_json::Value::Object(map) => serde_json::Value::Object(
+            map.keys()
+                .map(|k| (k.clone(), serde_json::Value::String("********".into())))
+                .collect(),
+        ),
+        serde_json::Value::Null => serde_json::Value::Null,
+        _ => serde_json::Value::String("********".into()),
+    });
+    serde::Serialize::serialize(&masked, serializer)
+}
+
 // ============================================
 // Story 150.1: Integration Marketplace
 // ============================================
@@ -252,6 +276,9 @@ pub struct Connector {
     pub name: String,
     pub description: Option<String>,
     pub auth_type: String,
+    /// Connector credentials (API key, bearer token, OAuth client secret).
+    /// Write-only: never sent to API clients nor listed in the response schema.
+    #[serde(skip_serializing)]
     pub auth_config: Option<serde_json::Value>,
     pub base_url: String,
     pub rate_limit_requests: Option<i32>,
@@ -260,6 +287,8 @@ pub struct Connector {
     pub retry_initial_delay_ms: i32,
     pub retry_max_delay_ms: i32,
     pub timeout_ms: i32,
+    /// Custom headers; values are masked in API responses.
+    #[serde(serialize_with = "serialize_masked_headers")]
     pub headers: Option<serde_json::Value>,
     pub supported_actions: Vec<String>,
     pub error_mapping: Option<serde_json::Value>,
@@ -393,11 +422,16 @@ pub struct EnhancedWebhookSubscription {
     pub description: Option<String>,
     pub url: String,
     pub auth_type: String,
+    /// Webhook signing secret / bearer token / basic-auth credentials.
+    /// Write-only: never sent to API clients nor listed in the response schema.
+    #[serde(skip_serializing)]
     pub auth_config: Option<serde_json::Value>,
     pub events: Vec<String>,
     pub filters: Option<serde_json::Value>,
     pub payload_template: Option<serde_json::Value>,
     pub status: String,
+    /// Custom headers; values are masked in API responses.
+    #[serde(serialize_with = "serialize_masked_headers")]
     pub headers: Option<serde_json::Value>,
     pub retry_policy: Option<serde_json::Value>,
     pub rate_limit_requests: Option<i32>,
@@ -773,6 +807,9 @@ pub struct DeveloperApiKey {
     pub developer_id: Uuid,
     pub name: String,
     pub key_prefix: String,
+    /// Hash of the API key. Never sent to API clients nor listed in the
+    /// response schema (handlers return `DeveloperApiKeyDisplay`).
+    #[serde(skip_serializing)]
     pub key_hash: String,
     pub scopes: Vec<String>,
     pub rate_limit_tier: String,
@@ -1066,5 +1103,119 @@ mod credential_serialization_tests {
         };
         let json = serde_json::to_value(&integ).unwrap();
         assert!(json.get("credentials_encrypted").is_none());
+    }
+
+    #[test]
+    fn webhook_and_connector_secrets_and_key_hash_are_never_serialized() {
+        let now = Utc::now();
+        let secret = serde_json::json!({ "secret": "whsec-top-secret", "token": "tok-secret" });
+        let webhook = EnhancedWebhookSubscription {
+            id: Uuid::new_v4(),
+            organization_id: Uuid::new_v4(),
+            name: "w".into(),
+            description: None,
+            url: "https://example.test/hook".into(),
+            auth_type: "hmac_sha256".into(),
+            auth_config: Some(secret.clone()),
+            events: vec![],
+            filters: None,
+            payload_template: None,
+            status: "active".into(),
+            headers: Some(serde_json::json!({ "Authorization": "Bearer hdr-secret" })),
+            retry_policy: None,
+            rate_limit_requests: None,
+            rate_limit_window_seconds: None,
+            timeout_ms: 1000,
+            verify_ssl: true,
+            created_by: Uuid::new_v4(),
+            created_at: now,
+            updated_at: now,
+        };
+        let json = serde_json::to_value(&webhook).unwrap();
+        assert!(json.get("auth_config").is_none());
+        assert!(!json.to_string().contains("secret"));
+        assert_eq!(json["headers"]["Authorization"], "********");
+
+        let connector = Connector {
+            id: Uuid::new_v4(),
+            integration_id: Uuid::new_v4(),
+            name: "c".into(),
+            description: None,
+            auth_type: "api_key".into(),
+            auth_config: Some(secret),
+            base_url: "https://example.test".into(),
+            rate_limit_requests: None,
+            rate_limit_window_seconds: None,
+            retry_max_attempts: 3,
+            retry_initial_delay_ms: 100,
+            retry_max_delay_ms: 1000,
+            timeout_ms: 1000,
+            headers: Some(serde_json::json!({ "X-Api-Key": "hdr-secret" })),
+            supported_actions: vec![],
+            error_mapping: None,
+            data_transformations: None,
+            created_at: now,
+            updated_at: now,
+        };
+        let json = serde_json::to_value(&connector).unwrap();
+        assert!(json.get("auth_config").is_none());
+        assert!(!json.to_string().contains("secret"));
+        assert_eq!(json["headers"]["X-Api-Key"], "********");
+
+        let key = DeveloperApiKey {
+            id: Uuid::new_v4(),
+            developer_id: Uuid::new_v4(),
+            name: "k".into(),
+            key_prefix: "ppt_".into(),
+            key_hash: "hash-secret".into(),
+            scopes: vec![],
+            rate_limit_tier: "basic".into(),
+            is_sandbox: false,
+            status: "active".into(),
+            last_used_at: None,
+            expires_at: None,
+            created_at: now,
+            revoked_at: None,
+        };
+        let json = serde_json::to_value(&key).unwrap();
+        assert!(json.get("key_hash").is_none());
+    }
+
+    #[test]
+    fn secret_fields_are_absent_from_response_schemas() {
+        use utoipa::PartialSchema;
+        let cases = [
+            (
+                "EnhancedWebhookSubscription",
+                serde_json::to_string(&EnhancedWebhookSubscription::schema()).unwrap(),
+                "auth_config",
+            ),
+            (
+                "Connector",
+                serde_json::to_string(&Connector::schema()).unwrap(),
+                "auth_config",
+            ),
+            (
+                "DeveloperApiKey",
+                serde_json::to_string(&DeveloperApiKey::schema()).unwrap(),
+                "key_hash",
+            ),
+            (
+                "OrganizationIntegration",
+                serde_json::to_string(&OrganizationIntegration::schema()).unwrap(),
+                "credentials_encrypted",
+            ),
+            (
+                "PreBuiltIntegrationConnection",
+                serde_json::to_string(&PreBuiltIntegrationConnection::schema()).unwrap(),
+                "access_token_encrypted",
+            ),
+        ];
+        for (name, schema, field) in cases {
+            assert!(
+                !schema.contains(&format!("\"{field}\"")),
+                "{name} schema must not list {field}: {schema}"
+            );
+        }
     }
 }

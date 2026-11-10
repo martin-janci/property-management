@@ -172,6 +172,12 @@ export const ForgotPasswordPage = lazy(() =>
 export const ResetPasswordPage = lazy(() =>
   import('../features/auth').then((m) => ({ default: m.ResetPasswordPage }))
 );
+export const OrganizationMembersPage = lazy(() =>
+  import('../features/members').then((m) => ({ default: m.OrganizationMembersPage }))
+);
+export const VerifyEmailPage = lazy(() =>
+  import('../features/auth').then((m) => ({ default: m.VerifyEmailPage }))
+);
 export const ChangePasswordPage = lazy(() =>
   import('../features/auth').then((m) => ({ default: m.ChangePasswordPage }))
 );
@@ -297,6 +303,9 @@ export const ScheduleDetailPage = lazy(() =>
 export const BuildingsPage = lazy(() =>
   import('../features/buildings').then((m) => ({ default: m.BuildingsPage }))
 );
+export const BuildingFormPage = lazy(() =>
+  import('../features/buildings').then((m) => ({ default: m.BuildingFormPage }))
+);
 export const BuildingDetailPage = lazy(() =>
   import('../features/buildings').then((m) => ({ default: m.BuildingDetailPage }))
 );
@@ -340,6 +349,13 @@ export const SentimentDashboardPage = lazy(() =>
 export const NotificationAnalyticsPage = lazy(() =>
   import('../features/notification-analytics').then((m) => ({
     default: m.NotificationAnalyticsPage,
+  }))
+);
+
+// In-app notification inbox (gap audit R6 P1-8)
+export const NotificationInboxPage = lazy(() =>
+  import('../features/notification-inbox').then((m) => ({
+    default: m.NotificationInboxPage,
   }))
 );
 

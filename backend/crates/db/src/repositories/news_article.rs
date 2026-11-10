@@ -400,13 +400,18 @@ impl NewsArticleRepository {
     /// `organization_id` column of its own.
     pub async fn delete_media(
         &self,
+        article_id: Uuid,
         media_id: Uuid,
         organization_id: Uuid,
     ) -> Result<bool, SqlxError> {
+        // Scoped to the parent article in the path as well as the org: the
+        // handler authorizes the caller as author/manager of `article_id`, so
+        // the delete must not reach media hanging off a different article.
         let result = sqlx::query(
             r#"
             DELETE FROM article_media m
             WHERE m.id = $1
+              AND m.article_id = $3
               AND EXISTS (
                 SELECT 1 FROM news_articles a
                 WHERE a.id = m.article_id AND a.organization_id = $2
@@ -415,6 +420,7 @@ impl NewsArticleRepository {
         )
         .bind(media_id)
         .bind(organization_id)
+        .bind(article_id)
         .execute(&self.pool)
         .await?;
         Ok(result.rows_affected() > 0)

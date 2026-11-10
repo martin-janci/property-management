@@ -416,6 +416,7 @@ pub fn router() -> Router<AppState> {
         .route("/{id}/resolve", post(resolve_fault))
         .route("/{id}/confirm", post(confirm_fault))
         .route("/{id}/reopen", post(reopen_fault))
+        .route("/{id}/withdraw", post(withdraw_fault))
         // Comments & Notes
         .route("/{id}/comments", get(list_comments))
         .route("/{id}/comments", post(add_comment))
@@ -734,11 +735,12 @@ async fn get_fault(
         .await
         .unwrap_or_default();
 
-    let attachments = state
+    let mut attachments = state
         .fault_repo
         .list_attachments(id)
         .await
         .unwrap_or_default();
+    presign_attachment_urls(&state, &mut attachments).await;
 
     Ok(Json(FaultDetailResponse {
         fault,
@@ -1165,6 +1167,109 @@ async fn update_status(
     rls.release().await;
     Ok(Json(FaultActionResponse {
         message: "Status updated successfully".to_string(),
+        fault,
+    }))
+}
+
+/// Withdraw a fault report (gap audit R6 P1-10).
+///
+/// The reporter can take back a report that nobody has acted on yet (status
+/// `new`); it is closed with a "withdrawn by reporter" timeline note. Managers
+/// close faults through the regular status flow instead. Any other caller, or a
+/// fault past `new`, gets 403 / 409.
+#[utoipa::path(
+    post,
+    path = "/api/v1/faults/{id}/withdraw",
+    params(("id" = Uuid, Path, description = "Fault ID")),
+    responses(
+        (status = 200, description = "Fault withdrawn", body = FaultActionResponse),
+        (status = 403, description = "Not the reporter", body = ErrorResponse),
+        (status = 404, description = "Fault not found", body = ErrorResponse),
+        (status = 409, description = "Fault is already being handled", body = ErrorResponse),
+    ),
+    tag = "Faults"
+)]
+async fn withdraw_fault(
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+    mut rls: RlsConnection,
+    Path(id): Path<Uuid>,
+) -> Result<Json<FaultActionResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let tenant_id = require_tenant_id(&principal)?;
+
+    let existing = match state
+        .fault_repo
+        .find_by_id_for_org_rls(&mut **rls.conn(), id, tenant_id)
+        .await
+    {
+        Ok(Some(f)) => f,
+        Ok(None) => {
+            rls.release().await;
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Fault not found")),
+            ));
+        }
+        Err(e) => {
+            tracing::error!("Failed to find fault: {}", e);
+            rls.release().await;
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to find fault")),
+            ));
+        }
+    };
+
+    if existing.reporter_id != principal.user_id {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Only the reporter can withdraw a fault",
+            )),
+        ));
+    }
+    if existing.status != "new" {
+        rls.release().await;
+        return Err((
+            StatusCode::CONFLICT,
+            Json(ErrorResponse::new(
+                "FAULT_ALREADY_HANDLED",
+                "Only a fault that has not been triaged yet can be withdrawn",
+            )),
+        ));
+    }
+
+    let fault = state
+        .fault_repo
+        .update_status_rls(
+            &mut **rls.conn(),
+            id,
+            principal.user_id,
+            UpdateFaultStatus {
+                status: "closed".to_string(),
+                note: Some("Withdrawn by reporter".to_string()),
+                scheduled_date: None,
+                estimated_completion: None,
+            },
+            existing.status,
+        )
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to withdraw fault: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to withdraw fault",
+                )),
+            )
+        })?;
+
+    rls.release().await;
+    Ok(Json(FaultActionResponse {
+        message: "Fault withdrawn".to_string(),
         fault,
     }))
 }
@@ -1607,7 +1712,10 @@ async fn list_attachments(
     require_fault_in_org(&state, id, tenant_id).await?;
 
     match state.fault_repo.list_attachments(id).await {
-        Ok(attachments) => Ok(Json(AttachmentsResponse { attachments })),
+        Ok(mut attachments) => {
+            presign_attachment_urls(&state, &mut attachments).await;
+            Ok(Json(AttachmentsResponse { attachments }))
+        }
         Err(e) => {
             tracing::error!("Failed to list attachments: {}", e);
             Err((
@@ -1617,6 +1725,55 @@ async fn list_attachments(
                     "Failed to list attachments",
                 )),
             ))
+        }
+    }
+}
+
+/// Replace storage keys on attachments with short-lived presigned GET URLs so
+/// clients can render them (`<img src>`). Keys are what `add_attachment`
+/// stores; values that are already absolute URLs (legacy rows) are left as is.
+/// Without a configured storage service the keys are returned unchanged.
+async fn presign_attachment_urls(state: &AppState, attachments: &mut [FaultAttachment]) {
+    const READ_URL_TTL_SECS: i64 = 3600;
+    let Some(storage) = state.storage_service.as_ref() else {
+        return;
+    };
+    for att in attachments.iter_mut() {
+        if !att.storage_url.starts_with("http") {
+            match storage
+                .generate_download_url(
+                    &att.storage_url,
+                    &att.original_filename,
+                    &att.content_type,
+                    Some(READ_URL_TTL_SECS),
+                )
+                .await
+            {
+                Ok(signed) => att.storage_url = signed.url,
+                Err(e) => {
+                    tracing::warn!(attachment_id = %att.id, error = %e, "Failed to presign fault attachment")
+                }
+            }
+        }
+        if let Some(thumb) = att
+            .thumbnail_url
+            .as_ref()
+            .filter(|t| !t.starts_with("http"))
+        {
+            match storage
+                .generate_download_url(
+                    thumb,
+                    &att.original_filename,
+                    &att.content_type,
+                    Some(READ_URL_TTL_SECS),
+                )
+                .await
+            {
+                Ok(signed) => att.thumbnail_url = Some(signed.url),
+                Err(e) => {
+                    tracing::warn!(attachment_id = %att.id, error = %e, "Failed to presign fault thumbnail")
+                }
+            }
         }
     }
 }
@@ -1643,6 +1800,25 @@ async fn add_attachment(
 ) -> Result<(StatusCode, Json<FaultAttachment>), (StatusCode, Json<ErrorResponse>)> {
     let tenant_id = require_tenant_id(&principal)?;
     require_fault_in_org(&state, id, tenant_id).await?;
+
+    // SECURITY (gap audit R7): `storage_url` must be a storage key minted for
+    // the caller's org by `POST /documents/upload-url` (`{org_id}/...`). It
+    // used to be stored verbatim, so a client could register an arbitrary
+    // external URL (tracking pixel) or another org's object key, which the
+    // presigned read path below would then sign.
+    crate::routes::documents::core::validate_file_key_org_scope(&req.storage_url, tenant_id)?;
+    if let Some(thumb) = req.thumbnail_url.as_deref() {
+        crate::routes::documents::core::validate_file_key_org_scope(thumb, tenant_id)?;
+    }
+    if !integrations::is_allowed_content_type(&req.content_type) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "INVALID_CONTENT_TYPE",
+                "content_type is not an allowed attachment content type",
+            )),
+        ));
+    }
 
     let data = CreateFaultAttachment {
         fault_id: id,

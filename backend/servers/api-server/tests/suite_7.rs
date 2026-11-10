@@ -9,6 +9,8 @@ mod common;
 
 #[path = "suites/analytics_org_authz_tests.rs"]
 mod analytics_org_authz_tests;
+#[path = "suites/payment_webhook_dead_letter_rls_manager_tests.rs"]
+mod payment_webhook_dead_letter_rls_manager_tests;
 #[path = "suites/payment_webhook_settlement_tests.rs"]
 mod payment_webhook_settlement_tests;
 #[path = "suites/person_months_happy_path_tests.rs"]
@@ -39,6 +41,8 @@ mod push_delivery_receipt_tests;
 mod push_fanout_stale_token_isolation_tests;
 #[path = "suites/push_token_tests.rs"]
 mod push_token_tests;
+#[path = "suites/r5_sec_a_authz_tests.rs"]
+mod r5_sec_a_authz_tests;
 #[path = "suites/rag_index_embedding_write_tests.rs"]
 mod rag_index_embedding_write_tests;
 #[path = "suites/rag_migrate_pgvector_tests.rs"]
@@ -47,6 +51,8 @@ mod rag_migrate_pgvector_tests;
 mod regional_compliance_tests;
 #[path = "suites/registry_backfill_tests.rs"]
 mod registry_backfill_tests;
+#[path = "suites/registry_read_scope_tests.rs"]
+mod registry_read_scope_tests;
 #[path = "suites/rental_connection_token_leak_tests.rs"]
 mod rental_connection_token_leak_tests;
 #[path = "suites/rental_guest_id_document_tests.rs"]

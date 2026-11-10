@@ -101,5 +101,6 @@ UC-13 long-form article surface. Edit mode is a substantial separate UX from rea
 
 <!-- newest entries on top -->
 
+- 2026-11-05 — agent: screen-map-drift-pr-3244-ppt — reconcile i18n drift from PR #3244. `ArticleDetailPage` + `ArticleComments` + `ArticleReactions` localized (`news.*`) across all 6 locales — reader chrome, comment composer/moderation copy, reaction labels and the comment post/update/delete error toasts — and the detail/comment reads now consume the `{ article }` / `{ comments }` API envelopes. i18n only — apiStatus stays `partial`; frontmatter unchanged.
 - 2026-05-09 — agent: integrated Batch D (pages/ppt-article-detail.html — 4 artboards: read-mode / edit-mode / draft-preview / loading); flipped redesignStatus → in-progress; attached designSource; populated 7 sections + 4 states + 4 notes; declared 7 sharedComponents
 - 2026-05-08 — init: created from scan (source: sitemap)

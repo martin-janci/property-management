@@ -32,7 +32,7 @@ type PersonMonthApiError = (StatusCode, Json<ErrorResponse>);
 /// the building — 404 otherwise. `person_months` RLS is not FORCE'd, so these
 /// predicates are explicit. When `require_manager` is set the caller's DB
 /// membership role must be manager-level (403 otherwise).
-async fn authorize_building(
+async fn authorize_building_inner(
     state: &AppState,
     rls: &mut RlsConnection,
     user_id: Uuid,
@@ -103,6 +103,24 @@ async fn authorize_building(
     }
 
     Ok(())
+}
+
+/// [`authorize_building_inner`], releasing the RLS connection on failure so an
+/// error response never leaves the tenant context bound to a pooled connection.
+async fn authorize_building(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    user_id: Uuid,
+    building_id: Uuid,
+    unit_id: Option<Uuid>,
+    require_manager: bool,
+) -> Result<(), PersonMonthApiError> {
+    let res =
+        authorize_building_inner(state, rls, user_id, building_id, unit_id, require_manager).await;
+    if res.is_err() {
+        rls.release().await;
+    }
+    res
 }
 
 /// Create person months router.
@@ -326,6 +344,8 @@ pub async fn get_unit_person_months(
         false,
     )
     .await?;
+    // Authorization is the last use of the RLS connection here.
+    rls.release().await;
 
     // Verify unit belongs to building
     let belongs = state
@@ -411,17 +431,22 @@ pub async fn upsert_person_month(
     Path((building_id, unit_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpsertPersonMonthRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
+    let out = upsert_person_month_inner(&state, &auth, &mut rls, building_id, unit_id, req).await;
+    rls.release().await;
+    out
+}
+
+async fn upsert_person_month_inner(
+    state: &AppState,
+    auth: &AuthUser,
+    rls: &mut RlsConnection,
+    building_id: Uuid,
+    unit_id: Uuid,
+    req: UpsertPersonMonthRequest,
+) -> Result<Json<PersonMonthResponse>, PersonMonthApiError> {
     // Verify the building (and unit) are in the caller's organization and,
     // for mutations, that the caller is a manager.
-    authorize_building(
-        &state,
-        &mut rls,
-        auth.user_id,
-        building_id,
-        Some(unit_id),
-        true,
-    )
-    .await?;
+    authorize_building(state, rls, auth.user_id, building_id, Some(unit_id), true).await?;
 
     // Verify unit belongs to building
     let belongs = state
@@ -555,6 +580,8 @@ pub async fn get_person_month(
         false,
     )
     .await?;
+    // Authorization is the last use of the RLS connection here.
+    rls.release().await;
 
     let entry = state
         .person_month_repo
@@ -626,6 +653,8 @@ pub async fn update_person_month(
         true,
     )
     .await?;
+    // Authorization is the last use of the RLS connection here.
+    rls.release().await;
 
     // Verify entry exists and belongs to unit
     let existing = state
@@ -758,6 +787,8 @@ pub async fn delete_person_month(
         true,
     )
     .await?;
+    // Authorization is the last use of the RLS connection here.
+    rls.release().await;
 
     // Verify entry exists and belongs to unit
     let existing = state.person_month_repo.find_by_id(id).await.map_err(|e| {
@@ -842,6 +873,8 @@ pub async fn get_yearly_summary(
         false,
     )
     .await?;
+    // Authorization is the last use of the RLS connection here.
+    rls.release().await;
 
     // Verify unit belongs to building
     let belongs = state
@@ -917,6 +950,8 @@ pub async fn calculate_from_residents(
         false,
     )
     .await?;
+    // Authorization is the last use of the RLS connection here.
+    rls.release().await;
 
     // Verify unit belongs to building
     let belongs = state
@@ -987,6 +1022,8 @@ pub async fn list_building_person_months(
     // Verify the building (and unit) are in the caller's organization and,
     // for mutations, that the caller is a manager.
     authorize_building(&state, &mut rls, auth.user_id, building_id, None, false).await?;
+    // Authorization is the last use of the RLS connection here.
+    rls.release().await;
 
     let entries = state
         .person_month_repo
@@ -1028,9 +1065,21 @@ pub async fn bulk_upsert_person_months(
     Path(building_id): Path<Uuid>,
     Json(req): Json<BulkUpsertRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
+    let out = bulk_upsert_person_months_inner(&state, &auth, &mut rls, building_id, req).await;
+    rls.release().await;
+    out
+}
+
+async fn bulk_upsert_person_months_inner(
+    state: &AppState,
+    auth: &AuthUser,
+    rls: &mut RlsConnection,
+    building_id: Uuid,
+    req: BulkUpsertRequest,
+) -> Result<Json<BulkUpsertResult>, PersonMonthApiError> {
     // Verify the building (and unit) are in the caller's organization and,
     // for mutations, that the caller is a manager.
-    authorize_building(&state, &mut rls, auth.user_id, building_id, None, true).await?;
+    authorize_building(state, rls, auth.user_id, building_id, None, true).await?;
 
     // Validate month
     if req.month < 1 || req.month > 12 {
@@ -1144,6 +1193,8 @@ pub async fn get_building_summary(
     // Verify the building (and unit) are in the caller's organization and,
     // for mutations, that the caller is a manager.
     authorize_building(&state, &mut rls, auth.user_id, building_id, None, false).await?;
+    // Authorization is the last use of the RLS connection here.
+    rls.release().await;
 
     let summary = state
         .person_month_repo

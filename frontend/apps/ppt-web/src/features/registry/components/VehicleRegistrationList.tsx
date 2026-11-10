@@ -6,6 +6,7 @@
 
 import type { RegistryStatus, VehicleRegistrationWithDetails } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface VehicleRegistrationListProps {
   registrations: VehicleRegistrationWithDetails[];
@@ -30,13 +31,6 @@ const statusColors: Record<RegistryStatus, string> = {
   expired: 'bg-gray-100 text-gray-800',
 };
 
-const statusLabels: Record<RegistryStatus, string> = {
-  pending: 'Pending',
-  approved: 'Approved',
-  rejected: 'Rejected',
-  expired: 'Expired',
-};
-
 export function VehicleRegistrationList({
   registrations,
   total,
@@ -52,6 +46,7 @@ export function VehicleRegistrationList({
   onReview,
   onCreate,
 }: VehicleRegistrationListProps) {
+  const { t } = useTranslation();
   const [statusFilter, setStatusFilter] = useState<RegistryStatus | ''>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -71,14 +66,14 @@ export function VehicleRegistrationList({
     <div>
       {/* Header with create button */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h2 className="text-xl font-bold text-gray-900">Vehicle Registrations</h2>
+        <h2 className="text-xl font-bold text-gray-900">{t('registry.vehicle.list.title')}</h2>
         <button
           type="button"
           onClick={onCreate}
           className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <title>Create</title>
+            <title>{t('registry.actions.create')}</title>
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -86,7 +81,7 @@ export function VehicleRegistrationList({
               d="M12 6v6m0 0v6m0-6h6m-6 0H6"
             />
           </svg>
-          Register Vehicle
+          {t('registry.vehicle.list.register')}
         </button>
       </div>
 
@@ -97,10 +92,10 @@ export function VehicleRegistrationList({
           onChange={(e) => handleStatusChange(e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="">All Statuses</option>
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
+          <option value="">{t('registry.status.all')}</option>
+          <option value="pending">{t('registry.status.pending')}</option>
+          <option value="approved">{t('registry.status.approved')}</option>
+          <option value="rejected">{t('registry.status.rejected')}</option>
         </select>
 
         <form onSubmit={handleSearchSubmit} className="flex-1 min-w-[200px]">
@@ -109,7 +104,7 @@ export function VehicleRegistrationList({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by license plate, make, model..."
+              placeholder={t('registry.vehicle.list.searchPlaceholder')}
               className="w-full px-3 py-2 pl-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <svg
@@ -118,7 +113,7 @@ export function VehicleRegistrationList({
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <title>Search</title>
+              <title>{t('registry.actions.search')}</title>
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -143,7 +138,7 @@ export function VehicleRegistrationList({
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <title>No registrations</title>
+            <title>{t('registry.actions.noRegistrations')}</title>
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -151,14 +146,14 @@ export function VehicleRegistrationList({
               d="M12 6v6m0 0v6m0-6h6m-6 0H6"
             />
           </svg>
-          <p className="text-lg font-medium mb-2">No vehicle registrations found</p>
-          <p className="mb-4">Get started by registering a vehicle.</p>
+          <p className="text-lg font-medium mb-2">{t('registry.vehicle.list.emptyTitle')}</p>
+          <p className="mb-4">{t('registry.vehicle.list.emptyBody')}</p>
           <button
             type="button"
             onClick={onCreate}
             className="text-blue-600 hover:text-blue-800 font-medium"
           >
-            Register your first vehicle
+            {t('registry.vehicle.list.emptyAction')}
           </button>
         </div>
       ) : (
@@ -167,25 +162,25 @@ export function VehicleRegistrationList({
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Vehicle
+                  {t('registry.vehicle.list.colVehicle')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  License Plate
+                  {t('registry.vehicle.list.colLicensePlate')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Owner
+                  {t('registry.vehicle.list.colOwner')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Parking Spot
+                  {t('registry.vehicle.list.colParkingSpot')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
+                  {t('registry.vehicle.list.colStatus')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Submitted
+                  {t('registry.vehicle.list.colSubmitted')}
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
+                  {t('registry.vehicle.list.colActions')}
                 </th>
               </tr>
             </thead>
@@ -223,7 +218,7 @@ export function VehicleRegistrationList({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      {reg.parkingSpotNumber || 'Not assigned'}
+                      {reg.parkingSpotNumber || t('registry.vehicle.list.notAssigned')}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -232,7 +227,7 @@ export function VehicleRegistrationList({
                         statusColors[reg.status]
                       }`}
                     >
-                      {statusLabels[reg.status]}
+                      {t(`registry.status.${reg.status}`)}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -244,7 +239,7 @@ export function VehicleRegistrationList({
                         type="button"
                         onClick={() => onView(reg.id)}
                         className="text-gray-600 hover:text-gray-900"
-                        title="View"
+                        title={t('registry.actions.view')}
                       >
                         <svg
                           className="w-5 h-5"
@@ -252,7 +247,7 @@ export function VehicleRegistrationList({
                           stroke="currentColor"
                           viewBox="0 0 24 24"
                         >
-                          <title>View</title>
+                          <title>{t('registry.actions.view')}</title>
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -273,7 +268,7 @@ export function VehicleRegistrationList({
                             type="button"
                             onClick={() => onReview(reg.id)}
                             className="text-blue-600 hover:text-blue-900"
-                            title="Review"
+                            title={t('registry.actions.review')}
                           >
                             <svg
                               className="w-5 h-5"
@@ -281,7 +276,7 @@ export function VehicleRegistrationList({
                               stroke="currentColor"
                               viewBox="0 0 24 24"
                             >
-                              <title>Review</title>
+                              <title>{t('registry.actions.review')}</title>
                               <path
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
@@ -294,7 +289,7 @@ export function VehicleRegistrationList({
                             type="button"
                             onClick={() => onEdit(reg.id)}
                             className="text-blue-600 hover:text-blue-900"
-                            title="Edit"
+                            title={t('registry.actions.edit')}
                           >
                             <svg
                               className="w-5 h-5"
@@ -302,7 +297,7 @@ export function VehicleRegistrationList({
                               stroke="currentColor"
                               viewBox="0 0 24 24"
                             >
-                              <title>Edit</title>
+                              <title>{t('registry.actions.edit')}</title>
                               <path
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
@@ -315,7 +310,7 @@ export function VehicleRegistrationList({
                             type="button"
                             onClick={() => onDelete(reg.id)}
                             className="text-red-600 hover:text-red-900"
-                            title="Delete"
+                            title={t('registry.actions.delete')}
                           >
                             <svg
                               className="w-5 h-5"
@@ -323,7 +318,7 @@ export function VehicleRegistrationList({
                               stroke="currentColor"
                               viewBox="0 0 24 24"
                             >
-                              <title>Delete</title>
+                              <title>{t('registry.actions.delete')}</title>
                               <path
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
@@ -347,7 +342,11 @@ export function VehicleRegistrationList({
       {totalPages > 1 && (
         <div className="mt-6 flex items-center justify-between">
           <p className="text-sm text-gray-500">
-            Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, total)} of {total}
+            {t('registry.pagination.showing', {
+              from: (page - 1) * pageSize + 1,
+              to: Math.min(page * pageSize, total),
+              total,
+            })}
           </p>
           <div className="flex gap-2">
             <button
@@ -356,18 +355,16 @@ export function VehicleRegistrationList({
               disabled={page === 1}
               className="px-3 py-1 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
             >
-              Previous
+              {t('registry.pagination.previous')}
             </button>
-            <span className="px-3 py-1">
-              Page {page} of {totalPages}
-            </span>
+            <span className="px-3 py-1">{t('registry.pagination.page', { page, totalPages })}</span>
             <button
               type="button"
               onClick={() => onPageChange(page + 1)}
               disabled={page === totalPages}
               className="px-3 py-1 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
             >
-              Next
+              {t('registry.pagination.next')}
             </button>
           </div>
         </div>

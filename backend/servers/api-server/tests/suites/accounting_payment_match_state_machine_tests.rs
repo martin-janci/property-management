@@ -126,7 +126,7 @@ async fn confirm_reject_confirm_does_not_inflate_paid_amount(pool: PgPool) {
     assert_eq!(status, InvoiceStatus::Paid, "fully paid invoice is 'paid'");
 
     // Confirmed -> Rejected: unapplies the amount and reverts status.
-    svc.reject_match(&mut conn, match_id, user)
+    svc.reject_match(&mut conn, org, match_id, user)
         .await
         .expect("reject confirmed match");
     let (paid, status) = invoice_state(&pool, invoice).await;
@@ -192,10 +192,10 @@ async fn double_reject_is_idempotent(pool: PgPool) {
     let mut conn = pool.acquire().await.unwrap();
     set_ctx(&mut conn, org).await;
 
-    svc.reject_match(&mut conn, match_id, user)
+    svc.reject_match(&mut conn, org, match_id, user)
         .await
         .expect("first reject");
-    svc.reject_match(&mut conn, match_id, user)
+    svc.reject_match(&mut conn, org, match_id, user)
         .await
         .expect("second reject is a no-op");
 
@@ -205,4 +205,42 @@ async fn double_reject_is_idempotent(pool: PgPool) {
         dec!(0),
         "rejecting a suggested match never touches paid_amount"
     );
+}
+
+/// Round-5: confirm/reject look the match up with an explicit tenant
+/// predicate. Another org's match id is NotFound (404) and is left untouched,
+/// even on a connection that bypasses RLS.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn foreign_tenant_match_is_not_found(pool: PgPool) {
+    let (_org_a, invoice_a, match_a, user) = seed_match_scenario(&pool, "r5-match-a").await;
+    let org_b = seed_org(&pool, "r5-match-b").await;
+    let svc = AccountingService::new(AccountingRepository::new(pool.clone()));
+    let mut conn = pool.acquire().await.unwrap();
+    set_ctx(&mut conn, org_b).await;
+
+    let err = svc
+        .confirm_match(&mut conn, org_b, match_a, user)
+        .await
+        .expect_err("foreign confirm must fail");
+    assert!(
+        matches!(err, ::common::errors::AppError::NotFound(_)),
+        "got {err:?}"
+    );
+    let err = svc
+        .reject_match(&mut conn, org_b, match_a, user)
+        .await
+        .expect_err("foreign reject must fail");
+    assert!(
+        matches!(err, ::common::errors::AppError::NotFound(_)),
+        "got {err:?}"
+    );
+
+    let (paid, _) = invoice_state(&pool, invoice_a).await;
+    assert_eq!(paid, dec!(0), "foreign confirm must not apply paid_amount");
+    let state: String = sqlx::query_scalar("SELECT state::text FROM payment_match WHERE id = $1")
+        .bind(match_a)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(state, "suggested");
 }

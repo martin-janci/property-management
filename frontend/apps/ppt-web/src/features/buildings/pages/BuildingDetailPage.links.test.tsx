@@ -11,6 +11,10 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (k: string) => k }),
 }));
 
+vi.mock('../../../contexts', () => ({
+  useAuth: () => ({ user: { role: 'manager', organizationId: 'org-1' } }),
+}));
+
 vi.mock('../hooks', () => ({
   useBuilding: () => ({
     data: {

@@ -113,6 +113,7 @@ UC-03 faults list — the manager's working surface for the 8-state fault machin
 
 <!-- newest entries on top -->
 
+- 2026-11-05 — agent: screen-map-drift-pr-3244-ppt — reconcile i18n drift from PR #3244 (`fix(ppt-web): localize faults, news, settings and error pages`). `FaultsPage` / `FaultCard` / `FaultList` moved hardcoded English UI copy into react-i18next (`faults.*`); new `features/faults/utils/faultLabels.ts` maps fault status/priority/category enum values to i18n keys shared by the list, card and triage components, so status-pill + priority labels now render per-locale across all 6 locales (sk/cs native, de/pl/hu). i18n only — no route/component/endpoint/status change; frontmatter unchanged.
 - 2026-11-04 — agent: r3-nav-roles — Edit and Triage are passed to the cards only for `isManagerRole` users; residents get View only (audit r3 #14).
 - 2026-11-04 — agent: hid Delete action — API has no DELETE /faults/{id} (405); FaultCard renders Delete only when onDelete is wired
 - 2026-08-31 — agent: screen-map-drift-pr-2889-ppt — reconcile drift from PR #2889 (realtime ws→query-invalidation fix). ppt-web `WebSocketContext` re-keyed cache invalidation to canonical `domain.action` events and its `notification.created` subscriber routes by `payload.category`, so `category=faults` now invalidates the `faults` root; `App.tsx` wires `onEntityEvent → queryClient.invalidateQueries`. No route/component/endpoint/status change — frontmatter unchanged; docs-only.

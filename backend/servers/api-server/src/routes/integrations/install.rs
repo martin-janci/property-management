@@ -55,6 +55,36 @@ async fn caller_role_in_org(
         .unwrap_or(common::TenantRole::Guest))
 }
 
+/// Guard for the Booking.com push endpoints. `auth` comes from
+/// [`api_core::TenantAuthUser`], so `tenant_id` is the org the request targets
+/// (Host / `X-Tenant-ID`) with active DB membership verified, and `role` is the
+/// membership role. 403 when the path org is not that org (a cross-org
+/// caller) or when the membership role is not manager-level.
+fn require_push_manager(
+    auth: &api_core::AuthUser,
+    org_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    if auth.tenant_id != Some(org_id) {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "You are not a member of this organization",
+            )),
+        ));
+    }
+    if !auth.role.as_ref().is_some_and(|r| r.is_manager()) {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Manager-level access required for this organization",
+            )),
+        ));
+    }
+    Ok(())
+}
+
 const MAX_BATCH_SIZE: usize = 500;
 
 // ==================== Booking.com Push Validation ====================
@@ -1376,7 +1406,7 @@ pub async fn disconnect_booking(
 )]
 pub async fn push_booking_availability(
     State(state): State<crate::state::AppState>,
-    auth: api_core::AuthUser,
+    api_core::TenantAuthUser(auth): api_core::TenantAuthUser,
     Path(path): Path<OrgIdPath>,
     Json(request): Json<BookingPushAvailabilityRequest>,
 ) -> Result<Json<BookingPushResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -1387,19 +1417,15 @@ pub async fn push_booking_availability(
         "Pushing availability to Booking.com"
     );
 
-    // Login JWTs carry no tenant claim: check membership of the path org.
-    caller_role_in_org(&state, &auth, path.org_id).await?;
+    // Org + role come from the caller's DB membership (`TenantAuthUser`),
+    // never from JWT claims: the path org must be the validated request org,
+    // and pushing to its Booking.com channel is a manager action.
+    require_push_manager(&auth, path.org_id)?;
 
     validate_push_availability(&request)
         .map_err(|(code, msg)| (StatusCode::BAD_REQUEST, Json(ErrorResponse::new(code, msg))))?;
 
     let rental_repo = &state.rental_repo;
-
-    // Pushing to the org's Booking.com channel is a manager action (role
-    // from the DB membership of the path org, not the JWT).
-    if !auth.is_platform_admin() {
-        verify_manager_role_in_org(&state, auth.user_id, path.org_id).await?;
-    }
 
     let connection = rental_repo
         .find_booking_connection_by_org(path.org_id)
@@ -1526,7 +1552,7 @@ pub async fn push_booking_availability(
 )]
 pub async fn push_booking_rates(
     State(state): State<crate::state::AppState>,
-    auth: api_core::AuthUser,
+    api_core::TenantAuthUser(auth): api_core::TenantAuthUser,
     Path(path): Path<OrgIdPath>,
     Json(request): Json<BookingPushRatesRequest>,
 ) -> Result<Json<BookingPushResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -1537,19 +1563,15 @@ pub async fn push_booking_rates(
         "Pushing rates to Booking.com"
     );
 
-    // Login JWTs carry no tenant claim: check membership of the path org.
-    caller_role_in_org(&state, &auth, path.org_id).await?;
+    // Org + role come from the caller's DB membership (`TenantAuthUser`),
+    // never from JWT claims: the path org must be the validated request org,
+    // and pushing to its Booking.com channel is a manager action.
+    require_push_manager(&auth, path.org_id)?;
 
     validate_push_rates(&request)
         .map_err(|(code, msg)| (StatusCode::BAD_REQUEST, Json(ErrorResponse::new(code, msg))))?;
 
     let rental_repo = &state.rental_repo;
-
-    // Pushing to the org's Booking.com channel is a manager action (role
-    // from the DB membership of the path org, not the JWT).
-    if !auth.is_platform_admin() {
-        verify_manager_role_in_org(&state, auth.user_id, path.org_id).await?;
-    }
 
     let connection = rental_repo
         .find_booking_connection_by_org(path.org_id)

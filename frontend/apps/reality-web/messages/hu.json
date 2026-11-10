@@ -637,11 +637,59 @@
       }
     },
     "report": {
+      "h1": "Hirdetés bejelentése",
+      "subtitle": "Segítsen megőrizni a portál megbízhatóságát — mondja el, mi a baj.",
+      "title": "Hirdetés bejelentése",
       "submit": "Bejelentés elküldése",
-      "subtitle": "Help us keep the portal trustworthy — tell us what's wrong.",
+      "submitting": "Küldés…",
       "success": "Bejelentés elküldve",
-      "title": "Report a listing",
-      "h1": "Report a listing"
+      "problemLegend": "A bejelentés oka",
+      "problems": {
+        "fraudulent_listing": {
+          "label": "Csalás gyanúja",
+          "description": "Gyanús hirdetés, előre fizetés kérése, hamis ügynöki identitás"
+        },
+        "price_manipulation": {
+          "label": "Helytelen ár",
+          "description": "Az ár nem felel meg a valóságnak vagy szándékosan félrevezető"
+        },
+        "incorrect_information": {
+          "label": "Hamis fényképek",
+          "description": "A fényképek nem az adott ingatlanhoz tartoznak"
+        },
+        "duplicate_listing": {
+          "label": "Duplikált hirdetés",
+          "description": "Ugyanazt az ingatlant többször hirdetik"
+        },
+        "already_sold": {
+          "label": "Eladva / nem elérhető",
+          "description": "Az ingatlant már eladták vagy kiadták, a hirdetést nem távolították el"
+        },
+        "other": {
+          "label": "Egyéb ok",
+          "description": "Egyéb technikai hiba vagy a platform szabályainak megsértése"
+        }
+      },
+      "listingRefLabel": "Hivatkozás a hirdetésre (URL vagy azonosító)",
+      "listingRefPlaceholder": "pl. https://rlt.sk/listings/ba-byt-3i vagy #12345",
+      "descriptionLabel": "A probléma leírása",
+      "descriptionPlaceholder": "Írja le, miért jelenti be ezt a hirdetést. Minél több részletet ad meg, annál gyorsabban ki tudjuk vizsgálni.",
+      "attachmentsLabel": "Mellékletek (hamarosan)",
+      "attachmentsComingSoon": "A mellékletek hozzáadása hamarosan elérhető lesz",
+      "attachmentsHint": "A képernyőképek feltöltése még nem érhető el — kérjük, írja le a bizonyítékokat a fenti leírásban. Dolgozunk rajta.",
+      "gdpr": {
+        "label": "Hozzájárulok a személyes adatok kezeléséhez a bejelentésem kivizsgálása céljából a {privacyLink} szerint.",
+        "privacyLink": "Adatvédelmi szabályzat"
+      },
+      "successTitle": "Bejelentés elküldve",
+      "successBody": "Megkaptuk a bejelentését. Csapatunk 24 órán belül kivizsgálja. Köszönjük, hogy segít biztonságban tartani a portált.",
+      "referenceLabel": "Hivatkozási szám",
+      "referenceHint": "Adja meg a további kommunikáció során — segít gyorsan megtalálni a bejelentését.",
+      "backToListings": "Vissza a hirdetésekhez",
+      "errorNoListing": "Nem tudtuk megállapítani, melyik hirdetésre vonatkozik a bejelentés. Nyissa meg a bejelentést egy hirdetés részletes oldaláról, vagy illessze be a hirdetés hivatkozását vagy azonosítóját fent.",
+      "errorRateLimit": "Túl sok bejelentés érkezett erről az eszközről. Kérjük, próbálja újra egy pillanat múlva.",
+      "errorNotFound": "A hirdetés nem található. Ellenőrizze a hivatkozást vagy az azonosítót, és próbálja újra.",
+      "errorGeneric": "A bejelentést nem sikerült elküldeni. Kérjük, próbálja újra."
     },
     "security": {
       "reportCta": "Hirdetés bejelentése",
@@ -1311,5 +1359,17 @@
     "errorAreaNegative": "A terület nem lehet negatív",
     "errorRoomsInvalid": "A szobák számának érvényes számnak kell lennie",
     "errorRoomsNegative": "A szobák száma nem lehet negatív"
+  },
+  "realtor": {
+    "errorNetwork": "Hálózati hiba. Kérjük, próbálja újra.",
+    "errorMalformed": "A szerver váratlan választ adott. Kérjük, próbálja újra.",
+    "errorRequestFailed": "A kérés sikertelen ({status}). Kérjük, próbálja újra.",
+    "errorLoadProfile": "A profil betöltése nem sikerült.",
+    "errorSaveProfile": "A profil mentése nem sikerült.",
+    "errorNameRequired": "A név megadása kötelező.",
+    "errorLoadListing": "A hirdetés betöltése nem sikerült.",
+    "errorSaveListing": "A hirdetés mentése nem sikerült.",
+    "errorCreateListing": "A hirdetés létrehozása nem sikerült. Kérjük, próbálja újra.",
+    "errorMissingListingId": "Hiányzik a hirdetés azonosítója."
   }
 }

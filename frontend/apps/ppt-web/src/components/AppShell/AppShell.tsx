@@ -14,6 +14,7 @@ import { useAuth } from '../../contexts';
 import { isManagerRole } from '../../routes/shared';
 import { ConnectionStatus } from '../ConnectionStatus';
 import { LanguageSwitcher } from '../LanguageSwitcher';
+import { NotificationBell } from '../NotificationBell';
 import { ACCOUNT_ITEMS, isVisibleFor, sectionsFor } from './navConfig';
 import './AppShell.css';
 
@@ -238,6 +239,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <Brand />
         <div className="shell-topbar__actions">
           <ConnectionStatus />
+          <NotificationBell />
           <LanguageSwitcher />
           <UserMenu isManager={isManager} />
         </div>

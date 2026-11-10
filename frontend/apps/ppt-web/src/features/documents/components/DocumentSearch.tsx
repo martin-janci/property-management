@@ -236,8 +236,8 @@ export function DocumentSearch({
       {/* Results */}
       <div className="search-results">
         {error && (
-          <div className="error-message">
-            {t('documents.search.error', { error: error.message })}
+          <div className="error-message" role="alert">
+            {t('documents.search.error')}
           </div>
         )}
 

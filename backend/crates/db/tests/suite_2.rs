@@ -9,6 +9,8 @@ mod common;
 mod documents_rls_cross_tenant_tests;
 #[path = "suites/emergency_rls_repo_tests.rs"]
 mod emergency_rls_repo_tests;
+#[path = "suites/energy_schema_tests.rs"]
+mod energy_schema_tests;
 #[path = "suites/enhanced_tenant_screening_rls_repo_tests.rs"]
 mod enhanced_tenant_screening_rls_repo_tests;
 #[path = "suites/epic11_org_guc_rls_tests.rs"]

@@ -29,6 +29,7 @@ import {
   NotFoundPage,
   NotificationSettingsPage,
   OAuthGrantsPage,
+  OrganizationMembersPage,
   PrivacySettingsPage,
   ProfileEditPage,
   RegisterPage,
@@ -37,6 +38,7 @@ import {
   SessionExpiredPage,
   TemplateLibraryPage,
   TwoFactorAuthPage,
+  VerifyEmailPage,
 } from '../lazyRoutes';
 import { isManagerRole, MANAGER_ROLES } from '../shared';
 
@@ -160,6 +162,7 @@ export function authRoutes() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/settings/password" element={<ChangePasswordPage />} />
       <Route path="/settings/two-factor" element={<TwoFactorAuthPage />} />
       <Route path="/settings/profile" element={<ProfileEditPage />} />
@@ -267,6 +270,15 @@ export function settingsRoutes() {
         element={
           <ProtectedRoute>
             <SessionsPage />
+          </ProtectedRoute>
+        }
+      />
+      {/* Organization members + roles (gap audit round 6, P0-2) */}
+      <Route
+        path="/settings/members"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <OrganizationMembersPage />
           </ProtectedRoute>
         }
       />

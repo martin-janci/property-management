@@ -5,21 +5,11 @@
  */
 
 import type { UpdateRegistryRulesRequest } from '@ppt/api-client';
-import { createRegistryApi, createRegistryHooks } from '@ppt/api-client';
-import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '../../../components';
 import { RegistryRulesForm } from '../components/RegistryRulesForm';
-
-// API base URL - prefer environment configuration for different environments (dev/staging/prod)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
-
-// Create API instance - in production, this would come from a context with auth tokens
-const registryApi = createRegistryApi({
-  baseUrl: API_BASE_URL,
-  // accessToken and tenantId would come from auth context
-});
+import { useRegistryApi } from '../hooks/useRegistry';
 
 export function RegistryRulesPage() {
   const { buildingId } = useParams<{ buildingId: string }>();
@@ -27,8 +17,9 @@ export function RegistryRulesPage() {
   const { t } = useTranslation();
   const { showToast } = useToast();
 
-  // Create hooks instance from the API
-  const registryHooks = useMemo(() => createRegistryHooks(registryApi), []);
+  // Registry API hooks carrying the current auth context (token rotates via
+  // the canonical useBuildings.ts getToken() + useMemo pattern).
+  const registryHooks = useRegistryApi();
 
   // Fetch registry rules for the building
   const {

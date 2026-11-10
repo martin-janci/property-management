@@ -148,6 +148,10 @@ pub struct AutomationExecutionStats {
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct WorkflowAutomationTemplate {
     pub id: Uuid,
+    /// Stable, locale-independent key of a built-in template (e.g.
+    /// `weekly_maintenance_report`); clients translate by it. NULL for
+    /// custom templates.
+    pub slug: Option<String>,
     pub name: String,
     pub description: Option<String>,
     pub category: String,

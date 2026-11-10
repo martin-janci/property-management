@@ -894,3 +894,118 @@ async fn push_rates_with_unconfigured_hotel_id_returns_400(pool: PgPool) {
         resp.text()
     );
 }
+
+// ===========================================================================
+// Push endpoints: org + role from DB membership (TenantAuthUser), never JWT
+// ===========================================================================
+
+/// Token with **no** tenant / role claim — the shape real logins mint.
+fn login_token(user_id: Uuid) -> String {
+    let now = Utc::now();
+    let claims = AccessClaims {
+        sub: user_id,
+        iat: now.timestamp(),
+        exp: (now + Duration::hours(1)).timestamp(),
+        token_type: "access".to_string(),
+        tenant_id: None,
+        role: None,
+        email: "booking-handler-login@test.local".to_string(),
+        name: "Booking Handler Login".to_string(),
+    };
+    encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(JWT_SECRET.as_bytes()),
+    )
+    .expect("mint login token")
+}
+
+/// A resident whose token *claims* `role = manager` is still a resident in the
+/// DB: both push routes answer 403 before any connection lookup.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn push_routes_take_role_from_membership_not_jwt_claim(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_id = seed_org(&pool, "push-res").await;
+    let resident = seed_user(&pool, "push-res@booking-handler.test").await;
+    seed_membership(&pool, org_id, resident, "resident").await;
+    insert_booking_connection(&pool, org_id, Some(HOTEL_ID)).await;
+    let claim_says_manager = mint_token(resident, org_id);
+
+    for (uri, body) in [
+        (push_availability_uri(org_id), one_availability_update()),
+        (push_rates_uri(org_id), one_rate_update()),
+    ] {
+        for token in [&claim_says_manager, &login_token(resident)] {
+            let resp = app
+                .post(&uri)
+                .bearer(token)
+                .tenant(org_id)
+                .json(body.clone())
+                .send()
+                .await;
+            assert_eq!(
+                resp.status,
+                StatusCode::FORBIDDEN,
+                "resident must not push via {uri}; got {}: {}",
+                resp.status,
+                resp.text()
+            );
+        }
+    }
+}
+
+/// A DB manager holding a login-format token (no claims) passes the gate and
+/// reaches the connection lookup (404: no connection seeded); naming another
+/// org in the path while targeting their own is 403.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn push_routes_accept_db_manager_with_login_token(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_id = seed_org(&pool, "push-mgr").await;
+    let other_org = seed_org(&pool, "push-mgr-other").await;
+    let manager = seed_user(&pool, "push-mgr@booking-handler.test").await;
+    seed_membership(&pool, org_id, manager, "manager").await;
+    insert_booking_connection(&pool, other_org, Some(HOTEL_ID)).await;
+    let token = login_token(manager);
+
+    for (own, foreign, body) in [
+        (
+            push_availability_uri(org_id),
+            push_availability_uri(other_org),
+            one_availability_update(),
+        ),
+        (
+            push_rates_uri(org_id),
+            push_rates_uri(other_org),
+            one_rate_update(),
+        ),
+    ] {
+        let resp = app
+            .post(&own)
+            .bearer(&token)
+            .tenant(org_id)
+            .json(body.clone())
+            .send()
+            .await;
+        assert_eq!(
+            resp.status,
+            StatusCode::NOT_FOUND,
+            "DB manager must pass the gate on {own}; got {}: {}",
+            resp.status,
+            resp.text()
+        );
+        let resp = app
+            .post(&foreign)
+            .bearer(&token)
+            .tenant(org_id)
+            .json(body)
+            .send()
+            .await;
+        assert_eq!(
+            resp.status,
+            StatusCode::FORBIDDEN,
+            "path org other than the request org must be refused on {foreign}; got {}: {}",
+            resp.status,
+            resp.text()
+        );
+    }
+}

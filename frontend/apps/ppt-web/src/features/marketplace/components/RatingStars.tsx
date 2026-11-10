@@ -3,6 +3,8 @@
  * Epic 68: Service Provider Marketplace (Story 68.5)
  */
 
+import { useTranslation } from 'react-i18next';
+
 interface RatingStarsProps {
   rating: number;
   size?: 'sm' | 'md' | 'lg';
@@ -22,6 +24,7 @@ const textSizeClasses = {
 };
 
 export function RatingStars({ rating, size = 'md', showValue = false }: RatingStarsProps) {
+  const { t } = useTranslation();
   const fullStars = Math.floor(rating);
   const hasHalfStar = rating % 1 >= 0.5;
   const starSize = sizeClasses[size];
@@ -29,7 +32,7 @@ export function RatingStars({ rating, size = 'md', showValue = false }: RatingSt
 
   return (
     <div className="flex items-center gap-1">
-      <div className="flex" aria-label={`${rating} out of 5 stars`}>
+      <div className="flex" aria-label={t('marketplace.common.starsAria', { rating })}>
         {[...Array(5)].map((_, i) => {
           if (i < fullStars) {
             // Full star
@@ -40,7 +43,7 @@ export function RatingStars({ rating, size = 'md', showValue = false }: RatingSt
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >
-                <title>Filled star</title>
+                <title>{t('marketplace.common.filledStar')}</title>
                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
               </svg>
             );
@@ -49,7 +52,7 @@ export function RatingStars({ rating, size = 'md', showValue = false }: RatingSt
             // Half star
             return (
               <svg key={`star-${i}`} className={`${starSize} text-yellow-400`} viewBox="0 0 20 20">
-                <title>Half-filled star</title>
+                <title>{t('marketplace.common.halfStar')}</title>
                 <defs>
                   <linearGradient id={`half-gradient-${i}`}>
                     <stop offset="50%" stopColor="currentColor" />
@@ -71,7 +74,7 @@ export function RatingStars({ rating, size = 'md', showValue = false }: RatingSt
               fill="currentColor"
               viewBox="0 0 20 20"
             >
-              <title>Empty star</title>
+              <title>{t('marketplace.common.emptyStar')}</title>
               <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
             </svg>
           );
@@ -92,9 +95,16 @@ interface RatingInputProps {
 }
 
 export function RatingInput({ value, onChange, size = 'md', disabled = false }: RatingInputProps) {
+  const { t } = useTranslation();
   const starSize = sizeClasses[size];
 
-  const ratingLabels = ['Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
+  const ratingLabels = [
+    t('marketplace.ratingStars.poor'),
+    t('marketplace.ratingStars.fair'),
+    t('marketplace.ratingStars.good'),
+    t('marketplace.ratingStars.veryGood'),
+    t('marketplace.ratingStars.excellent'),
+  ];
 
   return (
     <div className="flex items-center gap-2">
@@ -106,7 +116,11 @@ export function RatingInput({ value, onChange, size = 'md', disabled = false }: 
             onClick={() => !disabled && onChange(star)}
             disabled={disabled}
             className={`${disabled ? 'cursor-not-allowed' : 'cursor-pointer'} focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 rounded-sm`}
-            aria-label={`Rate ${star} star${star !== 1 ? 's' : ''}`}
+            aria-label={
+              star === 1
+                ? t('marketplace.ratingStars.rateOne', { count: star })
+                : t('marketplace.ratingStars.rateOther', { count: star })
+            }
           >
             <svg
               className={`${starSize} ${
@@ -115,7 +129,11 @@ export function RatingInput({ value, onChange, size = 'md', disabled = false }: 
               fill="currentColor"
               viewBox="0 0 20 20"
             >
-              <title>{star <= value ? 'Selected' : 'Not selected'}</title>
+              <title>
+                {star <= value
+                  ? t('marketplace.common.selected')
+                  : t('marketplace.common.notSelected')}
+              </title>
               <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
             </svg>
           </button>

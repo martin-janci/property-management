@@ -12,7 +12,6 @@ export {
   confirmFault,
   createFault,
   deleteAttachment,
-  deleteFault,
   getAiSuggestion,
   getFault,
   getFaultStatistics,
@@ -25,6 +24,7 @@ export {
   resolveFault,
   triageFault,
   updateFault,
+  withdrawFault,
 } from './api';
 // React Query hooks
 export type { FaultStatisticsFilters } from './hooks';
@@ -39,7 +39,6 @@ export {
   useConfirmFault,
   useCreateFault,
   useDeleteAttachment,
-  useDeleteFault,
   useFault,
   useFaultComments,
   useFaultStatistics,
@@ -50,10 +49,12 @@ export {
   useResolveFault,
   useTriageFault,
   useUpdateFault,
+  useWithdrawFault,
 } from './hooks';
 // Types
 export type {
   AddCommentRequest,
+  AddFaultAttachmentRequest,
   AddWorkNoteRequest,
   AiSuggestion,
   AiSuggestionResponse,

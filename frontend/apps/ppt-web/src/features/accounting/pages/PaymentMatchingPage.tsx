@@ -47,18 +47,30 @@ export function PaymentMatchingPage() {
   const [selectedLineId, setSelectedLineId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  const { data: statements, isLoading: statementsLoading } = useQuery({
+  const {
+    data: statements,
+    isLoading: statementsLoading,
+    isError: statementsError,
+  } = useQuery({
     queryKey: queryKeys.accounting.statements(),
     queryFn: fetchStatements,
   });
 
-  const { data: lines, isLoading: linesLoading } = useQuery({
+  const {
+    data: lines,
+    isLoading: linesLoading,
+    isError: linesError,
+  } = useQuery({
     queryKey: queryKeys.accounting.statementLines(selectedStatementId ?? ''),
     queryFn: () => fetchStatementLines(selectedStatementId as string),
     enabled: !!selectedStatementId,
   });
 
-  const { data: matches, isLoading: matchesLoading } = useQuery({
+  const {
+    data: matches,
+    isLoading: matchesLoading,
+    isError: matchesError,
+  } = useQuery({
     queryKey: queryKeys.accounting.lineMatches(selectedLineId ?? ''),
     queryFn: () => fetchLineMatches(selectedLineId as string),
     enabled: !!selectedLineId,
@@ -141,6 +153,10 @@ export function PaymentMatchingPage() {
                   <div key={i} className="h-16 bg-gray-50 rounded" />
                 ))}
               </div>
+            ) : statementsError ? (
+              <p className="text-xs text-red-600 font-medium text-center py-4" role="alert">
+                {t('accounting.paymentMatching.loadFailed')}
+              </p>
             ) : statements?.length === 0 ? (
               <p className="text-xs text-gray-400 italic text-center py-4">
                 {t('accounting.paymentMatching.noStatements')}
@@ -208,6 +224,10 @@ export function PaymentMatchingPage() {
                 <div key={i} className="h-20 bg-gray-50 rounded" />
               ))}
             </div>
+          ) : linesError ? (
+            <p className="text-xs text-red-600 font-medium text-center py-4" role="alert">
+              {t('accounting.paymentMatching.loadFailed')}
+            </p>
           ) : !lines || lines.length === 0 ? (
             <p className="text-xs text-gray-400 italic text-center py-4">
               {t('accounting.paymentMatching.noTransactions')}
@@ -304,6 +324,26 @@ export function PaymentMatchingPage() {
           ) : matchesLoading ? (
             <div className="animate-pulse space-y-4">
               <div className="h-48 bg-gray-50 rounded-xl" />
+            </div>
+          ) : matchesError ? (
+            <div className="flex flex-col items-center justify-center py-12 text-red-600 bg-red-50/50 rounded-xl border border-red-100">
+              <svg
+                className="w-8 h-8 mb-2 opacity-40"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <p className="text-xs font-medium" role="alert">
+                {t('accounting.paymentMatching.loadFailed')}
+              </p>
             </div>
           ) : (
             <div className="space-y-4">

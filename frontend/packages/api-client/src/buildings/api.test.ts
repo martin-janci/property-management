@@ -212,3 +212,66 @@ describe('createBuildingsApi().listCommonAreas', () => {
     await expect(api.listCommonAreas(BUILDING_ID)).rejects.toThrow('boom');
   });
 });
+
+describe('createBuildingsApi() create / update wire shape', () => {
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    fetchMock.mockReset();
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const serverBuilding = {
+    id: BUILDING_ID,
+    organization_id: 'org-1',
+    street: 'Hlavná 1',
+    city: 'Bratislava',
+    postal_code: '81101',
+    country: 'SK',
+    name: 'Dom A',
+    total_floors: 5,
+    total_entrances: 2,
+    status: 'active',
+  };
+
+  it('POSTs a flat snake_case body with the organization id', async () => {
+    fetchMock.mockResolvedValueOnce(okJson(serverBuilding));
+    const api = createBuildingsApi({ baseUrl: '', tenantId: 'org-1' });
+    const created = await api.create({
+      name: 'Dom A',
+      address: { street: 'Hlavná 1', city: 'Bratislava', postalCode: '81101', country: 'SK' },
+      floorCount: 5,
+      totalEntrances: 2,
+    });
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe('/api/v1/buildings');
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body)).toEqual({
+      organization_id: 'org-1',
+      name: 'Dom A',
+      street: 'Hlavná 1',
+      city: 'Bratislava',
+      postal_code: '81101',
+      country: 'SK',
+      total_floors: 5,
+      total_entrances: 2,
+    });
+    expect(created.totalEntrances).toBe(2);
+  });
+
+  it('updates with PUT (the server has no PATCH route) and only sends set fields', async () => {
+    fetchMock.mockResolvedValueOnce(okJson(serverBuilding));
+    const api = createBuildingsApi({ baseUrl: '' });
+    await api.update(BUILDING_ID, { name: 'Dom B', floorCount: 6 });
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe(`/api/v1/buildings/${BUILDING_ID}`);
+    expect(init.method).toBe('PUT');
+    expect(JSON.parse(init.body)).toEqual({ name: 'Dom B', total_floors: 6 });
+  });
+});
