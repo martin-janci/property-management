@@ -101,12 +101,17 @@ pub fn router() -> Router<AppState> {
 
 // ==================== Error Helpers ====================
 
-/// Map a repository error to a `500`, logging the cause under `msg`.
+/// Map a repository error to a `500`, logging the full cause under `msg`.
+///
+/// SECURITY (code-review legal.rs db error leak): the raw `sqlx::Error`
+/// Display carries internal schema detail (table / column / constraint
+/// names). It is logged server-side via `tracing::error!` and MUST NOT reach
+/// the client — the response body gets a generic, opaque message instead.
 fn db_error(msg: &str, e: sqlx::Error) -> (StatusCode, Json<ErrorResponse>) {
     tracing::error!("{}: {:?}", msg, e);
     (
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+        Json(ErrorResponse::new("DB_ERROR", "Internal server error")),
     )
 }
 
