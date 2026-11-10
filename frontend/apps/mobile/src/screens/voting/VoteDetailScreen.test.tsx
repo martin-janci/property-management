@@ -64,11 +64,11 @@ const IDLE_QUERY = { data: undefined, isLoading: false, error: null };
 const LOADING_QUERY = { data: undefined, isLoading: true, error: null };
 const IDLE_MUTATION = { mutate: jest.fn(), isPending: false };
 
-function renderScreen(props: React.ComponentProps<typeof VoteDetailScreen> = {}) {
+async function renderScreen(props: React.ComponentProps<typeof VoteDetailScreen> = {}) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
-  return render(
+  return await render(
     <QueryClientProvider client={queryClient}>
       <VoteDetailScreen {...props} />
     </QueryClientProvider>
@@ -82,8 +82,8 @@ describe('VoteDetailScreen — hook ordering', () => {
     mockUseApiMutation.mockReturnValue(IDLE_MUTATION);
   });
 
-  it('calls the data hooks unconditionally even when voteId is missing (gated with enabled:false)', () => {
-    renderScreen({ voteId: undefined });
+  it('calls the data hooks unconditionally even when voteId is missing (gated with enabled:false)', async () => {
+    await renderScreen({ voteId: undefined });
 
     // On the buggy version these were never reached: the early return fired
     // before any useApiQuery call.
@@ -97,15 +97,15 @@ describe('VoteDetailScreen — hook ordering', () => {
     }
   });
 
-  it('renders the missing-id error state without crashing', () => {
-    renderScreen({ voteId: undefined });
+  it('renders the missing-id error state without crashing', async () => {
+    await renderScreen({ voteId: undefined });
     // The screen renders the i18n fallback (defaultValue), not the raw key:
     // `t('voting.missingId', { defaultValue: 'No vote selected' })`.
     expect(screen.getByText('No vote selected')).toBeTruthy();
   });
 
-  it('does not throw a hook-order error when voteId changes from missing to present', () => {
-    const { rerender } = renderScreen({ voteId: undefined });
+  it('does not throw a hook-order error when voteId changes from missing to present', async () => {
+    const { rerender } = await renderScreen({ voteId: undefined });
 
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
@@ -113,12 +113,13 @@ describe('VoteDetailScreen — hook ordering', () => {
     // On the buggy version this rerender throws "Rendered more hooks than
     // during the previous render." because the now-present voteId runs hooks
     // that the missing-id render skipped.
-    expect(() =>
-      rerender(
-        <QueryClientProvider client={queryClient}>
-          <VoteDetailScreen voteId="vote-1" />
-        </QueryClientProvider>
-      )
+    expect(
+      async () =>
+        await rerender(
+          <QueryClientProvider client={queryClient}>
+            <VoteDetailScreen voteId="vote-1" />
+          </QueryClientProvider>
+        )
     ).not.toThrow();
   });
 });
@@ -133,10 +134,10 @@ describe('VoteDetailScreen — reduced-hook branch render', () => {
   // the Rules-of-Hooks crash. Assert it renders the "no vote selected" empty
   // state and NOT the ballot surface — the structural guarantee the fix must
   // keep — without pinning the shared-style tree in a snapshot.
-  it('renders the missing-id (empty) branch: the empty state, not the ballot', () => {
+  it('renders the missing-id (empty) branch: the empty state, not the ballot', async () => {
     mockUseApiQuery.mockReturnValue(IDLE_QUERY);
 
-    renderScreen({ voteId: undefined });
+    await renderScreen({ voteId: undefined });
 
     expect(screen.getByText('No vote selected')).toBeOnTheScreen();
     // None of the ballot surface renders on this reduced branch.
@@ -148,10 +149,10 @@ describe('VoteDetailScreen — reduced-hook branch render', () => {
   // spinner render path — the render that the buggy code could never reach
   // consistently once the missing-id render had skipped hooks. Assert the full
   // hook set ran, the loading-title fallback shows, and the ballot does not.
-  it('renders the loading branch: the full hook set and loading title, not the ballot', () => {
+  it('renders the loading branch: the full hook set and loading title, not the ballot', async () => {
     mockUseApiQuery.mockReturnValue(LOADING_QUERY);
 
-    renderScreen({ voteId: 'vote-1' });
+    await renderScreen({ voteId: 'vote-1' });
 
     // All three data queries plus the cast mutation still run — the hook set is
     // complete even while the screen shows only the spinner.
@@ -264,11 +265,11 @@ describe('VoteDetailScreen — ranked ballot', () => {
   // confirmation Alert so the cast actually runs. Throws a clear error if submit
   // never reached a confirmation dialog, so a regression that drops the confirm
   // step fails loudly instead of silently skipping the cast assertions.
-  function castBallot() {
+  async function castBallot() {
     // The submit button renders the *resolved* label via
     // `t('voting.submit', { defaultValue: 'Submit ballot' })`, so press the
     // visible English text, not the raw i18n key.
-    fireEvent.press(screen.getByText('Submit ballot'));
+    await fireEvent.press(screen.getByText('Submit ballot'));
     const withButtons = [...(Alert.alert as jest.Mock).mock.calls]
       .reverse()
       .find((call) => Array.isArray(call[2]));
@@ -288,8 +289,8 @@ describe('VoteDetailScreen — ranked ballot', () => {
     return mutate.mock.calls[0][0].answers;
   }
 
-  it('shows every option with a reorder control and a 1-based rank position', () => {
-    renderScreen({ voteId: VOTE_ID });
+  it('shows every option with a reorder control and a 1-based rank position', async () => {
+    await renderScreen({ voteId: VOTE_ID });
 
     for (const label of OPTION_LABELS) {
       expect(screen.getByText(label)).toBeOnTheScreen();
@@ -310,10 +311,10 @@ describe('VoteDetailScreen — ranked ballot', () => {
     expect(positions).toEqual(['1', '2', '3']);
   });
 
-  it('submits the full declared option order when the voter does not reorder', () => {
-    renderScreen({ voteId: VOTE_ID });
+  it('submits the full declared option order when the voter does not reorder', async () => {
+    await renderScreen({ voteId: VOTE_ID });
 
-    castBallot();
+    await castBallot();
 
     expect(mutate).toHaveBeenCalledWith(
       expect.objectContaining({ unit_id: 'unit-1', answers: { 'q-ranked': DECLARED_ORDER } }),
@@ -321,13 +322,13 @@ describe('VoteDetailScreen — ranked ballot', () => {
     );
   });
 
-  it('captures the reordered preference list in the cast answers', () => {
-    renderScreen({ voteId: VOTE_ID });
+  it('captures the reordered preference list in the cast answers', async () => {
+    await renderScreen({ voteId: VOTE_ID });
 
     // Move the top option (Roof repair) down one place → Garden, Roof repair,
     // Elevator. Use the resolved accessibility label the component renders.
-    fireEvent.press(screen.getAllByLabelText('Move down')[0]);
-    castBallot();
+    await fireEvent.press(screen.getAllByLabelText('Move down')[0]);
+    await castBallot();
 
     expect(castAnswers()).toEqual({ 'q-ranked': ['opt-b', 'opt-a', 'opt-c'] });
   });
@@ -424,10 +425,10 @@ describe('VoteDetailScreen — eligibility reason i18n', () => {
   // these source sentences against the Rust literals they mirror.
   it.each(Object.entries(ELIGIBILITY_REASON_KEYS))(
     'routes mapped server reason %p through t() with key suffix %p and the raw string as defaultValue',
-    (reason, keySuffix) => {
+    async (reason, keySuffix) => {
       mockQueries(reason);
 
-      renderScreen({ voteId: VOTE_ID });
+      await renderScreen({ voteId: VOTE_ID });
 
       // The load-bearing assertion: the reason must go through the i18n layer.
       // Pre-fix (`<Text>{eligibilityReason}</Text>`) never calls t with this key.
@@ -442,10 +443,10 @@ describe('VoteDetailScreen — eligibility reason i18n', () => {
     }
   );
 
-  it('derives a slug key for an unmapped reason, still falling back to the raw string', () => {
+  it('derives a slug key for an unmapped reason, still falling back to the raw string', async () => {
     mockQueries('Some brand new backend reason');
 
-    renderScreen({ voteId: VOTE_ID });
+    await renderScreen({ voteId: VOTE_ID });
 
     expect(mockT).toHaveBeenCalledWith(
       'voting.eligibilityReason.some-brand-new-backend-reason',

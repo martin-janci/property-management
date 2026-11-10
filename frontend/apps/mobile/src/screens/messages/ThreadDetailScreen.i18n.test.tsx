@@ -68,8 +68,8 @@ describe('ThreadDetailScreen hardcoded-string i18n', () => {
     });
   });
 
-  it('renders the messages.* keys, not the hardcoded English literals', () => {
-    render(<ThreadDetailScreen threadId="t-1" onBack={() => {}} />);
+  it('renders the messages.* keys, not the hardcoded English literals', async () => {
+    await render(<ThreadDetailScreen threadId="t-1" onBack={() => {}} />);
 
     expect(screen.getByText('messages.backToList', { exact: false })).toBeTruthy();
     expect(screen.getByText('messages.threadTitleFallback')).toBeTruthy();

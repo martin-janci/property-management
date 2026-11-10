@@ -14,18 +14,18 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { QueryErrorBanner } from './QueryErrorBanner';
 
 describe('QueryErrorBanner', () => {
-  it('renders the provided localized message and a retry button', () => {
-    render(<QueryErrorBanner message="dashboard.loadError" onRetry={jest.fn()} />);
+  it('renders the provided localized message and a retry button', async () => {
+    await render(<QueryErrorBanner message="dashboard.loadError" onRetry={jest.fn()} />);
 
     expect(screen.getByText('dashboard.loadError')).toBeTruthy();
     expect(screen.getByText('common.retry')).toBeTruthy();
   });
 
-  it('calls onRetry when the retry button is pressed', () => {
+  it('calls onRetry when the retry button is pressed', async () => {
     const onRetry = jest.fn();
-    render(<QueryErrorBanner message="dashboard.loadError" onRetry={onRetry} />);
+    await render(<QueryErrorBanner message="dashboard.loadError" onRetry={onRetry} />);
 
-    fireEvent.press(screen.getByText('common.retry'));
+    await fireEvent.press(screen.getByText('common.retry'));
 
     expect(onRetry).toHaveBeenCalledTimes(1);
   });

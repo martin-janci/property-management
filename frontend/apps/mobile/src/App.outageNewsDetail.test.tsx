@@ -131,20 +131,20 @@ jest.mock('@tanstack/react-query', () => ({
 // eslint-disable-next-line import/first
 import App from './App';
 
-function navigate(screen: string, params?: Record<string, unknown>) {
+async function navigate(screen: string, params?: Record<string, unknown>) {
   if (!capturedNavigate) {
     throw new Error('onNavigate was never captured — DashboardScreen did not render');
   }
-  act(() => {
+  await act(() => {
     capturedNavigate!(screen, params);
   });
 }
 
-function invokeBack(back: (() => void) | undefined, label: string) {
+async function invokeBack(back: (() => void) | undefined, label: string) {
   if (!back) {
     throw new Error(`${label} onBack was never captured — detail screen did not render`);
   }
-  act(() => {
+  await act(() => {
     back();
   });
 }
@@ -157,11 +157,11 @@ describe('MainApp Outage/News detail navigation wiring', () => {
     jest.clearAllMocks();
   });
 
-  it('resolves OutageDetail to OutageDetailScreen with the outageId param', () => {
-    const { getByText, queryByText } = render(<App />);
+  it('resolves OutageDetail to OutageDetailScreen with the outageId param', async () => {
+    const { getByText, queryByText } = await render(<App />);
     expect(getByText('dashboard')).toBeTruthy();
 
-    navigate('OutageDetail', { outageId: 'o-1' });
+    await navigate('OutageDetail', { outageId: 'o-1' });
 
     // Route resolved to the detail screen with the param preserved — NOT the
     // Dashboard fallback that the missing `case` used to produce.
@@ -169,11 +169,11 @@ describe('MainApp Outage/News detail navigation wiring', () => {
     expect(queryByText('dashboard')).toBeNull();
   });
 
-  it('resolves ArticleDetail to ArticleDetailScreen with the articleId param', () => {
-    const { getByText, queryByText } = render(<App />);
+  it('resolves ArticleDetail to ArticleDetailScreen with the articleId param', async () => {
+    const { getByText, queryByText } = await render(<App />);
     expect(getByText('dashboard')).toBeTruthy();
 
-    navigate('ArticleDetail', { articleId: 'a-1' });
+    await navigate('ArticleDetail', { articleId: 'a-1' });
 
     expect(getByText('article-detail:a-1')).toBeTruthy();
     expect(queryByText('dashboard')).toBeNull();
@@ -184,17 +184,17 @@ describe('MainApp Outage/News detail navigation wiring', () => {
   // screen, not silently bounce to the list or the Dashboard fallback. Pins
   // the current contract so a future "defensive" param guard can't be added
   // without a conscious test update.
-  it('resolves OutageDetail with no params to the detail screen (no param guard), not the Dashboard', () => {
-    const { getByText, queryByText } = render(<App />);
-    navigate('OutageDetail');
+  it('resolves OutageDetail with no params to the detail screen (no param guard), not the Dashboard', async () => {
+    const { getByText, queryByText } = await render(<App />);
+    await navigate('OutageDetail');
 
     expect(getByText('outage-detail:undefined')).toBeTruthy();
     expect(queryByText('dashboard')).toBeNull();
   });
 
-  it('resolves ArticleDetail with no params to the detail screen (no param guard), not the Dashboard', () => {
-    const { getByText, queryByText } = render(<App />);
-    navigate('ArticleDetail');
+  it('resolves ArticleDetail with no params to the detail screen (no param guard), not the Dashboard', async () => {
+    const { getByText, queryByText } = await render(<App />);
+    await navigate('ArticleDetail');
 
     expect(getByText('article-detail:undefined')).toBeTruthy();
     expect(queryByText('dashboard')).toBeNull();
@@ -203,23 +203,23 @@ describe('MainApp Outage/News detail navigation wiring', () => {
   // Back-navigation wiring lives in the same switch cases (onBack ->
   // handleNavigate('Outages') / ('News')). A regression that mis-wires onBack
   // would strand the user on the detail screen.
-  it('wires OutageDetail back to the Outages list', () => {
-    const { getByText, queryByText } = render(<App />);
-    navigate('OutageDetail', { outageId: 'o-1' });
+  it('wires OutageDetail back to the Outages list', async () => {
+    const { getByText, queryByText } = await render(<App />);
+    await navigate('OutageDetail', { outageId: 'o-1' });
     expect(getByText('outage-detail:o-1')).toBeTruthy();
 
-    invokeBack(capturedOutageBack, 'OutageDetail');
+    await invokeBack(capturedOutageBack, 'OutageDetail');
 
     expect(getByText('outages-list')).toBeTruthy();
     expect(queryByText('outage-detail:o-1')).toBeNull();
   });
 
-  it('wires ArticleDetail back to the News list', () => {
-    const { getByText, queryByText } = render(<App />);
-    navigate('ArticleDetail', { articleId: 'a-1' });
+  it('wires ArticleDetail back to the News list', async () => {
+    const { getByText, queryByText } = await render(<App />);
+    await navigate('ArticleDetail', { articleId: 'a-1' });
     expect(getByText('article-detail:a-1')).toBeTruthy();
 
-    invokeBack(capturedArticleBack, 'ArticleDetail');
+    await invokeBack(capturedArticleBack, 'ArticleDetail');
 
     expect(getByText('news-list')).toBeTruthy();
     expect(queryByText('article-detail:a-1')).toBeNull();
@@ -228,12 +228,12 @@ describe('MainApp Outage/News detail navigation wiring', () => {
   // Documents WHY the two cases are load-bearing: an unmapped screen name
   // falls through to the Dashboard default branch — exactly the silent
   // fallthrough that swallowed OutageDetail/ArticleDetail before #3094.
-  it('falls through to the Dashboard for an unmapped screen name (the default branch)', () => {
-    const { getByText } = render(<App />);
-    navigate('OutageDetail', { outageId: 'o-1' });
+  it('falls through to the Dashboard for an unmapped screen name (the default branch)', async () => {
+    const { getByText } = await render(<App />);
+    await navigate('OutageDetail', { outageId: 'o-1' });
     expect(getByText('outage-detail:o-1')).toBeTruthy();
 
-    navigate('ThisScreenDoesNotExist');
+    await navigate('ThisScreenDoesNotExist');
 
     expect(getByText('dashboard')).toBeTruthy();
   });

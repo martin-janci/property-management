@@ -45,14 +45,14 @@ describe('ArticleDetailScreen', () => {
   });
 
   describe('missing articleId', () => {
-    it('renders the empty state and the back button', () => {
-      render(<ArticleDetailScreen onBack={jest.fn()} />);
+    it('renders the empty state and the back button', async () => {
+      await render(<ArticleDetailScreen onBack={jest.fn()} />);
       expect(screen.getByText('news.emptyTitle')).toBeTruthy();
       expect(screen.getByText('news.backToList')).toBeTruthy();
     });
 
-    it('gates the query so no /api/v1/news/undefined request fires', () => {
-      render(<ArticleDetailScreen onBack={jest.fn()} />);
+    it('gates the query so no /api/v1/news/undefined request fires', async () => {
+      await render(<ArticleDetailScreen onBack={jest.fn()} />);
       expect(mockUseApiQuery).toHaveBeenCalledWith(
         ['news', 'detail', ''],
         expect.any(String),
@@ -62,9 +62,9 @@ describe('ArticleDetailScreen', () => {
   });
 
   describe('with an articleId', () => {
-    it('fetches /api/v1/news/{id} with an enabled, id-keyed query', () => {
+    it('fetches /api/v1/news/{id} with an enabled, id-keyed query', async () => {
       mockQuery({ data: undefined, isLoading: true });
-      render(<ArticleDetailScreen articleId="a-1" onBack={jest.fn()} />);
+      await render(<ArticleDetailScreen articleId="a-1" onBack={jest.fn()} />);
       expect(mockUseApiQuery).toHaveBeenCalledWith(
         ['news', 'detail', 'a-1'],
         '/api/v1/news/a-1',
@@ -72,25 +72,25 @@ describe('ArticleDetailScreen', () => {
       );
     });
 
-    it('shows the loading indicator while fetching', () => {
+    it('shows the loading indicator while fetching', async () => {
       mockQuery({ data: undefined, isLoading: true });
-      render(<ArticleDetailScreen articleId="a-1" onBack={jest.fn()} />);
+      await render(<ArticleDetailScreen articleId="a-1" onBack={jest.fn()} />);
       expect(screen.getByText('common.loading')).toBeTruthy();
     });
 
-    it('shows the error state when the request fails', () => {
+    it('shows the error state when the request fails', async () => {
       mockQuery({ data: undefined, isLoading: false, error: new Error('boom') });
-      render(<ArticleDetailScreen articleId="a-1" onBack={jest.fn()} />);
+      await render(<ArticleDetailScreen articleId="a-1" onBack={jest.fn()} />);
       expect(screen.getByText('news.loadError')).toBeTruthy();
     });
 
-    it('shows the error state when data is missing even without an error', () => {
+    it('shows the error state when data is missing even without an error', async () => {
       mockQuery({ data: undefined, isLoading: false, error: null });
-      render(<ArticleDetailScreen articleId="a-1" onBack={jest.fn()} />);
+      await render(<ArticleDetailScreen articleId="a-1" onBack={jest.fn()} />);
       expect(screen.getByText('news.loadError')).toBeTruthy();
     });
 
-    it('renders the article title, category badge and body on success', () => {
+    it('renders the article title, category badge and body on success', async () => {
       mockQuery({
         data: {
           id: 'a-1',
@@ -100,7 +100,7 @@ describe('ArticleDetailScreen', () => {
           created_at: '2026-01-02T10:00:00Z',
         },
       });
-      render(<ArticleDetailScreen articleId="a-1" onBack={jest.fn()} />);
+      await render(<ArticleDetailScreen articleId="a-1" onBack={jest.fn()} />);
       expect(screen.getByText('Lift maintenance scheduled')).toBeTruthy();
       // The badge renders `t('news.categories.building', { defaultValue: 'building' })`
       // (PR #3110). The raw i18n key must NOT leak as the label: with a `t()` that
@@ -111,7 +111,7 @@ describe('ArticleDetailScreen', () => {
       expect(screen.getByText('The lift will be out of service on Tuesday.')).toBeTruthy();
     });
 
-    it('falls back excerpt -> summary when body is absent', () => {
+    it('falls back excerpt -> summary when body is absent', async () => {
       mockQuery({
         data: {
           id: 'a-2',
@@ -122,14 +122,14 @@ describe('ArticleDetailScreen', () => {
           created_at: '2026-01-02T10:00:00Z',
         },
       });
-      render(<ArticleDetailScreen articleId="a-2" onBack={jest.fn()} />);
+      await render(<ArticleDetailScreen articleId="a-2" onBack={jest.fn()} />);
       expect(screen.getByText('Short excerpt stands in for the body.')).toBeTruthy();
       expect(
         screen.queryByText('A summary that should be ignored when an excerpt exists.')
       ).toBeNull();
     });
 
-    it('falls back to summary when both body and excerpt are absent', () => {
+    it('falls back to summary when both body and excerpt are absent', async () => {
       mockQuery({
         data: {
           id: 'a-3',
@@ -140,11 +140,11 @@ describe('ArticleDetailScreen', () => {
           created_at: '2026-01-02T10:00:00Z',
         },
       });
-      render(<ArticleDetailScreen articleId="a-3" onBack={jest.fn()} />);
+      await render(<ArticleDetailScreen articleId="a-3" onBack={jest.fn()} />);
       expect(screen.getByText('Only the summary is available.')).toBeTruthy();
     });
 
-    it('renders without a category badge or body when the article is minimal', () => {
+    it('renders without a category badge or body when the article is minimal', async () => {
       mockQuery({
         data: {
           id: 'a-4',
@@ -152,7 +152,7 @@ describe('ArticleDetailScreen', () => {
           created_at: '2026-01-02T10:00:00Z',
         },
       });
-      render(<ArticleDetailScreen articleId="a-4" onBack={jest.fn()} />);
+      await render(<ArticleDetailScreen articleId="a-4" onBack={jest.fn()} />);
       expect(screen.getByText('Bare article')).toBeTruthy();
       // Back button is always present; this confirms the success branch
       // rendered rather than the error/empty branch.

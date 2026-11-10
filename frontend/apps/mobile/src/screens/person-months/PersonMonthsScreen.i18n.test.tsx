@@ -39,14 +39,14 @@ describe('PersonMonthsScreen header + control i18n', () => {
     jest.clearAllMocks();
   });
 
-  it('renders header title/subtitle keys, not hardcoded literals', () => {
-    render(<PersonMonthsScreen />);
+  it('renders header title/subtitle keys, not hardcoded literals', async () => {
+    await render(<PersonMonthsScreen />);
     expect(screen.getByText('personMonths.title')).toBeTruthy();
     expect(screen.getByText('personMonths.subtitle')).toBeTruthy();
   });
 
-  it('renders control keys (edit/bulk) via common/personMonths, not literals', () => {
-    render(<PersonMonthsScreen />);
+  it('renders control keys (edit/bulk) via common/personMonths, not literals', async () => {
+    await render(<PersonMonthsScreen />);
     // One draft entry is editable -> one edit link.
     expect(screen.getByText('common.edit')).toBeTruthy();
     expect(screen.getByText('personMonths.bulkEntry')).toBeTruthy();
@@ -55,8 +55,8 @@ describe('PersonMonthsScreen header + control i18n', () => {
     }
   });
 
-  it('renders status badges via i18n keys, not the raw enum values', () => {
-    render(<PersonMonthsScreen />);
+  it('renders status badges via i18n keys, not the raw enum values', async () => {
+    await render(<PersonMonthsScreen />);
     // Mock data carries one draft and three confirmed entries on first render.
     expect(screen.getAllByText('personMonths.status.draft').length).toBeGreaterThan(0);
     expect(screen.getAllByText('personMonths.status.confirmed').length).toBeGreaterThan(0);
@@ -65,12 +65,12 @@ describe('PersonMonthsScreen header + control i18n', () => {
     expect(screen.queryByText('confirmed')).toBeNull();
   });
 
-  it('raises the invalid-value Alert via i18n keys, not hardcoded literals', () => {
+  it('raises the invalid-value Alert via i18n keys, not hardcoded literals', async () => {
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-    render(<PersonMonthsScreen />);
-    fireEvent.press(screen.getByText('common.edit'));
-    fireEvent.changeText(screen.getByDisplayValue('3'), '99');
-    fireEvent.press(screen.getByText('common.save'));
+    await render(<PersonMonthsScreen />);
+    await fireEvent.press(screen.getByText('common.edit'));
+    await fireEvent.changeText(screen.getByDisplayValue('3'), '99');
+    await fireEvent.press(screen.getByText('common.save'));
     expect(alertSpy).toHaveBeenCalledWith(
       'personMonths.invalidTitle',
       'personMonths.invalidMessage'

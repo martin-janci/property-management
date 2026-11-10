@@ -56,23 +56,23 @@ describe('FaultsListScreen empty/error/loading i18n', () => {
     jest.clearAllMocks();
   });
 
-  it('loading state renders the common.loading key, not a hardcoded literal', () => {
+  it('loading state renders the common.loading key, not a hardcoded literal', async () => {
     mockQuery({ isLoading: true });
-    render(<FaultsListScreen />);
+    await render(<FaultsListScreen />);
     expect(screen.getByText('common.loading')).toBeTruthy();
     expect(screen.queryByText('Loading…')).toBeNull();
   });
 
-  it('error state renders the faults.loadError key, not the hardcoded literal', () => {
+  it('error state renders the faults.loadError key, not the hardcoded literal', async () => {
     mockQuery({ error: new Error('boom') });
-    render(<FaultsListScreen />);
+    await render(<FaultsListScreen />);
     expect(screen.getByText('faults.loadError')).toBeTruthy();
     expect(screen.queryByText("Couldn't load faults")).toBeNull();
   });
 
-  it('empty state renders the faults.emptyTitle/emptyText keys, not hardcoded literals', () => {
+  it('empty state renders the faults.emptyTitle/emptyText keys, not hardcoded literals', async () => {
     mockQuery({ data: { faults: [] } });
-    render(<FaultsListScreen />);
+    await render(<FaultsListScreen />);
     expect(screen.getByText('faults.emptyTitle')).toBeTruthy();
     expect(screen.getByText('faults.emptyText')).toBeTruthy();
     for (const literal of HARDCODED) {

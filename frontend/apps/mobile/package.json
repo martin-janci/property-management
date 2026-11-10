@@ -57,7 +57,7 @@
     "@expo/config-plugins": "~57.0.9",
     "@expo/metro-config": "~57.0.12",
     "@react-native/jest-preset": "^0.88.1",
-    "@testing-library/react-native": "^13.3.3",
+    "@testing-library/react-native": "^14.0.1",
     "@types/jest": "^29.5.12",
     "@types/react": "~19.3.0",
     "dotenv": "^17.0.0",

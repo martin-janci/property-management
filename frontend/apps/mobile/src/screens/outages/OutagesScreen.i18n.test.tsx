@@ -54,22 +54,22 @@ describe('OutagesScreen header + filter-chip i18n', () => {
     });
   });
 
-  it('renders header title/subtitle keys, not hardcoded literals', () => {
-    render(<OutagesScreen />);
+  it('renders header title/subtitle keys, not hardcoded literals', async () => {
+    await render(<OutagesScreen />);
     expect(screen.getByText('outages.title')).toBeTruthy();
     expect(screen.getByText('outages.subtitle')).toBeTruthy();
   });
 
-  it('renders filter-chip keys, not hardcoded literals', () => {
-    render(<OutagesScreen />);
+  it('renders filter-chip keys, not hardcoded literals', async () => {
+    await render(<OutagesScreen />);
     expect(screen.getByText('outages.filters.all')).toBeTruthy();
     expect(screen.getByText('outages.filters.scheduled')).toBeTruthy();
     expect(screen.getByText('outages.filters.active')).toBeTruthy();
     expect(screen.getByText('outages.filters.resolved')).toBeTruthy();
   });
 
-  it('no longer renders any hardcoded English header/chip literal', () => {
-    render(<OutagesScreen />);
+  it('no longer renders any hardcoded English header/chip literal', async () => {
+    await render(<OutagesScreen />);
     for (const literal of HARDCODED) {
       expect(screen.queryByText(literal)).toBeNull();
     }
@@ -113,7 +113,7 @@ describe('OutagesScreen status badge i18n', () => {
     ends_at: '2026-01-01T10:00:00Z',
   });
 
-  it('renders each status badge via t(outages.status.*), not raw enum text', () => {
+  it('renders each status badge via t(outages.status.*), not raw enum text', async () => {
     mockUseApiQuery.mockReturnValue({
       data: {
         outages: [mk('1', 'scheduled'), mk('2', 'in_progress'), mk('3', 'resolved')],
@@ -123,7 +123,7 @@ describe('OutagesScreen status badge i18n', () => {
       refetch: jest.fn(),
       isFetching: false,
     });
-    render(<OutagesScreen />);
+    await render(<OutagesScreen />);
     expect(screen.getByText('outages.status.scheduled')).toBeTruthy();
     expect(screen.getByText('outages.status.in_progress')).toBeTruthy();
     expect(screen.getByText('outages.status.resolved')).toBeTruthy();
