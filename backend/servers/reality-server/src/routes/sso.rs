@@ -238,28 +238,41 @@ pub struct SsoCallbackQuery {
     pub error_description: Option<String>,
 }
 
-/// Map an internal failure from an SSO-callback persistence step into a
-/// sanitized client response.
+/// Map a failed SSO-callback step into a sanitized client response: log the
+/// full underlying error server-side and return only the fixed, generic
+/// `client_message` to the caller under the stable machine-readable `code`.
 ///
 /// SECURITY: the underlying error (`e`) from these steps routinely carries
-/// sqlx/Postgres detail — table, column and constraint names, driver
-/// messages. That is internal schema information and must never reach an
-/// unauthenticated SSO caller. We log it server-side (so operators can still
-/// diagnose the failure) and return only the fixed, generic `client_message`
-/// in the body. Mirrors the log-then-generic convention used elsewhere in the
-/// reality-server routes (e.g. `users.rs`, `inactive_pm_token_response`).
+/// detail that must never reach an unauthenticated SSO caller — sqlx/Postgres
+/// schema information (table, column and constraint names, driver messages)
+/// from the persistence steps, and the verbatim upstream/provider response body
+/// from the PM OAuth token-exchange and userinfo calls (see
+/// `exchange_code_for_tokens` / `get_user_info`, which wrap the raw provider
+/// text). We log it server-side (so operators can still diagnose the failure)
+/// and return only the generic `client_message` in the body. Mirrors the
+/// log-then-generic convention used elsewhere in the reality-server routes
+/// (e.g. `users.rs`, `inactive_pm_token_response`).
 ///
-/// `code` is the stable machine-readable error code kept in the body.
+/// `status` is the HTTP status for the client (upstream failures stay a `400`;
+/// persistence failures are a `500` via [`sso_callback_internal_error`]).
+fn sso_callback_sanitized_error(
+    status: StatusCode,
+    code: &'static str,
+    client_message: &'static str,
+    e: &dyn std::fmt::Display,
+) -> (StatusCode, Json<SsoError>) {
+    tracing::error!(error = %e, code, status = %status, "SSO callback step failed");
+    (status, Json(SsoError::new(code, client_message)))
+}
+
+/// `500` specialization of [`sso_callback_sanitized_error`] for SSO-callback
+/// persistence-step failures (user upsert, session creation).
 fn sso_callback_internal_error(
     code: &'static str,
     client_message: &'static str,
     e: &dyn std::fmt::Display,
 ) -> (StatusCode, Json<SsoError>) {
-    tracing::error!(error = %e, code, "SSO callback persistence step failed");
-    (
-        StatusCode::INTERNAL_SERVER_ERROR,
-        Json(SsoError::new(code, client_message)),
-    )
+    sso_callback_sanitized_error(StatusCode::INTERNAL_SERVER_ERROR, code, client_message, e)
 }
 
 /// SSO callback - exchanges authorization code for tokens.
@@ -331,23 +344,34 @@ pub async fn sso_callback(
         ));
     }
 
-    // Exchange code for tokens with PM OAuth server
+    // Exchange code for tokens with PM OAuth server.
+    //
+    // SECURITY: the error wraps the verbatim PM OAuth provider response body
+    // (see `exchange_code_for_tokens`), which can carry provider-internal
+    // detail — client ids, issuer/endpoint URLs, misconfiguration hints. Log
+    // the full detail server-side and return only a generic client message
+    // (log-then-generic convention, see `sso_callback_sanitized_error`).
     let tokens = exchange_code_for_tokens(&state, &code, &pending_session.code_verifier)
         .await
         .map_err(|e| {
-            (
+            sso_callback_sanitized_error(
                 StatusCode::BAD_REQUEST,
-                Json(SsoError::new("token_exchange_failed", &e.to_string())),
+                "token_exchange_failed",
+                "Could not complete sign-in with the identity provider",
+                &e,
             )
         })?;
 
-    // Get user info from PM
+    // Get user info from PM. Same sanitization: `get_user_info` wraps the raw
+    // PM userinfo response body, which must not reach the client.
     let user_info = get_user_info(&state, &tokens.access_token)
         .await
         .map_err(|e| {
-            (
+            sso_callback_sanitized_error(
                 StatusCode::BAD_REQUEST,
-                Json(SsoError::new("user_info_failed", &e.to_string())),
+                "user_info_failed",
+                "Could not retrieve your profile from the identity provider",
+                &e,
             )
         })?;
 
