@@ -195,20 +195,37 @@ fn city_like_pattern(city: &str) -> String {
 /// `transaction_type = $1` (which matches zero rows, then echoes the bogus
 /// `mode` back and caches that empty aggregation for the full TTL). Allowed
 /// values are the canonical `transaction_type` enum (`sale`, `rent`).
-fn validate_mode(_mode: &str) -> Result<(), String> {
-    // STUB (pre-fix): accepts any value — see the `fix:` commit for the real
-    // closed-set validation. This reproduces the current unvalidated behavior
-    // so the regression test below is red before the fix.
-    Ok(())
+fn validate_mode(mode: &str) -> Result<(), String> {
+    use db::models::transaction_type as tx;
+    match mode {
+        tx::SALE | tx::RENT => Ok(()),
+        other => Err(format!(
+            "Unsupported mode {other:?} — expected one of sale, rent"
+        )),
+    }
 }
 
 /// Validate the optional `property_type` query parameter against the canonical
 /// listing `property_type` enum. `None` (no filter) is always valid; any present
 /// value must be a known type, otherwise 400 — consistent with [`validate_mode`]
 /// and the `time_window` check.
-fn validate_property_type(_property_type: Option<&str>) -> Result<(), String> {
-    // STUB (pre-fix): see the `fix:` commit.
-    Ok(())
+fn validate_property_type(property_type: Option<&str>) -> Result<(), String> {
+    use db::models::property_type as pt;
+    match property_type {
+        None => Ok(()),
+        Some(
+            pt::APARTMENT
+            | pt::HOUSE
+            | pt::COMMERCIAL
+            | pt::LAND
+            | pt::PARKING
+            | pt::STORAGE
+            | pt::OTHER,
+        ) => Ok(()),
+        Some(other) => Err(format!(
+            "Unsupported property_type {other:?} — expected one of apartment, house, commercial, land, parking, storage, other"
+        )),
+    }
 }
 
 /// Create price map router.
