@@ -1,10 +1,54 @@
 {
   "version": 1,
-  "generated": "2026-08-31T03:10:00Z",
+  "generated": "2026-11-09T06:45:00Z",
   "items": [
     {
+      "id": "pm-devops-swagger-ui-egress-blocking-security-2026-10-01",
+      "risk": "utoipa-swagger-ui egress 403 (#2966) renders api-server structurally unbuildable in the cloud runner — every backend-touching dispatcher task is CLOUD-BUILD-BLOCKED, including all 3 open cross-tenant IDOR retries (#2944/#2945/#2946). Security fixes are not landing because the toolchain can't compile, not because the fix is hard",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Vendor swagger-ui assets locally OR allowlist the egress target OR cache the dist in the sandbox base image — any of three. Blocks: all backend security PRs plus #2559 / #2555 accounting trio",
+      "owner_role": "pm-devops",
+      "trigger": "Any dispatcher run with claimable<=10 AND >=2 open blocked-on-#2966 items",
+      "status": "open",
+      "source": "pm-scrum-master 2026-10-01 (buffer-low signal: claimable=9/72)"
+    },
+    {
+      "id": "pm-security-portfolio-analytics-idor-persistent-2026-10-01",
+      "risk": "Cross-tenant IDOR #2946 (portfolio_analytics property metrics computed org_id then discarded) is on retry 2/2 and still open — a tier-1 security defect that has survived two implementer attempts; a successful exploit returns per-property metrics across org boundaries",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Prioritize #2966 unblock; if infra slips, land #2946 fix locally and push a reviewed PR by hand; add a hand-written cross-tenant repro test as part of the fix PR so regression surfaces",
+      "owner_role": "pm-security",
+      "trigger": "retry 2/2 failing without a merged PR; or dispatcher record of 3+ failed-no-pr cycles",
+      "status": "open",
+      "source": "pm-security 2026-10-01 (rotating role deep-dive)"
+    },
+    {
+      "id": "pm-tech-lead-auth-header-triplicate-drift-2026-10-01",
+      "risk": "@ppt/api-client has triplicated auth-header + MFA-retry logic across fetch primitives (gdprClient, paymentMatching, remaining consumers) — surfaced by post-merge review of PR #3004 and tracked as #3006. Three copies will drift (one will forget to attach MFA-retry on a 403; one will send a stale token; one will log the token). Classic security-overtones refactor target",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Collapse into a single shared `authenticatedFetchJson` primitive; add a biome rule to forbid new fetch primitives that do not import from the shared module",
+      "owner_role": "pm-tech-lead",
+      "trigger": "Any new PR introducing a 4th auth-header path, OR an MFA regression caught post-merge",
+      "status": "open",
+      "source": "pm-security 2026-10-01 (post-merge review of PR #3004)"
+    },
+    {
+      "id": "pm-scrum-master-accounting-mvp-trio-reviewer-starvation-2026-07-30",
+      "risk": "Accounting MVP-loop trio (#2555 / #2558 / #2559) has been sitting at 64d with no reviewer engagement — dispatcher stack is still starving on reviewer capacity, not implementer capacity. Risk is now aging past the 'review by October' commitment captured in the sprint retro",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Explicit reviewer slot for the trio next 24h; document reviewer-slot rotation policy for large-scope feature PRs",
+      "owner_role": "pm-tech-lead",
+      "trigger": null,
+      "status": "open",
+      "source": "pm-scrum-master 2026-07-30 (carried, aging)"
+    },
+    {
       "id": "risk-layout-webhook-replay-2026-07-23",
-      "risk": "Layout publish webhook lacks timestamp/replay protection (#2485) \u2014 a captured legitimate publish can be replayed to overwrite a newer layout",
+      "risk": "Layout publish webhook lacks timestamp/replay protection (#2485) — a captured legitimate publish can be replayed to overwrite a newer layout",
       "probability": "medium",
       "impact": "high",
       "mitigation": "Fix #2485 (add nonce+timestamp+HMAC parity with esignature webhook); track integration test in action-list",
@@ -15,7 +59,7 @@
     },
     {
       "id": "risk-mobile-layout-cache-cross-tenant-2026-07-23",
-      "risk": "Mobile LAYOUT_CACHE_KEY is not tenant-scoped and survives logout (#2486) \u2014 user A's layout can leak to user B on shared device or org-switch",
+      "risk": "Mobile LAYOUT_CACHE_KEY is not tenant-scoped and survives logout (#2486) — user A's layout can leak to user B on shared device or org-switch",
       "probability": "medium",
       "impact": "medium",
       "mitigation": "Fix #2486 (namespace cache key by tenant_id + purge on logout); add regression test in QA action-list",
@@ -26,7 +70,7 @@
     },
     {
       "id": "risk-dispute-add-evidence-idor-lingers-2026-07-23",
-      "risk": "add_evidence dispute sub-resource remains cross-tenant-writable until PR #2490 lands (#2483) \u2014 PR #2450 fixed 5 handlers but missed the sub-route",
+      "risk": "add_evidence dispute sub-resource remains cross-tenant-writable until PR #2490 lands (#2483) — PR #2450 fixed 5 handlers but missed the sub-route",
       "probability": "low",
       "impact": "high",
       "mitigation": "Land PR #2490 promptly; add subroute-authz regression as part of ongoing IDOR sweep pattern",
@@ -37,7 +81,7 @@
     },
     {
       "id": "risk-announcement-fanout-test-fidelity-2026-07-23",
-      "risk": "Announcement cross-tenant fan-out guard is tested only via a pure-Rust re-model, not the real SQL (#2484) \u2014 the SQL predicate could regress without the test catching it",
+      "risk": "Announcement cross-tenant fan-out guard is tested only via a pure-Rust re-model, not the real SQL (#2484) — the SQL predicate could regress without the test catching it",
       "probability": "medium",
       "impact": "high",
       "mitigation": "Replace pure-Rust model test with sqlx integration test that exercises the actual RLS policy",
@@ -48,10 +92,10 @@
     },
     {
       "id": "risk-analytics-blindspots-shipped-mvp-2026-07-23",
-      "risk": "Multiple shipped MVP features (Epic 6, 10A, 10B, 80, 84) lack KPI instrumentation \u2014 product/business decisions run blind (dispute funnel, OAuth token usage, listing view, onboarding-tour completion, layout publish)",
+      "risk": "Multiple shipped MVP features (Epic 6, 10A, 10B, 80, 84) lack KPI instrumentation — product/business decisions run blind",
       "probability": "high",
       "impact": "medium",
-      "mitigation": "Sequence pm-data KPI-definition tasks (7 items just added to action-list); establish minimum-analytics DoD for future stories",
+      "mitigation": "Sequence pm-data KPI-definition tasks; establish minimum-analytics DoD for future stories",
       "owner_role": "pm-data",
       "trigger": null,
       "status": "open",
@@ -59,7 +103,7 @@
     },
     {
       "id": "risk-data-retention-policy-missing-2026-07-23",
-      "risk": "Append-only support_tooling_events + support-data audit trail have ON DELETE RESTRICT but no TTL \u2014 long-term storage/GDPR compliance risk",
+      "risk": "Append-only support_tooling_events + support-data audit trail have ON DELETE RESTRICT but no TTL — long-term storage/GDPR compliance risk",
       "probability": "medium",
       "impact": "medium",
       "mitigation": "Publish retention policy; if GDPR-in-scope, add lifecycle policy for personal-data-containing events",
@@ -70,7 +114,7 @@
     },
     {
       "id": "risk-metric-definition-drift-2026-07-23",
-      "risk": "FaultStatusCount metric (support-data) diverges from owner/portfolio fault KPIs (open decision from 2026-05-28, still unresolved) \u2014 dashboards will disagree with each other",
+      "risk": "FaultStatusCount metric (support-data) diverges from owner/portfolio fault KPIs — dashboards will disagree with each other",
       "probability": "high",
       "impact": "medium",
       "mitigation": "Land single-source-of-truth metric definitions in shared module; deprecate duplicates",
@@ -81,7 +125,7 @@
     },
     {
       "id": "risk-webhook-cross-integration-drift-2026-07-23",
-      "risk": "Webhook handlers across integrations (booking, airbnb, esignature, layout) lack consistent hardening \u2014 #2485 shows layout has no replay guard; unknown parity elsewhere",
+      "risk": "Webhook handlers across integrations (booking, airbnb, esignature, layout) lack consistent hardening — #2485 shows layout has no replay guard; unknown parity elsewhere",
       "probability": "medium",
       "impact": "high",
       "mitigation": "Cross-cutting audit action-list item integrations-webhook-hardening-audit-2026-07-23",
@@ -92,7 +136,7 @@
     },
     {
       "id": "pm-scrum-master-delete-by-file-key-samesorg-ref-gap-2026-07-30",
-      "risk": "PR #2571 (DELETE-by-file-key) landed with a same-org reference-check gap (#2573) \u2014 an active same-org file key can be deleted out from under a live document row",
+      "risk": "PR #2571 (DELETE-by-file-key) landed with a same-org reference-check gap (#2573) — an active same-org file key can be deleted out from under a live document row",
       "probability": "medium",
       "impact": "high",
       "mitigation": "Land a reference-count guard + integration test before any client wires the endpoint",
@@ -103,7 +147,7 @@
     },
     {
       "id": "pm-scrum-master-android-sso-csrf-half-wired-2026-07-30",
-      "risk": "PR #2568 CSRF state fix is non-functional (#2574) \u2014 SsoStateStore.mint() has no call site so every reality://sso callback is rejected",
+      "risk": "PR #2568 CSRF state fix is non-functional (#2574) — SsoStateStore.mint() has no call site so every reality://sso callback is rejected",
       "probability": "high",
       "impact": "high",
       "mitigation": "Wire mint() at the SSO deep-link entry point; add integration test for the happy-path SSO callback",
@@ -113,19 +157,8 @@
       "source": "pm-scrum-master 2026-07-30 (#2574 follow-up on PR #2568)"
     },
     {
-      "id": "pm-scrum-master-accounting-mvp-trio-reviewer-starvation-2026-07-30",
-      "risk": "Accounting MVP-loop trio (#2555 / #2558 / #2559) has been sitting 2 days with no reviewer engagement \u2014 dispatcher stack is starving on reviewer capacity, not implementer capacity",
-      "probability": "medium",
-      "impact": "medium",
-      "mitigation": "Explicit reviewer slot for the trio next 24h; document reviewer-slot rotation policy for large-scope feature PRs",
-      "owner_role": "pm-tech-lead",
-      "trigger": null,
-      "status": "open",
-      "source": "pm-scrum-master 2026-07-30"
-    },
-    {
       "id": "pm-backend-disputes-kpis-window-validation-gap-2026-07-30",
-      "risk": "Dispute KPI endpoint (#2572 \u2192 #2575) is quarantined-test-only in main; a shape regression could ship undetected until reporting starts consuming it",
+      "risk": "Dispute KPI endpoint (#2572 → #2575) is quarantined-test-only in main; a shape regression could ship undetected until reporting starts consuming it",
       "probability": "medium",
       "impact": "medium",
       "mitigation": "Un-quarantine the KPIs test; add window_start <= window_end validation; add a second test asserting the reporting-consumer contract",
@@ -135,19 +168,8 @@
       "source": "pm-backend 2026-07-30 (#2575)"
     },
     {
-      "id": "pm-scrum-master-84-x-partials-aging-2026-08-25",
-      "risk": "84-1 (direct-to-S3 wiring) + 84-2 (signer page) have been the same 2 partial stories for 3 upkeep windows (2026-07-30 / 08-06 / 08-25) \u2014 no dispatcher progress; backend is shipped, so aging risk is only stakeholder-visibility, but MVP 49/49 blocked",
-      "probability": "high",
-      "impact": "medium",
-      "mitigation": "Explicit implementer-pair window scoped to 84-1 + 84-2; consider promoting from ranked backlog directly rather than waiting for dispatcher spawn",
-      "owner_role": "pm-frontend",
-      "trigger": null,
-      "status": "open",
-      "source": "pm-scrum-master 2026-08-25"
-    },
-    {
       "id": "pm-scrum-master-voice-webhooks-churn-persists-2026-08-25",
-      "risk": "backend/servers/api-server/src/routes/voice_webhooks.rs is on its 3rd hotspot window running; PR #2838 centralized token encryption but scheduler/OAuth-refresh/token-vend paths still cluster \u2014 repeated micro-fixes without a structural split are a leading indicator of a latent design defect",
+      "risk": "backend/servers/api-server/src/routes/voice_webhooks.rs is on its 3rd hotspot window running; PR #2838 centralized token encryption but scheduler/OAuth-refresh/token-vend paths still cluster — repeated micro-fixes without a structural split are a leading indicator of a latent design defect",
       "probability": "medium",
       "impact": "medium",
       "mitigation": "Draft a refactor plan (extract token-mgmt / webhook-handlers / scheduler-jobs into 3 modules) before the next voice-related feature request",
@@ -158,7 +180,7 @@
     },
     {
       "id": "pm-qa-mobile-rn-lint-gap-hooks-i18n-2026-08-25",
-      "risk": "3 of this window's mobile-rn PRs (#2835 conditional hooks / #2836 hardcoded en / #2837 hardcoded en) fixed defects that eslint-plugin-react-hooks + a no-hardcoded-strings rule would catch statically \u2014 every future mobile-rn PR risks reintroducing them",
+      "risk": "3 mobile-rn PRs fixed defects that eslint-plugin-react-hooks + a no-hardcoded-strings rule would catch statically — every future mobile-rn PR risks reintroducing them",
       "probability": "high",
       "impact": "medium",
       "mitigation": "Adopt eslint-plugin-react-hooks + i18next-hardcoded-strings ESLint config in frontend/apps/mobile; gate CI on it",
@@ -168,46 +190,13 @@
       "source": "pm-qa 2026-08-25"
     },
     {
-      "id": "pm-qa-atomic-claim-no-concurrency-test-2026-08-25",
-      "risk": "PR #2834 (atomic claim for quiet-hours drain) closes #2831 but no test exercises the >1 api-server-replica race \u2014 the exact scenario the fix was written for is unverified; a regression could ship undetected",
-      "probability": "medium",
-      "impact": "high",
-      "mitigation": "Add integration test with 2 racing api-server replicas contending on the same held-notification batch; assert at-most-once delivery",
-      "owner_role": "pm-qa",
-      "trigger": null,
-      "status": "open",
-      "source": "pm-qa 2026-08-25"
-    },
-    {
-      "id": "pm-qa-voice-oauth-encryption-no-roundtrip-test-2026-08-25",
-      "risk": "PR #2838 centralized voice OAuth token encryption but there is no round-trip test asserting no plaintext at rest \u2014 a future field-rename or key-derivation change could silently store plaintext",
-      "probability": "medium",
-      "impact": "high",
-      "mitigation": "Add unit + integration test covering encrypt(token) \u2192 DB row \u2192 decrypt(row) \u2192 token equality across Alexa/Google/fallback; assert stored bytes are not the plaintext token",
-      "owner_role": "pm-qa",
-      "trigger": null,
-      "status": "open",
-      "source": "pm-qa 2026-08-25"
-    },
-    {
-      "id": "pm-qa-csv-crlf-sanitizer-no-fuzz-2026-08-25",
-      "risk": "PR #2827 neutralizes CR/LF in the CSV export sanitizer but the test suite likely only covers the reported inputs \u2014 formula-injection prefixes (= + - @) combined with CR/LF are the classic bypass class and remain unfuzzed",
-      "probability": "medium",
-      "impact": "medium",
-      "mitigation": "Add a property/fuzz test crossing {CR, LF, CRLF, NUL, U+2028, U+2029} \u00d7 {=, +, -, @, tab} \u00d7 every export column type",
-      "owner_role": "pm-qa",
-      "trigger": null,
-      "status": "open",
-      "source": "pm-qa 2026-08-25"
-    },
-    {
       "id": "pm-devops-mobile-native-cloud-starvation",
-      "risk": "Buffer starvation becomes chronic \u2014 every new mobile-native/KMP finding adds an unclaimable item to the cloud dispatcher's pool, pushing the loop back to Tier-1d generator kicks (recurring GC3=FAIL record-only)",
+      "risk": "Buffer starvation becomes chronic — every new mobile-native/KMP finding adds an unclaimable item to the cloud dispatcher's pool, now compounded by #2966 forcing claimable=9/72",
       "probability": "high",
       "impact": "medium",
-      "mitigation": "Fix issue #2652 (AGP/Gradle egress in cloud sandbox) or split action-list into cloud + local buckets so mobile-native items don't drag the 36-slot cloud buffer",
+      "mitigation": "Fix issue #2652 (AGP/Gradle egress in cloud sandbox) + issue #2966 (swagger-ui egress) or split action-list into cloud + local buckets",
       "owner_role": "pm-devops",
-      "trigger": "3+ consecutive dispatcher runs with claimable=0 and open>=5 mobile-native items",
+      "trigger": "3+ consecutive dispatcher runs with claimable<=15 and open>=5 blocked-infra items",
       "status": "open"
     },
     {
@@ -218,6 +207,91 @@
       "mitigation": "Add alert if `dev` HEAD has no research commit for >36h (mirrors routine's Phase 1 stale-routine check)",
       "owner_role": "pm-devops",
       "trigger": "gap of 36h+ between routine commits on `dev`",
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-cargo-deny-rustsec-xlsxwriter-zip-2026-10-19",
+      "risk": "cargo-deny advisories FAILED on dev HEAD: RUSTSEC-2026-0368 / RUSTSEC-2026-0369 on zip 8.6.0 pulled transitively via rust_xlsxwriter (#3124). Every backend PR merge is now gated on this since the advisory gate is required. Compounds with #2966 (swagger-ui egress) that already blocks builds — now builds green PRs cannot merge either.",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Either bump rust_xlsxwriter to a version with safe zip transitive dep, or add a bounded cargo-deny exception for RUSTSEC-2026-0368/0369 with a deadline captured in dispatcher backlog and surfaced in CI gate description",
+      "owner_role": "pm-security",
+      "trigger": "cargo-deny advisories failing on dev at any point beyond 24h after advisory publication",
+      "status": "open",
+      "source": "pm-scrum-master 2026-10-19"
+    },
+    {
+      "id": "pm-integration-rustsec-advisory-burst-blocks-merges-2026-10-19",
+      "risk": "External-dependency drift surface: cargo-deny can veto every backend merge on any new RUSTSEC advisory landing on a transitive dep (today: rust_xlsxwriter → zip 8.6.0 → RUSTSEC-2026-0368/0369). Integration velocity collapses to zero on advisory bursts; no SLA on how fast exceptions get triaged.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Introduce a bounded cargo-deny exception window with deadline tracked in dispatcher backlog; add CI gate description text that links the exception policy and names the current triage owner",
+      "owner_role": "pm-integration",
+      "trigger": "Any cargo-deny advisory failure that is not resolved within 24h",
+      "status": "open",
+      "source": "pm-integration 2026-10-19"
+    },
+    {
+      "id": "pm-integration-api-client-regen-drift-compliance-2026-10-19",
+      "risk": "PR #3122 touched @ppt/api-client compliance types (AML flags). If api-validation.yml did not regenerate cleanly against the typespec snapshot, downstream frontends could silently diverge on nullable flag defaults",
+      "probability": "low",
+      "impact": "medium",
+      "mitigation": "Spot-check api-validation.yml on PR #3122; if the generated client bump was not part of the merge, open a follow-up to regenerate",
+      "owner_role": "pm-integration",
+      "trigger": null,
+      "status": "open",
+      "source": "pm-integration 2026-10-19"
+    },
+    {
+      "id": "pm-backend-violations-add-evidence-authz-gap-2026-10-26",
+      "risk": "violations add_evidence sub-route is ungated (#3164) — allows any authenticated user (incl. cross-tenant) to attach evidence to any violation; same shape as the dispute add_evidence sub-route gap (#2483) a year ago, suggesting the add_evidence pattern is systemically under-tested",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Add tenant-scoped authz guard to violations add_evidence; add cross-tenant integration test (follow community_cross_tenant_idor_tests.rs pattern); sweep for other add_evidence/add_* sub-routes with the same gap",
+      "owner_role": "pm-backend",
+      "trigger": "Any violations IDOR exploit reported, OR a 2nd add_evidence-shaped gap found in a different resource",
+      "status": "open",
+      "source": "pm-backend 2026-10-26 (#3164)"
+    },
+    {
+      "id": "pm-backend-rustsec-advisories-gating-backend-merges-2026-10-26",
+      "risk": "Issue #3168 — 3 new RUSTSEC advisories on dev gate every backend PR merge; this is the second cargo-deny gate in a month (#3124 cleared 2026-10-19). Dependency hygiene is becoming a recurring merge-queue tax",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Resolve #3168 (bump offending crate(s) or bounded exception); schedule a quarterly cargo-tree review of transitive deps with known-flaky lineage (zip/xlsxwriter were last month's culprit — look for recurrence)",
+      "owner_role": "pm-security",
+      "trigger": "Any dispatcher run reporting cargo-deny FAILED or claimable<=10 while backend queue is non-empty",
+      "status": "open",
+      "source": "pm-backend 2026-10-26 (#3168)"
+    },
+    {
+      "id": "pm-frontend-mobile-rn-fake-submit-pattern-cluster-2026-10-28",
+      "risk": "Three independent frontend code-review findings in 7 days reveal mobile-rn / reality-web have 'wire-the-button-but-not-the-POST' bugs (ReportFault setTimeout, reality-web /sell no-persist, VoteDetail ranked ballot) — chronic class suggests the mobile/web UI slices ship without an end-to-end integration smoke",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Add a per-screen e2e-smoke gate: for every form with a Submit button, a MSW/Mirage mock asserts the POST is sent with the collected payload; block merge if the submit emits no network call",
+      "owner_role": "pm-frontend",
+      "trigger": "A third user-facing form-submit regression lands without this gate",
+      "status": "open"
+    },
+    {
+      "id": "pm-frontend-rotation-stale-83-days-2026-10-28",
+      "risk": "pm-frontend rotation has been stale 83 days (last run 2026-08-06) while the backlog accumulated 12 frontend/mobile code-review items — the daily rotation cadence is skewing toward backend-heavy weeks because sprint velocity is backend-driven, leaving UI-surface findings uncoordinated",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Add a staleness-bias to pm_cursor rotation: when any role is >60 days stale, prefer it over the current index. Alternately, run full-rotation sweeps on 10-day cadence instead of relying on daily rotation only",
+      "owner_role": "pm-scrum-master",
+      "trigger": "Any pm-* role crosses 90 days stale",
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-dispatcher-pipeline-starvation-2026-11-09",
+      "risk": "Dispatcher pipeline at 0-claimed/0-merged for ~10 consecutive runs (until this runs burst of pre-existing relands); planner buffer at 6/72 claimable; fresh non-mobile-native vectors are not being generated fast enough to keep 3 implementers fed at 12 runs/day",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Phase 3 priority: promote non-mobile-native code-review-finding vectors this run; escalate #3357 to operator; monitor dispatcher claim rate over next 48h",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
       "status": "open"
     }
   ]

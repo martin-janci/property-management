@@ -1,313 +1,307 @@
 /**
- * GroupDetailPage
+ * GroupDetailPage — `/community/groups/:groupId`.
  *
- * Page for viewing a community group's details, members, and posts.
- * Part of Story 42.1: Community Groups.
+ * Loads the group (`GET /community/groups/{id}`), the caller's membership from
+ * the building's group list (`GET /community/buildings/{id}/groups` — the
+ * detail endpoint carries no membership), and the group's posts
+ * (`GET /community/groups/{id}/posts`). Members can post and like; Join /
+ * Leave and Delete (owner or manager) are real mutations.
+ *
+ * Not offered because the server has no endpoint for them: member list,
+ * inviting members, editing the group, moderating members, comment threads.
  */
 
-import type { CommunityGroup, GroupMember, GroupMemberRole } from '@ppt/api-client';
+import {
+  type CreateCommunityPostRequest,
+  useAddPostReaction,
+  useCreatePost,
+  useDeleteGroup,
+  useGroup,
+  useGroupPosts,
+  useGroups,
+  useJoinGroup,
+  useLeaveGroup,
+} from '@ppt/api-client';
 import { useState } from 'react';
-import { GroupMemberList } from '../components/GroupMemberList';
+import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ConfirmationDialog, useToast } from '../../../components';
+import { useAuth } from '../../../contexts';
+import { getErrorMessage } from '../../../lib/api';
+import { isManagerRole } from '../../../routes/shared';
+import { CreatePostForm } from '../components/CreatePostForm';
+import { PostCard } from '../components/PostCard';
+import { EmptyState, ErrorState, LoadingState } from '../components/StateViews';
+import { withBuilding } from '../hooks/useCommunityBuilding';
+import { formatDate } from '../utils/format';
 
-interface GroupDetailPageProps {
-  group: CommunityGroup;
-  members: GroupMember[];
-  currentUserId?: string;
-  isMember?: boolean;
-  isAdmin?: boolean;
-  isOwner?: boolean;
-  isJoining?: boolean;
-  isLeaving?: boolean;
-  onJoin: () => void;
-  onLeave: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
-  onNavigateToSettings: () => void;
-  onNavigateBack: () => void;
-  onPromoteMember: (memberId: string, newRole: GroupMemberRole) => void;
-  onRemoveMember: (memberId: string) => void;
-  onBanMember: (memberId: string) => void;
-}
+export function GroupDetailPage() {
+  const { groupId } = useParams<{ groupId: string }>();
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { showToast } = useToast();
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
-type TabType = 'about' | 'members' | 'posts';
+  const groupQuery = useGroup(groupId);
+  const group = groupQuery.data;
+  const siblings = useGroups(group?.buildingId);
+  const postsQuery = useGroupPosts(groupId, { limit: 50 });
+  const joinGroup = useJoinGroup();
+  const leaveGroup = useLeaveGroup();
+  const deleteGroup = useDeleteGroup();
+  const createPost = useCreatePost();
+  const react = useAddPostReaction();
 
-export function GroupDetailPage({
-  group,
-  members,
-  currentUserId,
-  isMember,
-  isAdmin,
-  isOwner,
-  isJoining,
-  isLeaving,
-  onJoin,
-  onLeave,
-  onEdit,
-  onDelete,
-  onNavigateToSettings,
-  onNavigateBack,
-  onPromoteMember,
-  onRemoveMember,
-  onBanMember,
-}: GroupDetailPageProps) {
-  const [activeTab, setActiveTab] = useState<TabType>('about');
+  const backToGroups = () => navigate(withBuilding('/community/groups', group?.buildingId));
 
-  const canManageMembers = isAdmin || isOwner;
+  if (groupQuery.isLoading) return <LoadingState />;
 
-  const tabs: { id: TabType; label: string }[] = [
-    { id: 'about', label: 'About' },
-    { id: 'members', label: `Members (${group.memberCount})` },
-    { id: 'posts', label: `Posts (${group.postCount})` },
-  ];
+  if (groupQuery.error || !group || !groupId) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-16 text-center">
+        <p className="text-gray-500">{t('errors.groupNotFound')}</p>
+        <button
+          type="button"
+          onClick={backToGroups}
+          className="mt-4 text-sm text-blue-600 hover:text-blue-800"
+        >
+          {t('common.back')}
+        </button>
+      </div>
+    );
+  }
+
+  const membership = siblings.data?.find((g) => g.id === group.id);
+  const isMember = membership?.isMember ?? false;
+  const role = membership?.memberRole ?? null;
+  const isOwner = role === 'owner' || (!!user?.id && group.createdBy === user.id);
+  const canDelete = isOwner || isManagerRole(user?.role);
+
+  const handleJoin = () =>
+    joinGroup.mutate(groupId, {
+      onSuccess: () =>
+        showToast({
+          type: 'success',
+          title: t('common.success'),
+          message: t('community.groupJoined'),
+        }),
+      onError: (err) =>
+        showToast({
+          type: 'error',
+          title: t('community.joinFailed'),
+          message: getErrorMessage(err),
+        }),
+    });
+
+  const handleLeave = () =>
+    leaveGroup.mutate(groupId, {
+      onSuccess: () =>
+        showToast({
+          type: 'success',
+          title: t('common.success'),
+          message: t('community.groupLeft'),
+        }),
+      onError: (err) =>
+        showToast({
+          type: 'error',
+          title: t('community.leaveFailed'),
+          message: getErrorMessage(err),
+        }),
+    });
+
+  const handleDelete = () =>
+    deleteGroup.mutate(groupId, {
+      onSuccess: () => {
+        setConfirmDelete(false);
+        showToast({
+          type: 'success',
+          title: t('common.success'),
+          message: t('community.groupDeleted'),
+        });
+        backToGroups();
+      },
+      onError: (err) => {
+        setConfirmDelete(false);
+        showToast({
+          type: 'error',
+          title: t('community.deleteFailed'),
+          message: getErrorMessage(err),
+        });
+      },
+    });
+
+  const handleCreatePost = (gid: string, data: CreateCommunityPostRequest) =>
+    createPost.mutateAsync(
+      { groupId: gid, data },
+      {
+        onSuccess: () =>
+          showToast({
+            type: 'success',
+            title: t('common.success'),
+            message: t('community.hub.postCreated'),
+          }),
+        onError: (err) =>
+          showToast({
+            type: 'error',
+            title: t('community.hub.postFailed'),
+            message: getErrorMessage(err),
+          }),
+      }
+    );
+
+  const handleLike = (postId: string) =>
+    react.mutate(
+      { postId },
+      {
+        onError: (err) =>
+          showToast({
+            type: 'error',
+            title: t('community.hub.likeFailed'),
+            message: getErrorMessage(err),
+          }),
+      }
+    );
+
+  const posts = postsQuery.data ?? [];
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      {/* Back Button */}
+    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
       <button
         type="button"
-        onClick={onNavigateBack}
-        className="flex items-center text-gray-600 hover:text-gray-900 mb-6"
+        onClick={backToGroups}
+        className="text-sm text-gray-600 hover:text-gray-900"
       >
-        <svg
-          className="w-5 h-5 mr-1"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          aria-hidden="true"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-        Back to Groups
+        ← {t('community.common.backToGroups')}
       </button>
 
-      {/* Header */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        {/* Cover Image */}
-        <div className="h-48 bg-gradient-to-r from-blue-500 to-purple-600 relative">
-          {group.coverImageUrl && (
-            <img
-              src={group.coverImageUrl}
-              alt={`${group.name} cover`}
-              className="w-full h-full object-cover"
-            />
-          )}
-          {group.isOfficial && (
-            <span className="absolute top-4 right-4 bg-blue-600 text-white text-sm px-3 py-1 rounded-full flex items-center gap-1">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                <path
-                  fillRule="evenodd"
-                  d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              Official
-            </span>
-          )}
-        </div>
-
-        {/* Group Info */}
-        <div className="p-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">{group.name}</h1>
-              <div className="flex items-center gap-3 mt-2 text-sm text-gray-500">
-                <span className="flex items-center gap-1">
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
-                    />
-                  </svg>
-                  {group.category}
+      <section className="bg-white rounded-lg shadow p-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold text-gray-900">{group.name}</h1>
+            <p className="mt-1 text-sm text-gray-500">
+              {t(`community.groupTypes.${group.groupType}`)} ·{' '}
+              {t(`community.groupCard.visibility.${group.visibility}`)} ·{' '}
+              {t('community.groupDetail.members', { count: group.memberCount })} ·{' '}
+              {t('community.hub.postCount', { count: group.postCount })}
+            </p>
+            {group.isOfficial && (
+              <span className="mt-2 inline-block text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                {t('community.common.official')}
+              </span>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {siblings.isLoading ? null : isMember ? (
+              isOwner ? (
+                <span
+                  className="text-sm text-gray-500"
+                  title={t('community.groupDetail.ownersCannotLeave')}
+                >
+                  {t('community.groupMembers.roles.owner')}
                 </span>
-                <span>•</span>
-                <span className="flex items-center gap-1">
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                    />
-                  </svg>
-                  {group.memberCount} members
-                </span>
-                <span>•</span>
-                <span className="capitalize">{group.visibility}</span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {isMember ? (
-                <>
-                  {(isAdmin || isOwner) && (
-                    <button
-                      type="button"
-                      onClick={onNavigateToSettings}
-                      className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md"
-                      title="Group Settings"
-                    >
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        aria-hidden="true"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                        />
-                      </svg>
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={onLeave}
-                    disabled={isLeaving || isOwner}
-                    className="px-4 py-2 text-sm border border-red-300 text-red-600 rounded-md hover:bg-red-50 disabled:opacity-50"
-                    title={isOwner ? 'Owners cannot leave the group' : 'Leave group'}
-                  >
-                    {isLeaving ? 'Leaving...' : 'Leave Group'}
-                  </button>
-                </>
               ) : (
                 <button
                   type="button"
-                  onClick={onJoin}
-                  disabled={isJoining}
-                  className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                  onClick={handleLeave}
+                  disabled={leaveGroup.isPending}
+                  className="px-4 py-2 text-sm border border-red-300 text-red-600 rounded-md hover:bg-red-50 disabled:opacity-50"
                 >
-                  {isJoining ? 'Joining...' : 'Join Group'}
+                  {leaveGroup.isPending
+                    ? t('community.groupDetail.leaving')
+                    : t('community.groupDetail.leaveGroup')}
                 </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="border-t border-gray-200">
-          <nav className="flex">
-            {tabs.map((tab) => (
+              )
+            ) : (
               <button
-                key={tab.id}
                 type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 py-3 text-sm font-medium text-center border-b-2 transition-colors ${
-                  activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
+                onClick={handleJoin}
+                disabled={joinGroup.isPending}
+                className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
               >
-                {tab.label}
+                {joinGroup.isPending
+                  ? t('community.groupDetail.joining')
+                  : t('community.groupDetail.joinGroup')}
               </button>
-            ))}
-          </nav>
-        </div>
-      </div>
-
-      {/* Tab Content */}
-      <div className="mt-6">
-        {activeTab === 'about' && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">About this group</h2>
-            <p className="text-gray-600 whitespace-pre-wrap">{group.description}</p>
-            <div className="mt-6 pt-4 border-t text-sm text-gray-500">
-              <p>Created on {new Date(group.createdAt).toLocaleDateString()}</p>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'members' && (
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Members</h2>
-              {canManageMembers && (
-                <button type="button" className="text-sm text-blue-600 hover:text-blue-800">
-                  Invite Members
-                </button>
-              )}
-            </div>
-            <GroupMemberList
-              members={members}
-              currentUserId={currentUserId}
-              canManageMembers={canManageMembers}
-              onPromote={onPromoteMember}
-              onRemove={onRemoveMember}
-              onBan={onBanMember}
-            />
-          </div>
-        )}
-
-        {activeTab === 'posts' && (
-          <div className="bg-white rounded-lg shadow p-6 text-center">
-            <svg
-              className="mx-auto h-12 w-12 text-gray-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
-              />
-            </svg>
-            <p className="mt-4 text-gray-500">
-              Posts will be shown here. See the Feed tab for all community posts.
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Admin Actions */}
-      {(isAdmin || isOwner) && (
-        <div className="mt-8 bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Admin Actions</h2>
-          <div className="flex items-center gap-4">
-            <button
-              type="button"
-              onClick={onEdit}
-              className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
-            >
-              Edit Group
-            </button>
-            {isOwner && (
+            )}
+            {canDelete && (
               <button
                 type="button"
-                onClick={onDelete}
-                className="px-4 py-2 text-sm border border-red-300 text-red-600 rounded-md hover:bg-red-50"
+                onClick={() => setConfirmDelete(true)}
+                className="px-4 py-2 text-sm border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
               >
-                Delete Group
+                {t('community.groupDetail.deleteGroup')}
               </button>
             )}
           </div>
         </div>
-      )}
+
+        {group.description && (
+          <div className="mt-4">
+            <h2 className="text-sm font-semibold text-gray-900">
+              {t('community.groupDetail.aboutTitle')}
+            </h2>
+            <p className="mt-1 text-sm text-gray-700 whitespace-pre-wrap">{group.description}</p>
+          </div>
+        )}
+        {group.rules && (
+          <div className="mt-4">
+            <h2 className="text-sm font-semibold text-gray-900">{t('community.hub.groupRules')}</h2>
+            <p className="mt-1 text-sm text-gray-700 whitespace-pre-wrap">{group.rules}</p>
+          </div>
+        )}
+        <p className="mt-4 text-xs text-gray-500">
+          {t('community.groupDetail.createdOn', {
+            date: formatDate(group.createdAt, i18n.language),
+          })}
+        </p>
+      </section>
+
+      <section className="space-y-4" aria-labelledby="group-posts-heading">
+        <h2 id="group-posts-heading" className="text-lg font-semibold text-gray-900">
+          {t('community.hub.postsHeading')}
+        </h2>
+        {isMember ? (
+          <CreatePostForm
+            groups={[{ id: group.id, name: group.name }]}
+            isSubmitting={createPost.isPending}
+            onSubmit={handleCreatePost}
+          />
+        ) : (
+          !siblings.isLoading && (
+            <p className="text-sm text-gray-500">{t('community.hub.joinToPost')}</p>
+          )
+        )}
+        {postsQuery.isLoading ? (
+          <LoadingState />
+        ) : postsQuery.error ? (
+          <ErrorState message={t('community.hub.loadError')} onRetry={() => postsQuery.refetch()} />
+        ) : posts.length === 0 ? (
+          <EmptyState title={t('community.feed.emptyTitle')} body={t('community.feed.emptyBody')} />
+        ) : (
+          posts.map((post) => (
+            <PostCard
+              key={post.id}
+              post={post}
+              currentUserId={user?.id}
+              onLike={handleLike}
+              isLiking={react.isPending && react.variables?.postId === post.id}
+            />
+          ))
+        )}
+      </section>
+
+      <ConfirmationDialog
+        isOpen={confirmDelete}
+        title={t('community.groupDetail.deleteGroup')}
+        message={t('community.deleteGroupConfirm')}
+        confirmLabel={t('community.common.delete')}
+        cancelLabel={t('community.common.cancel')}
+        variant="danger"
+        isLoading={deleteGroup.isPending}
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmDelete(false)}
+      />
     </div>
   );
 }

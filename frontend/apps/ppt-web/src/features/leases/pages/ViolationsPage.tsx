@@ -17,7 +17,8 @@ interface ViolationsPageProps {
   onResolveViolation: (id: string) => void;
   onDisputeViolation: (id: string) => void;
   onCreateViolation: () => void;
-  onExportReport: () => void;
+  /** Omit to hide the export button (no export endpoint). */
+  onExportReport?: () => void;
 }
 
 const violationStatuses: ViolationStatus[] = [
@@ -90,23 +91,25 @@ export function ViolationsPage({
           <p className="text-gray-600 mt-1">{t('leases.violations.subtitle')}</p>
         </div>
         <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={onExportReport}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-          >
-            <span className="flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                />
-              </svg>
-              {t('leases.violations.exportReport')}
-            </span>
-          </button>
+          {onExportReport && (
+            <button
+              type="button"
+              onClick={onExportReport}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              <span className="flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                  />
+                </svg>
+                {t('leases.violations.exportReport')}
+              </span>
+            </button>
+          )}
           {isManager && (
             <button
               type="button"

@@ -100,19 +100,26 @@ export function useAmlDashboard(): UseAmlDashboardResult {
     risk_score: a.risk_score,
     risk_level: a.risk_level,
     status: a.status,
-    risk_factors: a.risk_factors.map((f) => ({
+    risk_factors: (a.risk_factors ?? []).map((f) => ({
       factor_type: f.factor_type,
       description: f.description,
       weight: f.weight,
       mitigated: !f.triggered,
     })),
     flagged_for_review: a.flagged_for_review,
-    // TODO(Phase-2): Extend API to include these fields
-    // Phase 1: Default values for missing fields
-    id_verified: false,
-    source_of_funds_documented: false,
-    pep_check_completed: false,
-    sanctions_check_completed: false,
+    // Wire AML-check flags from the actual backend assessment row. The list
+    // endpoint returns an untyped JSON payload, so read defensively: a missing
+    // flag (null/undefined on a row predating these columns) means "not
+    // completed" rather than crashing or silently showing a bogus "verified".
+    id_verified: a.id_verified ?? false,
+    source_of_funds_documented: a.source_of_funds_documented ?? false,
+    pep_check_completed: a.pep_check_completed ?? false,
+    sanctions_check_completed: a.sanctions_check_completed ?? false,
+    // GAP (not fixed in this PR): the list endpoint does not return
+    // `recommendations`. The backend computes them only on the single-assessment
+    // get/create/review responses (AmlAssessmentResponse), never on list rows,
+    // so there is no field to read here. Left empty until the list payload is
+    // extended server-side — deliberately NOT inventing a new endpoint.
     recommendations: [],
     created_at: a.created_at,
     assessed_at: a.updated_at,

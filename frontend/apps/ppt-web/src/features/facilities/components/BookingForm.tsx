@@ -6,6 +6,7 @@
 
 import type { AvailableSlot, CreateBookingRequest, Facility } from '@ppt/api-client';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface BookingFormProps {
   facility: Facility;
@@ -17,6 +18,24 @@ interface BookingFormProps {
   isSubmitting?: boolean;
 }
 
+/**
+ * Whether a local date-time is bookable given the availability response.
+ *
+ * The api-server reports existing bookings as `is_available: false` slots and
+ * never lists the free time, so a time is free unless it falls inside one of
+ * them. If the response ever does list explicit free slots
+ * (`is_available: true`), the time must also fall inside one of those.
+ */
+export function isTimeAvailable(localDateTime: string, slots?: AvailableSlot[]): boolean {
+  if (!slots || slots.length === 0) return true;
+  const at = new Date(localDateTime);
+  const contains = (slot: AvailableSlot) =>
+    at >= new Date(slot.start_time) && at < new Date(slot.end_time);
+  if (slots.some((slot) => !slot.is_available && contains(slot))) return false;
+  const freeSlots = slots.filter((slot) => slot.is_available);
+  return freeSlots.length === 0 || freeSlots.some(contains);
+}
+
 export function BookingForm({
   facility,
   availableSlots,
@@ -26,6 +45,12 @@ export function BookingForm({
   onCancel,
   isSubmitting,
 }: BookingFormProps) {
+  const { t, i18n } = useTranslation();
+  const formatNumber = (value: number, fractionDigits = 0) =>
+    new Intl.NumberFormat(i18n.language, {
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: Math.max(fractionDigits, 2),
+    }).format(value);
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [purpose, setPurpose] = useState('');
@@ -44,16 +69,16 @@ export function BookingForm({
     const newErrors: Record<string, string> = {};
 
     if (!selectedDate) {
-      newErrors.date = 'Please select a date';
+      newErrors.date = t('facilities.bookings.form.errors.selectDate');
     }
     if (!startTime) {
-      newErrors.startTime = 'Please select a start time';
+      newErrors.startTime = t('facilities.bookings.form.errors.selectStart');
     }
     if (!endTime) {
-      newErrors.endTime = 'Please select an end time';
+      newErrors.endTime = t('facilities.bookings.form.errors.selectEnd');
     }
     if (startTime && endTime && startTime >= endTime) {
-      newErrors.endTime = 'End time must be after start time';
+      newErrors.endTime = t('facilities.bookings.form.errors.endAfterStart');
     }
 
     // Check max booking hours
@@ -62,13 +87,17 @@ export function BookingForm({
       const end = new Date(`${selectedDate}T${endTime}`);
       const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
       if (hours > facility.max_booking_hours) {
-        newErrors.endTime = `Maximum booking duration is ${facility.max_booking_hours} hours`;
+        newErrors.endTime = t('facilities.bookings.form.errors.maxDuration', {
+          hours: facility.max_booking_hours,
+        });
       }
     }
 
     // Check capacity
     if (attendeesCount && facility.capacity && Number(attendeesCount) > facility.capacity) {
-      newErrors.attendeesCount = `Maximum capacity is ${facility.capacity}`;
+      newErrors.attendeesCount = t('facilities.bookings.form.errors.maxCapacity', {
+        count: facility.capacity,
+      });
     }
 
     setErrors(newErrors);
@@ -107,17 +136,8 @@ export function BookingForm({
   }
 
   // Filter to available slots if provided
-  const isSlotAvailable = (time: string): boolean => {
-    if (!availableSlots) return true;
-    // Convert to Date objects for proper comparison
-    const dateTime = new Date(`${selectedDate}T${time}:00`);
-    return availableSlots.some((slot) => {
-      if (!slot.is_available) return false;
-      const slotStart = new Date(slot.start_time);
-      const slotEnd = new Date(slot.end_time);
-      return dateTime >= slotStart && dateTime < slotEnd;
-    });
-  };
+  const isSlotAvailable = (time: string): boolean =>
+    isTimeAvailable(`${selectedDate}T${time}:00`, availableSlots);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -125,12 +145,22 @@ export function BookingForm({
       <div className="bg-blue-50 rounded-lg p-4">
         <h3 className="font-semibold text-gray-900">{facility.name}</h3>
         <div className="mt-2 text-sm text-gray-600 space-y-1">
-          {facility.location && <p>Location: {facility.location}</p>}
-          {facility.capacity && <p>Capacity: {facility.capacity} people</p>}
-          {facility.hourly_fee && <p>Fee: {facility.hourly_fee}/hour</p>}
-          {facility.max_booking_hours && <p>Max duration: {facility.max_booking_hours} hours</p>}
+          {facility.location && (
+            <p>{t('facilities.bookings.form.location', { location: facility.location })}</p>
+          )}
+          {facility.capacity && (
+            <p>{t('facilities.bookings.form.capacity', { count: facility.capacity })}</p>
+          )}
+          {facility.hourly_fee && (
+            <p>{t('facilities.bookings.form.fee', { fee: facility.hourly_fee })}</p>
+          )}
+          {facility.max_booking_hours && (
+            <p>
+              {t('facilities.bookings.form.maxDuration', { hours: facility.max_booking_hours })}
+            </p>
+          )}
           {facility.requires_approval && (
-            <p className="text-yellow-700">This facility requires approval</p>
+            <p className="text-yellow-700">{t('facilities.bookings.form.requiresApproval')}</p>
           )}
         </div>
       </div>
@@ -138,7 +168,7 @@ export function BookingForm({
       {/* Date Selection */}
       <div>
         <label htmlFor="date" className="block text-sm font-medium text-gray-700">
-          Date
+          {t('facilities.bookings.form.date')}
         </label>
         <input
           type="date"
@@ -162,7 +192,7 @@ export function BookingForm({
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label htmlFor="startTime" className="block text-sm font-medium text-gray-700">
-            Start Time
+            {t('facilities.bookings.form.startTime')}
           </label>
           <select
             id="startTime"
@@ -170,10 +200,10 @@ export function BookingForm({
             onChange={(e) => setStartTime(e.target.value)}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="">Select time</option>
+            <option value="">{t('facilities.bookings.form.selectTime')}</option>
             {timeOptions.map((time) => (
               <option key={time} value={time} disabled={!isSlotAvailable(time)}>
-                {time} {!isSlotAvailable(time) ? '(unavailable)' : ''}
+                {time} {!isSlotAvailable(time) ? t('facilities.bookings.form.unavailable') : ''}
               </option>
             ))}
           </select>
@@ -182,7 +212,7 @@ export function BookingForm({
 
         <div>
           <label htmlFor="endTime" className="block text-sm font-medium text-gray-700">
-            End Time
+            {t('facilities.bookings.form.endTime')}
           </label>
           <select
             id="endTime"
@@ -190,7 +220,7 @@ export function BookingForm({
             onChange={(e) => setEndTime(e.target.value)}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="">Select time</option>
+            <option value="">{t('facilities.bookings.form.selectTime')}</option>
             {timeOptions
               .filter((time) => time > startTime)
               .map((time) => (
@@ -206,14 +236,14 @@ export function BookingForm({
       {/* Purpose */}
       <div>
         <label htmlFor="purpose" className="block text-sm font-medium text-gray-700">
-          Purpose of Booking
+          {t('facilities.bookings.form.purpose')}
         </label>
         <input
           type="text"
           id="purpose"
           value={purpose}
           onChange={(e) => setPurpose(e.target.value)}
-          placeholder="e.g., Team meeting, Birthday party"
+          placeholder={t('facilities.bookings.form.purposePlaceholder')}
           className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
@@ -222,7 +252,7 @@ export function BookingForm({
       {facility.capacity && (
         <div>
           <label htmlFor="attendeesCount" className="block text-sm font-medium text-gray-700">
-            Number of Attendees
+            {t('facilities.bookings.form.attendeesCount')}
           </label>
           <input
             type="number"
@@ -231,7 +261,7 @@ export function BookingForm({
             onChange={(e) => setAttendeesCount(e.target.value ? Number(e.target.value) : '')}
             min={1}
             max={facility.capacity}
-            placeholder={`Max: ${facility.capacity}`}
+            placeholder={t('facilities.bookings.form.maxPlaceholder', { count: facility.capacity })}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           {errors.attendeesCount && (
@@ -243,14 +273,14 @@ export function BookingForm({
       {/* Notes */}
       <div>
         <label htmlFor="notes" className="block text-sm font-medium text-gray-700">
-          Additional Notes
+          {t('facilities.bookings.form.notes')}
         </label>
         <textarea
           id="notes"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={3}
-          placeholder="Any special requirements or notes"
+          placeholder={t('facilities.bookings.form.notesPlaceholder')}
           className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
@@ -259,34 +289,31 @@ export function BookingForm({
       {facility.hourly_fee && startTime && endTime && (
         <div className="bg-gray-50 rounded-lg p-4">
           <div className="flex justify-between text-sm">
-            <span>Duration:</span>
+            <span>{t('facilities.bookings.form.durationLabel')}</span>
             <span>
               {(() => {
                 const start = new Date(`2000-01-01T${startTime}`);
                 const end = new Date(`2000-01-01T${endTime}`);
                 const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-                return `${hours} hour${hours !== 1 ? 's' : ''}`;
+                return t('facilities.bookings.form.hoursValue', { hours: formatNumber(hours) });
               })()}
             </span>
           </div>
           <div className="flex justify-between font-semibold mt-2">
-            <span>Estimated Total:</span>
+            <span>{t('facilities.bookings.form.estimatedTotal')}</span>
             <span>
               {(() => {
                 const start = new Date(`2000-01-01T${startTime}`);
                 const end = new Date(`2000-01-01T${endTime}`);
                 const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
                 const fee = Number.parseFloat(facility.hourly_fee || '0');
-                if (Number.isNaN(fee)) {
-                  return '$0.00';
-                }
-                return `$${(fee * hours).toFixed(2)}`;
+                return formatNumber(Number.isNaN(fee) ? 0 : fee * hours, 2);
               })()}
             </span>
           </div>
           {facility.deposit_amount && (
             <div className="flex justify-between text-sm text-gray-600 mt-1">
-              <span>Deposit required:</span>
+              <span>{t('facilities.bookings.form.depositRequired')}</span>
               <span>{facility.deposit_amount}</span>
             </div>
           )}
@@ -300,7 +327,7 @@ export function BookingForm({
           onClick={onCancel}
           className="flex-1 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
         >
-          Cancel
+          {t('facilities.bookings.form.cancel')}
         </button>
         <button
           type="submit"
@@ -308,10 +335,10 @@ export function BookingForm({
           className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {isSubmitting
-            ? 'Booking...'
+            ? t('facilities.bookings.form.submitting')
             : facility.requires_approval
-              ? 'Submit for Approval'
-              : 'Book Now'}
+              ? t('facilities.bookings.form.submitForApproval')
+              : t('facilities.bookings.form.bookNow')}
         </button>
       </div>
     </form>

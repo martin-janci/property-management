@@ -1,0 +1,59 @@
+{
+  "generated": "2026-10-11T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable buffer below floor: claimable=9 < floor=36; cheaper refill tiers exhausted). Static single-segment rotating code review via ppt-dev-review skill, no compilation / no test execution (cloud runner has no toolchain). File reading + grep only. Produces fresh frontend (React / ppt-web) backlog vectors for the ppt-web-ui segment.",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed: review_cursor's oldest dates are a tie at 2026-10-01 between ppt-web-ui and mobile-rn. mobile-rn was the one mined on 2026-10-10 (tie broken toward it that day), so today the tie is broken toward ppt-web-ui, the less-recently-reviewed-for-novelty of the two. NOT saturated by the skill's rule (0 open code-review-finding rows for ppt-web-ui in backlog.json; the 4 open rows are reality-server=3 + mobile-rn=1). NOTE: ppt-web-ui is deeply mined historically (172 prior signal findings across the *ppt-web-ui*.json history), so the pages/+components/ top-level dirs and all 34 already-covered feature dirs (incl. the churn hotspots disputes/documents/compliance/facilities) are exhausted or already-emitted. This pass instead targets the previously-unmined feature dirs. Candidates that turned out to be duplicates of prior findings were discarded: portfolio-performance dead PropertyCard onClick (dup of code-review-ppt-web-ui-portfolio-dashboard-deadnav 2026-09-05), BookFacilityPage silent availability error (dup of code-review-ppt-web-ui-facilities-booking-silent-errors), ContentModerationPage window.location full-reload (dup of code-review-ppt-web-ui-content-mod-window-location-nav 2026-08-11). The two findings below are the genuinely-new, non-duplicate issues located in unmined features (rentals, critical-notifications).",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-rentals-load-error-unhandled",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "The wired rentals feature has NO error-state path for failed data loads. frontend/apps/ppt-web/src/routes/groups/rentals.tsx contains 6 read useQuery() calls (lines 266, 274, 328, 401, 449, 546) and 0 references to isError (`grep -c isError` on the file returns 0). Every read query destructures only `{ data, isLoading }`.",
+        "On query failure (network drop / 4xx / 5xx) each route falls the data back to an empty collection: rentals.tsx:283-284 `const bookings = (data?.data?.data ?? []).map(...)` / `const connections = (connData?.data ?? []).map(...)`; also :375, :418, :558. So a failed load renders as legitimately-empty data, not an error.",
+        "RentalsDashboardPageRoute (rentals.tsx:262-320) is the worst case: on a failed reservations query it computes statistics from `bookings = []` and shows totalBookings 0, totalRevenue €0, 0 active/upcoming (rentals.tsx:290-299) with isLoading already false and no error banner — a misleading zeroed revenue dashboard that looks like real empty state to a property manager.",
+        "The presentational pages cannot surface the error even if the container knew about it: frontend/apps/ppt-web/src/features/rentals/pages/RentalsDashboardPage.tsx props (lines 10-27) expose `isLoading?: boolean` and `isTaxSummaryLoading?` but NO error/isError prop; same for BookingsPage/CalendarPage/PlatformConnectionsPage/GuestRegistrationPage/BookingDetailPage (none reference isError/.error/catch). The UI layer offers no error affordance at all.",
+        "This is a DISTINCT issue from the prior rentals findings, which were all about MUTATIONS and are already done: code-review-ppt-web-core-rentals-mutation-silent, code-review-ppt-web-core-rentals-auth-nonnull-mutation, code-review-ppt-web-core-mutation-no-onerror. Those drove the elaborate mutation onError handling now in the file (handleRentalsMutationError at rentals.tsx:244-260, SESSION_LOST_CODES, AuthError routing) — which makes the untouched READ queries the glaring remaining gap. No prior *ppt-web-ui*.json or backlog row covers the read-query/no-error-prop path (verified against 172 prior ppt-web-ui signals + backlog).",
+        "Landable remedy (frontend-only, no backend/KMP): destructure `isError`/`error` from the 6 read useQuery calls, add an `isError?: boolean` (or `loadError`) prop to the rentals presentational pages, and render an error state (retry affordance) instead of defaulting to `?? []`. Matches how the rest of ppt-web surfaces query failures (e.g. PortfolioDashboardPage.tsx:258 `cardsQuery.isError ? <error> : ...`). Severity medium: silent empty/zeroed revenue dashboard on a live, router-mounted feature. Confidence medium: statically code-verified (isError literally never referenced in the container; pages have no error prop), not runtime-confirmed."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx",
+        "frontend/apps/ppt-web/src/features/rentals/pages/RentalsDashboardPage.tsx"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-critical-notif-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "completeness",
+      "evidence": [
+        "The critical-notifications feature renders user-facing emergency copy as hardcoded English with no useTranslation / i18n keys. frontend/apps/ppt-web/src/features/critical-notifications/components/CriticalNotificationModal.tsx: 'Critical Notification' (:74), 'Posted on {date}' (:88), '{n} of {n}' (:78), 'Acknowledging...' (:127), 'I Acknowledge - Next' (:130), 'I Acknowledge' (:132). CriticalNotificationBanner.tsx: 'View Now' (:54) and the full banner sentence (:42-45).",
+        "Worse than a plain i18n gap: CriticalNotificationBanner.tsx:38-45 does manual English-only pluralization — `{count === 1 ? 'notification' : 'notifications'}` and `{count === 1 ? 'requires' : 'require'}`. This cannot be localized by swapping strings; Slovak/Czech have 3+ plural forms and German differs, so the hardcoded binary English branch is structurally wrong for sk/cs/de (the repo's supported locales).",
+        "This is critical/emergency content behind an acknowledgement action — a non-English resident literally cannot read what they are acknowledging (the Modal's acknowledge button and the persistent banner CTA are both unlocalized). i18n gaps in error/acknowledgement copy are the highest-impact ones.",
+        "critical-notifications is in UNWIRED_FEATURES (frontend/apps/ppt-web/src/features/unwired-features.ts:44) — built-but-not-yet-routed, code intentionally retained to wire later. The gap is latent today but will ship the moment the feature is wired; prior runs emit findings for unwired features too (e.g. code-review-ppt-web-ui-portfolio-perf-no-i18n for portfolio-performance, also unwired). Non-duplicate: no prior *ppt-web-ui*.json or backlog row references critical-notifications i18n (the only prior hit, dx-stale-todo-security-comments-faults-critical-notifications, is about stale TODO security comments, unrelated).",
+        "Reproduce: `grep -rL useTranslation frontend/apps/ppt-web/src/features/critical-notifications --include='*.tsx' | grep -v .test.` lists NotificationStatsCard.tsx, CriticalNotificationBanner.tsx and CriticalNotificationModal.tsx as having no i18n wiring.",
+        "Landable remedy (frontend-only): introduce `t('criticalNotifications.*')` keys for the literals, use interpolation/ICU plurals (e.g. react-i18next `t('...', { count })`) for the banner count sentence instead of manual English branching, and register keys in the sk/cs/de/en bundles. Low severity (unwired today, mechanical fix), confidence medium (static: literals + missing useTranslation code-verified, not runtime-confirmed)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/critical-notifications/components/CriticalNotificationModal.tsx",
+        "frontend/apps/ppt-web/src/features/critical-notifications/components/CriticalNotificationBanner.tsx"
+      ]
+    }
+  ]
+}

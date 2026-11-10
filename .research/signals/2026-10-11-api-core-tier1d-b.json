@@ -1,0 +1,52 @@
+{
+  "generated": "2026-10-11T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable buffer below floor: 7 < 36; no deterministic refill source available). Static single-segment rotating code review via ppt-dev-review skill - no compilation / no test execution / no git checkout (cloud runner, branch dev). File reading + grep only. Produces fresh backlog vectors for the api-core Rust segment (backend/servers/api-server/src/ excluding routes/). YIELD NOTE: api-core is a mature, heavily-defended segment - the unwrap/expect sweep (204 hits) is almost entirely test code or idiomatic infallible calls (OsRng fill .expect, reqwest client .build().expect, Decimal::from_str on hardcoded literals, argon2 params documented-infallible); the parts[0] indexing in totp.rs:194 and workflow_executor.rs:677 are both length/empty-guarded; the workflow api_call action (services/actions/api_call.rs) is extensively SSRF-hardened (DNS-pinned SsrfGuardResolver, TOCTOU-safe connect-time validation, same-origin redirect pinning); detached tokio::spawn tasks in notification_pipeline/workflow_executor/oauth all log errors via tracing on the Err branch; no unsafe blocks; the only production panics are startup config validation in main.rs (JWT_SECRET presence/length) which is correct fail-fast. Nits skipped per skill: voice_commands.rs:234 swallowed last-used-timestamp DB write (telemetry), accounting.rs:155-212 repeated Decimal::from_str(literal).unwrap() (infallible smell). Only the two findings below are net-new and defensible.",
+  "segment_reviewed": "api-core",
+  "selection_reason": "oldest-unreviewed. REVIEW_CURSOR shows api-core=2026-10-03, reality-server=2026-10-03, mobile-native-kmp=2026-10-03 tied oldest; tiebreak by the skill's segment-map table order -> api-core wins. No CHURN_FILES passed on this Tier-1d generator invocation (hotspot_history in state.json is stale, newest last_seen 2026-09-20). Not saturated: 0 open code-review-finding rows for api-core in backlog.json (only api-handlers has 3 open and would be skipped).",
+  "experts_used": [
+    "rust"
+  ],
+  "findings_count": 2,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-api-core-jwt-no-aud-iss",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/jwt.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/jwt.rs:198-212 (validate_access_token) and :216-230 (validate_refresh_token) build `Validation::default()` and set only `validation.validate_exp = true`. Neither validator binds `aud` (audience) or `iss` (issuer): there is no `validation.set_audience(...)` / `validation.set_issuer(...)` call, and the issued Claims struct (:30-57) carries no aud/iss fields at all. Token scoping rests solely on the shared HS256 secret plus the string `token_type` gate (:208 `!= \"access\"`, :226 `!= \"refresh\"`).",
+        "Consequence: any component that shares JWT_SECRET (api-server is also the OAuth provider per CLAUDE.md, and reality-server is an SSO consumer against the same shared DB/auth surface) will accept a token minted for a different audience/context. There is no cryptographic binding preventing an access token issued for one principal-kind/service context from being replayed against another that trusts the same secret. The nbf (not-before) claim is likewise unvalidated.",
+        "The service's own doc comment at :191-197 explicitly flags this as a KNOWN future-hardening gap ('any future hardening ... e.g. adding aud/iss validation ... MUST be applied here as well as in verify_access_token') and names a sibling verifier api_core::extractors::auth::verify_access_token that ~40 route call-sites depend on - so the hardening must land in BOTH copies or they silently diverge (the exact failure mode GH #1675/#1782 set out to prevent).",
+        "Fix (backend-only): add an `aud` claim at issuance (generate_access_token*/ refresh), call validation.set_audience(&[expected_aud]) and set_issuer(&[expected_iss]) in both validate_* fns AND in the shared verify_access_token, and enable validate_nbf. Gate behind config so existing tokens drain over the 15-min access TTL. Medium severity: auth-hardening on the most-used token path, not an active bypass (single-secret monolith today), confidence medium (static trace only, no runtime PoC)."
+      ]
+    },
+    {
+      "id": "code-review-api-core-retention-days-no-floor",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/main.rs",
+        "backend/servers/api-server/src/services/scheduler/retention.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/main.rs:670-681 parses three retention windows from env as raw i64 with `std::env::var(...).ok().and_then(|v| v.parse().ok()).unwrap_or(<default>)`: SUPPORT_TOOLING_RETENTION_DAYS (default 730), LAYOUT_CHANGE_EVENTS_RETENTION_DAYS (730), OAUTH_TOKEN_EVENTS_RETENTION_DAYS (90). There is NO lower-bound / positivity validation on any of them; the field types (scheduler/mod.rs:64,68,75) are plain `i64`.",
+        "backend/servers/api-server/src/services/scheduler/retention.rs:209 computes `let cutoff = now - chrono::Duration::days(self.config.oauth_token_events_retention_days);` and then `oauth_token_event_repo.cleanup_before(cutoff)` DELETEs every row older than cutoff. The support-tooling and layout-change prunes (:72-74, :137-141) pass the day count straight into cleanup_old_* repo deletes the same way.",
+        "Misconfiguration-to-data-loss: setting any of these env vars to `0` makes cutoff == now, pruning ALL existing rows on the next scheduler tick; a NEGATIVE value makes cutoff a FUTURE timestamp, deleting the entire table including rows just written. The 24h min-interval guards (SUPPORT_TOOLING_PRUNE_MIN_INTERVAL_HOURS etc.) only rate-limit how often the destructive prune runs, not its blast radius. Operator typo (e.g. `RETENTION_DAYS=0` meaning 'disabled') silently wipes audit/event history instead.",
+        "Fix (backend-only): validate each parsed value is >= 1 at startup (clamp with .max(1) or fail-fast with a clear error like the JWT_SECRET checks at main.rs:539-578), or treat <=0 as 'retention disabled -> skip prune' explicitly in retention.rs before building the cutoff. Add a unit test asserting a 0/negative config does not delete recent rows. Medium severity: requires operator misconfiguration but the outcome is irreversible data loss on audit/event tables; confidence medium (static only)."
+      ]
+    }
+  ]
+}

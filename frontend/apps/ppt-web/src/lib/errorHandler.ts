@@ -216,9 +216,19 @@ function parseErrorResponse(data: ErrorResponse, statusCode?: number): ParsedApi
   const errorInfo = errorCopy(data.error);
   const validationErrors = parseValidationDetails(data.details);
 
+  // Resolve the user-facing message from the i18n catalogue first (keyed by
+  // error code). The backend ships English `message` text regardless of the
+  // user's locale, so for any code that HAS a catalogue entry the localized
+  // copy must win — otherwise server English leaks through to sk/cs/de users.
+  // The raw backend `message` is only used as a fallback when the code has no
+  // catalogue entry (unknown code -> localized default copy, else raw message).
+  const message = KNOWN_ERROR_CODES.has(data.error)
+    ? errorInfo.message
+    : data.message || errorInfo.message;
+
   return {
     title: errorInfo.title,
-    message: data.message || errorInfo.message,
+    message,
     code: data.error,
     requestId: data.requestId,
     validationErrors: validationErrors.size > 0 ? validationErrors : undefined,

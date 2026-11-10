@@ -3,44 +3,65 @@
  * Epic 18: Short-Term Rental Integration (Story 18.2, 18.3)
  */
 
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { BookingWithGuests, RentalGuest } from '../types';
+import { ConfirmationDialog } from '../../../components/ConfirmationDialog';
+import { BookingFormDialog } from '../components/BookingFormDialog';
+import { GuestForm } from '../components/GuestForm';
+import { parseIsoDate, toIsoDate } from '../mappers';
+import type {
+  BookingFormValues,
+  BookingWithGuests,
+  CreateGuestRequest,
+  RentalGuest,
+  UpdateGuestRequest,
+} from '../types';
 
 interface BookingDetailPageProps {
   booking: BookingWithGuests;
   isLoading?: boolean;
   onBack: () => void;
-  onEdit: (id: string) => void;
+  /** Values for the edit dialog; the Edit button is hidden without them. */
+  editForm?: BookingFormValues;
+  /** Open the edit dialog right away (e.g. `?edit=1` from the bookings list). */
+  initialEditing?: boolean;
+  onSaveBooking: (values: BookingFormValues) => Promise<void>;
+  /** Called after the user confirmed the cancellation. */
   onCancel: (id: string) => void;
   onCheckIn: (id: string) => void;
   onCheckOut: (id: string) => void;
-  onAddGuest: (bookingId: string) => void;
-  onEditGuest: (guestId: string) => void;
+  onAddGuest: (data: CreateGuestRequest) => Promise<void>;
+  onEditGuest: (guestId: string, data: UpdateGuestRequest) => Promise<void>;
   onRegisterGuest: (guestId: string) => void;
+  /** Called after the user confirmed the deletion. */
   onDeleteGuest: (guestId: string) => void;
 }
 
-function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString(undefined, {
+function formatDate(dateString: string, language: string): string {
+  return new Intl.DateTimeFormat(language, {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
     day: 'numeric',
-  });
+  }).format(parseIsoDate(dateString));
 }
 
-function formatCurrency(amount: number | undefined, currency: string | undefined): string {
+function formatCurrency(
+  amount: number | undefined,
+  currency: string | undefined,
+  language: string
+): string {
   if (amount === undefined) return '-';
-  return new Intl.NumberFormat(undefined, {
+  return new Intl.NumberFormat(language, {
     style: 'currency',
     currency: currency || 'EUR',
   }).format(amount);
 }
 
 function getNights(checkIn: string, checkOut: string): number {
-  const start = new Date(checkIn);
-  const end = new Date(checkOut);
-  return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  const start = parseIsoDate(checkIn);
+  const end = parseIsoDate(checkOut);
+  return Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 function GuestCard({
@@ -56,6 +77,8 @@ function GuestCard({
   onDelete: () => void;
   t: (key: string) => string;
 }) {
+  const { i18n } = useTranslation();
+  const language = i18n.language;
   const isRegistered = guest.registrationStatus === 'registered';
   const isPending = guest.registrationStatus === 'pending';
 
@@ -109,7 +132,7 @@ function GuestCard({
           <div>
             <span className="text-gray-500">{t('rentals.guest.dateOfBirth')}</span>
             <p className="font-medium text-gray-900">
-              {new Date(guest.dateOfBirth).toLocaleDateString()}
+              {parseIsoDate(guest.dateOfBirth).toLocaleDateString(language)}
             </p>
           </div>
         )}
@@ -162,7 +185,9 @@ export function BookingDetailPage({
   booking,
   isLoading,
   onBack,
-  onEdit,
+  editForm,
+  initialEditing = false,
+  onSaveBooking,
   onCancel,
   onCheckIn,
   onCheckOut,
@@ -171,7 +196,28 @@ export function BookingDetailPage({
   onRegisterGuest,
   onDeleteGuest,
 }: BookingDetailPageProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const language = i18n.language;
+  const [isEditing, setIsEditing] = useState(initialEditing);
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const [guestToDelete, setGuestToDelete] = useState<RentalGuest | null>(null);
+  // null = closed, 'new' = add guest, otherwise the guest being edited.
+  const [guestDialog, setGuestDialog] = useState<'new' | RentalGuest | null>(null);
+  const [isSavingGuest, setIsSavingGuest] = useState(false);
+
+  const submitGuest = async (data: CreateGuestRequest | UpdateGuestRequest) => {
+    if (!guestDialog) return;
+    setIsSavingGuest(true);
+    try {
+      if (guestDialog === 'new') await onAddGuest(data as CreateGuestRequest);
+      else await onEditGuest(guestDialog.id, data as UpdateGuestRequest);
+      setGuestDialog(null);
+    } catch {
+      // The caller surfaces the failure (toast); keep the form open with its input.
+    } finally {
+      setIsSavingGuest(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -182,11 +228,11 @@ export function BookingDetailPage({
   }
 
   const nights = getNights(booking.checkIn, booking.checkOut);
-  const isPast = new Date(booking.checkOut) < new Date();
+  const isPast = booking.checkOut < toIsoDate(new Date());
   const canCheckIn = booking.status === 'confirmed' && !isPast;
   const canCheckOut = booking.status === 'checked_in';
   const canCancel = ['pending', 'confirmed'].includes(booking.status);
-  const canEdit = !isPast && booking.status !== 'cancelled';
+  const canEdit = !!editForm && !isPast && booking.status !== 'cancelled';
   const pendingGuests = booking.guests.filter((g) => g.registrationStatus === 'pending');
 
   const statusColors: Record<string, string> = {
@@ -255,19 +301,19 @@ export function BookingDetailPage({
               {canEdit && (
                 <button
                   type="button"
-                  onClick={() => onEdit(booking.id)}
+                  onClick={() => setIsEditing(true)}
                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
                 >
-                  {t('common.edit')}
+                  {t('rentals.bookingForm.editTitle')}
                 </button>
               )}
               {canCancel && (
                 <button
                   type="button"
-                  onClick={() => onCancel(booking.id)}
+                  onClick={() => setConfirmCancel(true)}
                   className="px-4 py-2 text-sm font-medium text-red-600 bg-white border border-red-200 rounded-md hover:bg-red-50"
                 >
-                  {t('common.cancel')}
+                  {t('rentals.bookings.cancelBooking')}
                 </button>
               )}
             </div>
@@ -320,13 +366,17 @@ export function BookingDetailPage({
                   <span className="text-sm text-gray-500">
                     {t('rentals.bookingDetail.checkIn')}
                   </span>
-                  <p className="font-medium text-gray-900">{formatDate(booking.checkIn)}</p>
+                  <p className="font-medium text-gray-900">
+                    {formatDate(booking.checkIn, language)}
+                  </p>
                 </div>
                 <div>
                   <span className="text-sm text-gray-500">
                     {t('rentals.bookingDetail.checkOut')}
                   </span>
-                  <p className="font-medium text-gray-900">{formatDate(booking.checkOut)}</p>
+                  <p className="font-medium text-gray-900">
+                    {formatDate(booking.checkOut, language)}
+                  </p>
                 </div>
                 <div>
                   <span className="text-sm text-gray-500">{t('rentals.bookingDetail.nights')}</span>
@@ -353,10 +403,26 @@ export function BookingDetailPage({
                   </div>
                 )}
               </div>
-              {booking.notes && (
-                <div className="mt-4 pt-4 border-t">
-                  <span className="text-sm text-gray-500">{t('rentals.bookingDetail.notes')}</span>
-                  <p className="mt-1 text-gray-900">{booking.notes}</p>
+              {(booking.guestNotes || booking.internalNotes) && (
+                <div className="mt-4 pt-4 border-t space-y-3">
+                  {booking.guestNotes && (
+                    <div>
+                      <span className="text-sm text-gray-500">
+                        {t('rentals.bookingForm.guestNotes')}
+                      </span>
+                      <p className="mt-1 text-gray-900 whitespace-pre-line">{booking.guestNotes}</p>
+                    </div>
+                  )}
+                  {booking.internalNotes && (
+                    <div>
+                      <span className="text-sm text-gray-500">
+                        {t('rentals.bookingForm.internalNotes')}
+                      </span>
+                      <p className="mt-1 text-gray-900 whitespace-pre-line">
+                        {booking.internalNotes}
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -369,7 +435,7 @@ export function BookingDetailPage({
                 </h2>
                 <button
                   type="button"
-                  onClick={() => onAddGuest(booking.id)}
+                  onClick={() => setGuestDialog('new')}
                   className="text-sm text-blue-600 hover:text-blue-800"
                 >
                   + {t('rentals.guest.addGuest')}
@@ -394,7 +460,7 @@ export function BookingDetailPage({
                   <p className="mt-2 text-gray-500">{t('rentals.bookingDetail.noGuests')}</p>
                   <button
                     type="button"
-                    onClick={() => onAddGuest(booking.id)}
+                    onClick={() => setGuestDialog('new')}
                     className="mt-4 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
                   >
                     {t('rentals.guest.addFirstGuest')}
@@ -406,9 +472,9 @@ export function BookingDetailPage({
                     <GuestCard
                       key={guest.id}
                       guest={guest}
-                      onEdit={() => onEditGuest(guest.id)}
+                      onEdit={() => setGuestDialog(guest)}
                       onRegister={() => onRegisterGuest(guest.id)}
-                      onDelete={() => onDeleteGuest(guest.id)}
+                      onDelete={() => setGuestToDelete(guest)}
                       t={t}
                     />
                   ))}
@@ -506,7 +572,7 @@ export function BookingDetailPage({
                   <span className="text-gray-600">{t('rentals.bookingDetail.pricePerNight')}</span>
                   <span className="font-medium text-gray-900">
                     {booking.totalPrice && nights > 0
-                      ? formatCurrency(booking.totalPrice / nights, booking.currency)
+                      ? formatCurrency(booking.totalPrice / nights, booking.currency, language)
                       : '-'}
                   </span>
                 </div>
@@ -519,7 +585,7 @@ export function BookingDetailPage({
                     {t('rentals.bookingDetail.total')}
                   </span>
                   <span className="text-xl font-bold text-gray-900">
-                    {formatCurrency(booking.totalPrice, booking.currency)}
+                    {formatCurrency(booking.totalPrice, booking.currency, language)}
                   </span>
                 </div>
               </div>
@@ -538,7 +604,7 @@ export function BookingDetailPage({
                       {t('rentals.bookingDetail.created')}
                     </p>
                     <p className="text-xs text-gray-500">
-                      {new Date(booking.createdAt).toLocaleString()}
+                      {new Date(booking.createdAt).toLocaleString(language)}
                     </p>
                   </div>
                 </div>
@@ -550,7 +616,7 @@ export function BookingDetailPage({
                         {t('rentals.bookingDetail.updated')}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {new Date(booking.updatedAt).toLocaleString()}
+                        {new Date(booking.updatedAt).toLocaleString(language)}
                       </p>
                     </div>
                   </div>
@@ -560,6 +626,75 @@ export function BookingDetailPage({
           </div>
         </div>
       </div>
+
+      <ConfirmationDialog
+        isOpen={confirmCancel}
+        title={t('rentals.bookings.cancelTitle')}
+        message={t('rentals.bookings.cancelMessage', {
+          guest: booking.guestName,
+          unit: booking.unitName ?? '',
+        })}
+        confirmLabel={t('rentals.bookings.cancelConfirm')}
+        cancelLabel={t('rentals.bookings.keepBooking')}
+        variant="danger"
+        onConfirm={() => {
+          setConfirmCancel(false);
+          onCancel(booking.id);
+        }}
+        onCancel={() => setConfirmCancel(false)}
+      />
+
+      <ConfirmationDialog
+        isOpen={guestToDelete !== null}
+        title={t('rentals.guest.deleteTitle')}
+        message={t('rentals.guest.deleteMessage', {
+          name: guestToDelete ? `${guestToDelete.firstName} ${guestToDelete.lastName}` : '',
+        })}
+        confirmLabel={t('common.delete')}
+        cancelLabel={t('common.cancel')}
+        variant="danger"
+        onConfirm={() => {
+          if (guestToDelete) onDeleteGuest(guestToDelete.id);
+          setGuestToDelete(null);
+        }}
+        onCancel={() => setGuestToDelete(null)}
+      />
+
+      {isEditing && editForm && (
+        <BookingFormDialog
+          mode="edit"
+          initial={editForm}
+          units={[]}
+          onSubmit={onSaveBooking}
+          onClose={() => setIsEditing(false)}
+        />
+      )}
+
+      {guestDialog && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div className="fixed inset-0 bg-black/25" aria-hidden="true" />
+            <div
+              className="relative bg-white rounded-lg shadow-xl max-w-3xl w-full p-6"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="guest-dialog-title"
+            >
+              <h3 id="guest-dialog-title" className="text-lg font-semibold text-gray-900 mb-4">
+                {guestDialog === 'new' ? t('rentals.guest.addGuest') : t('rentals.guest.editGuest')}
+              </h3>
+              <GuestForm
+                bookingId={booking.id}
+                initialData={guestDialog === 'new' ? undefined : guestDialog}
+                isEditing={guestDialog !== 'new'}
+                isSubmitting={isSavingGuest}
+                onSubmit={submitGuest}
+                onCancel={() => setGuestDialog(null)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

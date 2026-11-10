@@ -26,11 +26,19 @@ pub(super) async fn get_building_name(
     building_id: Option<Uuid>,
 ) -> Option<String> {
     if let Some(id) = building_id {
+        let org_id = rls.tenant_id();
+        let is_super_admin = rls.is_super_admin();
         let result = state
             .building_repo
             .find_by_id_rls(&mut **rls.conn(), id)
             .await;
-        result.ok().flatten().and_then(|b| b.name)
+        // Explicit org filter: `buildings` RLS is not FORCEd, so the owner
+        // role would otherwise see (and leak the name of) any org's building.
+        result
+            .ok()
+            .flatten()
+            .filter(|b| is_super_admin || b.organization_id == org_id)
+            .and_then(|b| b.name)
     } else {
         None
     }

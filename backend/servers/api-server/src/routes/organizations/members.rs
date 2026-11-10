@@ -14,6 +14,194 @@ use uuid::Uuid;
 
 use super::core::{extract_bearer_token, validate_access_token};
 use crate::state::AppState;
+use common::TenantRole;
+
+type ApiError = (StatusCode, Json<ErrorResponse>);
+
+/// Authorization level of a stored `role_type`, resolved the same way the
+/// tenant extractors do — via [`common::TenantRole::from_role_type`] (the
+/// canonical snake_case parser shared with JWT-claim/DB resolution). Unknown
+/// or legacy values rank as Guest, matching `ValidatedTenantExtractor`.
+///
+/// Deriving the level from the extractor's parser (rather than a second
+/// hand-rolled normalizer) keeps the escalation gate from ever disagreeing
+/// with the role the extractor actually grants the caller (#3304).
+fn role_type_level(raw: &str) -> u8 {
+    TenantRole::from_role_type(raw)
+        .unwrap_or(TenantRole::Guest)
+        .level()
+}
+
+/// SECURITY (round-4 follow-up, gap audit R7): a caller may only manage a
+/// member who ranks strictly below them. Peers are off limits so two managers
+/// cannot demote or remove each other; the one exception is the top org role
+/// (org admin), where peer management is how admins hand over the org. The
+/// last-admin guard ([`ensure_not_last_admin`]) keeps that exception safe.
+fn ensure_can_manage_member(
+    caller_role_type: &str,
+    target_role_type: &str,
+) -> Result<(), ApiError> {
+    let caller = role_type_level(caller_role_type);
+    let target = role_type_level(target_role_type);
+    let caller_is_admin = caller >= TenantRole::OrgAdmin.level();
+    if target > caller || (target == caller && !caller_is_admin) {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "ROLE_NOT_ASSIGNABLE",
+                "You can only manage members below your own role",
+            )),
+        ));
+    }
+    Ok(())
+}
+
+/// Refuse to demote or remove the last active admin of an organization.
+async fn ensure_not_last_admin(
+    state: &AppState,
+    org_id: Uuid,
+    target_user_id: Uuid,
+    target_role_type: &str,
+    new_role_type: Option<&str>,
+) -> Result<(), ApiError> {
+    let admin_level = TenantRole::OrgAdmin.level();
+    if role_type_level(target_role_type) < admin_level {
+        return Ok(());
+    }
+    if new_role_type.is_some_and(|r| role_type_level(r) >= admin_level) {
+        return Ok(());
+    }
+    let others = state
+        .org_member_repo
+        .count_other_active_admins(org_id, target_user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to count organization admins");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    "Failed to verify admins",
+                )),
+            )
+        })?;
+    if others == 0 {
+        return Err((
+            StatusCode::CONFLICT,
+            Json(ErrorResponse::new(
+                "LAST_ADMIN",
+                "The organization must keep at least one admin",
+            )),
+        ));
+    }
+    Ok(())
+}
+
+/// SECURITY: a member-management permission must not let the caller hand out
+/// a role row carrying permissions they do not hold themselves (e.g. a manager
+/// with only `users:update` assigning a `["*"]` role). Every permission on the
+/// assigned role must be granted by the caller's own role; malformed
+/// permission sets are rejected.
+fn ensure_role_permissions_assignable(
+    caller_role: &db::models::Role,
+    assigned_role: &db::models::Role,
+) -> Result<(), ApiError> {
+    let covered = match assigned_role.permissions.as_array() {
+        Some(perms) => perms
+            .iter()
+            .all(|p| p.as_str().is_some_and(|p| caller_role.has_permission(p))),
+        // `null` / non-array: no permissions to escalate with.
+        None => assigned_role.permissions.is_null(),
+    };
+    if covered {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "ROLE_NOT_ASSIGNABLE",
+                "You cannot assign a role with permissions you do not hold",
+            )),
+        ))
+    }
+}
+
+/// SECURITY: does `raw` name a platform role (`SuperAdmin` / `PlatformAdmin`)
+/// under *any* lenient formatting?
+///
+/// Unlike [`role_type_level`] — which resolves a caller's authority exactly the
+/// way the tenant extractors do, via the strict snake_case
+/// [`TenantRole::from_role_type`] (#3304) — the platform-role *write* gate must
+/// fail safe toward rejection: `raw` is caller-controlled and is persisted
+/// verbatim into `organization_members.role_type`, so a loosely formatted
+/// platform string ("SuperAdmin", "Super Admin", "platform-admin") must be
+/// refused even though the extractor would parse it to Guest. Matching only the
+/// canonical snake_case here would silently loosen the gate (regression caught
+/// on the follow-up to PR #3291).
+///
+/// The accepted spellings are derived from the enum itself (serde snake_case +
+/// `Display`), so they cannot drift as variants change; only the two-element
+/// platform set is named explicitly.
+fn names_platform_role(raw: &str) -> bool {
+    let normalize = |s: &str| {
+        s.chars()
+            .filter(|c| c.is_ascii_alphanumeric())
+            .map(|c| c.to_ascii_lowercase())
+            .collect::<String>()
+    };
+    let wanted = normalize(raw);
+    if wanted.is_empty() {
+        return false;
+    }
+    [TenantRole::SuperAdmin, TenantRole::PlatformAdmin]
+        .into_iter()
+        .any(|role| {
+            let snake = serde_json::to_value(role)
+                .ok()
+                .and_then(|v| v.as_str().map(&normalize));
+            snake.as_deref() == Some(wanted.as_str()) || normalize(&role.to_string()) == wanted
+        })
+}
+
+/// SECURITY: `role_type` is what the tenant extractors use as the caller's
+/// authoritative org role, so a member-management permission must not let the
+/// caller mint a role above their own. Platform roles are never assignable via
+/// org membership.
+fn ensure_role_type_assignable(caller_role_type: &str, requested: &str) -> Result<(), ApiError> {
+    if names_platform_role(requested) {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "ROLE_NOT_ASSIGNABLE",
+                "Platform roles cannot be assigned through organization membership",
+            )),
+        ));
+    }
+    if role_type_level(requested) > role_type_level(caller_role_type) {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "ROLE_NOT_ASSIGNABLE",
+                "You cannot assign a role higher than your own",
+            )),
+        ));
+    }
+    Ok(())
+}
+
+fn require_active_membership(status: &str) -> Result<(), ApiError> {
+    if status == "active" {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "NOT_MEMBER",
+                "You are not an active member of this organization",
+            )),
+        ))
+    }
+}
 
 /// Create organizations members router.
 pub fn router() -> Router<AppState> {
@@ -169,8 +357,13 @@ pub async fn list_organization_members(
 /// Add member request.
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct AddMemberRequest {
-    /// User ID to add
-    pub user_id: Uuid,
+    /// User ID to add. Either `user_id` or `email` is required.
+    #[serde(default)]
+    pub user_id: Option<Uuid>,
+    /// E-mail of an existing account to add (alternative to `user_id`, so a
+    /// manager can add a resident who has registered without knowing their id).
+    #[serde(default)]
+    pub email: Option<String>,
     /// Role ID to assign
     pub role_id: Uuid,
     /// Role type (e.g., "member", "admin", "owner")
@@ -272,6 +465,8 @@ pub async fn add_organization_member(
         }
     };
 
+    require_active_membership(&membership.status)?;
+
     if !role.has_permission("users:create") {
         return Err((
             StatusCode::FORBIDDEN,
@@ -282,9 +477,22 @@ pub async fn add_organization_member(
         ));
     }
 
-    // Verify user exists
-    match state.user_repo.find_by_id(req.user_id).await {
-        Ok(Some(_)) => {}
+    // Resolve the target user by id or by e-mail.
+    let lookup = match (req.user_id, req.email.as_deref().map(str::trim)) {
+        (Some(uid), _) => state.user_repo.find_by_id(uid).await,
+        (None, Some(email)) if !email.is_empty() => state.user_repo.find_by_email(email).await,
+        _ => {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse::new(
+                    "VALIDATION_ERROR",
+                    "Either user_id or email is required",
+                )),
+            ));
+        }
+    };
+    let target_user_id = match lookup {
+        Ok(Some(user)) => user.id,
         Ok(None) => {
             return Err((
                 StatusCode::NOT_FOUND,
@@ -298,11 +506,11 @@ pub async fn add_organization_member(
                 Json(ErrorResponse::new("DATABASE_ERROR", "Failed to find user")),
             ));
         }
-    }
+    };
 
     // Verify role exists and belongs to this organization
-    match state.role_repo.find_by_id(req.role_id).await {
-        Ok(Some(r)) if r.organization_id == id => {}
+    let assigned_role = match state.role_repo.find_by_id(req.role_id).await {
+        Ok(Some(r)) if r.organization_id == id => r,
         Ok(Some(_)) => {
             return Err((
                 StatusCode::BAD_REQUEST,
@@ -325,12 +533,13 @@ pub async fn add_organization_member(
                 Json(ErrorResponse::new("DATABASE_ERROR", "Failed to find role")),
             ));
         }
-    }
+    };
+    ensure_role_permissions_assignable(&role, &assigned_role)?;
 
     // Check if user is already a member
     match state
         .org_member_repo
-        .find_by_org_and_user(id, req.user_id)
+        .find_by_org_and_user(id, target_user_id)
         .await
     {
         Ok(Some(_)) => {
@@ -355,13 +564,16 @@ pub async fn add_organization_member(
         }
     }
 
+    let role_type = req.role_type.unwrap_or_else(|| "member".to_string());
+    ensure_role_type_assignable(&membership.role_type, &role_type)?;
+
     // Add member
     use db::models::CreateOrganizationMember;
     let create_member = CreateOrganizationMember {
         organization_id: id,
-        user_id: req.user_id,
+        user_id: target_user_id,
         role_id: Some(req.role_id),
-        role_type: req.role_type.unwrap_or_else(|| "member".to_string()),
+        role_type,
         invited_by: Some(admin_user_id),
     };
 
@@ -375,7 +587,7 @@ pub async fn add_organization_member(
 
     tracing::info!(
         org_id = %id,
-        user_id = %req.user_id,
+        user_id = %target_user_id,
         role_id = %req.role_id,
         added_by = %admin_user_id,
         "Member added to organization"
@@ -495,6 +707,8 @@ pub async fn update_organization_member(
         }
     };
 
+    require_active_membership(&admin_membership.status)?;
+
     // Check permission to update members
     if !role.has_permission("users:update") {
         return Err((
@@ -566,10 +780,33 @@ pub async fn update_organization_member(
         }
     };
 
+    // SECURITY: members cannot change their own role, nor touch a member who
+    // outranks them.
+    if target_user_id == admin_user_id {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "CANNOT_CHANGE_OWN_ROLE",
+                "You cannot change your own role",
+            )),
+        ));
+    }
+    ensure_can_manage_member(&admin_membership.role_type, &target_membership.role_type)?;
+
     // Derive role_type from the role name if not provided
     let role_type = req
         .role_type
         .unwrap_or_else(|| new_role.name.to_lowercase().replace(' ', "_"));
+    ensure_role_type_assignable(&admin_membership.role_type, &role_type)?;
+    ensure_role_permissions_assignable(&role, &new_role)?;
+    ensure_not_last_admin(
+        &state,
+        org_id,
+        target_user_id,
+        &target_membership.role_type,
+        Some(&role_type),
+    )
+    .await?;
 
     // Update the member
     use db::models::UpdateOrganizationMember;
@@ -752,6 +989,21 @@ pub async fn remove_organization_member(
         }
     };
 
+    // SECURITY (gap audit R7): removing someone else requires outranking them
+    // (it used to need only `users:delete`, so a manager could remove an org
+    // admin); nobody, including the admin themself, may remove the last admin.
+    if target_user_id != admin_user_id {
+        ensure_can_manage_member(&admin_membership.role_type, &target_membership.role_type)?;
+    }
+    ensure_not_last_admin(
+        &state,
+        org_id,
+        target_user_id,
+        &target_membership.role_type,
+        None,
+    )
+    .await?;
+
     // Remove member using the membership ID
     match state.org_member_repo.remove(target_membership.id).await {
         Ok(Some(_)) => {}
@@ -786,4 +1038,151 @@ pub async fn remove_organization_member(
     Ok(Json(RemoveMemberResponse {
         message: "Member removed successfully".to_string(),
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// How the tenant extractors resolve a stored `role_type` to an authority
+    /// level: `common::TenantRole::from_role_type`, unknown/legacy -> Guest.
+    fn extractor_level(raw: &str) -> u8 {
+        common::TenantRole::from_role_type(raw)
+            .unwrap_or(TenantRole::Guest)
+            .level()
+    }
+
+    const ALL_ROLES: [TenantRole; 12] = [
+        TenantRole::SuperAdmin,
+        TenantRole::PlatformAdmin,
+        TenantRole::OrgAdmin,
+        TenantRole::Manager,
+        TenantRole::TechnicalManager,
+        TenantRole::Owner,
+        TenantRole::OwnerDelegate,
+        TenantRole::PropertyManager,
+        TenantRole::RealEstateAgent,
+        TenantRole::Tenant,
+        TenantRole::Resident,
+        TenantRole::Guest,
+    ];
+
+    #[test]
+    fn manage_member_requires_strictly_lower_rank_except_admins() {
+        // Managers cannot touch peers or anyone above them.
+        assert!(ensure_can_manage_member("manager", "manager").is_err());
+        assert!(ensure_can_manage_member("manager", "org_admin").is_err());
+        assert!(ensure_can_manage_member("manager", "owner").is_ok());
+        // Org admins may manage each other (last-admin guard applies separately).
+        assert!(ensure_can_manage_member("org_admin", "org_admin").is_ok());
+        assert!(ensure_can_manage_member("org_admin", "manager").is_ok());
+        // Residents manage nobody at their level.
+        assert!(ensure_can_manage_member("owner", "owner").is_err());
+    }
+
+    /// The escalation gate's `role_type_level` must resolve a stored
+    /// `role_type` exactly the way the tenant extractors do, for every role in
+    /// the `TenantRole` set — otherwise the authority-level comparison can
+    /// disagree with the role the extractor actually grants the caller
+    /// (#3304, follow-up to PR #3291).
+    #[test]
+    fn role_type_level_agrees_with_extractor_for_full_role_set() {
+        for role in ALL_ROLES {
+            let canonical = serde_json::to_value(role)
+                .unwrap()
+                .as_str()
+                .expect("TenantRole serializes to a string")
+                .to_owned();
+            assert_eq!(
+                role_type_level(&canonical),
+                extractor_level(&canonical),
+                "role_type_level disagreed with extractor for {canonical:?}"
+            );
+            assert_eq!(role_type_level(&canonical), role.level());
+        }
+    }
+
+    /// Loosely-formatted strings that are NOT the canonical snake_case
+    /// `role_type` must resolve identically in the gate and the extractor. A
+    /// second, more tolerant parser used to rank some of these as privileged
+    /// (e.g. "Super Admin" -> SuperAdmin) while the extractor treated them as
+    /// unknown -> Guest: the privilege-escalation divergence of #3304.
+    #[test]
+    fn non_canonical_role_strings_degrade_like_the_extractor() {
+        for raw in [
+            "Super Admin",
+            "super-admin",
+            "ORG_ADMIN",
+            "Manager",
+            "member",
+            "",
+            "not_a_role",
+        ] {
+            assert_eq!(
+                role_type_level(raw),
+                extractor_level(raw),
+                "role_type_level disagreed with extractor for {raw:?}"
+            );
+        }
+    }
+
+    /// The platform-role WRITE gate must reject a platform role under *any*
+    /// lenient formatting — not just the canonical snake_case. `requested` is
+    /// caller-controlled and persisted verbatim, so resolving it with the
+    /// strict extractor parser alone ("SuperAdmin" -> None -> Guest-level ->
+    /// assignable) silently loosened the gate; `members_cannot_escalate_role_type`
+    /// pins this (#3304 follow-up to PR #3291).
+    #[test]
+    fn platform_roles_are_unassignable_in_any_formatting() {
+        for raw in [
+            "super_admin",
+            "SuperAdmin",
+            "Super Admin",
+            "super-admin",
+            "SUPER_ADMIN",
+            "platform_admin",
+            "PlatformAdmin",
+            "Platform Admin",
+            "platform-admin",
+        ] {
+            assert!(
+                names_platform_role(raw),
+                "expected {raw:?} to be detected as a platform role"
+            );
+            // Even an org_admin (the highest org-assignable role) must not be
+            // able to mint a platform role through org membership.
+            assert!(
+                ensure_role_type_assignable("org_admin", raw).is_err(),
+                "org_admin must not be able to assign {raw:?}"
+            );
+        }
+    }
+
+    /// Non-platform `role_type` values — including the non-canonical default
+    /// "member", custom/unknown strings, and empty input — must NOT be caught
+    /// by the platform-role gate: they resolve to Guest-level authority (the
+    /// same as the extractor) and stay assignable at or below the caller's
+    /// level. Rejecting them would break ordinary member management.
+    #[test]
+    fn non_platform_role_types_stay_assignable() {
+        for raw in [
+            "member",
+            "owner",
+            "tenant",
+            "resident",
+            "custom_caretaker",
+            "",
+        ] {
+            assert!(
+                !names_platform_role(raw),
+                "{raw:?} must not be treated as a platform role"
+            );
+        }
+        // A manager can assign at or below their own authority level.
+        assert!(ensure_role_type_assignable("manager", "member").is_ok());
+        assert!(ensure_role_type_assignable("manager", "owner").is_ok());
+        assert!(ensure_role_type_assignable("manager", "tenant").is_ok());
+        // ...but not a role that outranks them.
+        assert!(ensure_role_type_assignable("manager", "org_admin").is_err());
+    }
 }

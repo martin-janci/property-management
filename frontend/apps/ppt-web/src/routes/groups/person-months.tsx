@@ -9,7 +9,7 @@
  * Person-months hang off a building (and, for the unit views, a unit), so every
  * route is nested under `/buildings/:buildingId`. The building- and unit-level
  * endpoints only return units that already have an entry, so the building-level
- * wrappers also list the building's units (`/api/v1/units?buildingId=`) and
+ * wrappers also list the building's units (`/api/v1/buildings/{id}/units`) and
  * left-join the counts onto them — units with no data show a count of 0.
  */
 import type {
@@ -31,8 +31,10 @@ import {
 } from '@ppt/api-client';
 import { useQuery } from '@tanstack/react-query';
 import { lazy, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams } from 'react-router-dom';
 import { ProtectedRoute, useToast } from '../../components';
+import { useAuth } from '../../contexts';
 import type { PersonMonth as UiPersonMonth } from '../../features/person-months/components/PersonMonthCard';
 import type { YearlySummary as UiYearlySummary } from '../../features/person-months/components/YearlySummaryChart';
 import type {
@@ -45,6 +47,7 @@ import type {
   BulkEntryUnit,
 } from '../../features/person-months/types';
 import { getApiClient } from '../../lib/api';
+import { isManagerRole, MANAGER_ROLES } from '../shared';
 
 // Person-months feature pages (Epic 3) — lazy-loaded for code splitting.
 const PersonMonthsPage = lazy(() =>
@@ -67,6 +70,11 @@ const currentMonth = new Date().getMonth() + 1;
 // Building units (no person-months endpoint lists all units, so fetch them)
 // ============================================================================
 
+/** Page size for `GET /buildings/{id}/units` (the backend caps `limit` at 100). */
+const UNIT_PAGE_SIZE = 100;
+/** Safety cap on pages fetched (10 000 units). */
+const MAX_UNIT_PAGES = 100;
+
 interface BuildingUnit {
   id: string;
   designation: string;
@@ -85,10 +93,20 @@ export function useBuildingUnits(buildingId: string | undefined) {
     queryKey: ['person-months', 'building-units', buildingId ?? ''],
     enabled: !!buildingId,
     queryFn: async (): Promise<BuildingUnit[]> => {
-      const res = await getApiClient().get<{
-        data: Array<{ id: string; unitNumber: string }>;
-      }>('/units', { params: { buildingId, limit: 500 } });
-      return (res.data.data ?? []).map((u) => ({ id: u.id, designation: u.unitNumber }));
+      // `GET /buildings/{id}/units` caps `limit` at 100, so page until `total`.
+      const units: BuildingUnit[] = [];
+      for (let page = 0; page < MAX_UNIT_PAGES; page++) {
+        const res = await getApiClient().get<{
+          units: Array<{ id: string; designation: string }>;
+          total: number;
+        }>(`/buildings/${buildingId}/units`, {
+          params: { offset: units.length, limit: UNIT_PAGE_SIZE },
+        });
+        const batch = res.data.units ?? [];
+        units.push(...batch.map((u) => ({ id: u.id, designation: u.designation })));
+        if (batch.length === 0 || units.length >= res.data.total) break;
+      }
+      return units;
     },
   });
   return { units: data ?? [], isLoading };
@@ -148,6 +166,9 @@ function buildBuildingSummary(
 /** Building-level person-months summary (`/buildings/:buildingId/person-months`). */
 function PersonMonthsPageRoute() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  // Person-month entry is building-wide data entry: managers only.
+  const isManager = isManagerRole(user?.role);
   const { buildingId = '' } = useParams<{ buildingId: string }>();
   const [year, setYear] = useState(currentYear);
   const [month, setMonth] = useState(currentMonth);
@@ -176,10 +197,15 @@ function PersonMonthsPageRoute() {
       onNavigateToUnit={(unitId) =>
         navigate(`/buildings/${buildingId}/units/${unitId}/person-months`)
       }
-      onNavigateToEdit={(unitId, y, m) =>
-        navigate(`/buildings/${buildingId}/units/${unitId}/person-months/edit/${y}/${m}`)
+      onNavigateToEdit={
+        isManager
+          ? (unitId, y, m) =>
+              navigate(`/buildings/${buildingId}/units/${unitId}/person-months/edit/${y}/${m}`)
+          : undefined
       }
-      onNavigateToBulkEntry={() => navigate(`/buildings/${buildingId}/person-months/bulk`)}
+      onNavigateToBulkEntry={
+        isManager ? () => navigate(`/buildings/${buildingId}/person-months/bulk`) : undefined
+      }
       onBack={() => navigate(`/buildings/${buildingId}`)}
     />
   );
@@ -188,6 +214,7 @@ function PersonMonthsPageRoute() {
 /** Bulk entry for every unit (`/buildings/:buildingId/person-months/bulk`). */
 function BulkEntryPageRoute() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const { buildingId = '' } = useParams<{ buildingId: string }>();
 
@@ -246,14 +273,20 @@ function BulkEntryPageRoute() {
           setResults(mapResult(res, data));
           showToast({
             type: res.failed > 0 ? 'warning' : 'success',
-            title: 'Saved',
-            message: `${res.successful} unit(s) updated`,
+            title: t('common.saved', { defaultValue: 'Saved' }),
+            message: t('personMonths.unitsUpdated', {
+              count: res.successful,
+              defaultValue: '{{count}} unit(s) updated',
+            }),
           });
         } catch (err) {
           showToast({
             type: 'error',
-            title: 'Bulk entry failed',
-            message: err instanceof Error ? err.message : 'Could not save person-months',
+            title: t('personMonths.bulkFailedTitle', { defaultValue: 'Bulk entry failed' }),
+            message:
+              err instanceof Error
+                ? err.message
+                : t('personMonths.bulkFailed', { defaultValue: 'Could not save person-months' }),
           });
         }
       }}
@@ -264,6 +297,9 @@ function BulkEntryPageRoute() {
 /** Unit history + yearly summary (`/buildings/:buildingId/units/:unitId/person-months`). */
 function UnitPersonMonthsPageRoute() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isManager = isManagerRole(user?.role);
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const { buildingId = '', unitId = '' } = useParams<{ buildingId: string; unitId: string }>();
   const [year, setYear] = useState(currentYear);
@@ -292,21 +328,35 @@ function UnitPersonMonthsPageRoute() {
       isDeleting={deleteEntry.isPending}
       selectedYear={year}
       onYearChange={setYear}
-      onNavigateToEdit={(y, m) =>
-        navigate(`/buildings/${buildingId}/units/${unitId}/person-months/edit/${y}/${m}`)
+      onNavigateToEdit={
+        isManager
+          ? (y, m) =>
+              navigate(`/buildings/${buildingId}/units/${unitId}/person-months/edit/${y}/${m}`)
+          : undefined
       }
-      onDelete={async (pm) => {
-        try {
-          await deleteEntry.mutateAsync(pm.id);
-          showToast({ type: 'success', title: 'Deleted', message: 'Entry removed' });
-        } catch (err) {
-          showToast({
-            type: 'error',
-            title: 'Delete failed',
-            message: err instanceof Error ? err.message : 'Could not delete entry',
-          });
-        }
-      }}
+      onDelete={
+        isManager
+          ? async (pm) => {
+              try {
+                await deleteEntry.mutateAsync(pm.id);
+                showToast({
+                  type: 'success',
+                  title: t('common.deleted', { defaultValue: 'Deleted' }),
+                  message: t('personMonths.entryRemoved', { defaultValue: 'Entry removed' }),
+                });
+              } catch (err) {
+                showToast({
+                  type: 'error',
+                  title: t('common.deleteFailed', { defaultValue: 'Delete failed' }),
+                  message:
+                    err instanceof Error
+                      ? err.message
+                      : t('personMonths.deleteFailed', { defaultValue: 'Could not delete entry' }),
+                });
+              }
+            }
+          : undefined
+      }
       onBack={() => navigate(`/buildings/${buildingId}/person-months`)}
     />
   );
@@ -321,6 +371,7 @@ function UnitPersonMonthsPageRoute() {
  */
 function EditPersonMonthPageRoute() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const {
     buildingId = '',
@@ -374,13 +425,20 @@ function EditPersonMonthPageRoute() {
             count: data.personCount,
             source: 'manual',
           });
-          showToast({ type: 'success', title: 'Saved', message: 'Person-month saved' });
+          showToast({
+            type: 'success',
+            title: t('common.saved', { defaultValue: 'Saved' }),
+            message: t('personMonths.saved', { defaultValue: 'Person-month saved' }),
+          });
           backToUnit();
         } catch (err) {
           showToast({
             type: 'error',
-            title: 'Save failed',
-            message: err instanceof Error ? err.message : 'Could not save person-month',
+            title: t('common.saveFailed', { defaultValue: 'Save failed' }),
+            message:
+              err instanceof Error
+                ? err.message
+                : t('personMonths.saveFailed', { defaultValue: 'Could not save person-month' }),
           });
         }
       }}
@@ -403,7 +461,7 @@ export function personMonthRoutes() {
       <Route
         path="/buildings/:buildingId/person-months/bulk"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <BulkEntryPageRoute />
           </ProtectedRoute>
         }
@@ -419,7 +477,7 @@ export function personMonthRoutes() {
       <Route
         path="/buildings/:buildingId/units/:unitId/person-months/edit/:year/:month"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <EditPersonMonthPageRoute />
           </ProtectedRoute>
         }

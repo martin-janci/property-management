@@ -127,6 +127,39 @@ model OrganizationMember {
   status: MemberStatus;
 }
 
+@doc("Organization member as returned by the member list endpoint (snake_case, mirrors api-server `MemberResponse`)")
+model OrganizationMemberListItem {
+  @doc("User ID")
+  user_id: uuid;
+
+  @doc("User name")
+  name: string;
+
+  @doc("User email")
+  email: string;
+
+  @doc("Role ID")
+  role_id: uuid | null;
+
+  @doc("Role name")
+  role_name: string;
+
+  @doc("Role type")
+  role_type: string;
+
+  @doc("Joined timestamp (RFC 3339)")
+  joined_at: string | null;
+}
+
+@doc("List organization members response (mirrors api-server `ListMembersResponse`)")
+model ListOrganizationMembersResponse {
+  @doc("Members")
+  members: OrganizationMemberListItem[];
+
+  @doc("Total count")
+  total: int64;
+}
+
 @doc("Member status")
 enum MemberStatus {
   Active: "active",
@@ -242,7 +275,7 @@ interface OrganizationsApi {
     @header("Authorization") token?: string,
     @path id: uuid,
     ...PaginationQuery
-  ): PaginatedResponse<OrganizationMember> | UnauthorizedError | ForbiddenError | NotFoundError;
+  ): ListOrganizationMembersResponse | UnauthorizedError | ForbiddenError | NotFoundError;
 
   @doc("Invite member to organization")
   @post

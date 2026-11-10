@@ -1,0 +1,69 @@
+{
+  "generated": "2026-09-26T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven (claim buffer starved; remaining backlog is unlandable mobile-native/KMP; cloud-landable frontend preferred) 2026-09-26",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "oldest-unreviewed. review_cursor ties ppt-web-core and reality-web at 2026-08-29 (oldest); segment-map table order breaks the tie to ppt-web-core (Frontend expert, cloud-landable). Backend api-* and mobile-native segments are structurally UNLANDABLE in this cloud runner. SATURATION CHECK PASSED: backlog.json holds 0 open code-review-finding rows for ppt-web-core, so the >=3-open skip rule does not trigger. Segment root resolved to the skill's ppt-web-core scope = frontend/apps/ppt-web/src/{lib,contexts,hooks,routes} (the auth/api/websocket/query-cache core), distinct from the 2026-09-24 ppt-web-core run which mined feature data-hooks. Static analysis only (read + grep, no build/test) per skill contract.",
+  "experts_used": ["frontend"],
+  "landable_in_cloud": true,
+  "landability_note": "All three findings are frontend-only edits under frontend/apps/ppt-web/src (lib/queryKeys.ts, contexts/WebSocketContext.tsx, lib/api.ts), verifiable in the cloud runner via `pnpm --filter @ppt/web typecheck` + Vitest/RTL without a backend or device. No mobile-native/Gradle or Rust build involved.",
+  "findings_count": 3,
+  "static_only": true,
+  "note": "Findings ordered highest-severity first (skill Step 5: keep the 3 highest across the run). The ppt-web-core lib/contexts/hooks are exceptionally defensive (AuthContext token-refresh single-flight, websocket.ts bounded reconnect + handler detach, errorHandler i18n catalogue all present in en.json, all console.* dev-gated, no `as any`) — the surviving findings are cross-boundary/registry-drift bugs that static grep of a single file would miss.",
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-authed-roots-session-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-core query-cache)",
+      "segment": "ppt-web-core",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts:354-392 — `AUTHED_QUERY_KEY_ROOTS` is the allow-list that logout() iterates to purge per-user cache, and its own doc comment (:346-350) states it 'must cover ALL tenant-/user-scoped caches' and that such caches 'must never survive logout on a shared workstation' (#712 replaced the blunt queryClient.clear() with this scoped removal). The list is materially incomplete. A sweep of the query-key factories actually mounted in ppt-web (each defines `all: ['<root>']`) versus this allow-list shows these authed roots are MISSING from the purge: community, disputes, iot, outages, leases, voting, plus (defined in @ppt/api-client and reachable) visitors, packages, violations, my-units, compliance, esignature, portfolio-performance, registries, templates, integrations, syndication, ecosystem, oauth-grants, mfa. Each of community/disputes/iot/outages/leases/voting is a mounted ppt-web route group (frontend/apps/ppt-web/src/routes/groups/{community,disputes,iot,outages,leases,voting}.tsx) whose pages populate a TanStack Query cache under that root.",
+        "Auth path traced end-to-end: logout() at frontend/apps/ppt-web/src/contexts/AuthContext.tsx:614-637 clears localStorage + React state, then loops `for (const root of AUTHED_QUERY_KEY_ROOTS) queryClient.removeQueries({ queryKey: [root] })` (:624-626) — a prefix-match purge. Any cached query whose first key segment is NOT in the allow-list is left intact. So after User A views e.g. /disputes (mediation chat threads, resolution PII), /leases (tenant PII), or /community (neighbour posts/marketplace), then logs out, those caches persist in the shared queryClient; User B logging in on the same browser is served User A's cached tenant/user-scoped data until each query happens to refetch. This is the exact cross-session data-leak class the list was created to prevent — a privacy/isolation defect on a shared-workstation path.",
+        "Confirmed drift example (not just omission): the list contains 'votes' (:360) but the live factory root is `['voting']` (frontend/packages/api-client/src/voting/hooks.ts, `all: ['voting']`), and voting.tsx is a mounted ppt-web route — so the voting cache is never purged despite an entry that looks like it covers it. Landable frontend-only remedy: extend AUTHED_QUERY_KEY_ROOTS with the missing mounted roots (correcting 'votes' -> 'voting' or adding both), and add a guard test that asserts every `*.all` key-factory root imported into ppt-web appears in AUTHED_QUERY_KEY_ROOTS so the list cannot silently drift again. Verifiable via `pnpm --filter @ppt/web typecheck` + a Vitest test that seeds queries for each root, calls logout(), and asserts getQueryCache() is empty of authed roots. Confidence high: traced login -> cache population (mounted route groups) -> logout purge loop -> allow-list omission."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-category-map-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-core query-cache)",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx",
+        "backend/crates/common/src/notifications/mod.rs"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:61-68 — `categoryToQueryKeys` maps a `notification.created` payload.category to the query roots to invalidate. It covers only 6 categories: announcements, faults, votes, messages, documents, financial. The backend enum NotificationCategory (backend/crates/common/src/notifications/mod.rs:75-121, `#[serde(rename_all = \"snake_case\")]`) has 8 variants whose wire strings are: announcements, faults, votes, messages, community, financial, documents, system. So `community` and `system` are absent from the frontend map.",
+        "Real stale-data miss for `community`: backend maps NotificationEvent::CommunityEvent -> NotificationCategory::Community (backend/crates/common/src/notifications/events.rs:285) which serializes to \"community\". When that notification.created frame arrives, WebSocketContext.tsx:344-350 does `categoryToQueryKeys[category]` -> undefined, so `queryKeys` falls back to `['notifications']` only and the `['community']` cache is never invalidated. `['community']` is a live ppt-web cache: frontend/packages/api-client/src/community/hooks.ts:28 defines `communityKeys.all = ['community']` (posts/events/groups/marketplace lists) and community.tsx is a mounted route group. Net effect: a new community event pushes a notification but the community feed/events list stays stale until a manual refetch — the map's own comment (:55-59) claims it refreshes 'both the notification list and the announcements list', but the community domain silently falls through.",
+        "Landable frontend-only remedy: add `community: ['community']` to categoryToQueryKeys (and decide whether `system`/EmergencyAlert needs any list root — likely notifications-only, so document it explicitly to close the gap). Ideally add a small unit test / type-level check that every NotificationCategory wire value is either mapped or explicitly allow-listed, so future backend categories can't silently regress realtime sync. Verifiable via `pnpm --filter @ppt/web typecheck` + a Vitest test dispatching a `notification.created` frame with category 'community' and asserting onEntityEvent is called with a queryKeys array containing 'community'. Confidence high: traced the CommunityEvent -> Community -> \"community\" serialization on the backend and the undefined lookup on the frontend against the live ['community'] cache root."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export-orphan",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-core query-cache)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:370 — `export default getApiClient();` runs at module import time, eagerly constructing an axios instance with DEFAULT config (no getToken, no onUnauthorized, DEFAULT_BASE_URL). AuthProvider later calls configureApiClient() (contexts/AuthContext.tsx:380), which does `apiInstance = createAxiosInstance(config)` (api.ts:348) — a brand-new instance — so the eagerly-created default export is immediately orphaned and can never receive a custom baseURL/timeout passed to configureApiClient. It is a latent footgun: any future `import apiClient from '../lib/api'` binds permanently to that pre-configuration instance, bypassing configureApiClient's baseURL and the reset lifecycle (resetApiClient() at :356 nulls apiInstance but the default-exported object reference lives on).",
+        "Confirmed unused today: no default-style importer of lib/api exists (grep of frontend/apps/ppt-web/src for `import <ident> from '.../lib/api'` returns 0 non-test hits), and lib/index.ts (:8-18) re-exports only the named symbols (getApiClient, configureApiClient, resetApiClient, ...), not the default. So the line is a dead eager side-effect at import time plus a trap for future callers. Landable frontend-only remedy: delete the `export default getApiClient();` line (callers already use the named getApiClient()), or, if a default is desired for ergonomics, make it a lazy accessor rather than an eager call so it always resolves to the configured singleton. Verifiable via `pnpm --filter @ppt/web typecheck` + `pnpm --filter @ppt/web test`. Confidence medium: static analysis confirms the orphaning and zero current default-import consumers, but severity is low precisely because nothing imports it yet — this is a smell/footgun cleanup, not an active production break."
+      ]
+    }
+  ]
+}

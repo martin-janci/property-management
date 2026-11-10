@@ -1,0 +1,69 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-14",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed, saturation-skip (dispatcher Tier-1d demand-driven, landable buffer starved; remaining open backlog is mobile-native/KMP = structurally unlandable). REVIEW_CURSOR 4-way tie at 2026-10-11 (api-handlers, ppt-web-ui, reality-web, mobile-rn); CHURN_FILES not supplied (state.hotspot_history is stale May/Sep). Deterministic tiebreak = segment-map order -> api-handlers first, but SATURATION-SKIP applied (api-handlers has 3 open code-review-finding rows in backlog.json, >= floor 3). Next in map order is ppt-web-ui (0 open code-review-finding rows -> not saturated) and clearly cloud-landable (frontend/ppt-web). This is the SECOND ppt-web-ui dev-review pass of 2026-10-14 (-b): the -a pass (2026-10-14-ppt-web-ui-tier1d.json) exhaustively mined the faults feature slice + stated top-level pages/+components/ are pre-mined, so this -b pass deliberately mined UN-reviewed feature slices (accounting payment-matching, documents preview) to stay net-new. Experts: frontend (primary) + completeness (secondary). Static-only: file reads + grep, no compile/test, no git. Each finding verified net-new vs backlog.json (payment-match rows are api-core backend matcher logic; DocumentDetail row is a done test-gap sweep, different vector) and vs all prior ppt-web-ui signal files.",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-paymentmatch-silent-err",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-14 ppt-web-ui -b accounting)",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx:61-73 — confirmMutation (confirmMatch) and rejectMutation (rejectMatch) are declared with only an onSuccess (invalidateQueries); neither has an onError callback and neither mutation's isError/error is ever rendered anywhere in the file. Only uploadMutation surfaces failure (uploadMutation.isError -> 'Upload failed' at L112-114).",
+        "The confirm/reject buttons (L327-341) wire disabled={confirming}/{rejecting} pending state + 'Processing...'/'Rejecting...' labels, but on a failed confirmMatch/rejectMatch (network error, 409 already-matched, 422 validation, auth expiry) the button simply re-enables with NO toast/alert/inline error — the operator gets zero feedback that confirming or rejecting a bank-statement payment match failed, and may assume it succeeded. Contrast ContentModerationPage.tsx:139-146 in the same app which correctly does assignCase.mutate(id, { onError: show localized alert/toast }).",
+        "Impact: MEDIUM. Silent failure on a financial reconciliation action (payment match confirm/reject) — user-facing, misleading, and on money-handling data. Fix (cloud-landable, ppt-web frontend): add onError to both mutations surfacing a localized error toast/inline message, mirroring uploadMutation.isError and the ContentModerationPage pattern. Confidence MEDIUM (static; failure path not runtime-reproduced)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-documents-hardcoded-sk",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-14 ppt-web-ui -b documents)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentPreviewModal.tsx",
+        "frontend/apps/ppt-web/src/features/documents/components/PdfPreview.tsx",
+        "frontend/apps/ppt-web/src/features/documents/pages/DocumentDetail.tsx"
+      ],
+      "evidence": [
+        "The documents preview surface renders user-facing strings as HARDCODED SLOVAK literals (not routed through react-i18next t()), so cs/de/en locale users see untranslated Slovak: DocumentPreviewModal.tsx:56 'Načítavanie náhľadu…', :64 'Náhľad nie je dostupný.'; PdfPreview.tsx:130 'Nahled dokumentu nie je dostupny.', :150 'Nahled nie je dostupny pre tento typ suboru.', :269 'Chyba pri nacitani PDF: {docError}'; DocumentDetail.tsx:132 'Tento dokument nie je prístupný pre váš účet.' (permission-message).",
+        "This is a mixed-language i18n leak, not accepted English-default copy: the app ships sk/cs/de/en bundles and uses t() elsewhere, so a German or English manager opening a document gets Slovak error/loading/permission text. Some PdfPreview strings are even de-diacriticized Slovak ('Nahled','nacitani'), suggesting ad-hoc placeholder copy that never went through i18n.",
+        "Impact: LOW (i18n gap on user-facing document preview/permission states). Net-new: no prior i18n finding covers these files (the only backlog row touching DocumentDetail.tsx is a done test-gap sweep, different vector). Fix (cloud-landable): wrap all six strings in t('documents.preview.*' / 'documents.detail.*') keys and add to the sk/cs/de/en bundles."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-paymentmatch-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-14 ppt-web-ui -b accounting)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "expert": "completeness",
+      "files": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx imports NO useTranslation / react-i18next and contains ZERO t() calls (grep confirmed) — the entire Payment Matching screen is hardcoded English regardless of the active sk/cs/de locale.",
+        "Hardcoded literals include: L79 <h1>Payment Matching</h1>; L80 'Review and confirm matches from bank statements'; L87 'Bank Statements'; L90 'Upload CSV'; L104 'Choose File'; L109 'Processing upload...'; L113 'Upload failed'; L126 'No statements uploaded yet'; L321 'Variable symbol and amount matches the open balance.'; L333 'Confirm Payment Match'; L341 'Not a match'.",
+        "Impact: LOW (full-screen i18n gap on a manager-facing accounting/reconciliation page). Distinct from the silent-error finding on the same file (different vector: localization vs error-handling). Net-new vs backlog (existing payment-match rows are api-core backend matcher logic, not this UI). Fix (cloud-landable): add useTranslation and route all literals through t('accounting.paymentMatching.*') keys + sk/cs/de/en bundles."
+      ]
+    }
+  ]
+}

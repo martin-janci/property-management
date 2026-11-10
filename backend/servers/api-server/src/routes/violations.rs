@@ -1,7 +1,7 @@
 //! Violation Tracking & Enforcement routes for Epic 142.
 
 use crate::state::AppState;
-use api_core::extractors::AuthUser;
+use api_core::extractors::{AuthUser, TenantAuthUser};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -34,6 +34,57 @@ fn not_found_error(msg: &str) -> (StatusCode, Json<ErrorResponse>) {
 
 fn forbidden_error(msg: &str) -> (StatusCode, Json<ErrorResponse>) {
     (StatusCode::FORBIDDEN, Json(ErrorResponse::forbidden(msg)))
+}
+
+/// Map a repository error from an org-scoped mutation to an HTTP error.
+///
+/// Every mutation here keys its `UPDATE/DELETE ... WHERE id = $1 AND
+/// organization_id = $2` (or an equivalent ownership guard) on the caller's
+/// `org_id`, so a target belonging to another tenant — or one that genuinely
+/// does not exist — affects no rows, which sqlx surfaces as
+/// [`sqlx::Error::RowNotFound`]. That MUST become a `404`: a foreign-org id has
+/// to be indistinguishable from a missing one (so it cannot be probed) and the
+/// mutation must never leak as a `500`. Any other error is a real internal
+/// failure. (Cross-tenant IDOR finding
+/// `code-review-api-handlers-violations-no-xtenant-idor-tests`; mirrors the
+/// `RowNotFound => not_found` mapping already used by `add_evidence` /
+/// `add_comment`.)
+fn map_mutation_err(
+    not_found_msg: &str,
+    internal_ctx: &str,
+    e: sqlx::Error,
+) -> (StatusCode, Json<ErrorResponse>) {
+    match e {
+        sqlx::Error::RowNotFound => not_found_error(not_found_msg),
+        other => internal_error(&format!("{internal_ctx}: {other}")),
+    }
+}
+
+/// Manager-level authorization gate for privileged violation mutations.
+///
+/// Issuing a violation, issuing a fine / enforcement action, recording a fine
+/// payment, managing community rules, assigning a violation, and deciding an
+/// appeal are all staff operations. Before this gate every such mutation was
+/// reachable by *any* authenticated tenant member — tenant membership
+/// (a non-null `tenant_id`) was the only check — so an ordinary Resident /
+/// Tenant could fine other residents, or approve the appeal of their own fine.
+///
+/// [`TenantRole::is_manager`] covers SuperAdmin / PlatformAdmin / OrgAdmin /
+/// Manager / TechnicalManager; every role below (Owner, Tenant, Resident,
+/// Guest, …) is rejected with 403. Self-service actions a resident legitimately
+/// performs — filing an appeal (`create_appeal`) and commenting (`add_comment`)
+/// — are intentionally NOT gated here.
+///
+/// Handlers take `TenantAuthUser`, so `user.role` is the caller's membership
+/// role in the request's org (login JWTs carry no role claim).
+fn require_manager(user: &AuthUser) -> ApiResult<()> {
+    if user.role.map(|r| r.is_manager()).unwrap_or(false) {
+        Ok(())
+    } else {
+        Err(forbidden_error(
+            "Manager role required to perform this operation",
+        ))
+    }
 }
 
 /// Create the violations router.
@@ -97,9 +148,11 @@ pub fn router() -> Router<AppState> {
 
 async fn create_rule(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Json(req): Json<CreateCommunityRule>,
 ) -> ApiResult<Json<db::models::violations::CommunityRule>> {
+    require_manager(&user)?;
+
     let org_id = user
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
@@ -114,7 +167,7 @@ async fn create_rule(
 
 async fn get_rule(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(rule_id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::violations::CommunityRule>> {
     let org_id = user
@@ -138,7 +191,7 @@ struct ListRulesQuery {
 
 async fn list_rules(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(query): Query<ListRulesQuery>,
 ) -> ApiResult<Json<Vec<db::models::violations::CommunityRule>>> {
     let org_id = user
@@ -159,10 +212,12 @@ async fn list_rules(
 
 async fn update_rule(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(rule_id): Path<Uuid>,
     Json(req): Json<UpdateCommunityRule>,
 ) -> ApiResult<Json<db::models::violations::CommunityRule>> {
+    require_manager(&user)?;
+
     let org_id = user
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
@@ -172,14 +227,16 @@ async fn update_rule(
         .update_rule(rule_id, org_id, req)
         .await
         .map(Json)
-        .map_err(|e| internal_error(&format!("Failed to update rule: {}", e)))
+        .map_err(|e| map_mutation_err("Rule not found", "Failed to update rule", e))
 }
 
 async fn delete_rule(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(rule_id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
+    require_manager(&user)?;
+
     let org_id = user
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
@@ -203,9 +260,11 @@ async fn delete_rule(
 
 async fn create_violation(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Json(req): Json<CreateViolation>,
 ) -> ApiResult<Json<db::models::violations::Violation>> {
+    require_manager(&user)?;
+
     let org_id = user
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
@@ -220,7 +279,7 @@ async fn create_violation(
 
 async fn get_violation(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(violation_id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::violations::Violation>> {
     let org_id = user
@@ -238,7 +297,7 @@ async fn get_violation(
 
 async fn list_violations(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(query): Query<ViolationQuery>,
 ) -> ApiResult<Json<Vec<db::models::violations::ViolationSummary>>> {
     let org_id = user
@@ -255,10 +314,12 @@ async fn list_violations(
 
 async fn update_violation(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(violation_id): Path<Uuid>,
     Json(req): Json<UpdateViolation>,
 ) -> ApiResult<Json<db::models::violations::Violation>> {
+    require_manager(&user)?;
+
     let org_id = user
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
@@ -268,7 +329,7 @@ async fn update_violation(
         .update_violation(violation_id, org_id, req)
         .await
         .map(Json)
-        .map_err(|e| internal_error(&format!("Failed to update violation: {}", e)))
+        .map_err(|e| map_mutation_err("Violation not found", "Failed to update violation", e))
 }
 
 #[derive(Debug, Deserialize)]
@@ -278,20 +339,51 @@ struct AssignRequest {
 
 async fn assign_violation(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(violation_id): Path<Uuid>,
     Json(req): Json<AssignRequest>,
 ) -> ApiResult<Json<db::models::violations::Violation>> {
+    require_manager(&user)?;
+
     let org_id = user
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
+
+    // Org-scoped existence check FIRST. A violation that belongs to another
+    // tenant — or one that genuinely doesn't exist — must surface as 404, the
+    // same as every other by-id handler here. Running this before the assignee
+    // gate below prevents leaking a foreign violation's existence via the
+    // assignee 403 (cross-tenant IDOR, same class as the read handlers).
+    if state
+        .violation_repo
+        .get_violation_for_org(violation_id, org_id)
+        .await
+        .map_err(|e| internal_error(&format!("Failed to load violation: {}", e)))?
+        .is_none()
+    {
+        return Err(not_found_error("Violation not found"));
+    }
+
+    // A violation may only be assigned to a user who belongs to the manager's
+    // own organization. Without this check a manager could set `assigned_to` to
+    // any user UUID, including users outside their org.
+    let assignee_is_member = state
+        .org_member_repo
+        .is_member(org_id, req.assigned_to)
+        .await
+        .map_err(|e| internal_error(&format!("Failed to check assignee org membership: {}", e)))?;
+    if !assignee_is_member {
+        return Err(forbidden_error(
+            "Cannot assign a violation to a user outside your organization",
+        ));
+    }
 
     state
         .violation_repo
         .assign_violation(violation_id, org_id, req.assigned_to)
         .await
         .map(Json)
-        .map_err(|e| internal_error(&format!("Failed to assign violation: {}", e)))
+        .map_err(|e| map_mutation_err("Violation not found", "Failed to assign violation", e))
 }
 
 // =============================================================================
@@ -300,13 +392,40 @@ async fn assign_violation(
 
 async fn add_evidence(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(violation_id): Path<Uuid>,
     Json(req): Json<CreateViolationEvidence>,
 ) -> ApiResult<Json<db::models::violations::ViolationEvidence>> {
+    // Attaching evidence to a violation is a privileged staff action, gated the
+    // same as `delete_evidence`. Previously only tenant *membership* (a non-null
+    // `tenant_id`) was required, so any Resident could attach evidence to any
+    // violation in their org (gh-issue-3164). Evidence is enforcement record,
+    // not a self-service surface like appeals/comments.
+    require_manager(&user)?;
+
     let org_id = user
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
+
+    // A client-supplied `storage_path` must lie inside the caller's own org
+    // storage namespace (`{org_id}/…`, the shape `/documents/upload-url` mints
+    // via `integrations::generate_storage_key`), with no `..` traversal.
+    // Otherwise any member could attach another tenant's object (or a
+    // `messages/…` attachment) as "evidence" and later fetch it — the same
+    // bucket-wide IDOR guarded for documents in #2320. 400 on violation.
+    if let Some(path) = req.storage_path.as_deref() {
+        crate::routes::documents::core::validate_file_key_org_scope(path, org_id).map_err(
+            |_| {
+                (
+                    StatusCode::BAD_REQUEST,
+                    Json(ErrorResponse::new(
+                        "INVALID_STORAGE_PATH",
+                        "storage_path must reference an object uploaded for this organization",
+                    )),
+                )
+            },
+        )?;
+    }
 
     state
         .violation_repo
@@ -321,12 +440,16 @@ async fn add_evidence(
 
 async fn list_evidence(
     State(state): State<AppState>,
-    _user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(violation_id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<db::models::violations::ViolationEvidence>>> {
+    let org_id = user
+        .tenant_id
+        .ok_or_else(|| forbidden_error("No organization context"))?;
+
     state
         .violation_repo
-        .list_evidence(violation_id)
+        .list_evidence(violation_id, org_id)
         .await
         .map(Json)
         .map_err(|e| internal_error(&format!("Failed to list evidence: {}", e)))
@@ -334,9 +457,11 @@ async fn list_evidence(
 
 async fn delete_evidence(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path((_violation_id, evidence_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResult<StatusCode> {
+    require_manager(&user)?;
+
     let org_id = user
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
@@ -360,10 +485,12 @@ async fn delete_evidence(
 
 async fn create_action(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(violation_id): Path<Uuid>,
     Json(req): Json<CreateEnforcementAction>,
 ) -> ApiResult<Json<db::models::violations::EnforcementAction>> {
+    require_manager(&user)?;
+
     let org_id = user
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
@@ -373,12 +500,12 @@ async fn create_action(
         .create_enforcement_action(violation_id, org_id, req, user.user_id)
         .await
         .map(Json)
-        .map_err(|e| internal_error(&format!("Failed to create action: {}", e)))
+        .map_err(|e| map_mutation_err("Violation not found", "Failed to create action", e))
 }
 
 async fn get_action(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path((_violation_id, action_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResult<Json<db::models::violations::EnforcementAction>> {
     let org_id = user
@@ -396,7 +523,7 @@ async fn get_action(
 
 async fn list_actions(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(violation_id): Path<Uuid>,
     Query(mut query): Query<EnforcementQuery>,
 ) -> ApiResult<Json<Vec<db::models::violations::EnforcementAction>>> {
@@ -415,10 +542,12 @@ async fn list_actions(
 
 async fn update_action(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path((_violation_id, action_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateEnforcementAction>,
 ) -> ApiResult<Json<db::models::violations::EnforcementAction>> {
+    require_manager(&user)?;
+
     let org_id = user
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
@@ -428,7 +557,7 @@ async fn update_action(
         .update_enforcement_action(action_id, org_id, req)
         .await
         .map(Json)
-        .map_err(|e| internal_error(&format!("Failed to update action: {}", e)))
+        .map_err(|e| map_mutation_err("Action not found", "Failed to update action", e))
 }
 
 #[derive(Debug, Deserialize)]
@@ -438,10 +567,12 @@ struct SendNoticeRequest {
 
 async fn mark_action_sent(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path((_violation_id, action_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<SendNoticeRequest>,
 ) -> ApiResult<Json<db::models::violations::EnforcementAction>> {
+    require_manager(&user)?;
+
     let org_id = user
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
@@ -451,15 +582,17 @@ async fn mark_action_sent(
         .mark_action_sent(action_id, org_id, &req.method)
         .await
         .map(Json)
-        .map_err(|e| internal_error(&format!("Failed to mark action sent: {}", e)))
+        .map_err(|e| map_mutation_err("Action not found", "Failed to mark action sent", e))
 }
 
 async fn record_payment(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path((_violation_id, action_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<RecordFinePayment>,
 ) -> ApiResult<Json<db::models::violations::FinePayment>> {
+    require_manager(&user)?;
+
     let org_id = user
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
@@ -469,17 +602,21 @@ async fn record_payment(
         .record_payment(action_id, org_id, req, user.user_id)
         .await
         .map(Json)
-        .map_err(|e| internal_error(&format!("Failed to record payment: {}", e)))
+        .map_err(|e| map_mutation_err("Action not found", "Failed to record payment", e))
 }
 
 async fn list_payments(
     State(state): State<AppState>,
-    _user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path((_violation_id, action_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResult<Json<Vec<db::models::violations::FinePayment>>> {
+    let org_id = user
+        .tenant_id
+        .ok_or_else(|| forbidden_error("No organization context"))?;
+
     state
         .violation_repo
-        .list_payments(action_id)
+        .list_payments(action_id, org_id)
         .await
         .map(Json)
         .map_err(|e| internal_error(&format!("Failed to list payments: {}", e)))
@@ -491,7 +628,7 @@ async fn list_payments(
 
 async fn create_appeal(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(violation_id): Path<Uuid>,
     Json(req): Json<CreateViolationAppeal>,
 ) -> ApiResult<Json<db::models::violations::ViolationAppeal>> {
@@ -504,12 +641,12 @@ async fn create_appeal(
         .create_appeal(violation_id, org_id, req, user.user_id)
         .await
         .map(Json)
-        .map_err(|e| internal_error(&format!("Failed to create appeal: {}", e)))
+        .map_err(|e| map_mutation_err("Violation not found", "Failed to create appeal", e))
 }
 
 async fn get_appeal(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(appeal_id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::violations::ViolationAppeal>> {
     let org_id = user
@@ -527,7 +664,7 @@ async fn get_appeal(
 
 async fn list_appeals(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(query): Query<AppealQuery>,
 ) -> ApiResult<Json<Vec<db::models::violations::ViolationAppeal>>> {
     let org_id = user
@@ -544,10 +681,12 @@ async fn list_appeals(
 
 async fn update_appeal(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(appeal_id): Path<Uuid>,
     Json(req): Json<UpdateViolationAppeal>,
 ) -> ApiResult<Json<db::models::violations::ViolationAppeal>> {
+    require_manager(&user)?;
+
     let org_id = user
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
@@ -557,7 +696,7 @@ async fn update_appeal(
         .update_appeal(appeal_id, org_id, req, Some(user.user_id))
         .await
         .map(Json)
-        .map_err(|e| internal_error(&format!("Failed to update appeal: {}", e)))
+        .map_err(|e| map_mutation_err("Appeal not found", "Failed to update appeal", e))
 }
 
 #[derive(Debug, Deserialize)]
@@ -569,10 +708,12 @@ struct DecideAppealRequest {
 
 async fn decide_appeal(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(appeal_id): Path<Uuid>,
     Json(req): Json<DecideAppealRequest>,
 ) -> ApiResult<Json<db::models::violations::ViolationAppeal>> {
+    require_manager(&user)?;
+
     let org_id = user
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
@@ -589,7 +730,7 @@ async fn decide_appeal(
         )
         .await
         .map(Json)
-        .map_err(|e| internal_error(&format!("Failed to decide appeal: {}", e)))
+        .map_err(|e| map_mutation_err("Appeal not found", "Failed to decide appeal", e))
 }
 
 // =============================================================================
@@ -598,7 +739,7 @@ async fn decide_appeal(
 
 async fn add_comment(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(violation_id): Path<Uuid>,
     Json(req): Json<CreateViolationComment>,
 ) -> ApiResult<Json<db::models::violations::ViolationComment>> {
@@ -624,13 +765,25 @@ struct ListCommentsQuery {
 
 async fn list_comments(
     State(state): State<AppState>,
-    _user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(violation_id): Path<Uuid>,
     Query(query): Query<ListCommentsQuery>,
 ) -> ApiResult<Json<Vec<db::models::violations::ViolationComment>>> {
+    let org_id = user
+        .tenant_id
+        .ok_or_else(|| forbidden_error("No organization context"))?;
+
+    // Internal notes are staff-only. Even if the caller passes
+    // `?include_internal=true`, only manager-level roles (and platform admins)
+    // may actually see `is_internal` comments — a non-privileged role's request
+    // is silently downgraded to public-only (privilege-leak fix, issue #2944).
+    let may_see_internal =
+        user.is_platform_admin() || user.role.map(|r| r.is_manager()).unwrap_or(false);
+    let include_internal = query.include_internal.unwrap_or(false) && may_see_internal;
+
     state
         .violation_repo
-        .list_comments(violation_id, query.include_internal.unwrap_or(false))
+        .list_comments(violation_id, org_id, include_internal)
         .await
         .map(Json)
         .map_err(|e| internal_error(&format!("Failed to list comments: {}", e)))
@@ -642,7 +795,7 @@ async fn list_comments(
 
 async fn get_dashboard(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
 ) -> ApiResult<Json<db::models::violations::ViolationDashboard>> {
     let org_id = user
         .tenant_id
@@ -664,7 +817,7 @@ struct ViolatorHistoryQuery {
 
 async fn get_violator_history(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(query): Query<ViolatorHistoryQuery>,
 ) -> ApiResult<Json<db::models::violations::ViolatorHistory>> {
     let org_id = user
@@ -687,7 +840,7 @@ struct StatisticsQuery {
 
 async fn get_statistics(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(query): Query<StatisticsQuery>,
 ) -> ApiResult<Json<Option<db::models::violations::ViolationStatistics>>> {
     let org_id = user

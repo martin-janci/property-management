@@ -1,0 +1,73 @@
+{
+  "generated": "2026-09-20T00:00:00Z",
+  "source_run": "dispatcher Phase 2.6 Tier-1d demand-driven (deep-buffer-starvation response) 2026-09-20",
+  "segment_reviewed": "admin-web",
+  "selection_reason": "EXTENDED-SEGMENT (cloud-landable, fresh). The skill's 8-segment map covers only ppt-web-ui/ppt-web-core/reality-web/mobile-rn on the frontend side; all three cloud-landable skill-mapped frontend segments are EXHAUSTED and picked-over: ppt-web-core has ~100 code-review findings in the signals corpus and was reviewed 3x in the last 4 days (2026-09-16/17/19), ppt-web-ui has ~145 findings and was already reviewed TODAY (2026-09-20 file present), reality-web has ~111 findings reviewed 2026-09-18 and twice on 2026-09-19. A churn-aligned/oldest pick among those would yield near-100% DUPLICATES (I verified: my ppt-web-core candidates — financial-query-silent-error, financial-dash-false-zeros, rentals-mutation-swallow-err, person-months-toast-i18n — are all already filed). Per the dispatcher task's explicit instruction to PREFER a cloud-verifiable frontend segment and its naming of `frontend/apps/admin-web` and `frontend/packages/shared` as cloud-landable targets, I extended the rotation to `admin-web`, which has ZERO prior code-review findings in the entire signals corpus (grep code-review-admin-web* => 0) and ZERO rows in backlog.json — virgin, guaranteed-fresh, cloud-landable surface. SATURATION CHECK: 0 open admin-web findings in backlog.json, not skipped. Static-only (no build/test) per skill; admin-web is a Vite React SPA and is fully cloud-buildable/verifiable (no api-server/KMP egress blockers). Frontend expert pass. Cap-at-3 honored; 3 net-new findings below. VERIFIED-CLEAN (not findings): MfaWrapper mfa/verify raw fetch checks response.ok + try/catch; Dashboard.tsx metrics/audit/impersonation/merge fetches all check res.ok with try/catch fallbacks; usePrincipalCapabilities is fail-CLOSED (401/403 => empty caps, UI hidden); features/layout-editor/api.ts request<T>() has structured LayoutApiError + 404/204 handling; CapabilitiesAdminPage revoke/grant flows explicitly promptMfa() before the raw fetch and surface revokeMutation.error in the render (lines 729/757); no `as any`/`as unknown as` casts in admin-web src; the only console.* are 404-branch diagnostics.",
+  "experts_used": ["frontend"],
+  "findings_count": 3,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-admin-web-impersonation-stop-swallows-failure",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-20 admin-web impersonation)",
+      "segment": "admin-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/admin-web/src/components/ImpersonationWrapper.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/admin-web/src/components/ImpersonationWrapper.tsx:73-93 — handleEnd() (the 'Stop impersonation' banner action) fires `await fetch('/api/v1/admin/impersonation/${current.tokenId}', { method: 'DELETE', headers })` but NEVER checks `response.ok`. It then unconditionally runs `clearStored(); setState(null)` in the `finally` block (with a `catch {}` that swallows all errors). The inline comment makes it explicit: 'Clear local state regardless — banner must never get stuck.'",
+        "Security impact: if the server-side impersonation-revoke fails (backend 4xx/5xx, network error, or the request is silently rejected), the admin UI clears the local banner and reports impersonation as ENDED while the impersonation token/session may still be LIVE server-side. The operator believes they have dropped the elevated identity but has not — an elevated session leaks past the point the human intended to end it. This trades a real privilege-de-escalation guarantee for a cosmetic 'no stuck banner' UX.",
+        "Secondary defect (same call): this DELETE omits `credentials: 'include'`, unlike essentially every other admin fetch in the app (Dashboard.tsx, CapabilitiesAdminPage.tsx, MembershipsPage.tsx, usePrincipalCapabilities.ts all pass `credentials: 'include'`). If the impersonation-end endpoint depends on the session cookie in addition to the Bearer token, the revoke may fail server-side — directly triggering the leak above.",
+        "Fix (frontend, cloud-verifiable): check `res.ok`; only `clearStored()/setState(null)` on a confirmed 2xx (or an idempotent 404 = already-ended); on failure surface an error + retry affordance and keep the banner (or hard-logout the admin) rather than optimistically clearing. Add `credentials: 'include'` to match the rest of the app. Confidence medium: the swallow + unconditional finally-clear are confirmed by static read; the exact server-side liveness window depends on backend token invalidation semantics."
+      ]
+    },
+    {
+      "id": "code-review-admin-web-raw-fetch-bypasses-api-client",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-20 admin-web transport)",
+      "segment": "admin-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/admin-web/src/pages/Dashboard.tsx",
+        "frontend/apps/admin-web/src/pages/CapabilitiesAdminPage.tsx",
+        "frontend/apps/admin-web/src/pages/MembershipsPage.tsx",
+        "frontend/apps/admin-web/src/pages/users.tsx",
+        "frontend/apps/admin-web/src/auth/usePrincipalCapabilities.ts"
+      ],
+      "evidence": [
+        "admin-web makes ~31 raw `fetch()` calls (grep 'await fetch(' non-test => 31 sites across Dashboard.tsx, CapabilitiesAdminPage.tsx, MembershipsPage.tsx, users.tsx, OrganizationsPage.tsx, TenantLifecyclePage.tsx, LoginPage.tsx, usePrincipalCapabilities.ts, features/layout-editor/api.ts, components/MfaWrapper.tsx, components/ImpersonationWrapper.tsx) that bypass the shared `@ppt/api-client` axios instance. AdminAuthContext.tsx DOES register a token provider (`setTokenProvider(() => sessionTokenStore.get())`) so the typed api-client (used only by features/system-announcements) gets auth + the 401/mfa interceptors — but every raw-fetch page re-implements `const headers = {}; if (token) headers.Authorization = 'Bearer ' + token` by hand and gets NONE of the interceptor behavior.",
+        "Consequences of the split transport: (1) no shared 401 handling — admin-web has no refresh flow at all (AdminAuthContext exposes only token/setToken/logout, sessionTokenStore), so on token expiry each raw fetch fails independently with inconsistent UX (some throw, some return [], some return {items:[],total:0}) and no consistent redirect-to-login; (2) auth-header construction is duplicated ~31 times, so a new endpoint can silently ship without the Bearer header or without `credentials:'include'` (see the impersonation-stop finding — that exact omission already happened); (3) response-shape/error normalization is re-invented per call site (Array.isArray(data) ? data : data.items ?? []) with no single ApiError type.",
+        "Fix (frontend, cloud-verifiable): route admin fetches through a single thin wrapper (or the existing `@ppt/api-client` instance / a shared `adminRequest<T>()` modeled on features/layout-editor/api.ts's already-good `request<T>()`) that centralizes the Bearer header, `credentials:'include'`, `res.ok` handling, structured error, and a shared 401 → logout/redirect. Low-to-medium: not a live crash, but a systemic consistency + security-footgun surface (0 open findings here today; good time to standardize before it grows)."
+      ]
+    },
+    {
+      "id": "code-review-admin-web-dashboard-hardcoded-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-20 admin-web i18n)",
+      "segment": "admin-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/admin-web/src/pages/Dashboard.tsx",
+        "frontend/apps/admin-web/src/pages/OAuthClientsPage.tsx"
+      ],
+      "evidence": [
+        "admin-web ships react-i18next and uses `t(key, { defaultValue })` broadly (feature-flags.tsx, agencies.tsx, AgencyDetailPage.tsx), but several user-facing strings are hardcoded English literals not wrapped in t():",
+        "frontend/apps/admin-web/src/pages/Dashboard.tsx:585 'No high-risk events in the last 24 hours.', :616 'Loading…', :618 'No active impersonation sessions.', :657 'Loading…', :659 'No merge collisions.' — all empty-state / loading text rendered directly in JSX.",
+        "frontend/apps/admin-web/src/pages/OAuthClientsPage.tsx:586 placeholder=\"My Integration\", :598 placeholder=\"Optional description\", :1052 'Loading…' — hardcoded placeholders/loading text.",
+        "Also hardcoded (lower priority, error fallbacks): OrganizationsPage.tsx:326/351/486 ('Could not suspend the organization.' / 'Could not reactivate the organization.' / 'Failed to load organizations. Check your connection and try again.'), CapabilitiesAdminPage.tsx:560/705 fallbacks.",
+        "Fix (frontend, cloud-verifiable): wrap these in `t('admin.dashboard.*', { defaultValue })` (matching the app's existing pattern) so the admin console is translatable/consistent. Low severity (i18n gap, no functional break)."
+      ]
+    }
+  ]
+}

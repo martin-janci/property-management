@@ -7,6 +7,8 @@
 
 mod common;
 
+#[path = "suites/login_token_org_scope_tests.rs"]
+mod login_token_org_scope_tests;
 #[path = "suites/mfa_e2e_tests.rs"]
 mod mfa_e2e_tests;
 #[path = "suites/mfa_recovery_codes_tests.rs"]
@@ -17,6 +19,8 @@ mod mfa_recovery_cross_user_idor_tests;
 mod mfa_regenerate_backup_codes_rls_scope_tests;
 #[path = "suites/migration_db_tests.rs"]
 mod migration_db_tests;
+#[path = "suites/migration_import_upload_persists_file.rs"]
+mod migration_import_upload_persists_file;
 #[path = "suites/migration_pagination_tests.rs"]
 mod migration_pagination_tests;
 #[path = "suites/multi_currency_cross_org_idor_tests.rs"]
@@ -59,3 +63,5 @@ mod outages_happy_path_tests;
 mod owner_analytics_cross_org_idor_tests;
 #[path = "suites/package_visitor_happy_path_tests.rs"]
 mod package_visitor_happy_path_tests;
+#[path = "suites/package_visitor_round4_authz_tests.rs"]
+mod package_visitor_round4_authz_tests;

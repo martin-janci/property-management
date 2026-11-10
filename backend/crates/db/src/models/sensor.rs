@@ -23,6 +23,36 @@ pub mod sensor_type {
     pub const NOISE: &str = "noise";
     pub const AIR_QUALITY: &str = "air_quality";
     pub const OCCUPANCY: &str = "occupancy";
+
+    /// Every value the `sensors.sensor_type` CHECK constraint accepts.
+    pub const ALL: &[&str] = &[
+        TEMPERATURE,
+        HUMIDITY,
+        MOTION,
+        CO2,
+        WATER_LEAK,
+        ENERGY,
+        SMOKE,
+        DOOR,
+        WINDOW,
+        LIGHT,
+        PRESSURE,
+        NOISE,
+        AIR_QUALITY,
+        OCCUPANCY,
+    ];
+}
+
+/// Sensor connection type enum (`sensors.connection_type` CHECK constraint).
+#[allow(missing_docs)]
+pub mod sensor_connection_type {
+    pub const API: &str = "api";
+    pub const MQTT: &str = "mqtt";
+    pub const WEBHOOK: &str = "webhook";
+    pub const POLLING: &str = "polling";
+
+    /// Every value the `sensors.connection_type` CHECK constraint accepts.
+    pub const ALL: &[&str] = &[API, MQTT, WEBHOOK, POLLING];
 }
 
 /// Sensor status enum.
@@ -34,6 +64,9 @@ pub mod sensor_status {
     pub const ERROR: &str = "error";
     pub const MAINTENANCE: &str = "maintenance";
     pub const DISABLED: &str = "disabled";
+
+    /// Every value the `sensors.status` CHECK constraint accepts.
+    pub const ALL: &[&str] = &[PENDING, ACTIVE, OFFLINE, ERROR, MAINTENANCE, DISABLED];
 }
 
 /// IoT sensor entity.
@@ -73,6 +106,8 @@ pub struct Sensor {
 /// Create sensor request.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreateSensor {
+    /// Ignored on input: the route sets it from the validated tenant.
+    #[serde(default)]
     pub organization_id: Uuid,
     pub building_id: Uuid,
     pub unit_id: Option<Uuid>,
@@ -90,6 +125,8 @@ pub struct CreateSensor {
     pub serial_number: Option<String>,
     pub installed_at: Option<DateTime<Utc>>,
     pub metadata: Option<serde_json::Value>,
+    /// Ignored on input: the route sets it from the authenticated user.
+    #[serde(default)]
     pub created_by: Uuid,
 }
 
@@ -146,7 +183,12 @@ pub struct SensorReading {
     pub value: f64,
     pub unit: String,
     pub quality: Option<String>,
-    #[sqlx(json)]
+    // `raw_data` is a nullable JSONB column. Plain `#[sqlx(json)]` decodes via
+    // `Json<T>`, which rejects a SQL NULL ("unexpected null"); `json(nullable)`
+    // maps NULL -> None and decodes the JSON otherwise (same pattern as
+    // `llm_document.rs`). A reading ingested without `raw_data` stores NULL and
+    // must decode back through `RETURNING *`.
+    #[sqlx(json(nullable))]
     pub raw_data: Option<serde_json::Value>,
     pub timestamp: DateTime<Utc>,
 }

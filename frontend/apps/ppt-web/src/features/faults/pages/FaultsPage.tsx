@@ -50,8 +50,10 @@ interface FaultsPageProps {
   onNavigateToReports?: () => void;
   onNavigateToCreate: () => void;
   onNavigateToView: (id: string) => void;
-  onNavigateToEdit: (id: string) => void;
-  onNavigateToTriage: (id: string) => void;
+  /** Managers only; omitted for residents so the cards hide Edit. */
+  onNavigateToEdit?: (id: string) => void;
+  /** Managers only; omitted for residents so the cards hide Triage. */
+  onNavigateToTriage?: (id: string) => void;
   onFilterChange: (params: FaultListParams) => void;
 }
 
@@ -117,7 +119,7 @@ export function FaultsPage({
             onClick={onNavigateToReports}
             className="text-sm font-medium text-blue-600 hover:text-blue-700 underline"
           >
-            View reports →
+            {t('faults.viewReports')} →
           </button>
         </div>
       )}
@@ -130,15 +132,15 @@ export function FaultsPage({
         >
           <div className="text-center">
             <p className="text-2xl font-bold text-gray-900">{stats.total_count}</p>
-            <p className="text-sm text-gray-500">Total</p>
+            <p className="text-sm text-gray-500">{t('faults.statsTotal')}</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-blue-600">{stats.open_count}</p>
-            <p className="text-sm text-gray-500">Open</p>
+            <p className="text-sm text-gray-500">{t('faults.statusOpen')}</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-gray-400">{stats.closed_count}</p>
-            <p className="text-sm text-gray-500">Closed</p>
+            <p className="text-sm text-gray-500">{t('faults.statusClosed')}</p>
           </div>
         </div>
       )}

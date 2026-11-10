@@ -1,0 +1,23 @@
+{
+  "date": "2026-09-18",
+  "run_mode": "incremental",
+  "generated": "2026-09-18T08:30:00Z",
+  "run_note": "Tier 1d demand-driven review-vector generation (claim buffer starved: claimable=12 < floor=36). ppt-dev-review static-analysis slice ONLY (no compile, no tests, no dev-stack). Segment selection: no explicit CHURN_FILES passed to this generator; state.review_cursor oldest-unreviewed pair tied at 2026-08-29 between ppt-web-core and reality-web. Chose ppt-web-core (stable cursor insertion-order tiebreak; frontend => cloud-landable, preferred over infra-blocked mobile-native/KMP + api-server-swagger). Saturation check: 0 open code-review-finding items for any segment in backlog.json, so no saturation-skip. Frontend expert reviewed lib/ (api.ts, errorHandler.ts, websocket.ts, storage.ts), hooks/ (useWebSocket, useNetworkStatus, useOrganization, usePerformanceMetrics), contexts/ (AuthContext, WebSocketContext), routes/. Segment is mature and well-documented: all console.* calls are import.meta.env.DEV-gated (no committed logging), no `as any` casts, single-flight token refresh is race-free, timers/listeners all clean up, WS service reads token live via ref (no stale-service leak), token-in-WS-URL is the documented browser workaround with short-lived access token. One genuine latent finding emitted (default-export footgun in lib/api.ts). Cap of 3 not reached; stopped early rather than padding with nits.",
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "generator run — auto-fix is the dispatcher's decision, not this subagent's (single-writer rule; DISPATCHER_OWNED_COMMIT=1). Only candidate is score_delta=1 (below the score>=3 auto-fix threshold) anyway.",
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-api-default-export-stale",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:371 — `export default getApiClient()` is evaluated at module-load time, before AuthProvider runs configureApiClient(). At that point apiInstance is null, so getApiClient() builds an UNCONFIGURED axios instance (no getToken request interceptor => no Authorization header; no onUnauthorized handler => no single-flight 401 refresh-and-replay) and binds it as the default export. configureApiClient() later reassigns the `apiInstance` singleton, but the already-evaluated default export keeps its reference to the pre-config instance forever. Consequence: any consumer that does `import api from '@/lib/api'` (default import) gets a client that sends no auth header and never refreshes tokens — silent auth failure. Latent today (all current consumers use the named getApiClient(): features/predictive-maintenance, features/sentiment, routes/groups/person-months.tsx), so severity=low, but it is a footgun that will silently break auth the first time someone default-imports. Fix: remove the default export, or replace it with a lazy getter / Proxy that forwards to the live getApiClient() singleton."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

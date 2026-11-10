@@ -149,22 +149,35 @@ export interface CancelOutageRequest {
 // Statistics & Dashboard Types
 // ============================================
 
+/**
+ * Mirrors the server's `OutageStatistics` (GET /outages/statistics): status
+ * counters for the organization's outages.
+ */
 export interface OutageStatistics {
-  totalOutages: number;
-  activeOutages: number;
-  plannedOutages: number;
-  resolvedOutages: number;
-  cancelledOutages: number;
-  outagesByCommodity: Record<OutageCommodity, number>;
-  outagesBySeverity: Record<OutageSeverity, number>;
-  averageResolutionHours?: number;
+  total: number;
+  planned: number;
+  ongoing: number;
+  resolved: number;
+  cancelled: number;
 }
 
+/** One entry of the dashboard's per-commodity breakdown. */
+export interface OutageCommodityCount {
+  commodity: OutageCommodity;
+  count: number;
+}
+
+/**
+ * Mirrors the server's `OutageDashboard` (GET /outages/dashboard). Counts and
+ * the commodity breakdown cover active (planned + ongoing) outages only;
+ * `upcoming` lists up to 10 of them, soonest first.
+ */
 export interface OutageDashboard {
-  currentOutages: OutageSummary[];
-  upcomingOutages: OutageSummary[];
-  recentlyResolved: OutageSummary[];
-  statistics: OutageStatistics;
+  activeCount: number;
+  plannedCount: number;
+  ongoingCount: number;
+  byCommodity: OutageCommodityCount[];
+  upcoming: OutageSummary[];
 }
 
 export interface UnreadOutagesCount {

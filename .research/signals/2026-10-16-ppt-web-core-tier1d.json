@@ -1,0 +1,47 @@
+{
+  "generated": "2026-10-16T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claim buffer starved: honest_claimable=6 < BUFFER_FLOOR=36, after Tier 1b/1c). Static single-segment rotating code review per .claude/skills/ppt-dev-review/SKILL.md — no compilation, no test execution, no branch checkout (cloud runner, file reading + grep only). DISPATCHER_OWNED_COMMIT=1: this artifact was written into the working tree only; no git add/commit/push performed — the orchestrator folds .research deltas into its own Phase 6 commit. No .research/management/* or backlog.json touched. Segment selection: churn over the last 7 days (git log --name-only, non-.research) points primarily at mobile-rn (frontend/apps/mobile/src/screens/outages + locales) and ppt-web (frontend/apps/ppt-web/src/routes/groups/community.tsx, src/lib/errorHandler.ts) plus shared frontend/packages/api-client. Priority-1 churn-alignment: mobile-rn is churn-hot but review_cursor shows it was already reviewed today (2026-10-16), and reality-web was also already reviewed today (2026-10-16-reality-web-tier1d.json signal present), so both were excluded as same-day re-reviews. api-handlers is saturated (3 open code-review-finding rows with status==open in backlog.json) -> saturation-skip. The next churn-aligned, non-saturated, not-reviewed-today segment is ppt-web-core: errorHandler.ts (lib/) and routes/groups/community.tsx are churned and both live in the core (non-pages/, non-components/) scope, and its cursor (2026-10-13) is older than ppt-web-ui (2026-10-15). Selected: ppt-web-core.",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "churn-aligned (lib/errorHandler.ts + routes/groups/community.tsx churned in last 7 days; api-client adjacent), non-saturated, not reviewed today, cursor 2026-10-13. api-handlers skipped (saturated: 3 open findings); mobile-rn and reality-web excluded (already reviewed today per review_cursor / today's signal files).",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-ai-ack-no-error-surface",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/ai-dashboards.tsx",
+        "frontend/apps/ppt-web/src/features/sentiment/hooks/useSentiment.ts",
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/ai-dashboards.tsx:48 and :81 — both AI-dashboard routes invoke acknowledge mutations as fire-and-forget `onAcknowledge={(id) => acknowledge.mutate(id)}` / `onAcknowledgePrediction={(id) => acknowledge.mutate(id)}` with NO second-arg onError and NO try/catch (these are sync `.mutate`, not awaited `.mutateAsync`). The route forwards only the loading state down to the page component — `pendingAcknowledgeId={pendingAcknowledgeId}` (ai-dashboards.tsx:46, :79, derived from `acknowledge.isPending`) — but it never forwards `acknowledge.isError` or `acknowledge.error`, so the child pages (SentimentDashboardPage / PredictiveMaintenancePage) have no prop through which to render a failure. The backing hooks seal the gap shut: useAcknowledgeSentimentAlert (features/sentiment/hooks/useSentiment.ts:89-102) and useAcknowledgeMaintenancePrediction (features/predictive-maintenance/hooks/usePredictiveMaintenance.ts:72-86) each define ONLY `mutationFn` + `onSuccess` (cache invalidation) with NO onError. Net effect on a failed POST `/alerts/{id}/acknowledge` or `/predictions/{id}/acknowledge` (401/403/409/5xx): the cache is NOT invalidated (onSuccess skipped), the pending spinner clears, and the user sees the alert/prediction silently remain un-acknowledged with zero feedback — a classic swallowed-error user-facing path. Contrast with the well-handled siblings in the SAME segment that DO surface errors: SessionsPage (features/settings/pages/SessionsPage.tsx) renders `revokeSession.isError`/`revokeAllOthers.isError` role=alert blocks; financial.tsx (routes/groups/financial.tsx:179,:206,:308,:326) and rentals.tsx (routes/groups/rentals.tsx) attach explicit onError toasts/handleRentalsMutationError on every mutation. This is an unhandled error on a user-facing mutation path -> severity MEDIUM (+2). Suggested cloud-landable fix (frontend-only, vitest-verifiable): add `onError` to each acknowledge hook (surface via the shared errorHandler/toast used elsewhere), or forward `acknowledge.isError`/`acknowledge.error` from ai-dashboards.tsx down to the page components and render an alert, mirroring SessionsPage. Reachability traced statically (route -> hook -> consumer render); failure frequency not observable statically, hence confidence medium."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-jwt-in-query-param",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts",
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts:94-101 — buildWebSocketUrl(base, token) places the raw JWT access token into a query-string parameter: `url.searchParams.set('token', token); return url.toString();`, and the socket is opened with it at websocket.ts:369 `new WebSocket(buildWebSocketUrl(this.url, token), ['ppt.v1'])`, where `token = this.getToken()` (websocket.ts:330) is wired to the live access token via contexts/WebSocketContext.tsx:261 `getToken: () => authRef.current.accessToken`. Passing a bearer credential in a URL (even over wss://, which encrypts it on the wire) is a well-known sensitive-data-in-URL exposure (OWASP): the `?token=<jwt>` is captured in plaintext by any server/reverse-proxy/load-balancer access log, APM/observability spans that record request URLs, and — for the WS upgrade request — potentially intermediary diagnostics, where it then sits at rest readable by anyone with log access for the token's full TTL. The code comments (websocket.ts:86-92, :186-193) show this mirrors the api-server contract (server reads JWT from the `token` query param), so it is a deliberate but under-mitigated design: the token is not short-circuited to a single-use/ticket token, and browsers' inability to set custom headers on the native WebSocket handshake is the usual justification — but the standard safer pattern is a short-lived one-time WS ticket exchanged over an authenticated HTTP call, then presented in the query param, so a leaked log entry is useless after first use. Severity MEDIUM (+2): a real credential-exposure class on the WS auth path, bounded by access-token TTL and log access, not a direct auth bypass. Suggested vector (cross-stack, backend + ppt-web): introduce a short-lived single-use WS ticket endpoint and have buildWebSocketUrl carry the ticket instead of the full access JWT; at minimum, scrub `token` from access-log URL capture at the proxy. Reachability traced statically (WebSocketContext.getToken -> connect -> buildWebSocketUrl -> new WebSocket); confidence medium (static; depends on deployment log configuration which is not observable in-repo)."
+      ]
+    }
+  ]
+}

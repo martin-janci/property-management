@@ -57,14 +57,28 @@ export const eventToQueryKeys: Record<string, string[]> = {
  * `payload.category` (serialized snake_case, see `NotificationCategory`) pins
  * which entity list just changed. A new announcement notification, for example,
  * should refresh both the notification list and the announcements list.
+ *
+ * This map MUST cover every `NotificationCategory` variant the server can emit
+ * (`common::notifications::NotificationCategory`, serialized snake_case).
+ * A missing key silently degrades to the `notifications`-only fallback, so the
+ * corresponding entity feed goes stale on push — that was the community + system
+ * gap this map originally shipped with. Invalidating a root that no active query
+ * uses is a harmless no-op, so it is safe to keep the map in lock-step with the
+ * backend enum.
  */
 export const categoryToQueryKeys: Record<string, string[]> = {
   announcements: ['announcements'],
   faults: ['faults'],
-  votes: ['votes'],
+  // The live vote queries are keyed under the `voting` root (`votingKeys.all`
+  // in `@ppt/api-client`), NOT the legacy local `queryKeys.votes` factory root
+  // (`votes`). Keying this on `['votes']` invalidated a root no active query
+  // uses, so a votes push left the on-screen vote lists/details stale.
+  votes: ['voting'],
   messages: ['messages'],
-  documents: ['documents'],
+  community: ['community'],
   financial: ['financial'],
+  documents: ['documents'],
+  system: ['system'],
 };
 
 /**

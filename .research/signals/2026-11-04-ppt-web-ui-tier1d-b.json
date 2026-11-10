@@ -1,0 +1,52 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-04",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed (dispatcher Tier-1d demand-driven; research backlog starved, claimable=21 < floor=36). CHURN_FILES not supplied by the dispatcher this slice, and state.json hotspot_history is stale (mostly 2026-05; most recent 2026-10-25), so SKILL Step 1 priority 2 (oldest-unreviewed) applies. review_cursor from .research/state.json: ppt-web-ui 2026-11-02 is the strictly-oldest segment (reality-web/mobile-rn 2026-11-03; all others 2026-11-04). Saturation check against open code-review-finding rows in backlog.json: ppt-web-ui = 0 open (<3, not saturated; mobile-native-kmp=2, reality-server=1). ppt-web-ui selected. This is the SECOND ppt-web-ui Tier-1d run today; the earlier 2026-11-04-ppt-web-ui-tier1d.json mined meters/ReadingForm OCR + compliance/ContentModeration full-reload nav. Frontend expert primary + Completeness secondary per Step 2. Static analysis only — no compile, no test run. NOTE ON YIELD: ppt-web-ui is heavily pre-mined (35+ historical done + multiple runs in the last 72h). Every strong candidate surfaced this pass that was already filed was DROPPED as a duplicate: facilities/BookFacilityPage stale-availability + silent-error branch (already filed, code-review covering BookFacilityPage.tsx:49-56 availability swallow and the setAvailableSlots stale-state correctness bug); compliance/useAmlDashboard.ts hard-coded false compliance fields + recommendations:[] (already filed, code-review-ppt-web-aml hardcoded-false-fields) and the risk_factors.map unguarded crash (already filed); the broad hardcoded 'en-US'/undefined-locale number/date/currency formatter class (already filed: code-review-ppt-web-ui-hardcoded-en-us-locale 2026-09-20 + date-number-formatters-no-locale 2026-08-24 + meters/leases/neighbors follow-ups) — ~39 en-US sites confirmed but all within that existing finding's scope. The three dangerouslySetInnerHTML sites (news/ArticleDetailPage, announcements/ViewAnnouncementPage via lib/markdown.ts, documents/DocumentSearchResult) are all correctly DOMPurify-allowlist-sanitized (non-issues). The subscription feature (BillingPage/InvoiceCard/...) is UNWIRED (props-driven, no route mounts it) so its formatting/i18n gaps are not cloud-landable and were excluded. Only the two findings below are net-new, wired, and qualifying.",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-formrenderer-required-bypass",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-04 ppt-web-ui, run b)",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/forms/components/FormRenderer.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/forms/components/FormRenderer.tsx:35-40 — validateForm()'s required-field check is too narrow: `if (value === undefined || value === null || value === '')`. It only treats a missing string as empty, so three of the component's own field types bypass required validation and submit an 'empty' value: (1) NUMBER fields (case 'number', :164-169) store `Number.parseFloat(e.target.value)`; clearing the input makes parseFloat('') === NaN, and `NaN === '' / null / undefined` are all false, so a required number field left blank (NaN) PASSES and is submitted (NaN serializes to JSON null). (2) CHECKBOX fields (case 'checkbox', :195-202) store `e.target.checked`; an unchecked required checkbox is `false`, and `false === '' / null / undefined` are all false, so a mandatory consent/acknowledgement checkbox can be submitted UNCHECKED. (3) MULTISELECT fields (case 'multiselect', :249-256) store an array; an empty selection is `[]`, which is not `=== '' / null / undefined`, so a required multiselect with zero options chosen also PASSES.",
+        "Reachability confirmed static: handleSubmit (:67-75) gates onSubmit solely on validateForm() returning true; the required check at :35-40 is the only gate for these types (email/phone have extra regex at :43-56 but those are string-typed). No other guard exists. The required marker is rendered for all field types (:323 `{field.required && ...*}`), so the UI advertises these fields as mandatory while the validator does not enforce them.",
+        "Impact MEDIUM (+2): a correctness bug on a user-facing, wired form-filling surface (FillFormPage mounts FormRenderer). A cleared required numeric answer submits as null and a required consent checkbox submits as false/unchecked — the latter is the material case for forms that gate on an acknowledgement. The regex branches at :43,51 already use `formData[field.id]` truthiness, so the author's model of 'filled' is string-centric; the number/boolean/array types were not accounted for.",
+        "Fix vector (frontend-only, cloud-landable, frontend.yml + vitest verifiable): make the emptiness test type-aware — treat NaN as empty for number fields, require `value === true` for a required checkbox, and treat an empty array as empty for multiselect (e.g. `const empty = value === undefined || value === null || value === '' || (typeof value === 'number' && Number.isNaN(value)) || (Array.isArray(value) && value.length === 0) || (field.fieldType === 'checkbox' && value !== true);`). Add RTL tests asserting a required number/checkbox/multiselect left blank blocks submit. Confidence MEDIUM: the missing cases are statically certain; not upgraded to high because the server may re-validate (not traced). NET-NEW: distinct from the reality-web/mobile-rn FormRenderer rows in prior signals (different app + file); no ppt-web forms-validation finding exists in backlog.json."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-aml-threshold-errors-swallowed",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-04 ppt-web-ui, run b)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "completeness",
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/hooks/useAmlDashboard.ts",
+        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/hooks/useAmlDashboard.ts:85-89 — the AML dashboard issues three queries: useAmlAssessments (whose `error` is destructured as `assessmentsError` and exposed on UseAmlDashboardResult), useAmlThresholds() and useCountryRisks(). The latter two destructure only `data` (`thresholdsData`, `countryRisksData`); their `.error`/`.isError` are never read and the hook's return type (:30-59) has no field for them. So a thresholds or country-risk fetch failure is silently dropped.",
+        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx:66-76 — the page renders a single error branch keyed off `assessmentsError` only. When useAmlThresholds/useCountryRisks fail, `thresholds` falls to null (:128-135) and `countryRisks` to [] (:137-143), so AmlThresholdsSection and AmlCountryRisksTable render as empty/absent panels with NO error indication and NO retry — a failed load is indistinguishable from 'no thresholds configured' / 'no high-risk countries'. This is inconsistent with the assessments panel in the same screen, which does surface an error, and with the hardened mutation paths (submitEdd/submitReview) that toast on error (:179-186, :210-217).",
+        "Impact LOW (+1): no crash or auth impact, but on a regulated AML/KYC surface a compliance officer can read stale/empty FATF country-risk and monetary-threshold panels as authoritative 'empty' when the underlying fetch actually 500'd — a silent-failure/data-trust gap, not just a cosmetic one. Confidence MEDIUM (static): the dropped `.error` destructures and the single-source error branch are confirmed by full read of both files; runtime behaviour on a thresholds 500 not executed.",
+        "Fix vector (frontend-only, cloud-landable, frontend.yml verifiable): expose `thresholdsError`/`countryRisksError` from useAmlDashboard and either fold them into the page's top-level error branch or render per-section error+retry states in AmlThresholdsSection / AmlCountryRisksTable. NET-NEW: distinct from the existing AML rows (risk_factors.map crash; hardcoded-false compliance fields + recommendations:[]; window.prompt untrusted-cast; prompt/alert i18n) — none of those cover the unsurfaced thresholds/country-risk query errors."
+      ]
+    }
+  ]
+}

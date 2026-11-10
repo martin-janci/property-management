@@ -1,0 +1,60 @@
+{
+  "generated_by": "dispatcher-tier1d",
+  "generated_at": "2026-09-11T00:00:00Z",
+  "run": "dispatcher Tier-1d demand-driven (claim buffer starved of cloud-landable work) 2026-09-11",
+  "reason": "buffer starved of cloud-landable work; demand-driven vector generation on a landable (frontend) segment. CHURN_FILES empty (hotspot history stale from 2026-05), so oldest-unreviewed selection.",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "oldest-unreviewed. Per the REVIEW_CURSOR provided from state.json, ppt-web-core and reality-web tie at 2026-08-29 (oldest); picked ppt-web-core, first in skill-map order. NOTE: the state.json review_cursor is stale (last_run 2026-09-01); the signals corpus shows ppt-web-core was actually last swept 2026-09-10 and reality-web 2026-09-10, api-core 2026-09-09. Proceeded on ppt-web-core per the explicit task directive AND because a fresh sweep of the routes/ (router) sub-scope surfaced 3 net-new findings not present in seen_signals/backlog (the entire Community route group being shipped as a non-functional stub had not been flagged, despite an adjacent i18n pass on 2026-09-10 that only touched toast strings). mobile-native-kmp deliberately excluded (structurally unlandable in the cloud runner).",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-community-route-fully-stubbed",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx:26-40 — FeedPageRoute renders <FeedPage posts={[]} total={0} ...> with EVERY action handler a no-op (onCreatePost/onLikePost/onCommentPost/onSharePost/onEditPost/onDeletePost/onLoadMore all () => {}); no useQuery/useMutation, no API wiring — the community feed is permanently empty in production and all interactions silently do nothing",
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx:59-72 — CreateGroupPageRoute.onSubmit fabricates a SUCCESS toast ('Created' / 'Group created') and navigates away WITHOUT ever calling a create API; the user believes a group was created but nothing is persisted (fake-success / data-loss deception)",
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx:83-113 — GroupDetailPageRoute renders a hardcoded mockGroup ('Sample Group', memberCount:10, buildingId:'bld-1') with members={[]} and all member-management handlers (onPromoteMember/onRemoveMember/onBanMember/onJoin/onLeave/onDelete) as no-ops",
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx:116-150 — EventsPageRoute (events={[]}, onRsvp no-op) and MarketplacePageRoute (items={[]}, onContactSeller/onMarkSold no-op) are likewise fully stubbed; the whole Epic 42 Community feature (feed/groups/events/marketplace, 6 routes) is shipped non-functional behind live nav entries"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-reports-route-stub-analytics",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/reports.tsx:177-206 — ReportsPage is fed hardcoded stub datasets: dataSources={[]}, reports={[]}, kpis={[]}, buildings={[]}, trendLines={[]}, and a zeroed trendAnalysis (metric:'', current_value:0, previous_value:0, change:0, change_percentage:0, trend:'stable', anomalies:[]) cast `as TrendAnalysis`, plus a zeroed periodComparison (difference:0, difference_percentage:0, periods:[]) cast `as PeriodComparison`",
+        "Only schedules (useReportSchedules) and executions (useReportExecutionHistory) are wired to real queries; the analytics surfaces (KPIs, trend charts, period comparison, data sources, building filter) render fabricated empty/zero data regardless of real reporting data — misleading 'all zeros' analytics rather than a loading/empty state",
+        "The two `as TrendAnalysis`/`as PeriodComparison` casts on hand-built literals bypass the generated API-client types, so future schema drift in those DTOs would not surface as a type error here"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-faults-url-param-unvalidated-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx:233-235 — untrusted URL query params are cast straight to API enum unions and used as the initial list query: status: (searchParams.get('status') as FaultListQuery['status']), category: (... as FaultListQuery['category']), priority: (... as FaultListQuery['priority'])",
+        "A crafted/stale drill-down link such as /faults?status=garbage sends an invalid enum value to the faults list endpoint; if the backend rejects the unknown filter with a 4xx the entire list fails to load (error toast at :246), turning a bad query param into a broken page rather than an ignored filter",
+        "No allow-list validation against the known enum members before seeding faultQuery; the `as` cast crosses the API boundary and defeats the type system that would otherwise catch this"
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

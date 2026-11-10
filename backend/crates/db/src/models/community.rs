@@ -95,6 +95,83 @@ pub struct CommunityGroupWithMembership {
     pub joined_at: Option<DateTime<Utc>>,
 }
 
+/// Community group detail as seen by the calling user: the group plus the
+/// caller's membership (`is_member`, `my_role`). The group fields are
+/// flattened, so the payload is a superset of [`CommunityGroup`].
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CommunityGroupDetail {
+    #[serde(flatten)]
+    pub group: CommunityGroup,
+    pub is_member: bool,
+    pub my_role: Option<String>,
+}
+
+/// Outcome of a leave-group request.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LeaveGroupOutcome {
+    /// The membership row was removed.
+    Left,
+    /// The caller was not a member (idempotent no-op).
+    NotMember,
+    /// The caller is the group's only owner; leaving would orphan the group.
+    LastOwner,
+}
+
+// ============================================
+// Allowed enum values
+// ============================================
+//
+// The `group_type`, `visibility`, `post_type`, `event_type`, RSVP `status`,
+// marketplace `category` and `condition` columns are Postgres enums (migration
+// 00064). Handlers validate client strings against these lists so a bad value
+// is a 400 rather than a Postgres `invalid input value for enum` 500.
+
+/// `community_group_type` values.
+pub const COMMUNITY_GROUP_TYPES: &[&str] =
+    &["interest", "floor", "building", "neighborhood", "official"];
+/// `community_group_visibility` values.
+pub const COMMUNITY_GROUP_VISIBILITIES: &[&str] = &["public", "private", "secret"];
+/// `community_post_type` values.
+pub const COMMUNITY_POST_TYPES: &[&str] = &[
+    "text",
+    "photo",
+    "poll",
+    "event",
+    "marketplace",
+    "question",
+    "announcement",
+];
+/// Accepted `community_post_reactions.reaction_type` values.
+pub const COMMUNITY_REACTION_TYPES: &[&str] = &["like", "love", "helpful", "funny"];
+/// `community_event_type` values.
+pub const COMMUNITY_EVENT_TYPES: &[&str] = &[
+    "social",
+    "meeting",
+    "workshop",
+    "volunteer",
+    "sports",
+    "cultural",
+    "other",
+];
+/// `event_rsvp_status` values.
+pub const EVENT_RSVP_STATUSES: &[&str] = &["going", "maybe", "not_going", "waitlist"];
+/// `marketplace_category` values.
+pub const MARKETPLACE_CATEGORIES: &[&str] = &[
+    "furniture",
+    "electronics",
+    "clothing",
+    "sports",
+    "books",
+    "toys",
+    "home_garden",
+    "services",
+    "free",
+    "wanted",
+    "other",
+];
+/// `item_condition` values.
+pub const MARKETPLACE_CONDITIONS: &[&str] = &["new", "like_new", "good", "fair", "for_parts"];
+
 // ============================================
 // Community Posts (Story 37.2)
 // ============================================

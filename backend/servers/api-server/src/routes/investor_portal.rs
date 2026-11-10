@@ -2,7 +2,7 @@
 //! Provides investment tracking, ROI calculations, and investor dashboard features.
 
 use crate::state::AppState;
-use api_core::extractors::AuthUser;
+use api_core::extractors::{AuthUser, TenantAuthUser};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -19,6 +19,21 @@ use db::models::investor_portal::{
 use uuid::Uuid;
 
 type ApiResult<T> = Result<T, (StatusCode, Json<ErrorResponse>)>;
+
+/// Manager-class role, read from the caller's membership (`TenantAuthUser`),
+/// for the mutations of this module.
+fn require_manager(user: &AuthUser) -> ApiResult<()> {
+    if user.role.is_some_and(|r| r.is_manager()) {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::forbidden(
+                "Manager role required for this action",
+            )),
+        ))
+    }
+}
 
 fn get_org_id(auth: &AuthUser) -> Result<Uuid, (StatusCode, Json<ErrorResponse>)> {
     auth.tenant_id.ok_or((
@@ -132,7 +147,7 @@ pub fn router() -> Router<AppState> {
 
 async fn list_investors(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
 ) -> ApiResult<Json<Vec<db::models::investor_portal::InvestorProfile>>> {
     let org_id = get_org_id(&auth)?;
 
@@ -151,9 +166,10 @@ async fn list_investors(
 
 async fn create_investor(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Json(data): Json<CreateInvestorProfile>,
 ) -> ApiResult<Json<db::models::investor_portal::InvestorProfile>> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
 
     state
@@ -171,7 +187,7 @@ async fn create_investor(
 
 async fn get_investor(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(investor_id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::investor_portal::InvestorProfile>> {
     let org_id = get_org_id(&auth)?;
@@ -195,10 +211,11 @@ async fn get_investor(
 
 async fn update_investor(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(investor_id): Path<Uuid>,
     Json(data): Json<UpdateInvestorProfile>,
 ) -> ApiResult<Json<db::models::investor_portal::InvestorProfile>> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
 
     state
@@ -220,9 +237,10 @@ async fn update_investor(
 
 async fn delete_investor(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(investor_id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
 
     let deleted = state
@@ -248,7 +266,7 @@ async fn delete_investor(
 
 async fn get_investor_summary(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(investor_id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::investor_portal::InvestorSummary>> {
     let org_id = get_org_id(&auth)?;
@@ -276,7 +294,7 @@ async fn get_investor_summary(
 
 async fn list_portfolios(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
 ) -> ApiResult<Json<Vec<db::models::investor_portal::InvestmentPortfolio>>> {
     let org_id = get_org_id(&auth)?;
 
@@ -295,9 +313,10 @@ async fn list_portfolios(
 
 async fn create_portfolio(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Json(data): Json<CreateInvestmentPortfolio>,
 ) -> ApiResult<Json<db::models::investor_portal::InvestmentPortfolio>> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
 
     state
@@ -315,7 +334,7 @@ async fn create_portfolio(
 
 async fn get_portfolio(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(portfolio_id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::investor_portal::InvestmentPortfolio>> {
     let org_id = get_org_id(&auth)?;
@@ -339,10 +358,11 @@ async fn get_portfolio(
 
 async fn update_portfolio(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(portfolio_id): Path<Uuid>,
     Json(data): Json<UpdateInvestmentPortfolio>,
 ) -> ApiResult<Json<db::models::investor_portal::InvestmentPortfolio>> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
 
     state
@@ -364,9 +384,10 @@ async fn update_portfolio(
 
 async fn delete_portfolio(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(portfolio_id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
 
     let deleted = state
@@ -392,7 +413,7 @@ async fn delete_portfolio(
 
 async fn list_investor_portfolios(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(investor_id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<db::models::investor_portal::InvestmentPortfolio>>> {
     let org_id = get_org_id(&auth)?;
@@ -416,7 +437,7 @@ async fn list_investor_portfolios(
 
 async fn list_portfolio_properties(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(portfolio_id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<db::models::investor_portal::InvestorPortfolioProperty>>> {
     let org_id = get_org_id(&auth)?;
@@ -437,10 +458,11 @@ async fn list_portfolio_properties(
 
 async fn add_portfolio_property(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(portfolio_id): Path<Uuid>,
     Json(data): Json<CreateInvestorPortfolioProperty>,
 ) -> ApiResult<Json<db::models::investor_portal::InvestorPortfolioProperty>> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
     verify_portfolio_org(&state, portfolio_id, org_id).await?;
 
@@ -459,16 +481,17 @@ async fn add_portfolio_property(
 
 async fn update_portfolio_property(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path((portfolio_id, property_id)): Path<(Uuid, Uuid)>,
     Json(data): Json<UpdateInvestorPortfolioProperty>,
 ) -> ApiResult<Json<db::models::investor_portal::InvestorPortfolioProperty>> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
     verify_portfolio_org(&state, portfolio_id, org_id).await?;
 
     state
         .investor_portal_repo
-        .update_portfolio_property(property_id, &data)
+        .update_portfolio_property(portfolio_id, property_id, &data)
         .await
         .map_err(|e| {
             (
@@ -485,15 +508,16 @@ async fn update_portfolio_property(
 
 async fn remove_portfolio_property(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path((portfolio_id, property_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResult<StatusCode> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
     verify_portfolio_org(&state, portfolio_id, org_id).await?;
 
     let deleted = state
         .investor_portal_repo
-        .remove_portfolio_property(property_id)
+        .remove_portfolio_property(portfolio_id, property_id)
         .await
         .map_err(|e| {
             (
@@ -518,7 +542,7 @@ async fn remove_portfolio_property(
 
 async fn list_roi_calculations(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Query(query): Query<RoiCalculationQuery>,
 ) -> ApiResult<Json<Vec<db::models::investor_portal::RoiCalculation>>> {
     let org_id = get_org_id(&auth)?;
@@ -538,9 +562,10 @@ async fn list_roi_calculations(
 
 async fn create_roi_calculation(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Json(data): Json<CreateRoiCalculation>,
 ) -> ApiResult<Json<db::models::investor_portal::RoiCalculation>> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
 
     state
@@ -558,7 +583,7 @@ async fn create_roi_calculation(
 
 async fn get_latest_roi(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(portfolio_id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::investor_portal::RoiCalculation>> {
     let org_id = get_org_id(&auth)?;
@@ -586,9 +611,10 @@ async fn get_latest_roi(
 
 async fn create_distribution(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Json(data): Json<CreateDistribution>,
 ) -> ApiResult<Json<db::models::investor_portal::InvestorDistribution>> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
 
     state
@@ -606,7 +632,7 @@ async fn create_distribution(
 
 async fn list_investor_distributions(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(investor_id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<db::models::investor_portal::InvestorDistribution>>> {
     let org_id = get_org_id(&auth)?;
@@ -626,10 +652,11 @@ async fn list_investor_distributions(
 
 async fn update_distribution(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(distribution_id): Path<Uuid>,
     Json(data): Json<UpdateDistribution>,
 ) -> ApiResult<Json<db::models::investor_portal::InvestorDistribution>> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
 
     state
@@ -655,9 +682,10 @@ async fn update_distribution(
 
 async fn create_report(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Json(data): Json<CreateInvestorReport>,
 ) -> ApiResult<Json<db::models::investor_portal::InvestorReport>> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
 
     state
@@ -675,7 +703,7 @@ async fn create_report(
 
 async fn list_investor_reports(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(investor_id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<db::models::investor_portal::InvestorReport>>> {
     let org_id = get_org_id(&auth)?;
@@ -695,7 +723,7 @@ async fn list_investor_reports(
 
 async fn get_report(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(report_id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::investor_portal::InvestorReport>> {
     let org_id = get_org_id(&auth)?;
@@ -723,9 +751,10 @@ async fn get_report(
 
 async fn create_capital_call(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Json(data): Json<CreateCapitalCall>,
 ) -> ApiResult<Json<db::models::investor_portal::CapitalCall>> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
 
     state
@@ -743,7 +772,7 @@ async fn create_capital_call(
 
 async fn list_investor_capital_calls(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(investor_id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<db::models::investor_portal::CapitalCall>>> {
     let org_id = get_org_id(&auth)?;
@@ -763,10 +792,11 @@ async fn list_investor_capital_calls(
 
 async fn update_capital_call(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(call_id): Path<Uuid>,
     Json(data): Json<UpdateCapitalCall>,
 ) -> ApiResult<Json<db::models::investor_portal::CapitalCall>> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
 
     state
@@ -792,7 +822,7 @@ async fn update_capital_call(
 
 async fn get_investor_dashboard(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(investor_id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::investor_portal::InvestorPortalDashboard>> {
     let org_id = get_org_id(&auth)?;
@@ -916,10 +946,11 @@ async fn get_investor_dashboard(
 
 async fn upsert_dashboard_metrics(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(investor_id): Path<Uuid>,
     Json(mut data): Json<CreateDashboardMetrics>,
 ) -> ApiResult<Json<db::models::investor_portal::InvestorDashboardMetrics>> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
     data.investor_id = investor_id;
 

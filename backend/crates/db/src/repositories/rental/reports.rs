@@ -23,10 +23,13 @@ impl RentalRepository {
         period_start: NaiveDate,
         period_end: NaiveDate,
     ) -> Result<ReportPreview, SqlxError> {
-        // Get building name
+        // Get building name. SECURITY: scoped to `org_id` so a caller cannot
+        // read (or file a report against) another org's building by UUID; a
+        // foreign or missing building yields `RowNotFound` (mapped to 404).
         let (building_name,): (String,) =
-            sqlx::query_as(r#"SELECT name FROM buildings WHERE id = $1"#)
+            sqlx::query_as(r#"SELECT name FROM buildings WHERE id = $1 AND organization_id = $2"#)
                 .bind(building_id)
+                .bind(org_id)
                 .fetch_one(&self.pool)
                 .await?;
 

@@ -1,0 +1,55 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-08",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "oldest-unreviewed (dispatcher tier1d, demand-driven; claimable buffer starved). review_cursor landable tier {api-handlers, api-core, reality-server, ppt-web-core} all tied at 2026-11-04 (oldest among cloud-verifiable segments); ppt-web-ui=2026-11-05, reality-web=2026-11-06. mobile-rn (2026-11-03) and mobile-native-kmp (2026-11-04) excluded per dispatcher override as structurally unlandable in the cloud runner (AGP egress block / jest-expo rot). Tie broken to api-handlers (first in override priority list, also security-critical fallback). Saturation check against backlog.json: open code-review-finding rows are mobile-native-kmp=2 only; api-handlers has 0 open rows — not saturated. Static review (no compile/run): Rust + Security grep hit-list (unwrap/expect, todo!, non-RLS find_by_id IDOR sweep, raw e.to_string() leak, pagination caps). Hotspot registry.rs clean. signatures.rs / energy.rs / unit_residents.rs authz helpers are well-hardened; findings below are the three genuine gaps that survived verification.",
+  "experts_used": [
+    "rust",
+    "security"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-api-handlers-delegation-xorg-delegate",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/delegations.rs:183-205 — create_delegation validates the target delegate ONLY for global existence (state.user_repo.find_by_id(req.delegate_user_id), the non-RLS repo), then creates the delegation. There is no check that req.delegate_user_id is a member of the delegator's organization (nor, for unit-scoped delegations, a co-owner/resident of the unit). The caller-side check at L207-236 only confirms the DELEGATOR owns the unit; the delegate is never org-gated.",
+        "Impact: an owner can delegate scopes 'voting' / 'financial' / 'documents' / 'faults' / 'all' (L158) to an arbitrary user from ANY other organization. Granting voting/financial authority inside an owners' association to a non-member is a cross-org privilege grant — the outside delegate can later act as the owner's proxy for governance and financial actions. The accept_delegation path (L432) only checks delegate_user_id == auth.user_id, so there is no downstream org gate either. Landable backend-only fix: after the existence check, verify the delegate shares the delegator's organization (org_member_repo.is_member) — mirror the is_member gate already used in unit_residents.rs authorize_unit_inner (L79-92) — and 400/403 otherwise. Confidence medium: end-to-end enforcement of the delegated scope was not traced at runtime (static review only)."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-unit-residents-add-xorg-user",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/unit_residents.rs:418-438 — add_resident (manager-gated via authorize_unit(..., require_manager=true)) validates the incoming req.user_id ONLY for global existence (state.user_repo.find_by_id(req.user_id).is_some()). It never verifies that req.user_id belongs to the unit's organization before calling unit_resident_repo.create (L452) with that user_id.",
+        "Impact: a manager can attach a user from a DIFFERENT organization as a resident of a unit in their building. The attached resident carries receives_notifications / receives_mail flags (L447-448) and a residency relationship to the unit, so the foreign user begins receiving that org's unit communications and is linked into the org's unit roster — cross-tenant data exposure / linkage. Contrast delegations.rs and energy.rs which both run an explicit membership gate; add_resident is missing it. Landable fix: gate req.user_id through org_member_repo.is_member(building.organization_id, req.user_id) (the org id already resolved inside authorize_unit) and reject with 400/404 when the target is not an org member. Confidence medium: downstream access conferred by residency was not runtime-traced."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-signatures-raw-db-err-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/signatures.rs:116-119,184-189,199-205,231-237,357-363,371-378,703-712 — the signature-request handlers return ErrorResponse::new(\"DATABASE_ERROR\", e.to_string()) on every DB error branch, interpolating the raw sqlx::Error Display straight into the client-facing response body. Reachable from create_signature_request_for_document, list_signature_requests, load_signature_request_in_org (get/remind/cancel), and the provider webhook handle_webhook (L710).",
+        "Impact: information disclosure — raw sqlx error text exposes DB internals (SQLSTATE, table/column/constraint names, pool detail) to any authenticated caller (and, at L710, to an authenticated webhook sender). Same leak class the dispatcher already shipped fixes for in listings.rs (signals/2026-11-06) and rentals.rs (signals/2026-11-07); this is a distinct, not-yet-fixed file. Landable backend-only change: log the error via tracing::error! and return a generic stable message (e.g. \"Database error\"), matching the registry_db_error / critical_notifications.rs pattern already used elsewhere in the segment (critical_notifications.rs:321-330 returns a generic \"Failed to verify notification\")."
+      ]
+    }
+  ]
+}

@@ -576,6 +576,67 @@ describe('useOfflineSupport.processQueue — issue #1767', () => {
     expect(readQueue()).toHaveLength(0);
   });
 
+  it('(l) a permanent 4xx drop is SURFACED via permanentFailures, not dropped silently', async () => {
+    // Regression: a queued request rejected with a permanent 4xx used to be
+    // removed from the queue with only a `console.error` — the user got no
+    // signal that their offline-created content was discarded. The dropped
+    // action must now be surfaced on `permanentFailures` so the UI (App.tsx)
+    // can raise a user-visible error. This must hold for ANY caller, including
+    // the NetInfo auto-sync path that passes no progress callback.
+    seedQueue([makeAction({ id: 'rejected', body: { title: 'malformed' } })]);
+    const fetchMock = globalThis.fetch as jest.Mock;
+    fetchMock.mockResolvedValue(clientError(422));
+
+    await mountHook();
+
+    // Nothing surfaced before the flush.
+    expect(api.permanentFailures).toEqual([]);
+
+    // Flush WITHOUT a progress callback (mirrors the auto-sync path).
+    await act(async () => {
+      await api.processQueue();
+    });
+
+    // The item was dropped from the queue…
+    expect(readQueue()).toHaveLength(0);
+    // …but the drop is now visible to the UI, carrying the dropped action.
+    expect(api.permanentFailures).toHaveLength(1);
+    expect(api.permanentFailures[0].id).toBe('rejected');
+    expect((api.permanentFailures[0].body as { title: string }).title).toBe('malformed');
+
+    // The UI acknowledges the batch, clearing the surfaced state.
+    await act(async () => {
+      api.clearPermanentFailures();
+    });
+    expect(api.permanentFailures).toEqual([]);
+  });
+
+  it('(m) a retryable/transient failure and a clean success never populate permanentFailures', async () => {
+    // Guard the negative: only PERMANENT 4xx drops surface a user-visible error.
+    // A retryable 401 (kept for retry) and a 200 success must leave the list
+    // empty, so the UI does not cry wolf on recoverable or successful syncs.
+    seedQueue([makeAction({ id: 'kept', body: { title: 'reported-offline' } })]);
+    const fetchMock = globalThis.fetch as jest.Mock;
+    fetchMock.mockResolvedValue(clientError(401)); // recoverable — retained
+
+    await mountHook();
+    await act(async () => {
+      await api.processQueue();
+    });
+    // 401 is retained in the queue and NOT surfaced as a permanent failure.
+    expect(readQueue()).toHaveLength(1);
+    expect(api.permanentFailures).toEqual([]);
+
+    // Now the token is refreshed and the action drains cleanly.
+    fetchMock.mockResolvedValue(ok({ id: 'srv' }));
+    await act(async () => {
+      await api.processQueue();
+    });
+    expect(readQueue()).toHaveLength(0);
+    // A successful drain still leaves nothing surfaced.
+    expect(api.permanentFailures).toEqual([]);
+  });
+
   it('(k) a permanent 400 ahead of a valid action does not block the rest of the queue', async () => {
     // A dropped (terminal) 4xx must not halt the cycle — its successors still
     // drain the same reconnect (contrast with a retryable failure, which halts).

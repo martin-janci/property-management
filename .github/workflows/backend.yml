@@ -945,6 +945,17 @@ jobs:
       - uses: actions/checkout@v7
       - name: cargo deny check
         uses: EmbarkStudios/cargo-deny-action@v2
+        # cargo-deny-action@v2 runs in a musl container. When cargo-deny reads
+        # backend/Cargo.toml, cargo honors backend/rust-toolchain.toml
+        # (channel = "1.97.1") and rustup hard-errors trying to install the
+        # uninstalled '1.97.1-x86_64-unknown-linux-musl' toolchain *before*
+        # cargo-deny ever evaluates the advisory/license/ban graph (GH #3085).
+        # RUSTUP_TOOLCHAIN overrides the in-tree toolchain file, so cargo uses
+        # the action's already-installed `stable` toolchain (rust-version
+        # below) instead. cargo-deny only needs cargo metadata, so the pinned
+        # project toolchain is irrelevant here.
+        env:
+          RUSTUP_TOOLCHAIN: stable
         with:
           manifest-path: backend/Cargo.toml
           arguments: --workspace

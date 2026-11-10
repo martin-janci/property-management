@@ -1,0 +1,186 @@
+{
+  "date": "2026-09-27",
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-dashboard-routes-unguarded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-27 ppt-web-core router)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx:165-168 — dashboardRoutes() mounts /dashboard/manager and /dashboard/resident without <ProtectedRoute> wrapper; inline comment claims auth is handled by target pages but ManagerDashboardPage and ResidentDashboardPage have no auth/role check.",
+        "Unauth visitors render manager dashboard shell and fire authed useResolvedLayout('ppt/dashboard') fetch instead of being redirected to /login; /dashboard → /dashboard/manager Navigate misroutes residents to the manager dashboard."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx",
+        "frontend/apps/ppt-web/src/features/dashboard/pages/ManagerDashboardPage.tsx",
+        "frontend/apps/ppt-web/src/features/dashboard/pages/ResidentDashboardPage.tsx"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-home-cta-role-drift",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-27 ppt-web-core router)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx:99-101 — Home's 'Open dashboard' CTA computes target as `user?.role === 'manager' ? ... : '/dashboard/resident'`, bypassing isManagerRole(role) SSOT defined at routes/shared.tsx:36-49 (MANAGER_ROLES includes org_admin, super_admin, technical_manager, property_manager).",
+        "Every non-'manager' privileged operator (org_admin/super_admin/technical_manager/property_manager) is deterministically routed to /dashboard/resident by the app's most prominent entry-point CTA."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx",
+        "frontend/apps/ppt-web/src/routes/shared.tsx",
+        "frontend/apps/ppt-web/src/App.tsx"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no-candidate: no code-review-finding is on the Phase 5 allowlist, and the two new signals need review/tests, not a mechanical fix.",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches # <today>",
+      "observed": "matched",
+      "expected": "matched"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state.json against HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq re-emitted signals with score_delta!=0 and non-cumulative",
+      "observed": "0 offenders",
+      "expected": "0"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score >8 and decay applied to open >=14d",
+      "observed": "cap ok; no open row >=14d old",
+      "expected": "ok"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial-pass annotation on each new plan",
+      "observed": "0 new plans this run",
+      "expected": "one annotation per new plan"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans + all readiness gates",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets/hostnames in staged diff (excl. baseline docs)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md against regenerated view",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists failed phases and matching cursor stalled",
+      "observed": "no failed phases; cursors advanced consistently",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior plan slug present in plans/ or plans/_archive/",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive size non-decreasing",
+      "observed": "9 == 9",
+      "expected": ">=HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md against regenerated view",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps + idempotency + kill-switch honored",
+      "observed": "no auto_fix_actions this run",
+      "expected": "<=3 total, <=1 each kind"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts still valid on disk",
+      "observed": "action-list.json + risks.json parse; project-state.md non-empty; pm_cursor.next_index=5 in [0,7]",
+      "expected": "valid + Phase 1.6 skipped (no-op)"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token literal in staged added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "notes": {
+    "phase_1_5": "Skipped in the routine — dispatcher Tier-1d generator already emitted 2 ppt-web-core code-review-finding signals for 2026-09-27 (see signals/2026-09-27-ppt-web-core-tier1d.json); ingested into backlog + seen_signals this run. review_cursor.ppt-web-core advanced 2026-08-29 → 2026-09-27.",
+    "phase_1_6": "Skipped — no merged PRs since last run; the pm skill's project-state / action-list / risks would have no fresh delivery data to synthesize. Same disposition as briefs 2026-09-23/24/25/26. Management artifacts on disk retain their prior state (G16 is a no-op when Phase 1.6 is skipped).",
+    "since_last_run": {
+      "merged_prs": 0,
+      "open_prs_new": [
+        2981,
+        2983,
+        2984,
+        2985,
+        2986,
+        2987,
+        2988,
+        2989,
+        2990,
+        2991
+      ],
+      "issues_new": 0,
+      "code_commits_by_class": {
+        "routine_or_dispatcher": 14,
+        "application": 0
+      }
+    }
+  }
+}

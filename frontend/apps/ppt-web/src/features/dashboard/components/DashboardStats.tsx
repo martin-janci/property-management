@@ -1,58 +1,66 @@
 /**
- * DashboardStats section — the four QuickStat tiles extracted from
- * ManagerDashboardPage so that the layout registry can render them as a
- * discrete section.
+ * DashboardStats section — the summary tiles at the top of the manager
+ * dashboard, mounted by the layout registry as a discrete section.
+ *
+ * Every figure comes from a live endpoint:
+ *  - pending faults  — `new` bucket of GET /faults/statistics
+ *  - active votes    — GET /votes?status=active
+ *  - unread messages — GET /messages/unread-count
+ *
+ * A tile shows "–" while its query is loading or failed rather than a made-up
+ * number. There is no org-wide "pending approvals" count in the API, so that
+ * tile is not shown (the Action Queue lists the approvals themselves).
  *
  * @module features/dashboard/components/DashboardStats
  */
 
+import { useFaultStatistics, useVotes } from '@ppt/api-client';
 import { useTranslation } from 'react-i18next';
 import type { SectionProps } from '../../layout/registry';
+import { useUnreadCount } from '../../messaging/hooks/useMessaging';
 
 interface QuickStatProps {
   label: string;
-  value: string;
-  trend: 'up' | 'down' | 'neutral';
+  value: number | undefined;
   color: 'red' | 'orange' | 'blue' | 'green' | 'gray';
 }
 
-const trendIcons: Record<QuickStatProps['trend'], string> = {
-  up: '↑',
-  down: '↓',
-  neutral: '→',
-};
-
-function QuickStat({ label, value, trend, color }: QuickStatProps) {
+function QuickStat({ label, value, color }: QuickStatProps) {
   return (
     <div className={`quick-stat quick-stat--${color}`}>
       <div className="quick-stat__row">
-        <span className="quick-stat__value">{value}</span>
-        <span className="quick-stat__trend" aria-hidden="true">
-          {trendIcons[trend]}
-        </span>
+        <span className="quick-stat__value">{value ?? '–'}</span>
       </div>
       <p className="quick-stat__label">{label}</p>
     </div>
   );
 }
 
-/** Renders the four dashboard summary stats. Implements SectionProps so it can
+/** Renders the dashboard summary stats. Implements SectionProps so it can
  *  be mounted directly by LayoutRenderer. */
-// biome-ignore lint/correctness/noUnusedVariables: mode/props are part of SectionProps contract
 export function DashboardStats({ mode: _mode, props: _props }: SectionProps) {
   const { t } = useTranslation();
+  const faultStats = useFaultStatistics();
+  const activeVotes = useVotes({ status: 'active' });
+  const unread = useUnreadCount();
+
+  const pendingFaults = faultStats.data
+    ? (faultStats.data.by_status.find((s) => s.status === 'new')?.count ?? 0)
+    : undefined;
 
   return (
     <div className="dashboard-page__stats">
-      <QuickStat label={t('dashboard.stats.pendingFaults')} value="3" trend="up" color="red" />
+      <QuickStat label={t('dashboard.stats.pendingFaults')} value={pendingFaults} color="red" />
       <QuickStat
-        label={t('dashboard.stats.pendingApprovals')}
-        value="2"
-        trend="neutral"
-        color="orange"
+        label={t('dashboard.stats.activeVotes')}
+        value={activeVotes.data?.length}
+        color="blue"
       />
-      <QuickStat label={t('dashboard.stats.activeVotes')} value="1" trend="down" color="blue" />
-      <QuickStat label={t('dashboard.stats.unreadMessages')} value="5" trend="up" color="gray" />
+      <QuickStat
+        label={t('dashboard.stats.unreadMessages')}
+        value={unread.data?.unreadCount}
+        color="gray"
+      />
     </div>
   );
 }

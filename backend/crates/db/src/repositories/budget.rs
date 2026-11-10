@@ -401,6 +401,86 @@ impl BudgetRepository {
         Ok(result.rows_affected() > 0)
     }
 
+    /// Whether `category_id` exists and belongs to `organization_id`.
+    ///
+    /// Foreign-key checks bypass RLS, so the FK on `budget_items.category_id` /
+    /// `budget_categories.parent_id` alone would accept another org's category.
+    pub async fn category_in_org_rls<'e, E>(
+        &self,
+        executor: E,
+        organization_id: Uuid,
+        category_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_scalar(
+            r#"
+            SELECT EXISTS(
+                SELECT 1 FROM budget_categories
+                WHERE id = $1 AND organization_id = $2
+            )
+            "#,
+        )
+        .bind(category_id)
+        .bind(organization_id)
+        .fetch_one(executor)
+        .await
+    }
+
+    // ===========================================
+    // RLS-aware Ownership Lookups
+    // ===========================================
+
+    /// Find the budget that owns a budget item, scoped to `organization_id`.
+    ///
+    /// Returns `None` when the item does not exist or belongs to another org.
+    pub async fn find_budget_for_item_rls<'e, E>(
+        &self,
+        executor: E,
+        organization_id: Uuid,
+        item_id: Uuid,
+    ) -> Result<Option<Budget>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as(
+            r#"
+            SELECT b.* FROM budgets b
+            JOIN budget_items bi ON bi.budget_id = b.id
+            WHERE bi.id = $1 AND b.organization_id = $2
+            "#,
+        )
+        .bind(item_id)
+        .bind(organization_id)
+        .fetch_optional(executor)
+        .await
+    }
+
+    /// Find the budget that owns a variance alert, scoped to `organization_id`.
+    pub async fn find_budget_for_alert_rls<'e, E>(
+        &self,
+        executor: E,
+        organization_id: Uuid,
+        alert_id: Uuid,
+    ) -> Result<Option<Budget>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as(
+            r#"
+            SELECT b.* FROM budgets b
+            JOIN budget_items bi ON bi.budget_id = b.id
+            JOIN budget_variance_alerts bva ON bva.budget_item_id = bi.id
+            WHERE bva.id = $1 AND b.organization_id = $2
+            "#,
+        )
+        .bind(alert_id)
+        .bind(organization_id)
+        .fetch_optional(executor)
+        .await
+    }
+
     // ===========================================
     // RLS-aware Budget Item Operations
     // ===========================================
@@ -1000,7 +1080,10 @@ impl BudgetRepository {
                 COALESCE(SUM(budgeted_amount), 0) as total_budgeted,
                 COALESCE(SUM(actual_amount), 0) as total_actual,
                 COALESCE(SUM(variance_amount), 0) as total_variance,
-                CASE WHEN SUM(budgeted_amount) = 0 THEN 0
+                -- COALESCE: with zero items SUM() is NULL, `NULL = 0` is not
+                -- true, and the ELSE branch would yield NULL (500 on decode
+                -- for every freshly created budget).
+                CASE WHEN COALESCE(SUM(budgeted_amount), 0) = 0 THEN 0
                      ELSE ROUND((SUM(actual_amount) - SUM(budgeted_amount)) / SUM(budgeted_amount) * 100, 2)
                 END as variance_percent,
                 COUNT(*) FILTER (WHERE variance_amount > 0) as items_over_budget,
@@ -1040,7 +1123,7 @@ impl BudgetRepository {
                 COALESCE(SUM(bi.budgeted_amount), 0) as budgeted_amount,
                 COALESCE(SUM(bi.actual_amount), 0) as actual_amount,
                 COALESCE(SUM(bi.variance_amount), 0) as variance_amount,
-                CASE WHEN SUM(bi.budgeted_amount) = 0 THEN 0
+                CASE WHEN COALESCE(SUM(bi.budgeted_amount), 0) = 0 THEN 0
                      ELSE ROUND((SUM(bi.actual_amount) - SUM(bi.budgeted_amount)) / SUM(bi.budgeted_amount) * 100, 2)
                 END as variance_percent
             FROM budget_categories bc

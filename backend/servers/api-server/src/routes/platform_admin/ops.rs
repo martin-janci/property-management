@@ -184,10 +184,15 @@ pub async fn get_health_alerts(
     let alerts = if query.active_only {
         state.health_monitoring_repo.get_active_alerts().await
     } else {
-        let offset = ((query.page.saturating_sub(1)) as i64) * (query.page_size as i64);
+        // Clamp the caller-supplied page_size to the documented maximum (100)
+        // and a sane minimum (1) before it becomes a SQL LIMIT — an unbounded
+        // LIMIT is a DoS vector. Mirrors the sibling platform-admin paginated
+        // handlers (tenants.rs / audit.rs: `query.page_size.clamp(1, 100)`).
+        let page_size = query.page_size.clamp(1, 100);
+        let offset = ((query.page.saturating_sub(1)) as i64) * (page_size as i64);
         state
             .health_monitoring_repo
-            .get_alerts(query.page_size as i64, offset)
+            .get_alerts(page_size as i64, offset)
             .await
     }
     .map_err(|e| {

@@ -6,6 +6,8 @@
  */
 
 import type { ExecutionLog } from '@ppt/api-client';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 interface ExecutionLogItemProps {
   log: ExecutionLog;
@@ -13,31 +15,31 @@ interface ExecutionLogItemProps {
   isExpanded?: boolean;
 }
 
-const statusConfig: Record<string, { color: string; icon: string; label: string }> = {
+const statusConfig: Record<string, { color: string; icon: string; labelKey: string }> = {
   pending: {
     color: 'bg-gray-100 text-gray-700',
     icon: '⏳',
-    label: 'Pending',
+    labelKey: 'automation.execution.statusPending',
   },
   running: {
     color: 'bg-blue-100 text-blue-700',
     icon: '🔄',
-    label: 'Running',
+    labelKey: 'automation.execution.statusRunning',
   },
   completed: {
     color: 'bg-green-100 text-green-700',
     icon: '✅',
-    label: 'Completed',
+    labelKey: 'automation.execution.statusCompleted',
   },
   failed: {
     color: 'bg-red-100 text-red-700',
     icon: '❌',
-    label: 'Failed',
+    labelKey: 'automation.execution.statusFailed',
   },
   cancelled: {
     color: 'bg-yellow-100 text-yellow-700',
     icon: '⚠️',
-    label: 'Cancelled',
+    labelKey: 'automation.execution.statusCancelled',
   },
 };
 
@@ -47,15 +49,18 @@ function formatDuration(ms: number): string {
   return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
 }
 
-function formatTimestamp(date: string): string {
+function formatTimestamp(date: string, t: TFunction): string {
   const d = new Date(date);
   const now = new Date();
   const diff = now.getTime() - d.getTime();
 
-  if (diff < 60000) return 'Just now';
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
-  if (diff < 604800000) return `${Math.floor(diff / 86400000)}d ago`;
+  if (diff < 60000) return t('automation.execution.justNow');
+  if (diff < 3600000)
+    return t('automation.execution.minutesAgo', { count: Math.floor(diff / 60000) });
+  if (diff < 86400000)
+    return t('automation.execution.hoursAgo', { count: Math.floor(diff / 3600000) });
+  if (diff < 604800000)
+    return t('automation.execution.daysAgo', { count: Math.floor(diff / 86400000) });
 
   return d.toLocaleDateString(undefined, {
     month: 'short',
@@ -66,6 +71,7 @@ function formatTimestamp(date: string): string {
 }
 
 export function ExecutionLogItem({ log, onViewDetails, isExpanded }: ExecutionLogItemProps) {
+  const { t } = useTranslation();
   const status = statusConfig[log.status] ?? statusConfig.pending;
 
   return (
@@ -81,7 +87,7 @@ export function ExecutionLogItem({ log, onViewDetails, isExpanded }: ExecutionLo
             <div className="flex items-center gap-2 flex-wrap mb-1">
               <h4 className="font-medium text-gray-900 truncate">{log.ruleName}</h4>
               <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${status.color}`}>
-                {status.label}
+                {t(status.labelKey)}
               </span>
             </div>
             <div className="flex flex-wrap gap-3 text-xs text-gray-500">
@@ -100,7 +106,7 @@ export function ExecutionLogItem({ log, onViewDetails, isExpanded }: ExecutionLo
                     d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-                {formatTimestamp(log.startedAt)}
+                {formatTimestamp(log.startedAt, t)}
               </span>
               {log.duration !== undefined && (
                 <span className="flex items-center gap-1">
@@ -138,12 +144,12 @@ export function ExecutionLogItem({ log, onViewDetails, isExpanded }: ExecutionLo
                     />
                   </svg>
                   {log.triggerType === 'time_based'
-                    ? 'Scheduled'
+                    ? t('automation.execution.scheduled')
                     : log.triggerType === 'event_based'
-                      ? 'Event'
+                      ? t('automation.execution.event')
                       : log.triggerType === 'manual'
-                        ? 'Manual'
-                        : 'Condition'}
+                        ? t('automation.execution.manual')
+                        : t('automation.execution.condition')}
                 </span>
               )}
             </div>
@@ -155,7 +161,7 @@ export function ExecutionLogItem({ log, onViewDetails, isExpanded }: ExecutionLo
           onClick={() => onViewDetails(log)}
           className="flex-shrink-0 ml-4 px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
         >
-          Details
+          {t('automation.execution.details')}
         </button>
       </div>
 
@@ -170,7 +176,7 @@ export function ExecutionLogItem({ log, onViewDetails, isExpanded }: ExecutionLo
       {log.actionResults && log.actionResults.length > 0 && (
         <div className="mt-3 pt-3 border-t border-gray-100">
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-gray-500">Actions:</span>
+            <span className="text-gray-500">{t('automation.execution.actionsLabel')}</span>
             <div className="flex gap-1">
               {log.actionResults.map((result, index) => (
                 <span
@@ -189,8 +195,10 @@ export function ExecutionLogItem({ log, onViewDetails, isExpanded }: ExecutionLo
               ))}
             </div>
             <span className="text-gray-400">
-              {log.actionResults.filter((r) => r.status === 'completed').length}/
-              {log.actionResults.length} completed
+              {t('automation.execution.actionsCompleted', {
+                completed: log.actionResults.filter((r) => r.status === 'completed').length,
+                total: log.actionResults.length,
+              })}
             </span>
           </div>
         </div>

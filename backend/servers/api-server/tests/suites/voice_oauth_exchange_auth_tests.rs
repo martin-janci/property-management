@@ -54,6 +54,22 @@ struct AuthClaims {
     name: String,
 }
 
+/// Seed an org and a user who is an active member of it. The exchange handler
+/// resolves the caller's org from that membership (`TenantAuthUser`).
+async fn seed_member(pool: &PgPool) -> (Uuid, Uuid) {
+    let org_id = crate::common::seed_org(pool, "voice").await;
+    let user_id = sqlx::query_scalar::<_, Uuid>(
+        r#"INSERT INTO users (email, password_hash, name, status, email_verified_at)
+           VALUES ($1, 'hash', 'Voice Linker', 'active', NOW()) RETURNING id"#,
+    )
+    .bind(format!("voice-{}@example.test", Uuid::new_v4()))
+    .fetch_one(pool)
+    .await
+    .expect("seed user");
+    crate::common::seed_membership(pool, org_id, user_id, "owner").await;
+    (user_id, org_id)
+}
+
 fn mint_access_token(secret: &str, user_id: Uuid, tenant_id: Option<Uuid>) -> String {
     let now = Utc::now();
     let claims = AuthClaims {
@@ -179,7 +195,8 @@ async fn oauth_exchange_with_valid_auth_passes_auth_gate(pool: PgPool) {
     let secret = config.jwt_secret.clone();
     let app = TestApp::with_config(pool.clone(), config).await;
 
-    let token = mint_access_token(&secret, Uuid::new_v4(), Some(Uuid::new_v4()));
+    let (user_id, org_id) = seed_member(&pool).await;
+    let token = mint_access_token(&secret, user_id, Some(org_id));
 
     let req = Request::builder()
         .method(Method::POST)
@@ -234,8 +251,7 @@ async fn oauth_exchange_relink_reuses_single_device_row(pool: PgPool) {
     let secret = config.jwt_secret.clone();
     let app = TestApp::with_config(pool.clone(), config).await;
 
-    let user_id = Uuid::new_v4();
-    let org_id = Uuid::new_v4();
+    let (user_id, org_id) = seed_member(&pool).await;
     let token = mint_access_token(&secret, user_id, Some(org_id));
 
     let build_req = || {
@@ -317,8 +333,7 @@ async fn oauth_exchange_concurrent_relink_keeps_single_active_row(pool: PgPool) 
     let secret = config.jwt_secret.clone();
     let app = TestApp::with_config(pool.clone(), config).await;
 
-    let user_id = Uuid::new_v4();
-    let org_id = Uuid::new_v4();
+    let (user_id, org_id) = seed_member(&pool).await;
     let token = mint_access_token(&secret, user_id, Some(org_id));
 
     let build_req = || {

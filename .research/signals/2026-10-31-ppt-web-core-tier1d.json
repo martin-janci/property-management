@@ -1,0 +1,60 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-31",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "oldest-unreviewed (dispatcher-tier1d-demand-driven; claimable buffer starved, 14 < floor 36; backlog-refill + retry-remint exhausted). CHURN_FILES not supplied by dispatcher this slice, so SKILL Step 1 priority 2 applies. review_cursor (from .research/state.json) sorted ascending: ppt-web-ui 2026-10-22, reality-web 2026-10-23, mobile-native-kmp 2026-10-25, api-handlers 2026-10-26, api-core/ppt-web-core/mobile-rn 2026-10-27, reality-server 2026-10-28. Saturation check (open code-review-finding in backlog.json): ppt-web-ui=4 (>=3 => saturation-skip), api-handlers=3 (>=3 => saturation-skip). Segments already produced by sibling tier1d slices THIS SAME run (signal files dated 2026-10-31): api-core, mobile-native-kmp, reality-web — treated as reviewed-today to avoid duplicate vectors. Next oldest non-saturated, not-yet-claimed segment is ppt-web-core (cursor 2026-10-27, 0 open findings => maximum headroom; tied at 2026-10-27 with mobile-rn, ppt-web-core sorts first in the SKILL segment map) => selected. Frontend expert primary only per Step 2 (ppt-web-core has no secondary expert). ppt-web-core scope = frontend/apps/ppt-web/src non-UI core: lib/ (api.ts, websocket.ts, queryKeys.ts), contexts/ (AuthContext, WebSocketContext), hooks/, routes/ (groups/*). Reviewed and found CLEAN (no finding): lib/api.ts (401 refresh-and-replay is single-flight via AuthContext handleUnauthorized -> refreshToken in-flight guard L508-521/L657-669; non-idempotent methods never auto-retried; no default export by design; DEV-gated console.warn only); contexts/AuthContext.tsx refresh/rotation path (refreshPromise/isRefreshing dedup correct, cold-boot init routes through silent refresh, failure cleanup clears storage); lib/websocket.ts (defensive: maxReconnectAttempts cap stops the reconnect loop, token-rotation teardown, handler detach before close, JSON.parse guarded by try/catch + parseServerMessage, per-handler try/catch); hooks/useWebSocket.ts (ref-based handler, hasHandler presence gate avoids resubscribe churn, unsubscribe cleanup). All console.* hits in the segment are DEV-gated (usePerformanceMetrics.ts logPerformanceMetrics early-returns on !import.meta.env.DEV; api.ts retry log DEV-gated) or test-only; every `as any`/`as unknown as` hit is in *.test.* files => skipped per rules. The 3 findings below are genuine, novel, and under the 3-max cap — no nits padded.",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-financial-query-no-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx:70-84 — the financial DASHBOARD route component fires three useQuery calls (L70 ar-aging getARAgingReport, L75 overdue-invoices getOverdueInvoices, L80 invoices listInvoices) and destructures ONLY { data, isLoading } from each. No isError/error is read anywhere for these three queries and there is no ErrorBoundary wrapper. On any backend failure (5xx / network / 401-after-refresh-fail) the query data stays undefined and the code falls back to fabricated defaults: L88-94 totals default to { current:0, days_30:0, days_60:0, days_90_plus:0, total:0 }, L95 invoices=[], L96 overdueInvoices=[]. L99-101 then compute totalOutstanding/totalOverdue from those empty arrays. Net effect: a failed accounts-receivable / overdue fetch renders a money-facing FinancialDashboardPage (L115-122) showing a confident EUR 0 outstanding / EUR 0 overdue / EUR 0 total as if real, with zero error indication to the manager.",
+        "This is a silent-failure UX/data-integrity bug on a financial surface: misleading zeros are arguably worse than a visible error because a manager may read 'nothing overdue' and act on it. The same file already demonstrates the correct pattern in its reports section (L401-458: incomeQuery/balanceQuery/cashFlowQuery with `error={activeQuery.error instanceof Error ? activeQuery.error.message : null}`), so the dashboard section is an inconsistency, not a missing capability. Same class recurs at L265-280 (payments: paymentsData/unallocatedData/invoicesData queries, L275 and L280 don't even destructure isLoading or error).",
+        "Fix vector: destructure isError/error from the three dashboard queries, surface a page-level error state (mirror the L458 reports pattern or an ErrorState fallback) instead of defaulting monetary totals to 0, and distinguish 'genuinely zero' from 'fetch failed'. Confidence medium: the discard of error is certain by static read and the route is reachable in production; 'medium' not 'high' only because runtime behaviour of the exact query failure wasn't executed from here.",
+        "expert: frontend"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-person-months-units-swallow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:84-96 — useBuildingUnits fires a useQuery for the building's units (L85, queryFn GETs /units via getApiClient, L88-93) but destructures ONLY { data, isLoading } and returns `{ units: data ?? [], isLoading }` (L95). The query's isError/error is never read. On a failed /units fetch (500, network drop, or a 401 the refresh can't recover) the hook silently returns units:[] with isLoading:false, so the caller (L157 `useBuildingUnits(buildingId)`, which reads only `{ units, isLoading: unitsLoading }`) renders an EMPTY units dropdown with no error — the user sees 'no units' for a building that actually has units.",
+        "Notably the hook's own docstring (L78-82) records that an EARLIER silent-empty-dropdown bug was already fixed here (a raw fetch() 'bypassed the JWT interceptor and 401'd for real signed-in users, silently leaving the units dropdown empty' — fixed by routing through getApiClient so Bearer-token injection applies). That fix addressed the auth cause but the query's own error branch is still swallowed, so any OTHER failure reproduces the identical empty-dropdown symptom the comment warns about.",
+        "Fix vector: surface the query error — e.g. return isError/error from useBuildingUnits and render an inline error/retry in the units selector instead of an indistinguishable empty list, so 'building has no units' and 'units failed to load' are not conflated. Confidence medium: the swallow is certain by static read and the hook is reachable from the person-months route; medium not high as the failure path wasn't executed.",
+        "expert: frontend"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-tokens-localstorage-xss",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:116-191 — tokenStorage persists BOTH the access JWT and the long-lived refresh JWT in localStorage (ACCESS_TOKEN_KEY 'ppt_access_token' L98, REFRESH_TOKEN_KEY; getItem/setItem at L122/L130 for access, L138/L146 for refresh). localStorage is readable by any JavaScript executing in the SPA origin, so a single XSS anywhere in ppt-web can exfiltrate the refresh token, which grants silent, repeated access-token re-minting (refreshTokenInternal L405-438 POSTs it to authApi.refreshToken) = durable full account takeover that survives the victim's session and the access-token TTL.",
+        "This is a documented/accepted MVP tradeoff, not a novel defect: L116 comment reads 'Token Storage (localStorage for MVP, httpOnly cookies later)'. Flagging it as a LOW-severity tracked-debt vector so the pending migration to httpOnly, Secure, SameSite cookies (which removes the token from JS reach) stays on the backlog rather than silently becoming permanent. Note the refresh token in particular should move server-side; keeping only a short-lived access token in memory (not localStorage) materially reduces blast radius even before the full cookie migration.",
+        "Fix vector: move the refresh token (and ideally the access token) to an httpOnly Secure SameSite=strict cookie set by api-server, leaving the SPA to rely on cookie-based auth for the refresh endpoint; requires a coordinated api-server change (CSRF protection on the cookie path). Confidence medium: storage mechanism certain by static read; severity kept LOW (+1) because it is an explicitly commented, accepted decision, not an unflagged mistake.",
+        "expert: frontend"
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

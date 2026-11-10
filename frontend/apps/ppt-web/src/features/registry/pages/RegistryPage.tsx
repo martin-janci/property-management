@@ -6,21 +6,21 @@
  */
 
 import type { RegistryStatus } from '@ppt/api-client';
-import { createRegistryApi, createRegistryHooks } from '@ppt/api-client';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useToastOptional } from '../../../components';
+import { useConfirmDialog } from '../../../components/useConfirmDialog';
 import { PetRegistrationList } from '../components/PetRegistrationList';
 import { VehicleRegistrationList } from '../components/VehicleRegistrationList';
-
-// API base URL - prefer environment configuration for different environments (dev/staging/prod)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
-
-// Create API instance - in production, this would come from a context with auth tokens
-const registryApi = createRegistryApi({
-  baseUrl: API_BASE_URL,
-  // accessToken and tenantId would come from auth context
-});
+import { useRegistryApi } from '../hooks/useRegistry';
 
 export function RegistryPage() {
+  const { t } = useTranslation();
+  // Provider-tolerant: resolves to the app-level ToastProvider in production.
+  // `useToastOptional` (not `useToast`) so the page also renders under the
+  // auth-context regression suite, which mounts it without a ToastProvider.
+  const showToast = useToastOptional()?.showToast;
+  const { confirm, confirmDialog } = useConfirmDialog();
   const [activeTab, setActiveTab] = useState<'pets' | 'vehicles'>('pets');
 
   // Pet state
@@ -37,8 +37,9 @@ export function RegistryPage() {
 
   const pageSize = 10;
 
-  // Create hooks instance from the API
-  const registryHooks = useMemo(() => createRegistryHooks(registryApi), []);
+  // Registry API hooks carrying the current auth context (token rotates via
+  // the canonical useBuildings.ts getToken() + useMemo pattern).
+  const registryHooks = useRegistryApi();
 
   // Pet queries
   const {
@@ -97,32 +98,72 @@ export function RegistryPage() {
 
   const handlePetDelete = useCallback(
     async (id: string) => {
-      if (window.confirm('Are you sure you want to delete this pet registration?')) {
+      if (
+        await confirm({
+          message: t('registry.confirm.deletePet'),
+          confirmLabel: t('common.delete'),
+          variant: 'danger',
+        })
+      ) {
         try {
           await deletePetMutation.mutateAsync(id);
+          showToast?.({
+            type: 'success',
+            title: t('registry.toast.petDeleted'),
+            message: t('registry.toast.petDeletedBody'),
+          });
         } catch (error) {
+          // Keep the console trace for diagnostics, but always surface the
+          // failure via a persistent error toast (with the server's message
+          // when we have one) so a failed delete can never look successful.
           console.error('Failed to delete pet registration:', error);
+          showToast?.({
+            type: 'error',
+            title: t('registry.toast.petDeleteFailed'),
+            message:
+              error instanceof Error ? error.message : t('registry.toast.petDeleteFailedBody'),
+          });
         }
       }
     },
-    [deletePetMutation]
+    [deletePetMutation, confirm, t, showToast]
   );
 
   const handlePetReview = useCallback(
     async (id: string) => {
       // Simple approval - in a real app, this would open a modal to approve/reject with reason
-      if (window.confirm('Approve this pet registration?')) {
+      if (
+        await confirm({
+          message: t('registry.confirm.approvePet'),
+          confirmLabel: t('registry.confirm.approve'),
+          variant: 'default',
+        })
+      ) {
         try {
           await reviewPetMutation.mutateAsync({
             id,
             data: { approve: true },
           });
+          showToast?.({
+            type: 'success',
+            title: t('registry.toast.petReviewed'),
+            message: t('registry.toast.petReviewedBody'),
+          });
         } catch (error) {
+          // Keep the console trace for diagnostics, but always surface the
+          // failure via a persistent error toast (with the server's message
+          // when we have one) so a failed review can never look successful.
           console.error('Failed to review pet registration:', error);
+          showToast?.({
+            type: 'error',
+            title: t('registry.toast.petReviewFailed'),
+            message:
+              error instanceof Error ? error.message : t('registry.toast.petReviewFailedBody'),
+          });
         }
       }
     },
-    [reviewPetMutation]
+    [reviewPetMutation, confirm, t, showToast]
   );
 
   const handlePetCreate = useCallback(() => {
@@ -154,32 +195,72 @@ export function RegistryPage() {
 
   const handleVehicleDelete = useCallback(
     async (id: string) => {
-      if (window.confirm('Are you sure you want to delete this vehicle registration?')) {
+      if (
+        await confirm({
+          message: t('registry.confirm.deleteVehicle'),
+          confirmLabel: t('common.delete'),
+          variant: 'danger',
+        })
+      ) {
         try {
           await deleteVehicleMutation.mutateAsync(id);
+          showToast?.({
+            type: 'success',
+            title: t('registry.toast.vehicleDeleted'),
+            message: t('registry.toast.vehicleDeletedBody'),
+          });
         } catch (error) {
+          // Keep the console trace for diagnostics, but always surface the
+          // failure via a persistent error toast (with the server's message
+          // when we have one) so a failed delete can never look successful.
           console.error('Failed to delete vehicle registration:', error);
+          showToast?.({
+            type: 'error',
+            title: t('registry.toast.vehicleDeleteFailed'),
+            message:
+              error instanceof Error ? error.message : t('registry.toast.vehicleDeleteFailedBody'),
+          });
         }
       }
     },
-    [deleteVehicleMutation]
+    [deleteVehicleMutation, confirm, t, showToast]
   );
 
   const handleVehicleReview = useCallback(
     async (id: string) => {
       // Simple approval - in a real app, this would open a modal to approve/reject with reason
-      if (window.confirm('Approve this vehicle registration?')) {
+      if (
+        await confirm({
+          message: t('registry.confirm.approveVehicle'),
+          confirmLabel: t('registry.confirm.approve'),
+          variant: 'default',
+        })
+      ) {
         try {
           await reviewVehicleMutation.mutateAsync({
             id,
             data: { approve: true },
           });
+          showToast?.({
+            type: 'success',
+            title: t('registry.toast.vehicleReviewed'),
+            message: t('registry.toast.vehicleReviewedBody'),
+          });
         } catch (error) {
+          // Keep the console trace for diagnostics, but always surface the
+          // failure via a persistent error toast (with the server's message
+          // when we have one) so a failed review can never look successful.
           console.error('Failed to review vehicle registration:', error);
+          showToast?.({
+            type: 'error',
+            title: t('registry.toast.vehicleReviewFailed'),
+            message:
+              error instanceof Error ? error.message : t('registry.toast.vehicleReviewFailedBody'),
+          });
         }
       }
     },
-    [reviewVehicleMutation]
+    [reviewVehicleMutation, confirm, t, showToast]
   );
 
   const handleVehicleCreate = useCallback(() => {
@@ -218,8 +299,8 @@ export function RegistryPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Building Registries</h1>
-        <p className="mt-2 text-gray-600">Manage pet and vehicle registrations for your building</p>
+        <h1 className="text-3xl font-bold text-gray-900">{t('registry.page.title')}</h1>
+        <p className="mt-2 text-gray-600">{t('registry.page.subtitle')}</p>
       </div>
 
       {/* Tabs */}
@@ -236,7 +317,7 @@ export function RegistryPage() {
           >
             <div className="flex items-center gap-2">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <title>Pets</title>
+                <title>{t('registry.page.tabs.pets')}</title>
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -244,7 +325,7 @@ export function RegistryPage() {
                   d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              Pets
+              {t('registry.page.tabs.pets')}
               {petsData?.total ? (
                 <span className="ml-1 px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-full">
                   {petsData.total}
@@ -263,7 +344,7 @@ export function RegistryPage() {
           >
             <div className="flex items-center gap-2">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <title>Vehicles</title>
+                <title>{t('registry.page.tabs.vehicles')}</title>
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -271,7 +352,7 @@ export function RegistryPage() {
                   d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
                 />
               </svg>
-              Vehicles
+              {t('registry.page.tabs.vehicles')}
               {vehiclesData?.total ? (
                 <span className="ml-1 px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-full">
                   {vehiclesData.total}
@@ -285,9 +366,7 @@ export function RegistryPage() {
       {/* Error display */}
       {(petsError || vehiclesError) && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-700">
-            Failed to load registrations. Please try again later.
-          </p>
+          <p className="text-sm text-red-700">{t('registry.page.loadError')}</p>
         </div>
       )}
 
@@ -329,6 +408,7 @@ export function RegistryPage() {
           />
         )}
       </div>
+      {confirmDialog}
     </div>
   );
 }

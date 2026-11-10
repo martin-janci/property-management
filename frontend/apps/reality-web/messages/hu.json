@@ -107,7 +107,9 @@
     "callback": {
       "title": "A bejelentkezés sikertelen",
       "invalidState": "Érvénytelen állapot-token. Kérjük, próbáljon meg újra bejelentkezni.",
-      "returnHome": "Vissza a főoldalra"
+      "returnHome": "Vissza a főoldalra",
+      "loading": "Betöltés...",
+      "completingLogin": "Bejelentkezés befejezése..."
     }
   },
   "common": {
@@ -357,8 +359,10 @@
   },
   "listings": {
     "allProperties": "Összes ingatlan",
-    "emptyTitle": "Nem található hirdetés",
     "emptyDescription": "Módosítsa a szűrőket vagy a keresési feltételeket, hogy több ingatlant találjon.",
+    "emptyTitle": "Nem található hirdetés",
+    "errorDescription": "Hiba történt az ingatlanok betöltésekor. Kérjük, próbálja újra.",
+    "errorTitle": "A hirdetéseket nem sikerült betölteni",
     "filters": "Szűrők",
     "gridView": "Rácsnézet",
     "listView": "Listanézet",
@@ -368,6 +372,7 @@
     "propertiesForRent": "Kiadó ingatlanok",
     "propertiesForSale": "Eladó ingatlanok",
     "resultsCount": "{count} hirdetés található",
+    "retry": "Újrapróbálkozás",
     "sortNewest": "Legújabb",
     "sortOldest": "Legrégebbi",
     "sortPriceHigh": "Ár: legdrágábbtól",
@@ -394,26 +399,39 @@
       "description": "A Reality Portal a vezető ingatlan-hirdetési platform Szlovákiában, Csehországban és azon túl.",
       "title": "A Reality Portalról"
     },
-    "contact": {
-      "description": "Támogatással vagy üzleti kérdésekkel forduljon hozzánk a következő címen:",
-      "email": "info@rlt.sk",
-      "title": "Kapcsolatfelvétel"
-    },
-    "privacy": {
-      "description": "Elkötelezettünk vagyunk személyes adatainak védelme mellett a GDPR és az alkalmazandó jogszabályok szerint. A teljes adatvédelmi nyilatkozat hamarosan itt kerül közzétételre.",
-      "title": "Adatvédelmi irányelvek"
-    },
-    "terms": {
-      "description": "A Reality Portal használatával elfogadja általános szerződési feltételeinket. A teljes felhasználási feltételek hamarosan közzétételre kerülnek.",
-      "title": "Felhasználási feltételek"
-    },
     "agentProfile": {
+      "about": "Az ügynökről",
       "activeListings": "Aktív hirdetések",
       "contact": "Kapcsolat",
+      "contactDetails": "Elérhetőségek",
+      "defaultName": "Ingatlanközvetítő",
+      "experience": "{count} év tapasztalat",
       "languages": "Nyelvek",
+      "license": "Engedély: {number}",
+      "loading": "Betöltés…",
+      "mailtoSubject": "Kapcsolat a Reality Portálon keresztül",
+      "memberSince": "Tag: {date} óta",
+      "modalAriaLabel": "Ügynök megkeresése",
+      "modalCancel": "Mégse",
+      "modalClose": "Bezárás",
+      "modalEmailHint": "Az üzenet megnyílik az e-mail kliensében.",
+      "modalNoContact": "Az ügynök jelenleg nem tett közzé elérhetőséget.",
+      "modalPhoneIntro": "Ezt az ügynököt telefonon is elérheti:",
+      "modalPlaceholder": "Jó napot, érdeklődöm a szolgáltatásai iránt...",
+      "modalSendEmail": "E-mail küldése",
+      "modalTitle": "{name} megkeresése",
+      "noContact": "Az ügynök nem tett közzé elérhetőséget.",
+      "noReviews": "Még nincsenek értékelések.",
+      "notFoundBody": "Ennek az ügynöknek a profilja nem érhető el.",
+      "notFoundTitle": "Az ügynök nem található",
+      "rating": "Értékelés",
+      "reviewVerified": "Ellenőrzött",
       "reviews": "Értékelések",
+      "sendMessage": "Üzenet küldése",
       "specializations": "Szakterületek",
-      "verified": "Igazolt ügynök"
+      "totalListings": "Összes hirdetés",
+      "verified": "Igazolt ügynök",
+      "views": "Megtekintések"
     },
     "careers": {
       "hero": {
@@ -423,6 +441,11 @@
       },
       "title": "Karrier",
       "h1": "Let's build a real estate market that makes sense."
+    },
+    "contact": {
+      "description": "Támogatással vagy üzleti kérdésekkel forduljon hozzánk a következő címen:",
+      "email": "info@rlt.sk",
+      "title": "Kapcsolatfelvétel"
     },
     "cookies": {
       "reopen": "Cookie beállítások újranyitása",
@@ -463,15 +486,114 @@
       "newsletterTitle": "Newsletter signup"
     },
     "listingEdit": {
+      "title": "Hirdetés szerkesztése",
+      "breadcrumbAccount": "← Fiókom",
+      "breadcrumb": "Hirdetés szerkesztése #{id}",
+      "stepLabel": "{step}. lépés a(z) {total}-ből: {stepTitle}",
+      "asideTitle": "Lépések",
+      "back": "← Vissza",
+      "next": "Tovább →",
       "save": "Mentés",
+      "saving": "Mentés…",
+      "loading": "Hirdetés betöltése…",
+      "loadFailed": "A hirdetést nem sikerült betölteni.",
+      "backToAccount": "← Vissza a fiókhoz",
+      "priceInvalid": "Adjon meg egy 0 €-nál nagyobb érvényes árat (4. lépés).",
+      "saveFailed": "A mentés nem sikerült, próbálja újra.",
       "success": "Hirdetés mentve!",
-      "title": "Hirdetés szerkesztése"
+      "successBody": "A(z) #{id} hirdetés módosításai sikeresen elmentve.",
+      "viewListing": "Hirdetés megtekintése",
+      "moreEdits": "További szerkesztés",
+      "steps": {
+        "type": {
+          "title": "Típus és hely",
+          "description": "Ingatlantípus és cím"
+        },
+        "details": {
+          "title": "Részletek",
+          "description": "Terület, szobák, emelet"
+        },
+        "photos": {
+          "title": "Fényképek",
+          "description": "Fényképek kezelése"
+        },
+        "price": {
+          "title": "Ár",
+          "description": "Kínálati ár frissítése"
+        },
+        "summary": {
+          "title": "Összegzés",
+          "description": "Ellenőrzés és mentés"
+        }
+      },
+      "fields": {
+        "transactionType": "Tranzakció típusa",
+        "propertyType": "Ingatlan típusa",
+        "address": "Cím",
+        "addressPlaceholder": "Utca és házszám",
+        "city": "Város / Település",
+        "cityPlaceholder": "Pl. Pozsony",
+        "area": "Terület (m²)",
+        "areaPlaceholder": "Pl. 72",
+        "rooms": "Szobák száma",
+        "roomsPlaceholder": "Pl. 3",
+        "floor": "Emelet",
+        "floorPlaceholder": "Pl. 4",
+        "totalFloors": "Összes emelet",
+        "totalFloorsPlaceholder": "Pl. 8",
+        "yearBuilt": "Építés éve",
+        "yearBuiltPlaceholder": "Pl. 2005",
+        "description": "Leírás",
+        "price": "Ár (€)",
+        "priceNegotiable": "Az ár alku tárgyát képezi",
+        "status": "Hirdetés állapota"
+      },
+      "transactionOptions": {
+        "sale": "Eladás",
+        "rent": "Bérlés"
+      },
+      "propertyOptions": {
+        "apartment": "Lakás",
+        "house": "Ház",
+        "land": "Telek",
+        "commercial": "Kereskedelmi"
+      },
+      "statusOptions": {
+        "active": "Aktív",
+        "inactive": "Inaktív",
+        "draft": "Vázlat"
+      },
+      "photos": {
+        "existing": "Meglévő fényképek",
+        "alt": "Fénykép",
+        "remove": "Fénykép eltávolítása",
+        "addNew": "Új fényképek hozzáadása",
+        "addedCount": "+ {count} új fénykép"
+      },
+      "summary": {
+        "title": "Módosítások összegzése",
+        "type": "Típus",
+        "location": "Hely",
+        "area": "Terület",
+        "rooms": "Szobák",
+        "floor": "Emelet",
+        "year": "Év",
+        "price": "Ár",
+        "status": "Állapot",
+        "photos": "Fényképek",
+        "negotiable": "(alku tárgya)",
+        "photosValue": "{existing} meglévő + {added} új"
+      }
     },
     "priceMap": {
       "clickHint": "Kattints egy kerületre a részletes statisztikákért.",
       "subtitle": "Pozsony – áttekintés",
       "title": "Ártérkép",
       "h1": "Price map"
+    },
+    "privacy": {
+      "description": "Elkötelezettünk vagyunk személyes adatainak védelme mellett a GDPR és az alkalmazandó jogszabályok szerint. A teljes adatvédelmi nyilatkozat hamarosan itt kerül közzétételre.",
+      "title": "Adatvédelmi irányelvek"
     },
     "profile": {
       "tabs": {
@@ -480,14 +602,94 @@
         "reviews": "Értékelések",
         "settings": "Beállítások"
       },
-      "title": "Profilom"
+      "title": "Profilom",
+      "stats": {
+        "activeListings": "Aktív hirdetések",
+        "totalListings": "Összes hirdetés",
+        "reviews": "Értékelések",
+        "avgRating": "Átl. értékelés"
+      },
+      "status": {
+        "active": "Aktív",
+        "sold": "Eladva",
+        "rented": "Kiadva",
+        "draft": "Piszkozat",
+        "paused": "Szüneteltetve",
+        "archived": "Archiválva"
+      },
+      "listings": {
+        "loading": "Hirdetések betöltése…",
+        "error": "Nem sikerült betölteni a hirdetéseket.",
+        "emptyTitle": "Még nincsenek hirdetései",
+        "emptyBody": "Amikor hozzáad egy hirdetést, itt jelenik meg.",
+        "rooms": "{count} szoba"
+      },
+      "activity": {
+        "emptyTitle": "A tevékenység még nem érhető el",
+        "emptyBody": "A tevékenységének áttekintése elérhető lesz, amint elkészítjük a megfelelő nézetet."
+      },
+      "reviews": {
+        "emptyTitle": "Még nincsenek értékelések",
+        "emptyBody": "Az ügyfelek értékelései itt jelennek meg, amint megkapja őket."
+      },
+      "settings": {
+        "description": "A profilbeállítások a <account>Fiókom</account> szakaszban érhetők el."
+      }
     },
     "report": {
+      "h1": "Hirdetés bejelentése",
+      "subtitle": "Segítsen megőrizni a portál megbízhatóságát — mondja el, mi a baj.",
+      "title": "Hirdetés bejelentése",
       "submit": "Bejelentés elküldése",
-      "subtitle": "Help us keep the portal trustworthy — tell us what's wrong.",
+      "submitting": "Küldés…",
       "success": "Bejelentés elküldve",
-      "title": "Report a listing",
-      "h1": "Report a listing"
+      "problemLegend": "A bejelentés oka",
+      "problems": {
+        "fraudulent_listing": {
+          "label": "Csalás gyanúja",
+          "description": "Gyanús hirdetés, előre fizetés kérése, hamis ügynöki identitás"
+        },
+        "price_manipulation": {
+          "label": "Helytelen ár",
+          "description": "Az ár nem felel meg a valóságnak vagy szándékosan félrevezető"
+        },
+        "incorrect_information": {
+          "label": "Hamis fényképek",
+          "description": "A fényképek nem az adott ingatlanhoz tartoznak"
+        },
+        "duplicate_listing": {
+          "label": "Duplikált hirdetés",
+          "description": "Ugyanazt az ingatlant többször hirdetik"
+        },
+        "already_sold": {
+          "label": "Eladva / nem elérhető",
+          "description": "Az ingatlant már eladták vagy kiadták, a hirdetést nem távolították el"
+        },
+        "other": {
+          "label": "Egyéb ok",
+          "description": "Egyéb technikai hiba vagy a platform szabályainak megsértése"
+        }
+      },
+      "listingRefLabel": "Hivatkozás a hirdetésre (URL vagy azonosító)",
+      "listingRefPlaceholder": "pl. https://rlt.sk/listings/ba-byt-3i vagy #12345",
+      "descriptionLabel": "A probléma leírása",
+      "descriptionPlaceholder": "Írja le, miért jelenti be ezt a hirdetést. Minél több részletet ad meg, annál gyorsabban ki tudjuk vizsgálni.",
+      "attachmentsLabel": "Mellékletek (hamarosan)",
+      "attachmentsComingSoon": "A mellékletek hozzáadása hamarosan elérhető lesz",
+      "attachmentsHint": "A képernyőképek feltöltése még nem érhető el — kérjük, írja le a bizonyítékokat a fenti leírásban. Dolgozunk rajta.",
+      "gdpr": {
+        "label": "Hozzájárulok a személyes adatok kezeléséhez a bejelentésem kivizsgálása céljából a {privacyLink} szerint.",
+        "privacyLink": "Adatvédelmi szabályzat"
+      },
+      "successTitle": "Bejelentés elküldve",
+      "successBody": "Megkaptuk a bejelentését. Csapatunk 24 órán belül kivizsgálja. Köszönjük, hogy segít biztonságban tartani a portált.",
+      "referenceLabel": "Hivatkozási szám",
+      "referenceHint": "Adja meg a további kommunikáció során — segít gyorsan megtalálni a bejelentését.",
+      "backToListings": "Vissza a hirdetésekhez",
+      "errorNoListing": "Nem tudtuk megállapítani, melyik hirdetésre vonatkozik a bejelentés. Nyissa meg a bejelentést egy hirdetés részletes oldaláról, vagy illessze be a hirdetés hivatkozását vagy azonosítóját fent.",
+      "errorRateLimit": "Túl sok bejelentés érkezett erről az eszközről. Kérjük, próbálja újra egy pillanat múlva.",
+      "errorNotFound": "A hirdetés nem található. Ellenőrizze a hivatkozást vagy az azonosítót, és próbálja újra.",
+      "errorGeneric": "A bejelentést nem sikerült elküldeni. Kérjük, próbálja újra."
     },
     "security": {
       "reportCta": "Hirdetés bejelentése",
@@ -526,6 +728,8 @@
       "back": "← Back",
       "next": "Next →",
       "publish": "Publish listing",
+      "publishing": "Publishing…",
+      "submitFailed": "Publishing failed, please try again.",
       "submittedTitle": "Your listing has been submitted!",
       "submittedBody": "After review it will be published within 2 hours.",
       "submittedCta": "Add another listing",
@@ -536,6 +740,8 @@
         "addressPlaceholder": "Street and number",
         "city": "City / Town",
         "cityPlaceholder": "e.g. Bratislava",
+        "postalCode": "Postal code",
+        "postalCodePlaceholder": "e.g. 811 01",
         "area": "Area (m²)",
         "areaPlaceholder": "e.g. 65",
         "rooms": "Number of rooms",
@@ -594,6 +800,7 @@
         "required": "Required",
         "addressRequired": "Address is required",
         "cityRequired": "City is required",
+        "postalCodeRequired": "Postal code is required",
         "areaRequired": "Area is required",
         "areaPositive": "Area must be greater than 0",
         "roomsRequired": "Number of rooms is required",
@@ -607,6 +814,10 @@
         "termsRequired": "You must agree to the terms of use to publish",
         "roomsPositive": "Number of rooms must be greater than 0"
       }
+    },
+    "terms": {
+      "description": "A Reality Portal használatával elfogadja általános szerződési feltételeinket. A teljes felhasználási feltételek hamarosan közzétételre kerülnek.",
+      "title": "Felhasználási feltételek"
     },
     "listings": {
       "title": "Összes ingatlan",
@@ -710,6 +921,12 @@
         "completed": "Befejezve",
         "cancelled": "Törölve"
       },
+      "type": {
+        "general": "Általános érdeklődés",
+        "viewing_request": "Megtekintési kérelem",
+        "price_negotiation": "Ártárgyalás",
+        "availability": "Elérhetőség"
+      },
       "viewingScheduled": "Megtekintés ütemezve: {date} {time}",
       "agentResponse": "Ügynök válasza:",
       "cancelConfirm": "Törli ezt az érdeklődést?",
@@ -748,6 +965,19 @@
       "error": "Nem sikerült betölteni a hirdetéseket.",
       "empty": "Még nem tett közzé egyetlen hirdetést sem.",
       "createFirst": "Hozza létre első hirdetését"
+    },
+    "agencyProfile": {
+      "loading": "Betöltés…",
+      "notFound": "Az iroda nem található.",
+      "verified": "Ellenőrzött",
+      "about": "Az irodáról",
+      "team": "Csapatunk ({count})",
+      "activeListings": "Aktív hirdetések ({count})",
+      "noListings": "Nincsenek aktív hirdetések.",
+      "rentSuffix": "/hó",
+      "contact": "Kapcsolat",
+      "visitWebsite": "Weboldal megtekintése",
+      "license": "Engedély: {number}"
     }
   },
   "search": {
@@ -981,6 +1211,7 @@
       "mappingHint": "Feleltesse meg a CRM-mezőket a hirdetés tulajdonságaival",
       "creating": "Létrehozás...",
       "createConnection": "Kapcsolat létrehozása",
+      "createError": "A kapcsolat létrehozása nem sikerült. Kérjük, próbálja újra.",
       "connectionFailed": "A kapcsolat sikertelen",
       "connectionSuffix": "kapcsolat",
       "status": {
@@ -1019,6 +1250,9 @@
       "feedName": "Feed neve (opcionális)",
       "feedNamePlaceholder": "Az én ingatlan-feedem",
       "fetchError": "Nem sikerült lekérni a feedet. Ellenőrizze az URL-t, és próbálja újra.",
+      "updateError": "Nem sikerült frissíteni a feedet. Próbálja újra.",
+      "syncError": "Nem sikerült elindítani a feed szinkronizálását. Próbálja újra.",
+      "removeError": "Nem sikerült eltávolítani a feedet. Próbálja újra.",
       "format": "Formátum",
       "itemsFound": "Talált elemek",
       "availableFields": "Elérhető mezők",
@@ -1030,6 +1264,7 @@
       "mappingHint": "Feleltesse meg a feed mezőit a hirdetés tulajdonságaival",
       "creating": "Létrehozás...",
       "createFeed": "Feed létrehozása",
+      "createError": "A feed létrehozása nem sikerült. Kérjük, próbálja újra.",
       "defaultName": "Ingatlan-feed",
       "status": {
         "active": "Aktív",
@@ -1054,6 +1289,7 @@
       "cancel": "Mégse",
       "saving": "Mentés...",
       "saveChanges": "Változtatások mentése",
+      "saveError": "A módosításokat nem sikerült menteni. Kérjük, próbálja újra.",
       "status": "Állapot",
       "enabled": "Engedélyezve",
       "disabled": "Letiltva",
@@ -1123,5 +1359,17 @@
     "errorAreaNegative": "A terület nem lehet negatív",
     "errorRoomsInvalid": "A szobák számának érvényes számnak kell lennie",
     "errorRoomsNegative": "A szobák száma nem lehet negatív"
+  },
+  "realtor": {
+    "errorNetwork": "Hálózati hiba. Kérjük, próbálja újra.",
+    "errorMalformed": "A szerver váratlan választ adott. Kérjük, próbálja újra.",
+    "errorRequestFailed": "A kérés sikertelen ({status}). Kérjük, próbálja újra.",
+    "errorLoadProfile": "A profil betöltése nem sikerült.",
+    "errorSaveProfile": "A profil mentése nem sikerült.",
+    "errorNameRequired": "A név megadása kötelező.",
+    "errorLoadListing": "A hirdetés betöltése nem sikerült.",
+    "errorSaveListing": "A hirdetés mentése nem sikerült.",
+    "errorCreateListing": "A hirdetés létrehozása nem sikerült. Kérjük, próbálja újra.",
+    "errorMissingListingId": "Hiányzik a hirdetés azonosítója."
   }
 }

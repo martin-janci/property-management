@@ -267,12 +267,53 @@ mkdir -p "$(dirname "$WORKTREE_PATH")"
 git worktree add -B "$BRANCH" "$WORKTREE_PATH" origin/dev 2>&1 \
   || git worktree add "$WORKTREE_PATH" "$BRANCH"
 cd "$WORKTREE_PATH"
+# Disk (issue #3073): share ONE Cargo target across sibling worktrees instead
+# of each materializing its own ~24 GB target/. Parallel Rust implementers used
+# to sum their targets (observed 24 GB + 4.6 GB against a ~40 GB allowance) and
+# the second build hit ENOSPC mid-`scripts/verify-impact.sh`, so it could not
+# emit VERIFY OK and opened no PR. A shared target means the second build reuses
+# the first's artifacts (also a big wall-clock win) instead of duplicating them.
+export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-/tmp/ppt-cargo-target}"
 trap 'cd / && git worktree remove --force "$WORKTREE_PATH" 2>/dev/null' EXIT
 ```
 
 The trap removes the worktree on exit — `.gitignore` already excludes
 `.worktrees/` from the repo, and `/tmp/ppt-worktrees/` is outside the repo
-entirely, so no in-tree pollution either way.
+entirely, so no in-tree pollution either way. The shared `CARGO_TARGET_DIR`
+lives **outside** each worktree (`/tmp/ppt-cargo-target`), so the worktree trap
+and the Phase 1 worktree prune never delete it — it persists hot across runs.
+
+**Why a shared target is safe here (supersedes the 2026-07-22 "per-worktree
+targets" verdict for the dispatcher path — issue #3073).** That verdict's one
+objection was that a shared target "serializes every agent on cargo's build
+lock." But every cargo invocation in the verify gate **already** serializes
+host-wide on `flock /tmp/ppt-cargo.lock` (see `scripts/verify-impact.sh`), and
+cargo's own package-cache lock serializes any direct cargo runs — so the shared
+target is never written concurrently and the serialization cost is already paid
+regardless. The remaining downside (cross-branch incremental thrash) is
+wall-clock only, and the disk win (no ENOSPC, no wasted cycle) dominates for
+parallel worktree builds. Inject this `export` into every Phase 4 / 5.6 / 5.7
+subagent brief alongside the preamble.
+
+**NEVER `git stash` inside a `/tmp/ppt-worktrees/` worktree (issue #3012).**
+A `git worktree` shares the *common git directory* of the clone it was created
+from — the stash is stored there (`.git/refs/stash` plus the stash reflog),
+NOT per-worktree. So a `git stash` run from one implementer's worktree is
+visible to, and `stash pop`-able from, every other worktree of the same clone,
+including the sibling implementers the dispatcher spawns in parallel. Two
+implementers that each stash then pop will silently swap or drop each other's
+work (exactly the cross-worktree contamination #3012 reported). The worktree
+isolation above does NOT protect the stash — only the working tree and the
+branch are isolated.
+
+Safe alternative when a subagent must set uncommitted work aside: copy the
+affected paths to a scratch file *outside* the repo (e.g. under the session
+scratchpad or `/tmp/ppt-scratch-$$/`) and `git checkout -- <path>` / restore
+from the copy, instead of `git stash`. For isolating a pre-fix vs post-fix
+state (the IG3 "fails-before-fix" proof), use the two-separate-commits split
+(`test:` then `fix:`) and check each commit out independently — never stash
+the fix. Inject this prohibition into every Phase 4 / 5.6 / 5.7 subagent brief
+alongside the preamble.
 
 Phase 5.5 (merger) does NOT need worktree isolation — `gh pr merge` is a
 GitHub API call, no local checkout.
@@ -486,6 +527,12 @@ TTL steals are visible per-run in the commit log.
      # (observed 2026-05-27: 15 GB incremental dir on dev). Drop entries idle
      # for >4h — current-run artifacts stay hot, only multi-branch debris goes.
      find backend/target/debug/incremental -maxdepth 1 -mindepth 1 \
+          -mmin +240 -exec rm -rf {} + 2>/dev/null || true
+     # Same prune for the SHARED worktree target (issue #3073): implementers
+     # export CARGO_TARGET_DIR=/tmp/ppt-cargo-target, so its incremental dir
+     # accumulates cross-branch fingerprints too. Drop entries idle >4h; the
+     # compiled crate artifacts (the reuse win) stay, only incremental debris goes.
+     find /tmp/ppt-cargo-target/debug/incremental -maxdepth 1 -mindepth 1 \
           -mmin +240 -exec rm -rf {} + 2>/dev/null || true
      # Same treatment for sub-agent worktrees from prior runs whose trap missed.
      find /tmp/ppt-worktrees -maxdepth 1 -mindepth 1 -type d \
@@ -1006,6 +1053,31 @@ export BUFFER_FLOOR BUFFER_TARGET BUFFER_CEIL
   `Generator:` line. If the 24h post-merge gate in Phase 2.5 already ran a
   review-merged pass THIS run, spawn the dev-review slice instead (never two
   review-merged passes in one run).
+
+  **Tier 1d ingest — promote the signal sink (issue #3357 part 2).** The
+  **even** (`ppt-dev-review`) branch writes its findings to
+  `.research/signals/<date>-<segment>-tier1d.json` — but NO refill tier read
+  that sink, so every finding was orphaned and never became a claimable
+  action-list item (the buffer stayed pinned at `claimable < floor` with
+  `0 claimed` despite Tier-1d firing every run). Close the loop: right after the
+  dev-review generator returns (and also opportunistically every run, since the
+  sink accumulates), run the promotion step so fresh signals enter the claim
+  pool THIS run — deduped against action-list / assignments / backlog.json and
+  **mobile-native-gated** so structurally-unlandable KMP dead-ends
+  (`code-review-mobile-native-kmp-*`, AGP egress-blocked in cloud — issue #2652)
+  are never minted as claim rows (`mobile-rn` React Native findings still
+  promote). It mirrors `backlog-refill.sh`: buffer-gated, additive, fail-closed,
+  per-run capped (`SIGNALS_PROMOTE_CAP`, default 12), newest-signal-first.
+
+  ```bash
+  bash .research/signals-promote.sh --apply
+  ```
+
+  Include `action-list.json` in the Phase 6 commit when it promoted any row;
+  surface the count on the Phase 7 `Generator:` line (e.g.
+  `signals-promoted=<n>`). The `review-merged` **odd** branch still routes
+  through the EVERY-CYCLE issue-ingest above (GitHub issues), unchanged. Smoke
+  test: `.research/test-signals-promote.sh`.
 - **Tier 2 (upstream kick):** if `open_claimable_count` still `< BUFFER_FLOOR/2` (default 18 — deep-starvation last resort, scaled with the floor so it stays proportional to throughput; raised from a hardcoded 12 alongside `BUFFER_FLOOR` 18→36 so Tier-2 doesn't leave a wide dead band below the Tier-1 floor) OR coverage missing → `curl POST $DISPATCHER_URL` with `Bearer $DISPATCHER_TOKEN`, the `anthropic-version` header, a `{"text": …}` body, and `--max-time 10`. **Capture the response code AND first 200 chars of body** (NEW — issue #5: HTTP 400 from the planner used to vanish into fire-and-forget; now we see it. The body/header shape is fixed per issue #1151 / #1380 — see the comment below):
 
   ```bash
@@ -2263,10 +2335,30 @@ bash .claude/skills/ppt-implement/scripts/commit-scope-guard.sh \
 # code). It is now placed here, right after the final `git add`, so the check
 # actually fires. The guard self-skips when PUSH_METHOD != mcp (direct `git push`
 # has no inline-content limit), so it is safe to run unconditionally.
-if ! PUSH_METHOD="${PUSH_METHOD:-mcp}" bash .research/mcp-push-size-guard.sh --staged; then
-  echo "PHASE 6 ABORT: mcp-push-size-guard tripped — a staged file exceeds the MCP inline-push ceiling; refusing to commit/MCP-push (would truncate/corrupt it on dev, #1014). Remediation: re-run the reconcilers to shrink state, or land this run via 'PUSH_METHOD=git' where the proxy allows. Not marking this run successful." >&2
-  exit 0
-fi
+#
+# ARCHIVE-ROUTING (issue #1162 / #2743): the two append-only ledgers
+# (assignments-archive.json, action-list-archive.json) legitimately grow past the
+# ceiling and cannot be shrunk without losing history. When they are the ONLY
+# oversize staged files the guard exits 4 ("route via git push") rather than 3
+# ("abort") — a legit archive append must NEVER fail-close-wedge the whole Phase 6
+# push (that regression is exactly what #2743 hit). We honour the routing here by
+# forcing PUSH_METHOD=git for THIS commit; git push has no inline-content limit so
+# the archive lands intact. An oversize ACTIVE state file (the #1014 corruption
+# class) still exits 3 and aborts — those must be shrunk by the reconcilers, never
+# pushed oversize. PUSH_METHOD_EFF carries the (possibly-overridden) method into
+# the push branch below.
+PUSH_METHOD_EFF="${PUSH_METHOD:-mcp}"
+SIZE_GUARD_RC=0
+PUSH_METHOD="$PUSH_METHOD_EFF" bash .research/mcp-push-size-guard.sh --staged || SIZE_GUARD_RC=$?
+case "$SIZE_GUARD_RC" in
+  0) : ;;  # all staged files inline-safe (or guard skipped under PUSH_METHOD=git)
+  4) echo "PHASE 6: oversize append-only archive staged — routing THIS push via PUSH_METHOD=git (MCP inline-push would truncate it, #1014; git push has no inline limit, #1162/#2743)." >&2
+     PUSH_METHOD_EFF=git ;;
+  3) echo "PHASE 6 ABORT: mcp-push-size-guard tripped — an ACTIVE-state staged file exceeds the MCP inline-push ceiling; refusing to commit/MCP-push (would truncate/corrupt it on dev, #1014). Remediation: re-run the reconcilers to shrink state, or land this run via 'PUSH_METHOD=git' where the proxy allows. Not marking this run successful." >&2
+     exit 0 ;;
+  *) echo "PHASE 6 ABORT: mcp-push-size-guard returned unexpected rc=$SIZE_GUARD_RC — refusing to commit/push. Not marking this run successful." >&2
+     exit 0 ;;
+esac
 
 # Pre-commit self-test gate. Phase 8 finding `self-test-fail-recurs-each-run`:
 # T11 / T4 / T18 / T19 were enforced only by the post-hoc self-test, so every
@@ -2303,7 +2395,12 @@ INTENDED_TREE=$(git rev-parse HEAD^{tree})   # the state tree we MUST land (reba
 # full retry/backoff loop before failing EVERY run (recurred R8). Default to MCP;
 # fall back to git push only when the MCP tool is unavailable. `PUSH_METHOD=git`
 # forces the legacy path for environments where direct push works.
-if [ "${PUSH_METHOD:-mcp}" = "mcp" ]; then
+#
+# PUSH_METHOD_EFF (not the raw PUSH_METHOD) is the effective method for THIS run:
+# the size guard above sets it to `git` when only oversize append-only archives
+# are staged (#1162/#2743 archive-routing), so an oversize archive is pushed via
+# git (no inline limit) instead of wedging the MCP path.
+if [ "${PUSH_METHOD_EFF:-${PUSH_METHOD:-mcp}}" = "mcp" ]; then
   # NOTE (issue #2126): the MCP inline-push size guard already ran BEFORE
   # `git commit` above (right after the final `git add`), where
   # `git diff --cached` still reflected the staged payload. Do NOT re-run it

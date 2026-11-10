@@ -667,3 +667,24 @@ describe('api client — non-idempotent requests are never auto-retried', () => 
     expect(attempts()).toBe(4);
   });
 });
+
+// ---------------------------------------------------------------------------
+// 7. No eager default export (regression)
+//
+//    A `export default getApiClient()` in the module used to run at import time,
+//    *before* AuthProvider calls configureApiClient(). Any default-importer thus
+//    captured a pre-configuration instance — no token getter, no 401 refresh —
+//    which was silently orphaned once configureApiClient() swapped the singleton.
+//    Guard against the footgun coming back: the module must expose no default
+//    export, forcing every caller through the lazy getApiClient() accessor.
+// ---------------------------------------------------------------------------
+
+describe('api module — no eager default export', () => {
+  it('exposes no default export (callers must use getApiClient())', async () => {
+    const mod = (await import('./api')) as Record<string, unknown>;
+    expect('default' in mod).toBe(false);
+    expect(mod.default).toBeUndefined();
+    // The lazy accessor is the supported entry point.
+    expect(typeof mod.getApiClient).toBe('function');
+  });
+});

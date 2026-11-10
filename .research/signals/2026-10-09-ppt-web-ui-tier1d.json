@@ -1,0 +1,48 @@
+{
+  "generated": "2026-10-09T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven backlog generator (claimable buffer below floor: claimable=20 < floor=36; deterministic refills backlog-refill/retry-remint found nothing). Static single-segment rotating code review, no compilation / no test execution (cloud runner has no toolchain). File reading + grep only. Produces fresh CLOUD-LANDABLE frontend backlog vectors for the ppt-web-ui segment. Findings verified net-new against all prior ppt-web-ui signal files and backlog.json (no privacy / sentiment-page / oauth-grants ids previously filed; prior sentiment/privacy mentions are in the ppt-web-core HOOKS layer — useSentiment.ts auth wiring, gdprClient.ts token attach — not these UI-layer findings).",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed (review_cursor.ppt-web-ui = 2026-10-01, tied oldest with mobile-rn; tiebreak by skill segment-table order -> ppt-web-ui). No CHURN_FILES passed to this invocation. Not saturated (0 open code-review-finding items for ppt-web-ui in backlog.json; reality-server has 3 open and would be skipped).",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 3,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-privacy-settings-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/ppt-web/src/features/privacy/pages/PrivacySettingsPage.tsx"],
+      "evidence": ["frontend/apps/ppt-web/src/features/privacy/pages/PrivacySettingsPage.tsx (Epic 63, GDPR Screening & Consent Management) is a WIRED, production, customer-facing page (privacy is NOT in UNWIRED_FEATURES) yet ships ZERO i18n: `grep -rln useTranslation features/privacy/` returns nothing and every user-facing string is hardcoded English — including legally-sensitive GDPR copy: 'Privacy & Data Settings', 'Manage your privacy preferences and data in accordance with GDPR.' (:161), 'Delete Account' (:276), the deletion warning 'This action cannot be undone after the grace period.' (:283), profile-visibility option labels (:205-207), and the account-deletion prompt body (:120-123). ppt-web ships sk/cs/de/en, so Slovak/Czech/German users see English-only GDPR legal text. Separately, raw backend bodies are surfaced directly as the user-facing error: `err.message` from thrown `new Error(response.text())` (loadSettings :52, save :88, export :112, deletion :143-149) can leak server internals/stack text to end users. Fix (frontend-only, cloud-landable): route all strings through react-i18next t('privacy.*') keys across en/sk/cs/de bundles, and map known error statuses to translated catalogue copy instead of echoing the raw HTTP body. Net-new: no `privacy` id in prior ppt-web-ui signals or backlog."]
+    },
+    {
+      "id": "code-review-ppt-web-ui-sentiment-dash-no-error-state",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "completeness",
+      "files": ["frontend/apps/ppt-web/src/features/sentiment/pages/SentimentDashboardPage.tsx"],
+      "evidence": ["frontend/apps/ppt-web/src/features/sentiment/pages/SentimentDashboardPage.tsx (Epic 13 Story 13.2, WIRED at routes/lazyRoutes.tsx:317) is a presentational dashboard whose props interface (SentimentDashboardPageProps, :12-21) exposes ONLY loading flags (dashboardLoading/trendsLoading/alertsLoading) and NO error prop/branch. The route wrapper in routes/groups/core.tsx wires the TanStack Query hooks but has no error channel to pass through, and the component renders no isError/ErrorBoundary fallback. On any query failure the KPI tiles render MISLEADING values indistinguishable from real data: avgScore -> 'N/A' (:64), 'Data points' -> 0 (:70), and critically 'Open alerts' -> 0 with tone 'default' (:72-73) — i.e. a failed fetch silently reports 'zero open sentiment alerts' on an alerts-monitoring surface, masking real open alerts from managers with no error indication and no retry. Fix (frontend-only, cloud-landable): add dashboardError/trendsError/alertsError props, surface an error state + retry when any query fails, and render '—'/'N/A' distinctly from a loaded zero. Net-new: prior sentiment signals target features/sentiment/hooks/useSentiment.ts (auth-token wiring in ppt-web-core), not this page's missing error UI."]
+    },
+    {
+      "id": "code-review-ppt-web-ui-oauth-grants-hardcoded-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/ppt-web/src/features/oauth-grants/pages/OAuthGrantsPage.tsx"],
+      "evidence": ["frontend/apps/ppt-web/src/features/oauth-grants/pages/OAuthGrantsPage.tsx (Authorized Applications — the page where a user revokes third-party OAuth app access to their account, a security-sensitive wired surface) imports useTranslation and `const { t } = useTranslation()` (:15,:24) but uses t() ONLY for a single aria-label `t('aria.authorizedApplications')` (:101). All visible text and toast copy are hardcoded English: heading 'Authorized Applications' (:62/:87/…), loading 'Loading authorized applications…' (:63), the isError body + 'Retry' button (:74-82), revoke success toast 'Access revoked' / '{clientName} can no longer access your account.' (:41-43), and revoke failure toast 'Failed to revoke access' + raw `err.message` fallback (:45-49). Non-English (sk/cs/de) users see English on a security/account-management page. Fix (frontend-only, cloud-landable): move all literals to t('oauthGrants.*') keys across the four locale bundles and translate the revoke toasts. Net-new: no oauth-grants id in prior ppt-web-ui signals or backlog."]
+    }
+  ]
+}

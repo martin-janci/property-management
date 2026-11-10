@@ -1,15 +1,20 @@
-# Action list
+# Action List
 
-_Generated: 2026-08-31T03:10:00Z — regenerated from `action-list.json`._
+<sub>Generated: 2026-11-09 06:45 UTC by pm Phase 1.6 (pm-scrum-master + pm-qa)</sub>
 
-| ID | Priority | Owner | Action |
-|---|---|---|---|
-| `pm-devops-unblock-mobile-native-cloud-builds` | high | pm-devops | Unblock mobile-native/KMP builds in the cloud runner (issue #2652) — currently 7/8 open backlog items are structurally unclaimable in cloud, forcing Tier-1d generator kicks every r |
-| `code-review-mobile-native-kmp-inquiries-response-contract` | medium | pm-backend | mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call |
-| `code-review-mobile-native-kmp-portfolio-analytics-caps-100` | low | pm-backend | mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios |
-| `code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout-retry1` | low | pm-backend | mobile-native-kmp: getPortfolioAnalytics() fans out one analytics HTTP request per listing with no concurrency limit — up to 100 parallel GETs from a mobile device [retry 1/2 of fa |
-| `code-review-mobile-native-kmp-cancellation-swallowed` | low | pm-backend | mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breaking coroutine cancellation and showing spurious errors |
-| `code-review-mobile-native-kmp-ssoservice-untested` | low | pm-qa | mobile-native-kmp: SsoService (deep-link token exchange, login, password reset, session restore) has zero direct tests |
-| `code-review-mobile-native-kmp-httpclient-no-timeout` | low | pm-backend | mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang indefinitely on Android + iOS |
-| `code-review-mobile-native-kmp-create-listing-not-wired` | low | pm-backend | KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded |
-| `code-review-reality-server-sso-per-call-client-no-timeout` | low | pm-backend | SSO exchange/userinfo/introspect create a fresh reqwest::Client per request with no timeout — no pooling, hang risk |
+| Status | Owner | Priority | Action | Depends on |
+|--------|-------|----------|--------|------------|
+| open | pm-devops | high | Unblock mobile-native/KMP builds in the cloud runner (issue #2652) — still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low) |  |
+| open | pm-backend | medium | KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded |  |
+| open | pm-backend | medium | mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call |  |
+| open | pm-backend | low | Shared Ktor HttpClient has no HttpTimeout - mobile API calls can hang indefinitely |  |
+| open | pm-backend | low | Reality mobile MyListings + portfolio analytics silently cap at 100 listings (no pagination) |  |
+| open | pm-frontend | medium | Adopt eslint-plugin-react-hooks + i18next/no-literal-string in frontend/apps/mobile (blocking, warn-only for one sprint) — closes the chronic class-of-defect behind the carried mobile-rn lint-gap risk (ranked-ballot + i18n fallback bugs still open 83 days later) | UNRESOLVED:pm-qa |
+| open | pm-scrum-master | high | Sweep remaining violations mutation handlers for the 403-vs-404 cross-tenant contract (#3187 revealed assign still returns 403) — pattern audit across moderation.rs/aml_dsa.rs after PR #3183 fixed most but not assign | UNRESOLVED:pm-security |
+| open | pm-backend | low | KMP realtor SSO error-body parsing is unguarded — crashes on non-JSON response |  |
+| open | pm-security | low | SECURITY: ppt-web refresh-token persisted in localStorage — XSS-reachable |  |
+| open | pm-scrum-master | high | Promote a non-mobile-native code-review vector from the next Phase 1.5 segment (ppt-web-core / reality-server oldest = 2026-11-04) to refill the planner buffer |  |
+| open | pm-scrum-master | high | Triage #3357 — rebase the 3 blocked PRs OR adjust Tier-1d signal sourcing to stop emitting dead-end vectors |  |
+| open | pm-scrum-master | medium | Open the diff for code-review-ppt-web-core-refresh-token-localstorage and upgrade signal confidence from medium to high (or drop) — currently blocks security fast-track at score=2+confidence=medium |  |
+| open | pm-qa | medium | Add a dispatcher-self-test.sh test case that covers the quarantined-row recovery path so #3357-class stalls fail CI instead of silently queueing |  |
+| open | pm-qa | medium | QA audit: non-mobile-native backlog items with confidence=medium need a one-shot verification step before Phase 3 can promote them |  |

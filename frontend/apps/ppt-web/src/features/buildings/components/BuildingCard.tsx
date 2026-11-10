@@ -6,21 +6,15 @@
  * @see Story 81.2 - Wire buildings page to API
  */
 
-import type { Building, BuildingStatus, BuildingType } from '@ppt/api-client';
+import type { Building, BuildingStatus } from '@ppt/api-client';
 import { isSafeImageUrl } from '@ppt/shared';
+import { useTranslation } from 'react-i18next';
 
 interface BuildingCardProps {
   building: Building;
   onView: (id: string) => void;
   onEdit?: (id: string) => void;
 }
-
-const STATUS_LABELS: Record<BuildingStatus, string> = {
-  active: 'Active',
-  under_construction: 'Under Construction',
-  renovation: 'Renovation',
-  inactive: 'Inactive',
-};
 
 const STATUS_COLORS: Record<BuildingStatus, string> = {
   active: 'bg-green-100 text-green-800',
@@ -29,14 +23,8 @@ const STATUS_COLORS: Record<BuildingStatus, string> = {
   inactive: 'bg-gray-100 text-gray-800',
 };
 
-const TYPE_LABELS: Record<BuildingType, string> = {
-  residential: 'Residential',
-  commercial: 'Commercial',
-  mixed: 'Mixed Use',
-  industrial: 'Industrial',
-};
-
 export function BuildingCard({ building, onView, onEdit }: BuildingCardProps) {
+  const { t } = useTranslation();
   const { id, name, address, type, status, unitCount, floorCount, photoUrl } = building;
 
   // Only render server-provided photo URLs that pass the http(s)/relative
@@ -73,7 +61,7 @@ export function BuildingCard({ building, onView, onEdit }: BuildingCardProps) {
         <span
           className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[status]}`}
         >
-          {STATUS_LABELS[status]}
+          {t(`buildings.status.${status}`, { defaultValue: status })}
         </span>
       </div>
 
@@ -93,7 +81,7 @@ export function BuildingCard({ building, onView, onEdit }: BuildingCardProps) {
                 d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
               />
             </svg>
-            {unitCount} units
+            {t('buildings.card.unitCount', { count: unitCount })}
           </span>
           <span className="flex items-center gap-1">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,14 +92,14 @@ export function BuildingCard({ building, onView, onEdit }: BuildingCardProps) {
                 d="M4 6h16M4 10h16M4 14h16M4 18h16"
               />
             </svg>
-            {floorCount} floors
+            {t('buildings.card.floorCount', { count: floorCount })}
           </span>
         </div>
 
         {/* Type Badge */}
         <div className="flex items-center justify-between">
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-            {TYPE_LABELS[type]}
+            {t(`buildings.type.${type}`, { defaultValue: type })}
           </span>
 
           {/* Actions */}
@@ -121,7 +109,7 @@ export function BuildingCard({ building, onView, onEdit }: BuildingCardProps) {
               onClick={() => onView(id)}
               className="text-blue-600 hover:text-blue-800 text-sm font-medium"
             >
-              View
+              {t('buildings.view')}
             </button>
             {onEdit && (
               <button
@@ -129,7 +117,7 @@ export function BuildingCard({ building, onView, onEdit }: BuildingCardProps) {
                 onClick={() => onEdit(id)}
                 className="text-gray-600 hover:text-gray-800 text-sm font-medium"
               >
-                Edit
+                {t('common.edit')}
               </button>
             )}
           </div>

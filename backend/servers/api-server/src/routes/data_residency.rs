@@ -13,7 +13,7 @@ use uuid::Uuid;
 
 use api_core::extractors::{RlsConnection, TenantExtractor};
 use db::models::data_residency::*;
-use db::repositories::data_residency::string_to_data_region;
+use db::repositories::data_residency::{data_region_to_string, string_to_data_region};
 
 use crate::state::AppState;
 
@@ -138,6 +138,27 @@ fn get_compliance_implications(
 }
 
 /// Helper to map database config to API response
+/// The default configuration (EU West, backup EU Central, no cross-region
+/// access) shown to a non-admin member before an admin has configured
+/// residency. Same values as the default an admin's first read persists.
+fn unpersisted_default_config(org_id: Uuid, user_id: Uuid) -> DataResidencyConfig {
+    let now = Utc::now();
+    DataResidencyConfig {
+        id: Uuid::nil(),
+        organization_id: org_id,
+        primary_region: data_region_to_string(&DataRegion::EuWest),
+        backup_region: Some(data_region_to_string(&DataRegion::EuCentral)),
+        status: "active".to_string(),
+        allow_cross_region_access: false,
+        data_type_overrides: None,
+        compliance_notes: Some("Default configuration".to_string()),
+        last_verified_at: None,
+        created_by: user_id,
+        created_at: now,
+        updated_at: now,
+    }
+}
+
 fn map_config_to_response(config: DataResidencyConfig) -> DataResidencyConfigResponse {
     let primary_region = string_to_data_region(&config.primary_region);
     let backup_region = config
@@ -219,6 +240,9 @@ async fn get_residency_config_impl(
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
     {
         Some(c) => c,
+        // Reads are open to every org member, but persisting the default is a
+        // write: only an admin's first read materializes it.
+        None if !rls.role().is_admin() => unpersisted_default_config(org_id, user_id),
         None => {
             let default_payload = ConfigureDataResidency {
                 primary_region: DataRegion::EuWest,
@@ -250,6 +274,7 @@ async fn configure_residency(
     mut rls: RlsConnection,
     Json(payload): Json<ConfigureDataResidency>,
 ) -> Result<Json<DataResidencyConfigResponse>, (StatusCode, String)> {
+    crate::routes::rls_authz::require_admin_rls_plain(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let out = do_configure_residency(&state, &mut rls, org_id, user_id, payload).await;
@@ -319,6 +344,7 @@ async fn update_residency_config(
     mut rls: RlsConnection,
     Json(payload): Json<ConfigureDataResidency>,
 ) -> Result<Json<DataResidencyConfigResponse>, (StatusCode, String)> {
+    crate::routes::rls_authz::require_admin_rls_plain(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let out = do_configure_residency(&state, &mut rls, org_id, user_id, payload).await;
@@ -452,6 +478,7 @@ async fn log_cross_region_access(
     mut rls: RlsConnection,
     Json(payload): Json<LogCrossRegionAccess>,
 ) -> Result<Json<CrossRegionAccessLog>, (StatusCode, String)> {
+    crate::routes::rls_authz::require_admin_rls_plain(&mut rls).await?;
     let out = log_cross_region_access_impl(&state, &mut rls, payload).await;
     rls.release().await;
     out
@@ -483,6 +510,7 @@ async fn list_access_logs(
     State(state): State<AppState>,
     mut rls: RlsConnection,
 ) -> Result<Json<Vec<CrossRegionAccessLog>>, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let out = list_access_logs_impl(&state, &mut rls).await;
     rls.release().await;
     out
@@ -518,6 +546,7 @@ async fn run_compliance_verification(
     mut rls: RlsConnection,
     Json(_payload): Json<RunComplianceVerification>,
 ) -> Result<Json<ComplianceVerificationResponse>, (StatusCode, String)> {
+    crate::routes::rls_authz::require_admin_rls_plain(&mut rls).await?;
     let out = run_compliance_verification_impl(&state, &mut rls).await;
     rls.release().await;
     out
@@ -629,6 +658,7 @@ async fn get_verification_result(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ComplianceVerificationResponse>, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let out = get_verification_result_impl(&state, &mut rls, id).await;
     rls.release().await;
     out
@@ -711,6 +741,7 @@ async fn list_audit_logs(
     mut rls: RlsConnection,
     Query(query_params): Query<AuditLogQuery>,
 ) -> Result<Json<AuditLogResponse>, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let out = list_audit_logs_impl(&state, &mut rls, query_params).await;
     rls.release().await;
     out
@@ -804,6 +835,7 @@ async fn get_audit_entry(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<AuditLogEntry>, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let out = get_audit_entry_impl(&state, &mut rls, id).await;
     rls.release().await;
     out
@@ -863,6 +895,7 @@ async fn verify_audit_chain(
     State(state): State<AppState>,
     mut rls: RlsConnection,
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    crate::routes::rls_authz::require_manager_rls_plain(&mut rls).await?;
     let out = verify_audit_chain_impl(&state, &mut rls).await;
     rls.release().await;
     out
@@ -914,6 +947,9 @@ async fn get_residency_dashboard_impl(
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
     {
         Some(c) => c,
+        // Reads are open to every org member, but persisting the default is a
+        // write: only an admin's first read materializes it.
+        None if !rls.role().is_admin() => unpersisted_default_config(org_id, user_id),
         None => {
             let default_payload = ConfigureDataResidency {
                 primary_region: DataRegion::EuWest,

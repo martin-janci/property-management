@@ -118,9 +118,26 @@ where
         // `users` table on every request. JWT `roles` / `kind` claims are
         // accepted only as informational hints; they are NEVER trusted as
         // authority server-side (defends leaks #10/#11).
-        let principal = RequestPrincipal::from_request_parts(parts, state)
-            .await
-            .map_err(|(_status, _msg)| AdminError::Unauthenticated)?;
+        //
+        // Only a genuine authentication failure (401) maps to
+        // `Unauthenticated`. `RequestPrincipal` answers 403 for an
+        // authenticated *non-platform* caller it cannot place in a tenant
+        // (e.g. no resolved tenant / no membership): that caller is
+        // authenticated, so it is a `not_platform_principal` denial (audited),
+        // not a 401 that would make clients drop a valid session.
+        let principal = match RequestPrincipal::from_request_parts(parts, state).await {
+            Ok(principal) => principal,
+            Err((status, msg)) if status.is_server_error() => {
+                return Err(AdminError::Internal(format!("RequestPrincipal: {msg}")));
+            }
+            Err((axum::http::StatusCode::UNAUTHORIZED, _)) => {
+                return Err(AdminError::Unauthenticated);
+            }
+            Err(_) => {
+                audit_denied(&deps, None, required, ip.as_deref(), user_agent.as_deref()).await;
+                return Err(AdminError::NotPlatformPrincipal);
+            }
+        };
 
         // Step 2: platform principal.
         //

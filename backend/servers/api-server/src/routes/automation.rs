@@ -29,6 +29,7 @@ use axum::{
 };
 use common::errors::ErrorResponse;
 use db::models::{
+    AutomationExecutionFilter, AutomationExecutionList, AutomationExecutionStats,
     CreateAutomationRule, CreateRuleFromTemplate, UpdateAutomationRule, WorkflowAutomationLog,
     WorkflowAutomationRule, WorkflowAutomationTemplate,
 };
@@ -86,6 +87,41 @@ fn enforce_org_match(principal: &RequestPrincipal, path_org_id: Uuid) -> ApiResu
     Ok(())
 }
 
+/// Require a manager-tier role in `org_id` for rule mutations.
+///
+/// `RequestPrincipal` proves membership only, so the role is read from the
+/// caller's `organization_members` row (never the JWT). Platform principals
+/// pass. Returns 403 for non-managers.
+async fn require_manager(
+    state: &AppState,
+    principal: &RequestPrincipal,
+    org_id: Uuid,
+) -> ApiResult<()> {
+    if principal.is_platform() {
+        return Ok(());
+    }
+    let role_type = state
+        .org_member_repo
+        .get_user_role_type(org_id, principal.user_id)
+        .await
+        .map_err(db_error("Failed to resolve role"))?;
+    let is_manager = role_type
+        .as_deref()
+        .and_then(common::tenant::TenantRole::from_role_type)
+        .is_some_and(|role| role.is_manager());
+    if is_manager {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Manager role required to manage automation rules",
+            )),
+        ))
+    }
+}
+
 fn not_found(resource: &str) -> (StatusCode, Json<ErrorResponse>) {
     (
         StatusCode::NOT_FOUND,
@@ -117,6 +153,12 @@ pub fn router() -> Router<AppState> {
         .route("/rules/{id}", delete(delete_rule))
         .route("/rules/{id}/toggle", post(toggle_rule))
         .route("/rules/{id}/logs", get(get_rule_logs))
+        // Org-wide execution monitoring
+        .route("/organizations/{org_id}/executions", get(list_executions))
+        .route(
+            "/organizations/{org_id}/executions/stats",
+            get(execution_stats),
+        )
         // Templates
         .route("/templates", get(list_templates))
         .route("/templates/{id}", get(get_template))
@@ -155,6 +197,27 @@ pub struct RuleLogsQuery {
 
 fn default_limit() -> i32 {
     50
+}
+
+/// Org-wide execution list query.
+#[derive(Debug, Deserialize, IntoParams, ToSchema)]
+pub struct ExecutionsQuery {
+    /// Only executions started at or after this instant (RFC 3339).
+    pub since: Option<chrono::DateTime<chrono::Utc>>,
+    /// Exact log status (`pending`, `running`, `success`, `partial_failure`, `failed`).
+    pub status: Option<String>,
+    pub rule_id: Option<Uuid>,
+    #[serde(default = "default_limit")]
+    pub limit: i32,
+    #[serde(default)]
+    pub offset: i32,
+}
+
+/// Org-wide execution stats query.
+#[derive(Debug, Deserialize, IntoParams, ToSchema)]
+pub struct ExecutionStatsQuery {
+    pub since: Option<chrono::DateTime<chrono::Utc>>,
+    pub rule_id: Option<Uuid>,
 }
 
 /// Toggle rule request.
@@ -218,6 +281,7 @@ pub async fn create_rule(
     Json(data): Json<CreateAutomationRule>,
 ) -> ApiResult<(StatusCode, Json<WorkflowAutomationRule>)> {
     enforce_org_match(&principal, path.org_id)?;
+    require_manager(&state, &principal, path.org_id).await?;
 
     let rule = state
         .automation_repo
@@ -285,6 +349,7 @@ pub async fn update_rule(
     Json(data): Json<UpdateAutomationRule>,
 ) -> ApiResult<Json<WorkflowAutomationRule>> {
     let org_id = require_tenant_id(&principal)?;
+    require_manager(&state, &principal, org_id).await?;
 
     let rule = state
         .automation_repo
@@ -318,6 +383,7 @@ pub async fn delete_rule(
     Path(path): Path<RuleIdPath>,
 ) -> ApiResult<StatusCode> {
     let org_id = require_tenant_id(&principal)?;
+    require_manager(&state, &principal, org_id).await?;
 
     let deleted = state
         .automation_repo
@@ -354,6 +420,7 @@ pub async fn toggle_rule(
     Json(data): Json<ToggleRuleRequest>,
 ) -> ApiResult<StatusCode> {
     let org_id = require_tenant_id(&principal)?;
+    require_manager(&state, &principal, org_id).await?;
 
     let toggled = state
         .automation_repo
@@ -400,6 +467,88 @@ pub async fn get_rule_logs(
         Some(l) => Ok(Json(l)),
         None => Err(not_found("Rule")),
     }
+}
+
+// ==================== Executions ====================
+
+/// List automation executions across all rules of an organization.
+#[utoipa::path(
+    get,
+    path = "/api/v1/automation/organizations/{org_id}/executions",
+    params(OrgIdPath, ExecutionsQuery),
+    responses(
+        (status = 200, description = "Executions retrieved", body = AutomationExecutionList),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Manager role required"),
+        (status = 404, description = "Organization not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(("bearer_auth" = [])),
+    tag = "Automation"
+)]
+pub async fn list_executions(
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+    Path(path): Path<OrgIdPath>,
+    Query(query): Query<ExecutionsQuery>,
+) -> ApiResult<Json<AutomationExecutionList>> {
+    enforce_org_match(&principal, path.org_id)?;
+    require_manager(&state, &principal, path.org_id).await?;
+
+    let filter = AutomationExecutionFilter {
+        since: query.since,
+        status: query.status.filter(|s| !s.is_empty()),
+        rule_id: query.rule_id,
+    };
+    let limit = i64::from(query.limit.clamp(1, 200));
+    let offset = i64::from(query.offset.max(0));
+
+    let list = state
+        .automation_repo
+        .list_executions_for_org(path.org_id, &filter, limit, offset)
+        .await
+        .map_err(db_error("Failed to list executions"))?;
+
+    Ok(Json(list))
+}
+
+/// Aggregate automation execution statistics for an organization.
+#[utoipa::path(
+    get,
+    path = "/api/v1/automation/organizations/{org_id}/executions/stats",
+    params(OrgIdPath, ExecutionStatsQuery),
+    responses(
+        (status = 200, description = "Stats retrieved", body = AutomationExecutionStats),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Manager role required"),
+        (status = 404, description = "Organization not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(("bearer_auth" = [])),
+    tag = "Automation"
+)]
+pub async fn execution_stats(
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+    Path(path): Path<OrgIdPath>,
+    Query(query): Query<ExecutionStatsQuery>,
+) -> ApiResult<Json<AutomationExecutionStats>> {
+    enforce_org_match(&principal, path.org_id)?;
+    require_manager(&state, &principal, path.org_id).await?;
+
+    let filter = AutomationExecutionFilter {
+        since: query.since,
+        status: None,
+        rule_id: query.rule_id,
+    };
+
+    let stats = state
+        .automation_repo
+        .execution_stats_for_org(path.org_id, &filter)
+        .await
+        .map_err(db_error("Failed to get execution stats"))?;
+
+    Ok(Json(stats))
 }
 
 // ==================== Templates ====================
@@ -490,6 +639,7 @@ pub async fn create_from_template(
     Json(data): Json<CreateRuleFromTemplate>,
 ) -> ApiResult<(StatusCode, Json<WorkflowAutomationRule>)> {
     enforce_org_match(&principal, path.org_id)?;
+    require_manager(&state, &principal, path.org_id).await?;
 
     let rule = state
         .automation_repo

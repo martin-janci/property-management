@@ -13,42 +13,32 @@ import { backendEnabled, expect, test } from '@ppt/e2e';
 import { HomePage } from '../pages';
 
 test.describe('ppt-web · primary navigation', () => {
-  test('exposes the primary nav with its core links', async ({ page }) => {
+  // Anonymous visitors get the slim public header (brand, language, sign in,
+  // create account). The module navigation lives in the authenticated sidebar,
+  // so operator/resident links are no longer advertised to logged-out users.
+  test('exposes the public nav with sign-in and create-account links', async ({ page }) => {
     const home = new HomePage(page);
     await home.goto();
 
     await expect(home.nav().root).toBeVisible();
-    await expect(home.homeLink()).toBeVisible();
-    await expect(home.documentsLink()).toBeVisible();
-    await expect(home.newsLink()).toBeVisible();
-    await expect(home.emergencyLink()).toBeVisible();
-    await expect(home.disputesLink()).toBeVisible();
-    await expect(home.accessibilityLink()).toBeVisible();
-    await expect(home.privacyLink()).toBeVisible();
+    await expect(home.signInLink()).toBeVisible();
+    await expect(home.createAccountLink()).toBeVisible();
   });
 
-  test('navigates to the disputes page via the nav link', async ({ page }) => {
+  test('navigates to the login page via the nav link', async ({ page }) => {
     const home = new HomePage(page);
     await home.goto();
 
-    await home.disputesLink().click();
-    await expect(page).toHaveURL(/\/disputes/);
+    await home.signInLink().click();
+    await expect(page).toHaveURL(/\/login/);
   });
 
-  test('navigates to accessibility settings via the nav link', async ({ page }) => {
+  test('navigates to registration via the nav link', async ({ page }) => {
     const home = new HomePage(page);
     await home.goto();
 
-    await home.accessibilityLink().click();
-    await expect(page).toHaveURL(/\/settings\/accessibility/);
-  });
-
-  test('navigates to privacy settings via the nav link', async ({ page }) => {
-    const home = new HomePage(page);
-    await home.goto();
-
-    await home.privacyLink().click();
-    await expect(page).toHaveURL(/\/settings\/privacy/);
+    await home.createAccountLink().click();
+    await expect(page).toHaveURL(/\/register/);
   });
 });
 

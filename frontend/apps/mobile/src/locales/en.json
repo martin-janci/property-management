@@ -131,6 +131,12 @@
     "galleryButton": "Gallery",
     "submitButton": "Submit Report",
     "successSubmit": "Fault report submitted successfully",
+    "photosNotUploadedTitle": "Report saved — photos not attached",
+    "photosNotUploadedWarning": "The fault report was saved, but the attached photos could not be uploaded and were not included. Please add them again from the fault details.",
+    "successSubmitWithPhotos": "Fault report submitted with {{count}} photo(s).",
+    "photosPartialTitle": "Report submitted — some photos not attached",
+    "photosPartialWarning": "Your fault report was submitted and {{uploaded}} of {{total}} photos were attached. {{failed}} could not be uploaded — you can add them again from the fault details.",
+    "uploadingPhotos": "Uploading photos…",
     "failedSubmit": "Failed to submit fault report",
     "cameraPermissionDenied": "Camera permission is required to take photos",
     "photoLibraryPermissionDenied": "Photo library permission is required",
@@ -157,13 +163,26 @@
     "emptyText": "All issues have been addressed"
   },
   "news": {
+    "backToList": "‹ News",
     "title": "News",
     "latest": "Latest News",
     "readMore": "Read More",
     "noNews": "No news available",
     "loadError": "Couldn't load news",
     "emptyTitle": "Nothing new",
-    "emptyText": "Check back later for fresh updates."
+    "emptyText": "Check back later for fresh updates.",
+    "subtitle": "Updates from your building and neighbourhood.",
+    "filters": {
+      "all": "All",
+      "building": "Building",
+      "district": "District",
+      "partner": "Partners"
+    },
+    "categories": {
+      "building": "Building",
+      "district": "District",
+      "partner": "Partner"
+    }
   },
   "voting": {
     "title": "Voting",
@@ -173,7 +192,47 @@
     "voted": "Voted",
     "results": "Results",
     "deadline": "Deadline",
-    "noPolls": "No active polls"
+    "noPolls": "No active polls",
+    "submit": "Submit ballot",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "rankHint": "Order the options by preference (1 = most preferred).",
+    "eligibilityReason": {
+      "voteNotAcceptingBallots": "Voting is not currently accepting ballots.",
+      "notEligibleInBuilding": "You are not eligible to vote in this building.",
+      "allUnitsVoted": "All of your eligible units have already voted."
+    },
+    "activeCount_one": "{{count}} active",
+    "activeCount_other": "{{count}} active",
+    "ended": "Ended",
+    "timeLeftDaysHours": "{{days}}d {{hours}}h left",
+    "timeLeftHours": "{{hours}}h left",
+    "timeLeftMinutes": "{{minutes}}m left",
+    "filter": {
+      "all": "All",
+      "active": "Active",
+      "closed": "Closed"
+    },
+    "loadError": "Couldn't load votes",
+    "emptyTitle": "No votes yet",
+    "emptyText": "There are no votes to show right now.",
+    "openDetail": "Open vote details",
+    "quorum": "Quorum",
+    "quorumVotes": "{{current}} / {{required}} votes",
+    "tapToVote": "Tap to view & cast ballot",
+    "tapToView": "Tap to view results",
+    "createdBy": "By {{name}}",
+    "missingId": "No vote selected",
+    "confirmVoteTitle": "Confirm vote",
+    "answerRequired": "Please answer all required questions",
+    "confirmVoteMessage": "Submit your ballot? This action cannot be undone.",
+    "voteSubmitted": "Ballot submitted",
+    "confirmationNumber": "Confirmation",
+    "castError": "Couldn't submit ballot",
+    "noQuestions": "No questions yet",
+    "youHaveVoted": "You have already voted on this ballot.",
+    "notActive": "This vote is not currently active.",
+    "votingAs": "Voting as"
   },
   "documents": {
     "title": "Documents",
@@ -339,7 +398,9 @@
     "syncFailed": "Some items failed to sync",
     "syncProgress": "Syncing {{current}} of {{total}}",
     "itemSynced": "{{item}} synced successfully",
-    "itemFailed": "Failed to sync {{item}}"
+    "itemFailed": "Failed to sync {{item}}",
+    "droppedTitle": "Changes discarded",
+    "droppedMessage": "{{count}} offline change(s) could not be saved and were discarded because the server rejected them."
   },
   "help": {
     "title": "Help Center",
@@ -425,6 +486,7 @@
     "enterReading": "Enter Reading",
     "readingPlaceholder": "0.00",
     "readingRequired": "Please enter a reading",
+    "readingInvalid": "Please enter a valid number",
     "photo": "Photo (optional)",
     "submit": "Submit Reading",
     "submitSuccess": "Meter reading submitted successfully",
@@ -556,10 +618,38 @@
     "noPayments": "No upcoming payments scheduled.",
     "notFound": "Lease not found."
   },
+  "personMonths": {
+    "title": "Person-months",
+    "subtitle": "Declare how many people lived in your unit each month for cost allocation.",
+    "invalidTitle": "Invalid value",
+    "invalidMessage": "Enter a whole number between 0 and 20.",
+    "bulkEntry": "Bulk entry…",
+    "personCount_one": "{{count}} person",
+    "personCount_other": "{{count}} persons",
+    "status": {
+      "draft": "Draft",
+      "submitted": "Submitted",
+      "confirmed": "Confirmed"
+    }
+  },
   "outages": {
+    "backToList": "‹ Outages",
     "loadError": "Couldn't load outages",
     "emptyTitle": "No outages",
-    "emptyText": "Nothing scheduled or active right now."
+    "emptyText": "Nothing scheduled or active right now.",
+    "title": "Outages",
+    "subtitle": "Planned and active utility interruptions.",
+    "filters": {
+      "all": "All",
+      "scheduled": "Scheduled",
+      "active": "Active",
+      "resolved": "Resolved"
+    },
+    "status": {
+      "scheduled": "Scheduled",
+      "in_progress": "In progress",
+      "resolved": "Resolved"
+    }
   },
   "forms": {
     "loadError": "Couldn't load forms",
@@ -572,7 +662,12 @@
     "emptyTitle": "No neighbours yet",
     "noMatches": "No matches",
     "emptyText": "Residents who opt into the directory will appear here.",
-    "noMatchesText": "Try a different name or apartment number."
+    "noMatchesText": "Try a different name or apartment number.",
+    "title": "Neighbours",
+    "subtitle": "{{count}} residents in {{building}}",
+    "subtitleGeneric": "{{count}} residents in your building",
+    "searchPlaceholder": "Search by name or apartment…",
+    "owner": "Owner"
   },
   "voice": {
     "confirmations": {

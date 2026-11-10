@@ -51,6 +51,19 @@ impl<'a> SeedFactories<'a> {
                 email_verified_at, locale
             )
             VALUES ($1, $2, $3, $4, 'active', NOW(), $5)
+            -- Reuse a user `--force` retained (referenced by append-only
+            -- audit tables). Only a user with no remaining memberships is
+            -- reused, so a real member account is never taken over.
+            ON CONFLICT (email) DO UPDATE SET
+                password_hash = EXCLUDED.password_hash,
+                name = EXCLUDED.name,
+                phone = EXCLUDED.phone,
+                status = 'active',
+                locale = EXCLUDED.locale,
+                updated_at = NOW()
+            WHERE NOT EXISTS (
+                SELECT 1 FROM organization_members om WHERE om.user_id = users.id
+            )
             RETURNING id
             "#,
         )
@@ -79,6 +92,12 @@ impl<'a> SeedFactories<'a> {
             r#"
             INSERT INTO organizations (name, slug, contact_email, status, settings)
             VALUES ($1, $2, $3, 'active', '{}'::jsonb)
+            -- Reuse an organization `--force` retained (audit rows reference
+            -- it). Only an org with the same seed contact email is reused.
+            ON CONFLICT (slug) DO UPDATE SET
+                name = EXCLUDED.name,
+                status = 'active'
+            WHERE organizations.contact_email = EXCLUDED.contact_email
             RETURNING id
             "#,
         )
@@ -117,6 +136,14 @@ impl<'a> SeedFactories<'a> {
 
         let role_id: Option<Uuid> = role_row.map(|r| r.get("id"));
 
+        // `role_type` must hold the canonical snake_case value (`manager`,
+        // `org_admin`, …) that `TenantRole::from_role_type`, the RLS policies
+        // (`role_type IN ('org_admin','manager')`) and the login `tenants`
+        // payload expect. The seed data names roles by their display name
+        // ("Organization Admin") to find `role_id`; storing that display name
+        // left every seeded user without manager rights.
+        let canonical = canonical_role_type(role_type);
+
         let row = sqlx::query(
             r#"
             INSERT INTO organization_members (
@@ -130,8 +157,24 @@ impl<'a> SeedFactories<'a> {
         .bind(org_id)
         .bind(user_id)
         .bind(role_id)
-        .bind(role_type)
+        .bind(&canonical)
         .fetch_one(self.pool)
+        .await?;
+
+        // Host-resolved requests (`RequestPrincipal`) authorize against
+        // `user_memberships`, not `organization_members`; without this row a
+        // seeded user gets "no active membership in this organization".
+        sqlx::query(
+            r#"
+            INSERT INTO user_memberships (user_id, organization_id, role)
+            VALUES ($1, $2, $3)
+            ON CONFLICT DO NOTHING
+            "#,
+        )
+        .bind(user_id)
+        .bind(org_id)
+        .bind(&canonical)
+        .execute(self.pool)
         .await?;
 
         Ok(row.get("id"))
@@ -398,6 +441,13 @@ impl<'a> SeedFactories<'a> {
                 locale, created_at, updated_at
             )
             VALUES ($1, $2, $3, 'public', 'active', NOW(), 'sk', NOW(), NOW())
+            -- Reuse a portal user `--force` retained (see `create_user`).
+            ON CONFLICT (email) DO UPDATE SET
+                password_hash = EXCLUDED.password_hash,
+                name = EXCLUDED.name,
+                status = 'active',
+                updated_at = NOW()
+            WHERE users.principal_kind = 'public'
             RETURNING id
             "#,
         )
@@ -679,7 +729,8 @@ impl<'a> SeedFactories<'a> {
                 start_at, end_at,
                 status, quorum_type,
                 allow_delegation, anonymous_voting,
-                created_by, published_by, published_at
+                created_by, published_by, published_at,
+                eligible_count
             )
             VALUES (
                 $1, $2,
@@ -687,7 +738,18 @@ impl<'a> SeedFactories<'a> {
                 $5, $6,
                 $7::vote_status, $8::quorum_type,
                 TRUE, FALSE,
-                $9, $10, $11
+                $9, $10, $11,
+                -- Snapshot eligible voters the way VoteRepository::publish does
+                -- (count_eligible_units): units with a current owner. Drafts
+                -- stay 0 until published. Residents are seeded before votes.
+                CASE WHEN $11::timestamptz IS NULL THEN 0 ELSE (
+                    SELECT COUNT(DISTINCT u.id)::int
+                    FROM units u
+                    JOIN unit_residents ur ON u.id = ur.unit_id
+                    WHERE u.building_id = $2
+                      AND ur.resident_type = 'owner'
+                      AND ur.end_date IS NULL
+                ) END
             )
             RETURNING id
             "#,
@@ -711,9 +773,11 @@ impl<'a> SeedFactories<'a> {
 
     /// Create a question for a vote.
     ///
-    /// For "yes_no" questions, options are empty (yes/no is implied).
     /// Options for "single_choice" questions are passed in from the seed data.
-    /// For "yes_no" questions pass an empty slice.
+    /// For "yes_no" questions pass an empty slice: they get the Yes/No pair
+    /// ("Áno"/"Nie", in that order), because results tallying maps a `true`
+    /// answer to option 0 and `false` to option 1. With no options the
+    /// results of a seeded yes/no question showed no counts at all.
     ///
     /// Returns the question's UUID.
     pub async fn create_vote_question(
@@ -724,6 +788,11 @@ impl<'a> SeedFactories<'a> {
         display_order: i32,
         option_texts: &[&str],
     ) -> Result<Uuid, sqlx::Error> {
+        let option_texts: &[&str] = if question_type == "yes_no" && option_texts.is_empty() {
+            &["Áno", "Nie"]
+        } else {
+            option_texts
+        };
         let options = serde_json::Value::Array(
             option_texts
                 .iter()
@@ -875,6 +944,40 @@ impl<'a> SeedFactories<'a> {
         // all changes are rolled back to maintain consistency
         let mut tx = self.pool.begin().await?;
 
+        // Append-only tables (`audit_logs`, `layout_change_events`,
+        // `support_tooling_events`) reject UPDATE/DELETE. Their user / org
+        // foreign keys are `ON DELETE SET NULL` or `CASCADE`, so deleting a seed
+        // user or organization they reference would mutate an immutable row
+        // (and `audit_logs.user_id` is part of the integrity hash). Such users
+        // and organizations are therefore RETAINED: everything the seed hangs
+        // off them is still removed, and the re-seed reuses the rows
+        // (`create_user` / `create_organization` upsert them).
+        let retained_users: Vec<Uuid> = sqlx::query_scalar(
+            r#"
+            SELECT u.id FROM users u
+            WHERE (u.email LIKE $1 OR u.email LIKE $2)
+              AND (
+                EXISTS (SELECT 1 FROM audit_logs a WHERE a.user_id = u.id)
+                OR EXISTS (SELECT 1 FROM layout_change_events l WHERE l.published_by = u.id)
+                OR EXISTS (SELECT 1 FROM support_tooling_events s WHERE s.admin_user_id = u.id)
+              )
+            "#,
+        )
+        .bind(&pattern)
+        .bind(&portal_pattern)
+        .fetch_all(&mut *tx)
+        .await?;
+        let retained_orgs: Vec<Uuid> = sqlx::query_scalar(
+            r#"
+            SELECT o.id FROM organizations o
+            WHERE o.contact_email LIKE $1
+              AND EXISTS (SELECT 1 FROM audit_logs a WHERE a.org_id = o.id)
+            "#,
+        )
+        .bind(&pattern)
+        .fetch_all(&mut *tx)
+        .await?;
+
         // Delete in dependency order to avoid foreign key violations
 
         // 1. Delete unit_residents for seed users
@@ -888,7 +991,17 @@ impl<'a> SeedFactories<'a> {
         .execute(&mut *tx)
         .await?;
 
-        // 2. Delete organization_members for seed users
+        // 2. Delete user_memberships + organization_members for seed users
+        sqlx::query(
+            r#"
+            DELETE FROM user_memberships
+            WHERE user_id IN (SELECT id FROM users WHERE email LIKE $1)
+            "#,
+        )
+        .bind(&pattern)
+        .execute(&mut *tx)
+        .await?;
+
         let members_result = sqlx::query(
             r#"
             DELETE FROM organization_members
@@ -942,6 +1055,21 @@ impl<'a> SeedFactories<'a> {
             .await?;
             buildings_deleted += buildings_result.rows_affected();
 
+            if retained_orgs.contains(org_id) {
+                // The org row stays (append-only audit rows reference it), so
+                // its roles stay too and the content that would have cascaded
+                // from the org delete is removed explicitly.
+                sqlx::query("DELETE FROM announcements WHERE organization_id = $1")
+                    .bind(org_id)
+                    .execute(&mut *tx)
+                    .await?;
+                sqlx::query("DELETE FROM listings WHERE organization_id = $1")
+                    .bind(org_id)
+                    .execute(&mut *tx)
+                    .await?;
+                continue;
+            }
+
             // Delete roles in this org
             sqlx::query(
                 r#"
@@ -956,10 +1084,11 @@ impl<'a> SeedFactories<'a> {
         // 7. Delete seed organizations (announcements cascade)
         let orgs_result = sqlx::query(
             r#"
-            DELETE FROM organizations WHERE contact_email LIKE $1
+            DELETE FROM organizations WHERE contact_email LIKE $1 AND NOT (id = ANY($2))
             "#,
         )
         .bind(&pattern)
+        .bind(&retained_orgs)
         .execute(&mut *tx)
         .await?;
 
@@ -981,11 +1110,13 @@ impl<'a> SeedFactories<'a> {
         //    (portal users are now rows in `users` with principal_kind='public').
         let users_result = sqlx::query(
             r#"
-            DELETE FROM users WHERE email LIKE $1 OR email LIKE $2
+            DELETE FROM users
+            WHERE (email LIKE $1 OR email LIKE $2) AND NOT (id = ANY($3))
             "#,
         )
         .bind(&pattern)
         .bind(&portal_pattern)
+        .bind(&retained_users)
         .execute(&mut *tx)
         .await?;
 
@@ -1000,6 +1131,76 @@ impl<'a> SeedFactories<'a> {
             members_deleted: members_result.rows_affected(),
             residents_deleted: residents_result.rows_affected(),
         })
+    }
+
+    /// Publish the baseline `ppt/dashboard` layout and register its section
+    /// types in the `web` registry manifest.
+    ///
+    /// ppt-web's manager dashboard calls `GET /layout/resolved/ppt/dashboard`
+    /// on every load. Without a published config the endpoint answers 404
+    /// "unknown screen" (round-3 gap audit #38). This publishes the same
+    /// layout as ppt-web's `DEFAULT_DASHBOARD_LAYOUT` (and mirrors
+    /// `features/layout/manifest.json`). Idempotent and non-destructive: an
+    /// existing config or version row is left alone, and the manifest only
+    /// gains component entries it lacks.
+    pub async fn ensure_default_layouts(&self) -> Result<(), sqlx::Error> {
+        let config = serde_json::json!({
+            "screen": "ppt/dashboard",
+            "version": 1,
+            "sections": [
+                {"type": "dashboard-stats.v1", "visible": true},
+                {"type": "action-queue.v1", "visible": true}
+            ]
+        });
+        let manifest = serde_json::json!({
+            "platform": "web",
+            "components": {
+                "action-queue.v1": {"required": true},
+                "dashboard-stats.v1": {"required": true}
+            }
+        });
+
+        let mut tx = self.pool.begin().await?;
+        let inserted = sqlx::query(
+            r#"
+            INSERT INTO layout_configs (screen, draft, published, published_version)
+            VALUES ('ppt/dashboard', $1, $1, 1)
+            ON CONFLICT (screen) DO NOTHING
+            "#,
+        )
+        .bind(&config)
+        .execute(&mut *tx)
+        .await?;
+        if inserted.rows_affected() > 0 {
+            sqlx::query(
+                r#"
+                INSERT INTO layout_config_versions (screen, version, config)
+                VALUES ('ppt/dashboard', 1, $1)
+                ON CONFLICT (screen, version) DO NOTHING
+                "#,
+            )
+            .bind(&config)
+            .execute(&mut *tx)
+            .await?;
+        }
+        sqlx::query(
+            r#"
+            INSERT INTO layout_registry_manifests (platform, manifest)
+            VALUES ('web', $1)
+            ON CONFLICT (platform) DO UPDATE
+                SET manifest = jsonb_set(
+                    layout_registry_manifests.manifest,
+                    '{components}',
+                    (EXCLUDED.manifest -> 'components')
+                        || COALESCE(layout_registry_manifests.manifest -> 'components', '{}'::jsonb)
+                ),
+                    updated_at = NOW()
+            "#,
+        )
+        .bind(&manifest)
+        .execute(&mut *tx)
+        .await?;
+        tx.commit().await
     }
 
     /// Check if seed data already exists.
@@ -1028,4 +1229,42 @@ pub struct CleanupStats {
     pub members_deleted: u64,
     pub residents_deleted: u64,
     // Phase 6: portal_users_deleted removed — portal users are now `users` rows.
+}
+
+/// Map a seed role display name ("Organization Admin", "Technical Manager")
+/// to the canonical snake_case `role_type` ("org_admin", "technical_manager").
+/// Already-canonical values pass through unchanged.
+pub(crate) fn canonical_role_type(role: &str) -> String {
+    let normalized = role.trim().to_lowercase().replace([' ', '-'], "_");
+    match normalized.as_str() {
+        "organization_admin" | "organisation_admin" => "org_admin".to_string(),
+        _ => normalized,
+    }
+}
+
+#[cfg(test)]
+mod canonical_role_type_tests {
+    use super::canonical_role_type;
+
+    #[test]
+    fn maps_display_names_to_snake_case() {
+        assert_eq!(canonical_role_type("Organization Admin"), "org_admin");
+        assert_eq!(canonical_role_type("Super Admin"), "super_admin");
+        assert_eq!(
+            canonical_role_type("Technical Manager"),
+            "technical_manager"
+        );
+        assert_eq!(canonical_role_type("Owner Delegate"), "owner_delegate");
+        assert_eq!(
+            canonical_role_type("Real Estate Agent"),
+            "real_estate_agent"
+        );
+        assert_eq!(canonical_role_type("Manager"), "manager");
+    }
+
+    #[test]
+    fn canonical_values_pass_through() {
+        assert_eq!(canonical_role_type("org_admin"), "org_admin");
+        assert_eq!(canonical_role_type("tenant"), "tenant");
+    }
 }

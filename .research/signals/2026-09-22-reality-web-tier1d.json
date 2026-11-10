@@ -1,0 +1,70 @@
+{
+  "generated": "2026-09-22T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable buffer starved, well below floor 36; remaining backlog is structurally blocked on mobile-native/KMP + api-server cloud-build) 2026-09-22",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "OLDEST-UNREVIEWED among UNBLOCKED/landable stacks, and explicitly dispatcher-prioritized. No CHURN_FILES supplied to this run, so churn-alignment (Step 1 priority 1) did not apply. By state.review_cursor the oldest frontend segments tie at 2026-08-29: ppt-web-core and reality-web. api-server (Rust) and mobile-native/KMP are structurally unlandable in this cloud runner (egress-blocked builds), so blocked Rust/Kotlin segments were skipped in favour of an unblocked frontend segment even though api-handlers/api-core/reality-server cursors are as old or older. ppt-web-core was already reviewed under a Tier-1d run on 2026-09-17 (signals/2026-09-17.json), so the tie was broken toward reality-web (also the dispatcher's named priority). SATURATION CHECK PASSED: backlog.json holds 0 OPEN code-review-finding rows for any segment, so no saturation skip. Static-only, no build/test (cloud runner has no Node/pnpm toolchain and does not compile). Root reviewed: frontend/apps/reality-web/src/ (217 ts/tsx files; the skill's literal 'frontend/reality-web/src' path is the pre-monorepo layout, actual is frontend/apps/reality-web/src). SEGMENT IS MATURE AND MOSTLY CLEAN. Verified NOT-findings during the sweep so they are not re-emitted as noise: (a) the SSR listing detail page app/[locale]/listings/[slug]/page.tsx is exemplary — resolveApiBase hardens against a baked-in localhost, getListing null-checks response.ok AND runs parseListingDetail to guard malformed 200 bodies, and a missing/malformed listing emits a real HTTP 404 via notFound() (no soft-404); (b) the layout-revalidate webhook route (app/api/layout-revalidate/route.ts) is well hardened — HMAC over '{timestamp}.{body}', timingSafeEqual with length guard, timestamp-freshness check, and JSON.parse wrapped in try/catch returning 422; (c) realtor-api.ts request() wrapper catches network errors, checks response.ok, and handles 204; (d) feature-flags.useFeatureFlag guards `typeof window === 'undefined'` before touching window.__TENANT_CONFIG__; (e) ContactForm (the lead-capture form on every listing) surfaces createInquiry.error and disables submit on isPending; (f) auth-context refresh treats only 401/403 as definitive (clears session) and leaves optimistic state on transient 5xx/network; (g) ComparisonUrlHandler uses Promise.allSettled so one bad shared id degrades gracefully; (h) no `as any`/`as unknown as` casts anywhere in non-test code; console.* usage is confined to error boundaries and catch-branch logging. The concrete net-new findings are clustered in the Epic 51 comparison feature. Cap-at-3 honored; 3 findings below (1 MEDIUM, 2 LOW); nits skipped.",
+  "experts_used": ["frontend"],
+  "findings_count": 3,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-reality-web-comparison-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-22 reality-web Epic 51 comparison i18n)",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/CompareButton.tsx",
+        "frontend/apps/reality-web/src/components/comparison/ComparisonTray.tsx"
+      ],
+      "evidence": [
+        "reality-web is an explicitly 4-locale public portal (sk, cs, de, en — messages/{en,sk,cs,de}.json; every other user-facing component uses next-intl's useTranslations), but two entire Epic 51 comparison components import NO translation function and render hardcoded English user-facing strings.",
+        "frontend/apps/reality-web/src/components/comparison/CompareButton.tsx — no `useTranslations` import at all. Hardcoded visible text: :47 title={inComparison ? 'Remove from comparison' : 'Add to comparison'} (tooltip), :62 {inComparison ? 'Comparing' : 'Compare'} (button label), :66 'Maximum 4 properties. Remove one first.' (role=alert warning). Non-Slovak/Czech/German users on the localized portal see raw English on the primary compare CTA that appears on every listing card.",
+        "frontend/apps/reality-web/src/components/comparison/ComparisonTray.tsx — no `useTranslations` import at all. Hardcoded visible text: :23 '{n}/4 properties to compare', :25 'Clear all', :36 alt={`Thumbnail for ${listing.title}`}, :46 aria-label={`Remove ${listing.title} from comparison`}, :68 `Compare {n<2 ? '(need at least 2)' : '${n} properties'}`. The tray is a fixed, always-visible floating element once any listing is added.",
+        "Fix: wire both components through useTranslations('comparison') (the namespace already exists — ComparisonView.tsx:28 uses it and the sibling ComparisonUrlHandler.tsx uses t('loading')/t('loadError')), add the missing keys to messages/*.json, and pluralize the count strings via next-intl. Landable in the cloud runner (pure TS/tsx + JSON message files, no backend, no build required to author)."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-comparison-timer-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-22 reality-web comparison timers)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx",
+        "frontend/apps/reality-web/src/components/comparison/CompareButton.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx:117 — showToast() does `setTimeout(() => setToast(null), 3000)` with no handle stored and no clearTimeout. Because each call starts an independent uncancelled timer, two toasts fired within 3s stack their timers: the FIRST timer fires ~partway through the SECOND toast's lifetime and clears it early (e.g. copy-link then share-url in quick succession dismisses the newer toast prematurely). The timer also is never cleared on unmount, so a toast that is dismissed by navigating away leaves a pending setState on an unmounted component.",
+        "frontend/apps/reality-web/src/components/comparison/CompareButton.tsx:34 — same pattern: `setTimeout(() => setShowMaxWarning(false), 3000)` with no cleanup; if the button unmounts (listing scrolls out of a virtualized list) within the 3s window the callback still runs.",
+        "Fix: store the timer id in a useRef, clearTimeout the previous one before starting a new one, and clear it in a useEffect cleanup on unmount. Standard toast/transient-warning hygiene. Landable in the cloud runner (pure tsx)."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-shared-cmp-no-shape-check",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-22 reality-web shared-comparison loader)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx",
+        "frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:47 — for each user-supplied shared id the loader does `return response.json() as Promise<ListingSummary>` with NO runtime shape validation, then pushes the result straight into the comparison store (addToComparison). The ids come entirely from a shared/bookmarked URL (sharedIds), so the response shape is effectively attacker/stale-data-controlled.",
+        "Downstream, ComparisonView.tsx renders these objects and dereferences required numeric/object fields directly — e.g. :107 getValue: (l) => (l.area > 0 ? Math.round(l.price / l.area) : undefined) and the price/pricePerSqm rows assume l.price/l.area/currency exist. A 200 response with a partial or wrong-typed body (missing price, features/photos wrong-typed) is truthy and passes the `if (result.value)` check at :59, so a malformed listing can render NaN/blank cells or throw during render.",
+        "This is the same class of soft-corruption the sibling SSR listing detail page explicitly defends against: app/[locale]/listings/[slug]/page.tsx routes every body through parseListingDetail() precisely because 'a 200 does not guarantee a well-formed body'. The shared-comparison client path has no equivalent guard — inconsistent hardening across two consumers of the same endpoint.",
+        "Fix: validate each fetched listing against a lightweight shape check / zod-style parser (or reuse a ListingSummary normalizer) before addToComparison, dropping malformed entries the same way bad ids are already dropped at :63. Landable in the cloud runner (pure tsx)."
+      ]
+    }
+  ]
+}

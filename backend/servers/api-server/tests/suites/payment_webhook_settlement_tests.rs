@@ -430,6 +430,218 @@ async fn webhook_matching_amount_total_settles(pool: PgPool) {
     assert_eq!(sess_status, "completed", "session marked completed");
 }
 
+/// Regression (BIT — "silently drops paid events when invoice is missing"):
+/// a correctly-SIGNED `checkout.session.completed` (`payment_status = "paid"`)
+/// whose *pending* session references an invoice that no longer exists must NOT
+/// be acked away. Stripe has already collected the money; acking (200) would
+/// drop the paid event with no record anywhere. The handler must fail loud with
+/// a 5xx so Stripe's at-least-once retry keeps redelivering while operators
+/// reconcile.
+///
+/// On the old code (ack 200 on missing invoice) this FAILS; after the fix
+/// (refuse to ack) it PASSES.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn webhook_missing_invoice_is_not_acked(pool: PgPool) {
+    let _guard = ENV_LOCK.lock().await;
+    let secret = "whsec_missing_invoice";
+    std::env::set_var(SECRET_ENV, secret);
+
+    let provider_session_id = "cs_test_missing_invoice_1";
+    let (invoice_id, session_pk) = seed_invoice_with_session(
+        &pool,
+        "missinginv",
+        provider_session_id,
+        Decimal::new(10000, 2),
+    )
+    .await;
+
+    // Make the session dangle: drop the FK (ON DELETE CASCADE would otherwise
+    // take the session with it) then hard-delete the invoice, leaving a real
+    // pending session whose `invoice_id` resolves to nothing — exactly the
+    // data-integrity state the handler must not silently ack.
+    sqlx::query(
+        "ALTER TABLE online_payment_sessions \
+         DROP CONSTRAINT online_payment_sessions_invoice_id_fkey",
+    )
+    .execute(&pool)
+    .await
+    .expect("drop session->invoice fk");
+    sqlx::query("DELETE FROM invoices WHERE id = $1")
+        .bind(invoice_id)
+        .execute(&pool)
+        .await
+        .expect("delete invoice");
+
+    let app = TestApp::new(pool.clone()).await;
+
+    let body = serde_json::json!({
+        "type": "checkout.session.completed",
+        "data": { "object": {
+            "id": provider_session_id,
+            "payment_status": "paid",
+            "payment_intent": "pi_test_missing_invoice_1"
+        }}
+    });
+    let raw = body.to_string();
+    let ts = chrono::Utc::now().timestamp();
+    let header = sign(secret, ts, raw.as_bytes());
+
+    let resp = app
+        .execute(
+            app.post(WEBHOOK_URI)
+                .header(SIG_HEADER, &header)
+                .json(body)
+                .build(),
+        )
+        .await;
+
+    std::env::remove_var(SECRET_ENV);
+
+    // The core property: a PAID event for a missing invoice is NOT acked away.
+    assert_ne!(
+        resp.status,
+        StatusCode::OK,
+        "paid webhook with a missing invoice must NOT be acked (would silently drop a collected payment); body: {}",
+        resp.text()
+    );
+    assert_eq!(
+        resp.status,
+        StatusCode::INTERNAL_SERVER_ERROR,
+        "missing invoice must fail loud (5xx) so Stripe retries; body: {}",
+        resp.text()
+    );
+
+    // The session stays pending — nothing was settled.
+    let sess_status: String =
+        sqlx::query_scalar("SELECT status FROM online_payment_sessions WHERE id = $1")
+            .bind(session_pk)
+            .fetch_one(&pool)
+            .await
+            .expect("load session");
+    assert_eq!(
+        sess_status, "pending",
+        "session must stay pending when its invoice is missing"
+    );
+}
+
+/// Dead-letter durability (#3284, follow-up to the missing-invoice fix above):
+/// a correctly-SIGNED paid `checkout.session.completed` whose pending session
+/// references a missing invoice must, in addition to failing loud (5xx), be
+/// persisted to the durable `payment_webhook_dead_letters` table so a collected
+/// payment is recorded in-house even if Stripe eventually stops retrying.
+///
+/// Mirrors `webhook_missing_invoice_is_not_acked` but asserts a dead-letter row
+/// is written (raw signed event + provider_session_id + invoice_id, org-scoped,
+/// unresolved). On the old code (no persistence) this FAILS; after the fix it
+/// PASSES.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn webhook_missing_invoice_writes_dead_letter(pool: PgPool) {
+    let _guard = ENV_LOCK.lock().await;
+    let secret = "whsec_dead_letter";
+    std::env::set_var(SECRET_ENV, secret);
+
+    let provider_session_id = "cs_test_dead_letter_1";
+    let (invoice_id, session_pk) = seed_invoice_with_session(
+        &pool,
+        "deadletter",
+        provider_session_id,
+        Decimal::new(10000, 2),
+    )
+    .await;
+
+    // Resolve the owning org before we break the invoice link, for the
+    // org-scoping assertion below.
+    let org_id: Uuid =
+        sqlx::query_scalar("SELECT organization_id FROM online_payment_sessions WHERE id = $1")
+            .bind(session_pk)
+            .fetch_one(&pool)
+            .await
+            .expect("load session org");
+
+    // Dangle the session: drop the FK then delete the invoice, leaving a real
+    // pending session whose invoice_id resolves to nothing.
+    sqlx::query(
+        "ALTER TABLE online_payment_sessions \
+         DROP CONSTRAINT online_payment_sessions_invoice_id_fkey",
+    )
+    .execute(&pool)
+    .await
+    .expect("drop session->invoice fk");
+    sqlx::query("DELETE FROM invoices WHERE id = $1")
+        .bind(invoice_id)
+        .execute(&pool)
+        .await
+        .expect("delete invoice");
+
+    let app = TestApp::new(pool.clone()).await;
+
+    let body = serde_json::json!({
+        "type": "checkout.session.completed",
+        "data": { "object": {
+            "id": provider_session_id,
+            "payment_status": "paid",
+            "payment_intent": "pi_test_dead_letter_1"
+        }}
+    });
+    let raw = body.to_string();
+    let ts = chrono::Utc::now().timestamp();
+    let header = sign(secret, ts, raw.as_bytes());
+
+    let resp = app
+        .execute(
+            app.post(WEBHOOK_URI)
+                .header(SIG_HEADER, &header)
+                .json(body)
+                .build(),
+        )
+        .await;
+
+    std::env::remove_var(SECRET_ENV);
+
+    // Still fails loud so Stripe retries.
+    assert_eq!(
+        resp.status,
+        StatusCode::INTERNAL_SERVER_ERROR,
+        "missing invoice must still fail loud (5xx); body: {}",
+        resp.text()
+    );
+
+    // A durable dead-letter row was written for this session.
+    let (dl_count, dl_invoice, dl_org, dl_reason, dl_resolved, raw_len): (
+        i64,
+        Option<Uuid>,
+        Uuid,
+        String,
+        Option<chrono::DateTime<chrono::Utc>>,
+        i32,
+    ) = sqlx::query_as(
+        "SELECT count(*) OVER ()::int8, invoice_id, organization_id, failure_reason, \
+                resolved_at, octet_length(raw_event)::int4 \
+         FROM payment_webhook_dead_letters WHERE provider_session_id = $1",
+    )
+    .bind(provider_session_id)
+    .fetch_one(&pool)
+    .await
+    .expect("load dead-letter row");
+
+    assert_eq!(dl_count, 1, "exactly one dead-letter row for the session");
+    assert_eq!(
+        dl_invoice,
+        Some(invoice_id),
+        "dead-letter records the dangling invoice id"
+    );
+    assert_eq!(dl_org, org_id, "dead-letter is scoped to the owning org");
+    assert_eq!(dl_reason, "invoice_missing");
+    assert!(
+        dl_resolved.is_none(),
+        "a freshly written dead-letter is unresolved"
+    );
+    assert!(
+        raw_len > 0,
+        "the raw signed event body is persisted (non-empty)"
+    );
+}
+
 /// Concurrent-replay (the race the sequential test above cannot catch):
 /// Stripe is at-least-once and does not serialize deliveries, so two duplicate
 /// `checkout.session.completed` events can BOTH read the session as not-yet

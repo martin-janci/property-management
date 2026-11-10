@@ -79,9 +79,16 @@ export function useWebSocket(
   const handlerRef = useRef<MessageHandler | undefined>(handler);
   handlerRef.current = handler;
 
+  // Track handler *presence* (not identity). A handler supplied after mount
+  // must (re)subscribe, and clearing the handler must unsubscribe — but
+  // swapping one handler function for another must NOT cause resubscribe churn
+  // (that is what the ref above is for). Gating the effect on this boolean
+  // gives us exactly that: it flips only when the handler appears or disappears.
+  const hasHandler = handlerRef.current != null;
+
   // Subscribe to events
   useEffect(() => {
-    if (!eventType || !handlerRef.current) {
+    if (!eventType || !hasHandler) {
       return;
     }
 
@@ -92,7 +99,7 @@ export function useWebSocket(
     const unsubscribe = subscribe(eventType, wrappedHandler);
 
     return unsubscribe;
-  }, [eventType, subscribe]);
+  }, [eventType, subscribe, hasHandler]);
 
   return {
     isConnected,

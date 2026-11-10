@@ -66,8 +66,8 @@ describe('FaultReportsPage', () => {
     expect(screen.getByLabelText('By status')).toBeInTheDocument();
     expect(screen.getByLabelText('By category')).toBeInTheDocument();
     expect(screen.getByLabelText('By priority')).toBeInTheDocument();
-    // snake_case status humanised
-    expect(screen.getByText('Waiting parts')).toBeInTheDocument();
+    // snake_case status mapped to its translated label
+    expect(screen.getByText('Waiting for Parts')).toBeInTheDocument();
   });
 
   it('calls onDrillDown with the raw bucket key when a bar is clicked', () => {

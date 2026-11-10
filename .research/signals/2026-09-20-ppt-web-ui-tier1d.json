@@ -1,0 +1,66 @@
+{
+  "segment": "ppt-web-ui",
+  "date": "2026-09-20",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (ppt-dev-review, one static-analysis slice). Backlog claimable buffer starved. Cloud runner CANNOT build backend/ (api-server utoipa-swagger-ui egress 403, #2966) NOR mobile-native/ (AGP egress blocked), so findings there are structurally unlandable this cycle. This run produces CLOUD-LANDABLE frontend (React SPA @ppt/web) findings.",
+  "selection_reason": "oldest-unreviewed",
+  "selection_detail": "No CHURN_FILES passed to this Tier-1d run, so priority-1 (churn-aligned) does not apply. state.json review_cursor's two strictly-oldest segments tie at 2026-08-29: ppt-web-core and reality-web. BOTH were already exhausted by fresh Tier-1d passes earlier this same cycle that the routine cursor has not yet folded in: reality-web on 2026-09-17 (public pages) + 2026-09-18 (authenticated realtor/* + account/* route groups), and ppt-web-core on 2026-09-18 (x2, features/**/hooks + api + lib). Re-reviewing either would duplicate those non-overlapping file sets. This run therefore takes the next cloud-landable frontend segment, ppt-web-ui (cursor 2026-09-06), whose actual file set (features/**/pages + features/**/components, plus src/pages + src/components) is DISTINCT from the recently-reviewed ppt-web-core hook/api/lib layer. ppt-web-ui is preferred over the egress-blocked backend/mobile-native segments per the dispatcher's cloud-landability guidance. Backlog saturation check: 0 open code-review-finding rows for ppt-web-ui in backlog.json (>=3-open skip rule does not trigger). Segment root resolved to frontend/apps/ppt-web/src/features/**/{pages,components} (~435 files) + src/pages + src/components; the skill's literal frontend/ppt-web/src/{pages,components} predates the apps/ workspace layout. Per the token-budget rule for >40-file segments, review was narrowed to the churn-flagged disputes feature, the 12 largest UI files, and grep hit-lists (console.*, as any, dangerouslySetInnerHTML, key={index}, window.location internal nav, hardcoded 'en-US'/i18n). Static analysis only — no compile/test executed.",
+  "experts_used": ["frontend", "completeness"],
+  "landable_in_cloud": true,
+  "landability_note": "All three findings are frontend-only fixes under frontend/apps/ppt-web/src/features/** and are verifiable in the cloud runner via `pnpm --filter @ppt/web typecheck` + Vitest. No backend, no native toolchain, no egress-blocked dependency involved.",
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-budgetform-index-key",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/ppt-web/src/features/financial/components/BudgetForm.tsx"],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/financial/components/BudgetForm.tsx:127-160 — the editable Budget Categories list renders `categories.map((category, index) => <div key={index} ...>` where each row holds TWO controlled inputs: the name text field (:129-135 value={category.name}) and the amount number field (:140-150 value={category.amount || ''}). The list is dynamically mutable: addCategory (:81-83) appends `{ name: '', amount: 0 }` and removeCategory (:85-87) does `setCategories(categories.filter((_, i) => i !== index))`. BudgetCategory carries no stable id (:47 useState<BudgetCategory[]>), so the array index is the only key.",
+        "Using the array index as the React key on a middle-removable list of controlled inputs is the classic index-key data-integrity bug: when a user deletes category N of M, React reconciles by position and reuses the surviving component/DOM instances in place, so every row after the deleted one keeps the PREVIOUS row's input DOM state (typed-but-not-yet-committed text, focus, cursor position) while receiving the next row's props — the visible values shift by one relative to the underlying state array. In a financial budget-entry form this silently misattributes category names and amounts, corrupting the totalBudget reduce (:89) and the submitted payload.",
+        "Landable frontend-only remedy: give each category a stable id (e.g. crypto.randomUUID() at addCategory time, mirroring stable-id list patterns elsewhere in the app) and key the row by that id instead of the array index; updateCategory/removeCategory then locate by id. Verifiable via `pnpm --filter @ppt/web typecheck` + a Vitest that types into row 2, removes row 1, and asserts row 2's values stay with row 2."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-hardcoded-en-us-locale",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/reports/components/KPICard.tsx",
+        "frontend/apps/ppt-web/src/features/financial/components/RecentPaymentsList.tsx",
+        "frontend/apps/ppt-web/src/features/insurance/components/PolicyCard.tsx"
+      ],
+      "evidence": [
+        "46 UI files under frontend/apps/ppt-web/src/features hardcode the 'en-US' locale in money/date/number formatters — new Intl.NumberFormat('en-US', …), Date.prototype.toLocaleDateString('en-US', …) and toLocaleString('en-US', …) — across the financial, insurance, accounting, facilities and reports features. Representative hits: reports/components/KPICard.tsx:16-25, financial/components/RecentPaymentsList.tsx:32,39, financial/components/BudgetCard.tsx:14, financial/components/ReconciliationTable.tsx:17,24, financial/components/BudgetOverview.tsx:22, financial/components/BudgetForm.tsx:169, insurance/components/PolicyCard.tsx:58, insurance/pages/ClaimDetailPage.tsx:72, accounting/components/AccountingInvoiceList.tsx:79, facilities/components/BookingCard.tsx:38, reports/components/ExecutionHistory.tsx:80 (grep -rn \"'en-US'\" → 46 files).",
+        "The ppt-web app is multi-locale (react-i18next; the Reality side ships sk/cs/de/en and ppt-web's primary audience is Slovak). Hardcoding 'en-US' means every monetary amount and date renders with US grouping/decimal separators and US date order (MM/DD/YYYY) regardless of the user's selected language — a Slovak/Czech/German user sees '1,234.56' and '09/20/2026' instead of '1 234,56' and '20. 9. 2026'.",
+        "The defect is worse where the currency is explicitly EUR: reports/components/KPICard.tsx:18 sets `currency: 'EUR'` under locale 'en-US', producing '€1,234.56' (US grouping + leading symbol) instead of the correct sk-SK '1 234,56 €'. So the currency code is right but the formatting locale contradicts it.",
+        "These same feature folders already consume react-i18next (useTranslation / i18n.language is imported in sibling files e.g. financial/components/InvoiceDetail.tsx, insurance/components/PolicyForm.tsx), so the locale is available at the call site — the formatters simply ignore it. Landable frontend-only remedy: introduce a shared locale-aware formatter (formatCurrency/formatDate/formatNumber that read i18n.resolvedLanguage) and replace the 'en-US' literals; or pass i18n.language into the existing Intl calls. Verifiable via `pnpm --filter @ppt/web typecheck` + a Vitest asserting sk-SK grouping/decimal output. Fix can land incrementally per feature; the shared-formatter step is the durable one."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-full-reload-nav",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx"],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx performs all 6 of its internal navigations with `window.location.href = '/registry/...'` (lines 91, 95, 129, 148, 152, 186) instead of react-router's useNavigate. In a Vite React-Router SPA (30 feature pages use useNavigate) each of these forces a full browser navigation: the entire JS bundle re-downloads and re-parses, all in-memory SPA state and TanStack Query cache are discarded, and the user sees a white-flash reload on every 'view / edit / new' action for pets and vehicles — a needless UX and performance regression versus client-side routing.",
+        "The sibling compliance/pages/ContentModerationPage.tsx:205-207 does the same but at least carries an explicit `// TODO(Phase-2): Use React Router's useNavigate for SPA navigation` acknowledging the debt; RegistryPage has no such marker and repeats the anti-pattern 6 times. (Note: window.location.reload() calls elsewhere e.g. ContentModerationPage:281, AmlDashboardPage:77 are intentional error-recovery buttons, not internal nav, and are out of scope for this finding.)",
+        "Landable frontend-only remedy: replace the window.location.href assignments in RegistryPage with a useNavigate() hook and navigate(path); optionally clear the paired ContentModerationPage TODO in the same change. Verifiable via `pnpm --filter @ppt/web typecheck` + a Vitest/RTL test asserting navigate() is called (no full reload). Low severity — UX/perf regression, not a crash — but pervasive within the registry feature and trivially fixable."
+      ]
+    }
+  ]
+}

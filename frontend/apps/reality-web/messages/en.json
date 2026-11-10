@@ -107,7 +107,9 @@
     "callback": {
       "title": "Login Failed",
       "invalidState": "Invalid state token. Please try logging in again.",
-      "returnHome": "Return Home"
+      "returnHome": "Return Home",
+      "loading": "Loading...",
+      "completingLogin": "Completing login..."
     }
   },
   "common": {
@@ -357,8 +359,10 @@
   },
   "listings": {
     "allProperties": "All Properties",
-    "emptyTitle": "No listings found",
     "emptyDescription": "Try adjusting your filters or search criteria to find more properties.",
+    "emptyTitle": "No listings found",
+    "errorDescription": "Something went wrong while loading properties. Please try again.",
+    "errorTitle": "Couldn’t load listings",
     "filters": "Filters",
     "gridView": "Grid view",
     "listView": "List view",
@@ -368,6 +372,7 @@
     "propertiesForRent": "Properties for Rent",
     "propertiesForSale": "Properties for Sale",
     "resultsCount": "{count} listings found",
+    "retry": "Try again",
     "sortNewest": "Newest First",
     "sortOldest": "Oldest First",
     "sortPriceHigh": "Price: High to Low",
@@ -395,12 +400,38 @@
       "title": "About Reality Portal"
     },
     "agentProfile": {
+      "about": "About the agent",
       "activeListings": "Active listings",
       "contact": "Contact",
+      "contactDetails": "Contact details",
+      "defaultName": "Real estate agent",
+      "experience": "{count} years of experience",
       "languages": "Languages",
+      "license": "License: {number}",
+      "loading": "Loading…",
+      "mailtoSubject": "Contact via Reality Portal",
+      "memberSince": "Member since: {date}",
+      "modalAriaLabel": "Contact agent",
+      "modalCancel": "Cancel",
+      "modalClose": "Close",
+      "modalEmailHint": "The message will open in your email client.",
+      "modalNoContact": "The agent has not published contact details at the moment.",
+      "modalPhoneIntro": "You can contact this agent by phone:",
+      "modalPlaceholder": "Hello, I'm interested in your services...",
+      "modalSendEmail": "Send email",
+      "modalTitle": "Contact {name}",
+      "noContact": "The agent has not published contact details.",
+      "noReviews": "No reviews yet.",
+      "notFoundBody": "This agent's profile is not available.",
+      "notFoundTitle": "Agent not found",
+      "rating": "Rating",
+      "reviewVerified": "Verified",
       "reviews": "Reviews",
+      "sendMessage": "Send message",
       "specializations": "Specializations",
-      "verified": "Verified agent"
+      "totalListings": "Total listings",
+      "verified": "Verified agent",
+      "views": "Views"
     },
     "careers": {
       "hero": {
@@ -455,9 +486,104 @@
       "newsletterTitle": "Newsletter signup"
     },
     "listingEdit": {
+      "title": "Edit listing",
+      "breadcrumbAccount": "← My account",
+      "breadcrumb": "Edit listing #{id}",
+      "stepLabel": "Step {step} of {total}: {stepTitle}",
+      "asideTitle": "Steps",
+      "back": "← Back",
+      "next": "Next →",
       "save": "Save changes",
+      "saving": "Saving…",
+      "loading": "Loading listing…",
+      "loadFailed": "Could not load the listing.",
+      "backToAccount": "← Back to account",
+      "priceInvalid": "Enter a valid price greater than €0 (step 4).",
+      "saveFailed": "Saving failed, please try again.",
       "success": "Listing saved!",
-      "title": "Edit listing"
+      "successBody": "Changes to listing #{id} were saved successfully.",
+      "viewListing": "View listing",
+      "moreEdits": "More edits",
+      "steps": {
+        "type": {
+          "title": "Type & location",
+          "description": "Property type and address"
+        },
+        "details": {
+          "title": "Details",
+          "description": "Area, rooms, floor"
+        },
+        "photos": {
+          "title": "Photos",
+          "description": "Manage photos"
+        },
+        "price": {
+          "title": "Price",
+          "description": "Update the asking price"
+        },
+        "summary": {
+          "title": "Summary",
+          "description": "Review and save"
+        }
+      },
+      "fields": {
+        "transactionType": "Transaction type",
+        "propertyType": "Property type",
+        "address": "Address",
+        "addressPlaceholder": "Street and number",
+        "city": "City / Town",
+        "cityPlaceholder": "e.g. Bratislava",
+        "area": "Area (m²)",
+        "areaPlaceholder": "e.g. 72",
+        "rooms": "Number of rooms",
+        "roomsPlaceholder": "e.g. 3",
+        "floor": "Floor",
+        "floorPlaceholder": "e.g. 4",
+        "totalFloors": "Total floors",
+        "totalFloorsPlaceholder": "e.g. 8",
+        "yearBuilt": "Year built",
+        "yearBuiltPlaceholder": "e.g. 2005",
+        "description": "Description",
+        "price": "Price (€)",
+        "priceNegotiable": "Price is negotiable",
+        "status": "Listing status"
+      },
+      "transactionOptions": {
+        "sale": "Sale",
+        "rent": "Rent"
+      },
+      "propertyOptions": {
+        "apartment": "Apartment",
+        "house": "House",
+        "land": "Land",
+        "commercial": "Commercial"
+      },
+      "statusOptions": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "draft": "Draft"
+      },
+      "photos": {
+        "existing": "Existing photos",
+        "alt": "Photo",
+        "remove": "Remove photo",
+        "addNew": "Add new photos",
+        "addedCount": "+ {count} new photos"
+      },
+      "summary": {
+        "title": "Summary of changes",
+        "type": "Type",
+        "location": "Location",
+        "area": "Area",
+        "rooms": "Rooms",
+        "floor": "Floor",
+        "year": "Year",
+        "price": "Price",
+        "status": "Status",
+        "photos": "Photos",
+        "negotiable": "(negotiable)",
+        "photosValue": "{existing} existing + {added} new"
+      }
     },
     "priceMap": {
       "clickHint": "Click on a district for detailed statistics.",
@@ -476,14 +602,94 @@
         "reviews": "Reviews",
         "settings": "Settings"
       },
-      "title": "My profile"
+      "title": "My profile",
+      "stats": {
+        "activeListings": "Active listings",
+        "totalListings": "All listings",
+        "reviews": "Reviews",
+        "avgRating": "Avg. rating"
+      },
+      "status": {
+        "active": "Active",
+        "sold": "Sold",
+        "rented": "Rented",
+        "draft": "Draft",
+        "paused": "Paused",
+        "archived": "Archived"
+      },
+      "listings": {
+        "loading": "Loading listings…",
+        "error": "Failed to load listings.",
+        "emptyTitle": "You don't have any listings yet",
+        "emptyBody": "When you add a listing, it will appear here.",
+        "rooms": "{count} rooms"
+      },
+      "activity": {
+        "emptyTitle": "Activity isn't available yet",
+        "emptyBody": "An overview of your activity will be available once we prepare the relevant report."
+      },
+      "reviews": {
+        "emptyTitle": "No reviews yet",
+        "emptyBody": "Reviews from clients will appear here once you receive them."
+      },
+      "settings": {
+        "description": "Profile settings are available in the <account>My account</account> section."
+      }
     },
     "report": {
-      "submit": "Submit report",
+      "h1": "Report a listing",
       "subtitle": "Help us keep the portal trustworthy — tell us what's wrong.",
-      "success": "Report submitted",
       "title": "Report a listing",
-      "h1": "Report a listing"
+      "submit": "Submit report",
+      "submitting": "Submitting…",
+      "success": "Report submitted",
+      "problemLegend": "Reason for the report",
+      "problems": {
+        "fraudulent_listing": {
+          "label": "Suspected fraud",
+          "description": "Suspicious listing, request for upfront payment, fake agent identity"
+        },
+        "price_manipulation": {
+          "label": "Incorrect price",
+          "description": "The price doesn't match reality or is intended to mislead"
+        },
+        "incorrect_information": {
+          "label": "Fake photos",
+          "description": "The photos don't belong to this property"
+        },
+        "duplicate_listing": {
+          "label": "Duplicate listing",
+          "description": "The same property is advertised multiple times"
+        },
+        "already_sold": {
+          "label": "Sold / no longer available",
+          "description": "The property is already sold or rented and the listing wasn't removed"
+        },
+        "other": {
+          "label": "Other reason",
+          "description": "Another technical error or platform rules violation"
+        }
+      },
+      "listingRefLabel": "Listing link (URL or ID)",
+      "listingRefPlaceholder": "e.g. https://rlt.sk/listings/ba-byt-3i or #12345",
+      "descriptionLabel": "Problem description",
+      "descriptionPlaceholder": "Describe why you're reporting this listing. The more detail you provide, the faster we can review it.",
+      "attachmentsLabel": "Attachments (coming soon)",
+      "attachmentsComingSoon": "Adding attachments will be available soon",
+      "attachmentsHint": "Uploading screenshots isn't available yet — please describe the evidence in the description above. We're working on it.",
+      "gdpr": {
+        "label": "I agree to the processing of personal data for the purpose of reviewing my report in accordance with the {privacyLink}.",
+        "privacyLink": "Privacy Policy"
+      },
+      "successTitle": "Report submitted",
+      "successBody": "We've received your report. Our team will review it within 24 hours. Thank you for helping keep the portal safe.",
+      "referenceLabel": "Reference number",
+      "referenceHint": "Quote it in any further communication — it helps us locate your report quickly.",
+      "backToListings": "Back to listings",
+      "errorNoListing": "We couldn't determine which listing the report concerns. Open the report from a listing's detail page or paste the listing link or ID above.",
+      "errorRateLimit": "Too many reports from this device. Please try again in a moment.",
+      "errorNotFound": "Listing not found. Check the link or ID and try again.",
+      "errorGeneric": "The report couldn't be submitted. Please try again."
     },
     "security": {
       "reportCta": "Report a listing",
@@ -523,6 +729,8 @@
       "back": "← Back",
       "next": "Next →",
       "publish": "Publish listing",
+      "publishing": "Publishing…",
+      "submitFailed": "Publishing failed, please try again.",
       "submittedTitle": "Your listing has been submitted!",
       "submittedBody": "After review it will be published within 2 hours.",
       "submittedCta": "Add another listing",
@@ -533,6 +741,8 @@
         "addressPlaceholder": "Street and number",
         "city": "City / Town",
         "cityPlaceholder": "e.g. Bratislava",
+        "postalCode": "Postal code",
+        "postalCodePlaceholder": "e.g. 811 01",
         "area": "Area (m²)",
         "areaPlaceholder": "e.g. 65",
         "rooms": "Number of rooms",
@@ -591,6 +801,7 @@
         "required": "Required",
         "addressRequired": "Address is required",
         "cityRequired": "City is required",
+        "postalCodeRequired": "Postal code is required",
         "areaRequired": "Area is required",
         "areaPositive": "Area must be greater than 0",
         "roomsRequired": "Number of rooms is required",
@@ -717,6 +928,12 @@
         "completed": "Completed",
         "cancelled": "Cancelled"
       },
+      "type": {
+        "general": "General inquiry",
+        "viewing_request": "Viewing request",
+        "price_negotiation": "Price negotiation",
+        "availability": "Availability"
+      },
       "viewingScheduled": "Viewing scheduled: {date} at {time}",
       "agentResponse": "Agent response:",
       "cancelConfirm": "Cancel this inquiry?",
@@ -755,6 +972,19 @@
       "error": "Failed to load listings.",
       "empty": "You haven't published any listings yet.",
       "createFirst": "Create your first listing"
+    },
+    "agencyProfile": {
+      "loading": "Loading…",
+      "notFound": "Agency not found.",
+      "verified": "Verified",
+      "about": "About the agency",
+      "team": "Our team ({count})",
+      "activeListings": "Active listings ({count})",
+      "noListings": "No active listings.",
+      "rentSuffix": "/mo",
+      "contact": "Contact",
+      "visitWebsite": "Visit website",
+      "license": "License: {number}"
     }
   },
   "search": {
@@ -988,6 +1218,7 @@
       "mappingHint": "Map your CRM fields to listing properties",
       "creating": "Creating...",
       "createConnection": "Create Connection",
+      "createError": "Failed to create connection. Please try again.",
       "connectionFailed": "Connection failed",
       "connectionSuffix": "Connection",
       "status": {
@@ -1026,6 +1257,9 @@
       "feedName": "Feed Name (Optional)",
       "feedNamePlaceholder": "My Property Feed",
       "fetchError": "Failed to fetch feed. Please check the URL and try again.",
+      "updateError": "Failed to update the feed. Please try again.",
+      "syncError": "Failed to start the feed sync. Please try again.",
+      "removeError": "Failed to remove the feed. Please try again.",
       "format": "Format",
       "itemsFound": "Items Found",
       "availableFields": "Available Fields",
@@ -1037,6 +1271,7 @@
       "mappingHint": "Map feed fields to listing properties",
       "creating": "Creating...",
       "createFeed": "Create Feed",
+      "createError": "Failed to create feed. Please try again.",
       "defaultName": "Property Feed",
       "status": {
         "active": "Active",
@@ -1061,6 +1296,7 @@
       "cancel": "Cancel",
       "saving": "Saving...",
       "saveChanges": "Save Changes",
+      "saveError": "Couldn't save changes. Please try again.",
       "status": "Status",
       "enabled": "Enabled",
       "disabled": "Disabled",
@@ -1130,5 +1366,17 @@
     "errorAreaNegative": "Area must not be negative",
     "errorRoomsInvalid": "Rooms must be a valid number",
     "errorRoomsNegative": "Rooms must not be negative"
+  },
+  "realtor": {
+    "errorNetwork": "Network error. Please try again.",
+    "errorMalformed": "The server returned an unexpected response. Please try again.",
+    "errorRequestFailed": "Request failed ({status}). Please try again.",
+    "errorLoadProfile": "Could not load profile.",
+    "errorSaveProfile": "Could not save profile.",
+    "errorNameRequired": "Name is required.",
+    "errorLoadListing": "Could not load listing.",
+    "errorSaveListing": "Could not save listing.",
+    "errorCreateListing": "Could not create listing. Please try again.",
+    "errorMissingListingId": "Missing listing ID."
   }
 }

@@ -107,7 +107,9 @@
     "callback": {
       "title": "Přihlášení selhalo",
       "invalidState": "Neplatný stavový token. Zkuste se přihlásit znovu.",
-      "returnHome": "Zpět na domovskou stránku"
+      "returnHome": "Zpět na domovskou stránku",
+      "loading": "Načítání...",
+      "completingLogin": "Dokončování přihlášení..."
     }
   },
   "common": {
@@ -357,8 +359,10 @@
   },
   "listings": {
     "allProperties": "Všechny nemovitosti",
-    "emptyTitle": "Nebyly nalezeny žádné nabídky",
     "emptyDescription": "Zkuste upravit filtry nebo vyhledávací kritéria a najděte více nemovitostí.",
+    "emptyTitle": "Nebyly nalezeny žádné nabídky",
+    "errorDescription": "Při načítání nemovitostí došlo k chybě. Zkuste to znovu.",
+    "errorTitle": "Nabídky se nepodařilo načíst",
     "filters": "Filtry",
     "gridView": "Zobrazení mřížky",
     "listView": "Zobrazení seznamu",
@@ -368,6 +372,7 @@
     "propertiesForRent": "Nemovitosti k pronájmu",
     "propertiesForSale": "Nemovitosti k prodeji",
     "resultsCount": "Nalezeno {count} nabídek",
+    "retry": "Zkusit znovu",
     "sortNewest": "Nejnovější",
     "sortOldest": "Nejstarší",
     "sortPriceHigh": "Cena: od nejvyšší",
@@ -395,12 +400,38 @@
       "title": "O Reality Portálu"
     },
     "agentProfile": {
+      "about": "O makléři",
       "activeListings": "Aktivní inzeráty",
       "contact": "Kontaktovat",
+      "contactDetails": "Kontaktní údaje",
+      "defaultName": "Realitní makléř",
+      "experience": "{count} let zkušeností",
       "languages": "Jazyky",
+      "license": "Licence: {number}",
+      "loading": "Načítám…",
+      "mailtoSubject": "Kontakt přes Reality Portal",
+      "memberSince": "Členem od: {date}",
+      "modalAriaLabel": "Kontaktovat makléře",
+      "modalCancel": "Zrušit",
+      "modalClose": "Zavřít",
+      "modalEmailHint": "Zpráva se otevře ve vašem e-mailovém klientovi.",
+      "modalNoContact": "Makléř momentálně nezveřejnil kontaktní údaje.",
+      "modalPhoneIntro": "Tohoto makléře můžete kontaktovat telefonicky:",
+      "modalPlaceholder": "Dobrý den, mám zájem o Vaše služby...",
+      "modalSendEmail": "Odeslat e-mail",
+      "modalTitle": "Kontaktovat {name}",
+      "noContact": "Makléř nezveřejnil kontaktní údaje.",
+      "noReviews": "Zatím žádná hodnocení.",
+      "notFoundBody": "Profil tohoto makléře není dostupný.",
+      "notFoundTitle": "Makléř nebyl nalezen",
+      "rating": "Hodnocení",
+      "reviewVerified": "Ověřeno",
       "reviews": "Hodnocení",
+      "sendMessage": "Odeslat zprávu",
       "specializations": "Specializace",
-      "verified": "Ověřený makléř"
+      "totalListings": "Inzeráty celkem",
+      "verified": "Ověřený makléř",
+      "views": "Zobrazení"
     },
     "careers": {
       "hero": {
@@ -455,9 +486,104 @@
       "newsletterTitle": "Newsletter signup"
     },
     "listingEdit": {
+      "title": "Upravit inzerát",
+      "breadcrumbAccount": "← Můj účet",
+      "breadcrumb": "Upravit inzerát #{id}",
+      "stepLabel": "Krok {step} z {total}: {stepTitle}",
+      "asideTitle": "Kroky",
+      "back": "← Zpět",
+      "next": "Dále →",
       "save": "Uložit změny",
+      "saving": "Ukládám…",
+      "loading": "Načítám inzerát…",
+      "loadFailed": "Načtení inzerátu selhalo.",
+      "backToAccount": "← Zpět na účet",
+      "priceInvalid": "Zadejte platnou cenu větší než 0 € (krok 4).",
+      "saveFailed": "Uložení selhalo, zkuste to znovu.",
       "success": "Inzerát byl uložen!",
-      "title": "Upravit inzerát"
+      "successBody": "Změny v inzerátu #{id} byly úspěšně uloženy.",
+      "viewListing": "Zobrazit inzerát",
+      "moreEdits": "Další úpravy",
+      "steps": {
+        "type": {
+          "title": "Typ a poloha",
+          "description": "Typ nemovitosti a adresa"
+        },
+        "details": {
+          "title": "Detaily",
+          "description": "Plocha, pokoje, podlaží"
+        },
+        "photos": {
+          "title": "Fotografie",
+          "description": "Spravovat fotografie"
+        },
+        "price": {
+          "title": "Cena",
+          "description": "Aktualizovat požadovanou cenu"
+        },
+        "summary": {
+          "title": "Souhrn",
+          "description": "Zkontrolovat a uložit"
+        }
+      },
+      "fields": {
+        "transactionType": "Typ transakce",
+        "propertyType": "Typ nemovitosti",
+        "address": "Adresa",
+        "addressPlaceholder": "Ulice a číslo",
+        "city": "Město / Obec",
+        "cityPlaceholder": "Např. Praha",
+        "area": "Plocha (m²)",
+        "areaPlaceholder": "Např. 72",
+        "rooms": "Počet pokojů",
+        "roomsPlaceholder": "Např. 3",
+        "floor": "Podlaží",
+        "floorPlaceholder": "Např. 4",
+        "totalFloors": "Celkový počet podlaží",
+        "totalFloorsPlaceholder": "Např. 8",
+        "yearBuilt": "Rok výstavby",
+        "yearBuiltPlaceholder": "Např. 2005",
+        "description": "Popis",
+        "price": "Cena (€)",
+        "priceNegotiable": "Cena dohodou",
+        "status": "Stav inzerátu"
+      },
+      "transactionOptions": {
+        "sale": "Prodej",
+        "rent": "Pronájem"
+      },
+      "propertyOptions": {
+        "apartment": "Byt",
+        "house": "Dům",
+        "land": "Pozemek",
+        "commercial": "Komerční"
+      },
+      "statusOptions": {
+        "active": "Aktivní",
+        "inactive": "Neaktivní",
+        "draft": "Koncept"
+      },
+      "photos": {
+        "existing": "Stávající fotografie",
+        "alt": "Foto",
+        "remove": "Odstranit fotografii",
+        "addNew": "Přidat nové fotografie",
+        "addedCount": "+ {count} nových fotografií"
+      },
+      "summary": {
+        "title": "Souhrn změn",
+        "type": "Typ",
+        "location": "Poloha",
+        "area": "Plocha",
+        "rooms": "Pokoje",
+        "floor": "Podlaží",
+        "year": "Rok",
+        "price": "Cena",
+        "status": "Stav",
+        "photos": "Fotografie",
+        "negotiable": "(dohodou)",
+        "photosValue": "{existing} stávajících + {added} nových"
+      }
     },
     "priceMap": {
       "clickHint": "Klikněte na čtvrť pro detailní statistiky.",
@@ -476,14 +602,94 @@
         "reviews": "Hodnocení",
         "settings": "Nastavení"
       },
-      "title": "Můj profil"
+      "title": "Můj profil",
+      "stats": {
+        "activeListings": "Aktivní inzeráty",
+        "totalListings": "Všechny inzeráty",
+        "reviews": "Hodnocení",
+        "avgRating": "Prům. hodnocení"
+      },
+      "status": {
+        "active": "Aktivní",
+        "sold": "Prodáno",
+        "rented": "Pronajato",
+        "draft": "Koncept",
+        "paused": "Pozastaveno",
+        "archived": "Archivováno"
+      },
+      "listings": {
+        "loading": "Načítám inzeráty…",
+        "error": "Nepodařilo se načíst inzeráty.",
+        "emptyTitle": "Zatím nemáte žádné inzeráty",
+        "emptyBody": "Jakmile přidáte inzerát, zobrazí se tady.",
+        "rooms": "{count} pokoje"
+      },
+      "activity": {
+        "emptyTitle": "Aktivita zatím není k dispozici",
+        "emptyBody": "Přehled vaší aktivity bude dostupný, jakmile připravíme příslušný přehled."
+      },
+      "reviews": {
+        "emptyTitle": "Zatím žádná hodnocení",
+        "emptyBody": "Hodnocení od klientů se zobrazí zde, jakmile je obdržíte."
+      },
+      "settings": {
+        "description": "Nastavení profilu najdete v sekci <account>Můj účet</account>."
+      }
     },
     "report": {
+      "h1": "Nahlásit inzerát",
+      "subtitle": "Pomozte nám udržet portál důvěryhodný — řekněte nám, co je v inzerátu špatně.",
+      "title": "Nahlásit inzerát",
       "submit": "Odeslat nahlášení",
-      "subtitle": "Help us keep the portal trustworthy — tell us what's wrong.",
+      "submitting": "Odesílá se…",
       "success": "Nahlášení bylo odesláno",
-      "title": "Report a listing",
-      "h1": "Report a listing"
+      "problemLegend": "Důvod nahlášení",
+      "problems": {
+        "fraudulent_listing": {
+          "label": "Podezření z podvodu",
+          "description": "Podezřelý inzerát, žádost o platbu předem, falešná identita makléře"
+        },
+        "price_manipulation": {
+          "label": "Nesprávná cena",
+          "description": "Cena neodpovídá skutečnosti nebo má záměrně klamat"
+        },
+        "incorrect_information": {
+          "label": "Falešné fotografie",
+          "description": "Fotografie nepatří k dané nemovitosti"
+        },
+        "duplicate_listing": {
+          "label": "Duplicitní inzerát",
+          "description": "Stejná nemovitost je inzerována vícekrát"
+        },
+        "already_sold": {
+          "label": "Prodáno / nepronajímá se",
+          "description": "Nemovitost je již prodaná nebo pronajatá, inzerát nebyl odstraněn"
+        },
+        "other": {
+          "label": "Jiný důvod",
+          "description": "Jiná technická chyba nebo porušení pravidel platformy"
+        }
+      },
+      "listingRefLabel": "Odkaz na inzerát (URL nebo ID)",
+      "listingRefPlaceholder": "např. https://rlt.sk/listings/ba-byt-3i nebo #12345",
+      "descriptionLabel": "Popis problému",
+      "descriptionPlaceholder": "Popište, proč tento inzerát nahlašujete. Čím více detailů uvedete, tím rychleji to prověříme.",
+      "attachmentsLabel": "Přílohy (brzy)",
+      "attachmentsComingSoon": "Přidávání příloh bude brzy k dispozici",
+      "attachmentsHint": "Nahrávání screenshotů zatím není k dispozici — popište prosím důkazy v popisu výše. Pracujeme na tom.",
+      "gdpr": {
+        "label": "Souhlasím se zpracováním osobních údajů za účelem prověření mého nahlášení v souladu se {privacyLink}.",
+        "privacyLink": "Zásadami ochrany soukromí"
+      },
+      "successTitle": "Nahlášení bylo odesláno",
+      "successBody": "Váš podnět jsme přijali. Náš tým jej prověří do 24 hodin. Děkujeme, že pomáháte udržovat portál bezpečný.",
+      "referenceLabel": "Referenční číslo",
+      "referenceHint": "Uveďte je při další komunikaci — pomůže nám vaše hlášení rychle dohledat.",
+      "backToListings": "Zpět na nabídky",
+      "errorNoListing": "Nedokázali jsme určit, kterého inzerátu se hlášení týká. Otevřete nahlášení z detailu inzerátu nebo vložte odkaz či ID inzerátu výše.",
+      "errorRateLimit": "Příliš mnoho nahlášení z tohoto zařízení. Zkuste to prosím za chvíli znovu.",
+      "errorNotFound": "Inzerát nebyl nalezen. Zkontrolujte odkaz nebo ID a zkuste to znovu.",
+      "errorGeneric": "Nahlášení se nepodařilo odeslat. Zkuste to prosím znovu."
     },
     "security": {
       "reportCta": "Nahlásit inzerát",
@@ -523,6 +729,8 @@
       "back": "← Back",
       "next": "Next →",
       "publish": "Publish listing",
+      "publishing": "Publishing…",
+      "submitFailed": "Publishing failed, please try again.",
       "submittedTitle": "Your listing has been submitted!",
       "submittedBody": "After review it will be published within 2 hours.",
       "submittedCta": "Add another listing",
@@ -533,6 +741,8 @@
         "addressPlaceholder": "Street and number",
         "city": "City / Town",
         "cityPlaceholder": "e.g. Bratislava",
+        "postalCode": "Postal code",
+        "postalCodePlaceholder": "e.g. 811 01",
         "area": "Area (m²)",
         "areaPlaceholder": "e.g. 65",
         "rooms": "Number of rooms",
@@ -591,6 +801,7 @@
         "required": "Required",
         "addressRequired": "Address is required",
         "cityRequired": "City is required",
+        "postalCodeRequired": "Postal code is required",
         "areaRequired": "Area is required",
         "areaPositive": "Area must be greater than 0",
         "roomsRequired": "Number of rooms is required",
@@ -717,6 +928,12 @@
         "completed": "Dokončeno",
         "cancelled": "Zrušeno"
       },
+      "type": {
+        "general": "Obecná poptávka",
+        "viewing_request": "Žádost o prohlídku",
+        "price_negotiation": "Vyjednávání ceny",
+        "availability": "Dostupnost"
+      },
       "viewingScheduled": "Prohlídka naplánována: {date} v {time}",
       "agentResponse": "Odpověď makléře:",
       "cancelConfirm": "Zrušit tuto poptávku?",
@@ -755,6 +972,19 @@
       "error": "Nepodařilo se načíst nabídky.",
       "empty": "Zatím jste nezveřejnili žádné nabídky.",
       "createFirst": "Vytvořte svou první nabídku"
+    },
+    "agencyProfile": {
+      "loading": "Načítám…",
+      "notFound": "Kancelář nebyla nalezena.",
+      "verified": "Ověřená",
+      "about": "O kanceláři",
+      "team": "Náš tým ({count})",
+      "activeListings": "Aktivní nabídky ({count})",
+      "noListings": "Žádné aktivní nabídky.",
+      "rentSuffix": "/měs",
+      "contact": "Kontakt",
+      "visitWebsite": "Navštívit web",
+      "license": "Licence: {number}"
     }
   },
   "search": {
@@ -988,6 +1218,7 @@
       "mappingHint": "Přiřaďte pole CRM k vlastnostem nabídky",
       "creating": "Vytvářím...",
       "createConnection": "Vytvořit připojení",
+      "createError": "Nepodařilo se vytvořit připojení. Zkuste to znovu.",
       "connectionFailed": "Připojení selhalo",
       "connectionSuffix": "připojení",
       "status": {
@@ -1026,6 +1257,9 @@
       "feedName": "Název feedu (volitelné)",
       "feedNamePlaceholder": "Můj feed nemovitostí",
       "fetchError": "Nepodařilo se načíst feed. Zkontrolujte URL a zkuste to znovu.",
+      "updateError": "Nepodařilo se aktualizovat feed. Zkuste to znovu.",
+      "syncError": "Nepodařilo se spustit synchronizaci feedu. Zkuste to znovu.",
+      "removeError": "Nepodařilo se odstranit feed. Zkuste to znovu.",
       "format": "Formát",
       "itemsFound": "Nalezené položky",
       "availableFields": "Dostupná pole",
@@ -1037,6 +1271,7 @@
       "mappingHint": "Přiřaďte pole feedu k vlastnostem nabídky",
       "creating": "Vytvářím...",
       "createFeed": "Vytvořit feed",
+      "createError": "Nepodařilo se vytvořit feed. Zkuste to znovu.",
       "defaultName": "Feed nemovitostí",
       "status": {
         "active": "Aktivní",
@@ -1061,6 +1296,7 @@
       "cancel": "Zrušit",
       "saving": "Ukládám...",
       "saveChanges": "Uložit změny",
+      "saveError": "Změny se nepodařilo uložit. Zkuste to znovu.",
       "status": "Stav",
       "enabled": "Povoleno",
       "disabled": "Zakázáno",
@@ -1130,5 +1366,17 @@
     "errorAreaNegative": "Plocha nesmí být záporná",
     "errorRoomsInvalid": "Počet pokojů musí být platné číslo",
     "errorRoomsNegative": "Počet pokojů nesmí být záporný"
+  },
+  "realtor": {
+    "errorNetwork": "Chyba sítě. Zkuste to znovu.",
+    "errorMalformed": "Server vrátil neočekávanou odpověď. Zkuste to znovu.",
+    "errorRequestFailed": "Požadavek selhal ({status}). Zkuste to znovu.",
+    "errorLoadProfile": "Profil se nepodařilo načíst.",
+    "errorSaveProfile": "Profil se nepodařilo uložit.",
+    "errorNameRequired": "Jméno je povinné.",
+    "errorLoadListing": "Inzerát se nepodařilo načíst.",
+    "errorSaveListing": "Inzerát se nepodařilo uložit.",
+    "errorCreateListing": "Inzerát se nepodařilo vytvořit. Zkuste to znovu.",
+    "errorMissingListingId": "Chybí ID inzerátu."
   }
 }

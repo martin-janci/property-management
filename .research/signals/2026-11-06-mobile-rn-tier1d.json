@@ -1,0 +1,37 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-06",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "oldest-unreviewed (dispatcher-tier1d-demand-driven; review_cursor mobile-rn 2026-11-03 oldest; non-KMP segment). Saturation check: mobile-rn has 0 open findings.",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-refresh-offline-logout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/contexts/AuthContext.tsx:190-231 — refreshToken() wraps the whole refresh in one try/catch and calls logout() on ANY failure, including a rejected fetch() (offline/timeout/DNS) or 5xx, not only a 401/invalid-refresh-token response. logout() (lines 155-188) deletes access/refresh tokens + user + tenant and runs resetLocalData(), which purges the offline mutation queue (QUEUE_KEY) and cached responses.",
+        "Callers: cold-start initialize() (lines ~338-365) and authenticateWithBiometric() (lines ~290-300) both refresh when the stored access token is expired. A user who opens the app offline (e.g. in a basement/garage, the exact offline-first use case) with an expired access token is therefore force-logged-out and loses queued offline writes (faults, etc.) even though the refresh token is still valid. Fix: only logout on a definitive auth rejection (401/400 from /auth/refresh); on network error/5xx keep tokens and queue, restore session in a degraded offline state and retry refresh later."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-session-user-unnormalized",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/utils/session.ts:113-117 — buildSessionUser trusts an embedded `data.user` via `{ ...embedded } as unknown as SessionUser` without validating fields or passing role through toAppRole(). A server-side fine-grained role (e.g. 'org_admin', 'property_manager') would be stored verbatim in SecureStore USER_KEY and surface in state.user.role (ProfileScreen.tsx:120) outside the AppRole union; missing firstName/lastName would be undefined. The claims-derived path (lines 120-132) normalises correctly, so the two paths diverge. Fix: build the user field-by-field from embedded values with str() and toAppRole(embedded.role)."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

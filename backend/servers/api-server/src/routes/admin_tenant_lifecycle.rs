@@ -32,7 +32,7 @@ use axum::{
 };
 use axum_extra::extract::Multipart;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
+use std::path::{Component, PathBuf};
 use tenant_ops::{
     export_tenant, purge_tenant, restore_tenant_export, PurgeReport, RestoreReport,
     TenantDataManifest, TenantExport,
@@ -64,7 +64,10 @@ pub fn router() -> Router<AppState> {
 
 #[derive(Debug, Deserialize)]
 pub struct ExportRequest {
-    /// Override output directory. Defaults to `./exports/`.
+    /// Optional output sub-directory, interpreted *relative to* the
+    /// server-controlled export root (`PPT_EXPORT_ROOT`, default `./exports/`).
+    /// Absolute paths and `..` traversal are rejected — see
+    /// [`resolve_export_dir`].
     pub out_dir: Option<String>,
 }
 
@@ -95,10 +98,7 @@ async fn export_handler(
     body: Option<Json<ExportRequest>>,
 ) -> Result<Json<ExportResponse>, (StatusCode, String)> {
     let manifest = load_manifest()?;
-    let out_dir = body
-        .and_then(|Json(b)| b.out_dir)
-        .map(PathBuf::from)
-        .unwrap_or_else(|| PathBuf::from("./exports"));
+    let out_dir = resolve_export_dir(body.and_then(|Json(b)| b.out_dir))?;
     let report = export_tenant(&state.db, org_id, &manifest, &out_dir)
         .await
         .map_err(internal)?;
@@ -226,6 +226,57 @@ async fn restore_handler(
 // Helpers
 // ============================================================================
 
+/// Server-controlled root that every tenant export is confined to. A deploy
+/// can relocate it via `PPT_EXPORT_ROOT`; otherwise exports land under
+/// `./exports` (the documented default).
+fn export_root() -> PathBuf {
+    std::env::var_os("PPT_EXPORT_ROOT")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("./exports"))
+}
+
+/// Resolve the client-supplied `out_dir` to a concrete directory *inside* the
+/// server-controlled [`export_root`].
+///
+/// The export runs through a super-admin pool that bypasses RLS, so an
+/// unvalidated `out_dir` is an arbitrary-directory write primitive (a caller
+/// could point it at `/etc`, `../../…`, a UNC/drive path, …). We treat
+/// `out_dir` strictly as a *relative* sub-path of the export root and reject
+/// anything that could escape it: absolute paths, Windows drive/UNC prefixes,
+/// backslashes, control characters, and any `..` parent-directory component.
+/// Mirrors the existing `aml_dsa::validate_storage_path` convention.
+fn resolve_export_dir(out_dir: Option<String>) -> Result<PathBuf, (StatusCode, String)> {
+    let root = export_root();
+    let Some(raw) = out_dir else {
+        return Ok(root);
+    };
+    let trimmed = raw.trim();
+    if trimmed.is_empty() {
+        return Ok(root);
+    }
+    let reject = |msg: &str| Err((StatusCode::BAD_REQUEST, format!("out_dir {msg}")));
+    if trimmed.chars().any(|c| c.is_control()) {
+        return reject("must not contain control characters");
+    }
+    // Backslashes and colons would be plain filename characters on Unix but
+    // path separators / drive markers on Windows — reject for cross-platform
+    // safety and defense in depth.
+    if trimmed.contains('\\') || trimmed.contains(':') {
+        return reject("must not contain backslashes or drive letters");
+    }
+    // Component-level check: the only acceptable components are plain names and
+    // `.`; a root/prefix means an absolute path, and `..` escapes the root.
+    let requested = PathBuf::from(trimmed);
+    for component in requested.components() {
+        match component {
+            Component::Normal(_) | Component::CurDir => {}
+            Component::ParentDir => return reject("must not contain '..' components"),
+            Component::RootDir | Component::Prefix(_) => return reject("must be a relative path"),
+        }
+    }
+    Ok(root.join(requested))
+}
+
 fn load_manifest() -> Result<TenantDataManifest, (StatusCode, String)> {
     // Allow override via env so a deploy can ship the manifest at any path.
     let path = std::env::var("PPT_TENANT_MANIFEST_PATH")
@@ -242,4 +293,64 @@ fn load_manifest() -> Result<TenantDataManifest, (StatusCode, String)> {
 fn internal(e: tenant_ops::TenantOpsError) -> (StatusCode, String) {
     tracing::error!(error = %e, "tenant-ops error");
     (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Regression: the admin tenant-export handler writes via an RLS-bypassing
+    // super-admin pool, so a client-supplied `out_dir` must never be allowed to
+    // escape the server-controlled export root. An absolute path, a `..`
+    // traversal, or a drive/backslash path would be an arbitrary-directory
+    // write primitive.
+
+    #[test]
+    fn resolve_export_dir_rejects_absolute_path() {
+        let err = resolve_export_dir(Some("/etc/cron.d".to_string()))
+            .expect_err("absolute out_dir must be rejected");
+        assert_eq!(err.0, StatusCode::BAD_REQUEST);
+    }
+
+    #[test]
+    fn resolve_export_dir_rejects_parent_traversal() {
+        let err = resolve_export_dir(Some("../../var/www".to_string()))
+            .expect_err("'..' traversal must be rejected");
+        assert_eq!(err.0, StatusCode::BAD_REQUEST);
+    }
+
+    #[test]
+    fn resolve_export_dir_rejects_embedded_traversal() {
+        let err = resolve_export_dir(Some("nightly/../../../root".to_string()))
+            .expect_err("embedded '..' traversal must be rejected");
+        assert_eq!(err.0, StatusCode::BAD_REQUEST);
+    }
+
+    #[test]
+    fn resolve_export_dir_rejects_backslash_and_control_chars() {
+        assert!(
+            resolve_export_dir(Some("..\\..\\windows".to_string())).is_err(),
+            "backslash path must be rejected"
+        );
+        assert!(
+            resolve_export_dir(Some("a\0b".to_string())).is_err(),
+            "control characters must be rejected"
+        );
+    }
+
+    #[test]
+    fn resolve_export_dir_confines_relative_subdir_under_root() {
+        let resolved = resolve_export_dir(Some("nightly/2026".to_string()))
+            .expect("a legitimate relative subdir is allowed");
+        assert!(
+            resolved.starts_with(export_root()),
+            "resolved path {resolved:?} escaped the export root"
+        );
+        assert!(resolved.ends_with("nightly/2026"));
+    }
+
+    #[test]
+    fn resolve_export_dir_defaults_to_root_when_absent() {
+        assert_eq!(resolve_export_dir(None).unwrap(), export_root());
+    }
 }

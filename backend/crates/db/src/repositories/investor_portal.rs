@@ -365,8 +365,16 @@ impl InvestorPortalRepository {
     }
 
     /// Update a portfolio property.
+    ///
+    /// Scoped to `portfolio_id` as well as `id`: the caller (the route handler)
+    /// has already verified that `portfolio_id` belongs to its org, so requiring
+    /// the property to live under that portfolio prevents a cross-tenant IDOR
+    /// where an attacker supplies its own portfolio id together with a victim
+    /// property id (issue #2945). A property that isn't in the portfolio resolves
+    /// to `None`, which the handler maps to 404.
     pub async fn update_portfolio_property(
         &self,
+        portfolio_id: Uuid,
         id: Uuid,
         data: &UpdateInvestorPortfolioProperty,
     ) -> Result<Option<InvestorPortfolioProperty>, SqlxError> {
@@ -382,7 +390,7 @@ impl InvestorPortalRepository {
                 operating_expenses_share = COALESCE($8, operating_expenses_share),
                 net_income_share = COALESCE($9, net_income_share),
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND portfolio_id = $10
             RETURNING *
             "#,
         )
@@ -395,16 +403,28 @@ impl InvestorPortalRepository {
         .bind(data.rental_income_share)
         .bind(data.operating_expenses_share)
         .bind(data.net_income_share)
+        .bind(portfolio_id)
         .fetch_optional(&self.pool)
         .await
     }
 
     /// Remove a property from a portfolio.
-    pub async fn remove_portfolio_property(&self, id: Uuid) -> Result<bool, SqlxError> {
-        let result = sqlx::query("DELETE FROM portfolio_properties WHERE id = $1")
-            .bind(id)
-            .execute(&self.pool)
-            .await?;
+    ///
+    /// Scoped to `portfolio_id` as well as `id` for the same cross-tenant IDOR
+    /// reason as `update_portfolio_property` (issue #2945): deleting a property
+    /// that doesn't belong to the (org-verified) portfolio affects no rows, so
+    /// the handler returns 404 rather than silently deleting another org's row.
+    pub async fn remove_portfolio_property(
+        &self,
+        portfolio_id: Uuid,
+        id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        let result =
+            sqlx::query("DELETE FROM portfolio_properties WHERE id = $1 AND portfolio_id = $2")
+                .bind(id)
+                .bind(portfolio_id)
+                .execute(&self.pool)
+                .await?;
 
         Ok(result.rows_affected() > 0)
     }

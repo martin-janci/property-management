@@ -7,6 +7,7 @@
 
 import type { BalanceSheetReport } from '@ppt/api-client';
 import { Fragment } from 'react';
+import { useTranslation } from 'react-i18next';
 import { formatCurrency, formatDate } from '../utils/formatting';
 
 interface BalanceSheetViewProps {
@@ -24,6 +25,8 @@ function formatAccountType(type: string): string {
 }
 
 export function BalanceSheetView({ data, isLoading, currency = 'EUR' }: BalanceSheetViewProps) {
+  const { t } = useTranslation();
+
   if (isLoading) {
     return (
       <div className="bg-white rounded-lg shadow p-6 animate-pulse space-y-3">
@@ -37,9 +40,7 @@ export function BalanceSheetView({ data, isLoading, currency = 'EUR' }: BalanceS
   if (!data) {
     return (
       <div className="bg-white rounded-lg shadow p-6">
-        <p className="text-gray-500 text-center py-8">
-          Select an as-of date to view the balance sheet.
-        </p>
+        <p className="text-gray-500 text-center py-8">{t('financial.reports.balanceSheetEmpty')}</p>
       </div>
     );
   }
@@ -59,8 +60,12 @@ export function BalanceSheetView({ data, isLoading, currency = 'EUR' }: BalanceS
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-200">
-        <h3 className="text-lg font-medium text-gray-900">Balance Sheet</h3>
-        <p className="mt-1 text-sm text-gray-500">As of {formatDate(data.as_of_date)}</p>
+        <h3 className="text-lg font-medium text-gray-900">
+          {t('financial.reports.tabs.balanceSheet')}
+        </h3>
+        <p className="mt-1 text-sm text-gray-500">
+          {t('financial.reports.asOfDate', { date: formatDate(data.as_of_date) })}
+        </p>
       </div>
 
       <div className="overflow-x-auto">
@@ -69,7 +74,7 @@ export function BalanceSheetView({ data, isLoading, currency = 'EUR' }: BalanceS
             {data.accounts.length === 0 ? (
               <tr>
                 <td colSpan={2} className="px-6 py-8 text-sm text-gray-400 text-center">
-                  No accounts
+                  {t('financial.reports.noAccounts')}
                 </td>
               </tr>
             ) : (
@@ -80,13 +85,15 @@ export function BalanceSheetView({ data, isLoading, currency = 'EUR' }: BalanceS
                       scope="col"
                       className="px-6 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
                     >
-                      {formatAccountType(type)}
+                      {t(`financial.reports.accountType.${type}`, {
+                        defaultValue: formatAccountType(type),
+                      })}
                     </th>
                     <th
                       scope="col"
                       className="px-6 py-2 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider"
                     >
-                      Balance
+                      {t('financial.reports.balance')}
                     </th>
                   </tr>
                   {groups[type].map((line) => (
@@ -103,19 +110,25 @@ export function BalanceSheetView({ data, isLoading, currency = 'EUR' }: BalanceS
           </tbody>
           <tfoot className="bg-gray-100">
             <tr>
-              <td className="px-6 py-3 text-sm font-medium text-gray-900">Total Assets</td>
+              <td className="px-6 py-3 text-sm font-medium text-gray-900">
+                {t('financial.reports.totalAssets')}
+              </td>
               <td className="px-6 py-3 text-sm text-right font-medium text-gray-900 tabular-nums">
                 {formatCurrency(data.total_assets, currency)}
               </td>
             </tr>
             <tr>
-              <td className="px-6 py-3 text-sm font-medium text-gray-900">Total Liabilities</td>
+              <td className="px-6 py-3 text-sm font-medium text-gray-900">
+                {t('financial.reports.totalLiabilities')}
+              </td>
               <td className="px-6 py-3 text-sm text-right font-medium text-gray-900 tabular-nums">
                 {formatCurrency(data.total_liabilities, currency)}
               </td>
             </tr>
             <tr>
-              <td className="px-6 py-4 text-sm font-bold text-gray-900">Net Equity</td>
+              <td className="px-6 py-4 text-sm font-bold text-gray-900">
+                {t('financial.reports.netEquity')}
+              </td>
               <td
                 className={`px-6 py-4 text-sm text-right font-bold tabular-nums ${
                   data.net_equity < 0 ? 'text-red-600' : 'text-gray-900'

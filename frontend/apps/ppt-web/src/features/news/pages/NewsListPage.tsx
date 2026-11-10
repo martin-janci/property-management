@@ -6,14 +6,21 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
+import { useConfirmDialog } from '../../../components/useConfirmDialog';
+import { useAuth } from '../../../contexts';
 import { useOrganization } from '../../../hooks';
+import { getApiClient } from '../../../lib/api';
+import { isManagerRole } from '../../../routes/shared';
 import { NewsArticleCard } from '../components';
 import type { ArticleStatus, ArticleSummary } from '../types';
 
 export function NewsListPage() {
   const { t } = useTranslation();
+  const { confirm, confirmDialog } = useConfirmDialog();
   const { organizationId } = useOrganization();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isManager = isManagerRole(user?.role);
   const [articles, setArticles] = useState<ArticleSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,20 +37,23 @@ export function NewsListPage() {
     setError(null);
 
     try {
-      const params = new URLSearchParams({ organization_id: organizationId });
-      if (statusFilter) params.append('status', statusFilter);
-      if (showPinnedOnly) params.append('pinned_only', 'true');
+      // Route through the shared axios client (`getApiClient()`) so the request
+      // carries `Authorization: Bearer <token>` via the request interceptor.
+      // A raw `fetch('/api/v1/news')` here sent NO auth header and 401'd behind
+      // <ProtectedRoute> in production (#2982). Paths are relative to the
+      // client baseURL (`/api/v1`).
+      const params: Record<string, string> = { organization_id: organizationId };
+      if (statusFilter) params.status = statusFilter;
+      if (showPinnedOnly) params.pinned_only = 'true';
 
-      const response = await fetch(`/api/v1/news?${params}`);
+      const response = await getApiClient().get('/news', { params });
 
-      if (!response.ok) {
-        throw new Error('Failed to load articles');
-      }
-
-      const data = await response.json();
+      // The API returns `{ articles, count, total }`; tolerate a bare array too.
+      const data = response.data;
+      const items = Array.isArray(data) ? data : (data?.articles ?? []);
       // Convert snake_case to camelCase
       setArticles(
-        data.map((a: Record<string, unknown>) => ({
+        items.map((a: Record<string, unknown>) => ({
           id: a.id,
           title: a.title,
           excerpt: a.excerpt,
@@ -59,11 +69,11 @@ export function NewsListPage() {
         }))
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load articles');
+      setError(err instanceof Error ? err.message : t('news.errors.loadListFailed'));
     } finally {
       setLoading(false);
     }
-  }, [organizationId, statusFilter, showPinnedOnly]);
+  }, [organizationId, statusFilter, showPinnedOnly, t]);
 
   useEffect(() => {
     loadArticles();
@@ -72,24 +82,26 @@ export function NewsListPage() {
   const handleDelete = useCallback(
     async (id: string) => {
       if (!organizationId) return;
-      if (!confirm('Are you sure you want to delete this article?')) return;
+      if (
+        !(await confirm({
+          message: t('news.confirmDelete'),
+          confirmLabel: t('common.delete'),
+          variant: 'danger',
+        }))
+      )
+        return;
 
       try {
-        const params = new URLSearchParams({ organization_id: organizationId });
-        const response = await fetch(`/api/v1/news/${id}?${params}`, {
-          method: 'DELETE',
+        await getApiClient().delete(`/news/${id}`, {
+          params: { organization_id: organizationId },
         });
-
-        if (!response.ok) {
-          throw new Error('Failed to delete article');
-        }
 
         setArticles((prev) => prev.filter((a) => a.id !== id));
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to delete article');
+        setError(err instanceof Error ? err.message : t('news.errors.deleteFailed'));
       }
     },
-    [organizationId]
+    [organizationId, confirm, t]
   );
 
   const handlePublish = useCallback(
@@ -97,22 +109,16 @@ export function NewsListPage() {
       if (!organizationId) return;
 
       try {
-        const response = await fetch(`/api/v1/news/${id}/publish`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ organization_id: organizationId }),
+        await getApiClient().post(`/news/${id}/publish`, {
+          organization_id: organizationId,
         });
-
-        if (!response.ok) {
-          throw new Error('Failed to publish article');
-        }
 
         loadArticles();
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to publish article');
+        setError(err instanceof Error ? err.message : t('news.errors.publishFailed'));
       }
     },
-    [organizationId, loadArticles]
+    [organizationId, loadArticles, t]
   );
 
   const handleArchive = useCallback(
@@ -120,22 +126,16 @@ export function NewsListPage() {
       if (!organizationId) return;
 
       try {
-        const response = await fetch(`/api/v1/news/${id}/archive`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ organization_id: organizationId }),
+        await getApiClient().post(`/news/${id}/archive`, {
+          organization_id: organizationId,
         });
-
-        if (!response.ok) {
-          throw new Error('Failed to archive article');
-        }
 
         loadArticles();
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to archive article');
+        setError(err instanceof Error ? err.message : t('news.errors.archiveFailed'));
       }
     },
-    [organizationId, loadArticles]
+    [organizationId, loadArticles, t]
   );
 
   const handlePin = useCallback(
@@ -143,22 +143,17 @@ export function NewsListPage() {
       if (!organizationId) return;
 
       try {
-        const response = await fetch(`/api/v1/news/${id}/pin`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ organization_id: organizationId, pinned }),
+        await getApiClient().post(`/news/${id}/pin`, {
+          organization_id: organizationId,
+          pinned,
         });
-
-        if (!response.ok) {
-          throw new Error('Failed to update pin status');
-        }
 
         loadArticles();
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to update pin status');
+        setError(err instanceof Error ? err.message : t('news.errors.pinFailed'));
       }
     },
-    [organizationId, loadArticles]
+    [organizationId, loadArticles, t]
   );
 
   // Filter articles by search query
@@ -179,23 +174,25 @@ export function NewsListPage() {
   });
 
   if (!organizationId) {
-    return <div className="news-page-error">Please select an organization</div>;
+    return <div className="news-page-error">{t('common.selectOrganization')}</div>;
   }
 
   return (
     <div className="news-list-page">
       <header className="news-header">
-        <h1>News & Announcements</h1>
-        <Link to="/news/new" className="btn btn-primary">
-          Create Article
-        </Link>
+        <h1>{t('news.listTitle')}</h1>
+        {isManager && (
+          <Link to="/news/new" className="btn btn-primary">
+            {t('news.createArticle')}
+          </Link>
+        )}
       </header>
 
       {error && (
         <div className="news-error" role="alert">
           {error}
           <button type="button" onClick={() => setError(null)}>
-            Dismiss
+            {t('common.dismiss')}
           </button>
         </div>
       )}
@@ -203,7 +200,7 @@ export function NewsListPage() {
       <div className="news-filters">
         <input
           type="search"
-          placeholder="Search articles..."
+          placeholder={t('news.searchPlaceholder')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="search-input"
@@ -216,10 +213,10 @@ export function NewsListPage() {
           className="status-filter"
           aria-label={t('aria.filterByStatus')}
         >
-          <option value="">All Statuses</option>
-          <option value="draft">Drafts</option>
-          <option value="published">Published</option>
-          <option value="archived">Archived</option>
+          <option value="">{t('news.filters.allStatuses')}</option>
+          <option value="draft">{t('news.filters.drafts')}</option>
+          <option value="published">{t('news.statusPublished')}</option>
+          <option value="archived">{t('news.statusArchived')}</option>
         </select>
 
         <label className="pinned-filter">
@@ -228,17 +225,17 @@ export function NewsListPage() {
             checked={showPinnedOnly}
             onChange={(e) => setShowPinnedOnly(e.target.checked)}
           />
-          Pinned only
+          {t('news.filters.pinnedOnly')}
         </label>
       </div>
 
       {loading ? (
-        <div className="news-loading">Loading articles...</div>
+        <div className="news-loading">{t('news.loadingArticles')}</div>
       ) : sortedArticles.length === 0 ? (
         <div className="news-empty">
           {searchQuery || statusFilter || showPinnedOnly
-            ? 'No articles match your filters.'
-            : 'No articles yet. Create your first article!'}
+            ? t('news.emptyFiltered')
+            : t('news.empty')}
         </div>
       ) : (
         <div className="news-grid">
@@ -249,17 +246,24 @@ export function NewsListPage() {
               onView={(id) => {
                 navigate(`/news/${id}`);
               }}
-              onEdit={(id) => {
-                navigate(`/news/${id}/edit`);
-              }}
-              onPublish={handlePublish}
-              onArchive={handleArchive}
-              onDelete={handleDelete}
-              onPin={handlePin}
+              // Writing news is manager-only on the server (403 otherwise),
+              // so residents get read-only cards.
+              onEdit={
+                isManager
+                  ? (id) => {
+                      navigate(`/news/${id}/edit`);
+                    }
+                  : undefined
+              }
+              onPublish={isManager ? handlePublish : undefined}
+              onArchive={isManager ? handleArchive : undefined}
+              onDelete={isManager ? handleDelete : undefined}
+              onPin={isManager ? handlePin : undefined}
             />
           ))}
         </div>
       )}
+      {confirmDialog}
     </div>
   );
 }

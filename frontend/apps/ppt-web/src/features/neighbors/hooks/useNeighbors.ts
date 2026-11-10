@@ -30,10 +30,15 @@ import type { NeighborView, PrivacySettings } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
 
-function getNeighborsApiClient() {
+// NOTE: `createNeighborsApi` bakes the `Authorization: Bearer <token>` header
+// into the returned client at construction time. Callers must re-create the
+// client whenever the token rotates (the `useMemo` deps below are keyed on the
+// token read at render time via `getToken()`), otherwise a stale Bearer token
+// is sent for the rest of the component's lifetime after a refresh.
+function getNeighborsApiClient(accessToken: string | undefined) {
   return createNeighborsApi({
     baseUrl: API_BASE_URL,
-    accessToken: getToken() ?? undefined,
+    accessToken,
   });
 }
 
@@ -114,7 +119,8 @@ export function mapFeaturePrivacyToApi(settings: PrivacySettings): ApiUpdatePriv
  * Only includes neighbors who have not hidden their profile.
  */
 export function useNeighbors(buildingId: string, enabled = true) {
-  const api = useMemo(() => getNeighborsApiClient(), []);
+  const token = getToken() ?? undefined;
+  const api = useMemo(() => getNeighborsApiClient(token), [token]);
   const hooks = useMemo(() => createNeighborHooks(api), [api]);
   const query = hooks.useNeighbors(buildingId, enabled && !!buildingId);
 
@@ -135,7 +141,8 @@ export function useNeighbors(buildingId: string, enabled = true) {
  * Get + update current user's privacy settings.
  */
 export function usePrivacySettings() {
-  const api = useMemo(() => getNeighborsApiClient(), []);
+  const token = getToken() ?? undefined;
+  const api = useMemo(() => getNeighborsApiClient(token), [token]);
   const hooks = useMemo(() => createNeighborHooks(api), [api]);
 
   const query = hooks.usePrivacySettings();

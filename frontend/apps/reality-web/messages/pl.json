@@ -107,7 +107,9 @@
     "callback": {
       "title": "Logowanie nie powiodło się",
       "invalidState": "Nieprawidłowy token stanu. Spróbuj zalogować się ponownie.",
-      "returnHome": "Powrót do strony głównej"
+      "returnHome": "Powrót do strony głównej",
+      "loading": "Ładowanie...",
+      "completingLogin": "Kończenie logowania..."
     }
   },
   "common": {
@@ -357,8 +359,10 @@
   },
   "listings": {
     "allProperties": "Wszystkie nieruchomości",
-    "emptyTitle": "Nie znaleziono ofert",
     "emptyDescription": "Spróbuj dostosować filtry lub kryteria wyszukiwania, aby znaleźć więcej nieruchomości.",
+    "emptyTitle": "Nie znaleziono ofert",
+    "errorDescription": "Podczas ładowania nieruchomości wystąpił błąd. Spróbuj ponownie.",
+    "errorTitle": "Nie udało się załadować ofert",
     "filters": "Filtry",
     "gridView": "Widok siatki",
     "listView": "Widok listy",
@@ -368,6 +372,7 @@
     "propertiesForRent": "Nieruchomości do wynajęcia",
     "propertiesForSale": "Nieruchomości na sprzedaż",
     "resultsCount": "Znaleziono {count} ofert",
+    "retry": "Spróbuj ponownie",
     "sortNewest": "Najnowsze",
     "sortOldest": "Najstarsze",
     "sortPriceHigh": "Cena: od najwyższej",
@@ -394,26 +399,39 @@
       "description": "Reality Portal to wiodąca platforma ogłoszeń nieruchomości na Słowacji, w Czechach i nie tylko.",
       "title": "O Reality Portal"
     },
-    "contact": {
-      "description": "W sprawie wsparcia lub zapytań biznesowych prosimy o kontakt pod adresem",
-      "email": "info@rlt.sk",
-      "title": "Kontakt"
-    },
-    "privacy": {
-      "description": "Zobowiązujemy się chronić Twoje dane osobowe zgodnie z RODO i obowiązującymi przepisami. Pełna polityka prywatności zostanie tutaj opublikowana.",
-      "title": "Polityka prywatności"
-    },
-    "terms": {
-      "description": "Korzystając z Reality Portal, zgadzasz się na nasze warunki i postanowienia. Pełne warunki korzystania zostaną tutaj opublikowane.",
-      "title": "Warunki korzystania"
-    },
     "agentProfile": {
+      "about": "O agencie",
       "activeListings": "Aktywne ogłoszenia",
       "contact": "Kontakt",
+      "contactDetails": "Dane kontaktowe",
+      "defaultName": "Agent nieruchomości",
+      "experience": "{count} lat doświadczenia",
       "languages": "Języki",
+      "license": "Licencja: {number}",
+      "loading": "Ładowanie…",
+      "mailtoSubject": "Kontakt przez Reality Portal",
+      "memberSince": "Członek od: {date}",
+      "modalAriaLabel": "Kontakt z agentem",
+      "modalCancel": "Anuluj",
+      "modalClose": "Zamknij",
+      "modalEmailHint": "Wiadomość otworzy się w Twoim kliencie poczty.",
+      "modalNoContact": "Agent nie opublikował obecnie danych kontaktowych.",
+      "modalPhoneIntro": "Z tym agentem możesz skontaktować się telefonicznie:",
+      "modalPlaceholder": "Dzień dobry, jestem zainteresowany Państwa usługami...",
+      "modalSendEmail": "Wyślij e-mail",
+      "modalTitle": "Kontakt z {name}",
+      "noContact": "Agent nie opublikował danych kontaktowych.",
+      "noReviews": "Brak opinii.",
+      "notFoundBody": "Profil tego agenta jest niedostępny.",
+      "notFoundTitle": "Nie znaleziono agenta",
+      "rating": "Ocena",
+      "reviewVerified": "Zweryfikowano",
       "reviews": "Opinie",
+      "sendMessage": "Wyślij wiadomość",
       "specializations": "Specjalizacje",
-      "verified": "Zweryfikowany agent"
+      "totalListings": "Ogłoszenia łącznie",
+      "verified": "Zweryfikowany agent",
+      "views": "Wyświetlenia"
     },
     "careers": {
       "hero": {
@@ -423,6 +441,11 @@
       },
       "title": "Kariera",
       "h1": "Let's build a real estate market that makes sense."
+    },
+    "contact": {
+      "description": "W sprawie wsparcia lub zapytań biznesowych prosimy o kontakt pod adresem",
+      "email": "info@rlt.sk",
+      "title": "Kontakt"
     },
     "cookies": {
       "reopen": "Otwórz ponownie ustawienia cookie",
@@ -463,15 +486,114 @@
       "newsletterTitle": "Newsletter signup"
     },
     "listingEdit": {
+      "title": "Edytuj ogłoszenie",
+      "breadcrumbAccount": "← Moje konto",
+      "breadcrumb": "Edytuj ogłoszenie #{id}",
+      "stepLabel": "Krok {step} z {total}: {stepTitle}",
+      "asideTitle": "Kroki",
+      "back": "← Wstecz",
+      "next": "Dalej →",
       "save": "Zapisz zmiany",
+      "saving": "Zapisywanie…",
+      "loading": "Wczytywanie ogłoszenia…",
+      "loadFailed": "Nie udało się wczytać ogłoszenia.",
+      "backToAccount": "← Powrót do konta",
+      "priceInvalid": "Podaj prawidłową cenę większą niż 0 € (krok 4).",
+      "saveFailed": "Zapis nie powiódł się, spróbuj ponownie.",
       "success": "Ogłoszenie zapisane!",
-      "title": "Edytuj ogłoszenie"
+      "successBody": "Zmiany w ogłoszeniu #{id} zostały pomyślnie zapisane.",
+      "viewListing": "Zobacz ogłoszenie",
+      "moreEdits": "Dalsze zmiany",
+      "steps": {
+        "type": {
+          "title": "Typ i lokalizacja",
+          "description": "Typ nieruchomości i adres"
+        },
+        "details": {
+          "title": "Szczegóły",
+          "description": "Powierzchnia, pokoje, piętro"
+        },
+        "photos": {
+          "title": "Zdjęcia",
+          "description": "Zarządzaj zdjęciami"
+        },
+        "price": {
+          "title": "Cena",
+          "description": "Zaktualizuj cenę ofertową"
+        },
+        "summary": {
+          "title": "Podsumowanie",
+          "description": "Sprawdź i zapisz"
+        }
+      },
+      "fields": {
+        "transactionType": "Typ transakcji",
+        "propertyType": "Typ nieruchomości",
+        "address": "Adres",
+        "addressPlaceholder": "Ulica i numer",
+        "city": "Miasto / Gmina",
+        "cityPlaceholder": "Np. Warszawa",
+        "area": "Powierzchnia (m²)",
+        "areaPlaceholder": "Np. 72",
+        "rooms": "Liczba pokoi",
+        "roomsPlaceholder": "Np. 3",
+        "floor": "Piętro",
+        "floorPlaceholder": "Np. 4",
+        "totalFloors": "Łączna liczba pięter",
+        "totalFloorsPlaceholder": "Np. 8",
+        "yearBuilt": "Rok budowy",
+        "yearBuiltPlaceholder": "Np. 2005",
+        "description": "Opis",
+        "price": "Cena (€)",
+        "priceNegotiable": "Cena do negocjacji",
+        "status": "Status ogłoszenia"
+      },
+      "transactionOptions": {
+        "sale": "Sprzedaż",
+        "rent": "Wynajem"
+      },
+      "propertyOptions": {
+        "apartment": "Mieszkanie",
+        "house": "Dom",
+        "land": "Działka",
+        "commercial": "Komercyjna"
+      },
+      "statusOptions": {
+        "active": "Aktywne",
+        "inactive": "Nieaktywne",
+        "draft": "Szkic"
+      },
+      "photos": {
+        "existing": "Istniejące zdjęcia",
+        "alt": "Zdjęcie",
+        "remove": "Usuń zdjęcie",
+        "addNew": "Dodaj nowe zdjęcia",
+        "addedCount": "+ {count} nowych zdjęć"
+      },
+      "summary": {
+        "title": "Podsumowanie zmian",
+        "type": "Typ",
+        "location": "Lokalizacja",
+        "area": "Powierzchnia",
+        "rooms": "Pokoje",
+        "floor": "Piętro",
+        "year": "Rok",
+        "price": "Cena",
+        "status": "Status",
+        "photos": "Zdjęcia",
+        "negotiable": "(do negocjacji)",
+        "photosValue": "{existing} istniejących + {added} nowych"
+      }
     },
     "priceMap": {
       "clickHint": "Kliknij dzielnicę po szczegółowe statystyki.",
       "subtitle": "Bratysława – przegląd",
       "title": "Mapa cen",
       "h1": "Price map"
+    },
+    "privacy": {
+      "description": "Zobowiązujemy się chronić Twoje dane osobowe zgodnie z RODO i obowiązującymi przepisami. Pełna polityka prywatności zostanie tutaj opublikowana.",
+      "title": "Polityka prywatności"
     },
     "profile": {
       "tabs": {
@@ -480,14 +602,94 @@
         "reviews": "Opinie",
         "settings": "Ustawienia"
       },
-      "title": "Mój profil"
+      "title": "Mój profil",
+      "stats": {
+        "activeListings": "Aktywne ogłoszenia",
+        "totalListings": "Wszystkie ogłoszenia",
+        "reviews": "Opinie",
+        "avgRating": "Śr. ocena"
+      },
+      "status": {
+        "active": "Aktywne",
+        "sold": "Sprzedane",
+        "rented": "Wynajęte",
+        "draft": "Szkic",
+        "paused": "Wstrzymane",
+        "archived": "Zarchiwizowane"
+      },
+      "listings": {
+        "loading": "Ładowanie ogłoszeń…",
+        "error": "Nie udało się załadować ogłoszeń.",
+        "emptyTitle": "Nie masz jeszcze żadnych ogłoszeń",
+        "emptyBody": "Gdy dodasz ogłoszenie, pojawi się tutaj.",
+        "rooms": "{count} pokoje"
+      },
+      "activity": {
+        "emptyTitle": "Aktywność nie jest jeszcze dostępna",
+        "emptyBody": "Przegląd Twojej aktywności będzie dostępny, gdy przygotujemy odpowiedni widok."
+      },
+      "reviews": {
+        "emptyTitle": "Brak opinii",
+        "emptyBody": "Opinie od klientów pojawią się tutaj, gdy je otrzymasz."
+      },
+      "settings": {
+        "description": "Ustawienia profilu znajdziesz w sekcji <account>Moje konto</account>."
+      }
     },
     "report": {
+      "h1": "Zgłoś ogłoszenie",
+      "subtitle": "Pomóż nam utrzymać wiarygodność portalu — powiedz nam, co jest nie tak.",
+      "title": "Zgłoś ogłoszenie",
       "submit": "Wyślij zgłoszenie",
-      "subtitle": "Help us keep the portal trustworthy — tell us what's wrong.",
+      "submitting": "Wysyłanie…",
       "success": "Zgłoszenie wysłane",
-      "title": "Report a listing",
-      "h1": "Report a listing"
+      "problemLegend": "Powód zgłoszenia",
+      "problems": {
+        "fraudulent_listing": {
+          "label": "Podejrzenie oszustwa",
+          "description": "Podejrzane ogłoszenie, prośba o przedpłatę, fałszywa tożsamość agenta"
+        },
+        "price_manipulation": {
+          "label": "Nieprawidłowa cena",
+          "description": "Cena nie odpowiada rzeczywistości lub ma celowo wprowadzać w błąd"
+        },
+        "incorrect_information": {
+          "label": "Fałszywe zdjęcia",
+          "description": "Zdjęcia nie należą do tej nieruchomości"
+        },
+        "duplicate_listing": {
+          "label": "Zduplikowane ogłoszenie",
+          "description": "Ta sama nieruchomość jest ogłaszana wielokrotnie"
+        },
+        "already_sold": {
+          "label": "Sprzedane / niedostępne",
+          "description": "Nieruchomość jest już sprzedana lub wynajęta, a ogłoszenie nie zostało usunięte"
+        },
+        "other": {
+          "label": "Inny powód",
+          "description": "Inny błąd techniczny lub naruszenie zasad platformy"
+        }
+      },
+      "listingRefLabel": "Link do ogłoszenia (URL lub ID)",
+      "listingRefPlaceholder": "np. https://rlt.sk/listings/ba-byt-3i lub #12345",
+      "descriptionLabel": "Opis problemu",
+      "descriptionPlaceholder": "Opisz, dlaczego zgłaszasz to ogłoszenie. Im więcej szczegółów podasz, tym szybciej je sprawdzimy.",
+      "attachmentsLabel": "Załączniki (wkrótce)",
+      "attachmentsComingSoon": "Dodawanie załączników będzie wkrótce dostępne",
+      "attachmentsHint": "Przesyłanie zrzutów ekranu nie jest jeszcze dostępne — opisz dowody w opisie powyżej. Pracujemy nad tym.",
+      "gdpr": {
+        "label": "Wyrażam zgodę na przetwarzanie danych osobowych w celu rozpatrzenia mojego zgłoszenia zgodnie z {privacyLink}.",
+        "privacyLink": "Polityką prywatności"
+      },
+      "successTitle": "Zgłoszenie wysłane",
+      "successBody": "Otrzymaliśmy Twoje zgłoszenie. Nasz zespół rozpatrzy je w ciągu 24 godzin. Dziękujemy za pomoc w utrzymaniu bezpieczeństwa portalu.",
+      "referenceLabel": "Numer referencyjny",
+      "referenceHint": "Podaj go w dalszej komunikacji — pomoże nam szybko odnaleźć Twoje zgłoszenie.",
+      "backToListings": "Powrót do ogłoszeń",
+      "errorNoListing": "Nie udało nam się ustalić, którego ogłoszenia dotyczy zgłoszenie. Otwórz zgłoszenie ze strony szczegółów ogłoszenia lub wklej powyżej link albo ID ogłoszenia.",
+      "errorRateLimit": "Zbyt wiele zgłoszeń z tego urządzenia. Spróbuj ponownie za chwilę.",
+      "errorNotFound": "Nie znaleziono ogłoszenia. Sprawdź link lub ID i spróbuj ponownie.",
+      "errorGeneric": "Nie udało się wysłać zgłoszenia. Spróbuj ponownie."
     },
     "security": {
       "reportCta": "Zgłoś ogłoszenie",
@@ -526,6 +728,8 @@
       "back": "← Back",
       "next": "Next →",
       "publish": "Publish listing",
+      "publishing": "Publishing…",
+      "submitFailed": "Publishing failed, please try again.",
       "submittedTitle": "Your listing has been submitted!",
       "submittedBody": "After review it will be published within 2 hours.",
       "submittedCta": "Add another listing",
@@ -536,6 +740,8 @@
         "addressPlaceholder": "Street and number",
         "city": "City / Town",
         "cityPlaceholder": "e.g. Bratislava",
+        "postalCode": "Postal code",
+        "postalCodePlaceholder": "e.g. 811 01",
         "area": "Area (m²)",
         "areaPlaceholder": "e.g. 65",
         "rooms": "Number of rooms",
@@ -594,6 +800,7 @@
         "required": "Required",
         "addressRequired": "Address is required",
         "cityRequired": "City is required",
+        "postalCodeRequired": "Postal code is required",
         "areaRequired": "Area is required",
         "areaPositive": "Area must be greater than 0",
         "roomsRequired": "Number of rooms is required",
@@ -607,6 +814,10 @@
         "termsRequired": "You must agree to the terms of use to publish",
         "roomsPositive": "Number of rooms must be greater than 0"
       }
+    },
+    "terms": {
+      "description": "Korzystając z Reality Portal, zgadzasz się na nasze warunki i postanowienia. Pełne warunki korzystania zostaną tutaj opublikowane.",
+      "title": "Warunki korzystania"
     },
     "listings": {
       "title": "Wszystkie nieruchomości",
@@ -710,6 +921,12 @@
         "completed": "Zakończone",
         "cancelled": "Anulowane"
       },
+      "type": {
+        "general": "Zapytanie ogólne",
+        "viewing_request": "Prośba o oglądanie",
+        "price_negotiation": "Negocjacja ceny",
+        "availability": "Dostępność"
+      },
       "viewingScheduled": "Oglądanie zaplanowane: {date} o {time}",
       "agentResponse": "Odpowiedź agenta:",
       "cancelConfirm": "Anulować to zapytanie?",
@@ -748,6 +965,19 @@
       "error": "Nie udało się załadować ofert.",
       "empty": "Nie opublikowałeś jeszcze żadnych ofert.",
       "createFirst": "Utwórz swoją pierwszą ofertę"
+    },
+    "agencyProfile": {
+      "loading": "Ładowanie…",
+      "notFound": "Nie znaleziono biura.",
+      "verified": "Zweryfikowane",
+      "about": "O biurze",
+      "team": "Nasz zespół ({count})",
+      "activeListings": "Aktywne oferty ({count})",
+      "noListings": "Brak aktywnych ofert.",
+      "rentSuffix": "/mies",
+      "contact": "Kontakt",
+      "visitWebsite": "Odwiedź stronę",
+      "license": "Licencja: {number}"
     }
   },
   "search": {
@@ -981,6 +1211,7 @@
       "mappingHint": "Dopasuj pola CRM do właściwości oferty",
       "creating": "Tworzenie...",
       "createConnection": "Utwórz połączenie",
+      "createError": "Nie udało się utworzyć połączenia. Spróbuj ponownie.",
       "connectionFailed": "Połączenie nie powiodło się",
       "connectionSuffix": "Połączenie",
       "status": {
@@ -1019,6 +1250,9 @@
       "feedName": "Nazwa kanału (opcjonalnie)",
       "feedNamePlaceholder": "Mój kanał nieruchomości",
       "fetchError": "Nie udało się pobrać kanału. Sprawdź URL i spróbuj ponownie.",
+      "updateError": "Nie udało się zaktualizować kanału. Spróbuj ponownie.",
+      "syncError": "Nie udało się uruchomić synchronizacji kanału. Spróbuj ponownie.",
+      "removeError": "Nie udało się usunąć kanału. Spróbuj ponownie.",
       "format": "Format",
       "itemsFound": "Znalezione pozycje",
       "availableFields": "Dostępne pola",
@@ -1030,6 +1264,7 @@
       "mappingHint": "Dopasuj pola kanału do właściwości oferty",
       "creating": "Tworzenie...",
       "createFeed": "Utwórz kanał",
+      "createError": "Nie udało się utworzyć kanału. Spróbuj ponownie.",
       "defaultName": "Kanał nieruchomości",
       "status": {
         "active": "Aktywny",
@@ -1054,6 +1289,7 @@
       "cancel": "Anuluj",
       "saving": "Zapisywanie...",
       "saveChanges": "Zapisz zmiany",
+      "saveError": "Nie udało się zapisać zmian. Spróbuj ponownie.",
       "status": "Status",
       "enabled": "Włączone",
       "disabled": "Wyłączone",
@@ -1123,5 +1359,17 @@
     "errorAreaNegative": "Powierzchnia nie może być ujemna",
     "errorRoomsInvalid": "Liczba pokoi musi być prawidłową liczbą",
     "errorRoomsNegative": "Liczba pokoi nie może być ujemna"
+  },
+  "realtor": {
+    "errorNetwork": "Błąd sieci. Spróbuj ponownie.",
+    "errorMalformed": "Serwer zwrócił nieoczekiwaną odpowiedź. Spróbuj ponownie.",
+    "errorRequestFailed": "Żądanie nie powiodło się ({status}). Spróbuj ponownie.",
+    "errorLoadProfile": "Nie udało się wczytać profilu.",
+    "errorSaveProfile": "Nie udało się zapisać profilu.",
+    "errorNameRequired": "Imię jest wymagane.",
+    "errorLoadListing": "Nie udało się wczytać ogłoszenia.",
+    "errorSaveListing": "Nie udało się zapisać ogłoszenia.",
+    "errorCreateListing": "Nie udało się utworzyć ogłoszenia. Spróbuj ponownie.",
+    "errorMissingListingId": "Brak identyfikatora ogłoszenia."
   }
 }

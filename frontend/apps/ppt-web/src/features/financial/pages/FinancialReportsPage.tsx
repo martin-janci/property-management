@@ -19,10 +19,10 @@ import type {
 import { useTranslation } from 'react-i18next';
 import { BalanceSheetView, CashFlowView, IncomeStatementView } from '../components';
 
-const TABS: { key: ReportType; label: string }[] = [
-  { key: 'income-statement', label: 'Income Statement' },
-  { key: 'balance-sheet', label: 'Balance Sheet' },
-  { key: 'cash-flow', label: 'Cash Flow' },
+const TABS: { key: ReportType; labelKey: string }[] = [
+  { key: 'income-statement', labelKey: 'financial.reports.tabs.incomeStatement' },
+  { key: 'balance-sheet', labelKey: 'financial.reports.tabs.balanceSheet' },
+  { key: 'cash-flow', labelKey: 'financial.reports.tabs.cashFlow' },
 ];
 
 export interface FinancialReportsPageProps {
@@ -78,10 +78,8 @@ export function FinancialReportsPage({
       {/* Header */}
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h1 className="text-2xl font-bold text-gray-900">Financial Reports</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Income statement, balance sheet, and cash-flow reports.
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('financial.reports.title')}</h1>
+          <p className="mt-1 text-sm text-gray-500">{t('financial.reports.subtitle')}</p>
 
           {/* Tabs */}
           <div className="mt-4 border-b border-gray-200">
@@ -98,7 +96,7 @@ export function FinancialReportsPage({
                   }`}
                   aria-current={activeTab === tab.key ? 'page' : undefined}
                 >
-                  {tab.label}
+                  {t(tab.labelKey)}
                 </button>
               ))}
             </nav>
@@ -111,7 +109,7 @@ export function FinancialReportsPage({
                 <>
                   <div className="flex flex-col">
                     <label htmlFor="report-from" className="text-xs font-medium text-gray-600">
-                      From
+                      {t('financial.reports.from')}
                     </label>
                     <input
                       id="report-from"
@@ -124,7 +122,7 @@ export function FinancialReportsPage({
                   </div>
                   <div className="flex flex-col">
                     <label htmlFor="report-to" className="text-xs font-medium text-gray-600">
-                      To
+                      {t('financial.reports.to')}
                     </label>
                     <input
                       id="report-to"
@@ -139,7 +137,7 @@ export function FinancialReportsPage({
               ) : (
                 <div className="flex flex-col">
                   <label htmlFor="report-as-of" className="text-xs font-medium text-gray-600">
-                    As of
+                    {t('financial.reports.asOf')}
                   </label>
                   <input
                     id="report-as-of"
@@ -153,14 +151,14 @@ export function FinancialReportsPage({
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500">Export:</span>
+              <span className="text-sm text-gray-500">{t('financial.reports.export')}</span>
               <button
                 type="button"
                 onClick={() => onExport('pdf')}
                 disabled={!!exportingFormat}
                 className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {exportingFormat === 'pdf' ? 'Exporting…' : 'PDF'}
+                {exportingFormat === 'pdf' ? t('financial.reports.exporting') : 'PDF'}
               </button>
               <button
                 type="button"
@@ -168,7 +166,7 @@ export function FinancialReportsPage({
                 disabled={!!exportingFormat}
                 className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {exportingFormat === 'xlsx' ? 'Exporting…' : 'Excel'}
+                {exportingFormat === 'xlsx' ? t('financial.reports.exporting') : 'Excel'}
               </button>
             </div>
           </div>

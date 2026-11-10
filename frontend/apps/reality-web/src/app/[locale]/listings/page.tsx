@@ -142,7 +142,7 @@ function ListingsContent() {
 
   const filters = getFiltersFromUrl();
   const currentPage = Number(searchParams.get('page') || 1);
-  const { data, isLoading } = useListings(filters, currentPage);
+  const { data, isLoading, isError, refetch } = useListings(filters, currentPage);
   const toggleFavorite = useToggleFavorite();
 
   const updateUrl = useCallback(
@@ -339,6 +339,10 @@ function ListingsContent() {
                 viewMode={viewMode}
                 onToggleFavorite={handleToggleFavorite}
                 isLoading={isLoading}
+                isError={isError}
+                onRetry={() => {
+                  void refetch();
+                }}
               />
 
               {/* Pagination */}

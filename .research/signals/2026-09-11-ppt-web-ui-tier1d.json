@@ -1,0 +1,51 @@
+{
+  "generated": "2026-09-11T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven (claim buffer starved) 2026-09-11",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed among CLOUD-LANDABLE segments (co-oldest tiebreak).",
+  "selection_detail": "No fresh CHURN_FILES were handed to this demand-driven slice (state.json hotspot_history is stale May-2026 data), so priority-1 churn-alignment did not fire and selection fell to priority-2 oldest-unreviewed. state.json review_cursor is STALE (last_run 2026-09-01; it still shows reality-web/ppt-web-core=2026-08-29) and is NOT the source of truth for the tier1d generator (established convention, see 2026-09-10-reality-web-tier1d.json) — real per-segment last-reviewed dates were reconstructed from .research/signals/*.json filenames: api-handlers=2026-09-09 (also re-swept earlier TODAY 2026-09-11, 0 findings), api-core=2026-09-09, ppt-web-ui=2026-09-09, mobile-rn=2026-09-10, reality-server=2026-09-10, ppt-web-core=2026-09-10, reality-web=2026-09-10 (swept yesterday), mobile-native-kmp=2026-09-10. The stale cursor made reality-web LOOK oldest (2026-08-29) and it was the initial candidate, but the corpus shows reality-web was actually reviewed YESTERDAY and its realtor/account i18n gaps + listings NaN-coercion are already-captured duplicates (enumerated in the 2026-09-10 run's dedup note), so it was rejected. Cloud-landability bias per this dispatcher run: mobile-native-kmp is excluded (AGP egress #2652, not landable) and mobile-rn is de-prioritized (RN jest egress #2951, and outside the task's preferred reality-web/ppt-web frontend set). Among preferred cloud-landable segments the co-oldest at 2026-09-09 are api-core (Rust) and ppt-web-ui (frontend TS); ppt-web-ui was chosen because it is UNAMBIGUOUSLY cloud-buildable/landable under every convention (pure Next-independent React/Vite TS), sidestepping the api-server backend-build egress dispute (#2949) entirely and best serving the task's goal of findings actionable in THIS environment. Saturation check PASSED: backlog.json holds 0 OPEN code-review-finding rows for ppt-web-ui (all 7 prior ppt-web-ui rows are status=done); skill's >=3-open skip rule not triggered.",
+  "experts_used": ["frontend"],
+  "static_only": true,
+  "landable_in_cloud": true,
+  "landability_note": "Both findings are frontend-only ppt-web (React/Vite TS) changes in feature pages/components, fully cloud-landable and verifiable in this runner. No backend, no mobile-native, no manifest/version changes (so gh dependabot/PR-history checks were not required).",
+  "dedup_note": "ppt-web-ui is heavily mined (110+ prior finding ids enumerated from .research/signals/*ppt-web-ui*.json). Review was deliberately redirected to feature areas with ZERO prior findings by diffing the mined basename/feature set against the live feature tree (frontend/apps/ppt-web/src/features/*). Unmined features swept this pass: faults, leases, messaging, outages, news, my-unit, insurance, rentals, iot, neighbors, sentiment, predictive-maintenance. Candidates DISCARDED to avoid low value / duplication / false positives: (a) messaging useSendMessageWithAttachments has no onError but its route consumer (routes/groups/messaging.tsx:175-185) already wraps mutateAsync in try/catch + error toast — send path is handled, NOT a finding; (b) messaging useDeleteMessage is fire-and-forget with no error surfacing, but the swallow is at the route call site (routes/groups/messaging.tsx:207 — ppt-web-core scope), not inside the messaging feature, so it is out of this segment; (c) news/pages/ArticleDetailPage.tsx:331 dangerouslySetInnerHTML is SAFE — content is DOMPurify.sanitize()'d with an explicit tag allowlist; (d) leases/pages/TemplatesPage.tsx Number() coercion of default rent/deposit/duration is browser-mitigated (all three inputs are type=\"number\", empty-string guarded to undefined), so the NaN risk is largely moot — dropped as too weak; (e) outages/pages/OutagesPage.tsx has 0 i18n calls but renders NO own user-facing strings (it only composes <OutageList>/filter children), NOT a gap.",
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-editfaultpage-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-11 ppt-web-ui faults)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/faults/pages/EditFaultPage.tsx"
+      ],
+      "evidence": [
+        "EditFaultPage.tsx renders three hardcoded English strings with NO i18n on a react-i18next multi-locale app: line 35 '← Back to Fault' (button), line 37 <h1>Edit Fault</h1>, lines 38-40 'Update the fault details. Note: editing is only available before the fault is triaged.' The file contains ZERO useTranslation()/t() calls (grep count 0).",
+        "This is a MISSED page, not an accepted codebase pattern: every sibling in the same faults feature is localized — CreateFaultPage.tsx (6 t() calls), FaultDetailPage.tsx (79), FaultReportsPage.tsx (28), FaultsPage.tsx (3), and the shared child FaultForm.tsx (41). EditFaultPage was the only faults page overlooked during localization, so non-English (sk/cs/de) managers editing a fault see three English-only strings in an otherwise translated flow (Epic 4 / UC-03.1).",
+        "Impact: LOW (i18n gap on a user-facing manager page). Confidence MEDIUM: the hardcoded strings are directly in the unconditional render and the zero-t() count is confirmed statically; not runtime-reproduced and route-reachability from the fault-detail 'edit' action assumed but not traced. Fresh vs backlog: no prior faults-* finding exists in the ppt-web-ui corpus (faults feature was entirely unmined before this pass). Fix (cloud-landable, ppt-web frontend): wrap the three strings in t('...') with keys under the faults namespace, mirroring CreateFaultPage/FaultDetailPage."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-signature-modal-raw-err",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-11 ppt-web-ui leases)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/leases/components/RequestSignatureModal.tsx"
+      ],
+      "evidence": [
+        "RequestSignatureModal.tsx:214-221 — the e-sign request error alert renders the RAW error message for any Error instance: `{createRequest.error instanceof Error ? createRequest.error.message : t('common.unknownError', 'An error occurred. Please try again.')}`. Only the non-Error branch is localized; the common case (an ApiError from the createRequest mutation extends Error) shows its raw, untranslated .message (e.g. 'Request failed with status 400' / a server-supplied English string) directly to the user on a multi-locale (sk/cs/de/en) app.",
+        "The error IS surfaced (role='alert', styled), so this is not a silent-failure — it is a localization/UX gap: sk/cs/de users get an English/technical error string for a common failure (e.g. requesting a signature on an ineligible lease) instead of a translated message. This mirrors an established recurring class in the ppt-web-ui corpus (code-review-ppt-web-ui-emergency-dir-raw-err-message, code-review-ppt-web-ui-errorboundary-raw-message-prod) but is a distinct, previously-unmined instance in the leases feature (UC e-sign / lease signature flow).",
+        "Impact: LOW (untranslated/technical error text on a user-facing modal). Confidence MEDIUM: the raw-message branch is confirmed statically; the exact server message contents were not runtime-inspected. Fix (cloud-landable, ppt-web frontend): map known mutation error statuses to translated keys (t('leases.esign.errors.*')) and fall back to t('common.unknownError') rather than error.message, or run error.message through an i18n message-resolver."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "segment": "ppt-web-core",
+  "date": "2026-09-18",
+  "selection_reason": "oldest-unreviewed",
+  "selection_detail": "Tier 1d demand-driven run; no CHURN_FILES passed, so priority-1 (churn-aligned) does not apply. REVIEW_CURSOR oldest date is a tie at 2026-08-29 between ppt-web-core and reality-web. reality-web was the segment reviewed on the immediately-prior run (2026-09-17 signal present, which explicitly saturation-skipped ppt-web-core that day), so this run takes the other tied-oldest segment, ppt-web-core. Both are cloud-LANDABLE frontend segments (React SPA @ppt/web), preferred over mobile-native (#2652 AGP egress) and api-server/backend (#2949 utoipa-swagger-ui egress) per the dispatcher's cloud-landability guidance. Backlog saturation check: 0 open code-review-finding items for ppt-web-core in backlog.json (19 total, all done/dropped), so no backlog saturation-skip. Scope resolved to frontend/apps/ppt-web/src excluding pages/ and components/ (hooks/, lib/, contexts/, routes/, features/**/hooks + features/**/api); the skill's literal frontend/ppt-web/src/ predates the apps/ workspace layout. Static analysis only — no compile/test executed. Core lib (api.ts, errorHandler.ts, websocket.ts) and contexts/AuthContext.tsx were read and found mature/heavily-fortified; findings concentrate in the less-reviewed feature-hook layer. No manifest/dependency-version findings emitted, so no gh dependabot/PR-history checks were needed.",
+  "experts_used": ["frontend"],
+  "landable_in_cloud": true,
+  "landability_note": "All three findings are frontend-only fixes in frontend/apps/ppt-web/src/features/**/hooks and are verifiable in the cloud runner via `pnpm --filter @ppt/web typecheck` (+ existing Vitest suites). No backend, no native toolchain, no egress-blocked dependency involved.",
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-ocr-fetch-no-auth",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.ts:26-51,54-72 — the OCR hooks call the app's OWN api-server endpoints (`POST /api/v1/ai/ocr/meter-reading` :45 and `POST /api/v1/ai/ocr/correction` :59) through a bare `ocrFetch()` (:26 `const response = await fetch(url, options)`) that never attaches an Authorization header. The image request (:44-49) passes only a FormData body with no `headers` at all; the correction request (:59-71) sets only `Content-Type: application/json`. ppt-web authenticates with a localStorage Bearer JWT injected by the axios interceptor / setTokenProvider (contexts/AuthContext.tsx:361-390, lib/api.ts:217-229) — there is no cookie session and no global fetch monkey-patch (confirmed: no window.fetch/globalThis.fetch override in src). So both OCR calls go out UNAUTHENTICATED and will 401, and they also omit the `X-Tenant-ID` tenant header, so even if a request landed it would not be org-scoped. Net effect: Epic-128 OCR meter-reading preview and its correction-feedback training loop are broken against a real backend.",
+        "This is inconsistent with every sibling raw-fetch-to-own-API caller in this app, which all attach the Bearer token (and tenant header where relevant): features/notification-analytics/hooks/useNotificationAnalytics.ts:35-41 (`headers.set('Authorization', 'Bearer '+token)`) and features/accounting/api/paymentMatching.ts:64-73 (`headers.Authorization = 'Bearer '+token; headers['X-Tenant-ID'] = org`). Landable frontend-only remedy: route ocrFetch through getApiClient() (lib/api.ts — gains Bearer injection, 401 refresh-and-replay, X-Tenant-ID, and ErrorResponse→ApiError transform for free), or, if the raw multipart fetch must stay, attach `Authorization: Bearer ${getToken()}` and `X-Tenant-ID` exactly as paymentMatching.uploadStatement does. Verifiable via `pnpm --filter @ppt/web typecheck` + a hook test asserting the outbound request carries the auth header.",
+        "The sentiment (features/sentiment/hooks/useSentiment.ts:17-21) and predictive-maintenance (features/predictive-maintenance/hooks/usePredictiveMaintenance.ts:8-11) hooks carry explicit doc comments stating that routing through getApiClient() is what applies Bearer injection + 401 handling + retry — useOcrMeterReading is the lone hook that ignores that convention and uses a bare fetch."
+      ],
+      "files": ["frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.ts"],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-needing-maint-key",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts:59-70 — `useNeedingMaintenance(daysAhead = 30)` feeds `daysAhead` into the request URL (:64 `...?days_ahead=${daysAhead}`) but its TanStack Query key is the constant `predictiveKeys.needingMaintenance()` (:61 → :18 `[...all, 'needing-maintenance']`), which does NOT include `daysAhead`. So two callers requesting different horizons (e.g. 30 vs 90 days) collide on one cache entry: the second caller is served the first caller's cached data, and changing the `daysAhead` prop on a mounted component will not trigger a refetch. This contradicts the other two hooks in the same file, which correctly thread their query object into the key: useEquipmentList (:30-31 `predictiveKeys.equipment(query)`) and useMaintenancePredictions (:47-48 `predictiveKeys.predictions(query)`).",
+        "Landable frontend-only remedy: parameterize the key — change predictiveKeys.needingMaintenance to `(daysAhead: number) => [...all, 'needing-maintenance', daysAhead]` and pass `daysAhead` at the call site (:61). Verifiable via `pnpm --filter @ppt/web typecheck` and a Vitest asserting distinct cache entries per daysAhead."
+      ],
+      "files": ["frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts"],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-iot-ws-no-backoff",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts:26,84-95 — the IoT sensor WebSocket reconnect loop uses a FIXED 5s interval (`WS_RECONNECT_MS = 5_000` :26) with NO exponential backoff, NO jitter, and NO maximum-attempt cap: `ws.onerror` closes the socket (:84-86), `ws.onclose` unconditionally re-arms `setTimeout(connect, WS_RECONNECT_MS)` (:88-95), and connect() re-reads getToken() each cycle. On a persistent outage — server down, Redis unconfigured, or an expired/revoked token repeatedly rejected at the WS upgrade before AuthContext refreshes — the client hammers `/api/v1/iot/sensors/ws` forever every 5s across every mounted telemetry chart (thundering herd, server-log spam, needless battery/CPU/socket churn).",
+        "The app already has the correct pattern in lib/websocket.ts:600-637 (WebSocketService.scheduleReconnect): exponential backoff `min(minDelay * 2**attempts, maxDelay)` with `[0.5,1.0)` jitter and a hard `maxReconnectAttempts` cap that flips shouldReconnect=false and emits `connection:max-retries-exceeded`. Landable frontend-only remedy: give useIotWebSocket the same capped backoff+jitter (track an attempt counter in a ref, compute delay like scheduleReconnect, stop after N attempts). Verifiable via `pnpm --filter @ppt/web typecheck` + a fake-timer Vitest asserting increasing delays and a cap."
+      ],
+      "files": ["frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts"],
+      "expert": "frontend"
+    }
+  ]
+}

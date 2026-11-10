@@ -1,0 +1,34 @@
+{
+  "generated": "2026-09-26T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven generator (claim buffer starved of cloud-landable work: landable backlog all in-flight or infra-blocked #2966/#2951/#2652) 2026-09-26",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "OLDEST-UNREVIEWED per the deterministic cursor in .research/state.json review_cursor, filtered for freshness against today's signal corpus and de-saturated against backlog.json. review_cursor: {api-handlers:2026-08-31, api-core:2026-09-01, reality-server:2026-08-31, ppt-web-ui:2026-09-06, ppt-web-core:2026-08-29, reality-web:2026-08-29, mobile-rn:2026-09-09, mobile-native-kmp:2026-09-10}. The two absolute-oldest tie at 2026-08-29: ppt-web-core was ALREADY reviewed earlier today (signals/2026-09-26-ppt-web-core-tier1d.json exists; also exceptionally over-mined 09-20/09-23/09-24/09-25) so it is skipped to keep findings FRESH; reality-web (also 2026-08-29) is SATURATION-SKIPPED (3 open code-review-finding items in backlog.json: reality-web-import-create-mutation-silent-fail, reality-web-feedcard-mutation-silent-fail, reality-web-syncschedule-save-silent-fail -> >=3 open, no value adding more). Next oldest tie at 2026-08-31: api-handlers (backend, cloud-INFRA-BLOCKED per task #2966/#2951/#2652) and reality-server (cloud-LANDABLE). Task biases toward cloud-landable => reality-server selected. Scope reviewed: routes/ (favorites, saved_searches, agent_reviews, articles, agencies, realtors, portal_listings, listings, inquiries, reports, imports, agency_imports, users, sso), extractors/auth.rs, services/search_alert_drainer.rs, state.rs, util/url_validator.rs.",
+  "experts_used": ["rust", "security"],
+  "findings_count": 1,
+  "static_only": true,
+  "cloud_landable": true,
+  "note": "reality-server is exceptionally clean and heavily security-audited (H3/H6/H7 round-9 audit annotations throughout); prior reality-server review (09-24) filed 0 findings and this pass confirms that posture. VERIFIED-CLEAN this pass (no finding filed): all non-test unwrap()/expect() are either guarded by a preceding is_empty/length check (handlers/inquiries/mod.rs:274 is_valid_phone), guaranteed by the matching find() predicate (extractors/auth.rs:63 portal_session strip_prefix), OS-rng-failure fail-fast (handlers/users/mod.rs:558, routes/sso.rs:708), startup fail-fast (state.rs:81-106 JWT_SECRET config panics, state.rs:760 HTTP client build), or in #[cfg(test)]. SQL user-scoping is correct (favorites.rs threads principal.user_id into every repo call incl. mark_favorite_alert_read(alert_id, user_id)); SSO session cookie is exemplary (build_portal_session_cookie -> HttpOnly; Secure; SameSite=Strict; Path=/api/v1/sso; char-injection guard; no token values logged); pagination is uniformly clamped with a regression test (listings.rs clamp_pagination 1..=100 #953; agent_reviews/articles/agencies/portal_listings/saved_searches/realtors all .clamp(...) + util::clamp_offset); submission-time SSRF guard validate_fetch_url is applied to feed_url in agency_imports.rs (DNS-rebinding re-check at fetch time is already DOCUMENTED as a known worker follow-up, so not net-new); profile_image_url IS validated in users.rs update_me:357 and report attachment URLs ARE validated in reports.rs submit_report:219 (no defined-but-unapplied validator, no stored-XSS gap); search_alert_drainer background loop floors the poll interval to avoid the tokio interval zero-period panic and logs+continues on every per-alert error. One NET-NEW finding below.",
+  "signals": [
+    {
+      "id": "code-review-reality-server-dup-url-validator",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 reality-server URL-validation surface)",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/reports.rs",
+        "backend/servers/reality-server/src/routes/users.rs",
+        "backend/servers/reality-server/src/util/url_validator.rs"
+      ],
+      "evidence": [
+        "fn validate_image_or_link_url is duplicated VERBATIM in two public-endpoint route modules: routes/reports.rs:38 (guards report attachment URLs at submit_report:219) and routes/users.rs:28 (guards profile_image_url at update_me:357). The two copies are byte-identical apart from the length-cap constant name (reports.rs MAX_URL_LEN=2048 vs users.rs MAX_PROFILE_URL_LEN=2048 — same value): both parse with url::Url::parse and allow only http/https schemes to block javascript:/data:/file: stored-XSS payloads that the frontend later renders in <img src=>/<a href=>.",
+        "Both copies carry a now-STALE comment justifying the inline duplication: reports.rs:35-37 and users.rs:23-25 each say 'Inlined locally ... once the auth-hardening branch lands a shared `url_validator` module this should be swapped for the import.' That shared module ALREADY EXISTS on the reviewed tree: backend/servers/reality-server/src/util/url_validator.rs defines pub fn validate_fetch_url (util/mod.rs:7 re-exports it) and it is already imported and used by routes/agency_imports.rs:7. So the premise of the 'once it lands' TODO is satisfied, yet the two inline copies were never consolidated.",
+        "Impact (maintainability with a security-adjacent edge, hence low/+1): the reality-server public/anonymous URL-acceptance policy is now defined in THREE independent places with two different intents — util::validate_fetch_url (scheme + private-IP/SSRF + length, for server-fetched feed URLs) and two copies of validate_image_or_link_url (scheme + length, for frontend-rendered URLs). A future hardening of the frontend-rendered policy (e.g. blocking a newly-dangerous scheme, tightening the length cap, or adding host allow-listing) must be applied to both inline copies in lockstep; a change to only one silently drifts the report-attachment and profile-image code paths apart on an XSS-defense surface. There is NO active bug today — update_me and submit_report both correctly invoke their local validator — this is a consolidation/DRY finding.",
+        "Fix (low-risk): promote a single validate_display_url (scheme + length, distinct from the SSRF-oriented validate_fetch_url) into util/url_validator.rs beside the existing helper, replace the two inline copies with a shared import, and delete the stale 'once it lands on main' comments. NET-NEW: not covered by any prior reality-server signal (09-24 filed 0 findings) and orthogonal to the documented DNS-rebinding fetch-time follow-up. Confidence medium: the verbatim duplication, the stale comment, and the already-present shared module are objectively confirmed by static read; the drift risk is latent (no current defect)."
+      ]
+    }
+  ]
+}

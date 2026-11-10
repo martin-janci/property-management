@@ -37,3 +37,12 @@ Note: a `ppt/report-fault` screen-map already exists (mobile-oriented). This stu
 ## Agent Log
 - 2026-05-18 — agent: created stub for unmapped route.
 - 2026-06-02 — agent (gap-sweep): wired CreateFaultPageRoute to `useCreateFault` + `useBuildings` in App.tsx (was a no-op toast). Maps FaultFormData→CreateFaultRequest. apiStatus stub→partial — photo upload (File[]→useAddAttachment) still TODO.
+
+## Agent Log
+
+<!-- newest entries on top -->
+
+- 2026-11-09 — agent: gap-audit-r7 — photo picker re-enabled; photos are attached after create via the presigned flow, failures reported in a warning toast.
+
+- 2026-11-05 — agent: screen-map-drift-pr-3244-ppt — reconcile i18n drift from PR #3244. `CreateFaultPage` moved hardcoded English labels/placeholders/validation copy into react-i18next (`faults.*`) across all 6 locales. i18n only — no route/component/endpoint/status change.
+- 2026-11-04 — agent: unit dropdown filled from GET /buildings/{id}/units for the selected building; photo-first picker disabled (attachments endpoint needs an already-stored object, no fault presign flow) so photos are no longer silently dropped

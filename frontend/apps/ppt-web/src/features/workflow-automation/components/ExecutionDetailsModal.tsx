@@ -16,37 +16,37 @@ interface ExecutionDetailsModalProps {
 
 const statusConfig: Record<
   string,
-  { color: string; bgColor: string; icon: string; label: string }
+  { color: string; bgColor: string; icon: string; labelKey: string }
 > = {
   pending: {
     color: 'text-gray-700',
     bgColor: 'bg-gray-100',
     icon: '⏳',
-    label: 'Pending',
+    labelKey: 'automation.execution.statusPending',
   },
   running: {
     color: 'text-blue-700',
     bgColor: 'bg-blue-100',
     icon: '🔄',
-    label: 'Running',
+    labelKey: 'automation.execution.statusRunning',
   },
   completed: {
     color: 'text-green-700',
     bgColor: 'bg-green-100',
     icon: '✅',
-    label: 'Completed',
+    labelKey: 'automation.execution.statusCompleted',
   },
   failed: {
     color: 'text-red-700',
     bgColor: 'bg-red-100',
     icon: '❌',
-    label: 'Failed',
+    labelKey: 'automation.execution.statusFailed',
   },
   cancelled: {
     color: 'text-yellow-700',
     bgColor: 'bg-yellow-100',
     icon: '⚠️',
-    label: 'Cancelled',
+    labelKey: 'automation.execution.statusCancelled',
   },
 };
 
@@ -74,11 +74,11 @@ export function ExecutionDetailsModal({ log, onClose, onRetry }: ExecutionDetail
                   <span
                     className={`px-2 py-0.5 text-xs font-medium rounded-full ${status.bgColor} ${status.color}`}
                   >
-                    {status.label}
+                    {t(status.labelKey)}
                   </span>
                 </div>
                 <p className="text-sm text-gray-500 mt-1">
-                  Execution ID:{' '}
+                  {t('automation.execution.executionId')}{' '}
                   <code className="font-mono text-xs bg-gray-100 px-1 rounded">{log.id}</code>
                 </p>
               </div>
@@ -112,14 +112,18 @@ export function ExecutionDetailsModal({ log, onClose, onRetry }: ExecutionDetail
           {/* Timing Information */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-gray-50 rounded-lg p-3">
-              <p className="text-xs text-gray-500 uppercase font-medium">Started</p>
+              <p className="text-xs text-gray-500 uppercase font-medium">
+                {t('automation.execution.started')}
+              </p>
               <p className="text-sm font-medium text-gray-900 mt-1">
                 {new Date(log.startedAt).toLocaleString()}
               </p>
             </div>
             {log.completedAt && (
               <div className="bg-gray-50 rounded-lg p-3">
-                <p className="text-xs text-gray-500 uppercase font-medium">Completed</p>
+                <p className="text-xs text-gray-500 uppercase font-medium">
+                  {t('automation.execution.completed')}
+                </p>
                 <p className="text-sm font-medium text-gray-900 mt-1">
                   {new Date(log.completedAt).toLocaleString()}
                 </p>
@@ -127,7 +131,9 @@ export function ExecutionDetailsModal({ log, onClose, onRetry }: ExecutionDetail
             )}
             {log.duration !== undefined && (
               <div className="bg-gray-50 rounded-lg p-3">
-                <p className="text-xs text-gray-500 uppercase font-medium">Duration</p>
+                <p className="text-xs text-gray-500 uppercase font-medium">
+                  {t('automation.execution.duration')}
+                </p>
                 <p className="text-sm font-medium text-gray-900 mt-1">
                   {formatDuration(log.duration)}
                 </p>
@@ -135,7 +141,9 @@ export function ExecutionDetailsModal({ log, onClose, onRetry }: ExecutionDetail
             )}
             {log.triggerType && (
               <div className="bg-gray-50 rounded-lg p-3">
-                <p className="text-xs text-gray-500 uppercase font-medium">Trigger</p>
+                <p className="text-xs text-gray-500 uppercase font-medium">
+                  {t('automation.execution.triggerCol')}
+                </p>
                 <p className="text-sm font-medium text-gray-900 mt-1 capitalize">
                   {log.triggerType.replace('_', ' ')}
                 </p>
@@ -161,7 +169,7 @@ export function ExecutionDetailsModal({ log, onClose, onRetry }: ExecutionDetail
                     d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
                   />
                 </svg>
-                Error
+                {t('automation.execution.error')}
               </h3>
               <pre className="text-xs text-red-700 font-mono whitespace-pre-wrap overflow-x-auto">
                 {log.errorMessage}
@@ -169,7 +177,7 @@ export function ExecutionDetailsModal({ log, onClose, onRetry }: ExecutionDetail
               {log.errorStack && (
                 <details className="mt-2">
                   <summary className="text-xs text-red-600 cursor-pointer hover:underline">
-                    Show stack trace
+                    {t('automation.execution.showStackTrace')}
                   </summary>
                   <pre className="mt-2 text-xs text-red-600 font-mono whitespace-pre-wrap overflow-x-auto">
                     {log.errorStack}
@@ -182,7 +190,9 @@ export function ExecutionDetailsModal({ log, onClose, onRetry }: ExecutionDetail
           {/* Action Results */}
           {log.actionResults && log.actionResults.length > 0 && (
             <div>
-              <h3 className="text-sm font-medium text-gray-900 mb-3">Action Results</h3>
+              <h3 className="text-sm font-medium text-gray-900 mb-3">
+                {t('automation.execution.actionResults')}
+              </h3>
               <div className="space-y-2">
                 {log.actionResults.map((result, index) => {
                   const actionStatus = statusConfig[result.status] ?? statusConfig.pending;
@@ -202,7 +212,7 @@ export function ExecutionDetailsModal({ log, onClose, onRetry }: ExecutionDetail
                           <span
                             className={`px-1.5 py-0.5 text-xs font-medium rounded ${actionStatus.bgColor} ${actionStatus.color}`}
                           >
-                            {actionStatus.label}
+                            {t(actionStatus.labelKey)}
                           </span>
                           {result.duration !== undefined && (
                             <span className="text-xs text-gray-400">
@@ -233,7 +243,9 @@ export function ExecutionDetailsModal({ log, onClose, onRetry }: ExecutionDetail
           {/* Trigger Context */}
           {log.triggerContext && (
             <div>
-              <h3 className="text-sm font-medium text-gray-900 mb-3">Trigger Context</h3>
+              <h3 className="text-sm font-medium text-gray-900 mb-3">
+                {t('automation.execution.triggerContext')}
+              </h3>
               <pre className="text-xs text-gray-700 font-mono bg-gray-50 p-4 rounded-lg overflow-x-auto">
                 {JSON.stringify(log.triggerContext, null, 2)}
               </pre>
@@ -264,7 +276,7 @@ export function ExecutionDetailsModal({ log, onClose, onRetry }: ExecutionDetail
                     d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                   />
                 </svg>
-                Retry Execution
+                {t('automation.execution.retryExecution')}
               </button>
             )}
           </div>
@@ -273,7 +285,7 @@ export function ExecutionDetailsModal({ log, onClose, onRetry }: ExecutionDetail
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
           >
-            Close
+            {t('automation.execution.close')}
           </button>
         </div>
       </div>

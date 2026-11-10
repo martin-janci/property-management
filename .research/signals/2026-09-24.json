@@ -1,0 +1,128 @@
+{
+  "date": "2026-09-24",
+  "signals": [],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — allowlist did not fire",
+  "notes": [
+    "Quiet incremental run (6h after 2026-09-23T20:34Z). 0 merged PRs, 0 issues, 0 open-PR updates, 0 application-code commits (7 dev commits are all .research/ chore).",
+    "Phase 1.5 skipped: no application-code churn since last run — dispatcher Tier-1d cycles cover the window (same call as 2026-09-23).",
+    "Phase 1.6 skipped: same reason.",
+    "backlog.md + IDEAS_TRIAGE.md regenerated from backlog.json; picked up 3 dispatcher-added rows (2026-09-21) and 1 status flip (webhook.rs open→dropped, from yesterday's routine)."
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md; head -1 matches # <today>",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare staged state.json vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] | length == unique | length",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no cumulative-type re-emit with score_delta != 0",
+      "observed": "true (0 signals emitted)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq no item.score > 8",
+      "observed": "true",
+      "expected": "true",
+      "remediation": "decay check no-op — 0 open items older than 14d this run"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plans, headings, metadata",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep for secrets in staged diff excluding baseline docs",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regenerate backlog.md from backlog.json; diff -q",
+      "observed": "identical",
+      "expected": "identical",
+      "remediation": "regenerated view repaired 3 missing rows + 1 status flip left in place by prior runs"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "cross-check phases-that-failed vs unadvanced cursors",
+      "observed": "no phases failed",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every HEAD plans/<slug>.md still present in plans/ or plans/_archive/",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "count files in plans/_archive/; now>=HEAD",
+      "observed": "now=9, HEAD=9",
+      "expected": "now>=HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regenerate IDEAS_TRIAGE.md from backlog.json triage rows; diff -q",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap + idempotency + kill switch",
+      "observed": "0 actions this run",
+      "expected": "cap respected"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "jq -e .items on action-list.json + risks.json; project-state.md non-empty; pm_cursor.next_index in [0,7]",
+      "observed": "all ok; pm_cursor unchanged (Phase 1.6 skipped) — GC7 clause is a no-op",
+      "expected": "all pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep for literal telegram token in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

@@ -48,8 +48,22 @@ use uuid::Uuid;
 // platform-level admin roles. `TechnicalManager` is intentionally excluded to
 // preserve the pre-conversion authorization surface.
 
+/// Standard `403` body for a manager-gated emergency action.
+pub(super) fn manager_required_response() -> axum::response::Response {
+    use axum::response::IntoResponse;
+    (
+        axum::http::StatusCode::FORBIDDEN,
+        axum::Json(common::ErrorResponse::new(
+            "FORBIDDEN",
+            "Manager role required for this action",
+        )),
+    )
+        .into_response()
+}
+
 /// True if `role` may perform manager-gated emergency actions (broadcast +
-/// incident create/acknowledge — issue #827).
+/// incident lifecycle, protocols, contacts, drills and the acknowledgment
+/// roster — issue #827 / audit4).
 pub(super) fn is_emergency_manager(role: TenantRole) -> bool {
     matches!(
         role,

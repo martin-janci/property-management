@@ -13,6 +13,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { AccountingInvoiceManagementPage } from './AccountingInvoiceManagementPage';
 
 const invoicesApiList = vi.fn();
@@ -28,7 +29,10 @@ vi.mock('@ppt/api-client', () => ({
 }));
 
 const mockShowToast = vi.fn();
-vi.mock('../../../components', () => ({
+// Keep the real ConfirmationDialog (the delete flow now routes through it) and
+// only stub useToast so the error-surfacing assertions can observe the call.
+vi.mock('../../../components', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../components')>()),
   useToast: () => ({ showToast: mockShowToast }),
 }));
 
@@ -51,7 +55,9 @@ function renderPage(): ReactElement {
   });
   return (
     <QueryClientProvider client={queryClient}>
-      <AccountingInvoiceManagementPage />
+      <MemoryRouter>
+        <AccountingInvoiceManagementPage />
+      </MemoryRouter>
     </QueryClientProvider>
   );
 }
@@ -67,27 +73,28 @@ describe('AccountingInvoiceManagementPage — error surfacing', () => {
 
   it('shows an error toast when deleting an invoice fails', async () => {
     invoicesApiDelete.mockRejectedValue(new Error('Delete exploded'));
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
-    try {
-      render(renderPage());
+    render(renderPage());
 
-      // Wait for the list to render the invoice row, then click its delete icon.
-      await screen.findByText('INV-001');
-      const list = screen.getByRole('list');
-      await userEvent.click(within(list).getByRole('button'));
+    // Wait for the list to render the invoice row, then click its delete icon.
+    await screen.findByText('INV-001');
+    // The invoice list is the <ul> that holds the row (the sub-nav is a list too).
+    const list = screen.getByText('INV-001').closest('ul') as HTMLElement;
+    await userEvent.click(within(list).getByRole('button'));
 
-      await waitFor(() =>
-        expect(mockShowToast).toHaveBeenCalledWith(
-          expect.objectContaining({
-            type: 'error',
-            title: 'Failed to delete invoice',
-            message: 'Delete exploded',
-          })
-        )
-      );
-    } finally {
-      confirmSpy.mockRestore();
-    }
+    // The native confirm() is gone — a ConfirmationDialog opens instead. Confirm
+    // the deletion via its danger button to trigger the mutation.
+    const dialog = await screen.findByRole('alertdialog');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
+
+    await waitFor(() =>
+      expect(mockShowToast).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'error',
+          title: 'Failed to delete invoice',
+          message: 'Delete exploded',
+        })
+      )
+    );
   });
 
   it('shows an error toast when creating an invoice fails', async () => {

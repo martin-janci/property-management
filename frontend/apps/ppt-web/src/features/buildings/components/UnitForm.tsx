@@ -35,19 +35,21 @@ interface UnitFormProps {
   onClose: () => void;
 }
 
-export const UNIT_TYPE_OPTIONS: { value: UnitType; label: string }[] = [
-  { value: 'apartment', label: 'Apartment' },
-  { value: 'commercial', label: 'Commercial' },
-  { value: 'parking', label: 'Parking' },
-  { value: 'storage', label: 'Storage' },
-  { value: 'other', label: 'Other' },
+/** Unit types in display order (labels: `buildings.unitType.<value>`). */
+export const UNIT_TYPE_OPTIONS: UnitType[] = [
+  'apartment',
+  'commercial',
+  'parking',
+  'storage',
+  'other',
 ];
 
-export const OCCUPANCY_OPTIONS: { value: UnitOccupancyStatus; label: string }[] = [
-  { value: 'unknown', label: 'Unknown' },
-  { value: 'owner_occupied', label: 'Owner occupied' },
-  { value: 'rented', label: 'Rented' },
-  { value: 'vacant', label: 'Vacant' },
+/** Occupancy statuses in display order (labels: `buildings.occupancy.<value>`). */
+export const OCCUPANCY_OPTIONS: UnitOccupancyStatus[] = [
+  'unknown',
+  'owner_occupied',
+  'rented',
+  'vacant',
 ];
 
 const inputClass =
@@ -84,19 +86,19 @@ export function UnitForm({
   const roomsNum = rooms.trim() === '' ? null : Number(rooms);
 
   const errors: Record<string, string> = {};
-  if (!trimmedDesignation) errors.designation = 'Designation is required.';
+  if (!trimmedDesignation) errors.designation = t('buildings.unitForm.errors.designationRequired');
   else if (trimmedDesignation.length > 50)
-    errors.designation = 'Designation must be 50 characters or fewer.';
+    errors.designation = t('buildings.unitForm.errors.designationTooLong', { max: 50 });
   if (floor.trim() === '' || !Number.isInteger(floorNum))
-    errors.floor = 'Floor must be a whole number.';
+    errors.floor = t('buildings.unitForm.errors.floorInteger');
   if (ownershipShare.trim() === '' || Number.isNaN(ownershipNum))
-    errors.ownership_share = 'Ownership share is required.';
+    errors.ownership_share = t('buildings.unitForm.errors.shareRequired');
   else if (ownershipNum < 0 || ownershipNum > 100)
-    errors.ownership_share = 'Ownership share must be between 0 and 100.';
+    errors.ownership_share = t('buildings.unitForm.errors.shareRange');
   if (sizeNum !== null && (Number.isNaN(sizeNum) || sizeNum < 0))
-    errors.size_sqm = 'Size must be a non-negative number.';
+    errors.size_sqm = t('buildings.unitForm.errors.sizeInvalid');
   if (roomsNum !== null && (!Number.isInteger(roomsNum) || roomsNum < 0))
-    errors.rooms = 'Rooms must be a non-negative whole number.';
+    errors.rooms = t('buildings.unitForm.errors.roomsInvalid');
 
   const isValid = Object.keys(errors).length === 0;
 
@@ -129,14 +131,25 @@ export function UnitForm({
         <div className="relative w-full max-w-lg bg-white rounded-lg shadow-xl">
           <form
             onSubmit={handleSubmit}
-            aria-label={mode === 'create' ? 'Create unit' : 'Edit unit'}
+            aria-label={
+              mode === 'create'
+                ? t('buildings.unitForm.addTitle')
+                : t('buildings.unitForm.editTitle')
+            }
           >
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b">
               <h2 className="text-xl font-semibold text-gray-900">
-                {mode === 'create' ? 'Add unit' : 'Edit unit'}
+                {mode === 'create'
+                  ? t('buildings.unitForm.addTitle')
+                  : t('buildings.unitForm.editTitle')}
               </h2>
-              <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600">
+              <button
+                type="button"
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600"
+                aria-label={t('common.close')}
+              >
                 X
               </button>
             </div>
@@ -154,14 +167,14 @@ export function UnitForm({
                   htmlFor="unit-designation"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Designation *
+                  {t('buildings.unitForm.designation')} *
                 </label>
                 <input
                   id="unit-designation"
                   type="text"
                   value={designation}
                   onChange={(e) => setDesignation(e.target.value)}
-                  placeholder='e.g. "3B" or "101"'
+                  placeholder={t('buildings.unitForm.designationPlaceholder')}
                   className={inputClass}
                   maxLength={50}
                 />
@@ -176,7 +189,7 @@ export function UnitForm({
                     htmlFor="unit-floor"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    Floor
+                    {t('buildings.unitForm.floor')}
                   </label>
                   <input
                     id="unit-floor"
@@ -192,14 +205,14 @@ export function UnitForm({
                     htmlFor="unit-entrance"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    Entrance
+                    {t('buildings.unitForm.entrance')}
                   </label>
                   <input
                     id="unit-entrance"
                     type="text"
                     value={entrance}
                     onChange={(e) => setEntrance(e.target.value)}
-                    placeholder="Optional"
+                    placeholder={t('common.optional')}
                     className={inputClass}
                   />
                 </div>
@@ -211,7 +224,7 @@ export function UnitForm({
                     htmlFor="unit-type"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    Type
+                    {t('buildings.unitForm.type')}
                   </label>
                   <select
                     id="unit-type"
@@ -219,9 +232,9 @@ export function UnitForm({
                     onChange={(e) => setUnitType(e.target.value as UnitType)}
                     className={inputClass}
                   >
-                    {UNIT_TYPE_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
+                    {UNIT_TYPE_OPTIONS.map((value) => (
+                      <option key={value} value={value}>
+                        {t(`buildings.unitType.${value}`)}
                       </option>
                     ))}
                   </select>
@@ -231,7 +244,7 @@ export function UnitForm({
                     htmlFor="unit-occupancy"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    Occupancy
+                    {t('buildings.unitForm.occupancy')}
                   </label>
                   <select
                     id="unit-occupancy"
@@ -239,9 +252,9 @@ export function UnitForm({
                     onChange={(e) => setOccupancyStatus(e.target.value as UnitOccupancyStatus)}
                     className={inputClass}
                   >
-                    {OCCUPANCY_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
+                    {OCCUPANCY_OPTIONS.map((value) => (
+                      <option key={value} value={value}>
+                        {t(`buildings.occupancy.${value}`)}
                       </option>
                     ))}
                   </select>
@@ -254,7 +267,7 @@ export function UnitForm({
                     htmlFor="unit-size"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    Size (m²)
+                    {t('buildings.unitForm.size')}
                   </label>
                   <input
                     id="unit-size"
@@ -263,7 +276,7 @@ export function UnitForm({
                     min="0"
                     value={sizeSqm}
                     onChange={(e) => setSizeSqm(e.target.value)}
-                    placeholder="Optional"
+                    placeholder={t('common.optional')}
                     className={inputClass}
                   />
                   {errors.size_sqm && (
@@ -275,7 +288,7 @@ export function UnitForm({
                     htmlFor="unit-rooms"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    Rooms
+                    {t('buildings.unitForm.rooms')}
                   </label>
                   <input
                     id="unit-rooms"
@@ -283,7 +296,7 @@ export function UnitForm({
                     min="0"
                     value={rooms}
                     onChange={(e) => setRooms(e.target.value)}
-                    placeholder="Optional"
+                    placeholder={t('common.optional')}
                     className={inputClass}
                   />
                   {errors.rooms && <p className="mt-1 text-sm text-red-600">{errors.rooms}</p>}
@@ -293,7 +306,7 @@ export function UnitForm({
                     htmlFor="unit-ownership"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    Share (%) *
+                    {t('buildings.unitForm.share')} *
                   </label>
                   <input
                     id="unit-ownership"
@@ -316,13 +329,13 @@ export function UnitForm({
                   htmlFor="unit-description"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Description
+                  {t('buildings.unitForm.description')}
                 </label>
                 <textarea
                   id="unit-description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Optional"
+                  placeholder={t('common.optional')}
                   rows={2}
                   className={inputClass}
                 />
@@ -336,14 +349,18 @@ export function UnitForm({
                 onClick={onClose}
                 className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 type="submit"
                 disabled={!isValid || isSubmitting}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                {isSubmitting ? 'Saving…' : mode === 'create' ? 'Add unit' : 'Save changes'}
+                {isSubmitting
+                  ? t('buildings.unitForm.saving')
+                  : mode === 'create'
+                    ? t('buildings.unitForm.addTitle')
+                    : t('common.saveChanges')}
               </button>
             </div>
           </form>

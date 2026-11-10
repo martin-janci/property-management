@@ -264,6 +264,55 @@ impl FaultRepository {
         Ok(fault)
     }
 
+    /// Find a fault by ID under an RLS connection, scoped to a specific org.
+    ///
+    /// SECURITY (#3307): the executor-based sibling of [`find_by_id_for_org`].
+    /// Threads `organization_id` into the WHERE clause so the foreign-org → 404
+    /// is enforced in SQL (`WHERE id = $1 AND organization_id = $2`) rather than
+    /// by a hand-written Rust match arm in each mutation handler. The `faults`
+    /// RLS policy is not `FORCE`d, so a bare id-only reader (`find_by_id_rls`)
+    /// can observe a foreign row before a caller discards it; this method never
+    /// returns one. Prefer this over `find_by_id_rls` for the RLS-connection
+    /// mutate-by-id handlers (update/triage/status).
+    pub async fn find_by_id_for_org_rls<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<Fault>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        // Cast enum columns to text so the row decodes into the `String`-typed
+        // `Fault` model (matches `find_by_id_for_org` and the statistics queries).
+        let fault = sqlx::query_as::<_, Fault>(
+            r#"
+            SELECT
+                id, organization_id, building_id, unit_id, reporter_id,
+                title, description, location_description,
+                category::text AS category,
+                priority::text AS priority,
+                status::text AS status,
+                ai_category::text AS ai_category,
+                ai_priority::text AS ai_priority,
+                ai_confidence, ai_processed_at,
+                assigned_to, assigned_at, triaged_by, triaged_at,
+                resolved_at, resolved_by, resolution_notes,
+                confirmed_at, confirmed_by, rating, feedback,
+                scheduled_date, estimated_completion, idempotency_key,
+                created_at, updated_at
+            FROM faults
+            WHERE id = $1 AND organization_id = $2
+            "#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_optional(executor)
+        .await?;
+
+        Ok(fault)
+    }
+
     /// Find a fault by idempotency key with RLS context (Story 4.1, #970).
     ///
     /// Use this with an `RlsConnection` so the lookup is scoped to the caller's
@@ -1275,6 +1324,46 @@ impl FaultRepository {
         Ok(())
     }
 
+    /// Find an attachment scoped to its parent fault.
+    ///
+    /// Returns `None` when `attachment_id` does not belong to `fault_id`, so a
+    /// caller who passes their own fault id as the parent cannot reach another
+    /// fault's (or another org's) attachment.
+    pub async fn find_attachment_for_fault(
+        &self,
+        fault_id: Uuid,
+        attachment_id: Uuid,
+    ) -> Result<Option<FaultAttachment>, SqlxError> {
+        sqlx::query_as::<_, FaultAttachment>(
+            r#"
+            SELECT * FROM fault_attachments
+            WHERE id = $1 AND fault_id = $2
+            "#,
+        )
+        .bind(attachment_id)
+        .bind(fault_id)
+        .fetch_optional(&self.pool)
+        .await
+    }
+
+    /// Delete an attachment only if it belongs to `fault_id`.
+    ///
+    /// Returns the number of rows deleted (0 when the attachment does not
+    /// belong to the fault).
+    pub async fn delete_attachment_for_fault(
+        &self,
+        fault_id: Uuid,
+        attachment_id: Uuid,
+    ) -> Result<u64, SqlxError> {
+        let result = sqlx::query("DELETE FROM fault_attachments WHERE id = $1 AND fault_id = $2")
+            .bind(attachment_id)
+            .bind(fault_id)
+            .execute(&self.pool)
+            .await?;
+
+        Ok(result.rows_affected())
+    }
+
     // ========================================================================
     // Timeline
     // ========================================================================
@@ -1483,7 +1572,7 @@ impl FaultRepository {
         // Average resolution time
         let avg_resolution: Option<f64> = sqlx::query_scalar(
             r#"
-            SELECT AVG(EXTRACT(EPOCH FROM (resolved_at - created_at)) / 3600)
+            SELECT (AVG(EXTRACT(EPOCH FROM (resolved_at - created_at)) / 3600))::float8
             FROM faults
             WHERE organization_id = $1
               AND ($2::uuid IS NULL OR building_id = $2)

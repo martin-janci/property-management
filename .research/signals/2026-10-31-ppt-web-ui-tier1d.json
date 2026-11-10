@@ -1,0 +1,45 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-31",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed (dispatcher-tier1d-demand-driven; claimable buffer starved, 10 < floor 36; in-repo backlog/coverage/retry sources empty). CHURN_FILES not supplied by dispatcher this slice, so SKILL Step 1 priority 2 applies. review_cursor (from .research/state.json) sorted ascending: ppt-web-ui 2026-10-22, reality-web 2026-10-23, mobile-native-kmp 2026-10-25, api-handlers 2026-10-26, api-core/ppt-web-core/mobile-rn 2026-10-27, reality-server 2026-10-28. Saturation check (OPEN backlog items carrying a segment field — code-review findings land in backlog.json with vector bug/security, not vector=code-review-finding, so they are counted by the segment field): api-handlers=3 (>=3 => saturation-skip), ppt-web-ui=1, reality-server=1, mobile-native-kmp=2 — ppt-web-ui NOT saturated. Segments already produced by sibling tier1d slices THIS SAME run (signal files dated 2026-10-31): api-core, mobile-native-kmp, mobile-rn, ppt-web-core, reality-web — treated as reviewed-today to avoid duplicate vectors. Remaining not-yet-covered-today, non-saturated: ppt-web-ui (2026-10-22, oldest) and reality-server (2026-10-28). Oldest wins => ppt-web-ui selected. NOTE: ppt-web-ui is the most heavily-reviewed segment (~70 prior signal files); its obvious vectors are already captured. Dedup performed against all *ppt-web-ui*.json signals + open backlog: the three initial candidates were ALL duplicates and were DROPPED — (a) VotingPage.tsx full-page no-i18n == existing code-review-ppt-web-ui-voting-list-page-no-i18n (2026-09-06); (b) RegistryPage.tsx silent mutation errors (console.error-only catch on pet/vehicle delete+review) == existing code-review-ppt-web-ui-registry-silent-mutation-error (2026-10-27) / registry-page-mutations-silent-fail (2026-10-10); (c) MediationChatThread useMediationNotes no-isError == MediationChatThread reviewed 9x already. To find NOVEL vectors, extracted the set of feature dirs already flagged in prior ppt-web-ui signals (35 dirs) and targeted the UNTOUCHED dirs: command-palette, document-templates, layout, messaging, my-unit, neighbors, notification-analytics, notification-triggers, onboarding, predictive-maintenance, subscription, person-months. Reviewed and found CLEAN (no finding): subscription/* (all presentational, proper i18n + isLoading props, UsageChart guards limit=0 via truthy check L62-64, DiscountCodeInput error state + t() L51-52); predictive-maintenance/PredictiveMaintenancePage (clean presentational, defaultValue i18n); person-months/PersonMonthsPage (division-by-zero double-guarded L243/L251); command-palette/useCommandPalette (localStorage catches are intentional guards); layout/DashboardCustomizePage + TenantSectionEditor (error states + documented 422-empty-errors fallback); messaging/MessageAttachments + DiscountCodeInput (error state + t()); document-templates/DocumentTemplatesPage (full isError + empty + noMatches states); notification-triggers + notification-analytics (isError + empty states with i18n). All skeleton key={i} hits are static loading placeholders (acceptable). Two GENUINE NOVEL findings below (both in previously-unflagged feature dirs). Findings_count=2 (not padded to 3): the honest yield after dedup on a mined-out segment.",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-my-unit-page-no-i18n-states",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/my-unit/pages/MyUnitPage.tsx:45-62 — the resident-facing My Unit page imports useTranslation and uses t() for its loaded content, but its ERROR state and EMPTY state are hardcoded English literals: L49 `Could not load your unit: {error instanceof Error ? error.message : 'Unknown error'}` (both the prefix and the 'Unknown error' fallback are raw English), L57 `<h1>My Unit</h1>`, L58 `You are not currently registered as a resident of any unit.`, L59 `If you believe this is a mistake, please contact your building manager.`. A sk/cs/de resident whose unit fetch fails, or who has no unit yet, sees these screens in English only.",
+        "This is an intra-file i18n inconsistency, not a missing capability: the same component already depends on t() for the happy path (L21 `const { t } = useTranslation()`), so the error/empty branches are simply un-wrapped. Mirrors the already-tracked VotingPage/RegistryPage no-i18n class but in a DISTINCT, previously-unflagged feature dir (my-unit). Dedup: grep of all *ppt-web-ui*.json signals shows no prior my-unit finding.",
+        "Fix vector: wrap the four literals in t('myUnit.error.*' / 'myUnit.empty.*') keys and translate the 'Unknown error' fallback (reuse the shared common.unknownError key if one exists). Confidence medium: the literals are certain by static read and both branches are reachable (error = query failure, empty = resident with no unit); severity LOW (+1) as an i18n gap per the skill table.",
+        "expert: frontend"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-invitations-date-locale-ignored",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/neighbors/pages/InvitationsPage.tsx:70-77 — formatDate calls `new Date(dateString).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' })`, passing `undefined` as the locale argument. `undefined` makes the runtime fall back to the BROWSER locale, not the app's selected i18n language. In this 4-language app (sk/cs/de/en) a user who has switched the UI to Slovak but whose browser is English will see neighbor-invitation dates (sent/expiry) formatted in English, diverging from the rest of the page which is translated via t().",
+        "The repo has an established opposite convention: 12 call sites pass `i18n.language` into toLocale*String (e.g. features/disputes MediationChatThread -> formatTime(createdAt, i18n.language)). InvitationsPage ignores it. HONEST SCOPE CAVEAT: this is a widespread pattern — `grep toLocale*(undefined` returns 21 sites across features, so `undefined` is currently the majority habit; this signal flags InvitationsPage as the representative instance on a user-facing invitation list and proposes standardizing on the i18n.language convention. Previously-unflagged dir (neighbors not in the 35 flagged dirs for this class).",
+        "Fix vector: thread `const { i18n } = useTranslation()` and pass `i18n.language` as the first arg to toLocaleDateString (here and, as a follow-up sweep, at the other 20 `(undefined` sites). Confidence medium: the `undefined` locale is certain by static read; severity LOW (+1) — locale/i18n inconsistency, visible only when browser locale != selected app language.",
+        "expert: completeness"
+      ],
+      "expert": "completeness"
+    }
+  ]
+}

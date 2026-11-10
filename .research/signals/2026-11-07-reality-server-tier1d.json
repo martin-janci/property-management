@@ -1,0 +1,43 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-07",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "oldest-unreviewed (dispatcher-tier1d-demand-driven, buffer starved). review_cursor group at 2026-11-04 = {api-handlers, api-core, reality-server, ppt-web-core}; api-handlers + ppt-web-core were already reviewed earlier today and mobile-rn 3x, so per the caller's steer I picked from the fresh preferred set {reality-server, api-core, ppt-web-ui, reality-web}. reality-server and api-core tie as oldest (2026-11-04); chose reality-server (it is the public-internet portal API, higher security surface). Saturation check: reality-server has 1 open code-review-finding row in backlog.json (< 3 cap) — not saturated. mobile-native-kmp excluded (structurally unlandable in this runner). No CHURN_FILES passed (standalone). Rust/Security static sweep: unwrap/expect all in tests or guarded (extractors/auth.rs:63 after starts_with, handlers/inquiries/mod.rs:274 after is_empty); no todo!/unimplemented!/unsafe in prod; SSO (2261 lines) heavily audited (PKCE, redirect allowlist handles //, /\\ and non-http schemes, cookie HttpOnly/Secure/SameSite=Strict + scoped Path=/api/v1/sso, negative-cache-poisoning guard, session pruning); dynamic SQL in listings.rs:700 + price_map.rs:306 is safe (AssertSqlSafe with static literals; price-map `interval` is match-mapped to literals, all user input bound); pagination clamped across agencies/agent_reviews/articles/favorites; email via typed lettre Message::builder (no header injection, TEXT_PLAIN body); imports.rs IDOR scoping consistent (jobs keyed by user_id, feeds by resolve_agency); search_alert_drainer per-row error-isolated + tested + logs only token prefix. The two findings below are a real unauthenticated info-disclosure on the public /readiness probe (same raw-error leak class the dispatcher is fixing in api-handlers, but here reachable without auth).",
+  "experts_used": [
+    "rust",
+    "security"
+  ],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-reality-server-readiness-raw-db-error-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "security",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/health.rs:177-182 — check_database()'s Err arm sets DependencyHealth.error = Some(format!(\"Database connection failed: {}\", e)), interpolating the raw sqlx::Error Display into the response body. The readiness handler (health.rs:291-342) puts this straight into HealthResponse.dependencies (L299,L337) and returns Json(response).",
+        "backend/servers/reality-server/src/main.rs:471 — `/readiness` is mounted at the Router root. The only middleware layer on the app is api_core::middleware::host_tenant_middleware (main.rs:567-570, host/tenant resolution — NOT authentication), and the handler signature is `readiness(State(state))` with no PortalPrincipal/RequestPrincipal extractor. reality-server is the PUBLIC portal API with no global auth layer, so /readiness is reachable UNAUTHENTICATED from the internet.",
+        "Impact: when the DB is unreachable, any anonymous caller hitting GET /readiness (HTTP 503) receives the raw sqlx::Error Display, which for connection/auth failures can expose the DB host:port, username, SQLSTATE, and backend error text (e.g. 'password authentication failed for user ...', 'connection refused to <host:port>'). Same leak class the dispatcher is already fixing for authenticated manager endpoints in api-handlers (signals/2026-11-07-api-handlers-tier1d.json code-review-api-handlers-rentals-raw-db-error-leak), but worse here because exposure is to unauthenticated public callers. Landable backend-only fix: log e via tracing::error! and set error to a generic stable string (e.g. \"database unavailable\"), keeping the Unhealthy status/503 for probes. Call path traced end-to-end (route -> handler -> response); reachability is certain, kept at medium because the exact leaked content depends on the sqlx error variant."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-readiness-internal-detail-public",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "security",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/health.rs:330-340 — the same unauthenticated /readiness response (see sibling finding; main.rs:471, no auth extractor/layer) also returns commit = GIT_COMMIT (L333), built_at = BUILT_AT (L334), version (L332), and cache_metrics (L338) carrying token/health cache hits, misses, evictions, hit-rate and token_cache size (health.rs:303-322). The handler doc comment (health.rs:284-290 / 'Operator dashboards') implies it was intended for operators, but nothing gates it.",
+        "backend/servers/reality-server/src/main.rs:473 — GET /metrics (metrics_endpoint, main.rs:582-584) is likewise mounted at the root with no auth, exposing the full Prometheus text to anonymous callers.",
+        "Impact: unauthenticated fingerprinting / information disclosure on the public portal — exact git commit SHA + build timestamp let an attacker map the deployed build to known CVEs, and the cache internals/sizes leak operational detail. Lower severity than the raw-DB-error leak (no secrets, no outage required) so scored +1. Fix options (one change covers both findings): either put /readiness + /metrics behind an operator auth/allowlist, or strip commit/built_at/cache_metrics (and the dependency error strings) from the publicly reachable readiness body."
+      ]
+    }
+  ]
+}

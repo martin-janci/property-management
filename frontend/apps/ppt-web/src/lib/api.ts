@@ -11,6 +11,7 @@ import axios, {
   type AxiosResponse,
   type InternalAxiosRequestConfig,
 } from 'axios';
+import { describeError } from './describeError';
 
 // ============================================================================
 // Types
@@ -55,7 +56,11 @@ export type TokenGetter = () => string | null | Promise<string | null>;
  * not be recovered — the interceptor then rejects the original request and the
  * handler is responsible for any session teardown (logout / redirect).
  */
-export type UnauthorizedHandler = () => void | string | null | Promise<string | null | undefined>;
+export type UnauthorizedHandler = () =>
+  | undefined
+  | string
+  | null
+  | Promise<string | null | undefined>;
 
 /**
  * API client configuration options.
@@ -363,11 +368,16 @@ export function resetApiClient(): void {
 // Convenience Exports
 // ============================================================================
 
-/**
- * Default export: the API client instance.
- * Use getApiClient() for type-safe access.
- */
-export default getApiClient();
+// NOTE: intentionally NO default export.
+//
+// A default export here (`export default getApiClient()`) would be evaluated
+// eagerly at module-load time — i.e. *before* AuthProvider calls
+// `configureApiClient()`. Any `import api from './lib/api'` consumer would then
+// capture that pre-configuration instance, which lacks the token getter and the
+// 401 refresh-and-replay handler, and is orphaned the moment
+// `configureApiClient()` swaps `apiInstance` for a freshly configured one.
+// Always access the client lazily via `getApiClient()` so every caller sees the
+// configured singleton.
 
 /**
  * Type guard to check if an error is an ApiError.
@@ -377,14 +387,12 @@ export function isApiError(error: unknown): error is ApiError {
 }
 
 /**
- * Extract a user-friendly message from an error.
+ * Extract a user-friendly, translated message from an error.
+ *
+ * The message is chosen by HTTP status (see `describeError`); raw server text
+ * is never returned here because it is untranslated English. Use
+ * `describeError` directly when the raw text is wanted as secondary detail.
  */
 export function getErrorMessage(error: unknown): string {
-  if (isApiError(error)) {
-    return error.message;
-  }
-  if (error instanceof Error) {
-    return error.message;
-  }
-  return 'An unexpected error occurred';
+  return describeError(error).message;
 }

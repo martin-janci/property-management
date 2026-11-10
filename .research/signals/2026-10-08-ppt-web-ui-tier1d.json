@@ -1,0 +1,63 @@
+{
+  "generated": "2026-10-08T00:00:00Z",
+  "source_run": "dispatcher Phase 2.6 Tier-1d demand-driven vector generator (research buffer starved: claimable=23 < floor=36 after backlog-refill + retry-remint). Static single-segment rotating code review, no compilation / no test execution (cloud runner has no toolchain). File reading + grep only. Produces fresh CLOUD-LANDABLE frontend backlog vectors for the ppt-web-ui segment. Findings verified net-new against backlog.json ppt-web-ui ids and prior ppt-web-ui signal files (no existing Toast-overflow, ConnectionStatus-role, or LoginPage-raw-error finding).",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "churn-aligned (ppt-web is the highest-churn top-level area since 2026-10-01 at 885 file-touches; its ppt-web-ui sub-segment saw 33 recent touches across pages/ + components/ and was last reviewed 2026-10-01, whereas the sibling ppt-web-core was already reviewed today 2026-10-08. No saturation: 0 open code-review-finding items for ppt-web-ui in backlog.json, all 33 prior findings are done).",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "findings_count": 3,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-toast-persistent-overflow-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/components/Toast.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/Toast.tsx:144 — ToastProvider renders only the last MAX_VISIBLE_TOASTS (3) via `visibleToasts = toasts.slice(-MAX_VISIBLE_TOASTS)`, but ALL toasts stay in the `toasts` state array. Error toasts are created with duration = ERROR_DURATION = 0 (lines 68, 78-79), so showToast() (lines 132-138) never schedules an auto-dismiss setTimeout for them. The only removal path for a duration-0 toast is the close button inside ToastItem (line 243) — which is never rendered for a toast that has scrolled out of the visible slice. Consequence: in a session that raises >3 error toasts, the older error toasts are hidden (no close button reachable) AND have no timeout, so they are stuck in `toasts` permanently — unbounded state growth / effective memory leak, and the user can never dismiss them. Fix (frontend-only, cloud-landable): cap the retained array (e.g. drop/auto-expire overflow toasts, or give error toasts a finite max duration), or surface an overflow queue so hidden persistent toasts remain dismissable. Add a Vitest case that pushes 4+ error toasts and asserts the array does not grow unbounded. Medium: UX dead-end + unbounded state, no crash."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-connstatus-interactive-on-status-role",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "completeness",
+      "files": [
+        "frontend/apps/ppt-web/src/components/ConnectionStatus.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/ConnectionStatus.tsx:104-113 — the reconnect control is a plain <div> carrying onClick (109), onKeyDown (110) and a conditional tabIndex={!isConnected && !isConnecting ? 0 : -1} (113) while declaring role=\"status\" (111). role=\"status\" is an ARIA live-region role, not an interactive role: a click/keyboard-activated reconnect affordance should expose role=\"button\" (or be a real <button>) so assistive tech announces it as actionable and Enter/Space semantics are conventional. As written, the element doubles as a live region AND a focusable click target only when disconnected, which is inconsistent and also trips Biome's static-interactivity lints (a static element with event handlers). Fix (frontend-only, cloud-landable): render the dot/label as a <button type=\"button\"> (or add role=\"button\") for the reconnect affordance and keep the live-region announcement on a dedicated non-interactive node. Low severity, a11y semantics."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-loginpage-raw-error-message",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/pages/LoginPage.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/pages/LoginPage.tsx:80-86 — getErrorMessage() i18n-maps the AuthError codes and a heuristic network case, but its final fallback for any other `error instanceof Error` returns the RAW `error.message` (line 85), which is then rendered as the login error banner (handleSubmit sets errors.general, shown at lines 226-233). On a non-English UI (sk/cs/de) any unmapped thrown Error surfaces untranslated developer/English text on the primary auth surface, and the heuristic `includes('fetch')/('network')` (line 82) is locale/engine-fragile. This is the same raw-backend-message pattern already filed for other surfaces (errorboundary-raw-message-prod, emergency-dir-raw-err-message, signature-modal-raw-err) but is net-new for the login page. Fix (frontend-only, cloud-landable): return a translated generic fallback (t('auth.unexpectedError')) for unmapped errors instead of the raw message, or route it through an error-code catalogue. Low severity, i18n/UX consistency + minor internal-detail disclosure."
+      ]
+    }
+  ]
+}

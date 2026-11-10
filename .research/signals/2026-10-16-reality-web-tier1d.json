@@ -1,0 +1,44 @@
+{
+  "generated": "2026-10-16T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claim buffer starved: claimable=3 < floor=36). Static single-segment rotating code review per .claude/skills/ppt-dev-review/SKILL.md — no compilation, no test execution, no branch checkout (cloud runner, file reading + grep only). DISPATCHER_OWNED_COMMIT=1: this artifact was written into the working tree only; no git add/commit/push performed — the orchestrator folds .research deltas into its own Phase 6 commit. Segment selection: no Phase-1 churn list was handed to this demand-driven invocation, so priority-1 churn-alignment was empty (git-log churn over the last 7 days points at backend portfolio-analytics, i.e. the api-handlers/api-core Rust routes — api-handlers is saturated with 3 open findings and the analytics churn in backend/crates/db is outside any mapped segment root, so churn-alignment yielded no eligible target). Selection fell to priority-2 oldest-unreviewed. review_cursor oldest date is 2026-10-11, a 3-way tie (api-handlers, reality-web, mobile-rn). api-handlers skipped for saturation (3 open code-review-finding rows with status==open in backlog.json). mobile-rn deprioritized per dispatcher directive (React-Native is cloud-landable but the task explicitly preferred backend/ppt-web/reality-web verifiable-and-landable segments; reality-web is the cleaner cloud-landable Next.js target and was equally oldest). Selected: reality-web (cursor 2026-10-11, previously only 3 open i18n-flavoured findings, none overlapping these).",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "oldest-unreviewed (cloud-landable, non-saturated). 2026-10-11 cursor tie resolved away from api-handlers (saturated: 3 open findings) and mobile-rn (dispatcher directive prefers backend/ppt-web/reality-web landable segments). No Phase-1 churn list supplied to this demand-driven run, so priority-1 churn-alignment did not apply (and the 7-day churn hotspot — backend portfolio-analytics — maps only to the saturated api-handlers or to backend/crates/db which is outside any mapped segment root).",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-reality-web-comparison-ctx-unvalidated-parse",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/lib/comparison-context.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/comparison-context.tsx:40 — the mount effect reads `localStorage.getItem(STORAGE_KEY)` and does `const parsed = JSON.parse(stored); setListings(parsed);`. The surrounding try/catch (`:39`-`:45`) only guards against a `JSON.parse` *syntax* error (malformed JSON → the catch clears the key). It does NOT guard against VALID JSON of the wrong SHAPE: a stored value of `{}`, `\"x\"`, `42`, `null`, or an array of non-ListingSummary objects parses successfully and is handed straight to `setListings`, so React state (`listings: ListingSummary[]`) becomes a non-array / wrong-typed value with no runtime validation. That value then flows unguarded into the provider's consumers — `listings.length` and `listings.map(...)` in the comparison bar/drawer, plus `listingsRef.current = listings` (`:52`) — and a `.length`/`.map` on a non-array throws a TypeError at render, crashing the ComparisonProvider subtree (and therefore any page that mounts it) on the very next navigation after the storage entry is corrupted. The `expiresAt`/`JSON.parse` sibling in lib/auth-token.ts getSession has the same structural gap but is lower-risk because it RETURNS the value rather than pushing it into render state. Trigger requires a corrupted/extension-written localStorage value (same-origin, self-inflicted or a misbehaving browser extension), so this is a client-side robustness/crash-resilience gap, not a security boundary crossing — hence severity LOW (+1). NET-NEW vs backlog: distinct from code-review-reality-web-comparison-view-i18n (that is an i18n string gap in the comparison VIEW, not the context's persistence layer) and from the already-`done` code-review-reality-web-inline-tenant-json-xss (serialize-script/tenant bootstrap, a different file + mechanism). Suggested cloud-landable fix (frontend-only, verifiable with vitest): after `JSON.parse`, validate `Array.isArray(parsed)` and that each element has the minimal ListingSummary shape (e.g. a string `id`) before `setListings`; on a shape mismatch, treat it like the malformed-JSON case and `localStorage.removeItem(STORAGE_KEY)` + fall back to `[]`. Reachability traced statically (provider mount effect → setListings → consumer render); real-world corruption frequency not observable statically, hence confidence medium."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-authapi-unwrapped-json-parse",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/lib/auth-api.ts"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/auth-api.ts:67 — `requestJson<T>` (the shared fetch wrapper behind login/register/updateProfile/etc.) ends its success path with `return (await response.json()) as T;`, which is OUTSIDE any try/catch. The three preceding paths are all defensively typed: the network/fetch failure is caught (`:47`-`:49`) and rethrown as `AuthApiError(..., 'NETWORK_ERROR')`; the `!response.ok` branch (`:51`-`:61`) parses the error body inside its own try/catch and throws a typed `AuthApiError`; and `204 No Content` short-circuits to `undefined` (`:64`-`:65`). But a 2xx (non-204) response whose body is empty or not valid JSON — e.g. an upstream proxy/gateway emitting an empty `200`, a load-balancer health/short-circuit page, or an endpoint that returns `200` with no body where `204` was intended — makes `response.json()` throw a raw `SyntaxError` (\"Unexpected end of JSON input\") that is NOT wrapped in `AuthApiError` and NOT caught here. It propagates to callers (login form, profile update, etc.) as an untyped error, bypassing the app's uniform `AuthApiError`-based error surfacing and likely rendering a raw browser JSON-parse message to the user instead of a localized, coded auth error. This is an error-handling CONSISTENCY/robustness gap on a non-primary (empty-2xx) path rather than a correctness bug on the happy path, so severity LOW (+1). NET-NEW vs backlog: no existing reality-web finding touches auth-api.ts (the three open reality-web rows are comparison-view / realtor-mgmt / agency-errorstate i18n). Suggested cloud-landable fix (frontend-only, vitest-verifiable with a mocked empty-200 Response): wrap the final `response.json()` in try/catch and rethrow as `AuthApiError('Malformed response from server.', response.status, 'MALFORMED_RESPONSE')`, or read the body as text first and treat an empty body the same as `204`. Reachability traced statically (every exported auth call → postJson/requestJson → line 67); frequency of empty-2xx responses in practice not observable statically, hence confidence medium."
+      ]
+    }
+  ]
+}

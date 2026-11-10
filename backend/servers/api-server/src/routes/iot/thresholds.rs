@@ -1,7 +1,9 @@
 //! Sensor threshold handlers (Story 14.6) plus threshold-template listing and
 //! application.
 
-use super::shared::{db_error, insert_child_error, not_found, write_error};
+use super::shared::{
+    db_error, ensure_in_org, insert_child_error, not_found, write_error, IotManager, IotScope,
+};
 use crate::state::AppState;
 use api_core::extractors::RlsConnection;
 use axum::{
@@ -19,6 +21,7 @@ pub(super) async fn list_thresholds(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    ensure_in_org(&state, &mut rls, IotScope::Sensor(id)).await?;
     let out = state
         .sensor_repo
         .list_thresholds(&mut **rls.conn(), id)
@@ -31,10 +34,12 @@ pub(super) async fn list_thresholds(
 
 pub(super) async fn create_threshold(
     State(state): State<AppState>,
+    _manager: IotManager,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(mut req): Json<CreateSensorThreshold>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
+    ensure_in_org(&state, &mut rls, IotScope::Sensor(id)).await?;
     req.sensor_id = id;
     let out = state
         .sensor_repo
@@ -48,10 +53,12 @@ pub(super) async fn create_threshold(
 
 pub(super) async fn update_threshold(
     State(state): State<AppState>,
+    _manager: IotManager,
     mut rls: RlsConnection,
     Path(threshold_id): Path<Uuid>,
     Json(req): Json<UpdateSensorThreshold>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    ensure_in_org(&state, &mut rls, IotScope::Threshold(threshold_id)).await?;
     let out = state
         .sensor_repo
         .update_threshold(&mut **rls.conn(), threshold_id, req)
@@ -64,9 +71,11 @@ pub(super) async fn update_threshold(
 
 pub(super) async fn delete_threshold(
     State(state): State<AppState>,
+    _manager: IotManager,
     mut rls: RlsConnection,
     Path(threshold_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    ensure_in_org(&state, &mut rls, IotScope::Threshold(threshold_id)).await?;
     let out = state
         .sensor_repo
         .delete_threshold(&mut **rls.conn(), threshold_id)
@@ -114,10 +123,13 @@ pub struct TemplateQuery {
 
 pub(super) async fn apply_template(
     State(state): State<AppState>,
+    _manager: IotManager,
     mut rls: RlsConnection,
     Path(template_id): Path<Uuid>,
     Json(req): Json<ApplyTemplateRequest>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
+    ensure_in_org(&state, &mut rls, IotScope::Template(template_id)).await?;
+    ensure_in_org(&state, &mut rls, IotScope::Sensor(req.sensor_id)).await?;
     let out = state
         .sensor_repo
         .apply_threshold_template(rls.conn(), template_id, req.sensor_id)

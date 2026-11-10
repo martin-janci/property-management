@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { ApplicationCard } from '../components/ApplicationCard';
 import type { ApplicationStatus, ApplicationSummary } from '../types';
 
-interface ApplicationListParams {
+export interface ApplicationListParams {
   status?: ApplicationStatus;
   unitId?: string;
   search?: string;
@@ -30,6 +30,14 @@ interface ApplicationsPageProps {
   onNavigateToView: (id: string) => void;
   onNavigateToReview: (id: string) => void;
   onFilterChange: (params: ApplicationListParams) => void;
+  /** Initial filter state (e.g. restored from the URL). */
+  initialFilters?: Omit<ApplicationListParams, 'page' | 'pageSize'>;
+  /** Initial 1-based page (e.g. restored from the URL). */
+  initialPage?: number;
+  /** Rows per page; must match the `limit` the caller fetches with. */
+  pageSize?: number;
+  /** Hide the free-text search when the backend cannot search (default: shown). */
+  showSearch?: boolean;
 }
 
 const STATUS_OPTIONS: ApplicationStatus[] = [
@@ -50,12 +58,17 @@ export function ApplicationsPage({
   onNavigateToView,
   onNavigateToReview,
   onFilterChange,
+  initialFilters,
+  initialPage = 1,
+  pageSize = 12,
+  showSearch = true,
 }: ApplicationsPageProps) {
   const { t } = useTranslation();
-  const [page, setPage] = useState(1);
-  const [pageSize] = useState(12);
-  const [filters, setFilters] = useState<Omit<ApplicationListParams, 'page' | 'pageSize'>>({});
-  const [searchInput, setSearchInput] = useState('');
+  const [page, setPage] = useState(initialPage);
+  const [filters, setFilters] = useState<Omit<ApplicationListParams, 'page' | 'pageSize'>>(
+    initialFilters ?? {}
+  );
+  const [searchInput, setSearchInput] = useState(initialFilters?.search ?? '');
 
   const totalPages = Math.ceil(total / pageSize);
 
@@ -110,7 +123,7 @@ export function ApplicationsPage({
             {t('leases.applications.showing', { count: applications.length, total })}
             {pendingCount > 0 && (
               <span className="ml-2 text-blue-600">
-                ({pendingCount} {t('leases.applications.pendingReview')})
+                ({t('leases.applications.pendingReview', { count: pendingCount })})
               </span>
             )}
           </p>
@@ -145,33 +158,36 @@ export function ApplicationsPage({
       <div className="bg-white rounded-lg shadow p-4 mb-6">
         <div className="flex flex-wrap items-center gap-4">
           {/* Search */}
-          <form onSubmit={handleSearch} className="flex-1 min-w-[200px]">
-            <div className="relative">
-              <input
-                type="text"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder={t('leases.applications.searchPlaceholder')}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <svg
-                className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          {showSearch && (
+            <form onSubmit={handleSearch} className="flex-1 min-w-[200px]">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  placeholder={t('leases.applications.searchPlaceholder')}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-              </svg>
-            </div>
-          </form>
+                <svg
+                  className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+              </div>
+            </form>
+          )}
 
           {/* Status Filter */}
           <select
+            aria-label={t('leases.applications.filterByStatus')}
             value={filters.status || ''}
             onChange={(e) => handleStatusFilter((e.target.value as ApplicationStatus) || undefined)}
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -186,6 +202,7 @@ export function ApplicationsPage({
 
           {/* Unit Filter */}
           <select
+            aria-label={t('leases.applications.filterByUnit')}
             value={filters.unitId || ''}
             onChange={(e) => handleUnitFilter(e.target.value || undefined)}
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"

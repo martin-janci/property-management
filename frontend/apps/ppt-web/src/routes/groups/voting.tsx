@@ -6,17 +6,25 @@
  * are thin: the pages consume the voting hooks directly and the wrappers only
  * supply navigation callbacks and the `:voteId` route param.
  */
-import { Route, useNavigate, useParams } from 'react-router-dom';
+
+import { Route, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ProtectedRoute } from '../../components';
+import { useAuth } from '../../contexts';
 import { VoteCreatePage, VoteDetailPage, VotingPage } from '../lazyRoutes';
+import { isManagerRole, MANAGER_ROLES } from '../shared';
 
 /** Route wrapper: voting list (`/voting`). */
 function VotingPageRoute() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  // Carry the selected building (`?building=`) into the create wizard.
+  const { search } = useLocation();
   return (
     <VotingPage
       onOpenVote={(voteId) => navigate(`/voting/${voteId}`)}
-      onCreateVote={() => navigate('/voting/new')}
+      // Creating a vote is manager-only (POST /votes → 403 otherwise), so the
+      // "New vote" actions are only offered to managers.
+      onCreateVote={isManagerRole(user?.role) ? () => navigate(`/voting/new${search}`) : undefined}
     />
   );
 }
@@ -24,10 +32,11 @@ function VotingPageRoute() {
 /** Route wrapper: create vote (`/voting/new`). */
 function VoteCreatePageRoute() {
   const navigate = useNavigate();
+  const { search } = useLocation();
   return (
     <VoteCreatePage
       onCreated={(voteId) => navigate(`/voting/${voteId}`)}
-      onCancel={() => navigate('/voting')}
+      onCancel={() => navigate(`/voting${search}`)}
     />
   );
 }
@@ -54,7 +63,7 @@ export function votingRoutes() {
       <Route
         path="/voting/new"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <VoteCreatePageRoute />
           </ProtectedRoute>
         }

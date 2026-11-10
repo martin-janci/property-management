@@ -100,7 +100,7 @@ describe('FavoritesPage — AC-5 watch-price toggle (#2365)', () => {
     // GET starts subscribed; PATCH + the invalidation refetch persist the OFF
     // state, so the round-trip mirrors the real backend list DTO.
     let alertEnabled = true;
-    const fetchMock = vi.fn((url: string, init?: RequestInit) => {
+    const fetchMock = vi.fn((_url: string, init?: RequestInit) => {
       const method = init?.method ?? 'GET';
       if (method === 'PATCH') {
         alertEnabled = JSON.parse(String(init?.body)).price_alert_enabled;
@@ -142,7 +142,7 @@ describe('FavoritesPage — AC-5 watch-price toggle (#2365)', () => {
         rejectPatch = () => resolve({ ok: false, status: 500, json: async () => ({}) });
       }
     );
-    const fetchMock = vi.fn((url: string, init?: RequestInit) => {
+    const fetchMock = vi.fn((_url: string, init?: RequestInit) => {
       if ((init?.method ?? 'GET') === 'PATCH') return patchGate;
       return Promise.resolve({ ok: true, status: 200, json: async () => favoritesPayload(true) });
     });
@@ -169,7 +169,7 @@ describe('FavoritesPage — AC-5 watch-price toggle (#2365)', () => {
     // renders (no `onError`/`isError` UI existed); with the fix the page shows
     // the generic `error.description` message. `useTranslations` is mocked to
     // echo the key, so the alert text is the literal key `description`.
-    const fetchMock = vi.fn((url: string, init?: RequestInit) => {
+    const fetchMock = vi.fn((_url: string, init?: RequestInit) => {
       if ((init?.method ?? 'GET') === 'PATCH') {
         return Promise.resolve({ ok: false, status: 500, json: async () => ({}) });
       }

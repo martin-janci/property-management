@@ -1,0 +1,40 @@
+{
+  "segment": "ppt-web-ui",
+  "date": "2026-09-16",
+  "selection_reason": "churn-aligned",
+  "selection_detail": "No CHURN_FILES were passed to this Tier 1d run, so churn was derived from `git log --since=2026-08-15 --name-only`. Heaviest 30-day churn by top-level area is frontend/apps/ppt-web (901 changed-file touches), far ahead of backend/crates/db (620), api-server (468), mobile (305) and reality-web (251). Within ppt-web/src, churn is dominated by features/ (733) which in this feature-sliced repo holds the pages+components the skill's ppt-web-ui segment maps to (the skill's literal pages/+components/ roots predate the features/ layout). Saturation check: 0 open code-review-finding items for ppt-web-ui in backlog.json (the only open findings are 4 for mobile-native-kmp), so no saturation-skip. api-handlers already has a 2026-09-16 signal file today; ppt-web-ui is the top churn segment not yet reviewed today, so churn-aligned selects it. REVIEW_CURSOR ppt-web-ui=2026-09-06 but churn priority overrides recency per the skill priority-1 rule. gh dependabot/PR-history checks not needed (no manifest-version findings emitted). Static analysis only; no compile/test executed.",
+  "experts_used": ["frontend", "completeness"],
+  "landable_in_cloud": true,
+  "landability_note": "ppt-web-ui is a landable frontend segment in this cloud runner (no Rust/KMP compile, no api-server swagger-ui build required). Both findings are frontend-only remedies in ppt-web feature TSX and land without backend changes. Static analysis only.",
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-documents-i18n-hardcoded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/documents — the documents feature ships hardcoded Slovak user-facing error/empty/loading strings that bypass react-i18next (t()), so users on the app's other supported locales (cs/de/en) see Slovak text on these states. Occurrences: MoveFolderDialog.tsx:429 'Priečinky sa nepodarilo načítať.' (error), :434 'Žiadne priečinky' (empty); DocumentsBrowse.tsx:429 'Dokumenty sa nepodarilo načítať.' (error), :438 'Žiadne dokumenty nezodpovedajú zvoleným filtrom.' (empty-filter); FolderTree.tsx:608 'Priečinky sa nepodarilo načítať.', :618 'Žiadne priečinky'; DocumentDetail.tsx:145 'Detail dokumentu sa nepodarilo načítať.'; FolderTreePage.tsx:75 'Dokumenty sa nepodarilo načítať.'; DocumentPreviewModal.tsx:56 'Načítavanie náhľadu…' (loading); PdfPreview.tsx:269 'Chyba pri nacitani PDF: {docError}' (error — note the missing diacritics 'nacitani', confirming these are hand-written literals, not catalog entries).",
+        "This is inconsistent with the same files' own norm: MoveFolderDialog.tsx already uses t() for aria labels (e.g. :146, :323, :333) and DocumentsBrowse.tsx wraps other copy in t(), so the raw strings are an oversight, not an intentional choice. Scope is contained to the documents feature (7 files) and the feature was a recent churn hotspot (MoveFolderDialog ~802 churn, document tests). Landable frontend-only remedy: move each string into the i18n catalog and wrap in t() (add useTranslation where a file lacks it), matching the surrounding code."
+      ],
+      "expert": "completeness"
+    },
+    {
+      "id": "code-review-ppt-web-ui-ocr-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/meters/components/ReadingForm.tsx:107-116 — in handlePhotoChange, when OCR is enabled the code does `const result = await processOcr(file); ...; setShowOcrPreview(true);` inside a try, but the catch swallows the failure with only `console.error('OCR processing failed')` and no user-facing signal. The comment 'OCR failed, user can still enter value manually' documents graceful degradation, but the user gets zero feedback that OCR was attempted and failed — after taking a photo with OCR on, they see no toast, banner, or inline note and may wait expecting the value field to auto-fill.",
+        "console.error also logs a bare message without the caught error object, so the failure is hard to diagnose from logs too. Landable frontend-only remedy: surface a non-blocking inline hint/toast on OCR failure (e.g. 'Couldn't read the meter automatically — enter the value manually') via the app's i18n catalog, and include the error in the console.error call. Low severity: no data loss and manual entry still works, but it is a silent-failure completeness gap on a shipped meter-reading flow."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

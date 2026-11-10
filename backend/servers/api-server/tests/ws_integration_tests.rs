@@ -4,7 +4,7 @@
 //! 1. Authenticated WS upgrade (valid JWT → 101, WS session established).
 //! 2. JWT expiry enforcement — already-expired token → 401 before upgrade.
 //! 3. Wrong token type (refresh token) → 401.
-//! 4. Missing token query parameter → 400/401.
+//! 4. Missing token (no subprotocol, no query param) → 401 from the handler.
 //! 5. Client-initiated close / reconnect — client can disconnect and reconnect.
 //! 6. Heartbeat: client text frame keeps session alive (no close from server).
 //! 7. Redis pub/sub fanout isolation stub — marked `#[ignore]` (needs live Redis).
@@ -247,11 +247,15 @@ async fn ws_upgrade_with_refresh_token_returns_401(pool: PgPool) {
 }
 
 // ============================================================================
-// Test 4: Missing token query parameter is rejected
+// Test 4: Missing token (no subprotocol, no query param) is rejected
 // ============================================================================
 
-/// Requesting the WS endpoint without a `token` query parameter must not
-/// complete the upgrade — the server rejects the request before upgrading.
+/// Requesting the WS endpoint with no token at all — neither the `bearer.<jwt>`
+/// subprotocol nor the legacy `?token=` query param — must not complete the
+/// upgrade. Since the query param became an optional fallback (the preferred
+/// transport is the `Sec-WebSocket-Protocol` header), the `Query` extractor no
+/// longer rejects the request; the handler itself returns `401 Unauthorized`
+/// before upgrading.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn ws_upgrade_without_token_is_rejected(pool: PgPool) {
     let server = build_ws_test_server(pool).await;
@@ -277,9 +281,9 @@ async fn ws_upgrade_without_token_is_rejected(pool: PgPool) {
         .await;
 
     let status = response.status_code().as_u16();
-    assert!(
-        status == 400 || status == 422,
-        "Missing token must yield 400 or 422 (axum Query extractor rejection), got {status}"
+    assert_eq!(
+        status, 401,
+        "Missing token (no subprotocol, no query param) must yield 401 from the handler, got {status}"
     );
 }
 

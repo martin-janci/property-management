@@ -5,6 +5,13 @@
  * @module features/dashboard/hooks/useActionQueue
  */
 
+import {
+  approveBooking,
+  type FaultSummary,
+  listBuildings,
+  listFaults,
+  listPendingBookings,
+} from '@ppt/api-client';
 import { getMode, parseMode } from '@ppt/dev-panel';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
@@ -80,6 +87,114 @@ export function isActionQueueMockEnabled(): boolean {
 /** Empty queue returned when the mock is disabled and no real backend exists. */
 function emptyQueue(): ActionQueueData {
   return { items: [], total: 0, counts: { urgent: 0, high: 0, medium: 0, low: 0 } };
+}
+
+/**
+ * Whether the queue has a real data source for this role. The manager queue is
+ * composed on the client from existing endpoints (gap audit R6 P1-9); there is
+ * no resident composition yet, so residents only see it under the DEV mock.
+ */
+export function isActionQueueAvailable(role: 'manager' | 'resident'): boolean {
+  return role === 'manager' || isActionQueueMockEnabled();
+}
+
+/** Upper bounds so the dashboard never fans out unboundedly. */
+const MAX_NEW_FAULTS = 25;
+const MAX_BUILDINGS_FOR_BOOKINGS = 20;
+const MAX_BOOKINGS_PER_BUILDING = 10;
+
+function faultPriority(fault: Pick<FaultSummary, 'priority'>): ActionPriority {
+  switch (fault.priority) {
+    case 'urgent':
+      return 'urgent';
+    case 'high':
+      return 'high';
+    case 'low':
+      return 'low';
+    default:
+      return 'medium';
+  }
+}
+
+function withCounts(items: ActionItem[]): ActionQueueData {
+  const order: Record<ActionPriority, number> = { urgent: 0, high: 1, medium: 2, low: 3 };
+  const sorted = [...items].sort(
+    (a, b) => order[a.priority] - order[b.priority] || b.createdAt.localeCompare(a.createdAt)
+  );
+  const counts = { urgent: 0, high: 0, medium: 0, low: 0 };
+  for (const item of sorted) counts[item.priority] += 1;
+  return { items: sorted, total: sorted.length, counts };
+}
+
+/**
+ * Compose the manager queue from real endpoints (gap audit R6 P1-9):
+ *  - newly reported faults waiting for triage (`GET /faults?status=new`);
+ *  - facility bookings waiting for approval, per building
+ *    (`GET /facilities/buildings/{id}/bookings/pending`).
+ *
+ * A failing source is skipped rather than failing the whole queue, so one
+ * 403/500 does not hide the other source. Exported for testing.
+ */
+export async function buildManagerQueue(): Promise<ActionQueueData> {
+  const items: ActionItem[] = [];
+
+  const [faultsResult, buildingsResult] = await Promise.allSettled([
+    listFaults({ status: 'new', limit: MAX_NEW_FAULTS }),
+    listBuildings({ pageSize: MAX_BUILDINGS_FOR_BOOKINGS }),
+  ]);
+
+  if (faultsResult.status === 'fulfilled') {
+    for (const fault of faultsResult.value.faults ?? []) {
+      items.push({
+        id: `fault:${fault.id}`,
+        type: 'fault_pending',
+        title: fault.title,
+        description: [fault.building_name, fault.unit_designation].filter(Boolean).join(' · '),
+        priority: faultPriority(fault),
+        createdAt: fault.created_at,
+        entityId: fault.id,
+        entityType: 'fault',
+        actions: [{ id: 'view', label: 'View', variant: 'primary', action: 'view' }],
+      });
+    }
+  }
+
+  if (buildingsResult.status === 'fulfilled') {
+    const buildings = buildingsResult.value.items ?? [];
+    const pending = await Promise.allSettled(
+      buildings.map((b) => listPendingBookings(b.id, { limit: MAX_BOOKINGS_PER_BUILDING }))
+    );
+    pending.forEach((result, idx) => {
+      if (result.status !== 'fulfilled') return;
+      for (const booking of result.value.items) {
+        const when = new Date(booking.start_time);
+        items.push({
+          id: `booking:${booking.id}`,
+          type: 'approval_pending',
+          title: booking.facility_name,
+          description: [
+            booking.user_name ?? booking.user_email,
+            Number.isNaN(when.getTime()) ? null : when.toLocaleString(),
+            booking.building_name,
+          ]
+            .filter(Boolean)
+            .join(' · '),
+          priority: 'high',
+          dueDate: booking.start_time,
+          createdAt: booking.created_at,
+          entityId: booking.id,
+          entityType: 'booking',
+          metadata: { buildingId: booking.building_id ?? buildings[idx].id },
+          actions: [
+            { id: 'approve', label: 'Approve', variant: 'primary', action: 'approve' },
+            { id: 'view', label: 'View', variant: 'secondary', action: 'view' },
+          ],
+        });
+      }
+    });
+  }
+
+  return withCounts(items);
 }
 
 /** Apply client-side filters to an action-queue payload. Exported for testing. */
@@ -299,13 +414,12 @@ export function useActionQueue(role: 'manager' | 'resident', filters?: ActionQue
       // never see fabricated action items — the ActionQueue component then
       // renders its "all caught up" empty state.
       if (!isActionQueueMockEnabled()) {
+        if (role === 'manager') {
+          return applyActionQueueFilters(await buildManagerQueue(), filters);
+        }
         return emptyQueue();
       }
 
-      // TODO(backend): replace with real call once `/api/v1/action-queue`
-      // (and the TypeSpec contract + generated client hook) exist:
-      //   const response = await client.actionQueue.list({ role });
-      //   return response.data;
       await new Promise((resolve) => setTimeout(resolve, 300)); // Simulate network delay
       return applyActionQueueFilters(generateMockData(role), filters);
     },
@@ -321,11 +435,15 @@ export function useActionQueue(role: 'manager' | 'resident', filters?: ActionQue
       // backend endpoint is missing. The surfaced error drives the caller's
       // error handling (mutation `isError`) rather than a lie.
       if (!isActionQueueMockEnabled()) {
-        throw new Error('Action queue backend is not implemented yet (no /api/v1/action-queue).');
+        // Only booking approval is executable inline; rejection needs a
+        // reason and happens on the pending-bookings page ("view").
+        if (itemId.startsWith('booking:') && action === 'approve') {
+          await approveBooking(itemId.slice('booking:'.length));
+          return { success: true, itemId, action };
+        }
+        throw new Error(`Action "${action}" is not supported inline for ${itemId}.`);
       }
 
-      // TODO(backend): replace with real call once the endpoint exists:
-      //   await client.actionQueue.execute({ itemId, action });
       await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate network delay
       return { success: true, itemId, action };
     },

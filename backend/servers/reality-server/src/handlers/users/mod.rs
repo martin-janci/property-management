@@ -17,24 +17,33 @@ use uuid::Uuid;
 /// How long a freshly-issued reset token is valid before it must be rotated.
 const PASSWORD_RESET_TTL_MINUTES: i64 = 30;
 
-/// Outcome of a password-reset request. We deliberately collapse the
-/// "user not found" case into Sent (with an empty token) to avoid
-/// account-existence enumeration.
-#[derive(Debug)]
-pub enum PasswordResetRequestResult {
-    /// A reset token was generated. The plaintext token is returned so the
-    /// caller can dispatch the email; it is NOT persisted in plaintext. The
-    /// user's `name` and `locale` travel alongside it so the route handler can
-    /// render a properly addressed, localized reset email without a second
-    /// lookup.
-    Sent {
-        plaintext_token: String,
-        name: String,
-        locale: String,
-    },
-    /// No such user exists. Returned to the handler so it can log internally
-    /// while still returning HTTP 200 to the client.
-    UserNotFound,
+/// The minimal user identity the password-reset delivery task needs.
+///
+/// Produced by [`UserHandler::find_reset_user`] on the HTTP response path and
+/// then moved into the spawned [`deliver_password_reset`] task. It carries
+/// only what the email render + token write require — no password hash, no
+/// provider — so the heavy, account-specific work can run off the response
+/// path without a second lookup.
+#[derive(Debug, Clone)]
+pub struct ResetUser {
+    pub id: Uuid,
+    pub name: String,
+    pub locale: String,
+}
+
+/// Outcome of routing a password-reset request, independent of HTTP.
+///
+/// Returned by [`route_password_reset`]. It records whether the request
+/// matched an account (and thus dispatched delivery) purely for internal
+/// logging — the HTTP response is identical in both cases, by design, so the
+/// client can never tell them apart.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ResetRouteOutcome {
+    /// The email matched an account; token-issue + email were spawned OFF the
+    /// response path.
+    Dispatched,
+    /// No account matched; nothing was dispatched.
+    NoAccount,
 }
 
 /// Outcome of a confirm-reset request.
@@ -203,7 +212,17 @@ impl UserHandler {
         // back to portal_users for the unmerged-collision case, so this
         // detects a legacy portal-only row too.
         match self.unified.find_by_email(email).await {
-            Ok(Some(_)) => return RegistrationResult::EmailExists,
+            Ok(Some(_)) => {
+                // Account-enumeration defense: the success path below spends
+                // most of its wall-clock time in the Argon2 password hash.
+                // Mirror that cost here so an attacker cannot distinguish
+                // "email already registered" from "account created" by response
+                // latency. The hash output is discarded; `black_box` stops the
+                // optimizer from eliding the work. The route maps EmailExists
+                // onto the same status + body as a real success.
+                let _ = std::hint::black_box(Self::hash_password(password));
+                return RegistrationResult::EmailExists;
+            }
             Err(UnifiedPortalError::Db(e)) => {
                 return RegistrationResult::DatabaseError(e.to_string())
             }
@@ -521,60 +540,31 @@ impl UserHandler {
         Ok(pid)
     }
 
-    /// Issue a password reset token for the user with this email.
+    /// Response-path lookup for a password-reset request.
     ///
-    /// Returns the plaintext token to the caller (so it can put it in an
-    /// email link). Only the SHA-256 hash is persisted — the
-    /// reset-confirm endpoint will hash the incoming token and compare.
-    /// Existing unused tokens for the same user are invalidated so a
-    /// stale link from an earlier request can no longer be used.
-    pub async fn request_password_reset(
-        &self,
-        reset_repo: &PortalPasswordResetRepository,
-        email: &str,
-    ) -> Result<PasswordResetRequestResult, String> {
+    /// Does ONLY the email lookup — the same single DB read whether or not the
+    /// email maps to an account — and returns the identity the delivery task
+    /// needs. It deliberately performs NONE of the account-specific
+    /// side-effects (the two token DB writes and the SMTP send): those run off
+    /// the response path via [`route_password_reset`] + [`deliver_password_reset`].
+    ///
+    /// CWE-208: doing the token-issue + email inline made the found-account
+    /// path measurably slower than the no-account path, so response latency
+    /// leaked account existence even though the HTTP status/body are identical.
+    /// Keeping the response path down to this one shared lookup is what makes
+    /// the two paths timing-indistinguishable.
+    pub async fn find_reset_user(&self, email: &str) -> Result<Option<ResetUser>, String> {
         let user = self
             .repo
             .find_user_by_email(email)
             .await
             .map_err(|e| e.to_string())?;
 
-        let user = match user {
-            Some(u) => u,
-            None => return Ok(PasswordResetRequestResult::UserNotFound),
-        };
-
-        // Burn any existing tokens before issuing a new one.
-        reset_repo
-            .invalidate_user_tokens(user.id)
-            .await
-            .map_err(|e| e.to_string())?;
-
-        // 32 cryptographically-random bytes → URL-safe base64 → ~43 char
-        // token that we surface to the user via email.
-        let mut bytes = [0u8; 32];
-        rand::rngs::SysRng
-            .try_fill_bytes(&mut bytes)
-            .expect("OS rng failed");
-        let plaintext_token =
-            base64::Engine::encode(&base64::engine::general_purpose::URL_SAFE_NO_PAD, bytes);
-        let token_hash = sha256_hex(&plaintext_token);
-        let expires_at = Utc::now() + Duration::minutes(PASSWORD_RESET_TTL_MINUTES);
-
-        reset_repo
-            .create(CreatePortalPasswordResetToken {
-                portal_user_id: user.id,
-                token_hash,
-                expires_at,
-            })
-            .await
-            .map_err(|e| e.to_string())?;
-
-        Ok(PasswordResetRequestResult::Sent {
-            plaintext_token,
-            name: user.name,
-            locale: user.locale,
-        })
+        Ok(user.map(|u| ResetUser {
+            id: u.id,
+            name: u.name,
+            locale: u.locale,
+        }))
     }
 
     /// Verify a reset token and replace the user's password hash.
@@ -644,6 +634,229 @@ fn sha256_hex(input: &str) -> String {
     let mut hasher = Sha256::new();
     hasher.update(input.as_bytes());
     hex::encode(hasher.finalize())
+}
+
+/// Issue a reset token and email the link — the account-specific side-effects
+/// that must run OFF the HTTP response path.
+///
+/// Invalidates any outstanding tokens for the user, mints a fresh token (only
+/// its hash is persisted), writes it, and sends the localized reset link.
+/// Every step is best-effort: errors are logged, never surfaced, because by
+/// the time this runs the HTTP response has already been returned — generic
+/// and account-independent. This is the body [`route_password_reset`] spawns.
+///
+/// CWE-208: this function does the two DB writes and the SMTP send that the
+/// no-account path does not. Running it off the response path (rather than
+/// awaiting it inline) is what keeps the found-account and no-account requests
+/// timing-indistinguishable, closing the latency side-channel an attacker
+/// could otherwise use to enumerate registered emails.
+pub async fn deliver_password_reset(
+    reset_repo: PortalPasswordResetRepository,
+    mailer: std::sync::Arc<dyn crate::services::PasswordResetMailer>,
+    email: String,
+    user: ResetUser,
+) {
+    // Burn any existing tokens before issuing a new one.
+    if let Err(e) = reset_repo.invalidate_user_tokens(user.id).await {
+        tracing::error!(error = %e, "Password reset: failed to invalidate existing tokens");
+        return;
+    }
+
+    // 32 cryptographically-random bytes → URL-safe base64 → ~43 char token we
+    // surface to the user via email. A failure of the OS entropy source is
+    // logged and aborts delivery rather than panicking the worker.
+    let (plaintext_token, token_hash) = match generate_reset_token() {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!(error = %e, "Password reset: OS RNG unavailable, cannot issue token");
+            return;
+        }
+    };
+    let expires_at = Utc::now() + Duration::minutes(PASSWORD_RESET_TTL_MINUTES);
+
+    if let Err(e) = reset_repo
+        .create(CreatePortalPasswordResetToken {
+            portal_user_id: user.id,
+            token_hash,
+            expires_at,
+        })
+        .await
+    {
+        tracing::error!(error = %e, "Password reset: failed to persist token");
+        return;
+    }
+
+    let locale = Locale::parse(&user.locale);
+    match mailer
+        .send_reset_link(&email, &user.name, &plaintext_token, locale)
+        .await
+    {
+        Ok(()) => tracing::info!(
+            email_hash = %common::email_log_hash(&email),
+            "Password reset link dispatched"
+        ),
+        // Delivery failed at the transport. The response was already a generic
+        // 200; log loudly so operators notice — we never silently drop a token.
+        Err(e) => tracing::error!(
+            error = %e,
+            email_hash = %common::email_log_hash(&email),
+            "Failed to send password reset email"
+        ),
+    }
+}
+
+/// Dispatch a password-reset request's side-effects OFF the HTTP response path.
+///
+/// CWE-208: the found-account path performs two DB writes plus an SMTP send
+/// that the no-account path does not. Awaiting them inline makes the found
+/// path measurably slower, leaking account existence through response latency
+/// even though the HTTP status and body are identical for both. We
+/// `tokio::spawn` the delivery so the response returns in account-independent
+/// wall-clock time; when `found` is false there is nothing to deliver, so the
+/// future is dropped un-spawned and no work is scheduled.
+///
+/// This mirrors the fire-and-forget background-task idiom already used by the
+/// reality-server alert workers (`FavoriteAlertWorker` et al.): the join handle
+/// is intentionally detached.
+pub fn route_password_reset<Fut>(found: bool, deliver: Fut) -> ResetRouteOutcome
+where
+    Fut: std::future::Future<Output = ()> + Send + 'static,
+{
+    if found {
+        // Detached on purpose: the response must not wait on the delivery.
+        tokio::spawn(deliver);
+        ResetRouteOutcome::Dispatched
+    } else {
+        // Unknown email: drop the (un-spawned) delivery future. The no-account
+        // path and the found path have now done exactly the same response-path
+        // work — a single email lookup — so they are timing-indistinguishable.
+        drop(deliver);
+        ResetRouteOutcome::NoAccount
+    }
+}
+
+/// Generate a fresh password-reset token.
+///
+/// 32 bytes of OS entropy → URL-safe base64 (no padding, ~43 chars) → its
+/// SHA-256 hex digest. Returns `(plaintext_token, token_hash)`: only the hash
+/// is persisted, the plaintext goes into the email link.
+///
+/// Called once per real reset from [`deliver_password_reset`] (the spawned,
+/// off-response-path delivery task). A failure of the OS entropy source
+/// propagates as an error rather than panicking the worker; the caller logs it
+/// and aborts delivery while the already-returned response stays
+/// enumeration-safe.
+fn generate_reset_token() -> Result<(String, String), String> {
+    let mut bytes = [0u8; 32];
+    rand::rngs::SysRng
+        .try_fill_bytes(&mut bytes)
+        .map_err(|e| format!("OS RNG unavailable: {e}"))?;
+    let plaintext_token =
+        base64::Engine::encode(&base64::engine::general_purpose::URL_SAFE_NO_PAD, bytes);
+    let token_hash = sha256_hex(&plaintext_token);
+    Ok((plaintext_token, token_hash))
+}
+
+#[cfg(test)]
+mod reset_token_timing_tests {
+    //! `request_password_reset` must be timing-indistinguishable between the
+    //! "email exists" and "email does not exist" cases, or response latency
+    //! enumerates registered emails even though the HTTP status/body are
+    //! identical (CWE-208).
+    //!
+    //! The real fix is structural, not a compensating-work trick: the two DB
+    //! writes + the SMTP send happen only for a real account, so instead of
+    //! trying to make the no-account path spend the same time, we move that
+    //! heavy work OFF the response path. [`route_password_reset`] spawns the
+    //! delivery and returns immediately; the response path does only the one
+    //! shared email lookup for both cases.
+    //!
+    //! These tests pin that property. `found_path_does_not_block_on_delivery`
+    //! would FAIL against the old inline-await design (the response would block
+    //! for the full delivery), which is exactly the regression we are guarding.
+    use super::{generate_reset_token, route_password_reset, sha256_hex, ResetRouteOutcome};
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::Arc;
+    use std::time::{Duration, Instant};
+
+    #[test]
+    fn generate_reset_token_shape_is_stable() {
+        let (token, hash) = generate_reset_token().expect("OS RNG available");
+        // 32 bytes → URL-safe base64 (no padding) → 43 chars.
+        assert_eq!(token.len(), 43, "token should be 43 URL-safe base64 chars");
+        // SHA-256 hex digest is 64 chars and is exactly sha256(token).
+        assert_eq!(hash.len(), 64, "hash should be 64 hex chars");
+        assert_eq!(hash, sha256_hex(&token), "hash must be sha256 of the token");
+        // Successive calls differ — proves the CSPRNG actually ran, which is
+        // the per-reset cost now carried entirely by the off-path delivery.
+        let (token2, _) = generate_reset_token().expect("OS RNG available");
+        assert_ne!(token, token2, "CSPRNG must produce distinct tokens");
+    }
+
+    /// The found-account path must return WITHOUT waiting for the (slow)
+    /// side-effects — issuing the token (2 DB writes) and sending the email.
+    /// We stand in a 300 ms delivery future and assert the response path
+    /// returns near-instantly and the delivery still completes afterwards,
+    /// off the response path. Against the pre-fix inline-await design this
+    /// assertion fails (the response would block for ~300 ms).
+    #[tokio::test]
+    async fn found_path_does_not_block_on_delivery() {
+        let delivered = Arc::new(AtomicBool::new(false));
+        let flag = delivered.clone();
+
+        let start = Instant::now();
+        let outcome = route_password_reset(true, async move {
+            // Stand-in for invalidate + create + SMTP send.
+            tokio::time::sleep(Duration::from_millis(300)).await;
+            flag.store(true, Ordering::SeqCst);
+        });
+        let elapsed = start.elapsed();
+
+        assert_eq!(outcome, ResetRouteOutcome::Dispatched);
+        assert!(
+            elapsed < Duration::from_millis(100),
+            "found path must return before delivery runs (CWE-208); took {elapsed:?}"
+        );
+        assert!(
+            !delivered.load(Ordering::SeqCst),
+            "delivery must not have completed on the response path"
+        );
+
+        // …but the dispatched delivery still runs to completion, off-path.
+        tokio::time::sleep(Duration::from_millis(500)).await;
+        assert!(
+            delivered.load(Ordering::SeqCst),
+            "dispatched delivery must still complete in the background"
+        );
+    }
+
+    /// The no-account path returns just as fast and schedules no work at all,
+    /// so it is timing-indistinguishable from the found path — both do only the
+    /// shared email lookup before returning.
+    #[tokio::test]
+    async fn no_account_path_returns_fast_and_dispatches_nothing() {
+        let ran = Arc::new(AtomicBool::new(false));
+        let flag = ran.clone();
+
+        let start = Instant::now();
+        let outcome = route_password_reset(false, async move {
+            flag.store(true, Ordering::SeqCst);
+        });
+        let elapsed = start.elapsed();
+
+        assert_eq!(outcome, ResetRouteOutcome::NoAccount);
+        assert!(
+            elapsed < Duration::from_millis(100),
+            "no-account path must return immediately; took {elapsed:?}"
+        );
+
+        // Give any (erroneously) spawned task a chance to run, then prove none did.
+        tokio::time::sleep(Duration::from_millis(50)).await;
+        assert!(
+            !ran.load(Ordering::SeqCst),
+            "no-account path must not dispatch side-effects"
+        );
+    }
 }
 
 #[cfg(test)]

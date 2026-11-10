@@ -1,21 +1,41 @@
 //! Budget and financial planning routes for Epic 24.
 //!
 //! Handles budgets, budget items, capital plans, reserve funds, and forecasts.
+//!
+//! # Authorization
+//!
+//! Every handler takes an [`RlsConnection`], which validates the caller's
+//! membership in the active tenant and resolves their role from the database.
+//! On top of that:
+//!
+//! * any `organization_id` supplied in the query/body must equal the active
+//!   tenant (403 otherwise) — defense in depth, because RLS is bypassed by
+//!   superuser / `BYPASSRLS` database roles;
+//! * id-only routes (`/{id}/items`, `/items/{item_id}`, `/alerts/{id}`, …)
+//!   resolve their parent budget scoped to the active tenant (404 otherwise);
+//! * every mutation requires a manager-level role ([`TenantRole::is_manager`]);
+//!   read-only GETs stay available to all org members;
+//! * budget lines may only change while the budget is `draft`, actuals may only
+//!   be recorded while it is `active` (400 `INVALID_STATE`, matching the
+//!   submit/approve/activate/close transitions);
+//! * a budget cannot be approved by the user who created it (403).
+//!
+//! [`TenantRole::is_manager`]: common::TenantRole::is_manager
 
 use api_core::extractors::{AuthUser, RlsConnection};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
-    response::IntoResponse,
+    response::{IntoResponse, Response},
     routing::{delete, get, post, put},
     Json, Router,
 };
 use common::ErrorResponse;
 use db::models::{
-    AcknowledgeVarianceAlert, BudgetQuery, CapitalPlanQuery, CreateBudget, CreateBudgetCategory,
-    CreateBudgetItem, CreateCapitalPlan, CreateFinancialForecast, ForecastQuery,
-    RecordBudgetActual, UpdateBudget, UpdateBudgetCategory, UpdateBudgetItem, UpdateCapitalPlan,
-    UpdateFinancialForecast,
+    budget_status, AcknowledgeVarianceAlert, Budget, BudgetQuery, CapitalPlanQuery, CreateBudget,
+    CreateBudgetCategory, CreateBudgetItem, CreateCapitalPlan, CreateFinancialForecast,
+    ForecastQuery, RecordBudgetActual, UpdateBudget, UpdateBudgetCategory, UpdateBudgetItem,
+    UpdateCapitalPlan, UpdateFinancialForecast,
 };
 use rust_decimal::Decimal;
 use serde::Deserialize;
@@ -23,6 +43,21 @@ use utoipa::IntoParams;
 use uuid::Uuid;
 
 use crate::state::AppState;
+
+/// Run an authorization/ownership check; on `Err(response)` release the RLS
+/// connection and return that response from the handler. Evaluates to the
+/// `Ok` value otherwise.
+macro_rules! guard {
+    ($rls:ident, $check:expr) => {
+        match $check {
+            Ok(value) => value,
+            Err(rejection) => {
+                $rls.release().await;
+                return *rejection;
+            }
+        }
+    };
+}
 
 // ===========================================
 // Query Parameter Types
@@ -229,6 +264,151 @@ pub fn router() -> Router<AppState> {
 }
 
 // ===========================================
+// Authorization & Ownership Helpers
+// ===========================================
+
+/// Boxed error response returned by the guard helpers (keeps `Result` small).
+type Rejection = Box<Response>;
+
+fn error_response(status: StatusCode, code: &str, message: &str) -> Response {
+    (status, Json(ErrorResponse::new(code, message))).into_response()
+}
+
+fn not_found(message: &str) -> Response {
+    error_response(StatusCode::NOT_FOUND, "NOT_FOUND", message)
+}
+
+/// Manager-level gate for budget mutations. Uses the database-validated role
+/// carried by the [`RlsConnection`], not the JWT claim.
+fn require_manager(rls: &RlsConnection) -> Result<(), Rejection> {
+    if rls.role().is_manager() {
+        Ok(())
+    } else {
+        Err(Box::new(error_response(
+            StatusCode::FORBIDDEN,
+            "FORBIDDEN",
+            "Manager role required to perform this operation",
+        )))
+    }
+}
+
+/// The client-supplied `organization_id` must be the active (membership
+/// validated) tenant; otherwise a member of org A could address org B's data
+/// whenever RLS is not in force for the database role.
+fn require_tenant_org(rls: &RlsConnection, organization_id: Uuid) -> Result<(), Rejection> {
+    if organization_id == rls.tenant_id() {
+        Ok(())
+    } else {
+        Err(Box::new(error_response(
+            StatusCode::FORBIDDEN,
+            "FORBIDDEN",
+            "organization_id does not match the active organization",
+        )))
+    }
+}
+
+fn require_manager_in_org(rls: &RlsConnection, organization_id: Uuid) -> Result<(), Rejection> {
+    require_tenant_org(rls, organization_id)?;
+    require_manager(rls)
+}
+
+/// Budget lines and actuals follow the budget status machine
+/// (`draft → pending_approval → approved → active → closed`).
+fn require_budget_status(budget: &Budget, status: &str, message: &str) -> Result<(), Rejection> {
+    if budget.status == status {
+        Ok(())
+    } else {
+        Err(Box::new(error_response(
+            StatusCode::BAD_REQUEST,
+            "INVALID_STATE",
+            message,
+        )))
+    }
+}
+
+/// Map a database error to a response: FK violations become 400, unique
+/// violations 409, everything else 500.
+fn db_error(context: &str, e: sqlx::Error) -> Response {
+    let code = e
+        .as_database_error()
+        .and_then(|d| d.code())
+        .map(|c| c.into_owned());
+    match code.as_deref() {
+        Some("23503") => error_response(
+            StatusCode::BAD_REQUEST,
+            "INVALID_REFERENCE",
+            "A referenced record does not exist",
+        ),
+        Some("23505") => error_response(
+            StatusCode::CONFLICT,
+            "CONFLICT",
+            "A conflicting record already exists",
+        ),
+        _ => {
+            tracing::error!("Failed to {}: {:?}", context, e);
+            error_response(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "DB_ERROR",
+                "Database error",
+            )
+        }
+    }
+}
+
+/// Load a budget of the active tenant, or 404.
+async fn load_budget(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    budget_id: Uuid,
+) -> Result<Budget, Rejection> {
+    let org_id = rls.tenant_id();
+    state
+        .budget_repo
+        .find_budget_by_id_rls(&mut **rls.conn(), org_id, budget_id)
+        .await
+        .map_err(|e| Box::new(db_error("load budget", e)))?
+        .ok_or_else(|| Box::new(not_found("Budget not found")))
+}
+
+/// Load the budget owning `item_id` within the active tenant, or 404.
+async fn load_item_budget(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    item_id: Uuid,
+) -> Result<Budget, Rejection> {
+    let org_id = rls.tenant_id();
+    state
+        .budget_repo
+        .find_budget_for_item_rls(&mut **rls.conn(), org_id, item_id)
+        .await
+        .map_err(|e| Box::new(db_error("load budget item", e)))?
+        .ok_or_else(|| Box::new(not_found("Budget item not found")))
+}
+
+/// The category must exist in the active tenant (FK checks bypass RLS).
+async fn require_category_in_org(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    category_id: Uuid,
+) -> Result<(), Rejection> {
+    let org_id = rls.tenant_id();
+    let exists = state
+        .budget_repo
+        .category_in_org_rls(&mut **rls.conn(), org_id, category_id)
+        .await
+        .map_err(|e| Box::new(db_error("check budget category", e)))?;
+    if exists {
+        Ok(())
+    } else {
+        Err(Box::new(error_response(
+            StatusCode::BAD_REQUEST,
+            "INVALID_CATEGORY",
+            "Budget category not found",
+        )))
+    }
+}
+
+// ===========================================
 // Budget Handlers
 // ===========================================
 
@@ -238,6 +418,7 @@ async fn create_budget(
     mut rls: RlsConnection,
     Json(req): Json<CreateBudgetRequest>,
 ) -> impl IntoResponse {
+    guard!(rls, require_manager_in_org(&rls, req.organization_id));
     match state
         .budget_repo
         .create_budget_rls(
@@ -253,13 +434,8 @@ async fn create_budget(
             (StatusCode::CREATED, Json(budget)).into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to create budget: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("create budget", e)
         }
     }
 }
@@ -270,6 +446,7 @@ async fn list_budgets(
     mut rls: RlsConnection,
     Query(query): Query<BudgetListQuery>,
 ) -> impl IntoResponse {
+    guard!(rls, require_tenant_org(&rls, query.organization_id));
     match state
         .budget_repo
         .list_budgets_rls(
@@ -284,13 +461,8 @@ async fn list_budgets(
             Json(budgets).into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to list budgets: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("list budgets", e)
         }
     }
 }
@@ -302,6 +474,7 @@ async fn get_budget(
     Path(id): Path<Uuid>,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    guard!(rls, require_tenant_org(&rls, query.organization_id));
     match state
         .budget_repo
         .find_budget_by_id_rls(&mut **rls.conn(), query.organization_id, id)
@@ -320,13 +493,8 @@ async fn get_budget(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to get budget: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("get budget", e)
         }
     }
 }
@@ -338,6 +506,7 @@ async fn update_budget(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateBudgetRequest>,
 ) -> impl IntoResponse {
+    guard!(rls, require_manager_in_org(&rls, req.organization_id));
     match state
         .budget_repo
         .update_budget_rls(&mut **rls.conn(), req.organization_id, id, req.data)
@@ -356,13 +525,8 @@ async fn update_budget(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to update budget: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("update budget", e)
         }
     }
 }
@@ -374,6 +538,8 @@ async fn delete_budget(
     Path(id): Path<Uuid>,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    guard!(rls, require_manager_in_org(&rls, query.organization_id));
+    guard!(rls, load_budget(&state, &mut rls, id).await);
     match state
         .budget_repo
         .delete_budget_rls(&mut **rls.conn(), query.organization_id, id)
@@ -395,13 +561,8 @@ async fn delete_budget(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to delete budget: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("delete budget", e)
         }
     }
 }
@@ -413,6 +574,8 @@ async fn submit_budget(
     Path(id): Path<Uuid>,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    guard!(rls, require_manager_in_org(&rls, query.organization_id));
+    guard!(rls, load_budget(&state, &mut rls, id).await);
     match state
         .budget_repo
         .submit_budget_for_approval_rls(&mut **rls.conn(), query.organization_id, id)
@@ -434,13 +597,8 @@ async fn submit_budget(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to submit budget: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("submit budget", e)
         }
     }
 }
@@ -452,6 +610,37 @@ async fn approve_budget(
     Path(id): Path<Uuid>,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    guard!(rls, require_manager_in_org(&rls, query.organization_id));
+    let budget = guard!(rls, load_budget(&state, &mut rls, id).await);
+    // Separation of duties: the author of a budget cannot be its approver,
+    // unless they are the organization's only active manager-level member
+    // (otherwise a single-manager org could never approve a budget).
+    if budget.created_by == auth.user_id {
+        match state
+            .org_member_repo
+            .count_other_active_managers(budget.organization_id, auth.user_id)
+            .await
+        {
+            Ok(0) => {}
+            Ok(_) => {
+                rls.release().await;
+                return error_response(
+                    StatusCode::FORBIDDEN,
+                    "FORBIDDEN",
+                    "A budget cannot be approved by the user who created it",
+                );
+            }
+            Err(e) => {
+                tracing::error!("Failed to count organization managers: {:?}", e);
+                rls.release().await;
+                return error_response(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "DB_ERROR",
+                    "Database error",
+                );
+            }
+        }
+    }
     match state
         .budget_repo
         .approve_budget_rls(&mut **rls.conn(), query.organization_id, id, auth.user_id)
@@ -473,13 +662,8 @@ async fn approve_budget(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to approve budget: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("approve budget", e)
         }
     }
 }
@@ -491,6 +675,8 @@ async fn activate_budget(
     Path(id): Path<Uuid>,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    guard!(rls, require_manager_in_org(&rls, query.organization_id));
+    guard!(rls, load_budget(&state, &mut rls, id).await);
     match state
         .budget_repo
         .activate_budget_rls(&mut **rls.conn(), query.organization_id, id)
@@ -512,13 +698,8 @@ async fn activate_budget(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to activate budget: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("activate budget", e)
         }
     }
 }
@@ -530,6 +711,8 @@ async fn close_budget(
     Path(id): Path<Uuid>,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    guard!(rls, require_manager_in_org(&rls, query.organization_id));
+    guard!(rls, load_budget(&state, &mut rls, id).await);
     match state
         .budget_repo
         .close_budget_rls(&mut **rls.conn(), query.organization_id, id)
@@ -551,13 +734,8 @@ async fn close_budget(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to close budget: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("close budget", e)
         }
     }
 }
@@ -568,6 +746,7 @@ async fn get_budget_summary(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
+    guard!(rls, load_budget(&state, &mut rls, id).await);
     match state
         .budget_repo
         .get_budget_summary_rls(&mut **rls.conn(), id)
@@ -578,13 +757,8 @@ async fn get_budget_summary(
             Json(summary).into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to get budget summary: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("get budget summary", e)
         }
     }
 }
@@ -595,6 +769,7 @@ async fn get_category_variance(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
+    guard!(rls, load_budget(&state, &mut rls, id).await);
     match state
         .budget_repo
         .get_category_variance_rls(&mut **rls.conn(), id)
@@ -605,13 +780,8 @@ async fn get_category_variance(
             Json(variance).into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to get category variance: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("get category variance", e)
         }
     }
 }
@@ -628,6 +798,7 @@ async fn list_variance_alerts(
     Path(id): Path<Uuid>,
     Query(query): Query<AlertsQuery>,
 ) -> impl IntoResponse {
+    guard!(rls, load_budget(&state, &mut rls, id).await);
     match state
         .budget_repo
         .list_variance_alerts_rls(&mut **rls.conn(), id, query.acknowledged)
@@ -638,13 +809,8 @@ async fn list_variance_alerts(
             Json(alerts).into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to list variance alerts: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("list variance alerts", e)
         }
     }
 }
@@ -660,6 +826,20 @@ async fn add_budget_item(
     Path(id): Path<Uuid>,
     Json(data): Json<CreateBudgetItem>,
 ) -> impl IntoResponse {
+    guard!(rls, require_manager(&rls));
+    let budget = guard!(rls, load_budget(&state, &mut rls, id).await);
+    guard!(
+        rls,
+        require_budget_status(
+            &budget,
+            budget_status::DRAFT,
+            "Budget items can only be added while the budget is a draft",
+        )
+    );
+    guard!(
+        rls,
+        require_category_in_org(&state, &mut rls, data.category_id).await
+    );
     match state
         .budget_repo
         .add_budget_item_rls(&mut **rls.conn(), id, data)
@@ -670,13 +850,8 @@ async fn add_budget_item(
             (StatusCode::CREATED, Json(item)).into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to add budget item: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("add budget item", e)
         }
     }
 }
@@ -687,6 +862,7 @@ async fn list_budget_items(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
+    guard!(rls, load_budget(&state, &mut rls, id).await);
     match state
         .budget_repo
         .list_budget_items_rls(&mut **rls.conn(), id)
@@ -697,13 +873,8 @@ async fn list_budget_items(
             Json(items).into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to list budget items: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("list budget items", e)
         }
     }
 }
@@ -715,6 +886,16 @@ async fn update_budget_item(
     Path(item_id): Path<Uuid>,
     Json(data): Json<UpdateBudgetItem>,
 ) -> impl IntoResponse {
+    guard!(rls, require_manager(&rls));
+    let budget = guard!(rls, load_item_budget(&state, &mut rls, item_id).await);
+    guard!(
+        rls,
+        require_budget_status(
+            &budget,
+            budget_status::DRAFT,
+            "Budget items can only be edited while the budget is a draft",
+        )
+    );
     match state
         .budget_repo
         .update_budget_item_rls(&mut **rls.conn(), item_id, data)
@@ -726,20 +907,11 @@ async fn update_budget_item(
         }
         Ok(None) => {
             rls.release().await;
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Budget item not found")),
-            )
-                .into_response()
+            not_found("Budget item not found")
         }
         Err(e) => {
-            tracing::error!("Failed to update budget item: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("update budget item", e)
         }
     }
 }
@@ -750,6 +922,16 @@ async fn delete_budget_item(
     mut rls: RlsConnection,
     Path(item_id): Path<Uuid>,
 ) -> impl IntoResponse {
+    guard!(rls, require_manager(&rls));
+    let budget = guard!(rls, load_item_budget(&state, &mut rls, item_id).await);
+    guard!(
+        rls,
+        require_budget_status(
+            &budget,
+            budget_status::DRAFT,
+            "Budget items can only be deleted while the budget is a draft",
+        )
+    );
     match state
         .budget_repo
         .delete_budget_item_rls(&mut **rls.conn(), item_id)
@@ -761,20 +943,11 @@ async fn delete_budget_item(
         }
         Ok(false) => {
             rls.release().await;
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Budget item not found")),
-            )
-                .into_response()
+            not_found("Budget item not found")
         }
         Err(e) => {
-            tracing::error!("Failed to delete budget item: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("delete budget item", e)
         }
     }
 }
@@ -786,6 +959,16 @@ async fn record_actual(
     Path(item_id): Path<Uuid>,
     Json(data): Json<RecordBudgetActual>,
 ) -> impl IntoResponse {
+    guard!(rls, require_manager(&rls));
+    let budget = guard!(rls, load_item_budget(&state, &mut rls, item_id).await);
+    guard!(
+        rls,
+        require_budget_status(
+            &budget,
+            budget_status::ACTIVE,
+            "Actuals can only be recorded against an active budget",
+        )
+    );
     match state
         .budget_repo
         .record_actual_rls(&mut **rls.conn(), item_id, auth.user_id, data)
@@ -796,13 +979,8 @@ async fn record_actual(
             (StatusCode::CREATED, Json(actual)).into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to record actual: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("record actual", e)
         }
     }
 }
@@ -813,6 +991,7 @@ async fn list_actuals(
     mut rls: RlsConnection,
     Path(item_id): Path<Uuid>,
 ) -> impl IntoResponse {
+    guard!(rls, load_item_budget(&state, &mut rls, item_id).await);
     match state
         .budget_repo
         .list_actuals_rls(&mut **rls.conn(), item_id)
@@ -823,13 +1002,8 @@ async fn list_actuals(
             Json(actuals).into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to list actuals: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("list actuals", e)
         }
     }
 }
@@ -844,6 +1018,13 @@ async fn create_category(
     mut rls: RlsConnection,
     Json(req): Json<CreateCategoryRequest>,
 ) -> impl IntoResponse {
+    guard!(rls, require_manager_in_org(&rls, req.organization_id));
+    if let Some(parent_id) = req.data.parent_id {
+        guard!(
+            rls,
+            require_category_in_org(&state, &mut rls, parent_id).await
+        );
+    }
     match state
         .budget_repo
         .create_category_rls(&mut **rls.conn(), req.organization_id, req.data)
@@ -854,13 +1035,8 @@ async fn create_category(
             (StatusCode::CREATED, Json(category)).into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to create category: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("create category", e)
         }
     }
 }
@@ -871,6 +1047,7 @@ async fn list_categories(
     mut rls: RlsConnection,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    guard!(rls, require_tenant_org(&rls, query.organization_id));
     match state
         .budget_repo
         .list_categories_rls(&mut **rls.conn(), query.organization_id)
@@ -881,13 +1058,8 @@ async fn list_categories(
             Json(categories).into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to list categories: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("list categories", e)
         }
     }
 }
@@ -899,6 +1071,7 @@ async fn update_category(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateCategoryRequest>,
 ) -> impl IntoResponse {
+    guard!(rls, require_manager_in_org(&rls, req.organization_id));
     match state
         .budget_repo
         .update_category_rls(&mut **rls.conn(), req.organization_id, id, req.data)
@@ -917,13 +1090,8 @@ async fn update_category(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to update category: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("update category", e)
         }
     }
 }
@@ -935,6 +1103,7 @@ async fn delete_category(
     Path(id): Path<Uuid>,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    guard!(rls, require_manager_in_org(&rls, query.organization_id));
     match state
         .budget_repo
         .delete_category_rls(&mut **rls.conn(), query.organization_id, id)
@@ -953,13 +1122,8 @@ async fn delete_category(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to delete category: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("delete category", e)
         }
     }
 }
@@ -975,6 +1139,23 @@ async fn acknowledge_alert(
     Path(id): Path<Uuid>,
     Json(data): Json<AcknowledgeVarianceAlert>,
 ) -> impl IntoResponse {
+    guard!(rls, require_manager(&rls));
+    let org_id = rls.tenant_id();
+    match state
+        .budget_repo
+        .find_budget_for_alert_rls(&mut **rls.conn(), org_id, id)
+        .await
+    {
+        Ok(Some(_)) => {}
+        Ok(None) => {
+            rls.release().await;
+            return not_found("Alert not found");
+        }
+        Err(e) => {
+            rls.release().await;
+            return db_error("load variance alert", e);
+        }
+    }
     match state
         .budget_repo
         .acknowledge_alert_rls(&mut **rls.conn(), id, auth.user_id, data)
@@ -993,13 +1174,8 @@ async fn acknowledge_alert(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to acknowledge alert: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("acknowledge alert", e)
         }
     }
 }
@@ -1014,6 +1190,7 @@ async fn get_dashboard(
     mut rls: RlsConnection,
     Query(query): Query<BuildingQuery>,
 ) -> impl IntoResponse {
+    guard!(rls, require_tenant_org(&rls, query.organization_id));
     // All dashboard queries run on the RLS-bound connection so RLS policies
     // are enforced consistently across the budget, alert and reserve lookups.
     match state
@@ -1026,13 +1203,8 @@ async fn get_dashboard(
             Json(dashboard).into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to get dashboard: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("get dashboard", e)
         }
     }
 }
@@ -1047,6 +1219,7 @@ async fn create_capital_plan(
     mut rls: RlsConnection,
     Json(req): Json<CreateCapitalPlanRequest>,
 ) -> impl IntoResponse {
+    guard!(rls, require_manager_in_org(&rls, req.organization_id));
     match state
         .budget_repo
         .create_capital_plan_rls(
@@ -1062,13 +1235,8 @@ async fn create_capital_plan(
             (StatusCode::CREATED, Json(plan)).into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to create capital plan: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("create capital plan", e)
         }
     }
 }
@@ -1079,6 +1247,7 @@ async fn list_capital_plans(
     mut rls: RlsConnection,
     Query(query): Query<CapitalPlanListQuery>,
 ) -> impl IntoResponse {
+    guard!(rls, require_tenant_org(&rls, query.organization_id));
     match state
         .budget_repo
         .list_capital_plans_rls(
@@ -1093,13 +1262,8 @@ async fn list_capital_plans(
             Json(plans).into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to list capital plans: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("list capital plans", e)
         }
     }
 }
@@ -1110,6 +1274,7 @@ async fn get_yearly_capital_summary(
     mut rls: RlsConnection,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    guard!(rls, require_tenant_org(&rls, query.organization_id));
     match state
         .budget_repo
         .get_yearly_capital_summary_rls(&mut **rls.conn(), query.organization_id)
@@ -1120,13 +1285,8 @@ async fn get_yearly_capital_summary(
             Json(summary).into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to get yearly capital summary: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("get yearly capital summary", e)
         }
     }
 }
@@ -1138,6 +1298,7 @@ async fn get_capital_plan(
     Path(id): Path<Uuid>,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    guard!(rls, require_tenant_org(&rls, query.organization_id));
     match state
         .budget_repo
         .find_capital_plan_by_id_rls(&mut **rls.conn(), query.organization_id, id)
@@ -1156,13 +1317,8 @@ async fn get_capital_plan(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to get capital plan: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("get capital plan", e)
         }
     }
 }
@@ -1174,6 +1330,7 @@ async fn update_capital_plan(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateCapitalPlanRequest>,
 ) -> impl IntoResponse {
+    guard!(rls, require_manager_in_org(&rls, req.organization_id));
     match state
         .budget_repo
         .update_capital_plan_rls(&mut **rls.conn(), req.organization_id, id, req.data)
@@ -1192,13 +1349,8 @@ async fn update_capital_plan(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to update capital plan: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("update capital plan", e)
         }
     }
 }
@@ -1210,6 +1362,7 @@ async fn delete_capital_plan(
     Path(id): Path<Uuid>,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    guard!(rls, require_manager_in_org(&rls, query.organization_id));
     match state
         .budget_repo
         .delete_capital_plan_rls(&mut **rls.conn(), query.organization_id, id)
@@ -1231,13 +1384,8 @@ async fn delete_capital_plan(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to delete capital plan: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("delete capital plan", e)
         }
     }
 }
@@ -1249,6 +1397,7 @@ async fn start_capital_plan(
     Path(id): Path<Uuid>,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    guard!(rls, require_manager_in_org(&rls, query.organization_id));
     match state
         .budget_repo
         .start_capital_plan_rls(&mut **rls.conn(), query.organization_id, id)
@@ -1270,13 +1419,8 @@ async fn start_capital_plan(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to start capital plan: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("start capital plan", e)
         }
     }
 }
@@ -1288,6 +1432,7 @@ async fn complete_capital_plan(
     Path(id): Path<Uuid>,
     Json(req): Json<CompleteCapitalPlanRequest>,
 ) -> impl IntoResponse {
+    guard!(rls, require_manager_in_org(&rls, req.organization_id));
     match state
         .budget_repo
         .complete_capital_plan_rls(&mut **rls.conn(), req.organization_id, id, req.actual_cost)
@@ -1309,13 +1454,8 @@ async fn complete_capital_plan(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to complete capital plan: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("complete capital plan", e)
         }
     }
 }
@@ -1330,6 +1470,7 @@ async fn create_forecast(
     mut rls: RlsConnection,
     Json(req): Json<CreateForecastRequest>,
 ) -> impl IntoResponse {
+    guard!(rls, require_manager_in_org(&rls, req.organization_id));
     match state
         .budget_repo
         .create_forecast_rls(
@@ -1345,13 +1486,8 @@ async fn create_forecast(
             (StatusCode::CREATED, Json(forecast)).into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to create forecast: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("create forecast", e)
         }
     }
 }
@@ -1362,6 +1498,7 @@ async fn list_forecasts(
     mut rls: RlsConnection,
     Query(query): Query<ForecastListQuery>,
 ) -> impl IntoResponse {
+    guard!(rls, require_tenant_org(&rls, query.organization_id));
     match state
         .budget_repo
         .list_forecasts_rls(
@@ -1376,13 +1513,8 @@ async fn list_forecasts(
             Json(forecasts).into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to list forecasts: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("list forecasts", e)
         }
     }
 }
@@ -1394,6 +1526,7 @@ async fn get_forecast(
     Path(id): Path<Uuid>,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    guard!(rls, require_tenant_org(&rls, query.organization_id));
     match state
         .budget_repo
         .find_forecast_by_id_rls(&mut **rls.conn(), query.organization_id, id)
@@ -1412,13 +1545,8 @@ async fn get_forecast(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to get forecast: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("get forecast", e)
         }
     }
 }
@@ -1430,6 +1558,7 @@ async fn update_forecast(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateForecastRequest>,
 ) -> impl IntoResponse {
+    guard!(rls, require_manager_in_org(&rls, req.organization_id));
     match state
         .budget_repo
         .update_forecast_rls(&mut **rls.conn(), req.organization_id, id, req.data)
@@ -1448,13 +1577,8 @@ async fn update_forecast(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to update forecast: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("update forecast", e)
         }
     }
 }
@@ -1466,6 +1590,7 @@ async fn delete_forecast(
     Path(id): Path<Uuid>,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    guard!(rls, require_manager_in_org(&rls, query.organization_id));
     match state
         .budget_repo
         .delete_forecast_rls(&mut **rls.conn(), query.organization_id, id)
@@ -1484,13 +1609,42 @@ async fn delete_forecast(
                 .into_response()
         }
         Err(e) => {
-            tracing::error!("Failed to delete forecast: {:?}", e);
             rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
+            db_error("delete forecast", e)
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::body::to_bytes;
+
+    /// Every budget handler funnels DB failures through [`db_error`]. It must
+    /// return a generic body and never echo the raw sqlx error (table/column
+    /// names, query fragments, connection detail) back to the client — the
+    /// regression guard for the `e.to_string()` leak on the `DB_ERROR` paths.
+    #[tokio::test]
+    async fn db_error_never_leaks_raw_sqlx_detail() {
+        // A sqlx error whose Display carries internals a client must not see.
+        let secret = "secret_table.secret_column: internal constraint detail";
+        let resp = db_error("list budgets", sqlx::Error::Protocol(secret.to_string()));
+
+        assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
+
+        let body = to_bytes(resp.into_body(), usize::MAX)
+            .await
+            .expect("collect body");
+        let body = String::from_utf8(body.to_vec()).expect("utf8 body");
+
+        assert!(
+            !body.contains(secret),
+            "DB error body leaked raw sqlx detail: {body}"
+        );
+        assert!(body.contains("DB_ERROR"), "unexpected error code: {body}");
+        assert!(
+            body.contains("Database error"),
+            "expected the generic message: {body}"
+        );
     }
 }

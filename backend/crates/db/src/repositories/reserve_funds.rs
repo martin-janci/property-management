@@ -778,6 +778,49 @@ impl ReserveFundRepository {
         }
     }
 
+    /// Verify that a child row of `kind` (component, contribution schedule or
+    /// projection) belongs to `fund_id`, and that the fund belongs to `org_id`.
+    /// Returns [`sqlx::Error::RowNotFound`] otherwise, so a nested route such as
+    /// `/{fund_id}/components/{component_id}` cannot reach a child of a
+    /// different fund.
+    pub async fn ensure_child_in_fund<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+        fund_id: Uuid,
+        kind: FundChildKind,
+        child_id: Uuid,
+    ) -> Result<(), sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let sql = match kind {
+            FundChildKind::Component => {
+                "SELECT EXISTS(SELECT 1 FROM fund_components c JOIN reserve_funds rf ON rf.id = c.fund_id \
+                 WHERE c.id = $1 AND c.fund_id = $2 AND rf.organization_id = $3)"
+            }
+            FundChildKind::ContributionSchedule => {
+                "SELECT EXISTS(SELECT 1 FROM fund_contribution_schedules c JOIN reserve_funds rf ON rf.id = c.fund_id \
+                 WHERE c.id = $1 AND c.fund_id = $2 AND rf.organization_id = $3)"
+            }
+            FundChildKind::Projection => {
+                "SELECT EXISTS(SELECT 1 FROM fund_projections c JOIN reserve_funds rf ON rf.id = c.fund_id \
+                 WHERE c.id = $1 AND c.fund_id = $2 AND rf.organization_id = $3)"
+            }
+        };
+        let exists: bool = sqlx::query_scalar(sql)
+            .bind(child_id)
+            .bind(fund_id)
+            .bind(org_id)
+            .fetch_one(executor)
+            .await?;
+        if exists {
+            Ok(())
+        } else {
+            Err(sqlx::Error::RowNotFound)
+        }
+    }
+
     // ========================================================================
     // Components
     // ========================================================================
@@ -1225,4 +1268,16 @@ impl ReserveFundRepository {
             recommendations,
         })
     }
+}
+
+/// Child tables of a reserve fund addressed by nested routes; see
+/// [`ReserveFundRepository::ensure_child_in_fund`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FundChildKind {
+    /// `fund_components`
+    Component,
+    /// `fund_contribution_schedules`
+    ContributionSchedule,
+    /// `fund_projections`
+    Projection,
 }

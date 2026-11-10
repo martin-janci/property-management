@@ -1,0 +1,30 @@
+{
+  "generated": "2026-09-17T00:00:00Z",
+  "source_run": "dispatcher Phase 2.6 Tier-1d demand-driven vector generator (claimable buffer starved, 12 < floor 36) 2026-09-17",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "OLDEST-UNREVIEWED among UNBLOCKED/landable stacks. No CHURN_FILES were supplied to this run, so churn-alignment (Step 1 priority 1) did not apply. By state.review_cursor the oldest frontend segments tie at 2026-08-29: ppt-web-core and reality-web. Per task guidance the api-server (backend) and mobile-native/KMP stacks are structurally unlandable in this cloud runner (egress-blocked builds, #2949/#2652), so blocked Rust/Kotlin segments were skipped in favour of an unblocked frontend segment even though api-handlers/api-core cursors are older. Tie broken by segment-map table order -> ppt-web-core (root: frontend/apps/ppt-web/src/, i.e. hooks/ + lib/[api layer] + contexts/ + routes/[router]; the map's literal src/pages+components is the sibling ppt-web-ui segment and was excluded). SATURATION CHECK PASSED: backlog.json holds 0 OPEN code-review-finding rows for any segment (all 19 existing code-review findings are status=done), so no saturation skip. Static-only, no build/test (cloud runner has no Node/pnpm toolchain and does not compile). SEGMENT IS HEAVILY PICKED-OVER AND CLEAN: this is a mature, thoroughly-rationalised segment. Verified NOT-findings during the sweep so they are not re-emitted as noise: (a) all JSON.parse call sites are try/catch-guarded (websocket.ts handleMessage :538, AuthContext tokenStorage getters :155/:172 and decodeJwtPayload :229); (b) zero non-null (!) assertions in non-test core code; (c) the only console.* in hooks (usePerformanceMetrics logPerformanceMetrics) is gated behind `import.meta.env.DEV`, and lib/api.ts / lib/websocket.ts console calls are DEV-gated or routed through wsWarn/wsError logger wrappers; (d) every `as any`/`as unknown as` cast is confined to *.test.ts(x) files; (e) AuthContext token-refresh is single-flight (isRefreshing/refreshPromise refs) with correct cold-boot expiry-skew handling and scoped query-cache purge on logout (#712); (f) lib/api.ts retry loop is idempotency-aware (POST/PUT/PATCH excluded unless opted-in) with a `__authRetried` guard preventing 401 replay loops; (g) useNetworkStatus / useFocusTrap both clean up timers and listeners on unmount; (h) ProtectedRoute is deny-on-missing-role (fail-closed) and rentals.tsx using bare <ProtectedRoute> is the app-wide NORM (only core.tsx admin surfaces use requiredRoles; role enforcement is server-side + inline isManagerRole) so it was DROPPED as a false-positive rather than filed. Cap-at-3 honored; 1 net-new MEDIUM finding below; nits skipped.",
+  "experts_used": ["frontend"],
+  "findings_count": 1,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-ws-jwt-in-url",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-17 ppt-web-core websocket auth transport)",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts",
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts:94-101 — buildWebSocketUrl(base, token) appends the full JWT access token to the handshake URL as a query parameter: `url.searchParams.set('token', token)`. openConnection() (:369) then opens `new WebSocket(buildWebSocketUrl(this.url, token), ['ppt.v1'])`, so the raw bearer JWT rides in the WS connect URL on every (re)connect.",
+        "Why it is a real exposure vector: unlike request bodies or Authorization headers, full request URLs (including query strings) are routinely captured in places the token should never land — reverse-proxy / load-balancer / CDN access logs, APM traces, the browser's own history and devtools network panel, and any intermediary that logs the request line. A leaked access JWT is a bearer credential; anyone who reads it from a log can replay it until it expires. The code's own comment (websocket.ts:360-366, WebSocketContext.tsx:170-176) documents WHY the query param is used (browsers cannot set an Authorization header on the WS handshake, and the api-server WsQuery contract in ws_notifications.rs reads `?token=`), and the wss:// default protects the token ON THE WIRE — but neither addresses the residual at-rest log-capture risk, which persists even over TLS because the terminating proxy/server sees and can log the decrypted query string.",
+        "Suggested hardening (frontend + a small backend endpoint): replace the long-lived access JWT in the URL with a short-lived, single-use WS 'ticket' — client POSTs (with the normal Authorization header) to a `/ws/ticket` endpoint that returns an opaque nonce valid for ~30s and one connection; the WS URL then carries `?ticket=<nonce>` instead of the JWT, so a logged URL exposes only a spent/expired nonce. If a ticket endpoint is out of scope, the cheaper mitigation is a backend-side guarantee that the WS handshake query string is stripped/redacted from all access logs (proxy + app tracing). Filed MEDIUM: exploitability requires log/history access (not remote-unauthenticated) and is partly mitigated by short JWT TTL + wss://, but a bearer token in a URL is a well-established anti-pattern worth closing. Note the same `?token=` pattern likely exists in the reality-web and mobile WS clients and in the api-server WsQuery handler — a fix should sweep all WS-auth call sites together."
+      ]
+    }
+  ]
+}

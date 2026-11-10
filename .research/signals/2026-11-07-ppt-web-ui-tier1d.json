@@ -1,0 +1,57 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-07",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-landable-unreviewed-today (dispatcher Tier-1d demand-driven; buffer starved). review_cursor oldest is mobile-rn (2026-11-03) but it was already reviewed 3x today (signals/2026-11-07-mobile-rn-tier1d{,-2,-3}.json, 7 findings incl. code-review-mobile-rn-i18n-hardcoded-screen-strings), so re-reviewing it adds only duplicates. api-handlers/api-core/reality-server/ppt-web-core were already reviewed today (their tier1d files exist). mobile-native-kmp excluded per caller steer (structurally unlandable in cloud, no Kotlin/iOS toolchain). Among LANDABLE (backend/ or frontend non-mobile-native) segments with NO tier1d signal file today, ppt-web-ui (cursor 2026-11-05) is older than reality-web (2026-11-06) -> selected. Saturation check: 0 open code-review-finding rows for ppt-web-ui in backlog.json (15 done, 0 open) < 3 cap -> not saturated. Scope note: segment map lists pages/+components/, but those top-level dirs are tiny and heavily unit/a11y/i18n-tested; the real ppt-web UI lives under features/*/pages + features/*/components, which is where prior ppt-web-ui findings came from (e.g. disputes MediationWorkspacePage in hotspot_history). Churn-aligned narrowing: git log (last 45d) over features/ ranks registry/* and marketplace/* as the top-churn UI dirs. Frontend static sweep (read + grep, no build/test run): no `as any`/`as unknown as` crossing an API boundary that was unsafe (community/utils/format.ts:56 and iot/useIotWebSocket.ts:41 casts are deliberate + documented re #3310); no stray console.* in prod paths (ErrorBoundary.tsx console.error is intentional); pages use custom data hooks (no raw useQuery without an error branch found in marketplace/registry pages). The findable, landable, high-value defect class is a SYSTEMIC incomplete-i18n regression: ppt-web is a react-i18next app targeting sk/cs/de/en (sibling disputes feature uses useTranslation in 27 files), yet 44 feature components/pages render hardcoded English with no useTranslation import. Whole features are affected -- portfolio-performance/, forms/, reports/, government-portal/, critical-notifications/, compliance/ -- meaning non-English managers see those screens entirely in English. The 3 findings below are concrete, representative, independently-landable slices of that gap (registry is churn-aligned; portfolio-performance and forms are the two largest fully-untranslated features).",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-registry-rules-form-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/components/RegistryRulesForm.tsx (322 lines) imports NO useTranslation (grep count 0) and is a user-facing manager form reached from RegistryRulesPage.tsx -- a top recent-churn ppt-web UI file (3 commits touching registry/pages/RegistryPage.tsx + 2 each to RegistryRulesPage/VehicleRegistration*/PetRegistration* in the last 45d). Every string renders English regardless of the active locale (app targets sk/cs/de/en; sibling features/disputes uses useTranslation in 27 files, so i18n is the established norm -- this form is an un-translated gap, not a global absence).",
+        "Hardcoded visible labels: L91 'Pets are allowed in this building', L109 'Pet registrations require manager approval', L119 'Maximum pets per unit'. Hardcoded placeholders: L134/L228/L278 'No limit', L176 'Enter breed name and press Enter', L295 'Any additional registry rules or notes...'.",
+        "Hardcoded option labels L18-24 petTypes: Dog/Cat/Bird/Fish/Reptile/Rodent/Other -- rendered directly as <option> text. Fix vector (cloud-landable, TS-only): wrap strings in t('...'), add keys to the ppt-web locale bundles (en/sk/cs/de), and derive petType labels from t() rather than the inline English array; a *.i18n.test.tsx (the pattern already used for ConfirmationDialog/LanguageSwitcher) asserts no raw literal leaks."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-perf-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "The entire features/portfolio-performance/ UI is untranslated: PortfolioListPage.tsx, PortfolioDashboardPage.tsx, PropertyForm.tsx, FinancialMetricsTable.tsx, BenchmarkComparisonCard.tsx, PortfolioCard.tsx, PropertyCard.tsx, PerformanceAlert.tsx and CashFlowChart.tsx all import NO useTranslation (grep count 0 across the dir). A non-English manager sees the whole investment-portfolio area in English on a react-i18next sk/cs/de/en app.",
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioListPage.tsx -- L85 <h1>Investment Portfolios</h1>, L109 'Active Portfolios', L115 'Total Value', L121 'Total Equity', L125 'Total Properties', L169 empty-state heading 'No portfolios'. None wrapped in t().",
+        "frontend/apps/ppt-web/src/features/portfolio-performance/components/PropertyForm.tsx -- L117 placeholder='Custom name for this property', L329 placeholder='Additional notes about this property...'. Fix vector (cloud-landable, TS-only): add useTranslation to each page/component, move all literals (headings, stat-tile labels, empty states, placeholders) into the ppt-web locale bundles, and guard with an i18n test; biome + typecheck + vitest gate the change with no backend/API churn."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-forms-feature-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "The entire features/forms/ UI is untranslated: FormBuilder.tsx, FormRenderer.tsx, FormCard.tsx, FormList.tsx, SubmissionList.tsx and pages AvailableFormsPage/FillFormPage/CreateFormPage/ViewFormPage all import NO useTranslation (grep count 0 across the dir). Forms are resident/tenant-facing (FillFormPage) as well as manager-facing, so the English-only text reaches end users directly on an sk/cs/de/en portal.",
+        "frontend/apps/ppt-web/src/features/forms/pages/FillFormPage.tsx -- L42 <h2>Form Expired</h2>, plus hardcoded SVG <title> a11y labels (screen-reader text) L34 'Expired', L69 'Category', L83 'Deadline', L97 'Signature required'.",
+        "frontend/apps/ppt-web/src/features/forms/components/FormBuilder.tsx -- L116 'No fields' (empty state), L203 title='Edit field', L219 title='Delete field', L222 <title>Delete</title>. Fix vector (cloud-landable, TS-only): add useTranslation across the feature, move visible text AND the SVG <title>/title= accessibility strings into locale bundles, add an i18n test. Note: this is one of 6 fully-untranslated ppt-web features (also reports/, government-portal/, critical-notifications/, compliance/) -- 44 feature components/pages total with no useTranslation + visible English text; see selection_reason for the full systemic picture."
+      ]
+    }
+  ]
+}

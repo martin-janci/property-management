@@ -73,6 +73,30 @@ pub enum OAuthServiceError {
     InternalError,
 }
 
+impl OAuthServiceError {
+    /// Client-facing error message, safe to place in an HTTP response body.
+    ///
+    /// Internal/infrastructure failures (`DatabaseError`, `InternalError`) must
+    /// never surface their `Display` detail to the client: a raw `sqlx::Error`
+    /// leaks table, column and constraint names. Callers log the full error
+    /// server-side (`tracing::error!`) and use this for the response body.
+    ///
+    /// Validation / protocol variants are user-actionable and safe to surface
+    /// verbatim.
+    pub fn client_message(&self) -> String {
+        match self {
+            // Internal/infrastructure failures: opaque to the client. The full
+            // detail is logged server-side by the caller.
+            OAuthServiceError::DatabaseError(_) | OAuthServiceError::InternalError => {
+                "Internal server error".to_string()
+            }
+            // Validation / protocol variants carry no internal detail and are
+            // user-actionable — safe to surface verbatim.
+            other => other.to_string(),
+        }
+    }
+}
+
 impl From<OAuthServiceError> for OAuthError {
     fn from(e: OAuthServiceError) -> Self {
         match e {
@@ -960,6 +984,44 @@ mod tests {
         let mut bytes = vec![0u8; n];
         rand::TryRng::try_fill_bytes(&mut rand::rngs::SysRng, &mut bytes).expect("OS rng failed");
         URL_SAFE_NO_PAD.encode(&bytes)
+    }
+
+    #[test]
+    fn database_error_client_message_is_sanitized() {
+        // Security finding (api handlers db error leak): a raw DB failure must
+        // not leak table / column / constraint names into the HTTP response
+        // body. The full detail is logged server-side; the client gets a
+        // generic message.
+        let raw = "error returned from database: column \
+                   \"oauth_clients.secret_hash\" does not exist";
+        let err = OAuthServiceError::DatabaseError(sqlx::Error::Protocol(raw.to_string()));
+
+        let msg = err.client_message();
+        assert_eq!(msg, "Internal server error");
+        // Defense in depth: none of the raw driver detail may appear.
+        assert!(!msg.contains("oauth_clients"), "leaked table name: {msg}");
+        assert!(!msg.contains("column"), "leaked driver detail: {msg}");
+        assert!(!msg.contains("database"), "leaked driver detail: {msg}");
+
+        // InternalError is likewise opaque.
+        assert_eq!(
+            OAuthServiceError::InternalError.client_message(),
+            "Internal server error"
+        );
+    }
+
+    #[test]
+    fn validation_error_client_message_is_preserved() {
+        // User-actionable validation errors stay descriptive — they carry no
+        // internal detail and help the caller fix their request.
+        assert_eq!(
+            OAuthServiceError::InvalidScope("read:foo".to_string()).client_message(),
+            "Invalid scope: read:foo"
+        );
+        assert_eq!(
+            OAuthServiceError::InvalidRedirectUri.client_message(),
+            "Invalid redirect URI"
+        );
     }
 
     #[test]

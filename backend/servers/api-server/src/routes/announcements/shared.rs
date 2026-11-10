@@ -298,12 +298,15 @@ pub(crate) async fn resolve_announcement_recipients(
                 SELECT DISTINCT ur.user_id
                 FROM unit_residents ur
                 JOIN units u ON u.id = ur.unit_id
+                JOIN buildings b ON b.id = u.building_id
                 WHERE u.building_id = ANY($1)
+                  AND b.organization_id = $2
                   AND ur.end_date IS NULL
                   AND ur.receives_notifications = TRUE
                 "#,
             )
             .bind(target_ids)
+            .bind(org_id)
             .fetch_all(&mut *conn)
             .await?
         }
@@ -312,12 +315,16 @@ pub(crate) async fn resolve_announcement_recipients(
                 r#"
                 SELECT DISTINCT ur.user_id
                 FROM unit_residents ur
+                JOIN units u ON u.id = ur.unit_id
+                JOIN buildings b ON b.id = u.building_id
                 WHERE ur.unit_id = ANY($1)
+                  AND b.organization_id = $2
                   AND ur.end_date IS NULL
                   AND ur.receives_notifications = TRUE
                 "#,
             )
             .bind(target_ids)
+            .bind(org_id)
             .fetch_all(&mut *conn)
             .await?
         }
@@ -532,6 +539,59 @@ pub(crate) fn sanitize_markdown(content: &str) -> String {
 // ============================================================================
 // Tests (Story 6.3 - comment validation)
 // ============================================================================
+
+// ============================================================================
+// Org-scope helpers
+// ============================================================================
+
+/// Load an announcement by id, returning 404 unless it belongs to `org_id`.
+///
+/// `announcements` (and its child tables) are ENABLE-only RLS, not FORCE, and
+/// the api-server connects as the table owner, so the RLS policy does not
+/// bind. Every handler that takes an announcement id must go through this
+/// check before reading or writing anything keyed by that id.
+///
+/// On error the `RlsConnection` is released before returning.
+pub(crate) async fn load_announcement_in_org(
+    state: &crate::state::AppState,
+    rls: &mut api_core::extractors::RlsConnection,
+    org_id: Uuid,
+    id: Uuid,
+) -> Result<
+    Announcement,
+    (
+        axum::http::StatusCode,
+        axum::Json<common::errors::ErrorResponse>,
+    ),
+> {
+    use axum::http::StatusCode;
+    use common::errors::ErrorResponse;
+    match state
+        .announcement_repo
+        .find_by_id_rls(&mut **rls.conn(), id)
+        .await
+    {
+        Ok(Some(a)) if a.organization_id == org_id => Ok(a),
+        Ok(_) => {
+            rls.release().await;
+            Err((
+                StatusCode::NOT_FOUND,
+                axum::Json(ErrorResponse::new("NOT_FOUND", "Announcement not found")),
+            ))
+        }
+        Err(e) => {
+            rls.release().await;
+            tracing::error!("Failed to find announcement: {}", e);
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                axum::Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to find announcement",
+                )),
+            ))
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {

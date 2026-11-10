@@ -34,7 +34,8 @@ import {
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams } from 'react-router-dom';
-import { AuthRequiredGate, useToast } from '../../components';
+import { AuthRequiredGate, ProtectedRoute, useToast } from '../../components';
+import { useConfirmDialog } from '../../components/useConfirmDialog';
 import { useAuth } from '../../contexts';
 import type { AlertStateFilter, SensorFormValues, ThresholdFormValues } from '../../features/iot';
 import { useIotWebSocket } from '../../features/iot';
@@ -45,7 +46,7 @@ import {
   IotSensorListPage,
   IotThresholdConfigPage,
 } from '../lazyRoutes';
-import { transformBuildingForUI } from '../shared';
+import { MANAGER_ROLES, transformBuildingForUI } from '../shared';
 
 /** Map a numeric-string form field to a number, or null when blank. */
 function toIntOrNull(value: string): number | null {
@@ -82,7 +83,7 @@ function IotDashboardPageRoute() {
     { limit: 50 }
   );
 
-  const { liveReadings, isConnected } = useIotWebSocket(
+  const { liveReadings, isConnected, hasGivenUp } = useIotWebSocket(
     selectedSensorId,
     user?.organizationId ?? null
   );
@@ -121,7 +122,7 @@ function IotDashboardPageRoute() {
       showToast({
         type: 'error',
         title: t('iot.acknowledgeFailed', { defaultValue: 'Failed to acknowledge alert' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   };
@@ -133,7 +134,7 @@ function IotDashboardPageRoute() {
       showToast({
         type: 'error',
         title: t('iot.resolveFailed', { defaultValue: 'Failed to resolve alert' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   };
@@ -151,6 +152,7 @@ function IotDashboardPageRoute() {
       alerts={dashboard?.recent_alerts ?? []}
       pendingAlertId={pendingAlertId}
       isLive={isConnected}
+      isOffline={hasGivenUp}
       onSelectSensor={setSelectedSensorId}
       onAcknowledgeAlert={handleAcknowledgeAlert}
       onResolveAlert={handleResolveAlert}
@@ -170,6 +172,7 @@ function SensorListPageRoute() {
 
   const { data: sensorsData, isLoading } = useSensors();
   const deleteSensor = useDeleteSensor();
+  const { confirm, confirmDialog } = useConfirmDialog();
 
   const sensors = useMemo(() => sensorsData?.sensors ?? [], [sensorsData]);
 
@@ -179,44 +182,54 @@ function SensorListPageRoute() {
 
   const handleDelete = async (sensor: Sensor) => {
     if (
-      !window.confirm(
-        t('iot.sensorDeleteConfirm', {
+      !(await confirm({
+        message: t('iot.sensorDeleteConfirm', {
           name: sensor.name,
           defaultValue:
             'Delete sensor "{{name}}"? This removes its readings and alerts and cannot be undone.',
-        })
-      )
+        }),
+        confirmLabel: t('common.delete'),
+        variant: 'danger',
+      }))
     ) {
       return;
     }
     try {
       await deleteSensor.mutateAsync(sensor.id);
-      showToast({ type: 'success', title: 'Sensor deleted', message: sensor.name });
+      showToast({
+        type: 'success',
+        title: t('iot.sensorDeleted', { defaultValue: 'Sensor deleted' }),
+        message: sensor.name,
+      });
     } catch (error) {
       showToast({
         type: 'error',
-        title: 'Failed to delete sensor',
-        message: error instanceof Error ? error.message : 'Unexpected error',
+        title: t('iot.sensorDeleteFailed', { defaultValue: 'Failed to delete sensor' }),
+        error: error,
       });
     }
   };
 
   return (
-    <IotSensorListPage
-      sensors={sensors}
-      isLoading={isLoading}
-      deletingSensorId={deleteSensor.isPending ? (deleteSensor.variables ?? null) : null}
-      onNavigateToDashboard={() => navigate('/iot')}
-      onNavigateToRegister={() => navigate('/iot/sensors/new')}
-      onNavigateToEdit={(id) => navigate(`/iot/sensors/${id}/edit`)}
-      onNavigateToThresholds={(id) => navigate(`/iot/sensors/${id}/thresholds`)}
-      onDelete={handleDelete}
-    />
+    <>
+      <IotSensorListPage
+        sensors={sensors}
+        isLoading={isLoading}
+        deletingSensorId={deleteSensor.isPending ? (deleteSensor.variables ?? null) : null}
+        onNavigateToDashboard={() => navigate('/iot')}
+        onNavigateToRegister={() => navigate('/iot/sensors/new')}
+        onNavigateToEdit={(id) => navigate(`/iot/sensors/${id}/edit`)}
+        onNavigateToThresholds={(id) => navigate(`/iot/sensors/${id}/thresholds`)}
+        onDelete={handleDelete}
+      />
+      {confirmDialog}
+    </>
   );
 }
 
 /** Route wrapper for registering a new sensor (FR71). */
 function RegisterSensorPageRoute() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -252,13 +265,17 @@ function RegisterSensorPageRoute() {
     };
     try {
       await createSensor.mutateAsync(payload);
-      showToast({ type: 'success', title: 'Sensor registered', message: payload.name });
+      showToast({
+        type: 'success',
+        title: t('iot.sensorRegistered', { defaultValue: 'Sensor registered' }),
+        message: payload.name,
+      });
       navigate('/iot/sensors');
     } catch (error) {
       showToast({
         type: 'error',
-        title: 'Failed to register sensor',
-        message: error instanceof Error ? error.message : 'Unexpected error',
+        title: t('iot.sensorRegisterFailed', { defaultValue: 'Failed to register sensor' }),
+        error: error,
       });
     }
   };
@@ -297,6 +314,7 @@ function sensorToFormValues(sensor: Sensor): Partial<SensorFormValues> {
 
 /** Route wrapper for editing an existing sensor (FR71). */
 function EditSensorPageRoute() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -330,13 +348,17 @@ function EditSensorPageRoute() {
     };
     try {
       await updateSensor.mutateAsync({ id: sensorId, data: payload });
-      showToast({ type: 'success', title: 'Sensor updated', message: payload.name ?? '' });
+      showToast({
+        type: 'success',
+        title: t('iot.sensorUpdated', { defaultValue: 'Sensor updated' }),
+        message: payload.name ?? '',
+      });
       navigate('/iot/sensors');
     } catch (error) {
       showToast({
         type: 'error',
-        title: 'Failed to update sensor',
-        message: error instanceof Error ? error.message : 'Unexpected error',
+        title: t('iot.sensorUpdateFailed', { defaultValue: 'Failed to update sensor' }),
+        error: error,
       });
     }
   };
@@ -406,7 +428,7 @@ function IotAlertsPageRoute() {
       showToast({
         type: 'error',
         title: t('iot.acknowledgeFailed', { defaultValue: 'Failed to acknowledge alert' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   };
@@ -418,7 +440,7 @@ function IotAlertsPageRoute() {
       showToast({
         type: 'error',
         title: t('iot.resolveFailed', { defaultValue: 'Failed to resolve alert' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   };
@@ -502,6 +524,7 @@ function ThresholdConfigPageRoute() {
   const toggleThreshold = useUpdateThreshold(id);
   const deleteThreshold = useDeleteThreshold(id);
   const applyTemplate = useApplyTemplate(id);
+  const { confirm, confirmDialog } = useConfirmDialog();
 
   if (!user?.organizationId) {
     return <AuthRequiredGate />;
@@ -522,7 +545,7 @@ function ThresholdConfigPageRoute() {
       showToast({
         type: 'error',
         title: t('iot.thresholdCreateFailed', { defaultValue: 'Failed to create threshold' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
       throw error;
     }
@@ -548,11 +571,13 @@ function ThresholdConfigPageRoute() {
 
   const handleDelete = async (threshold: SensorThreshold) => {
     if (
-      !window.confirm(
-        t('iot.thresholdDeleteConfirm', {
+      !(await confirm({
+        message: t('iot.thresholdDeleteConfirm', {
           defaultValue: 'Delete this threshold? This cannot be undone.',
-        })
-      )
+        }),
+        confirmLabel: t('common.delete'),
+        variant: 'danger',
+      }))
     ) {
       return;
     }
@@ -567,7 +592,7 @@ function ThresholdConfigPageRoute() {
       showToast({
         type: 'error',
         title: t('iot.thresholdDeleteFailed', { defaultValue: 'Failed to delete threshold' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   };
@@ -582,7 +607,7 @@ function ThresholdConfigPageRoute() {
       showToast({
         type: 'error',
         title: t('iot.thresholdUpdateFailed', { defaultValue: 'Failed to update threshold' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   };
@@ -605,24 +630,27 @@ function ThresholdConfigPageRoute() {
   };
 
   return (
-    <IotThresholdConfigPage
-      sensor={sensor ?? null}
-      sensorLoading={sensorLoading}
-      thresholds={thresholds}
-      thresholdsLoading={thresholdsLoading}
-      templates={templates}
-      templatesLoading={templatesLoading}
-      isSaving={createThreshold.isPending || updateThreshold.isPending}
-      togglingId={toggleThreshold.isPending ? (toggleThreshold.variables?.id ?? null) : null}
-      deletingId={deleteThreshold.isPending ? (deleteThreshold.variables ?? null) : null}
-      applyingTemplate={applyTemplate.isPending}
-      onCreate={handleCreate}
-      onUpdate={handleUpdate}
-      onDelete={handleDelete}
-      onToggleEnabled={handleToggle}
-      onApplyTemplate={handleApplyTemplate}
-      onBack={() => navigate('/iot/sensors')}
-    />
+    <>
+      <IotThresholdConfigPage
+        sensor={sensor ?? null}
+        sensorLoading={sensorLoading}
+        thresholds={thresholds}
+        thresholdsLoading={thresholdsLoading}
+        templates={templates}
+        templatesLoading={templatesLoading}
+        isSaving={createThreshold.isPending || updateThreshold.isPending}
+        togglingId={toggleThreshold.isPending ? (toggleThreshold.variables?.id ?? null) : null}
+        deletingId={deleteThreshold.isPending ? (deleteThreshold.variables ?? null) : null}
+        applyingTemplate={applyTemplate.isPending}
+        onCreate={handleCreate}
+        onUpdate={handleUpdate}
+        onDelete={handleDelete}
+        onToggleEnabled={handleToggle}
+        onApplyTemplate={handleApplyTemplate}
+        onBack={() => navigate('/iot/sensors')}
+      />
+      {confirmDialog}
+    </>
   );
 }
 
@@ -630,12 +658,54 @@ function ThresholdConfigPageRoute() {
 export function iotRoutes() {
   return (
     <>
-      <Route path="/iot" element={<IotDashboardPageRoute />} />
-      <Route path="/iot/alerts" element={<IotAlertsPageRoute />} />
-      <Route path="/iot/sensors" element={<SensorListPageRoute />} />
-      <Route path="/iot/sensors/new" element={<RegisterSensorPageRoute />} />
-      <Route path="/iot/sensors/:sensorId/edit" element={<EditSensorPageRoute />} />
-      <Route path="/iot/sensors/:sensorId/thresholds" element={<ThresholdConfigPageRoute />} />
+      <Route
+        path="/iot"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <IotDashboardPageRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/iot/alerts"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <IotAlertsPageRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/iot/sensors"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <SensorListPageRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/iot/sensors/new"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <RegisterSensorPageRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/iot/sensors/:sensorId/edit"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <EditSensorPageRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/iot/sensors/:sensorId/thresholds"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <ThresholdConfigPageRoute />
+          </ProtectedRoute>
+        }
+      />
     </>
   );
 }

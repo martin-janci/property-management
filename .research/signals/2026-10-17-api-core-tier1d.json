@@ -1,0 +1,34 @@
+{
+  "generated": "2026-10-17T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claim buffer starved: claimable=6 < floor=36; deterministic refills backlog-refill + retry-remint found nothing; non-mobile-native segment preferred — mobile-native/KMP is structurally unlandable in this cloud runner, AGP egress-blocked) 2026-10-17",
+  "segment_reviewed": "api-core",
+  "selection_reason": "oldest-unreviewed (cloud-landable, non-saturated, non-mobile-native). review_cursor: api-handlers=2026-10-11 and reality-web=2026-10-11 are the joint-oldest. api-handlers is SATURATION-SKIPPED (3 open code-review-finding rows in backlog.json, >=3 skip rule). reality-web is ALREADY COVERED TODAY by a sibling Tier-1d run in this same dispatcher cycle (.research/signals/2026-10-17-reality-web-tier1d.json emitted 3 findings), so reviewing it again adds no value. Next oldest eligible is api-core=2026-10-12 — a BACKEND Rust segment, explicitly dispatcher-preferred as cloud-landable, and NOT saturated (0 open code-review-finding rows for api-core). mobile-native-kmp=2026-10-13 is excluded by dispatcher directive (unlandable in cloud). Segment root = backend/servers/api-server/src/ EXCLUDING routes/ (routes/ maps to the api-handlers segment). Static analysis only (read + grep, no cargo build / no test execution) per skill contract.",
+  "experts_used": ["rust"],
+  "landable_in_cloud": true,
+  "landability_note": "Backend Rust edit confined to backend/servers/api-server/src/services/totp.rs — no AGP/Gradle, no device, no new deps. Verifiable in the cloud runner path via cargo check -p api-server + a unit test on TotpService::encrypt_secret (the fix converts a panic branch into the function's existing Result<_, TotpError> error channel, so it is unit-testable without a DB or network).",
+  "findings_count": 1,
+  "static_only": true,
+  "note": "api-core is a mature, exceptionally well-disciplined segment. Static sweep found: ZERO unsafe blocks; ZERO todo!()/unimplemented!() on production paths; every panic!() is either boot-time config validation (main.rs JWT/DB env checks, totp.rs TotpService::new key validation — standard fail-fast) or inside #[cfg(test)] modules; all risky unwrap()/expect() hits (api_call.rs, workflow_executor.rs, stripe.rs, client_ip.rs, voice_commands.rs) are in test modules; the only non-test Decimal::from_str(...).unwrap() calls are on hardcoded literal constants (accounting.rs confidence weights — infallible). Crypto/auth paths are hardened: stripe.rs verify_signature uses constant-time compare (subtle::ct_eq) with a length guard, overflow-proof replay-window skew (issue #2330), and timestamp tolerance; jwt.rs validate_access_token/validate_refresh_token pin HS256 via Validation::default(), validate exp, and gate token_type; scheduler release_scheduler_conn detaches RLS-poisoned connections rather than returning app.global_read sessions to the pool, and increment_errors uses poison-safe lock().unwrap_or_else(|e| e.into_inner()); parse_announcement_target_ids is fail-safe (never panics in the loop). Only ONE finding cleared the severity bar; cap of 3 not reached (nits skipped).",
+  "signals": [
+    {
+      "id": "code-review-api-core-totp-rng-expect-panic",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-17 api-core)",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/totp.rs",
+        "backend/servers/api-server/src/routes/mfa.rs",
+        "backend/servers/api-server/src/routes/admin/mfa/enroll.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/totp.rs:153 — TotpService::encrypt_secret() fills its 12-byte AES-GCM nonce with `rand::rngs::SysRng.try_fill_bytes(&mut nonce_bytes).expect(\"OS rng failed\")`. This .expect() panics the request-handling task if the OS CSPRNG errors, instead of returning the function's own error type. The function signature is `pub fn encrypt_secret(&self, plaintext: &str) -> Result<String, TotpError>` and every OTHER fallible step in the same body already threads errors through that channel: `Aes256Gcm::new_from_slice(&key).map_err(|e| TotpError::EncryptionError(e.to_string()))?` (totp.rs:149) and `cipher.encrypt(&nonce, ...).map_err(|e| TotpError::EncryptionError(e.to_string()))?` (totp.rs:162). The nonce-fill is the lone branch that aborts via panic rather than `?`.",
+        "Contract violation (why this is a finding, not a nit): both production call sites consume encrypt_secret's Result gracefully and depend on it never panicking — backend/servers/api-server/src/routes/mfa.rs:228 does `state.totp_service.encrypt_secret(&secret).map_err(|e| { tracing::error!(...); <HTTP error> })?` and backend/servers/api-server/src/routes/admin/mfa/enroll.rs:130-131 does the same with `tracing::error!(error = %e, \"enroll/start: encrypt_secret failed\")`. A panic at totp.rs:153 bypasses both callers' careful map_err->logged-500 path on the MFA-enrollment endpoint, unwinding the task instead of returning a diagnosable error.",
+        "Landable Rust-only remedy: replace `.expect(\"OS rng failed\")` with `.map_err(|e| TotpError::EncryptionError(format!(\"OS rng failed: {e}\")))?`, matching the two adjacent map_err lines, so a CSPRNG failure flows out as TotpError::EncryptionError like every other error in the function. Verifiable via `cargo check -p api-server` + a unit test asserting encrypt_secret returns Err(TotpError::EncryptionError) rather than panicking under an injected failing RNG. Severity low (OS CSPRNG failure is vanishingly rare), confidence medium: the panic branch and the function's existing Result error channel are both statically confirmed, but the trigger is not reachable under normal operation. candidate_vector=bug (latent panic on an auth/MFA request path that contradicts the surrounding error-handling contract)."
+      ]
+    }
+  ]
+}

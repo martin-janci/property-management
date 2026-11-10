@@ -3,7 +3,7 @@
 //! Handles import templates, bulk import, data export, and validation.
 
 use crate::state::AppState;
-use api_core::extractors::{AuthUser, RlsConnection};
+use api_core::extractors::{AuthUser, RlsConnection, TenantAuthUser};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -28,8 +28,30 @@ use uuid::Uuid;
 /// units, residents, financials) and is therefore high-blast-radius. Gate the whole
 /// surface behind the platform-admin capability so ordinary tenant users cannot
 /// trigger bulk import/export. Returns 403 for authenticated non-admins.
-fn require_platform_admin(user: &AuthUser) -> Result<(), (StatusCode, String)> {
+async fn require_platform_admin(
+    state: &AppState,
+    user: &AuthUser,
+) -> Result<(), (StatusCode, String)> {
+    // Login tokens carry no role claim, so the platform tier is also read from
+    // the trusted `users.principal_kind` column (the same source
+    // `RequestPrincipal::is_platform` uses). An org membership row never
+    // grants it (`TenantAuthUser` caps membership roles below the platform
+    // tier, since org admins can write any `role_type` on their members).
     if user.is_platform_admin() {
+        return Ok(());
+    }
+    let platform_user = state
+        .user_repo
+        .find_by_id_and_kind(user.user_id, db::models::PrincipalKind::Platform)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "principal_kind lookup failed");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to verify platform access".to_string(),
+            )
+        })?;
+    if platform_user.is_some() {
         Ok(())
     } else {
         Err((
@@ -108,11 +130,11 @@ pub struct ListTemplatesResponse {
 /// List import templates for the organization.
 async fn list_templates(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Query(query): Query<ListTemplatesQuery>,
 ) -> Result<Json<ListTemplatesResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -180,10 +202,10 @@ async fn list_templates(
 /// List system-provided templates.
 async fn list_system_templates(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
 ) -> Result<Json<Vec<ImportTemplateSummary>>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
 
     let db_templates = state
         .migration_repo
@@ -227,11 +249,11 @@ pub struct CreateTemplateRequest {
 /// Create a new import template.
 async fn create_template(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Json(req): Json<CreateTemplateRequest>,
 ) -> Result<Json<ImportTemplateSummary>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -307,11 +329,11 @@ pub struct TemplateDetailResponse {
 /// Get a specific template.
 async fn get_template(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(template_id): Path<Uuid>,
 ) -> Result<Json<TemplateDetailResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -349,12 +371,12 @@ async fn get_template(
 /// Update an import template.
 async fn update_template(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(template_id): Path<Uuid>,
     Json(req): Json<UpdateImportTemplate>,
 ) -> Result<Json<ImportTemplateSummary>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -429,11 +451,11 @@ async fn update_template(
 /// Delete an import template.
 async fn delete_template(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(template_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -495,12 +517,12 @@ pub struct TemplateDownloadResponse {
 /// Download a template as CSV/Excel.
 async fn download_template(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(template_id): Path<Uuid>,
     Query(query): Query<DownloadTemplateQuery>,
 ) -> Result<Json<TemplateDownloadResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -552,11 +574,11 @@ async fn download_template(
 /// Duplicate a template.
 async fn duplicate_template(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(template_id): Path<Uuid>,
 ) -> Result<Json<ImportTemplateSummary>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -677,11 +699,11 @@ pub struct UploadImportResponse {
 /// Upload an import file.
 async fn upload_import_file(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     mut multipart: Multipart,
 ) -> Result<Json<UploadImportResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -690,7 +712,7 @@ async fn upload_import_file(
     let mut template_id: Option<Uuid> = None;
     let mut filename: Option<String> = None;
     let mut file_size: i64 = 0;
-    let mut _file_data: Vec<u8> = Vec::new();
+    let mut file_data: Vec<u8> = Vec::new();
 
     while let Some(field) = multipart
         .next_field()
@@ -717,7 +739,7 @@ async fn upload_import_file(
                     .await
                     .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
                 file_size = data.len() as i64;
-                _file_data = data.to_vec();
+                file_data = data.to_vec();
             }
             _ => {}
         }
@@ -754,7 +776,41 @@ async fn upload_import_file(
         return Err((StatusCode::FORBIDDEN, "Access denied".to_string()));
     }
 
-    let file_path = format!("imports/{}/{}", org_id, Uuid::new_v4());
+    // Persist the uploaded bytes to object storage BEFORE creating the
+    // import_job row. A prior stub read the multipart body into a discarded
+    // buffer and fabricated a `file_path` that pointed at nothing, so every
+    // upload silently lost its data and the downstream validate/approve flow
+    // operated on a key that never existed. Fail closed: if storage is not
+    // configured, do not create a job row that would dangle (503).
+    let storage = state.storage_service.as_ref().ok_or((
+        StatusCode::SERVICE_UNAVAILABLE,
+        "Storage service is not configured; import upload is unavailable".to_string(),
+    ))?;
+
+    let storage_key = format!("imports/{}/{}", org_id, Uuid::new_v4());
+    let content_type = integrations::get_content_type(&filename);
+    let file_path = storage
+        .upload(&storage_key, file_data, content_type)
+        .await
+        .map_err(|e| match e {
+            // An unsupported MIME type is a client error (400). Match on the
+            // typed variant rather than substring-matching the rendered
+            // `Display` message: the latter silently misclassifies the status
+            // if the error wording ever changes, or if some other variant's
+            // message happens to contain "content type".
+            integrations::StorageError::InvalidContentType(_) => {
+                (StatusCode::BAD_REQUEST, e.to_string())
+            }
+            // Anything else is a transient/server-side storage failure (503).
+            other => {
+                tracing::error!(error = %other, "Failed to upload import file to storage");
+                (
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "Failed to store uploaded file. Please try again later.".to_string(),
+                )
+            }
+        })?;
+
     let default_options = serde_json::json!({
         "skip_errors": false,
         "update_existing": true,
@@ -818,11 +874,11 @@ pub struct ListImportJobsResponse {
 /// List import jobs for the organization.
 async fn list_import_jobs(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Query(query): Query<ListImportJobsQuery>,
 ) -> Result<Json<ListImportJobsResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -862,11 +918,11 @@ async fn list_import_jobs(
 /// Get import job status.
 async fn get_import_job_status(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(job_id): Path<Uuid>,
 ) -> Result<Json<ImportJobStatusResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -931,11 +987,11 @@ async fn get_import_job_status(
 /// Cancel an import job.
 async fn cancel_import_job(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(job_id): Path<Uuid>,
 ) -> Result<Json<ImportJobStatusResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -1030,11 +1086,11 @@ async fn cancel_import_job(
 /// Retry a failed import job.
 async fn retry_import_job(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(job_id): Path<Uuid>,
 ) -> Result<Json<ImportJobStatusResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -1119,12 +1175,12 @@ pub struct ImportJobErrorsResponse {
 /// Get detailed errors for an import job.
 async fn get_import_job_errors(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(job_id): Path<Uuid>,
     Query(pagination): Query<MigrationPagination>,
 ) -> Result<Json<ImportJobErrorsResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -1182,11 +1238,11 @@ pub struct RequestMigrationExportRequest {
 /// Request a full data export for migration.
 async fn request_migration_export(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Json(req): Json<RequestMigrationExportRequest>,
 ) -> Result<Json<MigrationExportResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -1241,11 +1297,11 @@ async fn request_migration_export(
 /// Get migration export status.
 async fn get_export_status(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(export_id): Path<Uuid>,
 ) -> Result<Json<MigrationExportStatusResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -1257,45 +1313,26 @@ async fn get_export_status(
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
         .ok_or((StatusCode::NOT_FOUND, "Export not found".to_string()))?;
+    rls.release().await;
 
     if export.organization_id != org_id {
         return Err((StatusCode::FORBIDDEN, "Access denied".to_string()));
     }
 
-    let mut current_status = export.status;
-    let mut file_size_bytes = export.file_size_bytes;
-
-    // Auto-transition to Ready in mock setup
-    if current_status == MigrationExportStatus::Pending {
-        let path = format!("https://storage.example.com/exports/{}.zip", export_id);
-        let updated = state
-            .migration_repo
-            .update_migration_export(
-                &mut **rls.conn(),
-                export_id,
-                Some(MigrationExportStatus::Ready),
-                Some(path.clone()),
-                Some(15_234_567),
-                None,
-                Some(Uuid::new_v4()),
-                None,
-                None,
-                Some(chrono::Utc::now()),
-                None,
-                None,
-            )
-            .await
-            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-        current_status = updated.status;
-        file_size_bytes = updated.file_size_bytes;
-    }
-    rls.release().await;
-
     let categories: Vec<String> = serde_json::from_value(export.categories)
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-    let download_url = match current_status {
-        MigrationExportStatus::Ready | MigrationExportStatus::Downloaded => {
+    // A download URL is only meaningful once a real export archive exists in
+    // storage. Export archives are produced by the asynchronous export worker,
+    // which is not yet implemented; until that worker marks the export `Ready`
+    // with a persisted `file_path`, there is nothing to download. We therefore
+    // report the export's true persisted state rather than fabricating a ready
+    // artifact (previously a GET here silently flipped the record to `Ready`
+    // with a bogus `storage.example.com` URL and a hard-coded file size).
+    let download_url = match export.status {
+        MigrationExportStatus::Ready | MigrationExportStatus::Downloaded
+            if export.file_path.is_some() =>
+        {
             Some(format!("/api/v1/migration/export/{}/download", export_id))
         }
         _ => None,
@@ -1303,17 +1340,15 @@ async fn get_export_status(
 
     Ok(Json(MigrationExportStatusResponse {
         export_id,
-        status: current_status,
+        status: export.status,
         categories,
         download_url,
-        file_size_bytes,
+        file_size_bytes: export.file_size_bytes,
         expires_at: export.expires_at,
         error_message: export.error_message,
-        record_counts: Some(serde_json::json!({
-            "buildings": 45,
-            "units": 320,
-            "residents": 580
-        })),
+        // Per-category record counts are computed by the export worker when the
+        // archive is generated; we do not fabricate them before that happens.
+        record_counts: None,
     }))
 }
 
@@ -1329,11 +1364,11 @@ pub struct ExportDownloadResponse {
 /// Download a migration export.
 async fn download_export(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(export_id): Path<Uuid>,
 ) -> Result<Json<ExportDownloadResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -1387,12 +1422,19 @@ async fn download_export(
 
     let expires_at = chrono::Utc::now() + chrono::Duration::hours(1);
 
+    // Serve the real stored artifact location. A `Ready` export without a
+    // persisted `file_path` is an internal inconsistency (the export worker
+    // marks an export `Ready` only after writing the archive), so surface it
+    // as a server error instead of fabricating a `storage.example.com` URL.
+    let download_url = updated.file_path.ok_or((
+        StatusCode::INTERNAL_SERVER_ERROR,
+        "Export is marked ready but no archive is available".to_string(),
+    ))?;
+
     Ok(Json(ExportDownloadResponse {
         filename: format!("migration_export_{}.zip", export_id),
         content_type: "application/zip".to_string(),
-        download_url: updated
-            .file_path
-            .unwrap_or_else(|| format!("https://storage.example.com/exports/{}.zip", export_id)),
+        download_url,
         expires_at,
     }))
 }
@@ -1413,11 +1455,11 @@ pub struct ExportHistoryEntry {
 /// Get export history.
 async fn get_export_history(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Query(pagination): Query<MigrationPagination>,
 ) -> Result<Json<Vec<ExportHistoryEntry>>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -1465,10 +1507,10 @@ async fn get_export_history(
 
 /// Get available export categories with record counts.
 async fn get_export_categories(
-    State(_state): State<AppState>,
-    user: AuthUser,
+    State(state): State<AppState>,
+    TenantAuthUser(user): TenantAuthUser,
 ) -> Result<Json<ExportCategoriesResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let _org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -1543,11 +1585,11 @@ async fn get_export_categories(
 /// Get import preview/validation results.
 async fn get_import_preview(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(job_id): Path<Uuid>,
 ) -> Result<Json<ImportPreviewResult>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -1609,12 +1651,12 @@ async fn get_import_preview(
 /// Approve and execute import.
 async fn approve_import(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(job_id): Path<Uuid>,
     Json(req): Json<ApproveImportRequest>,
 ) -> Result<Json<ApproveImportResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -1670,11 +1712,11 @@ async fn approve_import(
 /// Trigger validation for an import job.
 async fn validate_import(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Path(job_id): Path<Uuid>,
 ) -> Result<Json<ImportJobStatusResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_platform_admin(&state, &user).await?;
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),

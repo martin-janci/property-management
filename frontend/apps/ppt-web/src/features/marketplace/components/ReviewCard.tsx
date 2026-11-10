@@ -3,6 +3,7 @@
  * Epic 68: Service Provider Marketplace (Story 68.5)
  */
 
+import { useTranslation } from 'react-i18next';
 import { RatingStars } from './RatingStars';
 
 export interface ReviewData {
@@ -56,6 +57,7 @@ export function ReviewCard({
   onMarkHelpful,
   onReport,
 }: ReviewCardProps) {
+  const { t } = useTranslation();
   const canRespond = isProviderView && !review.providerResponse;
 
   return (
@@ -88,31 +90,43 @@ export function ReviewCard({
       {/* Rating Breakdown */}
       <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="text-center p-2 bg-gray-50 rounded">
-          <p className="text-xs text-gray-500">Quality</p>
-          <p className="font-medium text-gray-900">{review.qualityRating}/5</p>
+          <p className="text-xs text-gray-500">{t('marketplace.reviewCard.quality')}</p>
+          <p className="font-medium text-gray-900">
+            {t('marketplace.reviewCard.ratingOutOf', { rating: review.qualityRating })}
+          </p>
         </div>
         <div className="text-center p-2 bg-gray-50 rounded">
-          <p className="text-xs text-gray-500">Timeliness</p>
-          <p className="font-medium text-gray-900">{review.timelinessRating}/5</p>
+          <p className="text-xs text-gray-500">{t('marketplace.reviewCard.timeliness')}</p>
+          <p className="font-medium text-gray-900">
+            {t('marketplace.reviewCard.ratingOutOf', { rating: review.timelinessRating })}
+          </p>
         </div>
         <div className="text-center p-2 bg-gray-50 rounded">
-          <p className="text-xs text-gray-500">Communication</p>
-          <p className="font-medium text-gray-900">{review.communicationRating}/5</p>
+          <p className="text-xs text-gray-500">{t('marketplace.reviewCard.communication')}</p>
+          <p className="font-medium text-gray-900">
+            {t('marketplace.reviewCard.ratingOutOf', { rating: review.communicationRating })}
+          </p>
         </div>
         <div className="text-center p-2 bg-gray-50 rounded">
-          <p className="text-xs text-gray-500">Value</p>
-          <p className="font-medium text-gray-900">{review.valueRating}/5</p>
+          <p className="text-xs text-gray-500">{t('marketplace.reviewCard.value')}</p>
+          <p className="font-medium text-gray-900">
+            {t('marketplace.reviewCard.ratingOutOf', { rating: review.valueRating })}
+          </p>
         </div>
       </div>
 
       {/* Provider Response */}
       {review.providerResponse && (
         <div className="mt-4 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
-          <p className="text-sm font-medium text-blue-800">Provider Response</p>
+          <p className="text-sm font-medium text-blue-800">
+            {t('marketplace.reviewCard.providerResponse')}
+          </p>
           <p className="mt-1 text-sm text-blue-700">{review.providerResponse}</p>
           {review.providerRespondedAt && (
             <p className="mt-2 text-xs text-blue-500">
-              Responded on {formatDate(review.providerRespondedAt)}
+              {t('marketplace.reviewCard.respondedOn', {
+                date: formatDate(review.providerRespondedAt),
+              })}
             </p>
           )}
         </div>
@@ -137,7 +151,7 @@ export function ReviewCard({
                 stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <title>Helpful</title>
+                <title>{t('marketplace.reviewCard.helpful')}</title>
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -145,7 +159,7 @@ export function ReviewCard({
                   d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"
                 />
               </svg>
-              Helpful ({review.helpfulCount || 0})
+              {t('marketplace.reviewCard.helpfulCount', { count: review.helpfulCount || 0 })}
             </button>
           )}
           {onReport && (
@@ -154,7 +168,7 @@ export function ReviewCard({
               onClick={() => onReport(review.id)}
               className="text-sm text-gray-400 hover:text-gray-600"
             >
-              Report
+              {t('marketplace.reviewCard.report')}
             </button>
           )}
         </div>
@@ -165,7 +179,7 @@ export function ReviewCard({
             onClick={() => onRespond?.(review.id)}
             className="text-sm font-medium text-blue-600 hover:text-blue-800"
           >
-            Respond to Review
+            {t('marketplace.reviewCard.respondToReview')}
           </button>
         )}
       </div>
@@ -188,6 +202,8 @@ export function ReviewList({
   onMarkHelpful,
   onReport,
 }: ReviewListProps) {
+  const { t } = useTranslation();
+
   if (reviews.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow p-8 text-center">
@@ -197,7 +213,7 @@ export function ReviewList({
           stroke="currentColor"
           viewBox="0 0 24 24"
         >
-          <title>No reviews</title>
+          <title>{t('marketplace.reviewCard.noReviews')}</title>
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -205,7 +221,7 @@ export function ReviewList({
             d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
           />
         </svg>
-        <p className="mt-2 text-gray-500">No reviews yet</p>
+        <p className="mt-2 text-gray-500">{t('marketplace.reviewCard.noReviews')}</p>
       </div>
     );
   }

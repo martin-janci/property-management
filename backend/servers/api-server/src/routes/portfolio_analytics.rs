@@ -2,7 +2,7 @@
 //! Multi-Property Portfolio Analytics with benchmarking, KPIs, and trend analysis.
 
 use crate::state::AppState;
-use api_core::extractors::AuthUser;
+use api_core::extractors::{AuthUser, TenantAuthUser};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -34,6 +34,48 @@ fn to_json_value<T: serde::Serialize>(value: T) -> ApiResult<serde_json::Value> 
             ))),
         )
     })
+}
+
+/// Manager-class role (membership role via `TenantAuthUser`) for every
+/// analytics configuration / metrics mutation.
+fn require_manager(user: &AuthUser) -> ApiResult<()> {
+    if user.role.is_some_and(|r| r.is_manager()) {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::forbidden(
+                "Manager role required for this action",
+            )),
+        ))
+    }
+}
+
+/// 404 unless every body-supplied building belongs to the caller's org.
+async fn verify_buildings(
+    s: &AppState,
+    org_id: Uuid,
+    building_ids: impl IntoIterator<Item = Uuid>,
+) -> ApiResult<()> {
+    for building_id in building_ids {
+        let owned = s
+            .building_repo
+            .belongs_to_organization(building_id, org_id)
+            .await
+            .map_err(|e| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::internal_error(&e.to_string())),
+                )
+            })?;
+        if !owned {
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::not_found("Building not found")),
+            ));
+        }
+    }
+    Ok(())
 }
 
 pub fn router() -> Router<AppState> {
@@ -84,7 +126,7 @@ pub fn router() -> Router<AppState> {
 
 async fn get_portfolio_summary(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
         (
@@ -112,7 +154,7 @@ async fn get_portfolio_summary(
 
 async fn list_benchmarks(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
         (
@@ -132,9 +174,10 @@ async fn list_benchmarks(
 
 async fn create_benchmark(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Json(req): Json<CreatePortfolioBenchmark>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
@@ -157,7 +200,7 @@ async fn create_benchmark(
 
 async fn get_benchmark(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -182,10 +225,11 @@ async fn get_benchmark(
 
 async fn update_benchmark(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdatePortfolioBenchmark>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
@@ -212,9 +256,10 @@ async fn update_benchmark(
 
 async fn delete_benchmark(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
+    require_manager(&user)?;
     let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
@@ -251,7 +296,7 @@ struct PropertyMetricsQuery {
 
 async fn list_property_metrics(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(query): Query<PropertyMetricsQuery>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -276,19 +321,22 @@ async fn list_property_metrics(
 
 async fn upsert_property_metrics(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Json(req): Json<CreatePropertyMetrics>,
 ) -> ApiResult<Json<serde_json::Value>> {
-    let _org_id = user.tenant_id.ok_or_else(|| {
+    require_manager(&user)?;
+    let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::bad_request("Tenant context required")),
         )
     })?;
+    // Building ownership is enforced by the repo (`WHERE EXISTS ... org`, #2946),
+    // which answers 400 for a foreign building.
 
     match s
         .portfolio_analytics_repo
-        .upsert_property_metrics(req)
+        .upsert_property_metrics(org_id, req)
         .await
     {
         Ok(metrics) => Ok(Json(to_json_value(metrics)?)),
@@ -307,11 +355,11 @@ struct GetPropertyMetricsQuery {
 
 async fn get_property_metrics(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(building_id): Path<Uuid>,
     Query(query): Query<GetPropertyMetricsQuery>,
 ) -> ApiResult<Json<serde_json::Value>> {
-    let _org_id = user.tenant_id.ok_or_else(|| {
+    let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::bad_request("Tenant context required")),
@@ -320,7 +368,7 @@ async fn get_property_metrics(
 
     match s
         .portfolio_analytics_repo
-        .get_property_metrics(building_id, query.period_start, query.period_end)
+        .get_property_metrics(org_id, building_id, query.period_start, query.period_end)
         .await
     {
         Ok(Some(metrics)) => Ok(Json(to_json_value(metrics)?)),
@@ -347,7 +395,7 @@ struct PortfolioMetricsQuery {
 
 async fn get_portfolio_metrics(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(query): Query<PortfolioMetricsQuery>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -388,9 +436,10 @@ fn default_period() -> AggregationPeriod {
 
 async fn calculate_portfolio_metrics(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Json(req): Json<CalculateMetricsRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
@@ -423,7 +472,7 @@ struct ComparisonListQuery {
 
 async fn list_comparisons(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(query): Query<ComparisonListQuery>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -448,15 +497,17 @@ async fn list_comparisons(
 
 async fn create_comparison(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Json(req): Json<CreatePropertyComparison>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::bad_request("Tenant context required")),
         )
     })?;
+    verify_buildings(&s, org_id, req.building_ids.iter().copied()).await?;
 
     let user_id = user.user_id;
 
@@ -475,7 +526,7 @@ async fn create_comparison(
 
 async fn get_comparison(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -500,9 +551,10 @@ async fn get_comparison(
 
 async fn delete_comparison(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
+    require_manager(&user)?;
     let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
@@ -541,7 +593,7 @@ struct TrendsQuery {
 
 async fn get_trends(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(query): Query<TrendsQuery>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -572,15 +624,17 @@ async fn get_trends(
 
 async fn record_trend(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Json(req): Json<RecordTrend>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::bad_request("Tenant context required")),
         )
     })?;
+    verify_buildings(&s, org_id, req.building_id).await?;
 
     match s.portfolio_analytics_repo.record_trend(org_id, req).await {
         Ok(trend) => Ok(Json(to_json_value(trend)?)),
@@ -603,7 +657,7 @@ struct AlertRulesQuery {
 
 async fn list_alert_rules(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(query): Query<AlertRulesQuery>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -628,15 +682,17 @@ async fn list_alert_rules(
 
 async fn create_alert_rule(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Json(req): Json<CreateAlertRule>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::bad_request("Tenant context required")),
         )
     })?;
+    verify_buildings(&s, org_id, req.building_id).await?;
 
     match s
         .portfolio_analytics_repo
@@ -653,7 +709,7 @@ async fn create_alert_rule(
 
 async fn get_alert_rule(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -678,10 +734,11 @@ async fn get_alert_rule(
 
 async fn update_alert_rule(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateAlertRule>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    require_manager(&user)?;
     let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
@@ -708,9 +765,10 @@ async fn update_alert_rule(
 
 async fn delete_alert_rule(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
+    require_manager(&user)?;
     let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
@@ -755,7 +813,7 @@ fn default_alert_limit() -> i32 {
 
 async fn list_alerts(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(query): Query<AlertsQuery>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -785,7 +843,7 @@ async fn list_alerts(
 
 async fn get_alert_stats(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
         (
@@ -805,7 +863,7 @@ async fn get_alert_stats(
 
 async fn get_alert(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -830,10 +888,11 @@ async fn get_alert(
 
 async fn acknowledge_alert(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<AcknowledgeAlert>,
 ) -> ApiResult<StatusCode> {
+    require_manager(&user)?;
     let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
@@ -860,10 +919,11 @@ async fn acknowledge_alert(
 
 async fn resolve_alert(
     State(s): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<ResolveAlert>,
 ) -> ApiResult<StatusCode> {
+    require_manager(&user)?;
     let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,

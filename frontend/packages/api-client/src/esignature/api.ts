@@ -5,7 +5,7 @@
  *           GET  /api/v1/documents/{documentId}/signature-requests
  */
 
-import { getToken } from '../auth';
+import { bearerAuthHeader } from '../auth';
 import type {
   CancelSignatureRequestBody,
   CancelSignatureRequestResponse,
@@ -24,17 +24,12 @@ const DOCUMENTS_BASE = '/api/v1/documents';
 const SIGNATURE_REQUESTS_BASE = '/api/v1/signature-requests';
 const SIGN_BASE = '/api/v1/signatures/sign';
 
-function getAuthHeaders(): HeadersInit {
-  const token = getToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...getAuthHeaders(),
+      ...bearerAuthHeader(),
       ...options.headers,
     },
   });

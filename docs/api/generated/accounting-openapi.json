@@ -1544,6 +1544,45 @@
         }
       }
     },
+    "/api/v1/invoices/{id}/pdf": {
+      "get": {
+        "tags": [
+          "Invoices"
+        ],
+        "summary": "Render the document as a print-ready PDF (UC-ACC-05.9).",
+        "description": "Works for every lifecycle state — drafts render with a visible\n\"DRAFT — not a tax document\" line so previews cannot be passed off as tax\ndocuments. All reads happen inside one RLS transaction so the PDF is a\nconsistent snapshot (invoice + items + company + contact + bank account).",
+        "operationId": "get_invoice_pdf",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Invoice id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PDF document",
+            "content": {
+              "application/pdf": {}
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "500": {
+            "description": "Render failed (e.g. fonts missing on host)"
+          }
+        }
+      }
+    },
     "/api/v1/platform/2fa/confirm": {
       "post": {
         "tags": [
@@ -1651,7 +1690,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AccShareLink"
+                  "$ref": "#/components/schemas/ShareLinkCreatedResponse"
                 }
               }
             }
@@ -2662,7 +2701,7 @@
           "id",
           "tenant_id",
           "invoice_id",
-          "token",
+          "token_hash",
           "created_at"
         ],
         "properties": {
@@ -2703,8 +2742,9 @@
             "type": "string",
             "format": "uuid"
           },
-          "token": {
-            "type": "string"
+          "token_hash": {
+            "type": "string",
+            "description": "SHA-256 hash of the capability token (the raw token is shown once on\ncreation and never persisted in clear). Lookups hash the presented token."
           }
         }
       },
@@ -3330,11 +3370,21 @@
         "required": [
           "status",
           "version",
+          "commit",
+          "built_at",
           "service",
           "region",
           "timestamp"
         ],
         "properties": {
+          "built_at": {
+            "type": "string",
+            "description": "RFC3339 build timestamp (`\"unknown\"` outside the image build)."
+          },
+          "commit": {
+            "type": "string",
+            "description": "Commit the image was built from (`\"unknown\"` outside the image build)."
+          },
           "dependencies": {
             "type": [
               "array",
@@ -3560,9 +3610,19 @@
         "required": [
           "status",
           "service",
-          "version"
+          "version",
+          "commit",
+          "built_at"
         ],
         "properties": {
+          "built_at": {
+            "type": "string",
+            "description": "RFC3339 build timestamp, or `\"unknown\"` outside the image build."
+          },
+          "commit": {
+            "type": "string",
+            "description": "Commit the image was built from, or `\"unknown\"` outside the image build."
+          },
           "service": {
             "type": "string"
           },
@@ -3688,6 +3748,41 @@
           "user_id": {
             "type": "string",
             "format": "uuid"
+          }
+        }
+      },
+      "ShareLinkCreatedResponse": {
+        "type": "object",
+        "description": "Response to share-link creation (UC-ACC-05.11). Carries the RAW capability\ntoken — shown to the caller exactly once. It is never persisted in clear\n(only its SHA-256 hash is stored), so it cannot be recovered later.",
+        "required": [
+          "id",
+          "invoice_id",
+          "token",
+          "created_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expires_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "invoice_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "token": {
+            "type": "string",
+            "description": "The raw share token (the capability). Build the public URL as\n`/api/v1/share/{token}`. Store/forward it now — it is unrecoverable."
           }
         }
       },

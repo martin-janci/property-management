@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { LeaseCard } from '../components/LeaseCard';
 import type { LeaseStatus, LeaseSummary } from '../types';
 
-interface LeaseListParams {
+export interface LeaseListParams {
   status?: LeaseStatus;
   buildingId?: string;
   search?: string;
@@ -32,6 +32,16 @@ interface LeasesListPageProps {
   onRenewLease: (id: string) => void;
   onTerminateLease: (id: string) => void;
   onFilterChange: (params: LeaseListParams) => void;
+  /** Initial filter state (e.g. restored from the URL). */
+  initialFilters?: Omit<LeaseListParams, 'page' | 'pageSize'>;
+  /** Initial 1-based page (e.g. restored from the URL). */
+  initialPage?: number;
+  /** Rows per page; must match the `limit` the caller fetches with. */
+  pageSize?: number;
+  /** Hide the free-text search when the backend cannot search (default: shown). */
+  showSearch?: boolean;
+  /** Hide the building filter when the backend cannot filter by it (default: shown). */
+  showBuildingFilter?: boolean;
 }
 
 const STATUS_OPTIONS: LeaseStatus[] = [
@@ -44,11 +54,7 @@ const STATUS_OPTIONS: LeaseStatus[] = [
   'draft',
 ];
 
-const EXPIRY_OPTIONS = [
-  { value: 30, label: '30 days' },
-  { value: 60, label: '60 days' },
-  { value: 90, label: '90 days' },
-];
+const EXPIRY_OPTIONS = [{ value: 30 }, { value: 60 }, { value: 90 }];
 
 export function LeasesListPage({
   leases,
@@ -60,12 +66,18 @@ export function LeasesListPage({
   onRenewLease,
   onTerminateLease,
   onFilterChange,
+  initialFilters,
+  initialPage = 1,
+  pageSize = 12,
+  showSearch = true,
+  showBuildingFilter = true,
 }: LeasesListPageProps) {
   const { t } = useTranslation();
-  const [page, setPage] = useState(1);
-  const [pageSize] = useState(12);
-  const [filters, setFilters] = useState<Omit<LeaseListParams, 'page' | 'pageSize'>>({});
-  const [searchInput, setSearchInput] = useState('');
+  const [page, setPage] = useState(initialPage);
+  const [filters, setFilters] = useState<Omit<LeaseListParams, 'page' | 'pageSize'>>(
+    initialFilters ?? {}
+  );
+  const [searchInput, setSearchInput] = useState(initialFilters?.search ?? '');
 
   const totalPages = Math.ceil(total / pageSize);
 
@@ -136,33 +148,36 @@ export function LeasesListPage({
       <div className="bg-white rounded-lg shadow p-4 mb-6">
         <div className="flex flex-wrap items-center gap-4">
           {/* Search */}
-          <form onSubmit={handleSearch} className="flex-1 min-w-[200px]">
-            <div className="relative">
-              <input
-                type="text"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder={t('leases.list.searchPlaceholder')}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <svg
-                className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          {showSearch && (
+            <form onSubmit={handleSearch} className="flex-1 min-w-[200px]">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  placeholder={t('leases.list.searchPlaceholder')}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-              </svg>
-            </div>
-          </form>
+                <svg
+                  className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+              </div>
+            </form>
+          )}
 
           {/* Status Filter */}
           <select
+            aria-label={t('leases.list.filterByStatus')}
             value={filters.status || ''}
             onChange={(e) => handleStatusFilter((e.target.value as LeaseStatus) || undefined)}
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -176,21 +191,25 @@ export function LeasesListPage({
           </select>
 
           {/* Building Filter */}
-          <select
-            value={filters.buildingId || ''}
-            onChange={(e) => handleBuildingFilter(e.target.value || undefined)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">{t('leases.list.allBuildings')}</option>
-            {buildings.map((building) => (
-              <option key={building.id} value={building.id}>
-                {building.name}
-              </option>
-            ))}
-          </select>
+          {showBuildingFilter && (
+            <select
+              aria-label={t('leases.list.filterByBuilding')}
+              value={filters.buildingId || ''}
+              onChange={(e) => handleBuildingFilter(e.target.value || undefined)}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">{t('leases.list.allBuildings')}</option>
+              {buildings.map((building) => (
+                <option key={building.id} value={building.id}>
+                  {building.name}
+                </option>
+              ))}
+            </select>
+          )}
 
           {/* Expiry Filter */}
           <select
+            aria-label={t('leases.list.filterByExpiry')}
             value={filters.expiringWithinDays || ''}
             onChange={(e) =>
               handleExpiryFilter(e.target.value ? Number(e.target.value) : undefined)
@@ -200,7 +219,7 @@ export function LeasesListPage({
             <option value="">{t('leases.list.allExpiry')}</option>
             {EXPIRY_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
-                {t('leases.list.expiringIn', { days: option.value })}
+                {t('leases.list.expiringIn', { count: option.value })}
               </option>
             ))}
           </select>

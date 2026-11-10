@@ -43,7 +43,6 @@ vi.mock('react-i18next', () => ({
 vi.mock('../components/MediationTimelineView', () => ({
   MediationTimelineView: () => null,
 }));
-vi.mock('../components/MediationChatThread', () => ({ MediationChatThread: () => null }));
 vi.mock('../components/MediationSessionsPanel', () => ({ MediationSessionsPanel: () => null }));
 
 import { useDispute } from '@ppt/api-client';

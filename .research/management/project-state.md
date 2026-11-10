@@ -1,73 +1,65 @@
 # PPT Project State
 
-_Generated: 2026-08-31 — routine Phase 1.6 lightweight upkeep (pm-devops rotation slot; 76-day stale slot refreshed) + pm-scrum-master always-on. Coverage `scan_kind=upkeep`; pm_cursor idx 4 → 5 (pm-devops → pm-security next), coverage_cursor idx 6 → 7 (epic-81 re-checked, no material change; advances to epic-82). Sprint window 2026-08-26..08-31 shipped 10 PRs — all code-review batch (#2889-#2899, dispatcher merged in-window)._
+_Generated: 2026-11-09 — routine Phase 1.6 incremental upkeep. Role focus: **pm-qa** (76-day stale rotation slot; pm-cursor idx 3 → 4). pm-scrum-master always-on. Coverage `scan_kind=upkeep`; coverage_cursor idx 0 → 1 (epic-10a re-checked, still 3/3 done; no PRs touched OAuth surfaces this window)._
+
+## Delta since last routine run (2026-11-06)
+
+- **7 PRs merged** in ~64h (see Shipped below) — all code-review relands + a session-revocation fix; every PR shipped with a new regression test file.
+- **8 gh-issue-\* follow-ups closed** (3283, 3304, 3305, 3306, 3307, 3308, 3309, 3310 — issue state=closed as of 2026-11-09). These were tracked as `in-progress` in action-list; all 8 moved to `done` and archived this run.
+- **4 action-list code-review items resolved** by this run's merged PRs (see Shipped mapping).
+- **1 new issue: #3357** — `dispatcher: pipeline fully stalled — 3 approved PRs blocked on non-mechanical conflicts + Tier-1d signals are a dead-end` (filed 2026-11-08 by the dispatcher itself; labels: `follow-up`, `blocked`). Operator action required — the dispatcher cannot self-heal.
+- **1 blocker clearing**: issue #3187 (cross-tenant assign-404 test) is now CLOSED; #2652 (mobile-native KMP cloud builds) is also CLOSED (but the structural starvation gap remains — see carried risks).
+- **1 quarantined assignment carried**: `code-review-ppt-web-core-refresh-token-localstorage` PR #3294 — the only non-mobile-native in-flight item.
 
 ## Executive summary
 
-- **Delivery still at 47/49 stories done, 2 partial** (84-1 direct-to-S3 upload wiring and 84-2 sign page). No status flips this window. The last window's 10 PRs were exclusively `code-review-*` fixes surfaced by the dev-team static passes:
-  - Backend security/reliability — PR #2893 (SSO introspect negative-cache poisoning fix), PR #2898 (validate reporter_email/reporter_phone on report submit), PR #2899 (compliance guard widening for PlatformAdmin).
-  - Backend correctness — PR #2892 (measure text length by char count not bytes; 8 files), PR #2896 (localize saved-search alert copy by recipient locale).
-  - Frontend correctness — PR #2889 (wire realtime ws events to query invalidation — end-to-end dead sync fix), PR #2890 (surface swallowed mutation errors), PR #2891 (wire onUnauthorized so 401 triggers session recovery).
-  - Frontend i18n — PR #2894 (Saved Searches localization), PR #2895 (Inquiries page localization).
-- **Auto-review loop still working:** all 10 merged PRs were originated by the ppt-dev-review generator over the prior 2 days (dispatcher spawned static passes → landed as `code-review-*` PRs → all merged in the same window). Zero regressions detected on the batch.
-- **Buffer starved (cloud-only):** 7/8 open backlog items are mobile-native/KMP — structurally unclaimable in the cloud dispatcher (AGP/Gradle egress gate, issue #2652). Every dispatcher commit since 2026-08-30 records `GC3-buffer-bounds=FAIL (record-only)`. Tier-1d generator kicks per run just to keep the buffer above floor. **Infra decision surfaced this run (pm-devops).**
-- **One open PR touched this run:** #2897 (`code-review-reality-server-sso-per-call-client-no-timeout`) — approved but had a real merge conflict against #2893 (both touched `introspect_pm_token`); dispatcher Phase 5.6 threaded the pooled `reqwest::Client` through the extracted `introspect_pm_token_inner`, pushed the merge (bca285d..aa5c544). CI red on the resolution attempt (fmt + introspect test-shard). Standing manual-reconciliation request on the PR.
-- **No new blockers.** Standing gh-issue-2797 (cargo-deny RUSTSEC-2026-0258 h2 DoS) still holds; owner pm-security.
+- **Delivery: 49/49 stories done across 13 epics in coverage.** No status flips this run; `last_checked` refreshed on epic-10a (idx 0, OAuth Provider Foundation — stories 10a-1/2/3 still done, nothing in the window touched OAuth).
+- **7 PRs merged, all with regression tests.** Test-shadow debt did NOT grow this window — pm-qa's standing concern on dispatcher-spawned fixes shipping without failing-on-main tests remains a watch, not an active regression.
+- **Dispatcher pipeline health is the real blocker now.** 10+ runs at 0-claimed/0-merged until this burst; planner buffer at 6/72 (claimable). The 7-PR burst is explained by pre-existing relands finally merging, NOT by fresh claim throughput.
+- **pm-qa rotation came up 76 days stale** — last run 2026-08-25. No fresh QA findings beyond the standing lint-adoption + dispatcher-self-test asks; test discipline on shipped PRs is actually improving.
 
-## Sprint progress (`_bmad-output/implementation-artifacts/sprint-status.yaml`)
+## Sprint progress
 
-Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth"** · **epics_done = 3/5** unchanged this run. Extended-scope epics (10B, 80, 81, 82, 83, 84, 85, 79, 8A, 9) folded into `coverage.json` and largely done.
+Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth"** · **epics_done = 4/4** at sprint level · 49/49 stories done in coverage.
 
-| Epic | Sprint status | Coverage status (13 epics) |
-|---|---|---|
-| 6 — Announcements & Communication | in-progress | 6/6 stories done in coverage |
-| 7A — Basic Document Management | in-progress | 5/5 stories done in coverage |
-| 8A — Basic Notification Preferences | done | 3/3 stories done |
-| 10A — OAuth Provider Foundation | done | 3/3 stories done |
-| 10B — Platform Administration | in-progress | 7/7 stories done |
-| 80 — Dispute Resolution | partial | 3/3 stories done in coverage |
-| 81 — Reports | (extended) | 2/2 stories done in coverage; **re-checked this run (idx 6), no material change, last_checked=2026-08-31** |
-| 84 — Documents / e-signature | (extended) | 3/5 done, 2 partial (84-1, 84-2) — unchanged |
-| 82 / 83 / 85 / 79 / 7a / 8a / 9 | (extended) | all done in coverage |
+| Epic | Sprint status | Coverage status | Shipped PRs this window |
+|---|---|---|---|
+| 6 — Announcements & Communication | done (6/6) | 6/6 done | — |
+| 7A — Basic Document Management | done (5/5) | 5/5 done | — |
+| 8A — Basic Notification Preferences | done (3/3) | 3/3 done | — |
+| 10A — OAuth Provider Foundation | done (3/3) | 3/3 done · **last_checked 2026-11-09 (cursor re-check)** | — |
+| 10B — Platform Administration | done (7/7) | 7/7 done | — |
+| 80 — Dispute Resolution | done (3/3) | 3/3 done | — |
 
-## Shipped since last run (10 PRs merged 2026-08-30 within the run window)
+## Shipped since last run (7 PRs merged)
 
-- **#2889** — code-review ppt-web-core ws-event-name-mismatch: wire realtime WS events to query invalidation (100% dead sync fix, real event names)
-- **#2890** — code-review reality-web mutation-no-onerror: surface swallowed mutation errors (favorites/saved-searches/inquiries)
-- **#2891** — code-review ppt-web-core api-onunauthorized-unwired: wire onUnauthorized so 401 triggers session recovery
-- **#2892** — code-review reality-server bytelen-charcount-validation: measure text length by character count not bytes (8 files, accented Slovak/Czech/German)
-- **#2893** — code-review reality-server sso-introspect-negcache-poison: don't cache active=false on PM introspection outage
-- **#2894** — code-review reality-web saved-searches-i18n: localize Saved Searches page + card (6 locales)
-- **#2895** — code-review reality-web inquiries-i18n: i18n the Inquiries page (6 locales)
-- **#2896** — code-review reality-server alert-drainer-i18n-english-only: localize saved-search alert copy by recipient locale (sk/cs/de/en with plural buckets)
-- **#2898** — code-review reality-server report-contact-unvalidated: validate reporter_email/reporter_phone on report submit
-- **#2899** — code-review api-handlers compliance-superadmin-exact-match: let PlatformAdmin reach compliance reports
+- **#3351** — code-review-ppt-web-ui-registry-no-i18n: wire registry pet/vehicle forms + lists through react-i18next (merged 2026-11-07). Closes action-list `code-review-ppt-web-ui-registry-no-i18n`.
+- **#3350** — code-review-reality-web-share-cmp-unchecked-json: validate shared-comparison listing bodies at the API boundary (merged 2026-11-07). Closes action-list `code-review-reality-web-share-cmp-unchecked-json`.
+- **#3353** — gh-issue-3352: revoke other sessions on authenticated password change (merged 2026-11-07). Closes issue #3352.
+- **#3354** — code-review-ppt-web-ui-registry-page-no-auth: send auth context on registry requests (merged 2026-11-07).
+- **#3355** — code-review-ppt-web-ui-registry-page-i18n-gap: translate RegistryPage chrome (merged 2026-11-07). Closes action-list `code-review-ppt-web-ui-registry-page-i18n-gap`.
+- **#3359** — code-review-ppt-web-ui-registry-mutation-reland: surface registry destructive-action outcomes via toast (merged 2026-11-08). Closes action-list `code-review-ppt-web-ui-registry-mutation-silent-fail`.
+- **#3358** — screen-map-drift-pr-3293-reality: reflect realtor-detail i18n in screen-map (re-land on current dev) (merged 2026-11-08).
 
-## What's next (top 5 actions from ranked backlog)
+## What's next (top 5 from the ranked plan)
 
-1. **[high] Unblock mobile-native/KMP builds in the cloud runner (issue #2652)** — 7/8 open backlog items structurally unclaimable — **owner: pm-devops**. New this run — cloud-runner starvation is now chronic; pushing it into the top actions.
-2. **[high] Wire ppt-web direct-to-S3 upload (84-1 partial)** — POST /api/v1/documents/upload-url consumer + regression test — **owner: pm-frontend**. Highest-leverage single move (drops partial count 2 → 1).
-3. **[high] Build signer-facing document-sign page (84-2 partial)** — flip screen-map ppt/document-sign buildStatus planned → shipped — **owner: pm-frontend**. Closes 49/49 MVP when paired with #2.
-4. **[high] Resolve gh-issue-2797** — cargo-deny RUSTSEC-2026-0258 (h2 empty-DATA-frame DoS) blocks every backend PR — **owner: pm-security**. Standing since 2026-08-18.
-5. **[medium] Resolve #2897 CI red** — PR approved and merge-conflict-resolved (bca285d..aa5c544), but CI shard is red (fmt + introspect test); needs manual reconciliation in a buildable env — **owner: pm-backend**.
+1. **[high] pm-scrum-master** — Promote a non-mobile-native code-review vector from the next Phase 1.5 segment (ppt-web-core / reality-server oldest = 2026-11-04) to refill the planner buffer. Why: planner buffer is 6/72; 8 of 9 open backlog items are mobile-native-kmp (structurally unclaimable in cloud) — refill is the single highest-leverage action this run.
+2. **[high] pm-scrum-master** — Triage #3357: rebase the 3 blocked PRs OR adjust Tier-1d signal sourcing to stop emitting dead-end vectors. Why: the dispatcher cannot self-heal; this is the direct cause of the ~10-run 0-merged streak.
+3. **[high] pm-devops** — Unblock mobile-native/KMP builds in the cloud runner (issue #2652 CLOSED but structural gap unchanged; #2966 still open). Why: structural starvation — 5+ backlog items permanently unclaimable in cloud.
+4. **[medium] pm-scrum-master** — Open the diff for code-review-ppt-web-core-refresh-token-localstorage and upgrade signal confidence from medium → high (or drop). Why: it is the ONLY non-mobile-native open row today; stays blocked by Phase 3 gates at score=2+confidence=medium.
+5. **[medium] pm-qa** — Add a dispatcher-self-test.sh test case covering the quarantined-row recovery path so #3357-class stalls fail CI instead of silently queueing.
 
 ## Blockers
 
-- **None new this run.** Sprint continues with no red flags; all 10 code-review PRs landed in-window.
-- **Standing:** gh-issue-2797 (cargo-deny RUSTSEC-2026-0258 h2 DoS) blocks every backend PR until landed. Owner: pm-security.
-- **Standing infra:** issue #2652 — mobile-native/KMP builds unlandable in cloud runner. Owner: pm-devops (surfaced as this run's top action).
-- **Aging:** 84-1 + 84-2 partial stories unchanged for 4 upkeep windows. Owner: pm-frontend.
+- **#3357 dispatcher stalled pipeline** (filed 2026-11-08, labels: `follow-up`, `blocked`). Operator action required; dispatcher cannot self-heal. Owner: pm-devops / operator.
+- **mobile-native-kmp cloud-landability starvation** (carries indefinitely until pm-devops unblocks local-toolchain-in-cloud; issue #2652 CLOSED but gap persists).
 
-## Role focus today: **pm-devops** (rotation idx 4; last 2026-06-16, 76d stale) + pm-scrum-master always-on
+## Decisions needed
 
-- **pm-scrum-master** (always-on): the code-review auto-generator + dispatcher merge loop delivered 10 PRs in one window with no regressions detected — the loop is a working delivery mechanism. Delivery blocker is now infrastructural, not code: mobile-native/KMP items can't be picked up in cloud, and the backlog rank is exhausted of landable items (`Buffer starved (claimable=0/floor=36)` on the 2026-08-31T00:35Z commit).
-- **pm-devops** (rotation): flagged the mobile-native/KMP cloud-runner gap (issue #2652) as the top standing infra risk. Also proposed a nightly `verify-all.sh --quick` sweep on `dev` HEAD to surface silent infra regressions, and a dependabot-queue triage (7 open dep PRs, 3d idle). See `roles/pm-devops.md` for the full 4 next-actions and 2 risks.
+- **Promotion policy for score=2 + confidence=medium security vectors** — current fast-track requires `confidence=high`, so `code-review-ppt-web-core-refresh-token-localstorage` stays in `open` unless the confidence is upgraded. Owner: pm-security.
+- **Buffer-low trigger text promotion as a hard-stop** — should the routine's buffer-low fire text (received as `buffer-low: claimable=6/72`) force Phase 1.5 to pick the oldest non-mobile-native segment regardless of churn-alignment? Owner: pm-scrum-master.
 
-## Coverage (upkeep this run — 2026-08-31)
+## Role summaries (this run)
 
-- **`coverage.json` refreshed via mechanical upkeep** — `scan_kind=upkeep`, `generated` bumped to 2026-08-31T03:10:00Z, no re-scan.
-- **Epic re-check: epic-81** — cursor idx 6. Both stories (81-1 report-schedule-editing, 81-2 report-execution-history) still `done`. No PR in the 2026-08-26..08-31 window touched reports schedule routes/screens; evidence entry appended to 81-1 noting the negative check. `last_checked = 2026-08-31` stamped on both stories.
-- **Merged-PR evidence:** none of the 10 merged PRs (all code-review batch) match a coverage story by keyword — all were correctness hardening of already-shipped surfaces. No status flips.
-- **`coverage_cursor` advances 6 → 7** (epic-81 → epic-82 next run).
-- **`pm_cursor` advances 4 → 5** (pm-devops → pm-security next run). role_last_run["pm-devops"] = 2026-08-31.
-- **Composition unchanged: 47 done · 2 partial · 0 not-started** across 13 epics. **Missing UC links: 3** (UC-33.1/33.2/33.3 already queued). Zero orphan screens, zero validation errors.
+- **pm-scrum-master** (always-on): 7 PRs merged, 12 action-list items done this run, planner buffer collapsed to 6/72 — refill is the priority.
+- **pm-qa** (rotation; last run 2026-08-25 → 76 days stale): test discipline on shipped PRs is improving (7/7 shipped with regression tests this window); carried decisions on mobile-rn lint adoption + dispatcher-self-test remain the open QA asks.

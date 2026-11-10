@@ -1,31 +1,24 @@
 /**
  * Authenticated fetch helper for the user-facing GDPR endpoints
- * (/api/v1/gdpr/*). Mirrors the conventions in features/auth/authApiClient.ts:
- * a configurable base URL (VITE_API_BASE_URL) plus the bearer token read from
- * localStorage. Every GDPR handler requires the `AuthUser` extractor, so a bare
- * `fetch` with no Authorization header returns 401 in production (gap-sweep).
+ * (/api/v1/gdpr/*).
+ *
+ * Delegates to the shared `authenticatedFetch` from `@ppt/api-client` — the same
+ * authenticated client the generated SDK and every other feature module use — so
+ * the bearer token comes from the registered token provider (not a bespoke
+ * `localStorage` read), the base URL matches every other API call, and a
+ * `401 { error: "mfa_required" }` triggers the shared MFA retry. Every GDPR
+ * handler requires the `AuthUser` extractor, so a request with a missing or
+ * stale Authorization header returns 401 in production (gap-sweep, #3000).
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
-const ACCESS_TOKEN_KEY = 'ppt_access_token';
-
-function readAccessToken(): string | undefined {
-  try {
-    return localStorage.getItem(ACCESS_TOKEN_KEY) ?? undefined;
-  } catch {
-    return undefined;
-  }
-}
+import { authenticatedFetch } from '@ppt/api-client';
 
 /**
- * Issue an authenticated request against an API path. Attaches the bearer
- * token (when present) and resolves the configured API base URL.
+ * Issue an authenticated request against a GDPR API path. Returns the raw
+ * `Response` so callers keep their existing `.ok` / `.json()` / `.text()`
+ * handling. Auth headers, token refresh, and base-URL resolution are handled by
+ * the shared client.
  */
 export function gdprFetch(path: string, init: RequestInit = {}): Promise<Response> {
-  const token = readAccessToken();
-  const headers = new Headers(init.headers);
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
-  }
-  return fetch(`${API_BASE_URL}${path}`, { ...init, headers });
+  return authenticatedFetch(path, init);
 }

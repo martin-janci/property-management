@@ -20,9 +20,10 @@ pub async fn list_matches(
         return Err(StatusCode::FORBIDDEN);
     }
 
+    let tenant_id = rls.tenant_id();
     let matches = state
         .accounting_repo
-        .list_payment_matches_by_line_rls(&mut **rls, line_id)
+        .list_payment_matches_by_line_for_tenant(&mut **rls, tenant_id, line_id)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
@@ -71,11 +72,12 @@ pub async fn reject_match(
         return Err(StatusCode::FORBIDDEN);
     }
 
+    let tenant_id = rls.tenant_id();
     let user_id = rls.user_id();
 
     state
         .accounting_service
-        .reject_match(&mut rls, match_id, user_id)
+        .reject_match(&mut rls, tenant_id, match_id, user_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to reject match: {}", e);

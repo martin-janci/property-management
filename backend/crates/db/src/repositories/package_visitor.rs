@@ -344,8 +344,8 @@ impl PackageVisitorRepository {
                 COUNT(*) FILTER (WHERE status = 'received' OR status = 'notified') as received_packages,
                 COUNT(*) FILTER (WHERE status = 'picked_up') as picked_up_packages,
                 COUNT(*) FILTER (WHERE status = 'unclaimed') as unclaimed_packages,
-                AVG(EXTRACT(EPOCH FROM (picked_up_at - received_at)) / 3600)
-                    FILTER (WHERE picked_up_at IS NOT NULL AND received_at IS NOT NULL) as avg_pickup_time_hours
+                (AVG(EXTRACT(EPOCH FROM (picked_up_at - received_at)) / 3600)
+                    FILTER (WHERE picked_up_at IS NOT NULL AND received_at IS NOT NULL))::float8 as avg_pickup_time_hours
             FROM packages
             WHERE tenant_id = $1 AND building_id = $2
             "#,
@@ -886,12 +886,15 @@ impl PackageVisitorRepository {
     }
 
     /// Upserts package settings for a building.
+    ///
+    /// SECURITY: the building must belong to `tenant_id`; `None` otherwise
+    /// (nothing is written), so the handler can answer 404.
     pub async fn upsert_package_settings(
         &self,
         tenant_id: Uuid,
         building_id: Uuid,
         data: UpdateBuildingPackageSettings,
-    ) -> Result<BuildingPackageSettings, sqlx::Error> {
+    ) -> Result<Option<BuildingPackageSettings>, sqlx::Error> {
         // Validate settings
         if let Some(days) = data.max_storage_days {
             if !(1..=365).contains(&days) {
@@ -917,7 +920,9 @@ impl PackageVisitorRepository {
                 require_photo_on_receipt, allow_resident_self_pickup, notify_on_arrival,
                 send_daily_summary, storage_instructions
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            SELECT b.organization_id, b.id, $3, $4, $5, $6, $7, $8, $9
+            FROM buildings b
+            WHERE b.id = $2 AND b.organization_id = $1
             ON CONFLICT (tenant_id, building_id) DO UPDATE SET
                 max_storage_days = COALESCE($3, building_package_settings.max_storage_days),
                 send_reminder_after_days = COALESCE($4, building_package_settings.send_reminder_after_days),
@@ -939,7 +944,7 @@ impl PackageVisitorRepository {
         .bind(data.notify_on_arrival.unwrap_or(true))
         .bind(data.send_daily_summary.unwrap_or(false))
         .bind(&data.storage_instructions)
-        .fetch_one(&self.pool)
+        .fetch_optional(&self.pool)
         .await
     }
 
@@ -959,12 +964,15 @@ impl PackageVisitorRepository {
     }
 
     /// Upserts visitor settings for a building.
+    ///
+    /// SECURITY: the building must belong to `tenant_id`; `None` otherwise
+    /// (nothing is written), so the handler can answer 404.
     pub async fn upsert_visitor_settings(
         &self,
         tenant_id: Uuid,
         building_id: Uuid,
         data: UpdateBuildingVisitorSettings,
-    ) -> Result<BuildingVisitorSettings, sqlx::Error> {
+    ) -> Result<Option<BuildingVisitorSettings>, sqlx::Error> {
         // Validate settings
         if let Some(code_length) = data.code_length {
             if !(4..=12).contains(&code_length) {
@@ -1004,7 +1012,9 @@ impl PackageVisitorRepository {
                 notify_host_on_checkin, send_visitor_instructions, require_id_verification,
                 require_photo, visitor_instructions, staff_instructions
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            SELECT b.organization_id, b.id, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
+            FROM buildings b
+            WHERE b.id = $2 AND b.organization_id = $1
             ON CONFLICT (tenant_id, building_id) DO UPDATE SET
                 default_code_validity_hours = COALESCE($3, building_visitor_settings.default_code_validity_hours),
                 code_length = COALESCE($4, building_visitor_settings.code_length),
@@ -1034,7 +1044,7 @@ impl PackageVisitorRepository {
         .bind(data.require_photo.unwrap_or(false))
         .bind(&data.visitor_instructions)
         .bind(&data.staff_instructions)
-        .fetch_one(&self.pool)
+        .fetch_optional(&self.pool)
         .await
     }
 }

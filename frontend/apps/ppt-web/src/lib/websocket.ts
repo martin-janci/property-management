@@ -82,23 +82,52 @@ export function parseServerMessage(raw: unknown): WebSocketMessage | null {
 }
 
 /**
- * Build the full WebSocket connection URL: base origin + canonical path +
- * `?token=<jwt>` query param.
+ * Build the full WebSocket connection URL: base origin + canonical path.
  *
- * Browsers cannot set an `Authorization` header on a WebSocket handshake, so
- * the api-server reads the JWT from the `token` query parameter (see
- * `WsQuery` in `ws_notifications.rs`). The `base` may be a bare origin
- * (`ws://localhost:8080`) or already include the path — in either case we
- * normalise to the canonical path and attach the token.
+ * The JWT access token is deliberately NOT placed in the URL. A query-string
+ * token (`?token=<jwt>`) leaks the bearer credential into api-server access
+ * logs and any intermediary proxy logs — a single captured log line is enough
+ * for session takeover. The token is instead carried in the
+ * `Sec-WebSocket-Protocol` handshake header via {@link buildWsSubprotocols},
+ * which the api-server reads (see `ws_notifications.rs`). The `base` may be a
+ * bare origin (`ws://localhost:8080`) or already include a path — in either
+ * case we normalise to the canonical handler path.
  */
-export function buildWebSocketUrl(base: string, token: string): string {
+export function buildWebSocketUrl(base: string): string {
   // `URL` needs an absolute base; ws/wss are valid absolute schemes.
   const url = new URL(base);
   // Force the canonical path regardless of what the base carried, so a
   // legacy `/ws` (or empty) path is corrected to the mounted handler.
   url.pathname = WS_NOTIFICATIONS_PATH;
-  url.searchParams.set('token', token);
   return url.toString();
+}
+
+/**
+ * Subprotocol token that prefixes the JWT in the `Sec-WebSocket-Protocol`
+ * handshake header. The api-server strips this prefix to recover the raw JWT
+ * (see `WS_BEARER_SUBPROTOCOL_PREFIX` in `ws_notifications.rs`). Keep the two
+ * in sync.
+ */
+export const WS_BEARER_SUBPROTOCOL_PREFIX = 'bearer.';
+
+/**
+ * Protocol-version subprotocol. The api-server echoes this one back to
+ * complete the handshake (Issue #438) — the browser aborts the connection
+ * with a silent network error if the server selects none of the offered
+ * subprotocols, so it must always be offered alongside the bearer token.
+ */
+export const WS_PROTOCOL_VERSION = 'ppt.v1';
+
+/**
+ * Build the `Sec-WebSocket-Protocol` offer list for an authenticated WS
+ * handshake: the bearer-token subprotocol followed by the protocol-version
+ * subprotocol the server echoes.
+ *
+ * JWTs are base64url (`[A-Za-z0-9-_]`) with `.` segment separators — all valid
+ * subprotocol token characters per RFC 6455 — so no escaping is required.
+ */
+export function buildWsSubprotocols(token: string): string[] {
+  return [`${WS_BEARER_SUBPROTOCOL_PREFIX}${token}`, WS_PROTOCOL_VERSION];
 }
 
 /**
@@ -122,7 +151,41 @@ export type WebSocketEventType =
  * and emits a `connection:max-retries-exceeded` event so callers can
  * surface a UI-level "offline" state instead of silently retrying forever.
  */
-const DEFAULT_MAX_RECONNECT_ATTEMPTS = 10;
+export const DEFAULT_MAX_RECONNECT_ATTEMPTS = 10;
+
+/**
+ * Default minimum reconnection delay in milliseconds (the first-attempt base
+ * before jitter).
+ */
+export const DEFAULT_MIN_RECONNECT_DELAY_MS = 1000;
+
+/**
+ * Default maximum reconnection delay in milliseconds — the exponential backoff
+ * is capped here so a long outage settles into a steady (jittered) poll rather
+ * than growing unbounded.
+ */
+export const DEFAULT_MAX_RECONNECT_DELAY_MS = 30000;
+
+/**
+ * Compute the reconnect delay for a given zero-based `attempt` using
+ * exponential backoff capped at `maxDelay`, plus random jitter in `[0.5, 1.0)`
+ * to avoid a thundering-herd on shared outages.
+ *
+ * This is the single source of truth for the project's WS reconnect backoff
+ * curve: {@link WebSocketService} (the shared notification socket) and the
+ * IoT sensor hook (`features/iot/hooks/useIotWebSocket`) both call it so their
+ * retry behaviour stays identical. Each caller still owns its own attempt
+ * counter and give-up handling (they live on different transports), but the
+ * delay math — the part worth not duplicating — is shared here.
+ */
+export function computeReconnectDelay(
+  attempt: number,
+  minDelay: number = DEFAULT_MIN_RECONNECT_DELAY_MS,
+  maxDelay: number = DEFAULT_MAX_RECONNECT_DELAY_MS
+): number {
+  const baseDelay = Math.min(minDelay * 2 ** attempt, maxDelay);
+  return baseDelay * (0.5 + Math.random() * 0.5);
+}
 
 /**
  * Connection states for the WebSocket.
@@ -183,9 +246,10 @@ export interface WebSocketServiceConfig {
 /**
  * Compute the default WebSocket base origin (scheme + host, no path).
  *
- * The canonical handler path ({@link WS_NOTIFICATIONS_PATH}) and `?token=`
- * query param are appended by {@link buildWebSocketUrl} at connect time, so
- * this only needs to resolve the origin.
+ * The canonical handler path ({@link WS_NOTIFICATIONS_PATH}) is appended by
+ * {@link buildWebSocketUrl} at connect time and the JWT travels in the
+ * handshake subprotocol ({@link buildWsSubprotocols}), so this only needs to
+ * resolve the origin.
  *
  * In dev we keep the explicit cleartext `ws://localhost:8080` so the local
  * Vite stack works without TLS. In production we never default to cleartext:
@@ -270,8 +334,8 @@ export class WebSocketService {
   constructor(config: WebSocketServiceConfig) {
     this.url = config.url ?? import.meta.env.VITE_WS_URL ?? defaultWebSocketUrl();
     this.getToken = config.getToken;
-    this.minReconnectDelay = config.minReconnectDelay ?? 1000;
-    this.maxReconnectDelay = config.maxReconnectDelay ?? 30000;
+    this.minReconnectDelay = config.minReconnectDelay ?? DEFAULT_MIN_RECONNECT_DELAY_MS;
+    this.maxReconnectDelay = config.maxReconnectDelay ?? DEFAULT_MAX_RECONNECT_DELAY_MS;
     this.maxReconnectAttempts = config.maxReconnectAttempts ?? DEFAULT_MAX_RECONNECT_ATTEMPTS;
   }
 
@@ -357,16 +421,17 @@ export class WebSocketService {
     this.shouldReconnect = true;
     this.clearReconnectTimeout();
 
-    // Auth transport: the api-server reads the JWT from the `token` query
-    // parameter (see `WsQuery` in `ws_notifications.rs`). Browsers cannot set
-    // an `Authorization` header on a WS handshake, so the query param is the
-    // contract the server validates. We still offer the `ppt.v1` subprotocol
-    // because the server echoes it (Issue #438) to complete the handshake and
-    // to leave room for future protocol-version negotiation.
+    // Auth transport: browsers cannot set an `Authorization` header on a WS
+    // handshake, so the JWT is carried in the `Sec-WebSocket-Protocol` header
+    // as `bearer.<jwt>` (see `buildWsSubprotocols`). The api-server reads it
+    // from there (see `ws_notifications.rs`). This replaces the previous
+    // `?token=<jwt>` query param, which leaked the bearer token into access
+    // logs. The `ppt.v1` subprotocol is offered alongside it because the
+    // server echoes it (Issue #438) to complete the handshake.
     this.setConnectionState('connecting');
 
     try {
-      this.socket = new WebSocket(buildWebSocketUrl(this.url, token), ['ppt.v1']);
+      this.socket = new WebSocket(buildWebSocketUrl(this.url), buildWsSubprotocols(token));
       this.setupSocketHandlers();
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Failed to create WebSocket');
@@ -619,13 +684,13 @@ export class WebSocketService {
       return;
     }
 
-    // Exponential backoff capped at maxReconnectDelay, plus random jitter
-    // in [0.5, 1.0) to avoid a thundering-herd on shared outages.
-    const baseDelay = Math.min(
-      this.minReconnectDelay * 2 ** this.reconnectAttempts,
+    // Exponential backoff capped at maxReconnectDelay, plus random jitter —
+    // shared with the IoT hook via computeReconnectDelay().
+    const delay = computeReconnectDelay(
+      this.reconnectAttempts,
+      this.minReconnectDelay,
       this.maxReconnectDelay
     );
-    const delay = baseDelay * (0.5 + Math.random() * 0.5);
 
     this.reconnectAttempts++;
 

@@ -7,6 +7,10 @@ interface ImportMetaEnv {
   /** Comma-separated exact origins allowed to activate layout preview mode.
    *  Unset/empty = preview never activates (deny by default). */
   readonly VITE_LAYOUT_PREVIEW_PARENT_ORIGINS?: string;
+  /** Deployment-level default ISO 4217 currency code (e.g. EUR, PLN, HUF).
+   *  Used where the backend payload carries no currency field (e.g. leases).
+   *  Unset/invalid = EUR. */
+  readonly VITE_DEFAULT_CURRENCY?: string;
   readonly DEV: boolean;
   readonly PROD: boolean;
   readonly MODE: string;

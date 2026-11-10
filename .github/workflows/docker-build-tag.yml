@@ -1,0 +1,26 @@
+name: Docker Build & Push (Backend, release tag)
+
+# The tag trigger, on purpose in its own workflow and with NO paths filter.
+#
+# GitHub evaluates `on.push.paths` for tag pushes as well, and a tag pushed onto
+# a commit that is already on a branch carries an empty commit list — so a paths
+# filter can never match it. While `tags: ['v*']` sat under the paths-filtered
+# `push:` key of docker-build.yml, a release tag built no backend image at all.
+#
+# The build itself is the same reusable workflow docker-build.yml calls, so a
+# tag build and a branch build can never publish different images or tags.
+# There is deliberately no auto-deploy job here: release.yml owns tag pushes via
+# the `register-candidate → manual promote` flow.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    uses: ./.github/workflows/docker-backend-images.yml

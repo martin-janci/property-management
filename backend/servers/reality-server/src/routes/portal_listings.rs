@@ -95,6 +95,23 @@ fn validate_enum(
     Ok(())
 }
 
+/// Validate a listing `price` before it reaches the DB.
+///
+/// The `listings.price` column is a bare `DECIMAL` with no CHECK constraint
+/// (migration 00049), so without this guard a zero or negative price would be
+/// persisted and surface as a broken public listing. `rust_decimal::Decimal`
+/// cannot represent NaN or infinity, so finiteness is guaranteed by the type;
+/// only positivity needs an explicit check here.
+fn validate_price(price: Decimal) -> Result<(), (axum::http::StatusCode, String)> {
+    if price <= Decimal::ZERO {
+        return Err((
+            axum::http::StatusCode::BAD_REQUEST,
+            "Invalid price: must be greater than zero".to_string(),
+        ));
+    }
+    Ok(())
+}
+
 /// Request body for creating a portal listing.
 #[derive(Debug, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
@@ -223,6 +240,7 @@ pub async fn create_listing(
         ALLOWED_TRANSACTION_TYPES,
     )?;
     validate_enum("currency", body.currency.as_deref(), ALLOWED_CURRENCIES)?;
+    validate_price(body.price)?;
     // NOTE: `status` is intentionally NOT accepted on create — `portal_create_listing`
     // (migration 00186) hard-codes it to 'draft'. If a `status` field is ever added to
     // `CreatePortalListingRequest`, it must also be guarded here via
@@ -336,6 +354,9 @@ pub async fn update_listing(
     // into the publicly-visible `active`/`published`/`approved` states is a
     // privileged transition reserved for the moderation path.
     validate_enum("status", body.status.as_deref(), ALLOWED_OWNER_STATUSES)?;
+    if let Some(price) = body.price {
+        validate_price(price)?;
+    }
 
     let listing = state
         .reality_portal_repo
@@ -607,4 +628,33 @@ pub async fn get_my_listing_analytics(
         days_on_market,
         daily_analytics: daily.into_iter().map(map_daily_analytics).collect(),
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::validate_price;
+    use axum::http::StatusCode;
+    use rust_decimal::Decimal;
+
+    #[test]
+    fn rejects_zero_price() {
+        let err = validate_price(Decimal::ZERO).expect_err("zero price must be rejected");
+        assert_eq!(err.0, StatusCode::BAD_REQUEST);
+    }
+
+    #[test]
+    fn rejects_negative_price() {
+        // -1.5
+        let err =
+            validate_price(Decimal::new(-15, 1)).expect_err("negative price must be rejected");
+        assert_eq!(err.0, StatusCode::BAD_REQUEST);
+    }
+
+    #[test]
+    fn accepts_positive_price() {
+        // 149000.00
+        validate_price(Decimal::new(14_900_000, 2)).expect("a positive price must be accepted");
+        // 0.01 — smallest positive price
+        validate_price(Decimal::new(1, 2)).expect("the smallest positive price must be accepted");
+    }
 }

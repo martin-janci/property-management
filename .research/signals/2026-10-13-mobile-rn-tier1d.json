@@ -1,0 +1,34 @@
+{
+  "generated": "2026-10-13T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claim buffer starved: claimable=4 < floor=36). Static single-segment rotating code review per .claude/skills/ppt-dev-review/SKILL.md — no compilation, no test execution, no branch checkout (cloud runner, file reading + grep only). DISPATCHER_OWNED_COMMIT=1: this artifact was written into the working tree only; no git add/commit/push performed, orchestrator folds .research deltas into its Phase 6 commit. Segment selection: no Phase-1 churn list was handed to this demand-driven invocation, so priority-1 churn-alignment was empty and selection fell to priority-2 oldest-unreviewed. review_cursor oldest date is 2026-10-11, a 4-way tie (api-handlers, ppt-web-ui, reality-web, mobile-rn). api-handlers skipped for saturation (3 open code-review-finding rows with status==open in backlog.json). ppt-web-ui and reality-web were ALREADY reviewed earlier in this same 2026-10-13 dispatcher cycle (signal files 2026-10-13-ppt-web-ui-tier1d.json and 2026-10-13-reality-web-tier1d.json already present; the full cycle so far also covered ppt-web-core, reality-server, mobile-native-kmp). To avoid redundant double-review within one cycle, selection advanced to the next oldest-unreviewed segment not yet covered today and not saturated: mobile-rn (cursor 2026-10-11, 0 open code-review-finding rows in backlog.json). NOTE: mobile-rn is HEAVILY mined — 10+ prior mobile-rn signal files exist and the obvious issues are all already tracked: Alert.alert hardcoded-English strings (code-review-mobile-rn-alert-hardcoded-en, -widget-settings-alerts-i18n, -person-months-no-i18n, -feedback-device-info-i18n, -hardcoded-i18n-screens), screen headerTitle/headerSubtitle literals across 12 screens incl. FormsScreen (code-review-mobile-rn-screen-header-titles-i18n, 2026-10-01), offline-queue 4xx/terminal drops, meter-reading validation, NFC validUntil fail-open, QR scanHistory unguarded parse, dashboard layout fetch, widget-bridge auth token. Verified the candidate against all prior mobile-rn signal files and backlog ids; the i18n translation-gap angle and crash paths are exhausted. Only ONE genuinely net-new finding survived honest de-duplication (a correctness bug distinct from the translation-gap class); no duplicates were emitted to pad the count toward the 3-finding cap. Defensive code confirmed sound in VoiceAssistant (native modules null-guarded), QRCodeScanner.parsePPTPayload (JSON.parse in try/catch), AuthContext (stored-user parse in try/catch), MeterReadingScreen/ReportFaultScreen (localized error Alerts), VoteDetailScreen (Rules-of-Hooks-safe), FormsScreen (has loading/error/empty states).",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "oldest-unreviewed (review_cursor tie at 2026-10-11 among api-handlers/ppt-web-ui/reality-web/mobile-rn; api-handlers skipped for saturation=3 open findings; ppt-web-ui and reality-web already reviewed earlier in this same 2026-10-13 cycle; mobile-rn is the next oldest-unreviewed segment not yet covered this cycle and NOT saturated — 0 open code-review-finding rows with segment==mobile-rn && status==open in backlog.json)",
+  "experts_used": ["frontend", "tester"],
+  "findings_count": 1,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-naive-en-pluralization",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/mobile/src/screens/forms/FormsScreen.tsx",
+        "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx",
+        "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/forms/FormsScreen.tsx:121 — `{forms.length} form{forms.length === 1 ? '' : 's'} available` hardcodes English binary (1 vs many) pluralization via string concatenation. This is a CORRECTNESS bug distinct from the already-tracked translation-gap findings (code-review-mobile-rn-screen-header-titles-i18n flags this subtitle as a missing-t() literal, but a naive `t('forms.countAvailable', { count })` fix that still interpolates `count + ' form' + (n===1?'':'s')` would remain wrong). The app ships 6 locales (frontend/apps/mobile/src/locales/: sk, cs, pl, de, hu, en). Slavic locales sk/cs/pl have 3-4 CLDR plural categories (one/few/many/other), and the binary `=== 1 ? '' : 's'` renders grammatically wrong counts in 5 of the 6 shipped languages (e.g. sk needs distinct forms for 1 / 2-4 / 5+). Correct fix: i18next ICU/count plural keys (`t('forms.available', { count })` with one/few/many/other sub-keys in each locale json), never a JS ternary appending 's'.",
+        "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx:151 — same antipattern: `{entry.declaredPersons} person{entry.declaredPersons === 1 ? '' : 's'}`. (person-months has prior translation-gap findings but none addresses the plural-form correctness.)",
+        "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx:117 — same antipattern: `{unreadTotal} unread message{unreadTotal === 1 ? '' : 's'}`.",
+        "Net-new verification: searched all prior mobile-rn signal files — the only 'plural'-mentioning prior signals are in ppt-web-ui / reality-web / reality-server segments, none in mobile-rn. backlog.json has 0 open mobile-rn code-review-finding rows. The three mobile i18n/header findings already on record are translation-gap (missing t()) in nature and do not call out the binary-pluralization correctness defect for non-English plural rules.",
+        "Scope note for implementer: fix all three sites in one PR and grep `? '' : 's'` across frontend/apps/mobile/src to catch any further instances; add the plural sub-keys to each of the 6 locale json files (one/few/many/other where the locale requires them)."
+      ]
+    }
+  ]
+}

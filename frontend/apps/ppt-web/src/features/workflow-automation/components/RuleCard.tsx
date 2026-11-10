@@ -6,6 +6,7 @@
  */
 
 import type { AutomationRule } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 
 interface RuleCardProps {
   rule: AutomationRule;
@@ -29,6 +30,7 @@ const statusColors = {
 };
 
 export function RuleCard({ rule, onEdit, onDelete, onToggle, onRun }: RuleCardProps) {
+  const { t } = useTranslation();
   const triggerIcon = triggerIcons[rule.trigger?.type ?? ''] ?? '⚙️';
   const status = rule.isEnabled ? 'active' : 'paused';
 
@@ -43,7 +45,9 @@ export function RuleCard({ rule, onEdit, onDelete, onToggle, onRun }: RuleCardPr
               <span
                 className={`px-2 py-0.5 text-xs font-medium rounded-full ${statusColors[status]}`}
               >
-                {status === 'active' ? 'Active' : 'Paused'}
+                {status === 'active'
+                  ? t('automation.status.active')
+                  : t('automation.status.paused')}
               </span>
             </div>
             {rule.description && (
@@ -65,18 +69,19 @@ export function RuleCard({ rule, onEdit, onDelete, onToggle, onRun }: RuleCardPr
                     d="M13 10V3L4 14h7v7l9-11h-7z"
                   />
                 </svg>
-                {rule.trigger?.name ?? rule.trigger?.type ?? 'Unknown trigger'}
+                {rule.trigger?.name ??
+                  rule.trigger?.type ??
+                  t('automation.ruleCard.unknownTrigger')}
               </span>
               <span>•</span>
-              <span>
-                {rule.actions?.length ?? 0} action{(rule.actions?.length ?? 0) !== 1 ? 's' : ''}
-              </span>
+              <span>{t('automation.ruleCard.actions', { count: rule.actions?.length ?? 0 })}</span>
               {rule.trigger?.conditions && rule.trigger.conditions.length > 0 && (
                 <>
                   <span>•</span>
                   <span>
-                    {rule.trigger.conditions.length} condition
-                    {rule.trigger.conditions.length !== 1 ? 's' : ''}
+                    {t('automation.ruleCard.conditions', {
+                      count: rule.trigger.conditions.length,
+                    })}
                   </span>
                 </>
               )}
@@ -94,7 +99,7 @@ export function RuleCard({ rule, onEdit, onDelete, onToggle, onRun }: RuleCardPr
             }`}
             role="switch"
             aria-checked={rule.isEnabled}
-            aria-label={`Toggle ${rule.name}`}
+            aria-label={t('automation.ruleCard.toggle', { name: rule.name })}
           >
             <span
               className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
@@ -110,22 +115,22 @@ export function RuleCard({ rule, onEdit, onDelete, onToggle, onRun }: RuleCardPr
         <div className="mt-4 pt-3 border-t border-gray-100">
           <div className="flex gap-4 text-xs">
             <div>
-              <span className="text-gray-400">Total Runs:</span>{' '}
+              <span className="text-gray-400">{t('automation.ruleCard.totalRuns')}</span>{' '}
               <span className="font-medium text-gray-700">{rule.executionStats.totalRuns}</span>
             </div>
             <div>
-              <span className="text-gray-400">Success:</span>{' '}
+              <span className="text-gray-400">{t('automation.ruleCard.success')}</span>{' '}
               <span className="font-medium text-green-600">
                 {rule.executionStats.successfulRuns}
               </span>
             </div>
             <div>
-              <span className="text-gray-400">Failed:</span>{' '}
+              <span className="text-gray-400">{t('automation.ruleCard.failed')}</span>{' '}
               <span className="font-medium text-red-600">{rule.executionStats.failedRuns}</span>
             </div>
             {rule.executionStats.lastRunAt && (
               <div>
-                <span className="text-gray-400">Last Run:</span>{' '}
+                <span className="text-gray-400">{t('automation.ruleCard.lastRun')}</span>{' '}
                 <span className="font-medium text-gray-700">
                   {new Date(rule.executionStats.lastRunAt).toLocaleDateString()}
                 </span>
@@ -163,7 +168,7 @@ export function RuleCard({ rule, onEdit, onDelete, onToggle, onRun }: RuleCardPr
                 d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            Run Now
+            {t('automation.ruleCard.runNow')}
           </button>
         )}
         <button
@@ -185,7 +190,7 @@ export function RuleCard({ rule, onEdit, onDelete, onToggle, onRun }: RuleCardPr
               d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
             />
           </svg>
-          Edit
+          {t('automation.ruleCard.edit')}
         </button>
         <button
           type="button"
@@ -206,7 +211,7 @@ export function RuleCard({ rule, onEdit, onDelete, onToggle, onRun }: RuleCardPr
               d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
             />
           </svg>
-          Delete
+          {t('automation.ruleCard.delete')}
         </button>
       </div>
     </div>

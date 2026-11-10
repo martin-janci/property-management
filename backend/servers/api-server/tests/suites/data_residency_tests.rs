@@ -80,7 +80,9 @@ async fn test_data_residency_lifecycle(pool: PgPool) {
 
     let user = seed_user(&pool, "manager@residency.test").await;
     let org_id = seed_org(&pool, "res-org").await;
-    seed_membership(&pool, org_id, user, "manager").await;
+    // Residency writes (configure, log access, compliance run) are
+    // admin-only; reads stay open to members.
+    seed_membership(&pool, org_id, user, "org_admin").await;
     let token = access_token(user, Some(org_id));
 
     // 1. Get initial config (should insert and return default)
@@ -198,7 +200,8 @@ async fn test_data_residency_cross_tenant_isolation(pool: PgPool) {
 
     let user_a = seed_user(&pool, "user-a@residency.test").await;
     let org_a = seed_org(&pool, "tenant-a").await;
-    seed_membership(&pool, org_a, user_a, "manager").await;
+    // Org A's admin configures residency (writes are admin-only).
+    seed_membership(&pool, org_a, user_a, "org_admin").await;
     let token_a = access_token(user_a, Some(org_a));
 
     let user_b = seed_user(&pool, "user-b@residency.test").await;

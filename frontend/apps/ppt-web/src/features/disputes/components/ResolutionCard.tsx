@@ -3,6 +3,9 @@
  * Epic 77: Dispute Resolution (Story 77.3)
  */
 
+import { useTranslation } from 'react-i18next';
+import { formatDisputeDate, resolutionStatusKeys } from '../utils/labels';
+
 export type ResolutionStatus =
   | 'proposed'
   | 'accepted'
@@ -49,14 +52,6 @@ const statusColors: Record<ResolutionStatus, string> = {
   implemented: 'bg-emerald-100 text-emerald-800',
 };
 
-const statusLabels: Record<ResolutionStatus, string> = {
-  proposed: 'Proposed',
-  accepted: 'Accepted',
-  rejected: 'Rejected',
-  partially_accepted: 'Partially Accepted',
-  implemented: 'Implemented',
-};
-
 interface ResolutionCardProps {
   resolution: Resolution;
   votes?: ResolutionVote[];
@@ -82,11 +77,10 @@ export function ResolutionCard({
   onImplement,
   onCompleteItem,
 }: ResolutionCardProps) {
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
-  };
+  const { t, i18n } = useTranslation();
+  const formatDate = (dateString: string) => formatDisputeDate(dateString, i18n.language);
 
-  const completedTerms = resolution.terms.filter((t) => t.completed).length;
+  const completedTerms = resolution.terms.filter((term) => term.completed).length;
   const totalTerms = resolution.terms.length;
   const progressPercent = totalTerms > 0 ? (completedTerms / totalTerms) * 100 : 0;
 
@@ -99,23 +93,33 @@ export function ResolutionCard({
             <span
               className={`px-2 py-0.5 text-xs font-medium rounded ${statusColors[resolution.status]}`}
             >
-              {statusLabels[resolution.status]}
+              {t(resolutionStatusKeys[resolution.status])}
             </span>
             {acceptanceRate !== undefined && (
               <span className="text-sm text-gray-500">
-                {Math.round(acceptanceRate * 100)}% approval
+                {t('disputes.resolution.approval', {
+                  rate: new Intl.NumberFormat(i18n.language, {
+                    style: 'percent',
+                    maximumFractionDigits: 0,
+                  }).format(acceptanceRate),
+                })}
               </span>
             )}
           </div>
           <p className="text-sm text-gray-500 mt-1">
-            Proposed by {resolution.proposedByName} on {formatDate(resolution.proposedAt)}
+            {t('disputes.resolution.proposedBy', {
+              name: resolution.proposedByName,
+              date: formatDate(resolution.proposedAt),
+            })}
           </p>
         </div>
       </div>
 
       {/* Resolution Text */}
       <div className="mb-4">
-        <h4 className="font-medium text-gray-900 mb-2">Resolution Proposal</h4>
+        <h4 className="font-medium text-gray-900 mb-2">
+          {t('disputes.resolution.proposalHeading')}
+        </h4>
         <p className="text-gray-700 whitespace-pre-wrap">{resolution.resolutionText}</p>
       </div>
 
@@ -124,7 +128,7 @@ export function ResolutionCard({
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
             <h4 className="font-medium text-gray-900">
-              Terms ({completedTerms}/{totalTerms})
+              {t('disputes.resolution.terms', { completed: completedTerms, total: totalTerms })}
             </h4>
             {totalTerms > 0 && (
               <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -158,12 +162,22 @@ export function ResolutionCard({
                   </p>
                   <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
                     {term.responsiblePartyName && (
-                      <span>Assigned to: {term.responsiblePartyName}</span>
+                      <span>
+                        {t('disputes.resolution.termAssignedTo', {
+                          name: term.responsiblePartyName,
+                        })}
+                      </span>
                     )}
-                    {term.deadline && <span>Due: {formatDate(term.deadline)}</span>}
+                    {term.deadline && (
+                      <span>
+                        {t('disputes.resolution.termDue', { date: formatDate(term.deadline) })}
+                      </span>
+                    )}
                     {term.completedAt && (
                       <span className="text-green-600">
-                        Completed: {formatDate(term.completedAt)}
+                        {t('disputes.resolution.termCompleted', {
+                          date: formatDate(term.completedAt),
+                        })}
                       </span>
                     )}
                   </div>
@@ -177,7 +191,7 @@ export function ResolutionCard({
       {/* Votes */}
       {votes && votes.length > 0 && (
         <div className="mb-4">
-          <h4 className="font-medium text-gray-900 mb-2">Votes</h4>
+          <h4 className="font-medium text-gray-900 mb-2">{t('disputes.resolution.votes')}</h4>
           <div className="space-y-2">
             {votes.map((vote) => (
               <div
@@ -191,7 +205,9 @@ export function ResolutionCard({
                   {vote.comments && <p className="text-sm text-gray-600 mt-1">{vote.comments}</p>}
                 </div>
                 <span className={vote.accepted ? 'text-green-600' : 'text-red-600'}>
-                  {vote.accepted ? 'Accepted' : 'Rejected'}
+                  {vote.accepted
+                    ? t('disputes.resolution.voteAccepted')
+                    : t('disputes.resolution.voteRejected')}
                 </span>
               </div>
             ))}
@@ -208,14 +224,14 @@ export function ResolutionCard({
               onClick={() => onVote(resolution.id, false)}
               className="px-3 py-1.5 text-sm border border-red-300 text-red-600 rounded-lg hover:bg-red-50"
             >
-              Reject
+              {t('disputes.resolution.reject')}
             </button>
             <button
               type="button"
               onClick={() => onVote(resolution.id, true)}
               className="px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
             >
-              Accept
+              {t('disputes.resolution.accept')}
             </button>
           </>
         )}
@@ -225,24 +241,23 @@ export function ResolutionCard({
             onClick={() => onAccept(resolution.id)}
             className="px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
           >
-            Finalize Resolution
+            {t('disputes.resolution.finalize')}
           </button>
         )}
         {canImplement &&
           onImplement &&
-          resolution.status === 'accepted' &&
-          progressPercent === 100 && (
+          // Term completion is not tracked by the api-server (the checkboxes
+          // are read-only), so an accepted resolution can always be implemented.
+          resolution.status === 'accepted' && (
             <button
               type="button"
               onClick={() => onImplement(resolution.id)}
               className="px-3 py-1.5 text-sm bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
             >
-              Mark as Implemented
+              {t('disputes.resolution.markImplemented')}
             </button>
           )}
       </div>
     </div>
   );
 }
-
-export { statusLabels };

@@ -400,13 +400,18 @@ impl NewsArticleRepository {
     /// `organization_id` column of its own.
     pub async fn delete_media(
         &self,
+        article_id: Uuid,
         media_id: Uuid,
         organization_id: Uuid,
     ) -> Result<bool, SqlxError> {
+        // Scoped to the parent article in the path as well as the org: the
+        // handler authorizes the caller as author/manager of `article_id`, so
+        // the delete must not reach media hanging off a different article.
         let result = sqlx::query(
             r#"
             DELETE FROM article_media m
             WHERE m.id = $1
+              AND m.article_id = $3
               AND EXISTS (
                 SELECT 1 FROM news_articles a
                 WHERE a.id = m.article_id AND a.organization_id = $2
@@ -415,6 +420,7 @@ impl NewsArticleRepository {
         )
         .bind(media_id)
         .bind(organization_id)
+        .bind(article_id)
         .execute(&self.pool)
         .await?;
         Ok(result.rows_affected() > 0)
@@ -527,6 +533,24 @@ impl NewsArticleRepository {
         .fetch_optional(&self.pool)
         .await?;
         Ok(result.map(|(r,)| r))
+    }
+
+    /// Whether comment `comment_id` exists on article `article_id`.
+    ///
+    /// `article_comments.parent_id` is only an FK to `article_comments(id)`,
+    /// so a reply's parent must be checked against the article explicitly.
+    pub async fn comment_belongs_to_article(
+        &self,
+        comment_id: Uuid,
+        article_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS(SELECT 1 FROM article_comments WHERE id = $1 AND article_id = $2)",
+        )
+        .bind(comment_id)
+        .bind(article_id)
+        .fetch_one(&self.pool)
+        .await
     }
 
     pub async fn add_comment(

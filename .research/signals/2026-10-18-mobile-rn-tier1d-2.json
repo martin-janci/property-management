@@ -1,0 +1,44 @@
+{
+  "generated": "2026-10-18T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claim buffer starved: claimable=3 << floor=36; in-repo backlog/retry pools empty). Static single-segment rotating code review via the ppt-dev-review skill — no compilation / no test execution (cloud runner has no RN/Expo toolchain). File reading + grep only. Produces fresh backlog vectors for the mobile-rn segment (frontend/apps/mobile/src). This is the SECOND mobile-rn slice of the 2026-10-18 cycle: an earlier run (.research/signals/2026-10-18-mobile-rn-tier1d.json) covered usePushNotifications.ts isRegistered ordering. Both findings below are in a file NOT cited by that run nor by any prior mobile-rn signal — VotingScreen.tsx — and were verified net-new against all .research/signals/*mobile-rn*.json and every code-review-finding / test-gap row in backlog.json (prior voting findings: vote-list-cast, vote-xform-untested, votedetail-conditional-hooks — none touch getTimeRemaining or the quorum-bar width).",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "oldest-unreviewed (with saturation-skip). No CHURN_FILES were passed by the dispatcher, so priority 1 (churn-aligned) does not apply. Priority 2 (oldest-unreviewed) on the review_cursor handed to this run: api-handlers=2026-10-11 (oldest) but SATURATED — 3 open code-review-finding rows in backlog.json (saturation-skip per skill Step 1). Next oldest is mobile-rn=2026-10-16, which has 0 open code-review-finding rows (all prior mobile-rn findings are status done/dropped) — not saturated — so mobile-rn wins. This also satisfies the dispatcher's stated preference for independently-actionable frontend segments over pure-Rust (Rust merge pipeline is blocked by RUSTSEC-2026-0368/0369, issue #3124). Segment root path corrected from the skill's stale `frontend/mobile/src/` to the real `frontend/apps/mobile/src/` (monorepo uses apps/).",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-voting-timeremaining-nan",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/mobile/src/screens/voting/VotingScreen.tsx"],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx:179-194 — getTimeRemaining(endsAt) renders 'NaN minutes left' for any active vote whose end_at is a present-but-unparseable date string. Full traced path: parseVoteSummaries() -> isApiVoteSummary() (:56-65) validates end_at with ONLY `typeof v.end_at === 'string'` (:63); it does NOT check that the string parses to a real date. So end_at values like '', 'TBD', '0000-00-00', or any non-ISO string survive the guard, flow through toUiVote() (endsAt = s.end_at, :128) into getTimeRemaining(vote.endsAt), which is called in the active-card render at :277 (`{vote.status === 'active' && <Text>{getTimeRemaining(vote.endsAt)}</Text>}`).",
+        "Inside getTimeRemaining: `const diff = new Date(endsAt).getTime() - now.getTime()` (:180-182) is NaN for a bad string. The intended early-return `if (diff <= 0) return t('voting.ended')` (:184) is SKIPPED because `NaN <= 0` is false (every relational comparison with NaN is false). Execution falls through: `Math.floor(NaN / …)` is NaN, so `days > 0` (:189) and `hours > 0` (:190) are both false, and the function returns `t('voting.timeLeftMinutes', { minutes: NaN })` (:192-193) — i.e. the card shows a literal 'NaN' where the remaining time should be, on the primary voting list a resident sees.",
+        "Asymmetry confirms this is an omission, not intent: the same file is otherwise aggressively defensive about the list shape — parseVoteSummaries drops malformed ROWS so one bad entry can't crash .map() (:67-81, with an explanatory comment at :48-54 about a past blind-cast crash) — but the per-field DATE validity was overlooked. Net-new: grep across all .research/signals/*mobile-rn*.json and backlog.json for getTimeRemaining / timeRemaining / NaN returns nothing for VotingScreen; the three prior voting findings (vote-list-cast, vote-xform-untested, votedetail-conditional-hooks) are all unrelated. Confidence medium: the NaN-fallthrough is proven by static read of JS NaN semantics and the traced render path; whether the backend actually emits a non-ISO end_at on the summary endpoint is data-dependent, so the trigger is latent rather than runtime-confirmed. Fix (cloud-landable, frontend-only, single file): guard the parse once and treat a non-finite timestamp as ended/unknown, e.g. `const end = new Date(endsAt).getTime(); if (!Number.isFinite(end)) return t('voting.ended'); const diff = end - Date.now(); if (diff <= 0) return t('voting.ended');` — and/or tighten isApiVoteSummary to reject an end_at whose Date is invalid. getTimeRemaining is a non-exported closure today, so also consider extracting it (like toUiVote/parseVoteSummaries already are) to cover it in VotingScreen.test.ts."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-voting-quorum-divzero",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/mobile/src/screens/voting/VotingScreen.tsx"],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx:302 + :304 — the quorum progress bar divides by a value that can legitimately be 0, producing both a broken style and a FALSE 'quorum met' indication. requiredQuorum is derived as `s.eligible_count ?? 0` in toUiVote (:130), and eligible_count is typed `number | null` and OPTIONAL on ApiVoteSummary (:44) and is NOT validated by isApiVoteSummary (:56-65). So whenever the summary endpoint omits eligible_count or returns 0/null, requiredQuorum = 0.",
+        "Consequence 1 (width): :302 computes `width: `${Math.min((vote.currentQuorum / vote.requiredQuorum) * 100, 100)}%``. With requiredQuorum === 0: if currentQuorum > 0 -> `n/0` = Infinity -> Math.min(Infinity,100)=100 (bar renders FULL); if currentQuorum === 0 -> `0/0` = NaN -> Math.min(NaN,100)=NaN -> `width: 'NaN%'`, an invalid React Native length that silently drops the style. Consequence 2 (false 'met'): :304 applies the styles.quorumMet highlight via `vote.currentQuorum >= vote.requiredQuorum`, and `n >= 0` is ALWAYS true — so a vote whose eligible population is unknown/zero is rendered to the resident as QUORUM MET. The label at :290-295 simultaneously shows `required: 0`, i.e. 'X / 0 votes'.",
+        "This is a governance-correctness bug: the quorum bar is a trust-bearing element of the voting list, and it can assert a quorum has been reached purely because the eligible count was absent/zero in the payload. Reachable: filteredVotes.map(...) renders this block for every vote card (:262-308), active or closed. Net-new: no existing mobile-rn signal or backlog row references quorum / eligible_count / the quorum bar (prior voting findings are unrelated). Confidence medium: the divide-by-zero and the always-true `>= 0` are proven statically; reachability depends on the backend returning eligible_count = 0/null on a summary, which is plausible for a just-opened vote or a quorum_type that doesn't track eligibility. Fix (cloud-landable, frontend-only, single file): guard the ratio (`const pct = vote.requiredQuorum > 0 ? Math.min((vote.currentQuorum / vote.requiredQuorum) * 100, 100) : 0;`) and gate the quorumMet style on `vote.requiredQuorum > 0 && vote.currentQuorum >= vote.requiredQuorum`; optionally render an 'eligibility unknown' state when requiredQuorum is 0."
+      ]
+    }
+  ]
+}

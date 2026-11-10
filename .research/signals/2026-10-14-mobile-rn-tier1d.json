@@ -1,0 +1,54 @@
+{
+  "generated": "2026-10-14T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable backlog starved: claimable=1 < floor=36; deterministic backlog-refill and retry-remint found no fresh candidates). Static single-segment rotating code review, no compilation / no test execution (cloud runner has no toolchain). File reading + grep only. Produces fresh CLOUD-LANDABLE frontend backlog vectors for the mobile-rn segment (frontend/apps/mobile/src/ — the Expo/React Native app, part of the pnpm frontend workspace gated by frontend.yml, NOT the AGP-gated mobile-native/ KMP surface). Findings verified net-new against every prior mobile-rn signal file and all mobile-rn code-review-finding rows in backlog.json.",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "churn-aligned. The actual repo layout differs from the skill's segment map (frontend/apps/mobile/src, not frontend/mobile/src). Recent code churn (git log 30d, excluding .research/**) is concentrated in frontend/apps/mobile/src (screens/meters/MeterReadingScreen.tsx + locales/*.json) and frontend/apps/ppt-web/src + frontend/packages/api-client. mobile-rn is ALSO tied-oldest in review_cursor (2026-10-11, with api-handlers/ppt-web-ui/reality-web), so churn + oldest-unreviewed agree. api-handlers SKIPPED for saturation (3 open code-review-finding rows in backlog.json, >=3 skip rule). Saturation check for mobile-rn PASSED: 0 OPEN mobile-rn code-review-finding rows in backlog.json (3 exist but all status=done). Churn-hot file MeterReadingScreen.tsx reviewed in full.",
+  "experts_used": ["frontend", "tester"],
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": true,
+  "note": "mobile-rn is a heavily-mined, broadly-mature segment (8+ prior rotations). The standard Frontend/Tester grep hit-lists came back clean for net-new issues: all `as any`/`as unknown as` are in test files only (not API-boundary production casts); all production console.* calls are either DEV-gated (usePushNotifications.ts:240/267 guarded by __DEV__ with explicit SECURITY no-log-token comments) or deliberate error logging with comments (useOfflineSupport.ts, resetLocalData.ts); no skipped tests (xit/.skip/@Ignore) in src; every useQuery/useMutation screen inspected (documents/*Sheet, leases/LeaseSignatureScreen, voting/VoteDetailScreen, faults/ReportFaultScreen, announcements/AnnouncementDetailScreen) pairs load/mutation with isError/onError + Alert; all `.catch(() => {})` sites are intentional fire-and-forget with comments. VERIFIED-ALREADY-TRACKED (NOT re-emitted to avoid duplicates): PersonMonthsScreen i18n gap (prior 2026-08-25/2026-08-26/2026-09-02 signals) and PersonMonthsScreen mock-data/no-API wiring (prior 2026-06-16 signal); naive EN binary pluralization (prior 2026-10-13 signal); fault-photos-silently-dropped in ReportFaultScreen (prior 2026-09-26 signal — a DIFFERENT file and a DIFFERENT mechanism than finding 2 below). Both findings below are on the meter-reading submit path (the churn hotspot) and are confirmed net-new: no prior mobile-rn signal flags the endpoint/payload mismatch (2026-10-08 analyzed the same addToQueue call but only for the optimistic success alert; 2026-09-26 only for reading-value validation).",
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-meter-submit-wrong-endpoint",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/mobile/src/screens/meters/MeterReadingScreen.tsx",
+        "backend/servers/api-server/src/routes/meters.rs",
+        "backend/crates/db/src/models/meter.rs"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/meters/MeterReadingScreen.tsx:128-138 — handleSubmit enqueues `addToQueue({ type: 'CREATE', endpoint: '/api/v1/meter-readings', method: 'POST', body: { meterType, reading, unit, photoUri } })`. The endpoint path `/api/v1/meter-readings` DOES NOT EXIST on the api-server. The backend mounts the meters router under `/api/v1/meters` and nests readings at `/readings` (backend/servers/api-server/src/routes/meters.rs:44 `.route(\"/readings\", post(submit_reading))`, documented utoipa path :571 `/api/v1/meters/readings`). A grep of backend/servers/api-server/src for `meter-readings` finds only an S3 key prefix in routes/ai/ocr.rs, never a route. So every POST from this screen hits a non-existent path and returns 404.",
+        "Payload shape is also incompatible with the real endpoint. Backend handler submit_reading (meters.rs:579-595) deserializes `Json<SubmitReading>`; SubmitReading (backend/crates/db/src/models/meter.rs:193-204) REQUIRES `meter_id: Uuid` and `reading: Decimal`, with optional `reading_date`, `reading_time`, `source`, `photo_url`. The mobile body sends none of these — it sends a `meterType` string enum (water/electricity/gas/...), `reading` as a raw user string, a `unit` string, and `photoUri`. There is no meter_id anywhere in the mobile flow (the screen selects a hardcoded METER_TYPES enum, not a server meter UUID), so even if the path were corrected the request would 422 on the missing required `meter_id`.",
+        "Failure is silent + data-losing. The offline queue classifies the 404 as a TERMINAL 4xx and DROPS the action permanently (frontend/apps/mobile/src/hooks/useOfflineSupport.ts:437-465, `isPermanent` branch -> droppedPermanent + console.error, action discarded). Meanwhile handleSubmit shows the success/offline Alert OPTIMISTICALLY at enqueue time, before any server round-trip (MeterReadingScreen.tsx:144-152 — t('meters.submitSuccess') / t('meters.savedOffline')). Net effect: NO meter reading submitted from the mobile app can ever persist; the resident is told their reading was saved while it is 404-dropped. This is a complete-feature-breakage + silent-data-loss bug on a core UC (meter self-readings).",
+        "Fix (landable in the cloud runner, TS + jest-expo only): point the submit at the real contract — resolve the user's meter UUID for the selected meterType (needs a meter-list/lookup; the screen currently has none) and POST `/api/v1/meters/readings` with `{ meter_id, reading: <numeric>, reading_date?, photo_url? }` per SubmitReading. Add a jest-expo test asserting the queued action's endpoint + body match the OpenAPI/SubmitReading shape (would fail on main today). If the server meter_id is genuinely unavailable on mobile, this is a missing-capability that must be surfaced to the user instead of a fake success."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-meter-photo-not-uploaded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/mobile/src/screens/meters/MeterReadingScreen.tsx",
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts",
+        "backend/crates/db/src/models/meter.rs"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/meters/MeterReadingScreen.tsx:84-97 captures a photo via ImagePicker and stores the LOCAL device URI in `photoUri` (a `file:///.../ImagePicker/xyz.jpg` path). handleSubmit then puts that raw local URI straight into the JSON submit body: :122 `photoUri: photoUri || undefined` -> :136 `photoUri: readingData.photoUri`. The body is sent as JSON, never multipart: executeQueuedAction serialises it with `JSON.stringify(action.body)` and sends it as a JSON POST (frontend/apps/mobile/src/hooks/useOfflineSupport.ts:299). No FormData, no presigned-URL upload, no file bytes ever leave the device — only the device-local path string.",
+        "The backend field is `photo_url: Option<String>` (backend/crates/db/src/models/meter.rs:203) — a URL to an ALREADY-UPLOADED image, not a client file:// path; note also the name mismatch (`photoUri` vs `photo_url`), so serde would ignore the mobile field even on the correct endpoint. There is no meter-photo upload pipeline on mobile (contrast the sibling fault-photo gap tracked in 2026-09-26, which is a different file/mechanism — faults omit photos entirely; here the photo is 'sent' as an unusable local path). The resident photographs their meter as proof-of-reading, sees success, and the image is silently discarded.",
+        "This is a distinct fix from the endpoint bug above: even after the submit is re-pointed to POST /api/v1/meters/readings with a valid meter_id, the photo still needs a real upload (capture -> upload image to storage / presigned URL -> pass the resulting `photo_url` string in SubmitReading), OR the photo picker should be hidden / the user warned that photos are not yet uploaded so no one believes evidence was filed when it was not. Fix is TS-only and cloud-landable; add a jest-expo test asserting a captured photo results in an uploaded URL (not a file:// path) in the submit body."
+      ]
+    }
+  ]
+}

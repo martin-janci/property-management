@@ -1,7 +1,7 @@
 //! Story 67.4: Content Moderation Dashboard endpoints.
 
 use crate::state::AppState;
-use api_core::extractors::AuthUser;
+use api_core::extractors::{AuthUser, TenantAuthUser};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -119,7 +119,7 @@ pub struct ModerationQueueQuery {
 /// Get moderation queue.
 pub(super) async fn get_moderation_queue(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(params): Query<ModerationQueueQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
     require_moderator_role(&user)?;
@@ -196,7 +196,7 @@ pub struct ModerationQueueStatsResponse {
 /// Get moderation queue statistics.
 pub(super) async fn get_moderation_stats(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
 ) -> Result<Json<ModerationQueueStatsResponse>, (StatusCode, String)> {
     require_moderator_role(&user)?;
 
@@ -244,7 +244,7 @@ pub(super) async fn get_moderation_stats(
 /// Get a specific moderation case.
 pub(super) async fn get_moderation_case(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
     require_moderator_role(&user)?;
@@ -292,7 +292,7 @@ pub struct AssignCaseRequest {
 /// Assign a moderation case.
 pub(super) async fn assign_moderation_case(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<AssignCaseRequest>,
 ) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
@@ -324,12 +324,22 @@ pub(super) async fn assign_moderation_case(
         .compliance_repo
         .assign_moderation_case(id, org_id, assignee)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to assign moderation case: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to assign case".to_string(),
-            )
+        .map_err(|e| match e {
+            // The UPDATE ... RETURNING matches no row for an unknown id OR a
+            // case owned by another tenant (the `organization_id` predicate
+            // scopes it) — a routine not-found, not a server fault, so surface
+            // 404 rather than 500 and skip the error-level log/alert noise.
+            sqlx::Error::RowNotFound => (
+                StatusCode::NOT_FOUND,
+                "Moderation case not found".to_string(),
+            ),
+            other => {
+                tracing::error!("Failed to assign moderation case: {}", other);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to assign case".to_string(),
+                )
+            }
         })?;
 
     Ok(Json(ModerationCaseResponse::from_case(
@@ -338,6 +348,53 @@ pub(super) async fn assign_moderation_case(
         "User",
         0,
         Some("Assigned".to_string()),
+    )))
+}
+
+/// Unassign a moderation case (clear its current assignee).
+///
+/// The inverse of [`assign_moderation_case`]; takes no body. Scoped to the
+/// caller's organization so a case in another tenant is not mutated. Mirrors
+/// `assign_moderation_case`'s error mapping: an unknown/cross-org id (the repo's
+/// `RowNotFound`) surfaces as a `404 Not Found`, other repo errors as 500.
+pub(super) async fn unassign_moderation_case(
+    State(state): State<AppState>,
+    TenantAuthUser(user): TenantAuthUser,
+    Path(id): Path<Uuid>,
+) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
+    require_moderator_role(&user)?;
+
+    let org_id = user.tenant_id.ok_or((
+        StatusCode::BAD_REQUEST,
+        "Organization context required".to_string(),
+    ))?;
+
+    let case = state
+        .compliance_repo
+        .unassign_moderation_case(id, org_id)
+        .await
+        .map_err(|e| match e {
+            // See `assign_moderation_case`: an unknown id or a cross-org case is
+            // a routine not-found (404), not a server fault (500).
+            sqlx::Error::RowNotFound => (
+                StatusCode::NOT_FOUND,
+                "Moderation case not found".to_string(),
+            ),
+            other => {
+                tracing::error!("Failed to unassign moderation case: {}", other);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to unassign case".to_string(),
+                )
+            }
+        })?;
+
+    Ok(Json(ModerationCaseResponse::from_case(
+        case,
+        Utc::now(),
+        "User",
+        0,
+        None,
     )))
 }
 
@@ -352,7 +409,7 @@ pub struct TakeModerationActionRequest {
 /// Take action on a moderation case.
 pub(super) async fn take_moderation_action(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<TakeModerationActionRequest>,
 ) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
@@ -466,6 +523,22 @@ pub(super) async fn file_appeal(
         ));
     }
 
+    // Status guard: once an appeal has reached a final decision
+    // (approved / rejected), the right to appeal is spent. Without this
+    // guard the owner could re-POST and `file_appeal` would unconditionally
+    // reset the case back to `appealed`, erasing the final decision and
+    // re-opening a closed case indefinitely. A spent appeal is a conflict with
+    // the case's terminal state, so refuse with 409.
+    if matches!(
+        existing.status,
+        ModerationStatus::AppealApproved | ModerationStatus::AppealRejected
+    ) {
+        return Err((
+            StatusCode::CONFLICT,
+            "This appeal already has a final decision and cannot be re-filed".to_string(),
+        ));
+    }
+
     let case = state
         .compliance_repo
         .file_appeal(id, org_id, &req.reason)
@@ -503,7 +576,7 @@ pub struct DecideAppealRequest {
 /// Decide on an appeal.
 pub(super) async fn decide_appeal(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<DecideAppealRequest>,
 ) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
@@ -641,7 +714,7 @@ pub struct ActionTemplateResponse {
 /// Get available action templates.
 pub(super) async fn get_action_templates(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
 ) -> Result<Json<Vec<ActionTemplateResponse>>, (StatusCode, String)> {
     require_moderator_role(&user)?;
 

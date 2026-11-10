@@ -6,7 +6,7 @@
  */
 import { useState } from 'react';
 import { Route } from 'react-router-dom';
-import { AuthRequiredGate } from '../../components';
+import { AuthRequiredGate, ProtectedRoute } from '../../components';
 import { useAuth } from '../../contexts';
 import {
   useAcknowledgeMaintenancePrediction,
@@ -20,6 +20,7 @@ import {
   useSentimentTrends,
 } from '../../features/sentiment/hooks';
 import { PredictiveMaintenancePage, SentimentDashboardPage } from '../lazyRoutes';
+import { MANAGER_ROLES } from '../shared';
 
 // ── Sentiment ──────────────────────────────────────────────────────────────
 
@@ -88,8 +89,22 @@ function PredictiveMaintenanceRoute() {
 export function aiDashboardRoutes() {
   return (
     <>
-      <Route path="/ai/sentiment" element={<SentimentDashboardRoute />} />
-      <Route path="/ai/predictive-maintenance" element={<PredictiveMaintenanceRoute />} />
+      <Route
+        path="/ai/sentiment"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <SentimentDashboardRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ai/predictive-maintenance"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <PredictiveMaintenanceRoute />
+          </ProtectedRoute>
+        }
+      />
     </>
   );
 }

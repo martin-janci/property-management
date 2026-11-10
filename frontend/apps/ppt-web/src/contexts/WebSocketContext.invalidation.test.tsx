@@ -134,10 +134,80 @@ describe('WebSocketContext — realtime event → query-key mapping', () => {
     const onEntityEvent = vi.fn();
     const socket = mountProvider(onEntityEvent);
 
-    socket.simulateServerEvent('notification.created', { category: 'system' });
+    socket.simulateServerEvent('notification.created', { category: 'not_a_real_category' });
 
     expect(onEntityEvent).toHaveBeenCalledTimes(1);
     expect(onEntityEvent.mock.calls[0][1]).toEqual(['notifications']);
+  });
+
+  // Regression: `categoryToQueryKeys` originally omitted the `community` and
+  // `system` categories, so a `notification.created` frame for either fell
+  // through to the notifications-only fallback and left its entity feed stale on
+  // push (the community feed in particular). The map must cover every
+  // `NotificationCategory` the server can emit.
+  it('invalidates the community root on a notification.created community frame', () => {
+    const onEntityEvent = vi.fn();
+    const socket = mountProvider(onEntityEvent);
+
+    socket.simulateServerEvent('notification.created', { category: 'community' });
+
+    expect(onEntityEvent).toHaveBeenCalledTimes(1);
+    const [eventType, queryKeys] = onEntityEvent.mock.calls[0];
+    expect(eventType).toBe('notification.created');
+    expect(queryKeys).toEqual(['notifications', 'community']);
+  });
+
+  it('invalidates the system root on a notification.created system frame', () => {
+    const onEntityEvent = vi.fn();
+    const socket = mountProvider(onEntityEvent);
+
+    socket.simulateServerEvent('notification.created', { category: 'system' });
+
+    expect(onEntityEvent).toHaveBeenCalledTimes(1);
+    expect(onEntityEvent.mock.calls[0][1]).toEqual(['notifications', 'system']);
+  });
+
+  // Regression (#votes-dead-invalidation): the `votes` category used to map to
+  // the legacy `['votes']` query root, but the live voting queries are keyed
+  // under `['voting']` (`votingKeys.all` in `@ppt/api-client`). A
+  // `notification.created` votes frame therefore invalidated a dead root and
+  // the on-screen vote lists/details stayed stale on push. The map must target
+  // the live `voting` root so the real queries refetch.
+  it('invalidates the live voting root on a notification.created votes frame', () => {
+    const onEntityEvent = vi.fn();
+    const socket = mountProvider(onEntityEvent);
+
+    socket.simulateServerEvent('notification.created', { category: 'votes' });
+
+    expect(onEntityEvent).toHaveBeenCalledTimes(1);
+    const [eventType, queryKeys] = onEntityEvent.mock.calls[0];
+    expect(eventType).toBe('notification.created');
+    // Must be the live api-client root `voting`, NOT the dead `votes` root.
+    expect(queryKeys).toEqual(['notifications', 'voting']);
+    expect(categoryToQueryKeys.votes).toEqual(['voting']);
+  });
+
+  it('covers every NotificationCategory the api-server can emit', () => {
+    // Mirror of `common::notifications::NotificationCategory` (serialized
+    // snake_case). Keep in lock-step with the backend enum — a missing key
+    // silently degrades that category to the notifications-only fallback.
+    const backendCategories = [
+      'announcements',
+      'faults',
+      'votes',
+      'messages',
+      'community',
+      'financial',
+      'documents',
+      'system',
+    ];
+
+    for (const category of backendCategories) {
+      expect(
+        categoryToQueryKeys[category],
+        `categoryToQueryKeys is missing the "${category}" category`
+      ).toBeDefined();
+    }
   });
 
   it('does not fire for a legacy entity:updated frame (server never emits it)', () => {

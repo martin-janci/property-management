@@ -337,7 +337,7 @@ impl EnergyRepository {
         // Get building area for per-sqm calculation
         let (floor_area,): (Option<Decimal>,) = sqlx::query_as(
             r#"
-            SELECT SUM(floor_area)
+            SELECT SUM(size_sqm)
             FROM units
             WHERE building_id = $1
             "#,
@@ -462,7 +462,30 @@ impl EnergyRepository {
     // SUSTAINABILITY SCORES (Story 65.3)
     // ========================================================================
 
+    /// Whether `listing_id` exists and belongs to `org_id`.
+    ///
+    /// Used to stop an organization from attaching a sustainability score to
+    /// another organization's listing (`listing_id` is UNIQUE on
+    /// `sustainability_scores`, so such a row would squat the listing).
+    pub async fn listing_in_org(
+        &self,
+        listing_id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, sqlx::Error> {
+        sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS(SELECT 1 FROM listings WHERE id = $1 AND organization_id = $2)",
+        )
+        .bind(listing_id)
+        .bind(org_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
     /// Create or update sustainability score for a listing.
+    ///
+    /// Only a score owned by `org_id` is updated on conflict; if the listing's
+    /// score belongs to another organization no row is returned and this
+    /// yields `sqlx::Error::RowNotFound`.
     pub async fn upsert_sustainability_score(
         &self,
         org_id: Uuid,
@@ -496,6 +519,8 @@ impl EnergyRepository {
                 energy_rating = EXCLUDED.energy_rating,
                 notes = EXCLUDED.notes,
                 calculated_at = NOW()
+            -- Never overwrite another organization's score for the listing.
+            WHERE sustainability_scores.organization_id = EXCLUDED.organization_id
             RETURNING *
             "#,
         )
@@ -792,12 +817,15 @@ impl EnergyRepository {
         period_end: NaiveDate,
     ) -> Result<Decimal, sqlx::Error> {
         let (floor_area,): (Option<Decimal>,) =
-            sqlx::query_as("SELECT SUM(floor_area) FROM units WHERE building_id = $1")
+            sqlx::query_as("SELECT SUM(size_sqm) FROM units WHERE building_id = $1")
                 .bind(building_id)
                 .fetch_one(&self.pool)
                 .await?;
 
-        let area = floor_area.unwrap_or(Decimal::from(1));
+        // Guard against a zero/NULL area: Decimal division by zero panics.
+        let area = floor_area
+            .filter(|a| *a > Decimal::ZERO)
+            .unwrap_or(Decimal::ONE);
 
         match metric_type {
             BenchmarkMetricType::ElectricityPerSqm => {

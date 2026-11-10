@@ -1,0 +1,29 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-03",
+  "segment_reviewed": "api-core",
+  "selection_reason": "oldest-unreviewed (dispatcher-tier1d demand-driven; action-list buffer starved, claimable=8 < floor=36). Two older segments (mobile-native-kmp, api-handlers) already reviewed earlier today; reality-web and mobile-rn saturation-skipped (>=3 open findings). api-core (2026-10-27, 0 open findings) selected. Rust expert; scope backend/servers/api-server/src/ excluding routes/.",
+  "experts_used": [
+    "rust"
+  ],
+  "findings_count": 1,
+  "signals": [
+    {
+      "id": "code-review-api-core-api-call-client-build-expect",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/api_call.rs:308 - ApiCallExecutor builds its reqwest client with .build().expect('Failed to create HTTP client'). reqwest .build() is fallible when the TLS backend or DNS resolver cannot initialise - a recoverable condition - so .expect() turns a transient init failure into a panic.",
+        "Reachable per workflow run: ActionRegistry::new() -> ApiCallExecutor::new() -> line 308 build; ActionRegistry::new() is constructed per workflow run in WorkflowExecutor::execute_workflow (services/workflow_executor.rs:286), not once at startup.",
+        "Corroborating precedent: sibling push_fanout.rs:460-487 refactored this exact pattern to return Result; api_call.rs:308 is the only remaining .build()+expect site under services/ (grep-confirmed).",
+        "Severity MEDIUM (+2): reachable panic aborting a workflow execution on a recoverable condition, inconsistent with the module's own fail-soft convention. Fix: propagate reqwest::Error and register a disabled/no-op executor, mirroring push_fanout's build_push_http_client.",
+        "expert: rust"
+      ],
+      "expert": "rust"
+    }
+  ]
+}

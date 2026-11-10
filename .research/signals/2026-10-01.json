@@ -1,0 +1,311 @@
+{
+  "generated_iso": "2026-10-01T04:46:44Z",
+  "run_mode": "incremental",
+  "trigger_payload": "buffer-low: claimable=9/72 — refill planner (pipeline wedged on #2966 infra + human-gated PRs)",
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-01",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-09-27T03:18:40Z, 97h ago",
+      "score_delta": 0,
+      "evidence": [
+        "Routine missed scheduled runs — 4d 1h since last run. Cloud cron likely paused or dispatcher-only commits kept state.last_run_iso stale."
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "screen-map-drift-pr-2994-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2994",
+      "score_delta": 2,
+      "evidence": [
+        "PR #2994 modified `frontend/apps/ppt-web/src/routes/groups/core.tsx` (ppt-web route file) without touching any `docs/screens/ppt/*.md` — ProtectedRoute auth wrapper on /dashboard/{manager,resident}.",
+        "Author's PR body claims 'no route paths added or removed' so screen-map frontmatter is unaffected — treat as review candidate per spec best-effort caveat."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2995-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2995",
+      "score_delta": 2,
+      "evidence": [
+        "PR #2995 modified `frontend/apps/ppt-web/src/routes/groups/core.tsx` (route file) without updating `docs/screens/ppt/*.md` — Home CTA role-based routing by manager-role membership."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3002-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3002",
+      "score_delta": 2,
+      "evidence": [
+        "PR #3002 modified `frontend/apps/ppt-web/src/routes/groups/core.tsx` (route file) without updating `docs/screens/ppt/*.md` — role-gate on manager-dashboard shell (closes #2998)."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/core.tsx",
+      "type": "churn-hotspot",
+      "source": "git log 14d",
+      "score_delta": 1,
+      "evidence": [
+        "Top-1 app-code churn hotspot: 4 commits in last 14 days (PRs #2994, #2995, #3002 + one earlier). Three were route-auth refactors with no screen-doc update."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx",
+      "type": "churn-hotspot",
+      "source": "git log 14d",
+      "score_delta": 1,
+      "evidence": [
+        "Top-2 app-code churn hotspot: 4 commits in last 14 days culminating in PR #2996 (boundary-cast fix)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx",
+      "type": "churn-hotspot",
+      "source": "git log 14d",
+      "score_delta": 1,
+      "evidence": [
+        "Top-3 app-code churn hotspot (tied at 3 commits): workflow-automation feature pages churning together — CreateRulePage, EditRulePage, TemplateLibraryPage, ExecutionMonitoringPage, AutomationRulesPage all 3+ changes."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx"
+      ]
+    },
+    {
+      "id": "stale-routine-alert-2026-10-01",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-09-27, >3 days",
+      "score_delta": 0,
+      "evidence": [
+        "Routine state.json has not advanced in 4 days — cloud cron likely paused. Dispatcher state in .research/management/assignments.json continues to tick (separate loop)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-rules-save-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx:48-51 — handleSubmit catch block only calls console.error; no toast, no error state is surfaced to the user, so a failed updateRulesMutation.mutateAsync looks identical to success",
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx:46-47 — success path is also silent (comment: 'Success - could show a toast notification here'); user clicks Save and gets no confirmation either way, inviting duplicate submits and lost edits"
+      ],
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-workflow-automation-toasts-hardcoded-english",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx:29-33,47-50,53-57 — toast title/message are English literals ('Create failed', 'Rule created', 'The automation rule was created.') while the rest of the page uses t('automation.createPage.*')",
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/EditRulePage.tsx:30-34,37-41 — 'Rule updated', 'Update failed' and body text hardcoded; i18n applied everywhere else in the file",
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx:66-69,72-76,86-90,92-97,103-107,109-114 — all six toast titles ('Rule deleted', 'Rule activated/paused', 'Rule triggered', 'Delete/Update/Run failed') and messages are English literals, including interpolations of rule.name",
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/ExecutionMonitoringPage.tsx:81-85,88-92 — 'Execution retried' / 'Retry failed' hardcoded",
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx:70-76 — 'Could not use template' / 'A rule could not be created from this template.' hardcoded"
+      ],
+      "expert": "completeness",
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx",
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/EditRulePage.tsx",
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx",
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/ExecutionMonitoringPage.tsx",
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-fetch-no-error-ui",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx:68-72 — listFacilities() rejection is caught, logged to console.error, and swallowed; no error state is tracked, so isLoading flips to false and the user sees an 'empty' facility list indistinguishable from a legitimately empty building (same anti-pattern the PendingBookingsPage.test.tsx:6 header calls out as a prior bug)",
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx:48-51 — component has no error useState, and FacilityList is not passed any error prop (lines 110-124), so there is no code path that could render an error state"
+      ],
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx"
+      ]
+    },
+    {
+      "id": "issue-ingest-3006",
+      "type": "untriaged-issue",
+      "source": "Issue #3006",
+      "score_delta": 2,
+      "evidence": [
+        "Issue #3006 opened 2026-10-01 by post-merge review of PR #3004 — follow-up/from-merged-review labels; concrete fix proposal in body (factor applyAuthHeaders + shouldRetryOnMfa401; collapse 3-way drift).",
+        "Backlog item code-review-ppt-web-api-client-auth-fetch-triplication seeded directly with score=2, vector=refactor, confidence=high."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/packages/api-client/src/lib/fetch.ts",
+        "frontend/packages/api-client/src/auth/interceptors.ts"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f brief && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no re-emit of non-cumulative seen signals with score_delta>0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score>8 and no score<0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "every new plan has adversarial-pass annotation in brief",
+      "observed": "1 of 1 annotated",
+      "expected": "all"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans, each 4 metadata + 11 headings + capability tick + Mode + files on disk",
+      "observed": "1 new plan, all checks ok",
+      "expected": "all"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "no files outside .research/ staged",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md == regen(backlog.json)",
+      "observed": "diff empty",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases that failed matches cursor advancement",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior plan slug still in plans/ or plans/_archive/",
+      "observed": "none missing",
+      "expected": "none missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "9>=9",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md == regen(backlog.json | triage)",
+      "observed": "diff empty",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency",
+      "observed": "length=0",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + cursor liveness",
+      "observed": "epics=13, cc=8, pm=6",
+      "expected": "valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token in staged",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist"
+}

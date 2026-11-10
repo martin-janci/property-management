@@ -7,10 +7,12 @@
 import type { CreateFacilityRequest, UpdateFacilityRequest } from '@ppt/api-client';
 import { createFacility } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FacilityForm } from '../components';
 
 export function CreateFacilityPage() {
+  const { t } = useTranslation();
   const { buildingId } = useParams<{ buildingId: string }>();
   const navigate = useNavigate();
 
@@ -25,10 +27,10 @@ export function CreateFacilityPage() {
 
     try {
       // For create, we need to cast to CreateFacilityRequest
-      const facility = await createFacility(buildingId, data as CreateFacilityRequest);
-      navigate(`/buildings/${buildingId}/facilities/${facility.id}`);
+      await createFacility(buildingId, data as CreateFacilityRequest);
+      navigate(`/buildings/${buildingId}/facilities`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create facility');
+      setError(err instanceof Error ? err.message : t('facilities.errors.createFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -40,7 +42,7 @@ export function CreateFacilityPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Add New Facility</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('facilities.createTitle')}</h1>
 
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md text-red-700">

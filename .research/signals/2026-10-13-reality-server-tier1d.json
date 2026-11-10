@@ -1,0 +1,36 @@
+{
+  "generated": "2026-10-13T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable buffer below floor: claimable=5 < floor=36; deterministic backlog-refill/retry-remint tiers exhausted with no fresh candidates). Static single-segment rotating code review, no compilation / no test execution (cloud runner has no toolchain). File reading + grep only. Produces fresh CLOUD-LANDABLE backend backlog vectors for the reality-server segment. Segment preferred over the co-oldest mobile-native-kmp because KMP work is structurally unlandable in the cloud runner (AGP egress blocked, #2652). Findings verified net-new against all prior reality-server signal files, backlog.json, and action-list.json code-review-reality-server-* ids (98 existing ids checked, no collision).",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "oldest-unreviewed (review_cursor.reality-server = 2026-10-03, tied-oldest with mobile-native-kmp; reality-server chosen as the cloud-verifiable Rust segment per dispatcher preference. No churn files provided for this segment; NOT saturated — 0 open code-review-finding items with segment==reality-server && status==open in backlog.json)",
+  "experts_used": ["rust"],
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-reality-server-realtor-respond-no-validation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": ["backend/servers/reality-server/src/routes/realtors.rs", "backend/servers/reality-server/src/routes/inquiries.rs"],
+      "evidence": ["backend/servers/reality-server/src/routes/realtors.rs:274-293 — respond_to_inquiry (POST /api/v1/realtors/inquiries/{id}/respond) passes the client-supplied `data.message` (db::models::SendInquiryMessage) STRAIGHT to reality_portal_repo.respond_to_inquiry(id, principal.user_id, &data.message) with NO validation whatsoever: no empty/whitespace rejection and no length cap.", "backend/servers/reality-server/src/routes/inquiries.rs:772-811 — the sibling respond_to_inquiry (POST /api/v1/inquiries/{id}/respond) takes the SAME SendInquiryMessage body and calls the SAME repo method, but first rejects an empty/trimmed message with 400 (:779-785) and caps it at 5000 chars with 400 (:786-791 `if req.message.chars().count() > 5000`). The realtors.rs route is the divergent copy — an authenticated realtor can POST an empty message (persisting a blank inquiry_messages row the UI renders as an empty bubble) or a multi-MiB message that bloats the inquiry_messages table, the realtor/consumer response payloads, and tracing logs. This is the one uncapped free-text write path in the segment; every other one (inquiries.rs:54/446/786 MAX_INQUIRY_MESSAGE_LEN=5000, agent_reviews.rs:27/233 MAX_REVIEW_BODY_LEN, articles.rs:24/456 MAX_COMMENT_BODY_LEN, reports.rs:30/199 MAX_REPORT_DESCRIPTION_LEN) enforces the server-wide 5000-char hygiene cap (H6). Fix (backend-only, cloud-landable): mirror the inquiries.rs guard in realtors.rs::respond_to_inquiry — reject empty-after-trim (400) and reject chars().count() > 5000 (400) before the repo call; ideally extract a shared validate_inquiry_message helper so the two respond paths cannot drift again. Add a unit test asserting a 5001-char and an empty body are both rejected with 400 on the realtors route."]
+    },
+    {
+      "id": "code-review-reality-server-favorites-limit-toctou",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": ["backend/servers/reality-server/src/handlers/favorites/mod.rs"],
+      "evidence": ["backend/servers/reality-server/src/handlers/favorites/mod.rs:48-66 — add_favorite enforces MAX_FAVORITES_PER_USER (=100, :10) purely in application code via a check-then-act sequence: it fetches the full favorites list (:49-53), returns LimitReached when `favorites.len() >= 100` (:55-57), checks the in-memory list for an existing entry (:60-62), then INSERTs (:65-66). There is no DB-side enforcement (no partial-unique/row-count constraint) of the per-user cap, so the limit check is a TOCTOU race: two concurrent POSTs from the same user at count==99, each with a distinct listing_id, both read 99, both pass the `>= 100` guard, and both insert — leaving the user above the advertised 100-favorite ceiling. Same class as the already-tracked compare TOCTOU (code-review-reality-server-add-to-compare-toctou-max-cap) but in a different handler/table (portal_favorites) and not covered by the favorites-read-amplification / favorites-add-error-mapping-500 findings, which are about read cost and unique-violation status mapping respectively. Low severity (a user can only slightly overfill their OWN favorites list, no cross-tenant impact) but it makes the documented cap non-authoritative. Fix (backend-only, cloud-landable): enforce the cap atomically — e.g. an INSERT ... WHERE (SELECT COUNT(*) FROM portal_favorites WHERE user_id = $1) < 100 guard (or a counter row / trigger) in repo.add_favorite, and map a zero-rows result to LimitReached. Add a test that fires two near-simultaneous adds at the boundary and asserts the final count never exceeds 100."]
+    }
+  ]
+}

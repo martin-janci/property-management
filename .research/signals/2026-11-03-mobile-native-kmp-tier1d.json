@@ -1,0 +1,47 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-03",
+  "segment_reviewed": "mobile-native-kmp",
+  "selection_reason": "oldest-unreviewed (dispatcher-tier1d-demand-driven; research backlog starved, claimable=11 < floor=36, backlog.json exhausted). CHURN_FILES not supplied by the dispatcher this slice, so SKILL Step 1 priority 2 applies. review_cursor (from .research/state.json) sorted ascending: mobile-native-kmp 2026-10-25, api-handlers 2026-10-26, api-core 2026-10-27, ppt-web-core 2026-10-27, reality-server 2026-10-28, ppt-web-ui 2026-11-02, reality-web 2026-11-03, mobile-rn 2026-11-03. Saturation exclusions (open code-review-finding count in backlog.json with status==open): mobile-rn=3 (>=3 saturation-skip), reality-web=3 (>=3 saturation-skip); api-handlers=2 and mobile-native-kmp=2 are below the >=3 skip threshold. Oldest non-saturated segment is mobile-native-kmp (2026-10-25, 2 open findings) => selected. Kotlin expert primary + Tester secondary per Step 2. Scope: mobile-native/ (shared KMP commonMain/iosMain + androidApp). The 2 pre-existing open findings (http-client-no-timeout, my-listings-pagination-cap) were read and are NOT re-emitted.",
+  "experts_used": [
+    "kotlin",
+    "tester"
+  ],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 - the CreateListing route wires CreateListingScreen's onSubmit to a hard-coded stub: `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`. The whole realtor 'Create Listing' feature is therefore dead on Android: the form always fails on submit and the listing is never created.",
+        "Full reachable path traced (confidence=high): Screen.CreateListing is a real nav destination reached from MyListingsScreen's onCreateClick (Navigation.kt:484 navController.navigate(Screen.CreateListing.route)). CreateListingScreen (androidApp/.../ui/realtor/CreateListingScreen.kt:39) collects title/description/city/price/currency/transactionType, validates them (title/city/price), then on a valid form calls the suspend `onSubmit(CreateListingInput(...))` at L109 and does result.fold(onSuccess={onCreated()}, onFailure={ generalError = publishFailedMsg }). Because the injected onSubmit always returns Result.failure, every submit lands in onFailure and renders publishFailedMsg; onCreated() (popBackStack to MyListings) is never reached.",
+        "Backend/client gap corroboration: PortalListingsRepository (shared/.../realtor/PortalListingsRepository.kt) exposes only listMyListings(), getListingAnalytics(), getPortfolioAnalytics() - there is no create-listing repository method and no POST call anywhere in the shared module, so the stub cannot simply be swapped for an existing repo call; the create endpoint client binding is genuinely unimplemented.",
+        "Severity MEDIUM (+2): user-facing realtor feature is non-functional on a reachable production path (not a crash - NotImplementedError is returned as Result.failure, not thrown - so no panic, hence +2 not +3). Fix: add a createListing(input) suspend to PortalListingsRepository backed by the reality-server create-listing endpoint and wire it into Navigation.kt:493 in place of the stub.",
+        "expert: kotlin"
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-sso-error-body-unguarded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:49, :77, :104, :129 - four methods deserialize the error branch unguarded: `val error: SsoError = response.body()` (createMobileToken L49, validateAndLogin L77, getSession L104, refreshSession L129). If a non-2xx response carries a body that is not valid SsoError JSON (gateway HTML 502/503, plain-text proxy error, empty body), response.body<SsoError>() throws a SerializationException.",
+        "The throw is caught by each method's outer try/catch and turned into Result.failure(e) / AuthState.Error(e.message), so there is no crash - but the user-facing error becomes an opaque kotlinx.serialization message ('Fields [error] are required...') instead of the real HTTP status. This is most impactful on validateAndLogin, the security-critical SSO deep-link token-validation path (see mobile-native/CLAUDE.md SSO deep-link CSRF contract), where a gateway error during callback validation surfaces as a confusing serialization error.",
+        "Inconsistency / fix precedent already in the same file: loginWithPassword (L173-176) and register (L201-204) handle the identical error branch robustly with `runCatching { response.body<SsoError>() }.map { it.errorDescription ?: it.error }.getOrElse { \"...(HTTP ${response.status.value})\" }`, and confirmPasswordReset (L256-258) falls back to response.bodyAsText(). The four SSO/session methods should adopt the same runCatching-with-HTTP-status-fallback pattern.",
+        "Severity LOW (+1): no crash (caught), but degrades error messaging on the auth/SSO path and is an avoidable inconsistency with the file's own established pattern. Confidence medium (static; error-response body contents not runtime-confirmed).",
+        "expert: kotlin"
+      ],
+      "expert": "kotlin"
+    }
+  ]
+}

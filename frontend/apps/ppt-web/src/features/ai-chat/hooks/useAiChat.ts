@@ -6,6 +6,7 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { getApiClient } from '../../../lib/api';
 import type {
   ChatMessage,
   ChatSession,
@@ -16,7 +17,12 @@ import type {
   SendMessageResponse,
 } from '../types';
 
-const API_BASE = '/api/v1/ai/chat';
+// Path is relative to the api-client baseURL (`/api/v1`). Routing through
+// `getApiClient()` ensures the shared axios interceptors apply: Bearer-token
+// injection, ErrorResponse → ApiError transformation, 401 → onUnauthorized,
+// and transient 5xx/429 retry with backoff. A raw `fetch()` here would bypass
+// the interceptor and go out unauthenticated (401 in prod).
+const API_BASE = '/ai/chat';
 
 /** Query keys for AI chat */
 export const aiChatKeys = {
@@ -27,33 +33,16 @@ export const aiChatKeys = {
   escalated: () => [...aiChatKeys.all, 'escalated'] as const,
 };
 
-/** API helper to make fetch requests */
-async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Request failed' }));
-    throw new Error(error.message || `HTTP error ${response.status}`);
-  }
-
-  return response.json();
-}
-
 /** Fetch user's chat sessions */
 export function useAiChatSessions(limit = 50, offset = 0) {
   return useQuery({
     queryKey: aiChatKeys.sessions(),
     queryFn: async () => {
-      const result = await apiFetch<{ sessions: ChatSessionSummary[] }>(
-        `${API_BASE}/sessions?limit=${limit}&offset=${offset}`
+      const res = await getApiClient().get<{ sessions: ChatSessionSummary[] }>(
+        `${API_BASE}/sessions`,
+        { params: { limit, offset } }
       );
-      return result.sessions;
+      return res.data.sessions;
     },
     staleTime: 30 * 1000, // 30 seconds
   });
@@ -65,7 +54,8 @@ export function useAiChatSession(sessionId: string | null) {
     queryKey: aiChatKeys.session(sessionId ?? ''),
     queryFn: async () => {
       if (!sessionId) return null;
-      return apiFetch<ChatSession>(`${API_BASE}/sessions/${sessionId}`);
+      const res = await getApiClient().get<ChatSession>(`${API_BASE}/sessions/${sessionId}`);
+      return res.data;
     },
     enabled: !!sessionId,
   });
@@ -77,10 +67,11 @@ export function useAiChatMessages(sessionId: string | null, limit = 100, offset 
     queryKey: aiChatKeys.messages(sessionId ?? ''),
     queryFn: async () => {
       if (!sessionId) return [];
-      const result = await apiFetch<{ messages: ChatMessage[] }>(
-        `${API_BASE}/sessions/${sessionId}/messages?limit=${limit}&offset=${offset}`
+      const res = await getApiClient().get<{ messages: ChatMessage[] }>(
+        `${API_BASE}/sessions/${sessionId}/messages`,
+        { params: { limit, offset } }
       );
-      return result.messages;
+      return res.data.messages;
     },
     enabled: !!sessionId,
     staleTime: 10 * 1000, // 10 seconds
@@ -93,10 +84,8 @@ export function useCreateSession() {
 
   return useMutation({
     mutationFn: async (request: CreateSessionRequest) => {
-      return apiFetch<ChatSession>(`${API_BASE}/sessions`, {
-        method: 'POST',
-        body: JSON.stringify(request),
-      });
+      const res = await getApiClient().post<ChatSession>(`${API_BASE}/sessions`, request);
+      return res.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: aiChatKeys.sessions() });
@@ -110,10 +99,11 @@ export function useSendMessage(sessionId: string) {
 
   return useMutation({
     mutationFn: async (request: SendMessageRequest) => {
-      return apiFetch<SendMessageResponse>(`${API_BASE}/sessions/${sessionId}/messages`, {
-        method: 'POST',
-        body: JSON.stringify(request),
-      });
+      const res = await getApiClient().post<SendMessageResponse>(
+        `${API_BASE}/sessions/${sessionId}/messages`,
+        request
+      );
+      return res.data;
     },
     onSuccess: (data) => {
       // Update messages cache with new messages
@@ -133,7 +123,11 @@ export function useDeleteSession() {
 
   return useMutation({
     mutationFn: async (sessionId: string) => {
-      await fetch(`${API_BASE}/sessions/${sessionId}`, { method: 'DELETE' });
+      // Route through the shared client: it throws on a non-2xx response, so a
+      // failed delete rejects the mutation instead of being swallowed and
+      // reported as success (which previously fired onSuccess and hid the
+      // failure from the user).
+      await getApiClient().delete(`${API_BASE}/sessions/${sessionId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: aiChatKeys.sessions() });
@@ -145,13 +139,10 @@ export function useDeleteSession() {
 export function useMessageFeedback() {
   return useMutation({
     mutationFn: async (feedback: MessageFeedback) => {
-      return apiFetch<void>(`${API_BASE}/messages/${feedback.messageId}/feedback`, {
-        method: 'POST',
-        body: JSON.stringify({
-          rating: feedback.rating,
-          helpful: feedback.helpful,
-          feedback_text: feedback.feedbackText,
-        }),
+      await getApiClient().post<void>(`${API_BASE}/messages/${feedback.messageId}/feedback`, {
+        rating: feedback.rating,
+        helpful: feedback.helpful,
+        feedback_text: feedback.feedbackText,
       });
     },
   });
@@ -162,10 +153,10 @@ export function useEscalatedMessages(limit = 50, offset = 0) {
   return useQuery({
     queryKey: aiChatKeys.escalated(),
     queryFn: async () => {
-      const result = await apiFetch<{ messages: ChatMessage[] }>(
-        `${API_BASE}/escalated?limit=${limit}&offset=${offset}`
-      );
-      return result.messages;
+      const res = await getApiClient().get<{ messages: ChatMessage[] }>(`${API_BASE}/escalated`, {
+        params: { limit, offset },
+      });
+      return res.data.messages;
     },
     staleTime: 60 * 1000, // 1 minute
   });

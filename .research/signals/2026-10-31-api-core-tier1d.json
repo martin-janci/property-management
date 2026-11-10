@@ -1,0 +1,29 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-31",
+  "segment_reviewed": "api-core",
+  "selection_reason": "oldest-unreviewed (dispatcher-tier1d-demand-driven; claimable backlog below floor, 17 < 36). CHURN_FILES not supplied by dispatcher this slice, so SKILL Step 1 priority 2 applies. review_cursor (from .research/state.json) sorted ascending: ppt-web-ui 2026-10-22, reality-web 2026-10-23, mobile-native-kmp 2026-10-25, api-handlers 2026-10-26, api-core/ppt-web-core/mobile-rn 2026-10-27, reality-server 2026-10-28. Two exclusions applied before selection: (a) saturation (open code-review-finding in backlog.json): ppt-web-ui=4 (>=3 => saturation-skip), api-handlers=3 (>=3 => saturation-skip); (b) already-covered-this-cycle: sibling tier1d slices this same run already wrote 2026-10-31-reality-web-tier1d.json and 2026-10-31-mobile-native-kmp-tier1d.json, so reality-web and mobile-native-kmp are skipped to avoid a duplicate same-day file. Next oldest non-saturated, not-yet-covered segment is api-core (2026-10-27, 0 open findings) => selected. Rust expert primary only per Step 2 (api-core has no secondary expert). Scope: backend/servers/api-server/src/ EXCLUDING routes/ (the handler-equivalent; api-handlers is its own segment).",
+  "experts_used": [
+    "rust"
+  ],
+  "findings_count": 1,
+  "signals": [
+    {
+      "id": "code-review-api-core-api-call-client-build-expect",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/api_call.rs:308 — ApiCallExecutor::with_ip_resolver() does `reqwest::Client::builder().timeout(60s).user_agent(..).redirect(..).dns_resolver(SsrfGuardResolver).build().expect(\"Failed to create HTTP client\")`. reqwest::ClientBuilder::build() is fallible (TLS backend init, proxy-from-env parse); on failure this panics instead of returning a Result the caller can log and fail-closed on.",
+        "This is the exact same pattern the team already accepted and fixed in this segment: done finding code-review-api-core-push-fanout-client-build-expect ('push_fanout.rs builds 3 reqwest clients with .expect() in production constructors'). push_fanout.rs:433/626/1042 were the flagged trio; they are now addressed, leaving api_call.rs:308 as the only remaining production (non-test) fallible-build().expect() in the api-core services layer (test module in this file starts at L604). The fix mirrors the accepted one: make the constructor (or a try_new) return Result and have the composition root log a precise 'workflow HTTP transport misconfigured' error.",
+        "Severity LOW, identical rationale to the accepted push_fanout finding: ApiCallExecutor::new() is called once at action-registry init (services/actions/mod.rs:206 registry.register(Box::new(ApiCallExecutor::new()))), i.e. a bootstrap/startup path, so the practical effect is a fail-fast crash at startup rather than a per-request panic — close to the acceptable startup-validation pattern in main.rs. Flagged for consistency with the precedent (same vector, same score=1) and because it is the sole leftover instance of that pattern; do NOT inflate.",
+        "NOTE for triage: api-core was reviewed statically this slice and is otherwise exceptionally clean, confirming the earlier reviewer's assessment. Verified no finding in: unwrap/expect audit (11 prod-path hits total, all safe — Decimal::from_str on hard-coded literals in accounting.rs:155/193/200/202/212, argon2 params and OS-rng expects in auth.rs:62/97 and oauth.rs:918 which are catastrophic-only, JwtService::new at main.rs:556 is startup); no unsafe blocks; no reachable todo!()/unimplemented!() (all panics are startup config-validation in totp.rs:76/94/109 + main.rs, or inside #[cfg(test)]); all sqlx queries use $-bound parameters (no string-interpolated SQL); Stripe webhook verify_signature uses constant-time ct_eq + replay-window + overflow-proof skew; OAuth is PKCE-S256-only (plain rejected) with atomic find_and_consume_authorization_code (replay-safe) and argon2-hashed client secrets; workflow_executor compute_backoff_seconds is overflow-safe (exp capped at 30, saturating_mul, min cap); validate_email guards parts.len() before indexing; best-effort writes (notification.record_sent, update_voice_device_last_used) are deliberately fire-and-forget with tracing. This single +1 is the only defensible signal in the segment.",
+        "expert: rust"
+      ],
+      "expert": "rust"
+    }
+  ]
+}

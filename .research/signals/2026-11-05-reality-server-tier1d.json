@@ -1,0 +1,42 @@
+{
+  "segment_reviewed": "reality-server",
+  "selection_reason": "churn-aligned (dispatcher Tier 1d, demand-driven refill; claimable=21 < floor=36). Today's hottest Phase-1 hotspot is backend/servers/reality-server/src/util/errors.rs (recent_churn 187), with a second hit at backend/servers/api-server/src/routes/suspend_cascade.rs (churn 166 -> api-handlers). reality-server wins on highest churn; it is not saturated (1 open code-review-finding < 3). Note: the skill's segment-map root (backend/reality-server/src/) predates the backend/servers/ layout; reviewed the live path backend/servers/reality-server/src/.",
+  "experts_used": ["rust"],
+  "findings_count": 2,
+  "generated_at": "2026-11-05T05:00:00Z",
+  "generator": "dispatcher-tier-1d",
+  "notes": "Static analysis only (no compile/run). Segment is in strong shape: no unsafe, no todo!()/unimplemented!(), all unwrap()/expect() hits are either test-module fixtures or provably guarded (e.g. inquiries::is_valid_phone first-char unwrap is gated by the preceding is_empty() check; auth::extract_session_cookie strip_prefix().unwrap() is guarded by the starts_with() in find()). Public listing queries correctly scope on status='active'; portal_listings owner reads scope on principal.user_id; SSO uses PKCE + a redirect_uri allowlist re-validated at callback; client_ip_bucket is spoof-resistant via trusted_hops. util/errors::db_error + classify_db_error are the documented public-surface error-scrubbing contract. The findings below are the places the SSO callback bypasses that contract.",
+  "signals": [
+    {
+      "id": "code-review-reality-server-sso-cb-db-err-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:331-340 — the SSO callback upsert_sso_user() map_err returns (INTERNAL_SERVER_ERROR, Json(SsoError::new(\"user_create_failed\", &e.to_string()))): the raw user-service/DB (sqlx) error string is serialized into the public JSON response body.",
+        "backend/servers/reality-server/src/routes/sso.rs:343-352 — same pattern for create_session(): Json(SsoError::new(\"session_create_failed\", &e.to_string())) leaks the raw session/redis/infra error to the internet-facing caller.",
+        "This directly violates the public-surface error contract documented in backend/servers/reality-server/src/util/errors.rs:1-32, which states reality-server is internet-facing and raw sqlx/anyhow error strings can leak column names, constraint names, and pool/TLS state; util::errors::db_error exists precisely to scrub these at the map_err boundary. The sibling inquiries route already routes DatabaseError through db_error (routes/inquiries.rs:173) and the registration route logs-then-returns a generic body (routes/users.rs:220-226); the SSO callback is the inconsistent outlier.",
+        "Fix: log server-side via tracing::error!(error = %e, ...) and return a fixed generic message (mirror RegistrationResult::DatabaseError handling / util::errors::db_error). No existing open backlog finding covers reality-server SSO callback error leakage."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-sso-cb-upstream-err-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:310-318 — exchange_code_for_tokens() map_err returns Json(SsoError::new(\"token_exchange_failed\", &e.to_string())), echoing the raw upstream PM OAuth HTTP/reqwest error (can carry the internal PM token endpoint URL / transport detail) to the public client.",
+        "backend/servers/reality-server/src/routes/sso.rs:321-328 — get_user_info() map_err likewise returns Json(SsoError::new(\"user_info_failed\", &e.to_string())).",
+        "Lower severity than the DB/infra leak (upstream HTTP error text is less sensitive than sqlx constraint/connection detail), but same class and same remediation: log server-side, return a generic stable code only. Keeping all four callback branches (token_exchange/user_info/user_create/session_create) consistent with util::errors would close the whole info-disclosure surface on the SSO callback."
+      ]
+    }
+  ]
+}

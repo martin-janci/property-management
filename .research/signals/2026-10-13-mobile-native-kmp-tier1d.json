@@ -1,0 +1,51 @@
+{
+  "generated": "2026-10-13T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (research buffer starved). Static single-segment rotating code review via the ppt-dev-review skill — no compilation / no test execution (cloud runner has no toolchain). File reading + grep only. Produces fresh CLOUD-LANDABLE Kotlin/KMP backlog vectors for the mobile-native-kmp segment (mobile-native/). CHURN_FILES empty this cycle, so selection fell to oldest-unreviewed: review_cursor.mobile-native-kmp = 2026-10-03 is the oldest of all 8 segments. No saturation (0 open code-review-finding items in backlog.json for mobile-native-kmp; only api-handlers has 3 open). Kotlin expert (primary) + Tester (secondary) lenses. Ran the skill's grep sweep (!!, GlobalScope, TODO()/NotImplementedError/actual stubs) across mobile-native/, then read the shared repositories (ListingRepository, InquiryRepository, AgencyRepository, PortalListingsRepository, RealtorRepository, NotificationRepository), the DecimalString serializers, ListingDetailViewModel/ListingDetailScreen, and the Account/Inquiries/Favorites Compose screens. VERIFIED CLEAN (dropped, not findings): all `!!` hits (ListingDetailScreen state.listing!!/errorMessage!!, AccountScreen notificationPrefs!!, Inquiries/Favorites errorMessage!!) are guarded by a `!= null` branch in the enclosing `when`/`if`, and ListingDetailViewModel never resets `listing` back to null after a successful load, so the deferred onCallClick `state.listing!!` closure cannot NPE; GlobalScope — none (all launches use the injected/remembered scope); Navigation.kt NotImplementedError create-listing stub + RealtorRepository NotImplemented fallback are already captured by prior signals (create-listing-notimpl-stub / create-listing-not-wired); SsoStateStore iOS nonce uses NSUUID x2 (documented, KMP store unused on iOS which owns its own nonce); the hardcoded English repo error strings are NOT a user-facing i18n gap because the ViewModel/screens inject a localizing errorMapper / friendlyError(stringResource) and never surface exception.message directly (deliberate commonMain-can't-reach-stringResource design, issue #2108); notif-prefs/saved-searches silent-fail already in seen_signals.",
+  "segment_reviewed": "mobile-native-kmp",
+  "selection_reason": "oldest-unreviewed (CHURN_FILES empty; review_cursor.mobile-native-kmp = 2026-10-03 is the oldest of all 8 segments). No saturation-skip: 0 open code-review-finding items in backlog.json for mobile-native-kmp.",
+  "experts_used": [
+    "kotlin",
+    "tester"
+  ],
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-decimal-serializer-parse-throw",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "kotlin",
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/DecimalStringSerializers.kt"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/DecimalStringSerializers.kt:46 (DecimalAsLongSerializer.deserialize) does `raw.substringBefore('.').toLong()` and :62 (DecimalAsDoubleSerializer.deserialize) does `raw.toDouble()` on the raw JSON primitive content with NO guard. `toLong()`/`toDouble()` throw NumberFormatException on any non-numeric / empty / unexpectedly-formatted content (e.g. an empty string -> substringBefore('.') = \"\" -> \"\".toLong() throws; a null-rendered, grouped, or scientific value throws).",
+        "This re-introduces the exact failure mode these serializers were written to eliminate: the file header (lines 20-25) documents issue #2331, where a single fractional monetary field 'silently killed the whole price-tracking payload decode'. An uncaught exception thrown inside kotlinx.serialization deserialize() aborts the entire `response.body()` decode for the favorites/alerts payload (GET /api/v1/favorites, GET /api/v1/favorites/alerts), so one malformed monetary field still sinks every row in the payload — not just that field. Caught at the repo try/catch boundary (becomes Result.failure), so no crash, but the whole screen's data is lost rather than the one bad field degrading gracefully.",
+        "Reachability is bounded by the backend (rust_decimal serde-str emits well-formed decimal strings), hence confidence medium / severity low (+1). Fix (KMP-shared, cloud-landable, no backend): wrap the parse (`raw.substringBefore('.').toLongOrNull() ?: 0L` and `raw.toDoubleOrNull() ?: 0.0`, or a try/catch returning a sentinel) so a single malformed monetary value degrades to a default instead of aborting the payload decode, and add a commonTest case feeding a non-numeric string to each serializer."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-listing-repo-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "expert": "tester",
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt — the core listing repository (6 public suspend endpoints: searchListings, getListingDetail, getFeaturedListings, getRecentListings, getSearchSuggestions, getListingsNearby) has NO corresponding test file anywhere under mobile-native/shared/src/commonTest. Verified: `find commonTest -name 'ListingRepository*Test.kt'` returns nothing.",
+        "Every sibling repository in the same shared module ships at least a path-encoding test: InquiryRepositoryPathEncodingTest, AgencyRepositoryPathEncodingTest, FavoritesRepositoryTest + FavoritesRepositoryPathEncodingTest, NotificationRepositoryTest, PortalListingsRepositoryTest, RealtorRepositoryPathEncodingTest, LayoutRepositoryTest. ListingRepository is the only untested one — and it is the primary search/detail surface (Epic 48 Story 48.1). getListingDetail relies on `listingId.asPathSegment()` for path encoding with no regression test guarding it (the exact thing every sibling's PathEncodingTest exists to pin).",
+        "Severity low (+1), test-gap. Fix (KMP-shared commonTest, cloud-landable, no backend): add a ListingRepository test with a Ktor MockEngine covering (a) asPathSegment encoding of listingId in getListingDetail, (b) the success/NotFound/other-status branch mapping, and (c) that a thrown client exception becomes Result.failure — mirroring the existing PathEncodingTest pattern used by the sibling repos."
+      ]
+    }
+  ]
+}

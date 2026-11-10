@@ -6,9 +6,16 @@
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { getApiClient } from '../../../lib/api';
 import type { OcrCorrection, OcrResult } from '../components/OcrPreviewCard';
 
-const API_BASE = '/api/v1/ai';
+// Path is relative to the api-client baseURL (`/api/v1`). Routing through
+// `getApiClient()` ensures the shared axios interceptors apply — most
+// importantly Bearer-token injection, so these calls are authenticated. A raw
+// `fetch()` here would omit the Authorization header and 401 in prod. For the
+// multipart upload, axios detects the `FormData` body and sets the correct
+// `multipart/form-data` Content-Type (with boundary) itself.
+const API_BASE = '/ai';
 
 /** Request to process meter image with OCR */
 interface OcrProcessRequest {
@@ -22,18 +29,6 @@ interface OcrProcessResponse {
   imageUrl: string;
 }
 
-/** API helper for OCR requests */
-async function ocrFetch<T>(url: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(url, options);
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'OCR request failed' }));
-    throw new Error(error.message || `HTTP error ${response.status}`);
-  }
-
-  return response.json();
-}
-
 /** Process meter image with OCR */
 export function useOcrProcessImage() {
   return useMutation({
@@ -42,10 +37,17 @@ export function useOcrProcessImage() {
       formData.append('image', image);
       formData.append('meter_id', meterId);
 
-      return ocrFetch<OcrProcessResponse>(`${API_BASE}/ocr/meter-reading`, {
-        method: 'POST',
-        body: formData,
-      });
+      // Set a multipart Content-Type so axios keeps the FormData body as-is:
+      // the client's default `application/json` would otherwise make axios
+      // serialize the FormData to JSON (via formDataToJSON) instead of sending
+      // a multipart upload. The browser/adapter replaces this with the real
+      // boundary at send time.
+      const res = await getApiClient().post<OcrProcessResponse>(
+        `${API_BASE}/ocr/meter-reading`,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+      return res.data;
     },
   });
 }
@@ -56,18 +58,12 @@ export function useOcrCorrection() {
 
   return useMutation({
     mutationFn: async (correction: OcrCorrection): Promise<void> => {
-      await ocrFetch<void>(`${API_BASE}/ocr/correction`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          original_value: correction.originalValue,
-          corrected_value: correction.correctedValue,
-          image_url: correction.imageUrl,
-          bounding_box: correction.boundingBox,
-          timestamp: correction.timestamp,
-        }),
+      await getApiClient().post<void>(`${API_BASE}/ocr/correction`, {
+        original_value: correction.originalValue,
+        corrected_value: correction.correctedValue,
+        image_url: correction.imageUrl,
+        bounding_box: correction.boundingBox,
+        timestamp: correction.timestamp,
       });
     },
     onSuccess: () => {

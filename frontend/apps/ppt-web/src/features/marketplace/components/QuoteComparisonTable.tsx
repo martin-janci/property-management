@@ -3,6 +3,7 @@
  * Epic 68: Service Provider Marketplace (Story 68.3)
  */
 
+import { useTranslation } from 'react-i18next';
 import type { QuoteSummary } from './QuoteCard';
 
 interface QuoteComparisonTableProps {
@@ -34,6 +35,8 @@ export function QuoteComparisonTable({
   onViewProvider,
   onViewQuote,
 }: QuoteComparisonTableProps) {
+  const { t } = useTranslation();
+
   if (quotes.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow p-8 text-center">
@@ -43,7 +46,7 @@ export function QuoteComparisonTable({
           stroke="currentColor"
           viewBox="0 0 24 24"
         >
-          <title>No quotes</title>
+          <title>{t('marketplace.comparisonTable.noQuotes')}</title>
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -51,7 +54,7 @@ export function QuoteComparisonTable({
             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
           />
         </svg>
-        <p className="mt-2 text-gray-500">No quotes to compare</p>
+        <p className="mt-2 text-gray-500">{t('marketplace.comparisonTable.noQuotesToCompare')}</p>
       </div>
     );
   }
@@ -64,53 +67,68 @@ export function QuoteComparisonTable({
   const warranties = quotes.filter((q) => q.warrantyPeriodDays).map((q) => q.warrantyPeriodDays!);
   const longestWarranty = warranties.length > 0 ? Math.max(...warranties) : null;
 
-  const comparisonRows = [
+  const comparisonRows: {
+    label: string;
+    getValue: (q: QuoteSummary) => string;
+    isBest: (q: QuoteSummary) => boolean;
+    highlight: boolean;
+  }[] = [
     {
-      label: 'Price',
+      label: t('marketplace.comparisonTable.price'),
       getValue: (q: QuoteSummary) => formatPrice(q.price, q.currency),
       isBest: (q: QuoteSummary) => q.price === lowestPrice,
       highlight: true,
     },
     {
-      label: 'Provider Rating',
+      label: t('marketplace.comparisonTable.providerRating'),
       getValue: (q: QuoteSummary) =>
-        q.providerRating ? `${q.providerRating.toFixed(1)} / 5` : '-',
+        q.providerRating
+          ? t('marketplace.comparisonTable.ratingOutOf', { rating: q.providerRating.toFixed(1) })
+          : '-',
       isBest: (q: QuoteSummary) => q.providerRating === highestRating,
       highlight: true,
     },
     {
-      label: 'Verified',
-      getValue: (q: QuoteSummary) => (q.providerIsVerified ? 'Yes' : 'No'),
+      label: t('marketplace.comparisonTable.verified'),
+      getValue: (q: QuoteSummary) =>
+        q.providerIsVerified
+          ? t('marketplace.comparisonTable.yes')
+          : t('marketplace.comparisonTable.no'),
       isBest: (q: QuoteSummary) => q.providerIsVerified === true,
       highlight: false,
     },
     {
-      label: 'Start Date',
+      label: t('marketplace.comparisonTable.startDate'),
       getValue: (q: QuoteSummary) => formatDate(q.estimatedStartDate),
       isBest: () => false,
       highlight: false,
     },
     {
-      label: 'End Date',
+      label: t('marketplace.comparisonTable.endDate'),
       getValue: (q: QuoteSummary) => formatDate(q.estimatedEndDate),
       isBest: () => false,
       highlight: false,
     },
     {
-      label: 'Duration',
+      label: t('marketplace.comparisonTable.duration'),
       getValue: (q: QuoteSummary) =>
-        q.estimatedDurationDays ? `${q.estimatedDurationDays} days` : '-',
+        q.estimatedDurationDays
+          ? t('marketplace.comparisonTable.durationDays', { count: q.estimatedDurationDays })
+          : '-',
       isBest: () => false,
       highlight: false,
     },
     {
-      label: 'Warranty',
-      getValue: (q: QuoteSummary) => (q.warrantyPeriodDays ? `${q.warrantyPeriodDays} days` : '-'),
+      label: t('marketplace.comparisonTable.warranty'),
+      getValue: (q: QuoteSummary) =>
+        q.warrantyPeriodDays
+          ? t('marketplace.comparisonTable.durationDays', { count: q.warrantyPeriodDays })
+          : '-',
       isBest: (q: QuoteSummary) => q.warrantyPeriodDays === longestWarranty,
       highlight: true,
     },
     {
-      label: 'Valid Until',
+      label: t('marketplace.comparisonTable.validUntil'),
       getValue: (q: QuoteSummary) => formatDate(q.validUntil),
       isBest: () => false,
       highlight: false,
@@ -124,7 +142,7 @@ export function QuoteComparisonTable({
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">
-                Criteria
+                {t('marketplace.comparisonTable.criteria')}
               </th>
               {quotes.map((quote) => (
                 <th key={quote.id} className="px-6 py-3 text-center min-w-[200px]">
@@ -143,7 +161,7 @@ export function QuoteComparisonTable({
                           stroke="currentColor"
                           viewBox="0 0 24 24"
                         >
-                          <title>Company</title>
+                          <title>{t('marketplace.common.company')}</title>
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -162,7 +180,7 @@ export function QuoteComparisonTable({
                     </button>
                     {quote.providerIsVerified && (
                       <span className="mt-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                        Verified
+                        {t('marketplace.common.verified')}
                       </span>
                     )}
                   </div>
@@ -189,7 +207,9 @@ export function QuoteComparisonTable({
                     >
                       {row.getValue(quote)}
                       {isBest && row.highlight && (
-                        <span className="ml-2 text-xs text-green-600">Best</span>
+                        <span className="ml-2 text-xs text-green-600">
+                          {t('marketplace.comparisonTable.best')}
+                        </span>
                       )}
                     </td>
                   );
@@ -198,7 +218,9 @@ export function QuoteComparisonTable({
             ))}
             {/* Notes Row */}
             <tr>
-              <td className="px-6 py-4 text-sm font-medium text-gray-900">Notes</td>
+              <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                {t('marketplace.comparisonTable.notes')}
+              </td>
               {quotes.map((quote) => (
                 <td key={quote.id} className="px-6 py-4 text-sm text-gray-600">
                   {quote.notes ? (
@@ -211,7 +233,9 @@ export function QuoteComparisonTable({
             </tr>
             {/* Actions Row */}
             <tr className="bg-gray-50">
-              <td className="px-6 py-4 text-sm font-medium text-gray-900">Actions</td>
+              <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                {t('marketplace.comparisonTable.actions')}
+              </td>
               {quotes.map((quote) => (
                 <td key={quote.id} className="px-6 py-4 text-center">
                   <div className="flex flex-col items-center gap-2">
@@ -220,7 +244,7 @@ export function QuoteComparisonTable({
                       onClick={() => onViewQuote?.(quote.id)}
                       className="text-sm font-medium text-blue-600 hover:text-blue-800"
                     >
-                      View Details
+                      {t('marketplace.common.viewDetails')}
                     </button>
                     {quote.status === 'submitted' && (
                       <button
@@ -228,7 +252,7 @@ export function QuoteComparisonTable({
                         onClick={() => onAccept?.(quote.id)}
                         className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                       >
-                        Accept Quote
+                        {t('marketplace.comparisonTable.acceptQuote')}
                       </button>
                     )}
                   </div>
@@ -243,7 +267,7 @@ export function QuoteComparisonTable({
       <div className="px-6 py-3 bg-gray-50 border-t text-sm text-gray-500">
         <span className="inline-flex items-center gap-2">
           <span className="w-3 h-3 bg-green-100 rounded" />
-          <span>Best value in category</span>
+          <span>{t('marketplace.comparisonTable.bestValue')}</span>
         </span>
       </div>
     </div>

@@ -11,8 +11,10 @@
  */
 
 import type { FaultStatistics } from '@ppt/api-client';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { FaultBreakdownChart, type FaultBreakdownDatum } from '../components/FaultBreakdownChart';
+import { faultCategoryKeys, faultPriorityKeys, faultStatusKeys } from '../utils/faultLabels';
 import { buildStatisticsCsv, downloadCsv, type FaultReportMeta } from '../utils/faultReportExport';
 
 export interface FaultReportFilters {
@@ -41,8 +43,17 @@ function humanise(value: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-function toData(buckets: Array<{ key: string; count: number }>): FaultBreakdownDatum[] {
-  return buckets.map((b) => ({ key: b.key, label: humanise(b.key), count: b.count }));
+function toData(
+  buckets: Array<{ key: string; count: number }>,
+  labelKeys: Record<string, string>,
+  t: TFunction
+): FaultBreakdownDatum[] {
+  return buckets.map((b) => ({
+    key: b.key,
+    // Known enum values get a translated label; unknown ones fall back to a humanised key.
+    label: labelKeys[b.key] ? t(labelKeys[b.key]) : humanise(b.key),
+    count: b.count,
+  }));
 }
 
 export function FaultReportsPage({
@@ -56,7 +67,12 @@ export function FaultReportsPage({
   onFiltersChange,
   onDrillDown,
 }: FaultReportsPageProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const formatDecimal = (value: number, digits: number) =>
+    new Intl.NumberFormat(i18n.language, {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    }).format(value);
 
   if (!isManager) {
     return (
@@ -246,12 +262,14 @@ export function FaultReportsPage({
               value={
                 stats.average_resolution_time_hours == null
                   ? '—'
-                  : stats.average_resolution_time_hours.toFixed(1)
+                  : formatDecimal(stats.average_resolution_time_hours, 1)
               }
             />
             <Kpi
               label={t('faults.reports.kpiRating', { defaultValue: 'Avg rating' })}
-              value={stats.average_rating == null ? '—' : `${stats.average_rating.toFixed(2)} ★`}
+              value={
+                stats.average_rating == null ? '—' : `${formatDecimal(stats.average_rating, 2)} ★`
+              }
               valueClassName="text-amber-500"
             />
           </div>
@@ -260,21 +278,33 @@ export function FaultReportsPage({
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <FaultBreakdownChart
               title={t('faults.reports.byStatus', { defaultValue: 'By status' })}
-              data={toData(stats.by_status.map((s) => ({ key: s.status, count: s.count })))}
+              data={toData(
+                stats.by_status.map((s) => ({ key: s.status, count: s.count })),
+                faultStatusKeys,
+                t
+              )}
               barClassName="bg-blue-500"
               onSelect={(status) => onDrillDown({ status })}
               emptyLabel={t('faults.reports.noData', { defaultValue: 'No data available' })}
             />
             <FaultBreakdownChart
               title={t('faults.reports.byCategory', { defaultValue: 'By category' })}
-              data={toData(stats.by_category.map((c) => ({ key: c.category, count: c.count })))}
+              data={toData(
+                stats.by_category.map((c) => ({ key: c.category, count: c.count })),
+                faultCategoryKeys,
+                t
+              )}
               barClassName="bg-emerald-500"
               onSelect={(category) => onDrillDown({ category })}
               emptyLabel={t('faults.reports.noData', { defaultValue: 'No data available' })}
             />
             <FaultBreakdownChart
               title={t('faults.reports.byPriority', { defaultValue: 'By priority' })}
-              data={toData(stats.by_priority.map((p) => ({ key: p.priority, count: p.count })))}
+              data={toData(
+                stats.by_priority.map((p) => ({ key: p.priority, count: p.count })),
+                faultPriorityKeys,
+                t
+              )}
               barClassName="bg-amber-500"
               onSelect={(priority) => onDrillDown({ priority })}
               emptyLabel={t('faults.reports.noData', { defaultValue: 'No data available' })}

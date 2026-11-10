@@ -1,0 +1,52 @@
+{
+  "generated": "2026-09-17T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claim buffer starved) 2026-09-17",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "oldest-unreviewed among cloud-claimable segments. state.json review_cursor is stale for this generator (last_run_iso 2026-09-01; the dispatcher's Tier-1d loop writes signals/ directly and does not update state.json, per state.json's own _pointer note). Using the actual signals/ corpus as the ledger: latest prior review date per segment was api-handlers=2026-09-16, ppt-web-ui=2026-09-16, ppt-web-core=2026-09-16, reality-web=2026-09-17 (already produced earlier today), reality-server=2026-09-11, mobile-native-kmp=2026-09-10, api-core=2026-09-09, mobile-rn=2026-09-11. Backend (api-core/api-handlers/reality-server) and mobile-native-kmp are avoid-listed per task instructions (cloud runner cannot land api-server/Gradle builds). Among the remaining cloud-claimable frontend segments, reality-web was already covered today, leaving mobile-rn as the true oldest-unreviewed (2026-09-11) — picked over the heavily-over-sampled ppt-web-core/ppt-web-ui (both hit almost daily this month). SATURATION CHECK PASSED: backlog.json holds 0 open code-review-finding rows for mobile-rn (20 historical rows, all done/dropped), so the <3-open rule does not skip it. SCOPE: frontend/apps/mobile/src, focused on previously-unreviewed subtrees (prior mobile-rn findings clustered in screens/, hooks/useOfflineSupport+usePushNotifications, contexts/AuthContext, nfc/, voice/, qrcode/ — all of which already carry done/dropped findings). This pass covered the untouched subtrees: navigation/, onboarding/, widgets/, config/, services/, utils/, components/, features/layout/. Static-only (read + grep), no build/test run. VERIFIED-CLEAN / NOT-FINDINGS (avoided false positives): services/resetLocalData.ts (tenant-scoped AsyncStorage + SecureStore purge, confirmed wired into AuthContext.tsx:123,159 login/logout paths, deliberate best-effort try/catch per its own docstring — not a bug); onboarding/FeedbackManager.submitFeedback (catch path stores a pending draft and the only caller, FeedbackScreen.tsx, correctly branches on result.success with distinct localized alerts — not silent); navigation/authGate.ts (pure function, straightforward priority order, no gap); WidgetBridge.parseWidgetDeepLink/createDeepLink round-trip correctly for the six screen types. Cap-at-3 honored; 2 net-new HIGH-confidence findings below (both statically traced end-to-end to a reachable screen); stopped rather than padding with a 3rd lower-value nit (a missing decodeURIComponent on WidgetBridge deep-link entity IDs was considered but dropped — practical impact is negligible since entity IDs are UUIDs that never need percent-decoding).",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-dashboard-layout-fetch-never-applied",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-17 mobile-rn features/layout)",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/mobile/src/features/layout/useDashboardLayout.ts",
+        "frontend/apps/mobile/src/screens/dashboard/DashboardScreen.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/features/layout/useDashboardLayout.ts:30-58 — `activate()` has two phases: Phase 1 reads the tenant-scoped AsyncStorage cache and calls `setLayout(cached)` if present; Phase 2 does a live `apiRequest('/api/v1/layout/resolved/{screen}?platform=mobile')` and, per the code's OWN comment at :37 ('background fetch — writes cache ONLY (never sets state)'), only calls `writeCachedLayout(...)` on success — it never calls `setLayout` with the freshly-fetched result.",
+        "Consequence: the freshly-resolved layout from the server is never rendered in the CURRENT session — only cached for the NEXT app launch's Phase-1 read. On a user's very first-ever activation of the screen (no cache yet, `cached === null` at :33), `layout` state stays at the hardcoded `DEFAULT_DASHBOARD_LAYOUT` (from `../registry`) for the entire session even though Phase 2 successfully fetched and validated the real tenant-customized layout — the user only sees their actual dashboard configuration after force-quitting and reopening the app.",
+        "Reachability confirmed: `screens/dashboard/DashboardScreen.tsx:57` calls `useDashboardLayout('ppt/dashboard')` directly — this is the app's home/dashboard screen, so the gap is hit on every fresh install / first login on a device, and after any server-side layout customization change (issue #2486's tenant-scoped caching correctly prevents cross-tenant leakage, but the companion 'don't thrash mid-session' choice went one step too far and also blocks same-session self-updates).",
+        "Fix: call `setLayout(fresh)` alongside `writeCachedLayout(sid, screen, fresh)` in Phase 2 (guarded by the existing shape-check and `!cancelled`), so a first-time or post-change fetch is reflected without waiting for the next cold start."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-widget-bridge-auth-token-never-set",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-17 mobile-rn widgets/)",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/mobile/src/widgets/WidgetBridge.ts",
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts",
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:26,354-361 — `apiRequest()` only adds the `Authorization: Bearer` header `if (this.authToken)`; `authToken` starts `null` and is set solely via the public `setAuthToken(token)` method (WidgetBridge.ts:40-42 delegates to the same method on its `dataProvider`).",
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx:33 — the ONLY place in the app that constructs a `WidgetBridge` (`new WidgetBridge(getApiBaseUrl())`, wrapped in `useMemo`). A repo-wide search (`grep -rn setAuthToken`) shows `setAuthToken` is called for `NFCCredentialManager`/`NFCAccessController` and `FeedbackManager` elsewhere, but NEVER for `WidgetBridge`/`WidgetDataProvider` — no `useAuth()` import, no effect wiring the current session token into `bridge`.",
+        "Consequence: every widget the user configures via this screen (`bridge.configureWidget` -> `fetchWidgetData` -> the six `/api/v1/{announcements,votes,faults,notifications,...}` endpoints) is fetched with NO auth header. The endpoints are auth-protected, so each request gets rejected (401 -> `!response.ok` -> throw), caught at WidgetDataProvider.ts:374-379, and silently falls through to empty/placeholder widget data (`return {}` fallback, dev-only console.error at :377). Epic 49 / Story 49.1 (Home Screen Widgets) is therefore non-functional end-to-end for real data — every configured widget always shows zero/empty content — with no error surfaced to the user (`handleToggleWidget` in WidgetSettingsScreen.tsx always shows the success alert 'Widget Added' regardless of whether the initial fetch inside `configureWidget` succeeded).",
+        "No test file exists for `widgets/` or `WidgetSettingsScreen` (confirmed via file search), consistent with this gap surviving unnoticed. Fix: call `bridge.setAuthToken(token)` from `WidgetSettingsScreen` (via `useAuth()`) on mount and whenever the token rotates, mirroring the pattern already used for `NFCAccessController`/`FeedbackManager`."
+      ]
+    }
+  ]
+}

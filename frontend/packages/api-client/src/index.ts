@@ -12,6 +12,7 @@ export * from './announcements';
 export type { AuthUser } from './auth';
 // Export auth token provider for secure token management
 export * from './auth';
+export * from './budgets';
 export * from './buildings';
 export * from './community';
 export * from './compliance';
@@ -43,9 +44,12 @@ export * from './integrations';
 export * from './iot';
 export * from './layout';
 export * from './leases';
-// Shared authenticated-fetch error type — carries HTTP `status` so callers can
-// branch on 401/403 (see `./lib/fetch`).
-export { ApiError } from './lib/fetch';
+// Shared authenticated-fetch helpers. `ApiError` carries HTTP `status` so callers
+// can branch on 401/403; `authenticatedFetch` is the raw-`Response` primitive for
+// callers that can't use the generated SDK — multipart uploads and endpoints
+// whose callers read the `Response` themselves (see `./lib/fetch`).
+export { ApiError, authenticatedFetch } from './lib/fetch';
+export * from './members';
 export * from './messaging';
 export * from './meters';
 export * from './mfa';
@@ -62,6 +66,7 @@ export * from './packages';
 export * from './person-months';
 export * from './portfolio-performance';
 export * from './registry';
+export * from './rentals';
 export * from './reports';
 export {
   exportReport as exportAnalyticsReport,

@@ -25,12 +25,13 @@ import {
   usePinAnnouncement,
   usePinnedAnnouncements,
   usePublishAnnouncement,
+  usePublishedAnnouncements,
   useUpdateAnnouncement,
 } from '@ppt/api-client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams } from 'react-router-dom';
-import { useToast } from '../../components';
+import { ProtectedRoute, useToast } from '../../components';
 import { useAuth } from '../../contexts';
 import {
   AnnouncementsPage,
@@ -38,7 +39,7 @@ import {
   EditAnnouncementPage,
   ViewAnnouncementPage,
 } from '../lazyRoutes';
-import { isManagerRole } from '../shared';
+import { isManagerRole, MANAGER_ROLES } from '../shared';
 
 /**
  * Route wrapper for announcements list page (UC-06, gap-79-1).
@@ -54,16 +55,27 @@ function AnnouncementsPageRoute() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { user } = useAuth();
+  // `GET /announcements` (all statuses, filters) is manager-only and returns 403
+  // for residents. Owners/tenants read `GET /announcements/published`, which the
+  // backend filters to published announcements targeted at them.
+  const isManager = isManagerRole(user?.role);
   const [listParams, setListParams] = useState<ListAnnouncementsParams>({
     page: 1,
     pageSize: 10,
   });
 
-  const { data, isLoading, error, refetch } = useAnnouncements(listParams);
+  const managerList = useAnnouncements(listParams, isManager);
+  const residentList = usePublishedAnnouncements(
+    { page: listParams.page, pageSize: listParams.pageSize },
+    !isManager
+  );
+  const { data, isLoading, error, refetch } = isManager ? managerList : residentList;
   // Story 6.4 — separate query for the sticky pinned band; immune to list filters.
   // Routes through the shared hook (#486 / #516) so the URL + staleTime + pageSize
   // can't drift between this callsite and other consumers (mobile).
-  const { data: pinnedData } = usePinnedAnnouncements();
+  // Manager-only endpoint; residents derive the band from their published list.
+  const { data: pinnedData } = usePinnedAnnouncements(isManager);
   const deleteAnnouncement = useDeleteAnnouncement();
   const publishAnnouncement = usePublishAnnouncement();
   const archiveAnnouncement = useArchiveAnnouncement();
@@ -81,7 +93,9 @@ function AnnouncementsPageRoute() {
 
   const announcements = data?.items ?? [];
   const total = data?.total ?? 0;
-  const pinnedAnnouncements = pinnedData?.items ?? [];
+  const pinnedAnnouncements = isManager
+    ? (pinnedData?.items ?? [])
+    : announcements.filter((a) => a.pinned);
 
   const handleDelete = async (id: string) => {
     try {
@@ -176,6 +190,7 @@ function AnnouncementsPageRoute() {
       onArchive={handleArchive}
       onPin={handlePin}
       onFilterChange={handleAnnouncementsFilterChange}
+      canManage={isManager}
     />
   );
 }
@@ -245,6 +260,7 @@ export function ViewAnnouncementPageInner({ announcementId }: { announcementId: 
   const autoMarkReadFired = useRef(false);
 
   const { data, isLoading, error } = useAnnouncement(announcementId);
+  const isManager = isManagerRole(user?.role);
   const markRead = useMarkReadAnnouncement();
   const acknowledge = useAcknowledgeAnnouncement();
   const publishAnnouncement = usePublishAnnouncement();
@@ -252,10 +268,11 @@ export function ViewAnnouncementPageInner({ announcementId }: { announcementId: 
   const pinAnnouncement = usePinAnnouncement();
   const deleteAnnouncement = useDeleteAnnouncement();
 
-  // Fetch ack stats only when the announcement requires acknowledgment (manager view)
+  // Fetch ack stats only when the announcement requires acknowledgment (manager view;
+  // the endpoint is manager-only and would 403 for residents)
   const { data: ackStatsData } = useAnnouncementAcknowledgmentStats(
     announcementId,
-    !!data?.announcement?.acknowledgmentRequired
+    isManager && !!data?.announcement?.acknowledgmentRequired
   );
 
   // Story 6.3: Comments — only fetch when commentsEnabled
@@ -272,7 +289,7 @@ export function ViewAnnouncementPageInner({ announcementId }: { announcementId: 
     if (error) {
       showToast({
         type: 'error',
-        title: t('announcements.failedToLoad', { defaultValue: 'Failed to load announcement' }),
+        title: t('announcements.failedToLoadOne', { defaultValue: 'Failed to load announcement' }),
         message: error instanceof Error ? error.message : t('auth.unexpectedError'),
       });
     }
@@ -467,7 +484,6 @@ export function ViewAnnouncementPageInner({ announcementId }: { announcementId: 
   };
 
   // Build commentsProps when comments are enabled (Story 6.3)
-  const isManager = isManagerRole(user?.role);
   const commentsProps = commentsEnabled
     ? {
         comments: commentsData?.comments ?? [],
@@ -492,6 +508,7 @@ export function ViewAnnouncementPageInner({ announcementId }: { announcementId: 
         onPin={handlePin}
         onDelete={handleDelete}
         onBack={() => navigate('/announcements')}
+        canManage={isManager}
       />
     );
   }
@@ -510,6 +527,7 @@ export function ViewAnnouncementPageInner({ announcementId }: { announcementId: 
       onAcknowledge={announcement.acknowledgmentRequired ? handleAcknowledge : undefined}
       acknowledgmentStats={ackStatsData?.stats}
       commentsProps={commentsProps}
+      canManage={isManager}
     />
   );
 }
@@ -547,7 +565,7 @@ function EditAnnouncementPageInner({ announcementId }: { announcementId: string 
     if (error) {
       showToast({
         type: 'error',
-        title: t('announcements.failedToLoad', { defaultValue: 'Failed to load announcement' }),
+        title: t('announcements.failedToLoadOne', { defaultValue: 'Failed to load announcement' }),
         message: error instanceof Error ? error.message : t('auth.unexpectedError'),
       });
     }
@@ -605,9 +623,23 @@ export function announcementRoutes() {
   return (
     <>
       <Route path="/announcements" element={<AnnouncementsPageRoute />} />
-      <Route path="/announcements/new" element={<CreateAnnouncementPageRoute />} />
+      <Route
+        path="/announcements/new"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <CreateAnnouncementPageRoute />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/announcements/:announcementId" element={<ViewAnnouncementPageRoute />} />
-      <Route path="/announcements/:announcementId/edit" element={<EditAnnouncementPageRoute />} />
+      <Route
+        path="/announcements/:announcementId/edit"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <EditAnnouncementPageRoute />
+          </ProtectedRoute>
+        }
+      />
     </>
   );
 }

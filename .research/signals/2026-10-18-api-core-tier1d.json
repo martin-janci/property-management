@@ -1,0 +1,51 @@
+{
+  "generated": "2026-10-18T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable backlog starved: claimable=5 < floor=36; deterministic refills backlog-refill + retry-remint came up empty). Static single-segment rotating code review per .claude/skills/ppt-dev-review/SKILL.md — no compilation, no test execution, no branch checkout (cloud runner: file reading + grep only). DISPATCHER_OWNED_COMMIT=1: this artifact was written into the working tree ONLY; no git add/commit/push performed; the orchestrator folds .research deltas into its Phase 6 commit. .research/management/assignments.json was NOT touched. SEGMENT SELECTION: no Phase-1 churn list was handed to this demand-driven invocation, so priority-1 churn-alignment was empty and selection fell to priority-2 oldest-unreviewed. review_cursor oldest date is api-handlers=2026-10-11 — SKIPPED for saturation (backlog.json has 3 open code-review-finding rows with segment==api-handlers && status==open). Next oldest is mobile-rn=2026-10-16 — SKIPPED as already-covered-this-cycle: signal file 2026-10-18-mobile-rn-tier1d.json is already present for today (2 findings: push-isregistered-premature, push-isregistered-perm-only), and mobile-native-kmp was also already covered today (2026-10-18-mobile-native-kmp-tier1d.json); re-reviewing either would be a redundant double-review within one cycle. Also per the invocation directive, mobile-native/KMP is deprioritized (findings structurally un-landable in this cloud runner). Selection therefore advanced to the next oldest-unreviewed, non-saturated, non-KMP, not-yet-covered-today segment: the 2026-10-17 tie (api-core, reality-server, ppt-web-ui, ppt-web-core, reality-web), broken by segment-map order to api-core (0 open code-review-finding rows in backlog.json — not saturated). SCOPE NOTE: the segment map path `backend/api-server/src/` is stale; the real tree is `backend/servers/api-server/src/`. This repo keeps route handlers in `routes/` (that IS the saturated `api-handlers` segment), so api-core was reviewed as the NON-route core: services/, state.rs, client_ip.rs, observability.rs, preflight.rs, lib.rs, main.rs, bin/. MATURITY: this core is exceptionally well-defended and heavily regression-tested — verified SOUND and NOT flagged: jwt.rs (access/refresh token_type gate + pinned regression test + documented triple-copy maintenance contract #1675/#1782; HS256-only Validation::default, validate_exp=true), totp.rs (startup config panics are intentional fail-fast with operator-actionable messages, dev fallback gated on RUST_ENV), client_ip.rs (textbook trusted-proxy X-Forwarded-For/CF-Connecting-IP allowlist, #2789), scheduler/mod.rs (every std::sync::Mutex lock is poison-tolerant via .unwrap_or_else(|e| e.into_inner()) with a regression test at :2343), push_fanout.rs (the 3 reqwest .expect(\"...build should not fail\") are in adapter CONSTRUCTORS built once at AppState/QuietHoursDrainWorker wiring — confirmed NOT per-tick/per-send, so boot-only, not a crash path), oauth.rs (is_confidential/rotate_refresh_tokens unwrap_or(true) are secure-by-default, not fail-open), no SQLi (format! appears only in error strings, queries go through typed repos), no unsafe, no reachable todo!()/unimplemented!(). De-dup: prior api-core signals (2026-10-16, 2026-08-30) cover dead/stub middleware in the api-core CRATE (tenant_filter, rls_context) and scheduler spam/push-noop — all distinct from the CORS findings below; backlog.json has 0 open api-core code-review-finding rows and no prior finding covers the CORS allow_headers/origins test-vs-prod divergence. Honest de-duplication: 2 genuinely net-new, cloud-landable findings emitted; no padding toward the 3-finding cap.",
+  "segment_reviewed": "api-core",
+  "selection_reason": "oldest-unreviewed (api-handlers=2026-10-11 skipped for saturation=3 open findings; mobile-rn=2026-10-16 and mobile-native-kmp already covered earlier in this same 2026-10-18 cycle — double-review avoidance + KMP deprioritized as un-landable; advanced to the 2026-10-17 tie and broke it by segment-map order to api-core, which has 0 open code-review-finding rows in backlog.json and is NOT saturated)",
+  "experts_used": ["rust", "security"],
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-api-core-cors-prod-test-divergence",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "security",
+      "files": [
+        "backend/servers/api-server/src/main.rs",
+        "backend/servers/api-server/src/lib.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/main.rs:119-143 `cors_layer()` (PRODUCTION) and backend/servers/api-server/src/lib.rs:463-488 (inside `create_router`, the INTEGRATION-TEST router per its own doc comment at lib.rs:440-451) build TWO separate, divergent CorsLayers. The codebase deliberately unified router/middleware into a single source (`route_table()`, issue #867; security_headers mirrored #963) precisely to stop test-vs-prod drift — but CORS is the one middleware left NOT unified, and it has already drifted on two axes.",
+        "AXIS 1 — allow_headers (the dangerous one): the TEST router (lib.rs:479-485) allows `x-tenant-id` in allow_headers; the PRODUCTION layer (main.rs:133-140) does NOT list `x-tenant-id`. Tenant-scoped api-server routes require the `X-Tenant-ID` header (RlsConnection extractor), and the browser SPA ppt-web sends it cross-origin: frontend/apps/ppt-web/src/routes/groups/rentals.tsx:200 returns `{ Authorization, 'X-Tenant-ID': auth.xTenantId }` and the shared `authenticatedFetch` client (#3000) attaches it; the generated api-client (frontend/packages/api-client/src/generated/types.gen.ts, many endpoints) carries `X-Tenant-ID`. With `allow_credentials(true)` set on BOTH layers and `https://ppt.three-two-bit.com`/`https://reality.three-two-bit.com` in the allowed-origin list, a cross-origin browser request carrying `X-Tenant-ID` triggers a CORS preflight that PRODUCTION rejects (header not in allow_headers) while the integration tests (which run `create_router`, where the header IS allowed) pass green — a prod-only preflight failure on every tenant-scoped browser call, masked by the divergent test config.",
+        "AXIS 2 — origins: production `get_cors_allowed_origins()` (main.rs:69-100) honors the `CORS_ALLOWED_ORIGINS` env var (comma-split, validated, with fallback); the test router hardwires `parse_default_origins()` (lib.rs:110-115) and ignores the env entirely. So the entire production CORS override path (env parsing, the 'set but all-invalid -> fallback' branch) is NEVER exercised by any integration test — a regression there ships undetected.",
+        "VERIFICATION FOR IMPLEMENTER: confirm the prod topology — if ppt-web/reality-web reach the api-server CROSS-ORIGIN in production (the allowed-origins list and allow_credentials(true) strongly imply yes), AXIS 1 is an ACTIVE prod bug (tenant-scoped browser requests fail preflight); if all browser traffic is same-origin/reverse-proxied so no preflight fires, it is a latent gap. Either way AXIS 1+2 are a real test/prod divergence. FIX: extract ONE shared `cors_layer()` (env-aware, with the full allow_headers set incl. `x-tenant-id`) into the shared build path the way route_table()/security_headers were unified under #867/#963, have both main.rs and lib.rs::create_router consume it, and add a guard test (mirroring `route_table_is_single_source_of_truth`) so the CORS config can never silently diverge again."
+      ]
+    },
+    {
+      "id": "code-review-api-core-cors-localhost-prod-default",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "security",
+      "files": [
+        "backend/servers/api-server/src/lib.rs",
+        "backend/servers/api-server/src/main.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/lib.rs:100-108 `DEFAULT_CORS_ORIGINS` = [http://localhost:3000, http://localhost:3001, http://localhost:8080, http://localhost:8081, https://ppt.three-two-bit.com, https://reality.three-two-bit.com]. This list is the PRODUCTION fallback: main.rs:69 `get_cors_allowed_origins()` returns `parse_default_origins()` whenever `CORS_ALLOWED_ORIGINS` is unset OR set-but-no-valid-entries (main.rs:85-99). Combined with `allow_credentials(true)` (main.rs:141), a production deploy that forgets to set `CORS_ALLOWED_ORIGINS` silently trusts four `http://localhost:*` dev origins as credentialed CORS origins.",
+        "Trusting plaintext `http://localhost:*` origins with credentials in a production CORS allowlist is a latent misconfiguration (dev origins should never be trusted by a prod edge; it also widens the surface for local-attacker / malicious-dev-tooling scenarios). The failure is silent — the only signal is an info-level `tracing::info!(\"CORS_ALLOWED_ORIGINS not set, using default origins\")` at main.rs:95, easy to miss.",
+        "FIX: split the default origin set by environment — localhost origins only when RUST_ENV=development (the same gate totp.rs/main.rs use for dev fallbacks), and in production either require `CORS_ALLOWED_ORIGINS` to be set explicitly (fail-fast panic with an actionable message, matching the JWT_SECRET pattern at main.rs:539-547) or fall back to prod-only origins (the two three-two-bit.com entries) with no localhost. Low risk, backend-only, statically landable."
+      ]
+    }
+  ]
+}

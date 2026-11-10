@@ -11,6 +11,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { queryKeys } from '../../../lib/queryKeys';
 import {
   confirmMatch,
@@ -20,9 +21,12 @@ import {
   rejectMatch,
   uploadStatement,
 } from '../api/paymentMatching';
+import { AccountingSubNav } from '../components/AccountingSubNav';
 
-function formatDate(value: string, month: 'short' | 'long'): string {
-  return new Date(value).toLocaleDateString(undefined, {
+const MATCH_STATES = ['unmatched', 'suggested', 'matched'] as const;
+
+function formatDate(value: string, month: 'short' | 'long', locale: string): string {
+  return new Date(value).toLocaleDateString(locale, {
     month,
     day: 'numeric',
     year: 'numeric',
@@ -30,22 +34,43 @@ function formatDate(value: string, month: 'short' | 'long'): string {
 }
 
 export function PaymentMatchingPage() {
+  const { t, i18n } = useTranslation();
+  const formatConfidence = (value: string) =>
+    new Intl.NumberFormat(i18n.language, { style: 'percent', maximumFractionDigits: 0 }).format(
+      Number.parseFloat(value) || 0
+    );
+  const matchStateLabel = (state: string) =>
+    (MATCH_STATES as readonly string[]).includes(state)
+      ? t(`accounting.paymentMatching.state.${state}`)
+      : state;
   const [selectedStatementId, setSelectedStatementId] = useState<string | null>(null);
   const [selectedLineId, setSelectedLineId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  const { data: statements, isLoading: statementsLoading } = useQuery({
+  const {
+    data: statements,
+    isLoading: statementsLoading,
+    isError: statementsError,
+  } = useQuery({
     queryKey: queryKeys.accounting.statements(),
     queryFn: fetchStatements,
   });
 
-  const { data: lines, isLoading: linesLoading } = useQuery({
+  const {
+    data: lines,
+    isLoading: linesLoading,
+    isError: linesError,
+  } = useQuery({
     queryKey: queryKeys.accounting.statementLines(selectedStatementId ?? ''),
     queryFn: () => fetchStatementLines(selectedStatementId as string),
     enabled: !!selectedStatementId,
   });
 
-  const { data: matches, isLoading: matchesLoading } = useQuery({
+  const {
+    data: matches,
+    isLoading: matchesLoading,
+    isError: matchesError,
+  } = useQuery({
     queryKey: queryKeys.accounting.lineMatches(selectedLineId ?? ''),
     queryFn: () => fetchLineMatches(selectedLineId as string),
     enabled: !!selectedLineId,
@@ -74,20 +99,25 @@ export function PaymentMatchingPage() {
 
   return (
     <div className="p-8">
+      <AccountingSubNav />
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Payment Matching</h1>
-          <p className="text-sm text-gray-500">Review and confirm matches from bank statements</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {t('accounting.paymentMatching.title')}
+          </h1>
+          <p className="text-sm text-gray-500">{t('accounting.paymentMatching.subtitle')}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left: Statements (3 cols) */}
         <div className="lg:col-span-3 bg-white p-6 rounded-lg shadow border border-gray-100">
-          <h2 className="text-lg font-semibold mb-4 text-gray-800">Bank Statements</h2>
+          <h2 className="text-lg font-semibold mb-4 text-gray-800">
+            {t('accounting.paymentMatching.statements')}
+          </h2>
           <div className="mb-6">
             <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">
-              Upload CSV
+              {t('accounting.paymentMatching.uploadCsv')}
             </label>
             <div className="relative">
               <input
@@ -101,16 +131,18 @@ export function PaymentMatchingPage() {
                 htmlFor="statement-upload"
                 className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer transition-colors"
               >
-                Choose File
+                {t('accounting.paymentMatching.chooseFile')}
               </label>
             </div>
             {uploadMutation.isPending && (
               <p className="text-xs text-blue-600 mt-2 animate-pulse font-medium">
-                Processing upload...
+                {t('accounting.paymentMatching.uploading')}
               </p>
             )}
             {uploadMutation.isError && (
-              <p className="text-xs text-red-600 mt-2 font-medium">Upload failed</p>
+              <p className="text-xs text-red-600 mt-2 font-medium" role="alert">
+                {t('accounting.paymentMatching.uploadFailed')}
+              </p>
             )}
           </div>
 
@@ -121,9 +153,13 @@ export function PaymentMatchingPage() {
                   <div key={i} className="h-16 bg-gray-50 rounded" />
                 ))}
               </div>
+            ) : statementsError ? (
+              <p className="text-xs text-red-600 font-medium text-center py-4" role="alert">
+                {t('accounting.paymentMatching.loadFailed')}
+              </p>
             ) : statements?.length === 0 ? (
               <p className="text-xs text-gray-400 italic text-center py-4">
-                No statements uploaded yet
+                {t('accounting.paymentMatching.noStatements')}
               </p>
             ) : (
               statements?.map((s) => (
@@ -147,7 +183,7 @@ export function PaymentMatchingPage() {
                   </p>
                   <div className="flex justify-between items-center mt-2">
                     <p className="text-[10px] text-gray-500">
-                      {formatDate(s.imported_at, 'short')}
+                      {formatDate(s.imported_at, 'short', i18n.language)}
                     </p>
                     <p className="text-[10px] font-mono text-gray-400 truncate max-w-[100px]">
                       {s.account_iban}
@@ -161,7 +197,9 @@ export function PaymentMatchingPage() {
 
         {/* Middle: Lines (5 cols) */}
         <div className="lg:col-span-5 bg-white p-6 rounded-lg shadow border border-gray-100">
-          <h2 className="text-lg font-semibold mb-4 text-gray-800">Transactions</h2>
+          <h2 className="text-lg font-semibold mb-4 text-gray-800">
+            {t('accounting.paymentMatching.transactions')}
+          </h2>
           {!selectedStatementId ? (
             <div className="flex flex-col items-center justify-center py-24 border-2 border-dashed border-gray-100 rounded-lg text-gray-400">
               <svg
@@ -178,7 +216,7 @@ export function PaymentMatchingPage() {
                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                 />
               </svg>
-              <p className="text-sm">Select a statement to view items</p>
+              <p className="text-sm">{t('accounting.paymentMatching.selectStatement')}</p>
             </div>
           ) : linesLoading ? (
             <div className="animate-pulse space-y-3">
@@ -186,9 +224,17 @@ export function PaymentMatchingPage() {
                 <div key={i} className="h-20 bg-gray-50 rounded" />
               ))}
             </div>
+          ) : linesError ? (
+            <p className="text-xs text-red-600 font-medium text-center py-4" role="alert">
+              {t('accounting.paymentMatching.loadFailed')}
+            </p>
+          ) : !lines || lines.length === 0 ? (
+            <p className="text-xs text-gray-400 italic text-center py-4">
+              {t('accounting.paymentMatching.noTransactions')}
+            </p>
           ) : (
             <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-              {lines?.map((l) => (
+              {lines.map((l) => (
                 <button
                   type="button"
                   key={l.id}
@@ -208,7 +254,7 @@ export function PaymentMatchingPage() {
                         </span>
                       </p>
                       <p className="text-[10px] font-medium text-gray-400 mt-2 tracking-tight uppercase">
-                        {formatDate(l.booking_date, 'long')}
+                        {formatDate(l.booking_date, 'long', i18n.language)}
                       </p>
                     </div>
                     <span
@@ -220,13 +266,13 @@ export function PaymentMatchingPage() {
                             : 'bg-gray-50 text-gray-500 border border-gray-100'
                       }`}
                     >
-                      {l.match_state}
+                      {matchStateLabel(l.match_state)}
                     </span>
                   </div>
                   <div className="mt-4 pt-3 border-t border-gray-50 grid grid-cols-2 gap-4 text-[11px]">
                     <div className="flex flex-col">
                       <span className="text-gray-400 font-bold uppercase text-[9px] mb-0.5 tracking-tight">
-                        Variable Symbol
+                        {t('accounting.paymentMatching.variableSymbol')}
                       </span>
                       <span className="text-gray-700 font-mono font-medium truncate">
                         {l.variable_symbol || '—'}
@@ -234,7 +280,7 @@ export function PaymentMatchingPage() {
                     </div>
                     <div className="flex flex-col">
                       <span className="text-gray-400 font-bold uppercase text-[9px] mb-0.5 tracking-tight">
-                        Counterparty IBAN
+                        {t('accounting.paymentMatching.counterpartyIban')}
                       </span>
                       <span className="text-gray-700 font-mono font-medium truncate">
                         {l.counterparty_iban || '—'}
@@ -252,7 +298,9 @@ export function PaymentMatchingPage() {
 
         {/* Right: Matches (4 cols) */}
         <div className="lg:col-span-4 bg-white p-6 rounded-lg shadow border border-gray-100">
-          <h2 className="text-lg font-semibold mb-4 text-gray-800">Match Review</h2>
+          <h2 className="text-lg font-semibold mb-4 text-gray-800">
+            {t('accounting.paymentMatching.matchReview')}
+          </h2>
           {!selectedLineId ? (
             <div className="flex flex-col items-center justify-center py-24 border-2 border-dashed border-gray-100 rounded-lg text-gray-400">
               <svg
@@ -270,15 +318,40 @@ export function PaymentMatchingPage() {
                 />
               </svg>
               <p className="text-sm px-8 text-center">
-                Select a transaction to see suggested invoice matches
+                {t('accounting.paymentMatching.selectTransaction')}
               </p>
             </div>
           ) : matchesLoading ? (
             <div className="animate-pulse space-y-4">
               <div className="h-48 bg-gray-50 rounded-xl" />
             </div>
+          ) : matchesError ? (
+            <div className="flex flex-col items-center justify-center py-12 text-red-600 bg-red-50/50 rounded-xl border border-red-100">
+              <svg
+                className="w-8 h-8 mb-2 opacity-40"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <p className="text-xs font-medium" role="alert">
+                {t('accounting.paymentMatching.loadFailed')}
+              </p>
+            </div>
           ) : (
             <div className="space-y-4">
+              {(confirmMutation.isError || rejectMutation.isError) && (
+                <p className="text-xs text-red-600 font-medium" role="alert">
+                  {t('accounting.paymentMatching.actionFailed')}
+                </p>
+              )}
               {matches
                 ?.filter((m) => m.state === 'suggested')
                 .map((m) => {
@@ -293,10 +366,10 @@ export function PaymentMatchingPage() {
                       <div className="flex justify-between items-center mb-4">
                         <div className="flex flex-col">
                           <span className="text-[10px] font-bold text-yellow-600 uppercase tracking-widest mb-1">
-                            Confidence Score
+                            {t('accounting.paymentMatching.confidence')}
                           </span>
                           <span className="text-2xl font-black text-yellow-700">
-                            {(Number.parseFloat(m.confidence) * 100).toFixed(0)}%
+                            {formatConfidence(m.confidence)}
                           </span>
                         </div>
                         <div className="w-12 h-12 rounded-full border-4 border-yellow-100 flex items-center justify-center">
@@ -307,7 +380,7 @@ export function PaymentMatchingPage() {
                       <div className="space-y-3 mb-6 p-3 bg-white/50 rounded-lg border border-yellow-100/50">
                         <div>
                           <span className="text-[9px] font-bold text-gray-400 uppercase block mb-0.5">
-                            Invoice Reference
+                            {t('accounting.paymentMatching.invoiceReference')}
                           </span>
                           <p className="text-xs font-bold text-gray-800 font-mono">
                             {m.invoice_id}
@@ -315,10 +388,10 @@ export function PaymentMatchingPage() {
                         </div>
                         <div>
                           <span className="text-[9px] font-bold text-gray-400 uppercase block mb-0.5">
-                            Match Reason
+                            {t('accounting.paymentMatching.matchReason')}
                           </span>
                           <p className="text-xs text-gray-600 leading-tight">
-                            Variable symbol and amount matches the open balance.
+                            {t('accounting.paymentMatching.matchReasonText')}
                           </p>
                         </div>
                       </div>
@@ -330,7 +403,9 @@ export function PaymentMatchingPage() {
                           disabled={confirming}
                           className="w-full bg-blue-600 text-white text-xs font-bold py-3 rounded-lg hover:bg-blue-700 transition-all shadow-md active:scale-[0.98] disabled:bg-gray-400"
                         >
-                          {confirming ? 'Processing...' : 'Confirm Payment Match'}
+                          {confirming
+                            ? t('accounting.paymentMatching.confirming')
+                            : t('accounting.paymentMatching.confirm')}
                         </button>
                         <button
                           type="button"
@@ -338,7 +413,9 @@ export function PaymentMatchingPage() {
                           disabled={rejecting}
                           className="w-full bg-white text-gray-500 border border-gray-200 text-xs font-bold py-2.5 rounded-lg hover:bg-gray-50 transition-colors disabled:bg-gray-100"
                         >
-                          {rejecting ? 'Rejecting...' : 'Not a match'}
+                          {rejecting
+                            ? t('accounting.paymentMatching.rejecting')
+                            : t('accounting.paymentMatching.reject')}
                         </button>
                       </div>
                     </div>
@@ -370,11 +447,11 @@ export function PaymentMatchingPage() {
                         </svg>
                       </div>
                       <span className="text-xs font-bold text-green-700 uppercase tracking-widest">
-                        Match Confirmed
+                        {t('accounting.paymentMatching.confirmed')}
                       </span>
                     </div>
                     <p className="text-xs text-gray-600 font-medium relative z-10">
-                      Linked to Invoice:{' '}
+                      {t('accounting.paymentMatching.linkedInvoice')}{' '}
                       <span className="font-mono font-bold text-gray-800">{m.invoice_id}</span>
                     </p>
                     <div className="absolute right-[-20px] bottom-[-20px] opacity-10">
@@ -411,7 +488,9 @@ export function PaymentMatchingPage() {
                         d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                       />
                     </svg>
-                    <p className="italic text-xs font-medium">No active match suggestions</p>
+                    <p className="italic text-xs font-medium">
+                      {t('accounting.paymentMatching.noSuggestions')}
+                    </p>
                   </div>
                 )}
             </div>

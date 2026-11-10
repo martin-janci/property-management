@@ -1,0 +1,46 @@
+[
+  {
+    "id": "code-review-mobile-native-kmp-create-listing-stub",
+    "type": "code-review-finding",
+    "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-03 mobile-native-kmp — realtor Create Listing form is fully built but its submit handler is a hard-coded NotImplementedError, so publishing a new listing can never succeed)",
+    "segment": "mobile-native-kmp",
+    "score_delta": 2,
+    "confidence": "high",
+    "candidate_vector": "bug",
+    "expert": "kotlin",
+    "files": [
+      "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+      "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt",
+      "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
+    ],
+    "evidence": [
+      "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:489-494 — the `Screen.CreateListing` composable wires `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`. The submit callback is a constant failure: it ignores the CreateListingInput and performs no network call. This is the ONLY grep hit for `NotImplementedError` in a production (non-test, non-iosMain-stub) path in the whole segment.",
+      "The screen is reachable in production: MyListings (Navigation.kt:481-493, `onCreateClick = { navController.navigate(Screen.CreateListing.route) }`) navigates to it, and the CreateListing route is registered in the NavHost. So a signed-in realtor can open the form from their listings tab.",
+      "CreateListingScreen is NOT a stub — it is a complete form with client-side validation and submit plumbing: mobile-native/androidApp/.../ui/realtor/CreateListingScreen.kt:41 declares `onSubmit: suspend (CreateListingInput) -> Result<Unit>`; L95-128 validate title/city/price, build a CreateListingInput, call `onSubmit(...)` in a coroutine, and `result.fold(onSuccess = { onCreated() }, onFailure = { generalError = if (it.isNetworkError()) networkErrorMsg else publishFailedMsg })`. Because the injected onSubmit always returns Result.failure(NotImplementedError) (which is not a network error), every submit lands in the onFailure branch and shows the generic 'publish failed' message. There is no success path.",
+      "No backing repository method exists to wire it to: PortalListingsRepository (mobile-native/shared/.../realtor/PortalListingsRepository.kt) exposes only `listMyListings`, `getListingAnalytics`, `getPortfolioAnalytics` — no create/POST method. A repo-wide grep for `fun create` / `createListing` / a POST to `my/listings` finds none (only unrelated `createInquiry`, `createMobileToken`, listings/search POST). The whole create-listing leg (repository method + API call + model) is unimplemented, not merely unwired.",
+      "Confidence HIGH (traced full path): route registration -> navigation entry -> screen onSubmit consumption -> injected constant-failure callback -> absence of any create method in the repository layer are all confirmed by direct read. Net effect: the realtor 'Create Listing' feature is shipped in the UI but is dead — a user fills the form, taps publish, and always gets a failure toast.",
+      "Fix (mobile-native, landable): add a `createListing(input): Result<Unit>` to PortalListingsRepository that POSTs to the listings create endpoint, then inject it at Navigation.kt:493 in place of the NotImplementedError stub; add a KMP commonTest (the module already has PortalListingsRepositoryTest + *PathEncodingTest patterns) asserting the request shape and the success/failure fold. If the backend endpoint does not yet exist, the honest minimum is to gate/hide the Create entry point so the UI does not advertise an action that cannot succeed."
+    ]
+  },
+  {
+    "id": "code-review-mobile-native-kmp-realtor-load-swallows-errors",
+    "type": "code-review-finding",
+    "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-03 mobile-native-kmp — several realtor/account data loads collapse every failure into an empty success state, hiding backend/network errors behind a misleading 'nothing here' / zeroed UI with no retry)",
+    "segment": "mobile-native-kmp",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "expert": "kotlin",
+    "files": [
+      "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt"
+    ],
+    "evidence": [
+      "mobile-native/androidApp/.../navigation/Navigation.kt — four in-NavHost LaunchedEffect data loads treat ANY failure as 'empty': saved searches (L379-381 `.onFailure { searches = emptyList() }`), realtor/agency inquiries (L450-451 `.onFailure { inquiries = emptyList() }`), My Listings (L476-477 `.onFailure { listings = emptyList() }`), and portfolio analytics (L541-542 `.onFailure { metrics = emptyList() }`). In every case `isLoading` is then set false and no error flag is raised.",
+      "The downstream screens have no error state to render — e.g. MyListingsScreen (ui/realtor/MyListingsScreen.kt:45-108) takes only `listings` + `isLoading` and branches `isLoading -> spinner`, `listings.isEmpty() -> EmptyState()`. There is no `isError`/onRetry parameter. So a failed load is indistinguishable from a genuinely empty account.",
+      "Impact: a realtor hitting a 500 / timeout / transient network blip on their own-business dashboards sees 'you have no listings', 'no inquiries', 'no saved searches', or an analytics screen with no metrics — rather than an error with a retry. The analytics case is the most misleading: an empty metrics list on failure reads as real zero-activity business data. None of these screens offers a way to retry short of leaving and re-entering the route.",
+      "The MyListings block comment (Navigation.kt:461-464) documents the empty fallback only for the 401/signed-out case; the `.onFailure` arm does not distinguish 401 from 5xx/network, so non-auth failures are silently swallowed too. This is a systemic pattern across the realtor surfaces, not a one-off.",
+      "Confidence MEDIUM (static-only): the onFailure->emptyList arms and the screens' lack of an error branch are confirmed by direct read; not runtime-confirmed because the exact message a user sees depends on which failure fires, but in all cases the UI cannot surface that a failure occurred.",
+      "Fix (mobile-native, landable): carry the Result failure into UI state (an `errorMessage`/`isError` field) and give these screens an ErrorContent + onRetry branch like ListingDetail/Inquiries/Favorites already have (ui/listing/ListingDetailScreen.kt:120-121, ui/inquiries/InquiriesScreen.kt:167-175, ui/favorites/FavoritesScreen.kt:162-170 all model the correct pattern). Distinguish 401/unauthenticated (empty state is fine) from 5xx/network (error + retry). Verifiable with the existing KMP commonTest harness by asserting a failed load maps to an error state rather than empty."
+    ]
+  }
+]

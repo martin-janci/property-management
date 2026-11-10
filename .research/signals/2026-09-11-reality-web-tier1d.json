@@ -1,0 +1,70 @@
+{
+  "run_iso": "2026-09-11T00:00:00Z",
+  "trigger_payload": "Tier-1d demand-driven code-review generation: dispatcher claimable buffer STARVED (claimable=8 < BUFFER_FLOOR=36) and the concrete refill paths (backlog-refill, retry-remint) are dry. Fresh LANDABLE review signals must be PRODUCED (not promoted). ONE rotating static-analysis segment, mode: cloud-ok (file reading + grep only), no compilation, no test execution, gh NOT available. DISPATCHER_OWNED_COMMIT=1: this generator writes the signal artifact only and returns; the dispatcher orchestrator owns the single Phase 6 commit (no git add/commit/push here, no assignment/action-list/state mutation).",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "CHURN_FILES empty, so selection is oldest-unreviewed. The REVIEW_CURSOR handed in ties two segments at 2026-08-29: ppt-web-core and reality-web. Both are LANDABLE (Next.js/frontend, cloud-buildable). Per the established Tier-1d convention (see 2026-09-10-reality-web-tier1d.json selection_reason) the state.json review_cursor is STALE and is not the real last-reviewed source of truth; reconstructing real dates from .research/signals/*.json filenames shows ppt-web-core was ALREADY reviewed earlier today (2026-09-11-ppt-web-core-tier1d.json exists), while reality-web's newest prior signal is 2026-09-10 — so among the two cursor-tied-oldest segments, reality-web is the one NOT already covered today, and it is also the oldest clearly-landable frontend segment by reconstructed date (reality-web=2026-09-10 vs ppt-web-ui=2026-09-11, ppt-web-core=2026-09-11; mobile-rn=2026-09-10 excluded as RN-jest not cloud-landable per prior convention; api-core/api-handlers/reality-server excluded as backend not cloud-buildable; mobile-native-kmp explicitly excluded by the task). Saturation check PASSED: 0 OPEN code-review-finding rows for reality-web in backlog.json (skill >=3-open skip rule not triggered; backlog shows all historical reality-web findings done/dropped). DEDUP DISCIPLINE: reality-web is heavily mined (95 distinct prior code-review-reality-web-* ids). The three most obvious static candidates this pass were DISCARDED as exact duplicates: (a) realtor/[id] + profile pages rendering MOCK_* fixtures / ignoring the route id / non-functional contact form -> already code-review-reality-web-realtor-profile-mock-noid, -realtor-profile-mock-unwired, -realtor-profile-mock-data, -agent-profile-mock-stub, -realtor-contact-fake-submit, -profile-mock-data-shipped, -profile-page-mock-data; (b) the realtor/report/account page hardcoded-Slovak / no-useTranslations i18n gap -> already ~8 prior ids (realtor-account-i18n-gap, realtor-account-pages-no-i18n, realtor-section-no-i18n, realtor-page-no-i18n, profile-pages-i18n-gap, realtor-profile-hardcoded-slovak, ...); (c) ListingGrid empty-state English -> already code-review-reality-web-listinggrid-empty-i18n. Review was redirected to PREVIOUSLY-UNMINED files, identified by diffing the referenced-file basenames of ALL prior *reality-web* signals (60 basenames) against the live src tree. From that unmined set, PhotoGallery.tsx and ListingHeader.tsx yielded genuine findings; the en-US price anti-pattern flagged for AdditionalInfo.tsx on 2026-09-10 was found to have TWO further un-flagged sites (ListingHeader.tsx primary price + AgencyListings.tsx table). tenant-config.ts, layout.ts, auth-context.tsx, auth-token.ts, middleware.ts, realtor-api.ts, Resources.tsx, Description.tsx, Features.tsx, KeyDetails.tsx, opengraph-image.tsx, analytics-session.ts, feature-flags.ts were also read and are clean/well-defended. All three findings are frontend-only (reality-web) -> cloud-landable.",
+  "experts_used": ["frontend"],
+  "findings_count": 3,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-reality-web-listingheader-en-us-price",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-11 reality-web listing-detail ListingHeader formats the PRIMARY headline price with a locally-redefined formatPrice hardcoded to en-US, wrong for every sk/cs/de/pl/hu visitor)",
+      "segment": "reality-web",
+      "expert": "frontend",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/sections/ListingHeader.tsx",
+        "frontend/apps/reality-web/src/lib/format.ts"
+      ],
+      "evidence": [
+        "ListingHeader.tsx:6-16 defines a module-local `formatPrice(price, currency)` that calls `new Intl.NumberFormat('en-US', ...)` on BOTH branches (the no-currency fallback at :9 and the currency branch at :11-14). The locale is hardcoded to 'en-US' regardless of the visitor's route locale. This formatter renders the listing-detail HEADLINE price at :50 (`<span className=\"price\">{formatPrice(listing.price, listing.currency)}`) and the price-per-sqm at :54, so on the public, SEO-indexed listing-detail page a Slovak/Czech/German buyer sees US-formatted money (',' thousands, '.' decimals, '$'-style symbol placement) instead of `1 234 €` / `1.234 €`. This is the single most prominent money field on the page.",
+        "This is the same anti-pattern already filed for a SIBLING file on 2026-09-10 (code-review-reality-web-additionalinfo-hardcoded-en-us-price, AdditionalInfo.tsx) but ListingHeader.tsx is a DISTINCT, un-flagged file and is higher-impact (H1-adjacent headline price vs a secondary section). lib/format.ts header (:5-6) explicitly states it exists to replace scattered `Intl.NumberFormat('en-US', {...})` sites that 'produced visibly wrong output for the other five' locales, and exposes `formatPrice(value, locale, options)` (:48-59) that threads `bcp47(locale)` + defaults to EUR. ListingHeader bypasses it with an inline en-US copy.",
+        "The locale is trivially in scope: ListingHeader is a `[locale]` route section and already calls `useTranslations('listing')` at :19, so `useLocale()` from next-intl is available. Landable frontend-only fix: delete the local formatPrice and `import { formatPrice } from '@/lib/format'`, calling `formatPrice(price, locale, { currency })` (mirror ListingCard.tsx:106 which already does exactly this).",
+        "Reproduce (static): grep -n \"'en-US'\" components/listings/sections/ListingHeader.tsx -> :9 and :11; grep -n \"lib/format\" ListingHeader.tsx -> no import. Non-duplicate: verified against all 95 prior code-review-reality-web-* ids and the only prior 'ListingHeader' string match is in an unrelated 2026-08-19 mobile-native-kmp signal. Confidence medium: the en-US hardcode is code-verified statically; exact rendered glyphs depend on runtime Intl data, not run-confirmed."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-photogallery-index-oob",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-11 reality-web PhotoGallery never resets selectedIndex when the photos prop changes; a stale index dereferences an out-of-bounds photo -> mainPhoto.url TypeError)",
+      "segment": "reality-web",
+      "expert": "frontend",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/PhotoGallery.tsx"
+      ],
+      "evidence": [
+        "PhotoGallery.tsx:18 holds `const [selectedIndex, setSelectedIndex] = useState(0)` but NOTHING resets or clamps it when the `photos` prop changes — there is no `useEffect([photos])` and no bounds guard. After the empty-array early return (:54), the code does `const mainPhoto = photos[selectedIndex]` (:89) and immediately dereferences `mainPhoto.url` (:100) and `mainPhoto.caption` (:100). The lightbox path is identical: `photos[selectedIndex].url` (:187) and `photos[selectedIndex].caption` (:190/:194). If a mounted instance ever receives a SHORTER `photos` array while `selectedIndex` points past its new end, `photos[selectedIndex]` is `undefined` and `.url` throws `TypeError: Cannot read properties of undefined` -> the whole client subtree of the listing-detail page crashes.",
+        "Trigger condition: the same PhotoGallery React instance is re-rendered with a shorter photos array while selectedIndex > photos.length-1. selectedIndex is advanced by the thumbnail buttons (:130 setSelectedIndex(index), up to 4) and the lightbox arrows / keyboard handlers (:29-33, :169, :215). Because Next.js App Router preserves client-component state across param-only navigations within the SAME dynamic segment, a listing-A(12 photos, user on thumb 5) -> listing-B(2 photos) client transition on `/[locale]/listings/[slug]` would reuse this instance with selectedIndex=4 and photos.length=2 -> crash.",
+        "Reachability caveat (why score_delta=1, not 2): a static sweep of the current listing-detail tree found NO in-page slug->slug client navigation today — ListingDetailContent.tsx:38 uses a plain `<a href=\"/listings\">` (full reload) and renders no similar/related ListingCard links, and SearchBar's `router.push('/listings/${slug}')` (SearchBar.tsx:49) lives on index/home pages, not the detail page. So the crash is currently LATENT: the missing bounds guard is real and code-verified, but no live trigger path was confirmed. It becomes an immediate reachable crash the moment a 'similar listings' client `<Link>` (a common, expected addition) is placed on the detail page.",
+        "Landable frontend-only fix: clamp on read (`const mainPhoto = photos[Math.min(selectedIndex, photos.length - 1)]`) or reset via `useEffect(() => setSelectedIndex(0), [photos])`, and gate the lightbox derefs the same way. Non-duplicate: verified against all 95 prior code-review-reality-web-* ids; the only prior 'PhotoGallery' mention (2026-08-20 code-review-reality-web-listinggrid-empty-i18n) references it incidentally as a component that DOES use useTranslations, not for this bounds bug."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-agencylistings-en-us-price",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-11 reality-web AgencyListings table defines a local formatPrice hardcoded to en-US, wrong for sk/cs/de/pl/hu agency users)",
+      "segment": "reality-web",
+      "expert": "frontend",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/AgencyListings.tsx",
+        "frontend/apps/reality-web/src/lib/format.ts"
+      ],
+      "evidence": [
+        "AgencyListings.tsx:373-378 defines a component-local `formatPrice = (price, currency) => new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }).format(price)` and renders it in the listings table price cell at :397 (`<td className=\"price-cell\">{formatPrice(listing.price, listing.currency)}</td>`). Locale is hardcoded 'en-US', so every sk/cs/de/pl/hu agency user sees US-formatted money in their own listing-management table.",
+        "Third remaining occurrence of the en-US anti-pattern that lib/format.ts (:5-6, :48-59 `formatPrice(value, locale, options)` with bcp47) was built to eliminate — distinct from the 2026-09-10 AdditionalInfo finding and the ListingHeader finding in this same run. AgencyListings.tsx does NOT import lib/format (grep -n 'lib/format' -> none).",
+        "Scored 1 (lower than the ListingHeader headline price) because this is the AUTHENTICATED agency-management tool table, not the public SEO listing-detail page — smaller audience and lower brand exposure, though still a real locale-correctness defect.",
+        "Landable frontend-only fix: `import { formatPrice } from '@/lib/format'` and thread the route locale (add `useLocale()`; the component already uses `useTranslations('agencyListings')` so next-intl locale is in scope), calling `formatPrice(listing.price, locale, { currency: listing.currency })`. Non-duplicate: the two prior signals that mention 'AgencyListings' (2026-08-03 code-review-reality-web-agency-import-i18n about CsvImport, 2026-08-29 code-review-reality-web-listing-grid-empty-dup about EmptyState) reference it only incidentally and neither covers this en-US formatPrice."
+      ]
+    }
+  ]
+}

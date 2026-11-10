@@ -126,24 +126,28 @@ pub async fn create_profile(
     State(state): State<AppState>,
     principal: RequestPrincipal,
     Json(data): Json<CreateRealtorProfile>,
-) -> Result<Json<ProfileResponse>, (axum::http::StatusCode, String)> {
+) -> Result<(axum::http::StatusCode, Json<ProfileResponse>), (axum::http::StatusCode, String)> {
     let profile = state
         .reality_portal_repo
         .upsert_realtor_profile(principal.user_id, data)
         .await
         .map_err(|e| {
-            let error_str = e.to_string();
-            if error_str.contains("already exists") {
-                (
-                    axum::http::StatusCode::BAD_REQUEST,
-                    "Profile already exists".to_string(),
-                )
-            } else {
-                crate::util::errors::db_error("create realtor profile", e)
-            }
+            // A unique-constraint violation (e.g. duplicate license number)
+            // means the profile conflicts with an existing one. Classify by the
+            // typed SQLSTATE (23505), not the message text.
+            crate::util::errors::db_error_or(
+                &e,
+                "create realtor profile",
+                crate::util::errors::DbErrorClass::UniqueViolation,
+                axum::http::StatusCode::BAD_REQUEST,
+                "Profile already exists",
+            )
         })?;
 
-    Ok(Json(ProfileResponse { profile }))
+    Ok((
+        axum::http::StatusCode::CREATED,
+        Json(ProfileResponse { profile }),
+    ))
 }
 
 /// Update realtor profile.
@@ -168,15 +172,17 @@ pub async fn update_profile(
         .update_realtor_profile(principal.user_id, data)
         .await
         .map_err(|e| {
-            let error_str = e.to_string();
-            if error_str.contains("not found") {
-                (
-                    axum::http::StatusCode::NOT_FOUND,
-                    "Profile not found".to_string(),
-                )
-            } else {
-                crate::util::errors::db_error("update realtor profile", e)
-            }
+            // `fetch_one` on the UPDATE yields `RowNotFound` when the caller has
+            // no profile yet. Classify by the sqlx variant, not message text —
+            // the old `contains("not found")` never matched `RowNotFound`'s
+            // "no rows returned …" text, so this path silently 500'd.
+            crate::util::errors::db_error_or(
+                &e,
+                "update realtor profile",
+                crate::util::errors::DbErrorClass::NotFound,
+                axum::http::StatusCode::NOT_FOUND,
+                "Profile not found",
+            )
         })?;
 
     Ok(Json(ProfileResponse { profile }))
@@ -276,7 +282,7 @@ pub async fn respond_to_inquiry(
     principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(data): Json<SendInquiryMessage>,
-) -> Result<Json<InquiryMessage>, (axum::http::StatusCode, String)> {
+) -> Result<(axum::http::StatusCode, Json<InquiryMessage>), (axum::http::StatusCode, String)> {
     let message = state
         .reality_portal_repo
         .respond_to_inquiry(id, principal.user_id, &data.message)
@@ -289,5 +295,5 @@ pub async fn respond_to_inquiry(
             )
         })?;
 
-    Ok(Json(message))
+    Ok((axum::http::StatusCode::CREATED, Json(message)))
 }

@@ -39,4 +39,12 @@ already built but unrouted; this screen is now reachable on web.
   stub/empty data pending the meters+leases api-client module.
 
 ## Agent Log
+- 2026-11-04 — agent: occupancy rate now formatted with `Intl.NumberFormat(i18n.language, {style: "percent"})` (sk "0,0 %") instead of `toFixed(1)%`; currency also uses the active language.
 - 2026-06-08 — CTO: created on route mount (PAP-20, Epic 19).
+- 2026-11-04 — agent: Expiring-lease rows: hard-coded `View` / `Renew` / `{n}d` translated; Renew now deep-links to `/leases/{id}?action=renew`.
+
+## Agent Log
+
+<!-- newest entries on top -->
+
+- 2026-11-04 — agent: header links to Lease templates (/leases/templates) and Violations (/leases/violations) — both were orphan screens

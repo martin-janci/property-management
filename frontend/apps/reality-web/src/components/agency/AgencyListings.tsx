@@ -9,8 +9,9 @@
 import type { AgencyListing, AgencyListingStatus } from '@ppt/reality-api-client';
 import { useAgencyListings, useMyAgency, useRealtors } from '@ppt/reality-api-client';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { formatPrice } from '@/lib/format';
 import {
   AgencyLoadError,
   isNotFoundError,
@@ -350,6 +351,7 @@ export function AgencyListings() {
 
 function ListingRow({ listing }: { listing: AgencyListing }) {
   const t = useTranslations('agencyListings');
+  const locale = useLocale();
   const statusConfig: Record<AgencyListingStatus, { color: string; bg: string }> = {
     active: {
       color: 'var(--ppt-color-success)',
@@ -370,13 +372,6 @@ function ListingRow({ listing }: { listing: AgencyListing }) {
 
   const status = statusConfig[listing.status];
 
-  const formatPrice = (price: number, currency: string) =>
-    new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency,
-      maximumFractionDigits: 0,
-    }).format(price);
-
   return (
     <tr className="listing-row">
       <td className="property-cell">
@@ -394,7 +389,9 @@ function ListingRow({ listing }: { listing: AgencyListing }) {
           {listing.transactionType === 'sale' ? t('typeSale') : t('typeRent')}
         </span>
       </td>
-      <td className="price-cell">{formatPrice(listing.price, listing.currency)}</td>
+      <td className="price-cell">
+        {formatPrice(listing.price, locale, { currency: listing.currency })}
+      </td>
       <td>
         <span className="status-badge" style={{ color: status.color, backgroundColor: status.bg }}>
           {t(`status.${listing.status}`)}

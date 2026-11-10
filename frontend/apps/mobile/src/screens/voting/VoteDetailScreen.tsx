@@ -177,14 +177,18 @@ export function VoteDetailScreen({ voteId, onBack }: VoteDetailScreenProps) {
         <View style={s.header}>
           {onBack && (
             <Pressable onPress={onBack} style={styles.backLink}>
-              <Text style={styles.backLinkText}>← {t('common.back') ?? 'Back'}</Text>
+              <Text style={styles.backLinkText}>
+                ← {t('common.back', { defaultValue: 'Back' })}
+              </Text>
             </Pressable>
           )}
-          <Text style={s.headerTitle}>{t('voting.title') ?? 'Voting'}</Text>
+          <Text style={s.headerTitle}>{t('voting.title', { defaultValue: 'Voting' })}</Text>
         </View>
         <View style={s.emptyState}>
           <Text style={s.emptyIcon}>⚠️</Text>
-          <Text style={s.emptyTitle}>{t('voting.missingId') ?? 'No vote selected'}</Text>
+          <Text style={s.emptyTitle}>
+            {t('voting.missingId', { defaultValue: 'No vote selected' })}
+          </Text>
         </View>
       </View>
     );
@@ -199,35 +203,56 @@ export function VoteDetailScreen({ voteId, onBack }: VoteDetailScreenProps) {
 
   const isAnswerComplete = (q: ApiVoteQuestion): boolean => {
     if (!q.is_required) return true;
+    // Ranked questions always carry a full ordering: the declared option order
+    // is the default ballot until the voter reorders, so they're complete as
+    // long as there are options to rank.
+    if (q.question_type === 'ranked') return (q.options?.length ?? 0) > 0;
     const v = selections[q.id];
     if (Array.isArray(v)) return v.length > 0;
     return typeof v === 'string' && v.length > 0;
   };
   const allRequiredAnswered = questions.every(isAnswerComplete);
 
+  // Ranked answers are ordered option-id arrays whose position expresses
+  // preference (the backend weights rank 0 highest — see repositories/vote.rs).
+  // A ranked question the voter never touched still submits the declared option
+  // order rather than a missing answer, so the ballot always carries a complete
+  // ordering instead of a bare option set.
+  const buildAnswers = (): Record<string, string | string[]> => {
+    const answers: Record<string, string | string[]> = { ...selections };
+    for (const q of questions) {
+      if (q.question_type === 'ranked' && !Array.isArray(answers[q.id])) {
+        answers[q.id] = [...(q.options ?? [])].sort((a, b) => a.order - b.order).map((o) => o.id);
+      }
+    }
+    return answers;
+  };
+
   const submit = () => {
     if (!activeUnit) return;
     if (!allRequiredAnswered) {
       Alert.alert(
-        t('voting.confirmVoteTitle') ?? 'Confirm vote',
-        t('voting.answerRequired') ?? 'Please answer all required questions'
+        t('voting.confirmVoteTitle', { defaultValue: 'Confirm vote' }),
+        t('voting.answerRequired', { defaultValue: 'Please answer all required questions' })
       );
       return;
     }
     Alert.alert(
-      t('voting.confirmVoteTitle') ?? 'Confirm vote',
-      t('voting.confirmVoteMessage') ?? 'Submit your ballot? This action cannot be undone.',
+      t('voting.confirmVoteTitle', { defaultValue: 'Confirm vote' }),
+      t('voting.confirmVoteMessage', {
+        defaultValue: 'Submit your ballot? This action cannot be undone.',
+      }),
       [
-        { text: t('common.cancel') ?? 'Cancel', style: 'cancel' },
+        { text: t('common.cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
         {
-          text: t('voting.submit') ?? 'Submit',
+          text: t('voting.submit', { defaultValue: 'Submit ballot' }),
           style: 'default',
           onPress: () => {
             castMutation.mutate(
               {
                 unit_id: activeUnit.unit_id,
                 delegation_id: activeUnit.delegation_id,
-                answers: selections,
+                answers: buildAnswers(),
               },
               {
                 onSuccess: (receipt) => {
@@ -237,12 +262,15 @@ export function VoteDetailScreen({ voteId, onBack }: VoteDetailScreenProps) {
                   queryClient.invalidateQueries({ queryKey: ['voting', 'detail', voteId] });
                   queryClient.invalidateQueries({ queryKey: ['voting', 'list'] });
                   Alert.alert(
-                    t('voting.voteSubmitted') ?? 'Ballot submitted',
-                    `${t('voting.confirmationNumber') ?? 'Confirmation'}: ${receipt.confirmation_number}`
+                    t('voting.voteSubmitted', { defaultValue: 'Ballot submitted' }),
+                    `${t('voting.confirmationNumber', { defaultValue: 'Confirmation' })}: ${receipt.confirmation_number}`
                   );
                 },
                 onError: (err) => {
-                  Alert.alert(t('voting.castError') ?? "Couldn't submit ballot", err.message);
+                  Alert.alert(
+                    t('voting.castError', { defaultValue: "Couldn't submit ballot" }),
+                    err.message
+                  );
                 },
               }
             );
@@ -267,16 +295,24 @@ export function VoteDetailScreen({ voteId, onBack }: VoteDetailScreenProps) {
     });
   };
 
+  // Ranked questions capture the full option ordering (position = preference).
+  // The card hands back the reordered list; we store it verbatim.
+  const setRank = (questionId: string, order: string[]) => {
+    setSelections((prev) => ({ ...prev, [questionId]: order }));
+  };
+
   return (
     <View style={s.container}>
       <View style={s.header}>
         {onBack && (
           <Pressable onPress={onBack} style={styles.backLink}>
-            <Text style={styles.backLinkText}>← {t('voting.title') ?? 'Voting'}</Text>
+            <Text style={styles.backLinkText}>
+              ← {t('voting.title', { defaultValue: 'Voting' })}
+            </Text>
           </Pressable>
         )}
         <Text style={s.headerTitle} numberOfLines={2}>
-          {detail?.title ?? t('common.loading') ?? 'Loading…'}
+          {detail?.title ?? t('common.loading', { defaultValue: 'Loading…' })}
         </Text>
         {detail && (
           <Text style={s.headerSubtitle}>
@@ -298,7 +334,9 @@ export function VoteDetailScreen({ voteId, onBack }: VoteDetailScreenProps) {
         ) : loadError ? (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>⚠️</Text>
-            <Text style={s.emptyTitle}>{t('voting.loadError') ?? "Couldn't load vote"}</Text>
+            <Text style={s.emptyTitle}>
+              {t('voting.loadError', { defaultValue: "Couldn't load vote" })}
+            </Text>
           </View>
         ) : (
           <>
@@ -326,7 +364,9 @@ export function VoteDetailScreen({ voteId, onBack }: VoteDetailScreenProps) {
             {questions.length === 0 ? (
               <View style={s.emptyState}>
                 <Text style={s.emptyIcon}>📋</Text>
-                <Text style={s.emptyTitle}>{t('voting.noQuestions') ?? 'No questions yet'}</Text>
+                <Text style={s.emptyTitle}>
+                  {t('voting.noQuestions', { defaultValue: 'No questions yet' })}
+                </Text>
               </View>
             ) : (
               questions.map((q, idx) => (
@@ -338,6 +378,7 @@ export function VoteDetailScreen({ voteId, onBack }: VoteDetailScreenProps) {
                   disabled={!canVote}
                   onSingle={(optionId) => toggleSingle(q.id, optionId)}
                   onMulti={(optionId) => toggleMulti(q.id, optionId)}
+                  onRank={(order) => setRank(q.id, order)}
                 />
               ))
             )}
@@ -351,7 +392,9 @@ export function VoteDetailScreen({ voteId, onBack }: VoteDetailScreenProps) {
                 {castMutation.isPending ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text style={s.primaryButtonText}>{t('voting.submit') ?? 'Submit ballot'}</Text>
+                  <Text style={s.primaryButtonText}>
+                    {t('voting.submit', { defaultValue: 'Submit ballot' })}
+                  </Text>
                 )}
               </Pressable>
             )}
@@ -362,6 +405,36 @@ export function VoteDetailScreen({ voteId, onBack }: VoteDetailScreenProps) {
       </ScrollView>
     </View>
   );
+}
+
+/**
+ * Known server-provided eligibility reasons (repositories/vote.rs) mapped to
+ * stable i18n key suffixes. The backend returns English free-text — not a reason
+ * code — so we anchor the known sentences to short codes and fall back to a slug
+ * of the raw text for any future/unknown reason. The raw string is always passed
+ * as `t(..., { defaultValue })` so an untranslated locale (or a reason we don't
+ * yet map) still shows readable text instead of a bare key, mirroring how the
+ * rest of this screen renders server-adjacent strings.
+ *
+ * Exported so the sibling `*.eligibilityReason.parity.test.ts` drift guard can
+ * pin these source sentences against the Rust literals they mirror
+ * (`repositories/vote.rs`) — a backend copy-edit then fails CI instead of
+ * silently dropping a non-English voter back to English (GH #3223).
+ */
+export const ELIGIBILITY_REASON_KEYS: Record<string, string> = {
+  'Vote is not currently accepting ballots': 'voteNotAcceptingBallots',
+  'User is not eligible to vote in this building': 'notEligibleInBuilding',
+  'All eligible units have already voted': 'allUnitsVoted',
+};
+
+function eligibilityReasonKey(reason: string): string {
+  const code =
+    ELIGIBILITY_REASON_KEYS[reason] ??
+    reason
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  return `voting.eligibilityReason.${code}`;
 }
 
 interface StatusBannerProps {
@@ -378,7 +451,7 @@ function StatusBanner({ status, alreadyVoted, canVote, eligibilityReason }: Stat
       <View style={[styles.banner, styles.bannerSuccess]}>
         <Text style={styles.bannerIcon}>✓</Text>
         <Text style={styles.bannerText}>
-          {t('voting.youHaveVoted') ?? 'You have already voted on this ballot.'}
+          {t('voting.youHaveVoted', { defaultValue: 'You have already voted on this ballot.' })}
         </Text>
       </View>
     );
@@ -386,14 +459,18 @@ function StatusBanner({ status, alreadyVoted, canVote, eligibilityReason }: Stat
   if (status && status !== 'active') {
     return (
       <View style={[styles.banner, styles.bannerMuted]}>
-        <Text style={styles.bannerText}>{t('voting.notActive') ?? `Voting is ${status}.`}</Text>
+        <Text style={styles.bannerText}>
+          {t('voting.notActive', { defaultValue: `Voting is ${status}.` })}
+        </Text>
       </View>
     );
   }
   if (!canVote && eligibilityReason) {
     return (
       <View style={[styles.banner, styles.bannerWarning]}>
-        <Text style={styles.bannerText}>{eligibilityReason}</Text>
+        <Text style={styles.bannerText}>
+          {t(eligibilityReasonKey(eligibilityReason), { defaultValue: eligibilityReason })}
+        </Text>
       </View>
     );
   }
@@ -410,7 +487,9 @@ function UnitPicker({ units, activeUnitId, onSelect }: UnitPickerProps) {
   const { t } = useTranslation();
   return (
     <View style={s.card}>
-      <Text style={[s.cardTitle, { marginBottom: 8 }]}>{t('voting.votingAs') ?? 'Voting as'}</Text>
+      <Text style={[s.cardTitle, { marginBottom: 8 }]}>
+        {t('voting.votingAs', { defaultValue: 'Voting as' })}
+      </Text>
       <View style={styles.unitRow}>
         {units.map((u) => {
           const active = u.unit_id === activeUnitId;
@@ -439,6 +518,7 @@ interface QuestionCardProps {
   disabled: boolean;
   onSingle: (optionId: string) => void;
   onMulti: (optionId: string) => void;
+  onRank: (order: string[]) => void;
 }
 
 function QuestionCard({
@@ -448,10 +528,27 @@ function QuestionCard({
   disabled,
   onSingle,
   onMulti,
+  onRank,
 }: QuestionCardProps) {
-  const isMulti =
-    question.question_type === 'multiple_choice' || question.question_type === 'ranked';
+  // `ranked` is NOT a multi-select: it captures an ordered preference list, so
+  // it gets its own reorderable renderer. Only `multiple_choice` is a genuine
+  // unordered checkbox group.
+  const isMulti = question.question_type === 'multiple_choice';
+  const isRanked = question.question_type === 'ranked';
   const sortedOptions = [...(question.options ?? [])].sort((a, b) => a.order - b.order);
+
+  if (isRanked) {
+    return (
+      <RankedQuestionCard
+        index={index}
+        question={question}
+        sortedOptions={sortedOptions}
+        selection={selection}
+        disabled={disabled}
+        onRank={onRank}
+      />
+    );
+  }
 
   return (
     <View style={s.card}>
@@ -494,6 +591,95 @@ function QuestionCard({
             </Pressable>
           );
         })}
+      </View>
+    </View>
+  );
+}
+
+interface RankedQuestionCardProps {
+  index: number;
+  question: ApiVoteQuestion;
+  sortedOptions: ApiQuestionOption[];
+  selection: string | string[] | undefined;
+  disabled: boolean;
+  onRank: (order: string[]) => void;
+}
+
+/**
+ * Ranked-choice ballot input. The voter orders every option; the array
+ * position is the preference (rank 1 = top). Mirrors the ppt-web `Ranked`
+ * input: the declared option order is the default ballot until the voter
+ * moves a row, and the full ordering is what gets submitted so the backend
+ * can weight by rank position (repositories/vote.rs).
+ */
+function RankedQuestionCard({
+  index,
+  question,
+  sortedOptions,
+  selection,
+  disabled,
+  onRank,
+}: RankedQuestionCardProps) {
+  const { t } = useTranslation();
+  const order =
+    Array.isArray(selection) && selection.length > 0 ? selection : sortedOptions.map((o) => o.id);
+  const labelFor = (id: string) => sortedOptions.find((o) => o.id === id)?.text ?? id;
+
+  const move = (from: number, delta: number) => {
+    const to = from + delta;
+    if (to < 0 || to >= order.length) return;
+    const next = [...order];
+    [next[from], next[to]] = [next[to], next[from]];
+    onRank(next);
+  };
+
+  return (
+    <View style={s.card}>
+      <Text style={styles.questionLabel}>Q{index}</Text>
+      <Text style={s.cardTitle}>
+        {question.question_text}
+        {question.is_required ? ' *' : ''}
+      </Text>
+      <Text style={[s.cardBody, { marginBottom: 8 }]}>
+        {question.description ??
+          t('voting.rankHint', {
+            defaultValue: 'Order the options by preference (1 = most preferred).',
+          })}
+      </Text>
+
+      <View style={{ marginTop: 8 }}>
+        {order.map((id, i) => (
+          <View
+            key={id}
+            style={[styles.optionRow, styles.rankRow, disabled && styles.optionRowDisabled]}
+          >
+            <View style={styles.rankBadge}>
+              <Text style={styles.rankBadgeText}>{i + 1}</Text>
+            </View>
+            <Text style={[styles.optionLabel, { flex: 1 }]}>{labelFor(id)}</Text>
+            <Pressable
+              style={[styles.rankButton, (disabled || i === 0) && styles.rankButtonDisabled]}
+              disabled={disabled || i === 0}
+              onPress={() => move(i, -1)}
+              accessibilityRole="button"
+              accessibilityLabel={t('voting.moveUp', { defaultValue: 'Move up' })}
+            >
+              <Text style={styles.rankButtonText}>↑</Text>
+            </Pressable>
+            <Pressable
+              style={[
+                styles.rankButton,
+                (disabled || i === order.length - 1) && styles.rankButtonDisabled,
+              ]}
+              disabled={disabled || i === order.length - 1}
+              onPress={() => move(i, 1)}
+              accessibilityRole="button"
+              accessibilityLabel={t('voting.moveDown', { defaultValue: 'Move down' })}
+            >
+              <Text style={styles.rankButtonText}>↓</Text>
+            </Pressable>
+          </View>
+        ))}
       </View>
     </View>
   );
@@ -545,6 +731,26 @@ const styles = StyleSheet.create({
   },
   optionRowSelected: { backgroundColor: '#eff6ff', borderColor: colors.accent },
   optionRowDisabled: { opacity: 0.7 },
+  rankRow: { gap: 8 },
+  rankBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rankBadgeText: { fontSize: 12, fontWeight: '700', color: '#fff' },
+  rankButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+    backgroundColor: colors.surfaceMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rankButtonDisabled: { opacity: 0.3 },
+  rankButtonText: { fontSize: 16, color: colors.text, fontWeight: '600' },
   optionLabel: { fontSize: 14, color: colors.text, flex: 1 },
   optionLabelSelected: { color: colors.accent, fontWeight: '500' },
   radio: {

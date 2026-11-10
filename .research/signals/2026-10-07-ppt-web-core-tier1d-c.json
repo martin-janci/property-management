@@ -1,0 +1,28 @@
+{
+  "generated": "2026-10-07T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable buffer below floor: claimable=18 < floor=36). Static single-segment rotating code review, no compilation / no test execution (cloud runner has no toolchain). File reading + grep only. Produces fresh CLOUD-LANDABLE frontend backlog vectors for the ppt-web-core segment. THIRD Tier-1d slice for this segment today (suffix -c); the single finding below was verified net-new against 2026-10-07-ppt-web-core-tier1d.json and 2026-10-07-ppt-web-core-tier1d-b.json and prior ppt-web-core signal files.",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "oldest-unreviewed (review_cursor.ppt-web-core = 2026-09-27, oldest of 8 segments; no churn files provided to this generator; no saturation — 0 open code-review-finding items in backlog.json for this segment)",
+  "experts_used": ["frontend"],
+  "findings_count": 1,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-errorhandler-client-timeout-unclassified",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/ppt-web/src/lib/errorHandler.ts"],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:127-170 — parseApiError() never classifies a CLIENT-SIDE request timeout. lib/api.ts sets axios timeout=30000 (DEFAULT_TIMEOUT); on timeout axios rejects with code 'ECONNABORTED' (or 'ETIMEDOUT'), message 'timeout of 30000ms exceeded', and NO response. isNetworkError() (lines 377-399) only matches code==='ERR_NETWORK' or a message containing network/fetch keywords, so a timeout returns false; isAxiosError() is then true but response is undefined, so parseHttpStatusError(undefined) hits the default branch and returns code 'UNKNOWN_ERROR' with generic default copy.",
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:90,313-320 — a dedicated 'TIMEOUT' error code exists in KNOWN_ERROR_CODES and has its own i18n catalogue copy (errors.catalogue.TIMEOUT.title/message), but it is ONLY reached from the HTTP 504 (gateway-timeout) case, which requires an actual server response with status 504. grep confirms no ECONNABORTED/ETIMEDOUT handling anywhere in the file, so the TIMEOUT copy is effectively dead code for the common case (upstream slow / connection stalls): users see a generic 'unknown error' instead of the localized 'request timed out' message.",
+        "Fix (frontend-only, cloud-landable): in isNetworkError() or a new isTimeoutError() guard, detect axios code 'ECONNABORTED'/'ETIMEDOUT' (and/or message match /timeout/i) and return a ParsedApiError with code 'TIMEOUT' via errorCopy('TIMEOUT'). Add a Vitest case asserting a simulated axios timeout maps to code TIMEOUT. No backend/DB work. Low severity (UX/i18n classification gap, no data risk)."
+      ]
+    }
+  ]
+}

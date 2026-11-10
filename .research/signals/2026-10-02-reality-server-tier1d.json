@@ -1,0 +1,56 @@
+{
+  "generated": "2026-10-02",
+  "source_run": "dispatcher Tier-1d demand-driven finding generator (backlog starved: claimable=20 < floor=36, deterministic refill found nothing)",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "OLDEST-UNREVIEWED. Churn hotspots were not handed in this run (demand-driven refill). review_cursor oldest-first after today's reality-web run: reality-server (2026-08-31) is now the oldest, then api-core (2026-09-01). reality-server carries 0 OPEN code-review-finding rows in backlog.json (only 2 done: code-review-reality-server-submit-report-no-rate-limit, code-review-reality-server-report-contact-unvalidated) -> not saturated -> selected. These two findings are disjoint from those done rows (pagination/offset class vs rate-limit/contact-validation class).",
+  "experts_used": [
+    "rust"
+  ],
+  "landable_in_cloud": true,
+  "landability_note": "Both are backend-only Rust edits confined to reality-server route/handler files. Each fix is a one-to-two line change that reuses the server's own existing guard helpers in crate::util (clamp_offset_i32 / clamp_offset + MAX_LIST_OFFSET=100_000), which are already applied by reports.rs and agent_reviews.rs. No migration, no OpenAPI/TypeSpec change, no generated-client regen. Verifies with `cargo fmt -p reality-server`, `cargo clippy -p reality-server -- -D warnings`, `cargo test -p reality-server` (the util module already ships clamp_offset_caps_pathological_values as the pattern test to mirror). No cross-stack coupling.",
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-reality-server-inquiry-list-offset-overflow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/inquiries.rs:588-590 (list_my_inquiries) computes `let page = query.page.unwrap_or(1).max(1); let limit = query.limit.unwrap_or(20).clamp(1, 100); let offset = (page - 1) * limit;`. `InquiryListQuery.page` is `Option<i32>` (inquiries.rs:247) and is clamped on the LOWER bound only (`.max(1)`) — there is no upper bound, so `(page - 1) * limit` is an unbounded i32 multiply. A crafted `?page=21474837&limit=100` overflows i32::MAX: in debug builds this is an arithmetic-overflow panic (request task aborts); in release builds it wraps to a negative offset, which Postgres rejects ('OFFSET must not be negative') and the handler maps to a 500 via crate::util::errors::db_error.",
+        "Same unbounded `(page - 1) * limit` offset computation is duplicated at backend/servers/reality-server/src/routes/inquiries.rs:640-642 (list_buyer_inquiries) and backend/servers/reality-server/src/handlers/inquiries/mod.rs:360 — all three share the page:i32 / limit<=100 shape, so all three carry the same overflow edge.",
+        "This bypasses the server's own established guard: backend/servers/reality-server/src/util/mod.rs defines `MAX_LIST_OFFSET = 100_000`, `clamp_offset()` and `clamp_offset_i32()` (raw.clamp(0, MAX_LIST_OFFSET)) specifically to cap pathological offsets, covered by the clamp_offset_caps_pathological_values unit test. routes/reports.rs:356 and routes/agent_reviews.rs:114 already use crate::util::clamp_offset; the inquiry handlers compute offset inline and skip it.",
+        "Reachability: the /api/v1/inquiries and /api/v1/inquiries/mine endpoints are authenticated (RequestPrincipal), so an attacker needs a valid portal account — this bounds the severity to availability/robustness on authenticated list endpoints (no data exposure, no cross-tenant leak), which is why this is MEDIUM not HIGH.",
+        "Confidence MEDIUM (static-only): the page type (Option<i32>), the lower-only clamp, and the inline multiply are confirmed by direct read; the exact debug-panic-vs-release-wrap behaviour depends on the build profile and was not runtime-confirmed on this cloud runner.",
+        "Fix (cloud-landable, backend-only): clamp the page (or the computed offset) before the multiply — e.g. replace the inline `let offset = (page - 1) * limit;` with the existing `crate::util::clamp_offset_i32(Some((page - 1).saturating_mul(limit)))`, or add an upper bound to `page`, at all three sites. Mirrors the clamp already applied in reports.rs / agent_reviews.rs."
+      ],
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/inquiries.rs",
+        "backend/servers/reality-server/src/handlers/inquiries/mod.rs"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-articles-offset-uncapped",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/articles.rs:155-157 (list_articles) computes `let per_page = query.per_page.unwrap_or(20).clamp(1, 100); let page = query.page.unwrap_or(1).max(1); let offset = (page - 1) * per_page;` and binds `offset` straight into `LIMIT $3 OFFSET $4` (articles.rs:185). `ArticlesQuery.page` is `Option<i64>` (articles.rs:128) and is lower-clamped only (`.max(1)`), so the resulting OFFSET is uncapped.",
+        "Unlike the i32 inquiry handlers this does not overflow in practice (i64), but it bypasses the same MAX_LIST_OFFSET=100_000 deep-pagination guard (crate::util::clamp_offset) that the rest of the server applies. /api/v1/articles is a PUBLIC, unauthenticated endpoint, so an anonymous caller can pass `?page=100000000000` and force Postgres to walk and discard a multi-billion-row OFFSET against reality_articles joined to users + reality_article_comments (articles.rs:177-185) — a cheap-request / expensive-query amplification (deep-pagination DoS) vector.",
+        "The guard to prevent exactly this already exists and is used elsewhere: crate::util::clamp_offset / MAX_LIST_OFFSET=100_000 in util/mod.rs, applied by routes/reports.rs:356 and routes/agent_reviews.rs:114. The articles list handler simply does not use it.",
+        "Confidence MEDIUM (static-only): the uncapped offset computation and the public route are confirmed by direct read; the query-plan cost of a large OFFSET was not runtime-measured on this cloud runner. Severity LOW (+1) because the practical impact is query-cost amplification on one public list endpoint, not a crash or data exposure.",
+        "Fix (cloud-landable, backend-only): cap the offset via the existing helper — e.g. `let offset = crate::util::clamp_offset(Some((page - 1) * per_page));` (clamp_offset is i64, matching articles.rs page/per_page) — so the public endpoint honours the same 100_000 OFFSET ceiling as reports/agent_reviews."
+      ],
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/articles.rs"
+      ]
+    }
+  ]
+}

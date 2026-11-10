@@ -145,6 +145,7 @@ impl AutomationRepository {
                 conditions = COALESCE($6, conditions),
                 actions = COALESCE($7, actions),
                 is_active = COALESCE($8, is_active),
+                trigger_type = COALESCE($9::workflow_automation_trigger, trigger_type),
                 updated_at = NOW()
             WHERE id = $1 AND organization_id = $2
             RETURNING
@@ -161,6 +162,7 @@ impl AutomationRepository {
         .bind(&data.conditions)
         .bind(&data.actions)
         .bind(data.is_active)
+        .bind(&data.trigger_type)
         .fetch_optional(&self.pool)
         .await
     }
@@ -354,6 +356,86 @@ impl AutomationRepository {
         }
     }
 
+    /// List executions across all rules of an organization, newest first.
+    ///
+    /// Tenant scoping is explicit (`r.organization_id = $1`) so a caller can
+    /// never see another org's executions regardless of RLS context.
+    pub async fn list_executions_for_org(
+        &self,
+        organization_id: Uuid,
+        filter: &AutomationExecutionFilter,
+        limit: i64,
+        offset: i64,
+    ) -> Result<AutomationExecutionList, SqlxError> {
+        // Shared FROM/WHERE as a literal so both queries stay `&'static str`.
+        macro_rules! from_where {
+            () => {
+                r#"
+            FROM workflow_automation_logs l
+            JOIN workflow_automation_rules r ON r.id = l.rule_id
+            WHERE r.organization_id = $1
+              AND ($2::timestamptz IS NULL OR l.started_at >= $2)
+              AND ($3::text IS NULL OR l.status = $3)
+              AND ($4::uuid IS NULL OR l.rule_id = $4)
+            "#
+            };
+        }
+
+        let total: i64 = sqlx::query_scalar(concat!("SELECT COUNT(*) ", from_where!()))
+            .bind(organization_id)
+            .bind(filter.since)
+            .bind(filter.status.as_deref())
+            .bind(filter.rule_id)
+            .fetch_one(&self.pool)
+            .await?;
+
+        let items = sqlx::query_as::<_, AutomationExecution>(concat!(
+            "SELECT l.id, l.rule_id, r.name AS rule_name, r.trigger_type::text AS trigger_type, \
+             l.trigger_data, l.actions_executed, l.status, l.started_at, \
+             l.completed_at, l.error_message, l.duration_ms ",
+            from_where!(),
+            " ORDER BY l.started_at DESC LIMIT $5 OFFSET $6"
+        ))
+        .bind(organization_id)
+        .bind(filter.since)
+        .bind(filter.status.as_deref())
+        .bind(filter.rule_id)
+        .bind(limit)
+        .bind(offset)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(AutomationExecutionList { items, total })
+    }
+
+    /// Aggregate execution statistics for an organization.
+    pub async fn execution_stats_for_org(
+        &self,
+        organization_id: Uuid,
+        filter: &AutomationExecutionFilter,
+    ) -> Result<AutomationExecutionStats, SqlxError> {
+        sqlx::query_as::<_, AutomationExecutionStats>(
+            r#"
+            SELECT
+                COUNT(*) AS total,
+                COUNT(*) FILTER (WHERE l.status = 'success') AS successful,
+                COUNT(*) FILTER (WHERE l.status IN ('failed', 'partial_failure')) AS failed,
+                COUNT(*) FILTER (WHERE l.status IN ('pending', 'running')) AS pending,
+                AVG(l.duration_ms)::float8 AS average_duration_ms
+            FROM workflow_automation_logs l
+            JOIN workflow_automation_rules r ON r.id = l.rule_id
+            WHERE r.organization_id = $1
+              AND ($2::timestamptz IS NULL OR l.started_at >= $2)
+              AND ($3::uuid IS NULL OR l.rule_id = $3)
+            "#,
+        )
+        .bind(organization_id)
+        .bind(filter.since)
+        .bind(filter.rule_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
     // ========================================================================
     // Automation Templates
     // ========================================================================
@@ -363,7 +445,7 @@ impl AutomationRepository {
         sqlx::query_as::<_, WorkflowAutomationTemplate>(
             r#"
             SELECT
-                id, name, description, category, trigger_type::text AS trigger_type,
+                id, slug, name, description, category, trigger_type::text AS trigger_type,
                 trigger_config_template, actions_template, is_system, created_at
             FROM workflow_automation_templates ORDER BY category, name
             "#,
@@ -380,7 +462,7 @@ impl AutomationRepository {
         sqlx::query_as::<_, WorkflowAutomationTemplate>(
             r#"
             SELECT
-                id, name, description, category, trigger_type::text AS trigger_type,
+                id, slug, name, description, category, trigger_type::text AS trigger_type,
                 trigger_config_template, actions_template, is_system, created_at
             FROM workflow_automation_templates WHERE id = $1
             "#,

@@ -79,9 +79,15 @@ active listings via `useAgencyListings(agency.id, { status: 'active' })`.
   `/agencies/{id}/members` endpoint, but the team grid uses `useRealtors` for
   richer profile data (name/photo/title) since the members payload is
   membership-only.
+- The active-listings card price renders through the shared
+  `@/lib/format.formatPrice(price, locale, { currency })` helper driven by the
+  active `useLocale()` — do not reintroduce a hardcoded `toLocaleString('sk-SK')`.
+  Reality Portal is a six-language portal (sk/cs/de/en/pl/hu), so the price must
+  follow the active locale's number grouping (PR #3166, issue #3162).
 
 ## Agent Log
 
 <!-- newest entries on top -->
 
+- 2026-10-26 — agent: reconciled with PR #3166 (issue #3162) — active-listings card price now formats via `@/lib/format.formatPrice` with the active `useLocale()` instead of hardcoded `sk-SK`; regression test added. Docs-only; no status change.
 - 2026-06-03 — agent: created public agency profile route `agency/[slug]`; added `useAgencyBySlug` + `useAgencyMembers` hooks (Issue #978)

@@ -131,6 +131,12 @@
     "galleryButton": "Galerie",
     "submitButton": "Odeslat hlaseni",
     "successSubmit": "Hlaseni zavady bylo uspesne odeslano",
+    "photosNotUploadedTitle": "Hlaseni ulozeno — fotografie nebyly pripojeny",
+    "photosNotUploadedWarning": "Hlaseni zavady bylo ulozeno, ale pripojene fotografie se nepodarilo nahrat a nebyly zahrnuty. Prosim, pridejte je znovu z detailu zavady.",
+    "successSubmitWithPhotos": "Hlaseni zavady odeslano s {{count}} fotografiemi.",
+    "photosPartialTitle": "Hlaseni odeslano — nektere fotografie nebyly pripojeny",
+    "photosPartialWarning": "Vase hlaseni zavady bylo odeslano a {{uploaded}} z {{total}} fotografii bylo pripojeno. {{failed}} se nepodarilo nahrat — muzete je znovu pridat z detailu zavady.",
+    "uploadingPhotos": "Nahravani fotografii…",
     "failedSubmit": "Nepodarilo se odeslat hlaseni zavady",
     "cameraPermissionDenied": "K fotografovani je potreba opravneni fotoaparatu",
     "photoLibraryPermissionDenied": "Je potreba opravneni pro knihovnu fotografii",
@@ -157,13 +163,26 @@
     "emptyText": "Všechny problémy byly vyřešeny"
   },
   "news": {
+    "backToList": "‹ Zpravy",
     "title": "Zpravy",
     "latest": "Nejnovejsi zpravy",
     "readMore": "Cist vice",
     "noNews": "Žádné zprávy",
     "loadError": "Nepodařilo se načíst novinky",
     "emptyTitle": "Nic nového",
-    "emptyText": "Novinky najdete později."
+    "emptyText": "Novinky najdete později.",
+    "subtitle": "Novinky z vaší budovy a okolí.",
+    "filters": {
+      "all": "Všechny",
+      "building": "Budova",
+      "district": "Čtvrť",
+      "partner": "Partneři"
+    },
+    "categories": {
+      "building": "Budova",
+      "district": "Čtvrť",
+      "partner": "Partner"
+    }
   },
   "voting": {
     "title": "Hlasovani",
@@ -173,7 +192,49 @@
     "voted": "Hlasovano",
     "results": "Vysledky",
     "deadline": "Termin",
-    "noPolls": "Zadna aktivni hlasovani"
+    "noPolls": "Zadna aktivni hlasovani",
+    "submit": "Odeslat hlasování",
+    "moveUp": "Posunout nahoru",
+    "moveDown": "Posunout dolů",
+    "rankHint": "Seřaďte možnosti podle preference (1 = nejvíce preferovaná).",
+    "activeCount_one": "{{count}} aktivní",
+    "activeCount_few": "{{count}} aktivní",
+    "activeCount_many": "{{count}} aktivních",
+    "activeCount_other": "{{count}} aktivních",
+    "ended": "Ukončeno",
+    "timeLeftDaysHours": "Zbývá {{days}} d {{hours}} h",
+    "timeLeftHours": "Zbývá {{hours}} h",
+    "timeLeftMinutes": "Zbývá {{minutes}} min",
+    "filter": {
+      "all": "Všechna",
+      "active": "Aktivní",
+      "closed": "Ukončená"
+    },
+    "loadError": "Hlasování se nepodařilo načíst",
+    "emptyTitle": "Zatím žádná hlasování",
+    "emptyText": "Momentálně nejsou k dispozici žádná hlasování.",
+    "openDetail": "Otevřít detail hlasování",
+    "quorum": "Kvórum",
+    "quorumVotes": "{{current}} / {{required}} hlasů",
+    "tapToVote": "Klepnutím zobrazíte a odevzdáte hlas",
+    "tapToView": "Klepnutím zobrazíte výsledky",
+    "createdBy": "Vytvořil {{name}}",
+    "missingId": "Není vybráno žádné hlasování",
+    "confirmVoteTitle": "Potvrdit hlas",
+    "answerRequired": "Odpovězte prosím na všechny povinné otázky",
+    "confirmVoteMessage": "Odeslat hlas? Tuto akci nelze vrátit zpět.",
+    "voteSubmitted": "Hlas odeslán",
+    "confirmationNumber": "Potvrzení",
+    "castError": "Hlas se nepodařilo odeslat",
+    "noQuestions": "Zatím žádné otázky",
+    "youHaveVoted": "V tomto hlasování jste již hlasovali.",
+    "notActive": "Toto hlasování není momentálně aktivní.",
+    "votingAs": "Hlasujete jako",
+    "eligibilityReason": {
+      "voteNotAcceptingBallots": "Hlasování momentálně nepřijímá hlasy.",
+      "notEligibleInBuilding": "V této budově nemáte oprávnění hlasovat.",
+      "allUnitsVoted": "Všechny vaše oprávněné jednotky již hlasovaly."
+    }
   },
   "documents": {
     "title": "Dokumenty",
@@ -339,7 +400,9 @@
     "syncFailed": "Nektere polozky se nepodarilo synchronizovat",
     "syncProgress": "Synchronizuji {{current}} z {{total}}",
     "itemSynced": "{{item}} uspesne synchronizovano",
-    "itemFailed": "Nepodarilo se synchronizovat {{item}}"
+    "itemFailed": "Nepodarilo se synchronizovat {{item}}",
+    "droppedTitle": "Změny zahozeny",
+    "droppedMessage": "{{count}} offline změn se nepodařilo uložit a byly zahozeny, protože je server odmítl."
   },
   "help": {
     "title": "Centrum napovedy",
@@ -425,6 +488,7 @@
     "enterReading": "Zadejte odecet",
     "readingPlaceholder": "0,00",
     "readingRequired": "Prosim zadejte odecet",
+    "readingInvalid": "Zadejte platne cislo",
     "photo": "Fotografie (volitelne)",
     "submit": "Odeslat odecet",
     "submitSuccess": "Odecet merice byl uspesne odeslan",
@@ -556,10 +620,40 @@
     "noPayments": "Nejsou naplánovány žádné nadcházející platby.",
     "notFound": "Nájemní smlouva nebyla nalezena."
   },
+  "personMonths": {
+    "title": "Osoboměsíce",
+    "subtitle": "Nahlaste, kolik osob bydlelo ve vaší jednotce každý měsíc pro účely rozúčtování nákladů.",
+    "invalidTitle": "Neplatná hodnota",
+    "invalidMessage": "Zadejte celé číslo od 0 do 20.",
+    "bulkEntry": "Hromadné zadání…",
+    "personCount_one": "{{count}} osoba",
+    "personCount_few": "{{count}} osoby",
+    "personCount_many": "{{count}} osoby",
+    "personCount_other": "{{count}} osob",
+    "status": {
+      "draft": "Koncept",
+      "submitted": "Odesláno",
+      "confirmed": "Potvrzeno"
+    }
+  },
   "outages": {
+    "backToList": "‹ Výpadky",
     "loadError": "Nepodařilo se načíst výpadky",
     "emptyTitle": "Žádné výpadky",
-    "emptyText": "Momentálně není nic naplánováno ani aktivní."
+    "emptyText": "Momentálně není nic naplánováno ani aktivní.",
+    "title": "Výpadky",
+    "subtitle": "Plánovaná a aktivní přerušení dodávek.",
+    "filters": {
+      "all": "Všechny",
+      "scheduled": "Naplánované",
+      "active": "Aktivní",
+      "resolved": "Vyřešené"
+    },
+    "status": {
+      "scheduled": "Naplánované",
+      "in_progress": "Probíhá",
+      "resolved": "Vyřešené"
+    }
   },
   "forms": {
     "loadError": "Nepodařilo se načíst formuláře",
@@ -572,7 +666,12 @@
     "emptyTitle": "Zatím žádní sousedé",
     "noMatches": "Žádné shody",
     "emptyText": "Obyvatelé, kteří se přihlásí do seznamu, se zobrazí zde.",
-    "noMatchesText": "Zkuste jiné jméno nebo číslo bytu."
+    "noMatchesText": "Zkuste jiné jméno nebo číslo bytu.",
+    "title": "Sousedé",
+    "subtitle": "{{count}} obyvatel v budově {{building}}",
+    "subtitleGeneric": "{{count}} obyvatel ve vaší budově",
+    "searchPlaceholder": "Hledat podle jména nebo bytu…",
+    "owner": "Vlastník"
   },
   "voice": {
     "confirmations": {

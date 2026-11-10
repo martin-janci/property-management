@@ -26,6 +26,7 @@ import {
 } from '@ppt/api-client';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useConfirmDialog } from '../../../components/useConfirmDialog';
 
 interface DocumentSignaturePanelProps {
   documentId: string;
@@ -148,6 +149,7 @@ interface SignatureRequestCardProps {
 
 function SignatureRequestCard({ documentId, request, onChanged }: SignatureRequestCardProps) {
   const { t } = useTranslation();
+  const { confirm, confirmDialog } = useConfirmDialog();
   const remind = useSendSignatureReminder(documentId);
   const cancel = useCancelSignatureRequest(documentId);
 
@@ -176,14 +178,15 @@ function SignatureRequestCard({ documentId, request, onChanged }: SignatureReque
     remind.mutate({ id: request.id }, { onSuccess: onChanged });
   };
 
-  const handleCancel = () => {
+  const handleCancel = async () => {
     if (
-      !window.confirm(
-        t(
+      !(await confirm({
+        message: t(
           'documents.esign.cancelConfirm',
           'Cancel this signature request? Signers can no longer sign.'
-        )
-      )
+        ),
+        variant: 'danger',
+      }))
     ) {
       return;
     }
@@ -267,9 +270,10 @@ function SignatureRequestCard({ documentId, request, onChanged }: SignatureReque
         <p className="signature-card__hint signature-card__hint--error" role="alert">
           {actionError instanceof Error
             ? actionError.message
-            : t('common.unknownError', 'Something went wrong. Please try again.')}
+            : t('documents.esign.genericError', 'Something went wrong. Please try again.')}
         </p>
       )}
+      {confirmDialog}
     </li>
   );
 }
@@ -547,7 +551,7 @@ function CreateSignatureRequestDialog({
               <p className="text-sm text-red-700">
                 {createRequest.error instanceof Error
                   ? createRequest.error.message
-                  : t('common.unknownError', 'Something went wrong. Please try again.')}
+                  : t('documents.esign.genericError', 'Something went wrong. Please try again.')}
               </p>
             </div>
           )}

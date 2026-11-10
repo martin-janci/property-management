@@ -1,0 +1,64 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-01",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "oldest-unreviewed (dispatcher-tier1d-demand-driven; claimable backlog below floor, 9 < 36). CHURN_FILES not supplied this slice, so SKILL Step 1 priority 2 applies. The review_cursor in .research/state.json is stale (it lists ppt-web-ui 2026-10-22 / reality-web 2026-10-23 as oldest), so — as the 2026-11-01 reality-server generator established — the .research/signals/ ledger is used as ground truth for what was ACTUALLY reviewed. Ledger (last 4 days): 2026-11-01 reality-server + ppt-web-ui(x2); 2026-10-31 reality-web, ppt-web-ui, ppt-web-core, mobile-rn, mobile-native-kmp, api-core; 2026-10-29 mobile-native-kmp, api-core(x5); 2026-10-28 reality-web, ppt-web-ui, ppt-web-core, mobile-native-kmp, api-handlers, api-core. The genuine oldest-reviewed is api-handlers (2026-10-28) but it has 3 open code-review-finding rows in backlog.json => SKILL Step 1 saturation-skip. ppt-web-ui is the single most over-reviewed segment (3 reviews in 4 days) and the dispatcher prompt explicitly directs rotation away from it, so it is excluded despite its stale cursor. Among the remaining non-saturated segments all last reviewed 2026-10-31, mobile-rn was reviewed the FEWEST times in the window (once) and has 0 open backlog findings => selected mobile-rn. Frontend expert primary + Tester secondary per Step 2. NOTE: the segment root in the SKILL map (frontend/mobile/src/) is stale; the app now lives at frontend/apps/mobile/src/ (pnpm workspace apps/ reorg) and was reviewed there. Prior mobile-rn reviews already hardened widgets (WidgetDataProvider JSON.parse, WidgetBridge no-tests), hooks/useApi (unchecked response cast) and nfc (3 done findings), so this slice deliberately steered to untouched areas: contexts, hooks/useOfflineSupport, features/layout, qrcode, onboarding, services. That sweep found the segment largely hardened — AuthContext.tsx (L266/L317 JSON.parse as User) is inside try/catch; useOfflineSupport.ts remapQueuedBody (L126) + readCachedData (L644) parses are try-caught; features/layout/layoutCache.ts readCachedLayout wraps JSON.parse AND shape-guards + removes the bad key; qrcode/QRCodeScanner.parsePPTPayload (L138) is try-caught; onboarding/TourManager.loadState (L277) + HelpCenter.loadUserVotes (L191) both try/catch + schema-validate; utils/jwt.ts decode is try-caught. The 3 findings below are the genuine residue: two files that did NOT follow that established parse-hardening pattern (onboarding/FeedbackManager + qrcode scan-history), plus the missing-test gap on FeedbackManager (mirrors the prior widgets-no-tests Tester finding on a different untested public manager). An empty-services sweep (backgroundNotifications, deepLinkRouting, resetLocalData) surfaced no issue — all have test files. Capped at 3; no nits padded.",
+  "experts_used": [
+    "frontend",
+    "tester"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-feedbackmgr-json-parse",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/onboarding/FeedbackManager.ts:139 getDrafts() does `return stored ? JSON.parse(stored) : [];` with NO try/catch. A corrupt or truncated FEEDBACK_DRAFTS_KEY value in AsyncStorage (e.g. an interrupted write, storage corruption, or a stale value from an older schema) makes JSON.parse throw synchronously, so the whole getDrafts() promise rejects and the feedback-draft UI that awaits it crashes instead of degrading to an empty list.",
+        "frontend/apps/mobile/src/onboarding/FeedbackManager.ts:229 getPendingFeedback() has the identical unguarded pattern `return stored ? JSON.parse(stored) : [];` against PENDING_FEEDBACK_KEY. getPendingFeedback feeds the pending-feedback sync/flush path, so a single corrupt entry throws and blocks ALL queued feedback from ever syncing (no isolation, no self-heal).",
+        "This is the SAME class of bug the team already fixed elsewhere in this segment: the prior open finding code-review-mobile-rn-widget-provider-json-parse flagged WidgetDataProvider.getAllWidgetConfigs() for the exact `return stored ? JSON.parse(stored)...` anti-pattern, and the hardened modules in this app (layoutCache.readCachedLayout L22-27, TourManager.loadState L277, HelpCenter.loadUserVotes L191) all wrap the parse in try/catch and drop/ignore the bad value. FeedbackManager was missed.",
+        "Fix vector: wrap each JSON.parse in try/catch returning [] on failure (and ideally AsyncStorage.removeItem the corrupt key, matching layoutCache). Beyond the throw, the parsed value is also returned untyped (no cast, no shape guard) so a wrong-shape-but-valid-JSON blob would propagate malformed drafts/submissions downstream. Confidence medium: the missing guard and the throwing path are certain by static read; not upgraded to high because triggering it requires already-corrupt local storage, not normal input.",
+        "expert: frontend"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-qrhistory-json-parse",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/qrcode/QRCodeScanner.ts:368 getScanHistory() does `return stored ? JSON.parse(stored) : [];` against SCAN_HISTORY_KEY with NO try/catch — the same unguarded-persisted-parse anti-pattern as FeedbackManager above.",
+        "Blast radius is wider than a read-only getter because getScanHistory() is also on the WRITE path: saveScanToHistory() (frontend/apps/mobile/src/qrcode/QRCodeScanner.ts:345 `const history = await getScanHistory();`) calls it before appending a new entry. So if SCAN_HISTORY_KEY is corrupt, scanning a fresh QR code throws inside saveScanToHistory and the post-scan success handler crashes — not just the history-list screen. (This is distinct from parsePPTPayload at L138, which IS correctly try-caught.)",
+        "Note the asymmetry: the parse of UNTRUSTED scanned QR payload (parsePPTPayload, L136-142) is defensively wrapped, but the parse of the app's OWN persisted history — which can still be corrupted by a partial write or OS-level storage issue — is not. Both should be guarded.",
+        "Fix vector: wrap JSON.parse in try/catch returning [] (and remove the corrupt key), so a bad history blob self-heals on the next scan instead of blocking all future scans. Confidence medium: throwing path certain by static read; requires already-corrupt storage to trigger.",
+        "expert: frontend"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-feedbackmgr-no-tests",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test",
+      "evidence": [
+        "frontend/apps/mobile/src/onboarding/FeedbackManager.ts is a public manager class (saveDraft/getDrafts/getPendingFeedback/submit flow + draft serialization) with ZERO test coverage: a repo-wide search `find frontend/apps/mobile -iname '*feedback*test*'` returns nothing, and no FeedbackManager.test.* exists anywhere in the tree.",
+        "By contrast the neighbouring onboarding/qrcode modules that were recently hardened DO have tests (qrcode/universalLinks.test.ts, qrcode/DeepLinkHandler.test.ts; services/ has backgroundNotifications.test.ts, deepLinkRouting.test.ts, resetLocalData.test.ts), so the gap is specific to FeedbackManager, not a segment-wide norm.",
+        "This mirrors the prior accepted Tester finding code-review-mobile-rn-widgets-no-tests (public classes driving a feature with no tests), applied to a different untested public manager. The missing coverage is also what let the unguarded-JSON.parse defects above (sibling finding code-review-mobile-rn-feedbackmgr-json-parse) ship unnoticed — a corrupt-storage unit test would have caught them.",
+        "Fix vector: add a FeedbackManager.test.ts covering (a) getDrafts/getPendingFeedback with corrupt stored JSON (should not throw), (b) draft round-trip save/get, (c) pending-feedback flush. Low severity / test-coverage gap. Confidence medium.",
+        "expert: tester"
+      ],
+      "expert": "tester"
+    }
+  ]
+}

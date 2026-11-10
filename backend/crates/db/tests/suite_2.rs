@@ -9,6 +9,8 @@ mod common;
 mod documents_rls_cross_tenant_tests;
 #[path = "suites/emergency_rls_repo_tests.rs"]
 mod emergency_rls_repo_tests;
+#[path = "suites/energy_schema_tests.rs"]
+mod energy_schema_tests;
 #[path = "suites/enhanced_tenant_screening_rls_repo_tests.rs"]
 mod enhanced_tenant_screening_rls_repo_tests;
 #[path = "suites/epic11_org_guc_rls_tests.rs"]
@@ -21,6 +23,8 @@ mod esg_force_rls_cross_tenant_tests;
 mod esignature_workflow_repo_tests;
 #[path = "suites/facility_enum_decode_tests.rs"]
 mod facility_enum_decode_tests;
+#[path = "suites/fault_find_by_id_for_org_rls_tests.rs"]
+mod fault_find_by_id_for_org_rls_tests;
 #[path = "suites/fault_kpi_unification_tests.rs"]
 mod fault_kpi_unification_tests;
 #[path = "suites/favorite_alert_read_idempotent_tests.rs"]
