@@ -1,5 +1,6 @@
 import type { ApiVoteSummary } from './VotingScreen';
 import {
+  formatTimeRemaining,
   formatVoteDate,
   formatVoteDateRange,
   parseVoteSummaries,
@@ -290,5 +291,60 @@ describe('quorumProgressPercent', () => {
     const pct = quorumProgressPercent(ui.currentQuorum, ui.requiredQuorum);
     expect(Number.isFinite(pct)).toBe(true);
     expect(pct).toBe(0);
+  });
+});
+
+describe('formatTimeRemaining', () => {
+  // A stub translator that echoes the key and its interpolation params, so a
+  // NaN leaking into the params surfaces as the literal "NaN" in the output —
+  // exactly what the real i18n renderer would show on the card.
+  const t = (key: string, params?: Record<string, number>): string =>
+    params ? `${key} ${JSON.stringify(params)}` : key;
+
+  // Fixed "now" so the countdown branches are deterministic regardless of the
+  // wall clock when the suite runs.
+  const now = new Date('2026-06-01T00:00:00Z');
+
+  it('reports days + hours for a date comfortably in the future', () => {
+    const out = formatTimeRemaining('2026-06-03T05:00:00Z', t, now);
+    expect(out).toContain('voting.timeLeftDaysHours');
+    expect(out).toContain('"days":2');
+    expect(out).toContain('"hours":5');
+  });
+
+  it('reports hours when less than a day remains', () => {
+    const out = formatTimeRemaining('2026-06-01T06:00:00Z', t, now);
+    expect(out).toContain('voting.timeLeftHours');
+    expect(out).toContain('"hours":6');
+  });
+
+  it('reports minutes when less than an hour remains', () => {
+    const out = formatTimeRemaining('2026-06-01T00:30:00Z', t, now);
+    expect(out).toContain('voting.timeLeftMinutes');
+    expect(out).toContain('"minutes":30');
+  });
+
+  it('returns the "ended" label once the end date has passed', () => {
+    expect(formatTimeRemaining('2026-05-31T23:59:59Z', t, now)).toBe('voting.ended');
+  });
+
+  // Core regression (code-review-mobile-rn-voting-timeremaining-nan): the list
+  // endpoint can carry a missing/empty `end_at`, and `toUiVote` copies it
+  // verbatim into `endsAt`. `new Date('').getTime()` is NaN, so `diff` is NaN,
+  // the `diff <= 0` "ended" guard is false, and every Math.floor branch below
+  // yields NaN → the card rendered the literal "NaN" (e.g. "NaN minutes left").
+  // An empty or unparseable end date must collapse to '' so the countdown is
+  // simply omitted, mirroring how `formatVoteDate` handles bad input.
+  it.each([
+    ['empty string', ''],
+    ['whitespace-only', '   '],
+    ['garbage', 'not-a-date'],
+  ])('returns "" for an unparseable end date (%s)', (_label, input) => {
+    expect(formatTimeRemaining(input, t, now)).toBe('');
+  });
+
+  it('never emits the literal "NaN" for an unparseable end date', () => {
+    expect(formatTimeRemaining('', t, now)).not.toMatch(/NaN/);
+    expect(formatTimeRemaining('nonsense', t, now)).not.toMatch(/NaN/);
   });
 });
