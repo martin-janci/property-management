@@ -95,12 +95,52 @@ impl BoundedCache {
     }
 
     /// Insert `data` under `key`, keeping the cache correct and bounded.
+    ///
+    /// Same discipline as `routes::price_map::BoundedCache::insert`: reclaim
+    /// TTL-expired entries from the front of the order index (amortised O(1)),
+    /// re-sequence a replaced key to the back, then enforce the size cap by
+    /// evicting the oldest-inserted entry — no full-keyset clone or sort.
     fn insert(&mut self, key: String, data: layout_core::ResolvedScreen, expires_at: Instant) {
-        // NOTE: caching not yet implemented — see the `fix:` commit. This stub
-        // intentionally drops the entry so the characterization tests below
-        // (which assert a round-trip hit, TTL expiry, and the size bound) fail
-        // against it, proving the fix.
-        let _ = (key, data, expires_at);
+        let now = Instant::now();
+        // (1) Correctness: reclaim TTL-expired entries from the front (oldest
+        // first), stopping at the first live entry.
+        while let Some((seq, front_key)) =
+            self.order.first_key_value().map(|(&s, k)| (s, k.clone()))
+        {
+            let expired = self
+                .entries
+                .get(&front_key)
+                .map(|e| e.expires_at <= now)
+                .unwrap_or(true);
+            if !expired {
+                break;
+            }
+            self.order.remove(&seq);
+            self.entries.remove(&front_key);
+        }
+        // (2) Replacing an existing key must not grow the map: drop its old
+        // order slot so the refreshed entry re-sequences to the back below.
+        if let Some(prev) = self.entries.remove(&key) {
+            self.order.remove(&prev.seq);
+        }
+        // (3) Memory bound: evict the oldest-inserted entry until there is room.
+        while self.entries.len() >= MAX_RESOLVED_CACHE_ENTRIES {
+            if self.evict_oldest().is_none() {
+                break;
+            }
+        }
+        // (4) Insert at the back with a fresh monotonic sequence.
+        let seq = self.next_seq;
+        self.next_seq += 1;
+        self.order.insert(seq, key.clone());
+        self.entries.insert(
+            key,
+            CacheEntry {
+                data,
+                expires_at,
+                seq,
+            },
+        );
     }
 
     #[cfg(test)]
@@ -160,6 +200,24 @@ pub async fn get_resolved(
             ))
         }
     };
+    let platform_key = match platform {
+        layout_core::Platform::Web => "web",
+        layout_core::Platform::Mobile => "mobile",
+    };
+    let key = cache_key(&screen, platform_key);
+
+    // Serve from the in-process cache when a live entry exists — avoids the
+    // three DB reads + resolve on every portal page load (mirrors price_map).
+    {
+        let cache = resolved_cache().read().await;
+        if let Some(entry) = cache.get(&key) {
+            if Instant::now() < entry.expires_at {
+                tracing::debug!(%screen, platform_key, "resolved layout cache hit");
+                return Ok(Json(entry.data.clone()));
+            }
+        }
+    }
+
     let mut conn = state
         .acquire_public_conn()
         .await
@@ -178,10 +236,6 @@ pub async fn get_resolved(
     let base: layout_core::ScreenConfig = serde_json::from_value(published)
         .map_err(|e| crate::util::errors::db_error("parse stored layout config", e))?;
 
-    let platform_key = match platform {
-        layout_core::Platform::Web => "web",
-        layout_core::Platform::Mobile => "mobile",
-    };
     let manifest_row = repo
         .get_manifest(&mut *conn, platform_key)
         .await
@@ -204,6 +258,16 @@ pub async fn get_resolved(
     // Public portal: no tenant layer (spec §3.2 — the tenant layer simply
     // doesn't contribute on public reality screens).
     let resolved = layout_core::resolve(&base, platform, None, &kills, &manifest);
+
+    // Store the resolution for the TTL window. `BoundedCache::insert` reclaims
+    // expired entries and enforces the size cap via an insertion-order index,
+    // so the map can never grow past `MAX_RESOLVED_CACHE_ENTRIES` even if a
+    // caller rotates distinct `{*screen}` / `platform` keys.
+    {
+        let mut cache = resolved_cache().write().await;
+        cache.insert(key, resolved.clone(), Instant::now() + CACHE_TTL);
+    }
+
     Ok(Json(resolved))
 }
 
@@ -254,7 +318,10 @@ mod tests {
         let key = cache_key("reality/listing-detail", "web");
         cache.insert(key.clone(), sample_resolved(), Instant::now() + CACHE_TTL);
         let entry = cache.get(&key).expect("stored entry must be retrievable");
-        assert!(Instant::now() < entry.expires_at, "entry must still be live");
+        assert!(
+            Instant::now() < entry.expires_at,
+            "entry must still be live"
+        );
     }
 
     /// Characterization: an already-expired entry is reclaimed on the next
