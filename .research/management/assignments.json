@@ -157,18 +157,18 @@
     {
       "task_id": "code-review-mobile-rn-voting-timeremaining-nan",
       "branch": "auto-impl/code-review-mobile-rn-voting-timeremaini-54d751a0",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-10T18:31:32Z",
-      "last_updated": "2026-11-10T18:31:32Z",
-      "status_changed_at": "2026-11-10T18:31:32Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-10T18:45:29Z",
+      "status_changed_at": "2026-11-10T18:45:29Z",
+      "pr_number": 3401,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3401",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-native",
+      "implementer_summary": "pr=3401 status=done specialist=react-native scope_drift=false code_reuse_warn=none note=guarded VotingScreen time-remaining vs NaN end_at (formatTimeRemaining returns '' on empty/unparseable); IG3 split red->green; verify OK 0847027",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -265,5 +265,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-10T18:41:39Z"
+  "generated": "2026-11-10T18:45:29Z"
 }
