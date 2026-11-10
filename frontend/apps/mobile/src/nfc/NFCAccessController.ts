@@ -308,18 +308,33 @@ export class NFCAccessController {
       };
 
       const isAllowed = accessPoint.timeRestrictions.some((restriction) => {
-        if (!restriction.days.includes(currentDay)) {
-          return false;
-        }
-
         const startMinutes = parseTimeToMinutes(restriction.startTime);
         const endMinutes = parseTimeToMinutes(restriction.endTime);
 
-        // Handle time range that crosses midnight (e.g., 23:00 to 01:00)
+        // A restriction's `days` list names the calendar day on which the
+        // window OPENS. For a window that crosses midnight (e.g. 23:00–01:00)
+        // the two halves fall on different calendar days, so each half must be
+        // matched against the day it actually belongs to — not blanket against
+        // the tap's current day. Otherwise Mon 23:00–01:00 wrongly denies the
+        // Tue 00:00–01:00 tail and spuriously grants Mon 00:00–01:00.
         if (endMinutes < startMinutes) {
-          return currentMinutes >= startMinutes || currentMinutes <= endMinutes;
+          // Evening half (>= start, before midnight): the tap day is itself a
+          // start day.
+          const inEveningHalf =
+            currentMinutes >= startMinutes && restriction.days.includes(currentDay);
+          // Early-morning half (<= end, after midnight): this belongs to the
+          // window that opened on the PREVIOUS calendar day.
+          const previousDay = (currentDay + 6) % 7;
+          const inMorningHalf =
+            currentMinutes <= endMinutes && restriction.days.includes(previousDay);
+          return inEveningHalf || inMorningHalf;
         }
 
+        // Same-day window: the tap day must be a start day and the time must
+        // fall within [start, end].
+        if (!restriction.days.includes(currentDay)) {
+          return false;
+        }
         return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
       });
 
