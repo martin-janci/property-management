@@ -137,7 +137,7 @@ describe('AuthContext integration', () => {
 
   describe('initialization', () => {
     it('boots into the unauthenticated state when no tokens are stored', async () => {
-      const { result } = renderHook(() => useAuth(), { wrapper });
+      const { result } = await renderHook(() => useAuth(), { wrapper });
 
       await waitFor(() => expect(result.current.isLoading).toBe(false));
       expect(result.current.isAuthenticated).toBe(false);
@@ -153,7 +153,7 @@ describe('AuthContext integration', () => {
         ppt_biometric_enabled: 'true',
       });
 
-      const { result } = renderHook(() => useAuth(), { wrapper });
+      const { result } = await renderHook(() => useAuth(), { wrapper });
 
       await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
       expect(result.current.accessToken).toBe('stored-access');
@@ -164,7 +164,7 @@ describe('AuthContext integration', () => {
     it('reports biometricAvailable=false when hardware is missing', async () => {
       mockedLocalAuth.hasHardwareAsync.mockResolvedValue(false);
 
-      const { result } = renderHook(() => useAuth(), { wrapper });
+      const { result } = await renderHook(() => useAuth(), { wrapper });
 
       await waitFor(() => expect(result.current.isLoading).toBe(false));
       expect(result.current.biometricAvailable).toBe(false);
@@ -186,7 +186,7 @@ describe('AuthContext integration', () => {
       // initialize() must exchange the expired bearer via /auth/refresh.
       mockFetchOnce({ access_token: 'refreshed-access', refresh_token: 'refreshed-refresh' });
 
-      const { result } = renderHook(() => useAuth(), { wrapper });
+      const { result } = await renderHook(() => useAuth(), { wrapper });
 
       await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
       // The refresh endpoint was hit on cold start (not the login endpoint).
@@ -211,7 +211,7 @@ describe('AuthContext integration', () => {
       });
       mockFetchOnce({}, 401); // refresh rejected
 
-      const { result } = renderHook(() => useAuth(), { wrapper });
+      const { result } = await renderHook(() => useAuth(), { wrapper });
 
       await waitFor(() => expect(result.current.isLoading).toBe(false));
       // Never restore an expired session when it cannot be refreshed.
@@ -231,7 +231,7 @@ describe('AuthContext integration', () => {
         ppt_user: JSON.stringify(sampleUser),
       });
 
-      const { result } = renderHook(() => useAuth(), { wrapper });
+      const { result } = await renderHook(() => useAuth(), { wrapper });
 
       await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
       expect(result.current.accessToken).toBe(token);
@@ -250,7 +250,7 @@ describe('AuthContext integration', () => {
         user: sampleUser,
       });
 
-      const { result } = renderHook(() => useAuth(), { wrapper });
+      const { result } = await renderHook(() => useAuth(), { wrapper });
       await waitFor(() => expect(result.current.isLoading).toBe(false));
 
       await act(async () => {
@@ -297,7 +297,7 @@ describe('AuthContext integration', () => {
         tenants: [{ tenantId: 'org-1', tenantName: 'SVB Hlavná 1', role: 'owner' }],
       });
 
-      const { result } = renderHook(() => useAuth(), { wrapper });
+      const { result } = await renderHook(() => useAuth(), { wrapper });
       await waitFor(() => expect(result.current.isLoading).toBe(false));
 
       await act(async () => {
@@ -331,7 +331,7 @@ describe('AuthContext integration', () => {
         user: sampleUser,
       });
 
-      const { result } = renderHook(() => useAuth(), { wrapper });
+      const { result } = await renderHook(() => useAuth(), { wrapper });
       await waitFor(() => expect(result.current.isLoading).toBe(false));
 
       await act(async () => {
@@ -356,7 +356,7 @@ describe('AuthContext integration', () => {
         user: sampleUser,
       });
 
-      const { result } = renderHook(() => useAuth(), { wrapper });
+      const { result } = await renderHook(() => useAuth(), { wrapper });
       await waitFor(() => expect(result.current.isLoading).toBe(false));
 
       await act(async () => {
@@ -372,7 +372,7 @@ describe('AuthContext integration', () => {
       primeSecureStore();
       mockFetchOnce({ message: 'Invalid credentials' }, 401);
 
-      const { result } = renderHook(() => useAuth(), { wrapper });
+      const { result } = await renderHook(() => useAuth(), { wrapper });
       await waitFor(() => expect(result.current.isLoading).toBe(false));
 
       await expect(
@@ -399,7 +399,7 @@ describe('AuthContext integration', () => {
         ppt_user: JSON.stringify(sampleUser),
       });
 
-      const { result } = renderHook(() => useAuth(), { wrapper });
+      const { result } = await renderHook(() => useAuth(), { wrapper });
       await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
 
       await act(async () => {
@@ -426,7 +426,7 @@ describe('AuthContext integration', () => {
       // ...and some unrelated tenant-scoped data.
       queryClient.setQueryData(['buildings', 'org-old'], [{ id: 'b-1' }]);
 
-      const { result } = renderHook(() => useAuth(), { wrapper });
+      const { result } = await renderHook(() => useAuth(), { wrapper });
       await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
 
       await act(async () => {
@@ -462,7 +462,7 @@ describe('AuthContext integration', () => {
 
       // --- login as user A ---
       mockFetchOnce({ access_token: 'a-access', refresh_token: 'a-refresh', user: sampleUser });
-      const { result } = renderHook(() => useAuth(), { wrapper });
+      const { result } = await renderHook(() => useAuth(), { wrapper });
       await waitFor(() => expect(result.current.isLoading).toBe(false));
       await act(async () => {
         await result.current.login('jane@example.com', 'pw');
@@ -519,7 +519,7 @@ describe('AuthContext integration', () => {
         refresh_token: 'rotated-refresh',
       });
 
-      const { result } = renderHook(() => useAuth(), { wrapper });
+      const { result } = await renderHook(() => useAuth(), { wrapper });
       await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
 
       await act(async () => {
@@ -546,7 +546,7 @@ describe('AuthContext integration', () => {
 
       mockFetchOnce({}, 401);
 
-      const { result } = renderHook(() => useAuth(), { wrapper });
+      const { result } = await renderHook(() => useAuth(), { wrapper });
       await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
 
       let caught: unknown;
@@ -574,7 +574,7 @@ describe('AuthContext integration', () => {
         ppt_user: JSON.stringify(sampleUser),
       });
 
-      const { result } = renderHook(() => useAuth(), { wrapper });
+      const { result } = await renderHook(() => useAuth(), { wrapper });
       await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
 
       await expect(
@@ -590,7 +590,7 @@ describe('AuthContext integration', () => {
       const store = primeSecureStore();
       mockedLocalAuth.authenticateAsync.mockResolvedValue({ success: true });
 
-      const { result } = renderHook(() => useAuth(), { wrapper });
+      const { result } = await renderHook(() => useAuth(), { wrapper });
       await waitFor(() => expect(result.current.isLoading).toBe(false));
 
       let enabled: boolean | undefined;
@@ -620,7 +620,7 @@ describe('AuthContext integration', () => {
       primeSecureStore();
       mockedLocalAuth.authenticateAsync.mockResolvedValue({ success: false });
 
-      const { result } = renderHook(() => useAuth(), { wrapper });
+      const { result } = await renderHook(() => useAuth(), { wrapper });
       await waitFor(() => expect(result.current.isLoading).toBe(false));
 
       let enabled: boolean | undefined;
@@ -639,7 +639,7 @@ describe('AuthContext integration', () => {
         ppt_user: JSON.stringify(sampleUser),
       });
 
-      const { result } = renderHook(() => useAuth(), { wrapper });
+      const { result } = await renderHook(() => useAuth(), { wrapper });
       await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
 
       await act(async () => {
@@ -658,7 +658,7 @@ describe('AuthContext integration', () => {
       });
       mockedLocalAuth.authenticateAsync.mockResolvedValue({ success: true });
 
-      const { result } = renderHook(() => useAuth(), { wrapper });
+      const { result } = await renderHook(() => useAuth(), { wrapper });
       // Already authenticated from the stored tokens.
       await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
 
@@ -707,7 +707,7 @@ describe('AuthContext integration', () => {
       // A persisted cache entry belonging to the SAME stored user.
       asyncStore.set('ppt_cache_faults_list', JSON.stringify([{ id: 'f-1' }]));
 
-      const { result } = renderHook(() => useAuth(), { wrapper });
+      const { result } = await renderHook(() => useAuth(), { wrapper });
       await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
 
       await act(async () => {
@@ -732,7 +732,7 @@ describe('AuthContext integration', () => {
       // A same-user persisted cache entry that must survive the unlock.
       asyncStore.set('ppt_cache_faults_list', JSON.stringify([{ id: 'f-1' }]));
 
-      const { result } = renderHook(() => useAuth(), { wrapper });
+      const { result } = await renderHook(() => useAuth(), { wrapper });
       await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
 
       // Simulate the device sitting locked past the access-token TTL: the stored
@@ -777,7 +777,7 @@ describe('AuthContext integration', () => {
       });
       mockedLocalAuth.authenticateAsync.mockResolvedValue({ success: true });
 
-      const { result } = renderHook(() => useAuth(), { wrapper });
+      const { result } = await renderHook(() => useAuth(), { wrapper });
       await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
 
       // Log out, then present an expired stored token whose refresh is rejected.
@@ -804,7 +804,7 @@ describe('AuthContext integration', () => {
     it('authenticateWithBiometric is a no-op when biometric is not enabled', async () => {
       primeSecureStore();
 
-      const { result } = renderHook(() => useAuth(), { wrapper });
+      const { result } = await renderHook(() => useAuth(), { wrapper });
       await waitFor(() => expect(result.current.isLoading).toBe(false));
 
       let ok: boolean | undefined;

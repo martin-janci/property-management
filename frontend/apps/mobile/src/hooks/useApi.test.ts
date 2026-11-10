@@ -252,7 +252,9 @@ describe('useTenantId', () => {
 
   it('resolves the tenant id from the stored token', async () => {
     primeToken(makeJwt({ tenant_id: 'org-A' }));
-    const { result } = renderHook(() => useTenantId(), { wrapper: makeWrapper(freshClient()) });
+    const { result } = await renderHook(() => useTenantId(), {
+      wrapper: makeWrapper(freshClient()),
+    });
 
     await waitFor(() => expect(result.current.tenantId).toBe('org-A'));
   });
@@ -264,7 +266,9 @@ describe('useTenantId', () => {
     // Infinity` cached value. Modeled here as a fresh client + swapped token —
     // the empty post-logout cache no longer holds the previous org's id.
     primeToken(makeJwt({ tenant_id: 'org-B' }));
-    const { result } = renderHook(() => useTenantId(), { wrapper: makeWrapper(freshClient()) });
+    const { result } = await renderHook(() => useTenantId(), {
+      wrapper: makeWrapper(freshClient()),
+    });
 
     await waitFor(() => expect(result.current.tenantId).toBe('org-B'));
   });

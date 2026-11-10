@@ -50,37 +50,37 @@ describe('MeterReadingScreen numeric-validation guard', () => {
     alertSpy.mockRestore();
   });
 
-  it('does not queue a reading when the input is non-numeric', () => {
-    render(<MeterReadingScreen />);
+  it('does not queue a reading when the input is non-numeric', async () => {
+    await render(<MeterReadingScreen />);
 
     const input = screen.getByPlaceholderText('meters.readingPlaceholder');
     // Simulate garbage that a hardware keyboard / paste can inject despite
     // keyboardType="decimal-pad": normalization strips it to empty.
-    fireEvent.changeText(input, 'abc');
-    fireEvent.press(screen.getByText('meters.submit'));
+    await fireEvent.changeText(input, 'abc');
+    await fireEvent.press(screen.getByText('meters.submit'));
 
     expect(mockAddToQueue).not.toHaveBeenCalled();
     // Empty-after-normalize hits the "required" guard; either way nothing queues.
     expect(alertSpy).toHaveBeenCalled();
   });
 
-  it('shows the invalid alert for a lone decimal separator and does not queue', () => {
-    render(<MeterReadingScreen />);
+  it('shows the invalid alert for a lone decimal separator and does not queue', async () => {
+    await render(<MeterReadingScreen />);
 
     const input = screen.getByPlaceholderText('meters.readingPlaceholder');
-    fireEvent.changeText(input, '.');
-    fireEvent.press(screen.getByText('meters.submit'));
+    await fireEvent.changeText(input, '.');
+    await fireEvent.press(screen.getByText('meters.submit'));
 
     expect(mockAddToQueue).not.toHaveBeenCalled();
     expect(alertSpy).toHaveBeenCalledWith('common.error', 'meters.readingInvalid');
   });
 
   it('queues a valid numeric reading', async () => {
-    render(<MeterReadingScreen />);
+    await render(<MeterReadingScreen />);
 
     const input = screen.getByPlaceholderText('meters.readingPlaceholder');
-    fireEvent.changeText(input, '142.4');
-    fireEvent.press(screen.getByText('meters.submit'));
+    await fireEvent.changeText(input, '142.4');
+    await fireEvent.press(screen.getByText('meters.submit'));
 
     // handleSubmit is async (awaits addToQueue), so wait for the effect.
     await waitFor(() => expect(mockAddToQueue).toHaveBeenCalledTimes(1));

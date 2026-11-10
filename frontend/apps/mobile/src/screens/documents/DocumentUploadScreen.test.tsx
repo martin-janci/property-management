@@ -219,14 +219,14 @@ describe('DocumentUploadScreen validate()', () => {
   /** Pick a file through the document picker and wait for its preview card. */
   async function pickFile(asset: { uri: string; name: string; mimeType: string; size: number }) {
     mockGetDocumentAsync.mockResolvedValue({ canceled: false, assets: [asset] });
-    fireEvent.press(screen.getByText('documents.upload.pickFile'));
+    await fireEvent.press(screen.getByText('documents.upload.pickFile'));
     await waitFor(() => expect(screen.getByText(asset.name)).toBeTruthy());
   }
 
-  it('rejects submit and shows all three field errors when the form is empty', () => {
-    render(<DocumentUploadScreen />);
+  it('rejects submit and shows all three field errors when the form is empty', async () => {
+    await render(<DocumentUploadScreen />);
 
-    fireEvent.press(screen.getByText('documents.upload.submitButton'));
+    await fireEvent.press(screen.getByText('documents.upload.submitButton'));
 
     // Reject branch: every required field flags its error and nothing is sent.
     expect(screen.getByText('documents.upload.fileRequired')).toBeTruthy();
@@ -236,7 +236,7 @@ describe('DocumentUploadScreen validate()', () => {
   });
 
   it('accepts submit once a file, title, and category are supplied and fires the upload', async () => {
-    render(<DocumentUploadScreen />);
+    await render(<DocumentUploadScreen />);
 
     // Pick a file — this also auto-populates the title from the filename.
     await pickFile({
@@ -247,9 +247,9 @@ describe('DocumentUploadScreen validate()', () => {
     });
 
     // Select a category chip (labels are i18n keys under the test mock).
-    fireEvent.press(screen.getByText('documents.upload.categories.contract'));
+    await fireEvent.press(screen.getByText('documents.upload.categories.contract'));
 
-    fireEvent.press(screen.getByText('documents.upload.submitButton'));
+    await fireEvent.press(screen.getByText('documents.upload.submitButton'));
 
     // Accept branch: validate() passed, so the multipart upload fired once.
     await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
@@ -259,7 +259,7 @@ describe('DocumentUploadScreen validate()', () => {
   });
 
   it('rejects an oversize file client-side (before any upload)', async () => {
-    render(<DocumentUploadScreen />);
+    await render(<DocumentUploadScreen />);
 
     // 51 MiB — one over the 50 MiB backend cap.
     await pickFile({
@@ -268,16 +268,16 @@ describe('DocumentUploadScreen validate()', () => {
       mimeType: 'application/pdf',
       size: 51 * 1024 * 1024,
     });
-    fireEvent.press(screen.getByText('documents.upload.categories.contract'));
+    await fireEvent.press(screen.getByText('documents.upload.categories.contract'));
 
-    fireEvent.press(screen.getByText('documents.upload.submitButton'));
+    await fireEvent.press(screen.getByText('documents.upload.submitButton'));
 
     expect(screen.getByText('documents.upload.fileTooLarge')).toBeTruthy();
     expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
   it('rejects a disallowed MIME type client-side (before any upload)', async () => {
-    render(<DocumentUploadScreen />);
+    await render(<DocumentUploadScreen />);
 
     // application/zip is not in the backend allow-list.
     await pickFile({
@@ -286,16 +286,16 @@ describe('DocumentUploadScreen validate()', () => {
       mimeType: 'application/zip',
       size: 1024,
     });
-    fireEvent.press(screen.getByText('documents.upload.categories.contract'));
+    await fireEvent.press(screen.getByText('documents.upload.categories.contract'));
 
-    fireEvent.press(screen.getByText('documents.upload.submitButton'));
+    await fireEvent.press(screen.getByText('documents.upload.submitButton'));
 
     expect(screen.getByText('documents.upload.fileTypeNotAllowed')).toBeTruthy();
     expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
   it('allows a picker-reported size of 0 (unknown size) through the size guard', async () => {
-    render(<DocumentUploadScreen />);
+    await render(<DocumentUploadScreen />);
 
     // size: 0 means the picker didn't report a size — we can't enforce the
     // cap, so the upload proceeds (server 422 is the backstop) rather than
@@ -306,9 +306,9 @@ describe('DocumentUploadScreen validate()', () => {
       mimeType: 'application/pdf',
       size: 0,
     });
-    fireEvent.press(screen.getByText('documents.upload.categories.contract'));
+    await fireEvent.press(screen.getByText('documents.upload.categories.contract'));
 
-    fireEvent.press(screen.getByText('documents.upload.submitButton'));
+    await fireEvent.press(screen.getByText('documents.upload.submitButton'));
 
     await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
     expect(screen.queryByText('documents.upload.fileTooLarge')).toBeNull();
@@ -321,16 +321,16 @@ describe('DocumentUploadScreen validate()', () => {
       json: async () => ({ message: 'File too large' }),
     }) as unknown as typeof fetch;
 
-    render(<DocumentUploadScreen />);
+    await render(<DocumentUploadScreen />);
     await pickFile({
       uri: 'file:///cache/report.pdf',
       name: 'report.pdf',
       mimeType: 'application/pdf',
       size: 4096,
     });
-    fireEvent.press(screen.getByText('documents.upload.categories.contract'));
+    await fireEvent.press(screen.getByText('documents.upload.categories.contract'));
 
-    fireEvent.press(screen.getByText('documents.upload.submitButton'));
+    await fireEvent.press(screen.getByText('documents.upload.submitButton'));
 
     await waitFor(() =>
       expect(alertSpy).toHaveBeenCalledWith('documents.upload.errorTitle', 'File too large')
@@ -345,16 +345,17 @@ describe('DocumentUploadScreen validate()', () => {
     });
     globalThis.fetch = jest.fn().mockReturnValue(pending) as unknown as typeof fetch;
 
-    render(<DocumentUploadScreen />);
+    await render(<DocumentUploadScreen />);
     await pickFile({
       uri: 'file:///cache/report.pdf',
       name: 'report.pdf',
       mimeType: 'application/pdf',
       size: 4096,
     });
-    fireEvent.press(screen.getByText('documents.upload.categories.contract'));
+    await fireEvent.press(screen.getByText('documents.upload.categories.contract'));
 
-    fireEvent.press(screen.getByText('documents.upload.submitButton'));
+    // Not awaited: the press only settles once the pending upload resolves.
+    const pressed = fireEvent.press(screen.getByText('documents.upload.submitButton'));
 
     // Upload started exactly once; the button label is replaced by the
     // in-progress spinner (so it can't be pressed again) and the uploading
@@ -364,6 +365,7 @@ describe('DocumentUploadScreen validate()', () => {
     expect(screen.queryByText('documents.upload.submitButton')).toBeNull();
 
     resolveFetch({ ok: true, json: async () => ({ id: 'doc-1', message: 'ok' }) });
+    await pressed;
     await waitFor(() => expect(screen.queryByText('documents.upload.uploading')).toBeNull());
     expect(globalThis.fetch).toHaveBeenCalledTimes(1);
   });
@@ -395,7 +397,7 @@ describe('DocumentUploadScreen pickPhoto()', () => {
     expectedName: string
   ) {
     mockLaunchImageLibrary.mockResolvedValue({ canceled: false, assets: [asset] });
-    fireEvent.press(screen.getByText('documents.upload.pickPhoto'));
+    await fireEvent.press(screen.getByText('documents.upload.pickPhoto'));
     await waitFor(() => expect(screen.getByText(expectedName)).toBeTruthy());
   }
 
@@ -406,13 +408,13 @@ describe('DocumentUploadScreen pickPhoto()', () => {
     // the upload proceeds under the transcoded .jpg name / MIME.
     mockManipulateAsync.mockResolvedValue({ uri: 'file:///cache/IMG_0001.jpg' });
 
-    render(<DocumentUploadScreen />);
+    await render(<DocumentUploadScreen />);
     await pickPhoto(
       { uri: 'file:///DCIM/IMG_0001.HEIC', mimeType: 'image/heic', fileName: 'IMG_0001.HEIC' },
       'IMG_0001.jpg'
     );
-    fireEvent.press(screen.getByText('documents.upload.categories.contract'));
-    fireEvent.press(screen.getByText('documents.upload.submitButton'));
+    await fireEvent.press(screen.getByText('documents.upload.categories.contract'));
+    await fireEvent.press(screen.getByText('documents.upload.submitButton'));
 
     // Transcode ran once (format-only JPEG pass) and the guard did NOT reject.
     expect(mockManipulateAsync).toHaveBeenCalledTimes(1);
@@ -430,13 +432,13 @@ describe('DocumentUploadScreen pickPhoto()', () => {
   it('transcodes a HEIF capture detected only by its .heif extension (no picker MIME)', async () => {
     mockManipulateAsync.mockResolvedValue({ uri: 'file:///cache/IMG_9.jpg' });
 
-    render(<DocumentUploadScreen />);
+    await render(<DocumentUploadScreen />);
     await pickPhoto(
       { uri: 'file:///DCIM/IMG_9.HEIF', fileName: 'IMG_9.HEIF', fileSize: 3000 },
       'IMG_9.jpg'
     );
-    fireEvent.press(screen.getByText('documents.upload.categories.contract'));
-    fireEvent.press(screen.getByText('documents.upload.submitButton'));
+    await fireEvent.press(screen.getByText('documents.upload.categories.contract'));
+    await fireEvent.press(screen.getByText('documents.upload.submitButton'));
 
     expect(mockManipulateAsync).toHaveBeenCalledTimes(1);
     expect(screen.queryByText('documents.upload.fileTypeNotAllowed')).toBeNull();
@@ -448,13 +450,13 @@ describe('DocumentUploadScreen pickPhoto()', () => {
     // JPEG — the original HEIC stays and validate() rejects it as before.
     mockManipulateAsync.mockRejectedValue(new Error('decode failed'));
 
-    render(<DocumentUploadScreen />);
+    await render(<DocumentUploadScreen />);
     await pickPhoto(
       { uri: 'file:///DCIM/IMG_0002.HEIC', mimeType: 'image/heic', fileName: 'IMG_0002.HEIC' },
       'IMG_0002.HEIC'
     );
-    fireEvent.press(screen.getByText('documents.upload.categories.contract'));
-    fireEvent.press(screen.getByText('documents.upload.submitButton'));
+    await fireEvent.press(screen.getByText('documents.upload.categories.contract'));
+    await fireEvent.press(screen.getByText('documents.upload.submitButton'));
 
     expect(mockManipulateAsync).toHaveBeenCalledTimes(1);
     expect(screen.getByText('documents.upload.fileTypeNotAllowed')).toBeTruthy();
@@ -465,7 +467,7 @@ describe('DocumentUploadScreen pickPhoto()', () => {
     // A picked asset the picker types as something the allow-list rejects but
     // that isn't HEIC/HEIF must not be run through the JPEG transcode — it stays
     // rejected client-side.
-    render(<DocumentUploadScreen />);
+    await render(<DocumentUploadScreen />);
     await pickPhoto(
       {
         uri: 'file:///DCIM/clip.gifx',
@@ -474,8 +476,8 @@ describe('DocumentUploadScreen pickPhoto()', () => {
       },
       'clip.gifx'
     );
-    fireEvent.press(screen.getByText('documents.upload.categories.contract'));
-    fireEvent.press(screen.getByText('documents.upload.submitButton'));
+    await fireEvent.press(screen.getByText('documents.upload.categories.contract'));
+    await fireEvent.press(screen.getByText('documents.upload.submitButton'));
 
     expect(mockManipulateAsync).not.toHaveBeenCalled();
     expect(screen.getByText('documents.upload.fileTypeNotAllowed')).toBeTruthy();
@@ -483,7 +485,7 @@ describe('DocumentUploadScreen pickPhoto()', () => {
   });
 
   it('prefers the picker-reported filename + MIME for an allowed photo and uploads it', async () => {
-    render(<DocumentUploadScreen />);
+    await render(<DocumentUploadScreen />);
 
     await pickPhoto(
       {
@@ -494,15 +496,15 @@ describe('DocumentUploadScreen pickPhoto()', () => {
       },
       'vacation.jpg'
     );
-    fireEvent.press(screen.getByText('documents.upload.categories.contract'));
-    fireEvent.press(screen.getByText('documents.upload.submitButton'));
+    await fireEvent.press(screen.getByText('documents.upload.categories.contract'));
+    await fireEvent.press(screen.getByText('documents.upload.submitButton'));
 
     await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
     expect(screen.queryByText('documents.upload.fileTypeNotAllowed')).toBeNull();
   });
 
   it('falls back to a lower-cased extension when the picker reports no MIME (.PNG accepted)', async () => {
-    render(<DocumentUploadScreen />);
+    await render(<DocumentUploadScreen />);
 
     // No mimeType and an upper-cased extension: the old `=== 'png'` check
     // mislabelled this image/jpeg; lower-casing resolves it to image/png, which
@@ -511,8 +513,8 @@ describe('DocumentUploadScreen pickPhoto()', () => {
       { uri: 'file:///DCIM/IMG_1234.PNG', fileName: 'IMG_1234.PNG', fileSize: 2048 },
       'IMG_1234.PNG'
     );
-    fireEvent.press(screen.getByText('documents.upload.categories.contract'));
-    fireEvent.press(screen.getByText('documents.upload.submitButton'));
+    await fireEvent.press(screen.getByText('documents.upload.categories.contract'));
+    await fireEvent.press(screen.getByText('documents.upload.submitButton'));
 
     await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
     expect(screen.queryByText('documents.upload.fileTypeNotAllowed')).toBeNull();

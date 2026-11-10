@@ -112,7 +112,7 @@ function setNetwork(next: Partial<NetState>) {
 // ---------------------------------------------------------------------------
 
 async function mountHook() {
-  const utils = renderHook(() => useOfflineSupport());
+  const utils = await renderHook(() => useOfflineSupport());
   // Wait for the initial NetInfo.fetch + queue/sync metadata loads to settle.
   await waitFor(() => expect(utils.result.current.isConnected).toBe(true));
   return utils;

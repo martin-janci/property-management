@@ -61,9 +61,9 @@ jest.mock('../../contexts/AuthContext', () => ({
 
 const mockUseApiQuery = jest.requireMock('../../hooks/useApi').useApiQuery as jest.Mock;
 
-function renderScreen() {
+async function renderScreen() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
+  return await render(
     <QueryClientProvider client={queryClient}>
       <ThreadDetailScreen threadId="thread-1" />
     </QueryClientProvider>
@@ -84,15 +84,15 @@ describe('ThreadDetailScreen — send outcomes', () => {
     });
   });
 
-  it('surfaces an error and keeps the draft when the send mutation rejects', () => {
+  it('surfaces an error and keeps the draft when the send mutation rejects', async () => {
     mockSendShouldFail = true;
-    renderScreen();
+    await renderScreen();
 
-    fireEvent.changeText(
+    await fireEvent.changeText(
       screen.getByPlaceholderText('messages.composerPlaceholder'),
       'Please fix the elevator'
     );
-    fireEvent.press(screen.getByText('messages.send'));
+    await fireEvent.press(screen.getByText('messages.send'));
 
     // The send was actually attempted (not a silent no-op).
     expect(mockMutationFn).toHaveBeenCalledTimes(1);
@@ -111,11 +111,14 @@ describe('ThreadDetailScreen — send outcomes', () => {
     expect(screen.getByDisplayValue('Please fix the elevator')).toBeTruthy();
   });
 
-  it('clears the draft and shows no error banner on a successful send', () => {
-    renderScreen();
+  it('clears the draft and shows no error banner on a successful send', async () => {
+    await renderScreen();
 
-    fireEvent.changeText(screen.getByPlaceholderText('messages.composerPlaceholder'), 'Thanks!');
-    fireEvent.press(screen.getByText('messages.send'));
+    await fireEvent.changeText(
+      screen.getByPlaceholderText('messages.composerPlaceholder'),
+      'Thanks!'
+    );
+    await fireEvent.press(screen.getByText('messages.send'));
 
     expect(mockMutationFn).toHaveBeenCalledTimes(1);
     expect(screen.queryByDisplayValue('Thanks!')).toBeNull();

@@ -92,7 +92,7 @@ describe('LayoutSections renderer', () => {
     jest.restoreAllMocks();
   });
 
-  it('renders sections in the correct order', () => {
+  it('renders sections in the correct order', async () => {
     // Simple registry with two stub sections
     function Section1() {
       return <Text>Section One</Text>;
@@ -113,13 +113,13 @@ describe('LayoutSections renderer', () => {
       ],
     };
 
-    render(<LayoutSections layout={testLayout} registry={testRegistry} />);
+    await render(<LayoutSections layout={testLayout} registry={testRegistry} />);
 
     expect(screen.getByText('Section One')).toBeTruthy();
     expect(screen.getByText('Section Two')).toBeTruthy();
   });
 
-  it('renders PlaceholderSection for presentation=placeholder', () => {
+  it('renders PlaceholderSection for presentation=placeholder', async () => {
     function ASection({ mode: _mode, props: _props }: SectionComponentProps) {
       return <Text>Real Content</Text>;
     }
@@ -132,14 +132,14 @@ describe('LayoutSections renderer', () => {
       sections: [{ type: 'sec-a', presentation: 'placeholder' }],
     };
 
-    render(<LayoutSections layout={testLayout} registry={testRegistry} />);
+    await render(<LayoutSections layout={testLayout} registry={testRegistry} />);
 
     // t() returns the key in tests
     expect(screen.getByText('layout.placeholderTitle')).toBeTruthy();
     expect(screen.queryByText('Real Content')).toBeNull();
   });
 
-  it('skips unknown section types and calls console.warn once', () => {
+  it('skips unknown section types and calls console.warn once', async () => {
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     const testLayout: ResolvedScreen = {
       screen: 'test',
@@ -150,7 +150,7 @@ describe('LayoutSections renderer', () => {
       ],
     };
 
-    render(<LayoutSections layout={testLayout} registry={{}} />);
+    await render(<LayoutSections layout={testLayout} registry={{}} />);
 
     // warn-once: called exactly once even though the type appears twice
     const layoutWarns = warnSpy.mock.calls.filter((args) =>
@@ -364,7 +364,7 @@ describe('useDashboardLayout hook', () => {
       return null;
     }
 
-    render(<TestComponent />);
+    await render(<TestComponent />);
 
     await waitFor(() => {
       expect(capturedLayout).toEqual(SAMPLE_LAYOUT);
@@ -384,7 +384,7 @@ describe('useDashboardLayout hook', () => {
       return null;
     }
 
-    render(<TestComponent />);
+    await render(<TestComponent />);
 
     // Wait for effect to settle
     await waitFor(() => {
@@ -405,7 +405,7 @@ describe('useDashboardLayout hook', () => {
       return null;
     }
 
-    render(<TestComponent />);
+    await render(<TestComponent />);
 
     await waitFor(() => {
       const layoutWarns = warnSpy.mock.calls.filter((args) =>
@@ -455,7 +455,7 @@ describe('useDashboardLayout — tightest activation cage', () => {
       return null;
     }
 
-    render(<TestComponent />);
+    await render(<TestComponent />);
 
     // Wait until the background fetch has written to cache
     await waitFor(() => {
@@ -487,7 +487,7 @@ describe('DashboardStatsSection stat arithmetic', () => {
     jest.restoreAllMocks();
   });
 
-  it('computes rendered stat values from mocked per-endpoint query results', () => {
+  it('computes rendered stat values from mocked per-endpoint query results', async () => {
     // Wire up useApiQuery to return distinct data per endpoint key.
     // Call order matches DashboardStatsSection's 4 useApiQuery calls:
     //   1. ['dashboard', 'announcements']   → /api/v1/announcements
@@ -532,7 +532,7 @@ describe('DashboardStatsSection stat arithmetic', () => {
       './registry'
     ) as typeof import('./registry');
 
-    render(<DashboardStatsSection />);
+    await render(<DashboardStatsSection />);
 
     // pendingFaults = open_count(2) + in_progress_count(1) = 3
     // unreadAnnouncements = announcements.slice(0,3).length = 3
@@ -615,7 +615,7 @@ describe('DashboardScreen with layout registry', () => {
 
   afterEach(() => jest.clearAllMocks());
 
-  it('renders managed sections via default layout without crashing', () => {
+  it('renders managed sections via default layout without crashing', async () => {
     // useDashboardLayout is mocked to return DEFAULT_DASHBOARD_LAYOUT.
     // The registry sections (DashboardStatsSection, ActionQueueSection) will
     // try to call useApiQuery — but since they are rendered inside LayoutSections
@@ -630,7 +630,7 @@ describe('DashboardScreen with layout registry', () => {
       mockUseApiQuery.mockReturnValueOnce(emptyResult);
     }
 
-    render(<DashboardScreen />);
+    await render(<DashboardScreen />);
 
     // Dashboard should render (no crash). Check for static content that's always present.
     expect(screen.getByText('dashboard.welcomeBack')).toBeTruthy();

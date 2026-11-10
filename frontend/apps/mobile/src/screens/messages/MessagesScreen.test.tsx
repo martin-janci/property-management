@@ -83,11 +83,11 @@ const CAMEL_CASE_THREADS = {
   total: 2,
 };
 
-function renderScreen() {
+async function renderScreen() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
-  return render(
+  return await render(
     <QueryClientProvider client={queryClient}>
       <MessagesScreen />
     </QueryClientProvider>
@@ -108,29 +108,29 @@ describe('MessagesScreen camelCase wire contract (#1780)', () => {
     });
   });
 
-  it("reads participants[0].firstName/lastName — renders 'Jane Doe'", () => {
-    renderScreen();
+  it("reads participants[0].firstName/lastName — renders 'Jane Doe'", async () => {
+    await renderScreen();
     // Proves `participants[0].firstName` + `.lastName` are read off the camelCase
     // array. With a wrong/singular field these would be `undefined` (or throw).
     expect(screen.getByText('Jane Doe')).toBeTruthy();
   });
 
-  it("renders a group thread title from the participants array — 'Jane Doe +1'", () => {
-    renderScreen();
+  it("renders a group thread title from the participants array — 'Jane Doe +1'", async () => {
+    await renderScreen();
     // Locks the contract to the real ARRAY shape: a 2-other-participant thread
     // must title as "Name +N", not crash on a missing singular field.
     expect(screen.getByText('Jane Doe +1')).toBeTruthy();
   });
 
-  it("reads lastMessage.content — renders 'hi' and not the empty fallback", () => {
-    renderScreen();
+  it("reads lastMessage.content — renders 'hi' and not the empty fallback", async () => {
+    await renderScreen();
     // Proves `lastMessage.content` is read off the camelCase preview object.
     expect(screen.getByText('hi')).toBeTruthy();
     expect(screen.queryByText('No messages yet.')).toBeNull();
   });
 
-  it("reads unreadCount — renders the '3 new' unread badge", () => {
-    renderScreen();
+  it("reads unreadCount — renders the '3 new' unread badge", async () => {
+    await renderScreen();
     // Proves `unreadCount` is read; with snake_case it was `undefined`, the
     // `> 0` guard was false, and the badge never rendered.
     expect(screen.getByText('3 new')).toBeTruthy();

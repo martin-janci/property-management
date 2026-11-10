@@ -120,16 +120,16 @@ const allSuccess = () => [
 describe('DashboardScreen error state (#2282)', () => {
   afterEach(() => jest.clearAllMocks());
 
-  it('renders no error banner and shows announcement data when all queries succeed', () => {
+  it('renders no error banner and shows announcement data when all queries succeed', async () => {
     mockQueries(allSuccess());
-    render(<DashboardScreen />);
+    await render(<DashboardScreen />);
 
     expect(screen.queryByText('dashboard.loadError')).toBeNull();
     // The announcements section renders real data from the query
     expect(screen.getByText('Lift maintenance')).toBeTruthy();
   });
 
-  it('shows the error banner when ANY query fails (not a silent all-zero state)', () => {
+  it('shows the error banner when ANY query fails (not a silent all-zero state)', async () => {
     // Only the fault-stats query fails; the other three succeed. Without the
     // fix the fault card would read 0 and the screen would look "empty".
     mockQueries([
@@ -138,13 +138,13 @@ describe('DashboardScreen error state (#2282)', () => {
       queryResult({ data: VOTES }),
       queryResult({ data: UNREAD }),
     ]);
-    render(<DashboardScreen />);
+    await render(<DashboardScreen />);
 
     expect(screen.getByText('dashboard.loadError')).toBeTruthy();
     expect(screen.getByText('common.retry')).toBeTruthy();
   });
 
-  it('does not distinguish a genuinely-empty building from an error — empty data shows NO banner', () => {
+  it('does not distinguish a genuinely-empty building from an error — empty data shows NO banner', async () => {
     // All queries succeed but return empty/zeroed payloads: this is a real
     // empty building, so there must be no error banner.
     mockQueries([
@@ -153,12 +153,12 @@ describe('DashboardScreen error state (#2282)', () => {
       queryResult({ data: { votes: [] } }),
       queryResult({ data: { unreadCount: 0 } }),
     ]);
-    render(<DashboardScreen />);
+    await render(<DashboardScreen />);
 
     expect(screen.queryByText('dashboard.loadError')).toBeNull();
   });
 
-  it('retry button refetches all four queries', () => {
+  it('retry button refetches all four queries', async () => {
     const refetches = [jest.fn(), jest.fn(), jest.fn(), jest.fn()];
     mockQueries([
       queryResult({ isError: true, refetch: refetches[0] }),
@@ -166,9 +166,9 @@ describe('DashboardScreen error state (#2282)', () => {
       queryResult({ data: VOTES, refetch: refetches[2] }),
       queryResult({ data: UNREAD, refetch: refetches[3] }),
     ]);
-    render(<DashboardScreen />);
+    await render(<DashboardScreen />);
 
-    fireEvent.press(screen.getByText('common.retry'));
+    await fireEvent.press(screen.getByText('common.retry'));
 
     for (const refetch of refetches) {
       expect(refetch).toHaveBeenCalledTimes(1);

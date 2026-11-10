@@ -69,9 +69,9 @@ describe('MeterDetailScreen hardcoded-string i18n', () => {
     jest.clearAllMocks();
   });
 
-  it('renders the meters.* keys, not the hardcoded English literals', () => {
+  it('renders the meters.* keys, not the hardcoded English literals', async () => {
     mockQuery({ data: responseWithReadings });
-    render(<MeterDetailScreen meterId="m-1" onBack={() => {}} onNavigate={() => {}} />);
+    await render(<MeterDetailScreen meterId="m-1" onBack={() => {}} onNavigate={() => {}} />);
 
     expect(screen.getByText('meters.backToMeters', { exact: false })).toBeTruthy();
     expect(screen.getByText('meters.latestReading')).toBeTruthy();
@@ -84,9 +84,9 @@ describe('MeterDetailScreen hardcoded-string i18n', () => {
     }
   });
 
-  it('falls back to the meters.meterFallback key when no label or meter number is present', () => {
+  it('falls back to the meters.meterFallback key when no label or meter number is present', async () => {
     mockQuery({ data: { meter: { id: 'm-1' }, recent_readings: [] } });
-    render(<MeterDetailScreen meterId="m-1" />);
+    await render(<MeterDetailScreen meterId="m-1" />);
     expect(screen.getByText('meters.meterFallback')).toBeTruthy();
     expect(screen.queryByText('Meter')).toBeNull();
   });
@@ -131,9 +131,9 @@ describe('reading dates follow the in-app locale, not the device locale (#2752)'
     jest.clearAllMocks();
   });
 
-  it('formats the latest-reading and history dates via the shared formatDate helper', () => {
+  it('formats the latest-reading and history dates via the shared formatDate helper', async () => {
     mockQuery({ data: responseWithReadings });
-    render(<MeterDetailScreen meterId="m-1" onBack={() => {}} onNavigate={() => {}} />);
+    await render(<MeterDetailScreen meterId="m-1" onBack={() => {}} onNavigate={() => {}} />);
 
     // The screen must route every reading date through the app locale helper.
     expect(mockFormatDate).toHaveBeenCalled();

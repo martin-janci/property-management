@@ -106,11 +106,11 @@ function setConnectivity(isConnected: boolean) {
   });
 }
 
-function renderScreen(props: React.ComponentProps<typeof ReportFaultScreen> = {}) {
+async function renderScreen(props: React.ComponentProps<typeof ReportFaultScreen> = {}) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
-  return render(
+  return await render(
     <QueryClientProvider client={queryClient}>
       <ReportFaultScreen {...props} />
     </QueryClientProvider>
@@ -118,16 +118,22 @@ function renderScreen(props: React.ComponentProps<typeof ReportFaultScreen> = {}
 }
 
 /** Fill all required fields with valid values, selecting the first building. */
-function fillValidForm() {
-  fireEvent.press(screen.getByText('Lipová Residence'));
-  fireEvent.changeText(screen.getByPlaceholderText('faults.titlePlaceholder'), 'Leaking pipe');
-  fireEvent.changeText(
+async function fillValidForm() {
+  await fireEvent.press(screen.getByText('Lipová Residence'));
+  await fireEvent.changeText(
+    screen.getByPlaceholderText('faults.titlePlaceholder'),
+    'Leaking pipe'
+  );
+  await fireEvent.changeText(
     screen.getByPlaceholderText('faults.descriptionPlaceholder'),
     'Water is leaking from the ceiling in the hallway near unit 3.'
   );
-  fireEvent.changeText(screen.getByPlaceholderText('faults.locationPlaceholder'), '3rd floor');
+  await fireEvent.changeText(
+    screen.getByPlaceholderText('faults.locationPlaceholder'),
+    '3rd floor'
+  );
   // Category grid uses the hardcoded English labels.
-  fireEvent.press(screen.getByText('Plumbing'));
+  await fireEvent.press(screen.getByText('Plumbing'));
 }
 
 // --- Tests ---
@@ -154,16 +160,16 @@ describe('ReportFaultScreen', () => {
     alertSpy.mockRestore();
   });
 
-  it('renders the building picker from the buildings query', () => {
-    renderScreen();
+  it('renders the building picker from the buildings query', async () => {
+    await renderScreen();
     expect(screen.getByText('Lipová Residence')).toBeTruthy();
     expect(screen.getByText('Cottage 12')).toBeTruthy();
   });
 
   it('fires POST /api/v1/faults with the form payload (incl. idempotency key) when online', async () => {
-    renderScreen();
-    fillValidForm();
-    fireEvent.press(screen.getByText('faults.submitButton'));
+    await renderScreen();
+    await fillValidForm();
+    await fireEvent.press(screen.getByText('faults.submitButton'));
 
     await waitFor(() => expect(mockApiRequest).toHaveBeenCalledTimes(1));
     expect(mockApiRequest).toHaveBeenCalledWith('/api/v1/faults', {
@@ -175,9 +181,9 @@ describe('ReportFaultScreen', () => {
 
   it('shows the success Alert after a 2xx and does not enqueue', async () => {
     const onSuccess = jest.fn();
-    renderScreen({ onSuccess });
-    fillValidForm();
-    fireEvent.press(screen.getByText('faults.submitButton'));
+    await renderScreen({ onSuccess });
+    await fillValidForm();
+    await fireEvent.press(screen.getByText('faults.submitButton'));
 
     await waitFor(() =>
       expect(alertSpy).toHaveBeenCalledWith(
@@ -189,8 +195,8 @@ describe('ReportFaultScreen', () => {
     expect(addToQueue).not.toHaveBeenCalled();
   });
 
-  it('queries buildings with the required organization_id and keys the cache on it', () => {
-    renderScreen();
+  it('queries buildings with the required organization_id and keys the cache on it', async () => {
+    await renderScreen();
 
     const buildingsCall = mockUseApiQuery.mock.calls.find(
       ([key]) => Array.isArray(key) && key[0] === 'buildings'
@@ -202,9 +208,9 @@ describe('ReportFaultScreen', () => {
     expect(queryKey).toContain(TENANT_ID);
   });
 
-  it('holds the buildings query disabled until the tenant id resolves', () => {
+  it('holds the buildings query disabled until the tenant id resolves', async () => {
     mockUseTenantId.mockReturnValue({ tenantId: null, isLoading: true });
-    renderScreen();
+    await renderScreen();
 
     const buildingsCall = mockUseApiQuery.mock.calls.find(
       ([key]) => Array.isArray(key) && key[0] === 'buildings'
@@ -215,17 +221,23 @@ describe('ReportFaultScreen', () => {
     expect(screen.getByText('faults.loadingBuildings')).toBeTruthy();
   });
 
-  it('does not submit or enqueue when no building is selected', () => {
-    renderScreen();
-    fireEvent.changeText(screen.getByPlaceholderText('faults.titlePlaceholder'), 'Leaking pipe');
-    fireEvent.changeText(
+  it('does not submit or enqueue when no building is selected', async () => {
+    await renderScreen();
+    await fireEvent.changeText(
+      screen.getByPlaceholderText('faults.titlePlaceholder'),
+      'Leaking pipe'
+    );
+    await fireEvent.changeText(
       screen.getByPlaceholderText('faults.descriptionPlaceholder'),
       'Water is leaking from the ceiling in the hallway near unit 3.'
     );
-    fireEvent.changeText(screen.getByPlaceholderText('faults.locationPlaceholder'), '3rd floor');
-    fireEvent.press(screen.getByText('Plumbing'));
+    await fireEvent.changeText(
+      screen.getByPlaceholderText('faults.locationPlaceholder'),
+      '3rd floor'
+    );
+    await fireEvent.press(screen.getByText('Plumbing'));
 
-    fireEvent.press(screen.getByText('faults.submitButton'));
+    await fireEvent.press(screen.getByText('faults.submitButton'));
     expect(mockApiRequest).not.toHaveBeenCalled();
     expect(addToQueue).not.toHaveBeenCalled();
     expect(screen.getByText('faults.selectBuilding')).toBeTruthy();
@@ -233,10 +245,10 @@ describe('ReportFaultScreen', () => {
 
   it('enqueues the create instead of firing a request when offline', async () => {
     setConnectivity(false);
-    renderScreen();
-    fillValidForm();
+    await renderScreen();
+    await fillValidForm();
     // Offline the button label switches to the "save & sync later" copy.
-    fireEvent.press(screen.getByText('faults.submitButtonOffline'));
+    await fireEvent.press(screen.getByText('faults.submitButtonOffline'));
 
     await waitFor(() => expect(addToQueue).toHaveBeenCalledTimes(1));
     expect(addToQueue).toHaveBeenCalledWith({
@@ -263,7 +275,7 @@ describe('ReportFaultScreen', () => {
     });
     // Attach from the gallery, then wait until the photo renders (the '✕' remove
     // control only appears once the photo state has settled).
-    fireEvent.press(screen.getByText('faults.galleryButton'));
+    await fireEvent.press(screen.getByText('faults.galleryButton'));
     await waitFor(() => expect(screen.getByText('✕')).toBeTruthy());
   }
 
@@ -272,11 +284,11 @@ describe('ReportFaultScreen', () => {
     // be uploaded — the screen creates the fault, then hands the picked URIs to
     // uploadFaultPhotos keyed on the NEW fault id.
     const onSuccess = jest.fn();
-    renderScreen({ onSuccess });
-    fillValidForm();
+    await renderScreen({ onSuccess });
+    await fillValidForm();
     await attachOnePhoto();
 
-    fireEvent.press(screen.getByText('faults.submitButton'));
+    await fireEvent.press(screen.getByText('faults.submitButton'));
 
     // The fault is created online, then its photos are uploaded against its id.
     await waitFor(() => expect(mockApiRequest).toHaveBeenCalledTimes(1));
@@ -302,11 +314,11 @@ describe('ReportFaultScreen', () => {
 
   it('warns with a partial-upload message when some photos fail to upload', async () => {
     mockUploadFaultPhotos.mockResolvedValue({ total: 2, uploaded: 1, failed: 1 });
-    renderScreen();
-    fillValidForm();
+    await renderScreen();
+    await fillValidForm();
     await attachOnePhoto();
 
-    fireEvent.press(screen.getByText('faults.submitButton'));
+    await fireEvent.press(screen.getByText('faults.submitButton'));
 
     await waitFor(() =>
       expect(alertSpy).toHaveBeenCalledWith(
@@ -319,11 +331,11 @@ describe('ReportFaultScreen', () => {
 
   it('warns that photos were not uploaded when every upload fails', async () => {
     mockUploadFaultPhotos.mockResolvedValue({ total: 1, uploaded: 0, failed: 1 });
-    renderScreen();
-    fillValidForm();
+    await renderScreen();
+    await fillValidForm();
     await attachOnePhoto();
 
-    fireEvent.press(screen.getByText('faults.submitButton'));
+    await fireEvent.press(screen.getByText('faults.submitButton'));
 
     await waitFor(() =>
       expect(alertSpy).toHaveBeenCalledWith(
@@ -339,11 +351,11 @@ describe('ReportFaultScreen', () => {
     // can't be uploaded — the user is warned rather than led to believe they
     // were attached.
     setConnectivity(false);
-    renderScreen();
-    fillValidForm();
+    await renderScreen();
+    await fillValidForm();
     await attachOnePhoto();
 
-    fireEvent.press(screen.getByText('faults.submitButtonOffline'));
+    await fireEvent.press(screen.getByText('faults.submitButtonOffline'));
 
     await waitFor(() => expect(addToQueue).toHaveBeenCalledTimes(1));
     expect(mockUploadFaultPhotos).not.toHaveBeenCalled();
@@ -356,9 +368,9 @@ describe('ReportFaultScreen', () => {
 
   it('falls back to the queue on request failure, reusing the attempted idempotency key', async () => {
     mockApiRequest.mockRejectedValueOnce(new Error('network down'));
-    renderScreen();
-    fillValidForm();
-    fireEvent.press(screen.getByText('faults.submitButton'));
+    await renderScreen();
+    await fillValidForm();
+    await fireEvent.press(screen.getByText('faults.submitButton'));
 
     await waitFor(() => expect(addToQueue).toHaveBeenCalledTimes(1));
 

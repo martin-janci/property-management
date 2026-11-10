@@ -29,14 +29,14 @@ describe('detail screens back-button i18n', () => {
     mockUseApiQuery.mockReturnValue({ data: undefined, isLoading: true, error: null });
   });
 
-  it('ArticleDetailScreen resolves the back label via t()', () => {
-    render(<ArticleDetailScreen articleId="a1" onBack={jest.fn()} />);
+  it('ArticleDetailScreen resolves the back label via t()', async () => {
+    await render(<ArticleDetailScreen articleId="a1" onBack={jest.fn()} />);
     expect(screen.getByText('news.backToList')).toBeTruthy();
     expect(screen.queryByText('‹ News')).toBeNull();
   });
 
-  it('OutageDetailScreen resolves the back label via t()', () => {
-    render(<OutageDetailScreen outageId="o1" onBack={jest.fn()} />);
+  it('OutageDetailScreen resolves the back label via t()', async () => {
+    await render(<OutageDetailScreen outageId="o1" onBack={jest.fn()} />);
     expect(screen.getByText('outages.backToList')).toBeTruthy();
     expect(screen.queryByText('‹ Outages')).toBeNull();
   });

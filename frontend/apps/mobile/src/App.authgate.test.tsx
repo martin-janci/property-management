@@ -43,12 +43,18 @@ jest.mock('./components/sync', () => ({
 }));
 
 // ── Screens — mock the entire screens barrel; each is a no-op component.
-// AuthFlow and DashboardScreen get distinct implementations so UNSAFE_queryByType
-// can differentiate the auth vs protected gate branches.
+// AuthFlow and DashboardScreen render distinct testIDs so the tests can tell
+// the auth vs protected gate branches apart.
 jest.mock('./screens', () => ({
-  AuthFlow: () => <></>,
+  AuthFlow: () => {
+    const { View } = require('react-native');
+    return <View testID="mock-auth-flow" />;
+  },
   TwoFactorScreen: () => null,
-  DashboardScreen: () => <></>,
+  DashboardScreen: () => {
+    const { View } = require('react-native');
+    return <View testID="mock-dashboard" />;
+  },
   AnnouncementsScreen: () => null,
   AnnouncementDetailScreen: () => null,
   BuildingsScreen: () => null,
@@ -96,8 +102,8 @@ import App from './App';
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-function renderApp() {
-  return render(<App />);
+async function renderApp() {
+  return await render(<App />);
 }
 
 describe('MainApp auth-gate wiring (AC-5)', () => {
@@ -105,39 +111,36 @@ describe('MainApp auth-gate wiring (AC-5)', () => {
     jest.clearAllMocks();
   });
 
-  it('renders the loading view while session is being restored', () => {
+  it('renders the loading view while session is being restored', async () => {
     mockUseAuth.mockReturnValue({ isLoading: true, isAuthenticated: false });
-    const { getByText } = renderApp();
+    const { getByText } = await renderApp();
     // The loading branch renders t('common.loading') — the i18n mock returns the key.
     expect(getByText('common.loading')).toBeTruthy();
   });
 
-  it('renders AuthFlow for an unauthenticated session (not the dashboard)', () => {
+  it('renders AuthFlow for an unauthenticated session (not the dashboard)', async () => {
     mockUseAuth.mockReturnValue({ isLoading: false, isAuthenticated: false });
-    const { queryByTestId, UNSAFE_queryByType } = renderApp();
+    const { queryByTestId } = await renderApp();
     // Auth branch: AuthFlow mock is rendered; DashboardScreen is not.
-    const { AuthFlow, DashboardScreen } = jest.requireMock('./screens');
-    expect(UNSAFE_queryByType(AuthFlow)).toBeTruthy();
-    expect(UNSAFE_queryByType(DashboardScreen)).toBeNull();
+    expect(queryByTestId('mock-auth-flow')).toBeTruthy();
+    expect(queryByTestId('mock-dashboard')).toBeNull();
     // And the loading text should not be present.
     expect(queryByTestId('loading-view')).toBeNull();
   });
 
-  it('renders the dashboard (protected) for an authenticated session, not AuthFlow', () => {
+  it('renders the dashboard (protected) for an authenticated session, not AuthFlow', async () => {
     mockUseAuth.mockReturnValue({ isLoading: false, isAuthenticated: true });
-    const { UNSAFE_queryByType } = renderApp();
-    const { AuthFlow, DashboardScreen } = jest.requireMock('./screens');
-    expect(UNSAFE_queryByType(DashboardScreen)).toBeTruthy();
-    expect(UNSAFE_queryByType(AuthFlow)).toBeNull();
+    const { queryByTestId } = await renderApp();
+    expect(queryByTestId('mock-dashboard')).toBeTruthy();
+    expect(queryByTestId('mock-auth-flow')).toBeNull();
   });
 
-  it('never shows protected content while still loading (even if isAuthenticated=true)', () => {
+  it('never shows protected content while still loading (even if isAuthenticated=true)', async () => {
     // Simulates the race condition: token restored from storage but loading flag still true.
     mockUseAuth.mockReturnValue({ isLoading: true, isAuthenticated: true });
-    const { getByText, UNSAFE_queryByType } = renderApp();
-    const { DashboardScreen, AuthFlow } = jest.requireMock('./screens');
+    const { getByText, queryByTestId } = await renderApp();
     expect(getByText('common.loading')).toBeTruthy();
-    expect(UNSAFE_queryByType(DashboardScreen)).toBeNull();
-    expect(UNSAFE_queryByType(AuthFlow)).toBeNull();
+    expect(queryByTestId('mock-dashboard')).toBeNull();
+    expect(queryByTestId('mock-auth-flow')).toBeNull();
   });
 });

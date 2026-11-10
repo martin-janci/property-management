@@ -50,28 +50,28 @@ describe('NewsScreen header + filter-chip i18n', () => {
     });
   });
 
-  it('renders header title/subtitle keys, not hardcoded literals', () => {
-    render(<NewsScreen />);
+  it('renders header title/subtitle keys, not hardcoded literals', async () => {
+    await render(<NewsScreen />);
     expect(screen.getByText('news.title')).toBeTruthy();
     expect(screen.getByText('news.subtitle')).toBeTruthy();
   });
 
-  it('renders filter-chip keys, not hardcoded literals', () => {
-    render(<NewsScreen />);
+  it('renders filter-chip keys, not hardcoded literals', async () => {
+    await render(<NewsScreen />);
     expect(screen.getByText('news.filters.all')).toBeTruthy();
     expect(screen.getByText('news.filters.building')).toBeTruthy();
     expect(screen.getByText('news.filters.district')).toBeTruthy();
     expect(screen.getByText('news.filters.partner')).toBeTruthy();
   });
 
-  it('no longer renders any hardcoded English header/chip literal', () => {
-    render(<NewsScreen />);
+  it('no longer renders any hardcoded English header/chip literal', async () => {
+    await render(<NewsScreen />);
     for (const literal of HARDCODED) {
       expect(screen.queryByText(literal)).toBeNull();
     }
   });
 
-  it('renders the category badge via an i18n key, not the raw enum value', () => {
+  it('renders the category badge via an i18n key, not the raw enum value', async () => {
     mockUseApiQuery.mockReturnValue({
       data: {
         articles: [
@@ -90,7 +90,7 @@ describe('NewsScreen header + filter-chip i18n', () => {
       refetch: jest.fn(),
       isFetching: false,
     });
-    render(<NewsScreen />);
+    await render(<NewsScreen />);
     expect(screen.getByText('news.categories.building')).toBeTruthy();
     // The raw enum value must not leak through as the badge label.
     expect(screen.queryByText('building')).toBeNull();
