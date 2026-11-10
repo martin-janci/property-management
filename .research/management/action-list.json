@@ -282,24 +282,6 @@
       }
     },
     {
-      "id": "code-review-mobile-rn-voting-quorum-divzero",
-      "action": "mobile rn voting quorum divzero",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-10T04:27:16Z (tier1d mobile-rn score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-10T04:27:16Z",
-      "signal_ref": {
-        "segment": "mobile-rn",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-10-18T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-mobile-rn-voting-timeremaining-nan",
       "action": "mobile rn voting timeremaining nan",
       "owner_role": "pm-backend",

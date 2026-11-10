@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-10T16:33:22Z",
+  "archived_at": "2026-11-10T16:43:36Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -6815,6 +6815,31 @@
         "merged_pr": 3389,
         "merged_at": "2026-11-10T12:47:00Z",
         "at": "2026-11-10T14:27:10Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-voting-quorum-divzero",
+      "action": "mobile rn voting quorum divzero",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-10T04:27:16Z (tier1d mobile-rn score=2 vector=bug) | gc1-reconcile 2026-11-10T16:43:35Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T04:27:16Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-18T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-10T16:43:35Z"
       }
     },
     {
