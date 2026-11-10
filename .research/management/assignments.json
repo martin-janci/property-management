@@ -245,18 +245,18 @@
     {
       "task_id": "code-review-reality-server-layout-resolved-no-ratelimit-cache",
       "branch": "auto-impl/code-review-reality-server-layout-resolv-d8c41d33",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-10T18:31:32Z",
-      "last_updated": "2026-11-10T18:31:32Z",
-      "status_changed_at": "2026-11-10T18:31:32Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-10T19:11:28Z",
+      "status_changed_at": "2026-11-10T19:11:28Z",
+      "pr_number": 3406,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3406",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3406 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=in-process bounded TTL cache (1h,10k cap,tokio RwLock) on GET /api/v1/layout/resolved mirroring routes::price_map; layout.rs only; IG3 split; fmt+clippy clean + 6 new unit tests pass; DB sqlx failures environmental",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -265,5 +265,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-10T19:11:05Z"
+  "generated": "2026-11-10T19:11:28Z"
 }
