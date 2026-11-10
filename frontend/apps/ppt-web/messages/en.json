@@ -410,7 +410,8 @@
     "iot": "Smart building",
     "rentals": "Short-term rentals",
     "sessions": "Active sessions",
-    "members": "People & roles"
+    "members": "People & roles",
+    "oauthGrants": "Connected apps"
   },
   "auth": {
     "signIn": "Sign In",
@@ -1068,7 +1069,14 @@
     },
     "confirmDelete": "Delete this fault? This action cannot be undone.",
     "deleted": "Fault deleted",
-    "deleteFailed": "Failed to delete fault"
+    "deleteFailed": "Failed to delete fault",
+    "withdraw": "Withdraw report",
+    "withdrawConfirm": "Withdraw this fault report? It will be closed.",
+    "withdrawn": "Report withdrawn",
+    "withdrawFailed": "Could not withdraw the report",
+    "uploadingPhoto": "Uploading…",
+    "photoUploadFailed": "Photo upload failed",
+    "photosNotAttached": "{{failed}} of {{total}} photos could not be attached. You can add them on the fault detail."
   },
   "buildings": {
     "title": "Buildings",
@@ -8571,7 +8579,24 @@
       "guest": "Guest",
       "real_estate_agent": "Real estate agent"
     },
-    "publicNavigation": "Site navigation"
+    "publicNavigation": "Site navigation",
+    "inbox": {
+      "title": "Notifications",
+      "unreadMarker": "Unread:",
+      "count_one": "{{count}} notification",
+      "count_other": "{{count}} notifications",
+      "markRead": "Mark as read",
+      "remove": "Remove",
+      "unreadSummary_one": "{{count}} unread",
+      "unreadSummary_other": "{{count}} unread",
+      "showRead": "Show read",
+      "markAllRead": "Mark all as read",
+      "failedToLoad": "Failed to load notifications",
+      "emptyAll": "You have no notifications.",
+      "empty": "You are all caught up.",
+      "bellUnread_one": "Notifications ({{count}} unread)",
+      "bellUnread_other": "Notifications ({{count}} unread)"
+    }
   },
   "notificationAnalytics": {
     "title": "Notification Analytics",

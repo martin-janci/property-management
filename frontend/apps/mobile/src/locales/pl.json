@@ -196,7 +196,45 @@
     "submit": "Oddaj głos",
     "moveUp": "Przenieś w górę",
     "moveDown": "Przenieś w dół",
-    "rankHint": "Uporządkuj opcje według preferencji (1 = najbardziej preferowana)."
+    "rankHint": "Uporządkuj opcje według preferencji (1 = najbardziej preferowana).",
+    "activeCount_one": "{{count}} aktywne",
+    "activeCount_few": "{{count}} aktywne",
+    "activeCount_many": "{{count}} aktywnych",
+    "activeCount_other": "{{count}} aktywnych",
+    "ended": "Zakończone",
+    "timeLeftDaysHours": "Pozostało {{days}} d {{hours}} godz",
+    "timeLeftHours": "Pozostało {{hours}} godz",
+    "timeLeftMinutes": "Pozostało {{minutes}} min",
+    "filter": {
+      "all": "Wszystkie",
+      "active": "Aktywne",
+      "closed": "Zakończone"
+    },
+    "loadError": "Nie udało się załadować głosowań",
+    "emptyTitle": "Brak głosowań",
+    "emptyText": "Obecnie nie ma żadnych głosowań do wyświetlenia.",
+    "openDetail": "Otwórz szczegóły głosowania",
+    "quorum": "Kworum",
+    "quorumVotes": "{{current}} / {{required}} głosów",
+    "tapToVote": "Dotknij, aby wyświetlić i oddać głos",
+    "tapToView": "Dotknij, aby zobaczyć wyniki",
+    "createdBy": "Utworzył: {{name}}",
+    "missingId": "Nie wybrano głosowania",
+    "confirmVoteTitle": "Potwierdź głos",
+    "answerRequired": "Odpowiedz na wszystkie wymagane pytania",
+    "confirmVoteMessage": "Oddać głos? Tej operacji nie można cofnąć.",
+    "voteSubmitted": "Głos oddany",
+    "confirmationNumber": "Potwierdzenie",
+    "castError": "Nie udało się oddać głosu",
+    "noQuestions": "Brak pytań",
+    "youHaveVoted": "Już oddałeś głos w tym głosowaniu.",
+    "notActive": "To głosowanie nie jest obecnie aktywne.",
+    "votingAs": "Głosujesz jako",
+    "eligibilityReason": {
+      "voteNotAcceptingBallots": "Głosowanie obecnie nie przyjmuje głosów.",
+      "notEligibleInBuilding": "Nie masz uprawnień do głosowania w tym budynku.",
+      "allUnitsVoted": "Wszystkie Twoje uprawnione lokale już zagłosowały."
+    }
   },
   "documents": {
     "title": "Dokumenty",
@@ -588,7 +626,12 @@
     "emptyTitle": "Brak sąsiadów",
     "noMatches": "Brak wyników",
     "emptyText": "Mieszkańcy, którzy dołączą do katalogu, pojawią się tutaj.",
-    "noMatchesText": "Spróbuj innego imienia lub numeru mieszkania."
+    "noMatchesText": "Spróbuj innego imienia lub numeru mieszkania.",
+    "title": "Sąsiedzi",
+    "subtitle": "{{count}} mieszkańców w budynku {{building}}",
+    "subtitleGeneric": "{{count}} mieszkańców w Twoim budynku",
+    "searchPlaceholder": "Szukaj według imienia lub mieszkania…",
+    "owner": "Właściciel"
   },
   "voice": {
     "confirmations": {

@@ -41,5 +41,7 @@ Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, e
 
 <!-- newest entries on top -->
 
+- 2026-11-09 — agent: gap-audit-r7 — photo upload enabled (presigned documents/upload-url → PUT → POST attachments; server now requires an org-scoped storage key and returns presigned read URLs); reporter can withdraw a `new` fault (POST /faults/{id}/withdraw); attachment contract fixed (client read file_url/file_name, server sends storage_url/original_filename).
+
 - 2026-11-05 — agent: screen-map-drift-pr-3244-ppt — reconcile i18n drift from PR #3244. Detail-view components `TriageFaultDialog` and `FaultTimeline` moved hardcoded English into react-i18next (`faults.*`) across all 6 locales — triage dialog fields + AI-suggestion copy and timeline event labels — with fault enum labels resolved via the shared `features/faults/utils/faultLabels.ts` key maps. i18n only — no route/component/endpoint/status change (builds on the PR #2647 fallback i18n already logged).
 - 2026-11-04 — agent: hid Add photo control — POST /faults/{id}/attachments takes JSON metadata (storage_url), the multipart client call could never succeed

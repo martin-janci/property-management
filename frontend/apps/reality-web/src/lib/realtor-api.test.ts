@@ -137,15 +137,18 @@ describe('realtor-api request helper', () => {
     await expect(getListing('x')).resolves.toBeUndefined();
   });
 
-  it('maps network failures to RealtorApiError status 0', async () => {
+  it('maps network failures to RealtorApiError status 0 with code "network"', async () => {
     fetchMock.mockRejectedValue(new TypeError('boom'));
+    // `code` is the locale-independent discriminator the UI translates off of
+    // (realtor.errorNetwork) — the English `message` stays developer-facing.
     await expect(getListing('x')).rejects.toMatchObject({
       name: 'RealtorApiError',
       status: 0,
+      code: 'network',
     });
   });
 
-  it('surfaces server message on error responses', async () => {
+  it('surfaces server message on error responses and exposes it as serverMessage', async () => {
     fetchMock.mockResolvedValue({
       ok: false,
       status: 422,
@@ -155,9 +158,12 @@ describe('realtor-api request helper', () => {
     expect(err).toBeInstanceOf(RealtorApiError);
     expect(err.message).toBe('bad postal code');
     expect(err.status).toBe(422);
+    expect(err.code).toBe('http');
+    // The backend owns and localizes this copy, so the UI shows it verbatim.
+    expect(err.serverMessage).toBe('bad postal code');
   });
 
-  it('falls back to a generic message for non-JSON error bodies', async () => {
+  it('falls back to a generic message for non-JSON error bodies (no serverMessage)', async () => {
     fetchMock.mockResolvedValue({
       ok: false,
       status: 502,
@@ -165,10 +171,21 @@ describe('realtor-api request helper', () => {
         throw new SyntaxError('not json');
       },
     });
-    await expect(getListing('x')).rejects.toMatchObject({
-      message: 'Request failed (502)',
-      status: 502,
-    });
+    const err = await getListing('x').catch((e) => e);
+    expect(err).toBeInstanceOf(RealtorApiError);
+    // `message` keeps the developer-facing fallback; `serverMessage` is
+    // undefined so the UI translates realtor.errorRequestFailed instead.
+    expect(err.message).toBe('Request failed (502)');
+    expect(err.status).toBe(502);
+    expect(err.code).toBe('http');
+    expect(err.serverMessage).toBeUndefined();
+  });
+
+  it('tags malformed 200 bodies with code "malformed"', async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => null });
+    const err = await getListing('x').catch((e) => e);
+    expect(err).toBeInstanceOf(RealtorApiError);
+    expect(err.code).toBe('malformed');
   });
 
   // Boundary shape validation: `request<T>` must not blindly cast a 200 body to

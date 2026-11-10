@@ -637,11 +637,59 @@
       }
     },
     "report": {
+      "h1": "Nahlásit inzerát",
+      "subtitle": "Pomozte nám udržet portál důvěryhodný — řekněte nám, co je v inzerátu špatně.",
+      "title": "Nahlásit inzerát",
       "submit": "Odeslat nahlášení",
-      "subtitle": "Help us keep the portal trustworthy — tell us what's wrong.",
+      "submitting": "Odesílá se…",
       "success": "Nahlášení bylo odesláno",
-      "title": "Report a listing",
-      "h1": "Report a listing"
+      "problemLegend": "Důvod nahlášení",
+      "problems": {
+        "fraudulent_listing": {
+          "label": "Podezření z podvodu",
+          "description": "Podezřelý inzerát, žádost o platbu předem, falešná identita makléře"
+        },
+        "price_manipulation": {
+          "label": "Nesprávná cena",
+          "description": "Cena neodpovídá skutečnosti nebo má záměrně klamat"
+        },
+        "incorrect_information": {
+          "label": "Falešné fotografie",
+          "description": "Fotografie nepatří k dané nemovitosti"
+        },
+        "duplicate_listing": {
+          "label": "Duplicitní inzerát",
+          "description": "Stejná nemovitost je inzerována vícekrát"
+        },
+        "already_sold": {
+          "label": "Prodáno / nepronajímá se",
+          "description": "Nemovitost je již prodaná nebo pronajatá, inzerát nebyl odstraněn"
+        },
+        "other": {
+          "label": "Jiný důvod",
+          "description": "Jiná technická chyba nebo porušení pravidel platformy"
+        }
+      },
+      "listingRefLabel": "Odkaz na inzerát (URL nebo ID)",
+      "listingRefPlaceholder": "např. https://rlt.sk/listings/ba-byt-3i nebo #12345",
+      "descriptionLabel": "Popis problému",
+      "descriptionPlaceholder": "Popište, proč tento inzerát nahlašujete. Čím více detailů uvedete, tím rychleji to prověříme.",
+      "attachmentsLabel": "Přílohy (brzy)",
+      "attachmentsComingSoon": "Přidávání příloh bude brzy k dispozici",
+      "attachmentsHint": "Nahrávání screenshotů zatím není k dispozici — popište prosím důkazy v popisu výše. Pracujeme na tom.",
+      "gdpr": {
+        "label": "Souhlasím se zpracováním osobních údajů za účelem prověření mého nahlášení v souladu se {privacyLink}.",
+        "privacyLink": "Zásadami ochrany soukromí"
+      },
+      "successTitle": "Nahlášení bylo odesláno",
+      "successBody": "Váš podnět jsme přijali. Náš tým jej prověří do 24 hodin. Děkujeme, že pomáháte udržovat portál bezpečný.",
+      "referenceLabel": "Referenční číslo",
+      "referenceHint": "Uveďte je při další komunikaci — pomůže nám vaše hlášení rychle dohledat.",
+      "backToListings": "Zpět na nabídky",
+      "errorNoListing": "Nedokázali jsme určit, kterého inzerátu se hlášení týká. Otevřete nahlášení z detailu inzerátu nebo vložte odkaz či ID inzerátu výše.",
+      "errorRateLimit": "Příliš mnoho nahlášení z tohoto zařízení. Zkuste to prosím za chvíli znovu.",
+      "errorNotFound": "Inzerát nebyl nalezen. Zkontrolujte odkaz nebo ID a zkuste to znovu.",
+      "errorGeneric": "Nahlášení se nepodařilo odeslat. Zkuste to prosím znovu."
     },
     "security": {
       "reportCta": "Nahlásit inzerát",
@@ -1333,5 +1381,17 @@
     "totalViews": "Celkový počet zobrazení",
     "inquiries": "Poptávky",
     "conversionRate": "Míra konverze"
+  },
+  "realtor": {
+    "errorNetwork": "Chyba sítě. Zkuste to znovu.",
+    "errorMalformed": "Server vrátil neočekávanou odpověď. Zkuste to znovu.",
+    "errorRequestFailed": "Požadavek selhal ({status}). Zkuste to znovu.",
+    "errorLoadProfile": "Profil se nepodařilo načíst.",
+    "errorSaveProfile": "Profil se nepodařilo uložit.",
+    "errorNameRequired": "Jméno je povinné.",
+    "errorLoadListing": "Inzerát se nepodařilo načíst.",
+    "errorSaveListing": "Inzerát se nepodařilo uložit.",
+    "errorCreateListing": "Inzerát se nepodařilo vytvořit. Zkuste to znovu.",
+    "errorMissingListingId": "Chybí ID inzerátu."
   }
 }

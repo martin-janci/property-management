@@ -152,17 +152,17 @@ export function useUpdateFault(faultId: string) {
   });
 }
 
-/** Delete a fault */
-export function useDeleteFault() {
+/** Withdraw an untriaged fault report (reporter only). */
+export function useWithdrawFault() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (faultId: string) => api.deleteFault(faultId),
+    mutationFn: (faultId: string) => api.withdrawFault(faultId),
     onSuccess: (_, faultId) => {
-      queryClient.removeQueries({ queryKey: faultKeys.detail(faultId) });
+      queryClient.invalidateQueries({ queryKey: faultKeys.detail(faultId) });
       queryClient.invalidateQueries({ queryKey: faultKeys.lists() });
-      // The Total/Open/Closed stats bar sits above the deletable list, so it
-      // must refresh after a delete too (#1588 F3). Prefix-invalidate every
+      // The Total/Open/Closed stats bar sits above the list, so it must
+      // refresh after a withdrawal too (#1588 F3). Prefix-invalidate every
       // statistics query (any buildingId variant).
       queryClient.invalidateQueries({ queryKey: [...faultKeys.all, 'statistics'] });
     },

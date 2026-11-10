@@ -247,7 +247,7 @@ describe('CreateFaultPageRoute (nav-fixes)', () => {
     }));
   });
 
-  it("(i) lists the selected building's units and hides the photo picker", async () => {
+  it("(i) lists the selected building's units and offers the photo picker", async () => {
     mockUseBuildings.mockReturnValue({ data: { items: [{ id: 'b-1', name: 'Tower A' }] } });
     renderFaultsRoute('/faults/new');
 
@@ -263,7 +263,7 @@ describe('CreateFaultPageRoute (nav-fixes)', () => {
 
     expect(mockUseUnits).toHaveBeenLastCalledWith('b-1', { limit: 100 }, true);
     expect(await screen.findByRole('option', { name: '3B' })).toBeInTheDocument();
-    // Photos could never be persisted (no storage upload flow) → no picker.
-    expect(screen.queryByText(/faults\.photo\.sectionTitle|Add Photos/)).not.toBeInTheDocument();
+    // Photos are uploaded after creation via the presigned attachment flow.
+    expect(screen.getAllByText(/faults\.photo\.sectionTitle|Add Photos/).length).toBeGreaterThan(0);
   });
 });

@@ -44,6 +44,21 @@ vi.mock('next/navigation', () => ({
   useParams: () => ({ locale: 'en' }),
 }));
 
+// Override the global next-intl mock (src/test/setup.tsx) to add `t.rich`,
+// which the GDPR consent label uses — the setup mock's `t` has no `.rich`.
+// Both `t(key)` and `t.rich(key, …)` echo the key verbatim, so the assertions
+// below pin message KEYS (`successTitle`, `errorRateLimit`, …) rather than any
+// one locale's copy.
+vi.mock('next-intl', () => {
+  const t = Object.assign((key: string) => key, { rich: (key: string) => key });
+  return {
+    useTranslations: () => t,
+    useLocale: () => 'en',
+    useMessages: () => ({}),
+    NextIntlClientProvider: ({ children }: { children: React.ReactNode }) => children,
+  };
+});
+
 vi.mock('@/components/ui', () => ({
   Header: () => <header />,
   Footer: () => <footer />,
@@ -109,7 +124,7 @@ describe('ReportPage — abuse-report submit wiring', () => {
     });
 
     // Success screen replaces the form once the POST resolves.
-    expect(await screen.findByText('Nahlásenie bolo odoslané')).toBeInTheDocument();
+    expect(await screen.findByText('successTitle')).toBeInTheDocument();
   });
 
   // #3042: the server returns `201 { report: { id } }` but the success card
@@ -150,8 +165,8 @@ describe('ReportPage — abuse-report submit wiring', () => {
     fireEvent.click(screen.getByRole('button'));
 
     const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent(/Priveľa nahlásení/);
-    expect(screen.queryByText('Nahlásenie bolo odoslané')).not.toBeInTheDocument();
+    expect(alert).toHaveTextContent('errorRateLimit');
+    expect(screen.queryByText('successTitle')).not.toBeInTheDocument();
   });
 
   // #3017: the attachment control used to collect File objects that
@@ -164,7 +179,7 @@ describe('ReportPage — abuse-report submit wiring', () => {
     // No file input: nothing to collect, nothing to silently drop.
     expect(container.querySelector('input[type="file"]')).toBeNull();
     // A disabled "coming soon" placeholder stands in for the old control.
-    const placeholder = screen.getByText('Pridávanie príloh bude čoskoro dostupné');
+    const placeholder = screen.getByText('attachmentsComingSoon');
     expect(placeholder).toBeInTheDocument();
     expect(placeholder).toHaveAttribute('aria-disabled', 'true');
   });
@@ -205,14 +220,14 @@ describe('ReportPage — abuse-report submit wiring', () => {
     fireEvent.click(screen.getByRole('button'));
 
     const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent(/Nevedeli sme určiť/);
+    expect(alert).toHaveTextContent('errorNoListing');
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('maps 404 to the not-found message and other failures to the generic one', async () => {
     for (const [status, re] of [
-      [404, /Inzerát sa nenašiel/],
-      [500, /Nahlásenie sa nepodarilo odoslať/],
+      [404, 'errorNotFound'],
+      [500, 'errorGeneric'],
     ] as const) {
       const fetchMock = vi.fn((_url: string, _init?: RequestInit) =>
         Promise.resolve({ ok: false, status, json: async () => ({}) })
@@ -222,7 +237,7 @@ describe('ReportPage — abuse-report submit wiring', () => {
       fillForm(container);
       fireEvent.click(screen.getByRole('button'));
       expect(await screen.findByRole('alert')).toHaveTextContent(re);
-      expect(screen.queryByText('Nahlásenie bolo odoslané')).not.toBeInTheDocument();
+      expect(screen.queryByText('successTitle')).not.toBeInTheDocument();
       unmount();
     }
   });
@@ -315,11 +330,11 @@ describe('ReportPage — abuse-report submit wiring', () => {
     fillForm(container);
     const form = container.querySelector('form') as HTMLFormElement;
     fireEvent.submit(form);
-    await waitFor(() => expect(screen.getByRole('button')).toHaveTextContent('Odosiela sa…'));
+    await waitFor(() => expect(screen.getByRole('button')).toHaveTextContent('submitting'));
     fireEvent.submit(form);
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
     resolve({ ok: true, status: 201, json: async () => ({ report: { id: 'r-5' } }) });
-    expect(await screen.findByText('Nahlásenie bolo odoslané')).toBeInTheDocument();
+    expect(await screen.findByText('successTitle')).toBeInTheDocument();
   });
 });

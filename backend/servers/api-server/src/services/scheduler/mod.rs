@@ -5,8 +5,9 @@
 
 use db::repositories::{
     AnnouncementRepository, ESignatureNonceRepository, FinancialRepository, LayoutRepository,
-    MeterRepository, OAuthTokenEventRepository, PlatformAdminRepository, ReportScheduleRepository,
-    SessionRepository, SignatureRequestRepository, UnitResidentRepository, VoteRepository,
+    LeaseRepository, MeterRepository, OAuthTokenEventRepository, PlatformAdminRepository,
+    ReportScheduleRepository, SessionRepository, SignatureRequestRepository,
+    UnitResidentRepository, UserRepository, VoteRepository,
 };
 use db::DbPool;
 use integrations::LightweightProvider;
@@ -31,6 +32,10 @@ mod retention;
 /// dedicated `impl Scheduler` block; behaviour is identical to the previous
 /// inline implementation.
 mod votes;
+
+/// Account / lease lifecycle jobs: GDPR erasure after the grace period and
+/// lease expiry (gap audit R6 P1-5, P2-13).
+mod lifecycle;
 
 /// Per-signer minimum interval between reminder emails sent by the
 /// background scheduler. Prevents the every-60s scheduler tick from
@@ -119,6 +124,10 @@ pub struct SchedulerMetrics {
     /// Aged `oauth_token_events` rows pruned by the daily retention job
     /// (Epic 10A, #2628).
     pub oauth_token_events_pruned: u64,
+    /// Accounts anonymized after their GDPR deletion grace period elapsed.
+    pub accounts_anonymized: u64,
+    /// Active leases flipped to `expired` after their end date.
+    pub leases_expired: u64,
     pub errors: u64,
 }
 
@@ -137,6 +146,8 @@ pub struct Scheduler {
     platform_admin_repo: PlatformAdminRepository,
     layout_repo: LayoutRepository,
     oauth_token_event_repo: OAuthTokenEventRepository,
+    user_repo: UserRepository,
+    lease_repo: LeaseRepository,
     notification_service: Arc<NotificationService>,
     email_service: EmailService,
     config: SchedulerConfig,
@@ -181,6 +192,8 @@ impl Scheduler {
             platform_admin_repo: PlatformAdminRepository::new(pool.clone()),
             layout_repo: LayoutRepository::new(),
             oauth_token_event_repo: OAuthTokenEventRepository::new(pool.clone()),
+            user_repo: UserRepository::new(pool.clone()),
+            lease_repo: LeaseRepository::new(pool.clone()),
             pool,
             announcement_repo,
             notification_service,
@@ -213,6 +226,8 @@ impl Scheduler {
             platform_admin_repo: PlatformAdminRepository::new(pool.clone()),
             layout_repo: LayoutRepository::new(),
             oauth_token_event_repo: OAuthTokenEventRepository::new(pool.clone()),
+            user_repo: UserRepository::new(pool.clone()),
+            lease_repo: LeaseRepository::new(pool.clone()),
             pool,
             announcement_repo,
             notification_service,
@@ -251,6 +266,8 @@ impl Scheduler {
             support_tooling_events_pruned: guard.support_tooling_events_pruned,
             layout_change_events_pruned: guard.layout_change_events_pruned,
             oauth_token_events_pruned: guard.oauth_token_events_pruned,
+            accounts_anonymized: guard.accounts_anonymized,
+            leases_expired: guard.leases_expired,
             errors: guard.errors,
         }
     }
@@ -397,6 +414,18 @@ impl Scheduler {
         // Issue #2303: fire due report schedules and advance next_run_at.
         if let Err(e) = self.fire_due_report_schedules().await {
             tracing::error!("Failed to fire due report schedules: {}", e);
+            self.increment_errors();
+        }
+
+        // Gap audit R6 P1-5: erase accounts whose GDPR grace period elapsed.
+        if let Err(e) = self.execute_scheduled_account_deletions().await {
+            tracing::error!("Failed to execute scheduled account deletions: {}", e);
+            self.increment_errors();
+        }
+
+        // Gap audit R6 P2-13: expire active leases past their end date.
+        if let Err(e) = self.expire_ended_leases().await {
+            tracing::error!("Failed to expire ended leases: {}", e);
             self.increment_errors();
         }
     }
@@ -2528,5 +2557,174 @@ mod tests {
             "the warn must carry the announcement id so the broken row is \
              diagnosable; captured: {captured:?}"
         );
+    }
+
+    // ------------------------------------------------------------------
+    // Gap audit R6 P1-5 / P2-13: GDPR erasure + lease expiry jobs.
+    // ------------------------------------------------------------------
+
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_scheduler_anonymizes_accounts_after_grace_period(pool: sqlx::PgPool) {
+        let org = seed_org(&pool, "gdpr").await;
+        let due = seed_user(&pool, "due@gdpr.test").await;
+        let pending = seed_user(&pool, "pending@gdpr.test").await;
+        let building = seed_building(&pool, org, "gdpr").await;
+        let unit = seed_unit(&pool, building, "G1").await;
+        seed_resident(&pool, unit, due).await;
+        sqlx::query(
+            "INSERT INTO organization_members (organization_id, user_id, status) VALUES ($1, $2, 'active')",
+        )
+        .bind(org)
+        .bind(due)
+        .execute(&pool)
+        .await
+        .expect("seed member");
+        sqlx::query(
+            "INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES ($1, 'gdpr-hash', NOW() + INTERVAL '1 day')",
+        )
+        .bind(due)
+        .execute(&pool)
+        .await
+        .expect("seed refresh token");
+        // An audit row referencing the user must not block erasure (P1-4).
+        sqlx::query("INSERT INTO audit_logs (user_id, org_id, action) VALUES ($1, $2, 'login')")
+            .bind(due)
+            .bind(org)
+            .execute(&pool)
+            .await
+            .expect("seed audit log");
+        sqlx::query(
+            "UPDATE users SET scheduled_deletion_at = NOW() - INTERVAL '1 minute' WHERE id = $1",
+        )
+        .bind(due)
+        .execute(&pool)
+        .await
+        .unwrap();
+        sqlx::query(
+            "UPDATE users SET scheduled_deletion_at = NOW() + INTERVAL '29 days' WHERE id = $1",
+        )
+        .bind(pending)
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        let scheduler = test_scheduler(pool.clone());
+        scheduler
+            .execute_scheduled_account_deletions()
+            .await
+            .expect("erasure job");
+
+        let (email, name, status, phone, sched): (
+            String,
+            String,
+            String,
+            Option<String>,
+            Option<chrono::DateTime<chrono::Utc>>,
+        ) = sqlx::query_as(
+            "SELECT email, name, status, phone, scheduled_deletion_at FROM users WHERE id = $1",
+        )
+        .bind(due)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+        assert_eq!(email, format!("deleted-{due}@deleted.invalid"));
+        assert_eq!(name, "Deleted user");
+        assert_eq!(status, "deleted");
+        assert!(phone.is_none());
+        assert!(sched.is_none());
+
+        let live_tokens: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM refresh_tokens WHERE user_id = $1 AND revoked_at IS NULL",
+        )
+        .bind(due)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+        assert_eq!(live_tokens, 0, "sessions must be revoked");
+        let member_status: String =
+            sqlx::query_scalar("SELECT status FROM organization_members WHERE user_id = $1")
+                .bind(due)
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        assert_eq!(member_status, "removed");
+        let open_residencies: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM unit_residents WHERE user_id = $1 AND (end_date IS NULL OR end_date > CURRENT_DATE)",
+        )
+        .bind(due)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+        assert_eq!(open_residencies, 0);
+
+        // Still inside the grace period: untouched.
+        let pending_email: String = sqlx::query_scalar("SELECT email FROM users WHERE id = $1")
+            .bind(pending)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(pending_email, "pending@gdpr.test");
+        assert_eq!(scheduler.get_metrics().accounts_anonymized, 1);
+
+        // Idempotent: a second tick finds nothing to do.
+        scheduler
+            .execute_scheduled_account_deletions()
+            .await
+            .expect("second tick");
+        assert_eq!(scheduler.get_metrics().accounts_anonymized, 1);
+    }
+
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_scheduler_expires_leases_past_end_date(pool: sqlx::PgPool) {
+        let org = seed_org(&pool, "lease-exp").await;
+        let building = seed_building(&pool, org, "lease-exp").await;
+        let unit = seed_unit(&pool, building, "L1").await;
+
+        async fn seed_lease(
+            pool: &sqlx::PgPool,
+            org: Uuid,
+            unit: Uuid,
+            end_offset_days: i32,
+        ) -> Uuid {
+            sqlx::query_scalar::<_, Uuid>(
+                r#"
+                INSERT INTO leases (organization_id, unit_id, landlord_name, tenant_name, tenant_email,
+                                    start_date, end_date, term_months, monthly_rent, security_deposit, status)
+                VALUES ($1, $2, 'L', 'T', 't@lease.test', CURRENT_DATE - 365,
+                        CURRENT_DATE + $3, 12, 500, 500, 'active')
+                RETURNING id
+                "#,
+            )
+            .bind(org)
+            .bind(unit)
+            .bind(end_offset_days)
+            .fetch_one(pool)
+            .await
+            .expect("seed lease")
+        }
+
+        let ended = seed_lease(&pool, org, unit, -1).await;
+        let ends_today = seed_lease(&pool, org, unit, 0).await;
+
+        let scheduler = test_scheduler(pool.clone());
+        scheduler.expire_ended_leases().await.expect("lease job");
+
+        let status = |id: Uuid| {
+            let pool = pool.clone();
+            async move {
+                sqlx::query_scalar::<_, String>("SELECT status::text FROM leases WHERE id = $1")
+                    .bind(id)
+                    .fetch_one(&pool)
+                    .await
+                    .unwrap()
+            }
+        };
+        assert_eq!(status(ended).await, "expired");
+        assert_eq!(
+            status(ends_today).await,
+            "active",
+            "a lease is valid through its end date"
+        );
+        assert_eq!(scheduler.get_metrics().leases_expired, 1);
     }
 }
