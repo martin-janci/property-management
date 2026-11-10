@@ -306,7 +306,12 @@ async fn handle_ws_session(
 /// non-empty `bearer.` entry — callers then fall back to the legacy `?token=`
 /// query param. The header is a comma-separated list of subprotocol tokens;
 /// we scan for the first `bearer.`-prefixed entry and strip the prefix.
-fn extract_token_from_subprotocols(headers: &HeaderMap) -> Option<String> {
+///
+/// `pub(crate)` so other WS upgrade handlers in this crate (e.g. the IoT
+/// sensor channel in `routes::iot::realtime`) reuse the exact same extraction
+/// instead of re-implementing the `bearer.<jwt>` parsing — keeping the client
+/// contract (`WS_BEARER_SUBPROTOCOL_PREFIX` in `lib/websocket.ts`) in one place.
+pub(crate) fn extract_token_from_subprotocols(headers: &HeaderMap) -> Option<String> {
     let value = headers.get(SEC_WEBSOCKET_PROTOCOL)?.to_str().ok()?;
     value
         .split(',')

@@ -1,9 +1,18 @@
 /**
  * Real-time IoT sensor reading WebSocket hook (Epic 14, FR72 — BIT-145 backend channel).
  *
- * Connects to `GET /api/v1/iot/sensors/ws?token=<jwt>&organization_id=<org>`,
- * subscribes to the `sensors:{org_id}` Redis pub/sub channel, and streams
+ * Connects to `GET /api/v1/iot/sensors/ws?organization_id=<org>`, subscribes to
+ * the `sensors:{org_id}` Redis pub/sub channel, and streams
  * `{ event: "sensor.reading.created", payload: SensorReading }` frames.
+ *
+ * The JWT access token is carried in the `Sec-WebSocket-Protocol` handshake
+ * header as a `bearer.<jwt>` subprotocol (via {@link buildWsSubprotocols}), the
+ * same transport the shared notification socket uses. It is deliberately NOT
+ * placed in the URL query string — a `?token=<jwt>` leaks the bearer credential
+ * into api-server access logs, proxy history, and browser history, where a
+ * single line is enough for session takeover. The api-server
+ * (`routes/iot/realtime.rs`) reads the subprotocol first and only falls back to
+ * the legacy `?token=` for not-yet-migrated clients.
  *
  * The backend re-checks active membership of `organization_id` before the WS
  * upgrade, so the channel can never leak another tenant's readings (issue
@@ -30,18 +39,28 @@
 import type { SensorReading } from '@ppt/api-client';
 import { getToken } from '@ppt/api-client';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { computeReconnectDelay, DEFAULT_MAX_RECONNECT_ATTEMPTS } from '../../../lib/websocket';
+import {
+  buildWsSubprotocols,
+  computeReconnectDelay,
+  DEFAULT_MAX_RECONNECT_ATTEMPTS,
+} from '../../../lib/websocket';
 
 const WS_MAX_BUFFER = 200;
 
 /** Event name emitted by the backend for a single newly-ingested reading. */
 const EVENT_READING_CREATED = 'sensor.reading.created';
 
-function buildWsUrl(token: string, organizationId: string): string {
+/**
+ * Build the sensor WS URL. The JWT is NOT included here — it travels in the
+ * `Sec-WebSocket-Protocol` subprotocol (see {@link buildWsSubprotocols}) so it
+ * never leaks into access logs / history. Only the non-secret `organization_id`
+ * stays in the query string.
+ */
+function buildWsUrl(organizationId: string): string {
   const win = typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>) : {};
   const httpBase = win.__API_BASE_URL__ ? String(win.__API_BASE_URL__) : '';
   const wsBase = httpBase.replace(/^https/, 'wss').replace(/^http/, 'ws');
-  const qs = new URLSearchParams({ token, organization_id: organizationId });
+  const qs = new URLSearchParams({ organization_id: organizationId });
   return `${wsBase}/api/v1/iot/sensors/ws?${qs.toString()}`;
 }
 
@@ -95,7 +114,7 @@ export function useIotWebSocket(
       const token = getToken();
       if (!token || !organizationId || cancelled.current) return;
 
-      const ws = new WebSocket(buildWsUrl(token, organizationId));
+      const ws = new WebSocket(buildWsUrl(organizationId), buildWsSubprotocols(token));
       wsRef.current = ws;
 
       ws.onopen = () => {

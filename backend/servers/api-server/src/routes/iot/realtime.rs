@@ -9,15 +9,22 @@
 //!
 //! # Authentication & tenant scoping
 //!
-//! WS upgrades cannot carry an `Authorization` header from browsers, so auth is
-//! a short-lived JWT in the `token` query param (same verifier as REST). The
-//! caller also passes the `organization_id` they want to subscribe to, and we
-//! validate active membership against the DB exactly like
-//! `ValidatedTenantExtractor` does — a non-member is rejected with `403` before
-//! the upgrade, so the channel can never leak another tenant's readings.
+//! WS upgrades cannot carry an `Authorization` header from browsers, so the
+//! short-lived JWT (same verifier as REST) is carried in the
+//! `Sec-WebSocket-Protocol` handshake header as a `bearer.<jwt>` subprotocol —
+//! the same transport the notification channel uses (`ws_notifications.rs`).
+//! Unlike the legacy `?token=<jwt>` query param it never lands in api-server
+//! access logs / proxy history / browser history, where a single leaked line is
+//! enough for session takeover. The query param is still accepted as a fallback
+//! for not-yet-migrated clients. The caller also passes the `organization_id`
+//! they want to subscribe to, and we validate active membership against the DB
+//! exactly like `ValidatedTenantExtractor` does — a non-member is rejected with
+//! `403` before the upgrade, so the channel can never leak another tenant's
+//! readings.
 
 use std::time::Duration;
 
+use crate::routes::ws_notifications::extract_token_from_subprotocols;
 use crate::state::AppState;
 use api_core::extractors::validate_access_token_with_exp;
 use axum::{
@@ -25,7 +32,7 @@ use axum::{
         ws::{Message, WebSocket, WebSocketUpgrade},
         Query, State,
     },
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
     response::IntoResponse,
 };
 use db::repositories::OrganizationMemberRepository;
@@ -51,9 +58,13 @@ const WS_MAX_SESSION_SECS: u64 = 4 * 60 * 60;
 /// Query parameters for the sensor WebSocket upgrade request.
 #[derive(Debug, Deserialize)]
 pub struct SensorWsQuery {
-    /// JWT access token — required because WS upgrades cannot carry a custom
-    /// `Authorization` header from browser clients.
-    pub token: String,
+    /// Legacy JWT access token transport. Optional: the preferred transport is
+    /// the `bearer.<jwt>` entry in the `Sec-WebSocket-Protocol` header, which
+    /// (unlike this query param) does not leak the token into access logs /
+    /// proxy history / browser history. Kept as a fallback for clients that
+    /// have not yet migrated to the subprotocol transport.
+    #[serde(default)]
+    pub token: Option<String>,
     /// Organization (tenant) whose sensor stream to subscribe to.
     ///
     /// This is **deliberately client-supplied**: a user who belongs to several
@@ -110,19 +121,36 @@ pub(super) async fn publish_sensor_event(
 
 /// WebSocket upgrade handler for realtime sensor readings (Story 14.3).
 ///
-/// Validates the `token` query param as a JWT access token, confirms the caller
-/// is an active member of `organization_id`, then upgrades the connection and
-/// forwards the org's Redis pub/sub sensor events to the client.
+/// Resolves the JWT access token — preferring the `bearer.<jwt>` subprotocol in
+/// the `Sec-WebSocket-Protocol` header over the legacy `?token=` query param —
+/// validates it, confirms the caller is an active member of `organization_id`,
+/// then upgrades the connection and forwards the org's Redis pub/sub sensor
+/// events to the client.
 pub async fn sensor_ws_handler(
     ws: WebSocketUpgrade,
     Query(params): Query<SensorWsQuery>,
+    headers: HeaderMap,
     State(state): State<AppState>,
 ) -> impl IntoResponse {
+    // --- Resolve the auth token ---
+    // Prefer the `bearer.<jwt>` subprotocol from the `Sec-WebSocket-Protocol`
+    // header: unlike the legacy `?token=` query param it never lands in access
+    // logs. Fall back to the query param for not-yet-migrated clients. Reuses
+    // the notification channel's extractor so the `bearer.` contract lives in
+    // exactly one place.
+    let token = match extract_token_from_subprotocols(&headers).or(params.token) {
+        Some(t) => t,
+        None => {
+            tracing::warn!("Sensor WS rejected: missing auth token");
+            return (StatusCode::UNAUTHORIZED, "missing auth token").into_response();
+        }
+    };
+
     // --- JWT validation (same verifier/lifetime as REST auth) ---
-    let (user_id, exp) = match validate_access_token_with_exp(&params.token) {
+    let (user_id, exp) = match validate_access_token_with_exp(&token) {
         Ok(t) => t,
         Err(msg) => {
-            // Never log `params.token` — it is a bearer JWT.
+            // Never log the token — it is a bearer JWT.
             tracing::warn!(msg = %msg, "Sensor WS rejected: invalid token");
             return (StatusCode::UNAUTHORIZED, msg).into_response();
         }
@@ -332,6 +360,46 @@ mod realtime_tests {
         let text = serde_json::to_string(&evt).unwrap();
         assert!(text.contains("\"event\":\"sensor.readings.batch\""));
         assert!(text.contains("\"inserted\":7"));
+    }
+
+    /// Credential-hygiene regression guard
+    /// (code-review-ppt-web-core-ws-jwt-in-query-param): the sensor WS must no
+    /// longer *require* the bearer JWT in the `?token=` query string — the
+    /// preferred transport is now the `bearer.<jwt>` `Sec-WebSocket-Protocol`
+    /// subprotocol, which (unlike a query param) never lands in access logs.
+    /// `SensorWsQuery::token` is therefore optional: a query that carries only
+    /// `organization_id` must still deserialize, letting a subprotocol-only
+    /// client connect. Reverting `token` to a required `String` would break the
+    /// subprotocol transport and fail this test.
+    #[test]
+    fn sensor_ws_query_deserialises_without_a_token_param() {
+        let org = Uuid::nil();
+        let q: SensorWsQuery = serde_json::from_value(serde_json::json!({
+            "organization_id": org.to_string(),
+        }))
+        .expect(
+            "an organization_id-only query must deserialize now that the token moved \
+             to the Sec-WebSocket-Protocol subprotocol",
+        );
+        assert_eq!(q.organization_id, org);
+        assert!(
+            q.token.is_none(),
+            "token must be optional (subprotocol-carried), not a required query param"
+        );
+    }
+
+    /// The legacy `?token=` query param is still accepted as a migration
+    /// fallback, so a request that supplies it must still deserialize into
+    /// `Some(..)`.
+    #[test]
+    fn sensor_ws_query_still_accepts_legacy_token_param() {
+        let org = Uuid::nil();
+        let q: SensorWsQuery = serde_json::from_value(serde_json::json!({
+            "token": "abc.def.ghi",
+            "organization_id": org.to_string(),
+        }))
+        .expect("a legacy token query must still deserialize for not-yet-migrated clients");
+        assert_eq!(q.token.as_deref(), Some("abc.def.ghi"));
     }
 
     /// Pin the published event names so a future rename of the ingest
