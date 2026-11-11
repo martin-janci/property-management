@@ -15,6 +15,7 @@ import {
   useResolveAlert,
 } from '@ppt/api-client';
 import type React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '../../../components';
 import { getErrorMessage } from '../../../lib/api';
 import {
@@ -93,47 +94,52 @@ function ytdRange(): { period_start: string; period_end: string } {
   };
 }
 
-const SummaryCards: React.FC<{ summary: DashboardSummary }> = ({ summary }) => (
-  <div className="grid grid-cols-5 gap-4">
-    <MetricsSummaryCard
-      title="Portfolio Value"
-      value={num(summary.total_portfolio_value)}
-      format="currency"
-      currency={summary.currency}
-    />
-    <MetricsSummaryCard
-      title="Total Equity"
-      value={num(summary.total_equity)}
-      format="currency"
-      currency={summary.currency}
-    />
-    <MetricsSummaryCard
-      title="YTD NOI"
-      value={num(summary.ytd_noi)}
-      format="currency"
-      currency={summary.currency}
-    />
-    <MetricsSummaryCard
-      title="YTD Cash Flow"
-      value={num(summary.ytd_cash_flow)}
-      format="currency"
-      currency={summary.currency}
-      change={optNum(summary.ytd_return_pct)}
-      changeLabel="YTD return"
-      trend={num(summary.ytd_cash_flow) >= 0 ? 'up' : 'down'}
-    />
-    <MetricsSummaryCard
-      title="LTV Ratio"
-      value={num(summary.ltv_ratio)}
-      format="percent"
-      subtitle={
-        summary.debt_to_equity_ratio != null
-          ? `D/E: ${num(summary.debt_to_equity_ratio).toFixed(2)}x`
-          : undefined
-      }
-    />
-  </div>
-);
+const SummaryCards: React.FC<{ summary: DashboardSummary }> = ({ summary }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="grid grid-cols-5 gap-4">
+      <MetricsSummaryCard
+        title={t('portfolio.dashboard.cards.portfolioValue')}
+        value={num(summary.total_portfolio_value)}
+        format="currency"
+        currency={summary.currency}
+      />
+      <MetricsSummaryCard
+        title={t('portfolio.dashboard.cards.totalEquity')}
+        value={num(summary.total_equity)}
+        format="currency"
+        currency={summary.currency}
+      />
+      <MetricsSummaryCard
+        title={t('portfolio.dashboard.cards.ytdNoi')}
+        value={num(summary.ytd_noi)}
+        format="currency"
+        currency={summary.currency}
+      />
+      <MetricsSummaryCard
+        title={t('portfolio.dashboard.cards.ytdCashFlow')}
+        value={num(summary.ytd_cash_flow)}
+        format="currency"
+        currency={summary.currency}
+        change={optNum(summary.ytd_return_pct)}
+        changeLabel={t('portfolio.dashboard.cards.ytdReturn')}
+        trend={num(summary.ytd_cash_flow) >= 0 ? 'up' : 'down'}
+      />
+      <MetricsSummaryCard
+        title={t('portfolio.dashboard.cards.ltvRatio')}
+        value={num(summary.ltv_ratio)}
+        format="percent"
+        subtitle={
+          summary.debt_to_equity_ratio != null
+            ? t('portfolio.dashboard.debtToEquity', {
+                ratio: num(summary.debt_to_equity_ratio).toFixed(2),
+              })
+            : undefined
+        }
+      />
+    </div>
+  );
+};
 
 export const PortfolioDashboardPage: React.FC<PortfolioDashboardPageProps> = ({ portfolioId }) => {
   const summaryQuery = useDashboardSummary(portfolioId);
@@ -145,6 +151,7 @@ export const PortfolioDashboardPage: React.FC<PortfolioDashboardPageProps> = ({ 
   const resolve = useResolveAlert(portfolioId);
   const calculateMetrics = useCalculateMetrics(portfolioId);
   const { showToast } = useToast();
+  const { t } = useTranslation();
 
   const handleCalculateMetrics = () => {
     const { period_start, period_end } = ytdRange();
@@ -154,13 +161,13 @@ export const PortfolioDashboardPage: React.FC<PortfolioDashboardPageProps> = ({ 
         onSuccess: () =>
           showToast({
             type: 'success',
-            title: 'Metrics recalculated',
-            message: 'Portfolio performance metrics have been refreshed.',
+            title: t('portfolio.dashboard.toast.metricsRecalculated'),
+            message: t('portfolio.dashboard.toast.metricsRecalculatedDetail'),
           }),
         onError: (err) =>
           showToast({
             type: 'error',
-            title: 'Could not calculate metrics',
+            title: t('portfolio.dashboard.toast.calculateFailed'),
             message: getErrorMessage(err),
           }),
       }
@@ -172,7 +179,7 @@ export const PortfolioDashboardPage: React.FC<PortfolioDashboardPageProps> = ({ 
       onError: (err) =>
         showToast({
           type: 'error',
-          title: 'Could not mark alert as read',
+          title: t('portfolio.dashboard.toast.markReadFailed'),
           message: getErrorMessage(err),
         }),
     });
@@ -182,7 +189,7 @@ export const PortfolioDashboardPage: React.FC<PortfolioDashboardPageProps> = ({ 
       onError: (err) =>
         showToast({
           type: 'error',
-          title: 'Could not resolve alert',
+          title: t('portfolio.dashboard.toast.resolveFailed'),
           message: getErrorMessage(err),
         }),
     });
@@ -191,7 +198,7 @@ export const PortfolioDashboardPage: React.FC<PortfolioDashboardPageProps> = ({ 
   if (summaryQuery.isLoading) {
     return (
       <div className="flex items-center justify-center py-24 text-sm text-gray-500">
-        Loading portfolio dashboard…
+        {t('portfolio.dashboard.loading')}
       </div>
     );
   }
@@ -199,18 +206,18 @@ export const PortfolioDashboardPage: React.FC<PortfolioDashboardPageProps> = ({ 
   if (summaryQuery.isError || !summaryQuery.data) {
     return (
       <div className="rounded-lg border border-red-200 bg-red-50 p-6">
-        <h2 className="text-sm font-semibold text-red-800">Failed to load portfolio dashboard</h2>
+        <h2 className="text-sm font-semibold text-red-800">{t('portfolio.dashboard.loadError')}</h2>
         <p className="mt-1 text-sm text-red-700">
           {summaryQuery.error instanceof Error
             ? summaryQuery.error.message
-            : 'The portfolio summary could not be retrieved. Please try again.'}
+            : t('portfolio.dashboard.loadErrorDetail')}
         </p>
         <button
           type="button"
           onClick={() => summaryQuery.refetch()}
           className="mt-4 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
         >
-          Retry
+          {t('portfolio.dashboard.retry')}
         </button>
       </div>
     );
@@ -227,20 +234,23 @@ export const PortfolioDashboardPage: React.FC<PortfolioDashboardPageProps> = ({ 
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Portfolio Dashboard</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('portfolio.dashboard.title')}</h1>
           <p className="text-sm text-gray-500">
-            Portfolio ID: {portfolioId} | As of: {summary.as_of_date}
+            {t('portfolio.dashboard.meta', {
+              portfolioId,
+              asOfDate: summary.as_of_date,
+            })}
           </p>
         </div>
         <div className="flex space-x-3">
           <button
             type="button"
             disabled
-            title="Report export is not yet available"
+            title={t('portfolio.dashboard.exportReportUnavailable')}
             aria-disabled="true"
             className="px-4 py-2 text-sm font-medium text-gray-400 bg-white border border-gray-200 rounded-md cursor-not-allowed"
           >
-            Export Report
+            {t('portfolio.dashboard.exportReport')}
           </button>
           <button
             type="button"
@@ -248,7 +258,9 @@ export const PortfolioDashboardPage: React.FC<PortfolioDashboardPageProps> = ({ 
             disabled={calculateMetrics.isPending}
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {calculateMetrics.isPending ? 'Calculating…' : 'Calculate Metrics'}
+            {calculateMetrics.isPending
+              ? t('portfolio.dashboard.calculating')
+              : t('portfolio.dashboard.calculateMetrics')}
           </button>
         </div>
       </div>
@@ -259,7 +271,7 @@ export const PortfolioDashboardPage: React.FC<PortfolioDashboardPageProps> = ({ 
       {/* Alerts Section */}
       {alerts.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-lg font-semibold text-gray-900">Alerts</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t('portfolio.dashboard.alerts')}</h2>
           {alerts.map((alert: PerformanceAlertDto) => (
             <PerformanceAlert
               key={alert.id}
@@ -285,11 +297,11 @@ export const PortfolioDashboardPage: React.FC<PortfolioDashboardPageProps> = ({ 
       <div>
         {trendQuery.isLoading ? (
           <div className="rounded-lg border border-gray-200 bg-white p-6 text-sm text-gray-500">
-            Loading cash-flow trend…
+            {t('portfolio.dashboard.cashFlowLoading')}
           </div>
         ) : trendQuery.isError ? (
           <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
-            Failed to load cash-flow trend.
+            {t('portfolio.dashboard.cashFlowError')}
           </div>
         ) : (
           <CashFlowChart data={cashFlowTrend.map(mapCashFlowPoint)} currency={summary.currency} />
@@ -299,23 +311,25 @@ export const PortfolioDashboardPage: React.FC<PortfolioDashboardPageProps> = ({ 
       {/* Property Cards */}
       <div>
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Property Performance</h2>
+          <h2 className="text-lg font-semibold text-gray-900">
+            {t('portfolio.dashboard.propertyPerformance')}
+          </h2>
           <button
             type="button"
             disabled
-            title="A dedicated properties view is not yet available"
+            title={t('portfolio.dashboard.viewAllPropertiesUnavailable')}
             aria-disabled="true"
             className="text-sm text-gray-400 font-medium cursor-not-allowed"
           >
-            View All Properties
+            {t('portfolio.dashboard.viewAllProperties')}
           </button>
         </div>
         {cardsQuery.isLoading ? (
-          <div className="text-sm text-gray-500">Loading properties…</div>
+          <div className="text-sm text-gray-500">{t('portfolio.dashboard.propertiesLoading')}</div>
         ) : cardsQuery.isError ? (
-          <div className="text-sm text-red-700">Failed to load property performance.</div>
+          <div className="text-sm text-red-700">{t('portfolio.dashboard.propertiesError')}</div>
         ) : propertyCards.length === 0 ? (
-          <div className="text-sm text-gray-500">No properties in this portfolio yet.</div>
+          <div className="text-sm text-gray-500">{t('portfolio.dashboard.propertiesEmpty')}</div>
         ) : (
           <div className="grid grid-cols-3 gap-4">
             {propertyCards.map((property: PropertyPerformanceCard) => (
@@ -328,10 +342,13 @@ export const PortfolioDashboardPage: React.FC<PortfolioDashboardPageProps> = ({ 
       {/* Financial Metrics Table */}
       {metricsQuery.isError ? (
         <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
-          Failed to load financial metrics.
+          {t('portfolio.dashboard.metricsError')}
         </div>
       ) : (
-        <FinancialMetricsTable metrics={metrics.map(mapMetric)} title="Financial Metrics Summary" />
+        <FinancialMetricsTable
+          metrics={metrics.map(mapMetric)}
+          title={t('portfolio.dashboard.metricsTableTitle')}
+        />
       )}
     </div>
   );

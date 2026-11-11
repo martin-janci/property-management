@@ -7574,5 +7574,46 @@
       "generic": "Nie udało się zapisać zmiany. Spróbuj ponownie.",
       "loadFailed": "Nie udało się wczytać członków."
     }
+  },
+  "portfolio": {
+    "dashboard": {
+      "title": "Panel portfela",
+      "meta": "ID portfela: {{portfolioId}} | Na dzień: {{asOfDate}}",
+      "exportReport": "Eksportuj raport",
+      "exportReportUnavailable": "Eksport raportu nie jest jeszcze dostępny",
+      "calculateMetrics": "Oblicz wskaźniki",
+      "calculating": "Obliczanie…",
+      "loading": "Ładowanie panelu portfela…",
+      "loadError": "Nie udało się załadować panelu portfela",
+      "loadErrorDetail": "Nie udało się pobrać podsumowania portfela. Spróbuj ponownie.",
+      "retry": "Spróbuj ponownie",
+      "alerts": "Alerty",
+      "cashFlowLoading": "Ładowanie trendu przepływów pieniężnych…",
+      "cashFlowError": "Nie udało się załadować trendu przepływów pieniężnych.",
+      "propertyPerformance": "Wyniki nieruchomości",
+      "viewAllProperties": "Zobacz wszystkie nieruchomości",
+      "viewAllPropertiesUnavailable": "Dedykowany widok nieruchomości nie jest jeszcze dostępny",
+      "propertiesLoading": "Ładowanie nieruchomości…",
+      "propertiesError": "Nie udało się załadować wyników nieruchomości.",
+      "propertiesEmpty": "W tym portfelu nie ma jeszcze żadnych nieruchomości.",
+      "metricsError": "Nie udało się załadować wskaźników finansowych.",
+      "metricsTableTitle": "Podsumowanie wskaźników finansowych",
+      "debtToEquity": "D/E: {{ratio}}x",
+      "cards": {
+        "portfolioValue": "Wartość portfela",
+        "totalEquity": "Kapitał własny ogółem",
+        "ytdNoi": "NOI od początku roku",
+        "ytdCashFlow": "Przepływy pieniężne od początku roku",
+        "ltvRatio": "Wskaźnik LTV",
+        "ytdReturn": "Zwrot od początku roku"
+      },
+      "toast": {
+        "metricsRecalculated": "Przeliczono wskaźniki",
+        "metricsRecalculatedDetail": "Wskaźniki wyników portfela zostały odświeżone.",
+        "calculateFailed": "Nie udało się obliczyć wskaźników",
+        "markReadFailed": "Nie udało się oznaczyć alertu jako przeczytanego",
+        "resolveFailed": "Nie udało się rozwiązać alertu"
+      }
+    }
   }
 }

@@ -8901,5 +8901,46 @@
       "generic": "Zmenu sa nepodarilo uložiť. Skúste to znova.",
       "loadFailed": "Členov sa nepodarilo načítať."
     }
+  },
+  "portfolio": {
+    "dashboard": {
+      "title": "Prehľad portfólia",
+      "meta": "ID portfólia: {{portfolioId}} | K dátumu: {{asOfDate}}",
+      "exportReport": "Exportovať report",
+      "exportReportUnavailable": "Export reportu zatiaľ nie je k dispozícii",
+      "calculateMetrics": "Vypočítať metriky",
+      "calculating": "Prebieha výpočet…",
+      "loading": "Načítava sa prehľad portfólia…",
+      "loadError": "Nepodarilo sa načítať prehľad portfólia",
+      "loadErrorDetail": "Súhrn portfólia sa nepodarilo načítať. Skúste to znova.",
+      "retry": "Skúsiť znova",
+      "alerts": "Upozornenia",
+      "cashFlowLoading": "Načítava sa vývoj cash flow…",
+      "cashFlowError": "Nepodarilo sa načítať vývoj cash flow.",
+      "propertyPerformance": "Výkonnosť nehnuteľností",
+      "viewAllProperties": "Zobraziť všetky nehnuteľnosti",
+      "viewAllPropertiesUnavailable": "Samostatné zobrazenie nehnuteľností zatiaľ nie je k dispozícii",
+      "propertiesLoading": "Načítavajú sa nehnuteľnosti…",
+      "propertiesError": "Nepodarilo sa načítať výkonnosť nehnuteľností.",
+      "propertiesEmpty": "V tomto portfóliu zatiaľ nie sú žiadne nehnuteľnosti.",
+      "metricsError": "Nepodarilo sa načítať finančné metriky.",
+      "metricsTableTitle": "Súhrn finančných metrík",
+      "debtToEquity": "D/E: {{ratio}}x",
+      "cards": {
+        "portfolioValue": "Hodnota portfólia",
+        "totalEquity": "Celkový vlastný kapitál",
+        "ytdNoi": "NOI od začiatku roka",
+        "ytdCashFlow": "Cash flow od začiatku roka",
+        "ltvRatio": "Pomer LTV",
+        "ytdReturn": "Výnos od začiatku roka"
+      },
+      "toast": {
+        "metricsRecalculated": "Metriky prepočítané",
+        "metricsRecalculatedDetail": "Metriky výkonnosti portfólia boli obnovené.",
+        "calculateFailed": "Nepodarilo sa vypočítať metriky",
+        "markReadFailed": "Upozornenie sa nepodarilo označiť ako prečítané",
+        "resolveFailed": "Upozornenie sa nepodarilo vyriešiť"
+      }
+    }
   }
 }
