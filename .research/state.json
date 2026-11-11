@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-11-09T22:53:00Z",
+  "last_run_iso": "2026-11-11T03:17:04Z",
   "last_run_ms": 0,
-  "last_pr_seen": 3370,
-  "last_issue_seen": 3357,
-  "last_commit_sha": "fa6d747e673fe509e8725ead53bba07d2342ac00",
+  "last_pr_seen": 3409,
+  "last_issue_seen": 3397,
+  "last_commit_sha": "21156d62adc214794f179a4f0ceb2af54f41290b",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -711,6 +711,21 @@
       "runs_seen": 1,
       "last_seen": "2026-11-09",
       "recent_churn": 3
+    },
+    "frontend/apps/reality-web/src/app/[locale]/realtor/profile/page.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-11",
+      "recent_churn": 3
+    },
+    "frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-11",
+      "recent_churn": 3
+    },
+    "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-11",
+      "recent_churn": 3
     }
   },
   "seen_signals": [
@@ -842,6 +857,7 @@
     "churn-hotspot-frontend/apps/ppt-web/src/features/documents/components/MoveFolderDialog.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.reconnect.test.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.test.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx",
@@ -852,6 +868,8 @@
     "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/rentals.tsx",
     "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
     "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx",
+    "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx",
+    "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/realtor/profile/page.tsx",
     "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
     "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
     "churn-hotspot-frontend/apps/reality-web/src/components/home/FeaturedListings.tsx",
@@ -1120,8 +1138,10 @@
     "code-review-reality-web-listingform-no-i18n",
     "code-review-reality-web-listings-page-no-error-state",
     "code-review-reality-web-price-alert-markread-silent-fail",
+    "code-review-reality-web-price-alerts-raw-err-console",
     "code-review-reality-web-profile-mock-data",
     "code-review-reality-web-protectedroute-i18n",
+    "code-review-reality-web-realtor-api-error-message-raw-in-ui",
     "code-review-reality-web-realtor-api-unvalidated-json-cast",
     "code-review-reality-web-realtor-mgmt-i18n",
     "code-review-reality-web-realtor-mgmt-silent-error",
@@ -1417,8 +1437,8 @@
     "mobile-native-kmp": "2026-11-04"
   },
   "stats": {
-    "runs": 117,
-    "vectors_created": 525,
+    "runs": 118,
+    "vectors_created": 527,
     "plans_created": 37,
     "quiet_days": 8,
     "auto_fix_count": 0
@@ -1434,20 +1454,20 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 4,
+    "next_index": 5,
     "role_last_run": {
       "pm-tech-lead": "2026-10-22",
       "pm-backend": "2026-10-26",
       "pm-frontend": "2026-10-28",
       "pm-qa": "2026-11-09",
-      "pm-devops": "2026-08-31",
+      "pm-devops": "2026-11-11",
       "pm-security": "2026-10-01",
       "pm-data": "2026-10-16",
       "pm-integration": "2026-10-19",
-      "pm-scrum-master": "2026-11-09"
+      "pm-scrum-master": "2026-11-11"
     }
   },
   "coverage_cursor": {
-    "next_index": 1
+    "next_index": 2
   }
 }

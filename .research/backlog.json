@@ -15711,6 +15711,56 @@
         "assignment_status": "failed",
         "pr_number": null
       }
+    },
+    {
+      "id": "code-review-reality-web-realtor-api-error-message-raw-in-ui",
+      "title": "reality-web: route raw RealtorApiError/AuthApiError.message through i18n wrapper (11 sites, 7 pages)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-11 (segment: reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx:47 — setError(err instanceof RealtorApiError ? err.message : t(\"error\")): server message rendered untranslated and may leak backend internals",
+        "frontend/apps/reality-web/src/app/[locale]/account/profile/page.tsx:40 — same pattern with AuthApiError",
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx:170,218 — load/save errors render RealtorApiError.message raw",
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx:198 — same pattern on listing submit",
+        "6 more sites across auth/* + account/password route raw error.message (useRealtorErrorMessage on realtor/profile/page.tsx is the already-adopted convention and should spread)"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/profile/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx"
+      ],
+      "created_at": "2026-11-11",
+      "updated_at": "2026-11-11",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-price-alerts-raw-err-console",
+      "title": "reality-web PriceAlerts: route console.error through toSafeLogMessage (secrets leak risk)",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-11 (segment: reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx:98 — console.error(\"Failed to mark price alert read:\", err) passes raw TanStack mutation error carrier",
+        "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx:108 — same on mark-all",
+        "frontend/apps/reality-web/src/lib/safe-error.ts documents the leak surface (axios err.config.data carries request bodies; invite tokens / CRM creds / feed-source creds)",
+        "Siblings RealtorManagement.tsx:579, CrmConnection.tsx:411, FeedImport.tsx:531 already route through toSafeLogMessage(error)"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx"
+      ],
+      "created_at": "2026-11-11",
+      "updated_at": "2026-11-11",
+      "plan": null
     }
   ]
 }

@@ -1,65 +1,65 @@
 # PPT Project State
 
-_Generated: 2026-11-09 — routine Phase 1.6 incremental upkeep. Role focus: **pm-qa** (76-day stale rotation slot; pm-cursor idx 3 → 4). pm-scrum-master always-on. Coverage `scan_kind=upkeep`; coverage_cursor idx 0 → 1 (epic-10a re-checked, still 3/3 done; no PRs touched OAuth surfaces this window)._
+_Generated: 2026-11-11 — routine Phase 1.6 incremental upkeep. Role focus: **pm-devops** (72-day stale rotation slot; pm-cursor idx 4 → 5). pm-scrum-master always-on. Coverage `scan_kind=upkeep`; coverage_cursor idx 1 → 2 (epic-10b re-check queued)._
 
-## Delta since last routine run (2026-11-06)
+## Delta since last routine run (2026-11-09)
 
-- **7 PRs merged** in ~64h (see Shipped below) — all code-review relands + a session-revocation fix; every PR shipped with a new regression test file.
-- **8 gh-issue-\* follow-ups closed** (3283, 3304, 3305, 3306, 3307, 3308, 3309, 3310 — issue state=closed as of 2026-11-09). These were tracked as `in-progress` in action-list; all 8 moved to `done` and archived this run.
-- **4 action-list code-review items resolved** by this run's merged PRs (see Shipped mapping).
-- **1 new issue: #3357** — `dispatcher: pipeline fully stalled — 3 approved PRs blocked on non-mechanical conflicts + Tier-1d signals are a dead-end` (filed 2026-11-08 by the dispatcher itself; labels: `follow-up`, `blocked`). Operator action required — the dispatcher cannot self-heal.
-- **1 blocker clearing**: issue #3187 (cross-tenant assign-404 test) is now CLOSED; #2652 (mobile-native KMP cloud builds) is also CLOSED (but the structural starvation gap remains — see carried risks).
-- **1 quarantined assignment carried**: `code-review-ppt-web-core-refresh-token-localstorage` PR #3294 — the only non-mobile-native in-flight item.
+- **37 PRs merged** in ~28h (#3371–#3409). The dispatcher cleared most of its code-review queue in one burst.
+- **3 action-list `code-review-*` items moved to `done`** by this run's merges:
+  - `code-review-reality-web-ssr-apibase-resolver-triplicated` ← PR #3407
+  - `code-review-ppt-web-ui-portfolio-dashboard-dead-buttons` ← PR #3408
+  - `code-review-api-core-rls-ctx-mw-dead-xtenant-only` ← PR #3409
+- **Security-adjacent work shipped**: argon2 env-cost floor (#3394), cors policy shared across prod+test routers (#3400), sanitized DB error leaks in legal.rs (#3383), sanitized upstream SSO-callback leak (#3384), fault-list SQL injection + mobile/Reality fixes (#3395 "audit round 8"). All with CI green on `dev`.
+- **1 issue closed**: #3397 ("last-admin guard's admin role_type list can drift from TenantRole") via PR #3405.
+- **1 open PR trending**: #3410 (draft, `api-core` CORS localhost prod-default) — companion hardening to #3400; author-owned; 24h old.
+- **Backlog nearly drained**: only 2 open + 2 ready non-triage items (all mobile-native-kmp), 0 open triage rows. No new vectors required this run.
 
 ## Executive summary
 
-- **Delivery: 49/49 stories done across 13 epics in coverage.** No status flips this run; `last_checked` refreshed on epic-10a (idx 0, OAuth Provider Foundation — stories 10a-1/2/3 still done, nothing in the window touched OAuth).
-- **7 PRs merged, all with regression tests.** Test-shadow debt did NOT grow this window — pm-qa's standing concern on dispatcher-spawned fixes shipping without failing-on-main tests remains a watch, not an active regression.
-- **Dispatcher pipeline health is the real blocker now.** 10+ runs at 0-claimed/0-merged until this burst; planner buffer at 6/72 (claimable). The 7-PR burst is explained by pre-existing relands finally merging, NOT by fresh claim throughput.
-- **pm-qa rotation came up 76 days stale** — last run 2026-08-25. No fresh QA findings beyond the standing lint-adoption + dispatcher-self-test asks; test discipline on shipped PRs is actually improving.
+- **Delivery: 49/49 stories done across 13 epics in coverage.** `coverage_cursor` was at idx 1 (epic-10b "Platform Administration"); upkeep re-check this run — nothing in the 28h window touched platform-admin surfaces. Advances to idx 2.
+- **CI is healthy** on `dev` for backend, frontend, and mobile-native workflows after the burst. No red workflows on `main`.
+- **pm-devops rotation came up 72 days stale** — last run 2026-08-31. The Sept `utoipa-swagger-ui` block that stalled api-server cloud builds **has not re-triggered**; backend security PRs compiled and shipped. Mobile-native cloud-build starvation (issue #2652) is still structurally unresolved but the dispatcher pressure has eased dramatically.
+- **Main remaining drag**: 4 PRs open 100+ days without a reviewer (#2555 invoice lifecycle, #2559 PAY by square QR, #2588/#2590 expo-57 dependabot now superseded). Three new action-list items force a decision.
 
 ## Sprint progress
 
 Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth"** · **epics_done = 4/4** at sprint level · 49/49 stories done in coverage.
 
 | Epic | Sprint status | Coverage status | Shipped PRs this window |
-|---|---|---|---|
-| 6 — Announcements & Communication | done (6/6) | 6/6 done | — |
-| 7A — Basic Document Management | done (5/5) | 5/5 done | — |
-| 8A — Basic Notification Preferences | done (3/3) | 3/3 done | — |
-| 10A — OAuth Provider Foundation | done (3/3) | 3/3 done · **last_checked 2026-11-09 (cursor re-check)** | — |
-| 10B — Platform Administration | done (7/7) | 7/7 done | — |
-| 80 — Dispute Resolution | done (3/3) | 3/3 done | — |
+|------|---------------|-----------------|-------------------------|
+| epic-6 Announcements | done | 6/6 done | — |
+| epic-7a Documents | done | 5/5 done | #3376 (ui doc-search i18n), #3393 (folder-tree i18n) |
+| epic-8a Notifications | done | 3/3 done | — |
+| epic-10a OAuth Provider | done | 3/3 done | — |
+| epic-10b Platform Admin | *in-progress coverage re-check* | — | — |
 
-## Shipped since last run (7 PRs merged)
+## Shipped since last run (summary, 37 PRs)
 
-- **#3351** — code-review-ppt-web-ui-registry-no-i18n: wire registry pet/vehicle forms + lists through react-i18next (merged 2026-11-07). Closes action-list `code-review-ppt-web-ui-registry-no-i18n`.
-- **#3350** — code-review-reality-web-share-cmp-unchecked-json: validate shared-comparison listing bodies at the API boundary (merged 2026-11-07). Closes action-list `code-review-reality-web-share-cmp-unchecked-json`.
-- **#3353** — gh-issue-3352: revoke other sessions on authenticated password change (merged 2026-11-07). Closes issue #3352.
-- **#3354** — code-review-ppt-web-ui-registry-page-no-auth: send auth context on registry requests (merged 2026-11-07).
-- **#3355** — code-review-ppt-web-ui-registry-page-i18n-gap: translate RegistryPage chrome (merged 2026-11-07). Closes action-list `code-review-ppt-web-ui-registry-page-i18n-gap`.
-- **#3359** — code-review-ppt-web-ui-registry-mutation-reland: surface registry destructive-action outcomes via toast (merged 2026-11-08). Closes action-list `code-review-ppt-web-ui-registry-mutation-silent-fail`.
-- **#3358** — screen-map-drift-pr-3293-reality: reflect realtor-detail i18n in screen-map (re-land on current dev) (merged 2026-11-08).
+- **Security** (#3383, #3384, #3394, #3395, #3400, #3404, #3405): DB-error leak sanitization, SSO callback upstream-error sanitization, Argon2 env-cost floor, SQL-injection audit round 8, CORS policy single-sourced, IoT WS JWT moved from URL query to subprotocol, last-admin guard role-type derivation.
+- **Frontend bugs / UX** (#3373, #3375, #3401, #3402, #3403, #3408, #3409): payment-match silent-fail surfaced, buildings error panel translated, vote time-remaining NaN guard, portfolio alert mutation errors surfaced, AI acknowledge errors surfaced, portfolio dashboard dead buttons wired/disabled, dead rls_context middleware removed.
+- **Mobile RN fixes** (#3385, #3386, #3389, #3390, #3391, #3396, #3398, #3401): meter submit endpoint, neighbors screen i18n, voting i18n keys, NFCAccessController characterization tests, NFC overnight day boundary fix, feedback storage JSON.parse guard, push-isRegistered gating.
+- **reality-web i18n sweep** (#3381, #3382, #3387, #3388): locale-aware date formatting, realtor CRUD error strings, realtor workspace agency i18n, report page i18n.
+- **Infra / refactors** (#3371, #3372, #3377, #3378, #3379, #3392, #3406, #3407): import-jobs total count fix, realtor-api JSON array coercion, price_map mode validation, password-reset timing oracle hardening, OAuth-admin DB error sanitization, voting WS cache invalidation, resolved-layout endpoint caching, SSR api-base resolver centralized.
 
-## What's next (top 5 from the ranked plan)
+## What's next (top 5 actions)
 
-1. **[high] pm-scrum-master** — Promote a non-mobile-native code-review vector from the next Phase 1.5 segment (ppt-web-core / reality-server oldest = 2026-11-04) to refill the planner buffer. Why: planner buffer is 6/72; 8 of 9 open backlog items are mobile-native-kmp (structurally unclaimable in cloud) — refill is the single highest-leverage action this run.
-2. **[high] pm-scrum-master** — Triage #3357: rebase the 3 blocked PRs OR adjust Tier-1d signal sourcing to stop emitting dead-end vectors. Why: the dispatcher cannot self-heal; this is the direct cause of the ~10-run 0-merged streak.
-3. **[high] pm-devops** — Unblock mobile-native/KMP builds in the cloud runner (issue #2652 CLOSED but structural gap unchanged; #2966 still open). Why: structural starvation — 5+ backlog items permanently unclaimable in cloud.
-4. **[medium] pm-scrum-master** — Open the diff for code-review-ppt-web-core-refresh-token-localstorage and upgrade signal confidence from medium → high (or drop). Why: it is the ONLY non-mobile-native open row today; stays blocked by Phase 3 gates at score=2+confidence=medium.
-5. **[medium] pm-qa** — Add a dispatcher-self-test.sh test case covering the quarantined-row recovery path so #3357-class stalls fail CI instead of silently queueing.
+1. **[high · pm-tech-lead]** Decide the mobile-native cloud-build policy — fix #2652, split queue, or close `pm-devops-unblock-mobile-native-cloud-builds` as won't-fix.
+2. **[medium · pm-tech-lead]** Drive reviewer assignment on the 100+-day stale PRs (#2555 invoice lifecycle, #2559 PAY by square).
+3. **[medium · pm-devops]** Land the nightly `verify-all.sh --quick` cron on `dev` so silent infra regressions surface without waiting for a PR (re-emit from 2026-08-31).
+4. **[medium · pm-scrum-master]** Address issue #3357 (dispatcher pipeline stall + Tier-1d signal dead-end) — carried from 2026-11-09 pm-qa run.
+5. **[low · pm-devops]** Close or rebase #2588 and #2590 (expo-57 dependabot superseded by the sprint's sibling PRs).
 
 ## Blockers
 
-- **#3357 dispatcher stalled pipeline** (filed 2026-11-08, labels: `follow-up`, `blocked`). Operator action required; dispatcher cannot self-heal. Owner: pm-devops / operator.
-- **mobile-native-kmp cloud-landability starvation** (carries indefinitely until pm-devops unblocks local-toolchain-in-cloud; issue #2652 CLOSED but gap persists).
+- None acute. The two carried blockers (#3357 dispatcher stall; #2966 utoipa-swagger-ui egress) are both quiet this run — the 37-PR merge burst suggests at least #2966's build-blocking effect is no longer active.
 
 ## Decisions needed
 
-- **Promotion policy for score=2 + confidence=medium security vectors** — current fast-track requires `confidence=high`, so `code-review-ppt-web-core-refresh-token-localstorage` stays in `open` unless the confidence is upgraded. Owner: pm-security.
-- **Buffer-low trigger text promotion as a hard-stop** — should the routine's buffer-low fire text (received as `buffer-low: claimable=6/72`) force Phase 1.5 to pick the oldest non-mobile-native segment regardless of churn-alignment? Owner: pm-scrum-master.
+- **Mobile-native cloud-build policy** (owner: pm-tech-lead) — see roles/pm-devops.md.
+- **Stale-PR eviction policy** (owner: pm-tech-lead) — adopt a 60-day no-review auto-close rule?
+- Carried: **Dispatcher Tier-1d signal sourcing** (owner: pm-scrum-master) — issue #3357.
 
-## Role summaries (this run)
+## Role focus this run
 
-- **pm-scrum-master** (always-on): 7 PRs merged, 12 action-list items done this run, planner buffer collapsed to 6/72 — refill is the priority.
-- **pm-qa** (rotation; last run 2026-08-25 → 76 days stale): test discipline on shipped PRs is improving (7/7 shipped with regression tests this window); carried decisions on mobile-rn lint adoption + dispatcher-self-test remain the open QA asks.
+- `pm-scrum-master` (always-on): synthesis above.
+- `pm-devops` (rotation idx 4 → 5): see `.research/management/roles/pm-devops.md`.

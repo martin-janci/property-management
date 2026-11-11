@@ -73,4 +73,4 @@ _Rebuilt from `coverage.json` (49/49 stories done across 13 epics) + current `ac
 
 _Nothing new this run — carried: 3 missing UC links (UC-33.1/33.2/33.3), 1 ppt-web route refactor without screen-map update (PR #2994)._
 
-Buffer: **17/36 open** · candidates ranked but unqueued: ~0 (coverage is all `done` — refill depends on the dispatcher's external backlog scan, not this upkeep run). Buffer below floor by 19 and below half (18) by 1 — a dispatcher backlog scan is overdue to replenish, but a `scan` on this skill is explicitly out of scope for an incremental run.
+Buffer: **45/36 open** · candidates ranked but unqueued: ~0. Buffer healthy (+9 above floor, +27 above half). 2026-11-11 upkeep run marked 3 action-list code-review items `done` (PRs #3407/#3408/#3409) and added 3 new pm-devops items; dispatcher burst of 37 merged PRs has drained the research backlog to 4 non-triage rows (all mobile-native-kmp).

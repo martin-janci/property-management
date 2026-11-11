@@ -1,27 +1,35 @@
 # pm-devops — DevOps / Infrastructure
 
-_Ran: 2026-08-31 (PM rotation, idx 4 → 5; previous run 2026-06-16, 76 days stale)_
+_Ran: 2026-11-11 (PM rotation, idx 4 → 5; previous run 2026-08-31, 72 days stale)_
 
 ## Summary
 
-CI is green on `dev` for the 10-PR code-review batch that landed 2026-08-30 (#2889-#2899). Dispatcher observations flag one structural infrastructure gap that repeats every run: **mobile-native/KMP jobs are unlandable in the cloud runner** (7 of 8 currently-open backlog items are mobile-native/KMP; issue #2652 - AGP/Gradle needs egress that the sandbox blocks). This has been the buffer-starvation cause for 5+ consecutive dispatcher runs (`GC3-buffer-bounds=FAIL (record-only)` on every commit since 2026-08-30). Otherwise dev infra is healthy: no red workflows on `main`, `research-land.yml` continues to replay routine commits from session branches to `dev` cleanly, and the pmctl worktree fleet is drained.
+CI is **green on `dev`** for the 37-PR code-review burst that landed 2026-11-10 (#3371–#3409). `backend.yml`, `frontend.yml` and `mobile-native.yml` all finished `success` on HEAD after the last merge; one `cancelled` run is just a concurrency-cancel from a follow-up push, not a failure. The chronic `utoipa-swagger-ui` egress block that halted api-server builds in September **has not re-triggered** — every backend security PR this week compiled and shipped (argon2 floor #3394, cors policy share #3400, legal.rs error sanitization #3383, sso callback sanitization #3384, big SQL-injection audit #3395). Mobile-native cloud-build starvation (issue #2652) remains structurally unresolved but the dispatcher pressure has eased: only 2 open non-triage backlog items remain, both mobile-native-kmp. Four very-old unreviewed PRs (#2555, #2559, #2588, #2590 — 103d) are the main remaining drag.
 
 ## Next actions
 
 | Priority | Action | Dependency | Definition of done |
 |---|---|---|---|
-| high | Unblock mobile-native/KMP builds in the cloud runner (issue #2652). Either allowlist AGP/Gradle egress in the runner sandbox, add a Docker-cached Gradle build layer, or route mobile-native tasks to a dedicated local runner label — the current setup keeps 7/8 backlog items structurally unclaimable in the cloud loop and forces Tier-1d dev-review generator kicks every run just to fill the buffer | pm-tech-lead | dispatcher `claimable` counts mobile-native items > 0 on at least one cloud run without operator intervention |
-| medium | Add a nightly `SKIP_NETWORK=1 ./.claude/skills/verify-all.sh --quick` smoke on `dev` HEAD so silent infra-only regressions surface without waiting for a PR — verify-all is already the auto-fix gate but has no scheduled sweep | pm-backend | new workflow file that runs on cron + fails visibly in Actions tab |
-| medium | Confirm `screen-map.yml` CI gate is green on `main` post today's 10 PRs — none of the merged PRs touched `docs/screens/**` but `App.tsx` was modified (PR #2889); routine emits `screen-map-drift-pr-2889-ppt` this run | none | `gh run list --workflow=screen-map.yml --branch=main --limit=1` shows conclusion=success |
-| low | Audit the dependabot open queue — 7 open dep-update PRs (#2673/2749/2865/2866/2867/2808 + npm-minor group #2867) sitting 3 days idle. Batch-review + auto-merge the safe minor bumps to reduce open-PR drag | pm-tech-lead | open dep PRs ≤ 3 after next sweep |
+| high | Re-evaluate pm-devops-unblock-mobile-native-cloud-builds vs the new throughput picture. Mobile-native pressure dropped to 2/last 72h — decide formally: fix #2652, OR split the dispatcher queue, OR accept the current state and close the action | pm-tech-lead | action-list item resolved with a documented decision in `decisions.md` |
+| medium | Add a scheduled (nightly cron) smoke of `SKIP_NETWORK=1 ./.claude/skills/verify-all.sh --quick` on `dev` HEAD so silent infra-only regressions surface without waiting for a PR — this was requested on 2026-08-31 and never landed | pm-backend | new workflow file `verify-dev-nightly.yml` running on cron + fails visibly in the Actions tab |
+| medium | Drive a reviewer decision on #2555 (invoice lifecycle) and #2559 (PAY by square QR) — 103d open, author-owned, zero `reviewDecision` | pm-tech-lead | both PRs resolved (merged, split, or closed-deferred) with a decision log line |
+| low | Close/rebase the two stuck expo-57 dependabot PRs #2588 and #2590 — expo SDK 57 already landed via sibling PRs this sprint; they're now superseded | none | both PRs closed or merged |
+| low | Verify utoipa-swagger-ui cloud-build fix was codified (vendored / allowlisted / cached) so a runner-base rebuild does not re-trigger the Sept 403s | none | written note under `.research/management/decisions.md` or the risk's `mitigation` field names the exact fix mechanism |
 
 ## Risks
 
 | Risk | Probability | Impact | Mitigation |
 |---|---|---|---|
-| Buffer starvation becomes chronic if mobile-native items keep accumulating and the cloud runner never picks them up. Every new mobile-native code-review finding adds an unclaimable item, pushing dispatcher back to Tier-1d generator kicks | high | medium | Fix #2652 or route mobile-native items to a `mobile-native` action-list bucket that is *not* counted toward the 36-slot cloud buffer |
-| `research-land.yml` replay is the only path routine commits reach `dev` — a workflow break would silently accumulate `.research/` commits on session branches | low | high | Add an alert if `dev` HEAD hasn't advanced with a routine commit in >36h (mirror the stale-routine alert from the routine's Phase 1) |
+| utoipa-swagger-ui egress 403 can re-trigger on runner-base rebuild if the Sept mitigation was ad-hoc. All 37 PRs merged cleanly this week, but the policy has not been shown fixed in writing | medium | high | Codify the fix (vendor/allowlist/cache) in a decision log entry; add a CI job that fails loudly if the prod swagger-ui URL is reached from the runner |
+| Mobile-native cloud-build starvation is now a throughput risk, not a security one — the dispatcher pipeline has fewer KMP items queued, so visible pain is low, but every new finding still cannot run | medium | medium | Decide: fix #2652, split the queue, or accept and close the action. Each has an owner |
+| Four PRs sitting unreviewed 100+ days (#2555/#2559/#2588/#2590) silently inflate open-PR drag on every stale-pr-guard and dependabot-related workflow run | high | low | This run's new action items force a resolution |
 
 ## Decisions needed
 
-- **Cloud runner scope decision (owner: pm-tech-lead):** commit to unblocking mobile-native/KMP in the cloud vs formally splitting the dispatcher into cloud + local queues. Current halfway state (all queues counted, only some claimable) causes the recurring `GC3-buffer-bounds=FAIL (record-only)` noise on every commit.
+- **Mobile-native cloud-build policy (owner: pm-tech-lead):** given the pressure has eased, do we still commit to fixing #2652, or do we accept the current state and close pm-devops-unblock-mobile-native-cloud-builds as "won't fix / split queue formally later"?
+- **Stale-PR eviction policy (owner: pm-tech-lead):** adopt a hard rule — any PR without reviewDecision at 60 days is auto-closed by stale-pr-guard — to prevent #2555-class drag from ever recurring?
+
+## Open questions
+
+- Was the Sept 2026 utoipa-swagger-ui unblock vendored, allowlisted or cached? The risk entry has been open since 2026-10-01; the fact that this week's 37-PR burst compiled green suggests the block is gone, but the mechanism is not documented.
+- Is `screen-map.yml` on `main` actually stale because no screen docs have changed since June 2026, or because it stopped triggering? Last run on main was 2026-06-04 — worth one spot-check.

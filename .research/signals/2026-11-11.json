@@ -1,0 +1,248 @@
+{
+  "date": "2026-11-11",
+  "run_meta": {
+    "since_iso": "2026-11-09T22:53:00Z",
+    "lag_hours": 28,
+    "head_sha_before": "fa6d747e673fe509e8725ead53bba07d2342ac00",
+    "head_sha_after": "21156d62adc214794f179a4f0ceb2af54f41290b",
+    "merged_pr_count": 37,
+    "last_pr": 3409
+  },
+  "signals": [
+    {
+      "id": "code-review-reality-web-realtor-api-error-message-raw-in-ui",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx:47 — setError(err instanceof RealtorApiError ? err.message : t('error')): server message rendered untranslated and may leak backend internals",
+        "frontend/apps/reality-web/src/app/[locale]/account/profile/page.tsx:40 — same pattern with AuthApiError",
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx:170,218 — load/save errors render RealtorApiError.message raw",
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx:198 — same pattern on listing submit",
+        "frontend/apps/reality-web/src/app/[locale]/auth/{login,register,reset-password,forgot-password}/page.tsx and account/password/page.tsx — 6 more sites setGeneralError(error.message) with no i18n fallback when message is present; a reality-web-wide refactor (useRealtorErrorMessage already exists on realtor/profile/page.tsx and should spread) would fix the whole family"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-price-alerts-raw-err-console",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx:98 — console.error('Failed to mark price alert read:', err) passes raw TanStack mutation error carrier to console.error",
+        "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx:108 — same pattern on mark-all",
+        "frontend/apps/reality-web/src/lib/safe-error.ts documents the contract: raw error objects carry config.data/request/response.config.data which serialize secret-bearing request bodies (invite tokens, CRM credentials, feed-source creds). Siblings RealtorManagement.tsx:579 / CrmConnection.tsx:411 / FeedImport.tsx:531 all route through toSafeLogMessage(error) — these two sites were missed",
+        "ComparisonUrlHandler.tsx:75,91 arguably share the pattern but use raw fetch() (no axios config carrier) so the leak surface is smaller"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/realtor/profile/page.tsx",
+      "type": "churn-hotspot",
+      "source": "git-log 2026-11-09..2026-11-11",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "3 commits touched frontend/apps/reality-web/src/app/[locale]/realtor/profile/page.tsx between 2026-11-09 and 2026-11-11 — PRs #3387 (realtor agency i18n), #3395 (audit round 8 Reality fixes), one dep ripple"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx",
+      "type": "churn-hotspot",
+      "source": "git-log 2026-11-09..2026-11-11",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "3 commits touched frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx between 2026-11-09 and 2026-11-11 — PR #3380 (analytics-i18n, open) + pairs touching rendering"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx",
+      "type": "churn-hotspot",
+      "source": "git-log 2026-11-09..2026-11-11",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "3 commits touched PortfolioDashboardPage.tsx between 2026-11-09 and 2026-11-11 — PRs #3402 (portfolio-alert-mutations-silent-fail), #3408 (portfolio-dashboard-dead-buttons)"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2555",
+      "type": "stalled-review",
+      "source": "PR #2555",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": [
+        "PR #2555 (feat(acc): wire sent/cancelled invoice lifecycle UC-ACC-05.17) open 103+ days (created 2026-07-28), last update 2026-07-30; already surfaced in PM action-list as stale",
+        "score_delta=0: pm-devops already queued this via action-list; avoid double-scoring"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2559",
+      "type": "stalled-review",
+      "source": "PR #2559",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": [
+        "PR #2559 (feat(acc): PAY by square payment QR UC-ACC-05.8) open 103+ days (created 2026-07-28), last update 2026-07-30; already surfaced in PM action-list as stale",
+        "score_delta=0: pm-devops already queued this via action-list; avoid double-scoring"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2588",
+      "type": "dep-update-noise",
+      "source": "PR #2588",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2588 dependabot expo-status-bar 56→57 — superseded by the new expo-57 dependabot cluster handled by pm-devops action item"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2590",
+      "type": "dep-update-noise",
+      "source": "PR #2590",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2590 dependabot expo-device 56→57 — superseded"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-11-11.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advancement jq check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "[.items[].id] | unique length match",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative signal double-count check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap (<=8) and decay check",
+      "observed": "no scores >8; no open items older than 14d (minimum updated_at = 2026-11-04)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans have adversarial pass note",
+      "observed": "no new plans this run — vacuously true",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans, all gates",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/private-hostnames grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md backlog.regen.md (same-minute)",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief phases-that-failed vs cursors",
+      "observed": "none failed; all cursors advanced",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan slugs convergence (prior-run plans still present or archived)",
+      "observed": "no missing slugs",
+      "expected": "no missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive-only-grows: staged(24) >= HEAD(24)",
+      "observed": "24 >= 24",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md ideas-triage.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps (<=3 total, <=1 pr/issue/comment each)",
+      "observed": "true",
+      "expected": "true",
+      "note": "auto_fix_actions=[] — no candidate this run"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + GC7 liveness",
+      "observed": "CC: 1->2 (advanced); PM: 4->5 (advanced); both in range (EPICS=13, PM<=7)",
+      "expected": "advancing"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram bot-token value scan",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}

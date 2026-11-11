@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "generated": "2026-11-09T06:45:00Z",
+  "generated": "2026-11-11T03:10:00Z",
   "items": [
     {
       "id": "pm-devops-swagger-ui-egress-blocking-security-2026-10-01",
-      "risk": "utoipa-swagger-ui egress 403 (#2966) renders api-server structurally unbuildable in the cloud runner — every backend-touching dispatcher task is CLOUD-BUILD-BLOCKED, including all 3 open cross-tenant IDOR retries (#2944/#2945/#2946). Security fixes are not landing because the toolchain can't compile, not because the fix is hard",
-      "probability": "high",
+      "risk": "utoipa-swagger-ui egress 403 (#2966) was previously blocking api-server cloud builds. This run: all 37 PRs merged cleanly (incl. backend security PRs #3394/#3395/#3400), and `backend.yml` is green on `dev` — the acute block has passed, but the egress policy itself has not been fixed, so a future base-image rebuild can re-trigger it",
+      "probability": "medium",
       "impact": "high",
-      "mitigation": "Vendor swagger-ui assets locally OR allowlist the egress target OR cache the dist in the sandbox base image — any of three. Blocks: all backend security PRs plus #2559 / #2555 accounting trio",
+      "mitigation": "Verify the current state: was swagger-ui vendored, allowlisted, or cached? If none, codify the fix so a runner rebuild does not re-break. Downgrade to medium probability on next successful month",
       "owner_role": "pm-devops",
       "trigger": "Any dispatcher run with claimable<=10 AND >=2 open blocked-on-#2966 items",
       "status": "open",
@@ -191,8 +191,8 @@
     },
     {
       "id": "pm-devops-mobile-native-cloud-starvation",
-      "risk": "Buffer starvation becomes chronic — every new mobile-native/KMP finding adds an unclaimable item to the cloud dispatcher's pool, now compounded by #2966 forcing claimable=9/72",
-      "probability": "high",
+      "risk": "Mobile-native/KMP items remain structurally unclaimable in the cloud runner (issue #2652). The dispatcher pressure has eased this week (only 2 open non-triage items, both KMP), but every new mobile-native code-review finding still gets stuck. Risk is now mostly throughput, not security",
+      "probability": "medium",
       "impact": "medium",
       "mitigation": "Fix issue #2652 (AGP/Gradle egress in cloud sandbox) + issue #2966 (swagger-ui egress) or split action-list into cloud + local buckets",
       "owner_role": "pm-devops",
@@ -293,6 +293,17 @@
       "owner_role": "pm-scrum-master",
       "trigger": null,
       "status": "open"
+    },
+    {
+      "id": "pm-devops-stale-prs-reviewer-starvation-2026-11-11",
+      "risk": "Four author-owned PRs (#2555, #2559, #2588, #2590) have been open 100+ days with zero reviewDecision. #2555/#2559 are the accounting MVP-loop feature; #2588/#2590 are expo-57 dependabot superseded by this sprint's sibling PRs. Each adds drag to `gh pr list` and to the auto-approve / stale-pr-guard workflows",
+      "probability": "high",
+      "impact": "low",
+      "mitigation": "This run adds action items pm-devops-close-stale-acc-mvp-prs-2026-11-11 and pm-devops-stale-dependabot-expo-57-2026-11-11 to force a decision",
+      "owner_role": "pm-devops",
+      "trigger": "PR age > 90 days AND reviewDecision is null",
+      "status": "open",
+      "source": "pm-analysis 2026-11-11"
     }
   ]
 }
