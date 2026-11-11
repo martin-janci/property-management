@@ -595,6 +595,8 @@
     "emptyText": "No properties are linked to your account yet."
   },
   "messages": {
+    "unreadCount_one": "{{count}} unread message",
+    "unreadCount_other": "{{count}} unread messages",
     "loadError": "Couldn't load messages",
     "emptyTitle": "No conversations",
     "emptyText": "Start a conversation with your manager or neighbours.",
@@ -652,6 +654,8 @@
     }
   },
   "forms": {
+    "availableCount_one": "{{count}} form available",
+    "availableCount_other": "{{count}} forms available",
     "loadError": "Couldn't load forms",
     "emptyTitle": "No forms",
     "emptyText": "You have no forms to complete right now."

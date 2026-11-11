@@ -555,6 +555,8 @@
     "emptyText": "Fiókjához még nincs ingatlan társítva."
   },
   "messages": {
+    "unreadCount_one": "{{count}} olvasatlan üzenet",
+    "unreadCount_other": "{{count}} olvasatlan üzenet",
     "loadError": "Az üzenetek nem tölthetők be",
     "emptyTitle": "Nincsenek beszélgetések",
     "emptyText": "Kezdjen beszélgetést a kezelővel vagy a szomszédokkal.",
@@ -612,6 +614,8 @@
     }
   },
   "forms": {
+    "availableCount_one": "{{count}} elérhető űrlap",
+    "availableCount_other": "{{count}} elérhető űrlap",
     "loadError": "Az űrlapok nem tölthetők be",
     "emptyTitle": "Nincsenek űrlapok",
     "emptyText": "Jelenleg nincs kitöltendő űrlapja."
