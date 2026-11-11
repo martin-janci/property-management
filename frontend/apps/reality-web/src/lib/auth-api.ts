@@ -64,7 +64,46 @@ async function requestJson<T>(method: string, path: string, body?: unknown): Pro
   if (response.status === 204) {
     return undefined as T;
   }
-  return (await response.json()) as T;
+  return parseJsonBody<T>(response);
+}
+
+/**
+ * Validate + return the parsed success body.
+ *
+ * `requestJson<T>` used to return `(await response.json()) as T` — an unchecked
+ * cast that trusts the wire blindly. A malformed or partial 2xx (an
+ * upstream/proxy truncation, an HTML error page served with a 200, or a
+ * `null`/primitive/array JSON body) then either threw a raw `SyntaxError` that
+ * no caller catches via `instanceof AuthApiError`, or was handed back typed as
+ * `T` so the first deref (`result.token`, `result.user`) crashed deep in a
+ * component with no hint the API boundary was the culprit.
+ *
+ * Every endpoint this module wraps returns a JSON *object*, so the boundary
+ * invariant is "the body is a non-null, non-array object". Guarding it here —
+ * the single point all helpers funnel through — mirrors `realtor-api.ts`'s
+ * `parseJsonBody`: reject the bad shape at the edge with a typed `AuthApiError`
+ * (so the auth pages' existing `instanceof AuthApiError` handling shows a clean
+ * message) instead of letting it crash downstream.
+ */
+async function parseJsonBody<T>(response: Response): Promise<T> {
+  let body: unknown;
+  try {
+    body = await response.json();
+  } catch {
+    throw new AuthApiError(
+      'Malformed response from server.',
+      response.status,
+      'MALFORMED_RESPONSE'
+    );
+  }
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    throw new AuthApiError(
+      'Malformed response from server.',
+      response.status,
+      'MALFORMED_RESPONSE'
+    );
+  }
+  return body as T;
 }
 
 /**
