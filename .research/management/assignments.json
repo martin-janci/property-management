@@ -223,15 +223,15 @@
     {
       "task_id": "code-review-ppt-web-core-meters-allmeters-false-empty",
       "branch": "auto-impl/code-review-ppt-web-core-meters-allmeter-c45cbd9f",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-11T12:22:33Z",
-      "last_updated": "2026-11-11T14:33:05Z",
-      "status_changed_at": "2026-11-11T14:33:05Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-11T14:49:21Z",
+      "status_changed_at": "2026-11-11T14:49:21Z",
+      "pr_number": 3419,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3419",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=3419 status=done specialist=react-web (reclaim) note=useAllMeters cold-load loading/error fixed; dropped buildingIds.length>0 guard; +6 locales loadError; IG3 TDD; VERIFY OK",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": null,
@@ -245,15 +245,15 @@
     {
       "task_id": "code-review-reality-server-realtor-respond-no-validation",
       "branch": "auto-impl/code-review-reality-server-realtor-respo-ae3e26df",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-11T12:22:33Z",
-      "last_updated": "2026-11-11T14:33:05Z",
-      "status_changed_at": "2026-11-11T14:33:05Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-11T14:49:21Z",
+      "status_changed_at": "2026-11-11T14:49:21Z",
+      "pr_number": 3420,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3420",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3420 status=done specialist=rust-backend (reclaim) note=shared validate_inquiry_message helper reuses MAX_INQUIRY_MESSAGE_LEN; both respond paths guarded; +3 tests; IG3 2-commit; sqlx DB tests deferred to CI",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": null,
@@ -265,5 +265,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-11T14:35:25Z"
+  "generated": "2026-11-11T14:49:21Z"
 }
