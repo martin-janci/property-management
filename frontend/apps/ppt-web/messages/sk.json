@@ -6717,6 +6717,7 @@
     "submittedAt": "Zadané",
     "readingPhoto": "Fotografia odpočtu",
     "noMeters": "Nenašli sa žiadne meradlá",
+    "loadError": "Meradlá sa nepodarilo načítať. Skúste to znova.",
     "showInactive": "Zobraziť neaktívne meradlá",
     "active": "Aktívne",
     "inactive": "Neaktívne",

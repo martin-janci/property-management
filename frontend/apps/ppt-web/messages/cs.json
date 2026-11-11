@@ -6718,6 +6718,7 @@
     "submittedAt": "Zadáno",
     "readingPhoto": "Fotografie odečtu",
     "noMeters": "Nebyla nalezena žádná měřidla",
+    "loadError": "Měřidla se nepodařilo načíst. Zkuste to znovu.",
     "showInactive": "Zobrazit neaktivní měřidla",
     "active": "Aktivní",
     "inactive": "Neaktivní",

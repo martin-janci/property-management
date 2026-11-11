@@ -6634,6 +6634,7 @@
     "submittedAt": "Wprowadzono",
     "readingPhoto": "Zdjęcie odczytu",
     "noMeters": "Nie znaleziono liczników",
+    "loadError": "Nie udało się załadować liczników. Spróbuj ponownie.",
     "showInactive": "Pokaż nieaktywne liczniki",
     "active": "Aktywny",
     "inactive": "Nieaktywny",

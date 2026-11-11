@@ -6522,6 +6522,7 @@
     "submittedAt": "Erfasst am",
     "readingPhoto": "Foto der Ablesung",
     "noMeters": "Keine Zähler gefunden",
+    "loadError": "Zähler konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
     "showInactive": "Inaktive Zähler anzeigen",
     "active": "Aktiv",
     "inactive": "Inaktiv",
