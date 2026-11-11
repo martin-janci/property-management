@@ -93,15 +93,15 @@
       "branch": "auto-impl/code-review-reality-server-url-validator-d625d669",
       "status": "review",
       "claimed_at": "2026-11-11T20:36:00Z",
-      "last_updated": "2026-11-11T20:55:05Z",
+      "last_updated": "2026-11-11T20:57:51Z",
       "status_changed_at": "2026-11-11T20:55:05Z",
       "pr_number": 3428,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3428",
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": "pr=3428 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=deduped validate_image_or_link_url (3 copies -> util::url); fmt+clippy green, 8/8 new unit tests pass; only DB-integration tests fail (no Postgres in sandbox, pre-existing, unrelated)",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve head_oid=c3df7fea370f658515c5780565b954200d7bf0b9 note=behavior-preserving dedup; 3 byte-identical copies extracted to util/url.rs, no 4th copy missed (sso.rs distinct), correct not to fold into SSRF validate_external_url, scope_drift false-positive owner-area mapping; approve posted as COMMENT",
+      "last_reviewed_oid": "c3df7fea370f658515c5780565b954200d7bf0b9",
       "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
@@ -111,5 +111,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-11T20:55:05Z"
+  "generated": "2026-11-11T20:57:51Z"
 }
