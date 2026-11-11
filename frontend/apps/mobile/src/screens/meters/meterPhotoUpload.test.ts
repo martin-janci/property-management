@@ -77,11 +77,15 @@ describe('uploadMeterPhoto', () => {
 
     // Step 2 — bytes PUT straight to the presigned URL with the signed
     // Content-Type and no auth headers.
-    expect(mockUploadAsync).toHaveBeenCalledWith('https://s3.example/put?sig=xyz', 'file:///meter.jpg', {
-      httpMethod: 'PUT',
-      uploadType: 0,
-      headers: { 'Content-Type': 'image/jpeg' },
-    });
+    expect(mockUploadAsync).toHaveBeenCalledWith(
+      'https://s3.example/put?sig=xyz',
+      'file:///meter.jpg',
+      {
+        httpMethod: 'PUT',
+        uploadType: 0,
+        headers: { 'Content-Type': 'image/jpeg' },
+      }
+    );
   });
 
   it('throws when the S3 PUT fails so the caller never keeps a bogus key', async () => {

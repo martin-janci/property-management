@@ -491,6 +491,8 @@
     "submit": "Submit Reading",
     "submitSuccess": "Meter reading submitted successfully",
     "submitFailed": "Failed to submit meter reading",
+    "photoNotUploadedTitle": "Reading saved — photo not attached",
+    "photoNotUploadedWarning": "The reading was saved, but the meter photo could not be uploaded and was not included. Please add it again when you're back online.",
     "savedOffline": "Saved Offline",
     "willSyncWhenOnline": "Your reading will be submitted when you're back online",
     "offlineMode": "You're offline. Readings will be saved locally.",

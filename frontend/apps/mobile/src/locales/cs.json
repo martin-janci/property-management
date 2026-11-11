@@ -493,6 +493,8 @@
     "submit": "Odeslat odecet",
     "submitSuccess": "Odecet merice byl uspesne odeslan",
     "submitFailed": "Nepodarilo se odeslat odecet merice",
+    "photoNotUploadedTitle": "Odecet ulozen — fotografie nebyla pripojena",
+    "photoNotUploadedWarning": "Odecet byl ulozen, ale fotografii merice se nepodarilo nahrat a nebyla zahrnuta. Prosim, pridejte ji znovu po pripojeni k internetu.",
     "savedOffline": "Ulozeno offline",
     "willSyncWhenOnline": "Vas odecet bude odeslan po pripojeni k internetu",
     "offlineMode": "Jste offline. Odecty budou ulozeny lokalne.",
