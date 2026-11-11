@@ -49,15 +49,15 @@
       "branch": "auto-impl/gh-issue-3425-467e9933",
       "status": "review",
       "claimed_at": "2026-11-11T20:36:00Z",
-      "last_updated": "2026-11-11T20:59:34Z",
+      "last_updated": "2026-11-11T21:02:15Z",
       "status_changed_at": "2026-11-11T20:59:34Z",
       "pr_number": 3429,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3429",
       "merged_at": null,
       "specialist": "react-web",
       "implementer_summary": "pr=3429 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=routed PortfolioDashboardPage load-error through i18n getErrorMessage (not raw error.message); regression test (2-commit split); verify green 11212 tests; no net-new locale key (reuses errors.catalogue.*); Closes #3425",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve head_oid=4e5c80f343cabd0b47b1112e7e3442a13020065a note=getErrorMessage routes to translated errors.catalogue.*; no-new-key sound (keys in all 6 bundles, pinned by i18n test); scope_drift benign; approve posted as COMMENT",
+      "last_reviewed_oid": "4e5c80f343cabd0b47b1112e7e3442a13020065a",
       "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
@@ -111,5 +111,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-11T20:59:34Z"
+  "generated": "2026-11-11T21:02:15Z"
 }
