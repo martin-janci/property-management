@@ -297,3 +297,35 @@ pub async fn respond_to_inquiry(
 
     Ok((axum::http::StatusCode::CREATED, Json(message)))
 }
+
+#[cfg(test)]
+mod respond_validation_tests {
+    //! Guard for POST /api/v1/realtors/inquiries/{id}/respond. The handler runs
+    //! the shared [`validate_inquiry_message`] check before the repo call, so
+    //! empty-after-trim and over-long bodies are rejected with 400 (no DB
+    //! needed — the length/emptiness rule is a pure function). This mirrors the
+    //! sibling /api/v1/inquiries/{id}/respond guard so the two cannot drift.
+    use crate::routes::inquiries::validate_inquiry_message;
+    use axum::http::StatusCode;
+
+    #[test]
+    fn empty_message_is_rejected_with_400() {
+        let err =
+            validate_inquiry_message("   ").expect_err("whitespace-only body must be rejected");
+        assert_eq!(err.0, StatusCode::BAD_REQUEST);
+    }
+
+    #[test]
+    fn over_long_message_is_rejected_with_400() {
+        // 5001 scalar values — exactly one past MAX_INQUIRY_MESSAGE_LEN (5000).
+        let body = "a".repeat(5001);
+        let err =
+            validate_inquiry_message(&body).expect_err("5001-char body must be rejected");
+        assert_eq!(err.0, StatusCode::BAD_REQUEST);
+    }
+
+    #[test]
+    fn valid_message_is_accepted() {
+        assert!(validate_inquiry_message("Hello, I'm interested in this listing.").is_ok());
+    }
+}
