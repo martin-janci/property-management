@@ -12,6 +12,8 @@ pub mod acc_platform;
 pub mod accounting_provider;
 pub mod accounting_test;
 pub mod agency_branding;
+#[cfg(test)]
+pub mod agency_branding_test;
 pub mod agency_domain;
 pub mod announcement;
 pub mod audit_log;
