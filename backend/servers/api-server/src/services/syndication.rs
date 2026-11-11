@@ -14,6 +14,75 @@ use uuid::Uuid;
 /// Syndication queue name for background jobs.
 pub const SYNDICATION_QUEUE: &str = "syndication";
 
+/// Worker identifier recorded on claimed syndication jobs.
+const SYNDICATION_WORKER_ID: &str = "api-server-syndication-drain";
+
+/// Configuration for the syndication queue drain worker.
+#[derive(Debug, Clone)]
+pub struct SyndicationDrainConfig {
+    /// When false, the worker does nothing.
+    pub enabled: bool,
+    /// How often to poll the queue.
+    pub poll_interval_secs: u64,
+    /// Max jobs processed per tick.
+    pub batch_limit: usize,
+}
+
+impl Default for SyndicationDrainConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            poll_interval_secs: 30,
+            batch_limit: 50,
+        }
+    }
+}
+
+impl SyndicationDrainConfig {
+    /// Build from `SYNDICATION_DRAIN_ENABLED` / `SYNDICATION_DRAIN_INTERVAL_SECS`.
+    pub fn from_env() -> Self {
+        let d = Self::default();
+        Self {
+            enabled: std::env::var("SYNDICATION_DRAIN_ENABLED")
+                .map(|v| v != "false" && v != "0")
+                .unwrap_or(d.enabled),
+            poll_interval_secs: std::env::var("SYNDICATION_DRAIN_INTERVAL_SECS")
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .filter(|&n| n > 0)
+                .unwrap_or(d.poll_interval_secs),
+            ..d
+        }
+    }
+}
+
+/// Spawn the background task that periodically drains the syndication queue.
+pub fn spawn_drain_worker(
+    service: SyndicationService,
+    config: SyndicationDrainConfig,
+) -> tokio::task::JoinHandle<()> {
+    tokio::spawn(async move {
+        if !config.enabled {
+            tracing::info!("Syndication drain worker disabled - not starting");
+            return;
+        }
+        tracing::info!(
+            poll_interval_secs = config.poll_interval_secs,
+            "Syndication drain worker started"
+        );
+        let mut ticker =
+            tokio::time::interval(std::time::Duration::from_secs(config.poll_interval_secs));
+        loop {
+            ticker.tick().await;
+            match service.drain_queue(config.batch_limit).await {
+                Ok(0) => {}
+                Ok(n) => tracing::info!(processed = n, "Drained syndication jobs"),
+                Err(e) => tracing::error!(error = %e, "Syndication drain tick failed"),
+            }
+        }
+    })
+}
+
 /// Portal status mapping from internal status to portal-specific status.
 pub struct PortalStatusMapping {
     /// Internal status
@@ -403,6 +472,49 @@ impl SyndicationService {
             }
             _ => Err(format!("Unknown operation: {}", payload.operation)),
         }
+    }
+
+    /// Drain up to `limit` due jobs from the syndication queue.
+    ///
+    /// Each job is claimed atomically (`claim_background_job` uses
+    /// `FOR UPDATE SKIP LOCKED`, so replicas never double-process), run through
+    /// [`Self::process_syndication_job`], then completed or failed (the DB
+    /// function re-queues it until `max_attempts` is exhausted). Returns the
+    /// number of jobs claimed.
+    pub async fn drain_queue(&self, limit: usize) -> Result<usize, String> {
+        let mut processed = 0;
+        while processed < limit {
+            let Some(job) = self
+                .background_job_repo
+                .claim_job(SYNDICATION_QUEUE, SYNDICATION_WORKER_ID, None)
+                .await
+                .map_err(|e| format!("Failed to claim syndication job: {}", e))?
+            else {
+                break;
+            };
+            processed += 1;
+
+            let outcome = match serde_json::from_value::<SyndicationJobPayload>(job.payload.clone())
+            {
+                Ok(payload) => self.process_syndication_job(&payload).await,
+                Err(e) => Err(format!("Invalid syndication job payload: {}", e)),
+            };
+
+            let finalize = match outcome {
+                Ok(external_id) => self
+                    .background_job_repo
+                    .complete_job(job.id, Some(json!({ "result": external_id })))
+                    .await,
+                Err(msg) => {
+                    tracing::warn!(job_id = %job.id, error = %msg, "Syndication job failed");
+                    self.background_job_repo.fail_job(job.id, &msg, None).await
+                }
+            };
+            if let Err(e) = finalize {
+                tracing::error!(job_id = %job.id, error = %e, "Failed to finalize syndication job");
+            }
+        }
+        Ok(processed)
     }
 
     /// Get queue statistics for syndication jobs.

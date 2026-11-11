@@ -723,6 +723,16 @@ async fn main() -> anyhow::Result<()> {
     );
     let _quiet_hours_drain_handle = quiet_hours_drain_worker.start();
 
+    // Epic 105: drain the `syndication` background-job queue. Jobs were enqueued
+    // by the listing routes but never claimed, so they stayed pending forever.
+    let _syndication_drain_handle = services::syndication::spawn_drain_worker(
+        services::SyndicationService::new(
+            db::repositories::BackgroundJobRepository::new(db_pool.clone()),
+            db::repositories::ListingRepository::new(db_pool.clone()),
+        ),
+        services::syndication::SyndicationDrainConfig::from_env(),
+    );
+
     // Story 2B.3 / PM #969 gap 1: email a notification digest to users who have
     // been inactive for >24h and have unread (pending) notifications. Drives the
     // previously-uncalled `create_digest` write path. Polls on an interval and is
