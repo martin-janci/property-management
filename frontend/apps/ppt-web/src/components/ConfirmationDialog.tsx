@@ -53,17 +53,37 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
   const previousActiveElement = useRef<Element | null>(null);
 
-  // Store the previously focused element and focus the dialog when opened
+  // Store the previously focused element and keep focus inside the dialog.
+  //
+  // Depends on `isLoading` as well as `isOpen`: while the confirm action is in
+  // flight both action buttons become disabled, which drops the previously
+  // focused button's focus to <body>. Re-running here pulls focus back onto the
+  // dialog container so it never escapes the modal (WCAG 2.1.2 / 2.4.3).
   useEffect(() => {
     if (isOpen) {
-      previousActiveElement.current = document.activeElement;
-      // Focus the cancel button by default (safer action)
-      cancelButtonRef.current?.focus();
-    } else if (previousActiveElement.current instanceof HTMLElement) {
-      // Restore focus when closed
-      previousActiveElement.current.focus();
+      // Record the opener only on the opening transition, so a mid-flight
+      // `isLoading` toggle (which re-runs this effect) doesn't overwrite it
+      // with a dialog-internal element.
+      if (previousActiveElement.current === null) {
+        previousActiveElement.current = document.activeElement;
+      }
+      if (!dialogRef.current?.contains(document.activeElement)) {
+        if (!isLoading && cancelButtonRef.current) {
+          // Focus the cancel button by default (safer action).
+          cancelButtonRef.current.focus();
+        } else {
+          // Every control is disabled — hold focus on the dialog itself.
+          dialogRef.current?.focus();
+        }
+      }
+    } else {
+      if (previousActiveElement.current instanceof HTMLElement) {
+        // Restore focus when closed
+        previousActiveElement.current.focus();
+      }
+      previousActiveElement.current = null;
     }
-  }, [isOpen]);
+  }, [isOpen, isLoading]);
 
   // Handle Escape key
   const handleKeyDown = useCallback(
@@ -77,6 +97,15 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
         const focusableElements = dialogRef.current.querySelectorAll<HTMLElement>(
           'button:not([disabled]), [tabindex]:not([tabindex="-1"])'
         );
+        // No tabbable control (e.g. every button disabled while the confirm
+        // action is in flight): keep focus on the dialog container so Tab can
+        // never release focus to the background page.
+        if (focusableElements.length === 0) {
+          event.preventDefault();
+          dialogRef.current.focus();
+          return;
+        }
+
         const firstElement = focusableElements[0];
         const lastElement = focusableElements[focusableElements.length - 1];
 
@@ -120,6 +149,9 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
         aria-modal="true"
         aria-labelledby="confirmation-dialog-title"
         aria-describedby="confirmation-dialog-description"
+        // Programmatically focusable (not in the Tab order) so focus can rest
+        // on the dialog itself when every interactive control is disabled.
+        tabIndex={-1}
       >
         <h2 id="confirmation-dialog-title" className="confirmation-dialog-title">
           {title}
