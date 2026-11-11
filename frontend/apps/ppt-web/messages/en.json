@@ -3518,6 +3518,7 @@
     "submittedAt": "Submitted At",
     "readingPhoto": "Reading Photo",
     "noMeters": "No meters found",
+    "loadError": "Could not load meters. Please try again.",
     "showInactive": "Show inactive meters",
     "active": "Active",
     "inactive": "Inactive",

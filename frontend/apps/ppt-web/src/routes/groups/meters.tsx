@@ -168,7 +168,11 @@ function mapValidationStatus(status: ValidationResult['status']): ApiReadingStat
  * backend lists meters per building, so we fan out one query per building.
  */
 export function useAllMeters() {
-  const { data: buildingsData } = useBuildings();
+  const {
+    data: buildingsData,
+    isLoading: isLoadingBuildings,
+    isError: isBuildingsError,
+  } = useBuildings();
   const buildingIds = (buildingsData?.items ?? []).map((b) => b.id);
   const results = useQueries({
     queries: buildingIds.map((id) => ({
@@ -177,19 +181,26 @@ export function useAllMeters() {
     })),
   });
   const meters = results.flatMap((r) => r.data?.meters ?? []).map(mapApiMeterToUi);
-  const isLoading = buildingIds.length > 0 && results.some((r) => r.isLoading);
-  return { meters, isLoading };
+  // Keep loading until buildings resolve. The old `buildingIds.length > 0`
+  // short-circuit reported isLoading=false while buildings were still pending
+  // (buildingIds is empty then) — a false "No meters" flash — and left a
+  // buildings-fetch error as a permanent settled empty list. Surface the error
+  // so the page can render an error state instead of a false empty one.
+  const isLoading = isLoadingBuildings || results.some((r) => r.isLoading);
+  const isError = isBuildingsError || results.some((r) => r.isError);
+  return { meters, isLoading, isError };
 }
 
 /** Route wrapper: meters list (Epic 12), live across all buildings. */
 function MetersPageRoute() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { meters, isLoading } = useAllMeters();
+  const { meters, isLoading, isError } = useAllMeters();
   return (
     <MetersPage
       meters={meters}
       isLoading={isLoading}
+      isError={isError}
       onNavigateToDetail={(meterId) => navigate(`/meters/${meterId}`)}
       onNavigateToSubmitReading={(meterId) => navigate(`/meters/${meterId}/submit`)}
       onNavigateToComparison={() => navigate('/meters/comparison')}

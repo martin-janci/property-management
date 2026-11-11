@@ -6522,6 +6522,7 @@
     "submittedAt": "Rögzítve",
     "readingPhoto": "Leolvasási fotó",
     "noMeters": "Nem található mérőóra",
+    "loadError": "A mérőórákat nem sikerült betölteni. Kérjük, próbálja újra.",
     "showInactive": "Inaktív mérőórák megjelenítése",
     "active": "Aktív",
     "inactive": "Inaktív",

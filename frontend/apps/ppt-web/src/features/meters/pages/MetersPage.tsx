@@ -15,6 +15,8 @@ interface MetersPageProps {
   buildingName?: string;
   unitDesignation?: string;
   isLoading?: boolean;
+  /** True when the meters list could not be loaded (e.g. buildings fetch failed). */
+  isError?: boolean;
   isExporting?: boolean;
   onNavigateToDetail: (meterId: string) => void;
   onNavigateToSubmitReading: (meterId: string) => void;
@@ -29,6 +31,7 @@ export function MetersPage({
   buildingName,
   unitDesignation,
   isLoading,
+  isError,
   isExporting,
   onNavigateToDetail,
   onNavigateToSubmitReading,
@@ -201,8 +204,31 @@ export function MetersPage({
         </div>
       )}
 
+      {/* Error state — distinct from the empty state so a failed load is not
+          silently shown as "no meters". */}
+      {!isLoading && isError && (
+        <div className="text-center py-12 bg-red-50 rounded-lg" role="alert">
+          <svg
+            className="mx-auto h-12 w-12 text-red-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+          <p className="mt-2 text-red-600">
+            {t('meters.loadError', { defaultValue: 'Could not load meters. Please try again.' })}
+          </p>
+        </div>
+      )}
+
       {/* Empty state */}
-      {!isLoading && filteredMeters.length === 0 && (
+      {!isLoading && !isError && filteredMeters.length === 0 && (
         <div className="text-center py-12 bg-gray-50 rounded-lg">
           <svg
             className="mx-auto h-12 w-12 text-gray-400"
