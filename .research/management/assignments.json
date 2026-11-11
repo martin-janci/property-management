@@ -5,7 +5,7 @@
       "branch": "auto-impl/code-review-reality-web-analytics-no-i18-8f668973",
       "status": "review",
       "claimed_at": "2026-11-10T08:30:57Z",
-      "last_updated": "2026-11-10T22:41:01Z",
+      "last_updated": "2026-11-11T08:38:50Z",
       "status_changed_at": "2026-11-10T09:08:44Z",
       "pr_number": 3380,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3380",
@@ -20,14 +20,14 @@
       "rebase_attempts": 1,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": "2026-11-10T22:41:01Z"
+      "merge_attempted_at": "2026-11-11T08:38:50Z"
     },
     {
       "task_id": "code-review-api-core-cors-localhost-prod-default",
       "branch": "auto-impl/code-review-api-core-cors-localhost-prod-8c5e6876",
       "status": "review",
       "claimed_at": "2026-11-10T20:38:55Z",
-      "last_updated": "2026-11-10T22:41:01Z",
+      "last_updated": "2026-11-11T08:38:50Z",
       "status_changed_at": "2026-11-10T21:20:04Z",
       "pr_number": 3410,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3410",
@@ -42,7 +42,7 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-11-11T08:38:50Z"
     },
     {
       "task_id": "code-review-ppt-web-ui-portfolio-dashboard-no-i18n",
@@ -93,37 +93,15 @@
       "branch": "auto-impl/code-review-reality-web-authapi-unwrappe-b8b8fae7",
       "status": "review",
       "claimed_at": "2026-11-10T22:41:01Z",
-      "last_updated": "2026-11-11T08:30:09Z",
+      "last_updated": "2026-11-11T08:38:50Z",
       "status_changed_at": "2026-11-11T08:30:09Z",
       "pr_number": 3411,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3411",
       "merged_at": null,
       "specialist": null,
       "implementer_summary": "[orphan-branch PR opened by dispatcher Phase 2: 2 commits (test+fix) on auth-api.ts guard]",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
-      "task_id": "code-review-reality-web-comparison-ctx-unvalidated-parse",
-      "branch": "auto-impl/code-review-reality-web-comparison-ctx-u-8c98eb27",
-      "status": "in-progress",
-      "claimed_at": "2026-11-11T08:30:09Z",
-      "last_updated": "2026-11-11T08:30:09Z",
-      "status_changed_at": "2026-11-11T08:30:09Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve head_oid=42553f266c5f64baeaed0acd1196f110e9949b74 note=success-body parse guarded via parseJsonBody (typed AuthApiError MALFORMED_RESPONSE + non-null-object check); IG3 tests pass; CI green; posted as COMMENT (bot-authored PR cannot self-approve)",
+      "last_reviewed_oid": "42553f266c5f64baeaed0acd1196f110e9949b74",
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
@@ -177,5 +155,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-10T22:41:01Z"
+  "generated": "2026-11-11T08:38:50Z"
 }
