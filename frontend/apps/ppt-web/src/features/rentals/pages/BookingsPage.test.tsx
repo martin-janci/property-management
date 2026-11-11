@@ -47,6 +47,15 @@ function setup(overrides: Partial<Parameters<typeof BookingsPage>[0]> = {}) {
 }
 
 describe('BookingsPage', () => {
+  it('shows an alert with retry instead of the empty state when loading fails', () => {
+    const onRetry = vi.fn();
+    setup({ bookings: [], total: 0, isError: true, onRetry });
+    expect(screen.getByRole('alert')).toHaveTextContent('Failed to load bookings');
+    expect(screen.queryByText('No bookings found')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
   it('pluralizes the result count', () => {
     setup();
     expect(screen.getByText('1 booking found')).toBeInTheDocument();
