@@ -283,6 +283,11 @@ pub async fn respond_to_inquiry(
     Path(id): Path<Uuid>,
     Json(data): Json<SendInquiryMessage>,
 ) -> Result<(axum::http::StatusCode, Json<InquiryMessage>), (axum::http::StatusCode, String)> {
+    // Reject empty-after-trim / over-long bodies before touching the repo,
+    // mirroring the sibling POST /api/v1/inquiries/{id}/respond guard via the
+    // shared helper so the two paths cannot drift.
+    crate::routes::inquiries::validate_inquiry_message(&data.message)?;
+
     let message = state
         .reality_portal_repo
         .respond_to_inquiry(id, principal.user_id, &data.message)
@@ -319,8 +324,7 @@ mod respond_validation_tests {
     fn over_long_message_is_rejected_with_400() {
         // 5001 scalar values — exactly one past MAX_INQUIRY_MESSAGE_LEN (5000).
         let body = "a".repeat(5001);
-        let err =
-            validate_inquiry_message(&body).expect_err("5001-char body must be rejected");
+        let err = validate_inquiry_message(&body).expect_err("5001-char body must be rejected");
         assert_eq!(err.0, StatusCode::BAD_REQUEST);
     }
 
