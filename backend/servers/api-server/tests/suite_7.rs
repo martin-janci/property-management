@@ -77,3 +77,5 @@ mod report_schedule_org_scope_jwt_tests;
 mod report_schedule_rbac_tests;
 #[path = "suites/report_schedule_sibling_scope_tests.rs"]
 mod report_schedule_sibling_scope_tests;
+#[path = "suites/syndication_queue_drain_tests.rs"]
+mod syndication_queue_drain_tests;
