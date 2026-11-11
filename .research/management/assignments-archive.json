@@ -8385,6 +8385,28 @@
       "first_open_at": "2026-11-10T02:29:11Z"
     },
     {
+      "task_id": "code-review-ppt-web-ui-categorypref-hardcoded-labels",
+      "branch": "auto-impl/code-review-ppt-web-ui-categorypref-hard-82c52218",
+      "status": "failed",
+      "claimed_at": "2026-11-11T12:22:33Z",
+      "last_updated": "2026-11-11T14:35:25Z",
+      "status_changed_at": "2026-11-11T14:35:25Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=done (reclaim respawn) note=stale-finding: CategoryPreferenceCard.tsx already fully i18n-migrated on dev (useTranslation + t()-interpolated); no net-new work; no PR",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-ui-community-feature-no-i18n",
       "branch": "auto-impl/code-review-ppt-web-ui-community-feature-363879b2",
       "status": "merged",
@@ -8559,6 +8581,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-09-27T14:30:58Z"
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-disableall-dialog-no-i18n",
+      "branch": "auto-impl/code-review-ppt-web-ui-disableall-dialog-35016474",
+      "status": "failed",
+      "claimed_at": "2026-11-11T12:22:33Z",
+      "last_updated": "2026-11-11T14:35:25Z",
+      "status_changed_at": "2026-11-11T14:35:25Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=done (reclaim respawn) note=stale-finding: i18n already implemented on origin/dev (useTranslation + all disableAll keys in en/sk/cs/de/pl/hu); no PR needed",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "code-review-ppt-web-ui-dispute-list-no-i18n",
@@ -24863,5 +24907,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-11T08:38:50Z"
+  "archived_at": "2026-11-11T14:35:32Z"
 }
