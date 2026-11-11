@@ -338,7 +338,9 @@ describe('AuthCallbackPage — SSO /auth/callback flow (Story 79.2)', () => {
     // `.message` must NEVER reach the rendered banner — it is untranslated and
     // leaks internal detail on the primary SSO auth surface
     // (code-review-ppt-web-ui-authcallback-raw-err-message).
-    exchangeSsoCodeSpy.mockRejectedValue(new Error('invalid_grant: token endpoint 500 at 10.0.3.14'));
+    exchangeSsoCodeSpy.mockRejectedValue(
+      new Error('invalid_grant: token endpoint 500 at 10.0.3.14')
+    );
 
     renderCallback(`?code=${AUTH_CODE}&state=${STATE_NONCE}`);
 

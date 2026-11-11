@@ -14,10 +14,11 @@
  */
 
 import { getAndClearReturnUrl, getAndClearSsoState } from '@ppt/shared';
+import type { TFunction } from 'i18next';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { AuthError, useAuth } from '../contexts/AuthContext';
 import './LoginPage.css';
 
 // ============================================================================
@@ -36,6 +37,56 @@ type CallbackStatus = 'pending' | 'success' | 'error';
  */
 function getRedirectUri(): string {
   return `${window.location.origin}/auth/callback`;
+}
+
+/**
+ * Map an SSO code-exchange failure to a user-facing, translated message.
+ *
+ * SECURITY / i18n: never surface a raw `Error.message` to the user. On the
+ * primary SSO auth surface that leaks internal/network detail (upstream host,
+ * stack frames, HTTP bodies) and renders untranslated English on sk/cs/de/pl/hu
+ * locales. We map known `AuthError` codes to existing translated keys and fall
+ * back to the generic `auth.ssoCallbackFailed` for everything else.
+ *
+ * Mirrors the `getErrorMessage` convention in `LoginPage.tsx`
+ * (code-review-ppt-web-ui-login-raw-message), minus the `return error.message`
+ * branch — the whole point here is to never echo it.
+ */
+function getSsoErrorMessage(error: unknown, t: TFunction): string {
+  const genericFallback = t('auth.ssoCallbackFailed', {
+    defaultValue: 'SSO login failed. Please try again.',
+  });
+
+  if (error instanceof AuthError) {
+    switch (error.code) {
+      case 'INVALID_CREDENTIALS':
+        return t('auth.invalidCredentials');
+      case 'ACCOUNT_LOCKED':
+        return t('auth.accountLocked');
+      case 'ACCOUNT_DISABLED':
+        return t('auth.accountDisabled');
+      case 'SESSION_EXPIRED':
+      case 'TOKEN_EXPIRED':
+      case 'TOKEN_INVALID':
+        return t('auth.sessionExpired');
+      case 'NETWORK_ERROR':
+        return t('auth.networkError');
+      default:
+        return genericFallback;
+    }
+  }
+
+  // A non-AuthError rejection (thrown Error, network layer, etc.). Detect the
+  // common network-failure shape so the user gets the actionable connectivity
+  // message, but still never echo the raw `message` for anything else.
+  if (
+    error instanceof Error &&
+    (error.message.includes('fetch') || error.message.includes('network'))
+  ) {
+    return t('auth.networkError');
+  }
+
+  return genericFallback;
 }
 
 // ============================================================================
@@ -137,13 +188,9 @@ export function AuthCallbackPage() {
         navigate(returnUrl || '/dashboard', { replace: true });
       } catch (err) {
         setStatus('error');
-        setErrorMessage(
-          err instanceof Error
-            ? err.message
-            : t('auth.ssoCallbackFailed', {
-                defaultValue: 'SSO login failed. Please try again.',
-              })
-        );
+        // Never render `err.message` verbatim — map it to a translated,
+        // user-safe message (code-review-ppt-web-ui-authcallback-raw-err-message).
+        setErrorMessage(getSsoErrorMessage(err, t));
       }
     };
 
