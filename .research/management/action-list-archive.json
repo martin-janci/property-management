@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-11T16:39:31Z",
+  "archived_at": "2026-11-11T18:28:54Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3973,6 +3973,31 @@
       }
     },
     {
+      "id": "code-review-api-core-tenant-filter-dead-stub",
+      "action": "api core tenant filter dead stub",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-10T10:24:54Z (tier1d api-core score=1 vector=bug) | gc1-reconcile 2026-11-11T18:24:58Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T10:24:54Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-16T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3415,
+        "merged_at": "2026-11-11T16:34:59Z",
+        "at": "2026-11-11T18:24:58Z"
+      }
+    },
+    {
       "id": "code-review-api-core-totp-rng-expect-panic",
       "action": "api-core: TotpService::encrypt_secret() panics on CSPRNG failure via .expect() instead of threading TotpError",
       "owner_role": "pm-backend",
@@ -6351,6 +6376,31 @@
         "merged_pr": 2739,
         "merged_at": "2026-08-12T12:19:26Z",
         "at": "2026-08-12T16:05:30Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-naive-en-pluralization",
+      "action": "mobile rn naive en pluralization",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-10T14:27:54Z (tier1d mobile-rn score=2 vector=bug) | gc1-reconcile 2026-11-11T18:24:58Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T14:27:54Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-13T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3417,
+        "merged_at": "2026-11-11T16:34:59Z",
+        "at": "2026-11-11T18:24:58Z"
       }
     },
     {

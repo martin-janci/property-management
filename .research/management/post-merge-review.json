@@ -1,9 +1,39 @@
 {
-  "generated": "2026-11-10T16:43:34Z",
+  "generated": "2026-11-11T18:32:00Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-11-11T18:32:00Z",
+      "prs_scanned": 15,
+      "clean": [
+        3418,
+        3417,
+        3416,
+        3415,
+        3414,
+        3412,
+        3411,
+        3410,
+        3407,
+        3408,
+        3409,
+        3406,
+        3405,
+        3404
+      ],
+      "with_issues": [
+        {
+          "pr": 3413,
+          "issue": 3425,
+          "findings": 1,
+          "specialist": "pm-frontend",
+          "note": "code-review-ppt-web-ui-portfolio-dashboard-no-i18n (route PortfolioDashboardPage copy through i18n), merged 2026-11-11. The PR is thorough — every chrome string routed through t('portfolio.dashboard.*') across all 6 locales (sk/cs/de/en/pl/hu) + a key-coverage + interpolation-placeholder test. ONE in-scope miss: the summary load-error branch still renders raw `summaryQuery.error instanceof Error ? summaryQuery.error.message : t('...loadErrorDetail')`, so the common Error path (authenticatedFetchJson throws ApiError/network Error with an English/raw .message) shows untranslated English on sk/cs/de/pl/hu AND echoes a raw backend/network detail onto a manager surface — same hygiene class PR #3414 just fixed for AuthCallbackPage. The same file already funnels toast errors through getErrorMessage(err); the load-error branch is the lone inconsistent path. Filed #3425 (better-approach/i18n, medium) proposing rendering the translated loadErrorDetail unconditionally (or routing raw detail through getErrorMessage) + a test asserting the error state never shows the raw message."
+        }
+      ],
+      "note": "Dispatcher post-merge review (Phase 2.5, DISPATCHER_OWNED_COMMIT=1 semantics). repo=martin-janci/property-management, window=14d (merged>=2026-10-28), base=dev, max_prs=15, labels=follow-up,from-merged-review. Scanned the 15 most-recently-merged in-window dev merges lacking post-merge-reviewed/no-review-needed: #3418,#3417,#3416,#3415,#3414,#3413,#3412,#3411,#3410 (2026-11-11 16:29-16:31Z) + #3407,#3408,#3409 (2026-11-10 22:39Z) + #3406,#3405,#3404 (2026-11-10 20:32Z). All 15 are tightly-scoped code-review auto-impl products (branch auto-impl/code-review-* / gh-issue-3397) and uniformly high-quality + well-tested. 14 CLEAN, 1 follow-up. CLEAN highlights: #3418 (RN meter photo now actually uploaded via presign->PUT returning storage key for SubmitReading.photo_url; warns instead of silently dropping on offline/upload-fail; mirrors faultAttachments; strong jest suite); #3417 (i18next plural keys for mobile unread/forms counts — correct _few/_many for cs/sk/pl, _one/_other for de/hu; note: adjacent headerTitle 'Forms'/'Messages' remain hardcoded EN but that is a separate pre-existing gap, out of this PR's narrow pluralization scope — not filed); #3416 (push-fanout now requeues transient failures (PushFailed/Database/RateLimitExceeded) with a bounded MAX_PUSH_DELIVERY_ATTEMPTS=3 via a backward-compatible #[serde(flatten)] QueuedPushJob envelope + a pure, unit-tested decide_disposition; previously EVERY failed job was dropped, silently losing the push); #3415 (delete dead stubbed tenant_filter middleware + tenant_logging); #3414 (AuthCallbackPage maps AuthError codes / network shape to translated messages via getSsoErrorMessage, never echoes raw err.message on the SSO surface; strong tests); #3412 (ConfirmationDialog focus-trap: holds focus on tabIndex=-1 dialog when every control is disabled mid-flight, effect re-keyed on isLoading, WCAG 2.1.2/2.4.3; a11y tests); #3411 (reality-web auth-api parseJsonBody guards malformed 2xx -> typed AuthApiError MALFORMED_RESPONSE, mirrors realtor-api); #3410 (api-server CORS: localhost dev origins only in RUST_ENV=development; prod default = HTTPS prod domains only, never localhost under allow_credentials(true); unit tests both ways); #3407 (centralize reality-web SSR api-base/site-url resolver into lib/server-api-base.ts, DRY across listings page + layout + env.js; precedence API_INTERNAL_URL > host-inference > NEXT_PUBLIC_API_URL > localhost preserved; characterization tests); #3408 (PortfolioDashboard dead buttons: wire Calculate Metrics mutation w/ success+error toasts, disable not-yet-available Export/View-All, PropertyCard non-interactive without onClick; typed CalculateMetricsRequest/PortfolioFinancialMetrics client; tests); #3409 (delete dead DEPRECATED rls_context middleware — self-documented as must-not-use; RlsConnection extractor is the correct path); #3406 (reality-server resolved-layout endpoint now in-process cached 1h, mirroring price_map's tokio::sync::RwLock BoundedCache w/ TTL reclamation + MAX 10k size cap (OOM-DoS bound); 5 cache-mechanics tests); #3405 (last-admin guard: derive admin role_type set from common::TenantRole::admin_role_types() [OrgAdmin+ via level()] instead of the hand-rolled SQL LOWER IN-list — THIS resolves prior-run follow-up #3397 on PR #3366; ALL const + as_role_type/serde-parity + coverage tests. Note: new query matches exact canonical snake_case via =ANY($3), dropping the old squashed 'superadmin'/'orgadmin' spellings — fail-safe (fewer-counted-admins => block removal, never over-permit), PR asserts all write paths persist canonical snake_case via seed::canonical_role_type); #3404 (IoT sensor WS JWT moved off ?token= query param to bearer.<jwt> Sec-WebSocket-Protocol subprotocol reusing ws_notifications::extract_token_from_subprotocols; query param kept as migration fallback; no credential in access logs/history; backend + ppt-web tests). ISSUE: #3413 -> follow-up #3425 (1 finding, pm-frontend). JSON-key-case camelCase check: reviewed Rust test diffs (#3416,#3410,#3406,#3405,#3404) use no snake_case json[...] accessors against camelCase DTOs — no overlap. Dedup: #3425 is a net-new theme (portfolio-dashboard raw error.message); not covered by prior open from-merged-review issues. No Task fan-out tool available to this subagent, so all 15 diffs reviewed inline (<=5 concurrency honoured conceptually). GitHub I/O MCP-primary (gh/git push proxy-unreliable): enumeration via list_pull_requests(state=closed, base=dev, sort=updated desc), merged detected by non-null merged_at; diffs via pull_request_read get_diff; issue + breadcrumb + labels via issue_write/add_issue_comment. All 15 PRs labeled post-merge-reviewed (none carried prior labels, so label-set writes clobbered nothing) + breadcrumb on #3413. DISPATCHER_OWNED_COMMIT single-writer: wrote post-merge-review.json + last-merged-review.txt only; no git add/commit/push, no branch checkout, did NOT touch assignments.json/action-list.json/archives — deferred commit to orchestrator Phase 6."
+    },
     {
       "run_at": "2026-11-10T16:43:34Z",
       "prs_scanned": 15,
@@ -519,13 +549,6 @@
           "note": "AML list endpoint untyped serde_json::Value -> hand-maintained TS types + recommendations always []"
         }
       ]
-    },
-    {
-      "run_at": "2026-10-18T04:34:32Z",
-      "prs_scanned": 0,
-      "clean": [],
-      "with_issues": [],
-      "note": "all 70 PRs merged into dev within window already labeled post-merge-reviewed; nothing new to review"
     }
   ]
 }

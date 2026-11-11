@@ -175,42 +175,6 @@
       }
     },
     {
-      "id": "code-review-api-core-tenant-filter-dead-stub",
-      "action": "api core tenant filter dead stub",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-10T10:24:54Z (tier1d api-core score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-10T10:24:54Z",
-      "signal_ref": {
-        "segment": "api-core",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-10-16T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-mobile-rn-naive-en-pluralization",
-      "action": "mobile rn naive en pluralization",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-10T14:27:54Z (tier1d mobile-rn score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-10T14:27:54Z",
-      "signal_ref": {
-        "segment": "mobile-rn",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-10-13T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-ppt-web-core-meters-allmeters-false-empty",
       "action": "ppt web core meters allmeters false empty",
       "owner_role": "pm-backend",
@@ -766,6 +730,236 @@
         "score": 1,
         "vector": "i18n",
         "generated": "2026-10-10T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-refresh-rotation-nonatomic-retry1",
+      "action": "api-server refresh-token rotation is non-atomic — revoke failure leaves old refresh token live alongside new one [retry 1/2 of failed code-review-api-handlers-refresh-rotation-nonatomic]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-11T18:25:59Z (retry_of=code-review-api-handlers-refresh-rotation-nonatomic reason=failed-no-pr cooldown_ok newest_failure=2026-11-04T18:25:01Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T18:25:59Z",
+      "retry_of": "code-review-api-handlers-refresh-rotation-nonatomic",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-ppt-web-ui-quorumtile-i18n",
+      "action": "ppt web ui quorumtile i18n",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d ppt-web-ui score=1 vector=i18n)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T18:26:12Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "i18n",
+        "generated": "2026-10-10T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-rfqform-i18n",
+      "action": "ppt web ui rfqform i18n",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d ppt-web-ui score=1 vector=i18n)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T18:26:12Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "i18n",
+        "generated": "2026-10-10T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-toast-copy-timer-no-cleanup",
+      "action": "ppt web ui toast copy timer no cleanup",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d ppt-web-ui score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T18:26:12Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-10T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-privacy-settings-no-i18n",
+      "action": "ppt web ui privacy settings no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d ppt-web-ui score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T18:26:12Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-09T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-sentiment-dash-no-error-state",
+      "action": "ppt web ui sentiment dash no error state",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d ppt-web-ui score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T18:26:12Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-09T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-2fa-qr-silent-fail",
+      "action": "ppt web ui 2fa qr silent fail",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d ppt-web-ui score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T18:26:12Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-09T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-articledetail-i18n-gaps",
+      "action": "ppt web ui articledetail i18n gaps",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d ppt-web-ui score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T18:26:12Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-09T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-docsearchresult-no-i18n",
+      "action": "ppt web ui docsearchresult no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d ppt-web-ui score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T18:26:12Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-09T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-oauth-grants-hardcoded-i18n",
+      "action": "ppt web ui oauth grants hardcoded i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d ppt-web-ui score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T18:26:12Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-09T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-pinned-badge-i18n",
+      "action": "ppt web ui pinned badge i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d ppt-web-ui score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T18:26:12Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-09T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-community-feed-noop-create",
+      "action": "ppt web ui community feed noop create",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d ppt-web-ui score=3 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T18:26:12Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 3,
+        "vector": "bug",
+        "generated": "2026-10-08T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-meter-reading-not-flushed",
+      "action": "mobile rn meter reading not flushed",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d mobile-rn score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T18:26:12Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-08T00:00:00Z"
       }
     }
   ],
