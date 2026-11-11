@@ -142,3 +142,46 @@ describe('AuthProvider checkSession — transient vs genuine auth failure', () =
     expect(window.localStorage.getItem(TOKEN_KEY)).toBeNull();
   });
 });
+
+describe('probeSsoSession — transient failures are not cached', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('retries /sso/session on remount after a network blip instead of serving a cached failure', async () => {
+    // Jump past any result cached by earlier tests (module-level cache).
+    vi.useFakeTimers({ toFake: ['Date'], now: Date.now() + 60_000 });
+    let calls = 0;
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = urlOf(input);
+      if (url.includes('/sso/session')) {
+        calls += 1;
+        if (calls === 1) throw new TypeError('network blip');
+        return new Response(
+          JSON.stringify({ user_id: 'u-9', email: 'sso@example.com', name: 'Sso User' }),
+          { status: 200 }
+        );
+      }
+      throw new Error(`unexpected fetch to ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const first = render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>
+    );
+    await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('no'));
+    expect(screen.getByTestId('auth').textContent).toBe('no');
+    first.unmount();
+
+    // Remount within the 2s cache window: must hit the network again.
+    render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>
+    );
+    await waitFor(() => expect(screen.getByTestId('email').textContent).toBe('sso@example.com'));
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+});
