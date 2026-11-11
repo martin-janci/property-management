@@ -8902,5 +8902,46 @@
       "generic": "Změnu se nepodařilo uložit. Zkuste to znovu.",
       "loadFailed": "Členy se nepodařilo načíst."
     }
+  },
+  "portfolio": {
+    "dashboard": {
+      "title": "Přehled portfolia",
+      "meta": "ID portfolia: {{portfolioId}} | K datu: {{asOfDate}}",
+      "exportReport": "Exportovat report",
+      "exportReportUnavailable": "Export reportu zatím není k dispozici",
+      "calculateMetrics": "Vypočítat metriky",
+      "calculating": "Probíhá výpočet…",
+      "loading": "Načítá se přehled portfolia…",
+      "loadError": "Nepodařilo se načíst přehled portfolia",
+      "loadErrorDetail": "Souhrn portfolia se nepodařilo načíst. Zkuste to znovu.",
+      "retry": "Zkusit znovu",
+      "alerts": "Upozornění",
+      "cashFlowLoading": "Načítá se vývoj cash flow…",
+      "cashFlowError": "Nepodařilo se načíst vývoj cash flow.",
+      "propertyPerformance": "Výkonnost nemovitostí",
+      "viewAllProperties": "Zobrazit všechny nemovitosti",
+      "viewAllPropertiesUnavailable": "Samostatné zobrazení nemovitostí zatím není k dispozici",
+      "propertiesLoading": "Načítají se nemovitosti…",
+      "propertiesError": "Nepodařilo se načíst výkonnost nemovitostí.",
+      "propertiesEmpty": "V tomto portfoliu zatím nejsou žádné nemovitosti.",
+      "metricsError": "Nepodařilo se načíst finanční metriky.",
+      "metricsTableTitle": "Souhrn finančních metrik",
+      "debtToEquity": "D/E: {{ratio}}x",
+      "cards": {
+        "portfolioValue": "Hodnota portfolia",
+        "totalEquity": "Celkový vlastní kapitál",
+        "ytdNoi": "NOI od začátku roku",
+        "ytdCashFlow": "Cash flow od začátku roku",
+        "ltvRatio": "Poměr LTV",
+        "ytdReturn": "Výnos od začátku roku"
+      },
+      "toast": {
+        "metricsRecalculated": "Metriky přepočítány",
+        "metricsRecalculatedDetail": "Metriky výkonnosti portfolia byly obnoveny.",
+        "calculateFailed": "Nepodařilo se vypočítat metriky",
+        "markReadFailed": "Upozornění se nepodařilo označit jako přečtené",
+        "resolveFailed": "Upozornění se nepodařilo vyřešit"
+      }
+    }
   }
 }

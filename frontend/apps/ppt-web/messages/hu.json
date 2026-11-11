@@ -7430,5 +7430,46 @@
       "generic": "A módosítást nem sikerült menteni. Próbálja újra.",
       "loadFailed": "A tagokat nem sikerült betölteni."
     }
+  },
+  "portfolio": {
+    "dashboard": {
+      "title": "Portfólió irányítópult",
+      "meta": "Portfólió-azonosító: {{portfolioId}} | Dátum: {{asOfDate}}",
+      "exportReport": "Jelentés exportálása",
+      "exportReportUnavailable": "A jelentés exportálása még nem érhető el",
+      "calculateMetrics": "Mutatók kiszámítása",
+      "calculating": "Számítás folyamatban…",
+      "loading": "Portfólió irányítópult betöltése…",
+      "loadError": "Nem sikerült betölteni a portfólió irányítópultot",
+      "loadErrorDetail": "A portfólió összegzését nem sikerült lekérni. Kérjük, próbálja újra.",
+      "retry": "Újra",
+      "alerts": "Riasztások",
+      "cashFlowLoading": "Pénzforgalmi trend betöltése…",
+      "cashFlowError": "Nem sikerült betölteni a pénzforgalmi trendet.",
+      "propertyPerformance": "Ingatlanok teljesítménye",
+      "viewAllProperties": "Összes ingatlan megtekintése",
+      "viewAllPropertiesUnavailable": "A dedikált ingatlannézet még nem érhető el",
+      "propertiesLoading": "Ingatlanok betöltése…",
+      "propertiesError": "Nem sikerült betölteni az ingatlanok teljesítményét.",
+      "propertiesEmpty": "Ebben a portfólióban még nincsenek ingatlanok.",
+      "metricsError": "Nem sikerült betölteni a pénzügyi mutatókat.",
+      "metricsTableTitle": "Pénzügyi mutatók összegzése",
+      "debtToEquity": "D/E: {{ratio}}x",
+      "cards": {
+        "portfolioValue": "Portfólió értéke",
+        "totalEquity": "Teljes saját tőke",
+        "ytdNoi": "NOI az év elejétől",
+        "ytdCashFlow": "Pénzforgalom az év elejétől",
+        "ltvRatio": "LTV-arány",
+        "ytdReturn": "Hozam az év elejétől"
+      },
+      "toast": {
+        "metricsRecalculated": "Mutatók újraszámítva",
+        "metricsRecalculatedDetail": "A portfólió teljesítménymutatói frissültek.",
+        "calculateFailed": "Nem sikerült kiszámítani a mutatókat",
+        "markReadFailed": "Nem sikerült a riasztást olvasottként megjelölni",
+        "resolveFailed": "Nem sikerült a riasztást megoldani"
+      }
+    }
   }
 }

@@ -7430,5 +7430,46 @@
       "generic": "Die Änderung konnte nicht gespeichert werden. Versuchen Sie es erneut.",
       "loadFailed": "Mitglieder konnten nicht geladen werden."
     }
+  },
+  "portfolio": {
+    "dashboard": {
+      "title": "Portfolio-Dashboard",
+      "meta": "Portfolio-ID: {{portfolioId}} | Stand: {{asOfDate}}",
+      "exportReport": "Bericht exportieren",
+      "exportReportUnavailable": "Berichtsexport ist noch nicht verfügbar",
+      "calculateMetrics": "Kennzahlen berechnen",
+      "calculating": "Wird berechnet…",
+      "loading": "Portfolio-Dashboard wird geladen…",
+      "loadError": "Portfolio-Dashboard konnte nicht geladen werden",
+      "loadErrorDetail": "Die Portfolio-Übersicht konnte nicht abgerufen werden. Bitte versuchen Sie es erneut.",
+      "retry": "Erneut versuchen",
+      "alerts": "Warnungen",
+      "cashFlowLoading": "Cashflow-Verlauf wird geladen…",
+      "cashFlowError": "Cashflow-Verlauf konnte nicht geladen werden.",
+      "propertyPerformance": "Immobilien-Performance",
+      "viewAllProperties": "Alle Immobilien anzeigen",
+      "viewAllPropertiesUnavailable": "Eine eigene Immobilienansicht ist noch nicht verfügbar",
+      "propertiesLoading": "Immobilien werden geladen…",
+      "propertiesError": "Immobilien-Performance konnte nicht geladen werden.",
+      "propertiesEmpty": "In diesem Portfolio sind noch keine Immobilien vorhanden.",
+      "metricsError": "Finanzkennzahlen konnten nicht geladen werden.",
+      "metricsTableTitle": "Zusammenfassung der Finanzkennzahlen",
+      "debtToEquity": "D/E: {{ratio}}x",
+      "cards": {
+        "portfolioValue": "Portfoliowert",
+        "totalEquity": "Gesamtes Eigenkapital",
+        "ytdNoi": "NOI seit Jahresbeginn",
+        "ytdCashFlow": "Cashflow seit Jahresbeginn",
+        "ltvRatio": "LTV-Verhältnis",
+        "ytdReturn": "Rendite seit Jahresbeginn"
+      },
+      "toast": {
+        "metricsRecalculated": "Kennzahlen neu berechnet",
+        "metricsRecalculatedDetail": "Die Portfolio-Performance-Kennzahlen wurden aktualisiert.",
+        "calculateFailed": "Kennzahlen konnten nicht berechnet werden",
+        "markReadFailed": "Warnung konnte nicht als gelesen markiert werden",
+        "resolveFailed": "Warnung konnte nicht aufgelöst werden"
+      }
+    }
   }
 }

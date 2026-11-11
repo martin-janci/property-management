@@ -8731,5 +8731,46 @@
       "generic": "The change could not be saved. Try again.",
       "loadFailed": "Members could not be loaded."
     }
+  },
+  "portfolio": {
+    "dashboard": {
+      "title": "Portfolio Dashboard",
+      "meta": "Portfolio ID: {{portfolioId}} | As of: {{asOfDate}}",
+      "exportReport": "Export Report",
+      "exportReportUnavailable": "Report export is not yet available",
+      "calculateMetrics": "Calculate Metrics",
+      "calculating": "Calculating…",
+      "loading": "Loading portfolio dashboard…",
+      "loadError": "Failed to load portfolio dashboard",
+      "loadErrorDetail": "The portfolio summary could not be retrieved. Please try again.",
+      "retry": "Retry",
+      "alerts": "Alerts",
+      "cashFlowLoading": "Loading cash-flow trend…",
+      "cashFlowError": "Failed to load cash-flow trend.",
+      "propertyPerformance": "Property Performance",
+      "viewAllProperties": "View All Properties",
+      "viewAllPropertiesUnavailable": "A dedicated properties view is not yet available",
+      "propertiesLoading": "Loading properties…",
+      "propertiesError": "Failed to load property performance.",
+      "propertiesEmpty": "No properties in this portfolio yet.",
+      "metricsError": "Failed to load financial metrics.",
+      "metricsTableTitle": "Financial Metrics Summary",
+      "debtToEquity": "D/E: {{ratio}}x",
+      "cards": {
+        "portfolioValue": "Portfolio Value",
+        "totalEquity": "Total Equity",
+        "ytdNoi": "YTD NOI",
+        "ytdCashFlow": "YTD Cash Flow",
+        "ltvRatio": "LTV Ratio",
+        "ytdReturn": "YTD return"
+      },
+      "toast": {
+        "metricsRecalculated": "Metrics recalculated",
+        "metricsRecalculatedDetail": "Portfolio performance metrics have been refreshed.",
+        "calculateFailed": "Could not calculate metrics",
+        "markReadFailed": "Could not mark alert as read",
+        "resolveFailed": "Could not resolve alert"
+      }
+    }
   }
 }
