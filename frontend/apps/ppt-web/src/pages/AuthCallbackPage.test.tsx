@@ -74,6 +74,7 @@ import type {
   RefreshTokenResponse,
   SsoCallbackRequest,
 } from '@ppt/api-client';
+import { AuthError } from '@ppt/api-client';
 import { setSsoState } from '@ppt/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
@@ -333,13 +334,23 @@ describe('AuthCallbackPage — SSO /auth/callback flow (Story 79.2)', () => {
 
   it('rolls back token storage and stays anonymous when the exchange fails', async () => {
     setSsoState(STATE_NONCE);
-    exchangeSsoCodeSpy.mockRejectedValue(new Error('invalid_grant'));
+    // A plain Error carrying a raw developer/network detail string. Its
+    // `.message` must NEVER reach the rendered banner — it is untranslated and
+    // leaks internal detail on the primary SSO auth surface
+    // (code-review-ppt-web-ui-authcallback-raw-err-message).
+    exchangeSsoCodeSpy.mockRejectedValue(
+      new Error('invalid_grant: token endpoint 500 at 10.0.3.14')
+    );
 
     renderCallback(`?code=${AUTH_CODE}&state=${STATE_NONCE}`);
 
+    // The user sees the translated generic SSO fallback, not the raw message.
     await waitFor(() => {
-      expect(screen.getByText('invalid_grant')).toBeInTheDocument();
+      expect(screen.getByText('SSO login failed. Please try again.')).toBeInTheDocument();
     });
+    // The raw error.message is never echoed verbatim.
+    expect(screen.queryByText(/invalid_grant/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/10\.0\.3\.14/)).not.toBeInTheDocument();
 
     expect(exchangeSsoCodeSpy).toHaveBeenCalledTimes(1);
     // No partial token writes survive a failed exchange (rollback in
@@ -351,5 +362,40 @@ describe('AuthCallbackPage — SSO /auth/callback flow (Story 79.2)', () => {
     // "Back to login" recovery affordance is present.
     expect(screen.getByRole('button', { name: /back to login/i })).toBeInTheDocument();
     expect(screen.queryByText('Dashboard page')).not.toBeInTheDocument();
+  });
+
+  it('maps a known AuthError code to its translated message instead of echoing err.message', async () => {
+    setSsoState(STATE_NONCE);
+    // The api-client rejects with a typed AuthError whose `.message` is the raw
+    // server string. The page must render the mapped translation for the code,
+    // never the raw message.
+    exchangeSsoCodeSpy.mockRejectedValue(
+      new AuthError('upstream idp returned HTTP 503', 'NETWORK_ERROR')
+    );
+
+    renderCallback(`?code=${AUTH_CODE}&state=${STATE_NONCE}`);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Unable to connect to the server. Please check your internet connection.')
+      ).toBeInTheDocument();
+    });
+    expect(screen.queryByText(/upstream idp/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/503/)).not.toBeInTheDocument();
+  });
+
+  it('falls back to the generic translated message for an unmapped AuthError code', async () => {
+    setSsoState(STATE_NONCE);
+    exchangeSsoCodeSpy.mockRejectedValue(
+      new AuthError('internal: nil pointer in sso_handler.rs:212', 'UNKNOWN_ERROR')
+    );
+
+    renderCallback(`?code=${AUTH_CODE}&state=${STATE_NONCE}`);
+
+    await waitFor(() => {
+      expect(screen.getByText('SSO login failed. Please try again.')).toBeInTheDocument();
+    });
+    expect(screen.queryByText(/nil pointer/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/sso_handler/)).not.toBeInTheDocument();
   });
 });
