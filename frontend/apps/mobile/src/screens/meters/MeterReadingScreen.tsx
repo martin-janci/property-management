@@ -22,6 +22,7 @@ import {
 import { PendingSyncIndicator, type SyncStatus } from '../../components/sync';
 import { useOfflineSupport } from '../../hooks';
 import { colors } from '../shared/screenStyles';
+import { uploadMeterPhoto } from './meterPhotoUpload';
 import { isValidReading, normalizeReadingInput } from './meterReadingInput';
 
 export interface MeterReadingScreenProps {
@@ -114,11 +115,34 @@ export function MeterReadingScreen({ onSuccess, onCancel }: MeterReadingScreenPr
     setIsSubmitting(true);
 
     try {
+      // Upload the captured photo to storage FIRST so the reading carries a real
+      // storage reference rather than a local `file://` URI the api-server can't
+      // resolve. The offline queue only replays a JSON body, so the image bytes
+      // can only be uploaded while online; when offline (or when the upload
+      // fails) we keep the reading but warn the user the photo wasn't included
+      // instead of silently dropping it (mirrors ReportFaultScreen, issue #2999).
+      let photoStorageKey: string | undefined;
+      let photoDropped = false;
+      if (photoUri) {
+        if (isConnected) {
+          try {
+            photoStorageKey = await uploadMeterPhoto(photoUri);
+          } catch (uploadError) {
+            console.error('Failed to upload meter photo:', uploadError);
+            photoDropped = true;
+          }
+        } else {
+          photoDropped = true;
+        }
+      }
+
       const readingData: MeterReading = {
         id: `reading-${Date.now()}-${Math.random().toString(36).substring(2)}`,
         meterType: selectedMeter,
         reading: reading.trim(),
         unit: selectedMeterConfig.unit,
+        // Local URI kept only for the on-screen pending-list thumbnail; the
+        // submitted body carries the uploaded storage key, not this URI.
         photoUri: photoUri || undefined,
         timestamp: Date.now(),
         syncStatus: isConnected ? 'syncing' : 'pending',
@@ -137,15 +161,25 @@ export function MeterReadingScreen({ onSuccess, onCancel }: MeterReadingScreenPr
           meterType: readingData.meterType,
           reading: readingData.reading,
           unit: readingData.unit,
-          photoUri: readingData.photoUri,
+          // The uploaded object's storage key, under the api-server's `photo_url`
+          // field (`SubmitReading.photo_url`). Omitted (undefined → dropped by
+          // JSON.stringify) when no photo was uploaded, so a reading without a
+          // photo, an offline reading, or a failed upload simply sends no photo.
+          photo_url: photoStorageKey,
         },
       });
 
       // Add to local pending list for display
       setPendingReadings((prev) => [readingData, ...prev]);
 
-      // Show success message
-      if (isConnected) {
+      // Show the outcome. When a photo was captured but couldn't be uploaded
+      // (offline, or the upload failed), tell the user it wasn't attached rather
+      // than implying the full reading went through unchanged.
+      if (photoDropped) {
+        Alert.alert(t('meters.photoNotUploadedTitle'), t('meters.photoNotUploadedWarning'), [
+          { text: t('common.ok'), onPress: isConnected ? onSuccess : undefined },
+        ]);
+      } else if (isConnected) {
         Alert.alert(t('common.done'), t('meters.submitSuccess'), [
           { text: t('common.ok'), onPress: onSuccess },
         ]);

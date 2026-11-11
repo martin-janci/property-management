@@ -451,6 +451,8 @@
     "submit": "Stand absenden",
     "submitSuccess": "Zahlerstand erfolgreich gesendet",
     "submitFailed": "Zahlerstand konnte nicht gesendet werden",
+    "photoNotUploadedTitle": "Stand gespeichert — Foto nicht angehangt",
+    "photoNotUploadedWarning": "Der Stand wurde gespeichert, aber das Zahlerfoto konnte nicht hochgeladen werden und wurde nicht ubernommen. Bitte fugen Sie es erneut hinzu, sobald Sie wieder online sind.",
     "savedOffline": "Offline gespeichert",
     "willSyncWhenOnline": "Ihr Stand wird gesendet wenn Sie wieder online sind",
     "offlineMode": "Sie sind offline. Stande werden lokal gespeichert.",

@@ -453,6 +453,8 @@
     "submit": "Wyslij odczyt",
     "submitSuccess": "Odczyt licznika wyslany pomyslnie",
     "submitFailed": "Nie udalo sie wyslac odczytu licznika",
+    "photoNotUploadedTitle": "Odczyt zapisany — zdjecie nie zostalo dolaczone",
+    "photoNotUploadedWarning": "Odczyt zostal zapisany, ale zdjecia licznika nie udalo sie przeslac i nie zostalo uwzglednione. Prosze dodac je ponownie, gdy bedziesz online.",
     "savedOffline": "Zapisano offline",
     "willSyncWhenOnline": "Twoj odczyt zostanie wyslany gdy bedziesz online",
     "offlineMode": "Jestes offline. Odczyty zostana zapisane lokalnie.",

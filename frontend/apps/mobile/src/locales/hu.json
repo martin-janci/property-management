@@ -451,6 +451,8 @@
     "submit": "Allas elkuldese",
     "submitSuccess": "Meroora allas sikeresen elkuldve",
     "submitFailed": "Nem sikerult elkuldeni a meroora allast",
+    "photoNotUploadedTitle": "Allas mentve — a fenykep nem lett csatolva",
+    "photoNotUploadedWarning": "Az allas mentve lett, de a meroora fenykepet nem sikerult feltolteni, ezert nem kerult bele. Kerjuk, adja hozza ujra, amikor ismet online lesz.",
     "savedOffline": "Offline mentve",
     "willSyncWhenOnline": "Az allasa elkuldesre kerul amikor ujra online lesz",
     "offlineMode": "Offline. Az allasok helyben lesznek mentve.",

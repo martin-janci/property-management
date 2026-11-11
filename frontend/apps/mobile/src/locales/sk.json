@@ -493,6 +493,8 @@
     "submit": "Odoslat odpocet",
     "submitSuccess": "Odpocet meraca bol uspesne odoslany",
     "submitFailed": "Nepodarilo sa odoslat odpocet meraca",
+    "photoNotUploadedTitle": "Odpocet ulozeny — fotografia nebola pripojena",
+    "photoNotUploadedWarning": "Odpocet bol ulozeny, ale fotografiu meraca sa nepodarilo nahrat a nebola zahrnuta. Prosim, pridajte ju znova po pripojeni na internet.",
     "savedOffline": "Ulozene offline",
     "willSyncWhenOnline": "Vas odpocet bude odoslany po pripojeni na internet",
     "offlineMode": "Ste offline. Odpocty budu ulozene lokalne.",
