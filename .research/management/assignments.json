@@ -157,18 +157,18 @@
     {
       "task_id": "code-review-ppt-web-ui-community-feed-noop-create",
       "branch": "auto-impl/code-review-ppt-web-ui-community-feed-no-0bde4861",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-11T18:28:39Z",
-      "last_updated": "2026-11-11T18:28:39Z",
-      "status_changed_at": "2026-11-11T18:28:39Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-11T18:47:49Z",
+      "status_changed_at": "2026-11-11T18:47:49Z",
+      "pr_number": 3426,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3426",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=3426 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=finding not reproducible; feed create already wired+persists+refreshes; added regression test (negative-control proven); verify green; recommend finding resolved-not-reproducible",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -177,5 +177,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-11T18:38:59Z"
+  "generated": "2026-11-11T18:47:49Z"
 }
