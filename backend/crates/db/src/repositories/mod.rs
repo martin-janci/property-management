@@ -223,7 +223,7 @@ pub use government_portal::GovernmentPortalRepository;
 pub mod reality_portal;
 
 pub use reality_portal::{
-    FavoriteAlertReadOutcome, RealityPortalRepository, SavedSearchError,
+    FavoriteAlertReadOutcome, FavoriteError, RealityPortalRepository, SavedSearchError,
     MAX_SAVED_SEARCHES_PER_USER,
 };
 

@@ -21,6 +21,21 @@ pub enum FavoriteAlertReadOutcome {
     NotFound,
 }
 
+/// Typed failure of [`RealityPortalRepository::add_favorite_capped`].
+#[derive(Debug, thiserror::Error)]
+pub enum FavoriteError {
+    /// The user already holds the maximum number of favorites.
+    /// Route -> `400 Bad Request`.
+    #[error("maximum of {max} favorites reached")]
+    LimitReached {
+        /// The per-user cap that was hit.
+        max: i64,
+    },
+    /// An underlying database error (including `RowNotFound` for a missing listing).
+    #[error(transparent)]
+    Db(#[from] SqlxError),
+}
+
 /// Typed failure of the mutating saved-search repository calls
 /// ([`RealityPortalRepository::create_saved_search`],
 /// [`RealityPortalRepository::update_saved_search`]).
@@ -434,6 +449,25 @@ impl RealityPortalRepository {
         .bind(&notes)
         .fetch_one(&self.pool)
         .await
+    }
+
+    /// Add a listing to favorites, enforcing a per-user cap of `max`.
+    pub async fn add_favorite_capped(
+        &self,
+        user_id: Uuid,
+        listing_id: Uuid,
+        notes: Option<String>,
+        max: i64,
+    ) -> Result<PortalFavorite, FavoriteError> {
+        let (existing,): (i64,) =
+            sqlx::query_as("SELECT COUNT(*) FROM portal_favorites WHERE user_id = $1")
+                .bind(user_id)
+                .fetch_one(&self.pool)
+                .await?;
+        if existing >= max {
+            return Err(FavoriteError::LimitReached { max });
+        }
+        Ok(self.add_favorite(user_id, listing_id, notes).await?)
     }
 
     /// Get favorites with listing details and price change info.
