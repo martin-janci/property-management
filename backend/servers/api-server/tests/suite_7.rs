@@ -25,8 +25,6 @@ mod platform_admin_authz_tests;
 mod platform_settings_patch_tests;
 #[path = "suites/portal_webhook_signature_tests.rs"]
 mod portal_webhook_signature_tests;
-#[path = "suites/syndication_queue_drain_tests.rs"]
-mod syndication_queue_drain_tests;
 #[path = "suites/predictive_maintenance_happy_path_tests.rs"]
 mod predictive_maintenance_happy_path_tests;
 #[path = "suites/predictive_maintenance_photos_idor_tests.rs"]
@@ -79,3 +77,5 @@ mod report_schedule_org_scope_jwt_tests;
 mod report_schedule_rbac_tests;
 #[path = "suites/report_schedule_sibling_scope_tests.rs"]
 mod report_schedule_sibling_scope_tests;
+#[path = "suites/syndication_queue_drain_tests.rs"]
+mod syndication_queue_drain_tests;

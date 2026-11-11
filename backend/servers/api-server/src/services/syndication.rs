@@ -501,10 +501,11 @@ impl SyndicationService {
             };
 
             let finalize = match outcome {
-                Ok(external_id) => self
-                    .background_job_repo
-                    .complete_job(job.id, Some(json!({ "result": external_id })))
-                    .await,
+                Ok(external_id) => {
+                    self.background_job_repo
+                        .complete_job(job.id, Some(json!({ "result": external_id })))
+                        .await
+                }
                 Err(msg) => {
                     tracing::warn!(job_id = %job.id, error = %msg, "Syndication job failed");
                     self.background_job_repo.fail_job(job.id, &msg, None).await
