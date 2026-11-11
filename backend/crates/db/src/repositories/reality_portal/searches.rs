@@ -463,7 +463,7 @@ impl RealityPortalRepository {
         // lock makes the COUNT and the INSERT atomic with respect to other
         // capped adds (released automatically on commit/rollback).
         let mut tx = self.pool.begin().await?;
-        sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended('portal_favorites:' || $1, 0))")
+        sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended('portal_favorites:' || $1::text, 0))")
             .bind(user_id.to_string())
             .execute(&mut *tx)
             .await?;
