@@ -167,7 +167,7 @@ function mapValidationStatus(status: ValidationResult['status']): ApiReadingStat
  * Fetch meters across every building the user can see and flatten them. The
  * backend lists meters per building, so we fan out one query per building.
  */
-function useAllMeters() {
+export function useAllMeters() {
   const { data: buildingsData } = useBuildings();
   const buildingIds = (buildingsData?.items ?? []).map((b) => b.id);
   const results = useQueries({
