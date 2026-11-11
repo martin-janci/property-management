@@ -2165,6 +2165,112 @@ mod tests {
     }
 
     // ------------------------------------------------------------------
+    // Transient-failure requeue policy
+    //
+    // Regression (code-review finding): the fanout worker dropped EVERY failed
+    // queued job, so a transient/retryable failure (provider 5xx, network
+    // error, OAuth token-refresh blip, DB hiccup) silently lost the push
+    // instead of retrying it. These tests pin the retry/drop decision.
+    // ------------------------------------------------------------------
+
+    /// A fresh job (`attempts == 0`) that fails *transiently* must be requeued,
+    /// not dropped. This is the core regression.
+    #[test]
+    fn transient_failure_requeues_fresh_job() {
+        let transient: TransportResult =
+            Err(NotificationError::PushFailed("gateway 503".to_string()));
+        assert_eq!(decide_disposition(&transient, 0), JobDisposition::Retry);
+
+        // A DB hiccup while fetching tokens is also transient.
+        let db: TransportResult = Err(NotificationError::Database("pool timeout".to_string()));
+        assert_eq!(decide_disposition(&db, 0), JobDisposition::Retry);
+
+        assert!(is_transient_push_error(&NotificationError::PushFailed(
+            "x".to_string()
+        )));
+        assert!(is_transient_push_error(&NotificationError::Database(
+            "x".to_string()
+        )));
+    }
+
+    /// Retries are bounded: once a job has used up its attempts, a further
+    /// transient failure drops it rather than hot-looping forever.
+    #[test]
+    fn transient_failure_drops_after_max_attempts() {
+        let transient: TransportResult =
+            Err(NotificationError::PushFailed("gateway 503".to_string()));
+        // `attempts == MAX - 1` means the attempt that just failed is the MAX-th.
+        assert_eq!(
+            decide_disposition(&transient, MAX_PUSH_DELIVERY_ATTEMPTS - 1),
+            JobDisposition::Drop
+        );
+        assert_eq!(
+            decide_disposition(&transient, MAX_PUSH_DELIVERY_ATTEMPTS + 5),
+            JobDisposition::Drop
+        );
+    }
+
+    /// A permanent/structural error is dropped immediately — never requeued.
+    #[test]
+    fn permanent_failure_is_dropped_not_requeued() {
+        let permanent: TransportResult = Err(NotificationError::RecipientResolution(
+            "user not found".to_string(),
+        ));
+        assert_eq!(decide_disposition(&permanent, 0), JobDisposition::Drop);
+        assert!(!is_transient_push_error(
+            &NotificationError::RecipientResolution("x".to_string())
+        ));
+    }
+
+    /// A successful delivery and a benign "not configured / no device" skip are
+    /// both terminal — the job is done, not requeued.
+    #[test]
+    fn success_and_benign_skip_are_done() {
+        let ok: TransportResult = Ok(());
+        assert_eq!(decide_disposition(&ok, 0), JobDisposition::Done);
+
+        let skip: TransportResult = Err(NotificationError::PushNotConfigured);
+        assert_eq!(decide_disposition(&skip, 2), JobDisposition::Done);
+    }
+
+    /// The queue envelope is backward-compatible: an old bare-`Notification`
+    /// payload deserializes as a `QueuedPushJob` with `attempts == 0`, and a
+    /// requeued job round-trips its incremented attempt counter while still
+    /// parsing as a plain `Notification` for any old-shape consumer.
+    #[test]
+    fn queued_job_envelope_is_backward_compatible() {
+        let user_id = Uuid::new_v4();
+        let notification = Notification::new(
+            user_id,
+            common::notifications::NotificationCategory::Announcements,
+            "Water outage",
+            "Water will be shut off 09:00-12:00.",
+        );
+
+        // Old producer shape: a bare Notification with no `attempts` field.
+        let bare = serde_json::to_string(&notification).expect("serialize notification");
+        let job: QueuedPushJob = serde_json::from_str(&bare).expect("parse bare notification");
+        assert_eq!(job.attempts, 0);
+        assert_eq!(job.notification.id, notification.id);
+        assert_eq!(job.notification.user_id, user_id);
+
+        // Requeued shape: incremented attempts carried through a round-trip.
+        let mut retried = job;
+        retried.attempts += 1;
+        let payload = serde_json::to_string(&retried).expect("serialize requeued job");
+        let decoded: QueuedPushJob =
+            serde_json::from_str(&payload).expect("parse requeued job");
+        assert_eq!(decoded.attempts, 1);
+        assert_eq!(decoded.notification.id, notification.id);
+
+        // The flattened envelope still parses as a plain Notification, so a
+        // consumer that only knows the old shape is unaffected.
+        let as_notification: Notification =
+            serde_json::from_str(&payload).expect("parse requeued job as notification");
+        assert_eq!(as_notification.id, notification.id);
+    }
+
+    // ------------------------------------------------------------------
     // APNs config and JWT minting
     // ------------------------------------------------------------------
 
