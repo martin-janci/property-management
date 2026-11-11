@@ -8005,6 +8005,7 @@
       "applyFilters": "Použít filtry",
       "clearFilters": "Zrušit filtry",
       "noBookings": "Nebyly nalezeny žádné rezervace",
+      "loadFailed": "Rezervace se nepodařilo načíst",
       "createFirstBooking": "Vytvořte první rezervaci",
       "page": "Strana {{current}} z {{total}}",
       "showing_one": "Nalezena {{count}} rezervace",

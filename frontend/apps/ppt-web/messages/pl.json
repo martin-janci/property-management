@@ -6960,6 +6960,7 @@
       "applyFilters": "Zastosuj filtry",
       "clearFilters": "Wyczyść filtry",
       "noBookings": "Nie znaleziono rezerwacji",
+      "loadFailed": "Nie udało się załadować rezerwacji",
       "createFirstBooking": "Utwórz pierwszą rezerwację",
       "page": "Strona {{current}} z {{total}}",
       "cancelBooking": "Anuluj rezerwację",

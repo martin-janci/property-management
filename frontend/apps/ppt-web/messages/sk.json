@@ -8004,6 +8004,7 @@
       "applyFilters": "Použiť filtre",
       "clearFilters": "Zrušiť filtre",
       "noBookings": "Nenašli sa žiadne rezervácie",
+      "loadFailed": "Rezervácie sa nepodarilo načítať",
       "createFirstBooking": "Vytvorte prvú rezerváciu",
       "page": "Strana {{current}} z {{total}}",
       "showing_one": "Nájdená {{count}} rezervácia",

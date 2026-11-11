@@ -29,6 +29,9 @@ interface BookingsPageProps {
   buildings: Building[];
   units: RentalUnitOption[];
   isLoading?: boolean;
+  /** The bookings query failed; show an error (not the empty state). */
+  isError?: boolean;
+  onRetry?: () => void;
   onFilterChange: (params: BookingListParams) => void;
   onViewBooking: (id: string) => void;
   onEditBooking: (id: string) => void;
@@ -58,6 +61,8 @@ export function BookingsPage({
   buildings,
   units,
   isLoading,
+  isError,
+  onRetry,
   onFilterChange,
   onViewBooking,
   onEditBooking,
@@ -295,6 +300,19 @@ export function BookingsPage({
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+          </div>
+        ) : isError ? (
+          <div className="bg-white rounded-lg shadow p-8 text-center" role="alert">
+            <p className="text-gray-900 font-medium">{t('rentals.bookings.loadFailed')}</p>
+            {onRetry && (
+              <button
+                type="button"
+                onClick={onRetry}
+                className="mt-4 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+              >
+                {t('common.retry')}
+              </button>
+            )}
           </div>
         ) : bookings.length === 0 ? (
           <div className="bg-white rounded-lg shadow p-8 text-center">
