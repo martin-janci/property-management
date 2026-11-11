@@ -4,6 +4,7 @@
 //! lean — anything reusable across servers belongs in `api-core` or `common`.
 
 pub mod errors;
+pub mod url;
 
 /// Maximum row `offset` accepted by any list endpoint.
 ///
