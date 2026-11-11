@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-11T08:30:30Z",
+  "archived_at": "2026-11-11T10:30:58Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -10959,6 +10959,31 @@
         "merged_pr": 2993,
         "merged_at": "2026-09-27T14:30:58Z",
         "at": "2026-09-27T16:25:33Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-comparison-ctx-unvalidated-parse",
+      "action": "reality web comparison ctx unvalidated parse",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-10T10:24:54Z (tier1d reality-web score=1 vector=bug) | gc1-reconcile 2026-11-11T10:27:20Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T10:24:54Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-16T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-11T10:27:20Z"
       }
     },
     {
