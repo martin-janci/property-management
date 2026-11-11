@@ -451,7 +451,7 @@ impl RealityPortalRepository {
         .await
     }
 
-    /// Add a listing to favorites, enforcing a per-user cap of `max`.
+    /// Add a listing to favorites, enforcing a per-user cap of `max` atomically.
     pub async fn add_favorite_capped(
         &self,
         user_id: Uuid,
@@ -459,15 +459,41 @@ impl RealityPortalRepository {
         notes: Option<String>,
         max: i64,
     ) -> Result<PortalFavorite, FavoriteError> {
+        // Serialise concurrent adds for this user: a transaction-scoped advisory
+        // lock makes the COUNT and the INSERT atomic with respect to other
+        // capped adds (released automatically on commit/rollback).
+        let mut tx = self.pool.begin().await?;
+        sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended('portal_favorites:' || $1, 0))")
+            .bind(user_id.to_string())
+            .execute(&mut *tx)
+            .await?;
+
         let (existing,): (i64,) =
             sqlx::query_as("SELECT COUNT(*) FROM portal_favorites WHERE user_id = $1")
                 .bind(user_id)
-                .fetch_one(&self.pool)
+                .fetch_one(&mut *tx)
                 .await?;
         if existing >= max {
             return Err(FavoriteError::LimitReached { max });
         }
-        Ok(self.add_favorite(user_id, listing_id, notes).await?)
+
+        let favorite = sqlx::query_as::<_, PortalFavorite>(
+            r#"
+            INSERT INTO portal_favorites (
+                user_id, listing_id, notes, original_price, last_seen_listing_status
+            )
+            SELECT $1, $2, $3, l.price, l.status
+            FROM listings l WHERE l.id = $2
+            RETURNING *
+            "#,
+        )
+        .bind(user_id)
+        .bind(listing_id)
+        .bind(&notes)
+        .fetch_one(&mut *tx)
+        .await?;
+        tx.commit().await?;
+        Ok(favorite)
     }
 
     /// Get favorites with listing details and price change info.
