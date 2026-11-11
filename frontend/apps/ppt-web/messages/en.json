@@ -4280,6 +4280,7 @@
       "applyFilters": "Apply Filters",
       "clearFilters": "Clear Filters",
       "noBookings": "No bookings found",
+      "loadFailed": "Failed to load bookings",
       "createFirstBooking": "Create your first booking",
       "page": "Page {{current}} of {{total}}",
       "cancelBooking": "Cancel booking",

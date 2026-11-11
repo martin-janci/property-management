@@ -712,7 +712,7 @@ function BookingsPageRoute() {
     navigate(`/rentals/bookings/${created.id}`);
   };
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['rentals', 'bookings', auth?.xTenantId, filters],
     queryFn: () =>
       listRentalBookings(
@@ -740,6 +740,8 @@ function BookingsPageRoute() {
       buildings={properties.data?.buildings ?? []}
       units={properties.data?.units ?? []}
       isLoading={isLoading}
+      isError={isError}
+      onRetry={() => refetch()}
       onFilterChange={setFilters}
       onViewBooking={(id) => navigate(`/rentals/bookings/${id}`)}
       onEditBooking={(id) => navigate(`/rentals/bookings/${id}?edit=1`)}

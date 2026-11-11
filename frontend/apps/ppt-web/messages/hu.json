@@ -6840,6 +6840,7 @@
       "applyFilters": "Szűrők alkalmazása",
       "clearFilters": "Szűrők törlése",
       "noBookings": "Nincs találat",
+      "loadFailed": "A foglalásokat nem sikerült betölteni",
       "createFirstBooking": "Hozza létre az első foglalást",
       "page": "{{current}}. oldal / {{total}}",
       "cancelBooking": "Foglalás lemondása",

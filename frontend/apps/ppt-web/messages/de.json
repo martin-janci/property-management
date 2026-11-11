@@ -6840,6 +6840,7 @@
       "applyFilters": "Filter anwenden",
       "clearFilters": "Filter zurücksetzen",
       "noBookings": "Keine Buchungen gefunden",
+      "loadFailed": "Buchungen konnten nicht geladen werden",
       "createFirstBooking": "Erste Buchung anlegen",
       "page": "Seite {{current}} von {{total}}",
       "cancelBooking": "Buchung stornieren",
