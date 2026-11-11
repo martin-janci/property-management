@@ -45,27 +45,43 @@ use api_server::{attach_admin_extensions, build_admin_extensions, route_table};
 // init, so it lives next to `main` rather than in the shared library crate.
 mod preflight;
 
-/// Default CORS allowed origins for api-server.
-/// Includes development origins and production domains.
-const DEFAULT_CORS_ORIGINS: &[&str] = &[
-    "http://localhost:3000",             // ppt-web dev
-    "http://localhost:3001",             // reality-web dev
-    "http://localhost:8080",             // api-server dev (swagger-ui)
-    "http://localhost:8081",             // mobile dev / reality-server
+/// Production CORS allowed origins — always trusted.
+///
+/// HTTPS production domains only. These are safe to trust by default on a
+/// production edge even when `CORS_ALLOWED_ORIGINS` is unset.
+const PROD_CORS_ORIGINS: &[&str] = &[
     "https://ppt.three-two-bit.com",     // production
     "https://reality.three-two-bit.com", // reality production
+];
+
+/// Development-only CORS allowed origins — plaintext `http://localhost:*` dev
+/// servers.
+///
+/// These are added to the default allow-list ONLY when `RUST_ENV=development`
+/// (the same gate `DATABASE_URL` / `JWT_SECRET` use for their dev fallbacks).
+/// Trusting plaintext localhost origins together with `allow_credentials(true)`
+/// on a production edge is a latent misconfiguration, so a production deploy
+/// that forgets to set `CORS_ALLOWED_ORIGINS` must never silently trust them
+/// (security finding: api-core CORS localhost-in-prod default).
+const DEV_CORS_ORIGINS: &[&str] = &[
+    "http://localhost:3000", // ppt-web dev
+    "http://localhost:3001", // reality-web dev
+    "http://localhost:8080", // api-server dev (swagger-ui)
+    "http://localhost:8081", // mobile dev / reality-server
 ];
 
 /// Parse CORS allowed origins from environment variable.
 ///
 /// Reads `CORS_ALLOWED_ORIGINS` environment variable as a comma-separated list of origins.
-/// Falls back to default origins if not set.
+/// Falls back to the environment-appropriate default origins
+/// ([`default_cors_origins`]) if not set or if no configured entry is valid.
 ///
 /// # Example
 /// ```bash
 /// CORS_ALLOWED_ORIGINS=https://example.com,https://api.example.com
 /// ```
 fn get_cors_allowed_origins() -> Vec<HeaderValue> {
+    let is_development = std::env::var("RUST_ENV").unwrap_or_default() == "development";
     match std::env::var("CORS_ALLOWED_ORIGINS") {
         Ok(origins_str) if !origins_str.is_empty() => {
             let origins: Vec<HeaderValue> = origins_str
@@ -84,23 +100,48 @@ fn get_cors_allowed_origins() -> Vec<HeaderValue> {
                 tracing::warn!(
                     "CORS_ALLOWED_ORIGINS is set but no valid origins found, using defaults"
                 );
-                parse_default_origins()
+                default_cors_origins(is_development)
             } else {
                 tracing::info!("Using {} configured CORS origins", origins.len());
                 origins
             }
         }
         _ => {
-            tracing::info!("CORS_ALLOWED_ORIGINS not set, using default origins");
-            parse_default_origins()
+            if is_development {
+                tracing::info!(
+                    "CORS_ALLOWED_ORIGINS not set, using development default origins (incl. localhost)"
+                );
+            } else {
+                // Loud on purpose: on a production edge the absence of an
+                // explicit allow-list is an operational mistake. We fall back
+                // to the production domains only (never localhost), but the
+                // operator should set CORS_ALLOWED_ORIGINS deliberately.
+                tracing::warn!(
+                    "CORS_ALLOWED_ORIGINS not set in a non-development environment — \
+                     falling back to production default origins only (no localhost). \
+                     Set CORS_ALLOWED_ORIGINS explicitly to control the allow-list."
+                );
+            }
+            default_cors_origins(is_development)
         }
     }
 }
 
-/// Parse the default origins into HeaderValue vector.
-fn parse_default_origins() -> Vec<HeaderValue> {
-    DEFAULT_CORS_ORIGINS
+/// Resolve the environment-appropriate default CORS origins.
+///
+/// [`PROD_CORS_ORIGINS`] are always included. The plaintext localhost dev
+/// origins ([`DEV_CORS_ORIGINS`]) are included ONLY in development
+/// (`is_development == true`), so they are never trusted by default on a
+/// production edge.
+fn default_cors_origins(is_development: bool) -> Vec<HeaderValue> {
+    let dev_origins: &[&str] = if is_development {
+        DEV_CORS_ORIGINS
+    } else {
+        &[]
+    };
+    PROD_CORS_ORIGINS
         .iter()
+        .chain(dev_origins.iter())
         .filter_map(|origin| origin.parse::<HeaderValue>().ok())
         .collect()
 }
@@ -736,4 +777,59 @@ async fn metrics_endpoint() -> impl axum::response::IntoResponse {
         )],
         metrics,
     )
+}
+
+#[cfg(test)]
+mod cors_default_origins_tests {
+    use super::{default_cors_origins, HeaderValue, DEV_CORS_ORIGINS, PROD_CORS_ORIGINS};
+
+    fn as_strings(origins: &[HeaderValue]) -> Vec<String> {
+        origins
+            .iter()
+            .map(|v| v.to_str().unwrap().to_string())
+            .collect()
+    }
+
+    /// The whole point of this fix: in a non-development (production)
+    /// configuration the default CORS allow-list must NOT contain any plaintext
+    /// `http://localhost:*` origin. Before the fix, `parse_default_origins()`
+    /// unconditionally trusted the four localhost dev origins — combined with
+    /// `allow_credentials(true)` this silently trusted dev origins on a prod
+    /// edge whenever `CORS_ALLOWED_ORIGINS` was unset.
+    #[test]
+    fn production_default_origins_exclude_localhost() {
+        let origins = as_strings(&default_cors_origins(false));
+        assert!(
+            !origins.iter().any(|o| o.contains("localhost")),
+            "production default CORS origins must not include any localhost \
+             origin, got: {origins:?}"
+        );
+        // Production domains are still trusted by default.
+        for prod in PROD_CORS_ORIGINS {
+            assert!(
+                origins.iter().any(|o| o == prod),
+                "production default CORS origins must include {prod}, got: {origins:?}"
+            );
+        }
+    }
+
+    /// In development the localhost dev origins are added back so local
+    /// cross-origin development keeps working without setting
+    /// `CORS_ALLOWED_ORIGINS`.
+    #[test]
+    fn development_default_origins_include_localhost() {
+        let origins = as_strings(&default_cors_origins(true));
+        for dev in DEV_CORS_ORIGINS {
+            assert!(
+                origins.iter().any(|o| o == dev),
+                "development default CORS origins must include {dev}, got: {origins:?}"
+            );
+        }
+        for prod in PROD_CORS_ORIGINS {
+            assert!(
+                origins.iter().any(|o| o == prod),
+                "development default CORS origins must still include {prod}, got: {origins:?}"
+            );
+        }
+    }
 }
