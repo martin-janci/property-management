@@ -103,6 +103,52 @@ describe('FeedPage', () => {
     );
   });
 
+  it('reflects the newly created post in the feed after publishing', async () => {
+    // Guards the end-to-end create path: submit -> POST -> cache invalidation
+    // -> feed refetch -> the new post is rendered. A stateful mock serves the
+    // created post only once it has been POSTed, so the post can appear in the
+    // feed only if the create actually persists AND the feed truly refreshes.
+    // (Regression guard for the "community feed create is a no-op" finding.)
+    const user = userEvent.setup();
+    const posts = [rawPost()];
+    mockApi([
+      unitsRoute,
+      {
+        method: 'GET',
+        path: groupsPath,
+        reply: { body: [rawGroupWithMembership({ id: 'g-1' }, { is_member: true })] },
+      },
+      {
+        method: 'GET',
+        path: '/api/v1/community/groups/g-1/posts',
+        reply: () => ({ body: posts }),
+      },
+      {
+        method: 'POST',
+        path: '/api/v1/community/groups/g-1/posts',
+        reply: () => {
+          const created = rawPost({
+            id: 'p-2',
+            content: 'Hello neighbours',
+            created_at: '2026-11-05T10:00:00Z',
+          });
+          posts.unshift(created);
+          return { status: 201, body: created };
+        },
+      },
+    ]);
+
+    renderPage(<FeedPage />, '/community', '/community');
+    await screen.findByText('Tomatoes are ripe!');
+    // The created post is not in the initial feed response.
+    expect(screen.queryByText('Hello neighbours')).not.toBeInTheDocument();
+
+    await user.type(screen.getByLabelText("What's on your mind?"), 'Hello neighbours');
+    await user.click(screen.getByRole('button', { name: 'Post' }));
+
+    await waitFor(() => expect(screen.getByText('Hello neighbours')).toBeInTheDocument());
+  });
+
   it('invites the user to join a group when they belong to none', async () => {
     mockApi([
       unitsRoute,
