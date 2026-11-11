@@ -1609,6 +1609,90 @@ const BLPOP_TIMEOUT_SECS: f64 = 2.0;
 /// can't make a single tick run unbounded.
 const MAX_JOBS_PER_TICK: usize = 256;
 
+/// Maximum number of delivery attempts for a single queued push job.
+///
+/// A *transient* (retryable) delivery failure requeues the job at the tail of
+/// [`PUSH_FANOUT_QUEUE_KEY`] with an incremented attempt counter; once a job has
+/// been attempted this many times it is dropped rather than requeued, so a
+/// permanently-failing job cannot hot-loop forever. Set to 3 — the original
+/// attempt plus two retries.
+const MAX_PUSH_DELIVERY_ATTEMPTS: u32 = 3;
+
+/// A push job as it travels on [`PUSH_FANOUT_QUEUE_KEY`].
+///
+/// Historically the queue payload was a bare JSON-serialized [`Notification`].
+/// This envelope `#[serde(flatten)]`s the notification fields back to that exact
+/// shape and adds an optional `attempts` counter, so:
+/// - an old bare-`Notification` payload still deserializes (`attempts` defaults
+///   to 0), and a requeued job still parses as a plain `Notification` for any
+///   old-shape consumer, and
+/// - a requeued job carries how many times it has already been attempted,
+///   letting the worker bound retries via [`MAX_PUSH_DELIVERY_ATTEMPTS`].
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct QueuedPushJob {
+    #[serde(flatten)]
+    notification: Notification,
+    /// How many delivery attempts this job has already had (0 for a fresh job).
+    #[serde(default)]
+    attempts: u32,
+}
+
+/// What to do with a job after one delivery attempt.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum JobDisposition {
+    /// Delivered, or a benign skip (no configured provider / no deliverable
+    /// device) — the job is complete and must not be requeued.
+    Done,
+    /// Permanent failure, or transient failure with retries exhausted — drop
+    /// the job (the in-app channel remains the mandatory record).
+    Drop,
+    /// Transient (retryable) failure with retries remaining — requeue the job
+    /// with an incremented attempt counter.
+    Retry,
+}
+
+/// Whether a delivery error is transient (worth a bounded retry) rather than a
+/// permanent/structural failure.
+///
+/// Network errors, provider 5xx responses, OAuth token-refresh failures and DB
+/// hiccups on the fanout path all surface as [`NotificationError::PushFailed`]
+/// or [`NotificationError::Database`]; these are retryable, as is a transient
+/// [`NotificationError::RateLimitExceeded`]. [`NotificationError::PushNotConfigured`]
+/// is a benign skip (handled before this is consulted), and every other variant
+/// is treated as permanent.
+fn is_transient_push_error(err: &NotificationError) -> bool {
+    matches!(
+        err,
+        NotificationError::PushFailed(_)
+            | NotificationError::Database(_)
+            | NotificationError::RateLimitExceeded(_)
+    )
+}
+
+/// Decide what to do with a queued job given the delivery result and how many
+/// attempts it has already had.
+///
+/// Pure (no I/O) so the retry policy is unit-testable without a live Redis, DB
+/// or push gateway. Before this, the worker dropped **every** failed job — a
+/// transient provider outage silently lost the push instead of retrying it.
+fn decide_disposition(result: &TransportResult, attempts: u32) -> JobDisposition {
+    match result {
+        // Delivered, or a benign "nothing to deliver" skip.
+        Ok(()) | Err(NotificationError::PushNotConfigured) => JobDisposition::Done,
+        Err(e) if is_transient_push_error(e) => {
+            // `attempts` counts prior attempts; the one that just failed is
+            // attempt number `attempts + 1`. Requeue only while retries remain.
+            if attempts + 1 >= MAX_PUSH_DELIVERY_ATTEMPTS {
+                JobDisposition::Drop
+            } else {
+                JobDisposition::Retry
+            }
+        }
+        // Permanent / structural failure — do not requeue.
+        Err(_) => JobDisposition::Drop,
+    }
+}
+
 /// Background worker that fans out pending push notifications.
 ///
 /// ## Delivery model
@@ -1721,6 +1805,7 @@ impl PushFanoutWorker {
 
         let redis = pubsub.client();
         let mut drained = 0usize;
+        let mut requeued = 0usize;
 
         // Drain up to MAX_JOBS_PER_TICK jobs. BLPOP with a short timeout means
         // an empty queue ends the drain promptly and yields back to the ticker;
@@ -1742,13 +1827,43 @@ impl PushFanoutWorker {
                 }
             };
 
-            self.deliver_job(&payload).await;
+            // `deliver_job` returns `Some(job)` only when the delivery failed
+            // *transiently* and the job still has retries left — requeue it at
+            // the tail so other pending jobs are served first and the retry is
+            // naturally spaced out. A transient failure used to be dropped here,
+            // silently losing the push (code-review finding).
+            if let Some(job) = self.deliver_job(&payload).await {
+                match serde_json::to_string(&job) {
+                    Ok(requeue_payload) => {
+                        if let Err(e) = redis
+                            .queue_push(PUSH_FANOUT_QUEUE_KEY, &requeue_payload)
+                            .await
+                        {
+                            tracing::warn!(
+                                error = %e,
+                                notification_id = %job.notification.id,
+                                "[8A-3] PushFanoutWorker: failed to requeue push job after transient failure — job dropped"
+                            );
+                        } else {
+                            requeued += 1;
+                        }
+                    }
+                    Err(e) => {
+                        tracing::error!(
+                            error = %e,
+                            notification_id = %job.notification.id,
+                            "[8A-3] PushFanoutWorker: failed to serialize push job for requeue — job dropped"
+                        );
+                    }
+                }
+            }
             drained += 1;
         }
 
         if drained > 0 {
             tracing::info!(
                 drained = drained,
+                requeued = requeued,
                 "[8A-3] PushFanoutWorker drained push_fanout_queue"
             );
         }
@@ -1756,56 +1871,96 @@ impl PushFanoutWorker {
 
     /// Deliver a single queued job payload.
     ///
-    /// The payload is a JSON-serialized [`Notification`]. A malformed payload is
-    /// logged and dropped (it has already been popped off the list, so it is not
-    /// retried — re-queuing a poison message would loop forever).
-    async fn deliver_job(&self, payload: &str) {
-        let notification: Notification = match serde_json::from_str(payload) {
-            Ok(n) => n,
+    /// The payload is a JSON [`QueuedPushJob`] (an old bare-`Notification`
+    /// payload still parses, with `attempts` defaulting to 0). A malformed
+    /// payload is logged and dropped — it has already been popped off the list,
+    /// and re-queuing a poison message would loop forever.
+    ///
+    /// Returns `Some(job)` when the job should be requeued — a *transient*
+    /// delivery failure with retries remaining; the returned job carries an
+    /// incremented attempt counter. Returns `None` when the job is complete
+    /// (delivered / benign skip) or must be dropped (permanent failure, or a
+    /// transient failure with retries exhausted). The caller performs the
+    /// actual requeue so that all Redis I/O stays in `process_pending_jobs`.
+    async fn deliver_job(&self, payload: &str) -> Option<QueuedPushJob> {
+        let mut job: QueuedPushJob = match serde_json::from_str(payload) {
+            Ok(j) => j,
             Err(e) => {
                 tracing::warn!(
                     error = %e,
                     "[8A-3] PushFanoutWorker: dropping malformed push_fanout_queue payload"
                 );
-                return;
+                return None;
             }
         };
 
-        match self.adapter.send(notification.user_id, &notification).await {
-            Ok(()) => {
-                tracing::debug!(
-                    notification_id = %notification.id,
-                    user_id = %notification.user_id,
-                    "[8A-3] PushFanoutWorker delivered queued push job"
-                );
+        let result = self
+            .adapter
+            .send(job.notification.user_id, &job.notification)
+            .await;
+
+        match decide_disposition(&result, job.attempts) {
+            JobDisposition::Done => {
+                if result.is_ok() {
+                    tracing::debug!(
+                        notification_id = %job.notification.id,
+                        user_id = %job.notification.user_id,
+                        "[8A-3] PushFanoutWorker delivered queued push job"
+                    );
+                } else {
+                    // `PushNotConfigured`: not a failure — either no provider is
+                    // configured, or the user has no deliverable device tokens
+                    // (`combine()` maps both to `PushNotConfigured`, which the
+                    // synchronous pipeline records as Skipped). A benign
+                    // no-device user must not emit warn-level noise.
+                    tracing::debug!(
+                        notification_id = %job.notification.id,
+                        user_id = %job.notification.user_id,
+                        "[8A-3] PushFanoutWorker: push skipped — no configured provider had a deliverable target"
+                    );
+                }
+                None
             }
-            Err(NotificationError::PushNotConfigured) => {
-                // Not a failure: either no provider is configured, or the user
-                // has no deliverable device tokens (`combine()` maps both to
-                // `PushNotConfigured`, which the synchronous pipeline records as
-                // Skipped). Mirror that here — a benign no-device user must not
-                // emit warn-level "delivery failed" noise or trip warn-based
-                // alerting.
-                tracing::debug!(
-                    notification_id = %notification.id,
-                    user_id = %notification.user_id,
-                    "[8A-3] PushFanoutWorker: push skipped — no configured provider had a deliverable target"
-                );
-            }
-            Err(e) => {
-                // Genuine failure (DB error or all provider sends failed). The
-                // in-app channel remains the mandatory record, so we log and move
-                // on rather than re-queue (avoids hot-looping on a permanently
-                // failing job).
+            JobDisposition::Retry => {
+                // Transient (retryable) failure with retries left — hand the job
+                // back to the caller to requeue with an incremented counter,
+                // instead of dropping it (the previous behaviour silently lost
+                // the push on a provider/DB blip).
+                job.attempts += 1;
                 tracing::warn!(
-                    notification_id = %notification.id,
-                    user_id = %notification.user_id,
-                    error = %e,
-                    "[8A-3] PushFanoutWorker: push delivery failed for queued job"
+                    notification_id = %job.notification.id,
+                    user_id = %job.notification.user_id,
+                    attempt = job.attempts,
+                    max_attempts = MAX_PUSH_DELIVERY_ATTEMPTS,
+                    error = %display_err(&result),
+                    "[8A-3] PushFanoutWorker: transient push failure — requeuing queued job"
                 );
+                Some(job)
+            }
+            JobDisposition::Drop => {
+                // Permanent failure, or retries exhausted. The in-app channel
+                // remains the mandatory record, so log and move on rather than
+                // requeue (avoids hot-looping on a permanently failing job).
+                tracing::warn!(
+                    notification_id = %job.notification.id,
+                    user_id = %job.notification.user_id,
+                    attempts = job.attempts,
+                    error = %display_err(&result),
+                    "[8A-3] PushFanoutWorker: dropping push job after failed delivery"
+                );
+                None
             }
         }
     }
+}
+
+/// Render the error side of a [`TransportResult`] for logging (`""` on `Ok`).
+fn display_err(result: &TransportResult) -> String {
+    result
+        .as_ref()
+        .err()
+        .map(|e| e.to_string())
+        .unwrap_or_default()
 }
 
 // ============================================================================
@@ -2258,8 +2413,7 @@ mod tests {
         let mut retried = job;
         retried.attempts += 1;
         let payload = serde_json::to_string(&retried).expect("serialize requeued job");
-        let decoded: QueuedPushJob =
-            serde_json::from_str(&payload).expect("parse requeued job");
+        let decoded: QueuedPushJob = serde_json::from_str(&payload).expect("parse requeued job");
         assert_eq!(decoded.attempts, 1);
         assert_eq!(decoded.notification.id, notification.id);
 
