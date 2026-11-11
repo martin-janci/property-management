@@ -91,18 +91,18 @@
     {
       "task_id": "code-review-reality-server-url-validator-triplicated",
       "branch": "auto-impl/code-review-reality-server-url-validator-d625d669",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-11T20:36:00Z",
-      "last_updated": "2026-11-11T20:36:00Z",
-      "status_changed_at": "2026-11-11T20:36:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-11T20:55:05Z",
+      "status_changed_at": "2026-11-11T20:55:05Z",
+      "pr_number": 3428,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3428",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3428 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=deduped validate_image_or_link_url (3 copies -> util::url); fmt+clippy green, 8/8 new unit tests pass; only DB-integration tests fail (no Postgres in sandbox, pre-existing, unrelated)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -111,5 +111,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-11T20:44:28Z"
+  "generated": "2026-11-11T20:55:05Z"
 }
