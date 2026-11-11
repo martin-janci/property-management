@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-11T10:30:58Z",
+  "archived_at": "2026-11-11T16:39:31Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3341,6 +3341,30 @@
       }
     },
     {
+      "id": "code-review-api-core-cors-localhost-prod-default",
+      "action": "api core cors localhost prod default",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-10T04:27:16Z (tier1d api-core score=1 vector=bug) | dev-reconcile 2026-11-11T16:35:09Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T04:27:16Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-18T00:00:00Z"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "1177b3912464b0c8cfaad82a0ab4d179bd2d9abf",
+        "subject": "code-review-api-core-cors-localhost-prod-default: don't trust localhost CORS origins in production by default (#3410)",
+        "at": "2026-11-11T16:35:09Z"
+      }
+    },
+    {
       "id": "code-review-api-core-cors-prod-test-divergence",
       "action": "api core cors prod test divergence",
       "owner_role": "pm-backend",
@@ -3611,6 +3635,30 @@
         "merged_pr": 3145,
         "merged_at": "2026-10-24T06:37:10Z",
         "at": "2026-10-24T10:28:51Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-pushfanout-queue-drops-transient",
+      "action": "api core pushfanout queue drops transient",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-10T14:27:54Z (tier1d api-core score=2 vector=bug) | dev-reconcile 2026-11-11T16:35:09Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T14:27:54Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-14T00:00:00Z"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "992c6d08231e29d473045d4672c4ff33c37cfeca",
+        "subject": "code-review-api-core-pushfanout-queue-drops-transient: retry transient push-fanout failures instead of dropping (#3416)",
+        "at": "2026-11-11T16:35:09Z"
       }
     },
     {
@@ -6207,6 +6255,30 @@
       }
     },
     {
+      "id": "code-review-mobile-rn-meter-photo-not-uploaded",
+      "action": "mobile rn meter photo not uploaded",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-10T14:27:54Z (tier1d mobile-rn score=2 vector=bug) | dev-reconcile 2026-11-11T16:35:09Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T14:27:54Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-14T00:00:00Z"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "db04db3ab60a77d084ef415d8cd5009022a2ad45",
+        "subject": "code-review-mobile-rn-meter-photo-not-uploaded: upload captured meter photo with the reading (#3418)",
+        "at": "2026-11-11T16:35:09Z"
+      }
+    },
+    {
       "id": "code-review-mobile-rn-meter-reading-no-numeric-validation",
       "action": "Mobile RN meter-reading input accepts non-numeric — silent write of garbage values",
       "owner_role": "pm-backend",
@@ -8393,6 +8465,30 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-authcallback-raw-err-message",
+      "action": "ppt web ui authcallback raw err message",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-10T10:24:54Z (tier1d ppt-web-ui score=1 vector=bug) | dev-reconcile 2026-11-11T16:35:09Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T10:24:54Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-15T00:00:00Z"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "49eec4524b938dbfdf2cdf7b8cf77bc22b25571b",
+        "subject": "code-review-ppt-web-ui-authcallback-raw-err-message: stop echoing raw SSO error message in AuthCallbackPage (#3414)",
+        "at": "2026-11-11T16:35:09Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-automation-feature-no-i18n",
       "action": "ppt-web automation feature ships English-only strings — missing i18n keys",
       "owner_role": "pm-backend",
@@ -8466,6 +8562,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-categorypref-hardcoded-labels",
+      "action": "ppt web ui categorypref hardcoded labels",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-10T14:27:54Z (tier1d ppt-web-ui score=1 vector=bug) | gc1-reconcile 2026-11-11T16:35:09Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T14:27:54Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-13T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-11T16:35:09Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-community-feature-no-i18n",
       "action": "code-review ppt-web-ui: entire community feature (posts, groups, events, marketplace, comments) is shipped English-only — only PostCard.tsx uses useTranslation",
       "owner_role": "pm-backend",
@@ -8506,6 +8627,30 @@
         "vector": "bug"
       },
       "dev_reconciled": "merged via PR #2940 on dev 2026-09-06 (commit 144a02f)"
+    },
+    {
+      "id": "code-review-ppt-web-ui-confirmdialog-loading-focustrap",
+      "action": "ppt web ui confirmdialog loading focustrap",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-10T10:24:54Z (tier1d ppt-web-ui score=1 vector=bug) | dev-reconcile 2026-11-11T16:35:09Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T10:24:54Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-15T00:00:00Z"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "287ba3226b43b03b482706a2b07f2119e50fa388",
+        "subject": "code-review-ppt-web-ui-confirmdialog-loading-focustrap: keep focus trapped in ConfirmationDialog while loading (#3412)",
+        "at": "2026-11-11T16:35:09Z"
+      }
     },
     {
       "id": "code-review-ppt-web-ui-connstatus-div-as-button-role",
@@ -8642,6 +8787,31 @@
         "merged_pr": 2996,
         "merged_at": "2026-09-27T14:30:58Z",
         "at": "2026-09-27T16:25:33Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-disableall-dialog-no-i18n",
+      "action": "ppt web ui disableall dialog no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-10T14:27:54Z (tier1d ppt-web-ui score=1 vector=bug) | gc1-reconcile 2026-11-11T16:35:09Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T14:27:54Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-13T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-11T16:35:09Z"
       }
     },
     {
@@ -9205,6 +9375,30 @@
         "merged_pr": 3408,
         "merged_at": "2026-11-10T22:41:01Z",
         "at": "2026-11-11T08:24:49Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-dashboard-no-i18n",
+      "action": "ppt web ui portfolio dashboard no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-10T10:24:54Z (tier1d ppt-web-ui score=1 vector=bug) | dev-reconcile 2026-11-11T16:35:09Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T10:24:54Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-17T00:00:00Z"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "1ca4c2de391c198760003d204af3bb8eb3b8a552",
+        "subject": "code-review-ppt-web-ui-portfolio-dashboard-no-i18n: route PortfolioDashboardPage copy through i18n (#3413)",
+        "at": "2026-11-11T16:35:09Z"
       }
     },
     {
@@ -10935,6 +11129,30 @@
         "commit": "27e3fb9ed29e5e056960f63fa02332ed8285d7e7",
         "subject": "code-review-reality-web-auth-ctx-transient-logout: don't log out on transient /users/me failure (#3121)",
         "at": "2026-10-18T22:34:35Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-authapi-unwrapped-json-parse",
+      "action": "reality web authapi unwrapped json parse",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-10T10:24:54Z (tier1d reality-web score=1 vector=bug) | dev-reconcile 2026-11-11T16:35:09Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T10:24:54Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-16T00:00:00Z"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "20a94b7f899ef8035b3dad8a33b49847efe7ffcd",
+        "subject": "code-review-reality-web-authapi-unwrapped-json-parse: guard auth-api success-body JSON parse (#3411)",
+        "at": "2026-11-11T16:35:09Z"
       }
     },
     {
