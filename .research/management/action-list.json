@@ -837,24 +837,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-ui-community-feed-noop-create",
-      "action": "ppt web ui community feed noop create",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d ppt-web-ui score=3 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-11T18:26:12Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 3,
-        "vector": "bug",
-        "generated": "2026-10-08T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-mobile-rn-meter-reading-not-flushed",
       "action": "mobile rn meter reading not flushed",
       "owner_role": "pm-backend",
