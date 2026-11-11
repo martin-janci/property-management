@@ -229,24 +229,6 @@
       }
     },
     {
-      "id": "code-review-api-core-jwt-no-aud-iss",
-      "action": "api core jwt no aud iss",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-10T20:35:26Z (tier1d api-core score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-10T20:35:26Z",
-      "signal_ref": {
-        "segment": "api-core",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-10-11T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-api-core-retention-days-no-floor",
       "action": "api core retention days no floor",
       "owner_role": "pm-backend",

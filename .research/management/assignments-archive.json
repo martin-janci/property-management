@@ -3529,6 +3529,28 @@
       "merge_attempted_at": "2026-08-06T12:16:08Z"
     },
     {
+      "task_id": "code-review-api-core-jwt-no-aud-iss",
+      "branch": "auto-impl/code-review-api-core-jwt-no-aud-iss-0fffa768",
+      "status": "failed",
+      "claimed_at": "2026-11-11T20:36:00Z",
+      "last_updated": "2026-11-11T20:44:06Z",
+      "status_changed_at": "2026-11-11T20:44:06Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=blocked specialist=rust-backend scope_drift=false code_reuse_warn=none note=iss/aud not emitted by any first-party issuer + no aud/iss config exists; enabling validation in api-core alone would reject 100% of auth. Cross-service design decision required — spun out to issue #3427 (follow-up,security,blocked).",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-api-core-llm-unscoped-idor-footguns",
       "branch": "auto-impl/code-review-api-core-llm-unscoped-idor-f-963e3beb",
       "status": "merged",
@@ -25237,5 +25259,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-11T20:41:25Z"
+  "archived_at": "2026-11-11T20:44:28Z"
 }
