@@ -555,6 +555,8 @@
     "emptyText": "Mit Ihrem Konto sind noch keine Immobilien verknüpft."
   },
   "messages": {
+    "unreadCount_one": "{{count}} ungelesene Nachricht",
+    "unreadCount_other": "{{count}} ungelesene Nachrichten",
     "loadError": "Nachrichten konnten nicht geladen werden",
     "emptyTitle": "Keine Unterhaltungen",
     "emptyText": "Beginnen Sie ein Gespräch mit Ihrer Verwaltung oder Ihren Nachbarn.",
@@ -612,6 +614,8 @@
     }
   },
   "forms": {
+    "availableCount_one": "{{count}} Formular verfügbar",
+    "availableCount_other": "{{count}} Formulare verfügbar",
     "loadError": "Formulare konnten nicht geladen werden",
     "emptyTitle": "Keine Formulare",
     "emptyText": "Sie haben derzeit keine Formulare auszufüllen."

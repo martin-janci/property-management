@@ -597,6 +597,10 @@
     "emptyText": "K vašemu účtu zatím nejsou přiřazeny žádné nemovitosti."
   },
   "messages": {
+    "unreadCount_one": "{{count}} nepřečtená zpráva",
+    "unreadCount_few": "{{count}} nepřečtené zprávy",
+    "unreadCount_many": "{{count}} nepřečtených zpráv",
+    "unreadCount_other": "{{count}} nepřečtených zpráv",
     "loadError": "Nepodařilo se načíst zprávy",
     "emptyTitle": "Žádné konverzace",
     "emptyText": "Začněte konverzaci se správcem nebo sousedy.",
@@ -656,6 +660,10 @@
     }
   },
   "forms": {
+    "availableCount_one": "{{count}} dostupný formulář",
+    "availableCount_few": "{{count}} dostupné formuláře",
+    "availableCount_many": "{{count}} dostupných formulářů",
+    "availableCount_other": "{{count}} dostupných formulářů",
     "loadError": "Nepodařilo se načíst formuláře",
     "emptyTitle": "Žádné formuláře",
     "emptyText": "Momentálně nemáte žádné formuláře k vyplnění."

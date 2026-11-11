@@ -557,6 +557,10 @@
     "emptyText": "Do Twojego konta nie przypisano jeszcze żadnych nieruchomości."
   },
   "messages": {
+    "unreadCount_one": "{{count}} nieprzeczytana wiadomość",
+    "unreadCount_few": "{{count}} nieprzeczytane wiadomości",
+    "unreadCount_many": "{{count}} nieprzeczytanych wiadomości",
+    "unreadCount_other": "{{count}} nieprzeczytanych wiadomości",
     "loadError": "Nie można załadować wiadomości",
     "emptyTitle": "Brak rozmów",
     "emptyText": "Rozpocznij rozmowę z zarządcą lub sąsiadami.",
@@ -616,6 +620,10 @@
     }
   },
   "forms": {
+    "availableCount_one": "{{count}} dostępny formularz",
+    "availableCount_few": "{{count}} dostępne formularze",
+    "availableCount_many": "{{count}} dostępnych formularzy",
+    "availableCount_other": "{{count}} dostępnych formularzy",
     "loadError": "Nie można załadować formularzy",
     "emptyTitle": "Brak formularzy",
     "emptyText": "Obecnie nie masz żadnych formularzy do wypełnienia."

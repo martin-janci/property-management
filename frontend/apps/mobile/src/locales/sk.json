@@ -597,6 +597,10 @@
     "emptyText": "K vášmu účtu zatiaľ nie sú priradené žiadne nehnuteľnosti."
   },
   "messages": {
+    "unreadCount_one": "{{count}} neprečítaná správa",
+    "unreadCount_few": "{{count}} neprečítané správy",
+    "unreadCount_many": "{{count}} neprečítaných správ",
+    "unreadCount_other": "{{count}} neprečítaných správ",
     "loadError": "Nepodarilo sa načítať správy",
     "emptyTitle": "Žiadne konverzácie",
     "emptyText": "Začnite konverzáciu so správcom alebo susedmi.",
@@ -656,6 +660,10 @@
     }
   },
   "forms": {
+    "availableCount_one": "{{count}} dostupný formulár",
+    "availableCount_few": "{{count}} dostupné formuláre",
+    "availableCount_many": "{{count}} dostupných formulárov",
+    "availableCount_other": "{{count}} dostupných formulárov",
     "loadError": "Nepodarilo sa načítať formuláre",
     "emptyTitle": "Žiadne formuláre",
     "emptyText": "Momentálne nemáte žiadne formuláre na vyplnenie."

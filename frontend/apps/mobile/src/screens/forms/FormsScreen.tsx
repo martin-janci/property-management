@@ -117,9 +117,7 @@ export function FormsScreen({ onNavigate }: FormsScreenProps) {
       <View style={s.header}>
         <Text style={s.headerTitle}>Forms</Text>
         {forms.length > 0 && (
-          <Text style={s.headerSubtitle}>
-            {forms.length} form{forms.length === 1 ? '' : 's'} available
-          </Text>
+          <Text style={s.headerSubtitle}>{t('forms.availableCount', { count: forms.length })}</Text>
         )}
       </View>
 
