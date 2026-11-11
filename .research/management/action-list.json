@@ -175,24 +175,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-core-meters-allmeters-false-empty",
-      "action": "ppt web core meters allmeters false empty",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-10T14:27:54Z (tier1d ppt-web-core score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-10T14:27:54Z",
-      "signal_ref": {
-        "segment": "ppt-web-core",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-10-13T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-reality-server-realtor-respond-no-validation",
       "action": "reality server realtor respond no validation",
       "owner_role": "pm-backend",
@@ -208,60 +190,6 @@
         "score": 2,
         "vector": "bug",
         "generated": "2026-10-13T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-reality-server-favorites-limit-toctou",
-      "action": "reality server favorites limit toctou",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-10T14:27:54Z (tier1d reality-server score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-10T14:27:54Z",
-      "signal_ref": {
-        "segment": "reality-server",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-10-13T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-reality-web-sso-probe-caches-transient-blip",
-      "action": "reality web sso probe caches transient blip",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-10T14:27:54Z (tier1d reality-web score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-10T14:27:54Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-10-13T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-api-core-syndication-jobs-never-drained",
-      "action": "api core syndication jobs never drained",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-10T14:27:54Z (tier1d api-core score=2 vector=completeness)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-10T14:27:54Z",
-      "signal_ref": {
-        "segment": "api-core",
-        "score": 2,
-        "vector": "completeness",
-        "generated": "2026-10-12T00:00:00Z"
       }
     },
     {
@@ -331,24 +259,6 @@
       "first_open_at": "2026-11-10T20:35:26Z",
       "signal_ref": {
         "segment": "api-core",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-10-11T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-rentals-load-error-unhandled",
-      "action": "ppt web ui rentals load error unhandled",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-10T20:35:26Z (tier1d ppt-web-ui score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-10T20:35:26Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
         "score": 2,
         "vector": "bug",
         "generated": "2026-10-11T00:00:00Z"
@@ -960,6 +870,26 @@
         "score": 2,
         "vector": "bug",
         "generated": "2026-10-08T00:00:00Z"
+      }
+    },
+    {
+      "id": "gh-issue-3425",
+      "action": "Follow-up: PortfolioDashboardPage load-error still renders raw untranslated error.message (PR #3413) (Closes #3425)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-11-11T20:31:05Z (#3425)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T20:31:05Z",
+      "issue_ref": {
+        "number": 3425,
+        "url": "https://github.com/martin-janci/property-management/issues/3425",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
       }
     }
   ],
