@@ -69,6 +69,8 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 interface ProbeResult {
   ok: boolean;
   session?: SessionInfo;
+  /** Network error / 5xx: outcome is unknown, so it must never be cached. */
+  transient?: boolean;
 }
 let _inflightSessionProbe: Promise<ProbeResult> | null = null;
 let _cachedProbeResult: ProbeResult | null = null;
@@ -90,19 +92,20 @@ async function probeSsoSession(apiBase: string): Promise<ProbeResult> {
         const session = (await response.json()) as SessionInfo;
         return { ok: true, session };
       }
-      return { ok: false };
+      // 5xx is a backend hiccup, not a durable "logged out" answer.
+      return response.status >= 500 ? { ok: false, transient: true } : { ok: false };
     } catch {
       // Network blip — treat as transient, NOT as "logged out". Don't cache
-      // so the next mount can retry; return ok=false so the current caller
-      // doesn't clobber any pre-existing optimistic state.
-      return { ok: false };
+      // so the next mount can retry.
+      return { ok: false, transient: true };
     }
   })().finally(() => {
     _cachedProbeAt = Date.now();
     _inflightSessionProbe = null;
   });
   const result = await _inflightSessionProbe;
-  _cachedProbeResult = result;
+  // Only durable outcomes (success or a genuine 4xx) are cached.
+  _cachedProbeResult = result.transient ? null : result;
   return result;
 }
 
