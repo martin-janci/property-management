@@ -46,7 +46,9 @@ mod agencies_test;
 #[cfg(test)]
 mod tests;
 
-pub use searches::{FavoriteAlertReadOutcome, SavedSearchError, MAX_SAVED_SEARCHES_PER_USER};
+pub use searches::{
+    FavoriteAlertReadOutcome, FavoriteError, SavedSearchError, MAX_SAVED_SEARCHES_PER_USER,
+};
 
 /// Repository for Reality Portal Professional operations.
 #[derive(Clone)]

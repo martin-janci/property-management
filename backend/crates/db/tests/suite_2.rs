@@ -31,6 +31,8 @@ mod fault_kpi_unification_tests;
 mod fault_list_filter_sort_tests;
 #[path = "suites/favorite_alert_read_idempotent_tests.rs"]
 mod favorite_alert_read_idempotent_tests;
+#[path = "suites/favorite_limit_concurrent_tests.rs"]
+mod favorite_limit_concurrent_tests;
 #[path = "suites/form_rls_repo_tests.rs"]
 mod form_rls_repo_tests;
 #[path = "suites/government_portal_connection_cross_org_idor_tests.rs"]

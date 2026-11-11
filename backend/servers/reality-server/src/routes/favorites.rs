@@ -134,24 +134,30 @@ pub async fn add_favorite(
     Path(listing_id): Path<Uuid>,
     Json(data): Json<AddFavorite>,
 ) -> Result<(axum::http::StatusCode, Json<PortalFavorite>), (axum::http::StatusCode, String)> {
+    // Cap check + insert are atomic in the repository (no TOCTOU overshoot).
     let favorite = state
         .reality_portal_repo
-        .add_favorite(principal.user_id, listing_id, data.notes)
+        .add_favorite_capped(
+            principal.user_id,
+            listing_id,
+            data.notes,
+            crate::handlers::favorites::MAX_FAVORITES_PER_USER as i64,
+        )
         .await
-        .map_err(|e| {
-            // `add_favorite` runs `INSERT … SELECT FROM listings WHERE id = $2
-            // RETURNING * … fetch_one`, so a non-existent listing surfaces as
-            // `RowNotFound`. Classify by the sqlx variant, not message text.
-            // (The old `contains("maximum")`/`contains("limit")` branch was
-            // dead: this route never enforces a per-user cap — the limit check
-            // lives in the `FavoritesHandler`, not the repository.)
-            crate::util::errors::db_error_or(
+        .map_err(|e| match e {
+            db::repositories::FavoriteError::LimitReached { max } => (
+                axum::http::StatusCode::BAD_REQUEST,
+                format!("Maximum of {max} favorites reached"),
+            ),
+            // A non-existent listing surfaces as `RowNotFound` from the
+            // `INSERT … SELECT … RETURNING` `fetch_one`. Classify by variant.
+            db::repositories::FavoriteError::Db(e) => crate::util::errors::db_error_or(
                 &e,
                 "add favorite",
                 crate::util::errors::DbErrorClass::NotFound,
                 axum::http::StatusCode::NOT_FOUND,
                 "Listing not found",
-            )
+            ),
         })?;
 
     Ok((axum::http::StatusCode::CREATED, Json(favorite)))

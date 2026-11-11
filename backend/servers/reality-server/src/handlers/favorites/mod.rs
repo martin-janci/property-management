@@ -3,7 +3,7 @@
 //! Implements favorites CRUD operations with price tracking.
 
 use db::models::{PortalFavorite, PortalFavoriteWithListing, UpdatePortalFavorite};
-use db::repositories::RealityPortalRepository;
+use db::repositories::{FavoriteError, RealityPortalRepository};
 use uuid::Uuid;
 
 /// Maximum favorites allowed per user.
@@ -45,35 +45,31 @@ impl FavoritesHandler {
         listing_id: Uuid,
         notes: Option<String>,
     ) -> Result<PortalFavorite, FavoriteResult> {
-        // Check if user has reached the limit
-        let favorites = self
+        // Already favorited?
+        let existing = self
             .repo
             .get_favorites_with_listings(user_id)
             .await
             .map_err(|e| FavoriteResult::DatabaseError(e.to_string()))?;
-
-        if favorites.len() >= MAX_FAVORITES_PER_USER as usize {
-            return Err(FavoriteResult::LimitReached);
-        }
-
-        // Check if already favorited
-        if favorites.iter().any(|f| f.listing_id == listing_id) {
+        if existing.iter().any(|f| f.listing_id == listing_id) {
             return Err(FavoriteResult::AlreadyFavorited);
         }
 
-        // Add to favorites
+        // Cap check + insert run atomically inside the repository (TOCTOU-safe).
         self.repo
-            .add_favorite(user_id, listing_id, notes)
+            .add_favorite_capped(user_id, listing_id, notes, MAX_FAVORITES_PER_USER as i64)
             .await
-            .map_err(|e| {
-                // A foreign-key violation means the referenced listing is gone.
-                // Classify by the typed sqlx error / SQLSTATE, not message text.
-                if crate::util::errors::classify_db_error(&e)
-                    == crate::util::errors::DbErrorClass::ForeignKeyViolation
-                {
-                    FavoriteResult::ListingNotFound
-                } else {
-                    FavoriteResult::DatabaseError(e.to_string())
+            .map_err(|e| match e {
+                FavoriteError::LimitReached { .. } => FavoriteResult::LimitReached,
+                FavoriteError::Db(e) => {
+                    // A foreign-key violation means the referenced listing is gone.
+                    if crate::util::errors::classify_db_error(&e)
+                        == crate::util::errors::DbErrorClass::ForeignKeyViolation
+                    {
+                        FavoriteResult::ListingNotFound
+                    } else {
+                        FavoriteResult::DatabaseError(e.to_string())
+                    }
                 }
             })
     }
