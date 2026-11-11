@@ -71,15 +71,15 @@
       "branch": "auto-impl/code-review-reality-server-branding-coal-cb750750",
       "status": "review",
       "claimed_at": "2026-11-11T20:36:00Z",
-      "last_updated": "2026-11-11T21:03:35Z",
+      "last_updated": "2026-11-11T21:06:28Z",
       "status_changed_at": "2026-11-11T21:03:35Z",
       "pr_number": 3430,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3430",
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": "pr=3430 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=branding update now clears fields (null/empty) via 3-state double-Option + CASE WHEN instead of COALESCE; 3 new sqlx tests fail-before/pass-after; verify green (VERIFY OK 0a565e9); sibling upsert_rls has same bug -> issue #3431",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve head_oid=4b34495273376199aa23a985ae7db9823be55d32 note=branding-coalesce-fix-correct; 3-state double_option+CASE-WHEN-$present per field verified, empty-str->NULL scoped to url/color only, OpenAPI/wire contract unchanged, tests fail-before/pass-after; approve posted as COMMENT; CI freshly queued",
+      "last_reviewed_oid": "4b34495273376199aa23a985ae7db9823be55d32",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
@@ -111,5 +111,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-11T21:03:35Z"
+  "generated": "2026-11-11T21:06:28Z"
 }
