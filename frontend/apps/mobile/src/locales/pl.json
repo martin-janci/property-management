@@ -17,7 +17,9 @@
     "search": "Szukaj",
     "refresh": "Odswiez",
     "submit": "Wyślij",
-    "tryAgain": "Spróbuj ponownie"
+    "tryAgain": "Spróbuj ponownie",
+    "errorTitle": "Coś poszło nie tak",
+    "errorDescription": "Spróbuj ponownie. Jeśli problem będzie się powtarzał, skontaktuj się z pomocą techniczną."
   },
   "tabs": {
     "home": "Glowna",

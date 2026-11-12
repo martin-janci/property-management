@@ -17,7 +17,9 @@
     "search": "Kereses",
     "refresh": "Frissites",
     "submit": "Küldés",
-    "tryAgain": "Próbáld újra"
+    "tryAgain": "Próbáld újra",
+    "errorTitle": "Valami hiba történt",
+    "errorDescription": "Kérjük, próbálja újra. Ha a probléma továbbra is fennáll, forduljon az ügyfélszolgálathoz."
   },
   "tabs": {
     "home": "Fooldal",
