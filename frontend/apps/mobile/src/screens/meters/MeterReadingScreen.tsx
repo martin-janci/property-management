@@ -214,7 +214,20 @@ export function MeterReadingScreen({ onSuccess, onCancel }: MeterReadingScreenPr
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+      {/*
+       * keyboardShouldPersistTaps="handled" is load-bearing, not cosmetic: the
+       * reading lives in a controlled, focusable TextInput. With the RN default
+       * ("never"), the first tap on the Submit Pressable while that field is
+       * focused is swallowed to dismiss the keyboard and never reaches onPress,
+       * so the entered reading is silently NOT flushed to the submit/offline
+       * queue on that tap. Mirrors ReportFaultScreen / DocumentUploadScreen.
+       */}
+      <ScrollView
+        testID="meter-reading-scroll"
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>{t('meters.title')}</Text>
