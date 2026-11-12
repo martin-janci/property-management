@@ -13,8 +13,3 @@ export type {
 export { useOfflineSupport } from './useOfflineSupport';
 export type { PushNotificationState, UsePushNotificationsReturn } from './usePushNotifications';
 export { usePushNotifications } from './usePushNotifications';
-export type {
-  SyncProgressState,
-  UseSyncNotificationsReturn,
-} from './useSyncNotifications';
-export { useSyncNotifications } from './useSyncNotifications';
