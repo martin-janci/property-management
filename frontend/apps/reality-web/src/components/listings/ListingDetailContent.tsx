@@ -11,6 +11,9 @@ import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useEffect } from 'react';
 import { Footer, Header } from '@/components/ui';
+// Locale-aware Link (next-intl createNavigation). Internal nav must go through
+// this, not a raw <a href>, so the active locale segment is preserved.
+import { Link } from '@/i18n/routing';
 import type { ResolvedScreen } from '@/lib/layout';
 import { DEFAULT_LISTING_DETAIL_LAYOUT } from '@/lib/layout';
 import { serializeForScript } from '@/lib/serialize-script';
@@ -35,9 +38,9 @@ export function ListingNotFound() {
         <div className="not-found">
           <h1>{t('notFound')}</h1>
           <p>{t('notFoundDesc')}</p>
-          <a href="/listings" className="back-link">
+          <Link href="/listings" className="back-link">
             {t('browseAll')}
-          </a>
+          </Link>
         </div>
       </main>
       <Footer />
@@ -66,11 +69,17 @@ export function ListingNotFound() {
           color: var(--ppt-fg-muted);
           margin: 0 0 24px;
         }
-        .back-link {
+        /*
+         * :global() — Link from next-intl/navigation renders its own <a>
+         * outside styled-jsx's hashed-class scoping. The wrapping .not-found
+         * still carries the hash, keeping the rule bound to this component
+         * while the Link-rendered <a> picks it up.
+         */
+        .not-found :global(.back-link) {
           color: var(--ppt-color-primary);
           text-decoration: none;
         }
-        .back-link:hover {
+        .not-found :global(.back-link):hover {
           text-decoration: underline;
         }
       `}</style>
@@ -142,9 +151,9 @@ export function ListingDetailContent({ listing, jsonLd, layout }: ListingDetailC
         <div className="container">
           {/* Breadcrumb */}
           <nav className="breadcrumb" aria-label="Breadcrumb">
-            <a href="/">{tNav('home')}</a>
+            <Link href="/">{tNav('home')}</Link>
             <span className="separator">/</span>
-            <a href="/listings">{tNav('allListings')}</a>
+            <Link href="/listings">{tNav('allListings')}</Link>
             <span className="separator">/</span>
             <span className="current">{listing.address?.city}</span>
           </nav>
@@ -198,12 +207,17 @@ export function ListingDetailContent({ listing, jsonLd, layout }: ListingDetailC
           margin-bottom: 24px;
         }
 
-        .breadcrumb a {
+        /*
+         * :global() — the breadcrumb Links render their own <a> outside
+         * styled-jsx scoping; .breadcrumb still carries the hash so the rule
+         * stays bound to this component.
+         */
+        .breadcrumb :global(a) {
           color: var(--ppt-fg-muted);
           text-decoration: none;
         }
 
-        .breadcrumb a:hover {
+        .breadcrumb :global(a):hover {
           color: var(--ppt-color-primary);
         }
 
