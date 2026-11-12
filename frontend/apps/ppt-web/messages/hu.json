@@ -542,6 +542,8 @@
       "regenerateButton": "Helyreállítási kódok újragenerálása",
       "disableButton": "Kétfaktoros hitelesítés kikapcsolása",
       "qrAriaLabel": "Olvassa be ezt a QR-kódot a hitelesítő alkalmazásával",
+      "qrRenderError": "A QR-kódot nem sikerült megjeleníteni. Adja meg a titkos kulcsot kézzel alább, vagy próbálja újra.",
+      "qrRetry": "Újrapróbálkozás",
       "recoveryCodesAriaLabel": "Helyreállítási kódok",
       "copyAll": "Összes másolása",
       "copied": "Másolva!",

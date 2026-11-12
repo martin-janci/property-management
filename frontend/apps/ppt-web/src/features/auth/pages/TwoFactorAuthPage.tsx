@@ -40,12 +40,43 @@ const LOW_CODES_THRESHOLD = 3;
 function QrCodeCanvas({ uri }: { uri: string }) {
   const { t } = useTranslation();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // Surface render failures instead of swallowing them: a blank canvas with no
+  // feedback left the user stuck with no idea 2FA setup had broken. `attempt`
+  // lets the user re-trigger the render after a transient failure.
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: attempt is a retry nonce that re-runs the render
   useEffect(() => {
-    if (canvasRef.current) {
-      QRCode.toCanvas(canvasRef.current, uri, { width: 200, margin: 2 }).catch(() => {});
-    }
-  }, [uri]);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    let cancelled = false;
+    setFailed(false);
+    QRCode.toCanvas(canvas, uri, { width: 200, margin: 2 }).catch(() => {
+      if (!cancelled) setFailed(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [uri, attempt]);
+
+  if (failed) {
+    return (
+      <div className="auth-warning-banner" role="alert">
+        <span>{t('auth.twoFactor.qrRenderError')}</span>
+        <button
+          type="button"
+          className="auth-link"
+          onClick={() => {
+            setFailed(false);
+            setAttempt((n) => n + 1);
+          }}
+        >
+          {t('auth.twoFactor.qrRetry')}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <canvas

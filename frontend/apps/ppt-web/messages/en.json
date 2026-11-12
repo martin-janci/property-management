@@ -556,6 +556,8 @@
       "regenerateButton": "Regenerate recovery codes",
       "disableButton": "Disable two-factor authentication",
       "qrAriaLabel": "Scan this QR code with your authenticator app",
+      "qrRenderError": "The QR code couldn't be displayed. Enter the secret below manually, or try again.",
+      "qrRetry": "Try again",
       "recoveryCodesAriaLabel": "Recovery codes",
       "copyAll": "Copy all",
       "copied": "Copied!",
