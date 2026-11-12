@@ -557,6 +557,8 @@
       "regenerateButton": "Vygenerovať nové obnovovacie kódy",
       "disableButton": "Vypnúť dvojfaktorové overenie",
       "qrAriaLabel": "Naskenujte tento QR kód svojou autentifikačnou aplikáciou",
+      "qrRenderError": "QR kód sa nepodarilo zobraziť. Zadajte tajný kľúč nižšie manuálne alebo to skúste znova.",
+      "qrRetry": "Skúsiť znova",
       "recoveryCodesAriaLabel": "Obnovovacie kódy",
       "copyAll": "Kopírovať všetko",
       "copied": "Skopírované!",

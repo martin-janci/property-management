@@ -543,6 +543,8 @@
       "regenerateButton": "Wiederherstellungscodes neu generieren",
       "disableButton": "Zwei-Faktor-Authentifizierung deaktivieren",
       "qrAriaLabel": "Scannen Sie diesen QR-Code mit Ihrer Authentifizierungs-App",
+      "qrRenderError": "Der QR-Code konnte nicht angezeigt werden. Geben Sie den Schlüssel unten manuell ein oder versuchen Sie es erneut.",
+      "qrRetry": "Erneut versuchen",
       "recoveryCodesAriaLabel": "Wiederherstellungscodes",
       "copyAll": "Alle kopieren",
       "copied": "Kopiert!",

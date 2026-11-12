@@ -545,6 +545,8 @@
       "regenerateButton": "Wygeneruj nowe kody odzyskiwania",
       "disableButton": "Wyłącz uwierzytelnianie dwuskładnikowe",
       "qrAriaLabel": "Zeskanuj ten kod QR aplikacją uwierzytelniającą",
+      "qrRenderError": "Nie udało się wyświetlić kodu QR. Wprowadź klucz ręcznie poniżej lub spróbuj ponownie.",
+      "qrRetry": "Spróbuj ponownie",
       "recoveryCodesAriaLabel": "Kody odzyskiwania",
       "copyAll": "Kopiuj wszystko",
       "copied": "Skopiowano!",

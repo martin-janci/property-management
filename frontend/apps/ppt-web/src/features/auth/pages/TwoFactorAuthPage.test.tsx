@@ -11,6 +11,7 @@
  */
 
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import QRCode from 'qrcode';
 import { TwoFactorAuthPage } from './TwoFactorAuthPage';
 
 // ── Mocks ──
@@ -189,5 +190,30 @@ describe('TwoFactorAuthPage — recovery codes', () => {
     await waitFor(() => {
       expect(screen.getByText('CODE-0009')).toBeInTheDocument();
     });
+  });
+});
+
+describe('TwoFactorAuthPage — QR render failure', () => {
+  // Regression: a failed QRCode.toCanvas render used to be swallowed, leaving a
+  // blank canvas and no feedback — the user had no idea 2FA setup had broken and
+  // no way to recover. The QR failure must surface an error and stay recoverable
+  // (retry + the manual-entry secret alongside).
+  it('surfaces an alert with a retry when the QR code fails to render', async () => {
+    vi.mocked(QRCode.toCanvas).mockRejectedValueOnce(new Error('canvas render failed'));
+    mockStatus.mockReturnValue(status({ enabled: false, backupCodesRemaining: 0 }));
+    mockSetup.mockReturnValue(mut({ data: { secret: 'JBSWY3DPEHPK3PXP', qrUri: 'otpauth://x' } }));
+
+    render(<TwoFactorAuthPage />);
+
+    fireEvent.click(screen.getByText('Set up two-factor authentication'));
+
+    // The failure is surfaced as an alert (not swallowed).
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(/QR code couldn.t be displayed/i);
+
+    // Recoverable: a retry action is offered…
+    expect(screen.getByText('Try again')).toBeInTheDocument();
+    // …and the manual-entry secret fallback is still available.
+    expect(screen.getByText('JBSWY3DPEHPK3PXP')).toBeInTheDocument();
   });
 });
