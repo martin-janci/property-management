@@ -110,6 +110,12 @@
       "returnHome": "Vissza a főoldalra",
       "loading": "Betöltés...",
       "completingLogin": "Bejelentkezés befejezése..."
+    },
+    "menu": {
+      "signIn": "Bejelentkezés",
+      "favorites": "Kedvenceim",
+      "profile": "Profil",
+      "signOut": "Kijelentkezés"
     }
   },
   "common": {
