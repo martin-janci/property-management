@@ -110,6 +110,12 @@
       "returnHome": "Powrót do strony głównej",
       "loading": "Ładowanie...",
       "completingLogin": "Kończenie logowania..."
+    },
+    "menu": {
+      "signIn": "Zaloguj się",
+      "favorites": "Moje ulubione",
+      "profile": "Profil",
+      "signOut": "Wyloguj się"
     }
   },
   "common": {

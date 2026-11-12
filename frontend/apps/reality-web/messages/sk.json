@@ -110,6 +110,12 @@
       "returnHome": "Späť na domovskú stránku",
       "loading": "Načítava sa...",
       "completingLogin": "Dokončuje sa prihlásenie..."
+    },
+    "menu": {
+      "signIn": "Prihlásiť sa",
+      "favorites": "Moje obľúbené",
+      "profile": "Profil",
+      "signOut": "Odhlásiť sa"
     }
   },
   "common": {

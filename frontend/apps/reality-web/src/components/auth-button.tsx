@@ -5,6 +5,7 @@
  * Shows login button when not authenticated, user menu when authenticated.
  */
 
+import { useTranslations } from 'next-intl';
 import { type CSSProperties, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 
@@ -115,6 +116,7 @@ const styles: Record<string, CSSProperties> = {
 
 export function AuthButton() {
   const { user, isLoading, isAuthenticated, login, logout } = useAuth();
+  const t = useTranslations('auth.menu');
   const [showDropdown, setShowDropdown] = useState(false);
 
   if (isLoading) {
@@ -124,7 +126,7 @@ export function AuthButton() {
   if (!isAuthenticated) {
     return (
       <button type="button" onClick={() => login()} style={styles.signInButton}>
-        Sign In
+        {t('signIn')}
       </button>
     );
   }
@@ -156,13 +158,13 @@ export function AuthButton() {
         </div>
         <div style={styles.dropdownMenu}>
           <a href="/favorites" style={styles.menuItem}>
-            My Favorites
+            {t('favorites')}
           </a>
           <a href="/profile" style={styles.menuItem}>
-            Profile
+            {t('profile')}
           </a>
           <button type="button" onClick={logout} style={styles.signOutButton}>
-            Sign Out
+            {t('signOut')}
           </button>
         </div>
       </div>

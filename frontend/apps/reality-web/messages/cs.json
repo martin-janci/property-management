@@ -110,6 +110,12 @@
       "returnHome": "Zpět na domovskou stránku",
       "loading": "Načítání...",
       "completingLogin": "Dokončování přihlášení..."
+    },
+    "menu": {
+      "signIn": "Přihlásit se",
+      "favorites": "Moje oblíbené",
+      "profile": "Profil",
+      "signOut": "Odhlásit se"
     }
   },
   "common": {
