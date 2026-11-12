@@ -137,15 +137,15 @@
       "branch": "auto-impl/code-review-api-core-retention-days-no-f-6bcba37f",
       "status": "review",
       "claimed_at": "2026-11-12T00:27:38Z",
-      "last_updated": "2026-11-12T01:00:07Z",
+      "last_updated": "2026-11-12T01:02:13Z",
       "status_changed_at": "2026-11-12T01:00:07Z",
       "pr_number": 3434,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3434",
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": "pr=3434 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=floored 3 scheduler retention prunes at MIN_RETENTION_DAYS=1 in services/scheduler/retention.rs (0/neg window now skips delete, not cutoff=now/future); IG3 two-commit red->green; fmt+clippy+retention test module PASS; 20 sqlx DB tests env-red only (no Postgres) deferred to CI; diff retention.rs only 112 ins",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve head_oid=e64b7db91f3d9a2229771e40af8d0c2a51390a78 note=floor-at-1-day-correct-boundary-skip-stamp-sound-tested; APPROVE-event blocked (self-authored PR), posted as COMMENT review",
+      "last_reviewed_oid": "e64b7db91f3d9a2229771e40af8d0c2a51390a78",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
@@ -177,5 +177,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-12T01:00:07Z"
+  "generated": "2026-11-12T01:02:13Z"
 }
