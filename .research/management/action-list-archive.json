@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-12T08:39:37Z",
+  "archived_at": "2026-11-12T12:27:49Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -9468,6 +9468,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-marketplace-epic68-orphaned-routes",
+      "action": "ppt web ui marketplace epic68 orphaned routes",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-11T08:26:16Z (tier1d ppt-web-ui score=2 vector=bug) | gc1-reconcile 2026-11-12T12:24:22Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T08:26:16Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-10T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-12T12:24:22Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-marketplace-no-i18n",
       "action": "ppt-web marketplace feature ships hardcoded English (placeholders, 16 service-category labels) in a 4-locale app — 0 useTranslation across 8 of 9 files",
       "owner_role": "pm-tech-lead",
@@ -11816,6 +11841,31 @@
         "merged_pr": 3381,
         "merged_at": "2026-11-10T15:53:22Z",
         "at": "2026-11-10T16:33:21Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-date-tolocale-no-locale",
+      "action": "reality web date tolocale no locale",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-10T20:35:26Z (tier1d reality-web score=1 vector=bug) | gc1-reconcile 2026-11-12T12:24:22Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T20:35:26Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-11T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-12T12:24:22Z"
       }
     },
     {
