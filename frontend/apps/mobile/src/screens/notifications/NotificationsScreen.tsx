@@ -3,17 +3,26 @@
  *
  * Inbox-style list of all notifications delivered to the user.
  *
- * NOTE: still backed by mock data. The api-server currently exposes only a
- * WebSocket sync endpoint for the notification inbox (`ws_notifications` at
- * `GET /api/v1/users/me/notifications/ws`) plus preference/critical-notification
- * routes — there is no REST list endpoint to page the inbox. Wiring this screen
- * needs a backend `GET /api/v1/users/me/notifications` (REST list) first, so it
- * is intentionally left on mock data (tracked as a backend follow-up).
+ * Wired to the in-app notification inbox on the api-server (Epic 29
+ * notification groups), the same REST surface ppt-web's NotificationInboxPage
+ * consumes through `@ppt/api-client`:
+ *   GET    /api/v1/users/me/notification-preferences/granular/groups
+ *   POST   .../groups/read-all
+ *   POST   .../groups/{group_id}/read
+ * Backend writes in-app notifications into `notification_groups` /
+ * `grouped_notifications`; each group is one entity (a fault, a vote, …) with
+ * its newest notifications. We read through the mobile `useApi` hooks (absolute
+ * URLs + SecureStore bearer token) rather than the web `@ppt/api-client` hooks,
+ * which use browser-relative paths that don't resolve on React Native — only
+ * the response TYPES are shared from the generated client so a backend field
+ * rename surfaces at compile time.
  */
 
+import type { InboxGroupWithNotifications, InboxResponse } from '@ppt/api-client';
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { EmptyState } from '../../components/states';
+import { useApiMutation, useApiQuery } from '../../hooks/useApi';
 import { formatDate } from '../../i18n/format';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
@@ -34,40 +43,10 @@ export interface AppNotification {
   read: boolean;
 }
 
-const MOCK_NOTIFICATIONS: AppNotification[] = [
-  {
-    id: 'nf1',
-    category: 'fault',
-    title: 'Fault status updated',
-    body: 'Your reported fault "Leaking pipe in lobby" was assigned to a contractor.',
-    receivedAt: '2026-04-24T08:42:00Z',
-    read: false,
-  },
-  {
-    id: 'nf2',
-    category: 'announcement',
-    title: 'New announcement',
-    body: 'Annual building meeting scheduled for May 12.',
-    receivedAt: '2026-04-23T14:00:00Z',
-    read: false,
-  },
-  {
-    id: 'nf3',
-    category: 'vote',
-    title: 'Voting open',
-    body: '"Replace lobby carpet" — voting closes in 3 days.',
-    receivedAt: '2026-04-22T09:30:00Z',
-    read: true,
-  },
-  {
-    id: 'nf4',
-    category: 'meter',
-    title: 'Meter reading reminder',
-    body: 'Submit your April water-meter reading by April 30.',
-    receivedAt: '2026-04-21T07:00:00Z',
-    read: true,
-  },
-];
+const INBOX_BASE_PATH = '/api/v1/users/me/notification-preferences/granular';
+/** `GET {INBOX_BASE_PATH}/groups` — include read groups so the inbox is a full
+ *  history, matching the previous screen behaviour (it showed read items too). */
+const INBOX_LIST_PATH = `${INBOX_BASE_PATH}/groups?includeRead=true&limit=50`;
 
 const CATEGORY_FILTERS: ReadonlyArray<{ value: 'all' | NotificationCategory; label: string }> = [
   { value: 'all', label: 'All' },
@@ -77,6 +56,42 @@ const CATEGORY_FILTERS: ReadonlyArray<{ value: 'all' | NotificationCategory; lab
   { value: 'vote', label: 'Voting' },
   { value: 'meter', label: 'Meters' },
 ];
+
+/** Map a backend notification-group `entityType` onto the UI category enum.
+ *  Entity types the mobile UI has no dedicated filter for (document, finance,
+ *  facility, critical, …) fall back to `system`. Exported for unit testing. */
+export function toCategory(entityType: string): NotificationCategory {
+  switch (entityType) {
+    case 'fault':
+      return 'fault';
+    case 'announcement':
+      return 'announcement';
+    case 'message':
+      return 'message';
+    case 'vote':
+      return 'vote';
+    case 'meter':
+      return 'meter';
+    default:
+      return 'system';
+  }
+}
+
+/** Flatten one inbox group into the screen's notification row shape. The group
+ *  carries the summary (title, latest timestamp, read flag); its newest entry
+ *  supplies the body. Exported for unit testing. */
+export function toAppNotification(item: InboxGroupWithNotifications): AppNotification {
+  const { group, notifications } = item;
+  const latest = notifications[0];
+  return {
+    id: group.id,
+    category: toCategory(group.entityType),
+    title: group.title,
+    body: latest?.body ?? latest?.title ?? '',
+    receivedAt: group.latestNotificationAt,
+    read: group.isRead,
+  };
+}
 
 function categoryIcon(category: NotificationCategory): string {
   switch (category) {
@@ -111,26 +126,49 @@ interface NotificationsScreenProps {
 }
 
 export function NotificationsScreen({ onNavigate }: NotificationsScreenProps) {
-  const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<'all' | NotificationCategory>('all');
-  const [items, setItems] = useState<AppNotification[]>(MOCK_NOTIFICATIONS);
 
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await new Promise((r) => setTimeout(r, 600));
-    setRefreshing(false);
-  }, []);
+  const { data, isLoading, error, refetch, isFetching } = useApiQuery<InboxResponse>(
+    ['notifications', 'inbox'],
+    INBOX_LIST_PATH,
+    { staleTime: 30_000 }
+  );
+
+  const markAll = useApiMutation<void, void>(`${INBOX_BASE_PATH}/groups/read-all`, 'POST');
+  const markOne = useApiMutation<void, string>(
+    (groupId) => `${INBOX_BASE_PATH}/groups/${encodeURIComponent(groupId)}/read`,
+    'POST'
+  );
+
+  const items = useMemo<AppNotification[]>(
+    () => (data?.groups ?? []).map(toAppNotification),
+    [data]
+  );
 
   const filtered = useMemo(
     () => (filter === 'all' ? items : items.filter((i) => i.category === filter)),
     [items, filter]
   );
 
-  const markAllRead = () => {
-    setItems((prev) => prev.map((i) => ({ ...i, read: true })));
-  };
+  const unread = data?.totalUnread ?? 0;
 
-  const unread = items.filter((i) => !i.read).length;
+  const onRefresh = useCallback(async () => {
+    await refetch();
+  }, [refetch]);
+
+  const markAllRead = useCallback(() => {
+    markAll.mutate(undefined, { onSuccess: () => void refetch() });
+  }, [markAll, refetch]);
+
+  const openNotification = useCallback(
+    (notification: AppNotification) => {
+      if (!notification.read) {
+        markOne.mutate(notification.id, { onSuccess: () => void refetch() });
+      }
+      onNavigate?.('NotificationDetail', { id: notification.id });
+    },
+    [markOne, refetch, onNavigate]
+  );
 
   return (
     <View style={s.container}>
@@ -159,39 +197,55 @@ export function NotificationsScreen({ onNavigate }: NotificationsScreenProps) {
 
       <ScrollView
         style={s.scrollView}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={<RefreshControl refreshing={isFetching} onRefresh={onRefresh} />}
       >
-        {unread > 0 && (
-          <Pressable onPress={markAllRead} style={styles.markAll}>
-            <Text style={styles.markAllText}>Mark all as read</Text>
-          </Pressable>
-        )}
-
-        {filtered.length === 0 ? (
-          <EmptyState
-            icon="🔕"
-            title="You're all caught up"
-            description="New notifications will appear here."
-          />
-        ) : (
-          filtered.map((notification) => (
-            <Pressable
-              key={notification.id}
-              style={[s.card, !notification.read && styles.unreadCard]}
-              onPress={() => onNavigate?.('NotificationDetail', { id: notification.id })}
-            >
-              <View style={s.cardHeader}>
-                <Text style={styles.icon}>{categoryIcon(notification.category)}</Text>
-                <Text style={[s.cardTitle, { marginLeft: 8 }]} numberOfLines={1}>
-                  {notification.title}
-                </Text>
-                <Text style={s.cardMeta}>{formatRelative(notification.receivedAt)}</Text>
-              </View>
-              <Text style={s.cardBody} numberOfLines={2}>
-                {notification.body}
-              </Text>
+        {isLoading ? (
+          <View style={s.emptyState}>
+            <Text style={s.emptyTitle}>Loading…</Text>
+          </View>
+        ) : error ? (
+          <View style={s.emptyState}>
+            <Text style={s.emptyIcon}>⚠️</Text>
+            <Text style={s.emptyTitle}>Couldn't load notifications</Text>
+            <Pressable onPress={() => void refetch()} style={styles.markAll}>
+              <Text style={styles.markAllText}>Try again</Text>
             </Pressable>
-          ))
+          </View>
+        ) : (
+          <>
+            {unread > 0 && (
+              <Pressable onPress={markAllRead} disabled={markAll.isPending} style={styles.markAll}>
+                <Text style={styles.markAllText}>Mark all as read</Text>
+              </Pressable>
+            )}
+
+            {filtered.length === 0 ? (
+              <EmptyState
+                icon="🔕"
+                title="You're all caught up"
+                description="New notifications will appear here."
+              />
+            ) : (
+              filtered.map((notification) => (
+                <Pressable
+                  key={notification.id}
+                  style={[s.card, !notification.read && styles.unreadCard]}
+                  onPress={() => openNotification(notification)}
+                >
+                  <View style={s.cardHeader}>
+                    <Text style={styles.icon}>{categoryIcon(notification.category)}</Text>
+                    <Text style={[s.cardTitle, { marginLeft: 8 }]} numberOfLines={1}>
+                      {notification.title}
+                    </Text>
+                    <Text style={s.cardMeta}>{formatRelative(notification.receivedAt)}</Text>
+                  </View>
+                  <Text style={s.cardBody} numberOfLines={2}>
+                    {notification.body}
+                  </Text>
+                </Pressable>
+              ))
+            )}
+          </>
         )}
 
         <View style={s.bottomSpacer} />
