@@ -63,3 +63,30 @@ describe('IotDashboardPage offline state', () => {
     expect(screen.queryByRole('status')).toBeNull();
   });
 });
+
+describe('IotDashboardPage query-error state', () => {
+  it('surfaces an error panel with a retry affordance when the dashboard query failed (isError)', () => {
+    const onRetry = vi.fn();
+    renderPage({ isError: true, onRetry });
+
+    // The swallowed query error must now be user-visible, not an endless
+    // placeholder-"—" dashboard.
+    const panel = screen.getByRole('alert');
+    expect(panel).toHaveTextContent(/failed to load/i);
+
+    const retry = screen.getByRole('button', { name: /retry/i });
+    retry.click();
+    expect(onRetry).toHaveBeenCalledTimes(1);
+
+    // The KPI rollup / panels are replaced by the error state, so no sensor
+    // list placeholder is rendered underneath it.
+    expect(screen.queryByText(/total devices/i)).toBeNull();
+  });
+
+  it('renders the dashboard normally when there is no query error', () => {
+    renderPage({ isError: false });
+
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByText(/total devices/i)).toBeInTheDocument();
+  });
+});
