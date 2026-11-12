@@ -24,22 +24,28 @@ interface OutagesPageProps {
   outages: OutageSummary[];
   total: number;
   isLoading?: boolean;
+  /** True when the outages query failed; surfaces the error state with retry. */
+  isError?: boolean;
   /** Managers only; omitted for residents so the create button is hidden. */
   onNavigateToCreate?: () => void;
   onNavigateToView: (id: string) => void;
   /** Managers only; omitted for residents so the cards hide Edit. */
   onNavigateToEdit?: (id: string) => void;
   onFilterChange: (params: ListOutagesParams) => void;
+  /** Re-run the outages query (wired to the error state's retry button). */
+  onRetry?: () => void;
 }
 
 export function OutagesPage({
   outages,
   total,
   isLoading,
+  isError,
   onNavigateToCreate,
   onNavigateToView,
   onNavigateToEdit,
   onFilterChange,
+  onRetry,
 }: OutagesPageProps) {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
@@ -79,7 +85,9 @@ export function OutagesPage({
         page={page}
         pageSize={pageSize}
         isLoading={isLoading}
+        isError={isError}
         onPageChange={handlePageChange}
+        onRetry={onRetry}
         onStatusFilter={handleStatusFilter}
         onCommodityFilter={handleCommodityFilter}
         onSeverityFilter={handleSeverityFilter}

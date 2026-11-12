@@ -34,13 +34,13 @@ import { isManagerRole, MANAGER_ROLES, transformBuildingForUI } from '../shared'
  * Route wrapper for outages list page (UC-12).
  * Manages filter state and navigation callbacks.
  */
-function OutagesPageRoute() {
+export function OutagesPageRoute() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isManager = isManagerRole(user?.role);
   const [queryParams, setQueryParams] = useState<OutageListQuery>({ limit: 10, offset: 0 });
 
-  const { data, isLoading } = useOutages(queryParams);
+  const { data, isLoading, isError, refetch } = useOutages(queryParams);
 
   if (!user?.organizationId) {
     return <AuthRequiredGate />;
@@ -67,6 +67,12 @@ function OutagesPageRoute() {
       outages={outages}
       total={total}
       isLoading={isLoading}
+      // A failed query must surface the error state (with retry) instead of
+      // being swallowed into the empty "No outages found" placeholder.
+      isError={isError}
+      onRetry={() => {
+        void refetch();
+      }}
       // Creating and editing outages is manager-only on the server, so
       // residents get a read-only list.
       onNavigateToCreate={isManager ? handleNavigateToCreate : undefined}

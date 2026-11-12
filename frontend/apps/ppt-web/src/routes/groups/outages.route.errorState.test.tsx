@@ -47,9 +47,8 @@ vi.mock('../../components', () => ({
 
 // ─── render the REAL OutagesPage (and OutageList) so the error UI is exercised ─
 vi.mock('../lazyRoutes', async () => {
-  const real = await vi.importActual<typeof import('../../features/outages')>(
-    '../../features/outages'
-  );
+  const real =
+    await vi.importActual<typeof import('../../features/outages')>('../../features/outages');
   return {
     OutagesPage: real.OutagesPage,
     CreateOutagePage: () => null,
