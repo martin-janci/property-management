@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-12T18:40:02Z",
+  "archived_at": "2026-11-12T22:29:11Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -8669,6 +8669,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-2fa-qr-silent-fail",
+      "action": "ppt web ui 2fa qr silent fail",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d ppt-web-ui score=1 vector=bug) | gc1-reconcile 2026-11-12T22:24:28Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T18:26:12Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-09T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3463,
+        "merged_at": "2026-11-12T20:35:43Z",
+        "at": "2026-11-12T22:24:28Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-accounting-invoice-silent-fail",
       "action": "AccountingInvoiceManagementPage: create/delete mutations have no onError — silent invoice failures",
       "owner_role": "pm-backend",
@@ -8758,6 +8783,31 @@
         "merged_pr": 2635,
         "merged_at": "2026-08-03T12:13:22Z",
         "at": "2026-08-03T12:14:09Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-articledetail-i18n-gaps",
+      "action": "ppt web ui articledetail i18n gaps",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d ppt-web-ui score=1 vector=bug) | gc1-reconcile 2026-11-12T22:24:28Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T18:26:12Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-09T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3465,
+        "merged_at": "2026-11-12T20:37:00Z",
+        "at": "2026-11-12T22:24:28Z"
       }
     },
     {
@@ -9257,6 +9307,31 @@
         "merged_pr": 3376,
         "merged_at": "2026-11-10T06:39:30Z",
         "at": "2026-11-10T06:39:49Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-docsearchresult-no-i18n",
+      "action": "ppt web ui docsearchresult no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d ppt-web-ui score=1 vector=bug) | gc1-reconcile 2026-11-12T22:24:28Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T18:26:12Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-09T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3462,
+        "merged_at": "2026-11-12T20:35:23Z",
+        "at": "2026-11-12T22:24:28Z"
       }
     },
     {
@@ -10276,6 +10351,31 @@
         "merged_pr": 2457,
         "merged_at": "2026-07-22T22:23:38Z",
         "at": "2026-07-23T00:03:08Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-sentiment-dash-no-error-state",
+      "action": "ppt web ui sentiment dash no error state",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d ppt-web-ui score=2 vector=bug) | gc1-reconcile 2026-11-12T22:24:28Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T18:26:12Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-09T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3464,
+        "merged_at": "2026-11-12T20:36:23Z",
+        "at": "2026-11-12T22:24:28Z"
       }
     },
     {

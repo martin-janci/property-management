@@ -175,78 +175,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-ui-sentiment-dash-no-error-state",
-      "action": "ppt web ui sentiment dash no error state",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d ppt-web-ui score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-11T18:26:12Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-10-09T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-2fa-qr-silent-fail",
-      "action": "ppt web ui 2fa qr silent fail",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d ppt-web-ui score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-11T18:26:12Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-10-09T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-articledetail-i18n-gaps",
-      "action": "ppt web ui articledetail i18n gaps",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d ppt-web-ui score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-11T18:26:12Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-10-09T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-docsearchresult-no-i18n",
-      "action": "ppt web ui docsearchresult no i18n",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d ppt-web-ui score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-11T18:26:12Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-10-09T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-ppt-web-ui-oauth-grants-hardcoded-i18n",
       "action": "ppt web ui oauth grants hardcoded i18n",
       "owner_role": "pm-backend",
@@ -946,6 +874,26 @@
         "score": 1,
         "vector": "bug",
         "generated": "2026-09-27T00:00:00Z"
+      }
+    },
+    {
+      "id": "gh-issue-3466",
+      "action": "Follow-up: ppt-web de/pl/hu locale drift — new user-facing keys land only in en/sk/cs (PRs #3440, #3457) (Closes #3466)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-11-12T22:25:06Z (#3466)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-12T22:25:06Z",
+      "issue_ref": {
+        "number": 3466,
+        "url": "https://github.com/martin-janci/property-management/issues/3466",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
       }
     }
   ],
