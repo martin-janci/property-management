@@ -7313,7 +7313,10 @@
       "buildingsRequired": "Vyberte aspoň jednu dotknutú budovu",
       "startRequired": "Plánovaný čas začiatku je povinný",
       "outageNotFound": "Odstávka sa nenašla",
-      "outageNotFoundDesc": "Odstávka, ktorú hľadáte, neexistuje."
+      "outageNotFoundDesc": "Odstávka, ktorú hľadáte, neexistuje.",
+      "fetchFailedTitle": "Odstávky sa nepodarilo načítať",
+      "fetchFailedDescription": "Pri načítavaní odstávok sa vyskytla chyba. Skúste to znova.",
+      "retry": "Skúsiť znova"
     },
     "failedToStart": "Nepodarilo sa spustiť odstávku",
     "failedToResolve": "Nepodarilo sa označiť odstávku ako vyriešenú",

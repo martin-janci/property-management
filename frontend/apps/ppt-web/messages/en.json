@@ -3155,7 +3155,10 @@
       "buildingsRequired": "Please select at least one affected building",
       "startRequired": "Scheduled start time is required",
       "outageNotFound": "Outage not found",
-      "outageNotFoundDesc": "The outage you're looking for does not exist."
+      "outageNotFoundDesc": "The outage you're looking for does not exist.",
+      "fetchFailedTitle": "Couldn't load outages",
+      "fetchFailedDescription": "Something went wrong while loading outages. Please try again.",
+      "retry": "Try again"
     },
     "failedToStart": "Failed to start outage",
     "failedToResolve": "Failed to resolve outage",
