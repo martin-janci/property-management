@@ -8560,6 +8560,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-ppt-web-ui-2fa-qr-silent-fail",
+      "branch": "auto-impl/code-review-ppt-web-ui-2fa-qr-silent-fai-237d48fc",
+      "status": "merged",
+      "claimed_at": "2026-11-12T18:26:22Z",
+      "last_updated": "2026-11-12T20:37:25Z",
+      "status_changed_at": "2026-11-12T20:37:25Z",
+      "pr_number": 3463,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3463",
+      "merged_at": "2026-11-12T20:35:43Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=29c74a210ea11c030102ba8fa251da5f3a018be7 note=2fa-qr-failure-surfaced+retry;6-locale-keys;regression-test;ci-green",
+      "last_reviewed_oid": "29c74a210ea11c030102ba8fa251da5f3a018be7",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-ui-accounting-invoice-silent-fail",
       "branch": "auto-impl/code-review-ppt-web-ui-accounting-invoic-c06a08f8",
       "status": "merged",
@@ -8646,6 +8668,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-08-03T12:13:50Z"
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-articledetail-i18n-gaps",
+      "branch": "auto-impl/code-review-ppt-web-ui-articledetail-i18-c0f2a005",
+      "status": "merged",
+      "claimed_at": "2026-11-12T18:26:22Z",
+      "last_updated": "2026-11-12T20:37:25Z",
+      "status_changed_at": "2026-11-12T20:37:25Z",
+      "pr_number": 3465,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3465",
+      "merged_at": "2026-11-12T20:37:00Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=a66be25f19aedeadce6921476778ce0d51159f16 note=articledetail-i18n-gaps-de-pl-hu+leaf-parity-test;ci-green",
+      "last_reviewed_oid": "a66be25f19aedeadce6921476778ce0d51159f16",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "code-review-ppt-web-ui-authcallback-raw-err-message",
@@ -9118,6 +9162,28 @@
       "quarantined_at": null,
       "quarantine_reason": null,
       "first_open_at": "2026-11-10T02:29:11Z"
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-docsearchresult-no-i18n",
+      "branch": "auto-impl/code-review-ppt-web-ui-docsearchresult-n-ca72351f",
+      "status": "merged",
+      "claimed_at": "2026-11-12T18:26:22Z",
+      "last_updated": "2026-11-12T20:37:25Z",
+      "status_changed_at": "2026-11-12T20:37:25Z",
+      "pr_number": 3462,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3462",
+      "merged_at": "2026-11-12T20:35:23Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=718e593d13813985031b2004de0482ea95e2e9db note=i18n-parity-guard-test-only;6-locale-lock;ci-green;comment-only",
+      "last_reviewed_oid": "718e593d13813985031b2004de0482ea95e2e9db",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "code-review-ppt-web-ui-documents-toast-hardcoded-mixed-locale",
@@ -10114,6 +10180,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-07-22T22:21:44Z"
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-sentiment-dash-no-error-state",
+      "branch": "auto-impl/code-review-ppt-web-ui-sentiment-dash-no-cb773f32",
+      "status": "merged",
+      "claimed_at": "2026-11-12T18:26:22Z",
+      "last_updated": "2026-11-12T20:37:25Z",
+      "status_changed_at": "2026-11-12T20:37:25Z",
+      "pr_number": 3464,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3464",
+      "merged_at": "2026-11-12T20:36:23Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=5a6be6596d48364493fe8ddbff646da23597b216 note=sentiment-dash-error-state+retry;6-locale-key;screenmap-updated;ci-green",
+      "last_reviewed_oid": "5a6be6596d48364493fe8ddbff646da23597b216",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "code-review-ppt-web-ui-sessions-double-cast",
@@ -25969,5 +26057,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-12T18:39:09Z"
+  "archived_at": "2026-11-12T20:37:48Z"
 }

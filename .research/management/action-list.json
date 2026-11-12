@@ -731,6 +731,222 @@
         "vector": "completeness",
         "generated": "2026-10-04T00:00:00Z"
       }
+    },
+    {
+      "id": "code-review-ppt-web-core-mgmt-routes-unguarded",
+      "action": "ppt web core mgmt routes unguarded",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-12T20:25:35Z (tier1d ppt-web-core score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-12T20:25:35Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-03T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-agent-contact-no-persist",
+      "action": "reality web agent contact no persist",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-12T20:25:35Z (tier1d reality-web score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-12T20:25:35Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-03T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-route-toasts-i18n",
+      "action": "ppt web core route toasts i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-12T20:25:35Z (tier1d ppt-web-core score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-12T20:25:35Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-03T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-public-pages-mock-data",
+      "action": "reality web public pages mock data",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-12T20:25:35Z (tier1d reality-web score=1 vector=completeness)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-12T20:25:35Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "completeness",
+        "generated": "2026-10-03T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-report-page-hardcoded-sk",
+      "action": "reality web report page hardcoded sk",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-12T20:25:35Z (tier1d reality-web score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-12T20:25:35Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-03T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-listings-page-param-nan",
+      "action": "reality web listings page param nan",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-12T20:25:35Z (tier1d reality-web score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-12T20:25:35Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-30T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-comparison-url-unvalidated-cast",
+      "action": "reality web comparison url unvalidated cast",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-12T20:25:35Z (tier1d reality-web score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-12T20:25:35Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-30T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-admin-web-tenant-restore-stub",
+      "action": "admin web tenant restore stub",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-12T20:25:35Z (tier1d admin-web score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-12T20:25:35Z",
+      "signal_ref": {
+        "segment": "admin-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-27T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-agency-slug-no-i18n",
+      "action": "reality web agency slug no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-12T20:25:35Z (tier1d reality-web score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-12T20:25:35Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-27T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-no-i18n",
+      "action": "reality web listing edit no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-12T20:25:35Z (tier1d reality-web score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-12T20:25:35Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-27T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-realtor-id-no-i18n",
+      "action": "reality web realtor id no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-12T20:25:35Z (tier1d reality-web score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-12T20:25:35Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-27T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-admin-web-tenant-lifecycle-no-i18n",
+      "action": "admin web tenant lifecycle no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-12T20:25:35Z (tier1d admin-web score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-12T20:25:35Z",
+      "signal_ref": {
+        "segment": "admin-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-27T00:00:00Z"
+      }
     }
   ],
   "generated": "2026-11-09T06:45:00Z"
