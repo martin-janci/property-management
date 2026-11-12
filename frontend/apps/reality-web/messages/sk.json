@@ -977,7 +977,24 @@
     "realtorListings": {
       "error": "Nepodarilo sa načítať ponuky.",
       "empty": "Zatiaľ ste nezverejnili žiadne ponuky.",
-      "createFirst": "Vytvorte svoju prvú ponuku"
+      "createFirst": "Vytvorte svoju prvú ponuku",
+      "title": "Moje ponuky",
+      "subtitle": "Spravujte nehnuteľnosti, ktoré ste zverejnili.",
+      "newListing": "+ Nová ponuka",
+      "loading": "Načítava sa…",
+      "forSale": "Na predaj",
+      "forRent": "Na prenájom",
+      "views": "{count} zobrazení",
+      "inquiries": "{count} dopytov",
+      "edit": "Upraviť",
+      "status": {
+        "active": "Aktívna",
+        "pending": "Čaká sa",
+        "sold": "Predané",
+        "rented": "Prenajaté",
+        "withdrawn": "Stiahnutá",
+        "draft": "Koncept"
+      }
     },
     "agencyProfile": {
       "loading": "Načítavam…",

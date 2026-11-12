@@ -977,7 +977,24 @@
     "realtorListings": {
       "error": "Angebote konnten nicht geladen werden.",
       "empty": "Sie haben noch keine Angebote veröffentlicht.",
-      "createFirst": "Erstellen Sie Ihr erstes Angebot"
+      "createFirst": "Erstellen Sie Ihr erstes Angebot",
+      "title": "Meine Angebote",
+      "subtitle": "Verwalten Sie die von Ihnen veröffentlichten Immobilien.",
+      "newListing": "+ Neues Angebot",
+      "loading": "Wird geladen…",
+      "forSale": "Zu verkaufen",
+      "forRent": "Zu vermieten",
+      "views": "{count} Aufrufe",
+      "inquiries": "{count} Anfragen",
+      "edit": "Bearbeiten",
+      "status": {
+        "active": "Aktiv",
+        "pending": "Ausstehend",
+        "sold": "Verkauft",
+        "rented": "Vermietet",
+        "withdrawn": "Zurückgezogen",
+        "draft": "Entwurf"
+      }
     },
     "agencyProfile": {
       "loading": "Wird geladen…",

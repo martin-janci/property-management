@@ -22,26 +22,31 @@ function formatPrice(value: number, currency: string) {
 }
 
 function ListingCard({ listing }: { listing: AgencyListing }) {
+  const t = useTranslations('pages.realtorListings');
+  // Backend may return a status we don't have copy for; fall back to the raw
+  // value instead of letting next-intl emit a missing-key error.
+  const statusKey = `status.${listing.status}`;
+  const statusLabel = t.has(statusKey) ? t(statusKey) : listing.status;
   return (
     <li className="card">
       <div className="meta">
         <Link href={`/listings/${listing.slug}`} className="title">
           {listing.title}
         </Link>
-        <span className={`status status-${listing.status}`}>{listing.status}</span>
+        <span className={`status status-${listing.status}`}>{statusLabel}</span>
       </div>
       <div className="info">
         <span>{formatPrice(listing.price, listing.currency)}</span>
         <span>·</span>
-        <span>{listing.transactionType === 'sale' ? 'For sale' : 'For rent'}</span>
+        <span>{listing.transactionType === 'sale' ? t('forSale') : t('forRent')}</span>
         <span>·</span>
-        <span>{listing.views} views</span>
+        <span>{t('views', { count: listing.views })}</span>
         <span>·</span>
-        <span>{listing.inquiries} inquiries</span>
+        <span>{t('inquiries', { count: listing.inquiries })}</span>
       </div>
       <div className="actions">
         <Link href={`/realtor/listings/${listing.id}/edit`} className="link">
-          Edit
+          {t('edit')}
         </Link>
       </div>
       <style jsx>{`
@@ -76,15 +81,15 @@ function MyListingsContent() {
     <div className="container">
       <header className="head">
         <div>
-          <h1 className="title">My listings</h1>
-          <p className="subtitle">Manage the properties you have published.</p>
+          <h1 className="title">{t('title')}</h1>
+          <p className="subtitle">{t('subtitle')}</p>
         </div>
         <Link href="/realtor/listings/new" className="primary">
-          + New listing
+          {t('newListing')}
         </Link>
       </header>
 
-      {isLoading && <p className="state">Loading…</p>}
+      {isLoading && <p className="state">{t('loading')}</p>}
       {error && <p className="state error">{t('error')}</p>}
       {!isLoading && !error && listings.length === 0 && (
         <div className="empty">

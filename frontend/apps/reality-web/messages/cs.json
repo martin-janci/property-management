@@ -977,7 +977,24 @@
     "realtorListings": {
       "error": "Nepodařilo se načíst nabídky.",
       "empty": "Zatím jste nezveřejnili žádné nabídky.",
-      "createFirst": "Vytvořte svou první nabídku"
+      "createFirst": "Vytvořte svou první nabídku",
+      "title": "Moje nabídky",
+      "subtitle": "Spravujte nemovitosti, které jste zveřejnili.",
+      "newListing": "+ Nová nabídka",
+      "loading": "Načítání…",
+      "forSale": "Na prodej",
+      "forRent": "K pronájmu",
+      "views": "{count} zobrazení",
+      "inquiries": "{count} dotazů",
+      "edit": "Upravit",
+      "status": {
+        "active": "Aktivní",
+        "pending": "Čeká se",
+        "sold": "Prodáno",
+        "rented": "Pronajato",
+        "withdrawn": "Staženo",
+        "draft": "Koncept"
+      }
     },
     "agencyProfile": {
       "loading": "Načítám…",
