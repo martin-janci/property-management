@@ -208,8 +208,8 @@ export const PortfolioDashboardPage: React.FC<PortfolioDashboardPageProps> = ({ 
       <div className="rounded-lg border border-red-200 bg-red-50 p-6">
         <h2 className="text-sm font-semibold text-red-800">{t('portfolio.dashboard.loadError')}</h2>
         <p className="mt-1 text-sm text-red-700">
-          {summaryQuery.error instanceof Error
-            ? summaryQuery.error.message
+          {summaryQuery.isError
+            ? getErrorMessage(summaryQuery.error)
             : t('portfolio.dashboard.loadErrorDetail')}
         </p>
         <button
