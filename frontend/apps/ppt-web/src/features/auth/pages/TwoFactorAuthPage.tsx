@@ -66,13 +66,34 @@ function RecoveryCodesPanel({ codes }: { codes: string[] }) {
   const { t } = useTranslation();
   const { showToast } = useToast();
   const [copied, setCopied] = useState(false);
+  const copyResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear any pending "copied → not-copied" reset timer when the panel
+  // unmounts, so the timer never fires setCopied() on an unmounted component
+  // (state-update-after-unmount) and never leaks past this panel's lifetime.
+  useEffect(() => {
+    return () => {
+      if (copyResetTimer.current !== null) {
+        clearTimeout(copyResetTimer.current);
+        copyResetTimer.current = null;
+      }
+    };
+  }, []);
 
   const handleCopyAll = useCallback(async () => {
     const text = codes.join('\n');
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      // Cancel any in-flight reset before scheduling a new one so rapid
+      // re-clicks don't leave orphaned timers racing to flip `copied` back.
+      if (copyResetTimer.current !== null) {
+        clearTimeout(copyResetTimer.current);
+      }
+      copyResetTimer.current = setTimeout(() => {
+        copyResetTimer.current = null;
+        setCopied(false);
+      }, 2000);
       showToast({ type: 'success', title: t('auth.twoFactor.copiedToast') });
     } catch {
       showToast({
