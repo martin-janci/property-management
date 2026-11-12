@@ -107,6 +107,50 @@ describe('TwoFactorAuthPage — recovery codes', () => {
     });
   });
 
+  it('clears the "copied" reset timer on unmount (no leaked timer / state update after unmount)', async () => {
+    mockStatus.mockReturnValue(status({ enabled: false, backupCodesRemaining: 0 }));
+    mockVerify.mockReturnValue(
+      mut({ mutateAsync: vi.fn().mockResolvedValue({ enabled: true, recoveryCodes: CODES }) })
+    );
+    mockSetup.mockReturnValue(mut({ data: { secret: 'SECRET', qrUri: 'otpauth://x' } }));
+
+    const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
+    const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout');
+
+    const { unmount } = render(<TwoFactorAuthPage />);
+
+    fireEvent.click(screen.getByText('Set up two-factor authentication'));
+    const input = await screen.findByLabelText('Verification code');
+    fireEvent.change(input, { target: { value: '123456' } });
+    fireEvent.click(screen.getByText('Verify and enable'));
+
+    await waitFor(() => {
+      expect(screen.getByText('CODE-0000')).toBeInTheDocument();
+    });
+
+    // Copy, which schedules the 2000ms "copied" reset timer.
+    fireEvent.click(screen.getByText('Copy all'));
+    await waitFor(() => {
+      expect(screen.getByText('Copied!')).toBeInTheDocument();
+    });
+
+    // Grab the id of the copy-reset timer (the 2000ms one scheduled above).
+    const copyTimerCall = setTimeoutSpy.mock.results.find((r, i) => {
+      const delay = setTimeoutSpy.mock.calls[i]?.[1];
+      return delay === 2000 && r.type === 'return';
+    });
+    expect(copyTimerCall).toBeDefined();
+    const copyTimerId = copyTimerCall?.value;
+
+    // Unmounting must clear that pending timer — otherwise it leaks and fires
+    // setCopied() on an unmounted component.
+    unmount();
+    expect(clearTimeoutSpy).toHaveBeenCalledWith(copyTimerId);
+
+    setTimeoutSpy.mockRestore();
+    clearTimeoutSpy.mockRestore();
+  });
+
   it('shows the exhausted-codes warning when no codes remain', () => {
     mockStatus.mockReturnValue(status({ enabled: true, backupCodesRemaining: 0 }));
     render(<TwoFactorAuthPage />);
