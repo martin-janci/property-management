@@ -29,7 +29,12 @@ function SentimentDashboardRoute() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { showToast } = useToast();
-  const { data: dashboard, isLoading: dashboardLoading } = useSentimentDashboard();
+  const {
+    data: dashboard,
+    isLoading: dashboardLoading,
+    isError: dashboardError,
+    refetch: refetchDashboard,
+  } = useSentimentDashboard();
   const { data: trends, isLoading: trendsLoading } = useSentimentTrends({ limit: 60 });
   const { data: alerts, isLoading: alertsLoading } = useSentimentAlerts(false);
   const acknowledge = useAcknowledgeSentimentAlert();
@@ -60,6 +65,8 @@ function SentimentDashboardRoute() {
       trendsLoading={trendsLoading}
       alerts={alerts ?? []}
       alertsLoading={alertsLoading}
+      isError={dashboardError}
+      onRetry={() => refetchDashboard()}
       pendingAcknowledgeId={pendingAcknowledgeId}
       onAcknowledge={handleAcknowledge}
     />

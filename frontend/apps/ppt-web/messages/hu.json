@@ -4070,6 +4070,7 @@
   "sentiment": {
     "pageTitle": "Bérlői hangulat",
     "pageSubtitle": "MI által származtatott hangulati trendek és riasztások a bérlői kommunikációból.",
+    "dashboardLoadError": "Az irányítópult betöltése sikertelen. Kérjük, próbálja újra.",
     "orgAvg": "Szerv. átlag (30 nap)",
     "totalTrends": "Adatpontok",
     "openAlerts": "Nyitott riasztások",

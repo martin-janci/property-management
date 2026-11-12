@@ -65,4 +65,9 @@ client.
 
 <!-- newest entries on top -->
 
+- 2026-11-12 — agent: added a query-error state to the dashboard — the route
+  swallowed `useSentimentDashboard().isError`, so a failed rollup left the KPI
+  cards stuck on placeholder `—`/`N/A`. Now renders a `role="alert"` panel with
+  a Retry (refetch) affordance, mirroring the IoT dashboard convention; added
+  `sentiment.dashboardLoadError` (en/sk/cs/de/pl/hu) + a presentational regression test.
 - 2026-11-04 — agent: linked from the AI assistant page for managers (was orphan)

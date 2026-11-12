@@ -6624,6 +6624,7 @@
   "sentiment": {
     "pageTitle": "Tenant Sentiment",
     "pageSubtitle": "AI-derived sentiment trends and alerts from tenant communications.",
+    "dashboardLoadError": "Failed to load the dashboard. Please try again.",
     "orgAvg": "Org avg (30d)",
     "totalTrends": "Data points",
     "openAlerts": "Open alerts",

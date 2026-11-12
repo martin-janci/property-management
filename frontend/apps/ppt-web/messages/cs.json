@@ -4746,6 +4746,7 @@
   "sentiment": {
     "pageTitle": "Nálada nájemníků",
     "pageSubtitle": "Trendy nálady a upozornění z komunikace nájemníků získané pomocí AI.",
+    "dashboardLoadError": "Nepodařilo se načíst přehled. Zkuste to prosím znovu.",
     "orgAvg": "Průměr org. (30 d)",
     "totalTrends": "Datové body",
     "openAlerts": "Otevřená upozornění",

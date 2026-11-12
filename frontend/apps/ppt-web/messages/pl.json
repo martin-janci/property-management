@@ -4148,6 +4148,7 @@
   "sentiment": {
     "pageTitle": "Nastroje najemców",
     "pageSubtitle": "Trendy nastrojów i alerty z komunikacji najemców generowane przez AI.",
+    "dashboardLoadError": "Nie udało się załadować pulpitu. Spróbuj ponownie.",
     "orgAvg": "Śr. org. (30 dni)",
     "totalTrends": "Punkty danych",
     "openAlerts": "Otwarte alerty",
