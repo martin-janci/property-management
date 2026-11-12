@@ -50,6 +50,16 @@ export interface AuthContextValue extends AuthState {
   enableBiometric: () => Promise<boolean>;
   disableBiometric: () => Promise<void>;
   authenticateWithBiometric: () => Promise<boolean>;
+  /**
+   * Merge changes into the signed-in user and persist them to SecureStore.
+   *
+   * This is the single source of truth for mutating the cached user after a
+   * successful server write (e.g. `PATCH /api/v1/auth/me` from ProfileScreen):
+   * it keeps the in-memory context and the SecureStore `ppt_user` key (used to
+   * restore the session on cold start / biometric unlock) in sync, so callers
+   * must NOT write `USER_KEY` directly. No-ops when signed out.
+   */
+  updateUser: (changes: Partial<User>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -258,6 +268,21 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
     setState((prev) => ({ ...prev, biometricEnabled: false }));
   }, []);
 
+  const updateUser = useCallback(async (changes: Partial<User>) => {
+    // Build the next user synchronously so the persisted copy matches the
+    // in-memory one exactly. Bail when signed out — there is nothing to merge
+    // into and no session to persist.
+    let nextUser: User | null = null;
+    setState((prev) => {
+      if (!prev.user) return prev;
+      nextUser = { ...prev.user, ...changes };
+      return { ...prev, user: nextUser };
+    });
+    if (nextUser) {
+      await SecureStore.setItemAsync(USER_KEY, JSON.stringify(nextUser));
+    }
+  }, []);
+
   const authenticateWithBiometric = useCallback(async (): Promise<boolean> => {
     if (!state.biometricEnabled || !state.biometricAvailable) {
       return false;
@@ -402,6 +427,7 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
       enableBiometric,
       disableBiometric,
       authenticateWithBiometric,
+      updateUser,
     }),
     [
       state,
@@ -411,6 +437,7 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
       enableBiometric,
       disableBiometric,
       authenticateWithBiometric,
+      updateUser,
     ]
   );
 
