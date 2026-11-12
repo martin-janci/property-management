@@ -76,6 +76,22 @@ impl AgencyBrandingRepository {
     /// Upsert branding for `organization_id`. Caller must already hold an
     /// RLS context that authorizes writing this org's branding (super-admin
     /// for Phase 3; capability-gated in Phase 5).
+    ///
+    /// # Three-state partial update
+    ///
+    /// Each nullable field is applied with three-state semantics so a client
+    /// can CLEAR a field back to NULL rather than only ever setting it:
+    ///   * **absent** (`None`)            → leave the column unchanged,
+    ///   * **explicit null / empty** (`Some(None)` or `Some(Some(""))`)
+    ///                                     → clear the column to NULL,
+    ///   * **a value** (`Some(Some(v))`)  → set the column.
+    ///
+    /// This replaces the previous `COALESCE(EXCLUDED.x, agency_branding.x)`
+    /// upsert, under which an explicit null bound as SQL NULL and `COALESCE`
+    /// kept the old value — making a clear indistinguishable from "no change".
+    /// Each field now carries a `present` flag and the `ON CONFLICT` branch
+    /// uses `CASE WHEN $present THEN EXCLUDED.x ELSE agency_branding.x END`.
+    /// Mirrors the reality-server fix (#3430).
     pub async fn upsert_rls<'e, E>(
         &self,
         executor: E,
@@ -85,8 +101,22 @@ impl AgencyBrandingRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        // `css_vars` defaults to `{}` at the column level; we only override
-        // when an explicit value is passed.
+        // Split each nullable patch field into (present, value). `present`
+        // distinguishes an absent field (leave unchanged) from an explicit
+        // null/empty (clear to NULL) — the fix for the COALESCE-can-never-clear
+        // defect. A present-but-empty string clears the column, so a client can
+        // clear via `""` as well as `null`.
+        let (logo_present, logo_url) = patch_str(update.logo_url);
+        let (banner_present, banner_url) = patch_str(update.banner_url);
+        let (primary_present, primary_color) = patch_str(update.primary_color);
+        let (secondary_present, secondary_color) = patch_str(update.secondary_color);
+        let (font_present, font_family) = patch_str(update.font_family);
+
+        // `css_vars` is `NOT NULL` (defaults to `{}`), so it has only two
+        // states: present → set to the provided object, absent → leave the
+        // existing value untouched (the old code wrote `{}` on an absent field,
+        // silently wiping stored overrides).
+        let css_present = update.css_vars.is_some();
         let css_vars: Value = update.css_vars.unwrap_or(Value::Object(Default::default()));
 
         sqlx::query_as::<_, AgencyBranding>(
@@ -99,25 +129,46 @@ impl AgencyBrandingRepository {
             ON CONFLICT (organization_id)
                 WHERE organization_id IS NOT NULL
             DO UPDATE SET
-                logo_url        = COALESCE(EXCLUDED.logo_url,        agency_branding.logo_url),
-                banner_url      = COALESCE(EXCLUDED.banner_url,      agency_branding.banner_url),
-                primary_color   = COALESCE(EXCLUDED.primary_color,   agency_branding.primary_color),
-                secondary_color = COALESCE(EXCLUDED.secondary_color, agency_branding.secondary_color),
-                font_family     = COALESCE(EXCLUDED.font_family,     agency_branding.font_family),
-                css_vars        = EXCLUDED.css_vars,
+                logo_url        = CASE WHEN $8  THEN EXCLUDED.logo_url        ELSE agency_branding.logo_url        END,
+                banner_url      = CASE WHEN $9  THEN EXCLUDED.banner_url      ELSE agency_branding.banner_url      END,
+                primary_color   = CASE WHEN $10 THEN EXCLUDED.primary_color   ELSE agency_branding.primary_color   END,
+                secondary_color = CASE WHEN $11 THEN EXCLUDED.secondary_color ELSE agency_branding.secondary_color END,
+                font_family     = CASE WHEN $12 THEN EXCLUDED.font_family     ELSE agency_branding.font_family     END,
+                css_vars        = CASE WHEN $13 THEN EXCLUDED.css_vars        ELSE agency_branding.css_vars        END,
                 updated_at      = NOW()
             RETURNING id, organization_id, logo_url, banner_url, primary_color,
                       secondary_color, font_family, css_vars, updated_at
             "#,
         )
         .bind(organization_id)
-        .bind(&update.logo_url)
-        .bind(&update.banner_url)
-        .bind(&update.primary_color)
-        .bind(&update.secondary_color)
-        .bind(&update.font_family)
+        .bind(&logo_url)
+        .bind(&banner_url)
+        .bind(&primary_color)
+        .bind(&secondary_color)
+        .bind(&font_family)
         .bind(&css_vars)
+        .bind(logo_present)
+        .bind(banner_present)
+        .bind(primary_present)
+        .bind(secondary_present)
+        .bind(font_present)
+        .bind(css_present)
         .fetch_one(executor)
         .await
+    }
+}
+
+/// Split a nullable string patch field into `(present, value)` for the
+/// three-state upsert:
+/// - `None`                    → `(false, None)` — absent, leave unchanged.
+/// - `Some(None)`              → `(true, None)`  — explicit null, clear to NULL.
+/// - `Some(Some(s))` where `s` is empty → `(true, None)` — empty string clears.
+/// - `Some(Some(s))`           → `(true, Some(s))` — set the column.
+fn patch_str(field: Option<Option<String>>) -> (bool, Option<String>) {
+    match field {
+        None => (false, None),
+        Some(None) => (true, None),
+        Some(Some(s)) if s.is_empty() => (true, None),
+        Some(Some(s)) => (true, Some(s)),
     }
 }

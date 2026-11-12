@@ -35,20 +35,50 @@ pub struct AgencyBranding {
     pub updated_at: DateTime<Utc>,
 }
 
+/// Deserialize a field as a double `Option` so the caller can tell "absent"
+/// (`None`) from "explicitly null" (`Some(None)`) and "set to a value"
+/// (`Some(Some(v))`). Paired with `#[serde(default)]`: an absent key yields
+/// `None`; a present key (null OR a value) runs this and wraps the inner
+/// `Option` in `Some`. Without it, serde collapses an explicit `null` to
+/// `None`, making a clear-to-null indistinguishable from an omitted field —
+/// the exact reason the old COALESCE upsert in `AgencyBrandingRepository::
+/// upsert_rls` could never clear a branding field. Mirrors the reality-server
+/// fix (#3430) and `documents::core::double_option` (#1589).
+fn double_option<'de, T, D>(deserializer: D) -> Result<Option<Option<T>>, D::Error>
+where
+    T: Deserialize<'de>,
+    D: serde::Deserializer<'de>,
+{
+    Option::<T>::deserialize(deserializer).map(Some)
+}
+
 /// Update payload for the per-tenant branding admin endpoint
 /// (`PUT /admin/tenants/{org_id}/branding`).
+///
+/// Every nullable field is a double `Option` (via `double_option`) so the
+/// upsert can distinguish three client intents per field: **absent** (leave
+/// the column unchanged), **explicit null / empty string** (clear the column
+/// back to NULL), and **a value** (set it). The wire shape is unchanged — each
+/// field is still an optional, nullable value. `css_vars` is `NOT NULL`
+/// (defaults to `{}`), so it has only two states: present → set, absent →
+/// leave unchanged.
 #[derive(Debug, Clone, Default, Serialize, Deserialize, ToSchema)]
 pub struct UpdateOrganizationBranding {
-    #[serde(default)]
-    pub logo_url: Option<String>,
-    #[serde(default)]
-    pub banner_url: Option<String>,
-    #[serde(default)]
-    pub primary_color: Option<String>,
-    #[serde(default)]
-    pub secondary_color: Option<String>,
-    #[serde(default)]
-    pub font_family: Option<String>,
+    #[serde(default, deserialize_with = "double_option")]
+    #[schema(value_type = Option<String>, nullable)]
+    pub logo_url: Option<Option<String>>,
+    #[serde(default, deserialize_with = "double_option")]
+    #[schema(value_type = Option<String>, nullable)]
+    pub banner_url: Option<Option<String>>,
+    #[serde(default, deserialize_with = "double_option")]
+    #[schema(value_type = Option<String>, nullable)]
+    pub primary_color: Option<Option<String>>,
+    #[serde(default, deserialize_with = "double_option")]
+    #[schema(value_type = Option<String>, nullable)]
+    pub secondary_color: Option<Option<String>>,
+    #[serde(default, deserialize_with = "double_option")]
+    #[schema(value_type = Option<String>, nullable)]
+    pub font_family: Option<Option<String>>,
     #[serde(default)]
     pub css_vars: Option<Value>,
 }
