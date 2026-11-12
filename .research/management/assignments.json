@@ -27,7 +27,7 @@
       "branch": "auto-impl/code-review-reality-server-realtor-respo-ae3e26df",
       "status": "review",
       "claimed_at": "2026-11-11T12:22:33Z",
-      "last_updated": "2026-11-11T20:30:20Z",
+      "last_updated": "2026-11-12T00:31:15Z",
       "status_changed_at": "2026-11-11T14:49:21Z",
       "pr_number": 3420,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3420",
@@ -42,14 +42,14 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 1,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-11-12T00:31:15Z"
     },
     {
       "task_id": "gh-issue-3425",
       "branch": "auto-impl/gh-issue-3425-467e9933",
       "status": "review",
       "claimed_at": "2026-11-11T20:36:00Z",
-      "last_updated": "2026-11-11T21:02:15Z",
+      "last_updated": "2026-11-12T00:31:15Z",
       "status_changed_at": "2026-11-11T20:59:34Z",
       "pr_number": 3429,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3429",
@@ -64,7 +64,7 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-11-12T00:31:15Z"
     },
     {
       "task_id": "code-review-reality-server-branding-coalesce-no-clear",
@@ -115,15 +115,15 @@
       "branch": "auto-impl/gh-issue-3431-1deec44b",
       "status": "review",
       "claimed_at": "2026-11-11T22:30:51Z",
-      "last_updated": "2026-11-12T00:24:59Z",
+      "last_updated": "2026-11-12T00:33:23Z",
       "status_changed_at": "2026-11-12T00:24:59Z",
       "pr_number": 3432,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3432",
       "merged_at": null,
-      "specialist": null,
+      "specialist": "rust-backend",
       "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve head_oid=84f31b0662c0bbebd03a15bb945056ac69aac08e note=clean-3state-upsert-fix-mirrors-3430-ci-green-draft-ready-needed",
+      "last_reviewed_oid": "84f31b0662c0bbebd03a15bb945056ac69aac08e",
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
@@ -177,5 +177,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-11T22:35:12Z"
+  "generated": "2026-11-12T00:33:45Z"
 }
