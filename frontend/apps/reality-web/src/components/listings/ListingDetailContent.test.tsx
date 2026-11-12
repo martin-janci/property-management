@@ -41,6 +41,30 @@ vi.mock('@/components/ui', () => ({
   Footer: () => null,
 }));
 
+// Simulate next-intl's locale-aware Link (createNavigation). With
+// localePrefix 'as-needed' and a non-default active locale, the Link prefixes
+// the active locale onto the href — exactly the segment a raw <a href> drops.
+// We hard-code 'de' (a non-default locale) so the regression is observable: a
+// raw anchor renders href="/" / "/listings", whereas the locale-aware Link
+// renders "/de" / "/de/listings".
+vi.mock('@/i18n/routing', () => ({
+  Link: ({
+    children,
+    href,
+    ...rest
+  }: {
+    children: React.ReactNode;
+    href: string;
+    className?: string;
+  }) => (
+    <a href={href === '/' ? '/de' : `/de${href}`} {...rest}>
+      {children}
+    </a>
+  ),
+  usePathname: () => '/de',
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+}));
+
 const validListing: ListingDetail = {
   id: 'listing-1',
   slug: 'beautiful-apartment',
@@ -104,6 +128,23 @@ describe('ListingDetailContent', () => {
     render(<ListingDetailContent listing={null} />);
     // next-intl is mocked to echo the key.
     expect(screen.getByText('notFound')).toBeInTheDocument();
+  });
+
+  it('breadcrumb nav links preserve the active locale (locale-aware Link, not a raw anchor that drops it)', () => {
+    render(<ListingDetailContent listing={validListing} />);
+    // The home + "all listings" breadcrumb links must carry the active
+    // (non-default) locale. A raw <a href="/"> / <a href="/listings"> drops it
+    // and bounces the user back to the default locale on navigation.
+    expect(screen.getByRole('link', { name: 'home' })).toHaveAttribute('href', '/de');
+    expect(screen.getByRole('link', { name: 'allListings' })).toHaveAttribute(
+      'href',
+      '/de/listings'
+    );
+  });
+
+  it('ListingNotFound back-link preserves the active locale', () => {
+    render(<ListingDetailContent listing={null} />);
+    expect(screen.getByRole('link', { name: 'browseAll' })).toHaveAttribute('href', '/de/listings');
   });
 
   it('renders a normalized listing whose features/photos are empty', () => {
