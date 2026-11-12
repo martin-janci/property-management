@@ -14,8 +14,8 @@
  * mock content is gone.
  */
 
-import { render, screen } from '@testing-library/react-native';
 import type { InboxResponse } from '@ppt/api-client';
+import { render, screen } from '@testing-library/react-native';
 import { NotificationsScreen } from './NotificationsScreen';
 
 jest.mock('../../hooks/useApi', () => ({
@@ -90,9 +90,7 @@ describe('NotificationsScreen real-data wiring', () => {
     mockQuery({ data: SAMPLE });
     await render(<NotificationsScreen />);
     const paths = mockUseApiQuery.mock.calls.map((call) => String(call[1]));
-    expect(
-      paths.some((p) => p.includes('/notification-preferences/granular/groups'))
-    ).toBe(true);
+    expect(paths.some((p) => p.includes('/notification-preferences/granular/groups'))).toBe(true);
   });
 
   it('renders notifications from the API payload, not mock data', async () => {
