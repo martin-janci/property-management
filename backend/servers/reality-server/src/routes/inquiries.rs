@@ -57,6 +57,30 @@ fn validate_inquiry_lengths(
     Ok(())
 }
 
+/// Validate an inquiry **response** body, shared by every respond endpoint
+/// (`POST /inquiries/{id}/respond` and `POST /realtors/inquiries/{id}/respond`)
+/// so the two guards cannot drift apart. Rejects an empty-after-trim body and a
+/// body longer than [`MAX_INQUIRY_MESSAGE_LEN`] characters, each with a `400`
+/// tuple error ready to `?`-propagate from an Axum handler. Counts Unicode
+/// scalar values (`chars()`), not bytes, so multibyte input isn't penalised.
+pub(crate) fn validate_inquiry_message(
+    message: &str,
+) -> Result<(), (axum::http::StatusCode, String)> {
+    if message.trim().is_empty() {
+        return Err((
+            axum::http::StatusCode::BAD_REQUEST,
+            "Message is required".to_string(),
+        ));
+    }
+    if message.chars().count() > MAX_INQUIRY_MESSAGE_LEN {
+        return Err((
+            axum::http::StatusCode::BAD_REQUEST,
+            "Message must be less than 5000 characters".to_string(),
+        ));
+    }
+    Ok(())
+}
+
 /// Derive a stable, **spoof-resistant** per-client bucket key for the anonymous
 /// inquiry throttle.
 ///
@@ -783,20 +807,8 @@ pub async fn respond_to_inquiry(
     Path(id): Path<Uuid>,
     Json(req): Json<SendInquiryMessage>,
 ) -> Result<Json<InquiryMessageResponse>, (axum::http::StatusCode, String)> {
-    // Validate message
-    if req.message.trim().is_empty() {
-        return Err((
-            axum::http::StatusCode::BAD_REQUEST,
-            "Message is required".to_string(),
-        ));
-    }
-
-    if req.message.chars().count() > 5000 {
-        return Err((
-            axum::http::StatusCode::BAD_REQUEST,
-            "Message must be less than 5000 characters".to_string(),
-        ));
-    }
+    // Validate message (shared guard — mirrored by the realtors respond path).
+    validate_inquiry_message(&req.message)?;
 
     let message = state
         .reality_portal_repo
