@@ -69,18 +69,18 @@
     {
       "task_id": "code-review-ppt-web-ui-toast-persistent-overflow-leak",
       "branch": "auto-impl/code-review-ppt-web-ui-toast-persistent-186679ac",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-12T22:28:38Z",
-      "last_updated": "2026-11-12T22:28:38Z",
-      "status_changed_at": "2026-11-12T22:28:38Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-12T22:51:00Z",
+      "status_changed_at": "2026-11-12T22:51:00Z",
+      "pr_number": 3471,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3471",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=3471 status=done specialist=react-web note=bounded ToastProvider queue (evict overflow + clear timers); persistent/error toasts leaked forever; 2 TDD tests fail-on-dev/pass-on-fix; verify green; drift=false-positive (owner-hint only)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -89,5 +89,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-12T22:43:29Z"
+  "generated": "2026-11-12T22:51:00Z"
 }
