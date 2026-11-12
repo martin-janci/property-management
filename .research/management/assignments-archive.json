@@ -9451,6 +9451,28 @@
       "merge_attempted_at": "2026-11-06T08:29:17Z"
     },
     {
+      "task_id": "code-review-ppt-web-ui-leases-list-swallows-query-error",
+      "branch": "auto-impl/code-review-ppt-web-ui-leases-list-swall-b9bcddb1",
+      "status": "merged",
+      "claimed_at": "2026-11-12T14:27:57Z",
+      "last_updated": "2026-11-12T16:37:21Z",
+      "status_changed_at": "2026-11-12T16:37:21Z",
+      "pr_number": 3456,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3456",
+      "merged_at": "2026-11-12T16:36:23Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=7379ea972c411bdc8747078c13a1a01564b46700 note=clean-frontend-fix-ci-green-approve-posted-as-comment-self-approval-blocked",
+      "last_reviewed_oid": "7379ea972c411bdc8747078c13a1a01564b46700",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-12T16:34:43Z"
+    },
+    {
       "task_id": "code-review-ppt-web-ui-marketplace-epic68-orphaned-routes",
       "branch": "auto-impl/code-review-ppt-web-ui-marketplace-epic6-2dd4e831",
       "status": "failed",
@@ -9607,6 +9629,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "code-review-ppt-web-ui-outages-page-swallows-query-error",
+      "branch": "auto-impl/code-review-ppt-web-ui-outages-page-swal-943afb01",
+      "status": "merged",
+      "claimed_at": "2026-11-12T14:27:57Z",
+      "last_updated": "2026-11-12T16:40:25Z",
+      "status_changed_at": "2026-11-12T16:40:25Z",
+      "pr_number": 3457,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3457",
+      "merged_at": "2026-11-12T16:38:32Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=d9dd5041ea435131552cd7a70cf72d486f31472e note=clean-ppt-web-error-state-fix-mirrors-FacilityList-ci-green-posted-as-comment-review-self-approval-blocked",
+      "last_reviewed_oid": "d9dd5041ea435131552cd7a70cf72d486f31472e",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-12T16:37:37Z"
+    },
+    {
       "task_id": "code-review-ppt-web-ui-payment-match-silent-fail",
       "branch": "auto-impl/code-review-ppt-web-ui-payment-match-sil-98ca92f1",
       "status": "merged",
@@ -9761,6 +9805,28 @@
       "merge_attempted_at": "2026-08-12T06:07:30Z",
       "quarantined_at": null,
       "quarantine_reason": null
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-questionresults-i18n",
+      "branch": "auto-impl/code-review-ppt-web-ui-questionresults-i-75bb12ac",
+      "status": "merged",
+      "claimed_at": "2026-11-12T14:27:57Z",
+      "last_updated": "2026-11-12T16:40:25Z",
+      "status_changed_at": "2026-11-12T16:40:25Z",
+      "pr_number": 3458,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3458",
+      "merged_at": "2026-11-12T16:39:59Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=3389a6f7faf213f036e7a5e1a34d7a83d5c8ac62 note=clean-a11y-i18n-fix-all-6-locales-parity-CI-green-posted-as-comment-self-approval-blocked",
+      "last_reviewed_oid": "3389a6f7faf213f036e7a5e1a34d7a83d5c8ac62",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-12T16:37:37Z"
     },
     {
       "task_id": "code-review-ppt-web-ui-registry-feature-orphaned-routes",
@@ -9954,6 +10020,28 @@
       "reviewer_summary": "verdict=approve head_oid=12612abaab839093130b4ab5d5a39f79fa417daa note=ppt-web rentals error-state fix clean, test-first, i18n complete, CI green; scope_drift owner-label only; approve posted as COMMENT",
       "last_reviewed_oid": "12612abaab839093130b4ab5d5a39f79fa417daa",
       "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-rfqform-i18n",
+      "branch": "auto-impl/code-review-ppt-web-ui-rfqform-i18n-db2b1a70",
+      "status": "failed",
+      "claimed_at": "2026-11-12T16:28:01Z",
+      "last_updated": "2026-11-12T16:33:44Z",
+      "status_changed_at": "2026-11-12T16:33:44Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=done specialist=react-web scope_drift=false code_reuse_warn=none note=stale finding: RfqForm.tsx already fully i18n'd on dev (41 t() keys, 6-locale parity); only placeholder=0.00 numeric hints remain (ppt-web convention); no code change warranted",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -25815,5 +25903,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-12T14:39:18Z"
+  "archived_at": "2026-11-12T16:41:12Z"
 }

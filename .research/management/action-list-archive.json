@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-12T12:38:24Z",
+  "archived_at": "2026-11-12T16:41:13Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -6683,6 +6683,31 @@
       }
     },
     {
+      "id": "code-review-mobile-rn-notifications-still-mock",
+      "action": "mobile rn notifications still mock",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-11T08:26:16Z (tier1d mobile-rn score=1 vector=bug) | gc1-reconcile 2026-11-12T16:24:32Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T08:26:16Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-10T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3454,
+        "merged_at": "2026-11-12T14:37:56Z",
+        "at": "2026-11-12T16:24:32Z"
+      }
+    },
+    {
       "id": "code-review-mobile-rn-offline-401-dropped",
       "action": "mobile-rn: offline sync queue treats ALL 4xx (incl. recoverable 401 expired-token / 429 rate-limit) as permanent and drops the queued action, silently losing offline-created content",
       "owner_role": "pm-backend",
@@ -8932,6 +8957,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-community-forms-i18n",
+      "action": "ppt web ui community forms i18n",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-11T08:26:16Z (tier1d ppt-web-ui score=1 vector=i18n) | gc1-reconcile 2026-11-12T16:24:32Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T08:26:16Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "i18n",
+        "generated": "2026-10-10T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3455,
+        "merged_at": "2026-11-12T14:37:42Z",
+        "at": "2026-11-12T16:24:32Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-confirm-dialog-i18n",
       "action": "ppt-web ConfirmationDialog hardcodes 'Processing...' loading text with no i18n / prop escape hatch",
       "owner_role": "pm-backend",
@@ -9420,6 +9470,31 @@
         "merged_pr": 2884,
         "merged_at": "2026-08-30T04:38:30Z",
         "at": "2026-08-30T06:23:27Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-filedisputedialog-i18n",
+      "action": "ppt web ui filedisputedialog i18n",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-11T08:26:16Z (tier1d ppt-web-ui score=1 vector=i18n) | gc1-reconcile 2026-11-12T16:24:32Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T08:26:16Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "i18n",
+        "generated": "2026-10-10T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-12T16:24:32Z"
       }
     },
     {
@@ -9945,6 +10020,31 @@
       "archived_at": "2026-11-09"
     },
     {
+      "id": "code-review-ppt-web-ui-registry-page-mutations-silent-fail",
+      "action": "ppt web ui registry page mutations silent fail",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-11T08:26:16Z (tier1d ppt-web-ui score=2 vector=bug) | gc1-reconcile 2026-11-12T16:24:32Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T08:26:16Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-10T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-12T16:24:32Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-registry-page-no-auth",
       "action": "ppt-web RegistryPage.tsx (L19-23) and RegistryRulesPage.tsx (L21) build the API client at module scope with no accessToken/tenantId (stub) — all registry requests ship without a Bearer token/tenant context (401/non-functional) and the module-scope singleton never rotates the token. Rebuild per the canonical useBuildings.ts getToken()+useMemo pattern. Add/adjust a test.",
       "owner_role": "pm-frontend",
@@ -10009,6 +10109,24 @@
         "merged_pr": 3422,
         "merged_at": "2026-11-11T20:30:20Z",
         "at": "2026-11-11T20:30:30Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-rfqform-i18n",
+      "action": "[already-resolved-on-dev, no change needed] ppt web ui rfqform i18n",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d ppt-web-ui score=1 vector=i18n)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T18:26:12Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "i18n",
+        "generated": "2026-10-10T00:00:00Z"
       }
     },
     {
