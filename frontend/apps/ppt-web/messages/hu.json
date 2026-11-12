@@ -357,7 +357,8 @@
     "disabled": "Kikapcsolva",
     "more": "További lehetőségek",
     "settings": "Beállítások",
-    "confirmTitle": "Biztos benne?"
+    "confirmTitle": "Biztos benne?",
+    "selectOrganization": "Válasszon szervezetet"
   },
   "nav": {
     "home": "Főoldal",
@@ -2831,6 +2832,7 @@
       "replyCount_other": "{{count}} válasz"
     },
     "errors": {
+      "loadFailed": "Nem sikerült betölteni a cikket",
       "loadListFailed": "Nem sikerült betölteni a cikkeket",
       "deleteFailed": "Nem sikerült törölni a cikket",
       "publishFailed": "Nem sikerült közzétenni a cikket",

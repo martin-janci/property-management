@@ -357,7 +357,8 @@
     "disabled": "Wyłączone",
     "more": "Więcej opcji",
     "settings": "Ustawienia",
-    "confirmTitle": "Czy na pewno?"
+    "confirmTitle": "Czy na pewno?",
+    "selectOrganization": "Wybierz organizację"
   },
   "nav": {
     "home": "Strona główna",
@@ -2901,6 +2902,7 @@
       "replyCount_other": "{{count}} odpowiedzi"
     },
     "errors": {
+      "loadFailed": "Nie udało się załadować artykułu",
       "loadListFailed": "Nie udało się załadować artykułów",
       "deleteFailed": "Nie udało się usunąć artykułu",
       "publishFailed": "Nie udało się opublikować artykułu",

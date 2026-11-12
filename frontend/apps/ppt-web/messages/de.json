@@ -357,7 +357,8 @@
     "disabled": "Deaktiviert",
     "more": "Weitere Optionen",
     "settings": "Einstellungen",
-    "confirmTitle": "Sind Sie sicher?"
+    "confirmTitle": "Sind Sie sicher?",
+    "selectOrganization": "Bitte wählen Sie eine Organisation"
   },
   "nav": {
     "home": "Startseite",
@@ -2831,6 +2832,7 @@
       "replyCount_other": "{{count}} Antworten"
     },
     "errors": {
+      "loadFailed": "Artikel konnte nicht geladen werden",
       "loadListFailed": "Artikel konnten nicht geladen werden",
       "deleteFailed": "Artikel konnte nicht gelöscht werden",
       "publishFailed": "Artikel konnte nicht veröffentlicht werden",
