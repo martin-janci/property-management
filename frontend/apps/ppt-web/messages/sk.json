@@ -7342,6 +7342,50 @@
       "all": "Všetky",
       "pending": "Čakajúce",
       "acknowledged": "Potvrdené"
+    },
+    "banner": {
+      "short_one": "{{count}} kritické upozornenie",
+      "short_few": "{{count}} kritické upozornenia",
+      "short_many": "{{count}} kritických upozornení",
+      "short_other": "{{count}} kritických upozornení",
+      "long_one": "Máte {{count}} nepotvrdené kritické upozornenie, ktoré vyžaduje vašu pozornosť.",
+      "long_few": "Máte {{count}} nepotvrdené kritické upozornenia, ktoré vyžadujú vašu pozornosť.",
+      "long_many": "Máte {{count}} nepotvrdených kritických upozornení, ktoré vyžadujú vašu pozornosť.",
+      "long_other": "Máte {{count}} nepotvrdených kritických upozornení, ktoré vyžadujú vašu pozornosť.",
+      "viewNow": "Zobraziť teraz"
+    },
+    "modal": {
+      "heading": "Kritické upozornenie",
+      "counter": "{{current}} z {{total}}",
+      "postedOn": "Zverejnené dňa {{date}}",
+      "acknowledging": "Potvrdzuje sa...",
+      "acknowledgeNext": "Potvrdzujem – ďalšie",
+      "acknowledge": "Potvrdzujem"
+    },
+    "statsCard": {
+      "heading": "Stav potvrdení",
+      "percentAcknowledged": "{{percent}} % potvrdené",
+      "ofTotal": "{{done}} z {{total}}",
+      "totalUsers": "Používatelia celkom",
+      "acknowledged": "Potvrdené",
+      "pending": "Čakajúce"
+    },
+    "form": {
+      "titleLabel": "Názov",
+      "titlePlaceholder": "Zadajte názov upozornenia",
+      "messageLabel": "Správa",
+      "messagePlaceholder": "Zadajte text upozornenia...",
+      "messageHelp": "Toto upozornenie sa odošle všetkým členom vašej organizácie a bude vyžadovať potvrdenie.",
+      "warningStrong": "Kritické upozornenia obchádzajú predvoľby používateľov.",
+      "warningText": "Túto funkciu použite iba na skutočne dôležité oznámenia, ktoré musia vidieť všetci členovia.",
+      "cancel": "Zrušiť",
+      "submit": "Odoslať kritické upozornenie",
+      "submitting": "Odosiela sa...",
+      "validation": {
+        "titleRequired": "Názov je povinný",
+        "titleTooLong": "Názov musí mať najviac 255 znakov",
+        "messageRequired": "Správa je povinná"
+      }
     }
   },
   "neighbors": {

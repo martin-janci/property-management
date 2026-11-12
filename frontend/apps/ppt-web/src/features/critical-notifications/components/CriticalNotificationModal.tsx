@@ -7,6 +7,7 @@
 
 import type { CriticalNotificationResponse } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface CriticalNotificationModalProps {
   notifications: CriticalNotificationResponse[];
@@ -19,6 +20,7 @@ export function CriticalNotificationModal({
   onAcknowledge,
   isAcknowledging = false,
 }: CriticalNotificationModalProps) {
+  const { t } = useTranslation();
   const [currentIndex, setCurrentIndex] = useState(0);
 
   if (notifications.length === 0) return null;
@@ -71,11 +73,16 @@ export function CriticalNotificationModal({
                 </svg>
               </div>
               <div className="ml-3 flex-1">
-                <h3 className="text-base font-semibold text-white">Critical Notification</h3>
+                <h3 className="text-base font-semibold text-white">
+                  {t('criticalNotifications.modal.heading')}
+                </h3>
               </div>
               {notifications.length > 1 && (
                 <div className="text-sm text-red-200">
-                  {currentIndex + 1} of {notifications.length}
+                  {t('criticalNotifications.modal.counter', {
+                    current: currentIndex + 1,
+                    total: notifications.length,
+                  })}
                 </div>
               )}
             </div>
@@ -85,7 +92,9 @@ export function CriticalNotificationModal({
           <div className="px-4 py-5 sm:p-6">
             <h4 className="text-lg font-semibold text-gray-900">{currentNotification.title}</h4>
             <p className="mt-2 text-sm text-gray-500">
-              Posted on {formatDate(currentNotification.createdAt)}
+              {t('criticalNotifications.modal.postedOn', {
+                date: formatDate(currentNotification.createdAt),
+              })}
             </p>
             <div className="mt-4">
               <p className="text-sm text-gray-700 whitespace-pre-wrap">
@@ -124,12 +133,12 @@ export function CriticalNotificationModal({
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     />
                   </svg>
-                  Acknowledging...
+                  {t('criticalNotifications.modal.acknowledging')}
                 </>
               ) : hasMore ? (
-                'I Acknowledge - Next'
+                t('criticalNotifications.modal.acknowledgeNext')
               ) : (
-                'I Acknowledge'
+                t('criticalNotifications.modal.acknowledge')
               )}
             </button>
           </div>

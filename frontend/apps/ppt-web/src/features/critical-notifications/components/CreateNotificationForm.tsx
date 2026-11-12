@@ -6,6 +6,7 @@
 
 import type { CreateCriticalNotificationRequest } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface CreateNotificationFormProps {
   onSubmit: (data: CreateCriticalNotificationRequest) => Promise<void>;
@@ -20,6 +21,7 @@ export function CreateNotificationForm({
   isSubmitting = false,
   error = null,
 }: CreateNotificationFormProps) {
+  const { t } = useTranslation();
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [errors, setErrors] = useState<{ title?: string; message?: string }>({});
@@ -28,13 +30,13 @@ export function CreateNotificationForm({
     const newErrors: { title?: string; message?: string } = {};
 
     if (!title.trim()) {
-      newErrors.title = 'Title is required';
+      newErrors.title = t('criticalNotifications.form.validation.titleRequired');
     } else if (title.length > 255) {
-      newErrors.title = 'Title must be 255 characters or less';
+      newErrors.title = t('criticalNotifications.form.validation.titleTooLong');
     }
 
     if (!message.trim()) {
-      newErrors.message = 'Message is required';
+      newErrors.message = t('criticalNotifications.form.validation.messageRequired');
     }
 
     setErrors(newErrors);
@@ -89,7 +91,7 @@ export function CreateNotificationForm({
           htmlFor="notification-title"
           className="block text-sm font-medium leading-6 text-gray-900"
         >
-          Title
+          {t('criticalNotifications.form.titleLabel')}
         </label>
         <div className="mt-2">
           <input
@@ -100,7 +102,7 @@ export function CreateNotificationForm({
             className={`block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ${
               errors.title ? 'ring-red-300' : 'ring-gray-300'
             } placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-600 sm:text-sm sm:leading-6`}
-            placeholder="Enter notification title"
+            placeholder={t('criticalNotifications.form.titlePlaceholder')}
           />
           {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
         </div>
@@ -111,7 +113,7 @@ export function CreateNotificationForm({
           htmlFor="notification-message"
           className="block text-sm font-medium leading-6 text-gray-900"
         >
-          Message
+          {t('criticalNotifications.form.messageLabel')}
         </label>
         <div className="mt-2">
           <textarea
@@ -122,14 +124,11 @@ export function CreateNotificationForm({
             className={`block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ${
               errors.message ? 'ring-red-300' : 'ring-gray-300'
             } placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-600 sm:text-sm sm:leading-6`}
-            placeholder="Enter the notification message..."
+            placeholder={t('criticalNotifications.form.messagePlaceholder')}
           />
           {errors.message && <p className="mt-1 text-sm text-red-600">{errors.message}</p>}
         </div>
-        <p className="mt-2 text-sm text-gray-500">
-          This notification will be sent to all members of your organization and will require
-          acknowledgment.
-        </p>
+        <p className="mt-2 text-sm text-gray-500">{t('criticalNotifications.form.messageHelp')}</p>
       </div>
 
       <div className="bg-amber-50 border-l-4 border-amber-400 p-4">
@@ -150,8 +149,8 @@ export function CreateNotificationForm({
           </div>
           <div className="ml-3">
             <p className="text-sm text-amber-700">
-              <strong>Critical notifications bypass user preferences.</strong> Only use this feature
-              for truly important announcements that all members must see.
+              <strong>{t('criticalNotifications.form.warningStrong')}</strong>{' '}
+              {t('criticalNotifications.form.warningText')}
             </p>
           </div>
         </div>
@@ -164,7 +163,7 @@ export function CreateNotificationForm({
           disabled={isSubmitting}
           className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
         >
-          Cancel
+          {t('criticalNotifications.form.cancel')}
         </button>
         <button
           type="submit"
@@ -193,10 +192,10 @@ export function CreateNotificationForm({
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 />
               </svg>
-              Sending...
+              {t('criticalNotifications.form.submitting')}
             </>
           ) : (
-            'Send Critical Notification'
+            t('criticalNotifications.form.submit')
           )}
         </button>
       </div>
