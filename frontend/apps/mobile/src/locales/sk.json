@@ -17,7 +17,9 @@
     "search": "Hladat",
     "refresh": "Obnovit",
     "submit": "Odoslať",
-    "tryAgain": "Skúsiť znova"
+    "tryAgain": "Skúsiť znova",
+    "errorTitle": "Niečo sa pokazilo",
+    "errorDescription": "Skúste to znova. Ak problém pretrváva, kontaktujte podporu."
   },
   "tabs": {
     "home": "Domov",

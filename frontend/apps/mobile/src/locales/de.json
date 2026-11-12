@@ -17,7 +17,9 @@
     "search": "Suchen",
     "refresh": "Aktualisieren",
     "submit": "Absenden",
-    "tryAgain": "Erneut versuchen"
+    "tryAgain": "Erneut versuchen",
+    "errorTitle": "Etwas ist schiefgelaufen",
+    "errorDescription": "Bitte versuchen Sie es erneut. Besteht das Problem weiterhin, wenden Sie sich an den Support."
   },
   "tabs": {
     "home": "Startseite",

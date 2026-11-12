@@ -3,6 +3,7 @@
  */
 
 import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Animated, StyleSheet, View, type ViewStyle } from 'react-native';
 import { colors } from '../../screens/shared/screenStyles';
 
@@ -62,9 +63,11 @@ export function LoadingSkeleton({
   width = '100%',
   height = 16,
 }: LoadingSkeletonProps) {
+  const { t } = useTranslation();
+  const loadingLabel = t('common.loading', { defaultValue: 'Loading…' });
   if (cards != null) {
     return (
-      <View accessibilityRole="progressbar" accessibilityLabel="Loading">
+      <View accessibilityRole="progressbar" accessibilityLabel={loadingLabel}>
         {Array.from({ length: cards }).map((_, i) => (
           <View key={`card-${i}`} style={styles.cardWrap}>
             <SkeletonBlock width="100%" height={100} radius={12} />
@@ -75,7 +78,7 @@ export function LoadingSkeleton({
   }
   if (lines != null) {
     return (
-      <View accessibilityRole="progressbar" accessibilityLabel="Loading">
+      <View accessibilityRole="progressbar" accessibilityLabel={loadingLabel}>
         {Array.from({ length: lines }).map((_, i) => (
           <View key={`line-${i}`} style={styles.lineWrap}>
             <SkeletonBlock width={i === lines - 1 ? '70%' : '100%'} height={height} />
@@ -85,7 +88,7 @@ export function LoadingSkeleton({
     );
   }
   return (
-    <View accessibilityRole="progressbar" accessibilityLabel="Loading">
+    <View accessibilityRole="progressbar" accessibilityLabel={loadingLabel}>
       <SkeletonBlock width={width} height={height} />
     </View>
   );

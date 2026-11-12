@@ -17,7 +17,9 @@
     "search": "Search",
     "refresh": "Refresh",
     "submit": "Submit",
-    "tryAgain": "Try again"
+    "tryAgain": "Try again",
+    "errorTitle": "Something went wrong",
+    "errorDescription": "Please try again. If the issue persists, contact support."
   },
   "tabs": {
     "home": "Home",
