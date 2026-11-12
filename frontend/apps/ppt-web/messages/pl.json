@@ -6378,6 +6378,7 @@
       "expiringIn_other": "Wygasa w ciągu {{count}} dnia",
       "clearFilters": "Wyczyść filtry",
       "noLeases": "Nie znaleziono umów najmu",
+      "failedToLoad": "Nie udało się załadować umów najmu",
       "createFirst": "Utwórz pierwszą umowę najmu",
       "filterByStatus": "Filtruj według statusu",
       "filterByBuilding": "Filtruj według budynku",

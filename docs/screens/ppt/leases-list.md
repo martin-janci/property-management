@@ -29,8 +29,10 @@ already built but unrouted; this screen is now reachable on web.
 
 - **Empty**: rendered today — the `@ppt/api-client` Epic module is not yet
   generated (client-lag), so the route mounts with empty data.
-- **Loading**: n/a until the api-client lands.
-- **Error**: n/a until the api-client lands.
+- **Loading**: spinner while the leases query is in flight.
+- **Error**: when the leases query fails, the list renders a `role="alert"`
+  error panel (`leases.list.failedToLoad`) with a Retry button that refetches —
+  the sibling-list pattern (faults / announcements: `isError` + `onRetry`).
 
 ## Notes
 
@@ -41,3 +43,4 @@ already built but unrouted; this screen is now reachable on web.
 ## Agent Log
 - 2026-06-08 — CTO: created on route mount (PAP-20, Epic 19).
 - 2026-11-04 — agent: Filters wired (were `onFilterChange={() => {}}`): status + expiry window + page persist in the URL (`?status=&expiring=&page=`) and map to `GET /leases` `status` / `expiring_within_days` / `limit=12` / `offset` (`pending_signatures`→`pending_signature`; synthetic `expiring_soon`→`active` + 90 days). Search and building filter hidden — the list endpoint supports neither. Card Renew/Terminate deep-link to `/leases/{id}?action=…`.
+- 2026-11-12 — agent: Surfaced the swallowed query error. `LeasesListPageRoute` ignored `useLeases` `isError`/`refetch`, so a failed query fell through to the empty state. Route now passes `isError` + `onRetry` (refetch) and `LeasesListPage` renders the standard `role="alert"` error panel (`leases.list.failedToLoad`, en/sk/cs) with Retry, guarding the empty/grid states with `!isError`. Regression test: `leases.list-error.route.test.tsx`.

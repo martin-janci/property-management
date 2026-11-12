@@ -3539,6 +3539,7 @@
       "allExpiry": "Všechny termíny skončení",
       "clearFilters": "Zrušit filtry",
       "noLeases": "Nebyly nalezeny žádné nájemní smlouvy",
+      "failedToLoad": "Nepodařilo se načíst nájemní smlouvy",
       "createFirst": "Vytvořte první nájemní smlouvu",
       "expiringIn_one": "Končí do {{count}} dne",
       "expiringIn_few": "Končí do {{count}} dnů",
