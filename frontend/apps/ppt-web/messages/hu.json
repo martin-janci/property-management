@@ -4459,7 +4459,8 @@
     },
     "quorum": {
       "met": "Határozatképes",
-      "participation": "{{eligible}} jogosultból {{participation}} szavazott"
+      "participation": "{{eligible}} jogosultból {{participation}} szavazott",
+      "progressLabel": "Határozatképességi részvétel: {{pct}}%"
     },
     "card": {
       "questionCount_one": "{{count}} kérdés",

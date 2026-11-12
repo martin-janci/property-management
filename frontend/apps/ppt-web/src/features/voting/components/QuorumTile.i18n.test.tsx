@@ -34,8 +34,6 @@ describe('QuorumTile i18n', () => {
 
     render(<QuorumTile participation={6} eligible={10} quorumMet={false} />);
 
-    expect(
-      screen.getByRole('progressbar', { name: 'Účasť na kvóre: 60 %' })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('progressbar', { name: 'Účasť na kvóre: 60 %' })).toBeInTheDocument();
   });
 });

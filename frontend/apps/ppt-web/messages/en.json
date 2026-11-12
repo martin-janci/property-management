@@ -7007,7 +7007,8 @@
     },
     "quorum": {
       "met": "Quorum met",
-      "participation": "{{participation}} of {{eligible}} eligible voted"
+      "participation": "{{participation}} of {{eligible}} eligible voted",
+      "progressLabel": "Quorum participation: {{pct}}%"
     },
     "card": {
       "questionCount_one": "{{count}} question",
