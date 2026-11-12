@@ -159,15 +159,15 @@
       "branch": "auto-impl/code-review-reality-web-anchor-nav-drops-bd3173d7",
       "status": "review",
       "claimed_at": "2026-11-12T00:27:38Z",
-      "last_updated": "2026-11-12T00:39:07Z",
+      "last_updated": "2026-11-12T00:40:43Z",
       "status_changed_at": "2026-11-12T00:39:07Z",
       "pr_number": 3433,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3433",
       "merged_at": null,
       "specialist": "nextjs-web",
       "implementer_summary": "pr=3433 status=done specialist=nextjs-web scope_drift=false code_reuse_warn=none note=fixed reality-web listing-detail breadcrumb+back-link raw <a> -> locale-aware @/i18n/routing Link (localePrefix as-needed, default sk); :global() styled-jsx per Header convention; 2-commit test:/fix: IG3 proof; VERIFY OK 485/485 reality-web tests, typecheck+biome clean",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve head_oid=b573007dffddbf7597eaa3dab4067a355c6876bc note=locale-aware-Link-fix-correct-tests-pass-posted-as-COMMENT(bot-cannot-self-APPROVE)",
+      "last_reviewed_oid": "b573007dffddbf7597eaa3dab4067a355c6876bc",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
@@ -177,5 +177,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-12T00:39:45Z"
+  "generated": "2026-11-12T00:40:43Z"
 }
