@@ -16,6 +16,14 @@ export interface SentimentDashboardPageProps {
   trendsLoading: boolean;
   alerts: SentimentAlert[];
   alertsLoading: boolean;
+  /**
+   * True when the dashboard rollup query (`useSentimentDashboard`) failed.
+   * Renders a page-level error panel with a retry affordance instead of
+   * leaving the KPI cards stuck on their placeholder `—`/`N/A` forever.
+   */
+  isError?: boolean;
+  /** Retry handler for the error panel (re-runs the dashboard rollup query). */
+  onRetry?: () => void;
   pendingAcknowledgeId: string | null;
   onAcknowledge: (alertId: string) => void;
 }
@@ -27,6 +35,8 @@ export function SentimentDashboardPage({
   trendsLoading,
   alerts,
   alertsLoading,
+  isError = false,
+  onRetry,
   pendingAcknowledgeId,
   onAcknowledge,
 }: SentimentDashboardPageProps): JSX.Element {
@@ -57,37 +67,60 @@ export function SentimentDashboardPage({
         </p>
       </header>
 
-      {/* KPI row */}
-      <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-        <SentimentStatCard
-          label={t('sentiment.orgAvg', { defaultValue: 'Org avg (30d)' })}
-          value={dashboardLoading ? '—' : avgScore !== null ? avgScore.toFixed(2) : 'N/A'}
-          tone={scoreTone}
-        />
-        <SentimentStatCard
-          label={t('sentiment.totalTrends', { defaultValue: 'Data points' })}
-          value={dashboardLoading ? '—' : (dashboard?.trends.length ?? 0)}
-        />
-        <SentimentStatCard
-          label={t('sentiment.openAlerts', { defaultValue: 'Open alerts' })}
-          value={alertsLoading ? '—' : unacknowledged}
-          tone={unacknowledged > 0 ? 'danger' : 'default'}
-        />
-        <SentimentStatCard
-          label={t('sentiment.totalAlerts', { defaultValue: 'Total alerts' })}
-          value={alertsLoading ? '—' : alerts.length}
-        />
-      </div>
+      {isError ? (
+        <section className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+          <div className="px-4 py-16 text-center" role="alert">
+            <p className="text-sm font-medium text-red-600">
+              {t('sentiment.dashboardLoadError', {
+                defaultValue: 'Failed to load the dashboard. Please try again.',
+              })}
+            </p>
+            {onRetry && (
+              <button
+                type="button"
+                onClick={onRetry}
+                className="mt-3 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                {t('common.retry', { defaultValue: 'Retry' })}
+              </button>
+            )}
+          </div>
+        </section>
+      ) : (
+        <>
+          {/* KPI row */}
+          <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
+            <SentimentStatCard
+              label={t('sentiment.orgAvg', { defaultValue: 'Org avg (30d)' })}
+              value={dashboardLoading ? '—' : avgScore !== null ? avgScore.toFixed(2) : 'N/A'}
+              tone={scoreTone}
+            />
+            <SentimentStatCard
+              label={t('sentiment.totalTrends', { defaultValue: 'Data points' })}
+              value={dashboardLoading ? '—' : (dashboard?.trends.length ?? 0)}
+            />
+            <SentimentStatCard
+              label={t('sentiment.openAlerts', { defaultValue: 'Open alerts' })}
+              value={alertsLoading ? '—' : unacknowledged}
+              tone={unacknowledged > 0 ? 'danger' : 'default'}
+            />
+            <SentimentStatCard
+              label={t('sentiment.totalAlerts', { defaultValue: 'Total alerts' })}
+              value={alertsLoading ? '—' : alerts.length}
+            />
+          </div>
 
-      <div className="space-y-6">
-        <SentimentTrendChart trends={trends} isLoading={trendsLoading} />
-        <SentimentAlertsPanel
-          alerts={alerts}
-          isLoading={alertsLoading}
-          pendingAcknowledgeId={pendingAcknowledgeId}
-          onAcknowledge={onAcknowledge}
-        />
-      </div>
+          <div className="space-y-6">
+            <SentimentTrendChart trends={trends} isLoading={trendsLoading} />
+            <SentimentAlertsPanel
+              alerts={alerts}
+              isLoading={alertsLoading}
+              pendingAcknowledgeId={pendingAcknowledgeId}
+              onAcknowledge={onAcknowledge}
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 }

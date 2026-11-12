@@ -4599,6 +4599,7 @@
   "sentiment": {
     "pageTitle": "Mieterstimmung",
     "pageSubtitle": "KI-gestützte Stimmungstrends und Warnungen aus der Mieterkommunikation.",
+    "dashboardLoadError": "Dashboard konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
     "orgAvg": "Org.-Durchschnitt (30 T)",
     "totalTrends": "Datenpunkte",
     "openAlerts": "Offene Warnungen",
