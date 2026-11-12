@@ -13,6 +13,8 @@ mod agencies_happy_path_tests;
 mod agent_reviews_tests;
 #[path = "suites/articles_tests.rs"]
 mod articles_tests;
+#[path = "suites/branding_update_clear_tests.rs"]
+mod branding_update_clear_tests;
 #[path = "suites/buyer_inquiries_tests.rs"]
 mod buyer_inquiries_tests;
 #[path = "suites/compare_tests.rs"]
