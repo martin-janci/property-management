@@ -17,24 +17,10 @@ use sqlx::Row;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-// ---------------------------------------------------------------------------
-// H7 — URL hygiene
-// ---------------------------------------------------------------------------
-// `logo_url`, `banner_url`, `watermark_url` end up in `<img src=>` on the
-// frontend. Reject `javascript:`, `data:`, `file:` and any non-http(s) URL.
-// Inlined locally until the auth-hardening branch lands a shared validator.
-const MAX_URL_LEN: usize = 2048;
-
-fn validate_image_or_link_url(s: &str) -> Result<(), String> {
-    if s.chars().count() > MAX_URL_LEN {
-        return Err(format!("URL must be at most {} characters", MAX_URL_LEN));
-    }
-    let parsed = url::Url::parse(s).map_err(|_| "Invalid URL".to_string())?;
-    match parsed.scheme() {
-        "https" | "http" => Ok(()),
-        _ => Err("URL scheme must be http or https".to_string()),
-    }
-}
+// H7 — URL hygiene. `logo_url`, `banner_url`, `watermark_url` end up in
+// `<img src=>` on the frontend; the shared `validate_image_or_link_url`
+// rejects `javascript:`, `data:`, `file:` and any non-http(s) URL.
+use crate::util::url::validate_image_or_link_url;
 
 /// Validate an optional URL field. Returns a generic 400 message that does
 /// NOT echo the rejected URL back (reflected-XSS guard).

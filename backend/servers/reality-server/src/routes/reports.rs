@@ -29,29 +29,16 @@ use uuid::Uuid;
 // request body. 5000 chars mirrors the existing inquiry-response cap.
 const MAX_REPORT_DESCRIPTION_LEN: usize = 5000;
 const MAX_REPORT_ATTACHMENTS: usize = 10;
-const MAX_URL_LEN: usize = 2048;
 
 /// Canonical `listing_reports.status` values a reporter may filter by. Mirrors
 /// the status comment in migration `00106_create_listing_reports.sql` and the
 /// `MyReportsQuery::status` doc. Keep in sync with the moderation workflow.
 const REPORT_STATUS_VALUES: [&str; 4] = ["received", "in_review", "resolved", "rejected"];
 
-/// Reject `javascript:`, `data:`, `file:`, etc. URLs that would later be
-/// rendered in `<img src=>` / `<a href=>` on the frontend (stored XSS).
-/// Inlined locally per H7 brief. NOTE: this is an XSS-focused scheme check
-/// for URLs rendered in the frontend, distinct from the SSRF fetch validator
-/// now shared in `common::url_validation`; a future consolidation could move
-/// this image/link validator into that shared crate too.
-fn validate_image_or_link_url(s: &str) -> Result<(), String> {
-    if s.chars().count() > MAX_URL_LEN {
-        return Err(format!("URL must be at most {} characters", MAX_URL_LEN));
-    }
-    let parsed = url::Url::parse(s).map_err(|_| "Invalid URL".to_string())?;
-    match parsed.scheme() {
-        "https" | "http" => Ok(()),
-        _ => Err("URL scheme must be http or https".to_string()),
-    }
-}
+// Report attachment URLs are later rendered in `<img src=>` / `<a href=>` on
+// the frontend (stored XSS); the shared `validate_image_or_link_url` rejects
+// `javascript:`, `data:`, `file:`, etc. schemes.
+use crate::util::url::validate_image_or_link_url;
 
 /// Create reports router.
 pub fn router() -> Router<AppState> {

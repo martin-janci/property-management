@@ -21,27 +21,9 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-// H7 — `profile_image_url` ends up in `<img src=>` on the frontend. Reject
-// `javascript:`, `data:`, `file:` URLs. Inlined locally (see H7 brief).
-// NOTE: this is an XSS-focused scheme check for URLs rendered in the
-// frontend, distinct from the SSRF fetch validator now shared in
-// `common::url_validation`; a future consolidation could move this
-// image/link validator into that shared crate too.
-const MAX_PROFILE_URL_LEN: usize = 2048;
-
-fn validate_image_or_link_url(s: &str) -> Result<(), String> {
-    if s.chars().count() > MAX_PROFILE_URL_LEN {
-        return Err(format!(
-            "URL must be at most {} characters",
-            MAX_PROFILE_URL_LEN
-        ));
-    }
-    let parsed = url::Url::parse(s).map_err(|_| "Invalid URL".to_string())?;
-    match parsed.scheme() {
-        "https" | "http" => Ok(()),
-        _ => Err("URL scheme must be http or https".to_string()),
-    }
-}
+// H7 — `profile_image_url` ends up in `<img src=>` on the frontend; the shared
+// `validate_image_or_link_url` rejects `javascript:`, `data:`, `file:` URLs.
+use crate::util::url::validate_image_or_link_url;
 
 /// Create users router.
 pub fn router() -> Router<AppState> {
