@@ -5,12 +5,16 @@
  * unacknowledged critical notifications.
  */
 
+import { useTranslation } from 'react-i18next';
+
 interface CriticalNotificationBannerProps {
   count: number;
   onClick: () => void;
 }
 
 export function CriticalNotificationBanner({ count, onClick }: CriticalNotificationBannerProps) {
+  const { t } = useTranslation();
+
   if (count === 0) return null;
 
   return (
@@ -36,12 +40,10 @@ export function CriticalNotificationBanner({ count, onClick }: CriticalNotificat
             </span>
             <p className="ml-3 truncate font-medium text-white">
               <span className="md:hidden">
-                {count} critical {count === 1 ? 'notification' : 'notifications'}
+                {t('criticalNotifications.banner.short', { count })}
               </span>
               <span className="hidden md:inline">
-                You have {count} unacknowledged critical{' '}
-                {count === 1 ? 'notification' : 'notifications'} that{' '}
-                {count === 1 ? 'requires' : 'require'} your attention.
+                {t('criticalNotifications.banner.long', { count })}
               </span>
             </p>
           </div>
@@ -51,7 +53,7 @@ export function CriticalNotificationBanner({ count, onClick }: CriticalNotificat
               onClick={onClick}
               className="flex items-center justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-red-600 shadow-sm hover:bg-red-50"
             >
-              View Now
+              {t('criticalNotifications.banner.viewNow')}
             </button>
           </div>
         </div>

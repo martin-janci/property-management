@@ -3185,6 +3185,46 @@
       "all": "All",
       "pending": "Pending",
       "acknowledged": "Acknowledged"
+    },
+    "banner": {
+      "short_one": "{{count}} critical notification",
+      "short_other": "{{count}} critical notifications",
+      "long_one": "You have {{count}} unacknowledged critical notification that requires your attention.",
+      "long_other": "You have {{count}} unacknowledged critical notifications that require your attention.",
+      "viewNow": "View Now"
+    },
+    "modal": {
+      "heading": "Critical Notification",
+      "counter": "{{current}} of {{total}}",
+      "postedOn": "Posted on {{date}}",
+      "acknowledging": "Acknowledging...",
+      "acknowledgeNext": "I Acknowledge - Next",
+      "acknowledge": "I Acknowledge"
+    },
+    "statsCard": {
+      "heading": "Acknowledgment Status",
+      "percentAcknowledged": "{{percent}}% Acknowledged",
+      "ofTotal": "{{done}} of {{total}}",
+      "totalUsers": "Total Users",
+      "acknowledged": "Acknowledged",
+      "pending": "Pending"
+    },
+    "form": {
+      "titleLabel": "Title",
+      "titlePlaceholder": "Enter notification title",
+      "messageLabel": "Message",
+      "messagePlaceholder": "Enter the notification message...",
+      "messageHelp": "This notification will be sent to all members of your organization and will require acknowledgment.",
+      "warningStrong": "Critical notifications bypass user preferences.",
+      "warningText": "Only use this feature for truly important announcements that all members must see.",
+      "cancel": "Cancel",
+      "submit": "Send Critical Notification",
+      "submitting": "Sending...",
+      "validation": {
+        "titleRequired": "Title is required",
+        "titleTooLong": "Title must be 255 characters or less",
+        "messageRequired": "Message is required"
+      }
     }
   },
   "dashboard": {
