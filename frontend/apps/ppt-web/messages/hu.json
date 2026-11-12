@@ -3002,6 +3002,83 @@
       "informational": "Tájékoztató",
       "minor": "Kisebb",
       "major": "Jelentős"
+    },
+    "errors": {
+      "titleRequired": "A cím megadása kötelező",
+      "descriptionRequired": "A leírás megadása kötelező",
+      "buildingsRequired": "Válasszon legalább egy érintett épületet",
+      "startRequired": "A tervezett kezdési időpont megadása kötelező",
+      "outageNotFound": "A szolgáltatáskiesés nem található",
+      "outageNotFoundDesc": "A keresett szolgáltatáskiesés nem létezik.",
+      "fetchFailedTitle": "Nem sikerült betölteni a szolgáltatáskieséseket",
+      "fetchFailedDescription": "Hiba történt a szolgáltatáskiesések betöltése közben. Kérjük, próbálja újra.",
+      "retry": "Újrapróbálkozás"
+    }
+  },
+  "criticalNotifications": {
+    "title": "Kritikus értesítések",
+    "subtitle": "Visszaigazolást igénylő fontos közlemények",
+    "createNew": "Kritikus értesítés létrehozása",
+    "createDescription": "Küldjön fontos értesítést a szervezet minden tagjának",
+    "backToList": "Vissza az értesítésekhez",
+    "noResults": "Nem található értesítés",
+    "requiresAction": "Műveletet igényel",
+    "acknowledged": "Visszaigazolva",
+    "acknowledgedAt": "Visszaigazolva ekkor",
+    "createdAt": "Létrehozva",
+    "message": "Üzenet",
+    "acknowledgmentInfo": "Visszaigazolás részletei",
+    "acknowledge": "Értesítés visszaigazolása",
+    "acknowledmentStats": "Visszaigazolási statisztika",
+    "stats": {
+      "total": "Összes értesítés",
+      "acknowledged": "Visszaigazolva",
+      "pending": "Függőben"
+    },
+    "filter": {
+      "all": "Összes",
+      "pending": "Függőben",
+      "acknowledged": "Visszaigazolva"
+    },
+    "banner": {
+      "short_one": "{{count}} kritikus értesítés",
+      "short_other": "{{count}} kritikus értesítés",
+      "long_one": "{{count}} vissza nem igazolt kritikus értesítése van, amely a figyelmét igényli.",
+      "long_other": "{{count}} vissza nem igazolt kritikus értesítése van, amely a figyelmét igényli.",
+      "viewNow": "Megtekintés most"
+    },
+    "modal": {
+      "heading": "Kritikus értesítés",
+      "counter": "{{current}} / {{total}}",
+      "postedOn": "Közzétéve: {{date}}",
+      "acknowledging": "Visszaigazolás...",
+      "acknowledgeNext": "Visszaigazolom – következő",
+      "acknowledge": "Visszaigazolom"
+    },
+    "statsCard": {
+      "heading": "Visszaigazolási állapot",
+      "percentAcknowledged": "{{percent}}% visszaigazolva",
+      "ofTotal": "{{done}} / {{total}}",
+      "totalUsers": "Felhasználók összesen",
+      "acknowledged": "Visszaigazolva",
+      "pending": "Függőben"
+    },
+    "form": {
+      "titleLabel": "Cím",
+      "titlePlaceholder": "Adja meg az értesítés címét",
+      "messageLabel": "Üzenet",
+      "messagePlaceholder": "Adja meg az értesítés szövegét...",
+      "messageHelp": "Ezt az értesítést a szervezete minden tagja megkapja, és visszaigazolást igényel.",
+      "warningStrong": "A kritikus értesítések figyelmen kívül hagyják a felhasználói beállításokat.",
+      "warningText": "Csak valóban fontos közleményekhez használja ezt a funkciót, amelyeket minden tagnak látnia kell.",
+      "cancel": "Mégse",
+      "submit": "Kritikus értesítés küldése",
+      "submitting": "Küldés...",
+      "validation": {
+        "titleRequired": "A cím megadása kötelező",
+        "titleTooLong": "A cím legfeljebb 255 karakter lehet",
+        "messageRequired": "Az üzenet megadása kötelező"
+      }
     }
   },
   "dashboard": {

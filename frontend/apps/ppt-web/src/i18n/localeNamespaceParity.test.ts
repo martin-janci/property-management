@@ -50,9 +50,9 @@ const FULL_TRIO = ['en', 'sk', 'cs'] as const;
 
 /** Partially-translated locales and the top-level namespaces they do not yet carry. */
 const PARTIAL_MISSING: Record<string, readonly string[]> = {
-  de: ['criticalNotifications', 'documentTemplates', 'help', 'onboarding', 'subscription'],
-  pl: ['criticalNotifications', 'documentTemplates', 'help', 'onboarding', 'subscription'],
-  hu: ['criticalNotifications', 'documentTemplates', 'help', 'onboarding', 'subscription'],
+  de: ['documentTemplates', 'help', 'onboarding', 'subscription'],
+  pl: ['documentTemplates', 'help', 'onboarding', 'subscription'],
+  hu: ['documentTemplates', 'help', 'onboarding', 'subscription'],
 };
 
 const topLevel = (bundle: Json): Set<string> => new Set(Object.keys(bundle));

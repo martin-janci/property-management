@@ -3072,6 +3072,87 @@
       "informational": "Informacyjna",
       "minor": "Niska",
       "major": "Wysoka"
+    },
+    "errors": {
+      "titleRequired": "Tytuł jest wymagany",
+      "descriptionRequired": "Opis jest wymagany",
+      "buildingsRequired": "Wybierz co najmniej jeden dotknięty budynek",
+      "startRequired": "Planowany czas rozpoczęcia jest wymagany",
+      "outageNotFound": "Nie znaleziono przerwy",
+      "outageNotFoundDesc": "Szukana przerwa nie istnieje.",
+      "fetchFailedTitle": "Nie udało się załadować przerw",
+      "fetchFailedDescription": "Podczas ładowania przerw wystąpił błąd. Spróbuj ponownie.",
+      "retry": "Spróbuj ponownie"
+    }
+  },
+  "criticalNotifications": {
+    "title": "Krytyczne powiadomienia",
+    "subtitle": "Ważne ogłoszenia wymagające potwierdzenia",
+    "createNew": "Utwórz krytyczne powiadomienie",
+    "createDescription": "Wyślij ważne powiadomienie do wszystkich członków organizacji",
+    "backToList": "Powrót do powiadomień",
+    "noResults": "Nie znaleziono powiadomień",
+    "requiresAction": "Wymaga działania",
+    "acknowledged": "Potwierdzone",
+    "acknowledgedAt": "Potwierdzono",
+    "createdAt": "Utworzono",
+    "message": "Wiadomość",
+    "acknowledgmentInfo": "Szczegóły potwierdzenia",
+    "acknowledge": "Potwierdź powiadomienie",
+    "acknowledmentStats": "Statystyki potwierdzeń",
+    "stats": {
+      "total": "Łączna liczba powiadomień",
+      "acknowledged": "Potwierdzone",
+      "pending": "Oczekujące"
+    },
+    "filter": {
+      "all": "Wszystkie",
+      "pending": "Oczekujące",
+      "acknowledged": "Potwierdzone"
+    },
+    "banner": {
+      "short_one": "{{count}} krytyczne powiadomienie",
+      "short_few": "{{count}} krytyczne powiadomienia",
+      "short_many": "{{count}} krytycznych powiadomień",
+      "short_other": "{{count}} krytycznych powiadomień",
+      "long_one": "Masz {{count}} niepotwierdzone krytyczne powiadomienie, które wymaga Twojej uwagi.",
+      "long_few": "Masz {{count}} niepotwierdzone krytyczne powiadomienia, które wymagają Twojej uwagi.",
+      "long_many": "Masz {{count}} niepotwierdzonych krytycznych powiadomień, które wymagają Twojej uwagi.",
+      "long_other": "Masz {{count}} niepotwierdzonych krytycznych powiadomień, które wymagają Twojej uwagi.",
+      "viewNow": "Zobacz teraz"
+    },
+    "modal": {
+      "heading": "Krytyczne powiadomienie",
+      "counter": "{{current}} z {{total}}",
+      "postedOn": "Opublikowano {{date}}",
+      "acknowledging": "Potwierdzanie...",
+      "acknowledgeNext": "Potwierdzam – dalej",
+      "acknowledge": "Potwierdzam"
+    },
+    "statsCard": {
+      "heading": "Status potwierdzeń",
+      "percentAcknowledged": "Potwierdzono {{percent}}%",
+      "ofTotal": "{{done}} z {{total}}",
+      "totalUsers": "Łączna liczba użytkowników",
+      "acknowledged": "Potwierdzone",
+      "pending": "Oczekujące"
+    },
+    "form": {
+      "titleLabel": "Tytuł",
+      "titlePlaceholder": "Wprowadź tytuł powiadomienia",
+      "messageLabel": "Wiadomość",
+      "messagePlaceholder": "Wprowadź treść powiadomienia...",
+      "messageHelp": "To powiadomienie zostanie wysłane do wszystkich członków Twojej organizacji i będzie wymagać potwierdzenia.",
+      "warningStrong": "Krytyczne powiadomienia pomijają preferencje użytkowników.",
+      "warningText": "Używaj tej funkcji wyłącznie do naprawdę ważnych ogłoszeń, które muszą zobaczyć wszyscy członkowie.",
+      "cancel": "Anuluj",
+      "submit": "Wyślij krytyczne powiadomienie",
+      "submitting": "Wysyłanie...",
+      "validation": {
+        "titleRequired": "Tytuł jest wymagany",
+        "titleTooLong": "Tytuł może mieć maksymalnie 255 znaków",
+        "messageRequired": "Wiadomość jest wymagana"
+      }
     }
   },
   "dashboard": {
