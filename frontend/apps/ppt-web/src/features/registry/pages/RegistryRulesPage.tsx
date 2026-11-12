@@ -2,6 +2,11 @@
  * RegistryRulesPage Component
  *
  * Page for configuring building registry rules (Epic 57, Story 57.7).
+ *
+ * NOTE: not mounted on any route — the `registry` feature is intentionally
+ * unwired (PAP-55; see `src/features/unwired-features.ts` and the
+ * `src/test/unwired-features.test.ts` guard). This page being unreachable is
+ * expected, not an orphaned route to "fix" by wiring or deleting.
  */
 
 import type { UpdateRegistryRulesRequest } from '@ppt/api-client';
