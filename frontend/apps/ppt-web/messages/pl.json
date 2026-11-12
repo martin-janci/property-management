@@ -4553,7 +4553,8 @@
       "responseCount_one": "{{count}} odpowiedź",
       "responseCount_few": "{{count}} odpowiedzi",
       "responseCount_many": "{{count}} odpowiedzi",
-      "responseCount_other": "{{count}} odpowiedzi"
+      "responseCount_other": "{{count}} odpowiedzi",
+      "winnerLabel": "Zwycięska opcja"
     },
     "list": {
       "voteCount_one": "{{count}} głosowanie",

@@ -5204,7 +5204,8 @@
       "responseCount_one": "{{count}} odpoveď",
       "responseCount_few": "{{count}} odpovede",
       "responseCount_many": "{{count}} odpovedí",
-      "responseCount_other": "{{count}} odpovedí"
+      "responseCount_other": "{{count}} odpovedí",
+      "winnerLabel": "Víťazná možnosť"
     },
     "list": {
       "voteCount_one": "{{count}} hlasovanie",

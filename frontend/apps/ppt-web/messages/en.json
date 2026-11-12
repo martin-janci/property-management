@@ -7019,7 +7019,8 @@
     },
     "results": {
       "responseCount_one": "{{count}} response",
-      "responseCount_other": "{{count}} responses"
+      "responseCount_other": "{{count}} responses",
+      "winnerLabel": "Winning option"
     },
     "list": {
       "voteCount_one": "{{count}} vote",

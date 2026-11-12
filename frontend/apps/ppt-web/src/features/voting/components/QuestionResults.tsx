@@ -18,7 +18,15 @@ export function QuestionResults({ result }: { result: QuestionResult }) {
               <div className="flex justify-between text-sm">
                 <span className={isWinner ? 'font-semibold text-gray-900' : 'text-gray-700'}>
                   {opt.option_text}
-                  {isWinner ? <span className="ml-1 text-green-600">✓</span> : null}
+                  {isWinner ? (
+                    <span
+                      className="ml-1 text-green-600"
+                      role="img"
+                      aria-label={t('voting.results.winnerLabel')}
+                    >
+                      ✓
+                    </span>
+                  ) : null}
                 </span>
                 <span className="text-gray-500">
                   {opt.count} · {Math.round(opt.percentage)}%

@@ -4467,7 +4467,8 @@
     },
     "results": {
       "responseCount_one": "{{count}} válasz",
-      "responseCount_other": "{{count}} válasz"
+      "responseCount_other": "{{count}} válasz",
+      "winnerLabel": "Nyertes lehetőség"
     },
     "list": {
       "voteCount_one": "{{count}} szavazás",
