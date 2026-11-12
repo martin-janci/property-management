@@ -977,7 +977,24 @@
     "realtorListings": {
       "error": "Failed to load listings.",
       "empty": "You haven't published any listings yet.",
-      "createFirst": "Create your first listing"
+      "createFirst": "Create your first listing",
+      "title": "My listings",
+      "subtitle": "Manage the properties you have published.",
+      "newListing": "+ New listing",
+      "loading": "Loading…",
+      "forSale": "For sale",
+      "forRent": "For rent",
+      "views": "{count} views",
+      "inquiries": "{count} inquiries",
+      "edit": "Edit",
+      "status": {
+        "active": "Active",
+        "pending": "Pending",
+        "sold": "Sold",
+        "rented": "Rented",
+        "withdrawn": "Withdrawn",
+        "draft": "Draft"
+      }
     },
     "agencyProfile": {
       "loading": "Loading…",

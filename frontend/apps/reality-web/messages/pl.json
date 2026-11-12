@@ -970,7 +970,24 @@
     "realtorListings": {
       "error": "Nie udało się załadować ofert.",
       "empty": "Nie opublikowałeś jeszcze żadnych ofert.",
-      "createFirst": "Utwórz swoją pierwszą ofertę"
+      "createFirst": "Utwórz swoją pierwszą ofertę",
+      "title": "Moje ogłoszenia",
+      "subtitle": "Zarządzaj opublikowanymi nieruchomościami.",
+      "newListing": "+ Nowe ogłoszenie",
+      "loading": "Ładowanie…",
+      "forSale": "Na sprzedaż",
+      "forRent": "Do wynajęcia",
+      "views": "{count} wyświetleń",
+      "inquiries": "{count} zapytań",
+      "edit": "Edytuj",
+      "status": {
+        "active": "Aktywne",
+        "pending": "Oczekujące",
+        "sold": "Sprzedane",
+        "rented": "Wynajęte",
+        "withdrawn": "Wycofane",
+        "draft": "Szkic"
+      }
     },
     "agencyProfile": {
       "loading": "Ładowanie…",

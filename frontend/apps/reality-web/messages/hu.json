@@ -970,7 +970,24 @@
     "realtorListings": {
       "error": "Nem sikerült betölteni a hirdetéseket.",
       "empty": "Még nem tett közzé egyetlen hirdetést sem.",
-      "createFirst": "Hozza létre első hirdetését"
+      "createFirst": "Hozza létre első hirdetését",
+      "title": "Hirdetéseim",
+      "subtitle": "Kezelje a közzétett ingatlanjait.",
+      "newListing": "+ Új hirdetés",
+      "loading": "Betöltés…",
+      "forSale": "Eladó",
+      "forRent": "Kiadó",
+      "views": "{count} megtekintés",
+      "inquiries": "{count} érdeklődés",
+      "edit": "Szerkesztés",
+      "status": {
+        "active": "Aktív",
+        "pending": "Függőben",
+        "sold": "Eladva",
+        "rented": "Kiadva",
+        "withdrawn": "Visszavonva",
+        "draft": "Piszkozat"
+      }
     },
     "agencyProfile": {
       "loading": "Betöltés…",
