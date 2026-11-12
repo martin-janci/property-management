@@ -33,6 +33,33 @@ const LAYOUT_CHANGE_EVENTS_PRUNE_MIN_INTERVAL_HOURS: i64 = 24;
 /// successful run.
 const OAUTH_TOKEN_EVENTS_PRUNE_MIN_INTERVAL_HOURS: i64 = 24;
 
+/// Lower-bound floor (in days) shared by every retention prune. A configured
+/// window below this is treated as "retention disabled" rather than executed.
+///
+/// The env parse in `main.rs` (`SUPPORT_TOOLING_RETENTION_DAYS`,
+/// `LAYOUT_CHANGE_EVENTS_RETENTION_DAYS`, `OAUTH_TOKEN_EVENTS_RETENTION_DAYS`)
+/// reads a raw `i64` with no validation. Without this floor a `0` window makes
+/// the delete cutoff `now` — pruning *every* existing row — and a NEGATIVE
+/// window makes it a FUTURE instant, deleting the entire table including rows
+/// written seconds ago. An operator typo such as `RETENTION_DAYS=0` (intending
+/// "disabled") would silently wipe irreplaceable audit/event history. One day
+/// is the smallest window for which the daily prune deletes only genuinely
+/// aged rows.
+#[allow(dead_code)] // wired in by the paired fix commit
+const MIN_RETENTION_DAYS: i64 = 1;
+
+/// Returns `true` when a configured retention window is safe to prune against —
+/// i.e. at least [`MIN_RETENTION_DAYS`]. A non-positive (or sub-floor) window is
+/// treated as "retention disabled" so the caller skips the destructive delete
+/// instead of turning the cutoff into `now`/a future instant and wiping live
+/// rows. Extracted as a pure function so the floor is testable without a DB.
+fn retention_prune_enabled(_retention_days: i64) -> bool {
+    // NOTE: no floor yet — this mirrors the current behaviour where any value
+    // (including 0/negative) is accepted. The paired `fix:` commit tightens
+    // this to `>= MIN_RETENTION_DAYS`.
+    true
+}
+
 impl Scheduler {
     // ========================================================================
     // Issue #2531: support_tooling_events retention prune (daily cadence)
@@ -65,6 +92,25 @@ impl Scheduler {
             if !support_tooling_prune_due(*last, now, min_interval) {
                 return Ok(());
             }
+        }
+
+        // Retention-window floor: a sub-floor window (0 → cutoff == now, or
+        // negative → a FUTURE cutoff) would delete live rows, so treat it as
+        // "retention disabled" and skip the destructive prune entirely. Guards
+        // against an operator typo like SUPPORT_TOOLING_RETENTION_DAYS=0.
+        if !retention_prune_enabled(self.config.support_tooling_retention_days) {
+            tracing::warn!(
+                retention_days = self.config.support_tooling_retention_days,
+                "support_tooling_events retention window below the 1-day floor; \
+                 treating as disabled and skipping prune"
+            );
+            // Stamp so the ~60s tick loop does not re-warn until the next window.
+            let mut last = self
+                .last_support_tooling_prune_at
+                .lock()
+                .unwrap_or_else(|e| e.into_inner());
+            *last = Some(now);
+            return Ok(());
         }
 
         // Note: Scheduler runs in background without user context. This prune is
@@ -130,6 +176,25 @@ impl Scheduler {
             if !layout_change_events_prune_due(*last, now, min_interval) {
                 return Ok(());
             }
+        }
+
+        // Retention-window floor: a sub-floor window (0 → cutoff == now, or
+        // negative → a FUTURE cutoff) would delete live rows, so treat it as
+        // "retention disabled" and skip the destructive prune entirely. Guards
+        // against an operator typo like LAYOUT_CHANGE_EVENTS_RETENTION_DAYS=0.
+        if !retention_prune_enabled(self.config.layout_change_events_retention_days) {
+            tracing::warn!(
+                retention_days = self.config.layout_change_events_retention_days,
+                "layout_change_events retention window below the 1-day floor; \
+                 treating as disabled and skipping prune"
+            );
+            // Stamp so the ~60s tick loop does not re-warn until the next window.
+            let mut last = self
+                .last_layout_change_events_prune_at
+                .lock()
+                .unwrap_or_else(|e| e.into_inner());
+            *last = Some(now);
+            return Ok(());
         }
 
         // Note: Scheduler runs in background without user context. This prune is
@@ -201,6 +266,25 @@ impl Scheduler {
             if !oauth_token_events_prune_due(*last, now, min_interval) {
                 return Ok(());
             }
+        }
+
+        // Retention-window floor: a sub-floor window (0 → cutoff == now, or
+        // negative → a FUTURE cutoff) would delete live rows, so treat it as
+        // "retention disabled" and skip the destructive prune entirely. Guards
+        // against an operator typo like OAUTH_TOKEN_EVENTS_RETENTION_DAYS=0.
+        if !retention_prune_enabled(self.config.oauth_token_events_retention_days) {
+            tracing::warn!(
+                retention_days = self.config.oauth_token_events_retention_days,
+                "oauth_token_events retention window below the 1-day floor; \
+                 treating as disabled and skipping prune"
+            );
+            // Stamp so the ~60s tick loop does not re-warn until the next window.
+            let mut last = self
+                .last_oauth_token_events_prune_at
+                .lock()
+                .unwrap_or_else(|e| e.into_inner());
+            *last = Some(now);
+            return Ok(());
         }
 
         // Note: Scheduler runs in background without user context. The
@@ -284,6 +368,38 @@ fn oauth_token_events_prune_due(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // ------------------------------------------------------------------
+    // Retention-window floor: a non-positive (0/negative) configured window
+    // must NOT be pruned against. With no floor the delete cutoff becomes
+    // `now` (0 days — every existing row) or a FUTURE instant (negative — the
+    // whole table, including rows just written), so an operator typo like
+    // `RETENTION_DAYS=0` silently wipes audit/event history. These pin the
+    // floor that makes the three prunes treat a sub-floor window as
+    // "retention disabled" and skip the destructive delete.
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn test_retention_prune_disabled_for_zero_window() {
+        // 0 days → cutoff == now → would delete EVERY existing row. Must skip.
+        assert!(!retention_prune_enabled(0));
+    }
+
+    #[test]
+    fn test_retention_prune_disabled_for_negative_window() {
+        // Negative days → FUTURE cutoff → would delete the whole table. Skip.
+        assert!(!retention_prune_enabled(-1));
+        assert!(!retention_prune_enabled(-730));
+    }
+
+    #[test]
+    fn test_retention_prune_enabled_at_and_above_floor() {
+        // The floor itself (1 day) and typical production windows prune.
+        assert!(retention_prune_enabled(MIN_RETENTION_DAYS));
+        assert!(retention_prune_enabled(1));
+        assert!(retention_prune_enabled(90));
+        assert!(retention_prune_enabled(730));
+    }
 
     // ------------------------------------------------------------------
     // Issue #2531: daily-cadence gate for the support_tooling_events prune.
