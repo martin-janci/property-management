@@ -3751,6 +3751,7 @@
       "expiringIn_other": "Läuft in {{count}} Tagen ab",
       "clearFilters": "Filter zurücksetzen",
       "noLeases": "Keine Mietverträge gefunden",
+      "failedToLoad": "Mietverträge konnten nicht geladen werden",
       "createFirst": "Ersten Mietvertrag erstellen",
       "filterByStatus": "Nach Status filtern",
       "filterByBuilding": "Nach Gebäude filtern",

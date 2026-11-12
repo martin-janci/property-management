@@ -4823,6 +4823,7 @@
       "allExpiry": "All Expiry Dates",
       "clearFilters": "Clear Filters",
       "noLeases": "No leases found",
+      "failedToLoad": "Failed to load leases",
       "createFirst": "Create your first lease",
       "expiringIn_one": "Expiring in {{count}} day",
       "expiringIn_other": "Expiring in {{count}} days",

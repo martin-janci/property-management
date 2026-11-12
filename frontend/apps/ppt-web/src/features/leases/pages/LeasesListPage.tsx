@@ -27,6 +27,10 @@ interface LeasesListPageProps {
   total: number;
   buildings: Building[];
   isLoading?: boolean;
+  /** The leases query failed — render the error state instead of the list. */
+  isError?: boolean;
+  /** Retry the failed leases query (refetch). */
+  onRetry?: () => void;
   onNavigateToCreate: () => void;
   onNavigateToView: (id: string) => void;
   onRenewLease: (id: string) => void;
@@ -61,6 +65,8 @@ export function LeasesListPage({
   total,
   buildings,
   isLoading,
+  isError,
+  onRetry,
   onNavigateToCreate,
   onNavigateToView,
   onRenewLease,
@@ -244,8 +250,29 @@ export function LeasesListPage({
         </div>
       )}
 
+      {/* Error State */}
+      {!isLoading && isError && (
+        <div
+          role="alert"
+          className="text-center py-12 border border-red-200 bg-red-50 rounded-lg text-red-700"
+        >
+          <p className="font-medium">
+            {t('leases.list.failedToLoad', { defaultValue: 'Failed to load leases' })}
+          </p>
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="mt-3 px-3 py-1 border border-red-300 rounded text-red-700 hover:bg-red-100"
+            >
+              {t('common.retry', { defaultValue: 'Retry' })}
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Empty State */}
-      {!isLoading && leases.length === 0 && (
+      {!isLoading && !isError && leases.length === 0 && (
         <div className="text-center py-12 bg-white rounded-lg shadow">
           <svg
             className="mx-auto h-12 w-12 text-gray-400"
@@ -272,7 +299,7 @@ export function LeasesListPage({
       )}
 
       {/* Leases Grid */}
-      {!isLoading && leases.length > 0 && (
+      {!isLoading && !isError && leases.length > 0 && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {leases.map((lease) => (

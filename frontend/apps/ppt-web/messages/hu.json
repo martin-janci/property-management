@@ -6274,6 +6274,7 @@
       "expiringIn_other": "{{count}} napon belül lejár",
       "clearFilters": "Szűrők törlése",
       "noLeases": "Nem található bérleti szerződés",
+      "failedToLoad": "A bérleti szerződések betöltése nem sikerült",
       "createFirst": "Hozza létre az első bérleti szerződést",
       "filterByStatus": "Szűrés állapot szerint",
       "filterByBuilding": "Szűrés épület szerint",

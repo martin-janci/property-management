@@ -828,7 +828,7 @@ function LeasesListPageRoute() {
   const { organizationId } = useOrganization();
   const [searchParams, setSearchParams] = useSearchParams();
   const { filters, page } = readLeaseListParams(searchParams);
-  const { data, isLoading } = useLeases({
+  const { data, isLoading, isError, refetch } = useLeases({
     organization_id: organizationId,
     ...toLeaseListQuery(filters, page),
   });
@@ -841,6 +841,10 @@ function LeasesListPageRoute() {
       total={data?.total ?? 0}
       buildings={[]}
       isLoading={isLoading}
+      isError={isError}
+      onRetry={() => {
+        void refetch();
+      }}
       initialFilters={filters}
       initialPage={page}
       pageSize={LIST_PAGE_SIZE}
