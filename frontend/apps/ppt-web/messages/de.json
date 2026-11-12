@@ -5002,7 +5002,8 @@
     },
     "results": {
       "responseCount_one": "{{count}} Antwort",
-      "responseCount_other": "{{count}} Antworten"
+      "responseCount_other": "{{count}} Antworten",
+      "winnerLabel": "Gewinneroption"
     },
     "list": {
       "voteCount_one": "{{count}} Abstimmung",
