@@ -32,6 +32,14 @@ export interface IotDashboardPageProps {
    * a live feed.
    */
   isOffline?: boolean;
+  /**
+   * True when the dashboard rollup query (`useIotDashboard`) failed. Renders a
+   * page-level error panel with a retry affordance instead of leaving the KPI
+   * cards stuck on their placeholder `—` / empty panels forever.
+   */
+  isError?: boolean;
+  /** Retry handler for the error panel (re-runs the dashboard rollup query). */
+  onRetry?: () => void;
   onSelectSensor: (id: string) => void;
   onAcknowledgeAlert: (alertId: string) => void;
   onResolveAlert: (alertId: string) => void;
@@ -50,6 +58,8 @@ export function IotDashboardPage({
   pendingAlertId,
   isLive = false,
   isOffline = false,
+  isError = false,
+  onRetry,
   onSelectSensor,
   onAcknowledgeAlert,
   onResolveAlert,
@@ -84,72 +94,99 @@ export function IotDashboardPage({
         )}
       </header>
 
-      {isOffline && (
-        <div
-          role="status"
-          className="mb-6 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
-        >
-          <span aria-hidden="true" className="mt-0.5 font-semibold">
-            !
-          </span>
-          <div>
-            <p className="font-medium">
-              {t('iot.offlineBannerTitle', { defaultValue: 'Live updates disconnected' })}
-            </p>
-            <p className="mt-0.5 text-amber-700">
-              {t('iot.offlineBannerMessage', {
-                defaultValue:
-                  'The real-time telemetry connection was lost and could not be re-established. Readings shown may be out of date — reload the page to reconnect.',
+      {isError ? (
+        <section className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+          <div className="px-4 py-16 text-center" role="alert">
+            <p className="text-sm font-medium text-red-600">
+              {t('iot.dashboardLoadError', {
+                defaultValue: 'Failed to load the dashboard. Please try again.',
               })}
             </p>
+            {onRetry && (
+              <button
+                type="button"
+                onClick={onRetry}
+                className="mt-3 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                {t('common.retry', { defaultValue: 'Retry' })}
+              </button>
+            )}
           </div>
-        </div>
+        </section>
+      ) : (
+        <>
+          {isOffline && (
+            <div
+              role="status"
+              className="mb-6 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
+            >
+              <span aria-hidden="true" className="mt-0.5 font-semibold">
+                !
+              </span>
+              <div>
+                <p className="font-medium">
+                  {t('iot.offlineBannerTitle', { defaultValue: 'Live updates disconnected' })}
+                </p>
+                <p className="mt-0.5 text-amber-700">
+                  {t('iot.offlineBannerMessage', {
+                    defaultValue:
+                      'The real-time telemetry connection was lost and could not be re-established. Readings shown may be out of date — reload the page to reconnect.',
+                  })}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* KPI rollup (FR75) */}
+          <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
+            <IotStatCard
+              label={t('iot.totalDevices', { defaultValue: 'Total devices' })}
+              value={dashboardLoading ? '—' : (dashboard?.total_sensors ?? 0)}
+            />
+            <IotStatCard
+              label={t('iot.activeDevices', { defaultValue: 'Active' })}
+              value={dashboardLoading ? '—' : (dashboard?.active_sensors ?? 0)}
+              tone="success"
+            />
+            <IotStatCard
+              label={t('iot.offlineDevices', { defaultValue: 'Offline' })}
+              value={dashboardLoading ? '—' : (dashboard?.offline_sensors ?? 0)}
+              tone={dashboard && dashboard.offline_sensors > 0 ? 'warning' : 'default'}
+            />
+            <IotStatCard
+              label={t('iot.unresolvedAlerts', { defaultValue: 'Open alerts' })}
+              value={dashboardLoading ? '—' : (dashboard?.unresolved_alerts ?? 0)}
+              tone={dashboard && dashboard.unresolved_alerts > 0 ? 'danger' : 'default'}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-1">
+              <SensorListPanel
+                sensors={sensors}
+                isLoading={sensorsLoading}
+                selectedSensorId={selectedSensorId}
+                onSelectSensor={onSelectSensor}
+              />
+            </div>
+
+            <div className="space-y-6 lg:col-span-2">
+              <TelemetryPanel
+                sensor={selectedSensor}
+                readings={readings}
+                isLoading={readingsLoading}
+              />
+              <AlertsPanel
+                alerts={alerts}
+                isLoading={dashboardLoading}
+                pendingAlertId={pendingAlertId}
+                onAcknowledge={onAcknowledgeAlert}
+                onResolve={onResolveAlert}
+              />
+            </div>
+          </div>
+        </>
       )}
-
-      {/* KPI rollup (FR75) */}
-      <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-        <IotStatCard
-          label={t('iot.totalDevices', { defaultValue: 'Total devices' })}
-          value={dashboardLoading ? '—' : (dashboard?.total_sensors ?? 0)}
-        />
-        <IotStatCard
-          label={t('iot.activeDevices', { defaultValue: 'Active' })}
-          value={dashboardLoading ? '—' : (dashboard?.active_sensors ?? 0)}
-          tone="success"
-        />
-        <IotStatCard
-          label={t('iot.offlineDevices', { defaultValue: 'Offline' })}
-          value={dashboardLoading ? '—' : (dashboard?.offline_sensors ?? 0)}
-          tone={dashboard && dashboard.offline_sensors > 0 ? 'warning' : 'default'}
-        />
-        <IotStatCard
-          label={t('iot.unresolvedAlerts', { defaultValue: 'Open alerts' })}
-          value={dashboardLoading ? '—' : (dashboard?.unresolved_alerts ?? 0)}
-          tone={dashboard && dashboard.unresolved_alerts > 0 ? 'danger' : 'default'}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-1">
-          <SensorListPanel
-            sensors={sensors}
-            isLoading={sensorsLoading}
-            selectedSensorId={selectedSensorId}
-            onSelectSensor={onSelectSensor}
-          />
-        </div>
-
-        <div className="space-y-6 lg:col-span-2">
-          <TelemetryPanel sensor={selectedSensor} readings={readings} isLoading={readingsLoading} />
-          <AlertsPanel
-            alerts={alerts}
-            isLoading={dashboardLoading}
-            pendingAlertId={pendingAlertId}
-            onAcknowledge={onAcknowledgeAlert}
-            onResolve={onResolveAlert}
-          />
-        </div>
-      </div>
     </div>
   );
 }

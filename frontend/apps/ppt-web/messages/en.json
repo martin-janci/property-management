@@ -6364,6 +6364,7 @@
   "iot": {
     "dashboardTitle": "Smart Building",
     "dashboardSubtitle": "Sensors, telemetry and alerts across your buildings.",
+    "dashboardLoadError": "Failed to load the dashboard. Please try again.",
     "openDashboard": "Dashboard",
     "sensorsTitle": "Sensors & Devices",
     "sensorsSubtitle": "Register and manage the IoT devices across your buildings.",
