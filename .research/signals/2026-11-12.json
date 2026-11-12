@@ -1,0 +1,200 @@
+{
+  "run_iso": "2026-11-12T03:16:35Z",
+  "signals": [
+    {
+      "id": "screen-map-drift-pr-3419-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3419",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #3419 touched frontend/apps/ppt-web/src/routes/groups/meters.tsx + meters.all-meters-hook.test.tsx without any docs/screens/ppt/*.md update."
+    },
+    {
+      "id": "screen-map-drift-pr-3422-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3422",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #3422 touched frontend/apps/ppt-web/src/routes/groups/rentals.tsx without any docs/screens/ppt/*.md update."
+    },
+    {
+      "id": "screen-map-drift-pr-3407-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3407",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #3407 touched frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx + env.js/route.ts without any docs/screens/reality/*.md update."
+    },
+    {
+      "id": "screen-map-drift-pr-3403-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3403",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #3403 touched frontend/apps/ppt-web/src/routes/groups/ai-dashboards.tsx + two route tests without any docs/screens/ppt/*.md update."
+    },
+    {
+      "id": "churn-hotspot-ppt-web-features-portfolio-performance-pages-portfoliodashboardpage-tsx",
+      "type": "churn-hotspot",
+      "source": "churn-2026-11-12",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx — 2 touches since cursor (PRs #3408 dashboard-dead-buttons, #3413 i18n routing)."
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/sk.json",
+      "type": "churn-hotspot",
+      "source": "churn-2026-11-12",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Cumulative re-emit: file touched 3× since cursor by i18n PRs (#3413 PortfolioDashboard, #3417 mobile unread/forms, #3380 realtor analytics). Translation bumps, not code instability. score_delta suppressed per cumulative dedup carve-out."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/main.rs",
+      "type": "churn-hotspot",
+      "source": "churn-2026-11-12",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Cumulative re-emit: file touched 2× since cursor by dead-middleware removals (#3409 rls_context, #3415 tenant_filter). score_delta suppressed per cumulative dedup carve-out."
+    },
+    {
+      "id": "lag-warning-2026-11-12",
+      "type": "lag_warning",
+      "source": "routine-scheduler",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "routine last ran 2026-11-09T22:53:00Z — 52h behind (>36h threshold). Stale-routine window (>=3 days) not quite reached."
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met confidence=high + score>=3 + allowlist",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches '# <today>'",
+      "observed": "to-be-verified-post-write",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advances vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "re-emitted cumulative signals have score_delta=0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap 8 / decay",
+      "observed": "no items with score>8; no 14d-old open items to decay",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans vs brief adversarial pass",
+      "observed": "no new plans",
+      "expected": "vacuous"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans + readiness gates",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged diff within .research/",
+      "observed": "only .research/ staged",
+      "expected": "0 non-.research files"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regen byte-identical",
+      "observed": "identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "phases 1.5 and 1.6 skipped, cursors preserved",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present",
+      "observed": "no plans deleted",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "no archive change",
+      "expected": ">=0"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md regen byte-identical",
+      "observed": "identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "0 auto_fix_actions",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid",
+      "observed": "phase-1.6 skipped — no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram secret",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

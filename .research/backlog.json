@@ -1941,13 +1941,14 @@
       ],
       "evidence": [
         "backend/servers/api-server/src/main.rs touched in 2 commits this run (+10/-0 lines): PR #989 (gap-sweep backend) and PR #963 (security headers); top-3 raw churn after lockfile/version-bump exclusions",
-        "resolved 2026-06-06: PR #1120 — refactor-main-rs-churn-2026-06-03: extract router/middleware/CORS setup"
+        "resolved 2026-06-06: PR #1120 — refactor-main-rs-churn-2026-06-03: extract router/middleware/CORS setup",
+        "Cumulative re-emit 2026-11-12: file touched 2× since 2026-11-09 by dead-middleware removals (#3409 rls_context, #3415 tenant_filter). Low churn, status unchanged — no score bump."
       ],
       "files": [
         "backend/servers/api-server/src/main.rs"
       ],
       "created_at": "2026-06-03",
-      "updated_at": "2026-06-06",
+      "updated_at": "2026-11-12",
       "plan": null
     },
     {
@@ -14489,7 +14490,8 @@
         "PR #3220"
       ],
       "evidence": [
-        "ppt-web i18n drops in PR #3218 (EvidenceUploader) + PR #3220 (Community) bumped all 6 locale message files identically (+430/-2 each). sk.json representative of bulk pattern. Informational — expected drop shape, not instability."
+        "ppt-web i18n drops in PR #3218 (EvidenceUploader) + PR #3220 (Community) bumped all 6 locale message files identically (+430/-2 each). sk.json representative of bulk pattern. Informational — expected drop shape, not instability.",
+        "Cumulative re-emit 2026-11-12: file touched 3× since 2026-11-09 by i18n bump PRs (#3413 PortfolioDashboard, #3417 mobile unread/forms, #3380 realtor analytics prep). Translation churn, not code instability — no score bump."
       ],
       "files": [
         "frontend/apps/ppt-web/messages/sk.json",
@@ -14500,7 +14502,7 @@
         "frontend/apps/ppt-web/messages/pl.json"
       ],
       "created_at": "2026-11-04",
-      "updated_at": "2026-11-04",
+      "updated_at": "2026-11-12",
       "plan": null,
       "reconciled": {
         "at": "2026-11-04T22:28:58Z",
@@ -15711,6 +15713,110 @@
         "assignment_status": "failed",
         "pr_number": null
       }
+    },
+    {
+      "id": "screen-map-drift-pr-3419-ppt",
+      "title": "Screen-map drift: PR #3419 (meters all-meters hook fix) touched ppt-web routes without updating docs/screens/ppt/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3419"
+      ],
+      "evidence": [
+        "PR #3419 touched frontend/apps/ppt-web/src/routes/groups/meters.tsx + meters.all-meters-hook.test.tsx without updating any docs/screens/ppt/*.md. Best-effort heuristic — review candidate, not promotable."
+      ],
+      "files": [
+        "docs/screens/ppt/",
+        "frontend/apps/ppt-web/src/routes/groups/meters.tsx"
+      ],
+      "created_at": "2026-11-12",
+      "updated_at": "2026-11-12",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3422-ppt",
+      "title": "Screen-map drift: PR #3422 (rentals load-error unhandled) touched ppt-web routes without updating docs/screens/ppt/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3422"
+      ],
+      "evidence": [
+        "PR #3422 touched frontend/apps/ppt-web/src/routes/groups/rentals.tsx without updating any docs/screens/ppt/*.md. Best-effort heuristic — review candidate, not promotable."
+      ],
+      "files": [
+        "docs/screens/ppt/",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx"
+      ],
+      "created_at": "2026-11-12",
+      "updated_at": "2026-11-12",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3407-reality",
+      "title": "Screen-map drift: PR #3407 (SSR API-base resolver centralization) touched reality-web app routes without updating docs/screens/reality/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3407"
+      ],
+      "evidence": [
+        "PR #3407 touched frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx + env.js/route.ts without updating any docs/screens/reality/*.md. Best-effort heuristic — review candidate, not promotable."
+      ],
+      "files": [
+        "docs/screens/reality/",
+        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx"
+      ],
+      "created_at": "2026-11-12",
+      "updated_at": "2026-11-12",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3403-ppt",
+      "title": "Screen-map drift: PR #3403 (AI acknowledge error surface) touched ppt-web ai-dashboards route without updating docs/screens/ppt/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3403"
+      ],
+      "evidence": [
+        "PR #3403 touched frontend/apps/ppt-web/src/routes/groups/ai-dashboards.tsx + two sibling route tests without updating any docs/screens/ppt/*.md. Best-effort heuristic — review candidate, not promotable."
+      ],
+      "files": [
+        "docs/screens/ppt/",
+        "frontend/apps/ppt-web/src/routes/groups/ai-dashboards.tsx"
+      ],
+      "created_at": "2026-11-12",
+      "updated_at": "2026-11-12",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-ppt-web-features-portfolio-performance-pages-portfoliodashboardpage-tsx",
+      "title": "Churn hotspot: frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx — 2 touches since 2026-11-09",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn 2026-11-12"
+      ],
+      "evidence": [
+        "First hotspot appearance: file touched twice in two non-research commits on dev since 2026-11-09T22:53:00Z (PRs #3408 dashboard-dead-buttons + #3413 route copy through i18n). Low-signal single-file hotspot, not yet repeated-churn."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx"
+      ],
+      "created_at": "2026-11-12",
+      "updated_at": "2026-11-12",
+      "plan": null
     }
   ]
 }

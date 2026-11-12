@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-11-09 22:58 UTC by routine</sub>
+<sub>Last regenerated: 2026-11-12 03:16 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -47,12 +47,16 @@
 | 3 | security | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-25 (+2) | 2026-05-25 | done | plans/_archive/security-equipment-idor.md |
 | 3 | security | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | `backend/servers/api-server/src/routes/signatures.rs (+2)` | issue #439 (+3) | 2026-05-25 | done | plans/_archive/security-ssrf-outbound-url-validation.md |
 | 3 | security | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-23 (+2) | 2026-05-25 | done | plans/_archive/security-voice-device-idor.md |
-| 2 | security | SECURITY: ppt-web refresh-token persisted in localStorage — XSS-reachable | `frontend/apps/ppt-web/src/` | rotating-expert-review 2026-11-03 ppt-web-core (dispatcher Tier-1d) | 2026-11-09 | open | — |
+| 2 | test-gap | Screen-map drift: PR #3419 (meters all-meters hook fix) touched ppt-web routes without updating docs/screens/ppt/ | `docs/screens/ppt/ (+1)` | PR #3419 | 2026-11-12 | open | — |
+| 2 | test-gap | Screen-map drift: PR #3422 (rentals load-error unhandled) touched ppt-web routes without updating docs/screens/ppt/ | `docs/screens/ppt/ (+1)` | PR #3422 | 2026-11-12 | open | — |
+| 2 | test-gap | Screen-map drift: PR #3407 (SSR API-base resolver centralization) touched reality-web app routes without updating docs/screens/reality/ | `docs/screens/reality/ (+1)` | PR #3407 | 2026-11-12 | open | — |
+| 2 | test-gap | Screen-map drift: PR #3403 (AI acknowledge error surface) touched ppt-web ai-dashboards route without updating docs/screens/ppt/ | `docs/screens/ppt/ (+1)` | PR #3403 | 2026-11-12 | open | — |
+| 2 | security | SECURITY: ppt-web refresh-token persisted in localStorage — XSS-reachable | `frontend/apps/ppt-web/src/` | rotating-expert-review 2026-11-03 ppt-web-core (dispatcher Tier-1d) | 2026-11-09 | done | — |
 | 2 | security | api-server messaging.rs leaks raw sqlx errors to clients — 33 handler error branches send e.to_string() as DB_ERROR | `backend/servers/api-server/src/routes/messaging.rs` | PR #3363 (+1) | 2026-11-09 | done | plans/_archive/code-review-api-handlers-messaging-db-error-leak.md |
 | 2 | bug | SECURITY: admin tenant-export handler writes to a client-supplied out_dir with no validation — arbitrary-directory write via RLS-bypassing export pool | `backend/servers/api-server/src/routes/admin_tenant_lifecycle.rs` | PR #3364 (+1) | 2026-11-09 | done | — |
 | 2 | bug | reality-server imports.rs list_import_jobs passes user `limit` to SQL unclamped - negative LIMIT 500s, huge LIMIT is unbounded | `backend/servers/reality-server/src/routes/imports.rs` | PR #3368 (+1) | 2026-11-09 | done | — |
 | 2 | bug | reality-server imports.rs create/update_import_job store user `source_url` without validate_external_url (SSRF parity gap vs agency_imports) | `backend/servers/reality-server/src/routes/imports.rs` | PR #3367 (+1) | 2026-11-09 | done | — |
-| 2 | bug | reality-server list_import_jobs reports `total` as page length, breaking client pagination | `backend/servers/reality-server/src/routes/imports.rs` | rotating-expert-review [reality-server] | 2026-11-09 | open | — |
+| 2 | bug | reality-server list_import_jobs reports `total` as page length, breaking client pagination | `backend/servers/reality-server/src/routes/imports.rs` | rotating-expert-review [reality-server] | 2026-11-09 | dropped | — |
 | 2 | test-gap | Screen-map drift: PR #3293 i18n'd reality-web realtor/[id] page without updating docs/screens/reality/realtor-detail.md | `frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx (+1)` | PR #3293 | 2026-11-05 | done | — |
 | 2 | test-gap | Screen-map drift: PR #3313 added regression tests for reality-web realtor/[id] without updating docs/screens/reality/realtor-detail.md | `frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.test.tsx` | PR #3313 | 2026-11-05 | done | — |
 | 2 | test-gap | Screen-map drift: PR #3317 biome-cleaned ppt-web ai-dashboards route test without updating docs/screens/ppt/*.md | `frontend/apps/ppt-web/src/routes/groups/ai-dashboards.role-gate.route.test.tsx` | PR #3317 | 2026-11-05 | done | — |
@@ -265,6 +269,9 @@
 | 2 | test-gap | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | `frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx` | PR #460 | 2026-05-25 | closed | — |
 | 2 | refactor | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | `backend/servers/api-server/src/handlers/auth/mod.rs (+2)` | code-review api-handlers 2026-05-23 (+1) | 2026-05-24 | done | — |
 | 2 | security | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | `backend/servers/api-server/src/handlers/voting/mod.rs (+4)` | issue #160 (+2) | 2026-05-23 | done | — |
+| 1 | refactor | api-server main.rs touched twice this run (gap-sweep + security headers) — minor churn marker | `backend/servers/api-server/src/main.rs` | PR #989 (+2) | 2026-11-12 | done | — |
+| 1 | refactor | Watch ppt-web i18n locale drops — PR #3218 + #3220 touched 6 locale files identically | `frontend/apps/ppt-web/messages/sk.json (+5)` | PR #3218 (+1) | 2026-11-12 | done | — |
+| 1 | refactor | Churn hotspot: frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx — 2 touches since 2026-11-09 | `frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx` | churn 2026-11-12 | 2026-11-12 | open | — |
 | 1 | bug | Shared Ktor HttpClient has no HttpTimeout - mobile API calls can hang indefinitely | `mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt` | rotating-expert-review [mobile-native-kmp] | 2026-11-09 | open | — |
 | 1 | refactor | Watch RegistryPage.tsx churn — 3 touches across #3354/#3355/#3359 (auth context + i18n + toasts) | `frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx` | PR #3354 (+3) | 2026-11-09 | done | — |
 | 1 | bug | platform-admin health-alerts pagination: page_size used as SQL LIMIT with no clamp despite documented 'max 100' — unbounded query (DoS) | `backend/servers/api-server/src/routes/platform_admin/ops.rs` | PR #3361 (+1) | 2026-11-09 | done | — |
@@ -284,7 +291,6 @@
 | 1 | bug | api-server resend-verification silently discards invalidate_user_tokens() result — a DB error leaves prior email-verification tokens valid | `backend/servers/api-server/src/routes/auth/registration.rs` | rotating-expert-review [api-handlers] | 2026-11-04 | done | — |
 | 1 | bug | api-server MFA security-event audit writes are fire-and-forget (let _ = audit.record) — a DB failure silently drops MFA enroll/disable/verify/recovery audit records | `backend/servers/api-server/src/routes/admin/mfa/enroll.rs (+3)` | rotating-expert-review [api-handlers] | 2026-11-04 | done | — |
 | 1 | refactor | Watch reality-web realtor/[id] page.tsx — top-1 churn this run after PR #3225 rewrite | `frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx` | PR #3225 | 2026-11-04 | done | — |
-| 1 | refactor | Watch ppt-web i18n locale drops — PR #3218 + #3220 touched 6 locale files identically | `frontend/apps/ppt-web/messages/sk.json (+5)` | PR #3218 (+1) | 2026-11-04 | done | — |
 | 1 | bug | reality-server maps HTTP status by substring-matching raw sqlx/Postgres error text (brittle under sqlx 0.9 / PG message changes) | `backend/servers/reality-server/src/routes/favorites.rs (+4)` | rotating-expert-review [reality-server] | 2026-11-04 | done | — |
 | 1 | refactor | InquiriesHandler splits ListingNotFound vs RealtorNotFound by error substring, but both collapse to the same 404 at the route - dead, brittle classification | `backend/servers/reality-server/src/handlers/inquiries/mod.rs (+1)` | rotating-expert-review [reality-server] | 2026-11-04 | dropped | — |
 | 1 | bug | mobile VoteDetailScreen renders server eligibility.reason string raw, bypassing i18n | `frontend/apps/mobile/src/screens/voting/VoteDetailScreen.tsx` | rotating-expert-review [mobile-rn] | 2026-11-03 | done | — |
@@ -500,7 +506,6 @@
 | 1 | refactor | ppt-web e2e auth-refresh.spec.ts added (+252 lines, story 79-2 token-refresh coverage) | `frontend/apps/ppt-web/e2e/auth-refresh.spec.ts` | PR #1047 (+1) | 2026-06-06 | done | — |
 | 1 | refactor | api-server esignature_webhook_idempotency_tests.rs added (+228 lines, terminal-state regression) | `backend/servers/api-server/tests/esignature_webhook_idempotency_tests.rs` | PR #1034 (+1) | 2026-06-06 | done | — |
 | 1 | refactor | ppt-web EvidenceUploader.test.tsx added (+202 lines, dispute-filing AC-2 regression) | `frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.test.tsx` | PR #1048 (+1) | 2026-06-06 | done | — |
-| 1 | refactor | api-server main.rs touched twice this run (gap-sweep + security headers) — minor churn marker | `backend/servers/api-server/src/main.rs` | PR #989 (+2) | 2026-06-06 | done | — |
 | 1 | refactor | Duplicated animate-spin spinner markup across mediation page + chat thread (no shared Spinner) | `frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx (+1)` | PR #555 (+2) | 2026-06-06 | done | — |
 | 1 | refactor | Mediation reference number uppercases full UUID (DSP-<uuid>) instead of a short code | `frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx` | PR #555 (+2) | 2026-06-06 | done | — |
 | 1 | refactor | frontend/apps/mobile/src/App.tsx churned twice this run (universal links + doc-detail wiring) | `frontend/apps/mobile/src/App.tsx` | PR #962 (+2) | 2026-06-06 | done | — |

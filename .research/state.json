@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-11-09T22:53:00Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 3370,
-  "last_issue_seen": 3357,
-  "last_commit_sha": "fa6d747e673fe509e8725ead53bba07d2342ac00",
+  "last_run_iso": "2026-11-12T03:16:35Z",
+  "last_run_ms": 180000,
+  "last_pr_seen": 3426,
+  "last_issue_seen": 3431,
+  "last_commit_sha": "4a2cf5507d51283581df3555cee803d50ed68525",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -168,9 +168,9 @@
       "recent_churn": 186
     },
     "backend/servers/api-server/src/main.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-06-03",
-      "recent_churn": 10
+      "runs_seen": 2,
+      "last_seen": "2026-11-12",
+      "recent_churn": 2
     },
     "docker/nginx/admin-web.nginx.conf.template": {
       "runs_seen": 1,
@@ -673,8 +673,8 @@
       "recent_churn": 837
     },
     "frontend/apps/ppt-web/messages/sk.json": {
-      "runs_seen": 2,
-      "last_seen": "2026-11-09",
+      "runs_seen": 3,
+      "last_seen": "2026-11-12",
       "recent_churn": 3
     },
     "backend/servers/reality-server/src/util/errors.rs": {
@@ -711,6 +711,11 @@
       "runs_seen": 1,
       "last_seen": "2026-11-09",
       "recent_churn": 3
+    },
+    "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-12",
+      "recent_churn": 2
     }
   },
   "seen_signals": [
@@ -865,6 +870,7 @@
     "churn-hotspot-mobile-native-listing-detail-kt",
     "churn-hotspot-mobile-native-search-screen-kt",
     "churn-hotspot-mobile-native/iosApp/iosAppTests/RealityPortalTests.swift",
+    "churn-hotspot-ppt-web-features-portfolio-performance-pages-portfoliodashboardpage-tsx",
     "closed-not-merged-pr-1274",
     "closed-not-merged-pr-1378",
     "closed-not-merged-pr-1425",
@@ -1250,6 +1256,7 @@
     "lag-warning-2026-11-01",
     "lag-warning-2026-11-04",
     "lag-warning-2026-11-09",
+    "lag-warning-2026-11-12",
     "lag-warning-supplement-2026-08-31",
     "merged-review-followup-issue-2366",
     "merged-review-followup-issue-2575",
@@ -1317,6 +1324,10 @@
     "screen-map-drift-pr-3313-reality",
     "screen-map-drift-pr-3317-ppt",
     "screen-map-drift-pr-3317-reality",
+    "screen-map-drift-pr-3403-ppt",
+    "screen-map-drift-pr-3407-reality",
+    "screen-map-drift-pr-3419-ppt",
+    "screen-map-drift-pr-3422-ppt",
     "screen-map-drift-pr-460-reality",
     "screen-map-drift-pr-464-ppt",
     "screen-map-drift-pr-547-ppt",
@@ -1417,8 +1428,8 @@
     "mobile-native-kmp": "2026-11-04"
   },
   "stats": {
-    "runs": 117,
-    "vectors_created": 525,
+    "runs": 118,
+    "vectors_created": 530,
     "plans_created": 37,
     "quiet_days": 8,
     "auto_fix_count": 0
