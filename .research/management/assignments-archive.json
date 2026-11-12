@@ -9761,6 +9761,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-ppt-web-ui-privacy-settings-no-i18n",
+      "branch": "auto-impl/code-review-ppt-web-ui-privacy-settings-44e65b84",
+      "status": "merged",
+      "claimed_at": "2026-11-12T16:28:01Z",
+      "last_updated": "2026-11-12T18:39:09Z",
+      "status_changed_at": "2026-11-12T18:39:09Z",
+      "pr_number": 3460,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3460",
+      "merged_at": "2026-11-12T18:36:29Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3460 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=privacy-settings de/pl/hu missing 35 neighbors.privacy.* + common.saving; added + regression test (109 fail pre-fix, green post); VERIFY OK; drift=owner-label",
+      "reviewer_summary": "verdict=approve head_oid=21df4cb99bf4768ff320e9369f96e86f56b3cb5d note=i18n-locale-parity-verified-ci-green-scope-drift-benign-approve-posted-as-comment(self-authored-PR)",
+      "last_reviewed_oid": "21df4cb99bf4768ff320e9369f96e86f56b3cb5d",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-12T18:34:08Z"
+    },
+    {
       "task_id": "code-review-ppt-web-ui-propinput-json-coerce",
       "branch": "auto-impl/code-review-ppt-web-ui-propinput-json-co-3e6b6c2e",
       "status": "merged",
@@ -9827,6 +9849,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-11-12T16:37:37Z"
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-quorumtile-i18n",
+      "branch": "auto-impl/code-review-ppt-web-ui-quorumtile-i18n-6066bf69",
+      "status": "merged",
+      "claimed_at": "2026-11-12T16:28:01Z",
+      "last_updated": "2026-11-12T18:39:09Z",
+      "status_changed_at": "2026-11-12T18:39:09Z",
+      "pr_number": 3459,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3459",
+      "merged_at": "2026-11-12T18:36:13Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3459 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=QuorumTile progressbar role + i18n aria-label (voting.quorum.progressLabel, 6 locales); VERIFY OK 11527 FE tests; IG3 two-commit; drift=owner-label",
+      "reviewer_summary": "verdict=approve head_oid=48bde57df8fe3d1b33b7bdd1f2081a7761577536 note=quorumtile-i18n-a11y-clean-scopedrift-false-positive-ci-green",
+      "last_reviewed_oid": "48bde57df8fe3d1b33b7bdd1f2081a7761577536",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-12T18:34:08Z"
     },
     {
       "task_id": "code-review-ppt-web-ui-registry-feature-orphaned-routes",
@@ -10114,6 +10158,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-08-21T16:48:48Z"
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-toast-copy-timer-no-cleanup",
+      "branch": "auto-impl/code-review-ppt-web-ui-toast-copy-timer-119dac7c",
+      "status": "merged",
+      "claimed_at": "2026-11-12T16:28:01Z",
+      "last_updated": "2026-11-12T18:39:09Z",
+      "status_changed_at": "2026-11-12T18:39:09Z",
+      "pr_number": 3461,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3461",
+      "merged_at": "2026-11-12T18:37:54Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3461 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=RecoveryCodesPanel copy-reset timer cleared (useRef+useEffect cleanup+reset-before-reschedule) in TwoFactorAuthPage.tsx; RTL regression test:/fix: split; VERIFY OK a3bc75da (11526 tests); drift=owner-label",
+      "reviewer_summary": "verdict=approve head_oid=adcda9a46ddfb2dcf11e62d3bcab8b7d63e48fda note=timer-cleanup-fix-correct-ci-green-scopedrift-benign",
+      "last_reviewed_oid": "adcda9a46ddfb2dcf11e62d3bcab8b7d63e48fda",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-12T18:34:08Z"
     },
     {
       "task_id": "code-review-ppt-web-ui-toast-setstate-after-unmount",
@@ -25903,5 +25969,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-12T16:41:12Z"
+  "archived_at": "2026-11-12T18:39:09Z"
 }

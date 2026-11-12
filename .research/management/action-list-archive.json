@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-12T16:41:13Z",
+  "archived_at": "2026-11-12T18:40:02Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -9618,6 +9618,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-leases-list-swallows-query-error",
+      "action": "ppt web ui leases list swallows query error",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-11T08:26:16Z (tier1d ppt-web-ui score=1 vector=bug) | gc1-reconcile 2026-11-12T18:23:35Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T08:26:16Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-10T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3456,
+        "merged_at": "2026-11-12T16:36:23Z",
+        "at": "2026-11-12T18:23:35Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-marketplace-epic68-orphaned-routes",
       "action": "ppt web ui marketplace epic68 orphaned routes",
       "owner_role": "pm-backend",
@@ -9774,6 +9799,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-outages-page-swallows-query-error",
+      "action": "ppt web ui outages page swallows query error",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-11T08:26:16Z (tier1d ppt-web-ui score=1 vector=bug) | gc1-reconcile 2026-11-12T18:23:35Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T08:26:16Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-10T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3457,
+        "merged_at": "2026-11-12T16:38:32Z",
+        "at": "2026-11-12T18:23:35Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-payment-match-silent-fail",
       "action": "ppt web ui payment match silent fail",
       "owner_role": "pm-backend",
@@ -9898,6 +9948,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-privacy-settings-no-i18n",
+      "action": "ppt web ui privacy settings no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d ppt-web-ui score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T18:26:12Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-09T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3460,
+        "merged_at": "2026-11-12T18:36:29Z",
+        "at": "2026-11-12T18:40:01Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-propinput-json-coerce",
       "action": "TenantSectionEditor PropInput silently JSON.parse-coerces every string prop on blur — override payload corrupted (\"true\" -> boolean, \"[]\" -> array)",
       "owner_role": "pm-backend",
@@ -9942,6 +10017,56 @@
         "commit": "2ef5672fdc073e6f68ea07aedfeaf07c758e660d",
         "subject": "code-review-ppt-web-ui-protectedroute-i18n: i18n ProtectedRoute strings (#2737)",
         "at": "2026-08-12T06:06:45Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-questionresults-i18n",
+      "action": "ppt web ui questionresults i18n",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-11T08:26:16Z (tier1d ppt-web-ui score=1 vector=i18n) | gc1-reconcile 2026-11-12T18:23:35Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T08:26:16Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "i18n",
+        "generated": "2026-10-10T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3458,
+        "merged_at": "2026-11-12T16:39:59Z",
+        "at": "2026-11-12T18:23:35Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-quorumtile-i18n",
+      "action": "ppt web ui quorumtile i18n",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d ppt-web-ui score=1 vector=i18n)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T18:26:12Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "i18n",
+        "generated": "2026-10-10T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3459,
+        "merged_at": "2026-11-12T18:36:13Z",
+        "at": "2026-11-12T18:40:01Z"
       }
     },
     {
@@ -10199,6 +10324,31 @@
         "merged_pr": 2818,
         "merged_at": "2026-08-21T16:50:20Z",
         "at": "2026-08-21T16:52:08Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-toast-copy-timer-no-cleanup",
+      "action": "ppt web ui toast copy timer no cleanup",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d ppt-web-ui score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T18:26:12Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-10T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3461,
+        "merged_at": "2026-11-12T18:37:54Z",
+        "at": "2026-11-12T18:40:01Z"
       }
     },
     {
