@@ -79,6 +79,13 @@ export function useToastOptional(): ToastContextValue | null {
 /**
  * Maximum number of toasts visible at once.
  * When exceeded, only the most recent toasts are shown.
+ *
+ * This is also the upper bound on the number of toasts kept in state: toasts
+ * that scroll past the visible window are evicted rather than retained. A
+ * retained-but-hidden toast has no rendered close button, and persistent
+ * toasts (duration = 0, e.g. every error toast) carry no auto-dismiss timer —
+ * so without this bound they could never leave the queue and would accumulate
+ * for the lifetime of the session (a memory / DOM-state leak).
  */
 const MAX_VISIBLE_TOASTS = 3;
 const DEFAULT_SUCCESS_DURATION = 5000;
@@ -150,7 +157,26 @@ export function ToastProvider({ children }: ToastProviderProps) {
       duration,
     };
 
-    setToasts((prev) => [...prev, toast]);
+    setToasts((prev) => {
+      const next = [...prev, toast];
+      if (next.length <= MAX_VISIBLE_TOASTS) {
+        return next;
+      }
+      // Bound the queue to the visible window. Evict the oldest overflow
+      // toasts and clear any pending auto-dismiss timers they own so the
+      // timeout map cannot leak either. (clearTimeout + Map.delete are
+      // idempotent, so this stays safe under React StrictMode's double
+      // invocation of state updaters.)
+      const evicted = next.slice(0, next.length - MAX_VISIBLE_TOASTS);
+      for (const old of evicted) {
+        const evictedTimeoutId = timeoutRefs.current.get(old.id);
+        if (evictedTimeoutId) {
+          clearTimeout(evictedTimeoutId);
+          timeoutRefs.current.delete(old.id);
+        }
+      }
+      return next.slice(-MAX_VISIBLE_TOASTS);
+    });
 
     // Only set auto-dismiss if duration > 0
     if (duration > 0) {
@@ -162,9 +188,11 @@ export function ToastProvider({ children }: ToastProviderProps) {
     }
   }, []);
 
-  // Get visible toasts (limited to MAX_VISIBLE_TOASTS)
-  // Note: When more than 3 toasts exist, only the 3 most recent are displayed.
-  // Older toasts are hidden but still tracked; they will auto-dismiss if they have a duration.
+  // Render the toasts (the queue is already bounded to MAX_VISIBLE_TOASTS in
+  // showToast, so this slice is defensive and normally a no-op). Only the most
+  // recent toasts survive; older ones are evicted on insertion rather than
+  // hidden-but-retained, which is what prevented persistent toasts from
+  // leaking.
   const visibleToasts = toasts.slice(-MAX_VISIBLE_TOASTS);
 
   return (
