@@ -175,78 +175,6 @@
       }
     },
     {
-      "id": "code-review-reality-web-listing-edit-i18n",
-      "action": "reality web listing edit i18n",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-10T20:35:26Z (tier1d reality-web score=1 vector=i18n)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-10T20:35:26Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 1,
-        "vector": "i18n",
-        "generated": "2026-10-11T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-mobile-rn-profile-local-only-save",
-      "action": "mobile rn profile local only save",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-11T08:26:16Z (tier1d mobile-rn score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-11T08:26:16Z",
-      "signal_ref": {
-        "segment": "mobile-rn",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-10-10T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-iot-dashboard-swallows-query-errors",
-      "action": "ppt web ui iot dashboard swallows query errors",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-11T08:26:16Z (tier1d ppt-web-ui score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-11T08:26:16Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-10-10T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-registry-feature-orphaned-routes",
-      "action": "ppt web ui registry feature orphaned routes",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-11T08:26:16Z (tier1d ppt-web-ui score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-11T08:26:16Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-10-10T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-ppt-web-ui-registry-page-mutations-silent-fail",
       "action": "ppt web ui registry page mutations silent fail",
       "owner_role": "pm-backend",
@@ -279,24 +207,6 @@
         "segment": "mobile-rn",
         "score": 1,
         "vector": "bug",
-        "generated": "2026-10-10T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-ballotquestion-yesno-i18n",
-      "action": "ppt web ui ballotquestion yesno i18n",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-11T08:26:16Z (tier1d ppt-web-ui score=1 vector=i18n)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-11T08:26:16Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
-        "vector": "i18n",
         "generated": "2026-10-10T00:00:00Z"
       }
     },

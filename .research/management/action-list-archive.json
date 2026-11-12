@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-12T12:27:49Z",
+  "archived_at": "2026-11-12T12:38:24Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -6874,6 +6874,31 @@
       }
     },
     {
+      "id": "code-review-mobile-rn-profile-local-only-save",
+      "action": "mobile rn profile local only save",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-11T08:26:16Z (tier1d mobile-rn score=2 vector=bug) | gc1-reconcile 2026-11-12T12:38:24Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T08:26:16Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-10T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3451,
+        "merged_at": "2026-11-12T12:37:46Z",
+        "at": "2026-11-12T12:38:24Z"
+      }
+    },
+    {
       "id": "code-review-mobile-rn-push-debug-console-log",
       "action": "mobile: usePushNotifications — debug console.log left on the device-token register/unregister production path",
       "owner_role": "pm-backend",
@@ -8783,6 +8808,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-ballotquestion-yesno-i18n",
+      "action": "ppt web ui ballotquestion yesno i18n",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-11T08:26:16Z (tier1d ppt-web-ui score=1 vector=i18n) | gc1-reconcile 2026-11-12T12:38:24Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T08:26:16Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "i18n",
+        "generated": "2026-10-10T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-12T12:38:24Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-buildings-err-raw-i18n",
       "action": "ppt web ui buildings err raw i18n",
       "owner_role": "pm-tech-lead",
@@ -9444,6 +9494,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-iot-dashboard-swallows-query-errors",
+      "action": "ppt web ui iot dashboard swallows query errors",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-11T08:26:16Z (tier1d ppt-web-ui score=2 vector=bug) | gc1-reconcile 2026-11-12T12:38:24Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T08:26:16Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-10T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3450,
+        "merged_at": "2026-11-12T12:37:46Z",
+        "at": "2026-11-12T12:38:24Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-lang-switcher-aria",
       "action": "ppt-web LanguageSwitcher has hardcoded English aria-label on the control a non-English screen-reader user would use to find their language",
       "owner_role": "pm-tech-lead",
@@ -9792,6 +9867,31 @@
         "commit": "2ef5672fdc073e6f68ea07aedfeaf07c758e660d",
         "subject": "code-review-ppt-web-ui-protectedroute-i18n: i18n ProtectedRoute strings (#2737)",
         "at": "2026-08-12T06:06:45Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-feature-orphaned-routes",
+      "action": "ppt web ui registry feature orphaned routes",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-11T08:26:16Z (tier1d ppt-web-ui score=2 vector=bug) | gc1-reconcile 2026-11-12T12:38:24Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T08:26:16Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-10T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3453,
+        "merged_at": "2026-11-12T12:37:46Z",
+        "at": "2026-11-12T12:38:24Z"
       }
     },
     {
@@ -12078,6 +12178,31 @@
         "merged_pr": 3372,
         "merged_at": "2026-11-10T06:39:30Z",
         "at": "2026-11-10T06:39:49Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-i18n",
+      "action": "reality web listing edit i18n",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-10T20:35:26Z (tier1d reality-web score=1 vector=i18n) | gc1-reconcile 2026-11-12T12:38:24Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-10T20:35:26Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "i18n",
+        "generated": "2026-10-11T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3452,
+        "merged_at": "2026-11-12T12:37:46Z",
+        "at": "2026-11-12T12:38:24Z"
       }
     },
     {

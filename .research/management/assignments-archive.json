@@ -6814,6 +6814,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-mobile-rn-profile-local-only-save",
+      "branch": "auto-impl/code-review-mobile-rn-profile-local-only-2f27b384",
+      "status": "merged",
+      "claimed_at": "2026-11-12T10:26:17Z",
+      "last_updated": "2026-11-12T12:37:46Z",
+      "status_changed_at": "2026-11-12T12:37:46Z",
+      "pr_number": 3451,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3451",
+      "merged_at": "2026-11-12T12:37:46Z",
+      "specialist": "react-native",
+      "implementer_summary": "pr=3451 status=done specialist=react-native scope_drift=true code_reuse_warn=none note=wired ProfileScreen save to PATCH /api/v1/auth/me via useApiMutation + AuthContext.updateUser; verify green 921 tests; drift=owner-hint vs mobile task",
+      "reviewer_summary": "verdict=approve head_oid=46018b924de9a3fd4fbc0b924c1697ddc662a1fe note=rn-profile-save-correctly-wired-to-patch-me-scopedrift-justified-ci-green-posted-as-comment-selfPR",
+      "last_reviewed_oid": "46018b924de9a3fd4fbc0b924c1697ddc662a1fe",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-mobile-rn-push-debug-console-log",
       "branch": "auto-impl/code-review-mobile-rn-push-debug-console-295a452f",
       "status": "merged",
@@ -8668,6 +8690,30 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-ppt-web-ui-ballotquestion-yesno-i18n",
+      "branch": "auto-impl/code-review-ppt-web-ui-ballotquestion-ye-47569bdb",
+      "status": "failed",
+      "claimed_at": "2026-11-12T12:27:37Z",
+      "last_updated": "2026-11-12T12:37:46Z",
+      "status_changed_at": "2026-11-12T12:37:46Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=done specialist=react-web scope_drift=false code_reuse_warn=none note=stale finding; BallotQuestion yes/no UI already i18n (t('common.yes'/'common.no')), all 6 locales have keys — no hardcoded strings, no change needed",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "code-review-ppt-web-ui-buildings-err-raw-i18n",
       "branch": "auto-impl/code-review-ppt-web-ui-buildings-err-raw-72867ebf",
       "status": "merged",
@@ -9291,6 +9337,28 @@
       "merge_attempted_at": "2026-10-31T18:33:40Z"
     },
     {
+      "task_id": "code-review-ppt-web-ui-iot-dashboard-swallows-query-errors",
+      "branch": "auto-impl/code-review-ppt-web-ui-iot-dashboard-swa-eb76cc86",
+      "status": "merged",
+      "claimed_at": "2026-11-12T10:26:17Z",
+      "last_updated": "2026-11-12T12:37:46Z",
+      "status_changed_at": "2026-11-12T12:37:46Z",
+      "pr_number": 3450,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3450",
+      "merged_at": "2026-11-12T12:37:46Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3450 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=IoT dashboard surfaces useIotDashboard query errors via isError/onRetry panel (mirrors IotAlertsPage); verify green 11218 tests; drift=owner-hint pm-backend vs frontend task",
+      "reviewer_summary": "verdict=approve head_oid=eec3b810c4cfebb49440fc3caa0577ddcf797ada note=clean-iot-dashboard-error-state-mirrors-IotAlertsPage-pattern;scope-drift-justified(all-frontend);CI-green;posted-as-COMMENT(cannot-self-APPROVE)",
+      "last_reviewed_oid": "eec3b810c4cfebb49440fc3caa0577ddcf797ada",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-ui-lang-switcher-aria",
       "branch": "auto-impl/code-review-ppt-web-ui-lang-switcher-ari-ded2934c",
       "status": "merged",
@@ -9623,6 +9691,28 @@
       "merge_attempted_at": "2026-08-12T06:07:30Z",
       "quarantined_at": null,
       "quarantine_reason": null
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-registry-feature-orphaned-routes",
+      "branch": "auto-impl/code-review-ppt-web-ui-registry-feature-4b8b82ff",
+      "status": "merged",
+      "claimed_at": "2026-11-12T10:26:17Z",
+      "last_updated": "2026-11-12T12:37:46Z",
+      "status_changed_at": "2026-11-12T12:37:46Z",
+      "pr_number": 3453,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3453",
+      "merged_at": "2026-11-12T12:37:46Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3453 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=registry intentionally-unwired per PAP-55 (UNWIRED_FEATURES + CI guard); annotated feature barrel + page headers (comment-only); verify green 11216 tests",
+      "reviewer_summary": "verdict=approve head_oid=cb466aaeb8a5f62c092e4877a227304963a4c953 note=registry-intentionally-unwired-PAP-55-confirmed-comment-only-fix-correct",
+      "last_reviewed_oid": "cb466aaeb8a5f62c092e4877a227304963a4c953",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "code-review-ppt-web-ui-registry-mutation-reland",
@@ -11883,6 +11973,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-11-10T02:43:27Z"
+    },
+    {
+      "task_id": "code-review-reality-web-listing-edit-i18n",
+      "branch": "auto-impl/code-review-reality-web-listing-edit-i18-99cd63cc",
+      "status": "merged",
+      "claimed_at": "2026-11-12T10:26:17Z",
+      "last_updated": "2026-11-12T12:37:46Z",
+      "status_changed_at": "2026-11-12T12:37:46Z",
+      "pr_number": 3452,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3452",
+      "merged_at": "2026-11-12T12:37:46Z",
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=3452 status=done specialist=nextjs-web scope_drift=true code_reuse_warn=none note=listing-edit already i18n-clean; localized sibling realtor My-listings view via pages.realtorListings ns +15 keys all 6 locales; verify green 497 tests; drift=pm-tech-lead area excludes reality-web",
+      "reviewer_summary": "verdict=approve head_oid=7246e8ec26e05cd46e9f16ff1ab65ef5a13687fb note=i18n-clean-6-locale-parity-ci-green-scopedrift-justified",
+      "last_reviewed_oid": "7246e8ec26e05cd46e9f16ff1ab65ef5a13687fb",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "code-review-reality-web-listing-edit-i18n-sk",
@@ -25611,5 +25723,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-12T10:46:14Z"
+  "archived_at": "2026-11-12T12:38:08Z"
 }
