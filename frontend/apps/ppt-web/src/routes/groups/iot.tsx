@@ -76,7 +76,12 @@ function IotDashboardPageRoute() {
   const { showToast } = useToast();
   const [selectedSensorId, setSelectedSensorId] = useState<string | null>(null);
 
-  const { data: dashboard, isLoading: dashboardLoading } = useIotDashboard();
+  const {
+    data: dashboard,
+    isLoading: dashboardLoading,
+    isError: dashboardError,
+    refetch: refetchDashboard,
+  } = useIotDashboard();
   const { data: sensorsData, isLoading: sensorsLoading } = useSensors();
   const { data: readingsData, isLoading: readingsLoading } = useSensorReadings(
     selectedSensorId ?? '',
@@ -153,6 +158,8 @@ function IotDashboardPageRoute() {
       pendingAlertId={pendingAlertId}
       isLive={isConnected}
       isOffline={hasGivenUp}
+      isError={dashboardError}
+      onRetry={() => refetchDashboard()}
       onSelectSensor={setSelectedSensorId}
       onAcknowledgeAlert={handleAcknowledgeAlert}
       onResolveAlert={handleResolveAlert}
