@@ -9313,6 +9313,28 @@
       "merge_attempted_at": "2026-11-06T08:29:17Z"
     },
     {
+      "task_id": "code-review-ppt-web-ui-marketplace-epic68-orphaned-routes",
+      "branch": "auto-impl/code-review-ppt-web-ui-marketplace-epic6-2dd4e831",
+      "status": "failed",
+      "claimed_at": "2026-11-12T10:26:17Z",
+      "last_updated": "2026-11-12T10:46:14Z",
+      "status_changed_at": "2026-11-12T10:46:14Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "frontend",
+      "implementer_summary": "pr=none status=done specialist=frontend scope_drift=false code_reuse_warn=none note=false-positive: Epic68 marketplace intentionally-unwired by board decision PAP-55 (unwired-features registry + CI guard); neither wire nor delete permitted — no change warranted",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-ui-marketplace-no-i18n",
       "branch": "auto-impl/code-review-ppt-web-ui-marketplace-no-i1-048b48f0",
       "status": "merged",
@@ -11589,6 +11611,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-11-10T12:47:00Z"
+    },
+    {
+      "task_id": "code-review-reality-web-date-tolocale-no-locale",
+      "branch": "auto-impl/code-review-reality-web-date-tolocale-no-bfe2d702",
+      "status": "failed",
+      "claimed_at": "2026-11-12T10:26:17Z",
+      "last_updated": "2026-11-12T10:46:14Z",
+      "status_changed_at": "2026-11-12T10:46:14Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "ppt-frontend",
+      "implementer_summary": "pr=none status=done specialist=ppt-frontend scope_drift=false code_reuse_warn=none note=already-fixed-in-dev: all 5 flagged reality-web date renders thread next-intl locale via @/lib/format; zero bare .toLocale* date calls remain; regression test passes",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "code-review-reality-web-featured-fav-silent-fail",
@@ -25567,5 +25611,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-12T08:39:37Z"
+  "archived_at": "2026-11-12T10:46:14Z"
 }
