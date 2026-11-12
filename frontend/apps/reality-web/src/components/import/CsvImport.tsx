@@ -28,6 +28,33 @@ const OPTIONAL_FIELDS = [
 
 type ImportStep = 'upload' | 'mapping' | 'preview' | 'importing' | 'complete';
 
+/** Maximum accepted CSV upload size (5 MB). */
+const MAX_CSV_SIZE_MB = 5;
+const MAX_CSV_SIZE_BYTES = MAX_CSV_SIZE_MB * 1024 * 1024;
+
+type FileValidationError = { key: string; params?: Record<string, string | number> };
+
+/**
+ * Client-side validation for a user-selected CSV file. Returns a translation
+ * descriptor (key under `import.csv` + interpolation params) for the first
+ * failing rule, or `null` when the file is acceptable. The server still
+ * re-validates contents — this only guards against the obvious wrong-file,
+ * empty-file and oversized-file cases before we attempt a preview.
+ */
+function getCsvFileError(file: File): FileValidationError | null {
+  const isCsv = file.type === 'text/csv' || file.name.toLowerCase().endsWith('.csv');
+  if (!isCsv) {
+    return { key: 'invalidType' };
+  }
+  if (file.size === 0) {
+    return { key: 'emptyFile' };
+  }
+  if (file.size > MAX_CSV_SIZE_BYTES) {
+    return { key: 'fileTooLarge', params: { maxSize: MAX_CSV_SIZE_MB } };
+  }
+  return null;
+}
+
 export function CsvImport() {
   const t = useTranslations('import');
   const [step, setStep] = useState<ImportStep>('upload');
@@ -35,6 +62,7 @@ export function CsvImport() {
   const [mapping, setMapping] = useState<Partial<ColumnMapping>>({});
   const [skipInvalid, setSkipInvalid] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
 
   const { data: agency } = useMyAgency();
   const {
@@ -44,24 +72,41 @@ export function CsvImport() {
   } = useCsvPreview(agency?.id || '', file);
   const importMutation = useCsvImport(agency?.id || '');
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-
-    const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile?.type === 'text/csv' || droppedFile?.name.endsWith('.csv')) {
-      setFile(droppedFile);
+  const acceptFile = useCallback(
+    (candidate: File | undefined) => {
+      if (!candidate) {
+        return;
+      }
+      const error = getCsvFileError(candidate);
+      if (error) {
+        setFileError(t(`csv.${error.key}`, error.params));
+        return;
+      }
+      setFileError(null);
+      setFile(candidate);
       setStep('mapping');
-    }
-  }, []);
+    },
+    [t]
+  );
 
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      setStep('mapping');
-    }
-  }, []);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+      acceptFile(e.dataTransfer.files[0]);
+    },
+    [acceptFile]
+  );
+
+  const handleFileSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      acceptFile(e.target.files?.[0]);
+      // Reset the input so re-selecting the same (previously rejected) file
+      // still fires onChange.
+      e.target.value = '';
+    },
+    [acceptFile]
+  );
 
   const handleMappingChange = (field: keyof ColumnMapping, value: string) => {
     setMapping((prev) => ({ ...prev, [field]: value }));
@@ -88,6 +133,7 @@ export function CsvImport() {
   const handleReset = () => {
     setFile(null);
     setMapping({});
+    setFileError(null);
     setStep('upload');
     importMutation.reset();
   };
@@ -130,6 +176,7 @@ export function CsvImport() {
         {step === 'upload' && (
           <UploadStep
             isDragging={isDragging}
+            error={fileError}
             onDragEnter={() => setIsDragging(true)}
             onDragLeave={() => setIsDragging(false)}
             onDrop={handleDrop}
@@ -298,12 +345,14 @@ function StepConnector({ complete }: { complete: boolean }) {
 
 function UploadStep({
   isDragging,
+  error,
   onDragEnter,
   onDragLeave,
   onDrop,
   onFileSelect,
 }: {
   isDragging: boolean;
+  error: string | null;
   onDragEnter: () => void;
   onDragLeave: () => void;
   onDrop: (e: React.DragEvent) => void;
@@ -312,7 +361,7 @@ function UploadStep({
   const t = useTranslations('import.csv');
   return (
     <div
-      className={`upload-zone ${isDragging ? 'dragging' : ''}`}
+      className={`upload-zone ${isDragging ? 'dragging' : ''} ${error ? 'has-error' : ''}`}
       onDragEnter={onDragEnter}
       onDragLeave={onDragLeave}
       onDragOver={(e) => e.preventDefault()}
@@ -338,6 +387,11 @@ function UploadStep({
         <input type="file" accept=".csv,text/csv" onChange={onFileSelect} hidden />
       </label>
       <p className="hint">{t('supportedFormat')}</p>
+      {error && (
+        <p className="file-error" role="alert" aria-live="assertive">
+          {error}
+        </p>
+      )}
 
       <style jsx>{`
         .upload-zone {
@@ -357,10 +411,21 @@ function UploadStep({
           background: var(--ppt-color-primary-soft-bg);
         }
 
+        .upload-zone.has-error {
+          border-color: var(--ppt-color-danger);
+        }
+
         h3 {
           font-size: 1.25rem;
           color: var(--ppt-fg-primary);
           margin: 24px 0 8px;
+        }
+
+        .file-error {
+          margin-top: 16px;
+          margin-bottom: 0;
+          font-size: 14px;
+          color: var(--ppt-color-danger-hover);
         }
 
         p {
