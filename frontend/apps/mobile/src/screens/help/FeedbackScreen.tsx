@@ -206,14 +206,20 @@ export function FeedbackScreen({ onNavigate }: FeedbackScreenProps) {
             <View style={styles.deviceInfoPreview}>
               <Text style={styles.deviceInfoTitle}>{t('feedback.deviceInformation')}</Text>
               <Text style={styles.deviceInfoText}>
-                Platform: {deviceInfo.platform} {deviceInfo.osVersion}
+                {t('feedback.devicePlatform', {
+                  platform: deviceInfo.platform,
+                  osVersion: deviceInfo.osVersion,
+                })}
               </Text>
               <Text style={styles.deviceInfoText}>
-                App: v{deviceInfo.appVersion} (Build {deviceInfo.buildNumber})
+                {t('feedback.deviceAppVersion', {
+                  version: deviceInfo.appVersion,
+                  build: deviceInfo.buildNumber,
+                })}
               </Text>
               <Pressable
                 style={styles.viewDiagnostics}
-                onPress={() => Alert.alert('Diagnostic Report', diagnosticReport)}
+                onPress={() => Alert.alert(t('feedback.diagnosticReportTitle'), diagnosticReport)}
               >
                 <Text style={styles.viewDiagnosticsText}>{t('feedback.viewDiagnostics')}</Text>
               </Pressable>
