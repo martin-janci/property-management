@@ -2,11 +2,13 @@
  * ProfileScreen (UC-14.6).
  *
  * Authenticated user views and edits their profile, manages biometric login
- * and signs out. Edits are persisted to SecureStore via AuthContext storage
- * keys until the backend `PATCH /me` endpoint is wired in.
+ * and signs out. Edits are persisted server-side via `PATCH /api/v1/auth/me`
+ * (the api-server `updateMe` endpoint, body `{ displayName }`); on success the
+ * cached session user is updated through `AuthContext.updateUser`, which keeps
+ * both the in-memory context and the SecureStore `ppt_user` key in sync so the
+ * change survives a cold start / biometric unlock.
  */
 
-import * as SecureStore from 'expo-secure-store';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -21,54 +23,74 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { type User, useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { useApiMutation } from '../../hooks/useApi';
 import { colors } from '../shared/screenStyles';
-
-const USER_KEY = 'ppt_user';
 
 interface ProfileScreenProps {
   onChangePasswordPress?: () => void;
   onTwoFactorPress?: () => void;
 }
 
+/**
+ * Body accepted by `PATCH /api/v1/auth/me`. The api-server stores a single
+ * `displayName`; the app edits first/last separately, so they are joined on
+ * save (and split back into first/last on login via `buildSessionUser`).
+ */
+interface UpdateProfileBody {
+  displayName: string;
+}
+
 export function ProfileScreen({ onChangePasswordPress, onTwoFactorPress }: ProfileScreenProps) {
   const { t } = useTranslation();
-  const { user, logout, biometricAvailable, biometricEnabled, enableBiometric, disableBiometric } =
-    useAuth();
+  const {
+    user,
+    logout,
+    updateUser,
+    biometricAvailable,
+    biometricEnabled,
+    enableBiometric,
+    disableBiometric,
+  } = useAuth();
 
   const [firstName, setFirstName] = useState(user?.firstName ?? '');
   const [lastName, setLastName] = useState(user?.lastName ?? '');
-  const [isSaving, setIsSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number>();
 
-  const handleSave = async () => {
-    if (!user) return;
-    if (!firstName.trim() || !lastName.trim()) {
+  const updateProfile = useApiMutation<unknown, UpdateProfileBody>('/api/v1/auth/me', 'PATCH');
+
+  const handleSave = () => {
+    if (!user || updateProfile.isPending) return;
+    const trimmedFirst = firstName.trim();
+    const trimmedLast = lastName.trim();
+    if (!trimmedFirst || !trimmedLast) {
       Alert.alert(
         t('common.error', 'Error'),
         t('auth.nameRequired', 'First and last name are required.')
       );
       return;
     }
-    setIsSaving(true);
-    try {
-      const updated: User = {
-        ...user,
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-      };
-      await SecureStore.setItemAsync(USER_KEY, JSON.stringify(updated));
-      setSavedAt(Date.now());
-    } catch (error) {
-      Alert.alert(
-        t('common.error', 'Error'),
-        error instanceof Error
-          ? error.message
-          : t('auth.saveProfileFailed', 'Could not save profile')
-      );
-    } finally {
-      setIsSaving(false);
-    }
+    // Clear any stale success notice while the request is in flight.
+    setSavedAt(undefined);
+    updateProfile.mutate(
+      { displayName: `${trimmedFirst} ${trimmedLast}` },
+      {
+        onSuccess: async () => {
+          // Persist the confirmed values into the cached session so the rest of
+          // the app (and the next cold start) reflects them.
+          await updateUser({ firstName: trimmedFirst, lastName: trimmedLast });
+          setSavedAt(Date.now());
+        },
+        onError: (error) => {
+          Alert.alert(
+            t('common.error', 'Error'),
+            error instanceof Error
+              ? error.message
+              : t('auth.saveProfileFailed', 'Could not save profile')
+          );
+        },
+      }
+    );
   };
 
   const handleToggleBiometric = async (next: boolean) => {
@@ -145,12 +167,14 @@ export function ProfileScreen({ onChangePasswordPress, onTwoFactorPress }: Profi
           />
         </View>
         <Pressable
-          style={[styles.primaryButton, isSaving && styles.primaryButtonDisabled]}
+          style={[styles.primaryButton, updateProfile.isPending && styles.primaryButtonDisabled]}
           onPress={handleSave}
-          disabled={isSaving}
+          disabled={updateProfile.isPending}
         >
           <Text style={styles.primaryButtonText}>
-            {isSaving ? t('common.saving', 'Saving…') : t('common.saveChanges', 'Save changes')}
+            {updateProfile.isPending
+              ? t('common.saving', 'Saving…')
+              : t('common.saveChanges', 'Save changes')}
           </Text>
         </Pressable>
 
