@@ -45,7 +45,6 @@ const OAUTH_TOKEN_EVENTS_PRUNE_MIN_INTERVAL_HOURS: i64 = 24;
 /// "disabled") would silently wipe irreplaceable audit/event history. One day
 /// is the smallest window for which the daily prune deletes only genuinely
 /// aged rows.
-#[allow(dead_code)] // wired in by the paired fix commit
 const MIN_RETENTION_DAYS: i64 = 1;
 
 /// Returns `true` when a configured retention window is safe to prune against —
@@ -53,11 +52,8 @@ const MIN_RETENTION_DAYS: i64 = 1;
 /// treated as "retention disabled" so the caller skips the destructive delete
 /// instead of turning the cutoff into `now`/a future instant and wiping live
 /// rows. Extracted as a pure function so the floor is testable without a DB.
-fn retention_prune_enabled(_retention_days: i64) -> bool {
-    // NOTE: no floor yet — this mirrors the current behaviour where any value
-    // (including 0/negative) is accepted. The paired `fix:` commit tightens
-    // this to `>= MIN_RETENTION_DAYS`.
-    true
+fn retention_prune_enabled(retention_days: i64) -> bool {
+    retention_days >= MIN_RETENTION_DAYS
 }
 
 impl Scheduler {
