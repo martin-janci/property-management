@@ -5192,7 +5192,8 @@
     },
     "quorum": {
       "met": "Kvórum splnené",
-      "participation": "Hlasovalo {{participation}} z {{eligible}} oprávnených"
+      "participation": "Hlasovalo {{participation}} z {{eligible}} oprávnených",
+      "progressLabel": "Účasť na kvóre: {{pct}} %"
     },
     "card": {
       "questionCount_one": "{{count}} otázka",

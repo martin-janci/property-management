@@ -4995,7 +4995,8 @@
     },
     "quorum": {
       "met": "Quorum erreicht",
-      "participation": "{{participation}} von {{eligible}} Stimmberechtigten haben abgestimmt"
+      "participation": "{{participation}} von {{eligible}} Stimmberechtigten haben abgestimmt",
+      "progressLabel": "Quorum-Beteiligung: {{pct}} %"
     },
     "card": {
       "questionCount_one": "{{count}} Frage",

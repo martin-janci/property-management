@@ -25,7 +25,15 @@ export function QuorumTile({ participation, eligible, quorumMet, compact }: Quor
         </span>
       </div>
       <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-gray-200">
-        <div className={`h-full ${barColor}`} style={{ width: `${pct}%` }} />
+        <div
+          className={`h-full ${barColor}`}
+          style={{ width: `${pct}%` }}
+          role="progressbar"
+          aria-valuenow={pct}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label={t('voting.quorum.progressLabel', { pct })}
+        />
       </div>
       <p className="mt-1 text-xs text-gray-500">
         {t('voting.quorum.participation', { participation, eligible })}

@@ -4541,7 +4541,8 @@
     },
     "quorum": {
       "met": "Kworum osiągnięte",
-      "participation": "Głosowało {{participation}} z {{eligible}} uprawnionych"
+      "participation": "Głosowało {{participation}} z {{eligible}} uprawnionych",
+      "progressLabel": "Udział w kworum: {{pct}}%"
     },
     "card": {
       "questionCount_one": "{{count}} pytanie",
