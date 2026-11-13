@@ -2249,7 +2249,9 @@
         "budgetsDesc": "Planuj i monitoruj budżety",
         "reports": "Raporty",
         "reportsDesc": "Rachunek zysków i strat, bilans i przepływy pieniężne"
-      }
+      },
+      "loadFailed": "Nie udało się wczytać pulpitu finansowego",
+      "retry": "Spróbuj ponownie"
     },
     "invoiceChart": {
       "title": "Status faktur",
@@ -7052,7 +7054,9 @@
       "upcomingBookings": "Nadchodzące rezerwacje",
       "viewAll": "Pokaż wszystkie",
       "noUpcomingBookings": "Brak nadchodzących rezerwacji",
-      "taxReport": "Raport podatkowy"
+      "taxReport": "Raport podatkowy",
+      "loadFailed": "Nie udało się wczytać pulpitu wynajmu",
+      "retry": "Spróbuj ponownie"
     },
     "booking": {
       "unit": "Lokal"

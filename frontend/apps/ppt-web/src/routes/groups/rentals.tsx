@@ -442,21 +442,36 @@ function RentalsDashboardPageRoute() {
   const navigate = useNavigate();
   const auth = useRentalsAuth();
 
-  const { data: bookingsPage, isLoading } = useQuery({
+  const bookingsQuery = useQuery({
     queryKey: ['rentals', 'bookings', auth?.xTenantId, 'dashboard'],
     queryFn: () => listRentalBookings({ limit: 100 }, requireRentalsAuthHeaders(auth)),
     enabled: !!auth,
   });
-  const { data: stats } = useQuery({
+  const statsQuery = useQuery({
     queryKey: ['rentals', 'statistics', auth?.xTenantId],
     queryFn: () => getRentalStatistics(requireRentalsAuthHeaders(auth)),
     enabled: !!auth,
   });
-  const { data: connData } = useQuery({
+  const connQuery = useQuery({
     queryKey: ['rentals', 'connections', auth?.xTenantId],
     queryFn: () => listRentalConnections(requireRentalsAuthHeaders(auth)),
     enabled: !!auth,
   });
+
+  const bookingsPage = bookingsQuery.data;
+  const stats = statsQuery.data;
+  const connData = connQuery.data;
+  const isLoading = bookingsQuery.isLoading;
+
+  // Surface a load failure instead of rendering all-zero stats that are
+  // indistinguishable from "genuinely empty".
+  const dashboardQueries = [bookingsQuery, statsQuery, connQuery];
+  const failedQuery = dashboardQueries.find((q) => q.isError);
+  const loadError = failedQuery
+    ? failedQuery.error instanceof Error
+      ? failedQuery.error.message
+      : 'Failed to load'
+    : null;
 
   const rows = bookingsPage?.bookings ?? [];
   const bookings = rows.map(mapBookingSummaryToUi);
@@ -476,6 +491,13 @@ function RentalsDashboardPageRoute() {
       activeBookings={activeBookings}
       platformConnections={connections}
       isLoading={isLoading}
+      isError={!!failedQuery}
+      error={loadError}
+      onRetry={() => {
+        for (const q of dashboardQueries) {
+          if (q.isError) q.refetch();
+        }
+      }}
       onViewBooking={(id) => navigate(`/rentals/bookings/${id}`)}
       onCheckIn={(id) => navigate(`/rentals/bookings/${id}`)}
       onCheckOut={(id) => navigate(`/rentals/bookings/${id}`)}

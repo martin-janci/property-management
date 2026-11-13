@@ -15,6 +15,14 @@ interface RentalsDashboardPageProps {
   platformConnections: PlatformConnection[];
   taxSummary?: TaxSummary;
   isLoading?: boolean;
+  /**
+   * Load error flag/message. When set, the dashboard renders an error state
+   * (with an optional retry) instead of all-zero stats, so a failed fetch is
+   * not mistaken for genuinely empty data.
+   */
+  isError?: boolean;
+  error?: string | null;
+  onRetry?: () => void;
   isTaxSummaryLoading?: boolean;
   onViewBooking: (id: string) => void;
   onCheckIn: (id: string) => void;
@@ -48,6 +56,9 @@ export function RentalsDashboardPage({
   platformConnections,
   taxSummary,
   isLoading,
+  isError,
+  error,
+  onRetry,
   isTaxSummaryLoading,
   onViewBooking,
   onCheckIn,
@@ -105,6 +116,20 @@ export function RentalsDashboardPage({
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+          </div>
+        ) : isError || error ? (
+          <div className="bg-white rounded-lg shadow p-8 text-center" role="alert">
+            <p className="text-red-700">{t('rentals.dashboard.loadFailed')}</p>
+            {error && <p className="mt-1 text-sm text-gray-500">{error}</p>}
+            {onRetry && (
+              <button
+                type="button"
+                onClick={onRetry}
+                className="mt-4 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                {t('rentals.dashboard.retry')}
+              </button>
+            )}
           </div>
         ) : (
           <>

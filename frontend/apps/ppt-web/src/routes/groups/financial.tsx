@@ -80,29 +80,47 @@ function FinancialDashboardPageRoute() {
   const { user } = useAuth();
   const orgId = user?.organizationId ?? '';
 
-  const { data: arReportData, isLoading: arLoading } = useQuery({
+  const arQuery = useQuery({
     queryKey: ['financial', 'ar-aging', orgId],
     queryFn: () => getARAgingReport({ organization_id: orgId }),
     enabled: !!orgId,
   });
-  const { data: overdueData, isLoading: overdueLoading } = useQuery({
+  const overdueQuery = useQuery({
     queryKey: ['financial', 'overdue-invoices', orgId],
     queryFn: () => getOverdueInvoices(orgId),
     enabled: !!orgId,
   });
-  const { data: invoicesData, isLoading: invoicesLoading } = useQuery({
+  const invoicesQuery = useQuery({
     queryKey: ['financial', 'invoices', orgId],
     queryFn: () => listInvoices({ organization_id: orgId }),
     enabled: !!orgId,
   });
-
-  const { data: paymentsData, isLoading: paymentsLoading } = useQuery({
+  const paymentsQuery = useQuery({
     queryKey: ['financial', 'payments', orgId, 'recent'],
     queryFn: () => listPayments({ organization_id: orgId, limit: RECENT_PAYMENTS_LIMIT }),
     enabled: !!orgId,
   });
 
-  const isLoading = arLoading || overdueLoading || invoicesLoading || paymentsLoading;
+  const arReportData = arQuery.data;
+  const overdueData = overdueQuery.data;
+  const invoicesData = invoicesQuery.data;
+  const paymentsData = paymentsQuery.data;
+
+  const isLoading =
+    arQuery.isLoading ||
+    overdueQuery.isLoading ||
+    invoicesQuery.isLoading ||
+    paymentsQuery.isLoading;
+
+  // Surface a load failure instead of letting a failed query collapse to a
+  // zeroed-out dashboard that is indistinguishable from "genuinely empty".
+  const dashboardQueries = [arQuery, overdueQuery, invoicesQuery, paymentsQuery];
+  const failedQuery = dashboardQueries.find((q) => q.isError);
+  const loadError = failedQuery
+    ? failedQuery.error instanceof Error
+      ? failedQuery.error.message
+      : 'Failed to load'
+    : null;
 
   const totals = arReportData?.totals ?? {
     current: 0,
@@ -150,6 +168,12 @@ function FinancialDashboardPageRoute() {
         totals,
       }}
       isLoading={isLoading}
+      error={loadError}
+      onRetry={() => {
+        for (const q of dashboardQueries) {
+          if (q.isError) q.refetch();
+        }
+      }}
       onViewInvoice={(id) => navigate(`/financial/invoices/${id}`)}
       onViewAllPayments={() => navigate('/financial/payments')}
     />
