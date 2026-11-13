@@ -389,12 +389,17 @@ interface MoreMenuProps {
   onNavigate: (screen: string) => void;
 }
 
-const MORE_ITEMS: ReadonlyArray<{ icon: string; label: string; screen: string }> = [
+const MORE_ITEMS: ReadonlyArray<{
+  icon: string;
+  label?: string;
+  labelKey?: string;
+  screen: string;
+}> = [
   { icon: '🔔', label: 'Notifications', screen: 'Notifications' },
   { icon: '💬', label: 'Messages', screen: 'Messages' },
   { icon: '🏘️', label: 'Neighbours', screen: 'Neighbors' },
   { icon: '📏', label: 'Meters', screen: 'Meters' },
-  { icon: '👥', label: 'Person-months', screen: 'PersonMonths' },
+  { icon: '👥', labelKey: 'personMonths.title', screen: 'PersonMonths' },
   { icon: '⚡', label: 'Outages', screen: 'Outages' },
   { icon: '📰', label: 'News', screen: 'News' },
   { icon: '📝', label: 'Forms', screen: 'Forms' },
@@ -404,6 +409,7 @@ const MORE_ITEMS: ReadonlyArray<{ icon: string; label: string; screen: string }>
 ];
 
 function MoreMenu({ onNavigate }: MoreMenuProps) {
+  const { t } = useTranslation();
   return (
     <View style={moreStyles.container}>
       <View style={moreStyles.header}>
@@ -413,7 +419,7 @@ function MoreMenu({ onNavigate }: MoreMenuProps) {
       {MORE_ITEMS.map((item) => (
         <Pressable key={item.screen} style={moreStyles.row} onPress={() => onNavigate(item.screen)}>
           <Text style={moreStyles.rowIcon}>{item.icon}</Text>
-          <Text style={moreStyles.rowLabel}>{item.label}</Text>
+          <Text style={moreStyles.rowLabel}>{item.labelKey ? t(item.labelKey) : item.label}</Text>
           <Text style={moreStyles.rowChevron}>›</Text>
         </Pressable>
       ))}
