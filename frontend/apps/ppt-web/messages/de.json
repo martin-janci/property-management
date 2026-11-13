@@ -3002,6 +3002,83 @@
       "informational": "Information",
       "minor": "Gering",
       "major": "Schwer"
+    },
+    "errors": {
+      "titleRequired": "Titel ist erforderlich",
+      "descriptionRequired": "Beschreibung ist erforderlich",
+      "buildingsRequired": "Bitte wählen Sie mindestens ein betroffenes Gebäude aus",
+      "startRequired": "Geplante Startzeit ist erforderlich",
+      "outageNotFound": "Ausfall nicht gefunden",
+      "outageNotFoundDesc": "Der gesuchte Ausfall existiert nicht.",
+      "fetchFailedTitle": "Ausfälle konnten nicht geladen werden",
+      "fetchFailedDescription": "Beim Laden der Ausfälle ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+      "retry": "Erneut versuchen"
+    }
+  },
+  "criticalNotifications": {
+    "title": "Kritische Benachrichtigungen",
+    "subtitle": "Wichtige Mitteilungen, die eine Bestätigung erfordern",
+    "createNew": "Kritische Benachrichtigung erstellen",
+    "createDescription": "Senden Sie eine wichtige Benachrichtigung an alle Mitglieder der Organisation",
+    "backToList": "Zurück zu den Benachrichtigungen",
+    "noResults": "Keine Benachrichtigungen gefunden",
+    "requiresAction": "Aktion erforderlich",
+    "acknowledged": "Bestätigt",
+    "acknowledgedAt": "Bestätigt am",
+    "createdAt": "Erstellt",
+    "message": "Nachricht",
+    "acknowledgmentInfo": "Bestätigungsdetails",
+    "acknowledge": "Benachrichtigung bestätigen",
+    "acknowledmentStats": "Bestätigungsstatistik",
+    "stats": {
+      "total": "Benachrichtigungen gesamt",
+      "acknowledged": "Bestätigt",
+      "pending": "Ausstehend"
+    },
+    "filter": {
+      "all": "Alle",
+      "pending": "Ausstehend",
+      "acknowledged": "Bestätigt"
+    },
+    "banner": {
+      "short_one": "{{count}} kritische Benachrichtigung",
+      "short_other": "{{count}} kritische Benachrichtigungen",
+      "long_one": "Sie haben {{count}} unbestätigte kritische Benachrichtigung, die Ihre Aufmerksamkeit erfordert.",
+      "long_other": "Sie haben {{count}} unbestätigte kritische Benachrichtigungen, die Ihre Aufmerksamkeit erfordern.",
+      "viewNow": "Jetzt anzeigen"
+    },
+    "modal": {
+      "heading": "Kritische Benachrichtigung",
+      "counter": "{{current}} von {{total}}",
+      "postedOn": "Veröffentlicht am {{date}}",
+      "acknowledging": "Wird bestätigt...",
+      "acknowledgeNext": "Ich bestätige – Weiter",
+      "acknowledge": "Ich bestätige"
+    },
+    "statsCard": {
+      "heading": "Bestätigungsstatus",
+      "percentAcknowledged": "{{percent}} % bestätigt",
+      "ofTotal": "{{done}} von {{total}}",
+      "totalUsers": "Benutzer gesamt",
+      "acknowledged": "Bestätigt",
+      "pending": "Ausstehend"
+    },
+    "form": {
+      "titleLabel": "Titel",
+      "titlePlaceholder": "Titel der Benachrichtigung eingeben",
+      "messageLabel": "Nachricht",
+      "messagePlaceholder": "Geben Sie den Benachrichtigungstext ein...",
+      "messageHelp": "Diese Benachrichtigung wird an alle Mitglieder Ihrer Organisation gesendet und erfordert eine Bestätigung.",
+      "warningStrong": "Kritische Benachrichtigungen umgehen die Benutzereinstellungen.",
+      "warningText": "Verwenden Sie diese Funktion nur für wirklich wichtige Mitteilungen, die alle Mitglieder sehen müssen.",
+      "cancel": "Abbrechen",
+      "submit": "Kritische Benachrichtigung senden",
+      "submitting": "Wird gesendet...",
+      "validation": {
+        "titleRequired": "Titel ist erforderlich",
+        "titleTooLong": "Der Titel darf höchstens 255 Zeichen lang sein",
+        "messageRequired": "Nachricht ist erforderlich"
+      }
     }
   },
   "dashboard": {
