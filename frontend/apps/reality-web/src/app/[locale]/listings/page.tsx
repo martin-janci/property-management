@@ -17,6 +17,7 @@ import { SearchBar } from '@/components/listings/SearchBar';
 import { LoadingSkeleton } from '@/components/states';
 import { Footer, Header } from '@/components/ui';
 import { useRouter } from '@/i18n/routing';
+import { parseFiniteNumber, parsePageParam } from './_params';
 
 function ListingsFallback() {
   return (
@@ -108,20 +109,20 @@ function ListingsContent() {
       filters.propertyType = propertyType.split(',') as FilterType['propertyType'];
     }
 
-    const priceMin = searchParams.get('priceMin');
-    if (priceMin) filters.priceMin = Number(priceMin);
+    const priceMin = parseFiniteNumber(searchParams.get('priceMin'));
+    if (priceMin !== undefined) filters.priceMin = priceMin;
 
-    const priceMax = searchParams.get('priceMax');
-    if (priceMax) filters.priceMax = Number(priceMax);
+    const priceMax = parseFiniteNumber(searchParams.get('priceMax'));
+    if (priceMax !== undefined) filters.priceMax = priceMax;
 
-    const areaMin = searchParams.get('areaMin');
-    if (areaMin) filters.areaMin = Number(areaMin);
+    const areaMin = parseFiniteNumber(searchParams.get('areaMin'));
+    if (areaMin !== undefined) filters.areaMin = areaMin;
 
-    const areaMax = searchParams.get('areaMax');
-    if (areaMax) filters.areaMax = Number(areaMax);
+    const areaMax = parseFiniteNumber(searchParams.get('areaMax'));
+    if (areaMax !== undefined) filters.areaMax = areaMax;
 
-    const roomsMin = searchParams.get('roomsMin');
-    if (roomsMin) filters.roomsMin = Number(roomsMin);
+    const roomsMin = parseFiniteNumber(searchParams.get('roomsMin'));
+    if (roomsMin !== undefined) filters.roomsMin = roomsMin;
 
     const city = searchParams.get('city');
     if (city) filters.city = city;
@@ -141,7 +142,7 @@ function ListingsContent() {
   }, [searchParams]);
 
   const filters = getFiltersFromUrl();
-  const currentPage = Number(searchParams.get('page') || 1);
+  const currentPage = parsePageParam(searchParams.get('page'));
   const { data, isLoading, isError, refetch } = useListings(filters, currentPage);
   const toggleFavorite = useToggleFavorite();
 
