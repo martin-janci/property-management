@@ -1021,7 +1021,13 @@
     "photoUploadFailed": "Nie udało się przesłać zdjęcia",
     "photosNotAttached": "Nie udało się dołączyć {{failed}} z {{total}} zdjęć. Możesz je dodać w szczegółach usterki.",
     "withdrawFailed": "Nie udało się wycofać zgłoszenia",
-    "withdrawn": "Zgłoszenie wycofane"
+    "withdrawn": "Zgłoszenie wycofane",
+    "triageFailed": "Nie udało się posortować usterki",
+    "resolveFailed": "Nie udało się rozwiązać usterki",
+    "confirmFailed": "Nie udało się potwierdzić rozwiązania",
+    "reopenFailed": "Nie udało się ponownie otworzyć usterki",
+    "commentFailed": "Nie udało się dodać komentarza",
+    "attachmentDeleteFailed": "Nie udało się usunąć załącznika"
   },
   "buildings": {
     "title": "Budynki",

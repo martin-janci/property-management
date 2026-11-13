@@ -1019,7 +1019,13 @@
     "photoUploadFailed": "Foto-Upload fehlgeschlagen",
     "photosNotAttached": "{{failed}} von {{total}} Fotos konnten nicht angehängt werden. Sie können sie im Störungsdetail hinzufügen.",
     "withdrawFailed": "Meldung konnte nicht zurückgezogen werden",
-    "withdrawn": "Meldung zurückgezogen"
+    "withdrawn": "Meldung zurückgezogen",
+    "triageFailed": "Störung konnte nicht sortiert werden",
+    "resolveFailed": "Störung konnte nicht gelöst werden",
+    "confirmFailed": "Lösung konnte nicht bestätigt werden",
+    "reopenFailed": "Störung konnte nicht wiedereröffnet werden",
+    "commentFailed": "Kommentar konnte nicht hinzugefügt werden",
+    "attachmentDeleteFailed": "Anhang konnte nicht gelöscht werden"
   },
   "buildings": {
     "title": "Gebäude",

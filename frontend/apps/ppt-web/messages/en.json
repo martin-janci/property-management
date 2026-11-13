@@ -1078,7 +1078,13 @@
     "withdrawFailed": "Could not withdraw the report",
     "uploadingPhoto": "Uploading…",
     "photoUploadFailed": "Photo upload failed",
-    "photosNotAttached": "{{failed}} of {{total}} photos could not be attached. You can add them on the fault detail."
+    "photosNotAttached": "{{failed}} of {{total}} photos could not be attached. You can add them on the fault detail.",
+    "triageFailed": "Failed to triage fault",
+    "resolveFailed": "Failed to resolve fault",
+    "confirmFailed": "Failed to confirm resolution",
+    "reopenFailed": "Failed to reopen fault",
+    "commentFailed": "Failed to add comment",
+    "attachmentDeleteFailed": "Failed to delete attachment"
   },
   "buildings": {
     "title": "Buildings",

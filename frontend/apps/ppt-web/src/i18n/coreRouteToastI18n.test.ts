@@ -59,6 +59,16 @@ const REQUIRED_TOAST_KEYS: string[] = [
   'faults.photosNotAttached',
   'faults.withdrawFailed',
   'faults.withdrawn',
+  // faults.tsx — detail-page action-mutation error toasts
+  // (code-review-ppt-web-core-fault-detail-mutations-swallow-errors): the
+  // triage/resolve/confirm/reopen/comment/delete-attachment mutations used to
+  // swallow errors; these keys back the new error toasts and must be at parity.
+  'faults.triageFailed',
+  'faults.resolveFailed',
+  'faults.confirmFailed',
+  'faults.reopenFailed',
+  'faults.commentFailed',
+  'faults.attachmentDeleteFailed',
   // messaging.tsx — bulk archive/delete toasts (missing from de/pl/hu).
   'messaging.archiveSuccess',
   'messaging.archiveFailed',
