@@ -48,7 +48,7 @@ utoipa = { version = "5", features = ["axum_extras", "uuid", "chrono", "decimal"
 # ships the asset inside the published crate) so the build script never fetches
 # the swagger-ui zip from github.com at build time. This keeps the backend
 # buildable in egress-restricted cloud runners (issue #2966 / #2944-2946).
-utoipa-swagger-ui = { version = "9", features = ["axum", "vendored"] }
+utoipa-swagger-ui = { version = "10", features = ["axum", "vendored"] }
 
 # Validation
 validator = { version = "0.21", features = ["derive"] }
