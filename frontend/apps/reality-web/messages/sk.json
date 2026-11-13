@@ -1074,6 +1074,65 @@
       "saved": "Inzerát bol uložený.",
       "submit": "Uložiť zmeny",
       "submitError": "Inzerát sa nepodarilo uložiť."
+    },
+    "account": {
+      "title": "Účet",
+      "signedInAs": "Prihlásený ako <strong>{email}</strong>",
+      "signOut": "Odhlásiť sa",
+      "sections": {
+        "profile": {
+          "title": "Profil",
+          "description": "Upravte svoje meno, kontaktné údaje a avatar."
+        },
+        "password": {
+          "title": "Heslo",
+          "description": "Zmeňte heslo používané na prihlásenie."
+        },
+        "favorites": {
+          "title": "Obľúbené",
+          "description": "Nehnuteľnosti, ktoré ste si uložili na neskôr."
+        },
+        "savedSearches": {
+          "title": "Uložené vyhľadávania",
+          "description": "Spravujte svoje uložené vyhľadávania a nastavenia upozornení."
+        },
+        "inquiries": {
+          "title": "Dopyty",
+          "description": "Zobrazte správy a žiadosti o obhliadku, ktoré ste odoslali."
+        }
+      }
+    },
+    "accountProfile": {
+      "title": "Upraviť profil",
+      "subtitle": "Upravte svoje zobrazované meno a kontaktné nastavenia.",
+      "displayNameLabel": "Zobrazované meno",
+      "displayNameRequired": "Zobrazované meno je povinné",
+      "emailLabel": "E-mail",
+      "emailHint": "Ak chcete zmeniť e-mail tohto účtu, kontaktujte podporu.",
+      "save": "Uložiť zmeny",
+      "saving": "Ukladám…",
+      "saved": "Profil bol aktualizovaný.",
+      "saveFailed": "Profil sa nepodarilo uložiť.",
+      "backToAccount": "Späť na účet"
+    },
+    "accountPassword": {
+      "title": "Zmeniť heslo",
+      "subtitle": "Zmeňte heslo používané na prihlásenie do vášho účtu.",
+      "currentLabel": "Súčasné heslo",
+      "currentRequired": "Súčasné heslo je povinné",
+      "currentIncorrect": "Súčasné heslo je nesprávne.",
+      "newLabel": "Nové heslo",
+      "newRequired": "Nové heslo je povinné",
+      "minLength": "Heslo musí mať aspoň {min} znakov",
+      "mustDiffer": "Nové heslo sa musí líšiť od súčasného hesla",
+      "hint": "Aspoň {min} znakov.",
+      "confirmLabel": "Potvrďte nové heslo",
+      "mismatch": "Heslá sa nezhodujú",
+      "submit": "Aktualizovať heslo",
+      "submitting": "Aktualizujem…",
+      "updated": "Heslo bolo aktualizované.",
+      "updateFailed": "Heslo sa nepodarilo zmeniť. Skúste to znova.",
+      "backToAccount": "Späť na účet"
     }
   },
   "search": {

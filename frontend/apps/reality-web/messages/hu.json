@@ -1067,6 +1067,65 @@
       "saved": "A hirdetés mentve.",
       "submit": "Módosítások mentése",
       "submitError": "A hirdetés mentése sikertelen."
+    },
+    "account": {
+      "title": "Fiók",
+      "signedInAs": "Bejelentkezve mint <strong>{email}</strong>",
+      "signOut": "Kijelentkezés",
+      "sections": {
+        "profile": {
+          "title": "Profil",
+          "description": "Frissítse nevét, elérhetőségeit és profilképét."
+        },
+        "password": {
+          "title": "Jelszó",
+          "description": "Módosítsa a bejelentkezéshez használt jelszót."
+        },
+        "favorites": {
+          "title": "Kedvencek",
+          "description": "Később megtekintésre elmentett ingatlanok."
+        },
+        "savedSearches": {
+          "title": "Mentett keresések",
+          "description": "Kezelje mentett kereséseit és értesítési beállításait."
+        },
+        "inquiries": {
+          "title": "Érdeklődések",
+          "description": "Tekintse meg az elküldött üzeneteket és megtekintési kéréseket."
+        }
+      }
+    },
+    "accountProfile": {
+      "title": "Profil szerkesztése",
+      "subtitle": "Frissítse megjelenített nevét és kapcsolattartási beállításait.",
+      "displayNameLabel": "Megjelenített név",
+      "displayNameRequired": "A megjelenített név megadása kötelező",
+      "emailLabel": "E-mail",
+      "emailHint": "A fiók e-mail-címének módosításához forduljon az ügyfélszolgálathoz.",
+      "save": "Módosítások mentése",
+      "saving": "Mentés…",
+      "saved": "A profil frissült.",
+      "saveFailed": "A profilt nem sikerült menteni.",
+      "backToAccount": "Vissza a fiókhoz"
+    },
+    "accountPassword": {
+      "title": "Jelszó módosítása",
+      "subtitle": "Módosítsa a fiókjába való bejelentkezéshez használt jelszót.",
+      "currentLabel": "Jelenlegi jelszó",
+      "currentRequired": "A jelenlegi jelszó megadása kötelező",
+      "currentIncorrect": "A jelenlegi jelszó helytelen.",
+      "newLabel": "Új jelszó",
+      "newRequired": "Az új jelszó megadása kötelező",
+      "minLength": "A jelszónak legalább {min} karakterből kell állnia",
+      "mustDiffer": "Az új jelszónak különböznie kell a jelenlegi jelszótól",
+      "hint": "Legalább {min} karakter.",
+      "confirmLabel": "Új jelszó megerősítése",
+      "mismatch": "A jelszavak nem egyeznek",
+      "submit": "Jelszó frissítése",
+      "submitting": "Frissítés…",
+      "updated": "A jelszó frissült.",
+      "updateFailed": "A jelszót nem sikerült módosítani. Kérjük, próbálja újra.",
+      "backToAccount": "Vissza a fiókhoz"
     }
   },
   "search": {

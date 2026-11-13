@@ -6,6 +6,7 @@
  */
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { type FormEvent, useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
@@ -20,6 +21,7 @@ interface FieldErrors {
 }
 
 function ChangePasswordForm() {
+  const t = useTranslations('pages.accountPassword');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -33,13 +35,12 @@ function ChangePasswordForm() {
     setGeneralError(undefined);
     setSuccess(false);
     const next: FieldErrors = {};
-    if (!currentPassword) next.currentPassword = 'Current password is required';
-    if (!newPassword) next.newPassword = 'New password is required';
+    if (!currentPassword) next.currentPassword = t('currentRequired');
+    if (!newPassword) next.newPassword = t('newRequired');
     else if (newPassword.length < MIN_PASSWORD)
-      next.newPassword = `Password must be at least ${MIN_PASSWORD} characters`;
-    else if (newPassword === currentPassword)
-      next.newPassword = 'New password must differ from the current password';
-    if (confirmPassword !== newPassword) next.confirmPassword = 'Passwords do not match';
+      next.newPassword = t('minLength', { min: MIN_PASSWORD });
+    else if (newPassword === currentPassword) next.newPassword = t('mustDiffer');
+    if (confirmPassword !== newPassword) next.confirmPassword = t('mismatch');
     setErrors(next);
     if (Object.keys(next).length > 0) return;
 
@@ -52,11 +53,11 @@ function ChangePasswordForm() {
       setConfirmPassword('');
     } catch (err) {
       if (err instanceof AuthApiError && err.status === 401) {
-        setErrors({ currentPassword: 'Current password is incorrect.' });
+        setErrors({ currentPassword: t('currentIncorrect') });
       } else if (err instanceof AuthApiError) {
         setGeneralError(err.message);
       } else {
-        setGeneralError('Could not change password. Please try again.');
+        setGeneralError(t('updateFailed'));
       }
     } finally {
       setIsSubmitting(false);
@@ -65,8 +66,8 @@ function ChangePasswordForm() {
 
   return (
     <form className="form" onSubmit={handleSubmit} noValidate>
-      <h1 className="title">Change password</h1>
-      <p className="subtitle">Update the password used to sign in to your account.</p>
+      <h1 className="title">{t('title')}</h1>
+      <p className="subtitle">{t('subtitle')}</p>
 
       {generalError && (
         <div className="alert" role="alert">
@@ -75,12 +76,12 @@ function ChangePasswordForm() {
       )}
       {success && (
         <div className="success" role="status">
-          Password updated.
+          {t('updated')}
         </div>
       )}
 
       <label className="field">
-        <span className="label">Current password</span>
+        <span className="label">{t('currentLabel')}</span>
         <input
           type="password"
           autoComplete="current-password"
@@ -93,7 +94,7 @@ function ChangePasswordForm() {
       </label>
 
       <label className="field">
-        <span className="label">New password</span>
+        <span className="label">{t('newLabel')}</span>
         <input
           type="password"
           autoComplete="new-password"
@@ -105,12 +106,12 @@ function ChangePasswordForm() {
         {errors.newPassword ? (
           <span className="error">{errors.newPassword}</span>
         ) : (
-          <span className="hint">At least {MIN_PASSWORD} characters.</span>
+          <span className="hint">{t('hint', { min: MIN_PASSWORD })}</span>
         )}
       </label>
 
       <label className="field">
-        <span className="label">Confirm new password</span>
+        <span className="label">{t('confirmLabel')}</span>
         <input
           type="password"
           autoComplete="new-password"
@@ -123,12 +124,12 @@ function ChangePasswordForm() {
       </label>
 
       <button type="submit" className="submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Updating…' : 'Update password'}
+        {isSubmitting ? t('submitting') : t('submit')}
       </button>
 
       <p className="meta">
         <Link href="/account" className="link">
-          Back to account
+          {t('backToAccount')}
         </Link>
       </p>
 

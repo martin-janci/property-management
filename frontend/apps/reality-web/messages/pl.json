@@ -1067,6 +1067,65 @@
       "saved": "Ogłoszenie zapisane.",
       "submit": "Zapisz zmiany",
       "submitError": "Nie udało się zapisać ogłoszenia."
+    },
+    "account": {
+      "title": "Konto",
+      "signedInAs": "Zalogowano jako <strong>{email}</strong>",
+      "signOut": "Wyloguj się",
+      "sections": {
+        "profile": {
+          "title": "Profil",
+          "description": "Zaktualizuj swoje imię, dane kontaktowe i awatar."
+        },
+        "password": {
+          "title": "Hasło",
+          "description": "Zmień hasło używane do logowania."
+        },
+        "favorites": {
+          "title": "Ulubione",
+          "description": "Nieruchomości zapisane na później."
+        },
+        "savedSearches": {
+          "title": "Zapisane wyszukiwania",
+          "description": "Zarządzaj zapisanymi wyszukiwaniami i ustawieniami powiadomień."
+        },
+        "inquiries": {
+          "title": "Zapytania",
+          "description": "Zobacz wiadomości i prośby o oględziny, które wysłałeś."
+        }
+      }
+    },
+    "accountProfile": {
+      "title": "Edytuj profil",
+      "subtitle": "Zaktualizuj swoją nazwę wyświetlaną i preferencje kontaktowe.",
+      "displayNameLabel": "Nazwa wyświetlana",
+      "displayNameRequired": "Nazwa wyświetlana jest wymagana",
+      "emailLabel": "E-mail",
+      "emailHint": "Aby zmienić adres e-mail tego konta, skontaktuj się z pomocą techniczną.",
+      "save": "Zapisz zmiany",
+      "saving": "Zapisywanie…",
+      "saved": "Profil zaktualizowany.",
+      "saveFailed": "Nie udało się zapisać profilu.",
+      "backToAccount": "Powrót do konta"
+    },
+    "accountPassword": {
+      "title": "Zmień hasło",
+      "subtitle": "Zmień hasło używane do logowania do Twojego konta.",
+      "currentLabel": "Obecne hasło",
+      "currentRequired": "Obecne hasło jest wymagane",
+      "currentIncorrect": "Obecne hasło jest nieprawidłowe.",
+      "newLabel": "Nowe hasło",
+      "newRequired": "Nowe hasło jest wymagane",
+      "minLength": "Hasło musi mieć co najmniej {min} znaków",
+      "mustDiffer": "Nowe hasło musi różnić się od obecnego hasła",
+      "hint": "Co najmniej {min} znaków.",
+      "confirmLabel": "Potwierdź nowe hasło",
+      "mismatch": "Hasła nie są zgodne",
+      "submit": "Zaktualizuj hasło",
+      "submitting": "Aktualizowanie…",
+      "updated": "Hasło zaktualizowane.",
+      "updateFailed": "Nie udało się zmienić hasła. Spróbuj ponownie.",
+      "backToAccount": "Powrót do konta"
     }
   },
   "search": {

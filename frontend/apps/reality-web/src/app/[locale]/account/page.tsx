@@ -7,51 +7,35 @@
  */
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
 import { useAuth } from '@/lib/auth-context';
 
 const SECTIONS: ReadonlyArray<{
   href: string;
-  title: string;
-  description: string;
+  key: 'profile' | 'password' | 'favorites' | 'savedSearches' | 'inquiries';
 }> = [
-  {
-    href: '/account/profile',
-    title: 'Profile',
-    description: 'Update your name, contact details and avatar.',
-  },
-  {
-    href: '/account/password',
-    title: 'Password',
-    description: 'Change the password used to sign in.',
-  },
-  {
-    href: '/favorites',
-    title: 'Favorites',
-    description: 'Properties you have saved for later.',
-  },
-  {
-    href: '/saved-searches',
-    title: 'Saved searches',
-    description: 'Manage your saved searches and alert preferences.',
-  },
-  {
-    href: '/inquiries',
-    title: 'Inquiries',
-    description: 'View messages and viewing requests you have sent.',
-  },
+  { href: '/account/profile', key: 'profile' },
+  { href: '/account/password', key: 'password' },
+  { href: '/favorites', key: 'favorites' },
+  { href: '/saved-searches', key: 'savedSearches' },
+  { href: '/inquiries', key: 'inquiries' },
 ];
 
 function AccountContent() {
   const { user, logout } = useAuth();
+  const t = useTranslations('pages.account');
 
   return (
     <div className="container">
       <header className="hero">
-        <h1 className="title">Account</h1>
+        <h1 className="title">{t('title')}</h1>
         <p className="subtitle">
-          Signed in as <strong>{user?.email}</strong>
+          {t.rich('signedInAs', {
+            email: user?.email ?? '',
+            strong: (chunks) => <strong>{chunks}</strong>,
+          })}
         </p>
       </header>
 
@@ -59,15 +43,15 @@ function AccountContent() {
         {SECTIONS.map((section) => (
           <li key={section.href}>
             <Link href={section.href} className="card">
-              <h2 className="card-title">{section.title}</h2>
-              <p className="card-desc">{section.description}</p>
+              <h2 className="card-title">{t(`sections.${section.key}.title`)}</h2>
+              <p className="card-desc">{t(`sections.${section.key}.description`)}</p>
             </Link>
           </li>
         ))}
       </ul>
 
       <button type="button" className="logout" onClick={() => void logout()}>
-        Sign out
+        {t('signOut')}
       </button>
 
       <style jsx>{`

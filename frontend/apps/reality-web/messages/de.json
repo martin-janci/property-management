@@ -1074,6 +1074,65 @@
       "saved": "Inserat gespeichert.",
       "submit": "Änderungen speichern",
       "submitError": "Inserat konnte nicht gespeichert werden."
+    },
+    "account": {
+      "title": "Konto",
+      "signedInAs": "Angemeldet als <strong>{email}</strong>",
+      "signOut": "Abmelden",
+      "sections": {
+        "profile": {
+          "title": "Profil",
+          "description": "Aktualisieren Sie Ihren Namen, Ihre Kontaktdaten und Ihr Avatar."
+        },
+        "password": {
+          "title": "Passwort",
+          "description": "Ändern Sie das Passwort für die Anmeldung."
+        },
+        "favorites": {
+          "title": "Favoriten",
+          "description": "Immobilien, die Sie für später gespeichert haben."
+        },
+        "savedSearches": {
+          "title": "Gespeicherte Suchen",
+          "description": "Verwalten Sie Ihre gespeicherten Suchen und Benachrichtigungseinstellungen."
+        },
+        "inquiries": {
+          "title": "Anfragen",
+          "description": "Nachrichten und Besichtigungsanfragen anzeigen, die Sie gesendet haben."
+        }
+      }
+    },
+    "accountProfile": {
+      "title": "Profil bearbeiten",
+      "subtitle": "Aktualisieren Sie Ihren Anzeigenamen und Ihre Kontakteinstellungen.",
+      "displayNameLabel": "Anzeigename",
+      "displayNameRequired": "Anzeigename ist erforderlich",
+      "emailLabel": "E-Mail",
+      "emailHint": "Wenden Sie sich an den Support, um die E-Mail-Adresse dieses Kontos zu ändern.",
+      "save": "Änderungen speichern",
+      "saving": "Wird gespeichert…",
+      "saved": "Profil aktualisiert.",
+      "saveFailed": "Profil konnte nicht gespeichert werden.",
+      "backToAccount": "Zurück zum Konto"
+    },
+    "accountPassword": {
+      "title": "Passwort ändern",
+      "subtitle": "Ändern Sie das Passwort für die Anmeldung bei Ihrem Konto.",
+      "currentLabel": "Aktuelles Passwort",
+      "currentRequired": "Aktuelles Passwort ist erforderlich",
+      "currentIncorrect": "Aktuelles Passwort ist falsch.",
+      "newLabel": "Neues Passwort",
+      "newRequired": "Neues Passwort ist erforderlich",
+      "minLength": "Das Passwort muss mindestens {min} Zeichen lang sein",
+      "mustDiffer": "Das neue Passwort muss sich vom aktuellen Passwort unterscheiden",
+      "hint": "Mindestens {min} Zeichen.",
+      "confirmLabel": "Neues Passwort bestätigen",
+      "mismatch": "Passwörter stimmen nicht überein",
+      "submit": "Passwort aktualisieren",
+      "submitting": "Wird aktualisiert…",
+      "updated": "Passwort aktualisiert.",
+      "updateFailed": "Passwort konnte nicht geändert werden. Bitte versuchen Sie es erneut.",
+      "backToAccount": "Zurück zum Konto"
     }
   },
   "search": {
