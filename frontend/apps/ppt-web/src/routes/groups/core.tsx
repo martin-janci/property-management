@@ -253,8 +253,19 @@ export function settingsRoutes() {
       />
       {/* Accessibility settings route (Epic 60) */}
       <Route path="/settings/accessibility" element={<AccessibilitySettingsPage />} />
-      {/* Privacy settings route (Epic 63) */}
-      <Route path="/settings/privacy" element={<PrivacySettingsPage />} />
+      {/* Privacy settings route (Epic 63). Auth-only, matching every peer
+          /settings/* route: the page loads the signed-in user's own GDPR
+          privacy settings + data-export history from /api/v1/gdpr/*, so it must
+          not render for an anonymous visitor (it is a per-user page, so it is
+          auth-gated — not role-gated like the manager-only settings routes). */}
+      <Route
+        path="/settings/privacy"
+        element={
+          <ProtectedRoute>
+            <PrivacySettingsPage />
+          </ProtectedRoute>
+        }
+      />
       {/* OAuth Grants management route (Epic 10A, Story 10A-3) */}
       <Route
         path="/settings/oauth-grants"
