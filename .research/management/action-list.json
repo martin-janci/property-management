@@ -135,19 +135,6 @@
       }
     },
     {
-      "id": "pm-scrum-master-refill-non-kmp-buffer-2026-11-09",
-      "action": "Promote a non-mobile-native code-review vector from the next Phase 1.5 segment (ppt-web-core / reality-server oldest = 2026-11-04) to refill the planner buffer",
-      "owner_role": "pm-scrum-master",
-      "priority": "high",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "done",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-09",
-      "resolved_at": "2026-11-13",
-      "resolved_by": "resolved by dispatcher burst: 58 PRs merged in 4-day window"
-    },
-    {
       "id": "pm-qa-confirm-non-kmp-medium-confidence-2026-11-09",
       "action": "QA audit: non-mobile-native backlog items with confidence=medium need a one-shot verification step before Phase 3 can promote them",
       "owner_role": "pm-qa",
@@ -175,64 +162,6 @@
         "vector": "bug",
         "generated": "2026-10-25T00:00:00Z"
       }
-    },
-    {
-      "id": "code-review-reality-web-report-attachments-disabled-3017",
-      "action": "reality web report attachments disabled 3017",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-12T08:26:20Z (tier1d reality-web score=2 vector=feature-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-12T08:26:20Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 2,
-        "vector": "feature-gap",
-        "generated": "2026-10-08T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-mobile-rn-features-faults-orphaned",
-      "action": "mobile rn features faults orphaned",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "done",
-      "source": "dispatcher-signals-promote 2026-11-12T08:26:20Z (tier1d mobile-rn score=1 vector=cleanup)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-12T08:26:20Z",
-      "signal_ref": {
-        "segment": "mobile-rn",
-        "score": 1,
-        "vector": "cleanup",
-        "generated": "2026-10-08T00:00:00Z"
-      },
-      "resolved_at": "2026-11-13",
-      "resolved_by": "PR #3473"
-    },
-    {
-      "id": "code-review-mobile-rn-person-months-no-i18n",
-      "action": "mobile rn person months no i18n",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "done",
-      "source": "dispatcher-signals-promote 2026-11-12T08:26:20Z (tier1d mobile-rn score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-12T08:26:20Z",
-      "signal_ref": {
-        "segment": "mobile-rn",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-10-08T00:00:00Z"
-      },
-      "resolved_at": "2026-11-13",
-      "resolved_by": "PR #3474"
     },
     {
       "id": "code-review-ppt-web-ui-loginpage-raw-error-message",
@@ -345,24 +274,6 @@
     {
       "id": "code-review-ppt-web-core-mfa-verify-relative-fetch-base",
       "action": "ppt web core mfa verify relative fetch base",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-12T16:25:31Z (tier1d ppt-web-core score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-12T16:25:31Z",
-      "signal_ref": {
-        "segment": "ppt-web-core",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-10-07T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-core-ws-notifications-token-in-url",
-      "action": "ppt web core ws notifications token in url",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
