@@ -91,7 +91,10 @@ describe('AccountingInvoiceManagementPage — error surfacing', () => {
         expect.objectContaining({
           type: 'error',
           title: 'Failed to delete invoice',
-          message: 'Delete exploded',
+          // The raw client/server `Error.message` ("Delete exploded") is no
+          // longer surfaced to the user — `parseApiError` maps it to the safe,
+          // localized default copy. The page still owns the error `title`.
+          message: 'An unexpected error occurred.',
         })
       )
     );
@@ -130,7 +133,9 @@ describe('AccountingInvoiceManagementPage — error surfacing', () => {
         expect.objectContaining({
           type: 'error',
           title: 'Failed to create invoice',
-          message: 'Create exploded',
+          // Raw `Error.message` ("Create exploded") is mapped to the safe,
+          // localized default copy rather than shown verbatim to the user.
+          message: 'An unexpected error occurred.',
         })
       )
     );
