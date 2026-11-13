@@ -197,6 +197,24 @@ const NEWLY_COVERED_SEED: ReadonlyArray<readonly [readonly unknown[], string]> =
   [['oauth-grants', 'user'], 'oauth-grants'],
   [['mfa', 'status'], 'mfa'],
   [['layout', 'tenant'], 'layout'],
+  // Org members + unit residents (membersKeys, @ppt/api-client) — consumed via
+  // `useOrgMembers`/`useOrgRoles` (OrganizationMembersPage) and
+  // `useUnitResidents` (UnitResidentsDialog). The factory keys the member/role
+  // lists under `['org-members', …]` but the resident lists under a SEPARATE
+  // `['unit-residents', …]` root, so both roots must be purged. membersKeys is
+  // consumed only via generated hooks (never imported by name), so the
+  // allowlist-enforcement test could not catch this — these tenant-scoped
+  // lists survived logout and leaked into the next session on a shared
+  // workstation.
+  [['org-members', 'list', 'org-1'], 'org-members'],
+  [['unit-residents', 'b-1', 'u-1'], 'unit-residents'],
+  // Per-user in-app notification inbox (inboxKeys, @ppt/api-client) — consumed
+  // via `useNotificationInbox` (NotificationInboxPage) and
+  // `useUnreadNotificationCount` (NotificationBell). Keyed under
+  // `['notification-inbox', …]`; distinct from the `notification-triggers`
+  // root. Consumed only via generated hooks, so it escaped the enforcement
+  // test and the previous user's inbox + unread badge leaked across sessions.
+  [['notification-inbox', 'unread'], 'notification-inbox'],
 ];
 const NEWLY_COVERED_ROOTS = NEWLY_COVERED_SEED.map(([, root]) => root);
 

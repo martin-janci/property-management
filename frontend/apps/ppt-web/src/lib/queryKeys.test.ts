@@ -39,10 +39,12 @@ import {
   complianceKeys,
   disputeKeys,
   esignatureKeys,
+  inboxKeys,
   integrationKeys,
   iotKeys,
   layoutKeys,
   leaseKeys,
+  membersKeys,
   messagingKeys,
   meterKeys,
   mfaKeys,
@@ -233,6 +235,15 @@ describe('AUTHED_QUERY_KEY_ROOTS logout-purge coverage', () => {
       oauthGrantKeys,
       mfaKeys,
       layoutKeys,
+      // Org members + unit residents (OrganizationMembersPage / UnitResidentsDialog)
+      // and the per-user in-app notification inbox (NotificationInboxPage /
+      // NotificationBell). Both are consumed only via generated hooks — ppt-web
+      // never imports these `*Keys` factories by name — so the direct-import
+      // lower-bound check below cannot see them; they are enumerated here
+      // explicitly. Covers membersKeys' primary root `org-members`; its separate
+      // `unit-residents` resident-list root is guarded in AuthContext.test.tsx.
+      membersKeys,
+      inboxKeys,
       // Resident dashboard RecentActivity reads `/announcements/published`
       // through `announcementKeys.published()`.
       announcementKeys,
