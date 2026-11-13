@@ -94,7 +94,7 @@ const nextConfig = {
   // built JS. Next won't compile TS from `node_modules` by default; listing
   // them here lets the Next compiler pick them up. Add new TS-only workspace
   // deps here (or build them to `dist/*` and switch their `main`/`exports`).
-  transpilePackages: ['@ppt/dev-panel'],
+  transpilePackages: ['@ppt/dev-panel', '@ppt/ui-kit'],
 
   // Image optimization.
   // `domains` is deprecated in Next 14+ in favour of `remotePatterns`, which
