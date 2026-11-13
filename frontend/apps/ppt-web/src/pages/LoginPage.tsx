@@ -58,8 +58,12 @@ function validateForm(email: string, password: string, t: (key: string) => strin
 
 /**
  * Maps authentication error codes to user-friendly messages.
+ *
+ * Exported for regression testing: a generic `Error` (e.g. a raw
+ * backend/transport failure) must degrade to a friendly i18n string and never
+ * surface its raw `error.message` to the user.
  */
-function getErrorMessage(error: unknown, t: (key: string) => string): string {
+export function getErrorMessage(error: unknown, t: (key: string) => string): string {
   if (error instanceof AuthError) {
     switch (error.code) {
       case 'INVALID_CREDENTIALS':
@@ -82,7 +86,9 @@ function getErrorMessage(error: unknown, t: (key: string) => string): string {
     if (error.message.includes('fetch') || error.message.includes('network')) {
       return t('auth.networkError');
     }
-    return error.message;
+    // Never surface a raw backend/transport message to the user — route
+    // unknown failures through the app's i18n convention.
+    return t('auth.unexpectedError');
   }
 
   return t('auth.unexpectedError');
