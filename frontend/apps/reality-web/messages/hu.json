@@ -699,6 +699,10 @@
     },
     "security": {
       "reportCta": "Hirdetés bejelentése",
+      "reportPrompt": {
+        "heading": "Gyanús hirdetésbe botlott?",
+        "body": "Jelentse azonnal. Csapatunk 24 órán belül ellenőrzi, és ha a gyanú megalapozott, eltávolítjuk a hirdetést."
+      },
       "subtitle": "How we keep listings, payments and your data safe — and what to watch out for.",
       "title": "Security",
       "h1": "Your security is our priority",

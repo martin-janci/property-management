@@ -699,6 +699,10 @@
     },
     "security": {
       "reportCta": "Nahlásit inzerát",
+      "reportPrompt": {
+        "heading": "Narazili jste na podezřelý inzerát?",
+        "body": "Nahlaste ji okamžitě. Náš tým ji prověří do 24 hodin, a pokud je podezření oprávněné, inzerát odstraníme."
+      },
       "subtitle": "Pomáháme vám odhalit podvody a obchodovat s nemovitostmi v bezpečném prostředí.",
       "title": "Bezpečnost",
       "h1": "Vaše bezpečnost je naše priorita",

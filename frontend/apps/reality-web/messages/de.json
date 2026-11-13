@@ -699,6 +699,10 @@
     },
     "security": {
       "reportCta": "Inserat melden",
+      "reportPrompt": {
+        "heading": "Ein verdächtiges Inserat entdeckt?",
+        "body": "Melden Sie es sofort. Unser Team prüft jede Meldung innerhalb von 24 Stunden und entfernt das Inserat, wenn sich der Verdacht bestätigt."
+      },
       "subtitle": "Wir helfen Ihnen, Betrug zu erkennen und Immobilien in einer sicheren Umgebung zu handeln.",
       "title": "Sicherheit",
       "h1": "Ihre Sicherheit ist unsere Priorität",

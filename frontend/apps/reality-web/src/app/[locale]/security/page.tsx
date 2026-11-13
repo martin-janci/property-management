@@ -197,7 +197,7 @@ export default function SecurityPage() {
               marginBottom: 12,
             }}
           >
-            Narazili ste na podozrivú ponuku?
+            {t('reportPrompt.heading')}
           </h2>
           <p
             style={{
@@ -207,8 +207,7 @@ export default function SecurityPage() {
               margin: '0 auto 28px',
             }}
           >
-            Nahláste ju okamžite. Náš tím to preverí do 24 hodín a ak je podozrenie opodstatnené,
-            ponuku odstránime.
+            {t('reportPrompt.body')}
           </p>
           <Link
             href="/report"
@@ -223,7 +222,7 @@ export default function SecurityPage() {
               fontSize: '1rem',
             }}
           >
-            Nahlásiť ponuku
+            {t('reportCta')}
           </Link>
         </section>
       </main>
