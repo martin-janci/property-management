@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-12T22:29:11Z",
+  "archived_at": "2026-11-13T00:29:46Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -6451,6 +6451,31 @@
       }
     },
     {
+      "id": "code-review-mobile-rn-meter-reading-not-flushed",
+      "action": "mobile rn meter reading not flushed",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d mobile-rn score=2 vector=bug) | gc1-reconcile 2026-11-13T00:25:17Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T18:26:12Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-08T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3467,
+        "merged_at": "2026-11-12T22:40:44Z",
+        "at": "2026-11-13T00:25:17Z"
+      }
+    },
+    {
       "id": "code-review-mobile-rn-meter-submit-wrong-endpoint",
       "action": "mobile rn meter submit wrong endpoint",
       "owner_role": "pm-backend",
@@ -8047,6 +8072,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-iot-ws-unbounded-reconnect",
+      "action": "ppt web core iot ws unbounded reconnect",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-12T08:26:20Z (tier1d ppt-web-core score=2 vector=bug) | gc1-reconcile 2026-11-13T00:25:17Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-12T08:26:20Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-08T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-13T00:25:17Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-leases-hardcoded-eur-currency",
       "action": "ppt-web lease mappers hardcode EUR for all monetary values, so PLN/HUF markets mislabel amounts",
       "owner_role": "pm-backend",
@@ -9032,6 +9082,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-community-list-routes-empty",
+      "action": "ppt web ui community list routes empty",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-12T08:26:20Z (tier1d ppt-web-ui score=2 vector=bug) | gc1-reconcile 2026-11-13T00:25:17Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-12T08:26:20Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-08T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-13T00:25:17Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-confirm-dialog-i18n",
       "action": "ppt-web ConfirmationDialog hardcodes 'Processing...' loading text with no i18n / prop escape hatch",
       "owner_role": "pm-backend",
@@ -9573,6 +9648,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-groupdetail-delete-noop",
+      "action": "ppt web ui groupdetail delete noop",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-12T08:26:20Z (tier1d ppt-web-ui score=2 vector=bug) | gc1-reconcile 2026-11-13T00:25:17Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-12T08:26:20Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-08T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-13T00:25:17Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-invoice-feature-no-i18n",
       "action": "ppt-web Accounting Invoice feature ships entirely in hardcoded English — no i18n hook, uses native alert/confirm",
       "owner_role": "pm-tech-lead",
@@ -9851,6 +9951,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-oauth-grants-hardcoded-i18n",
+      "action": "ppt web ui oauth grants hardcoded i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d ppt-web-ui score=1 vector=bug) | gc1-reconcile 2026-11-13T00:25:17Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T18:26:12Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-09T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3468,
+        "merged_at": "2026-11-12T22:42:17Z",
+        "at": "2026-11-13T00:25:17Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-offline-ind-i18n",
       "action": "ppt-web-ui: OfflineIndicator banner text is hardcoded English, not i18n",
       "owner_role": "pm-tech-lead",
@@ -9921,6 +10046,31 @@
         "merged_pr": 3373,
         "merged_at": "2026-11-10T06:39:30Z",
         "at": "2026-11-10T06:39:49Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-pinned-badge-i18n",
+      "action": "ppt web ui pinned badge i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d ppt-web-ui score=1 vector=bug) | gc1-reconcile 2026-11-13T00:25:17Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-11T18:26:12Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-09T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3469,
+        "merged_at": "2026-11-12T22:42:27Z",
+        "at": "2026-11-13T00:25:17Z"
       }
     },
     {

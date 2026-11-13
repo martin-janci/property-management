@@ -175,78 +175,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-ui-oauth-grants-hardcoded-i18n",
-      "action": "ppt web ui oauth grants hardcoded i18n",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d ppt-web-ui score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-11T18:26:12Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-10-09T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-pinned-badge-i18n",
-      "action": "ppt web ui pinned badge i18n",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d ppt-web-ui score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-11T18:26:12Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-10-09T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-mobile-rn-meter-reading-not-flushed",
-      "action": "mobile rn meter reading not flushed",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-11T18:26:12Z (tier1d mobile-rn score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-11T18:26:12Z",
-      "signal_ref": {
-        "segment": "mobile-rn",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-10-08T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-core-iot-ws-unbounded-reconnect",
-      "action": "ppt web core iot ws unbounded reconnect",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-12T08:26:20Z (tier1d ppt-web-core score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-12T08:26:20Z",
-      "signal_ref": {
-        "segment": "ppt-web-core",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-10-08T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-ppt-web-core-needing-maint-querykey-arg",
       "action": "ppt web core needing maint querykey arg",
       "owner_role": "pm-backend",
@@ -259,42 +187,6 @@
       "first_open_at": "2026-11-12T08:26:20Z",
       "signal_ref": {
         "segment": "ppt-web-core",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-10-08T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-community-list-routes-empty",
-      "action": "ppt web ui community list routes empty",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-12T08:26:20Z (tier1d ppt-web-ui score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-12T08:26:20Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-10-08T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-groupdetail-delete-noop",
-      "action": "ppt web ui groupdetail delete noop",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-12T08:26:20Z (tier1d ppt-web-ui score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-12T08:26:20Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
         "score": 2,
         "vector": "bug",
         "generated": "2026-10-08T00:00:00Z"

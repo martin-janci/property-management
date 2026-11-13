@@ -7751,6 +7751,28 @@
       "merge_attempted_at": "2026-09-27T14:30:58Z"
     },
     {
+      "task_id": "code-review-ppt-web-core-doc-download-hardcoded-i18n",
+      "branch": "auto-impl/code-review-ppt-web-core-doc-download-ha-74f8e5f1",
+      "status": "failed",
+      "claimed_at": "2026-11-13T00:29:23Z",
+      "last_updated": "2026-11-13T00:46:10Z",
+      "status_changed_at": "2026-11-13T00:46:10Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=blocked specialist=react-web scope_drift=false code_reuse_warn=none note=stale/already-fixed: doc-download flow already uses react-i18next; all 6 keys translated in en/sk/cs/de/pl/hu. No hardcoded strings; no PR.",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-core-documents-default-org-sentinel",
       "branch": "auto-impl/code-review-ppt-web-core-documents-defau-c90abdc1",
       "status": "merged",
@@ -8129,6 +8151,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-08-04T00:13:43Z"
+    },
+    {
+      "task_id": "code-review-ppt-web-core-needing-maint-querykey-arg",
+      "branch": "auto-impl/code-review-ppt-web-core-needing-maint-q-a733a503",
+      "status": "merged",
+      "claimed_at": "2026-11-12T22:28:38Z",
+      "last_updated": "2026-11-13T00:46:10Z",
+      "status_changed_at": "2026-11-13T00:46:10Z",
+      "pr_number": 3470,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3470",
+      "merged_at": "2026-11-13T00:39:48Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3470 status=done specialist=react-web note=live bug: predictiveKeys.needingMaintenance() dropped daysAhead arg (cache collision); added daysAhead to key+hook; test+fix; verify green",
+      "reviewer_summary": "verdict=approve head_oid=bdc8da4c0bdc0f2e6050d010ecb82fce407c7e49 note=clean-querykey-fix-approved-as-comment-self-approve-blocked",
+      "last_reviewed_oid": "bdc8da4c0bdc0f2e6050d010ecb82fce407c7e49",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "code-review-ppt-web-core-neighbors-stale-token-usememo",
@@ -9027,6 +9071,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-10-31T18:33:40Z"
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-connstatus-interactive-on-status-role",
+      "branch": "auto-impl/code-review-ppt-web-ui-connstatus-intera-da0de849",
+      "status": "failed",
+      "claimed_at": "2026-11-13T00:29:23Z",
+      "last_updated": "2026-11-13T00:46:10Z",
+      "status_changed_at": "2026-11-13T00:46:10Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=blocked specialist=react-web scope_drift=false code_reuse_warn=none note=stale/already-fixed on dev (d66ecc281): ConnectionStatus.tsx role=status on passive div; reconnect is real nested button; a11y test present. No change needed.",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "code-review-ppt-web-ui-content-mod-overdue-noop",
@@ -10400,6 +10466,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-11-12T18:34:08Z"
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-toast-persistent-overflow-leak",
+      "branch": "auto-impl/code-review-ppt-web-ui-toast-persistent-186679ac",
+      "status": "merged",
+      "claimed_at": "2026-11-12T22:28:38Z",
+      "last_updated": "2026-11-13T00:46:10Z",
+      "status_changed_at": "2026-11-13T00:46:10Z",
+      "pr_number": 3471,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3471",
+      "merged_at": "2026-11-13T00:42:29Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3471 status=done specialist=react-web note=bounded ToastProvider queue (evict overflow + clear timers); persistent/error toasts leaked forever; 2 TDD tests fail-on-dev/pass-on-fix; verify green; drift=false-positive (owner-hint only)",
+      "reviewer_summary": "verdict=approve head_oid=8bf0bcf7fc552f966ba0f21d2333fbd4035c2342 note=toast-queue-bound-correct-tests-solid-CI-green-scopedrift-fp; posted as COMMENT (self-approve blocked, #3215)",
+      "last_reviewed_oid": "8bf0bcf7fc552f966ba0f21d2333fbd4035c2342",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "code-review-ppt-web-ui-toast-setstate-after-unmount",
@@ -22428,6 +22516,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-3466",
+      "branch": "auto-impl/gh-issue-3466-8c1b20dd",
+      "status": "merged",
+      "claimed_at": "2026-11-12T22:28:38Z",
+      "last_updated": "2026-11-13T00:46:10Z",
+      "status_changed_at": "2026-11-13T00:46:10Z",
+      "pr_number": 3472,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3472",
+      "merged_at": "2026-11-13T00:43:44Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3472 status=done specialist=react-web note=REAL: de/pl/hu missing criticalNotifications namespace (#3440) + outages.errors subtree (#3457); full translations + IG3 test (178 fails-before); verify green; Closes #3466",
+      "reviewer_summary": "verdict=approve head_oid=1fee401eb5682c20d145c74f1da78cea7c5c2c5f note=i18n de/pl/hu parity complete; test red->green; no hot-path/rust; self-approve blocked so review posted as COMMENT",
+      "last_reviewed_oid": "1fee401eb5682c20d145c74f1da78cea7c5c2c5f",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -26189,5 +26299,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-12T22:43:30Z"
+  "archived_at": "2026-11-13T00:46:16Z"
 }
