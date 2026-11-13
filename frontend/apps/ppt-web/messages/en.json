@@ -5792,6 +5792,9 @@
       "createFailed": "Failed to create schedule.",
       "updated": "Schedule updated successfully.",
       "updateFailed": "Failed to update schedule.",
+      "paused": "Schedule paused.",
+      "resumed": "Schedule resumed.",
+      "toggleFailed": "Failed to change schedule status.",
       "createErrors": {
         "emptyName": "The schedule name must not be empty.",
         "invalidFrequency": "The selected frequency is not supported.",

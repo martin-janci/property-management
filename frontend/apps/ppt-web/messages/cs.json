@@ -3359,6 +3359,9 @@
       "createFailed": "Plán se nepodařilo vytvořit.",
       "updated": "Plán byl úspěšně aktualizován.",
       "updateFailed": "Plán se nepodařilo aktualizovat.",
+      "paused": "Plán byl pozastaven.",
+      "resumed": "Plán byl obnoven.",
+      "toggleFailed": "Nepodařilo se změnit stav plánu.",
       "createErrors": {
         "emptyName": "Název plánu nesmí být prázdný.",
         "invalidFrequency": "Zvolená frekvence není podporována.",

@@ -3374,6 +3374,9 @@
       "createFailed": "Zeitplan konnte nicht erstellt werden.",
       "updated": "Zeitplan erfolgreich aktualisiert.",
       "updateFailed": "Zeitplan konnte nicht aktualisiert werden.",
+      "paused": "Zeitplan pausiert.",
+      "resumed": "Zeitplan fortgesetzt.",
+      "toggleFailed": "Status des Zeitplans konnte nicht geändert werden.",
       "createErrors": {
         "emptyName": "Der Name des Zeitplans darf nicht leer sein.",
         "invalidFrequency": "Die gewählte Häufigkeit wird nicht unterstützt.",

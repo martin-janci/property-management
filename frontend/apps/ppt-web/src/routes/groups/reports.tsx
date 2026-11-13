@@ -14,8 +14,10 @@ import {
   ApiError,
   useCreateSchedule,
   useDownloadReport,
+  usePauseSchedule,
   useReportExecutionHistory,
   useReportSchedules,
+  useResumeSchedule,
   useRetryReportExecution,
   useUpdateScheduleCron,
 } from '@ppt/api-client';
@@ -90,6 +92,41 @@ function ReportsPageRoute() {
           : t('reports.schedule.createFailed', 'Failed to create schedule.'),
       });
       throw e;
+    }
+  };
+
+  // Inline pause/resume toggle for the Schedules list (Story 81.1). The
+  // ScheduleList row toggle previously had no handler wired, so flipping a
+  // schedule active/paused from the list was a silent no-op. The dedicated
+  // backend endpoints already exist: PUT /api/v1/reports/schedules/{id}/pause
+  // and .../resume (reports/mod.rs). The toggle's second arg is the DESIRED
+  // active state, so active→resume, paused→pause.
+  const pauseScheduleMutation = usePauseSchedule();
+  const resumeScheduleMutation = useResumeSchedule();
+
+  const handleToggleSchedule = async (id: string, isActive: boolean) => {
+    try {
+      if (isActive) {
+        await resumeScheduleMutation.mutateAsync(id);
+      } else {
+        await pauseScheduleMutation.mutateAsync(id);
+      }
+      showToast({
+        type: 'success',
+        title: t('common.success'),
+        message: isActive
+          ? t('reports.schedule.resumed', 'Schedule resumed.')
+          : t('reports.schedule.paused', 'Schedule paused.'),
+      });
+    } catch {
+      // The row toggle is fire-and-forget (no caller awaits it), so surface the
+      // failure via the toast rather than re-throwing into an unhandled
+      // rejection. React Query keeps the list showing the unchanged state.
+      showToast({
+        type: 'error',
+        title: t('common.error'),
+        message: t('reports.schedule.toggleFailed', 'Failed to change schedule status.'),
+      });
     }
   };
 
@@ -174,6 +211,12 @@ function ReportsPageRoute() {
     }
   };
 
+  // NOTE: the Schedules list also exposes "delete" and "run now" row actions,
+  // but there is deliberately NO backend endpoint for either yet — the reports
+  // router (backend/.../routes/reports/mod.rs) ships only create/list/update/
+  // pause/resume/executions. `onDeleteSchedule` / `onRunScheduleNow` are left
+  // unpassed on purpose rather than wired to a fabricated route; they stay inert
+  // until the api-server adds DELETE /schedules/{id} and POST /schedules/{id}/run.
   return (
     <ReportsPage
       organizationId={organizationId}
@@ -206,6 +249,7 @@ function ReportsPageRoute() {
       }
       onCreateSchedule={handleCreateSchedule}
       onUpdateSchedule={handleUpdateSchedule}
+      onToggleSchedule={handleToggleSchedule}
       executions={executions}
       executionsLoading={executionsLoading}
       executionsHasMore={hasMore}

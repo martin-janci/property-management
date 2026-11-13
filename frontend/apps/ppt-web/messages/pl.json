@@ -3452,6 +3452,9 @@
       "createFailed": "Nie udało się utworzyć harmonogramu.",
       "updated": "Harmonogram został zaktualizowany.",
       "updateFailed": "Nie udało się zaktualizować harmonogramu.",
+      "paused": "Harmonogram wstrzymany.",
+      "resumed": "Harmonogram wznowiony.",
+      "toggleFailed": "Nie udało się zmienić stanu harmonogramu.",
       "createErrors": {
         "emptyName": "Nazwa harmonogramu nie może być pusta.",
         "invalidFrequency": "Wybrana częstotliwość nie jest obsługiwana.",
