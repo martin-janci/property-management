@@ -365,6 +365,15 @@ if [ "$LAG_DAYS" -ge 3 ]; then
   echo "stale_routine_alert: state.json last_run_iso=${SINCE_ISO} is ${LAG_DAYS}d old; cloud routine may be paused. Dispatcher state lives in .research/management/assignments.json on the planning branch — check that separately."
 fi
 
+# Lag-floor guard (deterministic, fail-loud) — the echoes above are ADVISORY;
+# the pipeline ignores them, so a drifted/dead scheduler is masked by a silent
+# one-shot catch-up. This guard puts a hard FLOOR on lag: if the gap since the
+# last successful run EXCEEDS LAG_FLOOR_DAYS (default 2) it prints a loud banner
+# and exits non-zero, failing the next run instead of silently back-filling.
+# Intentional catch-up (deep 30-day sweep below) passes LAG_FLOOR_ACK=1. The
+# guard is read-only (touches no cursor/state); see .research/lag-floor-guard.sh.
+LAG_FLOOR_ACK="${LAG_FLOOR_ACK:-0}" bash .research/lag-floor-guard.sh
+
 # Merged PRs since last_pr_seen
 gh pr list --state merged --base dev --limit 50 \
   --json number,title,mergedAt,author,additions,deletions,files,body,labels \
@@ -1101,7 +1110,7 @@ When promoting a vector, copy that file to `.research/plans/<slug>.md` and repla
 ## Special trigger payloads
 
 - `text == ""` — normal run
-- `text == "deep"` — scan the last 30 days instead of since-last-run. Only update `last_run_iso` and cursors **after all writes succeed** (deep mode is opportunistic catch-up, not a cursor reset).
+- `text == "deep"` — scan the last 30 days instead of since-last-run. Only update `last_run_iso` and cursors **after all writes succeed** (deep mode is opportunistic catch-up, not a cursor reset). Deep is an *intentional* wide catch-up, so run the cadence block's lag-floor guard with `LAG_FLOOR_ACK=1` (it would otherwise fail loudly on the large gap — that's the point of the guard for *unintentional* drift).
 - `text == "reset"` — write a brief noting state was reset, then set `last_pr_seen = 0`, `last_commit_sha = null`, `last_issue_seen = 0`, clear `seen_signals` and `hotspot_history`. Next run will do an initial 14-day sweep again.
 - `text == "full"` / `text == "pm-full"` — Phase 1.6 runs the Scrum Master + all 8 role agents (full delivery analysis), not just the daily rotating role.
 - `text == "pm:<role>"` — Phase 1.6 runs the Scrum Master + the named role only (e.g. `pm:security`, `pm:backend`). Valid roles: tech-lead, backend, frontend, qa, devops, security, data, integration.
