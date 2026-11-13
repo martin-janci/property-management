@@ -1074,6 +1074,65 @@
       "saved": "Listing saved.",
       "submit": "Save changes",
       "submitError": "Could not save listing."
+    },
+    "account": {
+      "title": "Account",
+      "signedInAs": "Signed in as <strong>{email}</strong>",
+      "signOut": "Sign out",
+      "sections": {
+        "profile": {
+          "title": "Profile",
+          "description": "Update your name, contact details and avatar."
+        },
+        "password": {
+          "title": "Password",
+          "description": "Change the password used to sign in."
+        },
+        "favorites": {
+          "title": "Favorites",
+          "description": "Properties you have saved for later."
+        },
+        "savedSearches": {
+          "title": "Saved searches",
+          "description": "Manage your saved searches and alert preferences."
+        },
+        "inquiries": {
+          "title": "Inquiries",
+          "description": "View messages and viewing requests you have sent."
+        }
+      }
+    },
+    "accountProfile": {
+      "title": "Edit profile",
+      "subtitle": "Update your display name and contact preferences.",
+      "displayNameLabel": "Display name",
+      "displayNameRequired": "Display name is required",
+      "emailLabel": "Email",
+      "emailHint": "Contact support to change the email on this account.",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "saved": "Profile updated.",
+      "saveFailed": "Could not save profile.",
+      "backToAccount": "Back to account"
+    },
+    "accountPassword": {
+      "title": "Change password",
+      "subtitle": "Update the password used to sign in to your account.",
+      "currentLabel": "Current password",
+      "currentRequired": "Current password is required",
+      "currentIncorrect": "Current password is incorrect.",
+      "newLabel": "New password",
+      "newRequired": "New password is required",
+      "minLength": "Password must be at least {min} characters",
+      "mustDiffer": "New password must differ from the current password",
+      "hint": "At least {min} characters.",
+      "confirmLabel": "Confirm new password",
+      "mismatch": "Passwords do not match",
+      "submit": "Update password",
+      "submitting": "Updating…",
+      "updated": "Password updated.",
+      "updateFailed": "Could not change password. Please try again.",
+      "backToAccount": "Back to account"
     }
   },
   "search": {

@@ -7,6 +7,7 @@
  */
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { type FormEvent, useEffect, useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
@@ -15,6 +16,7 @@ import { useAuth } from '@/lib/auth-context';
 
 function ProfileForm() {
   const { user, refreshSession } = useAuth();
+  const t = useTranslations('pages.accountProfile');
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState<string>();
   const [savedAt, setSavedAt] = useState<number>();
@@ -28,7 +30,7 @@ function ProfileForm() {
     event.preventDefault();
     setError(undefined);
     if (!displayName.trim()) {
-      setError('Display name is required');
+      setError(t('displayNameRequired'));
       return;
     }
     setIsSaving(true);
@@ -37,7 +39,7 @@ function ProfileForm() {
       await refreshSession();
       setSavedAt(Date.now());
     } catch (err) {
-      setError(err instanceof AuthApiError ? err.message : 'Could not save profile.');
+      setError(err instanceof AuthApiError ? err.message : t('saveFailed'));
     } finally {
       setIsSaving(false);
     }
@@ -45,8 +47,8 @@ function ProfileForm() {
 
   return (
     <form className="form" onSubmit={handleSubmit} noValidate>
-      <h1 className="title">Edit profile</h1>
-      <p className="subtitle">Update your display name and contact preferences.</p>
+      <h1 className="title">{t('title')}</h1>
+      <p className="subtitle">{t('subtitle')}</p>
 
       {error && (
         <div className="alert" role="alert">
@@ -55,12 +57,12 @@ function ProfileForm() {
       )}
       {savedAt && (
         <div className="success" role="status">
-          Profile updated.
+          {t('saved')}
         </div>
       )}
 
       <label className="field">
-        <span className="label">Display name</span>
+        <span className="label">{t('displayNameLabel')}</span>
         <input
           type="text"
           autoComplete="name"
@@ -72,18 +74,18 @@ function ProfileForm() {
       </label>
 
       <label className="field">
-        <span className="label">Email</span>
+        <span className="label">{t('emailLabel')}</span>
         <input type="email" value={user?.email ?? ''} disabled className="input" />
-        <span className="hint">Contact support to change the email on this account.</span>
+        <span className="hint">{t('emailHint')}</span>
       </label>
 
       <button type="submit" className="submit" disabled={isSaving}>
-        {isSaving ? 'Saving…' : 'Save changes'}
+        {isSaving ? t('saving') : t('save')}
       </button>
 
       <p className="meta">
         <Link href="/account" className="link">
-          Back to account
+          {t('backToAccount')}
         </Link>
       </p>
 
