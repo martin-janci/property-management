@@ -1015,7 +1015,11 @@
     },
     "confirmDelete": "Diese Störung löschen? Dies kann nicht rückgängig gemacht werden.",
     "deleted": "Störung gelöscht",
-    "deleteFailed": "Störung konnte nicht gelöscht werden"
+    "deleteFailed": "Störung konnte nicht gelöscht werden",
+    "photoUploadFailed": "Foto-Upload fehlgeschlagen",
+    "photosNotAttached": "{{failed}} von {{total}} Fotos konnten nicht angehängt werden. Sie können sie im Störungsdetail hinzufügen.",
+    "withdrawFailed": "Meldung konnte nicht zurückgezogen werden",
+    "withdrawn": "Meldung zurückgezogen"
   },
   "buildings": {
     "title": "Gebäude",
@@ -3013,7 +3017,16 @@
       "fetchFailedTitle": "Ausfälle konnten nicht geladen werden",
       "fetchFailedDescription": "Beim Laden der Ausfälle ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
       "retry": "Erneut versuchen"
-    }
+    },
+    "cancelled": "Ausfall abgesagt",
+    "createdSuccessfully": "Ausfall erstellt",
+    "failedToCreate": "Ausfall konnte nicht erstellt werden",
+    "failedToUpdate": "Ausfall konnte nicht aktualisiert werden",
+    "outageCreatedMsg": "Die Ausfallbenachrichtigung wurde erstellt und betroffene Bewohner werden benachrichtigt.",
+    "outageUpdatedMsg": "Die Ausfallbenachrichtigung wurde aktualisiert.",
+    "resolved": "Ausfall behoben",
+    "started": "Ausfall gestartet",
+    "updatedSuccessfully": "Ausfall aktualisiert"
   },
   "criticalNotifications": {
     "title": "Kritische Benachrichtigungen",
@@ -4700,7 +4713,8 @@
       "spike_negative": "Negativer Ausschlag",
       "sustained_decline": "Anhaltender Rückgang",
       "anomaly": "Anomalie"
-    }
+    },
+    "acknowledgeFailed": "Warnung konnte nicht bestätigt werden"
   },
   "predictive": {
     "pageTitle": "Vorausschauende Wartung",
@@ -4723,14 +4737,19 @@
       "needs_maintenance": "Wartung erforderlich",
       "under_repair": "In Reparatur",
       "decommissioned": "Außer Betrieb"
-    }
+    },
+    "acknowledgeFailed": "Vorhersage konnte nicht bestätigt werden"
   },
   "messaging": {
     "errors": {
       "downloadFailed": "Anhang konnte nicht heruntergeladen werden"
     },
     "messageSent": "Nachricht gesendet",
-    "sendFailed": "Nachricht konnte nicht gesendet werden"
+    "sendFailed": "Nachricht konnte nicht gesendet werden",
+    "archiveFailed": "Konversationen konnten nicht archiviert werden",
+    "archiveSuccess": "Konversationen archiviert",
+    "deleteFailed": "Konversationen konnten nicht gelöscht werden",
+    "deleteSuccess": "Konversationen gelöscht"
   },
   "notificationTriggers": {
     "title": "Benachrichtigungsauslöser",

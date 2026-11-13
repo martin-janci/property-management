@@ -6643,7 +6643,8 @@
       "spike_negative": "Negative spike",
       "sustained_decline": "Sustained decline",
       "anomaly": "Anomaly"
-    }
+    },
+    "acknowledgeFailed": "Failed to acknowledge alert"
   },
   "predictive": {
     "pageTitle": "Predictive Maintenance",
@@ -6666,7 +6667,8 @@
       "needs_maintenance": "Needs maintenance",
       "under_repair": "Under repair",
       "decommissioned": "Decommissioned"
-    }
+    },
+    "acknowledgeFailed": "Failed to acknowledge prediction"
   },
   "notificationTriggers": {
     "title": "Notification Triggers",
