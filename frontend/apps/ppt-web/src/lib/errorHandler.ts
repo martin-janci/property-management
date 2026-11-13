@@ -167,6 +167,25 @@ export function parseApiError(error: unknown): ParsedApiError {
     };
   }
 
+  // Handle client-side request/connection timeouts. A timed-out axios request
+  // is aborted with `code: 'ECONNABORTED'` (request timeout) or `'ETIMEDOUT'`
+  // (connection timeout) and carries no `response`, so without this branch it
+  // passed `isAxiosError` below, hit `parseHttpStatusError(undefined)`, and was
+  // returned as the unclassified `UNKNOWN_ERROR`. Classify it as the existing
+  // `TIMEOUT` error class (the same code the 504 gateway-timeout path maps to)
+  // so the user gets the dedicated timeout copy. Checked before `isAxiosError`
+  // because a timeout error also satisfies that guard.
+  if (isTimeoutError(error)) {
+    const copy = errorCopy('TIMEOUT');
+    return {
+      title: copy.title,
+      message: copy.message,
+      code: 'TIMEOUT',
+      isNetworkError: false,
+      isRateLimitError: false,
+    };
+  }
+
   // Handle axios-style errors
   if (isAxiosError(error)) {
     const response = error.response;
@@ -439,6 +458,34 @@ function isNetworkError(error: unknown): boolean {
       message.includes('network request failed') ||
       message.includes('networkerror')
     );
+  }
+
+  return false;
+}
+
+/**
+ * Detect a client-side request/connection timeout.
+ *
+ * Mirrors {@link isNetworkError}: axios aborts a timed-out request with
+ * `code: 'ECONNABORTED'` (the per-request timeout) or `'ETIMEDOUT'` (a
+ * connection-level timeout) and leaves `response` undefined. For transports
+ * that don't set a code we fall back to the message wording. The network-error
+ * check runs first, so a bare network failure never reaches here.
+ */
+function isTimeoutError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  // Axios timeout codes.
+  if ('code' in error && (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT')) {
+    return true;
+  }
+
+  // Message fallback for transports without a structured code.
+  if ('message' in error && typeof error.message === 'string') {
+    const message = error.message.toLowerCase();
+    return message.includes('timeout') || message.includes('timed out');
   }
 
   return false;
