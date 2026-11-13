@@ -413,6 +413,85 @@
       "invalidJson": "Invalid JSON — please check your input.",
       "missingComponents": "Manifest must have a \"components\" object.",
       "platformMismatch": "Platform mismatch: body says \"{{bodyPlatform}}\" but selected platform is \"{{platform}}\"."
+    },
+    "tenants": {
+      "lifecycle": "Lifecycle"
+    },
+    "tenantLifecycle": {
+      "picker": {
+        "label": "Tenant slug",
+        "load": "Load"
+      },
+      "header": {
+        "title": "Lifecycle · {{name}}",
+        "slug": "Tenant slug:",
+        "lastExport": "Last export:",
+        "softDeletedAt": "Soft-deleted at:",
+        "never": "Never",
+        "active": "Active"
+      },
+      "export": {
+        "title": "Export",
+        "body": "Full tenant dump as .tar.gz. Includes listings, memberships, audit rows, blobs.",
+        "start": "Start export",
+        "starting": "Starting…",
+        "lastExportBy": "Last export: {{date}} by {{by}} — ",
+        "download": "download ({{size}} GB)",
+        "none": "No exports yet.",
+        "unknownUser": "unknown",
+        "startedTitle": "Export started",
+        "startedMessage": "A new export is being generated. You will be notified when it is ready.",
+        "failedTitle": "Export failed ({{status}})",
+        "networkErrorTitle": "Network error",
+        "networkErrorMessage": "Unable to start export. Check your connection and try again."
+      },
+      "purge": {
+        "title": "Purge · irreversible",
+        "body": "Deletes all tenant data including audit log. After 24-hour cooldown from soft-delete. Cannot be undone.",
+        "needsSoftDelete": "Tenant must be soft-deleted before purge can be initiated.",
+        "buttonNotSoftDeleted": "Tenant is not soft-deleted yet",
+        "buttonCooldown": "Cooldown · {{time}} left",
+        "button": "Purge tenant",
+        "cooldownRemaining": "Cooldown: {{time}} remaining"
+      },
+      "restore": {
+        "title": "Restore",
+        "body": "Upload a previously exported tarball into a new tenant slug. Multipart — resumes on disconnect.",
+        "upload": "Upload",
+        "uploading": "Uploading…",
+        "notImplementedTitle": "Upload not yet implemented",
+        "notImplementedMessage": "Multipart restore endpoint not yet wired. File selected: {{name}}"
+      },
+      "wizard": {
+        "region": "Purge wizard",
+        "title": "Purge wizard — proceed carefully",
+        "stepConfirmExport": "Confirm export",
+        "stepTypeSlug": "Type slug",
+        "stepMfaReason": "MFA + reason",
+        "exportRequired": "An export less than 7 days old is required before purge. Last export was {{age}}.",
+        "exportAgeNever": "never",
+        "exportAgeDays": "{{days}} days ago",
+        "startExportNow": "Start export now",
+        "exportFailedTitle": "Export failed",
+        "exportFailedServer": "Server returned {{status}}. Cannot proceed to purge.",
+        "exportFailedUnable": "Unable to start export.",
+        "typeSlugExactly": "Type the tenant slug exactly:",
+        "confirmSlugAria": "Type \"{{slug}}\" to confirm",
+        "slugMismatch": "⚠ Doesn't match yet — keep typing",
+        "continueToMfa": "Continue to MFA",
+        "enterTotp": "Enter 6-digit authenticator code",
+        "totpGroupAria": "TOTP code digits",
+        "totpDigitAria": "Digit {{index}} of 6",
+        "verifyAndPurge": "Verify and purge",
+        "purging": "Purging…",
+        "purgedTitle": "Tenant purged",
+        "purgedMessage": "{{name}} has been permanently purged.",
+        "mfaRequiredTitle": "MFA required",
+        "mfaRequiredMessage": "Re-verify MFA and try again.",
+        "purgeFailedTitle": "Purge failed ({{status}})",
+        "networkErrorTitle": "Network error",
+        "networkErrorMessage": "Unable to reach the server. Check your connection and try again."
+      }
     }
   },
   "common": {

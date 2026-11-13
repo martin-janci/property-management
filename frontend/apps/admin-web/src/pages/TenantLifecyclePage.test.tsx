@@ -24,11 +24,26 @@ import { ToastProvider } from '../components/Toast';
 import TenantLifecyclePage, { PurgeWizard, type TenantInfo } from './TenantLifecyclePage';
 
 // ---------------------------------------------------------------------------
-// i18next mock (Toast uses useTranslation)
+// i18next mock (TenantLifecyclePage + Toast use useTranslation)
+//
+// Returns the `defaultValue` (mirroring the real i18next fallback for a
+// missing key) and interpolates any `{{var}}` placeholders from the options
+// object, so these behavior tests keep asserting on the English copy rather
+// than on translation keys. This mirrors the convention in
+// LayoutManifestsPage.test.tsx.
 // ---------------------------------------------------------------------------
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string) => key,
+    t: (key: string, opts?: Record<string, unknown> & { defaultValue?: string }) => {
+      let out = opts?.defaultValue ?? key;
+      if (opts) {
+        for (const [k, v] of Object.entries(opts)) {
+          if (k === 'defaultValue') continue;
+          out = out.replace(new RegExp(`{{\\s*${k}\\s*}}`, 'g'), String(v));
+        }
+      }
+      return out;
+    },
     i18n: { changeLanguage: vi.fn() },
   }),
   initReactI18next: { type: '3rdParty', init: vi.fn() },

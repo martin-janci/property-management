@@ -14,6 +14,7 @@
 import { useCapability } from '@ppt/admin-ui';
 import { FileUpload, Stepper } from '@ppt/ui-kit';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { useAdminAuth } from '../auth/AdminAuthContext';
 import { AuditReasonPrompt, useAuditReasonValid } from '../components/AuditReasonPrompt';
@@ -257,6 +258,7 @@ interface PurgeWizardProps {
 // drive the wizard directly without first arranging a soft-deleted tenant
 // fixture in the parent page. Also exported is `TenantInfo` for fixture use.
 export function PurgeWizard({ tenant, onCancel }: PurgeWizardProps) {
+  const { t } = useTranslation();
   // Gate "Start export now" button on tenant_export capability
   const canExportInWizard = useCapability('tenant_export');
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -321,39 +323,69 @@ export function PurgeWizard({ tenant, onCancel }: PurgeWizardProps) {
       if (resp.ok) {
         showToast({
           type: 'success',
-          title: 'Tenant purged',
-          message: `${tenant.name} has been permanently purged.`,
+          title: t('admin.tenantLifecycle.wizard.purgedTitle', { defaultValue: 'Tenant purged' }),
+          message: t('admin.tenantLifecycle.wizard.purgedMessage', {
+            name: tenant.name,
+            defaultValue: '{{name}} has been permanently purged.',
+          }),
         });
         onCancel();
       } else if (resp.status === 401) {
         showToast({
           type: 'error',
-          title: 'MFA required',
-          message: 'Re-verify MFA and try again.',
+          title: t('admin.tenantLifecycle.wizard.mfaRequiredTitle', {
+            defaultValue: 'MFA required',
+          }),
+          message: t('admin.tenantLifecycle.wizard.mfaRequiredMessage', {
+            defaultValue: 'Re-verify MFA and try again.',
+          }),
         });
       } else {
         const text = await resp.text().catch(() => resp.statusText);
-        showToast({ type: 'error', title: `Purge failed (${resp.status})`, message: text });
+        showToast({
+          type: 'error',
+          title: t('admin.tenantLifecycle.wizard.purgeFailedTitle', {
+            status: resp.status,
+            defaultValue: 'Purge failed ({{status}})',
+          }),
+          message: text,
+        });
       }
     } catch {
       showToast({
         type: 'error',
-        title: 'Network error',
-        message: 'Unable to reach the server. Check your connection and try again.',
+        title: t('admin.tenantLifecycle.wizard.networkErrorTitle', {
+          defaultValue: 'Network error',
+        }),
+        message: t('admin.tenantLifecycle.wizard.networkErrorMessage', {
+          defaultValue: 'Unable to reach the server. Check your connection and try again.',
+        }),
       });
     } finally {
       setIsPending(false);
     }
-  }, [isPending, tenant, reason, token, showToast, onCancel]);
+  }, [isPending, tenant, reason, token, showToast, onCancel, t]);
 
   return (
-    <div className="lc-wizard" role="region" aria-label="Purge wizard">
-      <p className="lc-wizard-title">Purge wizard — proceed carefully</p>
+    <div
+      className="lc-wizard"
+      role="region"
+      aria-label={t('admin.tenantLifecycle.wizard.region', { defaultValue: 'Purge wizard' })}
+    >
+      <p className="lc-wizard-title">
+        {t('admin.tenantLifecycle.wizard.title', {
+          defaultValue: 'Purge wizard — proceed carefully',
+        })}
+      </p>
 
       {/* Step indicator — shared @ppt/ui-kit primitive (step is 1-based, Stepper is 0-based) */}
       <Stepper
         className="lc-stepper"
-        steps={['Confirm export', 'Type slug', 'MFA + reason']}
+        steps={[
+          t('admin.tenantLifecycle.wizard.stepConfirmExport', { defaultValue: 'Confirm export' }),
+          t('admin.tenantLifecycle.wizard.stepTypeSlug', { defaultValue: 'Type slug' }),
+          t('admin.tenantLifecycle.wizard.stepMfaReason', { defaultValue: 'MFA + reason' }),
+        ]}
         current={step - 1}
       />
 
@@ -364,8 +396,17 @@ export function PurgeWizard({ tenant, onCancel }: PurgeWizardProps) {
             <p
               style={{ fontSize: 13, color: 'var(--ppt-warning-800, #92400e)', margin: '0 0 12px' }}
             >
-              An export less than 7 days old is required before purge. Last export was{' '}
-              {exportAgeDays === Infinity ? 'never' : `${Math.floor(exportAgeDays)} days ago`}.
+              {t('admin.tenantLifecycle.wizard.exportRequired', {
+                age:
+                  exportAgeDays === Infinity
+                    ? t('admin.tenantLifecycle.wizard.exportAgeNever', { defaultValue: 'never' })
+                    : t('admin.tenantLifecycle.wizard.exportAgeDays', {
+                        days: Math.floor(exportAgeDays),
+                        defaultValue: '{{days}} days ago',
+                      }),
+                defaultValue:
+                  'An export less than 7 days old is required before purge. Last export was {{age}}.',
+              })}
             </p>
             {canExportInWizard && (
               <button
@@ -383,8 +424,13 @@ export function PurgeWizard({ tenant, onCancel }: PurgeWizardProps) {
                       if (!resp.ok) {
                         showToast({
                           type: 'error',
-                          title: 'Export failed',
-                          message: `Server returned ${resp.status}. Cannot proceed to purge.`,
+                          title: t('admin.tenantLifecycle.wizard.exportFailedTitle', {
+                            defaultValue: 'Export failed',
+                          }),
+                          message: t('admin.tenantLifecycle.wizard.exportFailedServer', {
+                            status: resp.status,
+                            defaultValue: 'Server returned {{status}}. Cannot proceed to purge.',
+                          }),
                         });
                         return;
                       }
@@ -393,13 +439,19 @@ export function PurgeWizard({ tenant, onCancel }: PurgeWizardProps) {
                     .catch(() => {
                       showToast({
                         type: 'error',
-                        title: 'Export failed',
-                        message: 'Unable to start export.',
+                        title: t('admin.tenantLifecycle.wizard.exportFailedTitle', {
+                          defaultValue: 'Export failed',
+                        }),
+                        message: t('admin.tenantLifecycle.wizard.exportFailedUnable', {
+                          defaultValue: 'Unable to start export.',
+                        }),
                       });
                     });
                 }}
               >
-                Start export now
+                {t('admin.tenantLifecycle.wizard.startExportNow', {
+                  defaultValue: 'Start export now',
+                })}
               </button>
             )}
           </div>
@@ -409,7 +461,9 @@ export function PurgeWizard({ tenant, onCancel }: PurgeWizardProps) {
         {step === 2 && (
           <div>
             <p className="lc-step-label">
-              Type the tenant slug exactly:{' '}
+              {t('admin.tenantLifecycle.wizard.typeSlugExactly', {
+                defaultValue: 'Type the tenant slug exactly:',
+              })}{' '}
               <code
                 style={{
                   fontFamily: 'var(--ppt-font-mono, monospace)',
@@ -431,11 +485,16 @@ export function PurgeWizard({ tenant, onCancel }: PurgeWizardProps) {
               autoCorrect="off"
               autoCapitalize="off"
               spellCheck={false}
-              aria-label={`Type "${tenant.slug}" to confirm`}
+              aria-label={t('admin.tenantLifecycle.wizard.confirmSlugAria', {
+                slug: tenant.slug,
+                defaultValue: 'Type "{{slug}}" to confirm',
+              })}
             />
             {slugTyped.length > 0 && !slugMatch && (
               <p className="lc-mismatch" role="alert">
-                ⚠ Doesn't match yet — keep typing
+                {t('admin.tenantLifecycle.wizard.slugMismatch', {
+                  defaultValue: "⚠ Doesn't match yet — keep typing",
+                })}
               </p>
             )}
             <div className="lc-wizard-actions">
@@ -445,10 +504,12 @@ export function PurgeWizard({ tenant, onCancel }: PurgeWizardProps) {
                 disabled={!slugMatch}
                 onClick={() => setStep(3)}
               >
-                Continue to MFA
+                {t('admin.tenantLifecycle.wizard.continueToMfa', {
+                  defaultValue: 'Continue to MFA',
+                })}
               </button>
               <button type="button" className="lc-btn lc-btn--ghost" onClick={onCancel}>
-                Cancel
+                {t('common.cancel', { defaultValue: 'Cancel' })}
               </button>
             </div>
           </div>
@@ -465,8 +526,18 @@ export function PurgeWizard({ tenant, onCancel }: PurgeWizardProps) {
             />
 
             <div>
-              <p className="lc-totp-label">Enter 6-digit authenticator code</p>
-              <div className="lc-totp-row" role="group" aria-label="TOTP code digits">
+              <p className="lc-totp-label">
+                {t('admin.tenantLifecycle.wizard.enterTotp', {
+                  defaultValue: 'Enter 6-digit authenticator code',
+                })}
+              </p>
+              <div
+                className="lc-totp-row"
+                role="group"
+                aria-label={t('admin.tenantLifecycle.wizard.totpGroupAria', {
+                  defaultValue: 'TOTP code digits',
+                })}
+              >
                 {totp.map((digit, idx) => (
                   <input
                     key={idx}
@@ -480,7 +551,10 @@ export function PurgeWizard({ tenant, onCancel }: PurgeWizardProps) {
                     value={digit}
                     onChange={(e) => handleTotpChange(idx, e.target.value)}
                     onKeyDown={(e) => handleTotpKeyDown(idx, e)}
-                    aria-label={`Digit ${idx + 1} of 6`}
+                    aria-label={t('admin.tenantLifecycle.wizard.totpDigitAria', {
+                      index: idx + 1,
+                      defaultValue: 'Digit {{index}} of 6',
+                    })}
                     autoComplete="one-time-code"
                   />
                 ))}
@@ -495,7 +569,11 @@ export function PurgeWizard({ tenant, onCancel }: PurgeWizardProps) {
                 onClick={handlePurge}
               >
                 {isPending && <span className="lc-spinner" aria-hidden="true" />}
-                {isPending ? 'Purging…' : 'Verify and purge'}
+                {isPending
+                  ? t('admin.tenantLifecycle.wizard.purging', { defaultValue: 'Purging…' })
+                  : t('admin.tenantLifecycle.wizard.verifyAndPurge', {
+                      defaultValue: 'Verify and purge',
+                    })}
               </button>
               <button
                 type="button"
@@ -503,7 +581,7 @@ export function PurgeWizard({ tenant, onCancel }: PurgeWizardProps) {
                 onClick={onCancel}
                 disabled={isPending}
               >
-                Cancel
+                {t('common.cancel', { defaultValue: 'Cancel' })}
               </button>
             </div>
           </div>
@@ -519,6 +597,7 @@ export function PurgeWizard({ tenant, onCancel }: PurgeWizardProps) {
 
 export default function TenantLifecyclePage() {
   ensureStyles();
+  const { t } = useTranslation();
 
   // Capability checks for OR-gate (page-level gating mirrors ProtectedRoute
   // which also uses any-of, but we double-check here and show ForbiddenPage
@@ -603,26 +682,35 @@ export default function TenantLifecyclePage() {
       if (resp.ok) {
         showToast({
           type: 'success',
-          title: 'Export started',
-          message: 'A new export is being generated. You will be notified when it is ready.',
+          title: t('admin.tenantLifecycle.export.startedTitle', { defaultValue: 'Export started' }),
+          message: t('admin.tenantLifecycle.export.startedMessage', {
+            defaultValue: 'A new export is being generated. You will be notified when it is ready.',
+          }),
         });
       } else {
         showToast({
           type: 'error',
-          title: `Export failed (${resp.status})`,
+          title: t('admin.tenantLifecycle.export.failedTitle', {
+            status: resp.status,
+            defaultValue: 'Export failed ({{status}})',
+          }),
           message: await resp.text().catch(() => resp.statusText),
         });
       }
     } catch {
       showToast({
         type: 'error',
-        title: 'Network error',
-        message: 'Unable to start export. Check your connection and try again.',
+        title: t('admin.tenantLifecycle.export.networkErrorTitle', {
+          defaultValue: 'Network error',
+        }),
+        message: t('admin.tenantLifecycle.export.networkErrorMessage', {
+          defaultValue: 'Unable to start export. Check your connection and try again.',
+        }),
       });
     } finally {
       setIsExporting(false);
     }
-  }, [isExporting, tenant.id, token, showToast]);
+  }, [isExporting, tenant.id, token, showToast, t]);
 
   // Restore upload stub
   const handleUpload = useCallback(async () => {
@@ -631,13 +719,18 @@ export default function TenantLifecyclePage() {
     try {
       showToast({
         type: 'info',
-        title: 'Upload not yet implemented',
-        message: `Multipart restore endpoint not yet wired. File selected: ${restoreFile.name}`,
+        title: t('admin.tenantLifecycle.restore.notImplementedTitle', {
+          defaultValue: 'Upload not yet implemented',
+        }),
+        message: t('admin.tenantLifecycle.restore.notImplementedMessage', {
+          name: restoreFile.name,
+          defaultValue: 'Multipart restore endpoint not yet wired. File selected: {{name}}',
+        }),
       });
     } finally {
       setIsUploading(false);
     }
-  }, [restoreFile, isUploading, showToast]);
+  }, [restoreFile, isUploading, showToast, t]);
 
   // Purge button state
   const tenantSoftDeleted = tenant.softDeletedAt !== null;
@@ -645,16 +738,23 @@ export default function TenantLifecyclePage() {
   const purgeButtonDisabled = !tenantSoftDeleted || cooldownActive;
 
   const purgeButtonLabel = !tenantSoftDeleted
-    ? 'Tenant is not soft-deleted yet'
+    ? t('admin.tenantLifecycle.purge.buttonNotSoftDeleted', {
+        defaultValue: 'Tenant is not soft-deleted yet',
+      })
     : cooldownActive
-      ? `Cooldown · ${formatCooldown(cooldownMs)} left`
-      : 'Purge tenant';
+      ? t('admin.tenantLifecycle.purge.buttonCooldown', {
+          time: formatCooldown(cooldownMs),
+          defaultValue: 'Cooldown · {{time}} left',
+        })
+      : t('admin.tenantLifecycle.purge.button', { defaultValue: 'Purge tenant' });
 
   return (
     <div className="lc-page">
       {/* Tenant picker */}
       <div className="lc-picker">
-        <label htmlFor="lc-slug-picker">Tenant slug</label>
+        <label htmlFor="lc-slug-picker">
+          {t('admin.tenantLifecycle.picker.label', { defaultValue: 'Tenant slug' })}
+        </label>
         <input
           id="lc-slug-picker"
           type="text"
@@ -666,19 +766,31 @@ export default function TenantLifecyclePage() {
           }}
         />
         <button type="button" className="lc-btn lc-btn--ghost" onClick={handleLoadTenant}>
-          Load
+          {t('admin.tenantLifecycle.picker.load', { defaultValue: 'Load' })}
         </button>
       </div>
 
       {/* Page header */}
       <div className="lc-header">
-        <h1 className="lc-title">Lifecycle · {tenant.name}</h1>
+        <h1 className="lc-title">
+          {t('admin.tenantLifecycle.header.title', {
+            name: tenant.name,
+            defaultValue: 'Lifecycle · {{name}}',
+          })}
+        </h1>
         <p className="lc-subline">
-          Tenant slug: <strong>{tenant.slug}</strong>
+          {t('admin.tenantLifecycle.header.slug', { defaultValue: 'Tenant slug:' })}{' '}
+          <strong>{tenant.slug}</strong>
           <span aria-hidden="true">·</span>
-          Last export: {tenant.lastExportAt ? formatDate(tenant.lastExportAt) : 'Never'}
+          {t('admin.tenantLifecycle.header.lastExport', { defaultValue: 'Last export:' })}{' '}
+          {tenant.lastExportAt
+            ? formatDate(tenant.lastExportAt)
+            : t('admin.tenantLifecycle.header.never', { defaultValue: 'Never' })}
           <span aria-hidden="true">·</span>
-          Soft-deleted at: {tenant.softDeletedAt ? formatDate(tenant.softDeletedAt) : 'Active'}
+          {t('admin.tenantLifecycle.header.softDeletedAt', { defaultValue: 'Soft-deleted at:' })}{' '}
+          {tenant.softDeletedAt
+            ? formatDate(tenant.softDeletedAt)
+            : t('admin.tenantLifecycle.header.active', { defaultValue: 'Active' })}
         </p>
       </div>
 
@@ -686,9 +798,14 @@ export default function TenantLifecyclePage() {
       <div className="lc-grid">
         {/* ── Export card ── */}
         <div className="lc-card">
-          <h3 className="lc-card-title">Export</h3>
+          <h3 className="lc-card-title">
+            {t('admin.tenantLifecycle.export.title', { defaultValue: 'Export' })}
+          </h3>
           <p className="lc-card-body">
-            Full tenant dump as .tar.gz. Includes listings, memberships, audit rows, blobs.
+            {t('admin.tenantLifecycle.export.body', {
+              defaultValue:
+                'Full tenant dump as .tar.gz. Includes listings, memberships, audit rows, blobs.',
+            })}
           </p>
           {canExport && (
             <button
@@ -698,32 +815,51 @@ export default function TenantLifecyclePage() {
               disabled={isExporting}
             >
               {isExporting && <span className="lc-spinner" aria-hidden="true" />}
-              {isExporting ? 'Starting…' : 'Start export'}
+              {isExporting
+                ? t('admin.tenantLifecycle.export.starting', { defaultValue: 'Starting…' })
+                : t('admin.tenantLifecycle.export.start', { defaultValue: 'Start export' })}
             </button>
           )}
           {tenant.lastExportAt ? (
             <p className="lc-card-subtext">
-              Last export: {formatDate(tenant.lastExportAt)} by {tenant.lastExportBy ?? 'unknown'} —{' '}
+              {t('admin.tenantLifecycle.export.lastExportBy', {
+                date: formatDate(tenant.lastExportAt),
+                by:
+                  tenant.lastExportBy ??
+                  t('admin.tenantLifecycle.export.unknownUser', { defaultValue: 'unknown' }),
+                defaultValue: 'Last export: {{date}} by {{by}} — ',
+              })}
               {/* biome-ignore lint/a11y/useValidAnchor: placeholder download link */}
               <a onClick={(e) => e.preventDefault()} href="#">
-                download ({tenant.lastExportSizeGb?.toFixed(1) ?? '?'} GB)
+                {t('admin.tenantLifecycle.export.download', {
+                  size: tenant.lastExportSizeGb?.toFixed(1) ?? '?',
+                  defaultValue: 'download ({{size}} GB)',
+                })}
               </a>
             </p>
           ) : (
-            <p className="lc-card-subtext">No exports yet.</p>
+            <p className="lc-card-subtext">
+              {t('admin.tenantLifecycle.export.none', { defaultValue: 'No exports yet.' })}
+            </p>
           )}
         </div>
 
         {/* ── Purge card ── */}
         <div className="lc-card danger">
-          <h3 className="lc-card-title danger">Purge · irreversible</h3>
+          <h3 className="lc-card-title danger">
+            {t('admin.tenantLifecycle.purge.title', { defaultValue: 'Purge · irreversible' })}
+          </h3>
           <p className="lc-card-body danger">
-            Deletes all tenant data including audit log. After 24-hour cooldown from soft-delete.
-            Cannot be undone.
+            {t('admin.tenantLifecycle.purge.body', {
+              defaultValue:
+                'Deletes all tenant data including audit log. After 24-hour cooldown from soft-delete. Cannot be undone.',
+            })}
           </p>
           {!tenantSoftDeleted && (
             <p className="lc-btn-hint">
-              Tenant must be soft-deleted before purge can be initiated.
+              {t('admin.tenantLifecycle.purge.needsSoftDelete', {
+                defaultValue: 'Tenant must be soft-deleted before purge can be initiated.',
+              })}
             </p>
           )}
           {canPurge && (
@@ -739,7 +875,10 @@ export default function TenantLifecyclePage() {
               </button>
               {cooldownActive && (
                 <p className="lc-btn-hint" aria-live="polite">
-                  Cooldown: {formatCooldown(cooldownMs)} remaining
+                  {t('admin.tenantLifecycle.purge.cooldownRemaining', {
+                    time: formatCooldown(cooldownMs),
+                    defaultValue: 'Cooldown: {{time}} remaining',
+                  })}
                 </p>
               )}
             </>
@@ -748,10 +887,14 @@ export default function TenantLifecyclePage() {
 
         {/* ── Restore card ── */}
         <div className="lc-card">
-          <h3 className="lc-card-title">Restore</h3>
+          <h3 className="lc-card-title">
+            {t('admin.tenantLifecycle.restore.title', { defaultValue: 'Restore' })}
+          </h3>
           <p className="lc-card-body">
-            Upload a previously exported tarball into a new tenant slug. Multipart — resumes on
-            disconnect.
+            {t('admin.tenantLifecycle.restore.body', {
+              defaultValue:
+                'Upload a previously exported tarball into a new tenant slug. Multipart — resumes on disconnect.',
+            })}
           </p>
           {canRestore && (
             <>
@@ -782,7 +925,9 @@ export default function TenantLifecyclePage() {
                     disabled={isUploading}
                   >
                     {isUploading && <span className="lc-spinner" aria-hidden="true" />}
-                    {isUploading ? 'Uploading…' : 'Upload'}
+                    {isUploading
+                      ? t('admin.tenantLifecycle.restore.uploading', { defaultValue: 'Uploading…' })
+                      : t('admin.tenantLifecycle.restore.upload', { defaultValue: 'Upload' })}
                   </button>
                 </div>
               )}

@@ -389,6 +389,85 @@
       "invalidJson": "Neplatný JSON — zkontrolujte vstup.",
       "missingComponents": "Manifest musí mít objekt \"components\".",
       "platformMismatch": "Neshoda platformy: tělo říká \"{{bodyPlatform}}\" ale vybraná platforma je \"{{platform}}\"."
+    },
+    "tenants": {
+      "lifecycle": "Životní cyklus"
+    },
+    "tenantLifecycle": {
+      "picker": {
+        "label": "Slug nájemce",
+        "load": "Načíst"
+      },
+      "header": {
+        "title": "Životní cyklus · {{name}}",
+        "slug": "Slug nájemce:",
+        "lastExport": "Poslední export:",
+        "softDeletedAt": "Měkce smazáno:",
+        "never": "Nikdy",
+        "active": "Aktivní"
+      },
+      "export": {
+        "title": "Export",
+        "body": "Úplný výpis nájemce jako .tar.gz. Obsahuje inzeráty, členství, záznamy auditu, bloby.",
+        "start": "Spustit export",
+        "starting": "Spouští se…",
+        "lastExportBy": "Poslední export: {{date}} uživatelem {{by}} — ",
+        "download": "stáhnout ({{size}} GB)",
+        "none": "Zatím žádné exporty.",
+        "unknownUser": "neznámý",
+        "startedTitle": "Export spuštěn",
+        "startedMessage": "Generuje se nový export. Budete upozorněni, až bude připraven.",
+        "failedTitle": "Export selhal ({{status}})",
+        "networkErrorTitle": "Chyba sítě",
+        "networkErrorMessage": "Nepodařilo se spustit export. Zkontrolujte připojení a zkuste to znovu."
+      },
+      "purge": {
+        "title": "Vymazání · nevratné",
+        "body": "Odstraní všechna data nájemce včetně záznamu auditu. Po 24hodinové lhůtě od měkkého smazání. Nelze vrátit zpět.",
+        "needsSoftDelete": "Nájemce musí být před vymazáním měkce smazán.",
+        "buttonNotSoftDeleted": "Nájemce ještě není měkce smazán",
+        "buttonCooldown": "Lhůta · zbývá {{time}}",
+        "button": "Vymazat nájemce",
+        "cooldownRemaining": "Lhůta: zbývá {{time}}"
+      },
+      "restore": {
+        "title": "Obnovení",
+        "body": "Nahrajte dříve exportovaný archiv do nového slugu nájemce. Vícedílné — pokračuje po odpojení.",
+        "upload": "Nahrát",
+        "uploading": "Nahrává se…",
+        "notImplementedTitle": "Nahrávání zatím není implementováno",
+        "notImplementedMessage": "Vícedílný koncový bod obnovení ještě není zapojen. Vybraný soubor: {{name}}"
+      },
+      "wizard": {
+        "region": "Průvodce vymazáním",
+        "title": "Průvodce vymazáním — postupujte opatrně",
+        "stepConfirmExport": "Potvrdit export",
+        "stepTypeSlug": "Zadat slug",
+        "stepMfaReason": "MFA + důvod",
+        "exportRequired": "Před vymazáním je nutný export ne starší než 7 dní. Poslední export byl {{age}}.",
+        "exportAgeNever": "nikdy",
+        "exportAgeDays": "před {{days}} dny",
+        "startExportNow": "Spustit export nyní",
+        "exportFailedTitle": "Export selhal",
+        "exportFailedServer": "Server vrátil {{status}}. Nelze pokračovat ve vymazání.",
+        "exportFailedUnable": "Nepodařilo se spustit export.",
+        "typeSlugExactly": "Zadejte slug nájemce přesně:",
+        "confirmSlugAria": "Napište \"{{slug}}\" pro potvrzení",
+        "slugMismatch": "⚠ Zatím se neshoduje — pokračujte v psaní",
+        "continueToMfa": "Pokračovat na MFA",
+        "enterTotp": "Zadejte 6místný kód z autentifikátoru",
+        "totpGroupAria": "Číslice kódu TOTP",
+        "totpDigitAria": "Číslice {{index}} ze 6",
+        "verifyAndPurge": "Ověřit a vymazat",
+        "purging": "Vymazává se…",
+        "purgedTitle": "Nájemce vymazán",
+        "purgedMessage": "{{name}} byl trvale vymazán.",
+        "mfaRequiredTitle": "Vyžaduje se MFA",
+        "mfaRequiredMessage": "Znovu ověřte MFA a zkuste to znovu.",
+        "purgeFailedTitle": "Vymazání selhalo ({{status}})",
+        "networkErrorTitle": "Chyba sítě",
+        "networkErrorMessage": "Nepodařilo se spojit se serverem. Zkontrolujte připojení a zkuste to znovu."
+      }
     }
   },
   "common": {

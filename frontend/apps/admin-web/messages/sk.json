@@ -389,6 +389,85 @@
       "invalidJson": "Neplatný JSON — skontrolujte vstup.",
       "missingComponents": "Manifest musí mať objekt \"components\".",
       "platformMismatch": "Nezhoda platformy: telo hovorí \"{{bodyPlatform}}\" ale vybraná platforma je \"{{platform}}\"."
+    },
+    "tenants": {
+      "lifecycle": "Životný cyklus"
+    },
+    "tenantLifecycle": {
+      "picker": {
+        "label": "Slug nájomcu",
+        "load": "Načítať"
+      },
+      "header": {
+        "title": "Životný cyklus · {{name}}",
+        "slug": "Slug nájomcu:",
+        "lastExport": "Posledný export:",
+        "softDeletedAt": "Mäkko odstránený:",
+        "never": "Nikdy",
+        "active": "Aktívny"
+      },
+      "export": {
+        "title": "Export",
+        "body": "Úplný výpis nájomcu ako .tar.gz. Obsahuje inzeráty, členstvá, záznamy auditu, bloby.",
+        "start": "Spustiť export",
+        "starting": "Spúšťa sa…",
+        "lastExportBy": "Posledný export: {{date}} používateľom {{by}} — ",
+        "download": "stiahnuť ({{size}} GB)",
+        "none": "Zatiaľ žiadne exporty.",
+        "unknownUser": "neznámy",
+        "startedTitle": "Export spustený",
+        "startedMessage": "Generuje sa nový export. Budete upozornení, keď bude pripravený.",
+        "failedTitle": "Export zlyhal ({{status}})",
+        "networkErrorTitle": "Chyba siete",
+        "networkErrorMessage": "Nepodarilo sa spustiť export. Skontrolujte pripojenie a skúste znova."
+      },
+      "purge": {
+        "title": "Vymazanie · nezvratné",
+        "body": "Odstráni všetky údaje nájomcu vrátane záznamu auditu. Po 24-hodinovej lehote od mäkkého odstránenia. Nedá sa vrátiť späť.",
+        "needsSoftDelete": "Nájomca musí byť pred vymazaním mäkko odstránený.",
+        "buttonNotSoftDeleted": "Nájomca ešte nie je mäkko odstránený",
+        "buttonCooldown": "Lehota · zostáva {{time}}",
+        "button": "Vymazať nájomcu",
+        "cooldownRemaining": "Lehota: zostáva {{time}}"
+      },
+      "restore": {
+        "title": "Obnovenie",
+        "body": "Nahrajte predtým exportovaný archív do nového slugu nájomcu. Viacdielne — pokračuje po odpojení.",
+        "upload": "Nahrať",
+        "uploading": "Nahráva sa…",
+        "notImplementedTitle": "Nahrávanie zatiaľ nie je implementované",
+        "notImplementedMessage": "Viacdielny koncový bod obnovenia ešte nie je zapojený. Vybraný súbor: {{name}}"
+      },
+      "wizard": {
+        "region": "Sprievodca vymazaním",
+        "title": "Sprievodca vymazaním — postupujte opatrne",
+        "stepConfirmExport": "Potvrdiť export",
+        "stepTypeSlug": "Zadať slug",
+        "stepMfaReason": "MFA + dôvod",
+        "exportRequired": "Pred vymazaním je potrebný export nie starší ako 7 dní. Posledný export bol {{age}}.",
+        "exportAgeNever": "nikdy",
+        "exportAgeDays": "pred {{days}} dňami",
+        "startExportNow": "Spustiť export teraz",
+        "exportFailedTitle": "Export zlyhal",
+        "exportFailedServer": "Server vrátil {{status}}. Nemožno pokračovať vo vymazaní.",
+        "exportFailedUnable": "Nepodarilo sa spustiť export.",
+        "typeSlugExactly": "Zadajte slug nájomcu presne:",
+        "confirmSlugAria": "Napíšte \"{{slug}}\" na potvrdenie",
+        "slugMismatch": "⚠ Zatiaľ sa nezhoduje — pokračujte v písaní",
+        "continueToMfa": "Pokračovať na MFA",
+        "enterTotp": "Zadajte 6-miestny kód z autentifikátora",
+        "totpGroupAria": "Číslice kódu TOTP",
+        "totpDigitAria": "Číslica {{index}} zo 6",
+        "verifyAndPurge": "Overiť a vymazať",
+        "purging": "Vymazáva sa…",
+        "purgedTitle": "Nájomca vymazaný",
+        "purgedMessage": "{{name}} bol natrvalo vymazaný.",
+        "mfaRequiredTitle": "Vyžaduje sa MFA",
+        "mfaRequiredMessage": "Znovu overte MFA a skúste znova.",
+        "purgeFailedTitle": "Vymazanie zlyhalo ({{status}})",
+        "networkErrorTitle": "Chyba siete",
+        "networkErrorMessage": "Nepodarilo sa spojiť so serverom. Skontrolujte pripojenie a skúste znova."
+      }
     }
   },
   "common": {
