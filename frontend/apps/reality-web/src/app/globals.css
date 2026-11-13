@@ -1,5 +1,7 @@
 /* Global styles for Reality Portal */
 @import "@ppt/ui-kit/tokens.css";
+/* Design-system tokens consumed by migrated ui-kit components (SegmentedControl); additive to the legacy ppt tokens above. */
+@import "@ppt/ui-kit/tokens/tokens.css";
 
 /* Inject the Inter webfont (loaded via next/font in [locale]/layout.tsx as
    --ppt-font-inter) at the front of the existing system stack, so we keep

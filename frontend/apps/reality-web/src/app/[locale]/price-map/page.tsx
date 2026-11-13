@@ -16,6 +16,7 @@ import {
   type PriceMapPropertyType,
   usePriceMap,
 } from '@ppt/reality-api-client';
+import { SegmentedControl } from '@ppt/ui-kit';
 import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { Footer, Header } from '@/components/ui';
@@ -23,7 +24,6 @@ import { formatNumber, formatPrice } from '@/lib/format';
 import { geometryFor, priceToColor } from './_geometry';
 
 // TODO: replace filter strip with @ppt/ui-kit/ChipGroup once available
-// TODO: replace with @ppt/ui-kit/SegmentedControl for transactionType toggle
 
 type TransactionType = 'sale' | 'rent';
 
@@ -139,31 +139,14 @@ export default function PriceMapPage() {
           >
             {t('h1')}
           </h1>
-          <div style={{ display: 'flex', gap: 4 }}>
-            {/* TODO: replace with @ppt/ui-kit/SegmentedControl once available */}
-            {(['sale', 'rent'] as TransactionType[]).map((tx) => (
-              <button
-                key={tx}
-                type="button"
-                onClick={() => setTransactionType(tx)}
-                style={{
-                  padding: '7px 16px',
-                  borderRadius: 6,
-                  border: 'none',
-                  background:
-                    transactionType === tx
-                      ? 'var(--ppt-color-primary, #2563eb)'
-                      : 'var(--ppt-bg-app, #f1f5f9)',
-                  color: transactionType === tx ? '#fff' : 'var(--ppt-fg-secondary)',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                }}
-              >
-                {tx === 'sale' ? 'Predaj' : 'Prenájom'}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            options={[
+              { value: 'sale', label: 'Predaj' },
+              { value: 'rent', label: 'Prenájom' },
+            ]}
+            value={transactionType}
+            onChange={(value) => setTransactionType(value as TransactionType)}
+          />
           {/* TODO: replace with @ppt/ui-kit/ChipGroup once available */}
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {PROPERTY_OPTIONS.map((opt) => (
