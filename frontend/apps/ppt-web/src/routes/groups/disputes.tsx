@@ -26,7 +26,7 @@ import {
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, Route, useNavigate, useParams } from 'react-router-dom';
-import { AuthRequiredGate, useToast } from '../../components';
+import { AuthRequiredGate, ProtectedRoute, useToast } from '../../components';
 import { useAuth } from '../../contexts';
 import type {
   DisputeCategory,
@@ -370,14 +370,50 @@ function DisputeMediationRoute() {
   );
 }
 
-/** Dispute Resolution routes (Epic 77). */
+/**
+ * Dispute Resolution routes (Epic 77).
+ *
+ * Auth-only (not role-gated): residents file and participate in disputes, so
+ * every route is wrapped in `<ProtectedRoute>` — matching the guarded peer
+ * groups and the per-user `/settings/privacy` precedent (manager-only actions
+ * inside the pages remain gated via `isManagerRole`). An anonymous visitor is
+ * redirected to /login instead of rendering the dispute surfaces.
+ */
 export function disputeRoutes() {
   return (
     <>
-      <Route path="/disputes" element={<DisputesPageRoute />} />
-      <Route path="/disputes/new" element={<FileDisputePageRoute />} />
-      <Route path="/disputes/:disputeId" element={<DisputeDetailRoute />} />
-      <Route path="/disputes/:disputeId/mediation" element={<DisputeMediationRoute />} />
+      <Route
+        path="/disputes"
+        element={
+          <ProtectedRoute>
+            <DisputesPageRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/disputes/new"
+        element={
+          <ProtectedRoute>
+            <FileDisputePageRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/disputes/:disputeId"
+        element={
+          <ProtectedRoute>
+            <DisputeDetailRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/disputes/:disputeId/mediation"
+        element={
+          <ProtectedRoute>
+            <DisputeMediationRoute />
+          </ProtectedRoute>
+        }
+      />
     </>
   );
 }
