@@ -341,7 +341,8 @@ export const queryKeys = {
  * domain: `community`, `disputes`, `iot`, `outages`, `leases`, `violations`,
  * `voting`, `registries`, `compliance`, `esignature`, `my-units`,
  * `portfolio-performance`, `templates`, `integrations`, `syndication`,
- * `oauth-grants`, `mfa`, `layout`),
+ * `oauth-grants`, `mfa`, `layout`, `notification-inbox`, `org-members`,
+ * `unit-residents`),
  * and the ad-hoc roots used
  * directly in feature hooks (`developer`, `ocr`, `actionQueue`,
  * `executionLogs`, `executionStats`, `ai-chat`, `predictive-maintenance`,
@@ -426,6 +427,24 @@ export const AUTHED_QUERY_KEY_ROOTS = [
   // per-user preference caches; without this root they leaked into the next
   // session (PR #2650 fix was incomplete — this root was missed).
   'notification-triggers',
+  // Per-user in-app notification inbox (@ppt/api-client granular-notifications —
+  // `inboxKeys.all === ['notification-inbox']`), consumed via
+  // `useNotificationInbox` (NotificationInboxPage) and
+  // `useUnreadNotificationCount` (NotificationBell). Distinct from
+  // `notification-triggers`. Consumed only via generated hooks (the factory is
+  // never imported by name), so it escaped the allowlist-enforcement test and
+  // the previous user's inbox + unread badge leaked across sessions on a shared
+  // workstation.
+  'notification-inbox',
+  // Organization members + unit residents (@ppt/api-client members —
+  // `membersKeys`), consumed via `useOrgMembers`/`useOrgRoles`
+  // (OrganizationMembersPage) and `useUnitResidents` (UnitResidentsDialog). The
+  // factory keys the member/role lists under `org-members` but the resident
+  // lists under a SEPARATE `unit-residents` root — BOTH are tenant-scoped and
+  // must be purged. Consumed only via generated hooks, so these roots leaked
+  // into the next session until added here.
+  'org-members',
+  'unit-residents',
 ] as const;
 
 // ============================================================================
