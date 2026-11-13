@@ -1015,7 +1015,11 @@
     },
     "confirmDelete": "Törli ezt a hibát? Ez a művelet nem vonható vissza.",
     "deleted": "Hiba törölve",
-    "deleteFailed": "Nem sikerült törölni a hibát"
+    "deleteFailed": "Nem sikerült törölni a hibát",
+    "photoUploadFailed": "A fénykép feltöltése sikertelen",
+    "photosNotAttached": "{{failed}} / {{total}} fénykép nem volt csatolható. A hiba részleteinél hozzáadhatja őket.",
+    "withdrawFailed": "A jelentést nem sikerült visszavonni",
+    "withdrawn": "Jelentés visszavonva"
   },
   "buildings": {
     "title": "Épületek",
@@ -3013,7 +3017,16 @@
       "fetchFailedTitle": "Nem sikerült betölteni a szolgáltatáskieséseket",
       "fetchFailedDescription": "Hiba történt a szolgáltatáskiesések betöltése közben. Kérjük, próbálja újra.",
       "retry": "Újrapróbálkozás"
-    }
+    },
+    "cancelled": "Szolgáltatáskiesés lemondva",
+    "createdSuccessfully": "Szolgáltatáskiesés létrehozva",
+    "failedToCreate": "Nem sikerült létrehozni a szolgáltatáskiesést",
+    "failedToUpdate": "Nem sikerült frissíteni a szolgáltatáskiesést",
+    "outageCreatedMsg": "A szolgáltatáskiesésről szóló értesítés létrejött, és az érintett lakókat értesítjük.",
+    "outageUpdatedMsg": "A szolgáltatáskiesésről szóló értesítés frissült.",
+    "resolved": "Szolgáltatáskiesés megoldva",
+    "started": "Szolgáltatáskiesés elindítva",
+    "updatedSuccessfully": "Szolgáltatáskiesés frissítve"
   },
   "criticalNotifications": {
     "title": "Kritikus értesítések",
@@ -4168,7 +4181,8 @@
       "spike_negative": "Negatív kiugrás",
       "sustained_decline": "Tartós csökkenés",
       "anomaly": "Anomália"
-    }
+    },
+    "acknowledgeFailed": "Nem sikerült nyugtázni a riasztást"
   },
   "predictive": {
     "pageTitle": "Prediktív karbantartás",
@@ -4191,14 +4205,19 @@
       "needs_maintenance": "Karbantartás szükséges",
       "under_repair": "Javítás alatt",
       "decommissioned": "Kivonva"
-    }
+    },
+    "acknowledgeFailed": "Nem sikerült nyugtázni az előrejelzést"
   },
   "messaging": {
     "errors": {
       "downloadFailed": "A melléklet letöltése nem sikerült"
     },
     "messageSent": "Üzenet elküldve",
-    "sendFailed": "Az üzenet elküldése nem sikerült"
+    "sendFailed": "Az üzenet elküldése nem sikerült",
+    "archiveFailed": "A beszélgetések archiválása nem sikerült",
+    "archiveSuccess": "Beszélgetések archiválva",
+    "deleteFailed": "A beszélgetések törlése nem sikerült",
+    "deleteSuccess": "Beszélgetések törölve"
   },
   "notificationTriggers": {
     "title": "Értesítési triggerek",

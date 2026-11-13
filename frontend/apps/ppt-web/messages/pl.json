@@ -1017,7 +1017,11 @@
     },
     "confirmDelete": "Usunąć tę usterkę? Tej operacji nie można cofnąć.",
     "deleted": "Usterka została usunięta",
-    "deleteFailed": "Nie udało się usunąć usterki"
+    "deleteFailed": "Nie udało się usunąć usterki",
+    "photoUploadFailed": "Nie udało się przesłać zdjęcia",
+    "photosNotAttached": "Nie udało się dołączyć {{failed}} z {{total}} zdjęć. Możesz je dodać w szczegółach usterki.",
+    "withdrawFailed": "Nie udało się wycofać zgłoszenia",
+    "withdrawn": "Zgłoszenie wycofane"
   },
   "buildings": {
     "title": "Budynki",
@@ -3083,7 +3087,16 @@
       "fetchFailedTitle": "Nie udało się załadować przerw",
       "fetchFailedDescription": "Podczas ładowania przerw wystąpił błąd. Spróbuj ponownie.",
       "retry": "Spróbuj ponownie"
-    }
+    },
+    "cancelled": "Przerwa anulowana",
+    "createdSuccessfully": "Przerwa utworzona",
+    "failedToCreate": "Nie udało się utworzyć przerwy",
+    "failedToUpdate": "Nie udało się zaktualizować przerwy",
+    "outageCreatedMsg": "Powiadomienie o przerwie zostało utworzone, a dotknięci mieszkańcy zostaną powiadomieni.",
+    "outageUpdatedMsg": "Powiadomienie o przerwie zostało zaktualizowane.",
+    "resolved": "Przerwa zakończona",
+    "started": "Przerwa rozpoczęta",
+    "updatedSuccessfully": "Przerwa zaktualizowana"
   },
   "criticalNotifications": {
     "title": "Krytyczne powiadomienia",
@@ -4250,7 +4263,8 @@
       "spike_negative": "Negatywny skok",
       "sustained_decline": "Utrzymujący się spadek",
       "anomaly": "Anomalia"
-    }
+    },
+    "acknowledgeFailed": "Nie udało się potwierdzić alertu"
   },
   "predictive": {
     "pageTitle": "Konserwacja predykcyjna",
@@ -4273,14 +4287,19 @@
       "needs_maintenance": "Wymaga konserwacji",
       "under_repair": "W naprawie",
       "decommissioned": "Wycofane"
-    }
+    },
+    "acknowledgeFailed": "Nie udało się potwierdzić prognozy"
   },
   "messaging": {
     "errors": {
       "downloadFailed": "Nie udało się pobrać załącznika"
     },
     "messageSent": "Wiadomość wysłana",
-    "sendFailed": "Nie udało się wysłać wiadomości"
+    "sendFailed": "Nie udało się wysłać wiadomości",
+    "archiveFailed": "Nie udało się zarchiwizować rozmów",
+    "archiveSuccess": "Rozmowy zarchiwizowane",
+    "deleteFailed": "Nie udało się usunąć rozmów",
+    "deleteSuccess": "Rozmowy usunięte"
   },
   "notificationTriggers": {
     "title": "Wyzwalacze powiadomień",

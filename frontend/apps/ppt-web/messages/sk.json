@@ -4764,7 +4764,8 @@
       "spike_negative": "Negatívny výkyv",
       "sustained_decline": "Pretrvávajúci pokles",
       "anomaly": "Anomália"
-    }
+    },
+    "acknowledgeFailed": "Upozornenie sa nepodarilo potvrdiť"
   },
   "predictive": {
     "pageTitle": "Prediktívna údržba",
@@ -4787,7 +4788,8 @@
       "needs_maintenance": "Vyžaduje údržbu",
       "under_repair": "V oprave",
       "decommissioned": "Vyradené"
-    }
+    },
+    "acknowledgeFailed": "Predikciu sa nepodarilo potvrdiť"
   },
   "messaging": {
     "errors": {
