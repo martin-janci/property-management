@@ -3374,6 +3374,9 @@
       "createFailed": "Nem sikerült létrehozni az ütemezést.",
       "updated": "Ütemezés sikeresen frissítve.",
       "updateFailed": "Nem sikerült frissíteni az ütemezést.",
+      "paused": "Ütemezés szüneteltetve.",
+      "resumed": "Ütemezés folytatva.",
+      "toggleFailed": "Nem sikerült módosítani az ütemezés állapotát.",
       "createErrors": {
         "emptyName": "Az ütemezés neve nem lehet üres.",
         "invalidFrequency": "A kiválasztott gyakoriság nem támogatott.",
