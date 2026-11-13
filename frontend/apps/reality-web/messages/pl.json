@@ -1521,6 +1521,7 @@
     "errorLoadListing": "Nie udało się wczytać ogłoszenia.",
     "errorSaveListing": "Nie udało się zapisać ogłoszenia.",
     "errorCreateListing": "Nie udało się utworzyć ogłoszenia. Spróbuj ponownie.",
-    "errorMissingListingId": "Brak identyfikatora ogłoszenia."
+    "errorMissingListingId": "Brak identyfikatora ogłoszenia.",
+    "errorLoadAnalytics": "Nie udało się załadować analityki."
   }
 }

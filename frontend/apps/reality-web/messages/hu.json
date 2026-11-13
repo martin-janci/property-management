@@ -1521,6 +1521,7 @@
     "errorLoadListing": "A hirdetés betöltése nem sikerült.",
     "errorSaveListing": "A hirdetés mentése nem sikerült.",
     "errorCreateListing": "A hirdetés létrehozása nem sikerült. Kérjük, próbálja újra.",
-    "errorMissingListingId": "Hiányzik a hirdetés azonosítója."
+    "errorMissingListingId": "Hiányzik a hirdetés azonosítója.",
+    "errorLoadAnalytics": "Az elemzések betöltése sikertelen."
   }
 }

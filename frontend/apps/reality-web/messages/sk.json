@@ -1528,6 +1528,7 @@
     "errorLoadListing": "Inzerát sa nepodarilo načítať.",
     "errorSaveListing": "Inzerát sa nepodarilo uložiť.",
     "errorCreateListing": "Inzerát sa nepodarilo vytvoriť. Skúste to znova.",
-    "errorMissingListingId": "Chýba ID inzerátu."
+    "errorMissingListingId": "Chýba ID inzerátu.",
+    "errorLoadAnalytics": "Analytiku sa nepodarilo načítať."
   }
 }

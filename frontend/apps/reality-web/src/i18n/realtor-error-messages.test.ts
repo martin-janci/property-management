@@ -32,6 +32,7 @@ const ERROR_KEYS = [
   'errorSaveListing',
   'errorCreateListing',
   'errorMissingListingId',
+  'errorLoadAnalytics',
 ] as const;
 
 function realtorNode(locale: string): Record<string, unknown> {

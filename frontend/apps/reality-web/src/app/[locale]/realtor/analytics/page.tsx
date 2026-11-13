@@ -10,7 +10,8 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
-import { getMyRealtorAnalytics, type RealtorAnalytics, RealtorApiError } from '@/lib/realtor-api';
+import { getMyRealtorAnalytics, type RealtorAnalytics } from '@/lib/realtor-api';
+import { useRealtorErrorMessage } from '@/lib/realtor-error';
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
@@ -31,20 +32,24 @@ function StatCard({ label, value }: { label: string; value: string }) {
 
 function AnalyticsContent() {
   const t = useTranslations('pages.realtorAnalytics');
+  const describeError = useRealtorErrorMessage();
   const [analytics, setAnalytics] = useState<RealtorAnalytics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string>();
+  // Store the raw thrown value and translate at render time so the message
+  // tracks the active locale — rendering `RealtorApiError.message` directly
+  // leaked developer-facing English error copy to this 6-language portal.
+  const [loadError, setLoadError] = useState<unknown>();
 
   useEffect(() => {
     let cancelled = false;
     setIsLoading(true);
-    setError(undefined);
+    setLoadError(undefined);
     getMyRealtorAnalytics()
       .then((value) => {
         if (!cancelled) setAnalytics(value);
       })
       .catch((err) => {
-        if (!cancelled) setError(err instanceof RealtorApiError ? err.message : t('error'));
+        if (!cancelled) setLoadError(err);
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);
@@ -52,7 +57,7 @@ function AnalyticsContent() {
     return () => {
       cancelled = true;
     };
-  }, [t]);
+  }, []);
 
   return (
     <div className="container">
@@ -64,7 +69,9 @@ function AnalyticsContent() {
       </header>
 
       {isLoading && <p className="state">{t('loading')}</p>}
-      {error && <p className="state error">{error}</p>}
+      {loadError != null && (
+        <p className="state error">{describeError(loadError, 'errorLoadAnalytics')}</p>
+      )}
 
       {analytics && (
         <div className="grid">
