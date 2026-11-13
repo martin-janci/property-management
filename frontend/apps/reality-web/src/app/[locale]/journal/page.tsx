@@ -5,15 +5,22 @@
  * Screen-map: docs/screens/reality/journal.md
  */
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Footer, Header } from '@/components/ui';
+import { journalEmptyCopy } from './_empty';
 import { EDITORS_PICKS, MOCK_ARTICLES, MOST_READ } from './_mock';
 
-// NOTE: MOCK_ARTICLES (titles, excerpts) are placeholder Slovak strings.
-// Once real journal content lands via CMS / reality-server, those records
-// will carry their own locale field. The page chrome (h1, section headings,
-// newsletter form) is fully localised via pages.journal.*.
+// NOTE: MOCK_ARTICLES (titles, excerpts, bylines, dates) are design-review
+// scaffolding — the journal has no CMS / reality-server feed yet (screen-map
+// docs/screens/reality/journal.md → endpoints: []). They are gated to local
+// development (see JournalPage below) so no deployed build ships fabricated
+// editorial content as if it were real; deployed builds render the honest
+// "coming soon" state from `_empty.ts` instead. When the real feed lands these
+// records will carry their own locale field and `articles` becomes a data
+// hook. The page chrome (h1, section headings, newsletter form) is localised
+// via pages.journal.*; the placeholder empty-state copy is co-located in
+// `_empty.ts` so the whole pre-CMS layer is removed together.
 
 // TODO: replace article cards with @ppt/ui-kit/Card once available
 
@@ -102,13 +109,22 @@ function ArticleCard({
 
 export default function JournalPage() {
   const t = useTranslations('pages.journal');
+  const locale = useLocale();
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
 
-  const featured = MOCK_ARTICLES.find((a) => a.featured);
-  const latest = MOCK_ARTICLES.filter((a) => !a.featured).slice(0, 4);
-  const editorsPicks = MOCK_ARTICLES.filter((a) => EDITORS_PICKS.includes(a.id));
-  const mostRead = MOCK_ARTICLES.filter((a) => MOST_READ.includes(a.id));
+  // Gate the placeholder articles to local development (same convention as the
+  // DevPanel / MSW mocks in DevPanelMount.tsx): deployed builds get an empty
+  // feed and show the honest "coming soon" state below instead of fabricated
+  // bylines and dates. Replace with the real data hook when the feed ships.
+  const articles = process.env.NODE_ENV === 'development' ? MOCK_ARTICLES : [];
+  const hasArticles = articles.length > 0;
+  const emptyCopy = journalEmptyCopy(locale);
+
+  const featured = articles.find((a) => a.featured);
+  const latest = articles.filter((a) => !a.featured).slice(0, 4);
+  const editorsPicks = articles.filter((a) => EDITORS_PICKS.includes(a.id));
+  const mostRead = articles.filter((a) => MOST_READ.includes(a.id));
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,6 +171,33 @@ export default function JournalPage() {
         <div className="journal-grid">
           {/* Main column */}
           <div>
+            {/* Honest empty state — shown on deployed builds until a real
+                journal feed replaces the dev-only placeholder articles. */}
+            {!hasArticles && (
+              <section
+                style={{
+                  background: 'var(--ppt-bg-surface)',
+                  border: '1px solid var(--ppt-border-default, #e5e7eb)',
+                  borderRadius: 14,
+                  padding: '48px 32px',
+                  textAlign: 'center',
+                  marginBottom: 48,
+                }}
+              >
+                <h2
+                  style={{
+                    fontSize: '1.375rem',
+                    fontWeight: 700,
+                    color: 'var(--ppt-fg-primary)',
+                    margin: '0 0 8px',
+                  }}
+                >
+                  {emptyCopy.title}
+                </h2>
+                <p style={{ color: 'var(--ppt-fg-secondary)', margin: 0 }}>{emptyCopy.body}</p>
+              </section>
+            )}
+
             {/* Featured */}
             {featured && (
               <section style={{ marginBottom: 48 }}>
@@ -174,30 +217,32 @@ export default function JournalPage() {
               </section>
             )}
 
-            {/* Latest grid */}
-            <section style={{ marginBottom: 48 }}>
-              <h2
-                style={{
-                  fontSize: '1.25rem',
-                  fontWeight: 700,
-                  color: 'var(--ppt-fg-primary)',
-                  marginBottom: 20,
-                }}
-              >
-                {t('latest')}
-              </h2>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-                  gap: 20,
-                }}
-              >
-                {latest.map((article) => (
-                  <ArticleCard key={article.id} article={article} />
-                ))}
-              </div>
-            </section>
+            {/* Latest grid — dev-only until the real feed lands */}
+            {hasArticles && (
+              <section style={{ marginBottom: 48 }}>
+                <h2
+                  style={{
+                    fontSize: '1.25rem',
+                    fontWeight: 700,
+                    color: 'var(--ppt-fg-primary)',
+                    marginBottom: 20,
+                  }}
+                >
+                  {t('latest')}
+                </h2>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+                    gap: 20,
+                  }}
+                >
+                  {latest.map((article) => (
+                    <ArticleCard key={article.id} article={article} />
+                  ))}
+                </div>
+              </section>
+            )}
 
             {/* Newsletter */}
             <section
@@ -256,81 +301,85 @@ export default function JournalPage() {
               )}
             </section>
 
-            {/* Editor's picks */}
-            <section>
-              <h2
-                style={{
-                  fontSize: '1.25rem',
-                  fontWeight: 700,
-                  color: 'var(--ppt-fg-primary)',
-                  marginBottom: 20,
-                }}
-              >
-                {t('editorsPicks')}
-              </h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {editorsPicks.map((article) => (
-                  <ArticleCard key={article.id} article={article} variant="compact" />
-                ))}
-              </div>
-            </section>
+            {/* Editor's picks — dev-only until the real feed lands */}
+            {hasArticles && (
+              <section>
+                <h2
+                  style={{
+                    fontSize: '1.25rem',
+                    fontWeight: 700,
+                    color: 'var(--ppt-fg-primary)',
+                    marginBottom: 20,
+                  }}
+                >
+                  {t('editorsPicks')}
+                </h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  {editorsPicks.map((article) => (
+                    <ArticleCard key={article.id} article={article} variant="compact" />
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
 
-          {/* Sidebar — Most read */}
-          <aside style={{ position: 'sticky', top: 24 }}>
-            <h2
-              style={{
-                fontSize: '1.0625rem',
-                fontWeight: 700,
-                color: 'var(--ppt-fg-primary)',
-                marginBottom: 16,
-              }}
-            >
-              {t('mostRead')}
-            </h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {mostRead.map((article, idx) => (
-                <div
-                  key={article.id}
-                  style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}
-                >
-                  <span
-                    style={{
-                      fontWeight: 800,
-                      fontSize: '1.5rem',
-                      color: 'var(--ppt-border-default, #e5e7eb)',
-                      lineHeight: 1,
-                      flexShrink: 0,
-                      minWidth: 28,
-                    }}
+          {/* Sidebar — Most read (dev-only until the real feed lands) */}
+          {hasArticles && (
+            <aside style={{ position: 'sticky', top: 24 }}>
+              <h2
+                style={{
+                  fontSize: '1.0625rem',
+                  fontWeight: 700,
+                  color: 'var(--ppt-fg-primary)',
+                  marginBottom: 16,
+                }}
+              >
+                {t('mostRead')}
+              </h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {mostRead.map((article, idx) => (
+                  <div
+                    key={article.id}
+                    style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}
                   >
-                    {idx + 1}
-                  </span>
-                  <div>
-                    <div
+                    <span
                       style={{
-                        fontWeight: 600,
-                        fontSize: '0.9rem',
-                        color: 'var(--ppt-fg-primary)',
-                        lineHeight: 1.4,
+                        fontWeight: 800,
+                        fontSize: '1.5rem',
+                        color: 'var(--ppt-border-default, #e5e7eb)',
+                        lineHeight: 1,
+                        flexShrink: 0,
+                        minWidth: 28,
                       }}
                     >
-                      {article.title}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: '0.8rem',
-                        color: 'var(--ppt-fg-muted, #9ca3af)',
-                        marginTop: 4,
-                      }}
-                    >
-                      {t('readingTime', { min: article.readMin })}
+                      {idx + 1}
+                    </span>
+                    <div>
+                      <div
+                        style={{
+                          fontWeight: 600,
+                          fontSize: '0.9rem',
+                          color: 'var(--ppt-fg-primary)',
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        {article.title}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: '0.8rem',
+                          color: 'var(--ppt-fg-muted, #9ca3af)',
+                          marginTop: 4,
+                        }}
+                      >
+                        {t('readingTime', { min: article.readMin })}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </aside>
+                ))}
+              </div>
+            </aside>
+          )}
         </div>
       </main>
 
