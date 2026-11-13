@@ -6,6 +6,6 @@
   "reason": "current target still has claimable work",
   "stats_at_selection": {
     "open": 3,
-    "claimable": 3
+    "claimable": 1
   }
 }

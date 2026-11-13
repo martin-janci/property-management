@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-13T06:29:32Z",
+  "archived_at": "2026-11-13T08:28:32Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -7880,6 +7880,31 @@
         "merged_pr": 2994,
         "merged_at": "2026-09-27T14:30:58Z",
         "at": "2026-09-27T16:25:33Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-disputes-uidispute-nonnull-crash",
+      "action": "ppt web core disputes uidispute nonnull crash",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-12T16:25:31Z (tier1d ppt-web-core score=2 vector=bug) | gc1-reconcile 2026-11-13T08:24:09Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-12T16:25:31Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-04T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-13T08:24:09Z"
       }
     },
     {

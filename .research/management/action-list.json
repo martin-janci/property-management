@@ -290,24 +290,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-core-disputes-uidispute-nonnull-crash",
-      "action": "ppt web core disputes uidispute nonnull crash",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-12T16:25:31Z (tier1d ppt-web-core score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-12T16:25:31Z",
-      "signal_ref": {
-        "segment": "ppt-web-core",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-10-04T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-ppt-web-core-create-lease-empty-pickers",
       "action": "ppt web core create lease empty pickers",
       "owner_role": "pm-tech-lead",

@@ -7773,6 +7773,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "code-review-ppt-web-core-create-lease-empty-pickers",
+      "branch": "auto-impl/code-review-ppt-web-core-create-lease-em-c3f3d968",
+      "status": "failed",
+      "claimed_at": "2026-11-13T08:28:19Z",
+      "last_updated": "2026-11-13T08:36:27Z",
+      "status_changed_at": "2026-11-13T08:36:27Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=blocked specialist=react-web scope_drift=false code_reuse_warn=none note=stale-finding-already-resolved-by-PR#3453(586e5e1,2026-11-12); create-lease unit/tenant/template pickers in routes/groups/leases.tsx already wired to live @ppt/api-client+TanStack Query; no empty picker remains; no honest change; no PR opened",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": false,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-core-dashboard-routes-unguarded",
       "branch": "auto-impl/code-review-ppt-web-core-dashboard-route-a97c3aff",
       "status": "merged",
@@ -26481,5 +26503,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-13T06:42:00Z"
+  "archived_at": "2026-11-13T08:42:06Z"
 }
