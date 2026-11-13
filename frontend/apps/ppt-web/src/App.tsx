@@ -11,6 +11,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import './styles/accessibility.css';
 import './features/settings/styles/accessibility.css';
 import { AuthProvider, OrganizationProvider, useAuth, WebSocketProvider } from './contexts';
+import { verifyMfaCode } from './features/auth/mfaVerify';
 import {
   CommandPaletteDialog,
   CommandPaletteProvider,
@@ -27,18 +28,17 @@ import { AppRoutes } from './routes/AppRoutes';
  *
  *   * `setMfaChallengeHandler` — the api-client global registration
  *     point. Passed in so admin-ui has no @ppt/api-client dependency.
- *   * `verify(code)` — POST {code} to /api/v1/auth/mfa/verify with the
- *     current bearer token. Built from `AuthContext.getAccessToken`.
+ *   * `verify(code)` — delegated to `verifyMfaCode`, which POSTs {code} to
+ *     the MFA verify endpoint via the shared authenticated client so the
+ *     request hits the configured API base (not the web origin) and carries
+ *     the bearer token from the registered auth providers.
  *
  * The verify endpoint is `/api/v1/auth/mfa/verify` (api-server's
  * routes/mfa.rs). On 200 the user is freshly MFA-verified for the
  * RECENT_MFA_WINDOW (15 min); the api-client retries the original
  * mutation transparently.
- *
- * Must be rendered inside AuthProvider so getAccessToken is available.
  */
 function MfaWrapper({ children }: { children: ReactNode }) {
-  const { getAccessToken } = useAuth();
   const { t } = useTranslation();
   // Resolve labels once per render so the modal sees stable strings even
   // when the active locale changes (the next render swaps them out).
@@ -58,21 +58,7 @@ function MfaWrapper({ children }: { children: ReactNode }) {
     <MfaChallengeProvider
       registerHandler={setMfaChallengeHandler}
       labels={mfaLabels}
-      verify={async (code: string) => {
-        const token = getAccessToken();
-        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-        if (token) headers.Authorization = `Bearer ${token}`;
-        try {
-          const response = await fetch('/api/v1/auth/mfa/verify', {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({ code }),
-          });
-          return response.ok;
-        } catch {
-          return false;
-        }
-      }}
+      verify={verifyMfaCode}
     >
       {children}
     </MfaChallengeProvider>
