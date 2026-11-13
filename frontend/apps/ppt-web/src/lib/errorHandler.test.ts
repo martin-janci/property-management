@@ -105,7 +105,12 @@ describe('parseApiError — axios errors with structured body', () => {
     const result = parseApiError(error);
     expect(result.code).toBe('TEAPOT');
     expect(result.title).toBe('Error');
-    expect(result.message).toBe('I am a teapot');
+    // Regression: an unknown backend code must NOT echo the raw server `message`
+    // ("I am a teapot") as the user-facing copy — it falls back to the localized
+    // default. The raw text is retained only as a dev-only `detail`.
+    expect(result.message).toBe('An unexpected error occurred.');
+    expect(result.message).not.toBe('I am a teapot');
+    expect(result.detail).toBe('I am a teapot');
   });
 
   it('extracts validation errors into a field-keyed Map', () => {
@@ -245,10 +250,15 @@ describe('parseApiError — plain objects, Error, and fallback', () => {
     expect(result.requestId).toBe('req-9');
   });
 
-  it('uses the Error message for a raw Error instance', () => {
+  it('keeps a raw Error message out of the user-facing copy', () => {
+    // Regression: hand-written api clients throw `Error`s whose message is raw
+    // server text. That must not render as the toast message — the localized
+    // default copy wins, and the raw text is kept only as a dev-only `detail`.
     const result = parseApiError(new Error('something specific broke'));
     expect(result.code).toBe('UNKNOWN_ERROR');
-    expect(result.message).toBe('something specific broke');
+    expect(result.message).toBe('An unexpected error occurred.');
+    expect(result.message).not.toBe('something specific broke');
+    expect(result.detail).toBe('something specific broke');
     expect(result.isNetworkError).toBe(false);
   });
 
