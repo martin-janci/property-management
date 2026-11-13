@@ -56,6 +56,48 @@ describe('parseApiError — network errors', () => {
   });
 });
 
+describe('parseApiError — client/request timeouts', () => {
+  // Regression: a client-side timeout aborts the axios request with
+  // `code: 'ECONNABORTED'` (request timeout) or `'ETIMEDOUT'` (connection
+  // timeout) and leaves `response` undefined. Without a dedicated branch these
+  // passed the `isAxiosError` guard, hit `parseHttpStatusError(undefined)`, and
+  // fell through to the unclassified `UNKNOWN_ERROR`. They must instead classify
+  // as the existing `TIMEOUT` error class (the same code the 504 gateway-timeout
+  // path uses) so the user sees the dedicated timeout copy.
+  it('classifies an axios ECONNABORTED request timeout as TIMEOUT', () => {
+    const result = parseApiError({
+      code: 'ECONNABORTED',
+      message: 'timeout of 5000ms exceeded',
+    });
+
+    expect(result.code).toBe('TIMEOUT');
+    expect(result.title).toBe('Request Timeout');
+    expect(result.message).toBe('The request took too long. Please try again.');
+    expect(result.isNetworkError).toBe(false);
+    expect(result.isRateLimitError).toBe(false);
+  });
+
+  it('classifies an axios ETIMEDOUT connection timeout as TIMEOUT', () => {
+    const result = parseApiError({ code: 'ETIMEDOUT', message: 'connect ETIMEDOUT' });
+
+    expect(result.code).toBe('TIMEOUT');
+    expect(result.isNetworkError).toBe(false);
+  });
+
+  it('classifies a timeout-worded error without a code as TIMEOUT', () => {
+    const result = parseApiError({ message: 'Request timed out after 30s' });
+
+    expect(result.code).toBe('TIMEOUT');
+  });
+
+  it('does not misclassify a timeout as a network error', () => {
+    const result = parseApiError({ code: 'ECONNABORTED', message: 'timeout exceeded' });
+
+    expect(result.code).not.toBe('NETWORK_ERROR');
+    expect(result.isNetworkError).toBe(false);
+  });
+});
+
 describe('parseApiError — axios errors with structured body', () => {
   it('maps a known backend error code to its friendly title', () => {
     const error = {
