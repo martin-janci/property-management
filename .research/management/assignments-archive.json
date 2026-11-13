@@ -8379,6 +8379,28 @@
       "merge_attempted_at": "2026-08-12T16:41:50Z"
     },
     {
+      "task_id": "code-review-ppt-web-core-privacy-route-unprotected",
+      "branch": "auto-impl/code-review-ppt-web-core-privacy-route-u-7121e8be",
+      "status": "merged",
+      "claimed_at": "2026-11-13T06:29:18Z",
+      "last_updated": "2026-11-13T10:40:47Z",
+      "status_changed_at": "2026-11-13T10:40:47Z",
+      "pr_number": 3482,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3482",
+      "merged_at": "2026-11-13T10:35:55Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3482 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=wrapped /settings/privacy in existing ProtectedRoute (auth-only, matching peers) in ppt-web core.tsx; IG3 test:+fix: split proves fails-before-fix; VERIFY OK (biome+typecheck+12840 tests); drift=pm-backend label vs frontend stack, 2 ppt-web files",
+      "reviewer_summary": "verdict=approve head_oid=e89c699ef90cd8a38401ad5c1b3b3d743c78c47c note=privacy-route now ProtectedRoute auth-only matching peers; scope_drift label-only; IG3 fail-before-fix sound; CI green; posted-as-comment (self-approval blocked)",
+      "last_reviewed_oid": "e89c699ef90cd8a38401ad5c1b3b3d743c78c47c",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-13T08:37:23Z"
+    },
+    {
       "task_id": "code-review-ppt-web-core-raw-fetch-bypasses-jwt-interceptor",
       "branch": "auto-impl/code-review-ppt-web-core-raw-fetch-bypas-d1d1884b",
       "status": "merged",
@@ -8467,6 +8489,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-10-09T06:37:17Z"
+    },
+    {
+      "task_id": "code-review-ppt-web-core-reports-schedule-stub-data",
+      "branch": "auto-impl/code-review-ppt-web-core-reports-schedul-dcebe8a3",
+      "status": "merged",
+      "claimed_at": "2026-11-13T06:29:18Z",
+      "last_updated": "2026-11-13T10:44:32Z",
+      "status_changed_at": "2026-11-13T10:44:32Z",
+      "pr_number": 3483,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3483",
+      "merged_at": "2026-11-13T10:43:29Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3483 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=wired ppt-web schedule-list toggle to real usePause/useResumeSchedule endpoints (+localized toasts 6 locales, test); delete/run-now left inert (no backend DELETE/schedules/{id} or POST run — not fabricated, recommend backend follow-up); verify green (12841 tests, VERIFY OK 8706403); drift=pm-tech-lead label vs ppt-web stack, 8 files in frontend/apps/ppt-web",
+      "reviewer_summary": "verdict=approve head_oid=c63f21a0d68cdbd5be1803e43621f4d07424d626 note=toggle correctly wired to real pause/resume hooks; delete/run-now honestly inert (no backend route); scope_drift justified; CI green; posted-as-comment",
+      "last_reviewed_oid": "c63f21a0d68cdbd5be1803e43621f4d07424d626",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-13T10:40:47Z"
     },
     {
       "task_id": "code-review-ppt-web-core-route-error-boundary-gap",
@@ -23570,6 +23614,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "pm-scrum-master-triage-security-issue-3427-jwt-iss-aud-2026-11-13",
+      "branch": "auto-impl/pm-scrum-master-triage-security-issue-34-c1a6f262",
+      "status": "merged",
+      "claimed_at": "2026-11-13T06:29:18Z",
+      "last_updated": "2026-11-13T10:43:19Z",
+      "status_changed_at": "2026-11-13T10:43:19Z",
+      "pr_number": 3480,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3480",
+      "merged_at": "2026-11-13T10:43:05Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3480 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=triage: blocked=awaits-human-design-decision (not a dep); promoted plan security-jwt-iss-aud-cross-service.md; deferred autonomous JWT fix (binding in api-core alone would reject all tokens); draft PR #3480; commented on #3427",
+      "reviewer_summary": "verdict=approve head_oid=bdd21afa7e7a5993cabf8a5717a6668fddce30db note=triage-claims-verified-on-dev; promote+defer sound; self-approval-blocked posted-as-comment",
+      "last_reviewed_oid": "bdd21afa7e7a5993cabf8a5717a6668fddce30db",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-13T10:40:47Z"
+    },
+    {
       "task_id": "pm-scrum-master-upgrade-refresh-token-confidence-2026-11-09",
       "branch": "auto-impl/pm-scrum-master-upgrade-refresh-token-co-b111e059",
       "status": "merged",
@@ -26503,5 +26569,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-13T08:42:06Z"
+  "archived_at": "2026-11-13T10:44:32Z"
 }

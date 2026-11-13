@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-13T08:28:32Z",
+  "archived_at": "2026-11-13T10:41:03Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -7856,6 +7856,31 @@
         "merged_pr": 3034,
         "merged_at": "2026-10-08T00:33:31Z",
         "at": "2026-10-08T02:39:36Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-create-lease-empty-pickers",
+      "action": "ppt web core create lease empty pickers",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-12T16:25:31Z (tier1d ppt-web-core score=1 vector=completeness) | gc1-reconcile 2026-11-13T10:35:12Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-12T16:25:31Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "completeness",
+        "generated": "2026-10-04T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-13T10:35:12Z"
       }
     },
     {
