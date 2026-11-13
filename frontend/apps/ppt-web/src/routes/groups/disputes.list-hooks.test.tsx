@@ -31,6 +31,9 @@ vi.mock('../../contexts', () => ({
 vi.mock('../../components', () => ({
   useToast: () => ({ showToast: vi.fn() }),
   AuthRequiredGate: () => <div>auth required</div>,
+  // Route-level auth guard is transparent here — the guard itself is covered by
+  // mgmt-routes-auth-guard.route.test.tsx; this suite exercises list behavior.
+  ProtectedRoute: ({ children }: { children?: import('react').ReactNode }) => <>{children}</>,
 }));
 
 function tree() {

@@ -8,7 +8,7 @@ import { useBuildings } from '@ppt/api-client';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams } from 'react-router-dom';
-import { useToast } from '../../components';
+import { ProtectedRoute, useToast } from '../../components';
 import type { PrivacySettings } from '../../features/neighbors';
 import { useNeighbors, usePrivacySettings } from '../../features/neighbors';
 import { NeighborDetailPage, NeighborsPage, NeighborsPrivacySettingsPage } from '../lazyRoutes';
@@ -133,13 +133,42 @@ function NeighborsPrivacySettingsRoute() {
   );
 }
 
-/** Neighbors routes (Epic 6, Story 6.6). */
+/**
+ * Neighbors routes (Epic 6, Story 6.6).
+ *
+ * Auth-only (not role-gated): the neighbor directory and per-user privacy
+ * settings are resident-accessible, so every route is wrapped in
+ * `<ProtectedRoute>` — matching the guarded peer groups and the per-user
+ * `/settings/privacy` precedent. An anonymous visitor is redirected to /login
+ * instead of rendering the directory or privacy form.
+ */
 export function neighborRoutes() {
   return (
     <>
-      <Route path="/neighbors" element={<NeighborsPageRoute />} />
-      <Route path="/neighbors/:neighborId" element={<NeighborDetailRoute />} />
-      <Route path="/neighbors/privacy" element={<NeighborsPrivacySettingsRoute />} />
+      <Route
+        path="/neighbors"
+        element={
+          <ProtectedRoute>
+            <NeighborsPageRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/neighbors/:neighborId"
+        element={
+          <ProtectedRoute>
+            <NeighborDetailRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/neighbors/privacy"
+        element={
+          <ProtectedRoute>
+            <NeighborsPrivacySettingsRoute />
+          </ProtectedRoute>
+        }
+      />
     </>
   );
 }

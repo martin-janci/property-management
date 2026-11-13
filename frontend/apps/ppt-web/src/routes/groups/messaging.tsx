@@ -9,7 +9,7 @@ import { useBuildings } from '@ppt/api-client';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { useToast } from '../../components';
+import { ProtectedRoute, useToast } from '../../components';
 import { useAuth } from '../../contexts';
 import type { CreateThreadRequest, SendMessageRequest } from '../../features/messaging';
 import {
@@ -211,13 +211,41 @@ function ThreadDetailPageRoute() {
   );
 }
 
-/** Messaging routes (UC-07). */
+/**
+ * Messaging routes (UC-07).
+ *
+ * Auth-only (not role-gated): messaging is a per-user, resident-accessible
+ * feature, so every route is wrapped in `<ProtectedRoute>` — matching the
+ * guarded peer groups and the per-user `/settings/privacy` precedent. An
+ * anonymous visitor is redirected to /login instead of rendering the inbox.
+ */
 export function messagingRoutes() {
   return (
     <>
-      <Route path="/messages" element={<MessagesPageRoute />} />
-      <Route path="/messages/new" element={<NewMessagePageRoute />} />
-      <Route path="/messages/:threadId" element={<ThreadDetailPageRoute />} />
+      <Route
+        path="/messages"
+        element={
+          <ProtectedRoute>
+            <MessagesPageRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/messages/new"
+        element={
+          <ProtectedRoute>
+            <NewMessagePageRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/messages/:threadId"
+        element={
+          <ProtectedRoute>
+            <ThreadDetailPageRoute />
+          </ProtectedRoute>
+        }
+      />
     </>
   );
 }
