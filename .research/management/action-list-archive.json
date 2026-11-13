@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-13T00:29:46Z",
+  "archived_at": "2026-11-13T02:29:23Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -7843,6 +7843,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-doc-download-hardcoded-i18n",
+      "action": "ppt web core doc download hardcoded i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-12T08:26:20Z (tier1d ppt-web-core score=1 vector=bug) | gc1-reconcile 2026-11-13T02:23:05Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-12T08:26:20Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-08T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-13T02:23:05Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-documents-default-org-sentinel",
       "action": "ppt-web documents routes fabricate a 'default-org' sentinel instead of gating when the user has no organizationId",
       "owner_role": "pm-backend",
@@ -8235,6 +8260,31 @@
         "commit": "f2ee8ee41887c30b10f581b9271617a3aaf47d26",
         "subject": "code-review-ppt-web-core-mutation-no-onerror: surface rentals/financial mutation failures via error toast (#2649)",
         "at": "2026-08-04T02:18:22Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-needing-maint-querykey-arg",
+      "action": "ppt web core needing maint querykey arg",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-12T08:26:20Z (tier1d ppt-web-core score=2 vector=bug) | gc1-reconcile 2026-11-13T02:23:05Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-12T08:26:20Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-08T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3470,
+        "merged_at": "2026-11-13T00:39:48Z",
+        "at": "2026-11-13T02:23:05Z"
       }
     },
     {
@@ -9169,6 +9219,31 @@
         "commit": "a1bea8e1142a53488100137580a2673e3bb40d4e",
         "subject": "code-review-ppt-web-ui-connstatus-div-as-button-role: make ConnectionStatus reconnect a real button (#3201)",
         "at": "2026-10-31T18:30:02Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-connstatus-interactive-on-status-role",
+      "action": "ppt web ui connstatus interactive on status role",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-12T08:26:20Z (tier1d ppt-web-ui score=1 vector=bug) | gc1-reconcile 2026-11-13T02:23:05Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-12T08:26:20Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-08T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-13T02:23:05Z"
       }
     },
     {
@@ -10599,6 +10674,31 @@
         "merged_pr": 3461,
         "merged_at": "2026-11-12T18:37:54Z",
         "at": "2026-11-12T18:40:01Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-toast-persistent-overflow-leak",
+      "action": "ppt web ui toast persistent overflow leak",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-12T08:26:20Z (tier1d ppt-web-ui score=2 vector=bug) | gc1-reconcile 2026-11-13T02:23:05Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-12T08:26:20Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-10-08T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3471,
+        "merged_at": "2026-11-13T00:42:29Z",
+        "at": "2026-11-13T02:23:05Z"
       }
     },
     {
@@ -24511,6 +24611,33 @@
         "merged_pr": 3432,
         "merged_at": "2026-11-12T04:27:24Z",
         "at": "2026-11-12T06:25:56Z"
+      }
+    },
+    {
+      "id": "gh-issue-3466",
+      "action": "Follow-up: ppt-web de/pl/hu locale drift — new user-facing keys land only in en/sk/cs (PRs #3440, #3457) (Closes #3466)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-11-12T22:25:06Z (#3466) | gc1-reconcile 2026-11-13T02:23:05Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-12T22:25:06Z",
+      "issue_ref": {
+        "number": 3466,
+        "url": "https://github.com/martin-janci/property-management/issues/3466",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3472,
+        "merged_at": "2026-11-13T00:43:44Z",
+        "at": "2026-11-13T02:23:05Z"
       }
     },
     {
