@@ -6,10 +6,18 @@
  * RECENT_MFA_WINDOW (15 min) and the api-client retries the original mutation
  * transparently.
  *
- * NOTE: this helper is the extracted seam for the former inline
- * `fetch('/api/v1/auth/mfa/verify')` in `App.tsx`'s `MfaWrapper`. It is kept
- * standalone so the base-URL handling can be unit-tested in isolation.
+ * Routes through the shared `authenticatedFetch` from `@ppt/api-client` — the
+ * same authenticated client the generated SDK and the other core requests
+ * (e.g. `gdprClient`, community) use — so the request resolves against the
+ * configured API base (`client.setConfig({ baseUrl })` in `main.tsx`) and not
+ * the web origin, and the bearer token plus `X-Tenant-ID` come from the
+ * registered auth providers. Previously `App.tsx`'s `MfaWrapper` issued a raw
+ * `fetch('/api/v1/auth/mfa/verify')` with a hand-built bearer header, which
+ * resolved against the web origin and therefore hit the wrong host whenever
+ * `VITE_API_URL` points at a different origin than the SPA.
  */
+
+import { authenticatedFetch } from '@ppt/api-client';
 
 /** api-server MFA verify endpoint (routes/mfa.rs). */
 const MFA_VERIFY_PATH = '/api/v1/auth/mfa/verify';
@@ -21,7 +29,7 @@ const MFA_VERIFY_PATH = '/api/v1/auth/mfa/verify';
  */
 export async function verifyMfaCode(code: string): Promise<boolean> {
   try {
-    const response = await fetch(MFA_VERIFY_PATH, {
+    const response = await authenticatedFetch(MFA_VERIFY_PATH, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code }),
