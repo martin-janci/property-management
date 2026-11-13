@@ -4,7 +4,7 @@
  * Implements Section E of the admin design brief:
  *   - Export card  (gate: tenant_export)
  *   - Purge card   (gate: tenant_purge) with live cooldown countdown + inline purge wizard
- *   - Restore card (gate: tenant_restore) with multipart file upload stub
+ *   - Restore card (gate: tenant_restore) with multipart file upload
  *
  * Route: /tenants/lifecycle
  * Page-level gating: any of tenant_export | tenant_purge | tenant_restore.
@@ -624,20 +624,60 @@ export default function TenantLifecyclePage() {
     }
   }, [isExporting, tenant.id, token, showToast]);
 
-  // Restore upload stub
+  // Restore upload — multipart POST to the admin tenant-restore endpoint.
+  // Defense #16: restore always lands as a NEW org id server-side, so the
+  // endpoint carries no tenant :id. The capability extractor enforces
+  // tenant_restore + recent MFA; X-MFA-Recent mirrors the purge call.
   const handleUpload = useCallback(async () => {
     if (!restoreFile || isUploading) return;
     setIsUploading(true);
     try {
+      const formData = new FormData();
+      formData.append('tarball', restoreFile);
+      const resp = await fetch('/api/v1/admin/tenants/restore', {
+        method: 'POST',
+        // Note: do NOT set Content-Type — the browser must add the multipart
+        // boundary itself.
+        headers: {
+          Authorization: `Bearer ${token ?? ''}`,
+          'X-MFA-Recent': '1',
+        },
+        body: formData,
+      });
+
+      if (resp.ok) {
+        const report = (await resp.json().catch(() => null)) as {
+          new_organization_id?: string;
+          rows_restored?: number;
+        } | null;
+        showToast({
+          type: 'success',
+          title: 'Tenant restored',
+          message: report?.new_organization_id
+            ? `Restored into new tenant ${report.new_organization_id} (${report.rows_restored ?? 0} rows).`
+            : `${restoreFile.name} restored into a new tenant.`,
+        });
+        setRestoreFile(null);
+      } else if (resp.status === 401) {
+        showToast({
+          type: 'error',
+          title: 'MFA required',
+          message: 'Re-verify MFA and try again.',
+        });
+      } else {
+        const text = await resp.text().catch(() => resp.statusText);
+        showToast({ type: 'error', title: `Restore failed (${resp.status})`, message: text });
+      }
+    } catch {
       showToast({
-        type: 'info',
-        title: 'Upload not yet implemented',
-        message: `Multipart restore endpoint not yet wired. File selected: ${restoreFile.name}`,
+        type: 'error',
+        title: 'Network error',
+        message: 'Unable to reach the server. Check your connection and try again.',
       });
     } finally {
       setIsUploading(false);
     }
-  }, [restoreFile, isUploading, showToast]);
+  }, [restoreFile, isUploading, token, showToast]);
 
   // Purge button state
   const tenantSoftDeleted = tenant.softDeletedAt !== null;

@@ -134,6 +134,90 @@ describe('TenantLifecyclePage — capability gating', () => {
   });
 });
 
+describe('TenantLifecyclePage — restore upload', () => {
+  beforeEach(() => {
+    vi.spyOn(globalThis, 'fetch');
+    vi.spyOn(Date, 'now').mockReturnValue(new Date('2026-05-17T00:00:00Z').getTime());
+  });
+
+  afterEach(() => {
+    sessionStorage.clear();
+    vi.restoreAllMocks();
+  });
+
+  /** Select a tarball in the restore card's hidden file input. */
+  async function selectRestoreFile(
+    user: ReturnType<typeof userEvent.setup>,
+    container: HTMLElement
+  ) {
+    const file = new File(['tenant-dump'], 'dunajska.tar.gz', { type: 'application/gzip' });
+    const input = container.querySelector<HTMLInputElement>('input[type="file"]');
+    if (!input) throw new Error('restore file input not found');
+    await user.upload(input, file);
+    return file;
+  }
+
+  it('POSTs the selected tarball as multipart to the restore endpoint and shows success', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetch).mockImplementation(async (input, init) => {
+      const url = input.toString();
+      if (url.endsWith('/api/v1/admin/tenants/restore') && init?.method === 'POST') {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            original_organization_id: '00000000-0000-0000-0000-000000000001',
+            new_organization_id: '00000000-0000-0000-0000-0000000000ff',
+            rows_restored: 1234,
+            tables_restored: 42,
+          }),
+        } as Response;
+      }
+      return { ok: false, status: 404 } as Response;
+    });
+
+    const { container } = renderPage({ capabilities: ['tenant_restore'] });
+    await selectRestoreFile(user, container);
+
+    const uploadBtn = await screen.findByRole('button', { name: /^Upload$/i });
+    await user.click(uploadBtn);
+
+    // The restore endpoint was called with a multipart FormData body.
+    await waitFor(() => {
+      const call = vi
+        .mocked(fetch)
+        .mock.calls.find(([u]) => u.toString().endsWith('/api/v1/admin/tenants/restore'));
+      expect(call).toBeDefined();
+      const init = call?.[1];
+      expect(init?.method).toBe('POST');
+      expect(init?.body).toBeInstanceOf(FormData);
+    });
+
+    // Success toast references the newly-minted tenant id.
+    await waitFor(() => expect(screen.getByText(/Tenant restored/i)).toBeDefined());
+    await waitFor(() =>
+      expect(screen.getByText(/00000000-0000-0000-0000-0000000000ff/)).toBeDefined()
+    );
+  });
+
+  it('shows MFA-required toast on 401 from the restore endpoint', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetch).mockImplementation(async (input, init) => {
+      const url = input.toString();
+      if (url.endsWith('/api/v1/admin/tenants/restore') && init?.method === 'POST') {
+        return { ok: false, status: 401 } as Response;
+      }
+      return { ok: false, status: 404 } as Response;
+    });
+
+    const { container } = renderPage({ capabilities: ['tenant_restore'] });
+    await selectRestoreFile(user, container);
+    await user.click(await screen.findByRole('button', { name: /^Upload$/i }));
+
+    await waitFor(() => expect(screen.getByText(/MFA required/i)).toBeDefined());
+  });
+});
+
 describe('PurgeWizard — step 2 (slug confirmation)', () => {
   beforeEach(() => {
     vi.spyOn(globalThis, 'fetch');
