@@ -164,24 +164,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-ui-loginpage-raw-error-message",
-      "action": "ppt web ui loginpage raw error message",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-12T08:26:20Z (tier1d ppt-web-ui score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-12T08:26:20Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-10-08T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-reality-web-account-pages-no-i18n",
       "action": "reality web account pages no i18n",
       "owner_role": "pm-backend",
@@ -251,42 +233,6 @@
         "score": 1,
         "vector": "refactor",
         "generated": "2026-10-08T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-core-logout-cache-root-allowlist-drift",
-      "action": "ppt web core logout cache root allowlist drift",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-12T16:25:31Z (tier1d ppt-web-core score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-12T16:25:31Z",
-      "signal_ref": {
-        "segment": "ppt-web-core",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-10-07T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-core-mfa-verify-relative-fetch-base",
-      "action": "ppt web core mfa verify relative fetch base",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-12T16:25:31Z (tier1d ppt-web-core score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-12T16:25:31Z",
-      "signal_ref": {
-        "segment": "ppt-web-core",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-10-07T00:00:00Z"
       }
     },
     {
