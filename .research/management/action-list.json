@@ -736,6 +736,222 @@
           "bug"
         ]
       }
+    },
+    {
+      "id": "code-review-reality-web-currency-code-rangeerror-crash",
+      "action": "reality web currency code rangeerror crash",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d reality-web score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T22:25:04Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-21T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-listing-sections-currency-ssr-500",
+      "action": "reality web listing sections currency ssr 500",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d reality-web score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T22:25:04Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-21T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-statement-upload-not-atomic",
+      "action": "api core statement upload not atomic",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d api-core score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T22:25:04Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-20T02:28:42Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-statement-account-iban-hardcoded",
+      "action": "api core statement account iban hardcoded",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d api-core score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T22:25:04Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-20T02:28:42Z"
+      }
+    },
+    {
+      "id": "code-review-admin-web-impersonation-stop-swallows-failure",
+      "action": "admin web impersonation stop swallows failure",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d admin-web score=2 vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T22:25:04Z",
+      "signal_ref": {
+        "segment": "admin-web",
+        "score": 2,
+        "vector": "security",
+        "generated": "2026-09-20T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-admin-web-raw-fetch-bypasses-api-client",
+      "action": "admin web raw fetch bypasses api client",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d admin-web score=2 vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T22:25:04Z",
+      "signal_ref": {
+        "segment": "admin-web",
+        "score": 2,
+        "vector": "refactor",
+        "generated": "2026-09-20T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-admin-web-dashboard-hardcoded-i18n",
+      "action": "admin web dashboard hardcoded i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d admin-web score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T22:25:04Z",
+      "signal_ref": {
+        "segment": "admin-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-20T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-raw-backend-message-passthrough",
+      "action": "ppt web core errorhandler raw backend message passthrough",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d ppt-web-core score=2 vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T22:25:04Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "security",
+        "generated": "2026-09-19T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-unvalidated-href-url-scheme",
+      "action": "reality web unvalidated href url scheme",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d reality-web score=2 vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T22:25:04Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "security",
+        "generated": "2026-09-19T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-comparison-share-id-unencoded",
+      "action": "reality web comparison share id unencoded",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d reality-web score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T22:25:04Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-19T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-csv-import-filepick-no-type-guard",
+      "action": "reality web csv import filepick no type guard",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d reality-web score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T22:25:04Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-19T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-logout-purge-disputes-leases-iot",
+      "action": "ppt web core logout purge disputes leases iot",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d ppt-web-core score=3 vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T22:25:04Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 3,
+        "vector": "security",
+        "generated": "2026-09-18T00:00:00Z"
+      }
     }
   ],
   "generated": "2026-11-13T04:10:00Z"
