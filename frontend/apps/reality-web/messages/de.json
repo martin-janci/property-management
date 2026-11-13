@@ -1469,6 +1469,7 @@
     "errorLoadListing": "Inserat konnte nicht geladen werden.",
     "errorSaveListing": "Inserat konnte nicht gespeichert werden.",
     "errorCreateListing": "Inserat konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
-    "errorMissingListingId": "Inserat-ID fehlt."
+    "errorMissingListingId": "Inserat-ID fehlt.",
+    "errorLoadAnalytics": "Analysen konnten nicht geladen werden."
   }
 }

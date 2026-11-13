@@ -26,7 +26,8 @@ export type RealtorErrorFallbackKey =
   | 'errorSaveProfile'
   | 'errorLoadListing'
   | 'errorSaveListing'
-  | 'errorCreateListing';
+  | 'errorCreateListing'
+  | 'errorLoadAnalytics';
 
 /**
  * Returns a translator that maps an unknown thrown value — in practice a
