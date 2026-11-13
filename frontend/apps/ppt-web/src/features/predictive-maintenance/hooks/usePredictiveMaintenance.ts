@@ -15,7 +15,8 @@ export const predictiveKeys = {
   all: ['predictive-maintenance'] as const,
   equipment: (q?: EquipmentQuery) => [...predictiveKeys.all, 'equipment', q] as const,
   predictions: (q?: PredictionsQuery) => [...predictiveKeys.all, 'predictions', q] as const,
-  needingMaintenance: () => [...predictiveKeys.all, 'needing-maintenance'] as const,
+  needingMaintenance: (daysAhead?: number) =>
+    [...predictiveKeys.all, 'needing-maintenance', daysAhead] as const,
 };
 
 export function useEquipmentList(query?: EquipmentQuery) {
@@ -58,7 +59,7 @@ export function useMaintenancePredictions(query?: PredictionsQuery) {
 
 export function useNeedingMaintenance(daysAhead = 30) {
   return useQuery({
-    queryKey: predictiveKeys.needingMaintenance(),
+    queryKey: predictiveKeys.needingMaintenance(daysAhead),
     queryFn: async () => {
       const res = await getApiClient().get<{ equipment: Equipment[] }>(
         `${EQUIPMENT_API}/needing-maintenance?days_ahead=${daysAhead}`
