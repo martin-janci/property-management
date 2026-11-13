@@ -11,6 +11,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getApiBase } from '../config';
 import type {
   AvailableViewingSlotsResponse,
+  ContactMessageResponse,
   CreateInquiryRequest,
   Inquiry,
   InquiryStatus,
@@ -52,15 +53,27 @@ export function useInquiry(id: string) {
 }
 
 // Create Inquiry (Contact Form)
+//
+// The public contact submission is listing-scoped on the server:
+// `POST /api/v1/inquiries/contact/{listing_id}` with a `ContactMessageRequest`
+// body (`name` / `email` / `phone` / `message`). There is no `POST
+// /api/v1/inquiries` route — that path only serves `GET` (list my inquiries) —
+// so the previous POST to it never persisted the inquiry (405/404). Route to
+// the real endpoint so contact-form submissions are actually stored.
 export function useCreateInquiry() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: CreateInquiryRequest): Promise<Inquiry> => {
-      const response = await fetch(`${getApiBase()}/api/v1/inquiries`, {
+    mutationFn: async (data: CreateInquiryRequest): Promise<ContactMessageResponse> => {
+      const response = await fetch(`${getApiBase()}/api/v1/inquiries/contact/${data.listingId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          message: data.message,
+        }),
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to create inquiry');

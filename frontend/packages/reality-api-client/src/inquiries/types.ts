@@ -47,6 +47,15 @@ export interface CreateInquiryRequest {
   preferredViewingSlots?: ViewingSlot[];
 }
 
+// Contact Message Response
+// Returned by POST /api/v1/inquiries/contact/{listingId}. The reality-server
+// handler answers 201 with a confirmation message and the new inquiry id in
+// snake_case (no camelCase rename on `ContactMessageResponse`).
+export interface ContactMessageResponse {
+  message: string;
+  inquiry_id: string;
+}
+
 // Paginated Response
 export interface PaginatedInquiries {
   data: Inquiry[];
