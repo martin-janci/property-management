@@ -699,6 +699,10 @@
     },
     "security": {
       "reportCta": "Zgłoś ogłoszenie",
+      "reportPrompt": {
+        "heading": "Natknąłeś się na podejrzane ogłoszenie?",
+        "body": "Zgłoś je natychmiast. Nasz zespół sprawdzi je w ciągu 24 godzin i usunie ogłoszenie, jeśli podejrzenie się potwierdzi."
+      },
       "subtitle": "How we keep listings, payments and your data safe — and what to watch out for.",
       "title": "Security",
       "h1": "Your security is our priority",

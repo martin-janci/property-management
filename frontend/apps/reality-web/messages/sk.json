@@ -699,6 +699,10 @@
     },
     "security": {
       "reportCta": "Nahlásiť ponuku",
+      "reportPrompt": {
+        "heading": "Narazili ste na podozrivú ponuku?",
+        "body": "Nahláste ju okamžite. Náš tím to preverí do 24 hodín a ak je podozrenie opodstatnené, ponuku odstránime."
+      },
       "subtitle": "Pomáhame vám rozpoznať podvody a obchodovať s nehnuteľnosťami v bezpečnom prostredí.",
       "title": "Bezpečnosť",
       "h1": "Vaša bezpečnosť je naša priorita",

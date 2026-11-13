@@ -699,6 +699,10 @@
     },
     "security": {
       "reportCta": "Report a listing",
+      "reportPrompt": {
+        "heading": "Spotted a suspicious listing?",
+        "body": "Report it right away. Our team reviews every report within 24 hours and removes the listing if the suspicion is confirmed."
+      },
       "subtitle": "We help you spot fraud and trade properties in a safe environment.",
       "title": "Security",
       "h1": "Your security is our priority",
