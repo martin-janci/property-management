@@ -115,7 +115,5 @@ a dependency bump. Keep swagger-ui at 9 until a `utoipa 6` migration is planned.
 ## Suggested follow-up tasks
 
 1. **`jsonwebtoken` 11** — human-review + merge #3444 once backend CI is green (no code change needed).
-2. **`vitest` 5** — new PR: bump `vitest` + `@vitest/coverage-v8` together to `^5.1.0`, raise Node baseline to ≥ 22.12, update CI node-version. Supersedes #3443→#3447 (close #3447).
+2. **`vitest` 5** — new PR: bump `vitest` + `@vitest/coverage-v8` together to `^5.1.0`, raise Node baseline to ≥ 22.12, update CI node-version. Supersedes #3447 (close #3447).
 3. **`utoipa` 6 migration** — dedicated backend task: bump workspace `utoipa` 5→6 and `utoipa-swagger-ui` 9→10 together, regenerate OpenAPI + clients, run `api-validation.yml`. Supersedes #3443.
-</content>
-</invoke>
