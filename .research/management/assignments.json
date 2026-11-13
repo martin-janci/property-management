@@ -75,18 +75,18 @@
     {
       "task_id": "gh-issue-3498",
       "branch": "auto-impl/gh-issue-3498-367e8de4",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-13T20:33:39Z",
-      "last_updated": "2026-11-13T20:33:39Z",
-      "status_changed_at": "2026-11-13T20:33:39Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-13T21:05:14Z",
+      "status_changed_at": "2026-11-13T21:05:14Z",
+      "pr_number": 3501,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3501",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "ppt-rust-backend",
+      "implementer_summary": "pr=3501 status=done specialist=ppt-rust-backend scope_drift=false code_reuse_warn=none note=ammonia 4.2.4->4.2.5 (Cargo.lock only) + deny.toml 4.2.x ban floor <4.2.4->-<4.2.5 citing RUSTSEC-2026-0533; cargo deny advisories+bans ok, fmt/clippy clean; only env-dependent (DB/SSRF-proxy) test failures. Closes #3498. Draft PR vs dev.",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -145,5 +145,5 @@
       "quarantine_reason": null
     }
   ],
-  "generated": "2026-11-13T20:57:38Z"
+  "generated": "2026-11-13T21:05:14Z"
 }
