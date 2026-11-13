@@ -1,0 +1,320 @@
+{
+  "generated_at": "2026-11-13T11:30:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-11-13",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "candidate_vector": null,
+      "confidence": "high",
+      "evidence": "last_run_iso=2026-11-09T22:53:00Z; now=2026-11-13T11:30:00Z; lag ≈ 85 h / 3.5 d — above 36h threshold and >3d stale-routine alert",
+      "files": []
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/de.json",
+      "type": "churn-hotspot",
+      "source": "git-log 14d sweep",
+      "file": "frontend/apps/ppt-web/messages/de.json",
+      "churn_count": 9,
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": "9 commits touched this file since 2026-11-09T22:53:00Z (i18n leaf-parity sweep — de/pl/hu catch-up to sk/cs baseline)",
+      "files": [
+        "frontend/apps/ppt-web/messages/de.json"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
+      "type": "churn-hotspot",
+      "source": "git-log 14d sweep",
+      "file": "frontend/apps/ppt-web/messages/en.json",
+      "churn_count": 9,
+      "score_delta": 0,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": "9 commits touched this file since 2026-11-09T22:53:00Z (i18n leaf-parity sweep; runs_seen=2 in prior history, becomes 3) (cumulative re-emit; delta suppressed)",
+      "files": [
+        "frontend/apps/ppt-web/messages/en.json"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/hu.json",
+      "type": "churn-hotspot",
+      "source": "git-log 14d sweep",
+      "file": "frontend/apps/ppt-web/messages/hu.json",
+      "churn_count": 9,
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": "9 commits touched this file since 2026-11-09T22:53:00Z (i18n leaf-parity sweep)",
+      "files": [
+        "frontend/apps/ppt-web/messages/hu.json"
+      ]
+    },
+    {
+      "id": "repeated-churn-frontend/apps/ppt-web/messages/en.json",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "file": "frontend/apps/ppt-web/messages/en.json",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "medium",
+      "evidence": "hotspot_history.runs_seen >=2 before this run — translation-data churn, not code instability per se (noise candidate)",
+      "files": [
+        "frontend/apps/ppt-web/messages/en.json"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-3449",
+      "type": "dep-update-noise",
+      "source": "PR #3449",
+      "score_delta": 0,
+      "candidate_vector": "dep-update",
+      "confidence": "high",
+      "evidence": "dependabot: expo-status-bar 57.0.1 -> 58.0.4 (frontend)",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-3448",
+      "type": "dep-update-noise",
+      "source": "PR #3448",
+      "score_delta": 0,
+      "candidate_vector": "dep-update",
+      "confidence": "high",
+      "evidence": "dependabot: expo-device 57.0.2 -> 58.0.5 (frontend)",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-3447",
+      "type": "dep-update-noise",
+      "source": "PR #3447",
+      "score_delta": 0,
+      "candidate_vector": "dep-update",
+      "confidence": "high",
+      "evidence": "dependabot: vitest 4.1.11 -> 5.1.0 (MAJOR bump — needs human review)",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-3446",
+      "type": "dep-update-noise",
+      "source": "PR #3446",
+      "score_delta": 0,
+      "candidate_vector": "dep-update",
+      "confidence": "high",
+      "evidence": "dependabot: expo-secure-store 57.0.3 -> 58.0.2 (frontend)",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-3445",
+      "type": "dep-update-noise",
+      "source": "PR #3445",
+      "score_delta": 0,
+      "candidate_vector": "dep-update",
+      "confidence": "high",
+      "evidence": "dependabot: npm-minor-patch group (15 updates, frontend)",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-3444",
+      "type": "dep-update-noise",
+      "source": "PR #3444",
+      "score_delta": 0,
+      "candidate_vector": "dep-update",
+      "confidence": "high",
+      "evidence": "dependabot: jsonwebtoken 10.4.0 -> 11.1.0 (backend MAJOR — needs human review)",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-3443",
+      "type": "dep-update-noise",
+      "source": "PR #3443",
+      "score_delta": 0,
+      "candidate_vector": "dep-update",
+      "confidence": "high",
+      "evidence": "dependabot: utoipa-swagger-ui 9.0.2 -> 10.0.2 (backend MAJOR — needs human review)",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-3442",
+      "type": "dep-update-noise",
+      "source": "PR #3442",
+      "score_delta": 0,
+      "candidate_vector": "dep-update",
+      "confidence": "high",
+      "evidence": "dependabot: cargo-minor-patch group (3 updates, backend)",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-3441",
+      "type": "dep-update-noise",
+      "source": "PR #3441",
+      "score_delta": 0,
+      "candidate_vector": "dep-update",
+      "confidence": "high",
+      "evidence": "dependabot: axum-test 21.0.0 -> 21.1.0 (backend, axum group)",
+      "files": []
+    },
+    {
+      "id": "code-review-reality-web-realtor-reviews-silent-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review reality-web 2026-11-13 (churn-aligned)",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:62 — useQuery for realtor-reviews destructures only `data`, silently renders (0) and empty list on 500; sibling realtor-profile useQuery on line 55 takes isError/error and shows notFound — pattern inconsistent within same component",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f brief + head -1 match",
+      "observed": "brief head '# 2026-11-13'",
+      "expected": "match"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state diff vs HEAD",
+      "observed": "cursors advanced",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative double-count",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score>8; no decay candidates",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "N/A — 0 new plans",
+      "observed": "N/A",
+      "expected": "N/A"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans ≤ 2",
+      "observed": "0",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "staged secret/hostname hits",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief phases==none + cursors advanced",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plan slugs still present",
+      "observed": "0 missing",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive grew",
+      "observed": "24 >= 24",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps",
+      "observed": "empty",
+      "expected": "≤3 caps hold"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "mgmt artifacts valid + cursor within range",
+      "observed": "epics=13 cc=2 within [0,13)",
+      "expected": "valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token value",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "backlog_deltas": [
+    {
+      "type": "new",
+      "id": "churn-hotspot-frontend-apps-ppt-web-messages-de-json",
+      "score": 1,
+      "title": "ppt-web messages/de.json churn-hotspot — i18n leaf-parity sweep (de/pl/hu catch-"
+    },
+    {
+      "type": "new",
+      "id": "churn-hotspot-frontend-apps-ppt-web-messages-en-json",
+      "score": 2,
+      "title": "ppt-web messages/en.json churn-hotspot — base-locale key additions driving i18n "
+    },
+    {
+      "type": "new",
+      "id": "churn-hotspot-frontend-apps-ppt-web-messages-hu-json",
+      "score": 1,
+      "title": "ppt-web messages/hu.json churn-hotspot — i18n leaf-parity sweep (de/pl/hu catch-"
+    },
+    {
+      "type": "new",
+      "id": "code-review-reality-web-realtor-reviews-silent-error",
+      "score": 1,
+      "title": "reality-web realtor/[id] page swallows realtor-reviews useQuery error — renders "
+    }
+  ]
+}

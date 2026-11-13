@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-11-09T06:45:00Z",
+  "generated": "2026-11-13T04:10:00Z",
   "items": [
     {
       "id": "pm-devops-swagger-ui-egress-blocking-security-2026-10-01",
@@ -292,6 +292,26 @@
       "mitigation": "Phase 3 priority: promote non-mobile-native code-review-finding vectors this run; escalate #3357 to operator; monitor dispatcher claim rate over next 48h",
       "owner_role": "pm-scrum-master",
       "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-devops-cloud-routine-scheduler-silent-drift-2026-11-13",
+      "risk": "Cloud research-routine scheduler is drifting silently — last_run_iso=2026-11-09 vs today 2026-11-13 (4-day lag) with no error surfaced. Dispatcher stayed productive, but routine state advances fell behind.",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Add a hard lag-floor check in Phase 1 that raises an alert on >48h lag; audit the cloud cron invocation path for silent failures.",
+      "owner_role": "pm-devops",
+      "trigger": "lag_hours > 48 without corresponding backlog activity",
+      "status": "open"
+    },
+    {
+      "id": "pm-devops-major-dep-bumps-piling-2026-11-13",
+      "risk": "9 Dependabot PRs open simultaneously (incl. major bumps vitest 4→5, jsonwebtoken 10→11, utoipa-swagger-ui 9→10). Delayed review compounds compatibility risk and pulls the auto-approve window further from upstream.",
+      "probability": "medium",
+      "impact": "low",
+      "mitigation": "Human-gate review within 72h for majors; auto-approve minor/patch groups once CI green; set a WIP cap on open Dependabot PRs.",
+      "owner_role": "pm-devops",
+      "trigger": "dependabot_open_prs > 10 for 7+ days",
       "status": "open"
     }
   ]

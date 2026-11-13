@@ -15711,6 +15711,88 @@
         "assignment_status": "failed",
         "pr_number": null
       }
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-messages-de-json",
+      "title": "ppt-web messages/de.json churn-hotspot — i18n leaf-parity sweep (de/pl/hu catch-",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log 14d sweep 2026-11-13"
+      ],
+      "evidence": [
+        "9 commits touched frontend/apps/ppt-web/messages/de.json since 2026-11-09T22:53:00Z — translation-data churn, not code instability"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/messages/de.json"
+      ],
+      "created_at": "2026-11-13",
+      "updated_at": "2026-11-13",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-messages-en-json",
+      "title": "ppt-web messages/en.json churn-hotspot — base-locale key additions driving i18n ",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "git-log 14d sweep 2026-11-13",
+        "hotspot_history runs_seen>=2"
+      ],
+      "evidence": [
+        "9 commits touched frontend/apps/ppt-web/messages/en.json since 2026-11-09T22:53:00Z (base locale)",
+        "repeated-churn: runs_seen >=2 before this run"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/messages/en.json"
+      ],
+      "created_at": "2026-11-13",
+      "updated_at": "2026-11-13",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-messages-hu-json",
+      "title": "ppt-web messages/hu.json churn-hotspot — i18n leaf-parity sweep (de/pl/hu catch-",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log 14d sweep 2026-11-13"
+      ],
+      "evidence": [
+        "9 commits touched frontend/apps/ppt-web/messages/hu.json since 2026-11-09T22:53:00Z — translation-data churn"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/messages/hu.json"
+      ],
+      "created_at": "2026-11-13",
+      "updated_at": "2026-11-13",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-reviews-silent-error",
+      "title": "reality-web realtor/[id] page swallows realtor-reviews useQuery error — renders ",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review reality-web 2026-11-13 (churn-aligned)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:62 — useQuery destructures only `data`; sibling realtor-profile at line 55 takes isError/error and renders notFound"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx"
+      ],
+      "created_at": "2026-11-13",
+      "updated_at": "2026-11-13",
+      "plan": null
     }
   ]
 }

@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-11-09T22:53:00Z",
+  "last_run_iso": "2026-11-13T11:30:00Z",
   "last_run_ms": 0,
-  "last_pr_seen": 3370,
-  "last_issue_seen": 3357,
-  "last_commit_sha": "fa6d747e673fe509e8725ead53bba07d2342ac00",
+  "last_pr_seen": 3477,
+  "last_issue_seen": 3466,
+  "last_commit_sha": "2be7d639ebd26b07ff1cae7574d8b1e7",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -348,9 +348,9 @@
       "recent_churn": 151
     },
     "frontend/apps/ppt-web/messages/en.json": {
-      "runs_seen": 2,
-      "last_seen": "2026-11-09",
-      "recent_churn": 3
+      "runs_seen": 3,
+      "last_seen": "2026-11-13",
+      "recent_churn": 9
     },
     "frontend/packages/sitemap/src/json/sitemap.json": {
       "runs_seen": 1,
@@ -711,6 +711,16 @@
       "runs_seen": 1,
       "last_seen": "2026-11-09",
       "recent_churn": 3
+    },
+    "frontend/apps/ppt-web/messages/de.json": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-13",
+      "recent_churn": 9
+    },
+    "frontend/apps/ppt-web/messages/hu.json": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-13",
+      "recent_churn": 9
     }
   },
   "seen_signals": [
@@ -825,7 +835,9 @@
     "churn-hotspot-frontend/apps/mobile/src/screens/outages/OutagesScreen.transforms.test.ts",
     "churn-hotspot-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
     "churn-hotspot-frontend/apps/ppt-web/e2e/auth-refresh.spec.ts",
+    "churn-hotspot-frontend/apps/ppt-web/messages/de.json",
     "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
+    "churn-hotspot-frontend/apps/ppt-web/messages/hu.json",
     "churn-hotspot-frontend/apps/ppt-web/messages/sk.json",
     "churn-hotspot-frontend/apps/ppt-web/src/App.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/contexts/AuthContext.api-client-unauthorized.test.tsx",
@@ -1126,6 +1138,7 @@
     "code-review-reality-web-realtor-mgmt-i18n",
     "code-review-reality-web-realtor-mgmt-silent-error",
     "code-review-reality-web-realtor-mgmt-untranslated",
+    "code-review-reality-web-realtor-reviews-silent-error",
     "code-review-reality-web-report-page-no-submit",
     "code-review-reality-web-sell-wizard-no-persist",
     "code-review-reality-web-share-comparison-404",
@@ -1189,6 +1202,15 @@
     "dep-update-noise-pr-3090",
     "dep-update-noise-pr-3133",
     "dep-update-noise-pr-3137",
+    "dep-update-noise-pr-3441",
+    "dep-update-noise-pr-3442",
+    "dep-update-noise-pr-3443",
+    "dep-update-noise-pr-3444",
+    "dep-update-noise-pr-3445",
+    "dep-update-noise-pr-3446",
+    "dep-update-noise-pr-3447",
+    "dep-update-noise-pr-3448",
+    "dep-update-noise-pr-3449",
     "dep-update-noise-pr-665",
     "dep-update-noise-pr-666",
     "dep-update-noise-pr-672",
@@ -1250,6 +1272,7 @@
     "lag-warning-2026-11-01",
     "lag-warning-2026-11-04",
     "lag-warning-2026-11-09",
+    "lag-warning-2026-11-13",
     "lag-warning-supplement-2026-08-31",
     "merged-review-followup-issue-2366",
     "merged-review-followup-issue-2575",
@@ -1272,6 +1295,7 @@
     "repeated-churn-backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs",
     "repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs",
     "repeated-churn-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
+    "repeated-churn-frontend/apps/ppt-web/messages/en.json",
     "repeated-churn-frontend/apps/ppt-web/src/App.tsx",
     "repeated-churn-frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
     "resolution-check-2026-08-31-drift-2894",
@@ -1412,13 +1436,13 @@
     "reality-server": "2026-11-04",
     "ppt-web-ui": "2026-11-08",
     "ppt-web-core": "2026-11-04",
-    "reality-web": "2026-11-06",
+    "reality-web": "2026-11-13",
     "mobile-rn": "2026-11-03",
     "mobile-native-kmp": "2026-11-04"
   },
   "stats": {
-    "runs": 117,
-    "vectors_created": 525,
+    "runs": 118,
+    "vectors_created": 529,
     "plans_created": 37,
     "quiet_days": 8,
     "auto_fix_count": 0
@@ -1434,20 +1458,20 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 4,
+    "next_index": 5,
     "role_last_run": {
       "pm-tech-lead": "2026-10-22",
       "pm-backend": "2026-10-26",
       "pm-frontend": "2026-10-28",
       "pm-qa": "2026-11-09",
-      "pm-devops": "2026-08-31",
+      "pm-devops": "2026-11-13",
       "pm-security": "2026-10-01",
       "pm-data": "2026-10-16",
       "pm-integration": "2026-10-19",
-      "pm-scrum-master": "2026-11-09"
+      "pm-scrum-master": "2026-11-13"
     }
   },
   "coverage_cursor": {
-    "next_index": 1
+    "next_index": 2
   }
 }

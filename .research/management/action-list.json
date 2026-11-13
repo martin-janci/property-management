@@ -141,9 +141,11 @@
       "priority": "high",
       "dependency": "none",
       "depends_on": [],
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "pm-analysis 2026-11-09"
+      "source": "pm-analysis 2026-11-09",
+      "resolved_at": "2026-11-13",
+      "resolved_by": "resolved by dispatcher burst: 58 PRs merged in 4-day window"
     },
     {
       "id": "pm-qa-confirm-non-kmp-medium-confidence-2026-11-09",
@@ -197,7 +199,7 @@
       "action": "mobile rn features faults orphaned",
       "owner_role": "pm-tech-lead",
       "priority": "low",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-signals-promote 2026-11-12T08:26:20Z (tier1d mobile-rn score=1 vector=cleanup)",
       "deadline": null,
       "dependency": null,
@@ -208,14 +210,16 @@
         "score": 1,
         "vector": "cleanup",
         "generated": "2026-10-08T00:00:00Z"
-      }
+      },
+      "resolved_at": "2026-11-13",
+      "resolved_by": "PR #3473"
     },
     {
       "id": "code-review-mobile-rn-person-months-no-i18n",
       "action": "mobile rn person months no i18n",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-signals-promote 2026-11-12T08:26:20Z (tier1d mobile-rn score=1 vector=bug)",
       "deadline": null,
       "dependency": null,
@@ -226,7 +230,9 @@
         "score": 1,
         "vector": "bug",
         "generated": "2026-10-08T00:00:00Z"
-      }
+      },
+      "resolved_at": "2026-11-13",
+      "resolved_by": "PR #3474"
     },
     {
       "id": "code-review-ppt-web-ui-loginpage-raw-error-message",
@@ -911,7 +917,40 @@
         "vector": "bug",
         "generated": "2026-09-25T00:00:00Z"
       }
+    },
+    {
+      "id": "pm-devops-dependabot-major-bumps-review-2026-11-13",
+      "action": "Review + land the 3 major-version Dependabot bumps sitting since 2026-11-12: #3447 vitest 4→5, #3444 jsonwebtoken 10→11, #3443 utoipa-swagger-ui 9→10. Minor-group PRs can auto-merge after; majors need a human read.",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-13"
+    },
+    {
+      "id": "pm-scrum-master-triage-security-issue-3427-jwt-iss-aud-2026-11-13",
+      "action": "Triage open security issue #3427 (Harden first-party JWT: emit + validate iss/aud across api-server & reality-server; label=security,follow-up,blocked). Confirm whether the blocked label points to a real dependency or just awaits prioritisation, and either promote to a plan or defer with justification.",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-13"
+    },
+    {
+      "id": "pm-devops-stale-routine-watch-2026-11-13",
+      "action": "The daily research routine ran 4 days late (last_run_iso=2026-11-09 vs today 2026-11-13). Check cloud routine scheduler for drift or a silent failure, and set a floor on lag-days that fails the next run loudly instead of silently catching up.",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-13"
     }
   ],
-  "generated": "2026-11-09T06:45:00Z"
+  "generated": "2026-11-13T04:10:00Z"
 }

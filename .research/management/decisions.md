@@ -129,3 +129,6 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-11-09, pm-scrum-master):** Promote-with-confidence-upgrade for `code-review-ppt-web-core-refresh-token-localstorage` — the only non-mobile-native open row today has confidence=medium which blocks the security fast-track. Either open the diff and upgrade to high, or drop. Owner: pm-security.
 - **NEW (2026-11-09, pm-qa):** Carried from 2026-08-25 — adopt eslint-plugin-react-hooks + i18next/no-literal-string in frontend/apps/mobile, 76 days unresolved. The exact defect class keeps shipping (registry hardcoded strings landed this window, caught only by post-merge review). Owner: pm-frontend + pm-qa.
 - **NEW (2026-11-09, pm-qa):** Add a dispatcher-self-test.sh regression that covers quarantined-row recovery so #3357-class stalls fail CI instead of silently queueing for weeks. Owner: pm-devops + pm-qa.
+- 2026-11-13: Lag-floor policy for the daily research routine — hard-fail at >48h lag? Owner: pm-devops.
+- 2026-11-13: Dependabot major-review SLA — WIP cap + 72h review window for majors. Owner: pm-devops.
+- 2026-11-13: #3357 dispatcher-stall operator action — likely self-resolved by the 58-PR burst. Owner: pm-scrum-master.

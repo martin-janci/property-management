@@ -1,45 +1,38 @@
-# pm-scrum-master — 2026-11-09
+# pm-scrum-master — 2026-11-13
 
 ## Summary
-
-7 PRs merged in the last ~64h (code-review relands + session-revocation fix) — all shipped with regression tests, zero test-shadow debt added. Sprint stays at 4/4 epics done, coverage still 49/49 stories; the real risk this window is dispatcher pipeline health: #3357 flags 3 approved PRs blocked on non-mechanical conflicts + Tier-1d signal exhaustion, and the planner buffer has collapsed to 6/72 claimable.
-
-## Shipped since last run
-
-- #3351 code-review-ppt-web-ui-registry-no-i18n
-- #3350 code-review-reality-web-share-cmp-unchecked-json
-- #3353 gh-issue-3352 (revoke other sessions on password change)
-- #3354 code-review-ppt-web-ui-registry-page-no-auth
-- #3355 code-review-ppt-web-ui-registry-page-i18n-gap
-- #3359 code-review-ppt-web-ui-registry-mutation-reland
-- #3358 screen-map-drift-pr-3293-reality
-
-## Sprint progress
-
-- Sprint: Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth
-- epics_done = 4/4 (sprint level), coverage 49/49 stories
-
-## Blockers
-
-- **#3357 dispatcher stalled pipeline** — operator action required; dispatcher cannot self-heal. 3 approved PRs blocked on non-mechanical conflicts + Tier-1d signals are a dead-end. Owner: pm-devops.
-- **mobile-native-kmp cloud starvation** — issue #2652 is now CLOSED, but the structural gap (5+ backlog items unclaimable in cloud without local KMP toolchain) persists. Owner: pm-devops.
+Dispatcher pipeline went from stalled (10+ zero-merge runs per the 2026-11-09 brief) to a sustained burst: 58 PRs merged in 4 days, closing 3 follow-up issues and 2 action-list rows. Routine scheduler itself drifted 4 days — the new coordination concern.
 
 ## Next actions
-
-1. **[high]** Promote a non-mobile-native code-review vector from the next Phase 1.5 segment (ppt-web-core / reality-server oldest = 2026-11-04) to refill the planner buffer. Dep: pm-tech-lead.
-2. **[high]** Triage #3357 — rebase the 3 blocked PRs OR adjust Tier-1d signal sourcing. Dep: pm-devops.
-3. **[medium]** Open the diff for code-review-ppt-web-core-refresh-token-localstorage and upgrade confidence to high (or drop). Dep: pm-security.
-4. **[medium]** Mark 12 action-list items done this run (8 gh-issue-* follow-ups + 4 code-review items).
+1. **[high]** Triage open security issue #3427 (`Harden first-party JWT: emit + validate iss/aud across api-server & reality-server`, labels: `security`/`follow-up`/`blocked`). Confirm whether `blocked` is a real dependency or just awaiting prioritisation; either promote to a plan or defer with justification. DoD: issue #3427 has a `next-step` comment or a linked plan under `.research/plans/`.
+2. **[medium]** Watch the 3 dispatcher drafts #3475/#3476/#3477 land. DoD: all 3 un-draft and merge, or get promoted to review and reassigned. _(No direct action — this is a monitoring note.)_
+3. **[medium]** Close out #3357 (dispatcher-stall operator ask) as self-resolved by the 58-PR burst. DoD: issue closed with a one-line explanation + link to this run's project-state.
 
 ## Risks
-
-- **Dispatcher pipeline starvation (high/high)** — ~10 consecutive runs at 0-claimed/0-merged until this burst; buffer at 6/72. Mitigation: refill with non-mobile-native vectors this run.
+- **Routine scheduler drift** (medium/medium) — flagged by pm-devops; blocks delivery visibility.
+- **Dispatcher stall recurrence** (medium/high) — root cause of #3357 (dispatcher cannot self-heal from blocked PRs) is unchanged even though the symptom cleared.
 
 ## Open questions
-
-- Should pm-cursor rotation staleness-bias (carried decision 2026-10-28) be enforced this run?
-- Can the quarantined assignment (PR #3294) be force-dropped if Phase 3.5 concludes the vector is unlanded?
+- What's the correct treatment of the `blocked` label on #3427 — was there an upstream dep that still hasn't landed, or is the label stale?
 
 ## Decisions needed
+- **Lag-floor policy** for the research routine (see pm-devops). Owner: pm-devops + pm-scrum-master.
 
-- Promotion policy for score=2 + confidence=medium security vectors — owner: pm-security.
+## Shipped since last run (sample — top of 58)
+- #3473 mobile-rn-features-faults-orphaned (cleanup)
+- #3474 mobile-rn-person-months-no-i18n (i18n)
+- #3472 gh-issue-3466 critical/outages i18n for de/pl/hu
+- #3471 ppt-web-ui toast persistent-overflow leak
+- #3454 mobile-rn notifications still-mock → wired to real inbox API
+- #3463 ppt-web-ui 2fa QR silent fail → surfaced
+- #3451 mobile-rn profile local-only → persisted to api-server
+- #3424 reality-server favorites cap TOCTOU → atomic
+- #3410 api-core CORS localhost-prod-default → hardened
+- #3416 api-core push-fanout dropping transient failures → retried
+
+## Sprint progress
+49/49 stories done across 13 epics. No status flips. epic-10b re-checked (upkeep).
+
+## Blockers
+- **mobile-native-kmp cloud-landability starvation** (carries indefinitely; owner: pm-devops).
+- **routine scheduler 4-day drift** (flagged this run; owner: pm-devops).
