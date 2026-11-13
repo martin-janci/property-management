@@ -49,18 +49,18 @@
     {
       "task_id": "code-review-admin-web-tenant-lifecycle-no-i18n",
       "branch": "auto-impl/code-review-admin-web-tenant-lifecycle-n-7e335401",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-13T12:32:28Z",
-      "last_updated": "2026-11-13T12:32:28Z",
-      "status_changed_at": "2026-11-13T12:32:28Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-13T12:51:36Z",
+      "status_changed_at": "2026-11-13T12:51:36Z",
+      "pr_number": 3487,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3487",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=3487 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=i18n admin-web TenantLifecyclePage; 62 keys en/sk/cs parity; VERIFY OK 275 tests; IG3 two-commit",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -69,5 +69,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-13T12:47:10Z"
+  "generated": "2026-11-13T12:51:36Z"
 }
