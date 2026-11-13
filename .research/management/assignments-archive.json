@@ -7461,6 +7461,30 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-ppt-web-core-aichat-fetch-no-auth",
+      "branch": "auto-impl/code-review-ppt-web-core-aichat-fetch-no-75a6bc51",
+      "status": "failed",
+      "claimed_at": "2026-11-13T15:39:08Z",
+      "last_updated": "2026-11-13T15:45:00Z",
+      "status_changed_at": "2026-11-13T15:45:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=blocked specialist=react-web scope_drift=false code_reuse_warn=none note=already-fixed: ai-chat hooks already route through getApiClient() bearer interceptor per regression #2978 w/ test; no raw fetch in ai-chat; stale finding (dup of #2978)",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "code-review-ppt-web-core-aml-checks-hardcoded-false",
       "branch": "auto-impl/code-review-ppt-web-core-aml-checks-hard-8b6c6683",
       "status": "merged",
@@ -13211,6 +13235,28 @@
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-reality-web-realtor-pages-no-i18n",
+      "branch": "auto-impl/code-review-reality-web-realtor-pages-no-460d263b",
+      "status": "merged",
+      "claimed_at": "2026-11-13T10:40:47Z",
+      "last_updated": "2026-11-13T15:45:00Z",
+      "status_changed_at": "2026-11-13T15:43:53Z",
+      "pr_number": 3484,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3484",
+      "merged_at": "2026-11-13T15:43:53Z",
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=3484 status=done specialist=nextjs-web scope_drift=true note=analytics page rendered raw RealtorApiError.message to users; wired useRealtorErrorMessage + realtor.errorLoadAnalytics in 6 locales; verify green (biome+tsc+497 vitest); IG3 two-commit split",
+      "reviewer_summary": "verdict=approve head_oid=69d6a42eddd9af9243a792a0052ff40d3fad6877 note=clean-i18n-fix-6locale-parity-scope-drift-owner-label-only-CI-not-yet-run",
+      "last_reviewed_oid": "69d6a42eddd9af9243a792a0052ff40d3fad6877",
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -26705,5 +26751,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-13T12:47:10Z"
+  "archived_at": "2026-11-13T15:48:03Z"
 }
