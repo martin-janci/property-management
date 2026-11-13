@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-13T12:47:19Z",
+  "archived_at": "2026-11-13T18:35:12Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -7539,6 +7539,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-aichat-fetch-no-auth",
+      "action": "ppt web core aichat fetch no auth",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-13T12:47:59Z (tier1d ppt-web-core score=3 vector=bug) | gc1-reconcile 2026-11-13T18:24:20Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T12:47:59Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 3,
+        "vector": "bug",
+        "generated": "2026-09-24T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-13T18:24:20Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-aml-checks-hardcoded-false",
       "action": "ppt-web-core: useAmlDashboard hardcodes id_verified/sof_documented/pep/sanctions_check to false and recommendations=[] regardless of backend state",
       "owner_role": "pm-backend",
@@ -13497,6 +13522,31 @@
       "deadline": null,
       "dependency": null,
       "depends_on": []
+    },
+    {
+      "id": "code-review-reality-web-realtor-pages-no-i18n",
+      "action": "reality web realtor pages no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-12T16:25:31Z (tier1d reality-web score=1 vector=bug) | gc1-reconcile 2026-11-13T18:24:20Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-12T16:25:31Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-10-08T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3484,
+        "merged_at": "2026-11-13T15:43:53Z",
+        "at": "2026-11-13T18:24:20Z"
+      }
     },
     {
       "id": "code-review-reality-web-report-attachments-disabled-3017",
