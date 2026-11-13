@@ -188,13 +188,21 @@ export function ComparisonView() {
       return '';
     }
 
+    // The highlight rows carry numeric metrics, but `getValue` is typed
+    // `string | number | undefined` and the underlying listings arrive from an
+    // untrusted source (shared `?ids=` comparison URLs fetched in
+    // `ComparisonUrlHandler`, whose `parseListingSummary` guard deliberately
+    // does NOT type-check the optional numeric fields). A bare `as number[]`
+    // cast let a string slip through to `Math.min(...)` / `Math.max(...)`,
+    // which coerces non-numeric strings to `NaN` and silently breaks the
+    // best-value highlight. Narrow to finite numbers with a real type guard.
     const values = listings
       .map((l: ListingSummary) => row.getValue(l))
-      .filter((v: string | number | undefined) => v !== undefined) as number[];
+      .filter((v): v is number => typeof v === 'number' && Number.isFinite(v));
     if (values.length < 2) return '';
 
     const currentValue = row.getValue(listing);
-    if (currentValue === undefined) return '';
+    if (typeof currentValue !== 'number' || !Number.isFinite(currentValue)) return '';
 
     // Note: When multiple properties share the same min/max value, all will be highlighted.
     // This is intentional - if properties are tied, they're all equally "best" for that metric.
