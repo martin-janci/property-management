@@ -6,8 +6,11 @@
  *
  * User-facing copy (error titles/messages) is resolved through the shared
  * react-i18next instance under the `errors.catalogue.*` keys, so the strings
- * follow the user's selected language. Developer-facing values — error `code`s,
- * `requestId`s and raw backend `message`s — are passed through untranslated.
+ * follow the user's selected language. The raw backend `message` is never
+ * surfaced as the rendered, user-facing message — it ships English regardless
+ * of locale and may carry internal server/DB text — so it is kept only as a
+ * dev-only `detail` for debugging (see {@link devDetail}). Developer-facing
+ * values — error `code`s and `requestId`s — are passed through untranslated.
  */
 
 import i18n from '../i18n';
@@ -36,8 +39,14 @@ export interface ValidationDetail {
 export interface ParsedApiError {
   /** User-friendly error title */
   title: string;
-  /** Detailed error message */
+  /** Localized, user-facing error message (never the raw backend text) */
   message: string;
+  /**
+   * Raw backend/transport text, kept as a secondary diagnostic only. Populated
+   * in development builds; omitted in production so server English (or internal
+   * DB text) never leaks to the user. See {@link devDetail}.
+   */
+  detail?: string;
   /** Error code from backend */
   code: string;
   /** Request ID for error reporting */
@@ -119,6 +128,27 @@ function errorCopy(code: string): ErrorCopy {
 }
 
 /**
+ * Preserve raw backend/transport text as a dev-only diagnostic `detail`.
+ *
+ * The user-facing `message` is always the localized catalogue copy; the raw
+ * server `message` (which ships English regardless of locale, and may carry
+ * internal DB/driver text) is never returned as the primary, rendered message.
+ * We keep it available for debugging in development builds only — production
+ * builds drop it entirely. Returns `undefined` when the raw text is empty or is
+ * already identical to the resolved user-facing copy.
+ */
+function devDetail(raw: string | undefined, userMessage: string): string | undefined {
+  if (!import.meta.env.DEV) {
+    return undefined;
+  }
+  const trimmed = typeof raw === 'string' ? raw.trim() : '';
+  if (!trimmed || trimmed === userMessage) {
+    return undefined;
+  }
+  return trimmed;
+}
+
+/**
  * Parse an API error response into a user-friendly format.
  *
  * @param error - The error object (can be axios error, fetch error, or plain object)
@@ -186,12 +216,17 @@ export function parseApiError(error: unknown): ParsedApiError {
     return parseErrorResponse(error);
   }
 
-  // Handle Error instances
+  // Handle Error instances. The thrown `Error.message` is frequently raw
+  // server/client text (e.g. "Only managers can create articles") or a bare
+  // placeholder ("HTTP 422") — showing it directly leaked English into every
+  // locale. Surface the localized default copy instead and keep the raw text
+  // as a dev-only `detail`.
   if (error instanceof Error) {
     const copy = defaultErrorCopy();
     return {
       title: copy.title,
-      message: error.message || copy.message,
+      message: copy.message,
+      detail: devDetail(error.message, copy.message),
       code: 'UNKNOWN_ERROR',
       isNetworkError: false,
       isRateLimitError: false,
@@ -216,19 +251,20 @@ function parseErrorResponse(data: ErrorResponse, statusCode?: number): ParsedApi
   const errorInfo = errorCopy(data.error);
   const validationErrors = parseValidationDetails(data.details);
 
-  // Resolve the user-facing message from the i18n catalogue first (keyed by
-  // error code). The backend ships English `message` text regardless of the
-  // user's locale, so for any code that HAS a catalogue entry the localized
-  // copy must win — otherwise server English leaks through to sk/cs/de users.
-  // The raw backend `message` is only used as a fallback when the code has no
-  // catalogue entry (unknown code -> localized default copy, else raw message).
-  const message = KNOWN_ERROR_CODES.has(data.error)
-    ? errorInfo.message
-    : data.message || errorInfo.message;
+  // The user-facing message is always resolved from the i18n catalogue (keyed
+  // by error code; `errorCopy` returns the localized default for an unknown
+  // code). The backend ships English `message` text regardless of the user's
+  // locale — and for unknown codes that text may be internal server/DB detail —
+  // so it is NEVER surfaced as the rendered message. It is retained only as a
+  // dev-only `detail` for debugging. Previously an unknown code echoed the raw
+  // `data.message` straight to the user, leaking server English into every
+  // locale; that bypass is removed here.
+  const message = errorInfo.message;
 
   return {
     title: errorInfo.title,
     message,
+    detail: devDetail(data.message, message),
     code: data.error,
     requestId: data.requestId,
     validationErrors: validationErrors.size > 0 ? validationErrors : undefined,
