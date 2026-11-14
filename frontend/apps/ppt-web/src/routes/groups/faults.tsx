@@ -454,17 +454,47 @@ function FaultDetailPageRoute() {
       onBack={() => navigate('/faults')}
       onEdit={() => navigate(`/faults/${faultId}/edit`)}
       onTriage={(triageData) =>
-        triage.mutate({
-          priority: triageData.priority,
-          category: triageData.category,
-          assigned_to: triageData.assignedTo,
+        triage.mutate(
+          {
+            priority: triageData.priority,
+            category: triageData.category,
+            assigned_to: triageData.assignedTo,
+          },
+          {
+            onError: (err) =>
+              showToast({ type: 'error', title: t('faults.triageFailed'), error: err }),
+          }
+        )
+      }
+      onResolve={(notes) =>
+        resolve.mutate(
+          { resolution_notes: notes },
+          {
+            onError: (err) =>
+              showToast({ type: 'error', title: t('faults.resolveFailed'), error: err }),
+          }
+        )
+      }
+      onConfirm={(rating) =>
+        confirm.mutate(rating, {
+          onError: (err) =>
+            showToast({ type: 'error', title: t('faults.confirmFailed'), error: err }),
         })
       }
-      onResolve={(notes) => resolve.mutate({ resolution_notes: notes })}
-      onConfirm={(rating) => confirm.mutate(rating)}
-      onReopen={(reason) => reopen.mutate(reason)}
+      onReopen={(reason) =>
+        reopen.mutate(reason, {
+          onError: (err) =>
+            showToast({ type: 'error', title: t('faults.reopenFailed'), error: err }),
+        })
+      }
       onAddComment={(content, isInternal) =>
-        addComment.mutate({ content, is_internal: isInternal })
+        addComment.mutate(
+          { content, is_internal: isInternal },
+          {
+            onError: (err) =>
+              showToast({ type: 'error', title: t('faults.commentFailed'), error: err }),
+          }
+        )
       }
       // Presigned upload: documents/upload-url → PUT → POST attachments.
       onAddAttachment={(file) =>
@@ -478,7 +508,12 @@ function FaultDetailPageRoute() {
         })
       }
       isUploadingAttachment={addAttachment.isPending}
-      onDeleteAttachment={(id) => deleteAttachment.mutate(id)}
+      onDeleteAttachment={(id) =>
+        deleteAttachment.mutate(id, {
+          onError: (err) =>
+            showToast({ type: 'error', title: t('faults.attachmentDeleteFailed'), error: err }),
+        })
+      }
       onWithdraw={
         fault.reporterId === user?.id
           ? () =>

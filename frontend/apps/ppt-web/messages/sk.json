@@ -1080,7 +1080,13 @@
     "withdrawFailed": "Hlásenie sa nepodarilo stiahnuť",
     "uploadingPhoto": "Nahráva sa…",
     "photoUploadFailed": "Fotku sa nepodarilo nahrať",
-    "photosNotAttached": "{{failed}} z {{total}} fotiek sa nepodarilo priložiť. Môžete ich pridať v detaile poruchy."
+    "photosNotAttached": "{{failed}} z {{total}} fotiek sa nepodarilo priložiť. Môžete ich pridať v detaile poruchy.",
+    "triageFailed": "Nepodarilo sa roztriediť poruchu",
+    "resolveFailed": "Nepodarilo sa vyriešiť poruchu",
+    "confirmFailed": "Nepodarilo sa potvrdiť vyriešenie",
+    "reopenFailed": "Nepodarilo sa znovu otvoriť poruchu",
+    "commentFailed": "Nepodarilo sa pridať komentár",
+    "attachmentDeleteFailed": "Nepodarilo sa odstrániť prílohu"
   },
   "buildings": {
     "title": "Budovy",

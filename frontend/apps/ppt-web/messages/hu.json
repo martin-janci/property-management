@@ -1019,7 +1019,13 @@
     "photoUploadFailed": "A fénykép feltöltése sikertelen",
     "photosNotAttached": "{{failed}} / {{total}} fénykép nem volt csatolható. A hiba részleteinél hozzáadhatja őket.",
     "withdrawFailed": "A jelentést nem sikerült visszavonni",
-    "withdrawn": "Jelentés visszavonva"
+    "withdrawn": "Jelentés visszavonva",
+    "triageFailed": "A hiba besorolása sikertelen",
+    "resolveFailed": "A hiba megoldása sikertelen",
+    "confirmFailed": "A megoldás megerősítése sikertelen",
+    "reopenFailed": "A hiba újranyitása sikertelen",
+    "commentFailed": "A megjegyzés hozzáadása sikertelen",
+    "attachmentDeleteFailed": "A melléklet törlése sikertelen"
   },
   "buildings": {
     "title": "Épületek",
