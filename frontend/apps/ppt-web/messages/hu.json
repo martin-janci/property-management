@@ -2209,7 +2209,9 @@
         "budgetsDesc": "Költségvetések tervezése és követése",
         "reports": "Kimutatások",
         "reportsDesc": "Eredménykimutatás, mérleg és pénzforgalom"
-      }
+      },
+      "loadFailed": "A pénzügyi irányítópult betöltése sikertelen",
+      "retry": "Újrapróbálás"
     },
     "invoiceChart": {
       "title": "Számlák állapota",
@@ -6936,7 +6938,9 @@
       "upcomingBookings": "Közelgő foglalások",
       "viewAll": "Összes megtekintése",
       "noUpcomingBookings": "Nincs közelgő foglalás",
-      "taxReport": "Adókimutatás"
+      "taxReport": "Adókimutatás",
+      "loadFailed": "A bérlési irányítópult betöltése sikertelen",
+      "retry": "Újrapróbálás"
     },
     "booking": {
       "unit": "Egység"

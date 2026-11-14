@@ -2339,7 +2339,9 @@
         "budgetsDesc": "Plánujte a sledujte rozpočty",
         "reports": "Výkazy",
         "reportsDesc": "Výkaz ziskov a strát, súvaha a peňažné toky"
-      }
+      },
+      "loadFailed": "Nepodarilo sa načítať finančný prehľad",
+      "retry": "Skúsiť znova"
     },
     "invoiceChart": {
       "title": "Stav faktúr",
@@ -8052,7 +8054,9 @@
       "registrationRequiredDesc_one": "{{count}} hosťa treba pred príchodom prihlásiť na úradoch.",
       "registrationRequiredDesc_few": "{{count}} hostí treba pred príchodom prihlásiť na úradoch.",
       "registrationRequiredDesc_many": "{{count}} hosťa treba pred príchodom prihlásiť na úradoch.",
-      "registrationRequiredDesc_other": "{{count}} hostí treba pred príchodom prihlásiť na úradoch."
+      "registrationRequiredDesc_other": "{{count}} hostí treba pred príchodom prihlásiť na úradoch.",
+      "loadFailed": "Nepodarilo sa načítať prehľad prenájmov",
+      "retry": "Skúsiť znova"
     },
     "booking": {
       "unit": "Jednotka"

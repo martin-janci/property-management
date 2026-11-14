@@ -47,6 +47,13 @@ interface FinancialDashboardPageProps {
     totals: ARReportTotals;
   };
   isLoading?: boolean;
+  /**
+   * Load error message. When set, the dashboard renders an error state (with an
+   * optional retry) instead of zeroed-out metrics, so a failed fetch is not
+   * mistaken for genuinely empty data.
+   */
+  error?: string | null;
+  onRetry?: () => void;
   onBuildingChange?: (buildingId?: string) => void;
   onDateRangeChange?: (startDate?: string, endDate?: string) => void;
   onViewInvoice?: (invoiceId: string) => void;
@@ -76,6 +83,8 @@ export function FinancialDashboardPage({
   overdueInvoices,
   arReport,
   isLoading,
+  error,
+  onRetry,
   onBuildingChange,
   onDateRangeChange,
   onViewInvoice,
@@ -160,103 +169,123 @@ export function FinancialDashboardPage({
           </ul>
         </nav>
 
-        {/* Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <MetricCard
-            title={t('financial.dashboard.totalBalance')}
-            value={formatCurrency(metrics.totalBalance, metrics.currency)}
-            subtitle={t('financial.dashboard.totalBalanceSubtitle')}
-            icon={
-              <svg
-                className="w-8 h-8"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
+        {error ? (
+          <div className="bg-white rounded-lg shadow p-8 text-center" role="alert">
+            <p className="text-red-700">{t('financial.dashboard.loadFailed')}</p>
+            <p className="mt-1 text-sm text-gray-500">{error}</p>
+            {onRetry && (
+              <button
+                type="button"
+                onClick={onRetry}
+                className="mt-4 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            }
-          />
-          <MetricCard
-            title={t('financial.dashboard.outstanding')}
-            value={formatCurrency(metrics.totalOutstanding, metrics.currency)}
-            subtitle={t('financial.dashboard.outstandingSubtitle')}
-            icon={
-              <svg
-                className="w-8 h-8"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-            }
-          />
-          <MetricCard
-            title={t('financial.statusOverdue')}
-            value={formatCurrency(metrics.totalOverdue, metrics.currency)}
-            subtitle={t('financial.dashboard.overdueSubtitle', { count: overdueInvoices.length })}
-            className={metrics.totalOverdue > 0 ? 'border-l-4 border-red-500' : ''}
-            icon={
-              <svg
-                className="w-8 h-8 text-red-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            }
-          />
-        </div>
+                {t('financial.dashboard.retry')}
+              </button>
+            )}
+          </div>
+        ) : (
+          <>
+            {/* Metrics Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <MetricCard
+                title={t('financial.dashboard.totalBalance')}
+                value={formatCurrency(metrics.totalBalance, metrics.currency)}
+                subtitle={t('financial.dashboard.totalBalanceSubtitle')}
+                icon={
+                  <svg
+                    className="w-8 h-8"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                }
+              />
+              <MetricCard
+                title={t('financial.dashboard.outstanding')}
+                value={formatCurrency(metrics.totalOutstanding, metrics.currency)}
+                subtitle={t('financial.dashboard.outstandingSubtitle')}
+                icon={
+                  <svg
+                    className="w-8 h-8"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                }
+              />
+              <MetricCard
+                title={t('financial.statusOverdue')}
+                value={formatCurrency(metrics.totalOverdue, metrics.currency)}
+                subtitle={t('financial.dashboard.overdueSubtitle', {
+                  count: overdueInvoices.length,
+                })}
+                className={metrics.totalOverdue > 0 ? 'border-l-4 border-red-500' : ''}
+                icon={
+                  <svg
+                    className="w-8 h-8 text-red-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                }
+              />
+            </div>
 
-        {/* Charts Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <InvoiceStatusChart data={invoiceCounts} />
-          <RecentPaymentsList
-            payments={recentPayments}
-            isLoading={isLoading}
-            onViewAll={onViewAllPayments}
-          />
-        </div>
+            {/* Charts Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              <InvoiceStatusChart data={invoiceCounts} />
+              <RecentPaymentsList
+                payments={recentPayments}
+                isLoading={isLoading}
+                onViewAll={onViewAllPayments}
+              />
+            </div>
 
-        {/* AR Aging Table */}
-        <div className="mb-8">
-          <ARAgingTable
-            entries={arReport.entries}
-            totals={arReport.totals}
-            isLoading={isLoading}
-            onRowClick={onUnitClick}
-          />
-        </div>
+            {/* AR Aging Table */}
+            <div className="mb-8">
+              <ARAgingTable
+                entries={arReport.entries}
+                totals={arReport.totals}
+                isLoading={isLoading}
+                onRowClick={onUnitClick}
+              />
+            </div>
 
-        {/* Overdue Invoices */}
-        <div className="mb-8">
-          <OverdueInvoicesList
-            invoices={overdueInvoices}
-            isLoading={isLoading}
-            onViewInvoice={onViewInvoice}
-            onSendReminder={onSendReminder}
-          />
-        </div>
+            {/* Overdue Invoices */}
+            <div className="mb-8">
+              <OverdueInvoicesList
+                invoices={overdueInvoices}
+                isLoading={isLoading}
+                onViewInvoice={onViewInvoice}
+                onSendReminder={onSendReminder}
+              />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -2209,7 +2209,9 @@
         "budgetsDesc": "Budgets planen und verfolgen",
         "reports": "Berichte",
         "reportsDesc": "Gewinn- und Verlustrechnung, Bilanz und Cashflow"
-      }
+      },
+      "loadFailed": "Finanz-Dashboard konnte nicht geladen werden",
+      "retry": "Erneut versuchen"
     },
     "invoiceChart": {
       "title": "Rechnungsstatus",
@@ -6936,7 +6938,9 @@
       "upcomingBookings": "Bevorstehende Buchungen",
       "viewAll": "Alle anzeigen",
       "noUpcomingBookings": "Keine bevorstehenden Buchungen",
-      "taxReport": "Steuerbericht"
+      "taxReport": "Steuerbericht",
+      "loadFailed": "Vermietungs-Dashboard konnte nicht geladen werden",
+      "retry": "Erneut versuchen"
     },
     "booking": {
       "unit": "Einheit"

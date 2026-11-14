@@ -2268,7 +2268,9 @@
         "budgetsDesc": "Plan and track budgets",
         "reports": "Reports",
         "reportsDesc": "Income statement, balance sheet and cash flow"
-      }
+      },
+      "loadFailed": "Failed to load the financial dashboard",
+      "retry": "Retry"
     },
     "invoiceChart": {
       "title": "Invoice Status",
@@ -4313,7 +4315,9 @@
       "upcomingBookings": "Upcoming Bookings",
       "viewAll": "View all",
       "noUpcomingBookings": "No upcoming bookings",
-      "taxReport": "Tax Report"
+      "taxReport": "Tax Report",
+      "loadFailed": "Failed to load the rentals dashboard",
+      "retry": "Retry"
     },
     "booking": {
       "unit": "Unit"
