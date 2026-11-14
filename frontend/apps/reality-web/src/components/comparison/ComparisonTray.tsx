@@ -7,10 +7,15 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
-import { useComparison } from '../../lib/comparison-context';
+import { MAX_COMPARISON_ITEMS, useComparison } from '../../lib/comparison-context';
+
+// Minimum selections required before the comparison view is useful.
+const MIN_COMPARISON_ITEMS = 2;
 
 export function ComparisonTray() {
+  const t = useTranslations('comparison');
   const { listings, removeFromComparison, clearComparison } = useComparison();
 
   if (listings.length === 0) {
@@ -20,9 +25,11 @@ export function ComparisonTray() {
   return (
     <div className="comparison-tray">
       <div className="tray-header">
-        <span className="count">{listings.length}/4 properties to compare</span>
+        <span className="count">
+          {t('tray.count', { count: listings.length, max: MAX_COMPARISON_ITEMS })}
+        </span>
         <button type="button" className="clear-btn" onClick={clearComparison}>
-          Clear all
+          {t('tray.clearAll')}
         </button>
       </div>
 
@@ -33,7 +40,7 @@ export function ComparisonTray() {
               {listing.primaryPhoto ? (
                 <img
                   src={listing.primaryPhoto.thumbnailUrl}
-                  alt={`Thumbnail for ${listing.title}`}
+                  alt={t('tray.thumbnailAlt', { title: listing.title })}
                 />
               ) : (
                 <div className="no-image">🏠</div>
@@ -43,7 +50,7 @@ export function ComparisonTray() {
               type="button"
               className="remove-btn"
               onClick={() => removeFromComparison(listing.id)}
-              aria-label={`Remove ${listing.title} from comparison`}
+              aria-label={t('removeAria', { title: listing.title })}
             >
               ×
             </button>
@@ -61,11 +68,13 @@ export function ComparisonTray() {
 
       <Link
         href="/compare"
-        className={`compare-btn ${listings.length < 2 ? 'disabled' : ''}`}
-        aria-disabled={listings.length < 2}
-        onClick={(e) => listings.length < 2 && e.preventDefault()}
+        className={`compare-btn ${listings.length < MIN_COMPARISON_ITEMS ? 'disabled' : ''}`}
+        aria-disabled={listings.length < MIN_COMPARISON_ITEMS}
+        onClick={(e) => listings.length < MIN_COMPARISON_ITEMS && e.preventDefault()}
       >
-        Compare {listings.length < 2 ? '(need at least 2)' : `${listings.length} properties`}
+        {listings.length < MIN_COMPARISON_ITEMS
+          ? t('tray.compareNeedMore', { min: MIN_COMPARISON_ITEMS })
+          : t('tray.compareReady', { count: listings.length })}
       </Link>
 
       <style jsx>{`
