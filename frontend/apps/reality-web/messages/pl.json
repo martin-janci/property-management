@@ -433,6 +433,7 @@
       "rating": "Ocena",
       "reviewVerified": "Zweryfikowano",
       "reviews": "Opinie",
+      "reviewsError": "Nie udało się załadować opinii. Spróbuj ponownie później.",
       "sendMessage": "Wyślij wiadomość",
       "specializations": "Specjalizacje",
       "totalListings": "Ogłoszenia łącznie",

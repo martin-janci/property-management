@@ -433,6 +433,7 @@
       "rating": "Bewertung",
       "reviewVerified": "Verifiziert",
       "reviews": "Bewertungen",
+      "reviewsError": "Bewertungen konnten nicht geladen werden. Bitte versuchen Sie es später erneut.",
       "sendMessage": "Nachricht senden",
       "specializations": "Spezialisierungen",
       "totalListings": "Inserate gesamt",
