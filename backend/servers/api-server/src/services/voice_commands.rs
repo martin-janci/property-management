@@ -10,7 +10,8 @@ use db::models::{
     VoiceAssistantDevice, VoiceCard, VoiceCommandHistory,
 };
 use db::repositories::{
-    AnnouncementRepository, FaultRepository, LlmDocumentRepository, MeterRepository, UnitRepository,
+    AnnouncementRepository, FaultRepository, LlmDocumentRepository, MeterRepository,
+    OrganizationRepository, UnitRepository,
 };
 use serde_json::json;
 use sqlx::PgConnection;
@@ -51,6 +52,7 @@ pub struct VoiceCommandProcessor {
     unit_repo: UnitRepository,
     announcement_repo: AnnouncementRepository,
     meter_repo: MeterRepository,
+    organization_repo: OrganizationRepository,
 }
 
 impl VoiceCommandProcessor {
@@ -61,6 +63,7 @@ impl VoiceCommandProcessor {
         unit_repo: UnitRepository,
         announcement_repo: AnnouncementRepository,
         meter_repo: MeterRepository,
+        organization_repo: OrganizationRepository,
     ) -> Self {
         Self {
             llm_document_repo,
@@ -68,6 +71,7 @@ impl VoiceCommandProcessor {
             unit_repo,
             announcement_repo,
             meter_repo,
+            organization_repo,
         }
     }
 
@@ -169,7 +173,9 @@ impl VoiceCommandProcessor {
             }
             voice_intent::BOOK_FACILITY => self.action_book_facility(device, parsed).await,
             voice_intent::CHECK_METER => self.action_check_meter(conn, device, parsed).await,
-            voice_intent::CONTACT_MANAGER => self.action_contact_manager(device, parsed).await,
+            voice_intent::CONTACT_MANAGER => {
+                self.action_contact_manager(conn, device, parsed).await
+            }
             voice_intent::GET_HELP => self.action_get_help(device, parsed).await,
             _ => Err(VoiceCommandError::InvalidIntent(parsed.intent.clone())),
         }
@@ -538,28 +544,55 @@ impl VoiceCommandProcessor {
 
     async fn action_contact_manager(
         &self,
-        _device: &VoiceAssistantDevice,
+        conn: &mut PgConnection,
+        device: &VoiceAssistantDevice,
         parsed: &ParsedVoiceCommand,
     ) -> Result<VoiceActionResult, VoiceCommandError> {
+        // Surface the organization's real contact email rather than a hardcoded
+        // placeholder. This handler previously answered with a fixed
+        // `manager@example.com` (code review: voice contact-manager placeholder
+        // email) on this live webhook path — a resident asking how to reach
+        // their manager was handed an address that routes nowhere. Resolve the
+        // device's organization on the caller's RLS-scoped connection and read
+        // its genuine `contact_email`; fail honestly if the organization can't
+        // be resolved instead of inventing an address.
+        let organization = self
+            .organization_repo
+            .find_by_id_rls(&mut *conn, device.organization_id)
+            .await?
+            .ok_or_else(|| {
+                VoiceCommandError::ActionFailed(format!(
+                    "organization {} not found; cannot resolve manager contact",
+                    device.organization_id
+                ))
+            })?;
+        let contact_email = organization.contact_email;
+
         let response = match parsed.language.as_str() {
-            "sk" => "Spravcu mozete kontaktovat prostrednstvom aplikacie alebo emailom na adrese spravca@example.com. Chcete nahlasit poruchu namiesto toho?",
-            "cs" => "Spravce muzete kontaktovat prostrednictvim aplikace nebo emailem na adrese spravce@example.com. Chcete nahlasit poruchu misto toho?",
-            _ => "You can contact the manager through the app or via email at manager@example.com. Would you like to report a fault instead?"
+            "sk" => format!(
+                "Spravcu mozete kontaktovat prostrednictvom aplikacie alebo emailom na adrese {contact_email}. Chcete nahlasit poruchu namiesto toho?"
+            ),
+            "cs" => format!(
+                "Spravce muzete kontaktovat prostrednictvim aplikace nebo emailem na adrese {contact_email}. Chcete nahlasit poruchu misto toho?"
+            ),
+            _ => format!(
+                "You can contact the manager through the app or via email at {contact_email}. Would you like to report a fault instead?"
+            ),
         };
 
         Ok(VoiceActionResult {
             success: true,
             action_type: voice_intent::CONTACT_MANAGER.to_string(),
-            response_text: response.to_string(),
+            response_text: response.clone(),
             ssml: Some(format!("<speak>{}</speak>", response)),
             card: Some(VoiceCard {
                 title: self.localize("Contact Manager", &parsed.language),
-                content: "manager@example.com".to_string(),
+                content: contact_email.clone(),
                 image_url: None,
             }),
             should_end_session: false,
             data: Some(json!({
-                "manager_email": "manager@example.com"
+                "manager_email": contact_email
             })),
         })
     }
@@ -696,7 +729,8 @@ mod tests {
             FaultRepository::new(pool.clone()),
             UnitRepository::new(pool.clone()),
             AnnouncementRepository::new(pool.clone()),
-            MeterRepository::new(pool),
+            MeterRepository::new(pool.clone()),
+            OrganizationRepository::new(pool),
         )
     }
 
@@ -706,7 +740,8 @@ mod tests {
             FaultRepository::new(pool.clone()),
             UnitRepository::new(pool.clone()),
             AnnouncementRepository::new(pool.clone()),
-            MeterRepository::new(pool),
+            MeterRepository::new(pool.clone()),
+            OrganizationRepository::new(pool),
         )
     }
 
@@ -1143,6 +1178,64 @@ mod tests {
         assert_eq!(
             count, 0,
             "no fault row must be created when there is no unit"
+        );
+    }
+
+    /// Regression (code-review: voice contact-manager placeholder email): the
+    /// handler used to answer with a hardcoded `manager@example.com` (and the
+    /// Slovak/Czech `spravca@example.com` / `spravce@example.com`) on this live
+    /// webhook path, regardless of which organization the device belonged to —
+    /// a resident asking how to reach their manager was handed an address that
+    /// routes nowhere. It must now surface the organization's real
+    /// `contact_email` in the spoken response, the card and the `data` payload.
+    /// Skipped by the offline verify gate (no DATABASE_URL); runs under
+    /// backend.yml CI.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_contact_manager_uses_real_org_contact_email(pool: sqlx::PgPool) {
+        // seed_org sets contact_email = "<slug>@voice.test".
+        let org = seed_org(&pool, "cm").await;
+        let user = seed_user(&pool, "cm@voice.test").await;
+        let expected_email = "cm@voice.test";
+
+        let processor = processor_with_pool(pool.clone());
+        let device = make_device(org, user, Some(Uuid::new_v4()));
+        let parsed = processor.parse_command("How do I contact the manager?", "en-US");
+        assert_eq!(parsed.intent, voice_intent::CONTACT_MANAGER);
+
+        let mut conn = pool.acquire().await.expect("acquire connection");
+        let result = processor
+            .execute_action(&mut conn, &device, &parsed)
+            .await
+            .expect("contact-manager should succeed");
+
+        assert!(result.success);
+
+        // The data payload must carry the org's real contact email, never the
+        // old placeholder.
+        let manager_email = result
+            .data
+            .as_ref()
+            .and_then(|d| d.get("manager_email"))
+            .and_then(|v| v.as_str())
+            .expect("manager_email present in action data");
+        assert_eq!(
+            manager_email, expected_email,
+            "contact-manager must surface the org's real contact_email, not a placeholder"
+        );
+        assert!(
+            result.response_text.contains(expected_email),
+            "spoken response must mention the org's real contact email"
+        );
+        assert!(
+            !result.response_text.contains("manager@example.com")
+                && !result.response_text.contains("spravca@example.com")
+                && !result.response_text.contains("spravce@example.com"),
+            "response must not contain the old hardcoded placeholder email"
+        );
+        assert_eq!(
+            result.card.as_ref().map(|c| c.content.as_str()),
+            Some(expected_email),
+            "contact card must show the org's real contact email"
         );
     }
 
