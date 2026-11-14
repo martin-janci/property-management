@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-14T06:41:08Z",
+  "archived_at": "2026-11-14T08:32:52Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -4241,6 +4241,30 @@
       }
     },
     {
+      "id": "code-review-api-core-voice-contact-manager-placeholder-email",
+      "action": "api core voice contact manager placeholder email",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T02:24:19Z (tier1d api-core score=2 vector=bug) | dev-reconcile 2026-11-14T08:31:11Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T02:24:19Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-25T00:00:00Z"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "6d9928fc4d9479d3f075c85ffcade7aa7bea871a",
+        "subject": "code-review-api-core-voice-contact-manager-placeholder-email: voice contact-manager surfaces the org's real contact email (#3511)",
+        "at": "2026-11-14T08:31:11Z"
+      }
+    },
+    {
       "id": "code-review-api-core-voice-read-handlers-fabricate-data",
       "action": "backend/servers/api-server/src/services/voice_commands.rs:235 action_check_balance returns a hardcoded response ('Your current balance is zero. You have no outstanding fees.') with data { balance: 0.0, currency: EUR } and success:true, rega",
       "owner_role": "pm-backend",
@@ -4902,6 +4926,30 @@
         "commit": "a8eb7f48e4c6dbfc7fca8dd32c9f9ecf1c97644c",
         "subject": "code-review-api-handlers-listing-detail-photos-silent-drop: surface photo-fetch failures in get_listing (#3279)",
         "at": "2026-11-04T14:28:07Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-listings-unbounded-limit",
+      "action": "api handlers listings unbounded limit",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T02:24:19Z (tier1d api-handlers score=2 vector=bug) | dev-reconcile 2026-11-14T08:31:11Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T02:24:19Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-25T00:00:00Z"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "863df3e72c213e5e0118ca3cd7a66b90d8202510",
+        "subject": "code-review-api-handlers-listings-unbounded-limit: clamp listings limit to a max page size (#3510)",
+        "at": "2026-11-14T08:31:11Z"
       }
     },
     {
@@ -8249,6 +8297,30 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-fault-detail-mutations-swallow-errors",
+      "action": "ppt web core fault detail mutations swallow errors",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T02:24:19Z (tier1d ppt-web-core score=2 vector=bug) | dev-reconcile 2026-11-14T08:31:11Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T02:24:19Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-25T00:00:00Z"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "6c9173fa5e3e231883005d83b7facdb4e8977e78",
+        "subject": "code-review-ppt-web-core-fault-detail-mutations-swallow-errors: surface fault-detail action-mutation errors (#3500)",
+        "at": "2026-11-14T08:31:11Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-group-delete-stub",
       "action": "ppt-web community groups: Delete button navigates away without calling delete API (data-coherence lie)",
       "owner_role": "pm-backend",
@@ -9354,6 +9426,30 @@
         "merged_pr": 2456,
         "merged_at": "2026-07-22T22:27:57Z",
         "at": "2026-07-23T00:03:08Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-aichat-first-message-settimeout-race",
+      "action": "ppt web ui aichat first message settimeout race",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T02:24:19Z (tier1d ppt-web-ui score=2 vector=bug) | dev-reconcile 2026-11-14T08:31:11Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T02:24:19Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-26T00:00:00Z"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "0b967dbd6be39e226c420f0d05edad037bbdd3ea",
+        "subject": "code-review-ppt-web-ui-aichat-first-message-settimeout-race: fix first-message setTimeout race in AI chat (#3503)",
+        "at": "2026-11-14T08:31:11Z"
       }
     },
     {
@@ -25580,6 +25676,32 @@
         "merged_pr": 3501,
         "merged_at": "2026-11-13T22:41:34Z",
         "at": "2026-11-14T00:28:40Z"
+      }
+    },
+    {
+      "id": "gh-issue-3502",
+      "action": "Follow-up: localize price-map SegmentedControl toggle labels (PR #3489) (Closes #3502)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-11-14T00:29:12Z (#3502) | dev-reconcile 2026-11-14T08:31:11Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T00:29:12Z",
+      "issue_ref": {
+        "number": 3502,
+        "url": "https://github.com/martin-janci/property-management/issues/3502",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "bd05bbc7c43064588167d39f90d2fb4f5c7b5d2c",
+        "subject": "gh-issue-3502: localize price-map SegmentedControl toggle labels (#3506)",
+        "at": "2026-11-14T08:31:11Z"
       }
     },
     {
