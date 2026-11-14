@@ -302,7 +302,9 @@ const MAX_LISTINGS_LIMIT: i32 = 100;
 /// `1..=MAX_LISTINGS_LIMIT` so neither an oversized page (DoS) nor a
 /// zero/negative page size (bad OFFSET math) can reach the database.
 fn clamp_listing_limit(limit: Option<i32>) -> i32 {
-    limit.unwrap_or(DEFAULT_LISTINGS_LIMIT)
+    limit
+        .unwrap_or(DEFAULT_LISTINGS_LIMIT)
+        .clamp(1, MAX_LISTINGS_LIMIT)
 }
 
 /// List listings for the organization.
