@@ -7,7 +7,9 @@
  * Showing that text as the toast message leaked English into every locale.
  * `describeError` picks the translated copy from the HTTP status instead
  * (reusing the `errors.catalogue.*` bundle) and keeps the server text only as
- * a secondary detail.
+ * a DEV-only secondary detail — in production builds the raw text is dropped
+ * entirely so internal server/DB English never leaks to the user (mirrors
+ * `devDetail` in `./errorHandler`).
  *
  * Deliberately free of `react-i18next` / `../i18n` imports so it can be used
  * from components that tests render with a mocked `react-i18next`.
@@ -18,7 +20,11 @@ import i18next, { type TFunction } from 'i18next';
 export interface DescribedError {
   /** Translated message chosen from the HTTP status (or network failure). */
   message: string;
-  /** The raw server/client text, kept only as secondary detail. */
+  /**
+   * The raw server/client text, kept only as a DEV-only secondary detail.
+   * Omitted in production builds so internal server/DB English never leaks to
+   * the user — see {@link devDetail}.
+   */
   detail?: string;
   statusCode?: number;
 }
@@ -69,6 +75,27 @@ export function errorStatusCode(error: unknown): number | undefined {
   return code ? Number(code) : undefined;
 }
 
+/**
+ * Preserve the raw server/transport text as a DEV-only diagnostic `detail`.
+ *
+ * The user-facing `message` is always the localized, status-derived catalogue
+ * copy. The raw backend text ships English regardless of locale and may carry
+ * internal server/DB detail, so it is NEVER surfaced to the user in a
+ * production build — it is dropped entirely and kept only in development for
+ * debugging. This mirrors `devDetail` in {@link ./errorHandler}. Returns
+ * `undefined` for placeholder text (e.g. "HTTP 422"), empty strings, or text
+ * already identical to the resolved user-facing copy.
+ */
+function devDetail(raw: string, userMessage: string): string | undefined {
+  if (!import.meta.env.DEV) {
+    return undefined;
+  }
+  if (raw === '' || PLACEHOLDER_MESSAGE.test(raw) || raw === userMessage) {
+    return undefined;
+  }
+  return raw;
+}
+
 function isNetworkFailure(error: unknown): boolean {
   if (error && typeof error === 'object' && (error as { code?: unknown }).code === 'ERR_NETWORK') {
     return true;
@@ -85,8 +112,9 @@ function isNetworkFailure(error: unknown): boolean {
 /**
  * Turn any thrown value into translated copy: 403 → access denied, 404 → not
  * found, 422 → validation error, 5xx → server error, network failure →
- * network error, anything else → the generic error. The raw text is returned
- * as `detail` unless it is only a placeholder like "HTTP 422".
+ * network error, anything else → the generic error. The raw text is kept as a
+ * DEV-only `detail` (dropped in production builds, and never for a placeholder
+ * like "HTTP 422") — see {@link devDetail}.
  */
 export function describeError(
   error: unknown,
@@ -101,7 +129,6 @@ export function describeError(
     code = 'NETWORK_ERROR';
   }
   const message = (t as (key: string) => string)(`errors.catalogue.${code}.message`);
-  const isPlaceholder = raw === '' || PLACEHOLDER_MESSAGE.test(raw);
-  const detail = isPlaceholder || raw === message ? undefined : raw;
+  const detail = devDetail(raw, message);
   return { message, detail, statusCode };
 }
