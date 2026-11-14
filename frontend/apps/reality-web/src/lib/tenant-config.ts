@@ -30,6 +30,7 @@ import { headers } from 'next/headers';
 import type React from 'react';
 import { cache } from 'react';
 import { isSafeCssVarName, sanitizeCssValue } from './sanitize-css';
+import { sanitizeHref } from './sanitize-url';
 
 // Re-exported so existing callers can keep importing these pure helpers from
 // `tenant-config`. Their real home is the client-safe `./sanitize-css` module
@@ -213,12 +214,13 @@ export function brandingToStyleObject(branding: TenantBranding): React.CSSProper
  * `<link rel="icon" href>`.
  *
  * `branding.logo_url` is tenant-controlled external data that flows straight
- * into an `href`, so it is returned here as the single choke point the layout
- * reads from. Returns `null` when there is no logo, in which case the layout
- * emits no favicon link.
+ * into an `href`, so it MUST pass the http(s)-only scheme allowlist before it
+ * is emitted — a `javascript:` / `data:` / `vbscript:` value would otherwise
+ * be a scheme-injection vector. Returns `null` when there is no logo or the
+ * URL is unsafe, in which case the layout emits no favicon link.
  */
 export function faviconHref(branding: TenantBranding): string | null {
-  return branding.logo_url;
+  return sanitizeHref(branding.logo_url);
 }
 
 /**
