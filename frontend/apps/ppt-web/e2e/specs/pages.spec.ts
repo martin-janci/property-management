@@ -17,6 +17,7 @@ import {
   LoginPage,
   NewsPage,
 } from '../pages';
+import { seedAuthenticatedSession, stubOtherApis } from './auth-helpers';
 
 /**
  * Protected pages. documents/news/emergency are auth-gated: without a backend
@@ -66,6 +67,15 @@ test.describe('ppt-web · emergency contacts page @requires-backend', () => {
 
 test.describe('ppt-web · disputes page', () => {
   test('loads with a main landmark', async ({ page }) => {
+    // `/disputes` is auth-gated behind `<ProtectedRoute>` (#3486 — disputes is a
+    // per-user/resident feature, so auth-only rather than role-gated). An
+    // anonymous visit now redirects to `/login`, so the spec must establish an
+    // authenticated session before navigating. Stub non-auth APIs so the
+    // disputes-list query resolves (empty) without a backend; the seeded access
+    // token is valid, so AuthProvider authenticates on mount with no refresh.
+    await stubOtherApis(page);
+    await seedAuthenticatedSession(page);
+
     const disputes = new DisputesPage(page);
     await disputes.goto();
 
