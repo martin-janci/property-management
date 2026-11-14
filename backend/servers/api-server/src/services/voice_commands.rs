@@ -1146,6 +1146,64 @@ mod tests {
         );
     }
 
+    /// Regression (code-review: voice contact-manager placeholder email): the
+    /// handler used to answer with a hardcoded `manager@example.com` (and the
+    /// Slovak/Czech `spravca@example.com` / `spravce@example.com`) on this live
+    /// webhook path, regardless of which organization the device belonged to —
+    /// a resident asking how to reach their manager was handed an address that
+    /// routes nowhere. It must now surface the organization's real
+    /// `contact_email` in the spoken response, the card and the `data` payload.
+    /// Skipped by the offline verify gate (no DATABASE_URL); runs under
+    /// backend.yml CI.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_contact_manager_uses_real_org_contact_email(pool: sqlx::PgPool) {
+        // seed_org sets contact_email = "<slug>@voice.test".
+        let org = seed_org(&pool, "cm").await;
+        let user = seed_user(&pool, "cm@voice.test").await;
+        let expected_email = "cm@voice.test";
+
+        let processor = processor_with_pool(pool.clone());
+        let device = make_device(org, user, Some(Uuid::new_v4()));
+        let parsed = processor.parse_command("How do I contact the manager?", "en-US");
+        assert_eq!(parsed.intent, voice_intent::CONTACT_MANAGER);
+
+        let mut conn = pool.acquire().await.expect("acquire connection");
+        let result = processor
+            .execute_action(&mut conn, &device, &parsed)
+            .await
+            .expect("contact-manager should succeed");
+
+        assert!(result.success);
+
+        // The data payload must carry the org's real contact email, never the
+        // old placeholder.
+        let manager_email = result
+            .data
+            .as_ref()
+            .and_then(|d| d.get("manager_email"))
+            .and_then(|v| v.as_str())
+            .expect("manager_email present in action data");
+        assert_eq!(
+            manager_email, expected_email,
+            "contact-manager must surface the org's real contact_email, not a placeholder"
+        );
+        assert!(
+            result.response_text.contains(expected_email),
+            "spoken response must mention the org's real contact email"
+        );
+        assert!(
+            !result.response_text.contains("manager@example.com")
+                && !result.response_text.contains("spravca@example.com")
+                && !result.response_text.contains("spravce@example.com"),
+            "response must not contain the old hardcoded placeholder email"
+        );
+        assert_eq!(
+            result.card.as_ref().map(|c| c.content.as_str()),
+            Some(expected_email),
+            "contact card must show the org's real contact email"
+        );
+    }
+
     #[test]
     fn test_extract_language() {
         assert_eq!(
