@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-14T10:41:33Z",
+  "archived_at": "2026-11-14T14:29:15Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3774,6 +3774,30 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-08-24T16:22:58Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-quiet-hours-weekend-master-gate",
+      "action": "api core quiet hours weekend master gate",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T12:47:59Z (tier1d api-core score=2 vector=bug) | dev-reconcile 2026-11-14T14:23:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T12:47:59Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-23T16:34:26Z"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "f599aef50736179861d086d9c87c148867bf18fc",
+        "subject": "code-review-api-core-quiet-hours-weekend-master-gate: attribute crossing quiet-hours window to the day it opened (#3515)",
+        "at": "2026-11-14T14:23:51Z"
       }
     },
     {
@@ -8823,6 +8847,30 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-org-provider-value-not-memoized",
+      "action": "ppt web core org provider value not memoized",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T12:47:59Z (tier1d ppt-web-core score=1 vector=bug) | dev-reconcile 2026-11-14T14:23:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T12:47:59Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-25T00:00:00Z"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "4baef590104bf64442588e9d86c1394b5b727b5d",
+        "subject": "code-review-ppt-web-core-org-provider-value-not-memoized: memoize OrganizationProvider context value (#3514)",
+        "at": "2026-11-14T14:23:51Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-perfmetrics-listener-leak",
       "action": "usePerformanceMetrics never removes its visibilitychange/load listeners on cleanup — event-listener leak, compounded by effect re-running on inline onReport",
       "owner_role": "pm-backend",
@@ -13251,6 +13299,30 @@
       }
     },
     {
+      "id": "code-review-reality-web-comparison-timer-leak",
+      "action": "reality web comparison timer leak",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T12:47:59Z (tier1d reality-web score=1 vector=bug) | dev-reconcile 2026-11-14T14:23:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T12:47:59Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-22T00:00:00Z"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "8472a837f25cee6baa22a5f525473d11dddfed28",
+        "subject": "code-review-reality-web-comparison-timer-leak: clear comparison auto-hide timers (#3513)",
+        "at": "2026-11-14T14:23:51Z"
+      }
+    },
+    {
       "id": "code-review-reality-web-comparison-url-unvalidated-cast",
       "action": "reality web comparison url unvalidated cast",
       "owner_role": "pm-backend",
@@ -13345,6 +13417,30 @@
         "merged_pr": 3436,
         "merged_at": "2026-11-12T08:38:24Z",
         "at": "2026-11-12T08:39:37Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-currency-code-rangeerror-crash",
+      "action": "reality web currency code rangeerror crash",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d reality-web score=2 vector=bug) | dev-reconcile 2026-11-14T14:23:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T22:25:04Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-21T00:00:00Z"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "57a1b5008cca728418dc426835c83b093bd2f093",
+        "subject": "code-review-reality-web-currency-code-rangeerror-crash: guard formatPrice against invalid currency codes (#3512)",
+        "at": "2026-11-14T14:23:51Z"
       }
     },
     {

@@ -10903,6 +10903,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-ppt-web-ui-registry-page-no-i18n",
+      "branch": "auto-impl/code-review-ppt-web-ui-registry-page-no-a73585d4",
+      "status": "failed",
+      "claimed_at": "2026-11-14T14:29:03Z",
+      "last_updated": "2026-11-14T14:40:00Z",
+      "status_changed_at": "2026-11-14T14:40:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=done specialist=react-web scope_drift=false code_reuse_warn=none note=already-resolved-on-dev: RegistryPage.tsx chrome + confirm/toast route through t(), all 6 locales carry registry.page.* keys, guard tests present; fix+tests landed in prior merge 08e01261e. No diff needed; no PR opened. (residual RegistryRulesForm.tsx distinct finding, left untouched)",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-ui-registry-rules-save-silent-fail",
       "branch": "auto-impl/code-review-ppt-web-ui-registry-rules-sa-813d957c",
       "status": "merged",
@@ -27413,5 +27435,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-14T10:40:50Z"
+  "archived_at": "2026-11-14T14:41:08Z"
 }
