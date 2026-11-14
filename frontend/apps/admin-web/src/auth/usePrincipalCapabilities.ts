@@ -14,6 +14,7 @@
  */
 
 import type { Capability } from '@ppt/admin-ui';
+import { ApiError, authenticatedFetchJson } from '@ppt/api-client';
 import { useQuery } from '@tanstack/react-query';
 
 import { useAdminAuth } from './AdminAuthContext';
@@ -69,20 +70,24 @@ export interface PrincipalCapabilitiesResult {
   mfaWindowMs: number;
 }
 
-async function fetchMeCapabilities(token: string): Promise<MeCapabilitiesResponse> {
-  const resp = await fetch('/api/v1/admin/capabilities/me', {
-    headers: { Authorization: `Bearer ${token}` },
-    credentials: 'include',
-  });
-  if (!resp.ok) {
-    // 401 / 403 → return defaults (gated UI stays hidden). Any other
-    // status throws and bubbles to the React Query error surface.
-    if (resp.status === 401 || resp.status === 403) {
+async function fetchMeCapabilities(): Promise<MeCapabilitiesResponse> {
+  // Route through the shared admin-web client helper rather than a hand-rolled
+  // `fetch`: `authenticatedFetchJson` injects the Authorization header from the
+  // registered token provider, applies the `401 { error: "mfa_required" }`
+  // challenge-and-retry flow, and normalizes non-2xx responses into `ApiError`
+  // (carrying `status`). This is the same primitive the `@ppt/api-client` admin
+  // module uses — see api-client `lib/fetch.ts`.
+  try {
+    return await authenticatedFetchJson<MeCapabilitiesResponse>('/api/v1/admin/capabilities/me');
+  } catch (err) {
+    // 401 / 403 → return defaults (gated UI stays hidden). Any other status
+    // re-throws and bubbles to the React Query error surface, preserving the
+    // previous behaviour.
+    if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
       return { principal_kind: 'public', capabilities: [] };
     }
-    throw new Error(`/admin/capabilities/me failed: ${resp.status}`);
+    throw err;
   }
-  return (await resp.json()) as MeCapabilitiesResponse;
 }
 
 /**
@@ -104,7 +109,10 @@ export function usePrincipalCapabilities(): PrincipalCapabilitiesResult {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin', 'capabilities', 'me', token],
-    queryFn: () => fetchMeCapabilities(token as string),
+    // The token is no longer threaded into the request — `authenticatedFetchJson`
+    // reads it from the registered provider — but it stays in the query key so a
+    // token change still refetches, and gates `enabled` below.
+    queryFn: () => fetchMeCapabilities(),
     enabled: token !== null,
     staleTime: 60_000,
     retry: 1,
