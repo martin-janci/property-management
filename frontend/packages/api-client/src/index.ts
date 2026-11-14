@@ -48,7 +48,11 @@ export * from './leases';
 // can branch on 401/403; `authenticatedFetch` is the raw-`Response` primitive for
 // callers that can't use the generated SDK — multipart uploads and endpoints
 // whose callers read the `Response` themselves (see `./lib/fetch`).
-export { ApiError, authenticatedFetch } from './lib/fetch';
+// `authenticatedFetchJson` is the relative-path JSON sibling the per-module
+// `Api*` classes use internally (centralized Authorization injection + MFA
+// challenge retry + `ApiError` normalization); exported so ad-hoc app call
+// sites (e.g. admin-web hooks) stop hand-rolling `fetch(..., { Authorization })`.
+export { ApiError, authenticatedFetch, authenticatedFetchJson } from './lib/fetch';
 export * from './members';
 export * from './messaging';
 export * from './meters';

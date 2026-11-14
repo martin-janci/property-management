@@ -2,6 +2,7 @@
  * usePrincipalCapabilities — fetch + reducer tests.
  */
 
+import { setMfaChallengeHandler } from '@ppt/api-client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
@@ -53,6 +54,7 @@ describe('usePrincipalCapabilities', () => {
 
   afterEach(() => {
     sessionStorage.clear();
+    setMfaChallengeHandler(null);
     vi.restoreAllMocks();
   });
 
@@ -165,5 +167,41 @@ describe('usePrincipalCapabilities', () => {
     // isPlatformPrincipal and capabilities should fall back to defaults
     expect(result.current.isPlatformPrincipal).toBe(false);
     expect(result.current.capabilities).toHaveLength(0);
+  });
+
+  // 6. 401 { error: "mfa_required" } → the shared client prompts the registered
+  //    MFA handler and retries once on success. This only works because the hook
+  //    routes `/admin/capabilities/me` through `authenticatedFetchJson` instead
+  //    of a hand-rolled `fetch` — a raw fetch would just return defaults on the
+  //    401 and never invoke the MFA seam.
+  it('prompts the MFA handler and retries once on 401 mfa_required', async () => {
+    const mfaHandler = vi.fn(async () => true); // user completes the challenge
+    setMfaChallengeHandler(mfaHandler);
+
+    vi.mocked(fetch)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        json: async () => ({ error: 'mfa_required' }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          principal_kind: 'platform',
+          capabilities: [{ capability: 'audit_read', revoked_at: null, expires_at: null }],
+        }),
+      } as Response);
+
+    const { result } = renderHook(() => usePrincipalCapabilities(), {
+      wrapper: makeWrapper('valid-token'),
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(mfaHandler).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledTimes(2); // original + retry
+    expect(result.current.isPlatformPrincipal).toBe(true);
+    expect(result.current.capabilities).toContain('audit_read');
   });
 });
