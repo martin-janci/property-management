@@ -119,18 +119,18 @@
     {
       "task_id": "gh-issue-3502",
       "branch": "auto-impl/gh-issue-3502-5d5537b1",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-14T00:32:38Z",
-      "last_updated": "2026-11-14T00:32:38Z",
-      "status_changed_at": "2026-11-14T00:32:38Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-14T00:43:19Z",
+      "status_changed_at": "2026-11-14T00:43:19Z",
+      "pr_number": 3506,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3506",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=3506 status=done specialist=nextjs-web scope_drift=true code_reuse_warn=none note=localized price-map SegmentedControl sale/rent toggle via t(); scope_drift is label/area mismatch (owner hint pm-tech-lead, all files reality-web); VERIFY OK; draft PR vs dev; Closes #3502",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -139,5 +139,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-14T00:41:06Z"
+  "generated": "2026-11-14T00:43:19Z"
 }
