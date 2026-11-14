@@ -141,18 +141,18 @@
     {
       "task_id": "gh-issue-3505",
       "branch": "auto-impl/gh-issue-3505-480cf51d",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-14T02:26:58Z",
-      "last_updated": "2026-11-14T02:26:58Z",
-      "status_changed_at": "2026-11-14T02:26:58Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-14T02:47:17Z",
+      "status_changed_at": "2026-11-14T02:44:51Z",
+      "pr_number": 3507,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3507",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=3507 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=authed disputes E2E test (seedAuthenticatedSession); fails-before/passes-after proven; verify green 12967 tests; fixes #3505 route-guard E2E regression",
+      "reviewer_summary": "verdict=approve head_oid=58b4faa035512149951be3a247a533da0d4c9d83 note=test-only e2e fix verified; seedAuthenticatedSession keys+JWT exp drive synchronous AuthProvider auth, organizationId clears disputes org-gate, no prod code touched, E2E(ppt-web) green; posted as COMMENT (self-PR, cannot self-approve, #3215)",
+      "last_reviewed_oid": "58b4faa035512149951be3a247a533da0d4c9d83",
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -183,5 +183,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-14T02:33:25Z"
+  "generated": "2026-11-14T02:47:17Z"
 }
