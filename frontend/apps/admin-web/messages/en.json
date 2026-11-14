@@ -98,7 +98,66 @@
       "warning": "Per-tenant kill switch — changes take effect immediately for every user in this tenant."
     },
     "dashboard": {
-      "helpTooltip": "Live overview of platform health, high-risk events, and active impersonation sessions. Refresh the page to update stats."
+      "attention": {
+        "clear": "Everything looks clear.",
+        "one": "1 thing needs attention.",
+        "other": "{{count}} things need attention."
+      },
+      "greeting": {
+        "afternoon": "Good afternoon",
+        "evening": "Good evening",
+        "morning": "Good morning"
+      },
+      "helpTooltip": "Live overview of platform health, high-risk events, and active impersonation sessions. Refresh the page to update stats.",
+      "highRisk": {
+        "empty": "No high-risk events in the last 24 hours.",
+        "loadError": "Unable to load audit events. Try again.",
+        "on": " on ",
+        "title": "Recent high-risk events · 24h",
+        "viewAll": "View all →"
+      },
+      "impersonation": {
+        "empty": "No active impersonation sessions.",
+        "meta": "started {{started}} · expires {{expires}}",
+        "stop": "Stop",
+        "title": "Active impersonation"
+      },
+      "merges": {
+        "empty": "No merge collisions.",
+        "resolve": "Resolve",
+        "title": "Pending merge collisions"
+      },
+      "mfa": {
+        "inactive": "MFA window not active.",
+        "one": "You're in a recent-MFA window for 1 more minute.",
+        "other": "You're in a recent-MFA window for {{count}} more minutes."
+      },
+      "operatorFallback": "Operator",
+      "quickActions": {
+        "findUser": "Find user…",
+        "openAudit": "Open audit log",
+        "title": "Quick actions",
+        "viewImpersonations": "View active impersonations ({{count}})"
+      },
+      "tiles": {
+        "highRisk": {
+          "detail": "purge / escalate events",
+          "label": "High-risk · 24h"
+        },
+        "operatorsOnline": {
+          "detail": "with active sessions",
+          "label": "Operators online"
+        },
+        "pendingMerges": {
+          "detail": "awaiting resolution",
+          "label": "Pending merges"
+        },
+        "tenantsActive": {
+          "detail": "total registered",
+          "label": "Tenants active"
+        }
+      },
+      "title": "{{greeting}}, {{name}}."
     },
     "impersonation": {
       "asUser": "as {{name}}",
