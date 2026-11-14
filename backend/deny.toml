@@ -328,13 +328,20 @@ deny = [
     # the -0367/-0368/-0369 ignores once utoipa-swagger-ui moves to zip >= 9.0.0.
     { name = "zip", version = ">=4.0.0, <9.0.0", reason = "RUSTSEC-2026-0367/-0368/-0369 patched-floor guard — the reachable zip line (rust_xlsxwriter) must be >= 9.0.0; the advisory ignore is scoped to the un-upgradable zip 3.0.0 utoipa-swagger-ui build-dep line, so an unpatched zip 4.0.0–8.x must trip cargo-deny rather than be swept up by it (GH #3124)" },
 
-    # ammonia PATCHED-FLOOR GUARD for RUSTSEC-2026-0373 (added 2026-10-23,
-    # GH #3130/#3143). The advisory ("Missing case-insensitive matching for CSS
-    # url function"): when an inline-style `url()` value is quoted, ammonia
-    # matched it case-sensitively, so a quoted `URL("https://evil/…")` skipped
-    # the relative-URL / url_schemes filtering that lowercase `url("…")` gets —
-    # a tracking-pixel / CSS format-injection vector (NOT XSS). Patched floor:
-    # `>= 4.2.4` (also back-patched on the 4.1.x line: `>= 4.1.8, < 4.2.0`).
+    # ammonia PATCHED-FLOOR GUARD for RUSTSEC-2026-0373 + RUSTSEC-2026-0533
+    # (added 2026-10-23, GH #3130/#3143; extended 2026-11-13, GH #3498).
+    # RUSTSEC-2026-0373 ("Missing case-insensitive matching for CSS url
+    # function"): when an inline-style `url()` value is quoted, ammonia matched
+    # it case-sensitively, so a quoted `URL("https://evil/…")` skipped the
+    # relative-URL / url_schemes filtering that lowercase `url("…")` gets — a
+    # tracking-pixel / CSS format-injection vector (NOT XSS). Fixed in 4.2.4.
+    # RUSTSEC-2026-0533 ("Incorrect handling of embedded SVG and MathML leads to
+    # mutation XSS"): markup embedded inside <svg>/<math> foreign-content was
+    # re-parsed under HTML rules after sanitization, so a crafted payload could
+    # mutate into executable script on reserialization — a genuine XSS on the
+    # same reachable sanitizer path. Fixed in 4.2.5. Patched floor is therefore
+    # `>= 4.2.5` (the 4.1.x line carries only -0373's back-patch:
+    # `>= 4.1.8, < 4.2.0`, and does NOT carry the -0533 fix).
     #
     # The workspace carries a SINGLE ammonia line: a DIRECT dependency of
     # api-server (`ammonia = "4.0"`) used to sanitize untrusted, user-supplied
@@ -342,14 +349,16 @@ deny = [
     # (servers/api-server/src/routes/announcements/shared.rs `sanitize`, which
     # calls `ammonia::Builder`) and outbound email content
     # (servers/api-server/src/services/email.rs `ammonia::clean`). It was bumped
-    # to 4.2.4 in Cargo.lock (#3130), which clears -0373 there.
+    # to 4.2.4 in Cargo.lock (#3130), which cleared -0373, then to 4.2.5 (#3498),
+    # which clears -0533 there.
     #
     # Unlike the AWS-SDK-pinned advisories on the `[advisories] ignore` list
     # above, this path is REACHABLE — we feed attacker-controlled markup through
-    # ammonia on the CSS-style sanitization path — so -0373 is deliberately NOT
-    # ignored; it must stay enforced. #3130 bumped the lockfile but did not pair
-    # the bump with a floor guard the way the zip / rustls / rustls-webpki / h2
-    # patched lines are; this completes that fix (GH #3143). ammonia's manifest
+    # ammonia on the CSS-style and embedded-SVG/MathML sanitization paths — so
+    # neither -0373 nor -0533 is ignored; both must stay enforced. #3130 bumped
+    # the lockfile but did not pair the bump with a floor guard the way the zip /
+    # rustls / rustls-webpki / h2 patched lines are; #3143 completed that for
+    # -0373 and #3498 extends it to -0533. ammonia's manifest
     # requirement is `^4.0` (>= 4.0.0, < 5.0.0), so a bad `cargo update` /
     # Dependabot lockfile move could otherwise drift the line back onto a
     # vulnerable release with only a Cargo.lock edit and silently reopen the
@@ -358,15 +367,15 @@ deny = [
     # patch floor.
     #
     # The patched set is two DISJOINT ranges (`>= 4.1.8, < 4.2.0` AND
-    # `>= 4.2.4`), and cargo-deny's `version` field is a semver VersionReq with
+    # `>= 4.2.5`), and cargo-deny's `version` field is a semver VersionReq with
     # no `!=`, so the vulnerable window is banned as the two gaps between the
-    # patched ranges: everything `< 4.1.8` and the `4.2.0–4.2.3` window. Both
-    # patched ranges — and the currently-resolved 4.2.4 — fall outside the bans
+    # patched ranges: everything `< 4.1.8` and the `4.2.0–4.2.4` window. Both
+    # patched ranges — and the currently-resolved 4.2.5 — fall outside the bans
     # and stay allowed. (The pre-4.0 lines carrying this advisory are not in our
     # tree; our requirement is `^4.0`.)
     # Follow-up: lift if ammonia ever leaves the api-server dependency tree.
     { name = "ammonia", version = ">=4.0.0, <4.1.8", reason = "RUSTSEC-2026-0373 patched-floor guard — ammonia (direct api-server HTML sanitizer, REACHABLE) must stay on a patched release (>= 4.1.8, < 4.2.0 OR >= 4.2.4); this half-range bans the vulnerable < 4.1.8 window so a lockfile downgrade trips cargo-deny rather than silently reopening the CSS url() sanitizer bypass (GH #3130/#3143)" },
-    { name = "ammonia", version = ">=4.2.0, <4.2.4", reason = "RUSTSEC-2026-0373 patched-floor guard — ammonia (direct api-server HTML sanitizer, REACHABLE) must stay on a patched release; this half-range bans the vulnerable 4.2.0–4.2.3 window (the 4.2.x releases before the 4.2.4 fix) so a lockfile downgrade trips cargo-deny rather than silently reopening the CSS url() sanitizer bypass (GH #3130/#3143)" },
+    { name = "ammonia", version = ">=4.2.0, <4.2.5", reason = "RUSTSEC-2026-0373 + RUSTSEC-2026-0533 patched-floor guard — ammonia (direct api-server HTML sanitizer, REACHABLE) must stay on a patched release; this half-range bans the vulnerable 4.2.0–4.2.4 window (the 4.2.x releases before the 4.2.5 fix: -0373's CSS url() sanitizer bypass applies to 4.2.0–4.2.3, and -0533's embedded-SVG/MathML mutation-XSS applies through 4.2.4) so a lockfile downgrade trips cargo-deny rather than silently reopening either bypass (GH #3130/#3143/#3498)" },
 
     # tokio PATCHED-FLOOR GUARD for RUSTSEC-2026-0386 (GH #3168). The advisory
     # ("`AsyncFd::new` and related constructors violate I/O safety", unsound) hit
