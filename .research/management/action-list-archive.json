@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-14T00:32:50Z",
+  "archived_at": "2026-11-14T02:27:09Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -4166,6 +4166,31 @@
       }
     },
     {
+      "id": "code-review-api-core-voice-book-facility-false-success",
+      "action": "api core voice book facility false success",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T02:24:19Z (tier1d api-core score=1 vector=bug) | gc1-reconcile 2026-11-14T02:24:19Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T02:24:19Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-25T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3497,
+        "merged_at": "2026-11-14T00:40:47Z",
+        "at": "2026-11-14T02:24:19Z"
+      }
+    },
+    {
       "id": "code-review-api-core-voice-cmd-fabricated-success",
       "action": "backend/servers/api-server/src/services/voice_commands.rs:248 and :278 — action_check_balance() and action_report_fault() are shipped stubs that return VoiceActionResult{ success: true } with fabricated data on a LIVE webhook path, not TODO",
       "owner_role": "pm-backend",
@@ -5758,6 +5783,31 @@
       "dependency": null,
       "depends_on": [],
       "first_open_at": "2026-07-08T12:21:22Z"
+    },
+    {
+      "id": "code-review-frontend-packages-formatdate-rangeerror",
+      "action": "frontend packages formatdate rangeerror",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T12:47:59Z (tier1d frontend-packages score=2 vector=bug) | gc1-reconcile 2026-11-14T02:24:19Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T12:47:59Z",
+      "signal_ref": {
+        "segment": "frontend-packages",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-24T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3499,
+        "merged_at": "2026-11-14T00:40:47Z",
+        "at": "2026-11-14T02:24:19Z"
+      }
     },
     {
       "id": "code-review-legal-rs-db-error-leak",
