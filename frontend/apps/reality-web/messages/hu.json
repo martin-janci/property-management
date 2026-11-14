@@ -595,7 +595,9 @@
       "clickHint": "Kattints egy kerületre a részletes statisztikákért.",
       "subtitle": "Pozsony – áttekintés",
       "title": "Ártérkép",
-      "h1": "Price map"
+      "h1": "Price map",
+      "sale": "Eladás",
+      "rent": "Bérlés"
     },
     "privacy": {
       "description": "Elkötelezettünk vagyunk személyes adatainak védelme mellett a GDPR és az alkalmazandó jogszabályok szerint. A teljes adatvédelmi nyilatkozat hamarosan itt kerül közzétételre.",

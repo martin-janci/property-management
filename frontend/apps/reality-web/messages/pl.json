@@ -595,7 +595,9 @@
       "clickHint": "Kliknij dzielnicę po szczegółowe statystyki.",
       "subtitle": "Bratysława – przegląd",
       "title": "Mapa cen",
-      "h1": "Price map"
+      "h1": "Price map",
+      "sale": "Sprzedaż",
+      "rent": "Wynajem"
     },
     "privacy": {
       "description": "Zobowiązujemy się chronić Twoje dane osobowe zgodnie z RODO i obowiązującymi przepisami. Pełna polityka prywatności zostanie tutaj opublikowana.",

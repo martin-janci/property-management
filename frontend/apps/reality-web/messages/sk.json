@@ -595,7 +595,9 @@
       "clickHint": "Kliknite na mestskú štvrť pre detailné štatistiky.",
       "subtitle": "Bratislava – Prehľad",
       "title": "Mapa cien",
-      "h1": "Mapa cien"
+      "h1": "Mapa cien",
+      "sale": "Predaj",
+      "rent": "Prenájom"
     },
     "privacy": {
       "description": "Zaviazali sme sa chrániť vaše osobné údaje v súlade s GDPR a platnými zákonmi. Úplné podmienky ochrany súkromia budú zverejnené tu.",

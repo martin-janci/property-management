@@ -595,7 +595,9 @@
       "clickHint": "Click on a district for detailed statistics.",
       "subtitle": "Bratislava – Overview",
       "title": "Price map",
-      "h1": "Price map"
+      "h1": "Price map",
+      "sale": "Sale",
+      "rent": "Rent"
     },
     "privacy": {
       "description": "We are committed to protecting your personal data in accordance with GDPR and applicable laws. Full privacy policy details will be published here.",
