@@ -201,8 +201,16 @@ fn ensure_role_type_assignable(caller_role_type: &str, requested: &str) -> Resul
 /// manage-hierarchy rule against the resulting role closes the gap while
 /// preserving the admin-level hand-over exception (an org admin may still assign
 /// `org_admin`, guarded against last-admin loss by [`ensure_not_last_admin`]).
-fn ensure_can_assign_role_type(caller_role_type: &str, new_role_type: &str) -> Result<(), ApiError> {
-    ensure_role_type_assignable(caller_role_type, new_role_type)
+fn ensure_can_assign_role_type(
+    caller_role_type: &str,
+    new_role_type: &str,
+) -> Result<(), ApiError> {
+    ensure_role_type_assignable(caller_role_type, new_role_type)?;
+    // The caller must be able to MANAGE a member at the resulting level, under
+    // the same strictly-below-except-admins rule the handler already enforces
+    // against the member's current role. Without this a non-admin could assign
+    // a peer-level role (lateral privilege propagation).
+    ensure_can_manage_member(caller_role_type, new_role_type)
 }
 
 fn require_active_membership(status: &str) -> Result<(), ApiError> {
