@@ -62,3 +62,59 @@ async fn upload_statement_happy_path(pool: PgPool) {
     // The created statement echoes the uploaded file name.
     resp.assert_json_field("id");
 }
+
+/// Regression: the created statement's `account_iban` is sourced from the
+/// company's configured bank account (UC-ACC-02.10), not a hardcoded
+/// placeholder (the old code recorded `"CZ0000000000000000000000"` for every
+/// upload regardless of the tenant's configured account).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn upload_statement_records_configured_account_iban(pool: PgPool) {
+    use serde_json::json;
+
+    let app = TestApp::new(pool.clone()).await;
+
+    let user = TestUser::new();
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "uploadstmtiban").await;
+
+    // Configure the tenant's default bank account — the source of truth for the
+    // statement's own-account IBAN.
+    let configured_iban = "SK9611000000002918599669";
+    sqlx::query(
+        "INSERT INTO acc_bank_account (tenant_id, label, iban, currency, is_default, is_active) \
+         VALUES ($1, 'main', $2, 'EUR', TRUE, TRUE)",
+    )
+    .bind(org_id)
+    .bind(configured_iban)
+    .execute(&pool)
+    .await
+    .expect("seed configured bank account");
+
+    let csv = "date,amount,currency,counterparty_iban,variable_symbol,reference\n\
+               2026-06-01,100.00,EUR,SK0000000000000000000000,VS999,Test payment\n";
+
+    let boundary = "bit420ibanboundary";
+    let body = format!(
+        "--{boundary}\r\n\
+         Content-Disposition: form-data; name=\"file\"; filename=\"statement.csv\"\r\n\
+         Content-Type: text/csv\r\n\
+         \r\n\
+         {csv}\r\n\
+         --{boundary}--\r\n"
+    );
+
+    let req = Request::builder()
+        .method(Method::POST)
+        .uri("/api/v1/accounting/statements")
+        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+        .header("X-Tenant-ID", org_id.to_string())
+        .header(
+            header::CONTENT_TYPE,
+            format!("multipart/form-data; boundary={boundary}"),
+        )
+        .body(Body::from(body))
+        .expect("build multipart upload request");
+
+    let resp = app.execute(req).await;
+    resp.assert_status(StatusCode::OK);
+    resp.assert_json_value("account_iban", &json!(configured_iban));
+}
