@@ -9,7 +9,7 @@
 import type { ListingSummary } from '@ppt/reality-api-client';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useComparison } from '../../lib/comparison-context';
 
@@ -28,6 +28,18 @@ export function ComparisonView() {
   const t = useTranslations('comparison');
   const locale = useLocale();
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear any pending toast auto-dismiss timer on unmount so the 3s callback
+  // can't fire setToast after the view has unmounted.
+  useEffect(
+    () => () => {
+      if (toastTimerRef.current !== null) {
+        clearTimeout(toastTimerRef.current);
+      }
+    },
+    []
+  );
 
   // Format price with the listing's actual currency, in the active locale.
   const formatPrice = useMemo(
@@ -114,7 +126,15 @@ export function ComparisonView() {
 
   const showToast = (message: string, type: 'success' | 'info' = 'success') => {
     setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
+    // Clear a still-pending dismiss timer before re-arming so back-to-back
+    // toasts don't leak stacked timeouts.
+    if (toastTimerRef.current !== null) {
+      clearTimeout(toastTimerRef.current);
+    }
+    toastTimerRef.current = setTimeout(() => {
+      setToast(null);
+      toastTimerRef.current = null;
+    }, 3000);
   };
 
   if (listings.length === 0) {
