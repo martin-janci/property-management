@@ -303,14 +303,13 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
                 .build(),
         )
         .await;
-    // The handler logs the attempt and returns 200; allow gateway/internal too
-    // in case an external dependency is wired up later.
-    assert!(
-        resp.status == StatusCode::OK
-            || resp.status == StatusCode::BAD_GATEWAY
-            || resp.status == StatusCode::INTERNAL_SERVER_ERROR,
-        "unexpected status {}: {}",
+    // No external rate provider is integrated, so the handler reports an honest
+    // 501 Not Implemented rather than a fake success for a no-op. See the
+    // dedicated regression test `rate_fetch_returns_honest_not_implemented`.
+    assert_eq!(
         resp.status,
+        StatusCode::NOT_IMPLEMENTED,
+        "rate fetch should report 501 (no provider wired): {}",
         resp.text()
     );
 
@@ -587,4 +586,88 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
         )
         .await;
     resp.assert_status(StatusCode::OK);
+}
+
+/// Regression: the rate-fetch endpoint must not fake a success for a no-op.
+///
+/// There is no external rate-provider integration in the backend, so
+/// `POST /api/v1/multi-currency/rates/fetch` returns `501 Not Implemented`
+/// and leaves the org's `last_rate_update` untouched (nothing was refreshed),
+/// while recording the attempt in `exchange_rate_fetch_log` with
+/// `success = false`. Before the honest-status fix the handler returned
+/// `200 { success: true }`, advanced `last_rate_update`, and logged
+/// `success = true, rates_fetched = 0` — masking a no-op as a real refresh.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn rate_fetch_returns_honest_not_implemented(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let org_id = seed_org(&app.pool, "mcfetch").await;
+    let email = format!("mc-fetch-{}@example.com", Uuid::new_v4());
+    let user_id = seed_user(&app.pool, &email).await;
+    let token = mint(user_id, &email, org_id);
+    seed_membership(&app.pool, org_id, user_id, "manager").await;
+
+    // Establish a currency config so `last_rate_update` starts NULL and the
+    // handler has a configured source to attribute the failed attempt to.
+    let create_config_payload = json!({
+        "base_currency": "EUR",
+        "enabled_currencies": ["EUR", "USD"],
+        "exchange_rate_source": "ecb",
+    });
+    let resp = app
+        .execute(
+            app.post("/api/v1/multi-currency/config")
+                .bearer(&token)
+                .tenant(org_id)
+                .json(&create_config_payload)
+                .build(),
+        )
+        .await;
+    resp.assert_status(StatusCode::OK);
+
+    // Act: trigger the fetch.
+    let resp = app
+        .execute(
+            app.post("/api/v1/multi-currency/rates/fetch")
+                .bearer(&token)
+                .tenant(org_id)
+                .build(),
+        )
+        .await;
+
+    // Honest status: 501, not a fake 200 success.
+    assert_eq!(
+        resp.status,
+        StatusCode::NOT_IMPLEMENTED,
+        "expected 501 for an unconfigured rate fetch, got {}: {}",
+        resp.status,
+        resp.text()
+    );
+
+    // No rates were refreshed, so `last_rate_update` must stay NULL.
+    let last_update: Option<chrono::DateTime<Utc>> = sqlx::query_scalar(
+        "SELECT last_rate_update FROM organization_currency_config WHERE organization_id = $1",
+    )
+    .bind(org_id)
+    .fetch_one(&app.pool)
+    .await
+    .expect("read currency config");
+    assert!(
+        last_update.is_none(),
+        "last_rate_update must not advance when no rates were fetched"
+    );
+
+    // The attempt is recorded honestly as a failed fetch (success = false).
+    let logged_success: bool = sqlx::query_scalar(
+        "SELECT success FROM exchange_rate_fetch_log WHERE organization_id = $1 \
+         ORDER BY fetch_time DESC LIMIT 1",
+    )
+    .bind(org_id)
+    .fetch_one(&app.pool)
+    .await
+    .expect("read fetch log");
+    assert!(
+        !logged_success,
+        "fetch log must record success = false for an unconfigured no-op fetch"
+    );
 }
