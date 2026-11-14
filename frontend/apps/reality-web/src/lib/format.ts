@@ -41,21 +41,54 @@ export function formatNumber(
   return new Intl.NumberFormat(bcp47(locale), options).format(value);
 }
 
+/** Fallback currency used whenever a caller supplies an invalid one. */
+const DEFAULT_CURRENCY = 'EUR';
+
+/**
+ * ISO 4217 codes are exactly three ASCII letters. `Intl.NumberFormat`
+ * throws a `RangeError: Invalid currency code` for anything else — an
+ * empty string, a symbol like `€`, a mixed-case or wrong-length value.
+ * Listing data reaches `formatPrice` straight from the API / mocks
+ * (`{ currency: listing.currency }`), so a malformed code there must not
+ * crash the page / SSR render.
+ */
+function isWellFormedCurrencyCode(code: unknown): code is string {
+  return typeof code === 'string' && /^[A-Za-z]{3}$/.test(code);
+}
+
 /**
  * Format a price. Defaults to EUR + no fraction digits — most reality
  * listings round to whole euros. Pass `options` to override.
+ *
+ * Guards against an invalid `options.currency` (empty, a currency
+ * *symbol*, or an otherwise unknown code): rather than throwing the
+ * `RangeError: Invalid currency code` that `Intl.NumberFormat` raises —
+ * which previously crashed the listing pages and SSR — it falls back to
+ * {@link DEFAULT_CURRENCY}, and ultimately to a plain grouped number if
+ * even that fails.
  */
 export function formatPrice(
   value: number,
   locale: string,
   options: Intl.NumberFormatOptions = {}
 ): string {
-  return new Intl.NumberFormat(bcp47(locale), {
-    style: 'currency',
-    currency: 'EUR',
-    maximumFractionDigits: 0,
-    ...options,
-  }).format(value);
+  const requestedCurrency = 'currency' in options ? options.currency : DEFAULT_CURRENCY;
+  const currency = isWellFormedCurrencyCode(requestedCurrency)
+    ? requestedCurrency
+    : DEFAULT_CURRENCY;
+
+  try {
+    return new Intl.NumberFormat(bcp47(locale), {
+      style: 'currency',
+      maximumFractionDigits: 0,
+      ...options,
+      currency,
+    }).format(value);
+  } catch {
+    // A well-formed but unknown code (or any other Intl rejection) must
+    // still not crash the render — degrade to a plain grouped number.
+    return formatNumber(value, locale, { maximumFractionDigits: 0 });
+  }
 }
 
 /**

@@ -8,7 +8,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { formatDate, formatDateTime } from './format';
+import { formatDate, formatDateTime, formatPrice } from './format';
 
 // Local-time constructor keeps the date portion stable regardless of the
 // test runner's TZ (31 Dec 2025, 14:05 local).
@@ -36,6 +36,43 @@ describe('formatDate', () => {
   it('returns an empty string for an unparseable date instead of "Invalid Date"', () => {
     expect(formatDate('not-a-date', 'de')).toBe('');
     expect(formatDate(Number.NaN, 'sk')).toBe('');
+  });
+});
+
+describe('formatPrice', () => {
+  it('formats a valid currency code', () => {
+    // Narrow non-breaking spaces vary by ICU build; assert on the pieces.
+    const out = formatPrice(1234, 'sk', { currency: 'EUR' });
+    expect(out).toMatch(/1.?234/);
+    expect(out).toContain('€');
+  });
+
+  it('defaults to EUR when no currency is supplied', () => {
+    expect(formatPrice(1000, 'de')).toContain('€');
+  });
+
+  // Regression: listing data flows in as `{ currency: listing.currency }`
+  // straight from the API / mocks, and that value can be empty, a symbol,
+  // or an otherwise invalid code. `Intl.NumberFormat` throws
+  // `RangeError: Invalid currency code` for those, which crashed the
+  // listing pages / SSR. These must not throw.
+  it.each([
+    ['empty string', ''],
+    ['a currency symbol', '€'],
+    ['wrong length', 'EU'],
+    ['too long', 'EURO'],
+    ['digits', '123'],
+    ['unknown-but-well-formed code', 'ZZZ'],
+  ])('does not throw for an invalid currency code (%s)', (_label, bad) => {
+    expect(() => formatPrice(1234, 'sk', { currency: bad as string })).not.toThrow();
+    // Output still renders the number rather than blowing up the page.
+    expect(formatPrice(1234, 'sk', { currency: bad as string })).toMatch(/1.?234/);
+  });
+
+  it('falls back to EUR formatting for an invalid code', () => {
+    // '€' is not a valid ISO 4217 code → guard swaps in EUR and still
+    // renders a euro-denominated price.
+    expect(formatPrice(1234, 'de', { currency: '€' })).toContain('€');
   });
 });
 
