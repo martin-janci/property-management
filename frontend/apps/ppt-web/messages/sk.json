@@ -4503,6 +4503,7 @@
   "iot": {
     "dashboardTitle": "Inteligentná budova",
     "dashboardSubtitle": "Senzory, telemetria a upozornenia naprieč vašimi budovami.",
+    "dashboardLoadError": "Nepodarilo sa načítať prehľad. Skúste to znova.",
     "openDashboard": "Prehľad",
     "sensorsTitle": "Senzory a zariadenia",
     "sensorsSubtitle": "Registrujte a spravujte IoT zariadenia vo vašich budovách.",
