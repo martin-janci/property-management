@@ -3205,6 +3205,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "code-review-admin-web-raw-fetch-bypasses-api-client",
+      "branch": "auto-impl/code-review-admin-web-raw-fetch-bypasses-45d4a9bb",
+      "status": "merged",
+      "claimed_at": "2026-11-14T20:29:25Z",
+      "last_updated": "2026-11-14T22:45:29Z",
+      "status_changed_at": "2026-11-14T22:45:29Z",
+      "pr_number": 3530,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3530",
+      "merged_at": "2026-11-14T22:44:47Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=d259b8a71c16daf4c2e1fcc3d464289e3a6295b4 note=clean-scoped-dedup-onto-authenticatedFetchJson-tests-CI-green",
+      "last_reviewed_oid": "d259b8a71c16daf4c2e1fcc3d464289e3a6295b4",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-14T22:40:12Z"
+    },
+    {
       "task_id": "code-review-admin-web-tenant-lifecycle-no-i18n",
       "branch": "auto-impl/code-review-admin-web-tenant-lifecycle-n-7e335401",
       "status": "merged",
@@ -5236,6 +5258,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-11-02T12:38:41Z"
+    },
+    {
+      "task_id": "code-review-api-handlers-multi-currency-refresh-stub-success",
+      "branch": "auto-impl/code-review-api-handlers-multi-currency-e014a93a",
+      "status": "merged",
+      "claimed_at": "2026-11-14T20:29:25Z",
+      "last_updated": "2026-11-14T22:42:15Z",
+      "status_changed_at": "2026-11-14T22:42:15Z",
+      "pr_number": 3529,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3529",
+      "merged_at": "2026-11-14T22:41:31Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=dcdbd27c02e9b852ecbc48521551c95606a9d3f9 note=honest-501-clean-scope-tested",
+      "last_reviewed_oid": "dcdbd27c02e9b852ecbc48521551c95606a9d3f9",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-14T22:40:12Z"
     },
     {
       "task_id": "code-review-api-handlers-ocr-photo-url-silent-loss",
@@ -8339,6 +8383,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-ppt-web-core-errorhandler-raw-backend-message-passthrough",
+      "branch": "auto-impl/code-review-ppt-web-core-errorhandler-ra-42557acc",
+      "status": "merged",
+      "claimed_at": "2026-11-14T20:29:25Z",
+      "last_updated": "2026-11-14T22:43:49Z",
+      "status_changed_at": "2026-11-14T22:43:49Z",
+      "pr_number": 3527,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3527",
+      "merged_at": "2026-11-14T22:43:25Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=65e7eb7b39486926bd9d38024d5cd73bb237acc0 note=describeError-prod-detail-gate-correct-tests-green-scopedrift-benign",
+      "last_reviewed_oid": "65e7eb7b39486926bd9d38024d5cd73bb237acc0",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-14T22:40:12Z"
     },
     {
       "task_id": "code-review-ppt-web-core-errorhandler-raw-backend-msg",
@@ -27755,5 +27821,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-14T20:45:25Z"
+  "archived_at": "2026-11-14T22:45:29Z"
 }
