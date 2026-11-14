@@ -10,6 +10,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   brandingToStyleObject,
+  faviconHref,
   isSafeCssVarName,
   sanitizeCssValue,
   type TenantBranding,
@@ -98,6 +99,39 @@ describe('isSafeCssVarName', () => {
     expect(isSafeCssVarName('color')).toBe(false);
     expect(isSafeCssVarName('--PPT-Color')).toBe(false);
     expect(isSafeCssVarName(`--${'a'.repeat(70)}`)).toBe(false);
+  });
+});
+
+describe('faviconHref — scheme allowlist for the <link rel="icon"> href', () => {
+  // IG3: the tenant-authored `logo_url` flows straight into an `href`. Without
+  // a scheme check a `javascript:` / `data:` / other dangerous-scheme value is
+  // emitted verbatim (scheme-based injection). These cases fail against the
+  // raw passthrough and pass once `faviconHref` routes through `sanitizeHref`.
+  it('rejects a javascript: logo_url', () => {
+    expect(faviconHref({ ...baseBranding, logo_url: 'javascript:alert(1)' })).toBeNull();
+    expect(faviconHref({ ...baseBranding, logo_url: 'JavaScript:alert(1)' })).toBeNull();
+    expect(faviconHref({ ...baseBranding, logo_url: '  javascript:alert(1)' })).toBeNull();
+    expect(faviconHref({ ...baseBranding, logo_url: 'java\tscript:alert(1)' })).toBeNull();
+  });
+
+  it('rejects other dangerous schemes', () => {
+    expect(
+      faviconHref({ ...baseBranding, logo_url: 'data:text/html,<script>alert(1)</script>' })
+    ).toBeNull();
+    expect(faviconHref({ ...baseBranding, logo_url: 'vbscript:msgbox(1)' })).toBeNull();
+  });
+
+  it('passes through a safe http(s) logo_url', () => {
+    expect(faviconHref({ ...baseBranding, logo_url: 'https://cdn.rlt.sk/logo.svg' })).toBe(
+      'https://cdn.rlt.sk/logo.svg'
+    );
+    expect(faviconHref({ ...baseBranding, logo_url: '/branding/logo.svg' })).toBe(
+      '/branding/logo.svg'
+    );
+  });
+
+  it('returns null when there is no logo', () => {
+    expect(faviconHref(baseBranding)).toBeNull();
   });
 });
 

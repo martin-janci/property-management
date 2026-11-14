@@ -209,6 +209,19 @@ export function brandingToStyleObject(branding: TenantBranding): React.CSSProper
 }
 
 /**
+ * Resolve the tenant-authored logo URL for the root layout's
+ * `<link rel="icon" href>`.
+ *
+ * `branding.logo_url` is tenant-controlled external data that flows straight
+ * into an `href`, so it is returned here as the single choke point the layout
+ * reads from. Returns `null` when there is no logo, in which case the layout
+ * emits no favicon link.
+ */
+export function faviconHref(branding: TenantBranding): string | null {
+  return branding.logo_url;
+}
+
+/**
  * Legacy raw-string version. Kept for tests / non-React consumers.
  * Sanitization is identical to `brandingToStyleObject`.
  */
