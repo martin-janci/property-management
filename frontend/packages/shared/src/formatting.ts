@@ -88,46 +88,78 @@ export interface DateFormatOptions {
 }
 
 /**
- * Safely converts various date inputs to Date objects.
+ * Fallback returned by the date formatters when the input cannot be parsed
+ * into a valid `Date`. Returning this instead of throwing keeps callers (and
+ * the React render tree) safe from invalid, `null`, or `undefined` input —
+ * `Intl.DateTimeFormat#format` and `Date#toISOString` throw a `RangeError`
+ * ("Invalid time value") on an invalid Date.
  */
-function toDate(input: DateInput): Date {
-  if (input instanceof Date) {
-    return input;
+const INVALID_DATE_FALLBACK = '';
+
+/**
+ * Safely converts various date inputs to `Date` objects.
+ *
+ * Returns `null` when the input cannot be parsed into a valid date (e.g. an
+ * unparseable string, `NaN`, or a `null`/`undefined` passed from untyped
+ * JS callers) so formatters can emit a safe fallback instead of throwing.
+ */
+function toDate(input: DateInput): Date | null {
+  // Treat missing input as invalid. `new Date(null)` coerces to the epoch
+  // rather than throwing, so guard it explicitly to keep "missing" distinct
+  // from a deliberate epoch timestamp.
+  if (input === null || input === undefined) {
+    return null;
   }
-  return new Date(input);
+  const date = input instanceof Date ? input : new Date(input);
+  return Number.isNaN(date.getTime()) ? null : date;
 }
 
 /**
  * Formats a date using short format (e.g., "Mar 20, 2026").
+ * Returns an empty string for invalid/missing input instead of throwing.
  */
 export function formatDate(date: DateInput, options: DateFormatOptions = {}): string {
   const { locale = getUserLocale() } = options;
+  const parsed = toDate(date);
+  if (parsed === null) {
+    return INVALID_DATE_FALLBACK;
+  }
 
   return new Intl.DateTimeFormat(locale, {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
-  }).format(toDate(date));
+  }).format(parsed);
 }
 
 /**
  * Formats a date using detailed format (e.g., "March 20, 2026").
+ * Returns an empty string for invalid/missing input instead of throwing.
  */
 export function formatDetailedDate(date: DateInput, options: DateFormatOptions = {}): string {
   const { locale = getUserLocale() } = options;
+  const parsed = toDate(date);
+  if (parsed === null) {
+    return INVALID_DATE_FALLBACK;
+  }
 
   return new Intl.DateTimeFormat(locale, {
     month: 'long',
     day: 'numeric',
     year: 'numeric',
-  }).format(toDate(date));
+  }).format(parsed);
 }
 
 /**
  * Formats a date with time (e.g., "Mar 20, 2026, 3:45 PM").
+ * Returns an empty string for invalid/missing input instead of throwing.
  */
 export function formatDateTime(date: DateInput, options: DateFormatOptions = {}): string {
   const { locale = getUserLocale() } = options;
+  const parsed = toDate(date);
+  if (parsed === null) {
+    return INVALID_DATE_FALLBACK;
+  }
 
   return new Intl.DateTimeFormat(locale, {
     month: 'short',
@@ -135,35 +167,50 @@ export function formatDateTime(date: DateInput, options: DateFormatOptions = {})
     year: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
-  }).format(toDate(date));
+  }).format(parsed);
 }
 
 /**
  * Formats time only (e.g., "3:45 PM").
+ * Returns an empty string for invalid/missing input instead of throwing.
  */
 export function formatTime(date: DateInput, options: DateFormatOptions = {}): string {
   const { locale = getUserLocale() } = options;
+  const parsed = toDate(date);
+  if (parsed === null) {
+    return INVALID_DATE_FALLBACK;
+  }
 
   return new Intl.DateTimeFormat(locale, {
     hour: 'numeric',
     minute: '2-digit',
-  }).format(toDate(date));
+  }).format(parsed);
 }
 
 /**
  * Formats a date as ISO date string (YYYY-MM-DD).
+ * Returns an empty string for invalid/missing input instead of throwing.
  */
 export function formatISODate(date: DateInput): string {
-  return toDate(date).toISOString().split('T')[0];
+  const parsed = toDate(date);
+  if (parsed === null) {
+    return INVALID_DATE_FALLBACK;
+  }
+  return parsed.toISOString().split('T')[0];
 }
 
 /**
  * Formats a relative time (e.g., "2 hours ago", "in 3 days").
+ * Returns an empty string for invalid/missing input instead of throwing.
  */
 export function formatRelativeTime(date: DateInput, options: DateFormatOptions = {}): string {
   const { locale = getUserLocale() } = options;
+  const parsed = toDate(date);
+  if (parsed === null) {
+    return INVALID_DATE_FALLBACK;
+  }
   const now = Date.now();
-  const then = toDate(date).getTime();
+  const then = parsed.getTime();
   const diffMs = then - now;
   const diffSecs = Math.round(diffMs / 1000);
   const diffMins = Math.round(diffSecs / 60);

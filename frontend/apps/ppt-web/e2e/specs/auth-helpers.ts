@@ -35,6 +35,18 @@ export const MOCK_USER = {
   role: 'manager',
 } as const;
 
+/**
+ * A manager user that additionally carries an active `organizationId`. Enough
+ * for a protected, tenant-scoped route (e.g. `/disputes`) to render its real
+ * surface instead of bouncing to the inline `AuthRequiredGate` (which fires
+ * when `user.organizationId` is absent). Kept separate from {@link MOCK_USER}
+ * so the refresh-flow specs' fixture stays untouched.
+ */
+export const MOCK_AUTHED_USER = {
+  ...MOCK_USER,
+  organizationId: 'org-e2e-01',
+} as const;
+
 // ---------------------------------------------------------------------------
 // JWT / time builders
 // ---------------------------------------------------------------------------
@@ -96,6 +108,32 @@ export async function seedRefreshableSession(page: Page, refreshToken: string): 
       rt: refreshToken,
       user: MOCK_USER,
     }
+  );
+}
+
+/**
+ * Seed a fully authenticated session: a stored user plus a still-valid access
+ * token. On the next full navigation AuthProvider.initializeAuth() takes its
+ * synchronous branch (stored user + unexpired access token ⇒ `setUser`),
+ * marking the session authenticated with NO network round-trip — so a
+ * `<ProtectedRoute>` renders its children instead of redirecting to `/login`.
+ *
+ * Use this (rather than {@link seedRefreshableSession}) when a spec simply
+ * needs to BE authenticated to reach a gated route, with no interest in the
+ * refresh-on-mount flow. The seeded user carries an `organizationId` so
+ * tenant-scoped pages render their real surface rather than `AuthRequiredGate`.
+ */
+export async function seedAuthenticatedSession(
+  page: Page,
+  user: Record<string, unknown> = MOCK_AUTHED_USER
+): Promise<void> {
+  await resetStorage(page);
+  await page.evaluate(
+    ({ atKey, uKey, at, u }) => {
+      localStorage.setItem(atKey, at);
+      localStorage.setItem(uKey, JSON.stringify(u));
+    },
+    { atKey: ACCESS_TOKEN_KEY, uKey: USER_KEY, at: managerAccessToken(), u: user }
   );
 }
 
