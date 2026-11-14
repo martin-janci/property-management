@@ -433,6 +433,7 @@
       "rating": "Értékelés",
       "reviewVerified": "Ellenőrzött",
       "reviews": "Értékelések",
+      "reviewsError": "Az értékeléseket nem sikerült betölteni. Kérjük, próbálja meg később.",
       "sendMessage": "Üzenet küldése",
       "specializations": "Szakterületek",
       "totalListings": "Összes hirdetés",

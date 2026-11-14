@@ -433,6 +433,7 @@
       "rating": "Rating",
       "reviewVerified": "Verified",
       "reviews": "Reviews",
+      "reviewsError": "Reviews couldn't be loaded. Please try again later.",
       "sendMessage": "Send message",
       "specializations": "Specializations",
       "totalListings": "Total listings",

@@ -206,3 +206,34 @@ describe('AgentProfilePage contact channels', () => {
     expect(href).toContain(`body=${encodeURIComponent('Ahoj & test')}`);
   });
 });
+
+/**
+ * Reviews error honesty — regression for the code-review finding that the
+ * `realtor-reviews` useQuery error branch was swallowed: when the reviews
+ * request failed, `reviewsData` stayed undefined and the Reviews section
+ * silently rendered the "no reviews yet" empty state, masking the failure.
+ * The page must instead surface the error (an alert) while the rest of the
+ * already-loaded profile keeps rendering.
+ *
+ * Fails against the pre-fix page (which destructured only `data` from the
+ * reviews query): no `role="alert"` is rendered and the empty-state copy
+ * ("Zatiaľ žiadne hodnotenia.") is shown for a *failed* request.
+ */
+describe('AgentProfilePage reviews error', () => {
+  it('surfaces the reviews load error instead of a silent empty state', async () => {
+    getRealtorPublicProfile.mockResolvedValue(makeProfile());
+    getRealtorReviews.mockRejectedValue(new RealtorApiError('Reviews unavailable', 500));
+
+    renderPage();
+
+    // The already-loaded profile still renders.
+    expect(await screen.findByText('Ing. Jozef Testovací')).toBeInTheDocument();
+
+    // The reviews failure is surfaced as an alert carrying the real i18n copy…
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(skMessages.pages.agentProfile.reviewsError);
+
+    // …and must NOT masquerade as a successful "no reviews yet" empty state.
+    expect(screen.queryByText(skMessages.pages.agentProfile.noReviews)).toBeNull();
+  });
+});
