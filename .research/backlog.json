@@ -15738,7 +15738,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "git-log 14d sweep 2026-11-13",
         "hotspot_history runs_seen>=2"
@@ -15752,7 +15752,12 @@
       ],
       "created_at": "2026-11-13",
       "updated_at": "2026-11-13",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-14T18:24:21Z",
+        "assignment_status": "merged",
+        "pr_number": 3519
+      }
     },
     {
       "id": "churn-hotspot-frontend-apps-ppt-web-messages-hu-json",
@@ -15780,7 +15785,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review reality-web 2026-11-13 (churn-aligned)"
       ],
@@ -15792,7 +15797,12 @@
       ],
       "created_at": "2026-11-13",
       "updated_at": "2026-11-13",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-14T18:24:21Z",
+        "assignment_status": "merged",
+        "pr_number": 3518
+      }
     }
   ]
 }
