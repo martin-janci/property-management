@@ -4504,6 +4504,7 @@
   "iot": {
     "dashboardTitle": "Chytrá budova",
     "dashboardSubtitle": "Senzory, telemetrie a upozornění napříč vašimi budovami.",
+    "dashboardLoadError": "Nepodařilo se načíst přehled. Zkuste to prosím znovu.",
     "openDashboard": "Přehled",
     "sensorsTitle": "Senzory a zařízení",
     "sensorsSubtitle": "Registrujte a spravujte IoT zařízení ve vašich budovách.",
