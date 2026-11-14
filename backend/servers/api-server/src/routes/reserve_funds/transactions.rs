@@ -11,7 +11,7 @@ use db::models::reserve_funds::{
 };
 use uuid::Uuid;
 
-use super::shared::{insert_child_error, internal_error, require_manager, ApiResult};
+use super::shared::{db_error, insert_child_error, require_manager, ApiResult};
 use crate::state::AppState;
 
 /// Transaction / transfer sub-router.
@@ -39,7 +39,7 @@ async fn list_transactions(
         .list_transactions(&mut **rls.conn(), org_id, query)
         .await
         .map(Json)
-        .map_err(|e| internal_error(&format!("Failed to list transactions: {}", e)));
+        .map_err(|e| db_error("list transactions", e));
     rls.release().await;
     out
 }

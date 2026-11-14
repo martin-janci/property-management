@@ -12,7 +12,7 @@ use db::models::reserve_funds::{
 use uuid::Uuid;
 
 use super::shared::{
-    internal_error, not_found_error, repo_error, require_manager, ApiResult, FundListQuery,
+    db_error, not_found_error, repo_error, require_manager, ApiResult, FundListQuery,
 };
 use crate::state::AppState;
 
@@ -43,7 +43,7 @@ async fn list_funds(
         )
         .await
         .map(Json)
-        .map_err(|e| internal_error(&format!("Failed to list funds: {}", e)));
+        .map_err(|e| db_error("list funds", e));
     rls.release().await;
     out
 }
@@ -62,7 +62,7 @@ async fn create_fund(
         .create_fund(&mut **rls.conn(), org_id, req, user_id)
         .await
         .map(Json)
-        .map_err(|e| internal_error(&format!("Failed to create fund: {}", e)));
+        .map_err(|e| db_error("create fund", e));
     rls.release().await;
     out
 }
@@ -78,7 +78,7 @@ async fn get_fund(
         .reserve_fund_repo
         .get_fund(&mut **rls.conn(), org_id, fund_id)
         .await
-        .map_err(|e| internal_error(&format!("Failed to get fund: {}", e)))
+        .map_err(|e| db_error("get fund", e))
         .and_then(|f| f.map(Json).ok_or_else(|| not_found_error("Fund not found")));
     rls.release().await;
     out
@@ -114,7 +114,7 @@ async fn get_dashboard(
         .get_fund_dashboard(rls.conn(), org_id)
         .await
         .map(Json)
-        .map_err(|e| internal_error(&format!("Failed to get dashboard: {}", e)));
+        .map_err(|e| db_error("get dashboard", e));
     rls.release().await;
     out
 }

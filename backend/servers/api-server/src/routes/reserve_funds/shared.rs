@@ -70,6 +70,17 @@ pub(super) fn not_found_error(msg: &str) -> (StatusCode, Json<ErrorResponse>) {
     (StatusCode::NOT_FOUND, Json(ErrorResponse::not_found(msg)))
 }
 
+/// Log a repository/database failure server-side and return a sanitized 500.
+///
+/// Mirrors the `budgets` route convention (`routes::budgets::db_error`): the
+/// raw `sqlx::Error` can carry table/column names, SQL fragments and
+/// connection detail, so it is written to the tracing log and never echoed
+/// in the client-facing response body.
+pub(super) fn db_error(action: &str, e: sqlx::Error) -> (StatusCode, Json<ErrorResponse>) {
+    tracing::error!("Failed to {}: {:?}", action, e);
+    internal_error("Internal server error")
+}
+
 /// Map a repository error to an HTTP response.
 ///
 /// Org-scoped repo methods surface a foreign-tenant or missing row as
@@ -84,7 +95,7 @@ pub(super) fn repo_error(
 ) -> (StatusCode, Json<ErrorResponse>) {
     match e {
         sqlx::Error::RowNotFound => not_found_error(not_found_msg),
-        other => internal_error(&format!("Failed to {}: {}", action, other)),
+        other => db_error(action, other),
     }
 }
 
@@ -103,7 +114,7 @@ pub(super) fn insert_child_error(
     }
     match e {
         sqlx::Error::RowNotFound => not_found_error(not_found_msg),
-        other => internal_error(&format!("Failed to {}: {}", action, other)),
+        other => db_error(action, other),
     }
 }
 
