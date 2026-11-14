@@ -163,18 +163,18 @@
     {
       "task_id": "code-review-api-core-scheduler-no-panic-supervision",
       "branch": "auto-impl/code-review-api-core-scheduler-no-panic-e1773edb",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-14T02:26:58Z",
-      "last_updated": "2026-11-14T02:26:58Z",
-      "status_changed_at": "2026-11-14T02:26:58Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-14T03:06:32Z",
+      "status_changed_at": "2026-11-14T03:06:32Z",
+      "pr_number": 3508,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3508",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3508 status=partial specialist=rust-backend scope_drift=false code_reuse_warn=none note=scheduler panic supervision (catch_unwind per job in api-server/services/scheduler, logs job identity, loop survives); fmt+clippy green, 3 DB-free IG3 tests green (two-commit test:/fix: split); cargo test -p api-server verify env-blocked (20 sqlx::test fail DATABASE_URL unset, unrelated modules too \u2014 CI backend.yml must confirm DB suite)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -183,5 +183,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-14T02:47:17Z"
+  "generated": "2026-11-14T03:06:32Z"
 }
