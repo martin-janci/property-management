@@ -9,7 +9,7 @@ use axum::{
 use db::models::reserve_funds::FundAlert;
 use uuid::Uuid;
 
-use super::shared::{internal_error, repo_error, require_manager, ApiResult};
+use super::shared::{db_error, repo_error, require_manager, ApiResult};
 use crate::state::AppState;
 
 /// Alert sub-router.
@@ -31,7 +31,7 @@ async fn list_alerts(
         .list_active_alerts(&mut **rls.conn(), org_id)
         .await
         .map(Json)
-        .map_err(|e| internal_error(&format!("Failed to list alerts: {}", e)));
+        .map_err(|e| db_error("list alerts", e));
     rls.release().await;
     out
 }

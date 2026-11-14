@@ -70,6 +70,17 @@ pub(super) fn not_found_error(msg: &str) -> (StatusCode, Json<ErrorResponse>) {
     (StatusCode::NOT_FOUND, Json(ErrorResponse::not_found(msg)))
 }
 
+/// Log a repository/database failure server-side and return a sanitized 500.
+///
+/// Mirrors the `budgets` route convention (`routes::budgets::db_error`): the
+/// raw `sqlx::Error` can carry table/column names, SQL fragments and
+/// connection detail, so it is written to the tracing log and never echoed
+/// in the client-facing response body.
+pub(super) fn db_error(action: &str, e: sqlx::Error) -> (StatusCode, Json<ErrorResponse>) {
+    tracing::error!("Failed to {}: {:?}", action, e);
+    internal_error("Internal server error")
+}
+
 /// Map a repository error to an HTTP response.
 ///
 /// Org-scoped repo methods surface a foreign-tenant or missing row as
@@ -84,7 +95,7 @@ pub(super) fn repo_error(
 ) -> (StatusCode, Json<ErrorResponse>) {
     match e {
         sqlx::Error::RowNotFound => not_found_error(not_found_msg),
-        other => internal_error(&format!("Failed to {}: {}", action, other)),
+        other => db_error(action, other),
     }
 }
 
@@ -103,6 +114,48 @@ pub(super) fn insert_child_error(
     }
     match e {
         sqlx::Error::RowNotFound => not_found_error(not_found_msg),
-        other => internal_error(&format!("Failed to {}: {}", action, other)),
+        other => db_error(action, other),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const SECRET: &str = "reserve_fund_ledger.secret_column: internal constraint detail";
+
+    fn leaky_db_error() -> sqlx::Error {
+        // A non-`RowNotFound`, non-`Database` error whose `Display`/`Debug`
+        // carries internals (table/column names, SQL fragments, connection
+        // detail) that a client must never see.
+        sqlx::Error::Protocol(SECRET.to_string())
+    }
+
+    /// `repo_error` funnels every non-404 failure to the client. The body must
+    /// never echo the raw `sqlx::Error` — regression guard mirroring
+    /// `routes::budgets::db_error`.
+    #[test]
+    fn repo_error_never_leaks_raw_sqlx_detail() {
+        let (status, body) = repo_error("list funds", "Fund not found", leaky_db_error());
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        let json = serde_json::to_string(&body.0).expect("serialize error body");
+        assert!(
+            !json.contains(SECRET),
+            "repo_error leaked raw sqlx detail to the client: {json}"
+        );
+    }
+
+    /// `insert_child_error`'s fallthrough (an error that is neither a 404 nor an
+    /// RLS/FK child-insert rejection) must likewise stay generic.
+    #[test]
+    fn insert_child_error_never_leaks_raw_sqlx_detail() {
+        let (status, body) =
+            insert_child_error("record transaction", "Fund not found", leaky_db_error());
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        let json = serde_json::to_string(&body.0).expect("serialize error body");
+        assert!(
+            !json.contains(SECRET),
+            "insert_child_error leaked raw sqlx detail to the client: {json}"
+        );
     }
 }
