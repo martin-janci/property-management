@@ -305,129 +305,132 @@ impl Scheduler {
     }
 
     /// Run all scheduled tasks.
+    ///
+    /// Every job is dispatched through [`Self::run_job`], which supervises it:
+    /// a returned error is logged + counted, and a panic is caught at the job
+    /// boundary (logged with the job identity, counted) instead of unwinding and
+    /// aborting the [`Self::start`] tick loop. One misbehaving job can therefore
+    /// no longer silently stop every subsequent scheduled run — the remaining
+    /// jobs in this tick still run, and the next tick still fires.
     async fn run_scheduled_tasks(&self) {
         // Story 106.1: Publish scheduled announcements (state flip only).
-        if let Err(e) = self.publish_scheduled_announcements().await {
-            tracing::error!("Failed to publish scheduled announcements: {}", e);
-            self.increment_errors();
-        }
+        self.run_job(
+            "publish_scheduled_announcements",
+            self.publish_scheduled_announcements(),
+        )
+        .await;
 
         // Issue #2612: dispatch pending published-announcement notifications
         // (decoupled from publishing so a transient failure retries next tick).
-        if let Err(e) = self.dispatch_announcement_notifications().await {
-            tracing::error!("Failed to dispatch announcement notifications: {}", e);
-            self.increment_errors();
-        }
+        self.run_job(
+            "dispatch_announcement_notifications",
+            self.dispatch_announcement_notifications(),
+        )
+        .await;
 
         // Story 6.4 (issue #972.7): Auto-unpin announcements pinned too long
-        if let Err(e) = self.auto_unpin_expired_announcements().await {
-            tracing::error!("Failed to auto-unpin expired announcements: {}", e);
-            self.increment_errors();
-        }
+        self.run_job(
+            "auto_unpin_expired_announcements",
+            self.auto_unpin_expired_announcements(),
+        )
+        .await;
 
         // Story 106.2: Activate scheduled votes (state flip only).
-        if let Err(e) = self.activate_scheduled_votes().await {
-            tracing::error!("Failed to activate scheduled votes: {}", e);
-            self.increment_errors();
-        }
+        self.run_job("activate_scheduled_votes", self.activate_scheduled_votes())
+            .await;
 
         // Issue #2612: dispatch pending vote-started notifications (decoupled
         // from activation so a transient failure retries next tick).
-        if let Err(e) = self.dispatch_vote_started_notifications().await {
-            tracing::error!("Failed to dispatch vote-started notifications: {}", e);
-            self.increment_errors();
-        }
+        self.run_job(
+            "dispatch_vote_started_notifications",
+            self.dispatch_vote_started_notifications(),
+        )
+        .await;
 
         // Story 106.2: Close expired votes (state flip only).
-        if let Err(e) = self.close_expired_votes().await {
-            tracing::error!("Failed to close expired votes: {}", e);
-            self.increment_errors();
-        }
+        self.run_job("close_expired_votes", self.close_expired_votes())
+            .await;
 
         // Issue #2612: dispatch pending closed-vote result notifications
         // (decoupled from closing so a transient failure retries next tick).
-        if let Err(e) = self.dispatch_vote_closed_notifications().await {
-            tracing::error!("Failed to dispatch vote-closed notifications: {}", e);
-            self.increment_errors();
-        }
+        self.run_job(
+            "dispatch_vote_closed_notifications",
+            self.dispatch_vote_closed_notifications(),
+        )
+        .await;
 
         // Story 106.3: Send vote reminders
-        if let Err(e) = self.send_vote_reminders().await {
-            tracing::error!("Failed to send vote reminders: {}", e);
-            self.increment_errors();
-        }
+        self.run_job("send_vote_reminders", self.send_vote_reminders())
+            .await;
 
         // Story 106.4: Clean up expired sessions
-        if let Err(e) = self.cleanup_sessions().await {
-            tracing::error!("Failed to cleanup sessions: {}", e);
-            self.increment_errors();
-        }
+        self.run_job("cleanup_sessions", self.cleanup_sessions())
+            .await;
 
         // Issue #2531: prune aged support_tooling_events on a daily cadence.
-        if let Err(e) = self.prune_support_tooling_events().await {
-            tracing::error!("Failed to prune support tooling events: {}", e);
-            self.increment_errors();
-        }
+        self.run_job(
+            "prune_support_tooling_events",
+            self.prune_support_tooling_events(),
+        )
+        .await;
 
         // Issue #2563: prune aged layout_change_events on a daily cadence.
-        if let Err(e) = self.prune_layout_change_events().await {
-            tracing::error!("Failed to prune layout change events: {}", e);
-            self.increment_errors();
-        }
+        self.run_job(
+            "prune_layout_change_events",
+            self.prune_layout_change_events(),
+        )
+        .await;
 
         // Epic 10A (#2628): prune aged oauth_token_events on a daily cadence.
-        if let Err(e) = self.prune_oauth_token_events().await {
-            tracing::error!("Failed to prune oauth token events: {}", e);
-            self.increment_errors();
-        }
+        self.run_job(
+            "prune_oauth_token_events",
+            self.prune_oauth_token_events(),
+        )
+        .await;
 
         // Story 84.2: Expire overdue signature requests
-        if let Err(e) = self.expire_signature_requests().await {
-            tracing::error!("Failed to expire signature requests: {}", e);
-            self.increment_errors();
-        }
+        self.run_job(
+            "expire_signature_requests",
+            self.expire_signature_requests(),
+        )
+        .await;
 
         // Story 84.2: Send signature reminder emails
-        if let Err(e) = self.send_signature_reminders().await {
-            tracing::error!("Failed to send signature reminders: {}", e);
-            self.increment_errors();
-        }
+        self.run_job("send_signature_reminders", self.send_signature_reminders())
+            .await;
 
         // Story 12.2: Send meter reading reminders to residents before window closes
-        if let Err(e) = self.send_meter_reminders().await {
-            tracing::error!("Failed to send meter reading reminders: {}", e);
-            self.increment_errors();
-        }
+        self.run_job("send_meter_reminders", self.send_meter_reminders())
+            .await;
 
         // Story 11.6: Send payment due reminders
-        if let Err(e) = self.send_payment_reminders().await {
-            tracing::error!("Failed to send payment reminders: {}", e);
-            self.increment_errors();
-        }
+        self.run_job("send_payment_reminders", self.send_payment_reminders())
+            .await;
 
         // Story 11.6: Transition overdue invoices and fire escalation
-        if let Err(e) = self.transition_overdue_invoices().await {
-            tracing::error!("Failed to transition overdue invoices: {}", e);
-            self.increment_errors();
-        }
+        self.run_job(
+            "transition_overdue_invoices",
+            self.transition_overdue_invoices(),
+        )
+        .await;
 
         // Issue #2303: fire due report schedules and advance next_run_at.
-        if let Err(e) = self.fire_due_report_schedules().await {
-            tracing::error!("Failed to fire due report schedules: {}", e);
-            self.increment_errors();
-        }
+        self.run_job(
+            "fire_due_report_schedules",
+            self.fire_due_report_schedules(),
+        )
+        .await;
 
         // Gap audit R6 P1-5: erase accounts whose GDPR grace period elapsed.
-        if let Err(e) = self.execute_scheduled_account_deletions().await {
-            tracing::error!("Failed to execute scheduled account deletions: {}", e);
-            self.increment_errors();
-        }
+        self.run_job(
+            "execute_scheduled_account_deletions",
+            self.execute_scheduled_account_deletions(),
+        )
+        .await;
 
         // Gap audit R6 P2-13: expire active leases past their end date.
-        if let Err(e) = self.expire_ended_leases().await {
-            tracing::error!("Failed to expire ended leases: {}", e);
-            self.increment_errors();
-        }
+        self.run_job("expire_ended_leases", self.expire_ended_leases())
+            .await;
     }
 
     // ========================================================================
@@ -1439,6 +1442,74 @@ impl Scheduler {
         let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
         metrics.errors += 1;
     }
+
+    /// Run one scheduled job under supervision.
+    ///
+    /// Each job is executed through [`run_supervised_job`], which isolates both
+    /// a returned error AND a panic from the supervisor tick loop. A returned
+    /// `Err` is logged (with the job identity) and counted; a panic is caught at
+    /// the job boundary, logged with the job identity, counted, and — crucially
+    /// — never allowed to unwind into [`Self::run_scheduled_tasks`] / the
+    /// [`Self::start`] loop. Before this, an unhandled panic in any single job
+    /// aborted the whole spawned task, so the scheduler stopped ticking and
+    /// every subsequent scheduled run silently never fired.
+    async fn run_job<F, E>(&self, job: &'static str, fut: F)
+    where
+        F: std::future::Future<Output = Result<(), E>>,
+        E: std::fmt::Display,
+    {
+        match run_supervised_job(job, fut).await {
+            JobOutcome::Completed => {}
+            JobOutcome::Failed | JobOutcome::Panicked => self.increment_errors(),
+        }
+    }
+}
+
+/// Outcome of running one supervised scheduled job.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum JobOutcome {
+    /// The job ran to completion and returned `Ok(())`.
+    Completed,
+    /// The job returned an `Err` (logged by [`run_supervised_job`]).
+    Failed,
+    /// The job panicked; the panic was caught at the job boundary and logged,
+    /// so the supervisor loop survives and the next tick still fires.
+    Panicked,
+}
+
+/// Run a single scheduled-job future under panic supervision.
+///
+/// A returned `Err` is logged with the job identity and reported as
+/// [`JobOutcome::Failed`]. A panic unwinding out of the job future is caught
+/// here (so it can never tear down the scheduler tick loop), logged with the
+/// job identity, and reported as [`JobOutcome::Panicked`]. Otherwise the job is
+/// [`JobOutcome::Completed`].
+async fn run_supervised_job<F, E>(job: &'static str, fut: F) -> JobOutcome
+where
+    F: std::future::Future<Output = Result<(), E>>,
+    E: std::fmt::Display,
+{
+    // NOTE: panic supervision is added in the follow-up `fix:` commit. Here the
+    // job future is awaited directly, so a panic propagates into the tick loop —
+    // the exact un-supervised behaviour the regression test pins.
+    match fut.await {
+        Ok(()) => JobOutcome::Completed,
+        Err(e) => {
+            tracing::error!(job, error = %e, "scheduled job returned an error");
+            JobOutcome::Failed
+        }
+    }
+}
+
+/// Best-effort extraction of a panic payload's message for structured logging.
+fn panic_message(panic: &(dyn std::any::Any + Send)) -> String {
+    if let Some(s) = panic.downcast_ref::<&str>() {
+        (*s).to_string()
+    } else if let Some(s) = panic.downcast_ref::<String>() {
+        s.clone()
+    } else {
+        "non-string panic payload".to_string()
+    }
 }
 
 /// Parse an announcement's `target_ids` JSON payload into a list of UUIDs.
@@ -2398,6 +2469,105 @@ mod tests {
         assert_eq!(guard.errors, 1, "value written before poison is preserved");
         guard.errors += 1;
         assert_eq!(guard.errors, 2, "post-poison mutation still works");
+    }
+
+    // ------------------------------------------------------------------
+    // IG3 regression (code-review: api-core scheduler — panic supervision).
+    //
+    // The scheduler drives ~20 jobs per tick inside a single spawned task.
+    // Previously each job was awaited directly, so an unhandled panic in ONE
+    // job unwound out of `run_scheduled_tasks`, aborted the spawned tick-loop
+    // task, and silently stopped every subsequent scheduled run. These tests
+    // pin the supervisor seam (`run_supervised_job` / the `JobOutcome` it
+    // returns) that now catches a per-job panic at the job boundary so the loop
+    // survives and the next tick still fires.
+    //
+    // Pre-fix (`run_supervised_job` awaits the job directly) the panicking-job
+    // test ABORTS here: the panic propagates out of `.await` and unwinds the
+    // test task, so the assertion is never reached. Post-fix the panic is
+    // caught, reported as `JobOutcome::Panicked`, and control returns — and a
+    // subsequent job still runs to `Completed`, proving the supervisor keeps
+    // going.
+    // ------------------------------------------------------------------
+
+    #[tokio::test]
+    async fn supervised_job_catches_panic_and_loop_survives() {
+        // A job that panics must be CAUGHT by the supervisor, not propagated.
+        let outcome = run_supervised_job::<_, sqlx::Error>("boom", async {
+            panic!("scheduled job blew up")
+        })
+        .await;
+        assert_eq!(
+            outcome,
+            JobOutcome::Panicked,
+            "a panicking job must be caught at the job boundary and reported as \
+             Panicked — not unwind and abort the supervisor tick loop"
+        );
+
+        // The supervisor is still usable afterwards: the "next tick" still fires.
+        let next =
+            run_supervised_job::<_, sqlx::Error>("after_panic", async { Ok(()) }).await;
+        assert_eq!(
+            next,
+            JobOutcome::Completed,
+            "the supervisor keeps running and executes the next job after catching a panic"
+        );
+    }
+
+    #[tokio::test]
+    async fn supervised_job_reports_completed_and_failed() {
+        let ok = run_supervised_job::<_, sqlx::Error>("ok", async { Ok(()) }).await;
+        assert_eq!(ok, JobOutcome::Completed);
+
+        let failed = run_supervised_job::<_, String>("failing", async {
+            Err("transient failure".to_string())
+        })
+        .await;
+        assert_eq!(
+            failed,
+            JobOutcome::Failed,
+            "a job that returns Err must be reported as Failed (logged + counted), \
+             not conflated with a panic"
+        );
+    }
+
+    #[tokio::test]
+    async fn run_job_counts_panic_as_error_and_returns() {
+        // Drive a panicking job through the full Scheduler supervisor wrapper and
+        // confirm it (a) returns control (loop survives) and (b) counts the panic
+        // in the error metric, exactly like a returned error.
+        // A lazily-connected pool: `Scheduler::new` only clones the handle into
+        // its repos, and no job executed here touches the database, so no live
+        // Postgres is required for this unit test.
+        let pool = DbPool::connect_lazy("postgres://never-used:never@127.0.0.1:1/never")
+            .expect("construct lazy pool");
+        let scheduler = Scheduler::new(
+            pool.clone(),
+            AnnouncementRepository::new(pool),
+            SchedulerConfig::default(),
+        );
+
+        scheduler
+            .run_job::<_, sqlx::Error>("boom", async {
+                panic!("job panic under run_job")
+            })
+            .await;
+
+        // Reaching this line at all proves the panic did not unwind the caller.
+        assert_eq!(
+            scheduler.get_metrics().errors,
+            1,
+            "a caught panic must be counted in the error metric like a returned error"
+        );
+
+        scheduler
+            .run_job::<_, sqlx::Error>("after", async { Ok(()) })
+            .await;
+        assert_eq!(
+            scheduler.get_metrics().errors,
+            1,
+            "a subsequent successful job after a caught panic must not add an error"
+        );
     }
 
     #[test]
