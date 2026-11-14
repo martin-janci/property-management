@@ -9,7 +9,7 @@
 import type { ListingSummary } from '@ppt/reality-api-client';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 
-const MAX_COMPARISON_ITEMS = 4;
+export const MAX_COMPARISON_ITEMS = 4;
 const STORAGE_KEY = 'ppt-comparison';
 
 /**

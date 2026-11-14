@@ -168,6 +168,20 @@
     "transactionType": {
       "sale": "Na predaj",
       "rent": "Na prenájom"
+    },
+    "button": {
+      "add": "Porovnať",
+      "comparing": "Porovnáva sa",
+      "addTitle": "Pridať do porovnania",
+      "removeTitle": "Odstrániť z porovnania",
+      "maxWarning": "Maximálne {max} nehnuteľnosti. Najprv jednu odstráňte."
+    },
+    "tray": {
+      "count": "{count}/{max} nehnuteľností na porovnanie",
+      "clearAll": "Vymazať všetko",
+      "thumbnailAlt": "Náhľad nehnuteľnosti {title}",
+      "compareNeedMore": "Porovnať (aspoň {min})",
+      "compareReady": "Porovnať {count} nehnuteľností"
     }
   },
   "contact": {
