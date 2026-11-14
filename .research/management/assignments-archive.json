@@ -2235,6 +2235,28 @@
       "merge_attempted_at": "2026-08-04T16:17:14Z"
     },
     {
+      "task_id": "churn-hotspot-frontend-apps-ppt-web-messages-en-json",
+      "branch": "auto-impl/churn-hotspot-frontend-apps-ppt-web-mess-32d96086",
+      "status": "merged",
+      "claimed_at": "2026-11-14T14:29:03Z",
+      "last_updated": "2026-11-14T16:43:38Z",
+      "status_changed_at": "2026-11-14T16:43:38Z",
+      "pr_number": 3519,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3519",
+      "merged_at": "2026-11-14T16:40:51Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3519 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=added base-locale key iot.dashboardLoadError (IotDashboardPage.tsx:101) to sk.json+cs.json (only parity gap in the two complete locales); verify green 13016 tests; reused sentiment.dashboardLoadError copy; drift=message files outside pm-tech-lead area (justified)",
+      "reviewer_summary": "verdict=approve head_oid=7c8401304d6728aab2e95280b45c7ec5d6eb7335 note=i18n-key-parity-clean-ci-green-self-approve-blocked-posted-as-comment",
+      "last_reviewed_oid": "7c8401304d6728aab2e95280b45c7ec5d6eb7335",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-14T16:43:38Z"
+    },
+    {
       "task_id": "churn-hotspot-frontend-apps-ppt-web-src-lib-websocket-ts",
       "branch": "auto-impl/churn-hotspot-frontend-apps-ppt-web-src-bffaab3a",
       "status": "failed",
@@ -5948,6 +5970,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-frontend-packages-auth-exp-bypass",
+      "branch": "auto-impl/code-review-frontend-packages-auth-exp-b-a928edfd",
+      "status": "merged",
+      "claimed_at": "2026-11-14T10:33:58Z",
+      "last_updated": "2026-11-14T16:43:38Z",
+      "status_changed_at": "2026-11-14T16:43:38Z",
+      "pr_number": 3516,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3516",
+      "merged_at": "2026-11-14T16:37:26Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=1712331f076207824a99e7c836e6940422f1ecfe note=exp-fail-closed-correct;IG3-test-fails-pre-fix;no-scope-drift;ci-green [merge-blocked: oversight classifier denies the auto-merge spawn (task name auth-exp-bypass pattern-matches security-sensitive); approved+clean+green -> needs human merge]",
+      "last_reviewed_oid": "1712331f076207824a99e7c836e6940422f1ecfe",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-14T12:46:21Z"
+    },
+    {
       "task_id": "code-review-frontend-packages-formatdate-rangeerror",
       "branch": "auto-impl/code-review-frontend-packages-formatdate-7550435c",
       "status": "merged",
@@ -7929,6 +7973,28 @@
       "merge_attempted_at": "2026-09-06T10:45:37Z"
     },
     {
+      "task_id": "code-review-ppt-web-core-authed-roots-adhoc-guard-gap",
+      "branch": "auto-impl/code-review-ppt-web-core-authed-roots-ad-04e2a7f0",
+      "status": "merged",
+      "claimed_at": "2026-11-14T14:29:03Z",
+      "last_updated": "2026-11-14T16:43:38Z",
+      "status_changed_at": "2026-11-14T16:43:38Z",
+      "pr_number": 3520,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3520",
+      "merged_at": "2026-11-14T16:42:27Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3520 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=wrapped core /settings/{password,two-factor,profile,accessibility} in shared ProtectedRoute (were ad-hoc inline guards/unguarded, skipping setReturnUrl); IG3 test cd4ea4ad fails pre-fix 4/8, fix cb68b184 passes 8/8; VERIFY OK b4618a07 (273 files/13024 tests); drift=pm-tech-lead label artifact, both files ppt-web core",
+      "reviewer_summary": "verdict=approve head_oid=cb68b184de9937a4d5f8c4965a5b1aa2a6021ca8 note=guard-gap-fix-sound-ig3-verified-ci-green-selfapprove-blocked-posted-as-comment",
+      "last_reviewed_oid": "cb68b184de9937a4d5f8c4965a5b1aa2a6021ca8",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-14T16:43:38Z"
+    },
+    {
       "task_id": "code-review-ppt-web-core-authed-roots-session-leak",
       "branch": "auto-impl/code-review-ppt-web-core-authed-roots-se-c07a77dd",
       "status": "merged",
@@ -7975,6 +8041,28 @@
       "merge_attempted_at": null,
       "quarantined_at": null,
       "quarantine_reason": null
+    },
+    {
+      "task_id": "code-review-ppt-web-core-community-route-fully-stubbed",
+      "branch": "auto-impl/code-review-ppt-web-core-community-route-9272b895",
+      "status": "failed",
+      "claimed_at": "2026-11-14T16:32:30Z",
+      "last_updated": "2026-11-14T16:43:38Z",
+      "status_changed_at": "2026-11-14T16:43:38Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=done specialist=react-web scope_drift=false code_reuse_warn=none note=already fully wired on dev (superseded by PR #3490 / commit 8f2fbd1); no stub present, CreateGroupPage uses real useCreateGroup with success only in onSuccess + error path; regression tests already present; nothing to implement — stale signal",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "code-review-ppt-web-core-create-lease-empty-pickers",
@@ -13767,6 +13855,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-reality-web-realtor-listing-crud-i18n",
+      "branch": "auto-impl/code-review-reality-web-realtor-listing-e0b21cfd",
+      "status": "merged",
+      "claimed_at": "2026-11-14T12:30:37Z",
+      "last_updated": "2026-11-14T16:43:38Z",
+      "status_changed_at": "2026-11-14T16:43:38Z",
+      "pr_number": 3517,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3517",
+      "merged_at": "2026-11-14T16:37:31Z",
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=3517 status=done specialist=nextjs-web scope_drift=true code_reuse_warn=none note=localized realtor My-listings price via shared @/lib/format+useLocale (removed hardcoded Intl en); strings already i18n w/ 6-locale key parity; verify green 533 tests; drift=owner_role mislabel pm-backend on reality-web task",
+      "reviewer_summary": "verdict=approve head_oid=c8461b8e49cd54292c7642aa12e085fc0f141ca1 note=clean-scoped-i18n-price-fix-ci-green-posted-as-comment-self-approval-blocked",
+      "last_reviewed_oid": "c8461b8e49cd54292c7642aa12e085fc0f141ca1",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-14T16:43:38Z"
+    },
+    {
       "task_id": "code-review-reality-web-realtor-mgmt-i18n",
       "branch": "auto-impl/code-review-reality-web-realtor-mgmt-i18-ff60476e",
       "status": "merged",
@@ -13831,6 +13941,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-reality-web-realtor-reviews-silent-error",
+      "branch": "auto-impl/code-review-reality-web-realtor-reviews-cfefaa51",
+      "status": "merged",
+      "claimed_at": "2026-11-14T14:29:03Z",
+      "last_updated": "2026-11-14T16:43:38Z",
+      "status_changed_at": "2026-11-14T16:43:38Z",
+      "pr_number": 3518,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3518",
+      "merged_at": "2026-11-14T16:41:04Z",
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=3518 status=done specialist=nextjs-web scope_drift=true code_reuse_warn=none note=surfaced realtor-reviews useQuery error as role=alert on reality-web realtor/[id]; new reviewsError key in all 6 locales; IG3 two-commit split proven (1 fail before fix, 6 pass after); verify OK ac75fff (biome+typecheck clean, 545 tests); drift is expected pm-backend label-hint vs reality-web files",
+      "reviewer_summary": "verdict=approve head_oid=95ce0279bbd66c4ef38a1ec082e18c0770698789 note=clean-fix-ci-green-posted-as-comment-cannot-self-approve",
+      "last_reviewed_oid": "95ce0279bbd66c4ef38a1ec082e18c0770698789",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-14T16:43:38Z"
     },
     {
       "task_id": "code-review-reality-web-report-attachments-disabled-3017",
@@ -27435,5 +27567,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-14T14:41:08Z"
+  "archived_at": "2026-11-14T16:44:05Z"
 }
