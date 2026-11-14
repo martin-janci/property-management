@@ -47,7 +47,7 @@ export function ChatInterface({
   const createSession = useCreateSession();
   const deleteSession = useDeleteSession();
   const messageFeedback = useMessageFeedback();
-  const sendMessage = useSendMessage(currentSessionId || '');
+  const sendMessage = useSendMessage();
 
   // Scroll to bottom when messages change
   // biome-ignore lint/correctness/useExhaustiveDependencies: messagesEndRef is stable; messages is the intended trigger
@@ -100,28 +100,25 @@ export function ChatInterface({
 
   const handleSendMessage = useCallback(
     async (content: string) => {
-      // Create session if needed
-      if (!currentSessionId) {
-        try {
+      try {
+        // Create the session on first send, then thread its id through to the
+        // send explicitly — no reliance on a state update + timer, so the whole
+        // flow (create + send) stays inside this try/catch and a failed first
+        // send surfaces via `sendMessage.isError` instead of becoming an
+        // unhandled promise rejection.
+        let sessionId = currentSessionId;
+        if (!sessionId) {
           const session = await createSession.mutateAsync({
             title: content.slice(0, 50),
             context: {},
           });
-          setCurrentSessionId(session.id);
-          // Need to wait for session to be set, then send
-          // This is a simplified version - in production you'd want better state management
-          setTimeout(async () => {
-            await sendMessage.mutateAsync({ content });
-          }, 100);
-        } catch {
-          // Error handling
+          sessionId = session.id;
+          setCurrentSessionId(sessionId);
         }
-      } else {
-        try {
-          await sendMessage.mutateAsync({ content });
-        } catch {
-          // Error handling
-        }
+        await sendMessage.mutateAsync({ sessionId, content });
+      } catch {
+        // Failures are reflected in the create/send mutation error state and
+        // rendered in the error banner below.
       }
     },
     [currentSessionId, createSession, sendMessage]

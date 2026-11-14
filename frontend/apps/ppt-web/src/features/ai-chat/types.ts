@@ -62,9 +62,19 @@ export interface CreateSessionRequest {
   context?: Record<string, unknown>;
 }
 
-/** Request to send a message */
+/** Request to send a message (API request body) */
 export interface SendMessageRequest {
   content: string;
+}
+
+/**
+ * Variables for the send-message mutation. The target session id is chosen at
+ * mutate time (not at hook-call time), so a message sent immediately after a
+ * session is created can be bound to the freshly-created id without waiting for
+ * a re-render.
+ */
+export interface SendMessageVariables extends SendMessageRequest {
+  sessionId: string;
 }
 
 /** Response from send message */

@@ -13,8 +13,8 @@ import type {
   ChatSessionSummary,
   CreateSessionRequest,
   MessageFeedback,
-  SendMessageRequest,
   SendMessageResponse,
+  SendMessageVariables,
 } from '../types';
 
 // Path is relative to the api-client baseURL (`/api/v1`). Routing through
@@ -93,19 +93,27 @@ export function useCreateSession() {
   });
 }
 
-/** Send a message in a session */
-export function useSendMessage(sessionId: string) {
+/**
+ * Send a message in a session.
+ *
+ * The target session id is passed per-call as a mutate variable rather than
+ * bound at hook-call time. This lets a caller send the first message straight
+ * to a just-created session (`mutateAsync({ sessionId, content })`) without
+ * relying on a state update + timer to thread the id through — which previously
+ * raced and could escape the caller's try/catch.
+ */
+export function useSendMessage() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (request: SendMessageRequest) => {
+    mutationFn: async ({ sessionId, content }: SendMessageVariables) => {
       const res = await getApiClient().post<SendMessageResponse>(
         `${API_BASE}/sessions/${sessionId}/messages`,
-        request
+        { content }
       );
       return res.data;
     },
-    onSuccess: (data) => {
+    onSuccess: (data, { sessionId }) => {
       // Update messages cache with new messages
       queryClient.setQueryData<ChatMessage[]>(aiChatKeys.messages(sessionId), (old) => {
         if (!old) return [data.userMessage, data.assistantMessage];
