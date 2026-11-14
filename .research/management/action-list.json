@@ -182,60 +182,6 @@
       }
     },
     {
-      "id": "code-review-reality-web-agency-slug-no-i18n",
-      "action": "reality web agency slug no i18n",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-12T20:25:35Z (tier1d reality-web score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-12T20:25:35Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-09-27T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-reality-web-listing-edit-no-i18n",
-      "action": "reality web listing edit no i18n",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-12T20:25:35Z (tier1d reality-web score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-12T20:25:35Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-09-27T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-reality-web-realtor-id-no-i18n",
-      "action": "reality web realtor id no i18n",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-12T20:25:35Z (tier1d reality-web score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-12T20:25:35Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-09-27T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-ppt-web-core-route-query-silent-error",
       "action": "ppt web core route query silent error",
       "owner_role": "pm-backend",
@@ -718,26 +664,6 @@
       }
     },
     {
-      "id": "gh-issue-3498",
-      "action": "security: bump ammonia to >=4.2.5 for RUSTSEC-2026-0533 — cargo-deny failing on all backend PRs (Closes #3498)",
-      "owner_role": "pm-security",
-      "priority": "high",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-11-13T20:30:40Z (#3498)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-13T20:30:40Z",
-      "issue_ref": {
-        "number": 3498,
-        "url": "https://github.com/martin-janci/property-management/issues/3498",
-        "labels": [
-          "security",
-          "bug"
-        ]
-      }
-    },
-    {
       "id": "code-review-reality-web-currency-code-rangeerror-crash",
       "action": "reality web currency code rangeerror crash",
       "owner_role": "pm-backend",
@@ -936,21 +862,23 @@
       }
     },
     {
-      "id": "code-review-ppt-web-core-logout-purge-disputes-leases-iot",
-      "action": "ppt web core logout purge disputes leases iot",
-      "owner_role": "pm-security",
+      "id": "gh-issue-3502",
+      "action": "Follow-up: localize price-map SegmentedControl toggle labels (PR #3489) (Closes #3502)",
+      "owner_role": "pm-tech-lead",
       "priority": "medium",
       "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d ppt-web-core score=3 vector=security)",
+      "source": "dispatcher-issue-ingest 2026-11-14T00:29:12Z (#3502)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-11-13T22:25:04Z",
-      "signal_ref": {
-        "segment": "ppt-web-core",
-        "score": 3,
-        "vector": "security",
-        "generated": "2026-09-18T00:00:00Z"
+      "first_open_at": "2026-11-14T00:29:12Z",
+      "issue_ref": {
+        "number": 3502,
+        "url": "https://github.com/martin-janci/property-management/issues/3502",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
       }
     }
   ],

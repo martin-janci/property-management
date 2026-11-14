@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-13T20:33:57Z",
+  "archived_at": "2026-11-14T00:32:50Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -8406,6 +8406,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-logout-purge-disputes-leases-iot",
+      "action": "ppt web core logout purge disputes leases iot",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d ppt-web-core score=3 vector=security) | gc1-reconcile 2026-11-14T00:28:40Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T22:25:04Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 3,
+        "vector": "security",
+        "generated": "2026-09-18T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-14T00:28:40Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-logout-purge-notif-triggers",
       "action": "ppt-web logout cache purge still misses the 'notification-triggers' query root (PR #2650 fix incomplete) — user notification-preference cache leaks into the next session",
       "owner_role": "pm-backend",
@@ -12665,6 +12690,31 @@
       }
     },
     {
+      "id": "code-review-reality-web-agency-slug-no-i18n",
+      "action": "reality web agency slug no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-12T20:25:35Z (tier1d reality-web score=2 vector=bug) | gc1-reconcile 2026-11-14T00:28:40Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-12T20:25:35Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-27T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-14T00:28:40Z"
+      }
+    },
+    {
       "id": "code-review-reality-web-agent-contact-no-persist",
       "action": "reality web agent contact no persist",
       "owner_role": "pm-backend",
@@ -13312,6 +13362,31 @@
       }
     },
     {
+      "id": "code-review-reality-web-listing-edit-no-i18n",
+      "action": "reality web listing edit no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-12T20:25:35Z (tier1d reality-web score=2 vector=bug) | gc1-reconcile 2026-11-14T00:28:40Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-12T20:25:35Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-27T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-14T00:28:40Z"
+      }
+    },
+    {
       "id": "code-review-reality-web-listing-edit-price-zero",
       "action": "reality-web listing edit handleSave coerces empty price to 0 via `Number(form.price) || 0` — silent price=0 persist",
       "owner_role": "pm-backend",
@@ -13667,6 +13742,31 @@
         "merged_pr": 3382,
         "merged_at": "2026-11-10T12:47:00Z",
         "at": "2026-11-10T14:27:10Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-realtor-id-no-i18n",
+      "action": "reality web realtor id no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-12T20:25:35Z (tier1d reality-web score=2 vector=bug) | gc1-reconcile 2026-11-14T00:28:40Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-12T20:25:35Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-27T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-14T00:28:40Z"
       }
     },
     {
@@ -25278,6 +25378,33 @@
         "merged_pr": 3472,
         "merged_at": "2026-11-13T00:43:44Z",
         "at": "2026-11-13T02:23:05Z"
+      }
+    },
+    {
+      "id": "gh-issue-3498",
+      "action": "security: bump ammonia to >=4.2.5 for RUSTSEC-2026-0533 — cargo-deny failing on all backend PRs (Closes #3498)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-11-13T20:30:40Z (#3498) | gc1-reconcile 2026-11-14T00:28:40Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T20:30:40Z",
+      "issue_ref": {
+        "number": 3498,
+        "url": "https://github.com/martin-janci/property-management/issues/3498",
+        "labels": [
+          "security",
+          "bug"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3501,
+        "merged_at": "2026-11-13T22:41:34Z",
+        "at": "2026-11-14T00:28:40Z"
       }
     },
     {
