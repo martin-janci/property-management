@@ -284,6 +284,27 @@ pub async fn create_from_unit(
     Ok(Json(listing))
 }
 
+/// Default page size for listing queries when the client omits `limit`.
+const DEFAULT_LISTINGS_LIMIT: i32 = 20;
+
+/// Maximum page size a client may request from the listings endpoint.
+///
+/// SECURITY (code-review finding): the listings endpoint previously echoed an
+/// unbounded `limit` straight through — a client could ask for an arbitrarily
+/// large page, a DoS / resource-exhaustion vector. We clamp the page size at
+/// the HTTP boundary, matching the `.min(100)` pagination cap used across the
+/// repositories (bookings/audit/announcements/documents/… all cap at 100).
+const MAX_LISTINGS_LIMIT: i32 = 100;
+
+/// Normalize the client-supplied `limit` into a safe page size.
+///
+/// Defaults to [`DEFAULT_LISTINGS_LIMIT`] when absent and clamps into
+/// `1..=MAX_LISTINGS_LIMIT` so neither an oversized page (DoS) nor a
+/// zero/negative page size (bad OFFSET math) can reach the database.
+fn clamp_listing_limit(limit: Option<i32>) -> i32 {
+    limit.unwrap_or(DEFAULT_LISTINGS_LIMIT)
+}
+
 /// List listings for the organization.
 #[utoipa::path(
     get,
@@ -300,6 +321,16 @@ pub async fn list_listings(
     ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Query(query): Query<ListingListQuery>,
 ) -> Result<Json<ListingsResponse>, (axum::http::StatusCode, String)> {
+    // Clamp the page size at the HTTP boundary (defense-in-depth + truthful
+    // pagination metadata). The repository also caps the fetch, but clamping
+    // here also guards against negative limits and keeps the reported `limit`
+    // consistent with what was actually fetched.
+    let effective_limit = clamp_listing_limit(query.limit);
+    let query = ListingListQuery {
+        limit: Some(effective_limit),
+        ..query
+    };
+
     let listings = state
         .listing_repo
         .list(tenant.tenant_id, &query)
@@ -326,7 +357,7 @@ pub async fn list_listings(
         listings,
         total,
         page: query.page.unwrap_or(1),
-        limit: query.limit.unwrap_or(20),
+        limit: effective_limit,
     }))
 }
 
@@ -1382,6 +1413,43 @@ mod tests {
         assert!(
             photos_or_error(ok).is_ok(),
             "a successful fetch must pass the photos through unchanged"
+        );
+    }
+
+    #[test]
+    fn clamp_listing_limit_caps_oversized_requests() {
+        // Regression (code-review finding): the listings endpoint must NOT
+        // honour an arbitrarily large `limit` — that is a DoS / resource
+        // exhaustion vector. An oversized request must be clamped down to the
+        // pagination cap used across the codebase (100).
+        assert_eq!(
+            clamp_listing_limit(Some(1_000_000)),
+            MAX_LISTINGS_LIMIT,
+            "an oversized limit must be clamped to MAX_LISTINGS_LIMIT"
+        );
+        assert_eq!(
+            clamp_listing_limit(Some(i32::MAX)),
+            MAX_LISTINGS_LIMIT,
+            "i32::MAX must be clamped to MAX_LISTINGS_LIMIT, not echoed back"
+        );
+    }
+
+    #[test]
+    fn clamp_listing_limit_defaults_and_floors() {
+        // Absent limit falls back to the default page size.
+        assert_eq!(clamp_listing_limit(None), DEFAULT_LISTINGS_LIMIT);
+        // A reasonable in-range request is passed through untouched.
+        assert_eq!(clamp_listing_limit(Some(50)), 50);
+        // Zero / negative limits (bad OFFSET math) are floored to at least 1.
+        assert_eq!(
+            clamp_listing_limit(Some(0)),
+            1,
+            "a zero limit must be floored to 1"
+        );
+        assert_eq!(
+            clamp_listing_limit(Some(-5)),
+            1,
+            "a negative limit must be floored to 1"
         );
     }
 }
