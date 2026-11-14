@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-14T04:42:28Z",
+  "archived_at": "2026-11-14T06:41:08Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -4541,6 +4541,31 @@
         "commit": "466a0f866aebe2ca4823e9e2b0c66c06d9905ae9",
         "subject": "code-review-api-handlers-booking-connect-non-manager-hijack: gate direct-connect OTA credential writes on manager role (#2821)",
         "at": "2026-08-22T08:24:47Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-budgets-raw-db-error-leak",
+      "action": "api handlers budgets raw db error leak",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T02:24:19Z (tier1d api-handlers score=2 vector=bug) | gc1-reconcile 2026-11-14T06:40:27Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T02:24:19Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-25T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3509,
+        "merged_at": "2026-11-14T06:37:47Z",
+        "at": "2026-11-14T06:40:27Z"
       }
     },
     {

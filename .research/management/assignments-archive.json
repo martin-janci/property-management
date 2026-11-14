@@ -4525,6 +4525,28 @@
       "merge_attempted_at": "2026-11-09T12:39:42Z"
     },
     {
+      "task_id": "code-review-api-handlers-budgets-raw-db-error-leak",
+      "branch": "auto-impl/code-review-api-handlers-budgets-raw-db-d397a598",
+      "status": "merged",
+      "claimed_at": "2026-11-14T04:29:53Z",
+      "last_updated": "2026-11-14T06:40:27Z",
+      "status_changed_at": "2026-11-14T06:40:27Z",
+      "pr_number": 3509,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3509",
+      "merged_at": "2026-11-14T06:37:47Z",
+      "specialist": null,
+      "implementer_summary": " [merged via ppt-pr-merge direct-MCP squash sha 47e8e6d5]",
+      "reviewer_summary": "verdict=approve head_oid=fba771474b04b17c5b18a0a2791663e91b5bf09e note=db-error-leak-sanitized-cleanly-with-ig3-tests; review posted as comment (self-approve blocked #3215)",
+      "last_reviewed_oid": "fba771474b04b17c5b18a0a2791663e91b5bf09e",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-14T06:36:27Z"
+    },
+    {
       "task_id": "code-review-api-handlers-capabilities-list-cross-org",
       "branch": "auto-impl/code-review-api-handlers-capabilities-li-978c2898",
       "status": "failed",
@@ -27235,5 +27257,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-14T04:42:14Z"
+  "archived_at": "2026-11-14T06:40:27Z"
 }
