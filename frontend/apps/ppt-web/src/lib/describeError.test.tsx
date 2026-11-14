@@ -109,3 +109,63 @@ describe('error toasts', () => {
     expect(detail.className).toBe('toast-detail');
   });
 });
+
+describe('describeError — production build (no raw server text leak)', () => {
+  // Security regression (code-review: ppt-web core error handler raw backend
+  // message passthrough). The raw backend `error.message` is a DEV-only
+  // diagnostic: it ships English regardless of locale and can carry internal
+  // server/DB text, so in a production build it must NOT survive as the toast
+  // `detail` line. This mirrors `devDetail` in ./errorHandler, which already
+  // gates the raw text behind `import.meta.env.DEV`. The user still sees the
+  // localized, status-derived `message`.
+  //
+  // These fail on the pre-fix `describeError` (which returned the raw text as
+  // `detail` in every build) and pass once the DEV gate is added.
+  function Trigger({ error }: { error: unknown }) {
+    const { showToast } = useToast();
+    return (
+      <button
+        type="button"
+        onClick={() => showToast({ type: 'error', title: 'Uloženie zlyhalo', error })}
+      >
+        go
+      </button>
+    );
+  }
+
+  beforeEach(() => {
+    vi.stubEnv('DEV', false);
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('drops the raw server text as detail in production', () => {
+    const d = describeError(new StatusError(403, 'Only managers can create articles'));
+    expect(d.message).toBe(sk.errors.catalogue.UNAUTHORIZED.message);
+    expect(d.detail).toBeUndefined();
+  });
+
+  it('drops internal 5xx server/DB text as detail in production', () => {
+    const d = describeError(new StatusError(500, 'row 42 violates unique constraint foo_key'));
+    expect(d.message).toBe(sk.errors.catalogue.INTERNAL_ERROR.message);
+    expect(d.detail).toBeUndefined();
+  });
+
+  it('does not render the raw server text in the toast in production', () => {
+    render(
+      <ToastProvider>
+        <Trigger error={new StatusError(403, 'Manager role required for this action')} />
+      </ToastProvider>
+    );
+    act(() => {
+      screen.getByRole('button', { name: 'go' }).click();
+    });
+    // The localized, status-derived copy is still shown to the user...
+    expect(screen.getByText(sk.errors.catalogue.UNAUTHORIZED.message)).toBeTruthy();
+    // ...but the raw backend message never reaches the DOM.
+    expect(screen.queryByText('Manager role required for this action')).toBeNull();
+    expect(document.querySelector('.toast-detail')).toBeNull();
+  });
+});
