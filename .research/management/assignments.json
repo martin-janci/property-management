@@ -93,28 +93,6 @@
       "merge_attempted_at": null
     },
     {
-      "task_id": "code-review-reality-web-listing-sections-currency-ssr-500",
-      "branch": "auto-impl/code-review-reality-web-listing-sections-6dac711b",
-      "status": "in-progress",
-      "claimed_at": "2026-11-14T22:29:39Z",
-      "last_updated": "2026-11-14T22:29:39Z",
-      "status_changed_at": "2026-11-14T22:29:39Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
       "task_id": "code-review-reality-web-unvalidated-href-url-scheme",
       "branch": "auto-impl/code-review-reality-web-unvalidated-href-ba099acf",
       "status": "in-progress",

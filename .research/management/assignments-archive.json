@@ -13795,6 +13795,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-reality-web-listing-sections-currency-ssr-500",
+      "branch": "auto-impl/code-review-reality-web-listing-sections-6dac711b",
+      "status": "failed",
+      "claimed_at": "2026-11-14T22:29:39Z",
+      "last_updated": "2026-11-14T22:51:41Z",
+      "status_changed_at": "2026-11-14T22:51:41Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=none status=done — noop: already fixed on dev by PR #3512 (currency-code-rangeerror-crash guard); duplicate finding, no PR opened",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-reality-web-listingform-nan-validation",
       "branch": "auto-impl/code-review-reality-web-listingform-nan-fb03c1ee",
       "status": "merged",
@@ -27821,5 +27843,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-14T22:45:29Z"
+  "archived_at": "2026-11-14T22:52:56Z"
 }
