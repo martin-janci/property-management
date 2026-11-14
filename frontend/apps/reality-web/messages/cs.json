@@ -433,6 +433,7 @@
       "rating": "Hodnocení",
       "reviewVerified": "Ověřeno",
       "reviews": "Hodnocení",
+      "reviewsError": "Hodnocení se nepodařilo načíst. Zkuste to prosím později.",
       "sendMessage": "Odeslat zprávu",
       "specializations": "Specializace",
       "totalListings": "Inzeráty celkem",
