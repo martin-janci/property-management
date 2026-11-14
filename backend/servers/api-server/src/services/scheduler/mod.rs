@@ -382,11 +382,8 @@ impl Scheduler {
         .await;
 
         // Epic 10A (#2628): prune aged oauth_token_events on a daily cadence.
-        self.run_job(
-            "prune_oauth_token_events",
-            self.prune_oauth_token_events(),
-        )
-        .await;
+        self.run_job("prune_oauth_token_events", self.prune_oauth_token_events())
+            .await;
 
         // Story 84.2: Expire overdue signature requests
         self.run_job(
@@ -1489,14 +1486,27 @@ where
     F: std::future::Future<Output = Result<(), E>>,
     E: std::fmt::Display,
 {
-    // NOTE: panic supervision is added in the follow-up `fix:` commit. Here the
-    // job future is awaited directly, so a panic propagates into the tick loop —
-    // the exact un-supervised behaviour the regression test pins.
-    match fut.await {
-        Ok(()) => JobOutcome::Completed,
-        Err(e) => {
+    use futures_util::FutureExt;
+
+    // Catch a panic at the job boundary so it can never unwind into the tick
+    // loop. `AssertUnwindSafe` is sound here: the scheduler holds no invariants
+    // across jobs that a half-completed, panicking job could corrupt — each job
+    // operates on its own pooled connection (dropped on unwind) and the only
+    // shared state is the `errors`/metrics mutex, which is already recovered
+    // from poisoning via `unwrap_or_else(|e| e.into_inner())`.
+    match std::panic::AssertUnwindSafe(fut).catch_unwind().await {
+        Ok(Ok(())) => JobOutcome::Completed,
+        Ok(Err(e)) => {
             tracing::error!(job, error = %e, "scheduled job returned an error");
             JobOutcome::Failed
+        }
+        Err(panic) => {
+            tracing::error!(
+                job,
+                panic = %panic_message(panic.as_ref()),
+                "scheduled job panicked; caught by supervisor — tick loop continues, next tick still fires"
+            );
+            JobOutcome::Panicked
         }
     }
 }
@@ -2493,10 +2503,9 @@ mod tests {
     #[tokio::test]
     async fn supervised_job_catches_panic_and_loop_survives() {
         // A job that panics must be CAUGHT by the supervisor, not propagated.
-        let outcome = run_supervised_job::<_, sqlx::Error>("boom", async {
-            panic!("scheduled job blew up")
-        })
-        .await;
+        let outcome =
+            run_supervised_job::<_, sqlx::Error>("boom", async { panic!("scheduled job blew up") })
+                .await;
         assert_eq!(
             outcome,
             JobOutcome::Panicked,
@@ -2505,8 +2514,7 @@ mod tests {
         );
 
         // The supervisor is still usable afterwards: the "next tick" still fires.
-        let next =
-            run_supervised_job::<_, sqlx::Error>("after_panic", async { Ok(()) }).await;
+        let next = run_supervised_job::<_, sqlx::Error>("after_panic", async { Ok(()) }).await;
         assert_eq!(
             next,
             JobOutcome::Completed,
@@ -2548,9 +2556,7 @@ mod tests {
         );
 
         scheduler
-            .run_job::<_, sqlx::Error>("boom", async {
-                panic!("job panic under run_job")
-            })
+            .run_job::<_, sqlx::Error>("boom", async { panic!("job panic under run_job") })
             .await;
 
         // Reaching this line at all proves the panic did not unwind the caller.
