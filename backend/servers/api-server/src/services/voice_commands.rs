@@ -449,6 +449,14 @@ impl VoiceCommandProcessor {
         _device: &VoiceAssistantDevice,
         parsed: &ParsedVoiceCommand,
     ) -> Result<VoiceActionResult, VoiceCommandError> {
+        // No facility-booking service is wired into the voice processor yet, so
+        // no reservation is actually created on this live webhook path. This
+        // used to report `success: true` while telling the caller booking "is
+        // not yet available" (code review: fabricated success) — a no-op was
+        // recorded as a successful action in the command history and surfaced
+        // as success to the assistant platform, even though nothing was booked.
+        // Fail honestly instead: the booking was neither performed nor possible,
+        // so report `success: false` with no fabricated `data` payload.
         let response = match parsed.language.as_str() {
             "sk" => "Rezervacia zariadeni momentalne nie je dostupna cez hlasoveho asistenta. Prosim, pouzite mobilnu aplikaciu alebo webovy portal.",
             "cs" => "Rezervace zarizeni momentalne neni dostupna pres hlasoveho asistenta. Prosim, pouzijte mobilni aplikaci nebo webovy portal.",
@@ -456,7 +464,7 @@ impl VoiceCommandProcessor {
         };
 
         Ok(VoiceActionResult {
-            success: true,
+            success: false,
             action_type: voice_intent::BOOK_FACILITY.to_string(),
             response_text: response.to_string(),
             ssml: Some(format!("<speak>{}</speak>", response)),
@@ -850,6 +858,40 @@ mod tests {
         assert!(
             !result.response_text.to_lowercase().contains("zero"),
             "response must not claim a fabricated zero balance"
+        );
+    }
+
+    /// Regression (code-review: voice book-facility fabricated success): the
+    /// handler used to unconditionally report `success: true` while telling the
+    /// caller that facility booking "is not yet available via voice assistant".
+    /// No booking service is wired in, so nothing was ever reserved — recording
+    /// that no-op as a successful action (in the command history and to the
+    /// assistant platform) is a false positive. It must now fail honestly:
+    /// `success: false` and no fabricated `data` payload, since no reservation
+    /// was performed.
+    #[tokio::test]
+    async fn test_book_facility_fails_honestly_instead_of_fabricating_success() {
+        let processor = create_test_processor();
+        let org = Uuid::new_v4();
+        let user = Uuid::new_v4();
+        let unit = Uuid::new_v4();
+        let device = make_device(org, user, Some(unit));
+        let parsed = processor.parse_command("Book the gym for tomorrow", "en-US");
+
+        // action_book_facility doesn't touch the database, so it can be called
+        // directly without acquiring a real connection.
+        let result = processor
+            .action_book_facility(&device, &parsed)
+            .await
+            .expect("book-facility must not error, it must fail honestly in-band");
+
+        assert!(
+            !result.success,
+            "book-facility must not report fabricated success when no reservation was made"
+        );
+        assert!(
+            result.data.is_none(),
+            "no booking data must be fabricated when no reservation was performed"
         );
     }
 
