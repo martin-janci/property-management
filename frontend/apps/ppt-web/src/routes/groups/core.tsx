@@ -163,9 +163,38 @@ export function authRoutes() {
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
-      <Route path="/settings/password" element={<ChangePasswordPage />} />
-      <Route path="/settings/two-factor" element={<TwoFactorAuthPage />} />
-      <Route path="/settings/profile" element={<ProfileEditPage />} />
+      {/* Per-user account settings (UC-14). Auth-only, routed through the shared
+          <ProtectedRoute> like every peer /settings/* route. These pages
+          previously relied on an ad-hoc inline `if (!isAuthenticated) <Navigate
+          to="/login">` guard that — unlike ProtectedRoute — never captured the
+          return URL via @ppt/shared setReturnUrl, so a login triggered from one
+          of these pages dropped the user on the default dashboard instead of
+          back here (code-review `…core-authed-roots-adhoc-guard-gap`). Wrapping
+          them in ProtectedRoute closes that gap and matches /settings/privacy. */}
+      <Route
+        path="/settings/password"
+        element={
+          <ProtectedRoute>
+            <ChangePasswordPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/two-factor"
+        element={
+          <ProtectedRoute>
+            <TwoFactorAuthPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/profile"
+        element={
+          <ProtectedRoute>
+            <ProfileEditPage />
+          </ProtectedRoute>
+        }
+      />
     </>
   );
 }
@@ -251,8 +280,20 @@ export function settingsRoutes() {
           </ProtectedRoute>
         }
       />
-      {/* Accessibility settings route (Epic 60) */}
-      <Route path="/settings/accessibility" element={<AccessibilitySettingsPage />} />
+      {/* Accessibility settings route (Epic 60). Auth-only, matching every peer
+          /settings/* route: the page persists the signed-in user's own
+          accessibility preferences, so it must not render for an anonymous
+          visitor. It had no guard at all (not even an inline one), so wrapping
+          it in <ProtectedRoute> both gates it and captures the return URL
+          (code-review `…core-authed-roots-adhoc-guard-gap`). */}
+      <Route
+        path="/settings/accessibility"
+        element={
+          <ProtectedRoute>
+            <AccessibilitySettingsPage />
+          </ProtectedRoute>
+        }
+      />
       {/* Privacy settings route (Epic 63). Auth-only, matching every peer
           /settings/* route: the page loads the signed-in user's own GDPR
           privacy settings + data-export history from /api/v1/gdpr/*, so it must
