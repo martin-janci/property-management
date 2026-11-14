@@ -186,8 +186,8 @@
       "action": "ppt web core route query silent error",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-13T02:24:19Z (tier1d ppt-web-core score=2 vector=bug)",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T02:24:19Z (tier1d ppt-web-core score=2 vector=bug) | gc1-reconcile 2026-11-14T10:40:50Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -197,6 +197,13 @@
         "score": 2,
         "vector": "bug",
         "generated": "2026-09-26T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3504,
+        "merged_at": "2026-11-14T10:28:29Z",
+        "at": "2026-11-14T10:40:50Z"
       }
     },
     {
@@ -362,8 +369,8 @@
       "action": "ppt web ui registry silent mutation fail",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-13T12:47:59Z (tier1d ppt-web-ui score=2 vector=bug)",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-13T12:47:59Z (tier1d ppt-web-ui score=2 vector=bug) | gc1-reconcile 2026-11-14T10:40:50Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
@@ -373,6 +380,13 @@
         "score": 2,
         "vector": "bug",
         "generated": "2026-09-23T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-14T10:40:50Z"
       }
     },
     {

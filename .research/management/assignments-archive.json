@@ -10926,6 +10926,28 @@
       "archived_at": "2026-10-01T22:31:08Z"
     },
     {
+      "task_id": "code-review-ppt-web-ui-registry-silent-mutation-fail",
+      "branch": "auto-impl/code-review-ppt-web-ui-registry-silent-m-6ad14a5b",
+      "status": "failed",
+      "claimed_at": "2026-11-14T10:33:58Z",
+      "last_updated": "2026-11-14T10:40:49Z",
+      "status_changed_at": "2026-11-14T10:40:49Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=done specialist=react-web — STALE/DUPLICATE finding: all ppt-web registry mutations already surface failures via toast (dup of merged #3359 + RegistryRulesPage fix); regression tests already exist; no silent swallow remains; no PR opened; no real failure",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-ui-rentals-load-error-unhandled",
       "branch": "auto-impl/code-review-ppt-web-ui-rentals-load-erro-f79db5f2",
       "status": "merged",
@@ -27391,5 +27413,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-14T10:33:58Z"
+  "archived_at": "2026-11-14T10:40:50Z"
 }
