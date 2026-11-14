@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-14T02:27:09Z",
+  "archived_at": "2026-11-14T04:42:28Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3919,6 +3919,31 @@
       }
     },
     {
+      "id": "code-review-api-core-scheduler-no-panic-supervision",
+      "action": "api core scheduler no panic supervision",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T02:24:19Z (tier1d api-core score=2 vector=bug) | gc1-reconcile 2026-11-14T04:42:28Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T02:24:19Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-25T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3508,
+        "merged_at": "2026-11-14T04:42:14Z",
+        "at": "2026-11-14T04:42:28Z"
+      }
+    },
+    {
       "id": "code-review-api-core-scheduler-rls-leak",
       "action": "Scheduler global-read RLS GUC leaks to pooled connection when set_global_read_context(conn,false) itself errors in fire_due_report_schedules (backend/servers/api-server/src/services/scheduler.rs:1416): the ? returns the connection with the session-level global-read GUC still set, so a later borrower without its own tenant context can read cross-org rows via the SELECT-only global-read policy leg (migration 00218). Clear the flag before the ? (mirror workflow_executor.rs guard.release() pattern) and add a regression test.",
       "owner_role": "pm-backend",
@@ -4468,6 +4493,31 @@
         "commit": "bef62a87ce1b6b4adfb8ab219b1a0039e92ff856",
         "subject": "code-review-api-handlers-assign-violation-no-member-check: enforce assignee org membership in assign_violation (#3181)",
         "at": "2026-10-27T02:40:23Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-auth-nonatomic-refresh-rotation",
+      "action": "api handlers auth nonatomic refresh rotation",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-13T02:24:19Z (tier1d api-handlers score=2 vector=bug) | gc1-reconcile 2026-11-14T04:42:28Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T02:24:19Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-25T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-14T04:42:28Z"
       }
     },
     {
@@ -12600,6 +12650,31 @@
       }
     },
     {
+      "id": "code-review-reality-web-account-pages-i18n",
+      "action": "reality web account pages i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-13T02:24:19Z (tier1d reality-web score=2 vector=bug) | gc1-reconcile 2026-11-14T04:42:28Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T02:24:19Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-25T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-14T04:42:28Z"
+      }
+    },
+    {
       "id": "code-review-reality-web-account-pages-no-i18n",
       "action": "reality web account pages no i18n",
       "owner_role": "pm-backend",
@@ -13792,6 +13867,31 @@
         "merged_pr": 3382,
         "merged_at": "2026-11-10T12:47:00Z",
         "at": "2026-11-10T14:27:10Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-realtor-hub-analytics-i18n",
+      "action": "reality web realtor hub analytics i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-13T02:24:19Z (tier1d reality-web score=2 vector=bug) | gc1-reconcile 2026-11-14T04:42:28Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T02:24:19Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-25T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-14T04:42:28Z"
       }
     },
     {
@@ -25455,6 +25555,34 @@
         "merged_pr": 3501,
         "merged_at": "2026-11-13T22:41:34Z",
         "at": "2026-11-14T00:28:40Z"
+      }
+    },
+    {
+      "id": "gh-issue-3505",
+      "action": "ppt-web E2E regression (toHaveURL) since ~2026-11-13 12:44 — blocks the approved-PR merge pipeline (Closes #3505)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-11-14T02:25:03Z (#3505) | gc1-reconcile 2026-11-14T04:42:28Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T02:25:03Z",
+      "issue_ref": {
+        "number": 3505,
+        "url": "https://github.com/martin-janci/property-management/issues/3505",
+        "labels": [
+          "bug",
+          "frontend",
+          "follow-up"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3507,
+        "merged_at": "2026-11-14T04:42:14Z",
+        "at": "2026-11-14T04:42:28Z"
       }
     },
     {
