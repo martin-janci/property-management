@@ -15793,6 +15793,292 @@
       "created_at": "2026-11-13",
       "updated_at": "2026-11-13",
       "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-admin-web-src-pages-TenantLifecyclePage-tsx",
+      "title": "churn-hotspot: frontend/apps/admin-web/src/pages/TenantLifecyclePage.tsx — rapid changes this run",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log since 2026-11-13T11:30:00Z"
+      ],
+      "evidence": [
+        "267 lines (+/-) across PRs #3487 (i18n) + #3488 (tenant-restore stub); hot path for the admin-web lifecycle page"
+      ],
+      "files": [
+        "frontend/apps/admin-web/src/pages/TenantLifecyclePage.tsx"
+      ],
+      "created_at": "2026-11-14",
+      "updated_at": "2026-11-14",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-reality-web-src-app-[locale]-journal-page-tsx",
+      "title": "churn-hotspot: frontend/apps/reality-web/src/app/[locale]/journal/page.tsx — rapid changes this run",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log since 2026-11-13T11:30:00Z"
+      ],
+      "evidence": [
+        "239 lines (+/-) in PR #3496 — journal placeholder articles gated to local dev"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/journal/page.tsx"
+      ],
+      "created_at": "2026-11-14",
+      "updated_at": "2026-11-14",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-routes-groups-mgmt-routes-auth-guard-route-test-tsx",
+      "title": "churn-hotspot: frontend/apps/ppt-web/src/routes/groups/mgmt-routes-auth-guard.route.test.tsx — rapid changes this run",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log since 2026-11-13T11:30:00Z"
+      ],
+      "evidence": [
+        "171 lines of new test coverage in PR #3486 — expected churn, ProtectedRoute gating batch"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/mgmt-routes-auth-guard.route.test.tsx"
+      ],
+      "created_at": "2026-11-14",
+      "updated_at": "2026-11-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3486-ppt",
+      "title": "screen-map drift: PR #3486 — route touched without docs/screens update (review candidate)",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3486"
+      ],
+      "evidence": [
+        "PR #3486 touched frontend/apps/ppt-web/src/routes/groups/community.tsx (+ disputes test files) with no docs/screens/ppt/*.md update — route-guard batch"
+      ],
+      "files": [],
+      "created_at": "2026-11-14",
+      "updated_at": "2026-11-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3481-reality",
+      "title": "screen-map drift: PR #3481 — route touched without docs/screens update (review candidate)",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3481"
+      ],
+      "evidence": [
+        "PR #3481 touched frontend/apps/reality-web/src/app/[locale]/account/page.tsx (+ password/page) with no docs/screens/reality/*.md update — i18n account pages"
+      ],
+      "files": [],
+      "created_at": "2026-11-14",
+      "updated_at": "2026-11-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3484-reality",
+      "title": "screen-map drift: PR #3484 — route touched without docs/screens update (review candidate)",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3484"
+      ],
+      "evidence": [
+        "PR #3484 touched frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx with no docs/screens/reality/*.md update — localize load-error copy"
+      ],
+      "files": [],
+      "created_at": "2026-11-14",
+      "updated_at": "2026-11-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3489-reality",
+      "title": "screen-map drift: PR #3489 — route touched without docs/screens update (review candidate)",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3489"
+      ],
+      "evidence": [
+        "PR #3489 touched frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx (+ globals.css) with no docs/screens/reality/*.md update — SegmentedControl migration"
+      ],
+      "files": [],
+      "created_at": "2026-11-14",
+      "updated_at": "2026-11-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3496-reality",
+      "title": "screen-map drift: PR #3496 — route touched without docs/screens update (review candidate)",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3496"
+      ],
+      "evidence": [
+        "PR #3496 touched frontend/apps/reality-web/src/app/[locale]/journal/page.tsx (+ _empty + test) with no docs/screens/reality/*.md update — gate journal placeholder articles"
+      ],
+      "files": [],
+      "created_at": "2026-11-14",
+      "updated_at": "2026-11-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3492-reality",
+      "title": "screen-map drift: PR #3492 — route touched without docs/screens update (review candidate)",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3492"
+      ],
+      "evidence": [
+        "PR #3492 touched frontend/apps/reality-web/src/app/[locale]/listings/page.tsx (+ _params) with no docs/screens/reality/*.md update — NaN guard"
+      ],
+      "files": [],
+      "created_at": "2026-11-14",
+      "updated_at": "2026-11-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3494-reality",
+      "title": "screen-map drift: PR #3494 — route touched without docs/screens update (review candidate)",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3494"
+      ],
+      "evidence": [
+        "PR #3494 touched frontend/apps/reality-web/src/app/[locale]/security/page.tsx with no docs/screens/reality/*.md update — report CTA i18n"
+      ],
+      "files": [],
+      "created_at": "2026-11-14",
+      "updated_at": "2026-11-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3483-ppt",
+      "title": "screen-map drift: PR #3483 — route touched without docs/screens update (review candidate)",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3483"
+      ],
+      "evidence": [
+        "PR #3483 touched frontend/apps/ppt-web/src/routes/groups/reports.tsx with no docs/screens/ppt/*.md update — wire schedule-list toggle"
+      ],
+      "files": [],
+      "created_at": "2026-11-14",
+      "updated_at": "2026-11-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3482-ppt",
+      "title": "screen-map drift: PR #3482 — route touched without docs/screens update (review candidate)",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3482"
+      ],
+      "evidence": [
+        "PR #3482 touched frontend/apps/ppt-web/src/routes/groups/core.tsx (+ core.privacy-auth.route.test.tsx) with no docs/screens/ppt/*.md update — gate /settings/privacy behind ProtectedRoute"
+      ],
+      "files": [],
+      "created_at": "2026-11-14",
+      "updated_at": "2026-11-14",
+      "plan": null
+    },
+    {
+      "id": "hotfix-no-test-pr-3494",
+      "title": "hotfix-no-test: PR #3494 — i18n security-page report CTA shipped without a regression test",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3494"
+      ],
+      "evidence": [
+        "PR #3494 (fix(reality-web): i18n the security page report CTA (sk hardcoded)) merged 7 files with no test file — translation JSONs + 1 page.tsx"
+      ],
+      "files": [],
+      "created_at": "2026-11-14",
+      "updated_at": "2026-11-14",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-detail-routes-spinner-on-error",
+      "title": "ppt-web-core detail routes spin forever on API errors — outages/edit-outage + messaging ThreadDetail miss isError branch",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-14 ppt-web-core"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/outages.tsx:161,219 — ViewOutagePageRoute destructures only `{ data, isLoading }` from useOutage; `isLoading || !outageData` spins forever on query error (isLoading=false, data=undefined, isError=true).",
+        "frontend/apps/ppt-web/src/routes/groups/outages.tsx:272,330 — EditOutagePageRoute repeats the same spinner-guard on `useOutage` + `useBuildings` errors.",
+        "frontend/apps/ppt-web/src/routes/groups/messaging.tsx:166,192 — ThreadDetailPageRoute uses `useThread(threadId, !!threadId)` then `threadLoading || !thread` spinner; 403/5xx traps the user on the spinner.",
+        "Sibling list wrappers already demonstrate the correct pattern (OutagesPageRoute reads isError + forwards onRetry)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/outages.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/messaging.tsx"
+      ],
+      "created_at": "2026-11-14",
+      "updated_at": "2026-11-14",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-notif-triggers-raw-err-message-toast",
+      "title": "ppt-web-core notification-triggers onError leaks untranslated ApiError.message into the user-facing toast body",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-14 ppt-web-core"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/notifications.tsx:107-116 — updateTrigger.mutate onError writes `err.message` into toast body; ApiError.message is untranslated backend English, so sk/cs/de users see English in the toast.",
+        "frontend/apps/ppt-web/src/routes/groups/notifications.tsx:132-140 — resetTriggers.mutate repeats the same leak.",
+        "Fix shape mirrors CREATE_SCHEDULE_ERROR_KEYS in routes/groups/reports.tsx:39-51."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/notifications.tsx"
+      ],
+      "created_at": "2026-11-14",
+      "updated_at": "2026-11-14",
+      "plan": null
     }
   ]
 }

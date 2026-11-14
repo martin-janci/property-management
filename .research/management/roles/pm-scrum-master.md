@@ -1,38 +1,44 @@
-# pm-scrum-master — 2026-11-13
+# pm-scrum-master — 2026-11-14
 
 ## Summary
-Dispatcher pipeline went from stalled (10+ zero-merge runs per the 2026-11-09 brief) to a sustained burst: 58 PRs merged in 4 days, closing 3 follow-up issues and 2 action-list rows. Routine scheduler itself drifted 4 days — the new coordination concern.
 
-## Next actions
-1. **[high]** Triage open security issue #3427 (`Harden first-party JWT: emit + validate iss/aud across api-server & reality-server`, labels: `security`/`follow-up`/`blocked`). Confirm whether `blocked` is a real dependency or just awaiting prioritisation; either promote to a plan or defer with justification. DoD: issue #3427 has a `next-step` comment or a linked plan under `.research/plans/`.
-2. **[medium]** Watch the 3 dispatcher drafts #3475/#3476/#3477 land. DoD: all 3 un-draft and merge, or get promoted to review and reassigned. _(No direct action — this is a monitoring note.)_
-3. **[medium]** Close out #3357 (dispatcher-stall operator ask) as self-resolved by the 58-PR burst. DoD: issue closed with a one-line explanation + link to this run's project-state.
-
-## Risks
-- **Routine scheduler drift** (medium/medium) — flagged by pm-devops; blocks delivery visibility.
-- **Dispatcher stall recurrence** (medium/high) — root cause of #3357 (dispatcher cannot self-heal from blocked PRs) is unchanged even though the symptom cleared.
-
-## Open questions
-- What's the correct treatment of the `blocked` label on #3427 — was there an upstream dep that still hasn't landed, or is the label stale?
-
-## Decisions needed
-- **Lag-floor policy** for the research routine (see pm-devops). Owner: pm-devops + pm-scrum-master.
-
-## Shipped since last run (sample — top of 58)
-- #3473 mobile-rn-features-faults-orphaned (cleanup)
-- #3474 mobile-rn-person-months-no-i18n (i18n)
-- #3472 gh-issue-3466 critical/outages i18n for de/pl/hu
-- #3471 ppt-web-ui toast persistent-overflow leak
-- #3454 mobile-rn notifications still-mock → wired to real inbox API
-- #3463 ppt-web-ui 2fa QR silent fail → surfaced
-- #3451 mobile-rn profile local-only → persisted to api-server
-- #3424 reality-server favorites cap TOCTOU → atomic
-- #3410 api-core CORS localhost-prod-default → hardened
-- #3416 api-core push-fanout dropping transient failures → retried
+Sprint (Epic 6/7A/8A/10A) is fully done (4/4 sprint epics; 6/6 incl. 10B and 80 in sprint-status). 21 PRs merged since last run (#3478–#3501), including security fix #3501 (ammonia RUSTSEC-2026-0533) and the #3427 JWT iss/aud triage (#3480). The only open delivery items are three new review/in-progress PRs (#3506, #3507, #3508) and the stacked Dependabot majors. Note: coverage.json was not re-scanned this run; the 49/49 figure comes from upkeep of the prior deep scan.
 
 ## Sprint progress
-49/49 stories done across 13 epics. No status flips. epic-10b re-checked (upkeep).
 
-## Blockers
-- **mobile-native-kmp cloud-landability starvation** (carries indefinitely; owner: pm-devops).
-- **routine scheduler 4-day drift** (flagged this run; owner: pm-devops).
+- Sprint: Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth
+- epics_done = 6/6 (at coverage level including 10B + 80)
+
+## Shipped since last run
+
+- **#3501** — gh-issue-3498: bump ammonia to 4.2.5 (RUSTSEC-2026-0533). Closes #3498.
+- **#3497** — fix(api-server): voice book-facility must not report false success.
+- **#3499** — guard date formatters against invalid input (formatDate RangeError).
+- **#3485/#3486/#3490/#3491** — ppt-web-core error-handling + route-guard batch.
+- **#3482/#3483** — ppt-web-core privacy route + reports schedule.
+- **#3481/#3484/#3487/#3489/#3492/#3493/#3494/#3495/#3496** — reality-web i18n + fix batch.
+- **#3478** — pm-devops dependabot major-bumps review.
+- **#3479** — pm-devops stale-routine lag-floor guard.
+- **#3480** — pm-scrum-master triage of security issue #3427 (JWT iss/aud) → promoted to `plans/security-jwt-iss-aud-cross-service.md`.
+
+## Next actions
+
+1. **[high]** Land #3507 (gh-issue-3505 disputes E2E auth) and resolve the ppt-web E2E regression tracked by #3505. Confirm it does not mask a real auth/route-guard regression from the #3485–#3491 batch. DoD: #3507 merged, E2E green on dev, #3505 closed.
+2. **[high]** Implement the #3427 JWT iss/aud hardening per the plan at `plans/security-jwt-iss-aud-cross-service.md`, and ship #3508 (scheduler no-panic supervision, in-progress) as a crash-risk item. DoD: iss/aud emitted and validated in api-server and reality-server (plan or PR landed); #3508 merged with a panic-recovery test.
+3. **[medium]** Human-review the 3 major Dependabot bumps (#3447 vitest 5, #3444 jsonwebtoken 11, #3443 utoipa-swagger-ui 10). Sequence jsonwebtoken after #3427 work (touches same auth code), then finish #3506 (gh-issue-3502 price-map i18n). DoD: each major merged or deferred with written justification; #3506 merged and #3502 closed.
+
+## Risks
+
+- **medium/medium** — Churn on admin-web TenantLifecyclePage, reality-web journal page and ppt-web mgmt-routes-auth-guard tests points to rework or flaky tests from the rapid merge burst. Mitigation: pm-qa checks regression tests on #3488 and #3500 before merge.
+- **medium/high** — ppt-web E2E regression (#3505) may mean auth-guard changes broke an E2E flow. Mitigation: prioritise #3507 and verify root cause (test fixture vs product regression).
+- **medium/medium** — Stacked Dependabot majors (vitest, jsonwebtoken, utoipa-swagger-ui) are stalling. Mitigation: set a review SLA (pm-devops).
+
+## Open questions
+
+- Is #3505 a test-only auth-fixture issue or a real product regression?
+- Is coverage.json current? It was last deep-scanned several days ago.
+
+## Decisions needed
+
+- Dependabot major-review SLA/WIP cap — owner: pm-devops.
+- Close #3357 (dispatcher stall) as self-resolved — owner: pm-scrum-master.

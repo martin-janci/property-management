@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-11-13T11:30:00Z",
+  "last_run_iso": "2026-11-14T03:20:34Z",
   "last_run_ms": 0,
-  "last_pr_seen": 3477,
-  "last_issue_seen": 3466,
-  "last_commit_sha": "2be7d639ebd26b07ff1cae7574d8b1e7",
+  "last_pr_seen": 3501,
+  "last_issue_seen": 3505,
+  "last_commit_sha": "1c84d9c2dc7c",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -721,6 +721,21 @@
       "runs_seen": 1,
       "last_seen": "2026-11-13",
       "recent_churn": 9
+    },
+    "frontend/apps/admin-web/src/pages/TenantLifecyclePage.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-14",
+      "recent_churn": 267
+    },
+    "frontend/apps/reality-web/src/app/[locale]/journal/page.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-14",
+      "recent_churn": 239
+    },
+    "frontend/apps/ppt-web/src/routes/groups/mgmt-routes-auth-guard.route.test.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-14",
+      "recent_churn": 171
     }
   },
   "seen_signals": [
@@ -1427,7 +1442,22 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "churn-hotspot-frontend/apps/admin-web/src/pages/TenantLifecyclePage.tsx",
+    "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/journal/page.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/mgmt-routes-auth-guard.route.test.tsx",
+    "screen-map-drift-pr-3486-ppt",
+    "screen-map-drift-pr-3481-reality",
+    "screen-map-drift-pr-3484-reality",
+    "screen-map-drift-pr-3489-reality",
+    "screen-map-drift-pr-3496-reality",
+    "screen-map-drift-pr-3492-reality",
+    "screen-map-drift-pr-3494-reality",
+    "screen-map-drift-pr-3483-ppt",
+    "screen-map-drift-pr-3482-ppt",
+    "hotfix-no-test-pr-3494",
+    "code-review-ppt-web-core-detail-routes-spinner-on-error",
+    "code-review-ppt-web-core-notif-triggers-raw-err-message-toast"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1435,14 +1465,14 @@
     "api-core": "2026-11-04",
     "reality-server": "2026-11-04",
     "ppt-web-ui": "2026-11-08",
-    "ppt-web-core": "2026-11-04",
+    "ppt-web-core": "2026-11-14",
     "reality-web": "2026-11-13",
     "mobile-rn": "2026-11-03",
     "mobile-native-kmp": "2026-11-04"
   },
   "stats": {
-    "runs": 118,
-    "vectors_created": 529,
+    "runs": 119,
+    "vectors_created": 544,
     "plans_created": 37,
     "quiet_days": 8,
     "auto_fix_count": 0
@@ -1458,20 +1488,20 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 5,
+    "next_index": 6,
     "role_last_run": {
       "pm-tech-lead": "2026-10-22",
       "pm-backend": "2026-10-26",
       "pm-frontend": "2026-10-28",
       "pm-qa": "2026-11-09",
       "pm-devops": "2026-11-13",
-      "pm-security": "2026-10-01",
+      "pm-security": "2026-11-14",
       "pm-data": "2026-10-16",
       "pm-integration": "2026-10-19",
-      "pm-scrum-master": "2026-11-13"
+      "pm-scrum-master": "2026-11-14"
     }
   },
   "coverage_cursor": {
-    "next_index": 2
+    "next_index": 3
   }
 }

@@ -865,7 +865,73 @@
           "follow-up"
         ]
       }
+    },
+    {
+      "id": "pm-scrum-master-ppt-web-e2e-regression-triage-2026-11-14",
+      "action": "Land #3507 (gh-issue-3505 disputes E2E auth) and resolve the ppt-web E2E regression tracked by #3505. Confirm it is not masking a real auth/route-guard regression from the #3485–#3491 batch.",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-14"
+    },
+    {
+      "id": "pm-scrum-master-jwt-iss-aud-implement-2026-11-14",
+      "action": "Implement the #3427 JWT iss/aud hardening per plans/security-jwt-iss-aud-cross-service.md, and ship #3508 (scheduler no-panic supervision, in-progress) as a crash-risk item.",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-14"
+    },
+    {
+      "id": "pm-scrum-master-dependabot-majors-review-2026-11-14",
+      "action": "Human-review the 3 major Dependabot bumps (#3447 vitest 5, #3444 jsonwebtoken 11, #3443 utoipa-swagger-ui 10). Sequence jsonwebtoken after #3427 work, then finish #3506 (gh-issue-3502 price-map i18n).",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "pm-devops",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-14"
+    },
+    {
+      "id": "pm-security-jwt-iss-aud-implement-2026-11-14",
+      "action": "Implement #3427: have JwtService emit iss/aud per service and enforce set_issuer/set_audience in BOTH api_core::extractors::auth::jwt_verifier (auth.rs ~L71–76) and JwtService::validate_access_token/validate_refresh_token (services/jwt.rs ~L198–224). Also check PrincipalClaims and reality-server verifiers. Roll out with a dual-accept window so tokens already issued without iss/aud do not log users out.",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-14"
+    },
+    {
+      "id": "pm-security-ppt-web-auth-regression-triage-2026-11-14",
+      "action": "Triage #3505/#3507 as an auth-guard regression. Confirm the ProtectedRoute gating from #3482/#3486 did not break legitimate flows. Fix the E2E fixtures rather than loosening guards. Add a route-test matrix asserting unauthenticated access to community, disputes, messaging, neighbors and /settings/privacy redirects to login.",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-14"
+    },
+    {
+      "id": "pm-security-jsonwebtoken-11-bump-review-2026-11-14",
+      "action": "Before merging the jsonwebtoken 11 Dependabot PR (backend/Cargo.toml currently pins 10 with rust_crypto), review its changelog for Validation defaults (exp/nbf/aud/algorithm handling) and the crypto-backend features. Sequence after or together with #3427; gate on auth tests covering expired, wrong-alg, wrong-secret and wrong-aud tokens.",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-14"
     }
   ],
-  "generated": "2026-11-13T04:10:00Z"
+  "generated": "2026-11-14T03:16:08Z"
 }

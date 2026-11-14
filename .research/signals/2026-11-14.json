@@ -1,0 +1,307 @@
+{
+  "signals": [
+    {
+      "id": "churn-hotspot-frontend/apps/admin-web/src/pages/TenantLifecyclePage.tsx",
+      "type": "churn-hotspot",
+      "source": "git-log since 2026-11-13T11:30:00Z",
+      "score_delta": 1,
+      "evidence": [
+        "267 lines (+/-) across PRs #3487 (i18n) + #3488 (tenant-restore stub); hot path for the admin-web lifecycle page"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/journal/page.tsx",
+      "type": "churn-hotspot",
+      "source": "git-log since 2026-11-13T11:30:00Z",
+      "score_delta": 1,
+      "evidence": [
+        "239 lines (+/-) in PR #3496 — journal placeholder articles gated to local dev"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/mgmt-routes-auth-guard.route.test.tsx",
+      "type": "churn-hotspot",
+      "source": "git-log since 2026-11-13T11:30:00Z",
+      "score_delta": 1,
+      "evidence": [
+        "171 lines of new test coverage in PR #3486 — expected churn, ProtectedRoute gating batch"
+      ],
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-3486-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3486",
+      "score_delta": 2,
+      "evidence": [
+        "PR #3486 touched frontend/apps/ppt-web/src/routes/groups/community.tsx (+ disputes test files) with no docs/screens/ppt/*.md update — route-guard batch"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-3481-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3481",
+      "score_delta": 2,
+      "evidence": [
+        "PR #3481 touched frontend/apps/reality-web/src/app/[locale]/account/page.tsx (+ password/page) with no docs/screens/reality/*.md update — i18n account pages"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-3484-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3484",
+      "score_delta": 2,
+      "evidence": [
+        "PR #3484 touched frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx with no docs/screens/reality/*.md update — localize load-error copy"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-3489-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3489",
+      "score_delta": 2,
+      "evidence": [
+        "PR #3489 touched frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx (+ globals.css) with no docs/screens/reality/*.md update — SegmentedControl migration"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-3496-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3496",
+      "score_delta": 2,
+      "evidence": [
+        "PR #3496 touched frontend/apps/reality-web/src/app/[locale]/journal/page.tsx (+ _empty + test) with no docs/screens/reality/*.md update — gate journal placeholder articles"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-3492-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3492",
+      "score_delta": 2,
+      "evidence": [
+        "PR #3492 touched frontend/apps/reality-web/src/app/[locale]/listings/page.tsx (+ _params) with no docs/screens/reality/*.md update — NaN guard"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-3494-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3494",
+      "score_delta": 2,
+      "evidence": [
+        "PR #3494 touched frontend/apps/reality-web/src/app/[locale]/security/page.tsx with no docs/screens/reality/*.md update — report CTA i18n"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-3483-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3483",
+      "score_delta": 2,
+      "evidence": [
+        "PR #3483 touched frontend/apps/ppt-web/src/routes/groups/reports.tsx with no docs/screens/ppt/*.md update — wire schedule-list toggle"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-3482-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3482",
+      "score_delta": 2,
+      "evidence": [
+        "PR #3482 touched frontend/apps/ppt-web/src/routes/groups/core.tsx (+ core.privacy-auth.route.test.tsx) with no docs/screens/ppt/*.md update — gate /settings/privacy behind ProtectedRoute"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-3494",
+      "type": "hotfix-no-test",
+      "source": "PR #3494",
+      "score_delta": 2,
+      "evidence": [
+        "PR #3494 (fix(reality-web): i18n the security page report CTA (sk hardcoded)) merged 7 files with no test file — translation JSONs + 1 page.tsx"
+      ],
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "code-review-ppt-web-core-detail-routes-spinner-on-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-11-14 ppt-web-core",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/outages.tsx:161,219 — ViewOutagePageRoute destructures only `{ data, isLoading }` from useOutage; `isLoading || !outageData` spins forever on query error (isLoading=false, data=undefined, isError=true).",
+        "frontend/apps/ppt-web/src/routes/groups/outages.tsx:272,330 — EditOutagePageRoute repeats the same spinner-guard on `useOutage` + `useBuildings` errors.",
+        "frontend/apps/ppt-web/src/routes/groups/messaging.tsx:166,192 — ThreadDetailPageRoute uses `useThread(threadId, !!threadId)` then `threadLoading || !thread` spinner; 403/5xx traps the user on the spinner.",
+        "Sibling list wrappers already demonstrate the correct pattern (OutagesPageRoute reads isError + forwards onRetry)."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-notif-triggers-raw-err-message-toast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-11-14 ppt-web-core",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/notifications.tsx:107-116 — updateTrigger.mutate onError writes `err.message` into toast body; ApiError.message is untranslated backend English, so sk/cs/de users see English in the toast.",
+        "frontend/apps/ppt-web/src/routes/groups/notifications.tsx:132-140 — resetTriggers.mutate repeats the same leak.",
+        "Fix shape mirrors CREATE_SCHEDULE_ERROR_KEYS in routes/groups/reports.tsx:39-51."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "frontend"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state progression",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no double-scored signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "decay applied",
+      "observed": "stale_open_14d=0",
+      "expected": "0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans have adversarial annotation",
+      "observed": "new_plans=0",
+      "expected": "all annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans count",
+      "observed": "new=0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged under .research only",
+      "observed": "others=0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets",
+      "observed": "matches=0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regen match",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failures surfaced",
+      "observed": "no phase failed",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan convergence",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive monotonic",
+      "observed": "now=24 head=24",
+      "expected": "now>=head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md regen match",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps",
+      "observed": "auto_fix_actions=empty",
+      "expected": "true (none this run)"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + cursors",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token",
+      "observed": "matches=0",
+      "expected": "0"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-11-13T04:10:00Z",
+  "generated": "2026-11-14T03:16:32Z",
   "items": [
     {
       "id": "pm-devops-swagger-ui-egress-blocking-security-2026-10-01",
@@ -312,6 +312,36 @@
       "mitigation": "Human-gate review within 72h for majors; auto-approve minor/patch groups once CI green; set a WIP cap on open Dependabot PRs.",
       "owner_role": "pm-devops",
       "trigger": "dependabot_open_prs > 10 for 7+ days",
+      "status": "open"
+    },
+    {
+      "id": "pm-security-jwt-iss-aud-binding-2026-11-14",
+      "risk": "No iss/aud binding (#3427). A token minted by one service or environment sharing JWT_SECRET is accepted by any other. Both validators (auth.rs ~L71–76 and services/jwt.rs ~L198–224) must be changed together, or they will diverge.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Ship #3427 per plans/security-jwt-iss-aud-cross-service.md with distinct per-service or per-environment secrets as a fallback control, and use a dual-accept rollout.",
+      "owner_role": "pm-security",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-security-mgmt-routes-backend-enforcement-unverified-2026-11-14",
+      "risk": "Community/disputes/messaging/neighbors and /settings/privacy were client-side unguarded before #3486 and #3482. ProtectedRoute is only UX gating. If backend endpoints for those features lack role/tenant checks or RLS, the exposure is real regardless of the SPA fix.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Audit the backend handlers and RLS for disputes, messaging, neighbors and privacy settings — auth, tenant scoping, role checks — and confirm they were not relying on SPA guards.",
+      "owner_role": "pm-security",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-ppt-web-e2e-regression-3505-2026-11-14",
+      "risk": "ppt-web E2E regression (#3505) may mean auth-guard changes broke an E2E flow or hide a product regression behind a test-fixture fix.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Prioritise #3507 and verify root cause (test fixture vs product). Add route-test matrix for every newly gated path (unauthenticated → login redirect).",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
       "status": "open"
     }
   ]

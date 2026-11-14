@@ -132,3 +132,10 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - 2026-11-13: Lag-floor policy for the daily research routine — hard-fail at >48h lag? Owner: pm-devops.
 - 2026-11-13: Dependabot major-review SLA — WIP cap + 72h review window for majors. Owner: pm-devops.
 - 2026-11-13: #3357 dispatcher-stall operator action — likely self-resolved by the 58-PR burst. Owner: pm-scrum-master.
+
+## 2026-11-14 — pm-scrum-master / pm-security decisions pending
+
+- **Dependabot major-review SLA/WIP cap.** Owner: pm-devops. Define a review window and a hard WIP cap on major-version PRs; apply to the 3 stacked majors (#3447 vitest 5, #3444 jsonwebtoken 11, #3443 utoipa-swagger-ui 10).
+- **Close #3357 (dispatcher stall) as self-resolved.** Owner: pm-scrum-master. The 2026-11-09 stall cleared itself with the burst that followed; the failure mode (dispatcher cannot self-heal from blocked PRs) is unchanged but the issue text matches the stall that is now gone.
+- **iss/aud values + rollout strategy for #3427.** Owner: pm-scrum-master / tech lead. Choose canonical iss/aud per service, and decide dual-accept window vs hard cutover (forced re-login). Needed before `plans/security-jwt-iss-aud-cross-service.md` can become an implementer task.
+- **Split JWT secrets per service or environment.** Owner: tech lead / DevOps. Interim control that bounds cross-service token-replay exposure even before iss/aud ships.

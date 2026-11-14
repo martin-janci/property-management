@@ -1,62 +1,30 @@
-# pm-security — 2026-05-27
-
-_Rotating role this run (pm_cursor idx 5). Static read; no compile/run._
+# pm-security — 2026-11-14
 
 ## Summary
 
-Authz/tenant-scoping is the dominant risk surface this window. Three open post-merge
-security follow-ups are confirmed exploitable-by-omission on the new reports surface:
-**#614** (`update_schedule` missing RBAC capability check), **#624** (`update_schedule`
-missing tenant/org scope — cross-tenant schedule mutation), and **#617** (cookie `Path`
-breaking change introduced by the #565 session-cookie scope hardening). The #565
-SameSite/Secure/scoped-cookie hardening (P0-12) landed this window — good — but it shipped
-a `Path` regression (#617) that must be reconciled before release, and the residual
-P1-04 Debug-format audit-hash leak from PR #435 is still open.
+Static check only (sprint-status.yaml, project-state and the Dependabot/E2E PRs were not read in this pass). #3427 is still open in code: neither access-token validator checks `iss`/`aud`, and minted tokens carry no `iss`/`aud` claims. The ppt-web route-guard work from #3486/#3482 looks widely applied (ProtectedRoute appears ≈383× across 64 files), but the #3505 E2E failure and whether all four #3486 route groups are guarded were not verified in this pass.
 
-## next_actions
+## Next actions
 
-- **[high]** Fix #624 + #614 together: thread `tenant_id`/`org_id` scope AND a
-  `RequireCapability` extractor into `update_schedule` (PUT
-  `/api/v1/reports/schedules/{id}`) in `report_schedule.rs`; add a cross-tenant +
-  unauthorized-role regression test. DoD: foreign-tenant/unauthorized callers get 403/404,
-  test in CI. dependency: pm-backend.
-- **[high]** Reconcile the #617 cookie `Path` breaking change from PR #565 (P0-12): confirm
-  the new `Path` scope does not silently log existing sessions out or widen/narrow the
-  cookie beyond the API prefix; document the migration. DoD: session set/clear verified
-  across `/` and API prefix; no auth regression. dependency: none.
-- **[high]** Close P1-04 Debug-format audit-hash domain leak (PR #435 residual): replace
-  `{:?}` on internal types in audit-trail records with `Display`/structured fields. DoD:
-  no Debug-formatted internal types in audit log lines. dependency: none.
-- **[medium]** Land the OAuth introspection + refresh-rotation security tests
-  (pm-qa-oauth-security-tests): revoked-token rejection, family-reuse replay block, PKCE
-  S256 enforcement — 10a-* shipped without end-to-end security coverage. dependency: pm-qa.
-- **[medium]** Audit the reports.rs / report_schedule.rs churn cluster for sibling missing
-  scope (the #614/#624 pattern often repeats across CRUD handlers in the same module).
-  DoD: every mutating reports handler binds + uses the principal's tenant/org. dependency:
-  pm-backend.
+1. **[high]** Implement #3427: have `JwtService` emit `iss`/`aud` (per service) and enforce `set_issuer`/`set_audience` in BOTH `api_core::extractors::auth::jwt_verifier` (`auth.rs` ≈L71–76) and `JwtService::validate_access_token`/`validate_refresh_token` (`services/jwt.rs` ≈L198–224), which are separate copies of the validation. Also check `PrincipalClaims` and reality-server verifiers. Roll out with a dual-accept window so tokens already issued without iss/aud do not log users out. DoD: tokens carry iss/aud; all verifier copies reject wrong or missing iss/aud; a cross-service token-replay test (api-server token sent to reality-server and the reverse) fails; the #3427 `blocked` label is cleared or the blocker is documented.
+2. **[high]** Triage #3505/#3507 as an auth-guard regression. Confirm the ProtectedRoute gating from #3482/#3486 did not break legitimate flows. Fix the E2E fixtures (login/session seeding) rather than loosening guards. Add a route-test matrix asserting unauthenticated access to community, disputes, messaging, neighbors and `/settings/privacy` redirects to login. DoD: E2E green; `mgmt-routes-auth-guard.route.test.tsx` covers every newly gated path with both unauthenticated (redirect) and authenticated (renders) cases. No guard removed to make tests pass.
+3. **[medium]** Before merging the jsonwebtoken 11 Dependabot PR (`backend/Cargo.toml` currently pins 10 with `rust_crypto`), review its changelog for Validation defaults (exp/nbf/aud/algorithm handling) and the crypto-backend features. Do it after or together with #3427, and keep the PR gated on auth tests that cover expired, wrong-alg, wrong-secret and wrong-aud tokens. DoD: changelog reviewed and the bump merged, or deferred with a reason; token tests above pass on 11.
 
-## risks
+## Risks
 
-- **update_schedule cross-tenant + missing-RBAC (high/high):** #624 + #614 — an
-  authenticated user can mutate another tenant's report schedule and/or mutate schedules
-  without the required capability. Same omission class as the prior `ai.rs` equipment IDOR
-  cluster. Mitigation: scope + capability extractor + regression test before promoting 81-1.
-- **Cookie Path breaking change (#617) (medium/high):** the #565 cookie-scope hardening
-  changed cookie `Path`; if mis-scoped it either logs users out or leaks the session to
-  unintended paths. Mitigation: verify set/clear across paths; document migration.
-- **Audit-hash Debug-format leak P1-04 (medium/medium):** internal type internals may reach
-  audit logs via `{:?}`. Mitigation: structured/Display formatting.
-- **OAuth provider untested security contract (medium/high):** 10a-1/10a-2/10a-3 shipped
-  with no introspection/refresh-rotation/PKCE security tests; a refactor could silently
-  reintroduce revoked-token acceptance or replay. Mitigation: add the security test suite.
+- **medium/high** — No `iss`/`aud` binding (#3427). A token minted by one service or environment sharing JWT_SECRET is accepted by any other. The comments in `auth.rs` and `jwt.rs` say iss/aud are not emitted. Both validators must change together or they will diverge. Mitigation: ship #3427 with distinct per-service / per-environment secrets as a fallback control, and use the dual-accept rollout.
+- **medium/high** — The community, disputes, messaging, neighbors and `/settings/privacy` routes were client-side unguarded before #3486 and #3482. ProtectedRoute is only UX gating. If backend endpoints for those features lack role/tenant checks or RLS, the exposure is real regardless of the SPA fix. Whether the backend enforces them is unverified. Mitigation: audit the backend handlers and RLS for disputes, messaging, neighbors and privacy settings — auth, tenant scoping, role checks — and confirm they were not relying on SPA guards.
+- **low/medium** — Stalled Dependabot majors. `jsonwebtoken` 11 sits on the auth path and a stale pin delays advisories, but we are already on 10, so exposure is modest. Rebasing against churn in the auth-guard tests could silently weaken coverage. `utoipa-swagger-ui` 10 and `vitest` 5 are lower risk, but swagger-ui is exposed at `/swagger-ui`. Mitigation: schedule the `jsonwebtoken` bump after #3427; check that `/swagger-ui` is disabled or gated in production.
 
-## open_questions
+## Open questions
 
-- Does `security-test-gate.yml` actually block security-labelled PRs lacking a test file,
-  or is it advisory? PR #497 and several reports PRs shipped without tests.
-- Are #614 and #624 the only missing-scope handlers in `report_schedule.rs`, or does the
-  whole CRUD set share the omission?
+- What is the exact blocker on #3427 (design decision, rollout concern, or capacity), and what did the #3480 triage conclude?
+- What is the root cause of the #3505 E2E failure: stale fixtures, or a guard blocking a flow that should be public?
+- Do the backend endpoints behind the community, disputes, messaging and neighbors routes enforce authentication, tenant scoping and role checks independently of the SPA?
+- Do api-server and reality-server share `JWT_SECRET`, and is it shared across environments? This determines the cross-service replay exposure.
+- Is `/swagger-ui` enabled in production builds?
 
-## decisions_needed
+## Decisions needed
 
-- Treat #614/#624/#617 as pre-release P0/P1 blockers gating Epic 81 promotion — owner: pm-security.
+- Decide the iss/aud values and rollout strategy for #3427 — dual-accept window vs hard cutover that forces re-login — owner: pm-scrum-master / tech-lead.
+- Decide whether to split JWT secrets per service or environment as an interim control — owner: tech-lead / DevOps.

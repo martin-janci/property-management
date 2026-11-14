@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-11-13 11:30 UTC by routine</sub>
+<sub>Last regenerated: 2026-11-14 03:19 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -47,6 +47,17 @@
 | 3 | security | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-25 (+2) | 2026-05-25 | done | plans/_archive/security-equipment-idor.md |
 | 3 | security | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | `backend/servers/api-server/src/routes/signatures.rs (+2)` | issue #439 (+3) | 2026-05-25 | done | plans/_archive/security-ssrf-outbound-url-validation.md |
 | 3 | security | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-23 (+2) | 2026-05-25 | done | plans/_archive/security-voice-device-idor.md |
+| 2 | test-gap | screen-map drift: PR #3486 — route touched without docs/screens update (review candidate) | — | PR #3486 | 2026-11-14 | open | — |
+| 2 | test-gap | screen-map drift: PR #3481 — route touched without docs/screens update (review candidate) | — | PR #3481 | 2026-11-14 | open | — |
+| 2 | test-gap | screen-map drift: PR #3484 — route touched without docs/screens update (review candidate) | — | PR #3484 | 2026-11-14 | open | — |
+| 2 | test-gap | screen-map drift: PR #3489 — route touched without docs/screens update (review candidate) | — | PR #3489 | 2026-11-14 | open | — |
+| 2 | test-gap | screen-map drift: PR #3496 — route touched without docs/screens update (review candidate) | — | PR #3496 | 2026-11-14 | open | — |
+| 2 | test-gap | screen-map drift: PR #3492 — route touched without docs/screens update (review candidate) | — | PR #3492 | 2026-11-14 | open | — |
+| 2 | test-gap | screen-map drift: PR #3494 — route touched without docs/screens update (review candidate) | — | PR #3494 | 2026-11-14 | open | — |
+| 2 | test-gap | screen-map drift: PR #3483 — route touched without docs/screens update (review candidate) | — | PR #3483 | 2026-11-14 | open | — |
+| 2 | test-gap | screen-map drift: PR #3482 — route touched without docs/screens update (review candidate) | — | PR #3482 | 2026-11-14 | open | — |
+| 2 | test-gap | hotfix-no-test: PR #3494 — i18n security-page report CTA shipped without a regression test | — | PR #3494 | 2026-11-14 | open | — |
+| 2 | bug | ppt-web-core detail routes spin forever on API errors — outages/edit-outage + messaging ThreadDetail miss isError branch | `frontend/apps/ppt-web/src/routes/groups/outages.tsx (+1)` | rotating-expert-review 2026-11-14 ppt-web-core | 2026-11-14 | open | — |
 | 2 | refactor | ppt-web messages/en.json churn-hotspot — base-locale key additions driving i18n  | `frontend/apps/ppt-web/messages/en.json` | git-log 14d sweep 2026-11-13 (+1) | 2026-11-13 | open | — |
 | 2 | security | SECURITY: ppt-web refresh-token persisted in localStorage — XSS-reachable | `frontend/apps/ppt-web/src/` | rotating-expert-review 2026-11-03 ppt-web-core (dispatcher Tier-1d) | 2026-11-09 | done | — |
 | 2 | security | api-server messaging.rs leaks raw sqlx errors to clients — 33 handler error branches send e.to_string() as DB_ERROR | `backend/servers/api-server/src/routes/messaging.rs` | PR #3363 (+1) | 2026-11-09 | done | plans/_archive/code-review-api-handlers-messaging-db-error-leak.md |
@@ -266,6 +277,10 @@
 | 2 | test-gap | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | `frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx` | PR #460 | 2026-05-25 | closed | — |
 | 2 | refactor | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | `backend/servers/api-server/src/handlers/auth/mod.rs (+2)` | code-review api-handlers 2026-05-23 (+1) | 2026-05-24 | done | — |
 | 2 | security | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | `backend/servers/api-server/src/handlers/voting/mod.rs (+4)` | issue #160 (+2) | 2026-05-23 | done | — |
+| 1 | refactor | churn-hotspot: frontend/apps/admin-web/src/pages/TenantLifecyclePage.tsx — rapid changes this run | `frontend/apps/admin-web/src/pages/TenantLifecyclePage.tsx` | git-log since 2026-11-13T11:30:00Z | 2026-11-14 | open | — |
+| 1 | refactor | churn-hotspot: frontend/apps/reality-web/src/app/[locale]/journal/page.tsx — rapid changes this run | `frontend/apps/reality-web/src/app/[locale]/journal/page.tsx` | git-log since 2026-11-13T11:30:00Z | 2026-11-14 | open | — |
+| 1 | test-gap | churn-hotspot: frontend/apps/ppt-web/src/routes/groups/mgmt-routes-auth-guard.route.test.tsx — rapid changes this run | `frontend/apps/ppt-web/src/routes/groups/mgmt-routes-auth-guard.route.test.tsx` | git-log since 2026-11-13T11:30:00Z | 2026-11-14 | open | — |
+| 1 | refactor | ppt-web-core notification-triggers onError leaks untranslated ApiError.message into the user-facing toast body | `frontend/apps/ppt-web/src/routes/groups/notifications.tsx` | rotating-expert-review 2026-11-14 ppt-web-core | 2026-11-14 | open | — |
 | 1 | refactor | ppt-web messages/de.json churn-hotspot — i18n leaf-parity sweep (de/pl/hu catch- | `frontend/apps/ppt-web/messages/de.json` | git-log 14d sweep 2026-11-13 | 2026-11-13 | open | — |
 | 1 | refactor | ppt-web messages/hu.json churn-hotspot — i18n leaf-parity sweep (de/pl/hu catch- | `frontend/apps/ppt-web/messages/hu.json` | git-log 14d sweep 2026-11-13 | 2026-11-13 | open | — |
 | 1 | bug | reality-web realtor/[id] page swallows realtor-reviews useQuery error — renders  | `frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx` | rotating-expert-review reality-web 2026-11-13 (churn-aligned) | 2026-11-13 | open | — |
