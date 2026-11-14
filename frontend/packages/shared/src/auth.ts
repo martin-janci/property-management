@@ -93,6 +93,14 @@ export function isTokenExpired(token: string, bufferSeconds = 30): boolean {
     return true;
   }
 
+  // Fail closed: a token whose `exp` claim is missing or not a finite number
+  // must be treated as expired/invalid. Without this guard, `payload.exp`
+  // being `undefined` (no exp) or `NaN` makes the comparison below evaluate to
+  // `false`, which would accept such a token indefinitely — a security bypass.
+  if (typeof payload.exp !== 'number' || !Number.isFinite(payload.exp)) {
+    return true;
+  }
+
   const now = Math.floor(Date.now() / 1000);
   return payload.exp <= now + bufferSeconds;
 }
