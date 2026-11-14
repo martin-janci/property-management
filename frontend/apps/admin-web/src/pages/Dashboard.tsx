@@ -412,11 +412,12 @@ export function Dashboard() {
   const canMembershipsGrant = useCapability('memberships_grant');
 
   // Derived first name from JWT sub (best-effort; fallback "Operator")
+  const operatorFallback = t('admin.dashboard.operatorFallback', { defaultValue: 'Operator' });
   const firstName = (() => {
-    if (!token) return 'Operator';
+    if (!token) return operatorFallback;
     try {
       const parts = token.split('.');
-      if (parts.length !== 3) return 'Operator';
+      if (parts.length !== 3) return operatorFallback;
       const padded = parts[1].replace(/-/g, '+').replace(/_/g, '/');
       const json = atob(padded.padEnd(padded.length + ((4 - (padded.length % 4)) % 4), '='));
       const payload = JSON.parse(json) as Record<string, unknown>;
@@ -425,24 +426,36 @@ export function Dashboard() {
       const namePart = emailLocal.split(/[._-]/)[0];
       return namePart.length > 0
         ? namePart.charAt(0).toUpperCase() + namePart.slice(1)
-        : 'Operator';
+        : operatorFallback;
     } catch {
-      return 'Operator';
+      return operatorFallback;
     }
   })();
 
   // Greeting by time-of-day
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  const greeting =
+    hour < 12
+      ? t('admin.dashboard.greeting.morning', { defaultValue: 'Good morning' })
+      : hour < 18
+        ? t('admin.dashboard.greeting.afternoon', { defaultValue: 'Good afternoon' })
+        : t('admin.dashboard.greeting.evening', { defaultValue: 'Good evening' });
 
   // MFA subline
   const mfaSubline = (() => {
     if (mfaState === 'verified' || mfaState === 'expiring') {
       const totalSec = Math.max(0, Math.ceil(msRemaining / 1000));
       const m = Math.floor(totalSec / 60);
-      return `You're in a recent-MFA window for ${m} more minute${m !== 1 ? 's' : ''}.`;
+      return m === 1
+        ? t('admin.dashboard.mfa.one', {
+            defaultValue: "You're in a recent-MFA window for 1 more minute.",
+          })
+        : t('admin.dashboard.mfa.other', {
+            count: m,
+            defaultValue: "You're in a recent-MFA window for {{count}} more minutes.",
+          });
     }
-    return 'MFA window not active.';
+    return t('admin.dashboard.mfa.inactive', { defaultValue: 'MFA window not active.' });
   })();
 
   // TanStack Queries
@@ -498,13 +511,22 @@ export function Dashboard() {
     <div className="ppt-dash">
       {/* Greeting */}
       <h1 className="ppt-dash__title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        {greeting}, {firstName}.
+        {t('admin.dashboard.title', {
+          greeting,
+          name: firstName,
+          defaultValue: '{{greeting}}, {{name}}.',
+        })}
         <HelpTooltip text={t('admin.dashboard.helpTooltip')} />
       </h1>
       <p className="ppt-dash__sub">
         {attentionCount > 0
-          ? `${attentionCount} thing${attentionCount !== 1 ? 's' : ''} need${attentionCount === 1 ? 's' : ''} attention.`
-          : 'Everything looks clear.'}{' '}
+          ? attentionCount === 1
+            ? t('admin.dashboard.attention.one', { defaultValue: '1 thing needs attention.' })
+            : t('admin.dashboard.attention.other', {
+                count: attentionCount,
+                defaultValue: '{{count}} things need attention.',
+              })
+          : t('admin.dashboard.attention.clear', { defaultValue: 'Everything looks clear.' })}{' '}
         {mfaSubline}
       </p>
 
@@ -520,26 +542,52 @@ export function Dashboard() {
         ) : (
           <>
             <div className="ppt-card">
-              <div className="ppt-tile__label">Tenants active</div>
+              <div className="ppt-tile__label">
+                {t('admin.dashboard.tiles.tenantsActive.label', { defaultValue: 'Tenants active' })}
+              </div>
               <div className="ppt-tile__value">{metrics?.tenantsActive ?? 0}</div>
-              <div className="ppt-tile__detail">total registered</div>
+              <div className="ppt-tile__detail">
+                {t('admin.dashboard.tiles.tenantsActive.detail', {
+                  defaultValue: 'total registered',
+                })}
+              </div>
             </div>
             <div className="ppt-card">
-              <div className="ppt-tile__label">Operators online</div>
+              <div className="ppt-tile__label">
+                {t('admin.dashboard.tiles.operatorsOnline.label', {
+                  defaultValue: 'Operators online',
+                })}
+              </div>
               <div className="ppt-tile__value">{metrics?.operatorsOnline ?? 0}</div>
-              <div className="ppt-tile__detail">with active sessions</div>
+              <div className="ppt-tile__detail">
+                {t('admin.dashboard.tiles.operatorsOnline.detail', {
+                  defaultValue: 'with active sessions',
+                })}
+              </div>
             </div>
             <div className="ppt-card">
-              <div className="ppt-tile__label">Pending merges</div>
+              <div className="ppt-tile__label">
+                {t('admin.dashboard.tiles.pendingMerges.label', { defaultValue: 'Pending merges' })}
+              </div>
               <div className="ppt-tile__value">{metrics?.pendingMerges ?? 0}</div>
-              <div className="ppt-tile__detail">awaiting resolution</div>
+              <div className="ppt-tile__detail">
+                {t('admin.dashboard.tiles.pendingMerges.detail', {
+                  defaultValue: 'awaiting resolution',
+                })}
+              </div>
             </div>
             <div className="ppt-card">
-              <div className="ppt-tile__label">High-risk · 24h</div>
+              <div className="ppt-tile__label">
+                {t('admin.dashboard.tiles.highRisk.label', { defaultValue: 'High-risk · 24h' })}
+              </div>
               <div className="ppt-tile__value" style={{ color: 'var(--ppt-danger-600, #dc2626)' }}>
                 {metrics?.highRisk24h ?? 0}
               </div>
-              <div className="ppt-tile__detail">purge / escalate events</div>
+              <div className="ppt-tile__detail">
+                {t('admin.dashboard.tiles.highRisk.detail', {
+                  defaultValue: 'purge / escalate events',
+                })}
+              </div>
             </div>
           </>
         )}
@@ -551,18 +599,26 @@ export function Dashboard() {
         {canAuditRead ? (
           <div className="ppt-card">
             <div className="ppt-card__header-row">
-              <h3 className="ppt-card__header">Recent high-risk events · 24h</h3>
+              <h3 className="ppt-card__header">
+                {t('admin.dashboard.highRisk.title', {
+                  defaultValue: 'Recent high-risk events · 24h',
+                })}
+              </h3>
               <button
                 type="button"
                 className="ppt-btn ppt-btn--ghost ppt-btn--tiny"
                 onClick={() => navigate('/ops/audit')}
               >
-                View all →
+                {t('admin.dashboard.highRisk.viewAll', { defaultValue: 'View all →' })}
               </button>
             </div>
 
             {highRiskQuery.isError && (
-              <div className="ppt-error-banner">Unable to load audit events. Try again.</div>
+              <div className="ppt-error-banner">
+                {t('admin.dashboard.highRisk.loadError', {
+                  defaultValue: 'Unable to load audit events. Try again.',
+                })}
+              </div>
             )}
 
             {highRiskQuery.isLoading ? (
@@ -582,7 +638,11 @@ export function Dashboard() {
                 ))}
               </div>
             ) : highRiskEvents.length === 0 ? (
-              <p className="ppt-empty">No high-risk events in the last 24 hours.</p>
+              <p className="ppt-empty">
+                {t('admin.dashboard.highRisk.empty', {
+                  defaultValue: 'No high-risk events in the last 24 hours.',
+                })}
+              </p>
             ) : (
               <div className="ppt-row-list">
                 {highRiskEvents.map((event, idx) => (
@@ -592,7 +652,7 @@ export function Dashboard() {
                       <span className="ppt-row__who">{event.actor_email}</span>
                       {' · '}
                       <span className={pillColorClass(event.capability)}>{event.capability}</span>
-                      {' on '}
+                      {t('admin.dashboard.highRisk.on', { defaultValue: ' on ' })}
                       <span className="ppt-row__target">{event.target_slug}</span>
                     </span>
                     <span className="ppt-row__time">{formatTime(event.occurred_at)}</span>
@@ -611,11 +671,21 @@ export function Dashboard() {
           {/* Active impersonation */}
           {(canUsersImpersonate || canAuditRead) && (
             <div className="ppt-card">
-              <h3 className="ppt-card__header">Active impersonation</h3>
+              <h3 className="ppt-card__header">
+                {t('admin.dashboard.impersonation.title', {
+                  defaultValue: 'Active impersonation',
+                })}
+              </h3>
               {impersonationQuery.isLoading ? (
-                <p className="ppt-empty">Loading…</p>
+                <p className="ppt-empty">
+                  {t('admin.common.loading', { defaultValue: 'Loading…' })}
+                </p>
               ) : impersonations.length === 0 ? (
-                <p className="ppt-empty">No active impersonation sessions.</p>
+                <p className="ppt-empty">
+                  {t('admin.dashboard.impersonation.empty', {
+                    defaultValue: 'No active impersonation sessions.',
+                  })}
+                </p>
               ) : (
                 <div className="ppt-row-list">
                   {impersonations.map((session) => (
@@ -629,8 +699,11 @@ export function Dashboard() {
                         </span>
                         <br />
                         <span style={{ color: 'var(--ppt-fg-muted, #6b7280)', fontSize: '11px' }}>
-                          started {formatTime(session.started_at)} · expires{' '}
-                          {formatTime(session.expires_at)}
+                          {t('admin.dashboard.impersonation.meta', {
+                            started: formatTime(session.started_at),
+                            expires: formatTime(session.expires_at),
+                            defaultValue: 'started {{started}} · expires {{expires}}',
+                          })}
                         </span>
                       </span>
                       {canUsersImpersonate && (
@@ -639,7 +712,7 @@ export function Dashboard() {
                           className="ppt-btn ppt-btn--tiny ppt-btn--danger"
                           onClick={() => navigate('/ops/impersonation')}
                         >
-                          Stop
+                          {t('admin.dashboard.impersonation.stop', { defaultValue: 'Stop' })}
                         </button>
                       )}
                     </div>
@@ -652,11 +725,17 @@ export function Dashboard() {
           {/* Pending merge collisions */}
           {canMembershipsGrant && (
             <div className="ppt-card">
-              <h3 className="ppt-card__header">Pending merge collisions</h3>
+              <h3 className="ppt-card__header">
+                {t('admin.dashboard.merges.title', { defaultValue: 'Pending merge collisions' })}
+              </h3>
               {mergeCollisionsQuery.isLoading ? (
-                <p className="ppt-empty">Loading…</p>
+                <p className="ppt-empty">
+                  {t('admin.common.loading', { defaultValue: 'Loading…' })}
+                </p>
               ) : mergeCollisions.length === 0 ? (
-                <p className="ppt-empty">No merge collisions.</p>
+                <p className="ppt-empty">
+                  {t('admin.dashboard.merges.empty', { defaultValue: 'No merge collisions.' })}
+                </p>
               ) : (
                 <div className="ppt-row-list">
                   {mergeCollisions.map((collision) => (
@@ -668,7 +747,7 @@ export function Dashboard() {
                         className="ppt-btn ppt-btn--tiny"
                         onClick={() => navigate('/identity/memberships')}
                       >
-                        Resolve
+                        {t('admin.dashboard.merges.resolve', { defaultValue: 'Resolve' })}
                       </button>
                     </div>
                   ))}
@@ -680,7 +759,9 @@ export function Dashboard() {
           {/* Quick actions */}
           {showQuickActions && (
             <div className="ppt-card">
-              <h3 className="ppt-card__header">Quick actions</h3>
+              <h3 className="ppt-card__header">
+                {t('admin.dashboard.quickActions.title', { defaultValue: 'Quick actions' })}
+              </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {showFindUser && (
                   <button
@@ -688,7 +769,7 @@ export function Dashboard() {
                     className="ppt-btn ppt-btn--full"
                     onClick={() => navigate('/identity/users')}
                   >
-                    Find user…
+                    {t('admin.dashboard.quickActions.findUser', { defaultValue: 'Find user…' })}
                   </button>
                 )}
                 {showAuditLog && (
@@ -697,7 +778,9 @@ export function Dashboard() {
                     className="ppt-btn ppt-btn--full"
                     onClick={() => navigate('/ops/audit')}
                   >
-                    Open audit log
+                    {t('admin.dashboard.quickActions.openAudit', {
+                      defaultValue: 'Open audit log',
+                    })}
                   </button>
                 )}
                 {showImpersonations && (
@@ -706,7 +789,10 @@ export function Dashboard() {
                     className="ppt-btn ppt-btn--full"
                     onClick={() => navigate('/ops/impersonation')}
                   >
-                    View active impersonations ({impersonations.length})
+                    {t('admin.dashboard.quickActions.viewImpersonations', {
+                      count: impersonations.length,
+                      defaultValue: 'View active impersonations ({{count}})',
+                    })}
                   </button>
                 )}
               </div>
