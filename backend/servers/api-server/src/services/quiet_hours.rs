@@ -237,6 +237,67 @@ mod tests {
     }
 
     #[test]
+    fn crossing_weekend_window_stays_active_into_monday_morning() {
+        // A weekend quiet window 22:00–07:00 crosses from Sunday night into
+        // Monday morning. Weekday quiet hours are OFF. The early-morning tail
+        // (00:00–07:00 Monday) belongs to the window that opened on Sunday, so
+        // it must still be reported as quiet — a held push must not fire at
+        // 03:00. Before the boundary fix the tail was evaluated against
+        // *Monday's* (disabled) weekday window and wrongly reported not-quiet.
+        let mut s = schedule("UTC");
+        s.quiet_hours_enabled = false; // no weekday window
+        s.weekend_quiet_hours_enabled = true;
+        s.weekend_quiet_hours_start = NaiveTime::from_hms_opt(22, 0, 0);
+        s.weekend_quiet_hours_end = NaiveTime::from_hms_opt(7, 0, 0);
+
+        // 2026-06-07 is a Sunday; 2026-06-08 is a Monday.
+        let sun_evening = Utc.with_ymd_and_hms(2026, 6, 7, 23, 0, 0).unwrap();
+        let mon_early = Utc.with_ymd_and_hms(2026, 6, 8, 3, 0, 0).unwrap();
+        let mon_after = Utc.with_ymd_and_hms(2026, 6, 8, 8, 0, 0).unwrap();
+        let mon_7am = Utc.with_ymd_and_hms(2026, 6, 8, 7, 0, 0).unwrap();
+
+        // Sunday 23:00 — evening portion, ends Monday 07:00.
+        let evening = evaluate(&s, sun_evening);
+        assert!(evening.active, "Sunday 23:00 must be quiet");
+        assert_eq!(evening.ends_at, Some(mon_7am), "window ends Monday 07:00");
+
+        // Monday 03:00 — still inside the Sunday-night weekend window.
+        let tail = evaluate(&s, mon_early);
+        assert!(
+            tail.active,
+            "Monday 03:00 is still within the Sunday-night 22:00-07:00 weekend window"
+        );
+        assert_eq!(
+            tail.ends_at,
+            Some(mon_7am),
+            "held push must release at Monday 07:00, not drop at midnight"
+        );
+
+        // Monday 08:00 — past the window; weekday quiet hours are off.
+        assert!(
+            !evaluate(&s, mon_after).active,
+            "Monday 08:00 is outside the weekend window and no weekday window applies"
+        );
+    }
+
+    #[test]
+    fn crossing_weekday_window_extends_into_saturday_morning() {
+        // Symmetric guard: a weekday window 22:00–07:00 enabled on Friday must
+        // extend into Saturday morning (the window opened Friday), even though
+        // Saturday is a weekend day.
+        let mut s = schedule("UTC");
+        s.quiet_hours_enabled = true; // weekday window 22:00–07:00
+        s.weekend_quiet_hours_enabled = false; // weekend falls through to weekday
+
+        // 2026-06-06 is a Saturday (prior day 2026-06-05 is a Friday).
+        let sat_early = Utc.with_ymd_and_hms(2026, 6, 6, 3, 0, 0).unwrap();
+        assert!(
+            evaluate(&s, sat_early).active,
+            "Friday-night 22:00-07:00 window must extend into Saturday 03:00"
+        );
+    }
+
+    #[test]
     fn unknown_timezone_falls_back_to_utc() {
         let s = schedule("Not/AZone");
         // Treated as UTC: 23:00 is inside 22:00–07:00.
