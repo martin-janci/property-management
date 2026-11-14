@@ -595,7 +595,9 @@
       "clickHint": "Klicken Sie auf einen Bezirk für detaillierte Statistiken.",
       "subtitle": "Bratislava – Übersicht",
       "title": "Preiskarte",
-      "h1": "Preiskarte"
+      "h1": "Preiskarte",
+      "sale": "Verkauf",
+      "rent": "Miete"
     },
     "privacy": {
       "description": "Wir sind verpflichtet, Ihre personenbezogenen Daten gemäß DSGVO und geltendem Recht zu schützen. Die vollständigen Datenschutzbestimmungen werden hier veröffentlicht.",

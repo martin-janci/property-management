@@ -595,7 +595,9 @@
       "clickHint": "Klikněte na čtvrť pro detailní statistiky.",
       "subtitle": "Bratislava – přehled",
       "title": "Mapa cen",
-      "h1": "Mapa cen"
+      "h1": "Mapa cen",
+      "sale": "Prodej",
+      "rent": "Pronájem"
     },
     "privacy": {
       "description": "Zavazujeme se chránit vaše osobní údaje v souladu s GDPR a platnými zákony. Úplné podmínky ochrany osobních údajů budou zveřejněny zde.",

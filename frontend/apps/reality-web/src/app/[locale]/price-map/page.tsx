@@ -141,8 +141,8 @@ export default function PriceMapPage() {
           </h1>
           <SegmentedControl
             options={[
-              { value: 'sale', label: 'Predaj' },
-              { value: 'rent', label: 'Prenájom' },
+              { value: 'sale', label: t('sale') },
+              { value: 'rent', label: t('rent') },
             ]}
             value={transactionType}
             onChange={(value) => setTransactionType(value as TransactionType)}
