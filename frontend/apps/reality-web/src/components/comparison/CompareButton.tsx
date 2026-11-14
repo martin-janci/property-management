@@ -7,7 +7,7 @@
 'use client';
 
 import type { ListingSummary } from '@ppt/reality-api-client';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useComparison } from '../../lib/comparison-context';
 
@@ -19,6 +19,18 @@ interface CompareButtonProps {
 export function CompareButton({ listing, className = '' }: CompareButtonProps) {
   const { isInComparison, addToComparison, removeFromComparison, canAddMore } = useComparison();
   const [showMaxWarning, setShowMaxWarning] = useState(false);
+  const warningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear any pending auto-hide timer on unmount so the 3s callback can't fire
+  // setShowMaxWarning after the button has gone away.
+  useEffect(
+    () => () => {
+      if (warningTimerRef.current !== null) {
+        clearTimeout(warningTimerRef.current);
+      }
+    },
+    []
+  );
 
   const inComparison = isInComparison(listing.id);
 
@@ -31,7 +43,15 @@ export function CompareButton({ listing, className = '' }: CompareButtonProps) {
     } else {
       if (!canAddMore) {
         setShowMaxWarning(true);
-        setTimeout(() => setShowMaxWarning(false), 3000);
+        // Clear a still-pending timer before re-arming so rapid clicks don't
+        // leak stacked timeouts.
+        if (warningTimerRef.current !== null) {
+          clearTimeout(warningTimerRef.current);
+        }
+        warningTimerRef.current = setTimeout(() => {
+          setShowMaxWarning(false);
+          warningTimerRef.current = null;
+        }, 3000);
         return;
       }
       addToComparison(listing);
