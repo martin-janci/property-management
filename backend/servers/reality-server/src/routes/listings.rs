@@ -496,7 +496,11 @@ pub async fn get_suggestions(
 /// Reuses the same `label_for_property_type` mapping as the categories endpoint
 /// so the two surfaces stay consistent.
 fn popular_search_phrase(property_type: &str, city: &str, locale: &Locale) -> String {
-    format!("{} {}", label_for_property_type(property_type, locale), city)
+    format!(
+        "{} {}",
+        label_for_property_type(property_type, locale),
+        city
+    )
 }
 
 // ============================================================================
@@ -831,7 +835,9 @@ pub async fn get_categories(
     let result = rows
         .into_iter()
         .map(|(property_type, count)| {
-            let label = label_for_property_type(&property_type);
+            // Categories are documented as Slovak (primary market); the
+            // frontend localizes from the stable `property_type` key.
+            let label = label_for_property_type(&property_type, &Locale::Slovak);
             CategoryCount {
                 icon: property_type.clone(),
                 property_type,
@@ -844,21 +850,66 @@ pub async fn get_categories(
     Ok(Json(result))
 }
 
-/// Localized (sk) label for a `property_type` enum value.
-fn label_for_property_type(t: &str) -> String {
-    match t {
-        "apartment" => "Byty",
-        "house" => "Domy",
-        "land" => "Pozemky",
-        "commercial" => "Komerčné priestory",
-        "office" => "Kancelárie",
-        "garage" => "Garáže",
-        "parking" => "Parkovanie",
-        "storage" => "Sklady",
+/// Localized label for a `property_type` enum value in the requested `locale`.
+///
+/// Slovak is the primary market, but the suggestions surface is served to all
+/// supported locales, so each known property type carries a translation per
+/// [`Locale`]. Unknown/future enum values fall back to a capitalized form of
+/// the raw type regardless of locale.
+fn label_for_property_type(t: &str, locale: &Locale) -> String {
+    let label = match (t, locale) {
+        ("apartment", Locale::Slovak) => "Byty",
+        ("apartment", Locale::Czech) => "Byty",
+        ("apartment", Locale::German) => "Wohnungen",
+        ("apartment", Locale::English) => "Apartments",
+        ("house", Locale::Slovak) => "Domy",
+        ("house", Locale::Czech) => "Domy",
+        ("house", Locale::German) => "Häuser",
+        ("house", Locale::English) => "Houses",
+        ("land", Locale::Slovak) => "Pozemky",
+        ("land", Locale::Czech) => "Pozemky",
+        ("land", Locale::German) => "Grundstücke",
+        ("land", Locale::English) => "Land",
+        ("commercial", Locale::Slovak) => "Komerčné priestory",
+        ("commercial", Locale::Czech) => "Komerční prostory",
+        ("commercial", Locale::German) => "Gewerbeflächen",
+        ("commercial", Locale::English) => "Commercial",
+        ("office", Locale::Slovak) => "Kancelárie",
+        ("office", Locale::Czech) => "Kanceláře",
+        ("office", Locale::German) => "Büros",
+        ("office", Locale::English) => "Offices",
+        ("garage", Locale::Slovak) => "Garáže",
+        ("garage", Locale::Czech) => "Garáže",
+        ("garage", Locale::German) => "Garagen",
+        ("garage", Locale::English) => "Garages",
+        ("parking", Locale::Slovak) => "Parkovanie",
+        ("parking", Locale::Czech) => "Parkování",
+        ("parking", Locale::German) => "Parkplätze",
+        ("parking", Locale::English) => "Parking",
+        ("storage", Locale::Slovak) => "Sklady",
+        ("storage", Locale::Czech) => "Sklady",
+        ("storage", Locale::German) => "Lager",
+        ("storage", Locale::English) => "Storage",
         // Fallback: capitalize the type so unknown values still render.
-        other => return capitalize(other),
+        (other, _) => return capitalize(other),
+    };
+    label.to_string()
+}
+
+/// Resolve the response locale for a request: an explicit `?locale=` query
+/// parameter wins, otherwise the first tag of the `Accept-Language` header is
+/// used, falling back to the default ([`Locale::English`]) when neither is
+/// usable. [`Locale::parse`] normalizes region subtags and unknown values.
+fn resolve_locale(explicit: Option<&str>, headers: &HeaderMap) -> Locale {
+    if let Some(loc) = explicit.filter(|s| !s.is_empty()) {
+        return Locale::parse(loc);
     }
-    .to_string()
+    headers
+        .get(axum::http::header::ACCEPT_LANGUAGE)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.split(',').next())
+        .map(|tag| Locale::parse(tag.split(';').next().unwrap_or(tag).trim()))
+        .unwrap_or_default()
 }
 
 fn capitalize(s: &str) -> String {
