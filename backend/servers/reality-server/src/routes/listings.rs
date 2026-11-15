@@ -309,7 +309,7 @@ pub async fn search(
     path = "/api/v1/listings/{id}",
     tag = "Listings",
     params(
-        ("id" = Uuid, Path, description = "Listing ID")
+        ("id" = String, Path, description = "Listing slug (`title-<uuid>`) or bare UUID")
     ),
     responses(
         (status = 200, description = "Listing detail", body = ListingDetail),
@@ -318,8 +318,14 @@ pub async fn search(
 )]
 pub async fn get_listing(
     State(state): State<AppState>,
-    Path(id): Path<Uuid>,
+    Path(id_or_slug): Path<String>,
 ) -> Result<Json<ListingDetail>, (axum::http::StatusCode, String)> {
+    // Accept both the SEO slug (`title-<uuid>`) and a bare UUID. An
+    // unresolvable segment is a 404 (the resource can't exist), not a 400.
+    let id = crate::util::slug::parse_listing_id(&id_or_slug).ok_or((
+        axum::http::StatusCode::NOT_FOUND,
+        "Listing not found".to_string(),
+    ))?;
     tracing::info!(%id, "Get listing detail");
 
     // Generic public-facing error message for any DB-side failure. The detailed
@@ -520,7 +526,10 @@ pub struct RichListingPhoto {
 pub struct RichListingSummary {
     pub id: Uuid,
     pub title: String,
-    /// URL slug — currently the listing UUID stringified (no slug column yet).
+    /// URL slug: `{slugified-title}-{uuid}`. The trailing UUID is
+    /// authoritative (the detail handler resolves by it); the title prefix is
+    /// cosmetic/SEO. A bare UUID is still accepted for backward-compatible
+    /// deep links.
     pub slug: String,
     pub property_type: String,
     pub transaction_type: String,
@@ -623,13 +632,17 @@ impl From<RichListingRow> for RichListingSummary {
             }),
             _ => None,
         };
+        // Derive an SEO-friendly, human-readable slug from the title with the
+        // UUID appended as a stable suffix (`beautiful-apartment-<uuid>`).
+        // Listings have no `slug` column, so the trailing UUID is what keeps
+        // the path resolvable: `get_listing` extracts it via
+        // `util::slug::parse_listing_id`, which also still accepts a bare UUID,
+        // so existing deep links keep working.
+        let slug = crate::util::slug::listing_slug(&r.title, r.id);
         Self {
             id: r.id,
             title: r.title,
-            // No slug column on listings yet — the frontend treats the path
-            // segment as an opaque identifier and the detail handler accepts
-            // a UUID, so stringifying the id keeps deep links functional.
-            slug: r.id.to_string(),
+            slug,
             property_type: r.property_type,
             transaction_type: r.transaction_type,
             status: r.status,
@@ -857,7 +870,7 @@ fn capitalize(s: &str) -> String {
     post,
     path = "/api/v1/listings/{id}/view",
     tag = "Listings",
-    params(("id" = Uuid, Path, description = "Listing ID")),
+    params(("id" = String, Path, description = "Listing slug (`title-<uuid>`) or bare UUID")),
     responses(
         (status = 204, description = "View recorded"),
         (status = 404, description = "Listing not found")
@@ -865,8 +878,14 @@ fn capitalize(s: &str) -> String {
 )]
 pub async fn record_view(
     State(state): State<AppState>,
-    Path(id): Path<Uuid>,
+    Path(id_or_slug): Path<String>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
+    // Accept both the SEO slug (`title-<uuid>`) and a bare UUID, matching the
+    // detail handler so the view beacon fires from the same path segment.
+    let id = crate::util::slug::parse_listing_id(&id_or_slug).ok_or((
+        axum::http::StatusCode::NOT_FOUND,
+        "Listing not found".to_string(),
+    ))?;
     // `track_view` is best-effort — analytics shouldn't break the page on
     // a transient db hiccup. Log and return 204 either way; only return a
     // hard error when the listing genuinely doesn't exist.
