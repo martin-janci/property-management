@@ -710,6 +710,222 @@
         "score": 1,
         "vector": "refactor"
       }
+    },
+    {
+      "id": "code-review-ppt-web-core-org-provider-value-not-memoized",
+      "action": "ppt web core org provider value not memoized",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d ppt-web-core score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T16:26:57Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-25T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-quiet-hours-weekend-master-gate",
+      "action": "api core quiet hours weekend master gate",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d api-core score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T16:26:57Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-23T16:34:26Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-comparison-timer-leak",
+      "action": "reality web comparison timer leak",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d reality-web score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T16:26:57Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-22T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-currency-code-rangeerror-crash",
+      "action": "reality web currency code rangeerror crash",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d reality-web score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T16:26:57Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-21T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-property-valuation-raw-error-leak",
+      "action": "api handlers property valuation raw error leak",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d api-handlers score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T16:26:57Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-05T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-login-open-redirect-backslash",
+      "action": "reality web login open redirect backslash",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d reality-web score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T16:26:57Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-05T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-auth-nav-drops-locale",
+      "action": "reality web auth nav drops locale",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d reality-web score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T16:26:57Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-05T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-digest-worker-no-replica-claim",
+      "action": "api core digest worker no replica claim",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d api-core score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T16:26:57Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-04T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-tenant-config-rls-clear-swallowed",
+      "action": "api handlers tenant config rls clear swallowed",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d api-handlers score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T16:26:57Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-04T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-authed-query-roots-drift",
+      "action": "ppt web core authed query roots drift",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d ppt-web-core score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T16:26:57Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-04T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-digest-send-failure-abandoned",
+      "action": "api core digest send failure abandoned",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d api-core score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T16:26:57Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-04T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-auth-inactive-revoke-swallowed",
+      "action": "api handlers auth inactive revoke swallowed",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d api-handlers score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T16:26:57Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-04T00:00:00Z"
+      }
     }
   ],
   "generated": "2026-11-13T04:10:00Z"

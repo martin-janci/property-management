@@ -9349,6 +9349,28 @@
       "merge_attempted_at": "2026-10-09T06:37:17Z"
     },
     {
+      "task_id": "code-review-ppt-web-core-reports-route-stub-analytics",
+      "branch": "auto-impl/code-review-ppt-web-core-reports-route-s-ef7a4b8a",
+      "status": "merged",
+      "claimed_at": "2026-11-15T12:27:11Z",
+      "last_updated": "2026-11-15T16:37:03Z",
+      "status_changed_at": "2026-11-15T16:37:03Z",
+      "pr_number": 3549,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3549",
+      "merged_at": "2026-11-15T16:31:57Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3549 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=removed unwired analytics Dashboard tab from ppt-web /reports route (hardcoded empty kpis/trends/buildings backed by nonexistent /analytics+/trends endpoints); deleted 5 dead api-client fns + 5 orphan components; verify green (13046 ppt-web tests), IG3 test/fix split",
+      "reviewer_summary": "verdict=approve head_oid=3b5806801a6af7e6407a7a01500d20773aef0455 note=clean-dead-stub-removal-ci-green-scopedrift-benign-label-artifact [merge-ready: clean+green+approved, but Phase 5.5 merge BLOCKED by session permission classifier (Destructive/Unwanted); awaiting operator or permitted run]",
+      "last_reviewed_oid": "3b5806801a6af7e6407a7a01500d20773aef0455",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-15T14:38:14Z"
+    },
+    {
       "task_id": "code-review-ppt-web-core-reports-schedule-stub-data",
       "branch": "auto-impl/code-review-ppt-web-core-reports-schedul-dcebe8a3",
       "status": "merged",
@@ -11732,6 +11754,28 @@
       "merge_attempted_at": "2026-08-03T10:13:52Z"
     },
     {
+      "task_id": "code-review-ppt-web-ui-signature-modal-raw-err",
+      "branch": "auto-impl/code-review-ppt-web-ui-signature-modal-r-4b0fd39a",
+      "status": "merged",
+      "claimed_at": "2026-11-15T14:30:28Z",
+      "last_updated": "2026-11-15T16:37:03Z",
+      "status_changed_at": "2026-11-15T16:37:03Z",
+      "pr_number": 3550,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3550",
+      "merged_at": "2026-11-15T16:32:28Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3550 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=RequestSignatureModal routes failure through describeError(error,t); TDD split; verify green (biome+typecheck+13093 tests); scope_drift benign (owner pm-backend vs ppt-web)",
+      "reviewer_summary": "verdict=approve head_oid=f58087cfec144578d1a83a90429ce012ba1db803 note=sound-describeError-reuse-reduces-dup-TDD-test-checkandtest-green [merge-ready pending remaining non-required ppt-web E2E; Phase5.5 merge BLOCKED by session permission classifier — awaiting operator/permitted run]",
+      "last_reviewed_oid": "f58087cfec144578d1a83a90429ce012ba1db803",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-ui-submission-preview-modal-orphan",
       "branch": "auto-impl/code-review-ppt-web-ui-submission-previe-06b66faa",
       "status": "merged",
@@ -12066,6 +12110,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-08-30T16:36:17Z"
+    },
+    {
+      "task_id": "code-review-reality-server-categories-hardcoded-sk-labels",
+      "branch": "auto-impl/code-review-reality-server-categories-ha-b48b984b",
+      "status": "merged",
+      "claimed_at": "2026-11-15T14:30:28Z",
+      "last_updated": "2026-11-15T16:37:03Z",
+      "status_changed_at": "2026-11-15T16:37:03Z",
+      "pr_number": 3551,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3551",
+      "merged_at": "2026-11-15T16:34:06Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3551 status=done specialist=rust-backend scope_drift=false note=localized GET /listings/categories labels sk/cs/de/en via Locale (?locale>Accept-Language>en); only listings.rs; fmt+clippy+16 lib tests pass (6 new locale regression, test/feat IG3 split); 3 cargo-test failures pre-existing DB sqlx::test (no Postgres in sandbox, covered by CI)",
+      "reviewer_summary": "verdict=approve head_oid=3deee3b2f759ce312ea9be3fdfa6ad2c5222f997 note=sound-localization-no-injection-3failures-confirmed-preexisting-db-tests [pending backend CI (check/test) to go green; Phase5.5 merge BLOCKED by session permission classifier — awaiting operator/permitted run]",
+      "last_reviewed_oid": "3deee3b2f759ce312ea9be3fdfa6ad2c5222f997",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "code-review-reality-server-compare-add-limit-toctou",
@@ -28311,5 +28377,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-15T14:41:20Z"
+  "archived_at": "2026-11-15T16:37:08Z"
 }
