@@ -182,23 +182,6 @@
       }
     },
     {
-      "id": "churn-hotspot-frontend-apps-ppt-web-messages-hu-json",
-      "action": "ppt-web messages/hu.json churn-hotspot — i18n leaf-parity sweep (de/pl/hu catch-",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-13T12:26:49Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-13T12:26:49Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
       "id": "code-review-api-core-statement-account-iban-hardcoded",
       "action": "api core statement account iban hardcoded",
       "owner_role": "pm-backend",
@@ -217,60 +200,6 @@
       }
     },
     {
-      "id": "code-review-reality-web-comparison-share-id-unencoded",
-      "action": "reality web comparison share id unencoded",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d reality-web score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-13T22:25:04Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-09-19T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-mobile-rn-dashboard-layout-fetch-never-applied",
-      "action": "mobile rn dashboard layout fetch never applied",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-14T06:25:48Z (tier1d mobile-rn score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-14T06:25:48Z",
-      "signal_ref": {
-        "segment": "mobile-rn",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-09-17T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-mobile-rn-widget-bridge-auth-token-never-set",
-      "action": "mobile rn widget bridge auth token never set",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-14T06:25:48Z (tier1d mobile-rn score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-14T06:25:48Z",
-      "signal_ref": {
-        "segment": "mobile-rn",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-09-17T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-ppt-web-ui-facilities-ismanager-hardcoded-true",
       "action": "ppt web ui facilities ismanager hardcoded true",
       "owner_role": "pm-backend",
@@ -284,24 +213,6 @@
       "signal_ref": {
         "segment": "ppt-web-ui",
         "score": 2,
-        "vector": "bug",
-        "generated": "2026-09-17T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-reading-form-number-coerce-zero",
-      "action": "ppt web ui reading form number coerce zero",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-14T06:25:48Z (tier1d ppt-web-ui score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-14T06:25:48Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
         "vector": "bug",
         "generated": "2026-09-17T00:00:00Z"
       }
