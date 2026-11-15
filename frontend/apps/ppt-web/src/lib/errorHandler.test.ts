@@ -244,7 +244,7 @@ describe('parseApiError — bare HTTP status (no structured body)', () => {
   const cases: Array<[number, string]> = [
     [400, 'INVALID_INPUT'],
     [401, 'AUTHENTICATION_ERROR'],
-    [403, 'UNAUTHORIZED'],
+    [403, 'FORBIDDEN'],
     [404, 'NOT_FOUND'],
     [409, 'CONFLICT'],
     [500, 'INTERNAL_ERROR'],
@@ -259,8 +259,16 @@ describe('parseApiError — bare HTTP status (no structured body)', () => {
     expect(result.statusCode).toBe(status);
   });
 
-  it('maps 403 as an authorization error, not rate limited', () => {
+  it('maps 403 as a permission/authorization failure, not an auth/session error', () => {
+    // A bare 403 (no structured backend body) is a "not permitted" result, not
+    // a "not signed in" / expired-session result. It must NOT reuse the auth
+    // (401) codes, or a UI branch that treats those as "session invalid" would
+    // wrongly log the user out on a mere permission denial.
     const result = parseApiError({ response: { status: 403, data: undefined } });
+    expect(result.code).toBe('FORBIDDEN');
+    expect(result.code).not.toBe('UNAUTHORIZED');
+    expect(result.code).not.toBe('AUTHENTICATION_ERROR');
+    expect(result.code).not.toBe('SESSION_EXPIRED');
     expect(result.isRateLimitError).toBe(false);
   });
 
