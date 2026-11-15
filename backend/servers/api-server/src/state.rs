@@ -20,9 +20,9 @@ use db::{
         ESignatureNonceRepository, EddRepository, EmergencyRepository, EnergyRepository,
         EnhancedTenantScreeningRepository, EquipmentRepository, EsgReportingRepository,
         FacilityRepository, FaultRepository, FeatureAnalyticsRepository, FeatureFlagRepository,
-        FeaturePackageRepository, FinancialRepository, FormRepository, GovernmentPortalRepository,
-        GranularNotificationRepository, HealthMonitoringRepository, HelpRepository,
-        InfrastructureRepository, InsuranceRepository, IntegrationRepository,
+        FeaturePackageRepository, FeedbackRepository, FinancialRepository, FormRepository,
+        GovernmentPortalRepository, GranularNotificationRepository, HealthMonitoringRepository,
+        HelpRepository, InfrastructureRepository, InsuranceRepository, IntegrationRepository,
         InvestorPortalRepository, LeaseAbstractionRepository, LeaseRepository, LegalRepository,
         ListingRepository, LlmDocumentRepository, MarketPricingRepository, MarketplaceRepository,
         MeterRepository, MigrationRepository, MultiCurrencyRepository,
@@ -310,6 +310,7 @@ pub struct AppState {
     pub system_announcement_repo: SystemAnnouncementRepository,
     pub onboarding_repo: OnboardingRepository,
     pub help_repo: HelpRepository,
+    pub feedback_repo: FeedbackRepository,
     pub signature_request_repo: SignatureRequestRepository,
     pub e_signature_nonce_repo: ESignatureNonceRepository,
     pub financial_repo: FinancialRepository,
@@ -536,6 +537,7 @@ impl AppState {
         let system_announcement_repo = SystemAnnouncementRepository::new(db.clone());
         let onboarding_repo = OnboardingRepository::new(db.clone());
         let help_repo = HelpRepository::new(db.clone());
+        let feedback_repo = FeedbackRepository::new(db.clone());
         let signature_request_repo = SignatureRequestRepository::new(db.clone());
         let e_signature_nonce_repo = ESignatureNonceRepository::new(db.clone());
         let financial_repo = FinancialRepository::new(db.clone());
@@ -707,6 +709,7 @@ impl AppState {
             system_announcement_repo,
             onboarding_repo,
             help_repo,
+            feedback_repo,
             signature_request_repo,
             e_signature_nonce_repo,
             financial_repo,
