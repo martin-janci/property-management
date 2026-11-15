@@ -3126,8 +3126,6 @@
     "completeIn60Seconds": "Většinu úkolů dokončíte za méně než 60 sekund",
     "recentActivity": "Poslední aktivita",
     "activity": {
-      "meterReadingSubmitted": "Odečet měřiče odeslán",
-      "faultReported": "Závada nahlášena",
       "announcementPublished": "Nové oznámení: {{title}}",
       "faultReportedByYou": "Nahlásili jste poruchu: {{title}}",
       "loading": "Načítá se aktivita…",
