@@ -53,13 +53,13 @@
       "branch": "auto-impl/code-review-api-core-statement-account-i-eda04dd5",
       "status": "review",
       "claimed_at": "2026-11-14T20:29:25Z",
-      "last_updated": "2026-11-15T00:43:06Z",
+      "last_updated": "2026-11-15T00:45:13Z",
       "status_changed_at": "2026-11-14T22:25:02Z",
       "pr_number": 3528,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3528",
       "merged_at": null,
       "specialist": null,
-      "implementer_summary": null,
+      "implementer_summary": "[5.5 merge-attempt failed: real non-mechanical conflict in backend/servers/api-server/src/services/accounting.rs \u2014 dev wrapped process_statement_upload in a tx (.begin()/&mut *tx) overlapping this PR's IBAN-sourcing rewrite; draft\u2192ready promoted + CI triggered; needs manual rebase of accounting.rs]",
       "reviewer_summary": "verdict=approve head_oid=a584779fab933510194cb1964fa50cbdcb5d1806 note=iban-fix-correct-scoped-tested",
       "last_reviewed_oid": "a584779fab933510194cb1964fa50cbdcb5d1806",
       "scope_drift": null,
@@ -119,15 +119,15 @@
       "branch": "auto-impl/code-review-ppt-web-core-api-default-exp-0e4d44e5",
       "status": "review",
       "claimed_at": "2026-11-14T22:29:39Z",
-      "last_updated": "2026-11-15T00:35:51Z",
+      "last_updated": "2026-11-15T00:46:02Z",
       "status_changed_at": "2026-11-14T23:05:41Z",
       "pr_number": 3534,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3534",
       "merged_at": null,
       "specialist": "react-web",
       "implementer_summary": "pr=3534 status=done \u2014 relativized api-client default baseUrl (was hardcoded localhost:8080); client-default.ts normalizes at load; IG3 two-commit pair",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve head_oid=4bd5a33b23e054386e36cf4e636223dfd24e3007 note=safe-relativization-no-consumer-regression-ci-green-self-approve-blocked-posted-as-comment-nit:regex-triplicated",
+      "last_reviewed_oid": "4bd5a33b23e054386e36cf4e636223dfd24e3007",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
@@ -209,5 +209,5 @@
       "quarantine_reason": null
     }
   ],
-  "generated": "2026-11-15T00:35:51Z"
+  "generated": "2026-11-15T00:46:02Z"
 }
