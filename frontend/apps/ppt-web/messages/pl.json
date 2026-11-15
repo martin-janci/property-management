@@ -3057,6 +3057,10 @@
         "title": "Odmowa dostępu",
         "message": "Nie masz uprawnień do wykonania tej akcji."
       },
+      "FORBIDDEN": {
+        "title": "Odmowa dostępu",
+        "message": "Nie masz uprawnień do wykonania tej akcji."
+      },
       "VALIDATION_ERROR": {
         "title": "Błąd walidacji",
         "message": "Sprawdź formularz pod kątem błędów."

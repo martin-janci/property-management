@@ -2960,6 +2960,10 @@
         "title": "Prístup zamietnutý",
         "message": "Nemáte oprávnenie vykonať túto akciu."
       },
+      "FORBIDDEN": {
+        "title": "Prístup zamietnutý",
+        "message": "Nemáte oprávnenie vykonať túto akciu."
+      },
       "VALIDATION_ERROR": {
         "title": "Chyba overenia",
         "message": "Skontrolujte prosím chyby vo formulári."

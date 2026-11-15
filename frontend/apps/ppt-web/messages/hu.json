@@ -2987,6 +2987,10 @@
         "title": "Hozzáférés megtagadva",
         "message": "Nincs jogosultsága a művelet végrehajtásához."
       },
+      "FORBIDDEN": {
+        "title": "Hozzáférés megtagadva",
+        "message": "Nincs jogosultsága a művelet végrehajtásához."
+      },
       "VALIDATION_ERROR": {
         "title": "Érvényesítési hiba",
         "message": "Ellenőrizze az űrlap hibáit."

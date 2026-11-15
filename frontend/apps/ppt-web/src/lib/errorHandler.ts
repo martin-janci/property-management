@@ -82,6 +82,9 @@ const KNOWN_ERROR_CODES = new Set<string>([
   'INVALID_CREDENTIALS',
   'SESSION_EXPIRED',
   'UNAUTHORIZED',
+  // Authorization errors (permission denied — distinct from the auth/session
+  // errors above; a 403 means "not permitted", not "not signed in")
+  'FORBIDDEN',
   // Validation errors
   'VALIDATION_ERROR',
   'INVALID_INPUT',
@@ -334,9 +337,14 @@ function parseHttpStatusError(statusCode?: number): ParsedApiError {
         isRateLimitError: false,
       };
     case 403:
+      // 403 Forbidden is an authorization/permission failure, NOT an
+      // authentication/session failure. Give it its own `FORBIDDEN` code (not
+      // the 401 `AUTHENTICATION_ERROR` nor the ambiguous `UNAUTHORIZED`) so a UI
+      // branch that treats the auth codes as "session invalid -> clear session /
+      // redirect to login" does not log the user out on a mere permission deny.
       return {
-        ...errorCopy('UNAUTHORIZED'),
-        code: 'UNAUTHORIZED',
+        ...errorCopy('FORBIDDEN'),
+        code: 'FORBIDDEN',
         statusCode,
         isNetworkError: false,
         isRateLimitError: false,
