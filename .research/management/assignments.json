@@ -163,15 +163,15 @@
     {
       "task_id": "code-review-ppt-web-core-financial-query-silent-error",
       "branch": "auto-impl/code-review-ppt-web-core-financial-query-17c3ecc9",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-15T00:35:51Z",
-      "last_updated": "2026-11-15T00:35:51Z",
-      "status_changed_at": "2026-11-15T00:35:51Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-15T00:49:58Z",
+      "status_changed_at": "2026-11-15T00:49:58Z",
+      "pr_number": 3535,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3535",
       "merged_at": null,
       "specialist": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=3535 status=done [recovered after container restart: branch+draft PR #3535 present (2-commit TDD: test/fix UC-52 surface swallowed payments-query load error; ppt-web PaymentManagementPage + 6-locale i18n); reviewer_summary=null \u2192 reviewed next run]",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": null,
@@ -209,5 +209,5 @@
       "quarantine_reason": null
     }
   ],
-  "generated": "2026-11-15T00:46:02Z"
+  "generated": "2026-11-15T00:49:58Z"
 }
