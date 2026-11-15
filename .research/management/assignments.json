@@ -75,22 +75,22 @@
       "branch": "auto-impl/code-review-mobile-rn-feedback-manager-n-bb35dde9",
       "status": "review",
       "claimed_at": "2026-11-15T06:29:32Z",
-      "last_updated": "2026-11-15T06:45:29Z",
+      "last_updated": "2026-11-15T08:33:17Z",
       "status_changed_at": "2026-11-15T06:45:29Z",
       "pr_number": 3543,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3543",
       "merged_at": null,
       "specialist": "react-native",
       "implementer_summary": "pr=3543 status=done specialist=react-native scope_drift=true note=wired AuthContext accessToken into feedbackManager singleton; clears on logout; IG3 two-commit split; VERIFY OK. FOLLOW-UP: /api/v1/feedback not mounted in backend (404) \u2014 needs backend task",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve head_oid=7095eaa2127ffabe18d4c03d51b3eb4cf7dd7b54 note=mobile-rn feedback singleton now wired to accessToken via AuthContext useEffect; scope-drift justified, no reuse dup, tests lock header+logout contract; approve posted as COMMENT (self-approve blocked)",
+      "last_reviewed_oid": "7095eaa2127ffabe18d4c03d51b3eb4cf7dd7b54",
       "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-11-15T08:33:17Z"
     },
     {
       "task_id": "gh-issue-3544",
@@ -181,5 +181,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-15T06:46:22Z"
+  "generated": "2026-11-15T08:34:31Z"
 }

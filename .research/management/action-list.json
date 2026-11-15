@@ -817,6 +817,27 @@
         "score": 1,
         "vector": "refactor"
       }
+    },
+    {
+      "id": "gh-issue-3544",
+      "action": "Backend: mobile feedback POST targets /api/v1/feedback, which is not mounted (404) (Closes #3544)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-11-15T08:23:28Z (#3544)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T08:23:28Z",
+      "issue_ref": {
+        "number": 3544,
+        "url": "https://github.com/martin-janci/property-management/issues/3544",
+        "labels": [
+          "bug",
+          "backend",
+          "follow-up"
+        ]
+      }
     }
   ],
   "generated": "2026-11-13T04:10:00Z"
