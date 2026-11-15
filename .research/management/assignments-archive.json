@@ -9463,6 +9463,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "code-review-ppt-web-core-route-toasts-i18n-gap",
+      "branch": "auto-impl/code-review-ppt-web-core-route-toasts-i1-d72f7dc4",
+      "status": "failed",
+      "claimed_at": "2026-11-15T14:30:28Z",
+      "last_updated": "2026-11-15T14:39:47Z",
+      "status_changed_at": "2026-11-15T14:39:47Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=done specialist=react-web note=no-op: route toasts already i18n-wired on dev (coreRouteToastI18n test 151 passes; t() keys at parity en/sk/cs/de/pl/hu); zero diff [no-op: finding already resolved on dev]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "branch": "auto-impl/code-review-ppt-web-core-usewebsocket-su-4c59e530",
       "claimed_at": "2026-10-24T08:30:00Z",
       "code_reuse_warn": null,
@@ -10488,6 +10510,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-08-25T08:39:01Z"
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-editfaultpage-no-i18n",
+      "branch": "auto-impl/code-review-ppt-web-ui-editfaultpage-no-094e673c",
+      "status": "failed",
+      "claimed_at": "2026-11-15T14:30:28Z",
+      "last_updated": "2026-11-15T14:38:14Z",
+      "status_changed_at": "2026-11-15T14:38:14Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=done specialist=react-web scope_drift=false code_reuse_warn=none note=no-op: EditFaultPage already fully i18n-wired on dev (all 6 locales); task stale, no diff/PR [no-op: finding already resolved on dev]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "code-review-ppt-web-ui-emergency-dir-raw-err-message",
@@ -28267,5 +28311,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-15T12:36:44Z"
+  "archived_at": "2026-11-15T14:41:20Z"
 }

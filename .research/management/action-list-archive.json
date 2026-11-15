@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-15T14:30:58Z",
+  "archived_at": "2026-11-15T14:41:20Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -9733,6 +9733,25 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-route-toasts-i18n-gap",
+      "action": "ppt web core route toasts i18n gap",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-14T16:26:02Z (tier1d ppt-web-core score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T16:26:02Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-10T22:35:00Z"
+      },
+      "noop_closed": "2026-11-15T14:41:19Z no-op: route toasts already i18n-wired on dev (test 151 passes)"
+    },
+    {
       "id": "code-review-ppt-web-core-usewebsocket-subscribe-gate",
       "action": "ppt-web-core useWebSocket subscription effect gates on handlerRef at mount but omits it from the dep array — a handler supplied after mount never triggers subscribe()",
       "owner_role": "pm-backend",
@@ -10812,6 +10831,25 @@
         "merged_at": "2026-08-25T08:41:02Z",
         "at": "2026-08-25T10:23:31Z"
       }
+    },
+    {
+      "id": "code-review-ppt-web-ui-editfaultpage-no-i18n",
+      "action": "ppt web ui editfaultpage no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-14T16:26:02Z (tier1d ppt-web-ui score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T16:26:02Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-11T00:00:00Z"
+      },
+      "noop_closed": "2026-11-15T14:41:19Z no-op: EditFaultPage already fully i18n-wired on dev"
     },
     {
       "id": "code-review-ppt-web-ui-emergency-dir-raw-err-message",
