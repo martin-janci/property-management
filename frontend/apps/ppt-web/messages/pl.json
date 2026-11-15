@@ -2236,7 +2236,9 @@
       "pendingReconciliationTitle": "Oczekuje na uzgodnienie",
       "recentPayments": "Ostatnie płatności",
       "matchFailed": "Nie udało się przypisać płatności",
-      "autoMatchFailed": "Nie udało się automatycznie uzgodnić płatności"
+      "autoMatchFailed": "Nie udało się automatycznie uzgodnić płatności",
+      "loadFailed": "Nie udało się wczytać płatności",
+      "retry": "Spróbuj ponownie"
     },
     "budgets": {
       "title": "Zarządzanie budżetami",

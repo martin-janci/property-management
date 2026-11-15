@@ -2192,7 +2192,9 @@
       "pendingReconciliationTitle": "Pending Reconciliation",
       "recentPayments": "Recent Payments",
       "matchFailed": "Failed to allocate payment",
-      "autoMatchFailed": "Failed to auto-match payments"
+      "autoMatchFailed": "Failed to auto-match payments",
+      "loadFailed": "Failed to load payments",
+      "retry": "Retry"
     },
     "budgets": {
       "title": "Budget Management",

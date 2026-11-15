@@ -2192,7 +2192,9 @@
       "pendingReconciliationTitle": "Abgleich ausstehend",
       "recentPayments": "Letzte Zahlungen",
       "matchFailed": "Zahlung konnte nicht zugeordnet werden",
-      "autoMatchFailed": "Automatischer Zahlungsabgleich fehlgeschlagen"
+      "autoMatchFailed": "Automatischer Zahlungsabgleich fehlgeschlagen",
+      "loadFailed": "Zahlungen konnten nicht geladen werden",
+      "retry": "Erneut versuchen"
     },
     "budgets": {
       "title": "Budgetverwaltung",

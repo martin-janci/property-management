@@ -15,7 +15,7 @@
  * `useAuth` are mocked; the real PaymentManagementPage renders.
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { Suspense } from 'react';
 import { MemoryRouter, Routes } from 'react-router-dom';
 import { financialRoutes } from './financial';
