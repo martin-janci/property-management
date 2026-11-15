@@ -7,6 +7,7 @@ import type { CreateSigner, SignatureRequestStatus } from '@ppt/api-client';
 import { useCreateSignatureRequest } from '@ppt/api-client';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { describeError } from '../../../lib/describeError';
 
 interface Party {
   name: string;
@@ -214,9 +215,7 @@ export function RequestSignatureModal({
           {createRequest.isError && (
             <div role="alert" className="rounded-md bg-red-50 p-3">
               <p className="text-sm text-red-700">
-                {createRequest.error instanceof Error
-                  ? createRequest.error.message
-                  : t('common.unknownError', 'An error occurred. Please try again.')}
+                {describeError(createRequest.error, t).message}
               </p>
             </div>
           )}
