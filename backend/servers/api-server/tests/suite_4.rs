@@ -33,6 +33,8 @@ mod faults_tests;
 mod faults_workflow_happy_path_tests;
 #[path = "suites/feature_flag_kill_switch_tests.rs"]
 mod feature_flag_kill_switch_tests;
+#[path = "suites/feedback_tests.rs"]
+mod feedback_tests;
 #[path = "suites/financial_cross_org_idor_tests.rs"]
 mod financial_cross_org_idor_tests;
 #[path = "suites/financial_happy_path_tests.rs"]

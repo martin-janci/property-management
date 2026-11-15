@@ -82,6 +82,11 @@ done
 #   voice_assistant_devices  : pre-auth voice-webhook match path; unauthenticated cross-org
 #                              token lookup, no org GUC; token refresh uses a context-cleared
 #                              public connection — RLS intentionally omitted, see migration 00226
+#   app_feedback             : general in-app feedback / bug reports (user-scoped, keyed on
+#                              user_id), mirrors user_article_feedback — NOT tenant data.
+#                              organization_id is an OPTIONAL, FK-less triage hint, not an
+#                              access-control boundary, so RLS is intentionally omitted —
+#                              see migration 00246.
 # Keep this list in sync with validate_rls_coverage() in 00006.
 # -----------------------------------------------------------------------------
 EXEMPT_TABLES=(
@@ -95,6 +100,7 @@ EXEMPT_TABLES=(
     login_attempts
     portal_webhook_events
     voice_assistant_devices
+    app_feedback
 )
 
 echo "🔍 RLS policy-coverage gate (tenant-data manifest)"
