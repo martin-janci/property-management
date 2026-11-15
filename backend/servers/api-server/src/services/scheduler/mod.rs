@@ -1076,7 +1076,24 @@ impl Scheduler {
         let mut total_sent = 0u64;
 
         for invoice in &invoices {
-            let user_ids = self.get_unit_resident_user_ids(invoice.unit_id).await?;
+            // Resolve the invoice's reminder targets. A per-invoice failure
+            // here must NOT abort the whole batch: previously this used `?`,
+            // so a single invoice whose resident lookup errored (e.g. a
+            // transient DB error) short-circuited `send_payment_reminders`
+            // and every remaining invoice silently lost its reminder. Log
+            // the failure and skip just this invoice so the rest still send.
+            let user_ids = match self.get_unit_resident_user_ids(invoice.unit_id).await {
+                Ok(ids) => ids,
+                Err(e) => {
+                    tracing::warn!(
+                        invoice_id = %invoice.id,
+                        unit_id = %invoice.unit_id,
+                        error = %e,
+                        "Failed to resolve residents for invoice — skipping; batch continues"
+                    );
+                    continue;
+                }
+            };
             if user_ids.is_empty() {
                 continue;
             }
