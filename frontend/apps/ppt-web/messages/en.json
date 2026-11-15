@@ -3624,6 +3624,7 @@
       "notesPlaceholder": "Any additional information about this reading...",
       "submitReading": "Submit Reading",
       "errors": {
+        "valueRequired": "Please enter a valid reading value",
         "valueNegative": "Reading value cannot be negative",
         "valueLowerThanLast": "Reading value cannot be lower than the last reading",
         "dateRequired": "Reading date is required",

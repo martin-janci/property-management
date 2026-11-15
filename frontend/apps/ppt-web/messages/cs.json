@@ -6791,6 +6791,7 @@
       "notesPlaceholder": "Doplňující informace k odečtu...",
       "submitReading": "Odeslat odečet",
       "errors": {
+        "valueRequired": "Zadejte platný stav měřidla",
         "valueNegative": "Stav měřidla nemůže být záporný",
         "valueLowerThanLast": "Stav měřidla nemůže být nižší než při posledním odečtu",
         "dateRequired": "Zadejte datum odečtu",
