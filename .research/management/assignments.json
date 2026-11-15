@@ -121,18 +121,18 @@
     {
       "task_id": "churn-hotspot-frontend-apps-ppt-web-messages-hu-json",
       "branch": "auto-impl/churn-hotspot-frontend-apps-ppt-web-mess-f620dce4",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-15T02:27:48Z",
-      "last_updated": "2026-11-15T02:27:48Z",
-      "status_changed_at": "2026-11-15T02:27:48Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-15T02:53:13Z",
+      "status_changed_at": "2026-11-15T02:53:13Z",
+      "pr_number": 3540,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3540",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=3540 status=done specialist=react-web scope_drift=true \u2014 i18n leaf-parity: de/pl/hu already parity; removed 3 dead dashboard.activity keys from sk/cs; added localeLeafParity.test.ts; VERIFY OK (13038 tests); rebased onto dev preserving #3535 keys",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -229,5 +229,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-15T02:45:50Z"
+  "generated": "2026-11-15T02:53:13Z"
 }
