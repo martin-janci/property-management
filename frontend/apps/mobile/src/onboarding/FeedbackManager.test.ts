@@ -77,3 +77,50 @@ describe('FeedbackManager corrupt-storage resilience', () => {
     await expect(manager.getDrafts()).resolves.toEqual([{ title: 'kept', savedAt: 'x' }]);
   });
 });
+
+describe('FeedbackManager auth-token header', () => {
+  const fetchMock = jest.fn();
+
+  beforeEach(() => {
+    fetchMock.mockReset();
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({ id: 'fb-1' }),
+    } as Response);
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+  });
+
+  function headersOf(call: unknown): Record<string, string> {
+    const init = (call as [string, { headers?: Record<string, string> }])[1];
+    return init?.headers ?? {};
+  }
+
+  it('omits the Authorization header until a token is set', async () => {
+    const manager = makeManager();
+
+    await manager.submitFeedback({ type: 'bug', title: 'T', description: 'D' });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toBe('https://api.test.local/api/v1/feedback');
+    expect(headersOf(fetchMock.mock.calls[0]).Authorization).toBeUndefined();
+  });
+
+  it('sends Bearer <token> once setAuthToken is called', async () => {
+    const manager = makeManager();
+    manager.setAuthToken('xyz');
+
+    await manager.submitFeedback({ type: 'bug', title: 'T', description: 'D' });
+
+    expect(headersOf(fetchMock.mock.calls[0]).Authorization).toBe('Bearer xyz');
+  });
+
+  it('drops the Authorization header again when the token is cleared', async () => {
+    const manager = makeManager();
+    manager.setAuthToken('xyz');
+    manager.setAuthToken(null);
+
+    await manager.submitFeedback({ type: 'bug', title: 'T', description: 'D' });
+
+    expect(headersOf(fetchMock.mock.calls[0]).Authorization).toBeUndefined();
+  });
+});
