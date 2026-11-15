@@ -2281,6 +2281,28 @@
       "merge_attempted_at": "2026-11-14T16:43:38Z"
     },
     {
+      "task_id": "churn-hotspot-frontend-apps-ppt-web-messages-hu-json",
+      "branch": "auto-impl/churn-hotspot-frontend-apps-ppt-web-mess-f620dce4",
+      "status": "merged",
+      "claimed_at": "2026-11-15T02:27:48Z",
+      "last_updated": "2026-11-15T04:38:41Z",
+      "status_changed_at": "2026-11-15T04:38:41Z",
+      "pr_number": 3540,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3540",
+      "merged_at": "2026-11-15T04:38:07Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3540 status=done specialist=react-web scope_drift=true — i18n leaf-parity: de/pl/hu already parity; removed 3 dead dashboard.activity keys from sk/cs; added localeLeafParity.test.ts; VERIFY OK (13038 tests); rebased onto dev preserving #3535 keys",
+      "reviewer_summary": "verdict=approve head_oid=e65e043bf4c4792fa25122866b38fe761d192fba note=i18n-dead-key-removal+leaf-parity-test-verified-CI-green",
+      "last_reviewed_oid": "e65e043bf4c4792fa25122866b38fe761d192fba",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "churn-hotspot-frontend-apps-ppt-web-src-lib-websocket-ts",
       "branch": "auto-impl/churn-hotspot-frontend-apps-ppt-web-src-bffaab3a",
       "status": "failed",
@@ -6558,6 +6580,28 @@
       "merge_attempted_at": "2026-08-06T22:32:53Z"
     },
     {
+      "task_id": "code-review-mobile-rn-dashboard-layout-fetch-never-applied",
+      "branch": "auto-impl/code-review-mobile-rn-dashboard-layout-f-f168af77",
+      "status": "merged",
+      "claimed_at": "2026-11-15T02:27:48Z",
+      "last_updated": "2026-11-15T04:38:41Z",
+      "status_changed_at": "2026-11-15T04:38:41Z",
+      "pr_number": 3539,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3539",
+      "merged_at": "2026-11-15T04:37:56Z",
+      "specialist": "react-native",
+      "implementer_summary": "pr=3539 status=done specialist=react-native [PR opened; hand-back pending at dispatcher finalize]",
+      "reviewer_summary": "verdict=approve head_oid=dc7cd15a7dc7c927866a989e06bde6322dbf95a7 note=surgical-cache-miss-fix-ok-scope-drift-benign-ci-green",
+      "last_reviewed_oid": "dc7cd15a7dc7c927866a989e06bde6322dbf95a7",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-mobile-rn-date-locale-en-us",
       "branch": "auto-impl/code-review-mobile-rn-date-locale-en-us-49f0f94c",
       "status": "merged",
@@ -7756,6 +7800,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-mobile-rn-widget-bridge-auth-token-never-set",
+      "branch": "auto-impl/code-review-mobile-rn-widget-bridge-auth-3abc595e",
+      "status": "merged",
+      "claimed_at": "2026-11-15T02:27:48Z",
+      "last_updated": "2026-11-15T04:38:41Z",
+      "status_changed_at": "2026-11-15T04:38:41Z",
+      "pr_number": 3537,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3537",
+      "merged_at": "2026-11-15T04:36:28Z",
+      "specialist": "react-native",
+      "implementer_summary": "pr=3537 status=done specialist=react-native scope_drift=true code_reuse_warn=none note=wired useAuth().accessToken into WidgetBridge.setAuthToken() in WidgetSettingsScreen; mobile jest green (930 tests); drift=owner-hint (pm-backend vs RN)",
+      "reviewer_summary": "verdict=approve head_oid=d16b501141dd8993bcc445179a343eb5ff347655 note=correct-minimal-token-propagation-fix-scopedrift-benign-ci-green",
+      "last_reviewed_oid": "d16b501141dd8993bcc445179a343eb5ff347655",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-15T04:35:16Z"
     },
     {
       "task_id": "code-review-ppt-web-aml-review-decision-untrusted-cast",
@@ -11113,6 +11179,28 @@
       "merge_attempted_at": "2026-11-12T18:34:08Z"
     },
     {
+      "task_id": "code-review-ppt-web-ui-reading-form-number-coerce-zero",
+      "branch": "auto-impl/code-review-ppt-web-ui-reading-form-numb-36332052",
+      "status": "merged",
+      "claimed_at": "2026-11-15T02:27:48Z",
+      "last_updated": "2026-11-15T04:38:41Z",
+      "status_changed_at": "2026-11-15T04:38:41Z",
+      "pr_number": 3538,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3538",
+      "merged_at": "2026-11-15T04:37:42Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3538 status=done specialist=react-web scope_drift=true — ReadingForm keeps raw string + validates (empty/invalid->valueRequired) instead of coercing to 0; genuine 0 still accepted; VERIFY OK; IG3 two-commit; 6 locales",
+      "reviewer_summary": "verdict=approve head_oid=96d872b8db7993a6c59260e1b4cedc8222a3d075 note=clean-scoped-fix-ci-green-approve-posted-as-comment",
+      "last_reviewed_oid": "96d872b8db7993a6c59260e1b4cedc8222a3d075",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-ui-registry-feature-orphaned-routes",
       "branch": "auto-impl/code-review-ppt-web-ui-registry-feature-4b8b82ff",
       "status": "merged",
@@ -13301,6 +13389,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-reality-web-comparison-share-id-unencoded",
+      "branch": "auto-impl/code-review-reality-web-comparison-share-ae20837c",
+      "status": "merged",
+      "claimed_at": "2026-11-15T02:27:48Z",
+      "last_updated": "2026-11-15T04:38:41Z",
+      "status_changed_at": "2026-11-15T04:38:41Z",
+      "pr_number": 3536,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3536",
+      "merged_at": "2026-11-15T04:38:19Z",
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=3536 status=done specialist=nextjs-web scope_drift=true code_reuse_warn=none note=url-encoded comparison share ids in generateShareUrl (encodeURIComponent per id); TDD two-commit; reality-web 564 tests green; drift=owner-hint only",
+      "reviewer_summary": "verdict=approve head_oid=fe6284c4f22f57b7421ac02aae479b2fae922bf3 note=encode-share-ids-correct-tests-good-scopedrift-justified-CIgreen",
+      "last_reviewed_oid": "fe6284c4f22f57b7421ac02aae479b2fae922bf3",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-15T04:35:16Z"
     },
     {
       "task_id": "code-review-reality-web-comparison-url-unvalidated-cast",
@@ -27955,5 +28065,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-15T02:43:16Z"
+  "archived_at": "2026-11-15T04:39:20Z"
 }
