@@ -88,6 +88,54 @@ const UI_FAULT_STATUS_TO_API: Record<FaultStatus, ApiFaultSummary['status'] | un
   reopened: 'reopened',
 };
 
+/**
+ * Allowed values for the `?status`/`?category`/`?priority` list filters,
+ * mirrored from the API enums (`@ppt/api-client`). Used to validate the raw
+ * URL query string before it is seeded into the list query.
+ */
+const FAULT_STATUS_VALUES = [
+  'new',
+  'triaged',
+  'in_progress',
+  'waiting_parts',
+  'scheduled',
+  'resolved',
+  'closed',
+  'reopened',
+] as const satisfies readonly NonNullable<FaultListQuery['status']>[];
+const FAULT_CATEGORY_VALUES = [
+  'plumbing',
+  'electrical',
+  'heating',
+  'structural',
+  'exterior',
+  'elevator',
+  'common_area',
+  'security',
+  'cleaning',
+  'other',
+] as const satisfies readonly NonNullable<FaultListQuery['category']>[];
+const FAULT_PRIORITY_VALUES = [
+  'low',
+  'medium',
+  'high',
+  'urgent',
+] as const satisfies readonly NonNullable<FaultListQuery['priority']>[];
+
+/**
+ * Return `raw` only if it is a member of `allowed`, otherwise `undefined`.
+ *
+ * Guards the `as`-cast of untrusted URL query params against the API enum
+ * types: a typo'd or hand-edited value (`/faults?status=foo`) is dropped
+ * rather than forwarded to the API as a bad request / invalid filter.
+ */
+function validEnumParam<T extends string>(
+  raw: string | null,
+  allowed: readonly T[]
+): T | undefined {
+  return raw != null && (allowed as readonly string[]).includes(raw) ? (raw as T) : undefined;
+}
+
 /** Transform API FaultSummary (snake_case) → UI FaultSummary (camelCase) */
 function transformApiFaultToUi(fault: ApiFaultSummary): UiFaultSummary {
   return {
@@ -227,14 +275,16 @@ function FaultsPageRoute() {
   const isManager = isManagerRole(user?.role);
   const [searchParams] = useSearchParams();
   // Seed the initial query from URL params so reports-page drill-down
-  // (`/faults?status=new`) lands on a pre-filtered list. Status/category/
-  // priority use the API enums directly (FaultListQuery is the API shape).
+  // (`/faults?status=new`) lands on a pre-filtered list. The raw query values
+  // are validated against the API enums (validEnumParam) before use so a typo'd
+  // or hand-edited param (`/faults?status=foo`) is dropped to `undefined`
+  // instead of being forwarded as a bad request / invalid filter.
   const [faultQuery, setFaultQuery] = useState<FaultListQuery>(() => ({
     page: 1,
     limit: 10,
-    status: (searchParams.get('status') as FaultListQuery['status']) ?? undefined,
-    category: (searchParams.get('category') as FaultListQuery['category']) ?? undefined,
-    priority: (searchParams.get('priority') as FaultListQuery['priority']) ?? undefined,
+    status: validEnumParam(searchParams.get('status'), FAULT_STATUS_VALUES),
+    category: validEnumParam(searchParams.get('category'), FAULT_CATEGORY_VALUES),
+    priority: validEnumParam(searchParams.get('priority'), FAULT_PRIORITY_VALUES),
   }));
 
   const { data, isLoading, error, refetch } = useFaults(faultQuery);
