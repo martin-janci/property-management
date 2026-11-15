@@ -6788,6 +6788,7 @@
       "notesPlaceholder": "Doplňujúce informácie k odpočtu...",
       "submitReading": "Odoslať odpočet",
       "errors": {
+        "valueRequired": "Zadajte platný stav meradla",
         "valueNegative": "Stav meradla nemôže byť záporný",
         "valueLowerThanLast": "Stav meradla nemôže byť nižší ako pri poslednom odpočte",
         "dateRequired": "Zadajte dátum odpočtu",

@@ -28,12 +28,18 @@ export function ReadingForm({
   const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [formData, setFormData] = useState<ReadingFormData>({
+  const [formData, setFormData] = useState<Omit<ReadingFormData, 'value'>>({
     meterId: meter.id,
-    value: meter.lastReadingValue || 0,
     readingDate: new Date().toISOString().split('T')[0],
     notes: '',
   });
+  // The reading value is kept as the raw input string so an empty or invalid
+  // entry can be told apart from a genuine `0`. A controlled number input that
+  // stored `Number.parseFloat(value) || 0` would silently turn a blank field
+  // into 0 and submit it. We only coerce to a number at validation/submit time.
+  const [valueInput, setValueInput] = useState<string>(
+    meter.lastReadingValue !== undefined ? String(meter.lastReadingValue) : ''
+  );
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [errors, setErrors] = useState<Partial<Record<keyof ReadingFormData, string>>>({});
 
@@ -50,14 +56,18 @@ export function ReadingForm({
     reset: resetOcr,
   } = useOcrMeterReading(meter.id);
 
+  // A trimmed-empty field parses to NaN so it is treated as "missing", never 0.
+  const parsedValue = valueInput.trim() === '' ? Number.NaN : Number(valueInput);
+
   const validate = (): boolean => {
     const newErrors: Partial<Record<keyof ReadingFormData, string>> = {};
 
-    if (formData.value < 0) {
+    if (Number.isNaN(parsedValue)) {
+      // Empty or non-numeric input — do not silently coerce to 0.
+      newErrors.value = t('meters.form.errors.valueRequired');
+    } else if (parsedValue < 0) {
       newErrors.value = t('meters.form.errors.valueNegative');
-    }
-
-    if (meter.lastReadingValue !== undefined && formData.value < meter.lastReadingValue) {
+    } else if (meter.lastReadingValue !== undefined && parsedValue < meter.lastReadingValue) {
       newErrors.value = t('meters.form.errors.valueLowerThanLast');
     }
 
@@ -78,18 +88,23 @@ export function ReadingForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validate()) {
-      onSubmit(formData);
+      onSubmit({ ...formData, value: parsedValue });
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === 'number' ? Number.parseFloat(value) || 0 : value,
-    }));
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name as keyof ReadingFormData]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
+  };
+
+  const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Store the raw string; empty/invalid is preserved rather than coerced to 0.
+    setValueInput(e.target.value);
+    if (errors.value) {
+      setErrors((prev) => ({ ...prev, value: undefined }));
     }
   };
 
@@ -131,7 +146,7 @@ export function ReadingForm({
   };
 
   const handleOcrAccept = (value: number) => {
-    setFormData((prev) => ({ ...prev, value }));
+    setValueInput(String(value));
     setShowOcrPreview(false);
   };
 
@@ -153,7 +168,9 @@ export function ReadingForm({
   };
 
   const consumption =
-    meter.lastReadingValue !== undefined ? formData.value - meter.lastReadingValue : null;
+    meter.lastReadingValue !== undefined && !Number.isNaN(parsedValue)
+      ? parsedValue - meter.lastReadingValue
+      : null;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -185,10 +202,11 @@ export function ReadingForm({
           type="number"
           id="value"
           name="value"
-          value={formData.value}
-          onChange={handleChange}
+          value={valueInput}
+          onChange={handleValueChange}
           step="0.01"
           min="0"
+          inputMode="decimal"
           className={`mt-1 block w-full rounded-md border ${
             errors.value ? 'border-red-500' : 'border-gray-300'
           } px-3 py-2 text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500`}

@@ -7005,6 +7005,7 @@
       "notesPlaceholder": "Dodatkowe informacje o odczycie...",
       "submitReading": "Wyślij odczyt",
       "errors": {
+        "valueRequired": "Wprowadź prawidłowy stan licznika",
         "valueNegative": "Stan licznika nie może być ujemny",
         "valueLowerThanLast": "Stan licznika nie może być niższy niż przy ostatnim odczycie",
         "dateRequired": "Podaj datę odczytu",

@@ -6885,6 +6885,7 @@
       "notesPlaceholder": "Weitere Angaben zu dieser Ablesung...",
       "submitReading": "Zählerstand senden",
       "errors": {
+        "valueRequired": "Bitte geben Sie einen gültigen Zählerstand ein",
         "valueNegative": "Der Zählerstand darf nicht negativ sein",
         "valueLowerThanLast": "Der Zählerstand darf nicht unter der letzten Ablesung liegen",
         "dateRequired": "Ablesedatum ist erforderlich",

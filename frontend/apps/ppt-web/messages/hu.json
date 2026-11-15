@@ -6885,6 +6885,7 @@
       "notesPlaceholder": "További információk a leolvasásról...",
       "submitReading": "Óraállás elküldése",
       "errors": {
+        "valueRequired": "Adjon meg egy érvényes óraállást",
         "valueNegative": "Az óraállás nem lehet negatív",
         "valueLowerThanLast": "Az óraállás nem lehet kisebb az utolsó leolvasásnál",
         "dateRequired": "Adja meg a leolvasás dátumát",
