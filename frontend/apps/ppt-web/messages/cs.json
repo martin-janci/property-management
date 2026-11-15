@@ -2230,7 +2230,9 @@
       "pendingReconciliationTitle": "Čeká na spárování",
       "recentPayments": "Poslední platby",
       "matchFailed": "Platbu se nepodařilo spárovat",
-      "autoMatchFailed": "Platby se nepodařilo automaticky spárovat"
+      "autoMatchFailed": "Platby se nepodařilo automaticky spárovat",
+      "loadFailed": "Nepodařilo se načíst platby",
+      "retry": "Zkusit znovu"
     },
     "budget": {
       "overBudget": "Překročený rozpočet",

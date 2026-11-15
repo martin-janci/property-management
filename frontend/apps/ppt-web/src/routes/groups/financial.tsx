@@ -340,7 +340,7 @@ function PaymentManagementPageRoute() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const { data: paymentsData, isLoading } = useQuery({
+  const paymentsQuery = useQuery({
     queryKey: ['financial', 'payments', orgId, page, pageSize],
     queryFn: () =>
       listPayments({
@@ -350,6 +350,7 @@ function PaymentManagementPageRoute() {
       }),
     enabled: !!orgId,
   });
+  const { data: paymentsData, isLoading } = paymentsQuery;
   const { data: unallocatedData } = useQuery({
     queryKey: ['financial', 'payments', 'unallocated', orgId],
     queryFn: () => listUnallocatedPayments(orgId),
@@ -410,6 +411,10 @@ function PaymentManagementPageRoute() {
       unpaidInvoices={unpaidInvoices}
       metrics={{ totalReceived, pendingReconciliation, currency }}
       isLoading={isLoading}
+      // Surface a failed payments fetch as an error state rather than letting
+      // the ?? fallbacks render an empty table with misleading €0 metrics.
+      error={paymentsQuery.error instanceof Error ? paymentsQuery.error.message : null}
+      onRetry={() => paymentsQuery.refetch()}
       // Recording a payment is a manager action; residents only see the list.
       onNavigateToRecord={
         isManagerRole(user?.role) ? () => navigate('/financial/payments/new') : undefined

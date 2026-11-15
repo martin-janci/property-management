@@ -2192,7 +2192,9 @@
       "pendingReconciliationTitle": "Párosításra vár",
       "recentPayments": "Legutóbbi befizetések",
       "matchFailed": "A befizetés párosítása sikertelen",
-      "autoMatchFailed": "Az automatikus párosítás sikertelen"
+      "autoMatchFailed": "Az automatikus párosítás sikertelen",
+      "loadFailed": "A fizetések betöltése sikertelen",
+      "retry": "Újrapróbálás"
     },
     "budgets": {
       "title": "Költségvetések kezelése",
