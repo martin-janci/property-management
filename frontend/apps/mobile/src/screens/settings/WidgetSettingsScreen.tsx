@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 
 import { getApiBaseUrl } from '../../config/api';
+import { useAuth } from '../../contexts';
 import { WidgetBridge } from '../../widgets';
 import type { WidgetConfig, WidgetType } from '../../widgets/types';
 import { colors } from '../shared/screenStyles';
@@ -27,12 +28,22 @@ interface WidgetSettingsScreenProps {
 
 export function WidgetSettingsScreen({ onNavigate }: WidgetSettingsScreenProps) {
   const { t } = useTranslation();
+  const { accessToken } = useAuth();
   const [isSupported, setIsSupported] = useState<boolean | null>(null);
   const [configs, setConfigs] = useState<WidgetConfig[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const bridge = useMemo(() => new WidgetBridge(getApiBaseUrl()), []);
   const availableTypes = useMemo(() => bridge.getAvailableWidgetTypes(), [bridge]);
+
+  // Propagate the signed-in user's bearer into the widget bridge so widget
+  // data requests (configure/refresh) are authenticated. Without this the
+  // bridge's auth token stays null and every widget API call goes out
+  // unauthenticated, falling back to empty data. Re-runs whenever the token
+  // changes (login, refresh, logout) so the bridge never holds a stale bearer.
+  useEffect(() => {
+    bridge.setAuthToken(accessToken);
+  }, [bridge, accessToken]);
 
   useEffect(() => {
     async function checkSupport() {
