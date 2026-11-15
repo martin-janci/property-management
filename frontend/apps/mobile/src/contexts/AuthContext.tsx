@@ -6,6 +6,7 @@ import * as SecureStore from 'expo-secure-store';
 import type { ReactNode } from 'react';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { feedbackManager } from '../onboarding/FeedbackManager';
 import { resetLocalData } from '../services/resetLocalData';
 import { isJwtExpired } from '../utils/jwt';
 import { buildSessionUser, readTokenPair, TENANT_ID_KEY } from '../utils/session';
@@ -417,6 +418,19 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
 
     initialize();
   }, [refreshToken]);
+
+  // Keep the global FeedbackManager singleton's bearer in sync with the signed-in
+  // session. The singleton is constructed once at module load with no token and
+  // nothing else wires it to auth state, so without this every
+  // `POST /api/v1/feedback` would ship unauthenticated — dropped as a 401 (then
+  // queued for infinite retry) or persisted without user attribution. Re-runs on
+  // login, token refresh, and logout (accessToken -> null), mirroring how
+  // WidgetSettingsScreen feeds the widget bridge. Clearing the token on logout
+  // matters on shared devices: the next user must not inherit the previous
+  // user's bearer.
+  useEffect(() => {
+    feedbackManager.setAuthToken(state.accessToken);
+  }, [state.accessToken]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
