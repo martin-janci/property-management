@@ -1068,4 +1068,99 @@ mod tests {
         assert_eq!(query.city.as_deref(), Some("Bratislava"));
         assert_eq!(query.transaction_type.as_deref(), Some("rent"));
     }
+
+    // --- Category label localization (de-hardcoding of sk labels) ---
+    //
+    // Regression: `label_for_property_type` previously returned Slovak strings
+    // unconditionally, ignoring the request locale. These tests assert every
+    // supported language renders its own label — they fail against the old
+    // sk-only implementation.
+
+    fn accept_language(value: &str) -> HeaderMap {
+        let mut h = HeaderMap::new();
+        h.insert(
+            axum::http::header::ACCEPT_LANGUAGE,
+            value.parse().expect("valid header value"),
+        );
+        h
+    }
+
+    #[test]
+    fn labels_are_localized_per_locale() {
+        assert_eq!(
+            label_for_property_type("apartment", &Locale::Slovak),
+            "Byty"
+        );
+        assert_eq!(
+            label_for_property_type("apartment", &Locale::German),
+            "Wohnungen"
+        );
+        assert_eq!(
+            label_for_property_type("apartment", &Locale::English),
+            "Apartments"
+        );
+        assert_eq!(
+            label_for_property_type("commercial", &Locale::Czech),
+            "Komerční prostory"
+        );
+        assert_eq!(
+            label_for_property_type("office", &Locale::English),
+            "Offices"
+        );
+    }
+
+    #[test]
+    fn unknown_property_type_falls_back_to_capitalized_key() {
+        // Fallback is locale-independent: capitalize the raw key.
+        assert_eq!(
+            label_for_property_type("penthouse", &Locale::German),
+            "Penthouse"
+        );
+        assert_eq!(
+            label_for_property_type("penthouse", &Locale::Slovak),
+            "Penthouse"
+        );
+    }
+
+    #[test]
+    fn locale_query_param_takes_precedence_over_header() {
+        let headers = accept_language("sk");
+        assert_eq!(
+            resolve_locale(Some("de"), &headers),
+            Locale::German,
+            "explicit query param must win over Accept-Language"
+        );
+    }
+
+    #[test]
+    fn locale_falls_back_to_accept_language_header() {
+        let headers = accept_language("cs-CZ,cs;q=0.9,en;q=0.8");
+        assert_eq!(
+            resolve_locale(None, &headers),
+            Locale::Czech,
+            "first Accept-Language tag (minus weight) should resolve"
+        );
+    }
+
+    #[test]
+    fn locale_defaults_to_english_when_no_signal() {
+        assert_eq!(
+            resolve_locale(None, &HeaderMap::new()),
+            Locale::English,
+            "no query param and no header should default to English"
+        );
+        // Blank query param is ignored, not parsed to English-via-unknown.
+        assert_eq!(
+            resolve_locale(Some("  "), &accept_language("sk")),
+            Locale::Slovak,
+            "blank query param must defer to the header"
+        );
+    }
+
+    #[test]
+    fn first_language_tag_strips_quality_weight() {
+        assert_eq!(first_language_tag("de-DE,de;q=0.9"), Some("de-DE"));
+        assert_eq!(first_language_tag("sk"), Some("sk"));
+        assert_eq!(first_language_tag(""), None);
+    }
 }
