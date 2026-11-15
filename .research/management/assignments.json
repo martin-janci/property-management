@@ -12,7 +12,7 @@
       "merged_at": null,
       "specialist": null,
       "implementer_summary": "pr=3380 status=done specialist=nextjs-web scope_drift=true code_reuse_warn=none note=i18n realtor analytics page via useTranslations; realtorAnalytics ns added to all 6 locales; verify green (417 tests); drift=owner label",
-      "reviewer_summary": "verdict=approve head_oid=cce239d9ec82ecaac4137160ffa2db7dfbf273a4 note=re-review-clean-6locale-parity-ok-scopedrift-label-only;ci-green;comment-only [merge-blocked: real non-mechanical conflict in page.tsx vs dev refactor; rebase_attempts=3 at cap — needs manual rework (issue #3357)]",
+      "reviewer_summary": "verdict=approve head_oid=cce239d9ec82ecaac4137160ffa2db7dfbf273a4 note=re-review-clean-6locale-parity-ok-scopedrift-label-only;ci-green;comment-only [merge-blocked: real non-mechanical conflict in page.tsx vs dev refactor; rebase_attempts=3 at cap \u2014 needs manual rework (issue #3357)]",
       "last_reviewed_oid": "cce239d9ec82ecaac4137160ffa2db7dfbf273a4",
       "scope_drift": true,
       "code_reuse_warn": null,
@@ -59,8 +59,8 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/3528",
       "merged_at": null,
       "specialist": null,
-      "implementer_summary": "[5.5 merge-attempt failed: real non-mechanical conflict in backend/servers/api-server/src/services/accounting.rs — dev wrapped process_statement_upload in a tx (.begin()/&mut *tx) overlapping this PR's IBAN-sourcing rewrite; draft→ready promoted + CI triggered; needs manual rebase of accounting.rs]",
-      "reviewer_summary": "verdict=approve head_oid=a584779fab933510194cb1964fa50cbdcb5d1806 note=iban-fix-correct-scoped-tested [5.6 rebase FAILED (attempt 1/3): non-mechanical conflict in accounting.rs process_statement_upload — dev tx-wrapping begin()/&mut*tx overlaps IBAN-sourcing rewrite; create_bank_statement_rls needs both; manual-rebase comment posted]",
+      "implementer_summary": "[5.5 merge-attempt failed: real non-mechanical conflict in backend/servers/api-server/src/services/accounting.rs \u2014 dev wrapped process_statement_upload in a tx (.begin()/&mut *tx) overlapping this PR's IBAN-sourcing rewrite; draft\u2192ready promoted + CI triggered; needs manual rebase of accounting.rs]",
+      "reviewer_summary": "verdict=approve head_oid=a584779fab933510194cb1964fa50cbdcb5d1806 note=iban-fix-correct-scoped-tested [5.6 rebase FAILED (attempt 1/3): non-mechanical conflict in accounting.rs process_statement_upload \u2014 dev tx-wrapping begin()/&mut*tx overlaps IBAN-sourcing rewrite; create_bank_statement_rls needs both; manual-rebase comment posted]",
       "last_reviewed_oid": "a584779fab933510194cb1964fa50cbdcb5d1806",
       "scope_drift": null,
       "code_reuse_warn": null,
@@ -73,18 +73,18 @@
     {
       "task_id": "code-review-ppt-web-core-reports-route-stub-analytics",
       "branch": "auto-impl/code-review-ppt-web-core-reports-route-s-ef7a4b8a",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-15T12:27:11Z",
-      "last_updated": "2026-11-15T12:27:11Z",
-      "status_changed_at": "2026-11-15T12:27:11Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-15T12:50:43Z",
+      "status_changed_at": "2026-11-15T12:50:43Z",
+      "pr_number": 3549,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3549",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=3549 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=removed unwired analytics Dashboard tab from ppt-web /reports route (hardcoded empty kpis/trends/buildings backed by nonexistent /analytics+/trends endpoints); deleted 5 dead api-client fns + 5 orphan components; verify green (13046 ppt-web tests), IG3 test/fix split",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -93,5 +93,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-15T12:36:44Z"
+  "generated": "2026-11-15T12:50:43Z"
 }
