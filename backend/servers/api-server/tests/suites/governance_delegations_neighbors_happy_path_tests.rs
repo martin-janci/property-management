@@ -70,6 +70,25 @@ async fn seed_building(pool: &PgPool, org_id: Uuid) -> Uuid {
     .expect("seed building")
 }
 
+async fn seed_unit(pool: &PgPool, building_id: Uuid) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO units (building_id, designation, floor) VALUES ($1, 'G-1', 1) RETURNING id",
+    )
+    .bind(building_id)
+    .fetch_one(pool)
+    .await
+    .expect("seed unit")
+}
+
+async fn seed_unit_owner(pool: &PgPool, unit_id: Uuid, user_id: Uuid) {
+    sqlx::query("INSERT INTO unit_owners (unit_id, user_id, status) VALUES ($1, $2, 'active')")
+        .bind(unit_id)
+        .bind(user_id)
+        .execute(pool)
+        .await
+        .expect("seed unit owner");
+}
+
 fn mint_token(user_id: Uuid, email: &str, org_id: Uuid) -> String {
     use api_server::services::JwtService;
     let config = TestConfig::default();
@@ -83,6 +102,7 @@ fn mint_token(user_id: Uuid, email: &str, org_id: Uuid) -> String {
 struct Ctx {
     app: TestApp,
     org_id: Uuid,
+    owner_id: Uuid,
     owner_token: String,
     delegate_id: Uuid,
     delegate_token: String,
@@ -97,6 +117,12 @@ async fn setup(pool: PgPool, tag: &str) -> Ctx {
     seed_membership(&pool, org_id, owner_id, "org_admin").await;
     let owner_token = mint_token(owner_id, &owner_email, org_id);
 
+    // The owner must actually own a unit: an all-units (null unit_id) delegation
+    // is only permitted for a caller who owns at least one unit.
+    let building_id = seed_building(&pool, org_id).await;
+    let unit_id = seed_unit(&pool, building_id).await;
+    seed_unit_owner(&pool, unit_id, owner_id).await;
+
     let delegate_email = format!("{tag}-delegate-{}@gov-hp.test", Uuid::new_v4());
     let delegate_id = seed_user(&pool, &delegate_email).await;
     seed_membership(&pool, org_id, delegate_id, "member").await;
@@ -105,6 +131,7 @@ async fn setup(pool: PgPool, tag: &str) -> Ctx {
     Ctx {
         app,
         org_id,
+        owner_id,
         owner_token,
         delegate_id,
         delegate_token,
@@ -154,8 +181,9 @@ impl Ctx {
             .expect("id field")
     }
 
-    /// Owner creates an org-wide delegation (no unit_id ⇒ skips owner check)
-    /// for the delegate and returns its id.
+    /// Owner creates an all-units delegation (no unit_id) for the delegate and
+    /// returns its id. The owner owns a seeded unit, so the null-unit owner
+    /// check passes.
     async fn create_delegation(&self, scope: &str) -> Uuid {
         let body = json!({
             "delegate_user_id": self.delegate_id,
@@ -188,6 +216,37 @@ async fn create_delegation_returns_201(pool: PgPool) {
     // create_delegation already asserts 201 internally.
     let id = ctx.create_delegation("voting").await;
     assert_ne!(id, Uuid::nil());
+}
+
+/// Regression (authorization): creating an all-units delegation (no `unit_id`)
+/// must enforce the owner check just like the unit-scoped path. A caller who
+/// owns no unit must be rejected with 403 instead of silently creating a
+/// building-wide delegation. The `delegate` user is a plain member who owns no
+/// unit, so it stands in for the non-owner here.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn create_delegation_without_unit_rejects_non_owner(pool: PgPool) {
+    let ctx = setup(pool, "nonowner-nulldel").await;
+
+    // delegate (owns no unit) tries to create an all-units delegation targeting
+    // the owner — must be forbidden, not created.
+    let body = json!({
+        "delegate_user_id": ctx.owner_id,
+        "scopes": ["voting"],
+    });
+    let resp = ctx
+        .app
+        .execute(
+            ctx.post("/api/v1/delegations", &ctx.delegate_token, body)
+                .build(),
+        )
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "all-units delegation by a non-owner must be 403, got: {}",
+        resp.text()
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
