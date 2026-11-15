@@ -3,10 +3,12 @@
 use crate::state::AppState;
 use axum::{
     extract::{Path, Query, State},
+    http::HeaderMap,
     routing::get,
     Json, Router,
 };
 use chrono::{DateTime, Utc};
+use db::models::user::Locale;
 use db::models::{PublicListingQuery, PublicListingSummary};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -566,7 +568,9 @@ pub struct CategoryCount {
     pub property_type: String,
     /// Count of currently active listings of this type.
     pub count: i64,
-    /// Localized display label (Slovak — primary market).
+    /// Display label localized to the request locale (resolved from the
+    /// `locale` query param, then the `Accept-Language` header, falling back
+    /// to English). Supported languages: sk, cs, de, en.
     pub label: String,
     /// Icon hint for the frontend; client-side `categoryIcons` lookup falls
     /// back to the property_type key.
@@ -765,22 +769,36 @@ pub async fn get_featured(
     Ok(Json(FeaturedListingsResponse { sale, rent, new }))
 }
 
+/// Category listing query parameters.
+#[derive(Debug, Default, Deserialize, IntoParams)]
+pub struct CategoriesQuery {
+    /// Preferred display language for category labels (`sk` | `cs` | `de` |
+    /// `en`). When omitted, the `Accept-Language` header is consulted; if that
+    /// is also absent or unrecognized, labels default to English.
+    pub locale: Option<String>,
+}
+
 /// Get listing counts grouped by property type.
 ///
 /// Drives the homepage "Browse by category" tiles. Only counts listings with
-/// `status = 'active'`. Labels are returned in Slovak (primary market) — the
+/// `status = 'active'`. Labels are localized to the resolved request locale
+/// (`locale` query param > `Accept-Language` header > English fallback); the
 /// frontend has its own i18n fallback if a label is missing.
 #[utoipa::path(
     get,
     path = "/api/v1/listings/categories",
     tag = "Listings",
+    params(CategoriesQuery),
     responses(
         (status = 200, description = "Listing counts by property type", body = [CategoryCount])
     )
 )]
 pub async fn get_categories(
     State(state): State<AppState>,
+    Query(query): Query<CategoriesQuery>,
+    headers: HeaderMap,
 ) -> Result<Json<Vec<CategoryCount>>, (axum::http::StatusCode, String)> {
+    let locale = resolve_locale(query.locale.as_deref(), &headers);
     let mut conn = state.acquire_public_conn().await.map_err(|e| {
         tracing::error!(error = %e, "Failed to acquire db connection");
         (
@@ -811,7 +829,7 @@ pub async fn get_categories(
     let result = rows
         .into_iter()
         .map(|(property_type, count)| {
-            let label = label_for_property_type(&property_type);
+            let label = label_for_property_type(&property_type, &locale);
             CategoryCount {
                 icon: property_type.clone(),
                 property_type,
@@ -824,21 +842,75 @@ pub async fn get_categories(
     Ok(Json(result))
 }
 
-/// Localized (sk) label for a `property_type` enum value.
-fn label_for_property_type(t: &str) -> String {
-    match t {
-        "apartment" => "Byty",
-        "house" => "Domy",
-        "land" => "Pozemky",
-        "commercial" => "Komerčné priestory",
-        "office" => "Kancelárie",
-        "garage" => "Garáže",
-        "parking" => "Parkovanie",
-        "storage" => "Sklady",
-        // Fallback: capitalize the type so unknown values still render.
-        other => return capitalize(other),
+/// Resolve the display locale for category labels.
+///
+/// Precedence: explicit `locale` query param, then the first tag of the
+/// `Accept-Language` header, then the [`Locale`] default (English). Both inputs
+/// are normalized through [`Locale::parse`], which falls back to English for an
+/// unrecognized value — so an unsupported language never leaks through.
+fn resolve_locale(query_locale: Option<&str>, headers: &HeaderMap) -> Locale {
+    if let Some(loc) = query_locale.map(str::trim).filter(|s| !s.is_empty()) {
+        return Locale::parse(loc);
     }
-    .to_string()
+    if let Some(tag) = headers
+        .get(axum::http::header::ACCEPT_LANGUAGE)
+        .and_then(|v| v.to_str().ok())
+        .and_then(first_language_tag)
+    {
+        return Locale::parse(tag);
+    }
+    Locale::default()
+}
+
+/// Extract the first (highest-priority) language tag from an `Accept-Language`
+/// header value, dropping any `;q=` weight. Returns `None` for an empty header.
+fn first_language_tag(header: &str) -> Option<&str> {
+    header
+        .split(',')
+        .next()
+        .map(|tag| tag.split(';').next().unwrap_or(tag).trim())
+        .filter(|tag| !tag.is_empty())
+}
+
+/// Localized label for a `property_type` enum value, in the given [`Locale`].
+fn label_for_property_type(t: &str, locale: &Locale) -> String {
+    let label = match (t, locale) {
+        ("apartment", Locale::Slovak) => "Byty",
+        ("apartment", Locale::Czech) => "Byty",
+        ("apartment", Locale::German) => "Wohnungen",
+        ("apartment", Locale::English) => "Apartments",
+        ("house", Locale::Slovak) => "Domy",
+        ("house", Locale::Czech) => "Domy",
+        ("house", Locale::German) => "Häuser",
+        ("house", Locale::English) => "Houses",
+        ("land", Locale::Slovak) => "Pozemky",
+        ("land", Locale::Czech) => "Pozemky",
+        ("land", Locale::German) => "Grundstücke",
+        ("land", Locale::English) => "Land",
+        ("commercial", Locale::Slovak) => "Komerčné priestory",
+        ("commercial", Locale::Czech) => "Komerční prostory",
+        ("commercial", Locale::German) => "Gewerbeflächen",
+        ("commercial", Locale::English) => "Commercial",
+        ("office", Locale::Slovak) => "Kancelárie",
+        ("office", Locale::Czech) => "Kanceláře",
+        ("office", Locale::German) => "Büros",
+        ("office", Locale::English) => "Offices",
+        ("garage", Locale::Slovak) => "Garáže",
+        ("garage", Locale::Czech) => "Garáže",
+        ("garage", Locale::German) => "Garagen",
+        ("garage", Locale::English) => "Garages",
+        ("parking", Locale::Slovak) => "Parkovanie",
+        ("parking", Locale::Czech) => "Parkování",
+        ("parking", Locale::German) => "Parkplätze",
+        ("parking", Locale::English) => "Parking",
+        ("storage", Locale::Slovak) => "Sklady",
+        ("storage", Locale::Czech) => "Sklady",
+        ("storage", Locale::German) => "Lager",
+        ("storage", Locale::English) => "Storage",
+        // Fallback: capitalize the type so unknown values still render.
+        (other, _) => return capitalize(other),
+    };
+    label.to_string()
 }
 
 fn capitalize(s: &str) -> String {
