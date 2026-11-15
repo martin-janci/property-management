@@ -8167,6 +8167,28 @@
       "merge_attempted_at": "2026-09-27T14:30:58Z"
     },
     {
+      "task_id": "code-review-ppt-web-core-api-default-export-stale-instance",
+      "branch": "auto-impl/code-review-ppt-web-core-api-default-exp-663a8a96",
+      "status": "failed",
+      "claimed_at": "2026-11-15T22:27:45Z",
+      "last_updated": "2026-11-15T22:33:11Z",
+      "status_changed_at": "2026-11-15T22:33:11Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=done note=stale-finding-already-fixed-on-dev: eager export default removed + NOTE comment present (api.ts:371-380), zero default-import consumers. No-op, no PR. [terminal=failed=no-PR-produced; not an impl failure]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": false,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-core-api-default-export-unconfigured",
       "branch": "auto-impl/code-review-ppt-web-core-api-default-exp-0e4d44e5",
       "status": "merged",
@@ -9131,6 +9153,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-ppt-web-core-mfa-verify-hardcoded-path",
+      "branch": "auto-impl/code-review-ppt-web-core-mfa-verify-hard-056fc0e4",
+      "status": "failed",
+      "claimed_at": "2026-11-15T22:27:45Z",
+      "last_updated": "2026-11-15T22:33:11Z",
+      "status_changed_at": "2026-11-15T22:33:11Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=done note=stale-finding-already-fixed-on-dev: MfaWrapper delegates to verifyMfaCode (features/auth/mfaVerify.ts) using authenticatedFetch@api-client against configured base; regression test exists. No raw hardcoded fetch remains. No-op, no PR. [terminal=failed=no-PR-produced; not an impl failure]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": false,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-core-mfa-verify-relative-fetch-base",
       "branch": "auto-impl/code-review-ppt-web-core-mfa-verify-rela-a172c35c",
       "status": "merged",
@@ -9287,6 +9331,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-08-04T00:13:43Z"
+    },
+    {
+      "task_id": "code-review-ppt-web-core-ocr-hook-raw-fetch-no-auth",
+      "branch": "auto-impl/code-review-ppt-web-core-ocr-hook-raw-fe-e814d9bc",
+      "status": "failed",
+      "claimed_at": "2026-11-15T22:27:45Z",
+      "last_updated": "2026-11-15T22:33:11Z",
+      "status_changed_at": "2026-11-15T22:33:11Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=done note=stale-finding-already-fixed-on-dev: useOcrMeterReading.ts already routes through getApiClient() (Bearer interceptor); regression test asserts auth on both OCR endpoints (ref #2978). No-op, no PR opened. [terminal=failed=no-PR-produced; not an impl failure]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": false,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "code-review-ppt-web-core-orgprovider-unmemoized",
@@ -28495,5 +28561,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-15T20:42:33Z"
+  "archived_at": "2026-11-15T22:34:14Z"
 }
