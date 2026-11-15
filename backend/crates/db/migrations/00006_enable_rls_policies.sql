@@ -159,9 +159,13 @@ BEGIN
         t.tablename,
         t.rowsecurity as has_rls,
         CASE
+            -- app_feedback: user-scoped general feedback / bug reports, mirrors
+            -- user_article_feedback; organization_id is an optional FK-less triage
+            -- hint, not an access-control boundary — intentionally non-tenant / no RLS
+            -- (migration 00246). Keep in sync with EXEMPT_TABLES in check-rls-coverage.sh.
             WHEN t.tablename IN ('organizations', 'users', 'email_verification_tokens',
                                 'refresh_tokens', 'password_reset_tokens', 'roles',
-                                'organization_members')
+                                'organization_members', 'app_feedback')
             THEN FALSE
             ELSE TRUE
         END as needs_rls
@@ -172,7 +176,7 @@ BEGIN
       AND (
           -- Show tables that need RLS but don't have it
           (CASE WHEN t.tablename NOT IN ('organizations', 'users', 'email_verification_tokens',
-                                         'refresh_tokens', 'password_reset_tokens')
+                                         'refresh_tokens', 'password_reset_tokens', 'app_feedback')
            THEN TRUE ELSE FALSE END) = TRUE
           AND t.rowsecurity = FALSE
       );
