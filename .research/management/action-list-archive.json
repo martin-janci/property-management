@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-15T06:47:20Z",
+  "archived_at": "2026-11-15T12:27:22Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -6863,6 +6863,30 @@
         "merged_pr": 3438,
         "merged_at": "2026-11-12T08:38:40Z",
         "at": "2026-11-12T08:39:37Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-feedback-manager-no-auth-token",
+      "action": "mobile-rn FeedbackManager singleton is constructed without ever receiving an auth token — every /api/v1/feedback POST ships unauthenticated",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-15T04:24:57Z (score=3 conf=high vector=security) | gc1-reconcile 2026-11-15T12:23:57Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T04:24:57Z",
+      "backlog_ref": {
+        "plan": "plans/code-review-mobile-rn-feedback-manager-no-auth-token.md",
+        "score": 3,
+        "vector": "security"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3543,
+        "merged_at": "2026-11-15T10:29:02Z",
+        "at": "2026-11-15T12:23:57Z"
       }
     },
     {

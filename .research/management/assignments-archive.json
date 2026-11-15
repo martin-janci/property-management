@@ -6846,6 +6846,28 @@
       "merge_attempted_at": "2026-08-03T22:17:21Z"
     },
     {
+      "task_id": "code-review-mobile-rn-imagecompress-width-only-resize",
+      "branch": "auto-impl/code-review-mobile-rn-imagecompress-widt-ee7f17f2",
+      "status": "merged",
+      "claimed_at": "2026-11-15T08:27:27Z",
+      "last_updated": "2026-11-15T12:36:21Z",
+      "status_changed_at": "2026-11-15T12:36:21Z",
+      "pr_number": 3545,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3545",
+      "merged_at": "2026-11-15T12:33:36Z",
+      "specialist": "react-native",
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=8a9f7566ea0370d88a4eacadcc01ce9495916660 note=longest-edge-cap-correct; portrait+landscape tests updated; ci-green; scope-tight; drift=owner-label-only",
+      "last_reviewed_oid": "8a9f7566ea0370d88a4eacadcc01ce9495916660",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-15T12:32:02Z"
+    },
+    {
       "task_id": "code-review-mobile-rn-meter-photo-not-uploaded",
       "branch": "auto-impl/code-review-mobile-rn-meter-photo-not-up-968fa6bd",
       "status": "merged",
@@ -8585,6 +8607,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "code-review-ppt-web-core-faults-url-param-unvalidated-cast",
+      "branch": "auto-impl/code-review-ppt-web-core-faults-url-para-b28a46e4",
+      "status": "merged",
+      "claimed_at": "2026-11-15T08:27:27Z",
+      "last_updated": "2026-11-15T12:36:21Z",
+      "status_changed_at": "2026-11-15T12:36:21Z",
+      "pr_number": 3546,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3546",
+      "merged_at": "2026-11-15T12:35:00Z",
+      "specialist": "react-web",
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=f4b777534af0bd54aa606bded8f108f8ae50fd55 note=faults-url-filter-param-validation-correct-complete-scoped; enum arrays exact-match api-client enums; ci-green; scope_drift owner-label-only",
+      "last_reviewed_oid": "f4b777534af0bd54aa606bded8f108f8ae50fd55",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-15T12:33:32Z"
+    },
+    {
       "task_id": "code-review-ppt-web-core-financial-query-silent-error",
       "branch": "auto-impl/code-review-ppt-web-core-financial-query-17c3ecc9",
       "status": "merged",
@@ -9057,6 +9101,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-08-04T00:13:43Z"
+    },
+    {
+      "task_id": "code-review-ppt-web-core-nav-aria-label-i18n",
+      "branch": "auto-impl/code-review-ppt-web-core-nav-aria-label-9af6d084",
+      "status": "merged",
+      "claimed_at": "2026-11-15T08:27:27Z",
+      "last_updated": "2026-11-15T12:36:21Z",
+      "status_changed_at": "2026-11-15T12:36:21Z",
+      "pr_number": 3547,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3547",
+      "merged_at": "2026-11-15T12:33:05Z",
+      "specialist": "react-web",
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=0048e3ae5a80a871d3918bc4082e869fd66c9e4e note=aria.* i18n key-parity clean across 6 locales; 3 added + closeMenu reused; old shell.* removed; ci-green; scope-tight",
+      "last_reviewed_oid": "0048e3ae5a80a871d3918bc4082e869fd66c9e4e",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-15T12:32:02Z"
     },
     {
       "task_id": "code-review-ppt-web-core-needing-maint-querykey-arg",
@@ -24348,6 +24414,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "gh-issue-3544",
+      "branch": "auto-impl/gh-issue-3544-4b835762",
+      "status": "merged",
+      "claimed_at": "2026-11-15T08:27:27Z",
+      "last_updated": "2026-11-15T12:36:21Z",
+      "status_changed_at": "2026-11-15T12:36:21Z",
+      "pr_number": 3548,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3548",
+      "merged_at": "2026-11-15T12:35:52Z",
+      "specialist": "rust-backend",
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=54f80c04c0e8baecec8198efe75ee12761e1a3b6 note=rls-gate-fixed-ci-green",
+      "last_reviewed_oid": "54f80c04c0e8baecec8198efe75ee12761e1a3b6",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-11-15T12:34:15Z"
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -28179,5 +28267,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-15T10:39:28Z"
+  "archived_at": "2026-11-15T12:36:44Z"
 }

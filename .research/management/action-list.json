@@ -632,23 +632,6 @@
       }
     },
     {
-      "id": "code-review-mobile-rn-feedback-manager-no-auth-token",
-      "action": "mobile-rn FeedbackManager singleton is constructed without ever receiving an auth token — every /api/v1/feedback POST ships unauthenticated",
-      "owner_role": "pm-security",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-15T04:24:57Z (score=3 conf=high vector=security)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-15T04:24:57Z",
-      "backlog_ref": {
-        "plan": "plans/code-review-mobile-rn-feedback-manager-no-auth-token.md",
-        "score": 3,
-        "vector": "security"
-      }
-    },
-    {
       "id": "code-review-mobile-rn-deeplink-pending-cross-user",
       "action": "mobile-rn DeepLinkManager.pendingLink never cleared on logout — shared-device deep-link intent crosses user boundary",
       "owner_role": "pm-security",

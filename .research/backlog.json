@@ -15986,7 +15986,7 @@
       "vector": "security",
       "confidence": "high",
       "score": 3,
-      "status": "ready",
+      "status": "done",
       "sources": [
         "Phase 1.5 rotating expert review 2026-11-15 mobile-rn"
       ],
@@ -16001,7 +16001,12 @@
       ],
       "created_at": "2026-11-15",
       "updated_at": "2026-11-15",
-      "plan": "plans/code-review-mobile-rn-feedback-manager-no-auth-token.md"
+      "plan": "plans/code-review-mobile-rn-feedback-manager-no-auth-token.md",
+      "reconciled": {
+        "at": "2026-11-15T12:23:57Z",
+        "assignment_status": "merged",
+        "pr_number": 3543
+      }
     },
     {
       "id": "code-review-mobile-rn-report-fault-category-chips-english",
