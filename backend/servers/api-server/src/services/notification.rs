@@ -157,6 +157,11 @@ fn claim_send_in_cache(
         }
     }
 
+    // Stamp the send *before* reporting "proceed" so a concurrent caller for the
+    // same key is deduplicated instead of producing a second delivery. Recording
+    // it only after the send (the previous flow) left a window in which two
+    // callers both passed the check and both delivered.
+    cache.insert(key, DedupEntry { sent_at: now });
     false
 }
 
@@ -202,8 +207,18 @@ impl NotificationService {
         )
     }
 
-    /// Check if a notification should be deduplicated.
-    async fn should_deduplicate(
+    /// Atomically claim this `(user, type, entity)` for sending.
+    ///
+    /// Returns `true` when a notification for this key was already sent within
+    /// the dedup window (the caller MUST skip delivery). Returns `false` after
+    /// recording the send stamp, so the caller may proceed and any concurrent
+    /// caller for the same key is deduplicated.
+    ///
+    /// The check and the stamp happen under a single write lock, so the record
+    /// is made *before* the send. This closes the duplicate-send race in which
+    /// two callers both passed a read-only check and then both delivered because
+    /// the stamp was only written after the send.
+    async fn claim_for_send(
         &self,
         user_id: Uuid,
         notification_type: NotificationType,
@@ -215,41 +230,8 @@ impl NotificationService {
             entity_id,
         };
 
-        let cache = self.dedup_cache.read().await;
-        if let Some(entry) = cache.get(&key) {
-            let window = Duration::seconds(self.config.dedup_window_secs);
-            if Utc::now() - entry.sent_at < window {
-                return true;
-            }
-        }
-        false
-    }
-
-    /// Record a notification as sent for deduplication.
-    async fn record_sent(
-        &self,
-        user_id: Uuid,
-        notification_type: NotificationType,
-        entity_id: Option<Uuid>,
-    ) {
-        let key = DedupKey {
-            user_id,
-            notification_type,
-            entity_id,
-        };
-
         let mut cache = self.dedup_cache.write().await;
-
-        // Clean up old entries while we have the lock
-        let cutoff = Utc::now() - Duration::seconds(self.config.dedup_window_secs * 2);
-        cache.retain(|_, v| v.sent_at > cutoff);
-
-        cache.insert(
-            key,
-            DedupEntry {
-                sent_at: Utc::now(),
-            },
-        );
+        claim_send_in_cache(&mut cache, key, self.config.dedup_window_secs, Utc::now())
     }
 
     /// Check if a user has enabled a specific notification channel for an event type.
@@ -310,9 +292,12 @@ impl NotificationService {
             return Ok(());
         }
 
-        // Check deduplication
+        // Atomically claim this notification for sending BEFORE delivering it.
+        // Claiming stamps the dedup record up front, so a concurrent caller for
+        // the same (user, type, entity) is deduplicated instead of producing a
+        // second delivery. A `true` return means it was already sent in-window.
         if self
-            .should_deduplicate(user_id, notification.notification_type, entity_id)
+            .claim_for_send(user_id, notification.notification_type, entity_id)
             .await
         {
             tracing::debug!(
@@ -411,10 +396,8 @@ impl NotificationService {
             }
         }
 
-        // Record for deduplication
-        self.record_sent(user_id, notification.notification_type, entity_id)
-            .await;
-
+        // The dedup record was already stamped by `claim_for_send` above, before
+        // delivery, so there is nothing to record here.
         tracing::info!(
             user_id = %user_id,
             notification_type = ?notification.notification_type,
