@@ -30,17 +30,26 @@ export function useDashboardLayout(screen: string): { layout: ResolvedScreen } {
     async function activate() {
       // Phase 1: read cache at mount (activation — allowed at launch time)
       const cached = await readCachedLayout(sid, screen);
+      const hadCachedLayout = cached !== null;
       if (!cancelled && cached !== null) {
         setLayout(cached);
       }
 
-      // Phase 2: background fetch — writes cache ONLY (never sets state)
+      // Phase 2: background fetch — refreshes the persisted cache. When a cached
+      // layout was already activated above we keep next-launch semantics (write
+      // cache only, never set state) so an established user's dashboard never
+      // reshuffles mid-session. But on a cache MISS the screen is still showing
+      // the generic DEFAULT layout, so leaving the fetched layout un-applied
+      // would strand the user on the default for the whole session (new users,
+      // and the first launch after the #2486 logout cache-sweep). In that case
+      // we apply the fetched layout to state as soon as it arrives — this is the
+      // only path that renders the freshly-fetched layout.
       try {
         const fresh = await apiRequest<ResolvedScreen>(
           `/api/v1/layout/resolved/${screen}?platform=mobile`
         );
         if (!cancelled) {
-          // Shape-check before writing
+          // Shape-check before writing/applying
           if (
             fresh &&
             typeof fresh === 'object' &&
@@ -48,6 +57,9 @@ export function useDashboardLayout(screen: string): { layout: ResolvedScreen } {
             Array.isArray(fresh.sections)
           ) {
             await writeCachedLayout(sid, screen, fresh);
+            if (!cancelled && !hadCachedLayout) {
+              setLayout(fresh);
+            }
           }
         }
       } catch (err) {
