@@ -23,11 +23,12 @@
  *   INV2 — no locale carries a top-level namespace absent from `en` (the
  *          `fallbackLng`). This is the #2395 inversion guard generalised: a
  *          namespace the fallback lacks can never resolve.
- *   INV3 — de/pl/hu (partially-translated) each lack exactly the known set of
- *          namespaces and nothing more. A merge that drops an additional
- *          namespace from one of them breaks this; translating one of the
- *          known-missing namespaces is a deliberate change that updates the
- *          list here.
+ *   INV3 — de/pl/hu each lack exactly the known set of namespaces and nothing
+ *          more. A merge that drops a namespace from one of them breaks this;
+ *          translating a known-missing namespace is a deliberate change that
+ *          updates the list here. As of #3531 all four formerly-missing
+ *          namespaces were translated, so the expected-gap lists are empty —
+ *          INV3 now locks full parity and still catches future drops.
  *
  * Leaf-key parity is intentionally NOT asserted — de/pl/hu are legitimately
  * incomplete at the key level and fall back to en at runtime. This guard is
@@ -48,11 +49,18 @@ const BUNDLES: Record<string, Json> = { en, sk, cs, de, pl, hu };
 /** Locales kept in full top-level-namespace parity with one another. */
 const FULL_TRIO = ['en', 'sk', 'cs'] as const;
 
-/** Partially-translated locales and the top-level namespaces they do not yet carry. */
+/**
+ * Partially-translated locales and the top-level namespaces they do not yet
+ * carry. As of #3531 de/pl/hu were brought to full top-level-namespace parity
+ * with en (the four formerly-missing namespaces — documentTemplates, help,
+ * onboarding, subscription — were translated), so each expected-gap list is now
+ * empty. The entries are retained so INV3 keeps guarding against a future
+ * merge-train namespace drop.
+ */
 const PARTIAL_MISSING: Record<string, readonly string[]> = {
-  de: ['documentTemplates', 'help', 'onboarding', 'subscription'],
-  pl: ['documentTemplates', 'help', 'onboarding', 'subscription'],
-  hu: ['documentTemplates', 'help', 'onboarding', 'subscription'],
+  de: [],
+  pl: [],
+  hu: [],
 };
 
 const topLevel = (bundle: Json): Set<string> => new Set(Object.keys(bundle));
