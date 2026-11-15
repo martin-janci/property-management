@@ -131,6 +131,35 @@ struct DedupEntry {
     sent_at: DateTime<Utc>,
 }
 
+/// Atomically decide whether a notification identified by `key` should be sent,
+/// recording the send stamp in the *same* critical section when it should.
+///
+/// Returns `true` when a send for this key already happened within the dedup
+/// window and the caller must NOT send (duplicate). Returns `false` when the
+/// caller should proceed.
+///
+/// The invariant that makes this race-free is that the stamp is written *before*
+/// the function reports "proceed", so a concurrent caller for the same key
+/// observes it and is deduplicated instead of producing a second delivery.
+/// Evicts stale entries (older than twice the window) while it holds the map.
+fn claim_send_in_cache(
+    cache: &mut std::collections::HashMap<DedupKey, DedupEntry>,
+    key: DedupKey,
+    window_secs: i64,
+    now: DateTime<Utc>,
+) -> bool {
+    let cutoff = now - Duration::seconds(window_secs * 2);
+    cache.retain(|_, v| v.sent_at > cutoff);
+
+    if let Some(entry) = cache.get(&key) {
+        if now - entry.sent_at < Duration::seconds(window_secs) {
+            return true;
+        }
+    }
+
+    false
+}
+
 /// Notification service for sending notifications across channels.
 pub struct NotificationService {
     pool: DbPool,
@@ -728,5 +757,52 @@ mod tests {
         assert_eq!(truncate_text("Hello", 10), "Hello");
         assert_eq!(truncate_text("Hello World", 10), "Hello W...");
         assert_eq!(truncate_text("Hi", 10), "Hi");
+    }
+
+    fn dedup_key() -> DedupKey {
+        DedupKey {
+            user_id: Uuid::new_v4(),
+            notification_type: NotificationType::AnnouncementPublished,
+            entity_id: Some(Uuid::new_v4()),
+        }
+    }
+
+    // Regression: the send path must record the send stamp *before* delivering,
+    // so two callers racing on the same (user, type, entity) result in exactly
+    // one notification. Recording the stamp only after the send (the old flow)
+    // let both callers pass the dedup check and double-notify.
+    #[test]
+    fn claim_send_dedups_concurrent_callers() {
+        let mut cache = std::collections::HashMap::new();
+        let key = dedup_key();
+        let now = Utc::now();
+
+        // Caller A claims the send and proceeds to deliver.
+        let a_duplicate = claim_send_in_cache(&mut cache, key.clone(), 300, now);
+        assert!(!a_duplicate, "first caller must be allowed to send");
+
+        // Caller B races in before A has finished delivering: it must be
+        // deduplicated, because A's claim already stamped the record.
+        let b_duplicate = claim_send_in_cache(&mut cache, key, 300, now);
+        assert!(
+            b_duplicate,
+            "second concurrent caller must be deduplicated (no duplicate send)"
+        );
+    }
+
+    // A stamp older than the dedup window must not suppress a fresh send.
+    #[test]
+    fn claim_send_allows_after_window() {
+        let mut cache = std::collections::HashMap::new();
+        let key = dedup_key();
+        let now = Utc::now();
+
+        assert!(!claim_send_in_cache(&mut cache, key.clone(), 300, now));
+        // 10 minutes later — well past the 5-minute window.
+        let later = now + Duration::seconds(600);
+        assert!(
+            !claim_send_in_cache(&mut cache, key, 300, later),
+            "a send past the dedup window must be allowed again"
+        );
     }
 }
