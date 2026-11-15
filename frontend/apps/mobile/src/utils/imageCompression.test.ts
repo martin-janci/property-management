@@ -64,16 +64,22 @@ describe('compressImagesIfNeeded', () => {
 
     expect(result.compressed).toBe(true);
     expect(result.uris).toEqual(['a.jpg.compressed', 'b.jpg.compressed', 'c.jpg.compressed']);
-    expect(mockManipulateAsync).toHaveBeenCalledTimes(3);
+    // Two manipulateAsync calls per photo: a measure pass (to cap the longest
+    // edge) followed by the resize + re-encode pass.
+    expect(mockManipulateAsync).toHaveBeenCalledTimes(6);
     expect(result.originalBytes).toBe(15 * MB);
     expect(result.finalBytes).toBe(3 * MB);
   });
 
   it('keeps the original uri when a single image fails to compress', async () => {
     mockGetInfoAsync.mockResolvedValue({ exists: true, size: 6 * MB }); // 2 × 6 = 12 MB
-    mockManipulateAsync
-      .mockResolvedValueOnce({ uri: 'a.jpg.compressed', width: 1, height: 1 })
-      .mockRejectedValueOnce(new Error('decode failed'));
+    // Keyed by uri (not call order) so the result is independent of the
+    // bounded-concurrency scheduling of the measure + resize passes.
+    mockManipulateAsync.mockImplementation(async (uri: string, actions: unknown[]) => {
+      const isResize = Array.isArray(actions) && actions.length > 0;
+      if (uri === 'b.jpg' && isResize) throw new Error('decode failed');
+      return { uri: isResize ? `${uri}.compressed` : uri, width: 1, height: 1 };
+    });
 
     const result = await compressImagesIfNeeded(['a.jpg', 'b.jpg']);
 
