@@ -10,6 +10,8 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { useToast } from '../../../components';
+import { useAuth } from '../../../contexts';
+import { isManagerRole } from '../../../routes/shared';
 import { BookingList, RejectBookingDialog } from '../components';
 
 const PAGE_SIZE = 10;
@@ -18,6 +20,8 @@ export function PendingBookingsPage() {
   const { t } = useTranslation();
   const { buildingId } = useParams<{ buildingId: string }>();
   const { showToast } = useToast();
+  const { user } = useAuth();
+  const isManager = isManagerRole(user?.role);
 
   const [bookings, setBookings] = useState<BookingWithDetails[]>([]);
   const [total, setTotal] = useState(0);
@@ -109,7 +113,7 @@ export function PendingBookingsPage() {
         page={page}
         pageSize={PAGE_SIZE}
         isLoading={isLoading || isProcessing}
-        isManager={true}
+        isManager={isManager}
         title={t('facilities.bookings.pendingTitle')}
         onPageChange={handlePageChange}
         onApprove={handleApprove}
