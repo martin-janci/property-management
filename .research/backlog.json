@@ -15718,7 +15718,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "git-log 14d sweep 2026-11-13"
       ],
@@ -15730,7 +15730,12 @@
       ],
       "created_at": "2026-11-13",
       "updated_at": "2026-11-13",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-15T00:27:26Z",
+        "assignment_status": "merged",
+        "pr_number": 3524
+      }
     },
     {
       "id": "churn-hotspot-frontend-apps-ppt-web-messages-en-json",

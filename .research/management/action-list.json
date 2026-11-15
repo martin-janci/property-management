@@ -217,24 +217,6 @@
       }
     },
     {
-      "id": "code-review-reality-web-listing-sections-currency-ssr-500",
-      "action": "reality web listing sections currency ssr 500",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d reality-web score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-13T22:25:04Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-09-21T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-api-core-statement-account-iban-hardcoded",
       "action": "api core statement account iban hardcoded",
       "owner_role": "pm-backend",
@@ -250,42 +232,6 @@
         "score": 1,
         "vector": "bug",
         "generated": "2026-09-20T02:28:42Z"
-      }
-    },
-    {
-      "id": "code-review-admin-web-raw-fetch-bypasses-api-client",
-      "action": "admin web raw fetch bypasses api client",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d admin-web score=2 vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-13T22:25:04Z",
-      "signal_ref": {
-        "segment": "admin-web",
-        "score": 2,
-        "vector": "refactor",
-        "generated": "2026-09-20T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-core-errorhandler-raw-backend-message-passthrough",
-      "action": "ppt web core errorhandler raw backend message passthrough",
-      "owner_role": "pm-security",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d ppt-web-core score=2 vector=security)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-13T22:25:04Z",
-      "signal_ref": {
-        "segment": "ppt-web-core",
-        "score": 2,
-        "vector": "security",
-        "generated": "2026-09-19T00:00:00Z"
       }
     },
     {
@@ -482,24 +428,6 @@
       "signal_ref": {
         "segment": "ppt-web-core",
         "score": 2,
-        "vector": "bug",
-        "generated": "2026-09-16T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-api-handlers-multi-currency-refresh-stub-success",
-      "action": "api handlers multi currency refresh stub success",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-14T06:25:48Z (tier1d api-handlers score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-14T06:25:48Z",
-      "signal_ref": {
-        "segment": "api-handlers",
-        "score": 1,
         "vector": "bug",
         "generated": "2026-09-16T00:00:00Z"
       }
@@ -790,6 +718,242 @@
         "score": 1,
         "vector": "bug",
         "generated": "2026-09-07T00:00:00Z"
+      }
+    },
+    {
+      "id": "gh-issue-3531",
+      "action": "Follow-up: ppt-web de/pl/hu still miss 455 en keys after the \"parity\" PR (PR #3524) (Closes #3531)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-11-15T00:27:53Z (#3531)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T00:27:53Z",
+      "issue_ref": {
+        "number": 3531,
+        "url": "https://github.com/martin-janci/property-management/issues/3531",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-org-provider-value-not-memoized",
+      "action": "ppt web core org provider value not memoized",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d ppt-web-core score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T00:28:30Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-25T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-quiet-hours-weekend-master-gate",
+      "action": "api core quiet hours weekend master gate",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d api-core score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T00:28:30Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-23T16:34:26Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-comparison-timer-leak",
+      "action": "reality web comparison timer leak",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d reality-web score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T00:28:30Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-22T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-currency-code-rangeerror-crash",
+      "action": "reality web currency code rangeerror crash",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d reality-web score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T00:28:30Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-21T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-networkstatus-navigator-guard",
+      "action": "ppt web core networkstatus navigator guard",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d ppt-web-core score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T00:28:30Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-07T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-orgprovider-unstable-value",
+      "action": "ppt web core orgprovider unstable value",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d ppt-web-core score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T00:28:30Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-07T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-mfa-verify-hardcoded-path",
+      "action": "ppt web core mfa verify hardcoded path",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d ppt-web-core score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T00:28:30Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-06T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export-stale-instance",
+      "action": "ppt web core api default export stale instance",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d ppt-web-core score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T00:28:30Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-06T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-full-page-reload-nav",
+      "action": "ppt web ui moderation full page reload nav",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d ppt-web-ui score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T00:28:30Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-06T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-voting-list-page-no-i18n",
+      "action": "ppt web ui voting list page no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d ppt-web-ui score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T00:28:30Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-06T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-ai-workflows-raw-error-leak",
+      "action": "api handlers ai workflows raw error leak",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d api-handlers score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T00:28:30Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-05T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-esg-reporting-raw-sqlx-error-leak",
+      "action": "api handlers esg reporting raw sqlx error leak",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d api-handlers score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T00:28:30Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-05T00:00:00Z"
       }
     }
   ],

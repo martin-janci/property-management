@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-14T22:30:34Z",
+  "archived_at": "2026-11-15T00:36:05Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3189,6 +3189,31 @@
       }
     },
     {
+      "id": "code-review-admin-web-raw-fetch-bypasses-api-client",
+      "action": "admin web raw fetch bypasses api client",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d admin-web score=2 vector=refactor) | gc1-reconcile 2026-11-15T00:27:26Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T22:25:04Z",
+      "signal_ref": {
+        "segment": "admin-web",
+        "score": 2,
+        "vector": "refactor",
+        "generated": "2026-09-20T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3530,
+        "merged_at": "2026-11-14T22:44:47Z",
+        "at": "2026-11-15T00:27:26Z"
+      }
+    },
+    {
       "id": "code-review-admin-web-tenant-lifecycle-no-i18n",
       "action": "admin web tenant lifecycle no i18n",
       "owner_role": "pm-backend",
@@ -5262,6 +5287,31 @@
         "merged_pr": 3193,
         "merged_at": null,
         "at": "2026-11-03T16:38:28Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-multi-currency-refresh-stub-success",
+      "action": "api handlers multi currency refresh stub success",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-14T06:25:48Z (tier1d api-handlers score=1 vector=bug) | gc1-reconcile 2026-11-15T00:27:26Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T06:25:48Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-16T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3529,
+        "merged_at": "2026-11-14T22:41:31Z",
+        "at": "2026-11-15T00:27:26Z"
       }
     },
     {
@@ -8493,6 +8543,31 @@
         "vector": "bug"
       },
       "dispatcher_merged": "2026-08-17T08:41:00Z"
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-raw-backend-message-passthrough",
+      "action": "ppt web core errorhandler raw backend message passthrough",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d ppt-web-core score=2 vector=security) | gc1-reconcile 2026-11-15T00:27:26Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T22:25:04Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "security",
+        "generated": "2026-09-19T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3527,
+        "merged_at": "2026-11-14T22:43:25Z",
+        "at": "2026-11-15T00:27:26Z"
+      }
     },
     {
       "id": "code-review-ppt-web-core-errorhandler-raw-backend-msg",
@@ -14173,6 +14248,31 @@
       "first_open_at": "2026-07-07T16:06:35Z",
       "retry_of": "code-review-reality-web-listing-page-ssr-crash",
       "retry_round": 1
+    },
+    {
+      "id": "code-review-reality-web-listing-sections-currency-ssr-500",
+      "action": "reality web listing sections currency ssr 500",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d reality-web score=2 vector=bug) | gc1-reconcile 2026-11-15T00:27:26Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T22:25:04Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-21T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-15T00:27:26Z"
+      }
     },
     {
       "id": "code-review-reality-web-listingform-nan-validation",
