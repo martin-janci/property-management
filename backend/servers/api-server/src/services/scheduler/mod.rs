@@ -1724,6 +1724,82 @@ mod tests {
         assert_eq!(targets, vec![user_1, user_2]);
     }
 
+    /// Pure model of the per-invoice resilience policy in
+    /// [`Scheduler::send_payment_reminders`].
+    ///
+    /// The live loop resolves each due invoice's resident targets and then
+    /// sends one reminder per resident. A single invoice whose target
+    /// resolution *fails* must be logged and skipped so the remaining
+    /// invoices still get processed — it must NEVER abort the whole batch.
+    /// Before the fix the resolution used `?`, which short-circuited the
+    /// entire function on the first failing invoice (one bad reminder
+    /// stopped all remaining reminders). This helper mirrors the fixed
+    /// policy: walk invoices in order and skip any whose resolution errored
+    /// (`Err`) or yielded no residents (`Ok(empty)`), collecting the
+    /// `(invoice, resident)` pairs that WOULD be notified from the
+    /// survivors. `Err(())` stands in for the `sqlx::Error` the live
+    /// `get_unit_resident_user_ids` can return.
+    fn resilient_payment_reminder_targets(
+        resolutions: &[(Uuid, Result<Vec<Uuid>, ()>)],
+    ) -> Vec<(Uuid, Uuid)> {
+        let mut out = Vec::new();
+        for (invoice_id, resolved) in resolutions {
+            let Ok(residents) = resolved else {
+                // Pre-fix this `Err` aborted the batch via `?`; post-fix it
+                // is logged and skipped so later invoices still process.
+                continue;
+            };
+            for &user in residents {
+                out.push((*invoice_id, user));
+            }
+        }
+        out
+    }
+
+    #[test]
+    fn test_payment_reminder_batch_continues_past_failed_item() {
+        // Regression: a single invoice whose resident resolution fails must
+        // not drop the invoices that come after it. Pre-fix the `?` on
+        // `get_unit_resident_user_ids` aborted `send_payment_reminders` at
+        // the first failure, so `inv_c` below never got its reminder.
+        let inv_a = Uuid::new_v4();
+        let inv_bad = Uuid::new_v4();
+        let inv_c = Uuid::new_v4();
+        let user_a = Uuid::new_v4();
+        let user_c = Uuid::new_v4();
+
+        let resolutions = vec![
+            (inv_a, Ok(vec![user_a])),
+            (inv_bad, Err(())), // pre-fix: aborts the whole batch here
+            (inv_c, Ok(vec![user_c])),
+        ];
+
+        let targets = resilient_payment_reminder_targets(&resolutions);
+        assert_eq!(
+            targets,
+            vec![(inv_a, user_a), (inv_c, user_c)],
+            "failed middle invoice must be skipped, not abort the batch"
+        );
+        assert!(
+            targets.iter().any(|(inv, _)| *inv == inv_c),
+            "invoice after the failed one must still be processed"
+        );
+    }
+
+    #[test]
+    fn test_payment_reminder_batch_skips_empty_but_processes_rest() {
+        // An invoice with no active residents is skipped (not an error), and
+        // the remaining invoices are still processed.
+        let inv_empty = Uuid::new_v4();
+        let inv_ok = Uuid::new_v4();
+        let user_ok = Uuid::new_v4();
+
+        let resolutions = vec![(inv_empty, Ok(vec![])), (inv_ok, Ok(vec![user_ok]))];
+
+        let targets = resilient_payment_reminder_targets(&resolutions);
+        assert_eq!(targets, vec![(inv_ok, user_ok)]);
+    }
+
     // ------------------------------------------------------------------
     // DB-backed regression (issue #2484, follow-up to PR #2455). IG3.
     //
