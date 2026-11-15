@@ -355,10 +355,10 @@ pub async fn get_listing(
     let listing = sqlx::query_as::<_, FullListingRow>(
         r#"
         SELECT
-            l.id, l.title, l.description, l.price, l.currency,
-            l.size_sqm, l.rooms, l.bathrooms, l.floor, l.total_floors,
+            l.id, l.title, l.description, l.price::bigint AS price, l.currency,
+            l.size_sqm::int AS size_sqm, l.rooms, l.bathrooms, l.floor, l.total_floors,
             l.street, l.city, l.postal_code, l.country,
-            l.latitude, l.longitude,
+            l.latitude::float8 AS latitude, l.longitude::float8 AS longitude,
             l.property_type, l.transaction_type, l.features,
             l.published_at
         FROM listings l
