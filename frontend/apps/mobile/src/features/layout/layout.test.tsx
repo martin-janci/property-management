@@ -371,7 +371,12 @@ describe('useDashboardLayout hook', () => {
     });
   });
 
-  it('background fetch does NOT call setLayout but writes cache', async () => {
+  it('applies the fetched layout to state on a cache MISS (fetched layout is rendered)', async () => {
+    // Regression for the code-review finding "dashboard layout fetch never
+    // applied": on a cache miss the background fetch previously wrote the cache
+    // only and left state on DEFAULT, so a new user (or the first launch after
+    // the #2486 logout cache-sweep) was stranded on the generic default layout
+    // for the WHOLE session even though their tenant layout fetched fine.
     const freshLayout: ResolvedScreen = { ...SAMPLE_LAYOUT, version: 2 };
     (mockAsyncStorage.getItem as jest.Mock).mockResolvedValue(null); // no cache
     mockApiRequest.mockResolvedValue(freshLayout);
@@ -386,13 +391,17 @@ describe('useDashboardLayout hook', () => {
 
     await render(<TestComponent />);
 
-    // Wait for effect to settle
+    // Cache is still refreshed for next launch…
     await waitFor(() => {
       expect(mockAsyncStorage.setItem).toHaveBeenCalled();
     });
 
-    // Layout should still be the DEFAULT (cache was empty, fetch doesn't set state)
-    expect(capturedLayout).toEqual(DEFAULT_DASHBOARD_LAYOUT);
+    // …AND, because nothing was cached, the fetched layout is applied to state
+    // and rendered THIS session instead of leaving the user on DEFAULT.
+    await waitFor(() => {
+      expect(capturedLayout).toEqual(freshLayout);
+    });
+    expect(capturedLayout).not.toEqual(DEFAULT_DASHBOARD_LAYOUT);
   });
 
   it('fetch failure is silent — console.warn fires once', async () => {
