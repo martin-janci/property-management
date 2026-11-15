@@ -3126,7 +3126,6 @@
     "completeIn60Seconds": "Väčšinu úloh dokončíte za menej ako 60 sekúnd",
     "recentActivity": "Posledná aktivita",
     "activity": {
-      "meterReadingSubmitted": "Odpočet merača odoslaný",
       "announcementPublished": "Nové oznámenie: {{title}}",
       "faultReportedByYou": "Nahlásili ste poruchu: {{title}}",
       "loading": "Načítava sa aktivita…",
