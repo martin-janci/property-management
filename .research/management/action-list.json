@@ -200,60 +200,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-core-reports-route-stub-analytics",
-      "action": "ppt web core reports route stub analytics",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-14T16:26:02Z (tier1d ppt-web-core score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-14T16:26:02Z",
-      "signal_ref": {
-        "segment": "ppt-web-core",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-09-11T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-signature-modal-raw-err",
-      "action": "ppt web ui signature modal raw err",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-14T16:26:02Z (tier1d ppt-web-ui score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-14T16:26:02Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-09-11T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-reality-server-categories-hardcoded-sk-labels",
-      "action": "reality server categories hardcoded sk labels",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-14T16:26:02Z (tier1d reality-server score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-14T16:26:02Z",
-      "signal_ref": {
-        "segment": "reality-server",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-09-10T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-reality-server-listing-slug-is-uuid",
       "action": "reality server listing slug is uuid",
       "owner_role": "pm-backend",

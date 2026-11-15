@@ -12602,6 +12602,28 @@
       "merge_attempted_at": "2026-08-20T10:26:45Z"
     },
     {
+      "task_id": "code-review-reality-server-listing-slug-is-uuid",
+      "branch": "auto-impl/code-review-reality-server-listing-slug-f5a0544c",
+      "status": "merged",
+      "claimed_at": "2026-11-15T14:30:28Z",
+      "last_updated": "2026-11-15T18:38:41Z",
+      "status_changed_at": "2026-11-15T18:38:41Z",
+      "pr_number": 3552,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3552",
+      "merged_at": "2026-11-15T18:34:40Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3552 status=done specialist=rust-backend scope_drift=false note=reality-server derives SEO slug {title}-{uuid}; detail/view resolve slug-or-bare-uuid (backward compat); new util/slug.rs; 8 unit+3 integration tests; no migration; reality-web consumes slug opaquely; verify GREEN (local PG16 run); IG3 split [5.7 ci-fix driven round 1: required test red (backend partition 4/4 exit 100) — followup implementer spawned to fix]",
+      "reviewer_summary": "verdict=approve head_oid=69aff560378d13809a76c5d02203553a6dc62148 note=re-review-after-round1-ci-fix: DECIMAL->::bigint/::int/::float8 casts in get_listing detail query (mirrors featured query); slug util panic-safe+8 unit+3 integ tests; backward-compat bare-uuid; CI fully green (34 checks); scope clean. MERGED squash (#3552 -> 0fe564a1)",
+      "last_reviewed_oid": "69aff560378d13809a76c5d02203553a6dc62148",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-reality-server-listing-viewcount-hardcoded-zero",
       "branch": "auto-impl/code-review-reality-server-listing-viewc-b930efe1",
       "status": "merged",
@@ -28377,5 +28399,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-15T16:37:08Z"
+  "archived_at": "2026-11-15T18:38:41Z"
 }

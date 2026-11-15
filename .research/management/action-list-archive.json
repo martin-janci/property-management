@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-15T14:41:20Z",
+  "archived_at": "2026-11-15T18:29:50Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -9610,6 +9610,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-reports-route-stub-analytics",
+      "action": "ppt web core reports route stub analytics",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-14T16:26:02Z (tier1d ppt-web-core score=2 vector=bug) | gc1-reconcile 2026-11-15T18:24:50Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T16:26:02Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-11T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3549,
+        "merged_at": "2026-11-15T16:31:57Z",
+        "at": "2026-11-15T18:24:50Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-reports-schedule-stub-data",
       "action": "ppt web core reports schedule stub data",
       "owner_role": "pm-tech-lead",
@@ -12096,6 +12121,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-signature-modal-raw-err",
+      "action": "ppt web ui signature modal raw err",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-14T16:26:02Z (tier1d ppt-web-ui score=1 vector=bug) | gc1-reconcile 2026-11-15T18:24:50Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T16:26:02Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-11T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3550,
+        "merged_at": "2026-11-15T16:32:28Z",
+        "at": "2026-11-15T18:24:50Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-submission-preview-modal-orphan",
       "action": "ppt-web SubmissionPreviewModal is exported but rendered by no page — orphaned dead component with silent-catch",
       "owner_role": "pm-backend",
@@ -12446,6 +12496,31 @@
         "merged_pr": 2892,
         "merged_at": "2026-08-30T16:37:56Z",
         "at": "2026-08-30T18:24:58Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-categories-hardcoded-sk-labels",
+      "action": "reality server categories hardcoded sk labels",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-14T16:26:02Z (tier1d reality-server score=1 vector=bug) | gc1-reconcile 2026-11-15T18:24:50Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T16:26:02Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-10T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3551,
+        "merged_at": "2026-11-15T16:34:06Z",
+        "at": "2026-11-15T18:24:50Z"
       }
     },
     {
