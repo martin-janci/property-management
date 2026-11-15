@@ -73,15 +73,15 @@
     {
       "task_id": "code-review-reality-server-suggestions-stub-popular",
       "branch": "auto-impl/code-review-reality-server-suggestions-s-a7243f18",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-15T14:30:28Z",
-      "last_updated": "2026-11-15T22:29:34Z",
-      "status_changed_at": "2026-11-15T22:29:34Z",
+      "last_updated": "2026-11-15T22:44:17Z",
+      "status_changed_at": "2026-11-15T22:44:17Z",
       "pr_number": 3553,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3553",
       "merged_at": null,
       "specialist": "rust-backend",
-      "implementer_summary": "pr=3553 status=done specialist=rust-backend scope_drift=false note=derive popular_searches from real inventory (portal_repo.get_popular_search_pairs); popular_search_phrase reuses label_for_property_type; 2 unit tests; implementer verified green (156 reality-server+130 db on local PG16) but exhausted budget in disk-recovery before pushing -> DISPATCHER-SALVAGED: committed+pushed+PR #3553 [Phase 5.7 respawn round 1: fix subagent spawned to merge origin/dev + thread &Locale through popular_search_phrase/get_suggestions + update 2 SK tests; resolves E0061 vs #3551 2-arg label_for_property_type]",
+      "implementer_summary": "pr=3553 status=done specialist=rust-backend round=2 note=completed locale refactor; defined resolve_locale + locale-aware label_for_property_type (sk/cs/de/en), threaded both call sites; cargo check/clippy -D warnings/fmt clean, 156 reality-server lib tests pass; DB-backed integration tests CI-only; pushed to branch",
       "reviewer_summary": null,
       "last_reviewed_oid": "8dcd2cc82742797dc34ed409ccc833c9b36b5935",
       "scope_drift": false,
@@ -115,5 +115,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-15T22:43:27Z"
+  "generated": "2026-11-15T22:44:17Z"
 }
