@@ -14,6 +14,11 @@ export type { AuthUser } from './auth';
 export * from './auth';
 export * from './budgets';
 export * from './buildings';
+// Re-export the generated client through `./client-default`, which normalizes
+// the generator's compiled-in absolute base URL (`http://localhost:8080`) to a
+// safe relative/same-origin default at package load — so consumers that don't
+// call `client.setConfig()` (e.g. admin-web) never hit an absolute dev host.
+export { client } from './client-default';
 export * from './community';
 export * from './compliance';
 export * from './critical-notifications';
@@ -37,7 +42,6 @@ export * from './forms';
 // Export generated types and client
 // These will be populated after running `pnpm generate`
 export * from './generated';
-export { client } from './generated/client.gen';
 export * from './government-portal';
 export * from './granular-notifications';
 export * from './integrations';
