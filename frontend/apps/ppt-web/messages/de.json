@@ -5197,6 +5197,7 @@
     "loadingDocuments": "Dokumente werden geladen",
     "loadingFolders": "Ordner werden geladen",
     "loadingPreview": "Vorschau wird geladen",
+    "mainNavigation": "Hauptnavigation",
     "moveDocuments": "Dokumente verschieben",
     "moveDown": "Nach unten verschieben",
     "moveUp": "Nach oben verschieben",
@@ -5206,6 +5207,7 @@
     "newRootFolder": "Neuer Stammordner",
     "newSubfolder": "Neuer Unterordner",
     "nextPage": "Nächste Seite",
+    "openMenu": "Menü öffnen",
     "pdfNavigation": "PDF-Navigation",
     "pdfPreview": "PDF-Vorschau",
     "pinnedAnnouncements": "Angeheftete Ankündigungen",
@@ -5213,6 +5215,7 @@
     "postOptionsMenu": "Beitragsoptionsmenü",
     "previousPage": "Vorherige Seite",
     "progress": "Fortschritt",
+    "publicNavigation": "Seitennavigation",
     "reactions": "Reaktionen",
     "removeOption": "Option entfernen",
     "renameFolder": "Ordner umbenennen",
@@ -7171,9 +7174,6 @@
   },
   "shell": {
     "brand": "Hausverwaltung",
-    "mainNavigation": "Hauptnavigation",
-    "openMenu": "Menü öffnen",
-    "closeMenu": "Menü schließen",
     "createAccount": "Konto erstellen",
     "sections": {
       "overview": "Übersicht",
@@ -7189,7 +7189,6 @@
       "twoFactor": "Zwei-Faktor-Authentifizierung",
       "notifications": "Benachrichtigungseinstellungen"
     },
-    "publicNavigation": "Seitennavigation",
     "roles": {
       "super_admin": "Super-Administrator",
       "platform_admin": "Plattform-Administrator",

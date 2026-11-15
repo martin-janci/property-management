@@ -5109,6 +5109,7 @@
     "loadingDocuments": "Načítají se dokumenty",
     "loadingFolders": "Načítají se složky",
     "loadingPreview": "Načítá se náhled",
+    "mainNavigation": "Hlavní navigace",
     "moveDocuments": "Přesunout dokumenty",
     "moveDown": "Posunout dolů",
     "moveUp": "Posunout nahoru",
@@ -5118,6 +5119,7 @@
     "newRootFolder": "Nová kořenová složka",
     "newSubfolder": "Nová podsložka",
     "nextPage": "Další strana",
+    "openMenu": "Otevřít menu",
     "pdfNavigation": "Navigace v PDF",
     "pdfPreview": "Náhled PDF",
     "pinnedAnnouncements": "Připnutá oznámení",
@@ -5125,6 +5127,7 @@
     "postOptionsMenu": "Nabídka možností příspěvku",
     "previousPage": "Předchozí strana",
     "progress": "Průběh",
+    "publicNavigation": "Navigace webu",
     "reactions": "Reakce",
     "removeOption": "Odebrat možnost",
     "renameFolder": "Přejmenovat složku",
@@ -7100,9 +7103,6 @@
   },
   "shell": {
     "brand": "Správa nemovitostí",
-    "mainNavigation": "Hlavní navigace",
-    "openMenu": "Otevřít menu",
-    "closeMenu": "Zavřít menu",
     "createAccount": "Vytvořit účet",
     "sections": {
       "overview": "Přehled",
@@ -7132,7 +7132,6 @@
       "guest": "Host",
       "real_estate_agent": "Realitní makléř"
     },
-    "publicNavigation": "Navigace webu",
     "inbox": {
       "title": "Oznámení",
       "unreadMarker": "Nepřečtené:",

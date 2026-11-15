@@ -4747,6 +4747,7 @@
     "loadingDocuments": "Ładowanie dokumentów",
     "loadingFolders": "Ładowanie folderów",
     "loadingPreview": "Ładowanie podglądu",
+    "mainNavigation": "Nawigacja główna",
     "moveDocuments": "Przenieś dokumenty",
     "moveDown": "Przesuń w dół",
     "moveUp": "Przesuń w górę",
@@ -4756,6 +4757,7 @@
     "newRootFolder": "Nowy folder główny",
     "newSubfolder": "Nowy podfolder",
     "nextPage": "Następna strona",
+    "openMenu": "Otwórz menu",
     "pdfNavigation": "Nawigacja PDF",
     "pdfPreview": "Podgląd PDF",
     "pinnedAnnouncements": "Przypięte ogłoszenia",
@@ -4763,6 +4765,7 @@
     "postOptionsMenu": "Menu opcji wpisu",
     "previousPage": "Poprzednia strona",
     "progress": "Postęp",
+    "publicNavigation": "Nawigacja witryny",
     "reactions": "Reakcje",
     "removeOption": "Usuń opcję",
     "renameFolder": "Zmień nazwę folderu",
@@ -7291,9 +7294,6 @@
   },
   "shell": {
     "brand": "Zarządzanie nieruchomościami",
-    "mainNavigation": "Nawigacja główna",
-    "openMenu": "Otwórz menu",
-    "closeMenu": "Zamknij menu",
     "createAccount": "Utwórz konto",
     "sections": {
       "overview": "Przegląd",
@@ -7309,7 +7309,6 @@
       "twoFactor": "Uwierzytelnianie dwuskładnikowe",
       "notifications": "Ustawienia powiadomień"
     },
-    "publicNavigation": "Nawigacja witryny",
     "roles": {
       "super_admin": "Superadministrator",
       "platform_admin": "Administrator platformy",

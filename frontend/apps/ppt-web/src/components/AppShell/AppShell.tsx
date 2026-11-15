@@ -142,14 +142,14 @@ function Sidebar({
         <button
           type="button"
           className="shell-backdrop"
-          aria-label={t('shell.closeMenu', { defaultValue: 'Close menu' })}
+          aria-label={t('aria.closeMenu')}
           onClick={onClose}
         />
       )}
       <nav
         id="app-sidebar"
         className={`shell-sidebar${open ? ' shell-sidebar--open' : ''}`}
-        aria-label={t('shell.mainNavigation', { defaultValue: 'Main navigation' })}
+        aria-label={t('aria.mainNavigation')}
       >
         {sections.map((section) => (
           <div key={section.id} className="shell-nav-section">
@@ -186,7 +186,7 @@ function PublicHeader() {
       <nav
         className="shell-topbar__actions"
         data-testid="primary-nav"
-        aria-label={t('shell.publicNavigation', { defaultValue: 'Site navigation' })}
+        aria-label={t('aria.publicNavigation')}
       >
         <LanguageSwitcher />
         <Link to="/login" className="shell-btn shell-btn--ghost">
@@ -231,7 +231,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           className="shell-menu-toggle"
           aria-controls="app-sidebar"
           aria-expanded={sidebarOpen}
-          aria-label={t('shell.openMenu', { defaultValue: 'Open menu' })}
+          aria-label={t('aria.openMenu')}
           onClick={() => setSidebarOpen((v) => !v)}
         >
           <span aria-hidden="true">☰</span>
