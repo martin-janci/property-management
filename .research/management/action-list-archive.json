@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-15T06:29:52Z",
+  "archived_at": "2026-11-15T06:47:20Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -8859,6 +8859,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-home-dashboard-role-route",
+      "action": "ppt web core home dashboard role route",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-14T06:25:48Z (tier1d ppt-web-core score=2 vector=bug) | gc1-reconcile 2026-11-15T06:47:20Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T06:25:48Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-16T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-15T06:47:20Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-iot-sensor-delete-confirm-hardcoded",
       "action": "ppt-web iot.tsx sensor-delete confirm is hardcoded English `window.confirm(…)` — sk/cs/de users see raw English on destructive action",
       "owner_role": "pm-backend",
@@ -9095,6 +9120,31 @@
         "merged_pr": 2741,
         "merged_at": "2026-08-12T12:19:26Z",
         "at": "2026-08-12T16:05:30Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-manager-dashboard-unguarded",
+      "action": "ppt web core manager dashboard unguarded",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-14T06:25:48Z (tier1d ppt-web-core score=2 vector=bug) | gc1-reconcile 2026-11-15T06:47:20Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T06:25:48Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-16T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-15T06:47:20Z"
       }
     },
     {
@@ -10802,6 +10852,31 @@
         "merged_pr": 3011,
         "merged_at": "2026-10-01T20:29:57Z",
         "at": "2026-10-02T00:26:03Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-ismanager-hardcoded-true",
+      "action": "ppt web ui facilities ismanager hardcoded true",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-14T06:25:48Z (tier1d ppt-web-ui score=2 vector=bug) | gc1-reconcile 2026-11-15T06:47:20Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T06:25:48Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-17T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3541,
+        "merged_at": "2026-11-15T06:42:41Z",
+        "at": "2026-11-15T06:47:20Z"
       }
     },
     {
@@ -26597,6 +26672,33 @@
         "merged_pr": 3507,
         "merged_at": "2026-11-14T04:42:14Z",
         "at": "2026-11-14T04:42:28Z"
+      }
+    },
+    {
+      "id": "gh-issue-3531",
+      "action": "Follow-up: ppt-web de/pl/hu still miss 455 en keys after the \"parity\" PR (PR #3524) (Closes #3531)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-11-15T00:27:53Z (#3531) | gc1-reconcile 2026-11-15T06:47:20Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T00:27:53Z",
+      "issue_ref": {
+        "number": 3531,
+        "url": "https://github.com/martin-janci/property-management/issues/3531",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3542,
+        "merged_at": "2026-11-15T06:45:35Z",
+        "at": "2026-11-15T06:47:20Z"
       }
     },
     {
