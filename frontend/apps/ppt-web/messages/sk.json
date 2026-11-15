@@ -5109,6 +5109,7 @@
     "loadingDocuments": "Načítavajú sa dokumenty",
     "loadingFolders": "Načítavajú sa priečinky",
     "loadingPreview": "Načítava sa náhľad",
+    "mainNavigation": "Hlavná navigácia",
     "moveDocuments": "Presunúť dokumenty",
     "moveDown": "Posunúť nadol",
     "moveUp": "Posunúť nahor",
@@ -5118,6 +5119,7 @@
     "newRootFolder": "Nový koreňový priečinok",
     "newSubfolder": "Nový podpriečinok",
     "nextPage": "Nasledujúca strana",
+    "openMenu": "Otvoriť menu",
     "pdfNavigation": "Navigácia v PDF",
     "pdfPreview": "Náhľad PDF",
     "pinnedAnnouncements": "Pripnuté oznámenia",
@@ -5125,6 +5127,7 @@
     "postOptionsMenu": "Menu možností príspevku",
     "previousPage": "Predchádzajúca strana",
     "progress": "Priebeh",
+    "publicNavigation": "Navigácia stránky",
     "reactions": "Reakcie",
     "removeOption": "Odstrániť možnosť",
     "renameFolder": "Premenovať priečinok",
@@ -7100,9 +7103,6 @@
   },
   "shell": {
     "brand": "Správa nehnuteľností",
-    "mainNavigation": "Hlavná navigácia",
-    "openMenu": "Otvoriť menu",
-    "closeMenu": "Zavrieť menu",
     "createAccount": "Vytvoriť účet",
     "sections": {
       "overview": "Prehľad",
@@ -7132,7 +7132,6 @@
       "guest": "Hosť",
       "real_estate_agent": "Realitný maklér"
     },
-    "publicNavigation": "Navigácia stránky",
     "inbox": {
       "title": "Upozornenia",
       "unreadMarker": "Neprečítané:",

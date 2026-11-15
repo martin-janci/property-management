@@ -6927,6 +6927,7 @@
     "loadingDocuments": "Loading documents",
     "loadingFolders": "Loading folders",
     "loadingPreview": "Loading preview",
+    "mainNavigation": "Main navigation",
     "moveDocuments": "Move documents",
     "moveDown": "Move down",
     "moveUp": "Move up",
@@ -6936,6 +6937,7 @@
     "newRootFolder": "New root folder",
     "newSubfolder": "New subfolder",
     "nextPage": "Next page",
+    "openMenu": "Open menu",
     "pdfNavigation": "PDF navigation",
     "pdfPreview": "PDF preview",
     "pinnedAnnouncements": "Pinned announcements",
@@ -6943,6 +6945,7 @@
     "postOptionsMenu": "Post options menu",
     "previousPage": "Previous page",
     "progress": "Progress",
+    "publicNavigation": "Site navigation",
     "reactions": "Reactions",
     "removeOption": "Remove option",
     "renameFolder": "Rename folder",
@@ -8619,9 +8622,6 @@
   },
   "shell": {
     "brand": "Property Manager",
-    "mainNavigation": "Main navigation",
-    "openMenu": "Open menu",
-    "closeMenu": "Close menu",
     "createAccount": "Create account",
     "sections": {
       "overview": "Overview",
@@ -8651,7 +8651,6 @@
       "guest": "Guest",
       "real_estate_agent": "Real estate agent"
     },
-    "publicNavigation": "Site navigation",
     "inbox": {
       "title": "Notifications",
       "unreadMarker": "Unread:",

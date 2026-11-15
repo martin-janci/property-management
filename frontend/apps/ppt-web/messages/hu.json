@@ -4665,6 +4665,7 @@
     "loadingDocuments": "Dokumentumok betöltése",
     "loadingFolders": "Mappák betöltése",
     "loadingPreview": "Előnézet betöltése",
+    "mainNavigation": "Fő navigáció",
     "moveDocuments": "Dokumentumok áthelyezése",
     "moveDown": "Mozgatás lefelé",
     "moveUp": "Mozgatás felfelé",
@@ -4674,6 +4675,7 @@
     "newRootFolder": "Új gyökérmappa",
     "newSubfolder": "Új almappa",
     "nextPage": "Következő oldal",
+    "openMenu": "Menü megnyitása",
     "pdfNavigation": "PDF navigáció",
     "pdfPreview": "PDF előnézet",
     "pinnedAnnouncements": "Rögzített közlemények",
@@ -4681,6 +4683,7 @@
     "postOptionsMenu": "Bejegyzés beállításai menü",
     "previousPage": "Előző oldal",
     "progress": "Folyamat",
+    "publicNavigation": "Webhely-navigáció",
     "reactions": "Reakciók",
     "removeOption": "Beállítás eltávolítása",
     "renameFolder": "Mappa átnevezése",
@@ -7171,9 +7174,6 @@
   },
   "shell": {
     "brand": "Ingatlankezelés",
-    "mainNavigation": "Fő navigáció",
-    "openMenu": "Menü megnyitása",
-    "closeMenu": "Menü bezárása",
     "createAccount": "Fiók létrehozása",
     "sections": {
       "overview": "Áttekintés",
@@ -7189,7 +7189,6 @@
       "twoFactor": "Kétlépcsős azonosítás",
       "notifications": "Értesítési beállítások"
     },
-    "publicNavigation": "Webhely-navigáció",
     "roles": {
       "super_admin": "Szuperadmin",
       "platform_admin": "Platformadmin",
