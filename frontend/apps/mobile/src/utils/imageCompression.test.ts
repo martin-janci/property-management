@@ -117,6 +117,24 @@ describe('compressImagesIfNeeded', () => {
     );
   });
 
+  // The resize must cap the *longest* edge, not just the width. For a tall /
+  // portrait photo (height > width) a width-only resize leaves the height
+  // unconstrained, so the image can stay oversized. The dimension that is
+  // constrained must be the height in that case (expo preserves aspect ratio
+  // when only one dimension is given).
+  it('caps the longest edge by height for a portrait image', async () => {
+    sizeEachFile(6 * MB); // 2 × 6 = 12 MB > limit
+    mockManipulateAsync.mockResolvedValue({ uri: 'out.jpg', width: 1080, height: 1920 });
+
+    await compressImagesIfNeeded(['tall.jpg', 'tall2.jpg']);
+
+    expect(mockManipulateAsync).toHaveBeenCalledWith(
+      'tall.jpg',
+      [{ resize: { height: 1920 } }],
+      expect.objectContaining({ format: 'jpeg', compress: expect.any(Number) })
+    );
+  });
+
   // issue #1767 §3: a single fixed-quality pass is not guaranteed to land under
   // the limit. When the compressed total is still over, the result must say so
   // (stillOverLimit) so the UI warns the upload may be slow/fail.
