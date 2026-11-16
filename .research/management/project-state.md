@@ -1,16 +1,16 @@
 # Project State — PPT (Property Management)
 
-<sub>Generated: 2026-11-16T03:12:00Z — Scrum Master synthesis (Phase 1.6, rotating role: pm-security)</sub>
+<sub>Generated: 2026-11-16T20:38:36Z — Scrum Master coverage upkeep refresh (task pm-scrum-master-coverage-scan-refresh; cursor idx 3 → epic-79)</sub>
 
 ## Executive summary
 
-Sprint (Epic 6 / 7A / 8A / 10A — Announcements, Documents, Notifications & OAuth) and all six tracked epics are **done**. `coverage.json` holds 49/49 stories done (0 partial or not-started), so gap-driven planning has no candidates. Work has moved to the improvement backlog (63 open action-list items after today's merge). 17 code-review and gh-issue PRs merged in this window — a continued dispatcher burst — and `coverage.json` + this file last refreshed 2026-11-13 and are stale; a scan is recommended.
+Sprint (Epic 6 / 7A / 8A / 10A — Announcements, Documents, Notifications & OAuth) and all six tracked epics are **done**. `coverage.json` holds 49/49 stories done (0 partial or not-started), so gap-driven planning has no candidates. Work has moved to the improvement backlog (63 open action-list items after today's merge). 17 code-review and gh-issue PRs merged in this window — a continued dispatcher burst — all hardening on already-shipped surfaces, with no coverage story flipped. `coverage.json` + this file refreshed **2026-11-16** (upkeep scan; rotating cursor re-checked epic-79, Reality Portal API client integration — 79-1..79-4 still done). Confirmed: **49/49 stories done** and **epic rollups 6/6 done** in `sprint-status.yaml` — coverage and rollups remain 100%.
 
 ## Sprint progress
 
 - **Sprint:** Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth
 - **Epics done:** 6 of 6 (100%)
-- **Coverage (last scan 2026-11-13):** 49 of 49 stories done
+- **Coverage (last scan 2026-11-16):** 49 of 49 stories done
 
 ## Shipped since last run (2026-11-15T11:30:00Z → 2026-11-16T03:12:00Z)
 
@@ -35,10 +35,11 @@ Sprint (Epic 6 / 7A / 8A / 10A — Announcements, Documents, Notifications & OAu
 ## What's next
 
 1. **[high] [pm-scrum-master]** Unblock mobile-native/KMP and swagger-ui egress in the cloud runner (#2652, #2966). Claimable work is a small share of the backlog, and backend security PRs cannot compile.
-2. **[high] [pm-scrum-master]** Run a coverage scan to refresh `coverage.json` and this file (both dated 2026-11-13), and confirm that epic rollups and coverage are still 100% done.
-3. **[high] [pm-scrum-master]** Triage the stalled reviews #2555 and #2559 (110 days). Merge them, close them, or explicitly defer them.
-4. **[high] [pm-scrum-master]** Run the cross-tenant 404 contract sweep and close the open IDOR retries #2944/#2945/#2946 once the build is unblocked.
-5. **[high] [pm-security]** Audit routes with optional `unit_id` or null-scope for the missing-owner-check pattern from #3554, and add a negative cross-owner test.
+2. **[high] [pm-scrum-master]** Triage the stalled reviews #2555 and #2559 (110 days). Merge them, close them, or explicitly defer them.
+3. **[high] [pm-scrum-master]** Run the cross-tenant 404 contract sweep and close the open IDOR retries #2944/#2945/#2946 once the build is unblocked.
+4. **[high] [pm-security]** Audit routes with optional `unit_id` or null-scope for the missing-owner-check pattern from #3554, and add a negative cross-owner test.
+
+<sub>Done 2026-11-16: coverage scan refresh (`coverage.json` + this file re-stamped, epic rollups & coverage reconfirmed 100%).</sub>
 
 ## Blockers
 
