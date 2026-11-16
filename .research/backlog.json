@@ -15930,7 +15930,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "PR #3524",
         "Issue #3531"
@@ -15945,7 +15945,12 @@
       ],
       "created_at": "2026-11-15",
       "updated_at": "2026-11-15",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-16T22:23:18Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "screen-map-drift-pr-3486-ppt",
