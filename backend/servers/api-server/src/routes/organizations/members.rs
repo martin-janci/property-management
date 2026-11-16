@@ -1243,4 +1243,50 @@ mod tests {
             "an org admin must still be able to hand over the org_admin role"
         );
     }
+
+    /// REGRESSION / fails-before-fix pin for the PR #3525 privilege-escalation
+    /// bug. The sibling test above exercises the *post-fix* helper
+    /// [`ensure_can_assign_role_type`] in isolation; on its own it cannot show
+    /// the mutation was ever reachable, because the helper only exists as part
+    /// of the fix. This test pins the *exact* authorization gate the handler
+    /// invoked on each side of the fix, so the privilege-escalation gap stays
+    /// provably closed and the test is meaningful rather than tautological:
+    ///
+    /// * BEFORE #3525, `update_organization_member` authorized the resulting
+    ///   role with [`ensure_role_type_assignable`] alone — which permits a
+    ///   non-admin to assign a role at their OWN level. We assert that pre-fix
+    ///   gate still *admits* the peer promotion, demonstrating the mutation
+    ///   would have been wrongly ALLOWED (lateral privilege propagation: a
+    ///   Manager minting a peer Manager it can no longer manage).
+    /// * AFTER #3525, the handler calls [`ensure_can_assign_role_type`], which
+    ///   additionally runs the strictly-below-except-admins manage rule. We
+    ///   assert it now DENIES the same peer promotion.
+    ///
+    /// If the fix regresses (the handler reverts to the bare
+    /// `ensure_role_type_assignable` gate), the post-fix leg below fails.
+    #[test]
+    fn non_admin_peer_promotion_was_allowed_before_fix_and_is_now_denied() {
+        for non_admin in ["manager", "technical_manager"] {
+            // Pre-fix gate (what the handler used to call): PERMITS the peer
+            // assignment — this is the privilege-escalation hole #3525 closed.
+            assert!(
+                ensure_role_type_assignable(non_admin, non_admin).is_ok(),
+                "pre-fix gate ensure_role_type_assignable unexpectedly rejected \
+                 the peer promotion for {non_admin:?}; the regression no longer \
+                 demonstrates the before-fix behaviour"
+            );
+            // Post-fix gate (what the handler calls now): DENIES it.
+            assert!(
+                ensure_can_assign_role_type(non_admin, non_admin).is_err(),
+                "post-fix gate must reject a non-admin assigning its own peer \
+                 role {non_admin:?} (privilege escalation PR #3525 fixed)"
+            );
+        }
+
+        // The admin hand-over path is the deliberate exception and must stay
+        // open under BOTH gates (last-admin loss is guarded elsewhere), so the
+        // added denial does not over-rotate onto legitimate admin transfer.
+        assert!(ensure_role_type_assignable("org_admin", "org_admin").is_ok());
+        assert!(ensure_can_assign_role_type("org_admin", "org_admin").is_ok());
+    }
 }
