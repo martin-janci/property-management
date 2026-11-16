@@ -108,8 +108,19 @@ fn require_manager(auth: &AuthUser) -> Result<(), (StatusCode, String)> {
     }
 }
 
+/// Map a database error to a sanitized 500 response.
+///
+/// The raw `sqlx`/database error is logged server-side (where operators can
+/// inspect it) but is never placed in the HTTP response body, so internal DB
+/// details and SQL (table/constraint names) are not leaked to the client.
+/// Mirrors the sanitized-error convention used by sibling handlers
+/// (e.g. `routes/gdpr.rs`, `routes/ai/workflows.rs`).
 fn db_err(e: impl std::fmt::Display) -> (StatusCode, String) {
-    (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+    tracing::error!(error = %e, "Property valuation handler database error");
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        "An internal error occurred. Please try again later.".to_string(),
+    )
 }
 
 fn not_found(what: &str) -> (StatusCode, String) {
@@ -286,7 +297,7 @@ async fn get_dashboard(
         .get_dashboard(org_id)
         .await
         .map(Json)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(db_err)
 }
 
 /// Get valuations expiring soon
@@ -302,7 +313,7 @@ async fn get_expiring_valuations(
         .get_expiring_valuations(org_id, query.days)
         .await
         .map(Json)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(db_err)
 }
 
 // ============================================================================
@@ -322,7 +333,7 @@ async fn list_models(
         .list_models(org_id, query.active_only)
         .await
         .map(Json)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(db_err)
 }
 
 /// Create a valuation model
@@ -339,7 +350,7 @@ async fn create_model(
         .create_model(org_id, &data, auth.user_id)
         .await
         .map(|model| (StatusCode::CREATED, Json(model)))
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(db_err)
 }
 
 /// Get a valuation model by ID
@@ -354,7 +365,7 @@ async fn get_model(
         .property_valuation_repo
         .get_model(org_id, model_id)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .map_err(db_err)?
         .map(Json)
         .ok_or((StatusCode::NOT_FOUND, "Model not found".to_string()))
 }
@@ -373,7 +384,7 @@ async fn update_model(
         .property_valuation_repo
         .update_model(org_id, model_id, &data)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .map_err(db_err)?
         .map(Json)
         .ok_or((StatusCode::NOT_FOUND, "Model not found".to_string()))
 }
@@ -391,7 +402,7 @@ async fn delete_model(
         .property_valuation_repo
         .delete_model(org_id, model_id)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(db_err)?;
 
     if deleted {
         Ok(StatusCode::NO_CONTENT)
@@ -423,7 +434,7 @@ async fn list_valuations(
         )
         .await
         .map(Json)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(db_err)
 }
 
 /// Create a valuation
@@ -447,7 +458,7 @@ async fn create_valuation(
         .create_valuation(org_id, &data, auth.user_id)
         .await
         .map(|v| (StatusCode::CREATED, Json(v)))
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(db_err)
 }
 
 /// Get a valuation by ID
@@ -462,7 +473,7 @@ async fn get_valuation(
         .property_valuation_repo
         .get_valuation(org_id, valuation_id)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .map_err(db_err)?
         .map(Json)
         .ok_or((StatusCode::NOT_FOUND, "Valuation not found".to_string()))
 }
@@ -481,7 +492,7 @@ async fn update_valuation(
         .property_valuation_repo
         .update_valuation(org_id, valuation_id, &data)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .map_err(db_err)?
         .map(Json)
         .ok_or((StatusCode::NOT_FOUND, "Valuation not found".to_string()))
 }
@@ -499,7 +510,7 @@ async fn delete_valuation(
         .property_valuation_repo
         .delete_valuation(org_id, valuation_id)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(db_err)?;
 
     if deleted {
         Ok(StatusCode::NO_CONTENT)
@@ -527,7 +538,7 @@ async fn approve_valuation(
         .property_valuation_repo
         .approve_valuation(org_id, valuation_id, auth.user_id, data.notes)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .map_err(db_err)?
         .map(Json)
         .ok_or((StatusCode::NOT_FOUND, "Valuation not found".to_string()))
 }
@@ -549,7 +560,7 @@ async fn list_comparables(
         .list_comparables(org_id, valuation_id)
         .await
         .map(Json)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(db_err)
 }
 
 /// Create a comparable
@@ -572,7 +583,7 @@ async fn create_comparable(
         .create_comparable(org_id, &data)
         .await
         .map(|c| (StatusCode::CREATED, Json(c)))
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(db_err)
 }
 
 /// Update a comparable
@@ -589,7 +600,7 @@ async fn update_comparable(
         .property_valuation_repo
         .update_comparable(org_id, comparable_id, &data)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .map_err(db_err)?
         .map(Json)
         .ok_or((StatusCode::NOT_FOUND, "Comparable not found".to_string()))
 }
@@ -607,7 +618,7 @@ async fn delete_comparable(
         .property_valuation_repo
         .delete_comparable(org_id, comparable_id)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(db_err)?;
 
     if deleted {
         Ok(StatusCode::NO_CONTENT)
@@ -634,7 +645,7 @@ async fn list_adjustments(
         .list_adjustments(org_id, comparable_id)
         .await
         .map(Json)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(db_err)
 }
 
 /// Create an adjustment
@@ -652,7 +663,7 @@ async fn create_adjustment(
         .property_valuation_repo
         .create_adjustment(org_id, &data)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .map_err(db_err)?
         .map(|a| (StatusCode::CREATED, Json(a)))
         .ok_or((StatusCode::NOT_FOUND, "Comparable not found".to_string()))
 }
@@ -669,7 +680,7 @@ async fn delete_adjustment(
         .property_valuation_repo
         .delete_adjustment(org_id, adjustment_id)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(db_err)?;
 
     if deleted {
         Ok(StatusCode::NO_CONTENT)
@@ -700,7 +711,7 @@ async fn get_market_data(
         )
         .await
         .map(Json)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(db_err)
 }
 
 /// Create market data
@@ -717,7 +728,7 @@ async fn create_market_data(
         .create_market_data(org_id, &data)
         .await
         .map(|m| (StatusCode::CREATED, Json(m)))
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(db_err)
 }
 
 /// Update market data
@@ -734,7 +745,7 @@ async fn update_market_data(
         .property_valuation_repo
         .update_market_data(org_id, market_data_id, &data)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .map_err(db_err)?
         .map(Json)
         .ok_or((StatusCode::NOT_FOUND, "Market data not found".to_string()))
 }
@@ -757,7 +768,7 @@ async fn get_value_history(
         .get_value_history(org_id, property_id, query.limit)
         .await
         .map(Json)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(db_err)
 }
 
 /// Create value history entry
@@ -780,7 +791,7 @@ async fn create_value_history(
         .create_value_history(org_id, &data)
         .await
         .map(|h| (StatusCode::CREATED, Json(h)))
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(db_err)
 }
 
 // ============================================================================
@@ -806,7 +817,7 @@ async fn list_requests(
         )
         .await
         .map(Json)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(db_err)
 }
 
 /// Create a valuation request
@@ -824,7 +835,7 @@ async fn create_request(
         .create_request(org_id, &data, auth.user_id)
         .await
         .map(|r| (StatusCode::CREATED, Json(r)))
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(db_err)
 }
 
 /// Get a valuation request
@@ -839,7 +850,7 @@ async fn get_request(
         .property_valuation_repo
         .get_request(org_id, request_id)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .map_err(db_err)?
         .map(Json)
         .ok_or((StatusCode::NOT_FOUND, "Request not found".to_string()))
 }
@@ -861,7 +872,7 @@ async fn update_request(
         .property_valuation_repo
         .update_request(org_id, request_id, &data)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .map_err(db_err)?
         .map(Json)
         .ok_or((StatusCode::NOT_FOUND, "Request not found".to_string()))
 }
@@ -882,7 +893,7 @@ async fn get_features(
         .property_valuation_repo
         .get_features(org_id, property_id)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .map_err(db_err)?
         .map(Json)
         .ok_or((StatusCode::NOT_FOUND, "Features not found".to_string()))
 }
@@ -904,7 +915,7 @@ async fn create_features(
         .create_features(org_id, &data, auth.user_id)
         .await
         .map(|f| (StatusCode::CREATED, Json(f)))
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(db_err)
 }
 
 /// Update property features
@@ -921,7 +932,7 @@ async fn update_features(
         .property_valuation_repo
         .update_features(org_id, feature_id, &data)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .map_err(db_err)?
         .map(Json)
         .ok_or((StatusCode::NOT_FOUND, "Features not found".to_string()))
 }
@@ -943,7 +954,7 @@ async fn list_reports(
         .list_reports(org_id, valuation_id)
         .await
         .map(Json)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(db_err)
 }
 
 /// Create a report
@@ -963,7 +974,7 @@ async fn create_report(
         .create_report(org_id, &data, auth.user_id)
         .await
         .map(|r| (StatusCode::CREATED, Json(r)))
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(db_err)
 }
 
 /// Update a report
@@ -980,7 +991,7 @@ async fn update_report(
         .property_valuation_repo
         .update_report(org_id, report_id, &data)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .map_err(db_err)?
         .map(Json)
         .ok_or((StatusCode::NOT_FOUND, "Report not found".to_string()))
 }
@@ -998,7 +1009,7 @@ async fn sign_report(
         .property_valuation_repo
         .sign_report(org_id, report_id, auth.user_id)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .map_err(db_err)?
         .map(Json)
         .ok_or((StatusCode::NOT_FOUND, "Report not found".to_string()))
 }
@@ -1021,7 +1032,7 @@ async fn get_audit_logs(
         .get_audit_logs(org_id, valuation_id, query.limit)
         .await
         .map(Json)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(db_err)
 }
 
 #[cfg(test)]
