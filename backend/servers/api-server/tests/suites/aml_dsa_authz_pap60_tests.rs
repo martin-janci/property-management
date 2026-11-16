@@ -36,7 +36,9 @@ use axum::http::StatusCode;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::common::{create_authenticated_user, mint_tenant_token, TestApp, TestUser};
+use crate::common::{
+    create_authenticated_user, mint_tenant_token, seed_membership, TestApp, TestUser,
+};
 use db::models::compliance::ModeratedContentType;
 use db::repositories::ComplianceRepository;
 
@@ -405,6 +407,18 @@ async fn file_appeal_rejected_after_final_decision(pool: PgPool) {
 //     a case in org A: the role and tenant-context gates pass, so the ONLY thing
 //     that stops the mutation is the org predicate inside the repo UPDATE — and
 //     the handler must translate that miss into 404.
+//
+//     Contract note (why the moderator is seeded as a member of org B): the
+//     `TenantAuthUser` extractor enforces org MEMBERSHIP first — a caller who
+//     claims an org they do not belong to is rejected with 403 ("User is not a
+//     member of this tenant") BEFORE any handler runs. That 403 is a *different*
+//     contract (impersonating a foreign org), not the one these tests target.
+//     To exercise the repo `RowNotFound` -> 404 arm, the moderator must be a
+//     LEGITIMATE active member of org B (membership + role gates pass); the case
+//     then living in org A is what makes the org-scoped `UPDATE ... RETURNING`
+//     match zero rows -> `RowNotFound` -> 404. Without the `seed_membership`
+//     call the membership guard short-circuits with 403 and the 404 arm under
+//     test is never reached.
 // ===========================================================================
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -416,9 +430,12 @@ async fn take_moderation_action_cross_tenant_returns_404(pool: PgPool) {
     let case_owner = seed_user(&pool, "action-owner").await;
     let case_in_a = seed_moderation_case(&pool, org_a, case_owner).await;
 
-    // Moderator scoped to a DIFFERENT org (org B).
+    // Moderator scoped to a DIFFERENT org (org B). They are a LEGITIMATE active
+    // member of org B (so the membership + manager-role gates pass); only the
+    // case living in org A must stop the mutation — at the repo org predicate.
     let org_b = seed_org(&pool, "action-b").await;
     let moderator_b = seed_user(&pool, "action-moderator-b").await;
+    seed_membership(&pool, org_b, moderator_b, "manager").await;
     let token = mint_tenant_token(
         moderator_b,
         "action-moderator-b@pap43.test",
@@ -472,9 +489,12 @@ async fn decide_appeal_cross_tenant_returns_404(pool: PgPool) {
     .await
     .expect("mark appealed");
 
-    // Moderator scoped to a DIFFERENT org (org B).
+    // Moderator scoped to a DIFFERENT org (org B). They are a LEGITIMATE active
+    // member of org B (so the membership + manager-role gates pass); only the
+    // case living in org A must stop the mutation — at the repo org predicate.
     let org_b = seed_org(&pool, "decide-b").await;
     let moderator_b = seed_user(&pool, "decide-moderator-b").await;
+    seed_membership(&pool, org_b, moderator_b, "manager").await;
     let token = mint_tenant_token(
         moderator_b,
         "decide-moderator-b@pap43.test",
