@@ -4759,6 +4759,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-api-handlers-auth-inactive-revoke-swallowed",
+      "branch": "auto-impl/code-review-api-handlers-auth-inactive-r-a60a15d7",
+      "status": "merged",
+      "claimed_at": "2026-11-16T16:33:58Z",
+      "last_updated": "2026-11-16T18:37:10Z",
+      "status_changed_at": "2026-11-16T18:37:10Z",
+      "pr_number": 3573,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3573",
+      "merged_at": "2026-11-16T18:37:10Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=398af9078f477c822592780d57a67740c3196b63 note=correct-tight-scope-hot-path-fix-ci-green-posted-as-comment-selfapprove-blocked",
+      "last_reviewed_oid": "398af9078f477c822592780d57a67740c3196b63",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-16T18:36:36Z"
+    },
+    {
       "task_id": "code-review-api-handlers-auth-nonatomic-refresh-rotation",
       "branch": "auto-impl/code-review-api-handlers-auth-nonatomic-82b9850b",
       "status": "failed",
@@ -5157,6 +5179,28 @@
       "merge_attempted_at": "2026-08-06T22:13:48Z"
     },
     {
+      "task_id": "code-review-api-handlers-esg-reporting-raw-sqlx-error-leak",
+      "branch": "auto-impl/code-review-api-handlers-esg-reporting-r-6cb49d56",
+      "status": "merged",
+      "claimed_at": "2026-11-16T14:37:26Z",
+      "last_updated": "2026-11-16T18:33:02Z",
+      "status_changed_at": "2026-11-16T18:33:02Z",
+      "pr_number": 3572,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3572",
+      "merged_at": "2026-11-16T18:33:02Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=b3cebc870a795d077e3628c7265f2f3a6a57636a note=esg internal_error sanitized+logged; all 38 db-err sites funnel through it; regression test solid; CI-green (approve posted as COMMENT, self-approval-blocked)",
+      "last_reviewed_oid": "b3cebc870a795d077e3628c7265f2f3a6a57636a",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-16T18:33:02Z"
+    },
+    {
       "task_id": "code-review-api-handlers-gdpr-raw-db-error-leak",
       "branch": "auto-impl/code-review-api-handlers-gdpr-raw-db-err-aa514c94",
       "status": "merged",
@@ -5510,6 +5554,28 @@
       "merge_attempted_at": null,
       "quarantined_at": null,
       "quarantine_reason": null
+    },
+    {
+      "task_id": "code-review-api-handlers-property-valuation-raw-error-leak",
+      "branch": "auto-impl/code-review-api-handlers-property-valuat-25b6135c",
+      "status": "merged",
+      "claimed_at": "2026-11-16T16:33:58Z",
+      "last_updated": "2026-11-16T18:37:10Z",
+      "status_changed_at": "2026-11-16T18:37:10Z",
+      "pr_number": 3575,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3575",
+      "merged_at": "2026-11-16T18:37:10Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=b3328ada7e9478abc4ae9f2724193674dcaf5346 note=clean-sanitization-all-paths-via-db_err-approve-posted-as-comment-self-approve-blocked",
+      "last_reviewed_oid": "b3328ada7e9478abc4ae9f2724193674dcaf5346",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-16T18:36:36Z"
     },
     {
       "task_id": "code-review-api-handlers-refresh-rotatio-fdd62aff",
@@ -29047,5 +29113,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-16T16:46:27Z"
+  "archived_at": "2026-11-16T18:40:16Z"
 }
