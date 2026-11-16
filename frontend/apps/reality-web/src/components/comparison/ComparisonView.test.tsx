@@ -37,13 +37,18 @@ import { ComparisonView } from './ComparisonView';
 
 const STORAGE_KEY = 'ppt-comparison';
 
-function makeListing(id: string, price: unknown, area = 60): ListingSummary {
+function makeListing(
+  id: string,
+  price: unknown,
+  area = 60,
+  currency: unknown = 'EUR'
+): ListingSummary {
   return {
     id,
     slug: `${id}-slug`,
     title: `Listing ${id}`,
     price,
-    currency: 'EUR',
+    currency,
     transactionType: 'sale',
     propertyType: 'apartment',
     status: 'active',
@@ -110,6 +115,32 @@ describe('ComparisonView — best-value highlight with untrusted numeric fields'
     // ...and the pricier/garbage ones must not be marked best.
     expect(priceCells[1].className).not.toContain('highlight-best');
     expect(priceCells[2].className).not.toContain('highlight-best');
+  });
+
+  it('renders without throwing when a listing carries an invalid currency code', async () => {
+    // Bug (`code-review-reality-web-currency-code-rangeerror-crash`): the price
+    // formatter fed `listing.currency` straight into `Intl.NumberFormat({
+    // style: 'currency', currency })`. A listing whose `currency` is a symbol
+    // (`'€'`), empty, or any non-ISO-4217 value makes that constructor throw
+    // `RangeError: Invalid currency code`, which crashed the whole comparison
+    // render. `currency` comes from untrusted listing data (API / mocks /
+    // rehydrated localStorage), so a bad code must degrade gracefully instead.
+    seed([makeListing('a', 100000, 60, '€'), makeListing('b', 200000, 80, '')]);
+
+    const { container } = render(
+      <ComparisonProvider>
+        <ComparisonView />
+      </ComparisonProvider>
+    );
+
+    // The table must render (no RangeError bubbling out of the price row).
+    await waitFor(() => expect(container.querySelector('table')).toBeTruthy());
+    const priceRow = container.querySelectorAll('tbody tr')[0];
+    const priceCells = priceRow.querySelectorAll('td.value-cell');
+    expect(priceCells).toHaveLength(2);
+    // The amounts still render (fell back to a valid currency / plain number).
+    expect(priceCells[0].textContent ?? '').toMatch(/\d/);
+    expect(priceCells[1].textContent ?? '').toMatch(/\d/);
   });
 
   it('renders without throwing when a numeric field is a malformed string', async () => {

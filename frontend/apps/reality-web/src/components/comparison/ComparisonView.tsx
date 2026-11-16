@@ -12,6 +12,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useComparison } from '../../lib/comparison-context';
+import { formatPrice as formatPriceIntl } from '../../lib/format';
 import { parseListingSummary } from './listingSummarySchema';
 
 interface ComparisonRow {
@@ -43,15 +44,15 @@ export function ComparisonView() {
   );
 
   // Format price with the listing's actual currency, in the active locale.
+  // Routes through the shared `formatPrice` helper, which guards an invalid
+  // or missing `currency` (a symbol, empty, or non-ISO-4217 value from
+  // untrusted listing data) instead of letting Intl.NumberFormat throw
+  // `RangeError: Invalid currency code` and crash the whole comparison render.
   const formatPrice = useMemo(
     () => (value: string | number | undefined, listing?: ListingSummary) => {
       if (value === undefined) return '-';
       const currency = listing?.currency ?? 'EUR';
-      return new Intl.NumberFormat(locale, {
-        style: 'currency',
-        currency,
-        maximumFractionDigits: 0,
-      }).format(Number(value));
+      return formatPriceIntl(Number(value), locale, { currency });
     },
     [locale]
   );
