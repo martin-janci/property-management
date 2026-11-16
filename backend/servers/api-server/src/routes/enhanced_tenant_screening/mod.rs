@@ -150,3 +150,55 @@ pub(super) async fn reject_foreign_refs(
         Err(e) => Some((StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()),
     }
 }
+
+#[cfg(test)]
+mod raw_error_leak_guard {
+    //! Regression guard (pm-security, Epic 135): tenant-screening handlers
+    //! expose highly sensitive PII (credit, criminal-background and eviction
+    //! results). A failing DB call must NEVER surface raw `sqlx` error text to
+    //! the client — its `Display` output leaks table/column names, SQL
+    //! fragments and connection details. Every DB-fallible arm routes through
+    //! `db_error`, which logs the cause server-side and returns an opaque 500.
+    //!
+    //! This source-level guard fails if any handler in the group reintroduces
+    //! the raw-error leak (a tuple response built from the sqlx error). It is a
+    //! sibling of the equivalent guard in `routes/compliance.rs`.
+
+    /// Every handler source file in the screening group.
+    const SOURCES: &[(&str, &str)] = &[
+        ("mod.rs", include_str!("mod.rs")),
+        ("models.rs", include_str!("models.rs")),
+        ("providers.rs", include_str!("providers.rs")),
+        ("queue.rs", include_str!("queue.rs")),
+        ("reporting.rs", include_str!("reporting.rs")),
+        ("results.rs", include_str!("results.rs")),
+        ("screening_results.rs", include_str!("screening_results.rs")),
+    ];
+
+    // Split across two constants so no single *code* line of this guard
+    // contains both tokens (which would make the scan flag its own source).
+    const LEAK_STATUS: &str = "INTERNAL_SERVER_ERROR";
+    const LEAK_RAW: &str = "to_string()";
+
+    #[test]
+    fn no_handler_leaks_raw_db_error_to_client() {
+        for (name, src) in SOURCES {
+            for (idx, line) in src.lines().enumerate() {
+                // Ignore comments / doc paragraphs — only real code counts.
+                if line.trim_start().starts_with("//") {
+                    continue;
+                }
+                let leaks = line.contains(LEAK_STATUS) && line.contains(LEAK_RAW);
+                assert!(
+                    !leaks,
+                    "{}:{}: raw DB error leaked to client — route it through \
+                     db_error(e) instead of building the response from the \
+                     error: {}",
+                    name,
+                    idx + 1,
+                    line.trim()
+                );
+            }
+        }
+    }
+}
