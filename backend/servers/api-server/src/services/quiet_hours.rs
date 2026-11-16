@@ -253,7 +253,10 @@ mod tests {
         s.weekend_quiet_hours_start = NaiveTime::from_hms_opt(10, 0, 0);
         s.weekend_quiet_hours_end = NaiveTime::from_hms_opt(14, 0, 0);
         let sat_noon = Utc.with_ymd_and_hms(2026, 6, 6, 12, 0, 0).unwrap();
-        assert!(evaluate(&s, sat_noon).active, "weekend window covers Sat noon");
+        assert!(
+            evaluate(&s, sat_noon).active,
+            "weekend window covers Sat noon"
+        );
         // On a weekday noon the weekday window (18:00–20:00) does not apply.
         assert!(!evaluate(&s, utc(12, 0)).active);
     }
