@@ -1023,3 +1023,36 @@ async fn get_audit_logs(
         .map(Json)
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Regression: a raw database/`sqlx` error must never be echoed back to the
+    /// client. `db_err` has to log the raw error server-side and return a
+    /// generic, sanitized body instead (matches the sibling-handler convention
+    /// in `routes/gdpr.rs` / `routes/ai/workflows.rs`).
+    #[test]
+    fn db_err_does_not_leak_raw_database_details() {
+        // A raw sqlx error whose Display carries internal DB/SQL details
+        // (table name, constraint name) that must not reach the client.
+        let raw = sqlx::Error::Protocol(
+            "relation \"property_valuations\" violates unique constraint \
+             \"property_valuations_pkey\""
+                .to_string(),
+        );
+        let raw_text = raw.to_string();
+
+        let (status, body) = db_err(raw);
+
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_ne!(
+            body, raw_text,
+            "response body must not echo the raw DB error text"
+        );
+        assert!(
+            !body.contains("property_valuations") && !body.contains("constraint"),
+            "response body leaked internal DB details: {body}"
+        );
+    }
+}
