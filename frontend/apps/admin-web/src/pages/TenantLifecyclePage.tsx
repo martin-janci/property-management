@@ -4,7 +4,7 @@
  * Implements Section E of the admin design brief:
  *   - Export card  (gate: tenant_export)
  *   - Purge card   (gate: tenant_purge) with live cooldown countdown + inline purge wizard
- *   - Restore card (gate: tenant_restore) with multipart file upload stub
+ *   - Restore card (gate: tenant_restore) with multipart file upload
  *
  * Route: /tenants/lifecycle
  * Page-level gating: any of tenant_export | tenant_purge | tenant_restore.
@@ -712,25 +712,84 @@ export default function TenantLifecyclePage() {
     }
   }, [isExporting, tenant.id, token, showToast, t]);
 
-  // Restore upload stub
+  // Restore upload — multipart POST to the admin tenant-restore endpoint.
+  // Defense #16: restore always lands as a NEW org id server-side, so the
+  // endpoint carries no tenant :id. The capability extractor enforces
+  // tenant_restore + recent MFA; X-MFA-Recent mirrors the purge call.
   const handleUpload = useCallback(async () => {
     if (!restoreFile || isUploading) return;
     setIsUploading(true);
     try {
+      const formData = new FormData();
+      formData.append('tarball', restoreFile);
+      const resp = await fetch('/api/v1/admin/tenants/restore', {
+        method: 'POST',
+        // Note: do NOT set Content-Type — the browser must add the multipart
+        // boundary itself.
+        headers: {
+          Authorization: `Bearer ${token ?? ''}`,
+          'X-MFA-Recent': '1',
+        },
+        body: formData,
+      });
+
+      if (resp.ok) {
+        const report = (await resp.json().catch(() => null)) as {
+          new_organization_id?: string;
+          rows_restored?: number;
+        } | null;
+        showToast({
+          type: 'success',
+          title: t('admin.tenantLifecycle.restore.restoredTitle', {
+            defaultValue: 'Tenant restored',
+          }),
+          message: report?.new_organization_id
+            ? t('admin.tenantLifecycle.restore.restoredIntoNew', {
+                id: report.new_organization_id,
+                rows: report.rows_restored ?? 0,
+                defaultValue: 'Restored into new tenant {{id}} ({{rows}} rows).',
+              })
+            : t('admin.tenantLifecycle.restore.restoredGeneric', {
+                name: restoreFile.name,
+                defaultValue: '{{name}} restored into a new tenant.',
+              }),
+        });
+        setRestoreFile(null);
+      } else if (resp.status === 401) {
+        showToast({
+          type: 'error',
+          title: t('admin.tenantLifecycle.restore.mfaRequiredTitle', {
+            defaultValue: 'MFA required',
+          }),
+          message: t('admin.tenantLifecycle.restore.mfaRequiredMessage', {
+            defaultValue: 'Re-verify MFA and try again.',
+          }),
+        });
+      } else {
+        const text = await resp.text().catch(() => resp.statusText);
+        showToast({
+          type: 'error',
+          title: t('admin.tenantLifecycle.restore.failedTitle', {
+            status: resp.status,
+            defaultValue: 'Restore failed ({{status}})',
+          }),
+          message: text,
+        });
+      }
+    } catch {
       showToast({
-        type: 'info',
-        title: t('admin.tenantLifecycle.restore.notImplementedTitle', {
-          defaultValue: 'Upload not yet implemented',
+        type: 'error',
+        title: t('admin.tenantLifecycle.restore.networkErrorTitle', {
+          defaultValue: 'Network error',
         }),
-        message: t('admin.tenantLifecycle.restore.notImplementedMessage', {
-          name: restoreFile.name,
-          defaultValue: 'Multipart restore endpoint not yet wired. File selected: {{name}}',
+        message: t('admin.tenantLifecycle.restore.networkErrorMessage', {
+          defaultValue: 'Unable to reach the server. Check your connection and try again.',
         }),
       });
     } finally {
       setIsUploading(false);
     }
-  }, [restoreFile, isUploading, showToast, t]);
+  }, [restoreFile, isUploading, token, showToast, t]);
 
   // Purge button state
   const tenantSoftDeleted = tenant.softDeletedAt !== null;
