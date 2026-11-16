@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-16T08:38:20Z",
+  "archived_at": "2026-11-16T14:38:43Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -7754,6 +7754,30 @@
         "merged_pr": 3398,
         "merged_at": "2026-11-10T20:30:01Z",
         "at": "2026-11-10T20:42:08Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-report-fault-category-chips-english",
+      "action": "mobile-rn ReportFaultScreen category chips always render English — locale switch leaves 7 chips in EN while rest of form translates",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-15T04:24:57Z (score=2 conf=high vector=bug) | gc1-reconcile 2026-11-16T14:38:35Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T04:24:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3567,
+        "merged_at": "2026-11-16T14:37:26Z",
+        "at": "2026-11-16T14:38:35Z"
       }
     },
     {
@@ -27665,6 +27689,27 @@
       }
     },
     {
+      "id": "pm-frontend-mobile-rn-lint-gates-adopt-2026-10-28",
+      "action": "Adopt eslint-plugin-react-hooks + i18next/no-literal-string in frontend/apps/mobile (blocking, warn-only for one sprint) — closes the chronic class-of-defect behind the carried mobile-rn lint-gap risk (ranked-ballot + i18n fallback bugs still open 83 days later)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "pm-qa",
+      "depends_on": [
+        "UNRESOLVED:pm-qa"
+      ],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-28 | gc1-reconcile 2026-11-16T14:38:35Z",
+      "first_open_at": "2026-10-28T11:00:00Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3566,
+        "merged_at": "2026-11-16T14:32:25Z",
+        "at": "2026-11-16T14:38:35Z"
+      }
+    },
+    {
       "id": "pm-frontend-mobile-rn-report-fault-fake-submit-2026-10-28",
       "action": "Wire ReportFaultScreen.tsx handleSubmit to real /api/v1/faults POST — currently fakes with setTimeout(1500), fault reports silently discarded",
       "owner_role": "pm-frontend",
@@ -28704,6 +28749,24 @@
       }
     },
     {
+      "id": "pm-scrum-master-xtenant-404-contract-sweep-idor-retries-2026-11-16",
+      "action": "Run the cross-tenant 404 contract sweep (pm-scrum-master-violations-xtenant-404-contract-sweep-2026-10-28), and close the open IDOR retries #2944/#2945/#2946 once the build is unblocked.",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-16 | gc1-reconcile 2026-11-16T14:38:35Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3565,
+        "merged_at": "2026-11-16T14:32:27Z",
+        "at": "2026-11-16T14:38:35Z"
+      }
+    },
+    {
       "id": "pm-security-audit-null-unit-scope-authorization-2026-11-16",
       "action": "Audit routes with optional unit_id or null-scope for the missing-owner-check pattern from #3554, and add a negative cross-owner test",
       "owner_role": "pm-security",
@@ -28719,6 +28782,42 @@
         "merged_pr": 3564,
         "merged_at": "2026-11-16T08:35:48Z",
         "at": "2026-11-16T08:38:19Z"
+      }
+    },
+    {
+      "id": "pm-security-fix-deeplink-singleton-sso-error-body-2026-11-16",
+      "action": "Fix the RN deep-link pending singleton by clearing it on logout and keying it by user, and guard the KMP SSO error body parsing",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-16 | gc1-reconcile 2026-11-16T14:38:35Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3568,
+        "merged_at": "2026-11-16T14:30:49Z",
+        "at": "2026-11-16T14:38:35Z"
+      }
+    },
+    {
+      "id": "pm-security-merge-gdpr-raw-db-error-leak-2026-11-16",
+      "action": "Merge #3560 after confirming gdpr routes return generic errors with no sqlx/db strings, and grep other routes for raw e.to_string() in responses",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-16 | gc1-reconcile 2026-11-16T14:38:35Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3569,
+        "merged_at": "2026-11-16T14:30:57Z",
+        "at": "2026-11-16T14:38:35Z"
       }
     },
     {
