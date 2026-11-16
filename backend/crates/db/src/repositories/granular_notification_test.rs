@@ -233,8 +233,13 @@ mod tests {
         let user = make_user(&pool, "abandoned@example.com").await;
 
         let now = Utc::now();
-        let resend_cutoff = now - Duration::hours(20); // now - resend_window_hours
-        let aged_after = resend_cutoff - Duration::hours(1); // one poll interval back
+        // The sweep window the worker passes each tick: the previous and current
+        // resend cutoffs. Keep a full hour of margin on each side so the just-aged
+        // row (20h old) sits comfortably inside the window and the few milliseconds
+        // of clock drift between capturing `now` here and the inserts below cannot
+        // push a boundary row across the inclusive edge and flip the result.
+        let aged_before = now - Duration::hours(19); // current resend cutoff
+        let aged_after = now - Duration::hours(21); // previous sweep's cutoff
 
         // (a) Just aged out of the retry window during this tick → surfaced.
         let abandoned = aged_unsent_digest(&pool, user, 20).await;
@@ -247,7 +252,7 @@ mod tests {
         repo.mark_digest_email_sent(sent).await.unwrap();
 
         let surfaced = repo
-            .get_newly_abandoned_digests(aged_after, resend_cutoff, 100)
+            .get_newly_abandoned_digests(aged_after, aged_before, 100)
             .await
             .unwrap();
 
