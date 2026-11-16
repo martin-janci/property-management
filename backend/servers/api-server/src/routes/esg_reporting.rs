@@ -81,9 +81,20 @@ pub fn router() -> Router<AppState> {
         .route("/statistics", get(get_statistics))
 }
 
-/// Map a `sqlx::Error` to a 500 response.
+/// Map a `sqlx::Error` to a sanitized 500 response.
+///
+/// ESG reporting handlers must never surface raw SQLx / DB errors to the
+/// caller: their `Display` output leaks table and column names, SQL fragments,
+/// and connection details. Log the full error server-side (`tracing::error!`)
+/// for operators and return an opaque 500 to the client — mirroring how the
+/// other api-server routes handle DB failures (e.g. `compliance`, `my_units`,
+/// `unit_residents`).
 fn internal_error(e: sqlx::Error) -> (StatusCode, String) {
-    (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+    tracing::error!(error = %e, "esg reporting query failed");
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        "Internal server error".to_string(),
+    )
 }
 
 // =============================================================================
