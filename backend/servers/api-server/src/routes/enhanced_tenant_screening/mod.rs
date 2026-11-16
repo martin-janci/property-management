@@ -131,6 +131,23 @@ pub(super) fn screening_not_found() -> Response {
     (StatusCode::NOT_FOUND, "Screening not found").into_response()
 }
 
+/// Map a repository (`sqlx`) error to a sanitized `500` response.
+///
+/// Tenant-screening data is highly sensitive PII, and a raw `sqlx::Error`'s
+/// `Display` output leaks table/column names, SQL fragments and connection
+/// details. Log the full cause server-side for operators and return an opaque
+/// message to the client, so internal DB details never reach the caller.
+/// Mirrors the sanitized-error convention used by sibling handlers
+/// (`routes/gdpr.rs`, `routes/compliance.rs`, `routes/vendors/shared.rs`).
+pub(super) fn db_error(e: sqlx::Error) -> Response {
+    tracing::error!(error = %e, "tenant-screening handler database error");
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        "An internal error occurred. Please try again later.",
+    )
+        .into_response()
+}
+
 /// Reject a create payload whose `screening_id` / `provider_config_id` belongs
 /// to another organization (`404`). The caller releases the connection.
 pub(super) async fn reject_foreign_refs(
@@ -147,7 +164,7 @@ pub(super) async fn reject_foreign_refs(
     match owned {
         Ok(true) => None,
         Ok(false) => Some(screening_not_found()),
-        Err(e) => Some((StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()),
+        Err(e) => Some(db_error(e)),
     }
 }
 
@@ -200,5 +217,35 @@ mod raw_error_leak_guard {
                 );
             }
         }
+    }
+
+    use super::db_error;
+    use axum::body::to_bytes;
+    use axum::http::StatusCode;
+
+    /// `db_error` must return an opaque `500` and never echo the raw sqlx
+    /// error (table/column names, SQL fragments, connection detail) into the
+    /// response body the client receives.
+    #[tokio::test]
+    async fn db_error_does_not_leak_raw_sqlx_detail() {
+        // A sqlx error whose Display carries internals a client must not see.
+        let secret = "screening_credit_results.ssn: internal constraint detail";
+        let resp = db_error(sqlx::Error::Protocol(secret.to_string()));
+
+        assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
+
+        let body = to_bytes(resp.into_body(), usize::MAX)
+            .await
+            .expect("collect body");
+        let body = String::from_utf8(body.to_vec()).expect("utf8 body");
+
+        assert!(
+            !body.contains("ssn") && !body.contains("screening_credit_results"),
+            "DB error body leaked raw sqlx detail: {body}"
+        );
+        assert!(
+            body.contains("An internal error occurred"),
+            "expected the generic message, got: {body}"
+        );
     }
 }
