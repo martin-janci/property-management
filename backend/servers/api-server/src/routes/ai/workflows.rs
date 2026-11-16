@@ -743,6 +743,50 @@ async fn import_workflow_template(
     ))
 }
 
+// ============================================================================
+// Tests
+// ============================================================================
+
+#[cfg(test)]
+mod tests {
+    //! Regression coverage for the raw-DB-error leak (code-review finding):
+    //! `trigger_workflow` and `handle_workflow_event` passed the raw
+    //! `WorkflowError` — which wraps `sqlx::Error` via `DatabaseError` and whose
+    //! `Display` embeds table/column names and SQL fragments — straight into the
+    //! HTTP body via `internal_error(e)`. Raw errors must be logged server-side
+    //! and mapped to an opaque body; `internal_error` carries only fixed,
+    //! non-sensitive `&'static str` labels.
+
+    #[test]
+    fn no_handler_bubbles_raw_error_to_client() {
+        // Source-level guard: every `internal_error(...)` call must receive a
+        // string literal, never a raw error value. A raw `WorkflowError` /
+        // `sqlx::Error` in the HTTP body leaks internal DB detail to the client.
+        // Guard the whole file so a future handler can't reintroduce the leak.
+        let src = include_str!("workflows.rs");
+        let needle = "internal_error(";
+        for (idx, line) in src.lines().enumerate() {
+            // Strip line comments so the doc paragraphs / this test don't match.
+            let code = line.split("//").next().unwrap_or("");
+            // Skip the helper definition itself (`fn internal_error(...)`).
+            if code.contains("fn internal_error") {
+                continue;
+            }
+            if let Some(pos) = code.find(needle) {
+                let rest = &code[pos + needle.len()..];
+                assert!(
+                    rest.trim_start().starts_with('"'),
+                    "line {}: internal_error() must be called with a string \
+                     literal, not a raw error value — route raw errors through \
+                     db_error() so DB detail never reaches the client: {}",
+                    idx + 1,
+                    line.trim()
+                );
+            }
+        }
+    }
+}
+
 /// List all built-in templates.
 async fn list_builtin_templates(
     _principal: RequestPrincipal,
