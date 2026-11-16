@@ -3,7 +3,8 @@
 //! Provides database operations for per-event and per-channel notification preferences.
 
 use chrono::{NaiveTime, Utc};
-use sqlx::{Error as SqlxError, FromRow, PgPool, Row};
+use sqlx::pool::PoolConnection;
+use sqlx::{Error as SqlxError, FromRow, PgPool, Postgres, Row};
 use uuid::Uuid;
 
 use crate::models::{
@@ -818,6 +819,58 @@ impl GranularNotificationRepository {
     // ========================================================================
     // Notification Digests (Epic 29, Story 29.3)
     // ========================================================================
+
+    /// Try to claim the single cross-replica lease for the inactivity-digest
+    /// sweep (Story 2B.3). Returns the connection that now *holds* the
+    /// `notification_digest_sweep` advisory lock, or `None` when another
+    /// api-server replica currently holds it.
+    ///
+    /// The digest worker runs in every api-server process. Before this guard,
+    /// each replica independently ran the same sweep every tick: both selected
+    /// the same inactivity candidates and both `create_digest` + emailed them
+    /// (duplicate rows *and* duplicate emails), and both fetched the same
+    /// unsent rows via `get_unsent_digests` and re-emailed them. Holding one
+    /// Postgres advisory lock for the whole sweep makes exactly one replica run
+    /// it per tick; peers that fail to claim skip and retry next tick.
+    ///
+    /// This is a **session-scoped** `pg_try_advisory_lock` held on the returned
+    /// connection — deliberately *not* the transaction-scoped
+    /// `pg_advisory_xact_lock` the idempotency middleware prefers. The sweep
+    /// sends email over SMTP, which must never run inside a DB transaction (it
+    /// would sit `idle in transaction` across the network send), so a
+    /// transaction-scoped lock is the wrong tool here. The caller MUST pass the
+    /// returned connection back to [`Self::release_digest_sweep`] when the sweep
+    /// finishes; if the process dies mid-sweep the connection closes and
+    /// Postgres drops the lock, so the lease is self-healing.
+    pub async fn try_claim_digest_sweep(
+        &self,
+    ) -> Result<Option<PoolConnection<Postgres>>, SqlxError> {
+        let mut conn = self.pool.acquire().await?;
+        let acquired: bool = sqlx::query_scalar(
+            "SELECT pg_try_advisory_lock(hashtextextended('notification_digest_sweep', 0))",
+        )
+        .fetch_one(&mut *conn)
+        .await?;
+        if acquired {
+            Ok(Some(conn))
+        } else {
+            Ok(None)
+        }
+    }
+
+    /// Release the `notification_digest_sweep` advisory lock held on `conn`
+    /// (the connection handed out by [`Self::try_claim_digest_sweep`]) and
+    /// return the connection to the pool. Unlocking on the same session that
+    /// took the lock is required — a mismatched session is a no-op in Postgres.
+    pub async fn release_digest_sweep(
+        &self,
+        mut conn: PoolConnection<Postgres>,
+    ) -> Result<(), SqlxError> {
+        sqlx::query("SELECT pg_advisory_unlock(hashtextextended('notification_digest_sweep', 0))")
+            .execute(&mut *conn)
+            .await?;
+        Ok(())
+    }
 
     /// Create a notification digest.
     #[allow(clippy::too_many_arguments)]
