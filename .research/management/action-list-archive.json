@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-15T20:42:33Z",
+  "archived_at": "2026-11-16T00:32:28Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -8326,6 +8326,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-api-default-export-stale-instance",
+      "action": "ppt web core api default export stale instance",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d ppt-web-core score=1 vector=bug) | gc1-reconcile 2026-11-16T00:26:01Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T00:28:30Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-06T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-16T00:26:01Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-api-default-export-unconfigured",
       "action": "ppt web core api default export unconfigured",
       "owner_role": "pm-backend",
@@ -9347,6 +9372,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-mfa-verify-hardcoded-path",
+      "action": "ppt web core mfa verify hardcoded path",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d ppt-web-core score=2 vector=bug) | gc1-reconcile 2026-11-16T00:26:01Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T00:28:30Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-06T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-16T00:26:01Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-mfa-verify-relative-fetch-base",
       "action": "ppt web core mfa verify relative fetch base",
       "owner_role": "pm-backend",
@@ -9515,6 +9565,31 @@
         "merged_pr": 2647,
         "merged_at": "2026-08-04T00:13:43Z",
         "at": "2026-08-04T02:09:58Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-ocr-hook-raw-fetch-no-auth",
+      "action": "ppt web core ocr hook raw fetch no auth",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-14T20:26:05Z (tier1d ppt-web-core score=2 vector=bug) | gc1-reconcile 2026-11-16T00:26:01Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T20:26:05Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-08T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-16T00:26:01Z"
       }
     },
     {

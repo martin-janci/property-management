@@ -73,23 +73,23 @@
     {
       "task_id": "code-review-reality-server-suggestions-stub-popular",
       "branch": "auto-impl/code-review-reality-server-suggestions-s-a7243f18",
-      "status": "review",
+      "status": "in-progress",
       "claimed_at": "2026-11-15T14:30:28Z",
-      "last_updated": "2026-11-15T22:44:17Z",
-      "status_changed_at": "2026-11-15T22:44:17Z",
+      "last_updated": "2026-11-16T00:41:23Z",
+      "status_changed_at": "2026-11-16T00:41:23Z",
       "pr_number": 3553,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3553",
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": "pr=3553 status=done specialist=rust-backend round=2 note=completed locale refactor; defined resolve_locale + locale-aware label_for_property_type (sk/cs/de/en), threaded both call sites; cargo check/clippy -D warnings/fmt clean, 156 reality-server lib tests pass; DB-backed integration tests CI-only; pushed to branch",
-      "reviewer_summary": null,
-      "last_reviewed_oid": "8dcd2cc82742797dc34ed409ccc833c9b36b5935",
+      "reviewer_summary": "verdict=changes head_oid=6665e2e7b930ba824dc88935e111ffa8879b444a note=stale-branch-reimplements-resolve_locale+localized-label_for_property_type-already-merged-on-dev(CONFLICT-cause); rebase onto dev, drop the now-duplicated functions, keep only get_popular_search_pairs+popular_search_phrase+get_suggestions wiring",
+      "last_reviewed_oid": "6665e2e7b930ba824dc88935e111ffa8879b444a",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
-      "fix_rounds": 2,
+      "fix_rounds": 3,
       "merge_attempted_at": null
     },
     {
@@ -97,15 +97,15 @@
       "branch": "auto-impl/code-review-ppt-web-core-errorhandler-40-63b21b84",
       "status": "review",
       "claimed_at": "2026-11-15T22:27:45Z",
-      "last_updated": "2026-11-15T22:43:27Z",
+      "last_updated": "2026-11-16T00:40:23Z",
       "status_changed_at": "2026-11-15T22:43:27Z",
       "pr_number": 3557,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3557",
       "merged_at": null,
       "specialist": "react-web",
       "implementer_summary": "pr=3557 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=403 now maps to new FORBIDDEN code (was UNAUTHORIZED) in errorHandler.ts; FORBIDDEN added to all 6 locales; IG3 test:/fix: split; VERIFY OK 33ee91d 13094 tests; draft PR #3557",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve head_oid=10bce3df48a3e90e2a41e6205e9246a84f71af7f note=403-to-FORBIDDEN-correct-tested-scoped; posted as COMMENT (self-approval blocked, issue #3215)",
+      "last_reviewed_oid": "10bce3df48a3e90e2a41e6205e9246a84f71af7f",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": false,
@@ -181,5 +181,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-15T22:44:17Z"
+  "generated": "2026-11-16T00:43:00Z"
 }
