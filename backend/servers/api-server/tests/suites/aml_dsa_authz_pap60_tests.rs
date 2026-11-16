@@ -390,3 +390,124 @@ async fn file_appeal_rejected_after_final_decision(pool: PgPool) {
         "the final appeal decision must be preserved after a blocked re-file"
     );
 }
+
+// ===========================================================================
+// (5) Cross-tenant mutation handlers must return 404, not 500, for a case that
+//     lives in another org. PR #3183/#3187 fixed `assign`/`unassign` to map the
+//     repo's `RowNotFound` (the org-scoped `UPDATE ... RETURNING` matches zero
+//     rows for a cross-org id) to 404 so the case's existence in another tenant
+//     is never revealed. `take_moderation_action` and `decide_appeal` had the
+//     same org-scoped repo call but a catch-all error map that surfaced the
+//     cross-org RowNotFound as 500 — an existence oracle (a real-but-foreign id
+//     looked different from a truly-unknown id). These lock the 404 contract.
+//
+//     The caller here is a moderator (Manager role) scoped to org B, acting on
+//     a case in org A: the role and tenant-context gates pass, so the ONLY thing
+//     that stops the mutation is the org predicate inside the repo UPDATE — and
+//     the handler must translate that miss into 404.
+// ===========================================================================
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn take_moderation_action_cross_tenant_returns_404(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    // Case lives in org A.
+    let org_a = seed_org(&pool, "action-a").await;
+    let case_owner = seed_user(&pool, "action-owner").await;
+    let case_in_a = seed_moderation_case(&pool, org_a, case_owner).await;
+
+    // Moderator scoped to a DIFFERENT org (org B).
+    let org_b = seed_org(&pool, "action-b").await;
+    let moderator_b = seed_user(&pool, "action-moderator-b").await;
+    let token = mint_tenant_token(
+        moderator_b,
+        "action-moderator-b@pap43.test",
+        org_b,
+        common::tenant::TenantRole::Manager,
+    );
+
+    let resp = app
+        .post(&format!(
+            "/api/v1/aml-dsa/moderation/cases/{case_in_a}/action"
+        ))
+        .bearer(&token)
+        .json(serde_json::json!({ "action": "Warn", "rationale": "cross-org" }))
+        .send()
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::NOT_FOUND,
+        "a moderator in org B acting on org A's case must get 404 (not 500/200), \
+         so the case's existence in another tenant is not revealed. Body: {}",
+        resp.text()
+    );
+
+    // The cross-tenant action must NOT have mutated the case.
+    let decided_by: Option<Uuid> =
+        sqlx::query_scalar("SELECT decided_by FROM moderation_cases WHERE id = $1")
+            .bind(case_in_a)
+            .fetch_one(&pool)
+            .await
+            .expect("query ok");
+    assert!(
+        decided_by.is_none(),
+        "the cross-tenant action attempt must not have recorded a decision on the case"
+    );
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn decide_appeal_cross_tenant_returns_404(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    // Case lives in org A and has an appeal on file to decide.
+    let org_a = seed_org(&pool, "decide-a").await;
+    let case_owner = seed_user(&pool, "decide-owner").await;
+    let case_in_a = seed_moderation_case(&pool, org_a, case_owner).await;
+    sqlx::query(
+        "UPDATE moderation_cases SET appeal_filed = TRUE, status = 'appealed' WHERE id = $1",
+    )
+    .bind(case_in_a)
+    .execute(&pool)
+    .await
+    .expect("mark appealed");
+
+    // Moderator scoped to a DIFFERENT org (org B).
+    let org_b = seed_org(&pool, "decide-b").await;
+    let moderator_b = seed_user(&pool, "decide-moderator-b").await;
+    let token = mint_tenant_token(
+        moderator_b,
+        "decide-moderator-b@pap43.test",
+        org_b,
+        common::tenant::TenantRole::Manager,
+    );
+
+    let resp = app
+        .post(&format!(
+            "/api/v1/aml-dsa/moderation/cases/{case_in_a}/appeal/decide"
+        ))
+        .bearer(&token)
+        .json(serde_json::json!({ "decision": "upheld", "rationale": "cross-org" }))
+        .send()
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::NOT_FOUND,
+        "a moderator in org B deciding org A's appeal must get 404 (not 500/200), \
+         so the case's existence in another tenant is not revealed. Body: {}",
+        resp.text()
+    );
+
+    // The cross-tenant decision must NOT have mutated the case out of `appealed`.
+    let status: String =
+        sqlx::query_scalar("SELECT status::text FROM moderation_cases WHERE id = $1")
+            .bind(case_in_a)
+            .fetch_one(&pool)
+            .await
+            .expect("query ok");
+    assert_eq!(
+        status, "appealed",
+        "the cross-tenant decide-appeal attempt must not have changed the case status"
+    );
+}
