@@ -16053,6 +16053,157 @@
       "created_at": "2026-11-15",
       "updated_at": "2026-11-15",
       "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3559-reality",
+      "title": "Screen-map drift: PR #3559 login open-redirect fix without docs/screens/reality update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3559"
+      ],
+      "evidence": [
+        "PR #3559 touched frontend/apps/reality-web/src/app/[locale]/auth/{callback,login}/page.tsx (open-redirect backslash hardening) without updating docs/screens/reality/auth-login.md or auth-callback.md — screen docs may not reflect the post-login redirect-sanitization step. Heuristic — review before promoting."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/login/page.tsx",
+        "docs/screens/reality/auth-login.md",
+        "docs/screens/reality/auth-callback.md"
+      ],
+      "created_at": "2026-11-16",
+      "updated_at": "2026-11-16",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3546-ppt",
+      "title": "Screen-map drift: PR #3546 faults URL-param validation without docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3546"
+      ],
+      "evidence": [
+        "PR #3546 touched frontend/apps/ppt-web/src/routes/groups/faults.tsx (URL-param validation for faults list) without touching any docs/screens/ppt/*.md — faults-list.md / fault-detail.md may not reflect the new URL-param validation contract. Heuristic — review before promoting."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+        "docs/screens/ppt/faults-list.md",
+        "docs/screens/ppt/fault-detail.md"
+      ],
+      "created_at": "2026-11-16",
+      "updated_at": "2026-11-16",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-features-reports-trendchart-tsx",
+      "title": "Churn hotspot: ppt-web features/reports/TrendChart.tsx (reports feature rollout)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/reports/components/TrendChart.tsx: 274 lines churn (1 commit this run — reports feature rollout alongside AnalyticsChart, KPICard, BuildingMetricsCard, PeriodComparisonChart)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/reports/components/TrendChart.tsx"
+      ],
+      "created_at": "2026-11-16",
+      "updated_at": "2026-11-16",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-features-reports-analyticschart-tsx",
+      "title": "Churn hotspot: ppt-web features/reports/AnalyticsChart.tsx (reports feature rollout)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/reports/components/AnalyticsChart.tsx: 266 lines churn (1 commit this run — reports feature rollout)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/reports/components/AnalyticsChart.tsx"
+      ],
+      "created_at": "2026-11-16",
+      "updated_at": "2026-11-16",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-reality-server-src-routes-listings-rs",
+      "title": "Churn hotspot: reality-server routes/listings.rs (slug + category i18n sweeps)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/listings.rs: 244 lines churn (2 commits — PR #3552 slug derivation + PR #3551 category i18n)."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/listings.rs"
+      ],
+      "created_at": "2026-11-16",
+      "updated_at": "2026-11-16",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-search-missing-slug",
+      "title": "reality-server ListingSummary (/listings search) emits bare UUID; SEO slug only on /featured",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-16"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/listings.rs:162 — ListingSummary (emitted by /api/v1/listings search endpoint and by From<PublicListingSummary>) does NOT carry a slug field, only id: Uuid. The new SEO slug was added only to RichListingSummary (lines 526-535) returned by /featured.",
+        "backend/servers/reality-server/src/routes/listings.rs:189 — impl From<PublicListingSummary> for ListingSummary never derives a slug, so frontends consuming /listings results still have nothing but a bare UUID to build the detail URL — the SEO fix lands on the homepage rail but NOT on the search results page that drives most traffic.",
+        "backend/servers/reality-server/tests/suites/listings_tests.rs:70 — search_returns_200_empty_result and search_with_query_param_returns_200 assert only status codes; no test parses the body and asserts that search rows carry a slug the client can navigate to."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/listings.rs",
+        "backend/servers/reality-server/tests/suites/listings_tests.rs"
+      ],
+      "created_at": "2026-11-16",
+      "updated_at": "2026-11-16",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-record-view-no-check",
+      "title": "reality-server record_view: comment claims existence check but handler does not verify + no per-IP throttle",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-16"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/listings.rs:960-967 — comment says only return a hard error when the listing genuinely does not exist but handler never verifies listing exists before calling track_view and unconditionally returns 204 (only failure mode is parse_listing_id returning None). Test record_view_unknown_listing_returns_204 enforces the 204-for-unknown-id contract.",
+        "backend/servers/reality-server/src/routes/listings.rs:964 — track_view(id, website) fires unauthenticated for any parseable UUID with no per-IP throttle at this handler; anonymous POST /api/v1/listings/<random-uuid>/view in a loop can inflate listing_analytics with orphan or duplicate rows.",
+        "backend/servers/reality-server/tests/suites/listings_tests.rs:164-177 — test locks in the 204-for-unknown behavior; either the comment should be fixed to match or an existence check should be added and the test updated."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/listings.rs",
+        "backend/servers/reality-server/tests/suites/listings_tests.rs"
+      ],
+      "created_at": "2026-11-16",
+      "updated_at": "2026-11-16",
+      "plan": null
     }
   ]
 }

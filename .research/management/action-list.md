@@ -1,61 +1,69 @@
 # Action list
 
-_Generated: 2026-11-13T04:10:00Z — from `action-list.json`._
+<sub>Generated: 2026-11-16T03:12:00Z — delivery actions tracked by the research routine (Phase 1.6 PM analysis).</sub>
 
-| ID | Owner | Priority | Status | Action |
-|----|-------|----------|--------|--------|
-| pm-devops-unblock-mobile-native-cloud-builds | pm-devops | high | open | Unblock mobile-native/KMP builds in the cloud runner (issue #2652) — still 5+ open backlog items structurally unclaimabl |
-| code-review-mobile-native-kmp-create-listing-not-wired | pm-backend | medium | open | KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded |
-| code-review-mobile-native-kmp-inquiries-response-contract | pm-backend | medium | open | mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on ever |
-| code-review-mobile-native-kmp-http-client-no-timeout | pm-backend | low | open | Shared Ktor HttpClient has no HttpTimeout - mobile API calls can hang indefinitely |
-| code-review-mobile-native-kmp-my-listings-pagination-cap | pm-backend | low | open | Reality mobile MyListings + portfolio analytics silently cap at 100 listings (no pagination) |
-| pm-frontend-mobile-rn-lint-gates-adopt-2026-10-28 | pm-frontend | medium | open | Adopt eslint-plugin-react-hooks + i18next/no-literal-string in frontend/apps/mobile (blocking, warn-only for one sprint) |
-| pm-scrum-master-violations-xtenant-404-contract-sweep-2026-10-28 | pm-scrum-master | high | open | Sweep remaining violations mutation handlers for the 403-vs-404 cross-tenant contract (#3187 revealed assign still retur |
-| code-review-mobile-native-kmp-sso-error-body-unguarded | pm-backend | low | open | KMP realtor SSO error-body parsing is unguarded — crashes on non-JSON response |
-| pm-scrum-master-refill-non-kmp-buffer-2026-11-09 | pm-scrum-master | high | done | Promote a non-mobile-native code-review vector from the next Phase 1.5 segment (ppt-web-core / reality-server oldest = 2 |
-| pm-qa-confirm-non-kmp-medium-confidence-2026-11-09 | pm-qa | medium | open | QA audit: non-mobile-native backlog items with confidence=medium need a one-shot verification step before Phase 3 can pr |
-| code-review-reality-web-analytics-no-i18n | pm-backend | low | open | reality web analytics no i18n |
-| code-review-reality-web-report-attachments-disabled-3017 | pm-tech-lead | low | open | reality web report attachments disabled 3017 |
-| code-review-mobile-rn-features-faults-orphaned | pm-tech-lead | low | done | mobile rn features faults orphaned |
-| code-review-mobile-rn-person-months-no-i18n | pm-backend | low | done | mobile rn person months no i18n |
-| code-review-ppt-web-ui-loginpage-raw-error-message | pm-backend | low | open | ppt web ui loginpage raw error message |
-| code-review-reality-web-account-pages-no-i18n | pm-backend | low | open | reality web account pages no i18n |
-| code-review-reality-web-realtor-pages-no-i18n | pm-backend | low | open | reality web realtor pages no i18n |
-| code-review-reality-web-report-page-hardcoded-sk-strings | pm-backend | low | open | reality web report page hardcoded sk strings |
-| code-review-reality-web-ui-kit-migration-debt | pm-tech-lead | low | open | reality web ui kit migration debt |
-| code-review-ppt-web-core-logout-cache-root-allowlist-drift | pm-backend | low | open | ppt web core logout cache root allowlist drift |
-| code-review-ppt-web-core-mfa-verify-relative-fetch-base | pm-backend | low | open | ppt web core mfa verify relative fetch base |
-| code-review-ppt-web-core-ws-notifications-token-in-url | pm-backend | low | open | ppt web core ws notifications token in url |
-| code-review-ppt-web-core-errorhandler-client-timeout-unclassified | pm-backend | low | open | ppt web core errorhandler client timeout unclassified |
-| code-review-ppt-web-core-errorhandler-raw-backend-msg | pm-backend | low | open | ppt web core errorhandler raw backend msg |
-| code-review-ppt-web-core-privacy-route-unprotected | pm-backend | low | open | ppt web core privacy route unprotected |
-| code-review-ppt-web-core-disputes-uidispute-nonnull-crash | pm-backend | low | open | ppt web core disputes uidispute nonnull crash |
-| code-review-ppt-web-core-create-lease-empty-pickers | pm-tech-lead | low | open | ppt web core create lease empty pickers |
-| code-review-ppt-web-core-reports-schedule-stub-data | pm-tech-lead | low | open | ppt web core reports schedule stub data |
-| code-review-ppt-web-core-mgmt-routes-unguarded | pm-backend | low | open | ppt web core mgmt routes unguarded |
-| code-review-reality-web-agent-contact-no-persist | pm-backend | low | open | reality web agent contact no persist |
-| code-review-ppt-web-core-route-toasts-i18n | pm-backend | low | open | ppt web core route toasts i18n |
-| code-review-reality-web-public-pages-mock-data | pm-tech-lead | low | open | reality web public pages mock data |
-| code-review-reality-web-report-page-hardcoded-sk | pm-backend | low | open | reality web report page hardcoded sk |
-| code-review-reality-web-listings-page-param-nan | pm-backend | low | open | reality web listings page param nan |
-| code-review-reality-web-comparison-url-unvalidated-cast | pm-backend | low | open | reality web comparison url unvalidated cast |
-| code-review-admin-web-tenant-restore-stub | pm-backend | low | open | admin web tenant restore stub |
-| code-review-reality-web-agency-slug-no-i18n | pm-backend | low | open | reality web agency slug no i18n |
-| code-review-reality-web-listing-edit-no-i18n | pm-backend | low | open | reality web listing edit no i18n |
-| code-review-reality-web-realtor-id-no-i18n | pm-backend | low | open | reality web realtor id no i18n |
-| code-review-admin-web-tenant-lifecycle-no-i18n | pm-backend | low | open | admin web tenant lifecycle no i18n |
-| code-review-ppt-web-core-route-query-silent-error | pm-backend | low | open | ppt web core route query silent error |
-| code-review-ppt-web-ui-aichat-first-message-settimeout-race | pm-backend | low | open | ppt web ui aichat first message settimeout race |
-| code-review-api-core-scheduler-no-panic-supervision | pm-backend | low | open | api core scheduler no panic supervision |
-| code-review-api-core-voice-contact-manager-placeholder-email | pm-backend | low | open | api core voice contact manager placeholder email |
-| code-review-api-handlers-auth-nonatomic-refresh-rotation | pm-backend | low | open | api handlers auth nonatomic refresh rotation |
-| code-review-api-handlers-budgets-raw-db-error-leak | pm-backend | low | open | api handlers budgets raw db error leak |
-| code-review-api-handlers-listings-unbounded-limit | pm-backend | low | open | api handlers listings unbounded limit |
-| code-review-ppt-web-core-fault-detail-mutations-swallow-errors | pm-backend | low | open | ppt web core fault detail mutations swallow errors |
-| code-review-reality-web-account-pages-i18n | pm-backend | low | open | reality web account pages i18n |
-| code-review-reality-web-realtor-hub-analytics-i18n | pm-backend | low | open | reality web realtor hub analytics i18n |
-| code-review-reality-web-realtor-listing-crud-i18n | pm-backend | low | open | reality web realtor listing crud i18n |
-| code-review-api-core-voice-book-facility-false-success | pm-backend | low | open | api core voice book facility false success |
-| pm-devops-dependabot-major-bumps-review-2026-11-13 | pm-devops | medium | open | Review + land the 3 major-version Dependabot bumps sitting since 2026-11-12: #3447 vitest 4→5, #3444 jsonwebtoken 10→11, |
-| pm-scrum-master-triage-security-issue-3427-jwt-iss-aud-2026-11-13 | pm-scrum-master | high | open | Triage open security issue #3427 (Harden first-party JWT: emit + validate iss/aud across api-server & reality-server; la |
-| pm-devops-stale-routine-watch-2026-11-13 | pm-devops | medium | open | The daily research routine ran 4 days late (last_run_iso=2026-11-09 vs today 2026-11-13). Check cloud routine scheduler  |
+| Priority | Owner | Action | Dependency | Status | Source |
+|----------|-------|--------|------------|--------|--------|
+| high | pm-devops | Unblock mobile-native/KMP builds in the cloud runner (issue #2652) — still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low) | none | open | pm-analysis 2026-08-31 (carried) |
+| high | pm-scrum-master | Unblock mobile-native/KMP and swagger-ui egress in the cloud runner (#2652, #2966). Claimable work is a small share of the backlog, and backend security PRs cannot compile. | none | open | pm-analysis 2026-11-16 |
+| high | pm-scrum-master | Run a coverage scan to refresh coverage.json and project-state.md (both dated 2026-11-13), and confirm that epic rollups and coverage are still 100% done. | none | open | pm-analysis 2026-11-16 |
+| high | pm-scrum-master | Triage the stalled reviews #2555 and #2559 (110 days). Merge them, close them, or explicitly defer them. | none | open | pm-analysis 2026-11-16 |
+| high | pm-scrum-master | Sweep remaining violations mutation handlers for the 403-vs-404 cross-tenant contract (#3187 revealed assign still returns 403) — pattern audit across moderation.rs/aml_dsa.rs after PR #3183 fixed most but not assign | pm-security | open | pm-analysis 2026-10-28 |
+| high | pm-scrum-master | Run the cross-tenant 404 contract sweep (pm-scrum-master-violations-xtenant-404-contract-sweep-2026-10-28), and close the open IDOR retries #2944/#2945/#2946 once the build is unblocked. | none | open | pm-analysis 2026-11-16 |
+| high | pm-security | Audit routes with optional unit_id or null-scope for the missing-owner-check pattern from #3554, and add a negative cross-owner test | none | open | pm-analysis 2026-11-16 |
+| high | pm-security | Merge #3560 after confirming gdpr routes return generic errors with no sqlx/db strings, and grep other routes for raw e.to_string() in responses | none | open | pm-analysis 2026-11-16 |
+| medium | pm-backend | KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded | none | open | dispatcher-backlog-refill 2026-10-21T22:25:48Z (score=3 conf=high vector=bug) |
+| medium | pm-backend | mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call | none | open | dispatcher-backlog-refill 2026-10-21T22:25:48Z (score=3 conf=high vector=bug) |
+| medium | pm-frontend | Adopt eslint-plugin-react-hooks + i18next/no-literal-string in frontend/apps/mobile (blocking, warn-only for one sprint) — closes the chronic class-of-defect behind the carried mobile-rn lint-gap risk (ranked-ballot + i18n fallback bugs still open 83 days later) | pm-qa | open | pm-analysis 2026-10-28 |
+| medium | pm-qa | QA audit: non-mobile-native backlog items with confidence=medium need a one-shot verification step before Phase 3 can promote them | none | open | pm-analysis 2026-11-09 |
+| medium | pm-scrum-master | Decide on #3427 (first-party JWT iss/aud emit and validate) and on the Dependabot majors (#3444 jsonwebtoken 10 to 11, #3443 utoipa-swagger-ui 9 to 10, #3447 vitest 5). Sequence them after the swagger-ui egress fix. | none | open | pm-analysis 2026-11-16 |
+| medium | pm-security | api handlers voting cast no unit ownership | none | open | dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d api-handlers score=3 vector=security) |
+| medium | pm-security | Fix the RN deep-link pending singleton by clearing it on logout and keying it by user, and guard the KMP SSO error body parsing | none | open | pm-analysis 2026-11-16 |
+| low | pm-backend | admin web tenant restore stub | none | open | dispatcher-signals-promote 2026-11-12T20:25:35Z (tier1d admin-web score=2 vector=bug) |
+| low | pm-backend | api core digest send failure abandoned | none | open | dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d api-core score=1 vector=bug) |
+| low | pm-backend | api core digest worker no replica claim | none | open | dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d api-core score=2 vector=bug) |
+| low | pm-backend | api core quiet hours weekend master gate | none | open | dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d api-core score=2 vector=bug) |
+| low | pm-backend | api core statement account iban hardcoded | none | open | dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d api-core score=1 vector=bug) |
+| low | pm-backend | api handlers ai workflows raw error leak | none | open | dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d api-handlers score=2 vector=bug) |
+| low | pm-backend | api handlers audit logs action filter dropped | none | open | dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d api-handlers score=1 vector=bug) |
+| low | pm-backend | api handlers audit summary integrity swallow | none | open | dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d api-handlers score=2 vector=bug) |
+| low | pm-backend | api handlers auth inactive revoke swallowed | none | open | dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d api-handlers score=1 vector=bug) |
+| low | pm-backend | api handlers esg reporting raw sqlx error leak | none | open | dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d api-handlers score=2 vector=bug) |
+| low | pm-backend | api handlers mfa report population mismatch | none | open | dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d api-handlers score=2 vector=bug) |
+| low | pm-backend | api handlers property valuation raw error leak | none | open | dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d api-handlers score=2 vector=bug) |
+| low | pm-backend | api handlers tenant config rls clear swallowed | none | open | dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d api-handlers score=2 vector=bug) |
+| low | pm-backend | api handlers vote update no tenant rls | none | open | dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d api-handlers score=2 vector=bug) |
+| low | pm-backend | Shared Ktor HttpClient has no HttpTimeout - mobile API calls can hang indefinitely | none | open | dispatcher-backlog-refill 2026-10-25T08:29:08Z (score=2 conf=medium vector=bug) |
+| low | pm-backend | Reality mobile MyListings + portfolio analytics silently cap at 100 listings (no pagination) | none | open | dispatcher-backlog-refill 2026-10-25T08:29:08Z (score=1 conf=medium vector=bug) |
+| low | pm-backend | KMP realtor SSO error-body parsing is unguarded — crashes on non-JSON response | none | open | dispatcher-backlog-refill 2026-11-04T04:24:45Z (score=2 conf=medium vector=bug) |
+| low | pm-backend | mobile-rn ReportFaultScreen category chips always render English — locale switch leaves 7 chips in EN while rest of form translates | none | open | dispatcher-backlog-refill 2026-11-15T04:24:57Z (score=2 conf=high vector=bug) |
+| low | pm-backend | ppt web core authed query roots drift | none | open | dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d ppt-web-core score=2 vector=bug) |
+| low | pm-backend | ppt web core errorhandler 403 mislabel | none | open | dispatcher-signals-promote 2026-11-14T20:26:05Z (tier1d ppt-web-core score=1 vector=bug) |
+| low | pm-backend | ppt web core networkstatus navigator guard | none | open | dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d ppt-web-core score=1 vector=bug) |
+| low | pm-backend | ppt web core org provider value not memoized | none | open | dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d ppt-web-core score=1 vector=bug) |
+| low | pm-backend | ppt web core orgprovider unstable value | none | open | dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d ppt-web-core score=1 vector=bug) |
+| low | pm-backend | ppt web core validation error i18n gap | none | open | dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d ppt-web-core score=1 vector=bug) |
+| low | pm-backend | ppt web core ws send envelope mismatch | none | open | dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d ppt-web-core score=1 vector=bug) |
+| low | pm-backend | ppt web ui moderation full page reload nav | none | open | dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d ppt-web-ui score=1 vector=bug) |
+| low | pm-backend | ppt web ui voting list page no i18n | none | open | dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d ppt-web-ui score=1 vector=bug) |
+| low | pm-backend | reality server import history limit 100 trunc | none | open | dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d reality-server score=1 vector=bug) |
+| low | pm-backend | reality server import jobs total page len | none | open | dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d reality-server score=2 vector=bug) |
+| low | pm-backend | reality server suggestions stub popular | none | open | dispatcher-signals-promote 2026-11-14T20:26:05Z (tier1d reality-server score=1 vector=bug) |
+| low | pm-backend | reality web agency branding save no error | none | open | dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d reality-web score=2 vector=bug) |
+| low | pm-backend | reality web analytics no i18n | none | open | dispatcher-signals-promote 2026-11-10T02:25:23Z (tier1d reality-web score=1 vector=bug) |
+| low | pm-backend | reality web auth nav drops locale | none | open | dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d reality-web score=1 vector=bug) |
+| low | pm-backend | reality web comparison timer leak | none | open | dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d reality-web score=1 vector=bug) |
+| low | pm-backend | reality web currency code rangeerror crash | none | open | dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d reality-web score=2 vector=bug) |
+| low | pm-backend | reality web login open redirect backslash | none | open | dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d reality-web score=2 vector=bug) |
+| low | pm-qa | PR #3497 fix(api-server) voice book-facility false-success — shipped without regression test | none | open | dispatcher-backlog-refill 2026-11-15T04:24:57Z (score=2 conf=high vector=test-gap) |
+| low | pm-qa | PR #3525 fix(api-handlers) non-admin peer-role mutation — privilege-escalation fix without a cross-tenant test | none | open | dispatcher-backlog-refill 2026-11-15T04:24:57Z (score=2 conf=high vector=test-gap) |
+| low | pm-qa | PR #3524 i18n leaf-parity fix on top-churn pl.json without a parity test — follow-up #3531 re-opened the same gap | none | open | dispatcher-backlog-refill 2026-11-15T04:24:57Z (score=2 conf=medium vector=test-gap) |
+| low | pm-qa | PR #3482 gated /settings/privacy behind ProtectedRoute without updating docs/screens/ppt/ | none | open | dispatcher-backlog-refill 2026-11-15T04:24:57Z (score=2 conf=medium vector=test-gap) |
+| low | pm-qa | PR #3486 gated community/disputes/messaging/neighbors behind ProtectedRoute without updating docs/screens/ppt/ | none | open | dispatcher-backlog-refill 2026-11-15T04:24:57Z (score=2 conf=medium vector=test-gap) |
+| low | pm-scrum-master | Mark as done in action-list the items already merged this window: errorhandler-403-mislabel, currency-code-rangeerror, login-open-redirect-backslash. Check that the 17 merges are reflected in the backlog. | none | open | pm-analysis 2026-11-16 |
+| low | pm-security | api handlers gdpr raw db error leak | none | open | dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d api-handlers score=2 vector=security) |
+| low | pm-security | mobile-rn DeepLinkManager.pendingLink never cleared on logout — shared-device deep-link intent crosses user boundary | none | open | dispatcher-backlog-refill 2026-11-15T04:24:57Z (score=2 conf=high vector=security) |
+| low | pm-tech-lead | ppt-web messages/cs.json churn-hotspot — 4 commits in 2d (ambient i18n sweeps + UC-52 payments) | none | open | dispatcher-backlog-refill 2026-11-15T04:24:57Z (score=1 conf=high vector=refactor) |
+| low | pm-tech-lead | ppt-web messages/pl.json churn-hotspot — 4 commits in 2d (i18n leaf-parity sweeps PR #3524 + locale-specific fixes) | none | open | dispatcher-backlog-refill 2026-11-15T04:24:57Z (score=1 conf=high vector=refactor) |
+| low | pm-tech-lead | ppt web core api default export eager instance | none | open | dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d ppt-web-core score=1 vector=refactor) |
+| low | pm-tech-lead | ppt-web messages/sk.json repeated-churn — primary locale touched in 3 of 3 recent runs | none | open | dispatcher-backlog-refill 2026-11-15T04:24:57Z (score=1 conf=high vector=refactor) |

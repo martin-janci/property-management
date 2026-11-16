@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-11-13T04:10:00Z",
+  "generated": "2026-11-16T03:12:00Z",
   "items": [
     {
       "id": "pm-devops-swagger-ui-egress-blocking-security-2026-10-01",
@@ -312,6 +312,76 @@
       "mitigation": "Human-gate review within 72h for majors; auto-approve minor/patch groups once CI green; set a WIP cap on open Dependabot PRs.",
       "owner_role": "pm-devops",
       "trigger": "dependabot_open_prs > 10 for 7+ days",
+      "status": "open"
+    },
+    {
+      "id": "pm-security-rls-owner-check-delegation-sibling-paths",
+      "risk": "Further RLS or owner-check gaps remain in delegation-adjacent routes, enabling cross-tenant access",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Sibling-path audit and negative authz tests, as in next_actions",
+      "owner_role": "pm-security",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-security-raw-db-error-leakage",
+      "risk": "Raw DB or internal error leakage in API responses (#3560 pattern) elsewhere",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Central error-mapping review of routes that return raw errors",
+      "owner_role": "pm-security",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-security-mobile-deeplink-shared-device",
+      "risk": "Mobile cross-user deep-link state on shared devices",
+      "probability": "low",
+      "impact": "medium",
+      "mitigation": "Reset the singleton on logout or user switch",
+      "owner_role": "pm-security",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-swagger-ui-egress-blocks-security-fixes",
+      "risk": "Backend security fixes cannot compile in the cloud runner (#2966), so cross-tenant IDOR fixes are delayed",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Vendor or cache the swagger-ui assets, or allowlist the egress target",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-dispatcher-locale-churn",
+      "risk": "The dispatcher produces many low-score code-review PRs (47 in the last window), which creates churn in the ppt-web locale JSONs (cs/pl/sk) and a screen-map drift backlog",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Locale merge-conflict guard; pm-tech-lead rebalances toward higher-score items",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-dependabot-majors-stacking",
+      "risk": "18 open PRs, with 9 Dependabot majors stacking, increase merge-conflict and release risk",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Batch-merge Dependabot PRs after the build is unblocked",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-stale-management-artifacts",
+      "risk": "Routine lag and stale management artifacts (project-state and coverage are 3 days old) lead to decisions on out-of-date data",
+      "probability": "medium",
+      "impact": "low",
+      "mitigation": "Run a scan now and keep the cursor rotation",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
       "status": "open"
     }
   ]
