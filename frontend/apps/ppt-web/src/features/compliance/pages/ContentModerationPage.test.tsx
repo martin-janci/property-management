@@ -28,6 +28,16 @@ import { ContentModerationPage } from './ContentModerationPage';
 const takeActionMutate = vi.fn();
 const decideAppealMutate = vi.fn();
 
+// "View Content" must route via the SPA router (useNavigate), not a full-page
+// reload (window.location.href) that drops client state and flashes the shell.
+// Mock only useNavigate so a real Router isn't required and we can observe the
+// navigation target.
+const navigateSpy = vi.fn();
+vi.mock('react-router-dom', async (importActual) => {
+  const actual = await importActual<typeof import('react-router-dom')>();
+  return { ...actual, useNavigate: () => navigateSpy };
+});
+
 // Two pending cases (each renders a "Take Action" button) and two appealed cases
 // (each renders a "Decide Appeal" button) so a dialog can be opened for one case
 // and re-opened for another — the stale-state regression path.
@@ -184,6 +194,31 @@ describe('ContentModerationPage decision flow', () => {
     openTakeActionDialog(1);
     expect((dialog().getByRole('combobox') as HTMLSelectElement).value).toBe('approve');
     expect((dialog().getByLabelText(/rationale/i) as HTMLTextAreaElement).value).toBe('');
+  });
+});
+
+/**
+ * Regression: "View Content" must navigate through the SPA router so the manager
+ * keeps client state (filters, scroll, React tree) and the shell doesn't flash.
+ * The Phase-1 flow used `window.location.href = …`, a full-page reload. The fix
+ * routes via react-router's `useNavigate`.
+ */
+describe('ContentModerationPage view-content navigation', () => {
+  beforeEach(() => {
+    navigateSpy.mockClear();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('navigates to the case detail route via the SPA router, not a full-page reload', () => {
+    renderPage();
+
+    fireEvent.click(screen.getAllByRole('button', { name: /view content/i })[0]);
+
+    expect(navigateSpy).toHaveBeenCalledTimes(1);
+    expect(navigateSpy).toHaveBeenCalledWith('/compliance/moderation/cases/pending-1');
   });
 });
 
