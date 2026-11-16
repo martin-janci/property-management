@@ -18,6 +18,7 @@ import {
 import type React from 'react';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../../components';
 import { DecideAppealDialog } from '../components/DecideAppealDialog';
 import type { ModerationCase } from '../components/ModerationCaseCard';
@@ -47,6 +48,7 @@ interface ActionTemplate {
 export const ContentModerationPage: React.FC = () => {
   const { t } = useTranslation();
   const { showToast } = useToast();
+  const navigate = useNavigate();
 
   // Filters
   const [statusFilter, setStatusFilter] = useState<string>('pending');
@@ -201,11 +203,15 @@ export const ContentModerationPage: React.FC = () => {
     [takeActionCaseId, takeAction, decisionMutationCallbacks]
   );
 
-  const handleViewContent = useCallback((caseId: string) => {
-    // TODO(Phase-2): Use React Router's useNavigate for SPA navigation
-    // Phase 1: Full page reload for simplicity
-    window.location.href = `/compliance/moderation/cases/${caseId}`;
-  }, []);
+  const handleViewContent = useCallback(
+    (caseId: string) => {
+      // SPA navigation: preserve client state (filters, scroll, query cache)
+      // and avoid a shell flash. Previously used window.location.href, a
+      // full-page reload (code-review finding).
+      navigate(`/compliance/moderation/cases/${caseId}`);
+    },
+    [navigate]
+  );
 
   const handleDecideAppeal = useCallback((caseId: string) => {
     setDecideAppealCaseId(caseId);
