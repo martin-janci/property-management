@@ -95,18 +95,18 @@
     {
       "task_id": "hotfix-no-test-pr-3525",
       "branch": "auto-impl/hotfix-no-test-pr-3525-4af02e4a",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-16T14:37:26Z",
-      "last_updated": "2026-11-16T14:37:26Z",
-      "status_changed_at": "2026-11-16T14:37:26Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-16T15:28:34Z",
+      "status_changed_at": "2026-11-16T15:28:34Z",
+      "pr_number": 3571,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3571",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3571 status=done specialist=rust-backend scope_drift=true (pm-qa owner→no src tree; test beside handler, justified); fails-before-fix peer-role authz regression test (members.rs); fmt+clippy green, members 7/7, 21 failing pre-existing no-DB sqlx::test",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -137,5 +137,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-16T15:21:14Z"
+  "generated": "2026-11-16T15:28:34Z"
 }
