@@ -2987,6 +2987,10 @@
         "title": "Zugriff verweigert",
         "message": "Sie haben keine Berechtigung, diese Aktion auszuführen."
       },
+      "FORBIDDEN": {
+        "title": "Zugriff verweigert",
+        "message": "Sie haben keine Berechtigung, diese Aktion auszuführen."
+      },
       "VALIDATION_ERROR": {
         "title": "Validierungsfehler",
         "message": "Bitte überprüfen Sie das Formular auf Fehler."

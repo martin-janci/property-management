@@ -2987,6 +2987,10 @@
         "title": "Access Denied",
         "message": "You do not have permission to perform this action."
       },
+      "FORBIDDEN": {
+        "title": "Access Denied",
+        "message": "You do not have permission to perform this action."
+      },
       "VALIDATION_ERROR": {
         "title": "Validation Error",
         "message": "Please check the form for errors."

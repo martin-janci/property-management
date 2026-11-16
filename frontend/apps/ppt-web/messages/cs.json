@@ -2960,6 +2960,10 @@
         "title": "Přístup odepřen",
         "message": "Nemáte oprávnění provést tuto akci."
       },
+      "FORBIDDEN": {
+        "title": "Přístup odepřen",
+        "message": "Nemáte oprávnění provést tuto akci."
+      },
       "VALIDATION_ERROR": {
         "title": "Chyba ověření",
         "message": "Zkontrolujte prosím chyby ve formuláři."
