@@ -132,8 +132,9 @@ async function fillValidForm() {
     screen.getByPlaceholderText('faults.locationPlaceholder'),
     '3rd floor'
   );
-  // Category grid uses the hardcoded English labels.
-  await fireEvent.press(screen.getByText('Plumbing'));
+  // Category chips are i18n'd; under the key-returning test mock the Plumbing
+  // chip renders its key.
+  await fireEvent.press(screen.getByText('faults.categoryPlumbing'));
 }
 
 // --- Tests ---
@@ -235,7 +236,7 @@ describe('ReportFaultScreen', () => {
       screen.getByPlaceholderText('faults.locationPlaceholder'),
       '3rd floor'
     );
-    await fireEvent.press(screen.getByText('Plumbing'));
+    await fireEvent.press(screen.getByText('faults.categoryPlumbing'));
 
     await fireEvent.press(screen.getByText('faults.submitButton'));
     expect(mockApiRequest).not.toHaveBeenCalled();
