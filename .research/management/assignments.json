@@ -73,9 +73,9 @@
     {
       "task_id": "pm-scrum-master-xtenant-404-contract-sweep-idor-retries-2026-11-16",
       "branch": "auto-impl/pm-scrum-master-xtenant-404-contract-swe-b7fdf348",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-16T06:28:41Z",
-      "last_updated": "2026-11-16T08:34:47Z",
+      "last_updated": "2026-11-16T08:47:55Z",
       "status_changed_at": "2026-11-16T08:34:47Z",
       "pr_number": 3565,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3565",
@@ -93,5 +93,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-16T08:38:33Z"
+  "generated": "2026-11-16T08:49:38Z"
 }
