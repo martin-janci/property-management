@@ -1,5 +1,26 @@
 # mobile — React Native Mobile App
 
+## Lint gates (React Native) — warn-only rollout
+
+`biome.json` (nested, `extends: "//"`) adopts the rules that close the
+chronic mobile-rn lint-gap risk (stale-closure "ranked-ballot" bugs +
+hardcoded-string i18n fallback bugs). These map the ESLint-era intent onto
+the workspace's Biome gate:
+
+| Intent (ESLint)              | Biome rule / plugin                         | Severity |
+| ---------------------------- | ------------------------------------------- | -------- |
+| `react-hooks/rules-of-hooks` | `correctness.useHookAtTopLevel`             | `warn`   |
+| `react-hooks/exhaustive-deps`| `correctness.useExhaustiveDependencies`     | `warn`   |
+| `i18next/no-literal-string`  | `biome-plugins/no-hardcoded-strings.grit`   | `warn`   |
+
+All three are **blocking** (they run inside the mandatory `pnpm check`
+lint job — mobile `src/` is in the workspace Biome scope) but **warn-only
+for one sprint**: warnings surface in CI/local output without failing the
+gate, giving a sprint to migrate the existing backlog. **Flip all three to
+`error` next sprint** (`useHookAtTopLevel` / `useExhaustiveDependencies`
+here, and `severity="error"` in the grit plugin) once the backlog is clear.
+Do not weaken test gates to get green — fix the flagged code instead.
+
 ## Env config — single source of truth
 
 - `.env.<APP_ENV>` → loaded by `app.config.ts` via dotenv →
