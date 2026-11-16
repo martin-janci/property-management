@@ -24,13 +24,18 @@ import { FieldInput } from '@/components/forms';
 import { Link } from '@/i18n/routing';
 import { AuthApiError, login } from '@/lib/auth-api';
 import { useAuth } from '@/lib/auth-context';
+import { sanitizeRedirectPath } from '@/lib/sanitize-url';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirect') ?? '/';
+  // Validate the redirect target against same-origin relative paths only.
+  // A naive `startsWith('/') && !startsWith('//')` check misses backslash
+  // bypasses like `/\evil.com`, which browsers treat as a protocol-relative
+  // URL (open redirect) — see `sanitizeRedirectPath`.
+  const redirectTo = sanitizeRedirectPath(searchParams.get('redirect'));
   const t = useTranslations('auth.login');
   // refreshSession() picks up the bearer token written to localStorage by
   // auth-api.login() so the header updates without a hard reload.
@@ -69,8 +74,7 @@ function LoginForm() {
       // Update auth-context state from the freshly-stored token so the
       // header re-renders to "logged in" before the navigation happens.
       await refreshSession();
-      const safe = redirectTo.startsWith('/') && !redirectTo.startsWith('//') ? redirectTo : '/';
-      router.replace(safe);
+      router.replace(redirectTo);
     } catch (error) {
       if (error instanceof AuthApiError) {
         if (error.status === 401) setGeneralError(t('incorrectCredentials'));
