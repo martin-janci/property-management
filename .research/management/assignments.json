@@ -135,7 +135,51 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "pm-security-audit-null-unit-scope-authorization-2026-11-16",
+      "branch": "auto-impl/pm-security-audit-null-unit-scope-author-a7a1fa50",
+      "status": "in-progress",
+      "claimed_at": "2026-11-16T06:28:41Z",
+      "last_updated": "2026-11-16T06:28:41Z",
+      "status_changed_at": "2026-11-16T06:28:41Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "pm-scrum-master-xtenant-404-contract-sweep-idor-retries-2026-11-16",
+      "branch": "auto-impl/pm-scrum-master-xtenant-404-contract-swe-b7fdf348",
+      "status": "in-progress",
+      "claimed_at": "2026-11-16T06:28:41Z",
+      "last_updated": "2026-11-16T06:28:41Z",
+      "status_changed_at": "2026-11-16T06:28:41Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-16T04:32:52Z"
+  "generated": "2026-11-16T06:33:42Z"
 }
