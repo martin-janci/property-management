@@ -123,3 +123,66 @@ describe('DeepLinkManager listener lifecycle', () => {
     expect(active.size).toBe(0);
   });
 });
+
+// Security regression (shared device): a deep-link intent queued while logged
+// out must not survive a logout, and must never be dispatched across a user
+// boundary. `ppt://faults/<id>` is an auth-required route, so an incoming URL
+// while unauthenticated is queued as `pendingLink`.
+describe('DeepLinkManager pending-link user isolation', () => {
+  const AUTH_REQUIRED_URL = 'ppt://faults/999';
+
+  it('clears a queued pending link on logout', async () => {
+    const manager = new DeepLinkManager();
+    await manager.initialize();
+
+    // Unauthenticated: the auth-required link is queued, not dispatched.
+    emitUrl(AUTH_REQUIRED_URL);
+    expect(manager.getPendingLink()).not.toBeNull();
+
+    // Logout must drop it so the next user can't inherit it.
+    manager.setAuthenticated(false);
+    expect(manager.getPendingLink()).toBeNull();
+  });
+
+  it('does not dispatch a link reserved for one user to a different user', async () => {
+    const manager = new DeepLinkManager();
+    const handler = jest.fn();
+    manager.addHandler(handler);
+    await manager.initialize();
+
+    manager.setAuthenticated(true, 'user-A'); // A signs in
+    manager.setAuthenticated(false); // A signs out (reservation stays with A)
+
+    emitUrl(AUTH_REQUIRED_URL); // queued, reserved for A
+    expect(manager.getPendingLink()).not.toBeNull();
+
+    manager.setAuthenticated(true, 'user-B'); // B signs in on the shared device
+    expect(handler).not.toHaveBeenCalled(); // A's link is NOT leaked to B
+    expect(manager.getPendingLink()).toBeNull(); // and is not left dangling
+  });
+
+  it('dispatches a reserved link back to the same user who returns', async () => {
+    const manager = new DeepLinkManager();
+    const handler = jest.fn();
+    manager.addHandler(handler);
+    await manager.initialize();
+
+    manager.setAuthenticated(true, 'user-A');
+    manager.setAuthenticated(false);
+
+    emitUrl(AUTH_REQUIRED_URL); // reserved for A
+    manager.setAuthenticated(true, 'user-A'); // A returns
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it('dispatches an unreserved link (fresh device) to the first user to authenticate', async () => {
+    const manager = new DeepLinkManager();
+    const handler = jest.fn();
+    manager.addHandler(handler);
+    await manager.initialize(); // never authenticated → no prior user
+
+    emitUrl(AUTH_REQUIRED_URL); // reserved for null (claimable)
+    manager.setAuthenticated(true, 'user-A');
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+});
