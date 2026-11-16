@@ -5089,6 +5089,28 @@
       "merge_attempted_at": "2026-08-06T22:13:48Z"
     },
     {
+      "task_id": "code-review-api-handlers-gdpr-raw-db-error-leak",
+      "branch": "auto-impl/code-review-api-handlers-gdpr-raw-db-err-aa514c94",
+      "status": "merged",
+      "claimed_at": "2026-11-16T00:32:00Z",
+      "last_updated": "2026-11-16T04:32:08Z",
+      "status_changed_at": "2026-11-16T04:32:08Z",
+      "pr_number": 3560,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3560",
+      "merged_at": "2026-11-16T04:31:10Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3560 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=gdpr.rs 14 DB-err sites sanitized via db_error() helper (log raw, generic body) matching mfa.rs; fmt+clippy green, api-server 757 tests + new gdpr regression pass (only failure sandbox-egress SSRF test); IG3 two-commit split; drift=gdpr.rs outside pm-security globs (expected)",
+      "reviewer_summary": "verdict=approve head_oid=afa9b4e7d5b02f0b31b358734b742c0020b3e2bf note=gdpr.rs all-14-db-error-sites sanitized via db_error() chokepoint; matches mfa.rs; good regression test; scope_drift justified; CI security+fmt-clippy green, test-shards in progress; APPROVE blocked (own-PR) posted as COMMENT",
+      "last_reviewed_oid": "afa9b4e7d5b02f0b31b358734b742c0020b3e2bf",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-16T04:28:57Z"
+    },
+    {
       "task_id": "code-review-api-handlers-health-alerts-page-size-uncapped",
       "branch": "auto-impl/code-review-api-handlers-health-alerts-p-d0d96c8f",
       "status": "merged",
@@ -13480,6 +13502,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-08-20T06:33:46Z"
+    },
+    {
+      "task_id": "code-review-reality-server-suggestions-stub-popular",
+      "branch": "auto-impl/code-review-reality-server-suggestions-s-a7243f18",
+      "status": "merged",
+      "claimed_at": "2026-11-15T14:30:28Z",
+      "last_updated": "2026-11-16T04:32:08Z",
+      "status_changed_at": "2026-11-16T04:32:08Z",
+      "pr_number": 3553,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3553",
+      "merged_at": "2026-11-16T04:30:45Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3553 status=done specialist=rust-backend round=3 note=followup-fixed: merged origin/dev, resolved add/add conflict in listings.rs by taking dev resolve_locale/label_for_property_type, kept new get_popular_search_pairs+popular_search_phrase+get_suggestions wiring (calls dev resolve_locale); pushed 4-file commit 6467b8e; mergeable dirty->blocked; head drifted from last_reviewed_oid so re-review next run",
+      "reviewer_summary": "verdict=approve head_oid=6467b8ef03f1f862ab81c635f82b560e6d687915 note=re-review: all-prior-blockers-resolved (dropped the duplicated resolve_locale/label_for_property_type now on dev); clean merge into dev; net change in scope; CI green",
+      "last_reviewed_oid": "6467b8ef03f1f862ab81c635f82b560e6d687915",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 3,
+      "merge_attempted_at": "2026-11-16T04:28:57Z"
     },
     {
       "task_id": "code-review-reality-server-url-validator-triplicated",
@@ -28693,5 +28737,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-16T02:49:29Z"
+  "archived_at": "2026-11-16T04:32:52Z"
 }

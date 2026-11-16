@@ -218,24 +218,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-core-errorhandler-403-mislabel",
-      "action": "ppt web core errorhandler 403 mislabel",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-14T20:26:05Z (tier1d ppt-web-core score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-14T20:26:05Z",
-      "signal_ref": {
-        "segment": "ppt-web-core",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-09-07T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-ppt-web-core-networkstatus-navigator-guard",
       "action": "ppt web core networkstatus navigator guard",
       "owner_role": "pm-backend",
@@ -254,44 +236,8 @@
       }
     },
     {
-      "id": "code-review-ppt-web-core-orgprovider-unstable-value",
-      "action": "ppt web core orgprovider unstable value",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d ppt-web-core score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-15T00:28:30Z",
-      "signal_ref": {
-        "segment": "ppt-web-core",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-09-07T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-ppt-web-ui-moderation-full-page-reload-nav",
       "action": "ppt web ui moderation full page reload nav",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d ppt-web-ui score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-15T00:28:30Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-09-06T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-voting-list-page-no-i18n",
-      "action": "ppt web ui voting list page no i18n",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -568,24 +514,6 @@
       }
     },
     {
-      "id": "code-review-reality-web-currency-code-rangeerror-crash",
-      "action": "reality web currency code rangeerror crash",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d reality-web score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-15T16:26:57Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-09-21T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-api-handlers-property-valuation-raw-error-leak",
       "action": "api handlers property valuation raw error leak",
       "owner_role": "pm-backend",
@@ -598,24 +526,6 @@
       "first_open_at": "2026-11-15T16:26:57Z",
       "signal_ref": {
         "segment": "api-handlers",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-09-05T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-reality-web-login-open-redirect-backslash",
-      "action": "reality web login open redirect backslash",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d reality-web score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-15T16:26:57Z",
-      "signal_ref": {
-        "segment": "reality-web",
         "score": 2,
         "vector": "bug",
         "generated": "2026-09-05T00:00:00Z"
@@ -745,24 +655,6 @@
         "score": 1,
         "vector": "bug",
         "generated": "2026-09-04T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-api-handlers-voting-cast-no-unit-ownership",
-      "action": "api handlers voting cast no unit ownership",
-      "owner_role": "pm-security",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d api-handlers score=3 vector=security)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-16T00:27:09Z",
-      "signal_ref": {
-        "segment": "api-handlers",
-        "score": 3,
-        "vector": "security",
-        "generated": "2026-09-03T00:00:00Z"
       }
     },
     {

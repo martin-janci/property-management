@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-16T00:32:28Z",
+  "archived_at": "2026-11-16T04:33:56Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -6217,6 +6217,31 @@
       }
     },
     {
+      "id": "code-review-api-handlers-voting-cast-no-unit-ownership",
+      "action": "api handlers voting cast no unit ownership",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d api-handlers score=3 vector=security) | gc1-reconcile 2026-11-16T04:27:06Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-16T00:27:09Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 3,
+        "vector": "security",
+        "generated": "2026-09-03T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-16T04:27:06Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-webhook-portal-signature-not-verified",
       "action": "[RECONCILED-DONE: merged via PR #2182 on dev 2026-07-08T22:05:05Z] security (latent auth bypass): backend/servers/api-server/src/routes/integrations/webhook.rs handle_portal_webhook (public no-auth endpoint at :97-98 `/api/v1/integrations/webhooks/portal/{connection_id}`, handed to external portals as callback at install.rs:1673) reads X-Webhook-Signature (:1066) but never verifies it (`let _sig = signature.to_str()...; debug!(\"present\")`) and returns 200. OpenAPI advertises a 401 invalid-signature response the code can never emit. Currently low-impact (handler only parses JSON, no state mutation) but a latent bypass the moment it acts on the payload. Verify HMAC over the raw body like the sibling Airbnb (:1157) / Stripe (:1452) handlers before acting.",
       "owner_role": "pm-security",
@@ -8775,6 +8800,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-errorhandler-403-mislabel",
+      "action": "ppt web core errorhandler 403 mislabel",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-14T20:26:05Z (tier1d ppt-web-core score=1 vector=bug) | gc1-reconcile 2026-11-16T04:27:06Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T20:26:05Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-07T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3557,
+        "merged_at": "2026-11-16T02:32:29Z",
+        "at": "2026-11-16T04:27:06Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-errorhandler-client-timeout-unclassified",
       "action": "ppt web core errorhandler client timeout unclassified",
       "owner_role": "pm-backend",
@@ -9639,6 +9689,31 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-14T22:25:08Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-orgprovider-unstable-value",
+      "action": "ppt web core orgprovider unstable value",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d ppt-web-core score=1 vector=bug) | gc1-reconcile 2026-11-16T04:27:06Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T00:28:30Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-07T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-16T04:27:06Z"
       }
     },
     {
@@ -12466,6 +12541,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-voting-list-page-no-i18n",
+      "action": "ppt web ui voting list page no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d ppt-web-ui score=1 vector=bug) | gc1-reconcile 2026-11-16T04:27:06Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T00:28:30Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-06T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-16T04:27:06Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-workflow-automation-toasts-hardcoded-english",
       "action": "workflow-automation pages emit English-literal toast titles while rest of file uses i18n",
       "owner_role": "pm-tech-lead",
@@ -15050,6 +15150,31 @@
         "merged_pr": 3492,
         "merged_at": "2026-11-13T18:35:28Z",
         "at": "2026-11-13T20:27:07Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-login-open-redirect-backslash",
+      "action": "reality web login open redirect backslash",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d reality-web score=2 vector=bug) | gc1-reconcile 2026-11-16T04:27:06Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T16:26:57Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-05T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3559,
+        "merged_at": "2026-11-16T02:37:37Z",
+        "at": "2026-11-16T04:27:06Z"
       }
     },
     {
