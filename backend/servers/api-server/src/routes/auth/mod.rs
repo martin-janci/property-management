@@ -1941,3 +1941,32 @@ mod email_dispatch_rate_limit_tests {
         );
     }
 }
+
+#[cfg(test)]
+mod inactive_revoke_outcome_tests {
+    use super::inactive_revoke_outcome;
+
+    /// Regression: when `/refresh` rejects an inactive account it revokes the
+    /// presented refresh token. That revoke was previously `let _ = state
+    /// .session_repo.revoke_token(..).await;`, so a DB failure was silently
+    /// swallowed — the stale token was left live with no log trail. The
+    /// outcome of a failed revoke must surface as an error (so the handler can
+    /// `tracing::error!` it, mirroring the replay fan-out-revoke path) rather
+    /// than being discarded.
+    #[test]
+    fn db_error_is_surfaced_not_swallowed() {
+        assert!(
+            inactive_revoke_outcome(Err(sqlx::Error::PoolClosed)).is_err(),
+            "a DB failure while revoking an inactive account's token must be surfaced, not swallowed"
+        );
+    }
+
+    /// A successful revoke — whether a row was revoked (`true`) or the token
+    /// was already revoked / absent (`false`) — is not an error; the 401
+    /// `ACCOUNT_INACTIVE` rejection stands regardless.
+    #[test]
+    fn revoke_success_is_ok() {
+        assert!(inactive_revoke_outcome(Ok(true)).is_ok());
+        assert!(inactive_revoke_outcome(Ok(false)).is_ok());
+    }
+}
