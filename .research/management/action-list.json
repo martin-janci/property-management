@@ -168,24 +168,6 @@
       }
     },
     {
-      "id": "code-review-api-handlers-esg-reporting-raw-sqlx-error-leak",
-      "action": "api handlers esg reporting raw sqlx error leak",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d api-handlers score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-15T00:28:30Z",
-      "signal_ref": {
-        "segment": "api-handlers",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-09-05T00:00:00Z"
-      }
-    },
-    {
       "id": "risky-churn-pr-3524-pl-json",
       "action": "PR #3524 i18n leaf-parity fix on top-churn pl.json without a parity test — follow-up #3531 re-opened the same gap",
       "owner_role": "pm-qa",
@@ -324,24 +306,6 @@
       }
     },
     {
-      "id": "code-review-api-handlers-property-valuation-raw-error-leak",
-      "action": "api handlers property valuation raw error leak",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d api-handlers score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-15T16:26:57Z",
-      "signal_ref": {
-        "segment": "api-handlers",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-09-05T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-reality-web-auth-nav-drops-locale",
       "action": "reality web auth nav drops locale",
       "owner_role": "pm-backend",
@@ -426,24 +390,6 @@
       "first_open_at": "2026-11-15T16:26:57Z",
       "signal_ref": {
         "segment": "api-core",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-09-04T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-api-handlers-auth-inactive-revoke-swallowed",
-      "action": "api handlers auth inactive revoke swallowed",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d api-handlers score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-15T16:26:57Z",
-      "signal_ref": {
-        "segment": "api-handlers",
         "score": 1,
         "vector": "bug",
         "generated": "2026-09-04T00:00:00Z"

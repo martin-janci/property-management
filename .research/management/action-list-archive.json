@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-16T14:43:33Z",
+  "archived_at": "2026-11-16T20:31:18Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3263,6 +3263,32 @@
       }
     },
     {
+      "id": "code-review-admin-web-tenant-restore-stub",
+      "action": "admin web tenant restore stub",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-12T20:25:35Z (tier1d admin-web score=2 vector=bug) | gc1-reconcile 2026-11-16T16:46:36Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-12T20:25:35Z",
+      "signal_ref": {
+        "segment": "admin-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-27T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3488,
+        "merged_at": "2026-11-16T16:42:43Z",
+        "at": "2026-11-16T16:46:36Z"
+      },
+      "archived_at": "2026-11-16T16:48:16Z"
+    },
+    {
       "id": "code-review-ai-ocr-correction-idor",
       "action": "backend/servers/api-server/src/routes/ai/ocr.rs:261-312 — submit_correction (POST /api/v1/ai/ocr/correction) authorizes only by checking the caller is_member of the CLIENT-SUPPLIED body.organization_id (OcrCorrectionRequest.organization_id:",
       "owner_role": "pm-security",
@@ -4791,6 +4817,31 @@
       }
     },
     {
+      "id": "code-review-api-handlers-auth-inactive-revoke-swallowed",
+      "action": "api handlers auth inactive revoke swallowed",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d api-handlers score=1 vector=bug) | gc1-reconcile 2026-11-16T20:25:50Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T16:26:57Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-04T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3573,
+        "merged_at": "2026-11-16T18:37:10Z",
+        "at": "2026-11-16T20:25:50Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-auth-nonatomic-refresh-rotation",
       "action": "api handlers auth nonatomic refresh rotation",
       "owner_role": "pm-backend",
@@ -5178,6 +5229,31 @@
       }
     },
     {
+      "id": "code-review-api-handlers-esg-reporting-raw-sqlx-error-leak",
+      "action": "api handlers esg reporting raw sqlx error leak",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d api-handlers score=2 vector=bug) | gc1-reconcile 2026-11-16T20:25:50Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T00:28:30Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-05T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3572,
+        "merged_at": "2026-11-16T18:33:02Z",
+        "at": "2026-11-16T20:25:50Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-gdpr-raw-db-error-leak",
       "action": "api handlers gdpr raw db error leak",
       "owner_role": "pm-security",
@@ -5510,6 +5586,31 @@
         "merged_pr": 3525,
         "merged_at": "2026-11-14T20:45:16Z",
         "at": "2026-11-14T22:25:08Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-property-valuation-raw-error-leak",
+      "action": "api handlers property valuation raw error leak",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d api-handlers score=2 vector=bug) | gc1-reconcile 2026-11-16T20:25:50Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T16:26:57Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-05T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3575,
+        "merged_at": "2026-11-16T18:37:10Z",
+        "at": "2026-11-16T20:25:50Z"
       }
     },
     {
@@ -27464,6 +27565,31 @@
       }
     },
     {
+      "id": "hotfix-no-test-pr-3525",
+      "action": "PR #3525 fix(api-handlers) non-admin peer-role mutation — privilege-escalation fix without a cross-tenant test",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-15T04:24:57Z (score=2 conf=high vector=test-gap) | gc1-reconcile 2026-11-16T16:46:36Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T04:24:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3571,
+        "merged_at": "2026-11-16T16:42:24Z",
+        "at": "2026-11-16T16:46:36Z"
+      },
+      "archived_at": "2026-11-16T16:48:16Z"
+    },
+    {
       "id": "integrations-webhook-hardening-audit-2026-07-23",
       "action": "Audit all webhook handlers (booking, airbnb, esignature, layout) for timestamp/replay/idempotency parity — #2485 shows layout webhook lacks it; treat as cross-cutting review",
       "owner_role": "pm-integration",
@@ -31884,57 +32010,6 @@
         "by": "dispatcher-verify-noop",
         "evidence": "reclaim respawn confirmed already shipped on dev; pr=none status=done"
       }
-    },
-    {
-      "id": "code-review-admin-web-tenant-restore-stub",
-      "action": "admin web tenant restore stub",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "done",
-      "source": "dispatcher-signals-promote 2026-11-12T20:25:35Z (tier1d admin-web score=2 vector=bug) | gc1-reconcile 2026-11-16T16:46:36Z",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-12T20:25:35Z",
-      "signal_ref": {
-        "segment": "admin-web",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-09-27T00:00:00Z"
-      },
-      "gc1_closed": {
-        "reason": "archive-terminal",
-        "archive_status": "merged",
-        "merged_pr": 3488,
-        "merged_at": "2026-11-16T16:42:43Z",
-        "at": "2026-11-16T16:46:36Z"
-      },
-      "archived_at": "2026-11-16T16:48:16Z"
-    },
-    {
-      "id": "hotfix-no-test-pr-3525",
-      "action": "PR #3525 fix(api-handlers) non-admin peer-role mutation — privilege-escalation fix without a cross-tenant test",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "done",
-      "source": "dispatcher-backlog-refill 2026-11-15T04:24:57Z (score=2 conf=high vector=test-gap) | gc1-reconcile 2026-11-16T16:46:36Z",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-15T04:24:57Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "test-gap"
-      },
-      "gc1_closed": {
-        "reason": "archive-terminal",
-        "archive_status": "merged",
-        "merged_pr": 3571,
-        "merged_at": "2026-11-16T16:42:24Z",
-        "at": "2026-11-16T16:46:36Z"
-      },
-      "archived_at": "2026-11-16T16:48:16Z"
     }
   ]
 }

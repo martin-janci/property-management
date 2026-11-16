@@ -3603,6 +3603,28 @@
       "merge_attempted_at": "2026-11-10T20:27:10Z"
     },
     {
+      "task_id": "code-review-api-core-digest-send-failure-abandoned",
+      "branch": "auto-impl/code-review-api-core-digest-send-failure-b6f19272",
+      "status": "merged",
+      "claimed_at": "2026-11-16T16:33:58Z",
+      "last_updated": "2026-11-16T20:41:09Z",
+      "status_changed_at": "2026-11-16T20:41:09Z",
+      "pr_number": 3574,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3574",
+      "merged_at": "2026-11-16T20:40:17Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=bd563d80c0d430156430a3d5a4abb2cf19c3e5e3 note=prior-blocker-fixed-ci-green; posted as COMMENT (self-approval blocked)",
+      "last_reviewed_oid": "bd563d80c0d430156430a3d5a4abb2cf19c3e5e3",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-11-16T20:39:26Z"
+    },
+    {
       "task_id": "code-review-api-core-docgen-summarize-char-boundary-panic",
       "branch": "auto-impl/code-review-api-core-docgen-summarize-ch-aa7486bf",
       "status": "merged",
@@ -26092,6 +26114,28 @@
       "merge_attempted_at": "2026-11-13T10:40:47Z"
     },
     {
+      "task_id": "pm-scrum-master-triage-stalled-reviews-2555-2559-2026-11-16",
+      "branch": "auto-impl/pm-scrum-master-triage-stalled-reviews-2-85206822",
+      "status": "failed",
+      "claimed_at": "2026-11-16T20:31:02Z",
+      "last_updated": "2026-11-16T20:39:26Z",
+      "status_changed_at": "2026-11-16T20:39:26Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked specialist=none scope_drift=false code_reuse_warn=none note=requires-human-triage-decision-no-code-change (merge/close/defer #2555 #2559 is a human-only decision; no code change)",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": false,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "pm-scrum-master-upgrade-refresh-token-confidence-2026-11-09",
       "branch": "auto-impl/pm-scrum-master-upgrade-refresh-token-co-b111e059",
       "status": "merged",
@@ -27308,6 +27352,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-11-02T12:38:41Z"
+    },
+    {
+      "task_id": "risky-churn-pr-3524-pl-json",
+      "branch": "auto-impl/risky-churn-pr-3524-pl-json-566c2776",
+      "status": "failed",
+      "claimed_at": "2026-11-16T20:31:02Z",
+      "last_updated": "2026-11-16T20:39:26Z",
+      "status_changed_at": "2026-11-16T20:39:26Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked specialist=react-web scope_drift=false code_reuse_warn=none note=already-enforced: pl.json leaf parity locked by ppt-web localeLeafParity/localeNamespaceParity tests; superseded by PR #3542 (issue #3531); no new test warranted",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": false,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "screen-map-drift-pr-1418-ppt",
@@ -29113,5 +29179,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-16T18:40:16Z"
+  "archived_at": "2026-11-16T20:41:09Z"
 }
