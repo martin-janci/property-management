@@ -465,7 +465,9 @@ pub async fn get_listing(
 pub async fn get_suggestions(
     State(state): State<AppState>,
     Query(params): Query<std::collections::HashMap<String, String>>,
+    headers: HeaderMap,
 ) -> Result<Json<SuggestionsResponse>, (axum::http::StatusCode, String)> {
+    let locale = resolve_locale(params.get("locale").map(|s| s.as_str()), &headers);
     let city = params
         .get("city")
         .map(|s| s.as_str())
@@ -477,14 +479,34 @@ pub async fn get_suggestions(
         .await
         .map_err(|e| crate::util::errors::db_error("get nearby cities", e))?;
 
+    // Derive popular searches from real inventory: the (property_type, city)
+    // pairs with the most active listings. Public search queries are not logged,
+    // so this is a best-effort proxy for what visitors are likely to search.
+    let popular_searches = state
+        .portal_repo
+        .get_popular_search_pairs(5)
+        .await
+        .map_err(|e| crate::util::errors::db_error("get popular search pairs", e))?
+        .into_iter()
+        .map(|(property_type, city)| popular_search_phrase(&property_type, &city, &locale))
+        .collect();
+
     Ok(Json(SuggestionsResponse {
         cities,
-        popular_searches: vec![
-            "2-izbový byt Bratislava".to_string(),
-            "Dom Košice".to_string(),
-            "Pozemok Žilina".to_string(),
-        ],
+        popular_searches,
     }))
+}
+
+/// Build a localized popular-search phrase from a `(property_type, city)` pair,
+/// e.g. `("apartment", "Bratislava", &Locale::Slovak) -> "Byty Bratislava"`.
+/// Reuses the same `label_for_property_type` mapping as the categories endpoint
+/// so the two surfaces stay consistent.
+fn popular_search_phrase(property_type: &str, city: &str, locale: &Locale) -> String {
+    format!(
+        "{} {}",
+        label_for_property_type(property_type, locale),
+        city
+    )
 }
 
 // ============================================================================
@@ -1012,6 +1034,39 @@ mod tests {
     #[test]
     fn valid_values_pass_through() {
         assert_eq!(clamp_pagination(Some(3), Some(50)), (3, 50));
+    }
+
+    // --- popular_search_phrase (popular-search suggestions) ---
+    //
+    // Placed here, among the clamp-helper tests, rather than at the end of the
+    // module: the localization tests appended on `dev` land at the tail, so
+    // keeping these away from that boundary avoids a spurious add/add merge
+    // conflict when the branch is brought up to date.
+
+    #[test]
+    fn popular_search_phrase_uses_localized_label_and_city() {
+        assert_eq!(
+            popular_search_phrase("apartment", "Bratislava", &Locale::Slovak),
+            "Byty Bratislava"
+        );
+        assert_eq!(
+            popular_search_phrase("house", "Košice", &Locale::Slovak),
+            "Domy Košice"
+        );
+        assert_eq!(
+            popular_search_phrase("land", "Žilina", &Locale::Slovak),
+            "Pozemky Žilina"
+        );
+    }
+
+    #[test]
+    fn popular_search_phrase_falls_back_to_capitalized_type_for_unknown() {
+        // Unknown/future enum values must still yield a usable phrase rather
+        // than an empty label (mirrors label_for_property_type's fallback).
+        assert_eq!(
+            popular_search_phrase("villa", "Nitra", &Locale::Slovak),
+            "Villa Nitra"
+        );
     }
 
     // --- Wiring regression for #953 / #959 ---

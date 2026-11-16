@@ -441,6 +441,34 @@ impl PortalRepository {
         Ok(rows.into_iter().map(|(c,)| c).collect())
     }
 
+    /// Popular search combinations, derived from active-listing inventory.
+    ///
+    /// We do not persist public search-query logs, so "popular" is approximated
+    /// by the `(property_type, city)` pairs with the most active listings — the
+    /// combinations a visitor is most likely to find results for. Returns the
+    /// raw `(property_type, city)` pairs ordered by listing count descending;
+    /// the caller turns them into display phrases.
+    pub async fn get_popular_search_pairs(
+        &self,
+        limit: i32,
+    ) -> Result<Vec<(String, String)>, SqlxError> {
+        let rows: Vec<(String, String)> = sqlx::query_as(
+            r#"
+            SELECT property_type, city
+            FROM listings
+            WHERE status = 'active'
+            GROUP BY property_type, city
+            ORDER BY COUNT(*) DESC, city ASC, property_type ASC
+            LIMIT $1
+            "#,
+        )
+        .bind(limit)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows)
+    }
+
     // ========================================================================
     // Favorites (Story 16.2)
     // ========================================================================
