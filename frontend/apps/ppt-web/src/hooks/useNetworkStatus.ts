@@ -30,8 +30,16 @@ function getInitialOnlineStatus(): boolean {
 
 /**
  * Subscribe to network status changes.
+ *
+ * Guarded for non-browser environments (SSR / web-worker / unsupported):
+ * when `window` is unavailable there are no online/offline events to listen
+ * for, so we return a no-op unsubscribe instead of crashing.
  */
 function subscribeToNetworkStatus(callback: () => void): () => void {
+  if (typeof window === 'undefined') {
+    return () => {};
+  }
+
   window.addEventListener('online', callback);
   window.addEventListener('offline', callback);
 
@@ -43,9 +51,13 @@ function subscribeToNetworkStatus(callback: () => void): () => void {
 
 /**
  * Get current online status snapshot.
+ *
+ * Guarded for environments without `navigator` (SSR / non-browser /
+ * unsupported): falls back to the optimistic "online" default rather than
+ * throwing, matching `getInitialOnlineStatus` / `isOnline`.
  */
 function getOnlineSnapshot(): boolean {
-  return navigator.onLine;
+  return getInitialOnlineStatus();
 }
 
 /**
@@ -181,6 +193,10 @@ export function useNetworkStatusEffect(onOnline?: () => void, onOffline?: () => 
   }, []);
 
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
