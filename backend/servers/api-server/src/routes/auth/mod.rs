@@ -817,6 +817,18 @@ async fn resolve_current_session_id(
 
 // ==================== Refresh Token (Story 1.3) ====================
 
+/// Classify the best-effort revocation of an inactive account's presented
+/// refresh token during `/refresh`.
+///
+/// The `401 ACCOUNT_INACTIVE` rejection stands either way; this only decides
+/// whether a revoke failure is surfaced to the caller (so the handler can
+/// `tracing::error!` it — mirroring the replay fan-out-revoke path) rather
+/// than being silently swallowed via `let _ = ...`. `Ok(_)` covers both a
+/// freshly-revoked token and one that was already revoked / absent.
+fn inactive_revoke_outcome(result: Result<bool, sqlx::Error>) -> Result<(), sqlx::Error> {
+    result.map(|_| ())
+}
+
 /// Refresh token request.
 #[derive(Debug, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
@@ -998,8 +1010,21 @@ pub async fn refresh_token(
     };
 
     if user.status != "active" {
-        // Revoke the token since user is no longer active
-        let _ = state.session_repo.revoke_token(stored_token.id).await;
+        // Revoke the presented token since the user is no longer active.
+        // Best-effort: the 401 ACCOUNT_INACTIVE rejection stands regardless,
+        // but a revoke failure must be surfaced (not swallowed via
+        // `let _ = ...`) so ops can see an inactive account's tokens aren't
+        // being cleaned up — mirroring the replay fan-out-revoke path above.
+        if let Err(err) =
+            inactive_revoke_outcome(state.session_repo.revoke_token(stored_token.id).await)
+        {
+            tracing::error!(
+                error = %err,
+                user_id = %user.id,
+                token_id = %stored_token.id,
+                "Failed to revoke presented refresh token for inactive account"
+            );
+        }
         return Err(err_response(
             StatusCode::UNAUTHORIZED,
             "ACCOUNT_INACTIVE",
