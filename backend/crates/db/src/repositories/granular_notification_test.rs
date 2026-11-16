@@ -202,4 +202,71 @@ mod tests {
             .unwrap();
         assert!(unsent_after.is_empty(), "sent digests are not retried");
     }
+
+    /// Insert a digest row and backdate its `created_at` to `hours_ago`,
+    /// leaving `email_sent_at` NULL — i.e. an unsent digest that has aged.
+    async fn aged_unsent_digest(pool: &sqlx::PgPool, user_id: Uuid, hours_ago: i64) -> Uuid {
+        let created = Utc::now() - Duration::hours(hours_ago);
+        sqlx::query(
+            "INSERT INTO notification_digests \
+             (user_id, digest_type, period_start, period_end, notification_count, created_at) \
+             VALUES ($1, 'daily', $2, $3, 3, $4) RETURNING id",
+        )
+        .bind(user_id)
+        .bind(created - Duration::hours(1))
+        .bind(created)
+        .bind(created)
+        .fetch_one(pool)
+        .await
+        .unwrap()
+        .get("id")
+    }
+
+    /// A digest whose email send keeps failing drops out of `get_unsent_digests`
+    /// once it ages past the resend window. Before the fix it was then silently
+    /// abandoned — never retried and never surfaced. `get_newly_abandoned_digests`
+    /// returns exactly the rows that crossed out of the retry window during the
+    /// last sweep, so the worker can surface each one once.
+    #[sqlx::test(migrator = "crate::MIGRATOR")]
+    async fn digest_that_aged_out_of_retry_window_is_surfaced_once(pool: sqlx::PgPool) {
+        let repo = GranularNotificationRepository::new(pool.clone());
+        let user = make_user(&pool, "abandoned@example.com").await;
+
+        let now = Utc::now();
+        let resend_cutoff = now - Duration::hours(20); // now - resend_window_hours
+        let aged_after = resend_cutoff - Duration::hours(1); // one poll interval back
+
+        // (a) Just aged out of the retry window during this tick → surfaced.
+        let abandoned = aged_unsent_digest(&pool, user, 20).await;
+        // (b) Still retryable (inside the window) → NOT surfaced.
+        let fresh = aged_unsent_digest(&pool, user, 1).await;
+        // (c) Aged out several ticks ago (already surfaced before) → NOT re-surfaced.
+        let old = aged_unsent_digest(&pool, user, 40).await;
+        // (d) Aged out but already delivered → NOT surfaced.
+        let sent = aged_unsent_digest(&pool, user, 20).await;
+        repo.mark_digest_email_sent(sent).await.unwrap();
+
+        let surfaced = repo
+            .get_newly_abandoned_digests(aged_after, resend_cutoff, 100)
+            .await
+            .unwrap();
+
+        assert!(
+            surfaced.contains(&abandoned),
+            "a digest that just aged out of the retry window must be surfaced"
+        );
+        assert!(
+            !surfaced.contains(&fresh),
+            "a still-retryable digest must not be surfaced"
+        );
+        assert!(
+            !surfaced.contains(&old),
+            "a long-abandoned digest must not be re-surfaced every tick"
+        );
+        assert!(
+            !surfaced.contains(&sent),
+            "a delivered digest must never be surfaced as abandoned"
+        );
+        assert_eq!(surfaced.len(), 1, "exactly one row crossed the boundary");
+    }
 }
