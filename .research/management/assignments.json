@@ -75,15 +75,15 @@
       "branch": "auto-impl/pm-scrum-master-xtenant-404-contract-swe-b7fdf348",
       "status": "review",
       "claimed_at": "2026-11-16T06:28:41Z",
-      "last_updated": "2026-11-16T08:47:55Z",
+      "last_updated": "2026-11-16T10:37:26Z",
       "status_changed_at": "2026-11-16T08:34:47Z",
       "pr_number": 3565,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3565",
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": "pr=3565 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=take_moderation_action+decide_appeal returned 500 (not 403) for cross-org RowNotFound; fixed to 404 matching assign/unassign contract; +2 HTTP 404 regression tests; fmt+clippy green, sqlx tests CI-deferred",
-      "reviewer_summary": null,
-      "last_reviewed_oid": "02bfff030d117c8fc395001c077761ea4d771d44",
+      "reviewer_summary": "verdict=approve head_oid=ca93f53c7731197feb0459cc29b5442c1469d491 note=xtenant-404-fix-correct-ci-green-approve-posted-as-comment-self-approve-blocked [merge-blocked: bot self-approval impossible (#3215) — needs human GitHub approval to land; CI green per review]",
+      "last_reviewed_oid": "ca93f53c7731197feb0459cc29b5442c1469d491",
       "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
@@ -181,5 +181,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-16T08:49:38Z"
+  "generated": "2026-11-16T10:37:26Z"
 }
