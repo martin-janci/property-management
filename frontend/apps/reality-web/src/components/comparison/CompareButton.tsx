@@ -7,9 +7,10 @@
 'use client';
 
 import type { ListingSummary } from '@ppt/reality-api-client';
-import { useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { useEffect, useRef, useState } from 'react';
 
-import { useComparison } from '../../lib/comparison-context';
+import { MAX_COMPARISON_ITEMS, useComparison } from '../../lib/comparison-context';
 
 interface CompareButtonProps {
   listing: ListingSummary;
@@ -17,8 +18,21 @@ interface CompareButtonProps {
 }
 
 export function CompareButton({ listing, className = '' }: CompareButtonProps) {
+  const t = useTranslations('comparison');
   const { isInComparison, addToComparison, removeFromComparison, canAddMore } = useComparison();
   const [showMaxWarning, setShowMaxWarning] = useState(false);
+  const warningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear any pending auto-hide timer on unmount so the 3s callback can't fire
+  // setShowMaxWarning after the button has gone away.
+  useEffect(
+    () => () => {
+      if (warningTimerRef.current !== null) {
+        clearTimeout(warningTimerRef.current);
+      }
+    },
+    []
+  );
 
   const inComparison = isInComparison(listing.id);
 
@@ -31,7 +45,15 @@ export function CompareButton({ listing, className = '' }: CompareButtonProps) {
     } else {
       if (!canAddMore) {
         setShowMaxWarning(true);
-        setTimeout(() => setShowMaxWarning(false), 3000);
+        // Clear a still-pending timer before re-arming so rapid clicks don't
+        // leak stacked timeouts.
+        if (warningTimerRef.current !== null) {
+          clearTimeout(warningTimerRef.current);
+        }
+        warningTimerRef.current = setTimeout(() => {
+          setShowMaxWarning(false);
+          warningTimerRef.current = null;
+        }, 3000);
         return;
       }
       addToComparison(listing);
@@ -44,7 +66,7 @@ export function CompareButton({ listing, className = '' }: CompareButtonProps) {
         type="button"
         className={`compare-button ${inComparison ? 'active' : ''} ${className}`}
         onClick={handleClick}
-        title={inComparison ? 'Remove from comparison' : 'Add to comparison'}
+        title={inComparison ? t('button.removeTitle') : t('button.addTitle')}
       >
         <svg
           width="16"
@@ -59,11 +81,11 @@ export function CompareButton({ listing, className = '' }: CompareButtonProps) {
           <line x1="12" y1="20" x2="12" y2="4" />
           <line x1="6" y1="20" x2="6" y2="14" />
         </svg>
-        {inComparison ? 'Comparing' : 'Compare'}
+        {inComparison ? t('button.comparing') : t('button.add')}
       </button>
       {showMaxWarning && (
         <div className="max-warning" role="alert">
-          Maximum 4 properties. Remove one first.
+          {t('button.maxWarning', { max: MAX_COMPARISON_ITEMS })}
         </div>
       )}
 

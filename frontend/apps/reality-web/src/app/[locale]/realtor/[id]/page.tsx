@@ -59,7 +59,7 @@ export default function AgentProfilePage() {
     retry: (count, err) => !(err instanceof RealtorApiError && err.status === 404) && count < 1,
   });
 
-  const { data: reviewsData } = useQuery({
+  const { data: reviewsData, isError: reviewsError } = useQuery({
     queryKey: ['realtor-reviews', id],
     queryFn: () => getRealtorReviews(id),
     enabled: !!id,
@@ -320,9 +320,23 @@ export default function AgentProfilePage() {
                   marginBottom: 16,
                 }}
               >
-                {t('reviews')} ({reviewCount})
+                {t('reviews')}
+                {reviewsError ? '' : ` (${reviewCount})`}
               </h2>
-              {reviews.length === 0 ? (
+              {reviewsError ? (
+                <p
+                  role="alert"
+                  style={{
+                    color: 'var(--ppt-color-danger-dark, #b91c1c)',
+                    background: 'var(--ppt-color-danger-light, #fef2f2)',
+                    border: '1px solid var(--ppt-color-danger, #dc2626)',
+                    borderRadius: 8,
+                    padding: '12px 16px',
+                  }}
+                >
+                  {t('reviewsError')}
+                </p>
+              ) : reviews.length === 0 ? (
                 <p style={{ color: 'var(--ppt-fg-secondary)' }}>{t('noReviews')}</p>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>

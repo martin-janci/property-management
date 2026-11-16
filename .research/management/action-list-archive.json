@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-14T08:32:52Z",
+  "archived_at": "2026-11-16T00:32:28Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2130,6 +2130,78 @@
       }
     },
     {
+      "id": "churn-hotspot-frontend-apps-ppt-web-messages-de-json",
+      "action": "ppt-web messages/de.json churn-hotspot — i18n leaf-parity sweep (de/pl/hu catch-",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-13T12:26:49Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-11-14T22:25:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T12:26:49Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3524,
+        "merged_at": "2026-11-14T20:45:16Z",
+        "at": "2026-11-14T22:25:08Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-messages-en-json",
+      "action": "ppt-web messages/en.json churn-hotspot — base-locale key additions driving i18n ",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-13T12:26:49Z (score=2 conf=high vector=refactor) | gc1-reconcile 2026-11-14T16:44:42Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T12:26:49Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3519,
+        "merged_at": "2026-11-14T16:40:51Z",
+        "at": "2026-11-14T16:44:42Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-messages-hu-json",
+      "action": "ppt-web messages/hu.json churn-hotspot — i18n leaf-parity sweep (de/pl/hu catch-",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-13T12:26:49Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-11-15T06:26:16Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T12:26:49Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3540,
+        "merged_at": "2026-11-15T04:38:07Z",
+        "at": "2026-11-15T06:26:16Z"
+      }
+    },
+    {
       "id": "churn-hotspot-frontend-apps-ppt-web-src-lib-websocket-ts",
       "action": "Churn hotspot: frontend/apps/ppt-web/src/lib/websocket.ts (+11/-94 heartbeat removal PR #2689)",
       "owner_role": "pm-tech-lead",
@@ -3091,6 +3163,81 @@
       }
     },
     {
+      "id": "code-review-admin-web-dashboard-hardcoded-i18n",
+      "action": "admin web dashboard hardcoded i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d admin-web score=1 vector=bug) | gc1-reconcile 2026-11-14T22:25:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T22:25:04Z",
+      "signal_ref": {
+        "segment": "admin-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-20T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3523,
+        "merged_at": "2026-11-14T20:45:16Z",
+        "at": "2026-11-14T22:25:08Z"
+      }
+    },
+    {
+      "id": "code-review-admin-web-impersonation-stop-swallows-failure",
+      "action": "admin web impersonation stop swallows failure",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d admin-web score=2 vector=security) | gc1-reconcile 2026-11-14T22:25:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T22:25:04Z",
+      "signal_ref": {
+        "segment": "admin-web",
+        "score": 2,
+        "vector": "security",
+        "generated": "2026-09-20T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3521,
+        "merged_at": "2026-11-14T20:45:16Z",
+        "at": "2026-11-14T22:25:08Z"
+      }
+    },
+    {
+      "id": "code-review-admin-web-raw-fetch-bypasses-api-client",
+      "action": "admin web raw fetch bypasses api client",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d admin-web score=2 vector=refactor) | gc1-reconcile 2026-11-15T00:27:26Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T22:25:04Z",
+      "signal_ref": {
+        "segment": "admin-web",
+        "score": 2,
+        "vector": "refactor",
+        "generated": "2026-09-20T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3530,
+        "merged_at": "2026-11-14T22:44:47Z",
+        "at": "2026-11-15T00:27:26Z"
+      }
+    },
+    {
       "id": "code-review-admin-web-tenant-lifecycle-no-i18n",
       "action": "admin web tenant lifecycle no i18n",
       "owner_role": "pm-backend",
@@ -3611,6 +3758,31 @@
       }
     },
     {
+      "id": "code-review-api-core-notify-send-before-stamp-dup",
+      "action": "api core notify send before stamp dup",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-14T20:26:05Z (tier1d api-core score=1 vector=bug) | gc1-reconcile 2026-11-15T20:42:33Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T20:26:05Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-09T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3555,
+        "merged_at": "2026-11-15T20:41:08Z",
+        "at": "2026-11-15T20:42:33Z"
+      }
+    },
+    {
       "id": "code-review-api-core-osrng-expect",
       "action": "[archive-terminal-reconcile: terminal in archive (merged)] crypto.rs:127 SysRng.try_fill_bytes(...).expect() panics if OS CSPRNG errors during integration-credential encrypt",
       "owner_role": "pm-backend",
@@ -3662,6 +3834,31 @@
         "vector": "bug"
       },
       "last_updated": "2026-08-17T10:45:00Z"
+    },
+    {
+      "id": "code-review-api-core-payment-reminders-batch-abort",
+      "action": "api core payment reminders batch abort",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-14T20:26:05Z (tier1d api-core score=1 vector=bug) | gc1-reconcile 2026-11-15T20:41:17Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T20:26:05Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-09T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3556,
+        "merged_at": "2026-11-15T20:39:07Z",
+        "at": "2026-11-15T20:41:17Z"
+      }
     },
     {
       "id": "code-review-api-core-push-fanout-client-build-expect",
@@ -3774,6 +3971,30 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-08-24T16:22:58Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-quiet-hours-weekend-master-gate",
+      "action": "api core quiet hours weekend master gate",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T12:47:59Z (tier1d api-core score=2 vector=bug) | dev-reconcile 2026-11-14T14:23:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T12:47:59Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-23T16:34:26Z"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "f599aef50736179861d086d9c87c148867bf18fc",
+        "subject": "code-review-api-core-quiet-hours-weekend-master-gate: attribute crossing quiet-hours window to the day it opened (#3515)",
+        "at": "2026-11-14T14:23:51Z"
       }
     },
     {
@@ -4070,6 +4291,31 @@
         "merged_pr": 2627,
         "merged_at": "2026-08-02T12:11:30Z",
         "at": "2026-08-02T14:04:00Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-statement-upload-not-atomic",
+      "action": "api core statement upload not atomic",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d api-core score=2 vector=bug) | gc1-reconcile 2026-11-14T22:25:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T22:25:04Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-20T02:28:42Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3526,
+        "merged_at": "2026-11-14T20:45:16Z",
+        "at": "2026-11-14T22:25:08Z"
       }
     },
     {
@@ -4858,6 +5104,31 @@
       }
     },
     {
+      "id": "code-review-api-handlers-delegation-null-unit-no-owner-check",
+      "action": "api handlers delegation null unit no owner check",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-14T20:26:05Z (tier1d api-handlers score=2 vector=bug) | gc1-reconcile 2026-11-15T20:41:17Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T20:26:05Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-09T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3554,
+        "merged_at": "2026-11-15T20:38:59Z",
+        "at": "2026-11-15T20:41:17Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-enhanced-chat-stub",
       "action": "api-handlers: enhanced_chat is a stubbed production handler that returns fabricated data....",
       "owner_role": "pm-backend",
@@ -5118,6 +5389,31 @@
       }
     },
     {
+      "id": "code-review-api-handlers-multi-currency-refresh-stub-success",
+      "action": "api handlers multi currency refresh stub success",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-14T06:25:48Z (tier1d api-handlers score=1 vector=bug) | gc1-reconcile 2026-11-15T00:27:26Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T06:25:48Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-16T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3529,
+        "merged_at": "2026-11-14T22:41:31Z",
+        "at": "2026-11-15T00:27:26Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-ocr-photo-url-silent-loss",
       "action": "ai/ocr photo submit returns 201 with fabricated `pending-upload/…` URL when storage disabled — image bytes dropped, no reconciler",
       "owner_role": "pm-backend",
@@ -5139,6 +5435,31 @@
         "merged_pr": 2887,
         "merged_at": "2026-08-30T06:33:45Z",
         "at": "2026-08-30T06:35:17Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-org-member-role-mutation-guards",
+      "action": "api handlers org member role mutation guards",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-14T06:25:48Z (tier1d api-handlers score=2 vector=security) | gc1-reconcile 2026-11-14T22:25:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T06:25:48Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 2,
+        "vector": "security",
+        "generated": "2026-09-16T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3525,
+        "merged_at": "2026-11-14T20:45:16Z",
+        "at": "2026-11-14T22:25:08Z"
       }
     },
     {
@@ -5908,6 +6229,31 @@
       "first_open_at": "2026-07-08T12:21:22Z"
     },
     {
+      "id": "code-review-frontend-packages-auth-exp-bypass",
+      "action": "frontend packages auth exp bypass",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T12:47:59Z (tier1d frontend-packages score=2 vector=bug) | gc1-reconcile 2026-11-14T16:44:42Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T12:47:59Z",
+      "signal_ref": {
+        "segment": "frontend-packages",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-24T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3516,
+        "merged_at": "2026-11-14T16:37:26Z",
+        "at": "2026-11-14T16:44:42Z"
+      }
+    },
+    {
       "id": "code-review-frontend-packages-formatdate-rangeerror",
       "action": "frontend packages formatdate rangeerror",
       "owner_role": "pm-backend",
@@ -6404,6 +6750,31 @@
       }
     },
     {
+      "id": "code-review-mobile-rn-dashboard-layout-fetch-never-applied",
+      "action": "mobile rn dashboard layout fetch never applied",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-14T06:25:48Z (tier1d mobile-rn score=2 vector=bug) | gc1-reconcile 2026-11-15T06:26:16Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T06:25:48Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-17T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3539,
+        "merged_at": "2026-11-15T04:37:56Z",
+        "at": "2026-11-15T06:26:16Z"
+      }
+    },
+    {
       "id": "code-review-mobile-rn-date-locale-en-us",
       "action": "mobile-rn: date formatters hardcode 'en-US' locale in many screens (incomplete fix of #2282), so dates never localize for sk/cs/de users",
       "owner_role": "pm-backend",
@@ -6570,6 +6941,30 @@
       }
     },
     {
+      "id": "code-review-mobile-rn-feedback-manager-no-auth-token",
+      "action": "mobile-rn FeedbackManager singleton is constructed without ever receiving an auth token — every /api/v1/feedback POST ships unauthenticated",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-15T04:24:57Z (score=3 conf=high vector=security) | gc1-reconcile 2026-11-15T12:23:57Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T04:24:57Z",
+      "backlog_ref": {
+        "plan": "plans/code-review-mobile-rn-feedback-manager-no-auth-token.md",
+        "score": 3,
+        "vector": "security"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3543,
+        "merged_at": "2026-11-15T10:29:02Z",
+        "at": "2026-11-15T12:23:57Z"
+      }
+    },
+    {
       "id": "code-review-mobile-rn-feedback-storage-unguarded-parse",
       "action": "mobile rn feedback storage unguarded parse",
       "owner_role": "pm-backend",
@@ -6616,6 +7011,31 @@
         "merged_pr": 2642,
         "merged_at": "2026-08-03T22:18:47Z",
         "at": "2026-08-04T00:07:12Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-imagecompress-width-only-resize",
+      "action": "mobile rn imagecompress width only resize",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-14T16:26:02Z (tier1d mobile-rn score=2 vector=bug) | gc1-reconcile 2026-11-15T14:26:21Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T16:26:02Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-10T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3545,
+        "merged_at": "2026-11-15T12:33:36Z",
+        "at": "2026-11-15T14:26:21Z"
       }
     },
     {
@@ -7650,6 +8070,31 @@
       }
     },
     {
+      "id": "code-review-mobile-rn-widget-bridge-auth-token-never-set",
+      "action": "mobile rn widget bridge auth token never set",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-14T06:25:48Z (tier1d mobile-rn score=2 vector=bug) | gc1-reconcile 2026-11-15T06:26:16Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T06:25:48Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-17T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3537,
+        "merged_at": "2026-11-15T04:36:28Z",
+        "at": "2026-11-15T06:26:16Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-aml-review-decision-untrusted-cast",
       "action": "AmlDashboardPage casts raw window.prompt text into the review-decision union — a typo submits an invalid AML decision",
       "owner_role": "pm-backend",
@@ -7762,6 +8207,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-aichat-hook-raw-fetch-no-auth",
+      "action": "ppt web core aichat hook raw fetch no auth",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-14T20:26:05Z (tier1d ppt-web-core score=2 vector=bug) | gc1-reconcile 2026-11-15T20:41:17Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T20:26:05Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-08T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-15T20:41:17Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-aml-checks-hardcoded-false",
       "action": "ppt-web-core: useAmlDashboard hardcodes id_verified/sof_documented/pep/sanctions_check to false and recommendations=[] regardless of backend state",
       "owner_role": "pm-backend",
@@ -7853,6 +8323,56 @@
         "merged_pr": 2990,
         "merged_at": "2026-09-27T14:30:58Z",
         "at": "2026-09-27T16:25:33Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export-stale-instance",
+      "action": "ppt web core api default export stale instance",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d ppt-web-core score=1 vector=bug) | gc1-reconcile 2026-11-16T00:26:01Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T00:28:30Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-06T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-16T00:26:01Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export-unconfigured",
+      "action": "ppt web core api default export unconfigured",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-14T06:25:48Z (tier1d ppt-web-core score=1 vector=bug) | gc1-reconcile 2026-11-15T04:24:10Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T06:25:48Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-18T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3534,
+        "merged_at": "2026-11-15T02:37:26Z",
+        "at": "2026-11-15T04:24:10Z"
       }
     },
     {
@@ -8035,6 +8555,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-authed-roots-adhoc-guard-gap",
+      "action": "ppt web core authed roots adhoc guard gap",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T12:47:59Z (tier1d ppt-web-core score=1 vector=test) | gc1-reconcile 2026-11-14T16:44:42Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T12:47:59Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "test",
+        "generated": "2026-09-23T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3520,
+        "merged_at": "2026-11-14T16:42:27Z",
+        "at": "2026-11-14T16:44:42Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-authed-roots-session-leak",
       "action": "logout() AUTHED_QUERY_KEY_ROOTS allow-list omits mounted route groups; caches leak across users on shared workstation",
       "owner_role": "pm-backend",
@@ -8079,6 +8624,31 @@
         "merged_pr": 3034,
         "merged_at": "2026-10-08T00:33:31Z",
         "at": "2026-10-08T02:39:36Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-community-route-fully-stubbed",
+      "action": "ppt web core community route fully stubbed",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-14T16:26:02Z (tier1d ppt-web-core score=3 vector=bug) | gc1-reconcile 2026-11-14T16:44:42Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T16:26:02Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 3,
+        "vector": "bug",
+        "generated": "2026-09-11T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-14T16:44:42Z"
       }
     },
     {
@@ -8248,6 +8818,31 @@
       "dispatcher_merged": "2026-08-17T08:41:00Z"
     },
     {
+      "id": "code-review-ppt-web-core-errorhandler-raw-backend-message-passthrough",
+      "action": "ppt web core errorhandler raw backend message passthrough",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d ppt-web-core score=2 vector=security) | gc1-reconcile 2026-11-15T00:27:26Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T22:25:04Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "security",
+        "generated": "2026-09-19T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3527,
+        "merged_at": "2026-11-14T22:43:25Z",
+        "at": "2026-11-15T00:27:26Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-errorhandler-raw-backend-msg",
       "action": "ppt web core errorhandler raw backend msg",
       "owner_role": "pm-backend",
@@ -8318,6 +8913,56 @@
         "commit": "6c9173fa5e3e231883005d83b7facdb4e8977e78",
         "subject": "code-review-ppt-web-core-fault-detail-mutations-swallow-errors: surface fault-detail action-mutation errors (#3500)",
         "at": "2026-11-14T08:31:11Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-faults-url-param-unvalidated-cast",
+      "action": "ppt web core faults url param unvalidated cast",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-14T16:26:02Z (tier1d ppt-web-core score=1 vector=bug) | gc1-reconcile 2026-11-15T14:26:21Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T16:26:02Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-11T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3546,
+        "merged_at": "2026-11-15T12:35:00Z",
+        "at": "2026-11-15T14:26:21Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-financial-query-silent-error",
+      "action": "ppt web core financial query silent error",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-14T06:25:48Z (tier1d ppt-web-core score=2 vector=bug) | gc1-reconcile 2026-11-15T04:24:10Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T06:25:48Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-17T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3535,
+        "merged_at": "2026-11-15T02:42:48Z",
+        "at": "2026-11-15T04:24:10Z"
       }
     },
     {
@@ -8410,6 +9055,31 @@
         "merged_pr": 2995,
         "merged_at": "2026-09-27T14:30:58Z",
         "at": "2026-09-27T16:25:33Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-home-dashboard-role-route",
+      "action": "ppt web core home dashboard role route",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-14T06:25:48Z (tier1d ppt-web-core score=2 vector=bug) | gc1-reconcile 2026-11-15T06:47:20Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T06:25:48Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-16T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-15T06:47:20Z"
       }
     },
     {
@@ -8652,6 +9322,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-manager-dashboard-unguarded",
+      "action": "ppt web core manager dashboard unguarded",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-14T06:25:48Z (tier1d ppt-web-core score=2 vector=bug) | gc1-reconcile 2026-11-15T06:47:20Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T06:25:48Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-16T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-15T06:47:20Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-meters-allmeters-false-empty",
       "action": "ppt web core meters allmeters false empty",
       "owner_role": "pm-backend",
@@ -8674,6 +9369,31 @@
         "merged_pr": 3419,
         "merged_at": "2026-11-11T20:30:20Z",
         "at": "2026-11-11T20:30:30Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-mfa-verify-hardcoded-path",
+      "action": "ppt web core mfa verify hardcoded path",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d ppt-web-core score=2 vector=bug) | gc1-reconcile 2026-11-16T00:26:01Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T00:28:30Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-06T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-16T00:26:01Z"
       }
     },
     {
@@ -8750,6 +9470,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-nav-aria-label-i18n",
+      "action": "ppt web core nav aria label i18n",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-14T06:25:48Z (tier1d ppt-web-core score=1 vector=refactor) | gc1-reconcile 2026-11-15T14:26:21Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T06:25:48Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "refactor",
+        "generated": "2026-09-16T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3547,
+        "merged_at": "2026-11-15T12:33:05Z",
+        "at": "2026-11-15T14:26:21Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-needing-maint-querykey-arg",
       "action": "ppt web core needing maint querykey arg",
       "owner_role": "pm-backend",
@@ -8820,6 +9565,80 @@
         "merged_pr": 2647,
         "merged_at": "2026-08-04T00:13:43Z",
         "at": "2026-08-04T02:09:58Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-ocr-hook-raw-fetch-no-auth",
+      "action": "ppt web core ocr hook raw fetch no auth",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-14T20:26:05Z (tier1d ppt-web-core score=2 vector=bug) | gc1-reconcile 2026-11-16T00:26:01Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T20:26:05Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-08T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-16T00:26:01Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-org-provider-value-not-memoized",
+      "action": "ppt web core org provider value not memoized",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T12:47:59Z (tier1d ppt-web-core score=1 vector=bug) | dev-reconcile 2026-11-14T14:23:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T12:47:59Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-25T00:00:00Z"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "4baef590104bf64442588e9d86c1394b5b727b5d",
+        "subject": "code-review-ppt-web-core-org-provider-value-not-memoized: memoize OrganizationProvider context value (#3514)",
+        "at": "2026-11-14T14:23:51Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-orgprovider-unmemoized",
+      "action": "ppt web core orgprovider unmemoized",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-13T12:47:59Z (tier1d ppt-web-core score=1 vector=bug) | gc1-reconcile 2026-11-14T22:25:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T12:47:59Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-24T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-14T22:25:08Z"
       }
     },
     {
@@ -8966,6 +9785,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-reports-route-stub-analytics",
+      "action": "ppt web core reports route stub analytics",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-14T16:26:02Z (tier1d ppt-web-core score=2 vector=bug) | gc1-reconcile 2026-11-15T18:24:50Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T16:26:02Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-11T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3549,
+        "merged_at": "2026-11-15T16:31:57Z",
+        "at": "2026-11-15T18:24:50Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-reports-schedule-stub-data",
       "action": "ppt web core reports schedule stub data",
       "owner_role": "pm-tech-lead",
@@ -9039,6 +9883,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-route-query-silent-error",
+      "action": "ppt web core route query silent error",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T02:24:19Z (tier1d ppt-web-core score=2 vector=bug) | gc1-reconcile 2026-11-14T10:40:50Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T02:24:19Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-26T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3504,
+        "merged_at": "2026-11-14T10:28:29Z",
+        "at": "2026-11-14T10:40:50Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-route-toasts-i18n",
       "action": "ppt web core route toasts i18n",
       "owner_role": "pm-backend",
@@ -9062,6 +9931,25 @@
         "merged_at": "2026-11-13T17:03:35Z",
         "at": "2026-11-13T20:27:07Z"
       }
+    },
+    {
+      "id": "code-review-ppt-web-core-route-toasts-i18n-gap",
+      "action": "ppt web core route toasts i18n gap",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-14T16:26:02Z (tier1d ppt-web-core score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T16:26:02Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-10T22:35:00Z"
+      },
+      "noop_closed": "2026-11-15T14:41:19Z no-op: route toasts already i18n-wired on dev (test 151 passes)"
     },
     {
       "id": "code-review-ppt-web-core-usewebsocket-subscribe-gate",
@@ -10145,6 +11033,25 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-editfaultpage-no-i18n",
+      "action": "ppt web ui editfaultpage no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-14T16:26:02Z (tier1d ppt-web-ui score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T16:26:02Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-11T00:00:00Z"
+      },
+      "noop_closed": "2026-11-15T14:41:19Z no-op: EditFaultPage already fully i18n-wired on dev"
+    },
+    {
       "id": "code-review-ppt-web-ui-emergency-dir-raw-err-message",
       "action": "ppt-web-ui EmergencyContactDirectoryPage: 5 error handlers show raw `err.message` (English backend copy) — the t() i18n fallback is dead code on the common failure path",
       "owner_role": "pm-backend",
@@ -10282,6 +11189,56 @@
         "merged_pr": 3011,
         "merged_at": "2026-10-01T20:29:57Z",
         "at": "2026-10-02T00:26:03Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-ismanager-hardcoded-true",
+      "action": "ppt web ui facilities ismanager hardcoded true",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-14T06:25:48Z (tier1d ppt-web-ui score=2 vector=bug) | gc1-reconcile 2026-11-15T06:47:20Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T06:25:48Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-17T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3541,
+        "merged_at": "2026-11-15T06:42:41Z",
+        "at": "2026-11-15T06:47:20Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-page-swallows-load-error",
+      "action": "ppt web ui facilities page swallows load error",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-14T06:25:48Z (tier1d ppt-web-ui score=2 vector=bug) | gc1-reconcile 2026-11-15T04:24:10Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T06:25:48Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-17T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-15T04:24:10Z"
       }
     },
     {
@@ -11006,6 +11963,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-reading-form-number-coerce-zero",
+      "action": "ppt web ui reading form number coerce zero",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-14T06:25:48Z (tier1d ppt-web-ui score=1 vector=bug) | gc1-reconcile 2026-11-15T06:26:16Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T06:25:48Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-17T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3538,
+        "merged_at": "2026-11-15T04:37:42Z",
+        "at": "2026-11-15T06:26:16Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-registry-feature-orphaned-routes",
       "action": "ppt web ui registry feature orphaned routes",
       "owner_role": "pm-backend",
@@ -11124,6 +12106,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-registry-page-no-i18n",
+      "action": "ppt web ui registry page no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-13T12:47:59Z (tier1d ppt-web-ui score=1 vector=bug) | gc1-reconcile 2026-11-14T16:24:28Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T12:47:59Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-23T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-14T16:24:28Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-registry-rules-save-silent-fail",
       "action": "RegistryRulesPage save silently swallows errors and gives no success feedback",
       "owner_role": "pm-backend",
@@ -11145,6 +12152,31 @@
         "merged_pr": 3009,
         "merged_at": "2026-10-01T20:29:43Z",
         "at": "2026-10-02T00:26:03Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-silent-mutation-fail",
+      "action": "ppt web ui registry silent mutation fail",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-13T12:47:59Z (tier1d ppt-web-ui score=2 vector=bug) | gc1-reconcile 2026-11-14T10:40:50Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T12:47:59Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-23T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-14T10:40:50Z"
       }
     },
     {
@@ -11261,6 +12293,31 @@
         "merged_pr": 2634,
         "merged_at": "2026-08-03T10:15:45Z",
         "at": "2026-08-03T10:16:35Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-signature-modal-raw-err",
+      "action": "ppt web ui signature modal raw err",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-14T16:26:02Z (tier1d ppt-web-ui score=1 vector=bug) | gc1-reconcile 2026-11-15T18:24:50Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T16:26:02Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-11T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3550,
+        "merged_at": "2026-11-15T16:32:28Z",
+        "at": "2026-11-15T18:24:50Z"
       }
     },
     {
@@ -11614,6 +12671,31 @@
         "merged_pr": 2892,
         "merged_at": "2026-08-30T16:37:56Z",
         "at": "2026-08-30T18:24:58Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-categories-hardcoded-sk-labels",
+      "action": "reality server categories hardcoded sk labels",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-14T16:26:02Z (tier1d reality-server score=1 vector=bug) | gc1-reconcile 2026-11-15T18:24:50Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T16:26:02Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-10T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3551,
+        "merged_at": "2026-11-15T16:34:06Z",
+        "at": "2026-11-15T18:24:50Z"
       }
     },
     {
@@ -12106,6 +13188,31 @@
         "commit": "52b219b5ea33fa24d4b68d3447b4d6a7d42b21e8",
         "subject": "code-review-reality-server-list-my-reports-total-page-length: list_my_reports returns true total row count (#2801)",
         "at": "2026-08-20T10:27:25Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-listing-slug-is-uuid",
+      "action": "reality server listing slug is uuid",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-14T20:26:05Z (tier1d reality-server score=1 vector=bug) | gc1-reconcile 2026-11-15T20:25:53Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T20:26:05Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-10T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3552,
+        "merged_at": "2026-11-15T18:34:40Z",
+        "at": "2026-11-15T20:25:53Z"
       }
     },
     {
@@ -13155,6 +14262,31 @@
       }
     },
     {
+      "id": "code-review-reality-web-comparison-i18n-gap",
+      "action": "reality web comparison i18n gap",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T12:47:59Z (tier1d reality-web score=2 vector=bug) | gc1-reconcile 2026-11-14T22:25:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T12:47:59Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-22T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3522,
+        "merged_at": "2026-11-14T20:45:16Z",
+        "at": "2026-11-14T22:25:08Z"
+      }
+    },
+    {
       "id": "code-review-reality-web-comparison-parse-shape",
       "action": "reality-web comparison-context JSON.parse(localStorage) with no shape check — tampered value crashes .some(...)",
       "owner_role": "pm-backend",
@@ -13198,6 +14330,55 @@
         "commit": "6a57a186728ad2bf828b112609fa708bf1afcc4c",
         "subject": "code-review-reality-web-comparison-share-all-or-nothing: tolerate bad listing ids in shared comparison URLs (#2701)",
         "at": "2026-08-07T08:10:06Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-comparison-share-id-unencoded",
+      "action": "reality web comparison share id unencoded",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d reality-web score=1 vector=bug) | gc1-reconcile 2026-11-15T06:26:16Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T22:25:04Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-19T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3536,
+        "merged_at": "2026-11-15T04:38:19Z",
+        "at": "2026-11-15T06:26:16Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-comparison-timer-leak",
+      "action": "reality web comparison timer leak",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T12:47:59Z (tier1d reality-web score=1 vector=bug) | dev-reconcile 2026-11-14T14:23:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T12:47:59Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-22T00:00:00Z"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "8472a837f25cee6baa22a5f525473d11dddfed28",
+        "subject": "code-review-reality-web-comparison-timer-leak: clear comparison auto-hide timers (#3513)",
+        "at": "2026-11-14T14:23:51Z"
       }
     },
     {
@@ -13273,6 +14454,31 @@
       }
     },
     {
+      "id": "code-review-reality-web-csv-import-filepick-no-type-guard",
+      "action": "reality web csv import filepick no type guard",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d reality-web score=1 vector=bug) | gc1-reconcile 2026-11-14T22:25:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T22:25:04Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-19T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-14T22:25:08Z"
+      }
+    },
+    {
       "id": "code-review-reality-web-csvimport-fileselect-noval",
       "action": "reality web csvimport fileselect noval",
       "owner_role": "pm-backend",
@@ -13295,6 +14501,30 @@
         "merged_pr": 3436,
         "merged_at": "2026-11-12T08:38:24Z",
         "at": "2026-11-12T08:39:37Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-currency-code-rangeerror-crash",
+      "action": "reality web currency code rangeerror crash",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d reality-web score=2 vector=bug) | dev-reconcile 2026-11-14T14:23:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T22:25:04Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-21T00:00:00Z"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "57a1b5008cca728418dc426835c83b093bd2f093",
+        "subject": "code-review-reality-web-currency-code-rangeerror-crash: guard formatPrice against invalid currency codes (#3512)",
+        "at": "2026-11-14T14:23:51Z"
       }
     },
     {
@@ -13706,6 +14936,31 @@
       "retry_round": 1
     },
     {
+      "id": "code-review-reality-web-listing-sections-currency-ssr-500",
+      "action": "reality web listing sections currency ssr 500",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d reality-web score=2 vector=bug) | gc1-reconcile 2026-11-15T00:27:26Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T22:25:04Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-21T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-15T00:27:26Z"
+      }
+    },
+    {
       "id": "code-review-reality-web-listingform-nan-validation",
       "action": "reality-web ListingForm posts NaN for area/rooms — non-numeric or negative input coerced silently",
       "owner_role": "pm-backend",
@@ -14041,6 +15296,31 @@
       }
     },
     {
+      "id": "code-review-reality-web-realtor-listing-crud-i18n",
+      "action": "reality web realtor listing crud i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T02:24:19Z (tier1d reality-web score=2 vector=bug) | gc1-reconcile 2026-11-14T16:44:42Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T02:24:19Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-25T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3517,
+        "merged_at": "2026-11-14T16:37:31Z",
+        "at": "2026-11-14T16:44:42Z"
+      }
+    },
+    {
       "id": "code-review-reality-web-realtor-mgmt-i18n",
       "action": "reality-web RealtorManagement page has untranslated English UI on 4-locale portal",
       "owner_role": "pm-backend",
@@ -14092,6 +15372,30 @@
         "merged_pr": 3484,
         "merged_at": "2026-11-13T15:43:53Z",
         "at": "2026-11-13T18:24:20Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-realtor-reviews-silent-error",
+      "action": "reality-web realtor/[id] page swallows realtor-reviews useQuery error — renders ",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-13T12:26:49Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-11-14T16:44:42Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T12:26:49Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3518,
+        "merged_at": "2026-11-14T16:41:04Z",
+        "at": "2026-11-14T16:44:42Z"
       }
     },
     {
@@ -14310,6 +15614,31 @@
       "retry_round": 1
     },
     {
+      "id": "code-review-reality-web-shared-cmp-no-shape-check",
+      "action": "reality web shared cmp no shape check",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T12:47:59Z (tier1d reality-web score=1 vector=bug) | gc1-reconcile 2026-11-15T04:24:10Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T12:47:59Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-22T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3532,
+        "merged_at": "2026-11-15T02:37:11Z",
+        "at": "2026-11-15T04:24:10Z"
+      }
+    },
+    {
       "id": "code-review-reality-web-sso-probe-caches-transient-blip",
       "action": "reality web sso probe caches transient blip",
       "owner_role": "pm-backend",
@@ -14382,6 +15711,31 @@
         "merged_pr": 3489,
         "merged_at": "2026-11-13T17:03:17Z",
         "at": "2026-11-13T20:27:07Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-unvalidated-href-url-scheme",
+      "action": "reality web unvalidated href url scheme",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d reality-web score=2 vector=security) | gc1-reconcile 2026-11-15T04:24:10Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T22:25:04Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "security",
+        "generated": "2026-09-19T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3533,
+        "merged_at": "2026-11-15T02:37:19Z",
+        "at": "2026-11-15T04:24:10Z"
       }
     },
     {
@@ -25730,6 +27084,61 @@
         "merged_pr": 3507,
         "merged_at": "2026-11-14T04:42:14Z",
         "at": "2026-11-14T04:42:28Z"
+      }
+    },
+    {
+      "id": "gh-issue-3531",
+      "action": "Follow-up: ppt-web de/pl/hu still miss 455 en keys after the \"parity\" PR (PR #3524) (Closes #3531)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-11-15T00:27:53Z (#3531) | gc1-reconcile 2026-11-15T06:47:20Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T00:27:53Z",
+      "issue_ref": {
+        "number": 3531,
+        "url": "https://github.com/martin-janci/property-management/issues/3531",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3542,
+        "merged_at": "2026-11-15T06:45:35Z",
+        "at": "2026-11-15T06:47:20Z"
+      }
+    },
+    {
+      "id": "gh-issue-3544",
+      "action": "Backend: mobile feedback POST targets /api/v1/feedback, which is not mounted (404) (Closes #3544)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-11-15T08:23:28Z (#3544) | gc1-reconcile 2026-11-15T14:26:21Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T08:23:28Z",
+      "issue_ref": {
+        "number": 3544,
+        "url": "https://github.com/martin-janci/property-management/issues/3544",
+        "labels": [
+          "bug",
+          "backend",
+          "follow-up"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3548,
+        "merged_at": "2026-11-15T12:35:52Z",
+        "at": "2026-11-15T14:26:21Z"
       }
     },
     {

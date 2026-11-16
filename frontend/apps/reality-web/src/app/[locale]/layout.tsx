@@ -7,7 +7,7 @@ import { ComparisonProvider } from '@/lib/comparison-context';
 import { FeatureFlags } from '@/lib/feature-flags';
 import { QueryProvider } from '@/lib/query-provider';
 import { serializeForScript } from '@/lib/serialize-script';
-import { brandingToStyleObject, getTenantConfig } from '@/lib/tenant-config';
+import { brandingToStyleObject, faviconHref, getTenantConfig } from '@/lib/tenant-config';
 import { TenantProvider } from '@/providers/TenantProvider';
 import { CookieConsentBanner } from '../../components/CookieConsentBanner';
 import { ComparisonTray } from '../../components/comparison';
@@ -167,6 +167,10 @@ export default async function LocaleLayout({ children, params }: Props) {
   // style attribute.
   const brandingStyle = brandingToStyleObject(tenantConfig.branding);
 
+  // Tenant-authored logo URL headed for the `<link rel="icon">` href. Resolved
+  // through the shared helper so the scheme allowlist lives in one place.
+  const iconHref = faviconHref(tenantConfig.branding);
+
   // Embed a minimal projection of the tenant config so client-side
   // `useFeatureFlag` and `useTenantContext` work without a fetch.
   const tenantBootstrapObj = {
@@ -190,9 +194,7 @@ export default async function LocaleLayout({ children, params }: Props) {
       suppressHydrationWarning
     >
       <head>
-        {tenantConfig.branding.logo_url ? (
-          <link rel="icon" href={tenantConfig.branding.logo_url} />
-        ) : null}
+        {iconHref ? <link rel="icon" href={iconHref} /> : null}
         <script
           // biome-ignore lint/security/noDangerouslySetInnerHtml: bootstrap must inline
           dangerouslySetInnerHTML={{

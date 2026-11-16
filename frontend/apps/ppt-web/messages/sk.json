@@ -2230,7 +2230,9 @@
       "pendingReconciliationTitle": "Čaká na spárovanie",
       "recentPayments": "Posledné platby",
       "matchFailed": "Platbu sa nepodarilo spárovať",
-      "autoMatchFailed": "Platby sa nepodarilo automaticky spárovať"
+      "autoMatchFailed": "Platby sa nepodarilo automaticky spárovať",
+      "loadFailed": "Nepodarilo sa načítať platby",
+      "retry": "Skúsiť znova"
     },
     "budget": {
       "overBudget": "Prekročený rozpočet",
@@ -2958,6 +2960,10 @@
         "title": "Prístup zamietnutý",
         "message": "Nemáte oprávnenie vykonať túto akciu."
       },
+      "FORBIDDEN": {
+        "title": "Prístup zamietnutý",
+        "message": "Nemáte oprávnenie vykonať túto akciu."
+      },
       "VALIDATION_ERROR": {
         "title": "Chyba overenia",
         "message": "Skontrolujte prosím chyby vo formulári."
@@ -3124,7 +3130,6 @@
     "completeIn60Seconds": "Väčšinu úloh dokončíte za menej ako 60 sekúnd",
     "recentActivity": "Posledná aktivita",
     "activity": {
-      "meterReadingSubmitted": "Odpočet merača odoslaný",
       "announcementPublished": "Nové oznámenie: {{title}}",
       "faultReportedByYou": "Nahlásili ste poruchu: {{title}}",
       "loading": "Načítava sa aktivita…",
@@ -4503,6 +4508,7 @@
   "iot": {
     "dashboardTitle": "Inteligentná budova",
     "dashboardSubtitle": "Senzory, telemetria a upozornenia naprieč vašimi budovami.",
+    "dashboardLoadError": "Nepodarilo sa načítať prehľad. Skúste to znova.",
     "openDashboard": "Prehľad",
     "sensorsTitle": "Senzory a zariadenia",
     "sensorsSubtitle": "Registrujte a spravujte IoT zariadenia vo vašich budovách.",
@@ -5107,6 +5113,7 @@
     "loadingDocuments": "Načítavajú sa dokumenty",
     "loadingFolders": "Načítavajú sa priečinky",
     "loadingPreview": "Načítava sa náhľad",
+    "mainNavigation": "Hlavná navigácia",
     "moveDocuments": "Presunúť dokumenty",
     "moveDown": "Posunúť nadol",
     "moveUp": "Posunúť nahor",
@@ -5116,6 +5123,7 @@
     "newRootFolder": "Nový koreňový priečinok",
     "newSubfolder": "Nový podpriečinok",
     "nextPage": "Nasledujúca strana",
+    "openMenu": "Otvoriť menu",
     "pdfNavigation": "Navigácia v PDF",
     "pdfPreview": "Náhľad PDF",
     "pinnedAnnouncements": "Pripnuté oznámenia",
@@ -5123,6 +5131,7 @@
     "postOptionsMenu": "Menu možností príspevku",
     "previousPage": "Predchádzajúca strana",
     "progress": "Priebeh",
+    "publicNavigation": "Navigácia stránky",
     "reactions": "Reakcie",
     "removeOption": "Odstrániť možnosť",
     "renameFolder": "Premenovať priečinok",
@@ -6787,6 +6796,7 @@
       "notesPlaceholder": "Doplňujúce informácie k odpočtu...",
       "submitReading": "Odoslať odpočet",
       "errors": {
+        "valueRequired": "Zadajte platný stav meradla",
         "valueNegative": "Stav meradla nemôže byť záporný",
         "valueLowerThanLast": "Stav meradla nemôže byť nižší ako pri poslednom odpočte",
         "dateRequired": "Zadajte dátum odpočtu",
@@ -7097,9 +7107,6 @@
   },
   "shell": {
     "brand": "Správa nehnuteľností",
-    "mainNavigation": "Hlavná navigácia",
-    "openMenu": "Otvoriť menu",
-    "closeMenu": "Zavrieť menu",
     "createAccount": "Vytvoriť účet",
     "sections": {
       "overview": "Prehľad",
@@ -7129,7 +7136,6 @@
       "guest": "Hosť",
       "real_estate_agent": "Realitný maklér"
     },
-    "publicNavigation": "Navigácia stránky",
     "inbox": {
       "title": "Upozornenia",
       "unreadMarker": "Neprečítané:",

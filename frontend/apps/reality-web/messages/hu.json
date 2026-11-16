@@ -168,6 +168,20 @@
     "transactionType": {
       "sale": "Eladó",
       "rent": "Kiadó"
+    },
+    "button": {
+      "add": "Összehasonlítás",
+      "comparing": "Összehasonlítás alatt",
+      "addTitle": "Hozzáadás az összehasonlításhoz",
+      "removeTitle": "Eltávolítás az összehasonlításból",
+      "maxWarning": "Legfeljebb {max} ingatlan. Előbb távolítson el egyet."
+    },
+    "tray": {
+      "count": "{count}/{max} ingatlan az összehasonlításhoz",
+      "clearAll": "Összes törlése",
+      "thumbnailAlt": "{title} indexképe",
+      "compareNeedMore": "Összehasonlítás (legalább {min})",
+      "compareReady": "{count} ingatlan összehasonlítása"
     }
   },
   "contact": {
@@ -433,6 +447,7 @@
       "rating": "Értékelés",
       "reviewVerified": "Ellenőrzött",
       "reviews": "Értékelések",
+      "reviewsError": "Az értékeléseket nem sikerült betölteni. Kérjük, próbálja meg később.",
       "sendMessage": "Üzenet küldése",
       "specializations": "Szakterületek",
       "totalListings": "Összes hirdetés",

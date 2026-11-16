@@ -1,29 +1,23 @@
 /**
  * Reports API client (Epic 53).
  *
- * Client functions for reports, schedules, analytics, and trends.
+ * Client functions for report definitions, data sources, schedules, and
+ * execution history.
  */
 
 import type { FaultCategoryCount, FaultPriorityCount, FaultStatusCount } from '../faults/types';
 import { ApiError, authenticatedFetch } from '../lib/fetch';
 import type {
-  AnalyticsParams,
-  AnalyticsSummary,
-  BuildingAnalytics,
   CreateReportDefinition,
   CreateReportSchedule,
   CronScheduleUpdateRequest,
   DataSource,
   ListSchedulesParams,
   ListSchedulesResponse,
-  PeriodComparison,
   ReportDefinition,
   ReportResult,
   ReportRun,
   ReportSchedule,
-  TrendAnalysis,
-  TrendLine,
-  TrendParams,
 } from './types';
 
 const API_BASE = '/api/v1/reports';
@@ -251,66 +245,12 @@ export async function retryReportExecution(executionId: string): Promise<ReportE
   return fetchApi(`${API_BASE}/executions/${executionId}/retry`, { method: 'POST' });
 }
 
-// ============================================================================
-// ANALYTICS
-// ============================================================================
-
-export async function getAnalyticsSummary(params: AnalyticsParams): Promise<AnalyticsSummary> {
-  const searchParams = new URLSearchParams();
-  searchParams.set('organization_id', params.organization_id);
-  if (params.building_id) searchParams.set('building_id', params.building_id);
-  if (params.start_date) searchParams.set('start_date', params.start_date);
-  if (params.end_date) searchParams.set('end_date', params.end_date);
-  return fetchApi(`${API_BASE}/analytics/summary?${searchParams}`);
-}
-
-export async function getBuildingAnalytics(
-  buildingId: string,
-  params?: Omit<AnalyticsParams, 'organization_id' | 'building_id'>
-): Promise<BuildingAnalytics> {
-  const searchParams = new URLSearchParams();
-  if (params?.start_date) searchParams.set('start_date', params.start_date);
-  if (params?.end_date) searchParams.set('end_date', params.end_date);
-  return fetchApi(`${API_BASE}/analytics/buildings/${buildingId}?${searchParams}`);
-}
-
-// ============================================================================
-// TREND ANALYSIS
-// ============================================================================
-
-export async function getTrendAnalysis(params: TrendParams): Promise<TrendAnalysis> {
-  const searchParams = new URLSearchParams();
-  searchParams.set('organization_id', params.organization_id);
-  searchParams.set('metric', params.metric);
-  searchParams.set('period', params.period);
-  searchParams.set('start_date', params.start_date);
-  searchParams.set('end_date', params.end_date);
-  if (params.building_id) searchParams.set('building_id', params.building_id);
-  if (params.compare_previous) searchParams.set('compare_previous', 'true');
-  return fetchApi(`${API_BASE}/trends?${searchParams}`);
-}
-
-export async function getTrendLines(params: TrendParams): Promise<TrendLine[]> {
-  const searchParams = new URLSearchParams();
-  searchParams.set('organization_id', params.organization_id);
-  searchParams.set('metric', params.metric);
-  searchParams.set('period', params.period);
-  searchParams.set('start_date', params.start_date);
-  searchParams.set('end_date', params.end_date);
-  if (params.building_id) searchParams.set('building_id', params.building_id);
-  return fetchApi(`${API_BASE}/trends/lines?${searchParams}`);
-}
-
-export async function comparePeriods(
-  organizationId: string,
-  metric: string,
-  periods: { start_date: string; end_date: string; label: string }[]
-): Promise<PeriodComparison> {
-  return fetchApi(`${API_BASE}/trends/compare`, {
-    method: 'POST',
-    body: JSON.stringify({ organization_id: organizationId, metric, periods }),
-  });
-}
+// NOTE: the dashboard analytics + trend-analysis client functions
+// (getAnalyticsSummary, getBuildingAnalytics, getTrendAnalysis, getTrendLines,
+// comparePeriods) were removed — they targeted `/api/v1/reports/analytics/*`
+// and `/trends/*` routes the reports router never registered and had zero
+// callers (code-review-ppt-web-core-reports-route-stub-analytics). Re-add them
+// only alongside a real backend analytics endpoint.
 
 // ============================================================================
 // EPIC 55: ADVANCED REPORTS - Types

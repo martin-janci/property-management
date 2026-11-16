@@ -168,6 +168,20 @@
     "transactionType": {
       "sale": "Na sprzedaż",
       "rent": "Do wynajęcia"
+    },
+    "button": {
+      "add": "Porównaj",
+      "comparing": "Porównywanie",
+      "addTitle": "Dodaj do porównania",
+      "removeTitle": "Usuń z porównania",
+      "maxWarning": "Maksymalnie {max} nieruchomości. Najpierw usuń jedną."
+    },
+    "tray": {
+      "count": "{count}/{max} nieruchomości do porównania",
+      "clearAll": "Wyczyść wszystko",
+      "thumbnailAlt": "Miniatura: {title}",
+      "compareNeedMore": "Porównaj (co najmniej {min})",
+      "compareReady": "Porównaj {count} nieruchomości"
     }
   },
   "contact": {
@@ -433,6 +447,7 @@
       "rating": "Ocena",
       "reviewVerified": "Zweryfikowano",
       "reviews": "Opinie",
+      "reviewsError": "Nie udało się załadować opinii. Spróbuj ponownie później.",
       "sendMessage": "Wyślij wiadomość",
       "specializations": "Specjalizacje",
       "totalListings": "Ogłoszenia łącznie",

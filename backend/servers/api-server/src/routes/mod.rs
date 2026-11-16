@@ -23,6 +23,7 @@ pub mod delegations;
 pub mod documents;
 pub mod facilities;
 pub mod faults;
+pub mod feedback;
 pub mod financial;
 pub mod gdpr;
 pub mod granular_notifications;

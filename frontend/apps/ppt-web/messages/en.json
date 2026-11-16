@@ -2192,7 +2192,9 @@
       "pendingReconciliationTitle": "Pending Reconciliation",
       "recentPayments": "Recent Payments",
       "matchFailed": "Failed to allocate payment",
-      "autoMatchFailed": "Failed to auto-match payments"
+      "autoMatchFailed": "Failed to auto-match payments",
+      "loadFailed": "Failed to load payments",
+      "retry": "Retry"
     },
     "budgets": {
       "title": "Budget Management",
@@ -2985,6 +2987,10 @@
         "title": "Access Denied",
         "message": "You do not have permission to perform this action."
       },
+      "FORBIDDEN": {
+        "title": "Access Denied",
+        "message": "You do not have permission to perform this action."
+      },
       "VALIDATION_ERROR": {
         "title": "Validation Error",
         "message": "Please check the form for errors."
@@ -3622,6 +3628,7 @@
       "notesPlaceholder": "Any additional information about this reading...",
       "submitReading": "Submit Reading",
       "errors": {
+        "valueRequired": "Please enter a valid reading value",
         "valueNegative": "Reading value cannot be negative",
         "valueLowerThanLast": "Reading value cannot be lower than the last reading",
         "dateRequired": "Reading date is required",
@@ -6924,6 +6931,7 @@
     "loadingDocuments": "Loading documents",
     "loadingFolders": "Loading folders",
     "loadingPreview": "Loading preview",
+    "mainNavigation": "Main navigation",
     "moveDocuments": "Move documents",
     "moveDown": "Move down",
     "moveUp": "Move up",
@@ -6933,6 +6941,7 @@
     "newRootFolder": "New root folder",
     "newSubfolder": "New subfolder",
     "nextPage": "Next page",
+    "openMenu": "Open menu",
     "pdfNavigation": "PDF navigation",
     "pdfPreview": "PDF preview",
     "pinnedAnnouncements": "Pinned announcements",
@@ -6940,6 +6949,7 @@
     "postOptionsMenu": "Post options menu",
     "previousPage": "Previous page",
     "progress": "Progress",
+    "publicNavigation": "Site navigation",
     "reactions": "Reactions",
     "removeOption": "Remove option",
     "renameFolder": "Rename folder",
@@ -8616,9 +8626,6 @@
   },
   "shell": {
     "brand": "Property Manager",
-    "mainNavigation": "Main navigation",
-    "openMenu": "Open menu",
-    "closeMenu": "Close menu",
     "createAccount": "Create account",
     "sections": {
       "overview": "Overview",
@@ -8648,7 +8655,6 @@
       "guest": "Guest",
       "real_estate_agent": "Real estate agent"
     },
-    "publicNavigation": "Site navigation",
     "inbox": {
       "title": "Notifications",
       "unreadMarker": "Unread:",

@@ -168,6 +168,20 @@
     "transactionType": {
       "sale": "K prodeji",
       "rent": "K pronájmu"
+    },
+    "button": {
+      "add": "Porovnat",
+      "comparing": "Porovnává se",
+      "addTitle": "Přidat do porovnání",
+      "removeTitle": "Odebrat z porovnání",
+      "maxWarning": "Maximálně {max} nemovitosti. Nejprve jednu odeberte."
+    },
+    "tray": {
+      "count": "{count}/{max} nemovitostí k porovnání",
+      "clearAll": "Vymazat vše",
+      "thumbnailAlt": "Náhled nemovitosti {title}",
+      "compareNeedMore": "Porovnat (alespoň {min})",
+      "compareReady": "Porovnat {count} nemovitostí"
     }
   },
   "contact": {
@@ -433,6 +447,7 @@
       "rating": "Hodnocení",
       "reviewVerified": "Ověřeno",
       "reviews": "Hodnocení",
+      "reviewsError": "Hodnocení se nepodařilo načíst. Zkuste to prosím později.",
       "sendMessage": "Odeslat zprávu",
       "specializations": "Specializace",
       "totalListings": "Inzeráty celkem",

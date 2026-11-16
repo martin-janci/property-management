@@ -423,7 +423,23 @@ async fn override_exchange_rate(
     }
 }
 
-/// Trigger exchange rate fetch from external source
+/// Trigger exchange rate fetch from an external source.
+///
+/// Automatic fetching from an external provider (ECB, XE, …) is not wired up:
+/// there is no rate-provider integration in the backend yet. Rather than
+/// reporting a fake success for a no-op — which previously marked the fetch log
+/// `success = true` with `rates_fetched = 0` and advanced `last_rate_update` as
+/// if rates had been refreshed — this handler returns `501 Not Implemented` and
+/// records the attempt as a failed fetch so the audit trail stays honest.
+///
+/// Until a provider is integrated, operators maintain rates through the manual
+/// endpoints: `POST /rates` (`create_exchange_rate`) and
+/// `POST /rates/override` (`override_exchange_rate`).
+const RATE_FETCH_NOT_CONFIGURED: &str =
+    "Automatic exchange rate fetching is not configured: no external rate \
+     provider is integrated. Enter rates manually via POST /rates or \
+     POST /rates/override.";
+
 async fn fetch_exchange_rates(
     State(s): State<AppState>,
     tenant: ValidatedTenantExtractor,
@@ -431,7 +447,8 @@ async fn fetch_exchange_rates(
     let org_id = tenant.tenant_id;
     require_manager(&tenant)?;
 
-    // Get organization config to determine source
+    // Get organization config to determine which source would be used, so the
+    // audit log attributes the failed attempt to the configured provider.
     let config = s
         .multi_currency_repo
         .get_or_create_currency_config(org_id)
@@ -443,27 +460,26 @@ async fn fetch_exchange_rates(
             )
         })?;
 
-    // In a real implementation, this would call external APIs (ECB, XE)
-    // For now, we just log the attempt
-    match s
+    // Record the attempt honestly as a failed fetch (no rates retrieved). We do
+    // NOT advance `last_rate_update`, because no rates were refreshed.
+    let _ = s
         .multi_currency_repo
-        .log_rate_fetch(Some(org_id), config.exchange_rate_source, true, 0, None)
-        .await
-    {
-        Ok(log) => {
-            // Update last rate update timestamp
-            let _ = s.multi_currency_repo.update_last_rate_update(org_id).await;
-            Ok(Json(json!({
-                "success": true,
-                "message": "Exchange rate fetch initiated",
-                "log": to_json_value(log)?
-            })))
-        }
-        Err(e) => Err((
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::internal_error(&e.to_string())),
+        .log_rate_fetch(
+            Some(org_id),
+            config.exchange_rate_source,
+            false,
+            0,
+            Some(RATE_FETCH_NOT_CONFIGURED),
+        )
+        .await;
+
+    Err((
+        StatusCode::NOT_IMPLEMENTED,
+        Json(ErrorResponse::new(
+            "NOT_IMPLEMENTED",
+            RATE_FETCH_NOT_CONFIGURED,
         )),
-    }
+    ))
 }
 
 // =============================================================================

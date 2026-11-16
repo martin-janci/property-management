@@ -31,6 +31,11 @@ vi.mock('../../../components', () => ({
   useToast: () => ({ showToast: mockShowToast }),
 }));
 
+// ── auth: manager role so approve/reject actions stay enabled ──
+vi.mock('../../../contexts', () => ({
+  useAuth: () => ({ user: { role: 'manager' } }),
+}));
+
 // ── router ──
 vi.mock('react-router-dom', () => ({
   useNavigate: () => vi.fn(),

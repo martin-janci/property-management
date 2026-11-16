@@ -168,6 +168,20 @@
     "transactionType": {
       "sale": "For Sale",
       "rent": "For Rent"
+    },
+    "button": {
+      "add": "Compare",
+      "comparing": "Comparing",
+      "addTitle": "Add to comparison",
+      "removeTitle": "Remove from comparison",
+      "maxWarning": "Maximum {max} properties. Remove one first."
+    },
+    "tray": {
+      "count": "{count}/{max} properties to compare",
+      "clearAll": "Clear all",
+      "thumbnailAlt": "Thumbnail for {title}",
+      "compareNeedMore": "Compare (need at least {min})",
+      "compareReady": "Compare {count} properties"
     }
   },
   "contact": {
@@ -433,6 +447,7 @@
       "rating": "Rating",
       "reviewVerified": "Verified",
       "reviews": "Reviews",
+      "reviewsError": "Reviews couldn't be loaded. Please try again later.",
       "sendMessage": "Send message",
       "specializations": "Specializations",
       "totalListings": "Total listings",

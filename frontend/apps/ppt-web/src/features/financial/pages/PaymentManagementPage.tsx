@@ -27,6 +27,13 @@ export interface PaymentManagementPageProps {
     currency: string;
   };
   isLoading?: boolean;
+  /**
+   * Load error message. When set, the page renders an error state (with an
+   * optional retry) instead of an empty table and zeroed-out metrics, so a
+   * failed fetch is not mistaken for genuinely empty payment data.
+   */
+  error?: string | null;
+  onRetry?: () => void;
   /** Managers only; omitted for residents so the record button is hidden. */
   onNavigateToRecord?: () => void;
   /**
@@ -53,6 +60,8 @@ export function PaymentManagementPage({
   unpaidInvoices,
   metrics,
   isLoading,
+  error,
+  onRetry,
   onNavigateToRecord,
   onNavigateToDetail,
   onMatch,
@@ -120,85 +129,111 @@ export function PaymentManagementPage({
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-500">{t('financial.payments.totalReceived')}</p>
-            <p className="mt-1 text-3xl font-semibold text-green-600">
-              {formatCurrency(metrics.totalReceived, metrics.currency)}
-            </p>
+        {error ? (
+          <div className="bg-white rounded-lg shadow p-8 text-center" role="alert">
+            <p className="text-red-700">{t('financial.payments.loadFailed')}</p>
+            <p className="mt-1 text-sm text-gray-500">{error}</p>
+            {onRetry && (
+              <button
+                type="button"
+                onClick={onRetry}
+                className="mt-4 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                {t('financial.payments.retry')}
+              </button>
+            )}
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-500">{t('financial.payments.pendingReconciliation')}</p>
-            <p className="mt-1 text-3xl font-semibold text-orange-600">
-              {formatCurrency(metrics.pendingReconciliation, metrics.currency)}
-            </p>
-          </div>
-        </div>
+        ) : (
+          <>
+            {/* Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <div className="bg-white rounded-lg shadow p-6">
+                <p className="text-sm text-gray-500">{t('financial.payments.totalReceived')}</p>
+                <p className="mt-1 text-3xl font-semibold text-green-600">
+                  {formatCurrency(metrics.totalReceived, metrics.currency)}
+                </p>
+              </div>
+              <div className="bg-white rounded-lg shadow p-6">
+                <p className="text-sm text-gray-500">
+                  {t('financial.payments.pendingReconciliation')}
+                </p>
+                <p className="mt-1 text-3xl font-semibold text-orange-600">
+                  {formatCurrency(metrics.pendingReconciliation, metrics.currency)}
+                </p>
+              </div>
+            </div>
 
-        {/* Date Range Filter */}
-        <div className="bg-white rounded-lg shadow p-4 mb-6">
-          <div className="flex flex-wrap gap-4 items-center">
+            {/* Date Range Filter */}
+            <div className="bg-white rounded-lg shadow p-4 mb-6">
+              <div className="flex flex-wrap gap-4 items-center">
+                <div>
+                  <label
+                    htmlFor="start-date"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    {t('financial.startDate')}
+                  </label>
+                  <input
+                    type="date"
+                    id="start-date"
+                    value={startDate || ''}
+                    onChange={(e) => handleDateRangeChange(e.target.value, endDate)}
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="end-date"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    {t('financial.endDate')}
+                  </label>
+                  <input
+                    type="date"
+                    id="end-date"
+                    value={endDate || ''}
+                    onChange={(e) => handleDateRangeChange(startDate, e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Pending Reconciliation */}
+            {(unallocatedPayments.length > 0 || unpaidInvoices.length > 0) && (
+              <div className="mb-8">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                  {t('financial.payments.pendingReconciliationTitle')}
+                </h2>
+                <ReconciliationTable
+                  unallocatedPayments={unallocatedPayments}
+                  unpaidInvoices={unpaidInvoices}
+                  isLoading={isLoading}
+                  onMatch={onMatch}
+                  onAutoMatch={onAutoMatch}
+                />
+              </div>
+            )}
+
+            {/* Recent Payments */}
             <div>
-              <label htmlFor="start-date" className="block text-sm font-medium text-gray-700 mb-1">
-                {t('financial.startDate')}
-              </label>
-              <input
-                type="date"
-                id="start-date"
-                value={startDate || ''}
-                onChange={(e) => handleDateRangeChange(e.target.value, endDate)}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {t('financial.payments.recentPayments')} ({total})
+                </h2>
+              </div>
+              <RecentPaymentsList
+                payments={payments}
+                isLoading={isLoading}
+                onViewAll={
+                  onNavigateToDetail && payments[0]
+                    ? () => onNavigateToDetail(payments[0].id)
+                    : undefined
+                }
               />
             </div>
-            <div>
-              <label htmlFor="end-date" className="block text-sm font-medium text-gray-700 mb-1">
-                {t('financial.endDate')}
-              </label>
-              <input
-                type="date"
-                id="end-date"
-                value={endDate || ''}
-                onChange={(e) => handleDateRangeChange(startDate, e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Pending Reconciliation */}
-        {(unallocatedPayments.length > 0 || unpaidInvoices.length > 0) && (
-          <div className="mb-8">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              {t('financial.payments.pendingReconciliationTitle')}
-            </h2>
-            <ReconciliationTable
-              unallocatedPayments={unallocatedPayments}
-              unpaidInvoices={unpaidInvoices}
-              isLoading={isLoading}
-              onMatch={onMatch}
-              onAutoMatch={onAutoMatch}
-            />
-          </div>
+          </>
         )}
-
-        {/* Recent Payments */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">
-              {t('financial.payments.recentPayments')} ({total})
-            </h2>
-          </div>
-          <RecentPaymentsList
-            payments={payments}
-            isLoading={isLoading}
-            onViewAll={
-              onNavigateToDetail && payments[0]
-                ? () => onNavigateToDetail(payments[0].id)
-                : undefined
-            }
-          />
-        </div>
       </div>
     </div>
   );

@@ -15718,7 +15718,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "git-log 14d sweep 2026-11-13"
       ],
@@ -15730,7 +15730,12 @@
       ],
       "created_at": "2026-11-13",
       "updated_at": "2026-11-13",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-15T00:27:26Z",
+        "assignment_status": "merged",
+        "pr_number": 3524
+      }
     },
     {
       "id": "churn-hotspot-frontend-apps-ppt-web-messages-en-json",
@@ -15738,7 +15743,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "git-log 14d sweep 2026-11-13",
         "hotspot_history runs_seen>=2"
@@ -15752,7 +15757,12 @@
       ],
       "created_at": "2026-11-13",
       "updated_at": "2026-11-13",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-14T18:24:21Z",
+        "assignment_status": "merged",
+        "pr_number": 3519
+      }
     },
     {
       "id": "churn-hotspot-frontend-apps-ppt-web-messages-hu-json",
@@ -15760,7 +15770,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "git-log 14d sweep 2026-11-13"
       ],
@@ -15772,7 +15782,12 @@
       ],
       "created_at": "2026-11-13",
       "updated_at": "2026-11-13",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-15T06:26:16Z",
+        "assignment_status": "merged",
+        "pr_number": 3540
+      }
     },
     {
       "id": "code-review-reality-web-realtor-reviews-silent-error",
@@ -15780,7 +15795,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review reality-web 2026-11-13 (churn-aligned)"
       ],
@@ -15792,6 +15807,251 @@
       ],
       "created_at": "2026-11-13",
       "updated_at": "2026-11-13",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-14T18:24:21Z",
+        "assignment_status": "merged",
+        "pr_number": 3518
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-messages-pl-json",
+      "title": "ppt-web messages/pl.json churn-hotspot — 4 commits in 2d (i18n leaf-parity sweeps PR #3524 + locale-specific fixes)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log 14d sweep 2026-11-15"
+      ],
+      "evidence": [
+        "ppt-web messages/pl.json: 4 commits since 2026-11-13 (PR #3524 de/pl/hu parity sweep; PR #3485 errorhandler; PR #3491 route toasts; PR #3500 fault-detail mutations)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/messages/pl.json"
+      ],
+      "created_at": "2026-11-15",
+      "updated_at": "2026-11-15",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-messages-cs-json",
+      "title": "ppt-web messages/cs.json churn-hotspot — 4 commits in 2d (ambient i18n sweeps + UC-52 payments)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log 14d sweep 2026-11-15"
+      ],
+      "evidence": [
+        "ppt-web messages/cs.json: 4 commits since 2026-11-13 (PR #3535 UC-52 payments error; PR #3519 iot.dashboardLoadError; PR #3485/3491 i18n sweeps)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/messages/cs.json"
+      ],
+      "created_at": "2026-11-15",
+      "updated_at": "2026-11-15",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-frontend-apps-ppt-web-messages-sk-json",
+      "title": "ppt-web messages/sk.json repeated-churn — primary locale touched in 3 of 3 recent runs",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "hotspot_history.runs_seen 2→3 with new churn 2026-11-15"
+      ],
+      "evidence": [
+        "ppt-web sk.json runs_seen=2 at start of this run (last_seen 2026-11-09); 4 commits since 2026-11-13 push runs_seen=3. Primary locale — translation debt there is highest-visibility for sk tenants. Candidate for a messages-parity CI guard."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/messages/sk.json"
+      ],
+      "created_at": "2026-11-15",
+      "updated_at": "2026-11-15",
+      "plan": null
+    },
+    {
+      "id": "hotfix-no-test-pr-3497",
+      "title": "PR #3497 fix(api-server) voice book-facility false-success — shipped without regression test",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3497"
+      ],
+      "evidence": [
+        "PR #3497 (merged 2026-11-13) touched backend/servers/api-server/src/services/voice_commands.rs only — no *test*/*spec* file in diff. voice book-facility correctness fix (prevented reporting success on booking failure) lacks a regression test; next refactor could silently re-break it."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/voice_commands.rs"
+      ],
+      "created_at": "2026-11-15",
+      "updated_at": "2026-11-15",
+      "plan": null
+    },
+    {
+      "id": "hotfix-no-test-pr-3525",
+      "title": "PR #3525 fix(api-handlers) non-admin peer-role mutation — privilege-escalation fix without a cross-tenant test",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3525"
+      ],
+      "evidence": [
+        "PR #3525 (merged 2026-11-14) touched backend/servers/api-server/src/routes/organizations/members.rs only — no *test*/*spec* file in diff. Role-escalation guard (peer assigns peer) is exactly the class of fix that must land with an RLS/role-boundary test to prevent regression."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/organizations/members.rs"
+      ],
+      "created_at": "2026-11-15",
+      "updated_at": "2026-11-15",
+      "plan": null
+    },
+    {
+      "id": "risky-churn-pr-3524-pl-json",
+      "title": "PR #3524 i18n leaf-parity fix on top-churn pl.json without a parity test — follow-up #3531 re-opened the same gap",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3524",
+        "Issue #3531"
+      ],
+      "evidence": [
+        "PR #3524 (fix) modified frontend/apps/ppt-web/messages/pl.json — a top-churn file this run — with no test diff. Follow-up Issue #3531 (now closed) documented 455 en keys still missing after the 'parity' PR. Pattern: repeated i18n leaf-parity fixes on the same church files without a messages-parity CI guard."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/messages/pl.json",
+        "frontend/apps/ppt-web/messages/de.json",
+        "frontend/apps/ppt-web/messages/hu.json"
+      ],
+      "created_at": "2026-11-15",
+      "updated_at": "2026-11-15",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3486-ppt",
+      "title": "PR #3486 gated community/disputes/messaging/neighbors behind ProtectedRoute without updating docs/screens/ppt/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3486"
+      ],
+      "evidence": [
+        "PR #3486 shipped an access-model shift (public→protected) on 4 ppt-web route files (community.tsx, disputes.tsx, messaging.tsx, neighbors.tsx) without touching any docs/screens/ppt/*.md. Best-effort heuristic — the screen docs for community/disputes/messaging/neighbors likely still describe the pre-protection flow."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/disputes.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/messaging.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/neighbors.tsx"
+      ],
+      "created_at": "2026-11-15",
+      "updated_at": "2026-11-15",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3482-ppt",
+      "title": "PR #3482 gated /settings/privacy behind ProtectedRoute without updating docs/screens/ppt/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3482"
+      ],
+      "evidence": [
+        "PR #3482 shipped a visibility shift on frontend/apps/ppt-web/src/routes/groups/core.tsx (gating /settings/privacy to authenticated users only) without touching any docs/screens/ppt/*.md. Best-effort heuristic — no privacy-settings.md exists; the accessibility-settings.md doc does not reflect the new auth gate."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ],
+      "created_at": "2026-11-15",
+      "updated_at": "2026-11-15",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-feedback-manager-no-auth-token",
+      "title": "mobile-rn FeedbackManager singleton is constructed without ever receiving an auth token — every /api/v1/feedback POST ships unauthenticated",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "done",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-11-15 mobile-rn"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/onboarding/FeedbackManager.ts:290 — `export const feedbackManager = new FeedbackManager(API_BASE_URL, APP_VERSION, BUILD_NUMBER)` is the sole instantiation. Repo-wide grep shows feedbackManager.setAuthToken is never called (only WidgetBridge/WidgetDataProvider and NFCAccessController use setAuthToken on OTHER singletons).",
+        "apiRequest at FeedbackManager.ts:259-272 only sets the bearer header when this.authToken is truthy — since setAuthToken is never called, every POST /api/v1/feedback ships without an auth header. Same bug class as the just-landed PR #3537 code-review-mobile-rn-widget-bridge-auth-token-never-set."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/onboarding/FeedbackManager.ts",
+        "frontend/apps/mobile/src/screens/help/FeedbackScreen.tsx",
+        "frontend/apps/mobile/src/contexts/AuthContext.tsx"
+      ],
+      "created_at": "2026-11-15",
+      "updated_at": "2026-11-15",
+      "plan": "plans/code-review-mobile-rn-feedback-manager-no-auth-token.md",
+      "reconciled": {
+        "at": "2026-11-15T12:23:57Z",
+        "assignment_status": "merged",
+        "pr_number": 3543
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-report-fault-category-chips-english",
+      "title": "mobile-rn ReportFaultScreen category chips always render English — locale switch leaves 7 chips in EN while rest of form translates",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-11-15 mobile-rn"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx:409-421 — getCategoryLabel returns a hard-coded English dictionary {plumbing:'Plumbing', electrical:'Electrical', ...}; author comment admits 'these would ideally come from translations'.",
+        "Line 533 priority chips already use t(`faults.${p.labelKey}`) — the i18n convention exists in the same file; categories just never wired. Every other visible string on this screen (title, placeholders, buttons, errors, offline hints) is translated."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx",
+        "frontend/apps/mobile/src/locales/en/faults.json",
+        "frontend/apps/mobile/src/locales/sk/faults.json"
+      ],
+      "created_at": "2026-11-15",
+      "updated_at": "2026-11-15",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-deeplink-pending-cross-user",
+      "title": "mobile-rn DeepLinkManager.pendingLink never cleared on logout — shared-device deep-link intent crosses user boundary",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-11-15 mobile-rn"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts:201,248-256,309 — DeepLinkManager is a module-level singleton. setAuthenticated(false) does NOT clear this.pendingLink; clearPendingLink is defined at line 309 but never called from any caller (repo-wide grep hits only the definition).",
+        "On a shared-tablet (kiosk/maintenance), user A taps a QR/push `ppt://faults/42` while logged out → handleUrl stores pendingLink. User A leaves; user B signs in and useDeepLinkRouting calls deepLinkManager.setAuthenticated(true), dispatching the stale link → user B lands in user A's fault detail. Same bug class as the #2953 NFC credential leak fix, now for navigation intent."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts",
+        "frontend/apps/mobile/src/hooks/useDeepLinkRouting.ts",
+        "frontend/apps/mobile/src/auth/AuthContext.tsx"
+      ],
+      "created_at": "2026-11-15",
+      "updated_at": "2026-11-15",
       "plan": null
     }
   ]

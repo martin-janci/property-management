@@ -9,20 +9,14 @@
 import type { AgencyListing } from '@ppt/reality-api-client';
 import { useMyListings } from '@ppt/reality-api-client';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
-
-function formatPrice(value: number, currency: string) {
-  try {
-    return new Intl.NumberFormat('en', { style: 'currency', currency }).format(value);
-  } catch {
-    return `${value} ${currency}`;
-  }
-}
+import { formatPrice } from '@/lib/format';
 
 function ListingCard({ listing }: { listing: AgencyListing }) {
   const t = useTranslations('pages.realtorListings');
+  const locale = useLocale();
   // Backend may return a status we don't have copy for; fall back to the raw
   // value instead of letting next-intl emit a missing-key error.
   const statusKey = `status.${listing.status}`;
@@ -36,7 +30,7 @@ function ListingCard({ listing }: { listing: AgencyListing }) {
         <span className={`status status-${listing.status}`}>{statusLabel}</span>
       </div>
       <div className="info">
-        <span>{formatPrice(listing.price, listing.currency)}</span>
+        <span>{formatPrice(listing.price, locale, { currency: listing.currency })}</span>
         <span>·</span>
         <span>{listing.transactionType === 'sale' ? t('forSale') : t('forRent')}</span>
         <span>·</span>

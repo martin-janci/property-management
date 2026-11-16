@@ -29,6 +29,7 @@ pub mod e_signature_nonce;
 pub mod facility;
 pub mod fault;
 pub mod feature_flag;
+pub mod feedback;
 pub mod financial;
 pub mod granular_notification;
 pub mod granular_notification_test;
@@ -121,6 +122,7 @@ pub use fault::FaultRepository;
 pub use feature_flag::{
     FeatureFlagRepository, FeatureFlagWithCount, FeatureFlagWithOverrides, ResolvedFeatureFlag,
 };
+pub use feedback::{FeedbackRecord, FeedbackRepository, NewFeedback};
 pub use financial::FinancialRepository;
 pub use granular_notification::{
     GranularNotificationRepository, InactiveDigestCandidate, PendingDigestEmail,

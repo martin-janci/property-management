@@ -3,10 +3,12 @@
 use crate::state::AppState;
 use axum::{
     extract::{Path, Query, State},
+    http::HeaderMap,
     routing::get,
     Json, Router,
 };
 use chrono::{DateTime, Utc};
+use db::models::user::Locale;
 use db::models::{PublicListingQuery, PublicListingSummary};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -309,7 +311,7 @@ pub async fn search(
     path = "/api/v1/listings/{id}",
     tag = "Listings",
     params(
-        ("id" = Uuid, Path, description = "Listing ID")
+        ("id" = String, Path, description = "Listing slug (`title-<uuid>`) or bare UUID")
     ),
     responses(
         (status = 200, description = "Listing detail", body = ListingDetail),
@@ -318,8 +320,14 @@ pub async fn search(
 )]
 pub async fn get_listing(
     State(state): State<AppState>,
-    Path(id): Path<Uuid>,
+    Path(id_or_slug): Path<String>,
 ) -> Result<Json<ListingDetail>, (axum::http::StatusCode, String)> {
+    // Accept both the SEO slug (`title-<uuid>`) and a bare UUID. An
+    // unresolvable segment is a 404 (the resource can't exist), not a 400.
+    let id = crate::util::slug::parse_listing_id(&id_or_slug).ok_or((
+        axum::http::StatusCode::NOT_FOUND,
+        "Listing not found".to_string(),
+    ))?;
     tracing::info!(%id, "Get listing detail");
 
     // Generic public-facing error message for any DB-side failure. The detailed
@@ -349,10 +357,10 @@ pub async fn get_listing(
     let listing = sqlx::query_as::<_, FullListingRow>(
         r#"
         SELECT
-            l.id, l.title, l.description, l.price, l.currency,
-            l.size_sqm, l.rooms, l.bathrooms, l.floor, l.total_floors,
+            l.id, l.title, l.description, l.price::bigint AS price, l.currency,
+            l.size_sqm::int AS size_sqm, l.rooms, l.bathrooms, l.floor, l.total_floors,
             l.street, l.city, l.postal_code, l.country,
-            l.latitude, l.longitude,
+            l.latitude::float8 AS latitude, l.longitude::float8 AS longitude,
             l.property_type, l.transaction_type, l.features,
             l.published_at
         FROM listings l
@@ -520,7 +528,10 @@ pub struct RichListingPhoto {
 pub struct RichListingSummary {
     pub id: Uuid,
     pub title: String,
-    /// URL slug — currently the listing UUID stringified (no slug column yet).
+    /// URL slug: `{slugified-title}-{uuid}`. The trailing UUID is
+    /// authoritative (the detail handler resolves by it); the title prefix is
+    /// cosmetic/SEO. A bare UUID is still accepted for backward-compatible
+    /// deep links.
     pub slug: String,
     pub property_type: String,
     pub transaction_type: String,
@@ -566,7 +577,9 @@ pub struct CategoryCount {
     pub property_type: String,
     /// Count of currently active listings of this type.
     pub count: i64,
-    /// Localized display label (Slovak — primary market).
+    /// Display label localized to the request locale (resolved from the
+    /// `locale` query param, then the `Accept-Language` header, falling back
+    /// to English). Supported languages: sk, cs, de, en.
     pub label: String,
     /// Icon hint for the frontend; client-side `categoryIcons` lookup falls
     /// back to the property_type key.
@@ -623,13 +636,17 @@ impl From<RichListingRow> for RichListingSummary {
             }),
             _ => None,
         };
+        // Derive an SEO-friendly, human-readable slug from the title with the
+        // UUID appended as a stable suffix (`beautiful-apartment-<uuid>`).
+        // Listings have no `slug` column, so the trailing UUID is what keeps
+        // the path resolvable: `get_listing` extracts it via
+        // `util::slug::parse_listing_id`, which also still accepts a bare UUID,
+        // so existing deep links keep working.
+        let slug = crate::util::slug::listing_slug(&r.title, r.id);
         Self {
             id: r.id,
             title: r.title,
-            // No slug column on listings yet — the frontend treats the path
-            // segment as an opaque identifier and the detail handler accepts
-            // a UUID, so stringifying the id keeps deep links functional.
-            slug: r.id.to_string(),
+            slug,
             property_type: r.property_type,
             transaction_type: r.transaction_type,
             status: r.status,
@@ -765,22 +782,36 @@ pub async fn get_featured(
     Ok(Json(FeaturedListingsResponse { sale, rent, new }))
 }
 
+/// Category listing query parameters.
+#[derive(Debug, Default, Deserialize, IntoParams)]
+pub struct CategoriesQuery {
+    /// Preferred display language for category labels (`sk` | `cs` | `de` |
+    /// `en`). When omitted, the `Accept-Language` header is consulted; if that
+    /// is also absent or unrecognized, labels default to English.
+    pub locale: Option<String>,
+}
+
 /// Get listing counts grouped by property type.
 ///
 /// Drives the homepage "Browse by category" tiles. Only counts listings with
-/// `status = 'active'`. Labels are returned in Slovak (primary market) — the
+/// `status = 'active'`. Labels are localized to the resolved request locale
+/// (`locale` query param > `Accept-Language` header > English fallback); the
 /// frontend has its own i18n fallback if a label is missing.
 #[utoipa::path(
     get,
     path = "/api/v1/listings/categories",
     tag = "Listings",
+    params(CategoriesQuery),
     responses(
         (status = 200, description = "Listing counts by property type", body = [CategoryCount])
     )
 )]
 pub async fn get_categories(
     State(state): State<AppState>,
+    Query(query): Query<CategoriesQuery>,
+    headers: HeaderMap,
 ) -> Result<Json<Vec<CategoryCount>>, (axum::http::StatusCode, String)> {
+    let locale = resolve_locale(query.locale.as_deref(), &headers);
     let mut conn = state.acquire_public_conn().await.map_err(|e| {
         tracing::error!(error = %e, "Failed to acquire db connection");
         (
@@ -811,7 +842,7 @@ pub async fn get_categories(
     let result = rows
         .into_iter()
         .map(|(property_type, count)| {
-            let label = label_for_property_type(&property_type);
+            let label = label_for_property_type(&property_type, &locale);
             CategoryCount {
                 icon: property_type.clone(),
                 property_type,
@@ -824,21 +855,75 @@ pub async fn get_categories(
     Ok(Json(result))
 }
 
-/// Localized (sk) label for a `property_type` enum value.
-fn label_for_property_type(t: &str) -> String {
-    match t {
-        "apartment" => "Byty",
-        "house" => "Domy",
-        "land" => "Pozemky",
-        "commercial" => "Komerčné priestory",
-        "office" => "Kancelárie",
-        "garage" => "Garáže",
-        "parking" => "Parkovanie",
-        "storage" => "Sklady",
-        // Fallback: capitalize the type so unknown values still render.
-        other => return capitalize(other),
+/// Resolve the display locale for category labels.
+///
+/// Precedence: explicit `locale` query param, then the first tag of the
+/// `Accept-Language` header, then the [`Locale`] default (English). Both inputs
+/// are normalized through [`Locale::parse`], which falls back to English for an
+/// unrecognized value — so an unsupported language never leaks through.
+fn resolve_locale(query_locale: Option<&str>, headers: &HeaderMap) -> Locale {
+    if let Some(loc) = query_locale.map(str::trim).filter(|s| !s.is_empty()) {
+        return Locale::parse(loc);
     }
-    .to_string()
+    if let Some(tag) = headers
+        .get(axum::http::header::ACCEPT_LANGUAGE)
+        .and_then(|v| v.to_str().ok())
+        .and_then(first_language_tag)
+    {
+        return Locale::parse(tag);
+    }
+    Locale::default()
+}
+
+/// Extract the first (highest-priority) language tag from an `Accept-Language`
+/// header value, dropping any `;q=` weight. Returns `None` for an empty header.
+fn first_language_tag(header: &str) -> Option<&str> {
+    header
+        .split(',')
+        .next()
+        .map(|tag| tag.split(';').next().unwrap_or(tag).trim())
+        .filter(|tag| !tag.is_empty())
+}
+
+/// Localized label for a `property_type` enum value, in the given [`Locale`].
+fn label_for_property_type(t: &str, locale: &Locale) -> String {
+    let label = match (t, locale) {
+        ("apartment", Locale::Slovak) => "Byty",
+        ("apartment", Locale::Czech) => "Byty",
+        ("apartment", Locale::German) => "Wohnungen",
+        ("apartment", Locale::English) => "Apartments",
+        ("house", Locale::Slovak) => "Domy",
+        ("house", Locale::Czech) => "Domy",
+        ("house", Locale::German) => "Häuser",
+        ("house", Locale::English) => "Houses",
+        ("land", Locale::Slovak) => "Pozemky",
+        ("land", Locale::Czech) => "Pozemky",
+        ("land", Locale::German) => "Grundstücke",
+        ("land", Locale::English) => "Land",
+        ("commercial", Locale::Slovak) => "Komerčné priestory",
+        ("commercial", Locale::Czech) => "Komerční prostory",
+        ("commercial", Locale::German) => "Gewerbeflächen",
+        ("commercial", Locale::English) => "Commercial",
+        ("office", Locale::Slovak) => "Kancelárie",
+        ("office", Locale::Czech) => "Kanceláře",
+        ("office", Locale::German) => "Büros",
+        ("office", Locale::English) => "Offices",
+        ("garage", Locale::Slovak) => "Garáže",
+        ("garage", Locale::Czech) => "Garáže",
+        ("garage", Locale::German) => "Garagen",
+        ("garage", Locale::English) => "Garages",
+        ("parking", Locale::Slovak) => "Parkovanie",
+        ("parking", Locale::Czech) => "Parkování",
+        ("parking", Locale::German) => "Parkplätze",
+        ("parking", Locale::English) => "Parking",
+        ("storage", Locale::Slovak) => "Sklady",
+        ("storage", Locale::Czech) => "Sklady",
+        ("storage", Locale::German) => "Lager",
+        ("storage", Locale::English) => "Storage",
+        // Fallback: capitalize the type so unknown values still render.
+        (other, _) => return capitalize(other),
+    };
+    label.to_string()
 }
 
 fn capitalize(s: &str) -> String {
@@ -857,7 +942,7 @@ fn capitalize(s: &str) -> String {
     post,
     path = "/api/v1/listings/{id}/view",
     tag = "Listings",
-    params(("id" = Uuid, Path, description = "Listing ID")),
+    params(("id" = String, Path, description = "Listing slug (`title-<uuid>`) or bare UUID")),
     responses(
         (status = 204, description = "View recorded"),
         (status = 404, description = "Listing not found")
@@ -865,8 +950,14 @@ fn capitalize(s: &str) -> String {
 )]
 pub async fn record_view(
     State(state): State<AppState>,
-    Path(id): Path<Uuid>,
+    Path(id_or_slug): Path<String>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
+    // Accept both the SEO slug (`title-<uuid>`) and a bare UUID, matching the
+    // detail handler so the view beacon fires from the same path segment.
+    let id = crate::util::slug::parse_listing_id(&id_or_slug).ok_or((
+        axum::http::StatusCode::NOT_FOUND,
+        "Listing not found".to_string(),
+    ))?;
     // `track_view` is best-effort — analytics shouldn't break the page on
     // a transient db hiccup. Log and return 204 either way; only return a
     // hard error when the listing genuinely doesn't exist.
@@ -995,5 +1086,100 @@ mod tests {
         assert_eq!((page, limit), (2, 25), "valid pagination passes through");
         assert_eq!(query.city.as_deref(), Some("Bratislava"));
         assert_eq!(query.transaction_type.as_deref(), Some("rent"));
+    }
+
+    // --- Category label localization (de-hardcoding of sk labels) ---
+    //
+    // Regression: `label_for_property_type` previously returned Slovak strings
+    // unconditionally, ignoring the request locale. These tests assert every
+    // supported language renders its own label — they fail against the old
+    // sk-only implementation.
+
+    fn accept_language(value: &str) -> HeaderMap {
+        let mut h = HeaderMap::new();
+        h.insert(
+            axum::http::header::ACCEPT_LANGUAGE,
+            value.parse().expect("valid header value"),
+        );
+        h
+    }
+
+    #[test]
+    fn labels_are_localized_per_locale() {
+        assert_eq!(
+            label_for_property_type("apartment", &Locale::Slovak),
+            "Byty"
+        );
+        assert_eq!(
+            label_for_property_type("apartment", &Locale::German),
+            "Wohnungen"
+        );
+        assert_eq!(
+            label_for_property_type("apartment", &Locale::English),
+            "Apartments"
+        );
+        assert_eq!(
+            label_for_property_type("commercial", &Locale::Czech),
+            "Komerční prostory"
+        );
+        assert_eq!(
+            label_for_property_type("office", &Locale::English),
+            "Offices"
+        );
+    }
+
+    #[test]
+    fn unknown_property_type_falls_back_to_capitalized_key() {
+        // Fallback is locale-independent: capitalize the raw key.
+        assert_eq!(
+            label_for_property_type("penthouse", &Locale::German),
+            "Penthouse"
+        );
+        assert_eq!(
+            label_for_property_type("penthouse", &Locale::Slovak),
+            "Penthouse"
+        );
+    }
+
+    #[test]
+    fn locale_query_param_takes_precedence_over_header() {
+        let headers = accept_language("sk");
+        assert_eq!(
+            resolve_locale(Some("de"), &headers),
+            Locale::German,
+            "explicit query param must win over Accept-Language"
+        );
+    }
+
+    #[test]
+    fn locale_falls_back_to_accept_language_header() {
+        let headers = accept_language("cs-CZ,cs;q=0.9,en;q=0.8");
+        assert_eq!(
+            resolve_locale(None, &headers),
+            Locale::Czech,
+            "first Accept-Language tag (minus weight) should resolve"
+        );
+    }
+
+    #[test]
+    fn locale_defaults_to_english_when_no_signal() {
+        assert_eq!(
+            resolve_locale(None, &HeaderMap::new()),
+            Locale::English,
+            "no query param and no header should default to English"
+        );
+        // Blank query param is ignored, not parsed to English-via-unknown.
+        assert_eq!(
+            resolve_locale(Some("  "), &accept_language("sk")),
+            Locale::Slovak,
+            "blank query param must defer to the header"
+        );
+    }
+
+    #[test]
+    fn first_language_tag_strips_quality_weight() {
+        assert_eq!(first_language_tag("de-DE,de;q=0.9"), Some("de-DE"));
+        assert_eq!(first_language_tag("sk"), Some("sk"));
+        assert_eq!(first_language_tag(""), None);
     }
 }

@@ -1,9 +1,62 @@
 {
-  "generated": "2026-11-13T22:40:45Z",
+  "generated": "2026-11-16T00:40:24Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-11-16T00:40:24Z",
+      "prs_scanned": 15,
+      "clean": [
+        3555,
+        3556,
+        3554,
+        3552,
+        3551,
+        3550,
+        3549,
+        3548,
+        3547,
+        3546,
+        3545,
+        3543,
+        3542,
+        3541,
+        3536
+      ],
+      "with_issues": [],
+      "note": "15 newest unreviewed PRs merged to dev (all > #3530, none in a prior run). All clean: well-scoped, single-concern auto-impl fixes each shipping an IG3-style regression test. Highlights: #3554 enforces owner check on null-unit delegation (authz), #3555 atomic notification-dedup claim closes a duplicate-send race, #3556 payment-reminder batch resilience, #3548 mounts POST /api/v1/feedback (+RLS-exempt table, documented both places), #3552 SEO listing slug w/ UUID-suffix resolver, #3549 removes Potemkin analytics tab backed by unregistered endpoints, #3542 closes #3531 (de/pl/hu namespace parity, now locked by INV3). No JSON-key-case (PR #473) regressions found in #3548/#3554 Rust tests. 0 follow-ups. PR labels not applied (gh writes 403 in cloud; dedup owned via this artifact)."
+    },
+    {
+      "run_at": "2026-11-14T22:51:53Z",
+      "prs_scanned": 15,
+      "clean": [
+        3526,
+        3525,
+        3529,
+        3516,
+        3520,
+        3530,
+        3527,
+        3521,
+        3518,
+        3512,
+        3517,
+        3522,
+        3523,
+        3519
+      ],
+      "with_issues": [
+        {
+          "pr": 3524,
+          "issue": 3531,
+          "findings": 1,
+          "specialist": "frontend",
+          "note": "de/pl/hu still miss 455 en keys (help/subscription/onboarding/documentTemplates) after 'parity' PR #3524; recommend finishing backfill + CI parity guard (low)"
+        }
+      ],
+      "note": "15 newest unreviewed PRs merged to dev (all > #3496, none labeled post-merge-reviewed); 14 are well-tested code-review fixes (atomicity, role-mutation guard, honest 501, JWT exp fail-closed, ProtectedRoute wiring, error-honesty, i18n). 1 follow-up (#3531). PR labels not applied (gh writes 403 in cloud; dispatcher owns dedup via this artifact)."
+    },
     {
       "run_at": "2026-11-13T22:40:45Z",
       "prs_scanned": 15,
@@ -531,44 +584,6 @@
           "note": "PR #3150 correctly fixed the compliance client base path (/api/v1/compliance -> /api/v1/aml-dsa) for AML + DSA + moderation \u2014 verified against lib.rs:322 (aml_dsa router mounts aml/dsa/moderation) vs lib.rs:243 (compliance router = audit-logs/gdpr/security only), and the new api.test.ts contract test pins AML/DSA. BUT the base-only fix left three moderation SUB-paths still 404ing against aml_dsa/mod.rs: listModerationCases -> /moderation/cases (backend: /moderation/queue, line 70), getModerationStats -> /moderation/stats (backend: /moderation/queue/stats, line 71), unassignModerationCase -> /moderation/cases/{id}/unassign (no backend route; only assign exists, line 74). The PR contract test only asserted assignModerationCase (which matches) so these slipped through. Filed #3157 (correctness/high) with exact path fixes + a request to extend the contract test. Other moderation calls (getModerationCase, templates, assign, action, appeal/decide) verified correct."
         }
       ]
-    },
-    {
-      "run_at": "2026-10-23T16:28:50Z",
-      "prs_scanned": 6,
-      "clean": [
-        3144,
-        3142,
-        3141,
-        3140,
-        3138
-      ],
-      "with_issues": [
-        {
-          "pr": 3139,
-          "issue": 3149,
-          "findings": 3,
-          "specialist": "pm-integration",
-          "note": "pm-integration-audit-integration-prs-openapi-drift (docs-only audit artifact docs/api/audits/2026-10-22-integration-openapi-drift.md) merged 10-22. The audit itself is well-constructed and accurate: it correctly maps the contract pipeline (TypeSpec -> openapi.yaml -> src/generated is the only client-generating path; utoipa ApiDoc is runtime-only; compliance/migration domains are hand-maintained and outside api-validation.yml) and concludes NO new window-caused drift \u2014 verified correct for all 8 window changes (#3129/#3127 wire shapes unchanged, rest dep/docs-only). BUT it recorded three genuine pre-existing, actionable drift findings as prose in the doc and opened NO tracking issue, leaving them untracked in a routine that works off GitHub issues. Filed consolidated follow-up #3149 (one issue per PR) converting them to tracked work, and VERIFIED the highest-severity one against the live dev checkout. HIGH (correctness): confirmed path mismatch \u2014 frontend/packages/api-client/src/compliance/api.ts sets API_BASE='/api/v1/compliance' (line 26) and uses it for ALL aml/* and dsa/* call sites (lines 138/142/146/150/160/181/185/...), but backend/servers/api-server/src/lib.rs mounts the AML/DSA router at /api/v1/aml-dsa (line 322) while /api/v1/compliance (line 243 -> routes/compliance.rs) serves only moderation/audit/GDPR/security \u2014 so every aml/* + dsa/* call resolves to a non-existent /api/v1/compliance/aml|dsa/... path and 404s (broader than the audit's Finding 2 which flagged only /aml/assessments as 'needs confirmation'; moderation/* sharing API_BASE is correct). MEDIUM (correctness): AmlRiskAssessment type in compliance/types.ts diverges from the #3129-formalized server AmlAssessmentListItem (subject_* vs party_*, triggered vs mitigated, risk_factors required vs Option, ~12 unmodeled fields). MEDIUM (architecture): compliance/migration sit outside TypeSpec so api-validation.yml can never catch these \u2014 proposal to lift into TypeSpec converts both classes to compile-time failures. 5 CLEAN siblings: #3144 (reality-web: extract sanitizeCssValue into client-safe lib/sanitize-css.ts and route agency cover-gradient primaryColor/secondaryColor through it, mirroring brandingToStyleObject; safe fallback to default gradient on reject; reuses existing helper, no new sanitizer), #3142 (api-server: stop fabricating ready state for GET /migration/export/{id} \u2014 get_export_status is now a pure read, no row mutation on GET, no bogus storage.example.com URL / hard-coded 15MB size / invented record counts; download_export 500s on Ready-without-file_path instead of fabricating; IG3 proven BOTH ways against live Postgres, two-commit test/fix split), #3141 (api-server: /impersonation/active audit now derives client IP via shared audit_ip_from_headers (first XFF hop, truncated to VARCHAR(45)) instead of raw XFF chain that overflowed audit_logs.ip_address and silently dropped the audit row; IG3 regression asserts exactly 1 row with the truncated first-hop IP; matches sibling start handler idiom), #3140 (reality-web: thread active next-intl useLocale() through shared @/lib/format formatPrice/formatNumber in ListingHeader/AdditionalInfo/AgencyListings instead of hardcoded Intl.NumberFormat('en-US') on a 4-language (sk/cs/de/en) portal; IG3 ListingHeader.test.tsx forces de locale and asserts German 1.250.000 grouping; reuses existing helpers), #3138 (docs-only: new docs/api/README.md section documenting the reality-server SSO transient-vs-permanent 401 contract \u2014 honestly frames it as 401/403-permanent vs 5xx/transport-transient rather than inventing a 'transient 401' the code lacks, documents server-side poison-resistant introspection + sync_session guards, and flags the honest get_session/refresh_session map_err(|_|401) gap; accurate vs the PR #3121 client cushion). All 6 PRs labeled post-merge-reviewed via issue_write update (needs-human-review preserved on #3141/#3140/#3139/#3138; #3144/#3142 had none). Breadcrumb comment on #3139 -> #3149. DISPATCHER_OWNED_COMMIT=1: wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to orchestrator Phase 6; did NOT touch assignments.json/action-list.json/archives. No Task fan-out tool available to this subagent, so the 6 diffs were reviewed inline (<=5 concurrency honoured conceptually). GitHub I/O MCP-primary (gh writes 403-blocked by proxy): enumeration via list_pull_requests(closed, base=dev, sort=updated desc); merged detected by non-null merged_at (MCP 'merged' bool unreliable, reports false)."
-        }
-      ],
-      "note": "Dispatcher Phase 2.5 post-merge review (24h cadence). repo=martin-janci/property-management, window=14d (merged>=2026-10-09), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. 6 net-new in-window merges lacking post-merge-reviewed/no-review-needed: #3144 (10-23), #3142/#3140/#3141/#3139/#3138 (all 10-22). All other in-window merges already carried post-merge-reviewed from prior runs (#3123 @10-21 and earlier). Dependabot #3091/#2981 are closed-unmerged (no merged_at). 5 CLEAN, 1 WITH ISSUE (#3139 -> #3149). Scanned 6, opened 1 follow-up.",
-      "focus_prs": [
-        3144,
-        3142,
-        3141,
-        3140,
-        3139,
-        3138
-      ]
-    },
-    {
-      "run_at": "2026-10-22T12:32:50Z",
-      "prs_scanned": 1,
-      "clean": [
-        3123
-      ],
-      "with_issues": [],
-      "note": "Dispatcher Phase 2.5 post-merge review (24h cadence). repo=martin-janci/property-management, window=14d (merged>=2026-10-08), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: gh GraphQL 403'd, so reads via GitHub MCP list_pull_requests (closed,base=dev,sort=updated desc, pages 1-2) + pull_request_read get/get_diff; label-add via gh api REST (POST issues/3123/labels, preserving needs-human-review). DISPATCHER_OWNED_COMMIT=1: wrote post-merge-review.json + last-merged-review.txt only, deferred commit/push to orchestrator Phase 6. Of all merged-into-dev PRs in window, every one except #3123 already carried post-merge-reviewed/no-review-needed and was skipped. Scanned 1 (#3123), 0 follow-up issues. #3123 (code-review-api-core-totp-rng-expect-panic, rust-backend, merged 2026-10-21): CLEAN. 3-add/1-del one-file defensive fix in backend/servers/api-server/src/services/totp.rs \u2014 replaced SysRng.try_fill_bytes(...).expect(\"OS rng failed\") in encrypt_secret() with map_err(|e| TotpError::EncryptionError(format!(\"secure RNG failed to generate nonce: {e}\")))?. Removes a panic/DoS vector on CSPRNG failure; uses the existing EncryptionError variant and matches the sibling map_err(?) idiom already at totp.rs:85 and :102; encrypt_secret already returns Result<String,TotpError> so no signature/caller changes; happy path + nonce:ciphertext format untouched (existing test_encrypt_decrypt_secret still covers it). Only gap: no fault-injection test for the unreachable RNG-failure branch \u2014 well-justified in the PR body (would require restructuring the function, which the task explicitly forbade). Not actionable; no follow-up issue warranted. Labeled post-merge-reviewed."
     }
   ]
 }

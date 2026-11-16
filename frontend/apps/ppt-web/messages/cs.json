@@ -2230,7 +2230,9 @@
       "pendingReconciliationTitle": "Čeká na spárování",
       "recentPayments": "Poslední platby",
       "matchFailed": "Platbu se nepodařilo spárovat",
-      "autoMatchFailed": "Platby se nepodařilo automaticky spárovat"
+      "autoMatchFailed": "Platby se nepodařilo automaticky spárovat",
+      "loadFailed": "Nepodařilo se načíst platby",
+      "retry": "Zkusit znovu"
     },
     "budget": {
       "overBudget": "Překročený rozpočet",
@@ -2958,6 +2960,10 @@
         "title": "Přístup odepřen",
         "message": "Nemáte oprávnění provést tuto akci."
       },
+      "FORBIDDEN": {
+        "title": "Přístup odepřen",
+        "message": "Nemáte oprávnění provést tuto akci."
+      },
       "VALIDATION_ERROR": {
         "title": "Chyba ověření",
         "message": "Zkontrolujte prosím chyby ve formuláři."
@@ -3124,8 +3130,6 @@
     "completeIn60Seconds": "Většinu úkolů dokončíte za méně než 60 sekund",
     "recentActivity": "Poslední aktivita",
     "activity": {
-      "meterReadingSubmitted": "Odečet měřiče odeslán",
-      "faultReported": "Závada nahlášena",
       "announcementPublished": "Nové oznámení: {{title}}",
       "faultReportedByYou": "Nahlásili jste poruchu: {{title}}",
       "loading": "Načítá se aktivita…",
@@ -4504,6 +4508,7 @@
   "iot": {
     "dashboardTitle": "Chytrá budova",
     "dashboardSubtitle": "Senzory, telemetrie a upozornění napříč vašimi budovami.",
+    "dashboardLoadError": "Nepodařilo se načíst přehled. Zkuste to prosím znovu.",
     "openDashboard": "Přehled",
     "sensorsTitle": "Senzory a zařízení",
     "sensorsSubtitle": "Registrujte a spravujte IoT zařízení ve vašich budovách.",
@@ -5108,6 +5113,7 @@
     "loadingDocuments": "Načítají se dokumenty",
     "loadingFolders": "Načítají se složky",
     "loadingPreview": "Načítá se náhled",
+    "mainNavigation": "Hlavní navigace",
     "moveDocuments": "Přesunout dokumenty",
     "moveDown": "Posunout dolů",
     "moveUp": "Posunout nahoru",
@@ -5117,6 +5123,7 @@
     "newRootFolder": "Nová kořenová složka",
     "newSubfolder": "Nová podsložka",
     "nextPage": "Další strana",
+    "openMenu": "Otevřít menu",
     "pdfNavigation": "Navigace v PDF",
     "pdfPreview": "Náhled PDF",
     "pinnedAnnouncements": "Připnutá oznámení",
@@ -5124,6 +5131,7 @@
     "postOptionsMenu": "Nabídka možností příspěvku",
     "previousPage": "Předchozí strana",
     "progress": "Průběh",
+    "publicNavigation": "Navigace webu",
     "reactions": "Reakce",
     "removeOption": "Odebrat možnost",
     "renameFolder": "Přejmenovat složku",
@@ -6788,6 +6796,7 @@
       "notesPlaceholder": "Doplňující informace k odečtu...",
       "submitReading": "Odeslat odečet",
       "errors": {
+        "valueRequired": "Zadejte platný stav měřidla",
         "valueNegative": "Stav měřidla nemůže být záporný",
         "valueLowerThanLast": "Stav měřidla nemůže být nižší než při posledním odečtu",
         "dateRequired": "Zadejte datum odečtu",
@@ -7098,9 +7107,6 @@
   },
   "shell": {
     "brand": "Správa nemovitostí",
-    "mainNavigation": "Hlavní navigace",
-    "openMenu": "Otevřít menu",
-    "closeMenu": "Zavřít menu",
     "createAccount": "Vytvořit účet",
     "sections": {
       "overview": "Přehled",
@@ -7130,7 +7136,6 @@
       "guest": "Host",
       "real_estate_agent": "Realitní makléř"
     },
-    "publicNavigation": "Navigace webu",
     "inbox": {
       "title": "Oznámení",
       "unreadMarker": "Nepřečtené:",

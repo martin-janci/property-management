@@ -1,47 +1,39 @@
 /**
- * ReportsPage - Main reports and analytics page.
+ * ReportsPage - Reports & schedules page.
  *
- * Combines all Story 53.x and Epic 81 components into a unified reports interface.
+ * Combines the Story 53.x report builder and the Epic 81 schedule-management /
+ * execution-history components into a unified reports interface.
+ *
+ * NOTE: the former "Dashboard" analytics tab (KPIs, trend charts, building
+ * metrics, period comparison) was removed — it was a Potemkin surface fed by
+ * hardcoded empty objects from the route container, backed by
+ * `/api/v1/reports/analytics/*` + `/trends/*` endpoints that the reports router
+ * never registered (code-review-ppt-web-core-reports-route-stub-analytics).
+ * Re-add it only alongside a real analytics endpoint + api-client hooks.
  */
 
 import type {
-  BuildingAnalytics,
   CreateReportSchedule,
   CronScheduleUpdateRequest,
   DataSource,
-  KPIMetric,
-  PeriodComparison,
   ReportDefinition,
   ReportExecution,
   ReportSchedule,
-  TrendAnalysis,
-  TrendLine,
 } from '@ppt/api-client';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  AnalyticsChart,
-  BuildingMetricsCard,
   EditScheduleModal,
   ExecutionHistory,
-  KPICard,
-  PeriodComparisonChart,
   ReportBuilder,
   ScheduleForm,
   ScheduleList,
-  TrendChart,
 } from '../components';
 
 interface ReportsPageProps {
-  organizationId: string;
   dataSources: DataSource[];
   reports: ReportDefinition[];
   schedules: ReportSchedule[];
-  kpis: KPIMetric[];
-  buildings: BuildingAnalytics[];
-  trendAnalysis: TrendAnalysis;
-  trendLines: TrendLine[];
-  periodComparison: PeriodComparison;
   isLoading?: boolean;
   onCreateReport?: (data: unknown) => Promise<void>;
   onPreviewReport?: (data: unknown) => Promise<unknown>;
@@ -51,7 +43,6 @@ interface ReportsPageProps {
   onDeleteSchedule?: (id: string) => Promise<void>;
   onToggleSchedule?: (id: string, isActive: boolean) => Promise<void>;
   onRunScheduleNow?: (id: string) => Promise<void>;
-  onPeriodChange?: (period: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly') => void;
   // Execution history props
   executions?: ReportExecution[];
   executionsLoading?: boolean;
@@ -62,17 +53,12 @@ interface ReportsPageProps {
   onFetchExecutions?: (scheduleId: string) => void;
 }
 
-type Tab = 'dashboard' | 'reports' | 'schedules';
+type Tab = 'reports' | 'schedules';
 
 export function ReportsPage({
   dataSources,
   reports,
   schedules,
-  kpis,
-  buildings,
-  trendAnalysis,
-  trendLines,
-  periodComparison,
   isLoading,
   onCreateReport,
   onPreviewReport,
@@ -81,7 +67,6 @@ export function ReportsPage({
   onDeleteSchedule,
   onToggleSchedule,
   onRunScheduleNow,
-  onPeriodChange,
   executions,
   executionsLoading,
   executionsHasMore,
@@ -91,12 +76,9 @@ export function ReportsPage({
   onFetchExecutions,
 }: ReportsPageProps) {
   const { t, i18n } = useTranslation();
-  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+  const [activeTab, setActiveTab] = useState<Tab>('schedules');
   const [showReportBuilder, setShowReportBuilder] = useState(false);
   const [showScheduleForm, setShowScheduleForm] = useState(false);
-  const [selectedPeriod, setSelectedPeriod] = useState<
-    'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly'
-  >('monthly');
 
   // Epic 81: Schedule editing state
   const [editingSchedule, setEditingSchedule] = useState<ReportSchedule | null>(null);
@@ -106,11 +88,6 @@ export function ReportsPage({
   // Epic 81: Execution history state
   const [viewingHistorySchedule, setViewingHistorySchedule] = useState<ReportSchedule | null>(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-
-  const handlePeriodChange = (period: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly') => {
-    setSelectedPeriod(period);
-    onPeriodChange?.(period);
-  };
 
   // Epic 81.1: Handle schedule editing
   const handleEditSchedule = useCallback((schedule: ReportSchedule) => {
@@ -156,7 +133,6 @@ export function ReportsPage({
   }, []);
 
   const tabs = [
-    { id: 'dashboard' as Tab, label: t('reports.page.tabs.dashboard'), icon: '📊' },
     { id: 'reports' as Tab, label: t('reports.page.tabs.reports'), icon: '📋' },
     { id: 'schedules' as Tab, label: t('reports.page.tabs.schedules'), icon: '⏰' },
   ];
@@ -215,64 +191,6 @@ export function ReportsPage({
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Dashboard Tab */}
-        {activeTab === 'dashboard' && (
-          <div className="space-y-8">
-            {/* KPIs */}
-            <section>
-              <h2 className="text-lg font-medium text-gray-900 mb-4">
-                {t('reports.page.keyMetrics')}
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {kpis.map((kpi) => (
-                  <KPICard key={kpi.id} metric={kpi} />
-                ))}
-              </div>
-            </section>
-
-            {/* Trend Analysis */}
-            <section>
-              <h2 className="text-lg font-medium text-gray-900 mb-4">{t('reports.page.trends')}</h2>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <TrendChart
-                  title={t('reports.page.revenueTrend')}
-                  analysis={trendAnalysis}
-                  trendLines={trendLines}
-                  selectedPeriod={selectedPeriod}
-                  onPeriodChange={handlePeriodChange}
-                  isLoading={isLoading}
-                />
-                <PeriodComparisonChart comparison={periodComparison} isLoading={isLoading} />
-              </div>
-            </section>
-
-            {/* Charts */}
-            <section>
-              <h2 className="text-lg font-medium text-gray-900 mb-4">
-                {t('reports.page.analytics')}
-              </h2>
-              <AnalyticsChart
-                title={t('reports.page.monthlyPerformance')}
-                data={trendLines}
-                chartType="area"
-                isLoading={isLoading}
-              />
-            </section>
-
-            {/* Building Metrics */}
-            <section>
-              <h2 className="text-lg font-medium text-gray-900 mb-4">
-                {t('reports.page.buildingPerformance')}
-              </h2>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {buildings.map((building) => (
-                  <BuildingMetricsCard key={building.building_id} analytics={building} />
-                ))}
-              </div>
-            </section>
-          </div>
-        )}
-
         {/* Reports Tab */}
         {activeTab === 'reports' && (
           <div>

@@ -468,6 +468,67 @@
         "networkErrorTitle": "Chyba siete",
         "networkErrorMessage": "Nepodarilo sa spojiť so serverom. Skontrolujte pripojenie a skúste znova."
       }
+    },
+    "dashboard": {
+      "attention": {
+        "clear": "Všetko je v poriadku.",
+        "one": "1 položka vyžaduje pozornosť.",
+        "other": "{{count}} položiek vyžaduje pozornosť."
+      },
+      "greeting": {
+        "afternoon": "Dobré popoludnie",
+        "evening": "Dobrý večer",
+        "morning": "Dobré ráno"
+      },
+      "highRisk": {
+        "empty": "Za posledných 24 hodín žiadne vysokorizikové udalosti.",
+        "loadError": "Nepodarilo sa načítať udalosti auditu. Skúste znova.",
+        "on": " na ",
+        "title": "Nedávne vysokorizikové udalosti · 24 h",
+        "viewAll": "Zobraziť všetky →"
+      },
+      "impersonation": {
+        "empty": "Žiadne aktívne relácie zosobnenia identity.",
+        "meta": "spustené {{started}} · vyprší {{expires}}",
+        "stop": "Zastaviť",
+        "title": "Aktívne zosobnenie identity"
+      },
+      "merges": {
+        "empty": "Žiadne kolízie zlúčenia.",
+        "resolve": "Vyriešiť",
+        "title": "Čakajúce kolízie zlúčenia"
+      },
+      "mfa": {
+        "inactive": "Okno MFA nie je aktívne.",
+        "one": "Nachádzate sa v okne nedávneho overenia MFA ešte 1 minútu.",
+        "other": "Nachádzate sa v okne nedávneho overenia MFA ešte {{count}} min."
+      },
+      "operatorFallback": "Operátor",
+      "quickActions": {
+        "findUser": "Nájsť používateľa…",
+        "openAudit": "Otvoriť záznam auditu",
+        "title": "Rýchle akcie",
+        "viewImpersonations": "Zobraziť aktívne zosobnenia ({{count}})"
+      },
+      "tiles": {
+        "highRisk": {
+          "detail": "udalosti purge / eskalácia",
+          "label": "Vysoké riziko · 24 h"
+        },
+        "operatorsOnline": {
+          "detail": "s aktívnymi reláciami",
+          "label": "Operátori online"
+        },
+        "pendingMerges": {
+          "detail": "čakajú na vyriešenie",
+          "label": "Čakajúce zlúčenia"
+        },
+        "tenantsActive": {
+          "detail": "celkovo registrovaných",
+          "label": "Aktívne tenanty"
+        }
+      },
+      "title": "{{greeting}}, {{name}}."
     }
   },
   "common": {

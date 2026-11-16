@@ -168,6 +168,20 @@
     "transactionType": {
       "sale": "Zum Verkauf",
       "rent": "Zur Miete"
+    },
+    "button": {
+      "add": "Vergleichen",
+      "comparing": "Im Vergleich",
+      "addTitle": "Zum Vergleich hinzufügen",
+      "removeTitle": "Aus dem Vergleich entfernen",
+      "maxWarning": "Maximal {max} Immobilien. Entfernen Sie zuerst eine."
+    },
+    "tray": {
+      "count": "{count}/{max} Immobilien zum Vergleichen",
+      "clearAll": "Alle löschen",
+      "thumbnailAlt": "Vorschaubild für {title}",
+      "compareNeedMore": "Vergleichen (mindestens {min})",
+      "compareReady": "{count} Immobilien vergleichen"
     }
   },
   "contact": {
@@ -433,6 +447,7 @@
       "rating": "Bewertung",
       "reviewVerified": "Verifiziert",
       "reviews": "Bewertungen",
+      "reviewsError": "Bewertungen konnten nicht geladen werden. Bitte versuchen Sie es später erneut.",
       "sendMessage": "Nachricht senden",
       "specializations": "Spezialisierungen",
       "totalListings": "Inserate gesamt",
