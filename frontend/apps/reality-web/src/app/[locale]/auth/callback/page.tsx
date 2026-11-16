@@ -14,6 +14,7 @@ import { type CSSProperties, Suspense, useEffect, useState } from 'react';
 // locales back to `sk`. `useSearchParams` still comes from `next/navigation`
 // (next-intl does not re-export it).
 import { Link, useRouter } from '@/i18n/routing';
+import { sanitizeRedirectPath } from '@/lib/sanitize-url';
 
 /**
  * sessionStorage key holding the one-shot CSRF nonce issued when the SSO flow
@@ -120,16 +121,11 @@ function SsoCallbackContent() {
     sessionStorage.removeItem(SSO_STATE_KEY);
 
     // Redirect to home - session cookie should already be set by the server.
-    // Only accept same-origin relative paths to prevent open-redirect attacks:
-    //   - must start with "/" (path-only)
-    //   - must NOT start with "//" or "/\" (protocol-relative URL escape)
-    const rawRedirect = searchParams.get('redirect_uri');
-    const isSafeRedirect =
-      typeof rawRedirect === 'string' &&
-      rawRedirect.startsWith('/') &&
-      !rawRedirect.startsWith('//') &&
-      !rawRedirect.startsWith('/\\');
-    router.replace(isSafeRedirect ? rawRedirect : '/');
+    // Only accept same-origin relative paths to prevent open-redirect attacks.
+    // `sanitizeRedirectPath` rejects protocol-relative (`//host`), backslash
+    // bypasses (`/\host`), absolute URLs and control-char tricks, returning
+    // `'/'` for anything unsafe (single-sourced with the login page).
+    router.replace(sanitizeRedirectPath(searchParams.get('redirect_uri')));
   }, [router, searchParams, t]);
 
   if (error) {
