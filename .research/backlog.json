@@ -15880,7 +15880,7 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3497"
       ],
@@ -15892,7 +15892,12 @@
       ],
       "created_at": "2026-11-15",
       "updated_at": "2026-11-15",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-16T16:46:27Z",
+        "assignment_status": "done",
+        "pr_number": null
+      }
     },
     {
       "id": "hotfix-no-test-pr-3525",
@@ -15900,7 +15905,7 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3525"
       ],
@@ -15912,7 +15917,12 @@
       ],
       "created_at": "2026-11-15",
       "updated_at": "2026-11-15",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-16T16:46:27Z",
+        "assignment_status": "merged",
+        "pr_number": 3571
+      }
     },
     {
       "id": "risky-churn-pr-3524-pl-json",
@@ -16014,7 +16024,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "Phase 1.5 rotating expert review 2026-11-15 mobile-rn"
       ],
@@ -16029,7 +16039,12 @@
       ],
       "created_at": "2026-11-15",
       "updated_at": "2026-11-15",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-16T16:46:27Z",
+        "assignment_status": "merged",
+        "pr_number": 3567
+      }
     },
     {
       "id": "code-review-mobile-rn-deeplink-pending-cross-user",
@@ -16037,7 +16052,7 @@
       "vector": "security",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "Phase 1.5 rotating expert review 2026-11-15 mobile-rn"
       ],
@@ -16052,7 +16067,12 @@
       ],
       "created_at": "2026-11-15",
       "updated_at": "2026-11-15",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-16T16:46:27Z",
+        "assignment_status": "done",
+        "pr_number": null
+      }
     },
     {
       "id": "screen-map-drift-pr-3559-reality",

@@ -150,24 +150,6 @@
       }
     },
     {
-      "id": "code-review-admin-web-tenant-restore-stub",
-      "action": "admin web tenant restore stub",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-12T20:25:35Z (tier1d admin-web score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-12T20:25:35Z",
-      "signal_ref": {
-        "segment": "admin-web",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-09-27T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-api-core-statement-account-iban-hardcoded",
       "action": "api core statement account iban hardcoded",
       "owner_role": "pm-backend",
@@ -201,23 +183,6 @@
         "score": 2,
         "vector": "bug",
         "generated": "2026-09-05T00:00:00Z"
-      }
-    },
-    {
-      "id": "hotfix-no-test-pr-3525",
-      "action": "PR #3525 fix(api-handlers) non-admin peer-role mutation — privilege-escalation fix without a cross-tenant test",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-15T04:24:57Z (score=2 conf=high vector=test-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-15T04:24:57Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "test-gap"
       }
     },
     {
@@ -338,24 +303,6 @@
         "score": 1,
         "vector": "bug",
         "generated": "2026-09-25T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-api-core-quiet-hours-weekend-master-gate",
-      "action": "api core quiet hours weekend master gate",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d api-core score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-15T16:26:57Z",
-      "signal_ref": {
-        "segment": "api-core",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-09-23T16:34:26Z"
       }
     },
     {

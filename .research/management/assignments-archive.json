@@ -3271,6 +3271,30 @@
       "merge_attempted_at": "2026-11-13T16:50:55Z"
     },
     {
+      "task_id": "code-review-admin-web-tenant-restore-stub",
+      "branch": "auto-impl/code-review-admin-web-tenant-restore-stu-67c0f6ff",
+      "status": "merged",
+      "claimed_at": "2026-11-13T15:39:08Z",
+      "last_updated": "2026-11-16T16:46:27Z",
+      "status_changed_at": "2026-11-16T16:46:27Z",
+      "pr_number": 3488,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3488",
+      "merged_at": "2026-11-16T16:42:43Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3488 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=wired admin-web TenantLifecyclePage restore stub to existing POST /api/v1/admin/tenants/restore (multipart, new-org/defense-16); verify green (biome+tsc+276 admin-web tests), IG3 two-commit split; draft PR vs dev [5.5 merge-attempt blocked: required check/test green but ppt-pr-merge hard-gates on advisory E2E(ppt-web) red] [Phase5.7 respawn: ci-fail(E2E ppt-web)+dirty, rebase-exhausted; fresh-from-dev fixup, fix_round=1]",
+      "reviewer_summary": "verdict=approve head_oid=ed937961e4c83ac6a48563ff64d1001c411c85b5 note=re-review-clean-contract-verified-ci-green",
+      "last_reviewed_oid": "ed937961e4c83ac6a48563ff64d1001c411c85b5",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 3,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-11-15T16:37:03Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "code-review-ai-ocr-correction-idor",
       "branch": "auto-impl/code-review-ai-ocr-correction-idor-754fa419",
       "status": "merged",
@@ -3951,6 +3975,28 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-api-core-quiet-hours-weekend-master-gate",
+      "branch": "auto-impl/code-review-api-core-quiet-hours-weekend-master-gate-clean",
+      "status": "merged",
+      "claimed_at": "2026-11-16T14:37:26Z",
+      "last_updated": "2026-11-16T16:46:27Z",
+      "status_changed_at": "2026-11-16T16:46:27Z",
+      "pr_number": 3570,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3570",
+      "merged_at": "2026-11-16T16:42:12Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "[partial→review: fix+test on fresh -master-gate-clean branch (quiet_hours.rs master-gate hoisted above weekend window; IG3 split edc64cd/481720b; module 12/12 green). Dispatcher-assigned branch -aa5e9986 was pre-existing STALE junk (62 commits net-zero churn) — abandoned. Draft PR #3570 opened for GitHub CI (DB-backed) verify; cloud verify stalled on host cargo-lock + sqlx DB-unavailable env tests.]",
+      "reviewer_summary": "verdict=approve head_oid=83e85b9aa7633cbb504966bfb2e20cc4d683035f note=weekend-master-gate-fix-correct;tests-solid;ci-green;review-posted-as-comment(self-approval-blocked)",
+      "last_reviewed_oid": "83e85b9aa7633cbb504966bfb2e20cc4d683035f",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
@@ -25038,6 +25084,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "hotfix-no-test-pr-3525",
+      "branch": "auto-impl/hotfix-no-test-pr-3525-4af02e4a",
+      "status": "merged",
+      "claimed_at": "2026-11-16T14:37:26Z",
+      "last_updated": "2026-11-16T16:46:27Z",
+      "status_changed_at": "2026-11-16T16:46:27Z",
+      "pr_number": 3571,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3571",
+      "merged_at": "2026-11-16T16:42:24Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3571 status=done specialist=rust-backend scope_drift=true (pm-qa owner→no src tree; test beside handler, justified); fails-before-fix peer-role authz regression test (members.rs); fmt+clippy green, members 7/7, 21 failing pre-existing no-DB sqlx::test",
+      "reviewer_summary": "verdict=approve head_oid=6cf3c6bf0fa688cce2e600280e86b679a7ba5286 note=meaningful-regression-verified;approve-posted-as-comment(self-pr)",
+      "last_reviewed_oid": "6cf3c6bf0fa688cce2e600280e86b679a7ba5286",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -28979,5 +29047,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-16T14:43:33Z"
+  "archived_at": "2026-11-16T16:46:27Z"
 }
