@@ -6206,6 +6206,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-api-handlers-voting-cast-no-unit-ownership",
+      "branch": "auto-impl/code-review-api-handlers-voting-cast-no-31dd5b97",
+      "status": "failed",
+      "claimed_at": "2026-11-16T02:29:27Z",
+      "last_updated": "2026-11-16T02:49:29Z",
+      "status_changed_at": "2026-11-16T02:49:29Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=blocked note=NO-OP stale finding (remediated on dev): cast_vote calls user_may_vote_for_unit unconditionally (voting.rs:1362) enforcing owner residency+delegation; regression test cast_and_my_response_require_the_units_voting_right already asserts cross-unit cast->403. Empty diff, no PR.",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-api-handlers-webhook-portal-signature-not-verified",
       "branch": "auto-impl/code-review-api-handlers-webhook-portal-e79d5115",
       "status": "merged",
@@ -9399,6 +9421,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-ppt-web-core-orgprovider-unstable-value",
+      "branch": "auto-impl/code-review-ppt-web-core-orgprovider-uns-0014cc69",
+      "status": "failed",
+      "claimed_at": "2026-11-16T02:29:27Z",
+      "last_updated": "2026-11-16T02:49:29Z",
+      "status_changed_at": "2026-11-16T02:49:29Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=done note=NO-OP stale finding: OrganizationProvider.tsx already memoizes context value via useMemo (fixed on dev 4a1b282); matches AuthProvider pattern. Empty diff, no PR.",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-core-perfmetrics-listener-leak",
       "branch": "auto-impl/code-review-ppt-web-core-perfmetrics-lis-00fbb67e",
       "status": "merged",
@@ -12092,6 +12136,28 @@
       "merge_attempted_at": "2026-08-21T18:31:56Z"
     },
     {
+      "task_id": "code-review-ppt-web-ui-voting-list-page-no-i18n",
+      "branch": "auto-impl/code-review-ppt-web-ui-voting-list-page-25470b04",
+      "status": "failed",
+      "claimed_at": "2026-11-16T02:29:27Z",
+      "last_updated": "2026-11-16T02:49:29Z",
+      "status_changed_at": "2026-11-16T02:49:29Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=blocked note=NO-OP stale finding: ppt-web voting list page + all components (VotingPage/VoteCard/VoteStatusBadge/VotingBuildingSelect/QuorumTile) already fully t()-wired with voting.* keys across all 6 locales. Nothing to change.",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-ui-workflow-automation-toasts-hardcoded-english",
       "branch": "auto-impl/code-review-ppt-web-ui-workflow-automati-b1aacc81",
       "status": "merged",
@@ -13995,6 +14061,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-reality-web-currency-code-rangeerror-crash",
+      "branch": "auto-impl/code-review-reality-web-currency-code-ra-00989eec",
+      "status": "merged",
+      "claimed_at": "2026-11-16T00:32:00Z",
+      "last_updated": "2026-11-16T02:49:29Z",
+      "status_changed_at": "2026-11-16T02:49:29Z",
+      "pr_number": 3558,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3558",
+      "merged_at": "2026-11-16T02:48:02Z",
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=3558 status=done specialist=nextjs-web scope_drift=true code_reuse_warn=none note=routed ComparisonView price formatter through guarded lib/format formatPrice; invalid currency no longer throws RangeError; verify green (571 tests); drift=owner-hint pm-backend vs reality-web frontend",
+      "reviewer_summary": "verdict=approve head_oid=137fbb7a0f82926f0c1723fa6882c18727ff16e3 note=currency-RangeError-guard-correct-tested-CI-green; review-post blocked by GitHub self-approval (author==reviewer)",
+      "last_reviewed_oid": "137fbb7a0f82926f0c1723fa6882c18727ff16e3",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-16T02:36:07Z"
     },
     {
       "task_id": "code-review-reality-web-date-locale-ignored",
@@ -28605,5 +28693,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-16T02:38:31Z"
+  "archived_at": "2026-11-16T02:49:29Z"
 }
