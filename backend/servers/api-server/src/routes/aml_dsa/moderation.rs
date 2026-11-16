@@ -438,12 +438,23 @@ pub(super) async fn take_moderation_action(
         .compliance_repo
         .take_moderation_action(id, org_id, action, user.user_id)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to take moderation action: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to take action".to_string(),
-            )
+        .map_err(|e| match e {
+            // See `assign_moderation_case`: the org-scoped `UPDATE ... RETURNING`
+            // matches no row for an unknown id OR a case owned by another tenant
+            // (the `organization_id` predicate scopes it), so a cross-org id is a
+            // routine not-found (404), never a server fault (500) — and must not
+            // reveal the case's existence in another tenant.
+            sqlx::Error::RowNotFound => (
+                StatusCode::NOT_FOUND,
+                "Moderation case not found".to_string(),
+            ),
+            other => {
+                tracing::error!("Failed to take moderation action: {}", other);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to take action".to_string(),
+                )
+            }
         })?;
 
     write_compliance_audit(
@@ -598,12 +609,22 @@ pub(super) async fn decide_appeal(
         .compliance_repo
         .decide_appeal(id, org_id, &req.decision, &req.rationale, user.user_id)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to decide appeal: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to decide appeal".to_string(),
-            )
+        .map_err(|e| match e {
+            // See `assign_moderation_case`: an unknown id or a cross-org case is a
+            // routine not-found (404), not a server fault (500). The org-scoped
+            // `UPDATE ... RETURNING` yields `RowNotFound` for a case in another
+            // tenant, which must stay indistinguishable from a truly-unknown id.
+            sqlx::Error::RowNotFound => (
+                StatusCode::NOT_FOUND,
+                "Moderation case not found".to_string(),
+            ),
+            other => {
+                tracing::error!("Failed to decide appeal: {}", other);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to decide appeal".to_string(),
+                )
+            }
         })?;
 
     write_compliance_audit(
