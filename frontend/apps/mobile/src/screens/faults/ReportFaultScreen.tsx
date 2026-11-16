@@ -69,13 +69,13 @@ function buildingLabel(b: ApiBuildingSummary): string {
 }
 
 const categories: Array<{ value: FaultCategory; labelKey: string; icon: string }> = [
-  { value: 'plumbing', labelKey: 'plumbing', icon: '🚿' },
-  { value: 'electrical', labelKey: 'electrical', icon: '⚡' },
-  { value: 'structural', labelKey: 'structural', icon: '🏗️' },
-  { value: 'hvac', labelKey: 'hvac', icon: '❄️' },
-  { value: 'elevator', labelKey: 'elevator', icon: '🛗' },
-  { value: 'security', labelKey: 'security', icon: '🔒' },
-  { value: 'other', labelKey: 'other', icon: '🔧' },
+  { value: 'plumbing', labelKey: 'categoryPlumbing', icon: '🚿' },
+  { value: 'electrical', labelKey: 'categoryElectrical', icon: '⚡' },
+  { value: 'structural', labelKey: 'categoryStructural', icon: '🏗️' },
+  { value: 'hvac', labelKey: 'categoryHvac', icon: '❄️' },
+  { value: 'elevator', labelKey: 'categoryElevator', icon: '🛗' },
+  { value: 'security', labelKey: 'categorySecurity', icon: '🔒' },
+  { value: 'other', labelKey: 'categoryOther', icon: '🔧' },
 ];
 
 const priorities: Array<{ value: FaultPriority; labelKey: string; color: string }> = [
@@ -406,20 +406,6 @@ export function ReportFaultScreen({ onSuccess, onCancel }: ReportFaultScreenProp
     }
   };
 
-  // Category label mapping (these would ideally come from translations)
-  const getCategoryLabel = (labelKey: string): string => {
-    const labels: Record<string, string> = {
-      plumbing: 'Plumbing',
-      electrical: 'Electrical',
-      structural: 'Structural',
-      hvac: 'HVAC',
-      elevator: 'Elevator',
-      security: 'Security',
-      other: 'Other',
-    };
-    return labels[labelKey] || labelKey;
-  };
-
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -503,7 +489,7 @@ export function ReportFaultScreen({ onSuccess, onCancel }: ReportFaultScreenProp
                     category === cat.value && styles.categoryLabelSelected,
                   ]}
                 >
-                  {getCategoryLabel(cat.labelKey)}
+                  {t(`faults.${cat.labelKey}`)}
                 </Text>
               </Pressable>
             ))}
