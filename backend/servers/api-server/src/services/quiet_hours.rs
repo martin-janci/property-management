@@ -306,6 +306,37 @@ mod tests {
     }
 
     #[test]
+    fn master_gate_off_suppresses_weekend_window() {
+        // Regression: the master `quiet_hours_enabled` switch gates quiet hours
+        // on EVERY day. A weekend-only window must not re-enable quiet hours
+        // while the master toggle is off — otherwise a push is wrongly held on
+        // Sat/Sun for a user who disabled quiet hours entirely. Previously the
+        // weekend branch was evaluated before (and independent of) the master
+        // gate, so the gate was bypassed on weekends.
+        let mut s = schedule("UTC");
+        s.quiet_hours_enabled = false; // master OFF
+        s.weekend_quiet_hours_enabled = true;
+        s.weekend_quiet_hours_start = NaiveTime::from_hms_opt(22, 0, 0);
+        s.weekend_quiet_hours_end = NaiveTime::from_hms_opt(7, 0, 0);
+
+        // 2026-06-06 Saturday 23:00 — inside the weekend window's hours, but the
+        // master gate is off, so the user is NOT in quiet hours.
+        let sat_evening = Utc.with_ymd_and_hms(2026, 6, 6, 23, 0, 0).unwrap();
+        assert!(
+            !evaluate(&s, sat_evening).active,
+            "master gate off ⇒ no quiet hours even inside the weekend window"
+        );
+
+        // 2026-06-07 Sunday 03:00 — the early-morning tail of the Saturday-night
+        // weekend window must also stay inactive while the master gate is off.
+        let sun_early = Utc.with_ymd_and_hms(2026, 6, 7, 3, 0, 0).unwrap();
+        assert!(
+            !evaluate(&s, sun_early).active,
+            "master gate off ⇒ the midnight-crossing weekend tail is suppressed too"
+        );
+    }
+
+    #[test]
     fn unknown_timezone_falls_back_to_utc() {
         let s = schedule("Not/AZone");
         // Treated as UTC: 23:00 is inside 22:00–07:00.
