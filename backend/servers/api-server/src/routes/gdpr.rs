@@ -44,7 +44,10 @@ pub fn router() -> Router<AppState> {
 /// `tracing::error!` and returns a generic `DATABASE_ERROR` message).
 fn db_error(err: sqlx::Error) -> (StatusCode, String) {
     tracing::error!(error = %err, "GDPR handler database error");
-    (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        "An internal error occurred. Please try again later.".to_string(),
+    )
 }
 
 // ============================================================================
