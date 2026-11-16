@@ -104,6 +104,10 @@ struct Ctx {
     org_id: Uuid,
     owner_id: Uuid,
     owner_token: String,
+    /// A unit owned by `owner_id` (same org). Used by the cross-owner
+    /// authorization regression: a non-owner submitting this `unit_id` must be
+    /// rejected.
+    owner_unit_id: Uuid,
     delegate_id: Uuid,
     delegate_token: String,
 }
@@ -133,6 +137,7 @@ async fn setup(pool: PgPool, tag: &str) -> Ctx {
         org_id,
         owner_id,
         owner_token,
+        owner_unit_id: unit_id,
         delegate_id,
         delegate_token,
     }
@@ -245,6 +250,40 @@ async fn create_delegation_without_unit_rejects_non_owner(pool: PgPool) {
         resp.status,
         StatusCode::FORBIDDEN,
         "all-units delegation by a non-owner must be 403, got: {}",
+        resp.text()
+    );
+}
+
+/// Regression (authorization, cross-owner): creating a *unit-scoped* delegation
+/// (`unit_id` present) for a unit owned by a **different** owner must be
+/// rejected with 403, not silently created. This is the `Some(unit_id)` sibling
+/// of `create_delegation_without_unit_rejects_non_owner` (which covers the
+/// null-unit path): the owner-check in `create_delegation` must hold on both
+/// branches. The `delegate` is a plain member who owns no unit; it targets the
+/// owner's seeded unit (`owner_unit_id`) and must be forbidden.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn create_delegation_for_other_owner_unit_rejects_non_owner(pool: PgPool) {
+    let ctx = setup(pool, "nonowner-unitdel").await;
+
+    // delegate (not an owner of owner_unit_id) tries to create a delegation
+    // scoped to the owner's unit — must be forbidden, not created.
+    let body = json!({
+        "delegate_user_id": ctx.owner_id,
+        "unit_id": ctx.owner_unit_id,
+        "scopes": ["voting"],
+    });
+    let resp = ctx
+        .app
+        .execute(
+            ctx.post("/api/v1/delegations", &ctx.delegate_token, body)
+                .build(),
+        )
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "unit-scoped delegation on another owner's unit must be 403, got: {}",
         resp.text()
     );
 }
