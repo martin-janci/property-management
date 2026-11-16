@@ -41,13 +41,27 @@ fn resolve_tz(schedule: &NotificationSchedule) -> Tz {
 
 /// Pick the applicable window for `local_weekday`: the dedicated weekend window
 /// on Sat/Sun when weekend quiet hours are enabled, otherwise the weekday
-/// window when quiet hours are enabled. Returns `None` when no window applies.
+/// window. Returns `None` when no window applies.
+///
+/// `quiet_hours_enabled` is the **master** do-not-disturb gate: when it is off
+/// there is no quiet-hours window on *any* day. The weekend settings are an
+/// "optional different schedule" layered on top of that master toggle (see
+/// migration `00038`), not an independent gate — so a configured weekend window
+/// must never re-enable quiet hours while the master switch is off, otherwise a
+/// push is wrongly held on Sat/Sun for a user who disabled quiet hours entirely.
 fn window_for(
     schedule: &NotificationSchedule,
     local_weekday: Weekday,
 ) -> Option<(NaiveTime, NaiveTime)> {
+    // Master gate: quiet hours disabled ⇒ no window, weekends included.
+    if !schedule.quiet_hours_enabled {
+        return None;
+    }
+
     let is_weekend = matches!(local_weekday, Weekday::Sat | Weekday::Sun);
 
+    // Weekend override: a configured weekend window replaces the weekday window
+    // on Sat/Sun. Enabled-but-unconfigured keeps the previous "no window" result.
     if is_weekend && schedule.weekend_quiet_hours_enabled {
         return match (
             schedule.weekend_quiet_hours_start,
@@ -58,14 +72,10 @@ fn window_for(
         };
     }
 
-    if schedule.quiet_hours_enabled {
-        return match (schedule.quiet_hours_start, schedule.quiet_hours_end) {
-            (Some(start), Some(end)) => Some((start, end)),
-            _ => None,
-        };
+    match (schedule.quiet_hours_start, schedule.quiet_hours_end) {
+        (Some(start), Some(end)) => Some((start, end)),
+        _ => None,
     }
-
-    None
 }
 
 /// Convert a naive local date+time in `tz` to UTC, tolerating DST gaps/folds by
@@ -232,15 +242,19 @@ mod tests {
 
     #[test]
     fn weekend_window_used_on_saturday() {
-        // 2026-06-06 is a Saturday.
+        // 2026-06-06 is a Saturday. Master quiet hours ON, with a weekday window
+        // (18:00–20:00) that does NOT cover noon, so the only thing that can make
+        // Saturday noon quiet is the dedicated weekend window.
         let mut s = schedule("UTC");
-        s.quiet_hours_enabled = false; // weekday window off
+        s.quiet_hours_enabled = true; // master gate on
+        s.quiet_hours_start = NaiveTime::from_hms_opt(18, 0, 0);
+        s.quiet_hours_end = NaiveTime::from_hms_opt(20, 0, 0);
         s.weekend_quiet_hours_enabled = true;
         s.weekend_quiet_hours_start = NaiveTime::from_hms_opt(10, 0, 0);
         s.weekend_quiet_hours_end = NaiveTime::from_hms_opt(14, 0, 0);
         let sat_noon = Utc.with_ymd_and_hms(2026, 6, 6, 12, 0, 0).unwrap();
-        assert!(evaluate(&s, sat_noon).active);
-        // On a weekday the (disabled) weekday window means not active.
+        assert!(evaluate(&s, sat_noon).active, "weekend window covers Sat noon");
+        // On a weekday noon the weekday window (18:00–20:00) does not apply.
         assert!(!evaluate(&s, utc(12, 0)).active);
     }
 
@@ -253,7 +267,13 @@ mod tests {
         // 03:00. Before the boundary fix the tail was evaluated against
         // *Monday's* (disabled) weekday window and wrongly reported not-quiet.
         let mut s = schedule("UTC");
-        s.quiet_hours_enabled = false; // no weekday window
+        // Master gate ON (required for any window). The weekday window is a
+        // daytime slot (12:00–13:00) that cannot cover the evening/early-morning
+        // instants below, so the only thing making them quiet is the Sunday-night
+        // weekend window — the behaviour this test pins.
+        s.quiet_hours_enabled = true;
+        s.quiet_hours_start = NaiveTime::from_hms_opt(12, 0, 0);
+        s.quiet_hours_end = NaiveTime::from_hms_opt(13, 0, 0);
         s.weekend_quiet_hours_enabled = true;
         s.weekend_quiet_hours_start = NaiveTime::from_hms_opt(22, 0, 0);
         s.weekend_quiet_hours_end = NaiveTime::from_hms_opt(7, 0, 0);
@@ -281,10 +301,11 @@ mod tests {
             "held push must release at Monday 07:00, not drop at midnight"
         );
 
-        // Monday 08:00 — past the window; weekday quiet hours are off.
+        // Monday 08:00 — past the weekend window, and outside the daytime
+        // weekday window (12:00–13:00).
         assert!(
             !evaluate(&s, mon_after).active,
-            "Monday 08:00 is outside the weekend window and no weekday window applies"
+            "Monday 08:00 is outside the weekend window and the weekday window"
         );
     }
 
