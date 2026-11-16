@@ -41,10 +41,36 @@ use db::RlsPool;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-fn internal_error(e: impl std::fmt::Display) -> (StatusCode, Json<ErrorResponse>) {
+/// Build a sanitized 500 response from a fixed, non-sensitive label.
+///
+/// The argument is a `&'static str` on purpose: it makes it a compile error to
+/// pass a raw error value, so a database/`sqlx` error can never be serialized
+/// into the HTTP body here. Raw error detail must be routed through
+/// [`db_error`], which logs it server-side before returning an opaque body.
+fn internal_error(msg: &'static str) -> (StatusCode, Json<ErrorResponse>) {
     (
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(ErrorResponse::new("INTERNAL_ERROR", e.to_string())),
+        Json(ErrorResponse::new("INTERNAL_ERROR", msg)),
+    )
+}
+
+/// Map a raw workflow/data-layer error to a sanitized client response.
+///
+/// Workflow handlers must never surface raw `WorkflowError` / `sqlx::Error`
+/// detail to the caller: their `Display` output leaks table and column names,
+/// SQL fragments, and connection details (e.g. `WorkflowError::DatabaseError`
+/// renders as `"Database error: {raw sqlx text}"`). Log the full error
+/// server-side (`tracing::error!`) for operators and return an opaque 500 —
+/// mirroring the `db_error` chokepoint in `routes/compliance.rs`,
+/// `routes/budgets.rs`, and `routes/gdpr.rs`.
+fn db_error(context: &'static str, e: impl std::fmt::Display) -> (StatusCode, Json<ErrorResponse>) {
+    tracing::error!(error = %e, "{context}");
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(ErrorResponse::new(
+            "INTERNAL_ERROR",
+            "Internal server error",
+        )),
     )
 }
 
@@ -328,10 +354,7 @@ async fn trigger_workflow(
                 })),
             ))
         }
-        Err(e) => {
-            tracing::error!("Failed to trigger workflow: {}", e);
-            Err(internal_error(e))
-        }
+        Err(e) => Err(db_error("Failed to trigger workflow", e)),
     }
 }
 
@@ -471,10 +494,7 @@ async fn handle_workflow_event(
                 })),
             ))
         }
-        Err(e) => {
-            tracing::error!("Failed to handle workflow event: {}", e);
-            Err(internal_error(e))
-        }
+        Err(e) => Err(db_error("Failed to handle workflow event", e)),
     }
 }
 
@@ -770,4 +790,81 @@ async fn list_builtin_templates(
         "templates": templates,
         "categories": template_category::ALL
     })))
+}
+
+// ============================================================================
+// Tests
+// ============================================================================
+
+#[cfg(test)]
+mod tests {
+    //! Regression coverage for the raw-DB-error leak (code-review finding):
+    //! `trigger_workflow` and `handle_workflow_event` passed the raw
+    //! `WorkflowError` — which wraps `sqlx::Error` via `DatabaseError` and whose
+    //! `Display` embeds table/column names and SQL fragments — straight into the
+    //! HTTP body via `internal_error(e)`. Raw errors must be logged server-side
+    //! and mapped to an opaque body; `internal_error` carries only fixed,
+    //! non-sensitive `&'static str` labels.
+
+    use super::*;
+    use crate::services::workflow_executor::WorkflowError;
+
+    #[test]
+    fn db_error_does_not_echo_raw_db_detail() {
+        // A raw sqlx error (table/column names, SQL fragments) must never reach
+        // the client. `db_error` logs it server-side and returns a fixed opaque
+        // body. `WorkflowError::DatabaseError` Displays as
+        // "Database error: {raw sqlx text}" — the exact string that leaked.
+        let raw = WorkflowError::DatabaseError(sqlx::Error::ColumnNotFound(
+            "workflows.trigger_config".to_string(),
+        ));
+        let (status, Json(body)) = db_error("trigger workflow failed", raw);
+
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(body.code, "INTERNAL_ERROR");
+        assert_eq!(body.message, "Internal server error");
+        assert!(
+            !body.message.contains("workflows")
+                && !body.message.contains("trigger_config")
+                && !body.message.contains("Database error")
+                && !body.message.contains("ColumnNotFound"),
+            "sanitized body leaked raw DB detail: {}",
+            body.message
+        );
+    }
+
+    #[test]
+    fn no_handler_bubbles_raw_error_to_client() {
+        // Source-level guard: every `internal_error(...)` call must receive a
+        // string literal, never a raw error value. A raw `WorkflowError` /
+        // `sqlx::Error` in the HTTP body leaks internal DB detail to the client.
+        // Guard the whole file so a future handler can't reintroduce the leak.
+        let src = include_str!("workflows.rs");
+        let needle = "internal_error(";
+        for (idx, line) in src.lines().enumerate() {
+            // Strip line comments so the doc paragraphs / this test don't match.
+            let code = line.split("//").next().unwrap_or("");
+            // Skip the helper definition itself (`fn internal_error(...)`).
+            if code.contains("fn internal_error") {
+                continue;
+            }
+            if let Some(pos) = code.find(needle) {
+                // Skip a match that sits inside a string literal (e.g. this
+                // test's own assertion message): an odd number of quotes before
+                // the match means we're inside one.
+                if code[..pos].matches('"').count() % 2 == 1 {
+                    continue;
+                }
+                let rest = &code[pos + needle.len()..];
+                assert!(
+                    rest.trim_start().starts_with('"'),
+                    "line {}: internal_error() must be called with a string \
+                     literal, not a raw error value — route raw errors through \
+                     db_error() so DB detail never reaches the client: {}",
+                    idx + 1,
+                    line.trim()
+                );
+            }
+        }
+    }
 }
