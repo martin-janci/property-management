@@ -19,10 +19,14 @@ import { resolveDeepLinkTarget } from '../services/deepLinkRouting';
  *
  * @param onNavigate stable navigation callback (App memoises this with `useCallback`)
  * @param isAuthenticated current auth state, forwarded to the manager's gate
+ * @param userId signed-in user's id, forwarded so the manager can key queued
+ *   auth-required links to a user and never cross a user boundary on a shared
+ *   device (see {@link deepLinkManager.setAuthenticated})
  */
 export function useDeepLinkRouting(
   onNavigate: (screen: string, params?: Record<string, unknown>) => void,
-  isAuthenticated: boolean
+  isAuthenticated: boolean,
+  userId: string | null = null
 ): void {
   // Hold the latest `onNavigate` in a ref so the wiring effect can read the
   // current callback without listing it as a dependency. This keeps the effect
@@ -48,8 +52,9 @@ export function useDeepLinkRouting(
   }, []);
 
   // Keep the manager's auth gate in sync so auth-required links queued while
-  // logged out are dispatched the moment the user authenticates.
+  // logged out are dispatched the moment the user authenticates — and, on a
+  // shared device, only to the user they were queued for (userId).
   useEffect(() => {
-    deepLinkManager.setAuthenticated(isAuthenticated);
-  }, [isAuthenticated]);
+    deepLinkManager.setAuthenticated(isAuthenticated, userId);
+  }, [isAuthenticated, userId]);
 }

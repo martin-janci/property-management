@@ -60,7 +60,7 @@ const API_BASE_URL = (Constants.expoConfig?.extra?.apiUrl as string) || 'http://
 
 function MainApp() {
   const { t } = useTranslation();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const {
     isConnected,
     queuedActionsCount,
@@ -123,7 +123,7 @@ function MainApp() {
   // Wiring lives in `useDeepLinkRouting`: it handles the cold-start initial
   // URL, runtime `url` events, and the auth gate that queues auth-required
   // links until the user is authenticated.
-  useDeepLinkRouting(handleNavigate, isAuthenticated);
+  useDeepLinkRouting(handleNavigate, isAuthenticated, user?.id ?? null);
 
   // Navigation auth guard (AC-5): pick the top-level view from auth state.
   // `auth` replaces every protected route with the login flow, i.e. it
