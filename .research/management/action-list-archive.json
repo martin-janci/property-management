@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-16T20:31:18Z",
+  "archived_at": "2026-11-16T22:26:03Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3610,6 +3610,31 @@
         "merged_pr": 3399,
         "merged_at": "2026-11-10T20:29:49Z",
         "at": "2026-11-10T20:42:08Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-digest-send-failure-abandoned",
+      "action": "api core digest send failure abandoned",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d api-core score=1 vector=bug) | gc1-reconcile 2026-11-16T22:23:18Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T16:26:57Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-04T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3574,
+        "merged_at": "2026-11-16T20:40:17Z",
+        "at": "2026-11-16T22:23:18Z"
       }
     },
     {
@@ -28850,6 +28875,24 @@
       }
     },
     {
+      "id": "pm-scrum-master-triage-stalled-reviews-2555-2559-2026-11-16",
+      "action": "Triage the stalled reviews #2555 and #2559 (110 days). Merge them, close them, or explicitly defer them.",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "dropped",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-16 | gc1-reconcile 2026-11-16T22:23:18Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-16T22:23:18Z"
+      }
+    },
+    {
       "id": "pm-scrum-master-upgrade-refresh-token-confidence-2026-11-09",
       "action": "Open the diff for code-review-ppt-web-core-refresh-token-localstorage and upgrade signal confidence from medium to high (or drop) — currently blocks security fast-track at score=2+confidence=medium",
       "owner_role": "pm-scrum-master",
@@ -30084,6 +30127,30 @@
         "merged_pr": 3217,
         "merged_at": "2026-11-02T12:36:36Z",
         "at": "2026-11-02T14:48:05Z"
+      }
+    },
+    {
+      "id": "risky-churn-pr-3524-pl-json",
+      "action": "PR #3524 i18n leaf-parity fix on top-churn pl.json without a parity test — follow-up #3531 re-opened the same gap",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-11-15T04:24:57Z (score=2 conf=medium vector=test-gap) | gc1-reconcile 2026-11-16T22:23:18Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T04:24:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-16T22:23:18Z"
       }
     },
     {
