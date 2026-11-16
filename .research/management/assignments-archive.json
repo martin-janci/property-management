@@ -4647,6 +4647,28 @@
       "merge_attempted_at": "2026-08-06T22:31:26Z"
     },
     {
+      "task_id": "code-review-api-handlers-ai-workflows-raw-error-leak",
+      "branch": "auto-impl/code-review-api-handlers-ai-workflows-ra-936e5a1a",
+      "status": "merged",
+      "claimed_at": "2026-11-16T02:29:27Z",
+      "last_updated": "2026-11-16T08:34:08Z",
+      "status_changed_at": "2026-11-16T08:34:08Z",
+      "pr_number": 3563,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3563",
+      "merged_at": "2026-11-16T08:32:26Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=2db6fab3f4d77cd92660bce41eba12e95c843459 note=clean-scoped-error-leak-fix; db_error chokepoint; only 2 leak sites; reuses gdpr/compliance pattern; tests present; posted as COMMENT (self-approve blocked)",
+      "last_reviewed_oid": "2db6fab3f4d77cd92660bce41eba12e95c843459",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-16T08:34:08Z"
+    },
+    {
       "task_id": "code-review-api-handlers-appeal-no-status-guard",
       "branch": "auto-impl/code-review-api-handlers-appeal-no-statu-f275a827",
       "status": "merged",
@@ -9377,6 +9399,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "code-review-ppt-web-core-networkstatus-navigator-guard",
+      "branch": "auto-impl/code-review-ppt-web-core-networkstatus-n-e8f067e8",
+      "status": "merged",
+      "claimed_at": "2026-11-16T02:29:27Z",
+      "last_updated": "2026-11-16T08:34:08Z",
+      "status_changed_at": "2026-11-16T08:34:08Z",
+      "pr_number": 3561,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3561",
+      "merged_at": "2026-11-16T08:30:35Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=9a42d77c9442f3a1761bfad73c1b7ab98f7a22b7 note=clean-guard-fix-reuses-getInitialOnlineStatus-tests+ci-green-posted-as-comment-cannot-self-approve",
+      "last_reviewed_oid": "9a42d77c9442f3a1761bfad73c1b7ab98f7a22b7",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-16T08:34:08Z"
+    },
+    {
       "task_id": "code-review-ppt-web-core-notfound-i18n-gap",
       "branch": "auto-impl/code-review-ppt-web-core-notfound-i18n-g-95f13f07",
       "status": "merged",
@@ -11293,6 +11337,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-moderation-full-page-reload-nav",
+      "branch": "auto-impl/code-review-ppt-web-ui-moderation-full-p-852d7cab",
+      "status": "merged",
+      "claimed_at": "2026-11-16T02:29:27Z",
+      "last_updated": "2026-11-16T08:34:08Z",
+      "status_changed_at": "2026-11-16T08:34:08Z",
+      "pr_number": 3562,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3562",
+      "merged_at": "2026-11-16T08:30:16Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=7c0c05981b56e6c0c510455240155eafb4f5636a note=clean-in-scope-spa-nav-fix-ci-green-self-approve-blocked-posted-as-comment",
+      "last_reviewed_oid": "7c0c05981b56e6c0c510455240155eafb4f5636a",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-16T08:34:08Z"
     },
     {
       "task_id": "code-review-ppt-web-ui-moderation-no-i18n",
@@ -25892,6 +25958,28 @@
       "merge_attempted_at": "2026-08-06T22:13:48Z"
     },
     {
+      "task_id": "pm-security-audit-null-unit-scope-authorization-2026-11-16",
+      "branch": "auto-impl/pm-security-audit-null-unit-scope-author-a7a1fa50",
+      "status": "merged",
+      "claimed_at": "2026-11-16T06:28:41Z",
+      "last_updated": "2026-11-16T08:38:13Z",
+      "status_changed_at": "2026-11-16T08:38:13Z",
+      "pr_number": 3564,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3564",
+      "merged_at": "2026-11-16T08:35:48Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3564 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=audit-clean-on-code (delegations already fixed by #3554; no other route has the gap); added missing unit-scoped cross-owner regression test; fmt+clippy green, DB sqlx test deferred to CI",
+      "reviewer_summary": "verdict=approve head_oid=dcb8be12c2da0f836e8f6175a01e7730434e7941 note=audit-confirmed-owner-check-holds-both-branches;test-sound;scope-drift-benign-label-only;CI-green;approve-posted-as-COMMENT(cannot-self-approve)",
+      "last_reviewed_oid": "dcb8be12c2da0f836e8f6175a01e7730434e7941",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-16T08:34:08Z"
+    },
+    {
       "task_id": "qa-verify-gate-adoption-checkin-2026-07-23",
       "branch": "auto-impl/qa-verify-gate-adoption-checkin-2026-07-db453303",
       "status": "merged",
@@ -28737,5 +28825,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-16T04:32:52Z"
+  "archived_at": "2026-11-16T08:38:19Z"
 }

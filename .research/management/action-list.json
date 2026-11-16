@@ -200,78 +200,6 @@
       }
     },
     {
-      "id": "code-review-reality-server-suggestions-stub-popular",
-      "action": "reality server suggestions stub popular",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-14T20:26:05Z (tier1d reality-server score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-14T20:26:05Z",
-      "signal_ref": {
-        "segment": "reality-server",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-09-10T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-core-networkstatus-navigator-guard",
-      "action": "ppt web core networkstatus navigator guard",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d ppt-web-core score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-15T00:28:30Z",
-      "signal_ref": {
-        "segment": "ppt-web-core",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-09-07T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-moderation-full-page-reload-nav",
-      "action": "ppt web ui moderation full page reload nav",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d ppt-web-ui score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-15T00:28:30Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-09-06T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-api-handlers-ai-workflows-raw-error-leak",
-      "action": "api handlers ai workflows raw error leak",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d api-handlers score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-15T00:28:30Z",
-      "signal_ref": {
-        "segment": "api-handlers",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-09-05T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-api-handlers-esg-reporting-raw-sqlx-error-leak",
       "action": "api handlers esg reporting raw sqlx error leak",
       "owner_role": "pm-backend",
@@ -676,24 +604,6 @@
       }
     },
     {
-      "id": "code-review-api-handlers-gdpr-raw-db-error-leak",
-      "action": "api handlers gdpr raw db error leak",
-      "owner_role": "pm-security",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d api-handlers score=2 vector=security)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-16T00:27:09Z",
-      "signal_ref": {
-        "segment": "api-handlers",
-        "score": 2,
-        "vector": "security",
-        "generated": "2026-09-03T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-api-handlers-mfa-report-population-mismatch",
       "action": "api handlers mfa report population mismatch",
       "owner_role": "pm-backend",
@@ -897,17 +807,6 @@
       "action": "Mark as done in action-list the items already merged this window: errorhandler-403-mislabel, currency-code-rangeerror, login-open-redirect-backslash. Check that the 17 merges are reflected in the backlog.",
       "owner_role": "pm-scrum-master",
       "priority": "low",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-16"
-    },
-    {
-      "id": "pm-security-audit-null-unit-scope-authorization-2026-11-16",
-      "action": "Audit routes with optional unit_id or null-scope for the missing-owner-check pattern from #3554, and add a negative cross-owner test",
-      "owner_role": "pm-security",
-      "priority": "high",
       "dependency": "none",
       "depends_on": [],
       "status": "open",

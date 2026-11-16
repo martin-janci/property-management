@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-16T04:33:56Z",
+  "archived_at": "2026-11-16T08:38:20Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -4719,6 +4719,31 @@
       }
     },
     {
+      "id": "code-review-api-handlers-ai-workflows-raw-error-leak",
+      "action": "api handlers ai workflows raw error leak",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d api-handlers score=2 vector=bug) | gc1-reconcile 2026-11-16T08:38:19Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T00:28:30Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-05T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3563,
+        "merged_at": "2026-11-16T08:32:26Z",
+        "at": "2026-11-16T08:38:19Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-appeal-no-status-guard",
       "action": "api-handlers file_appeal has no status guard → owner can re-file after a final appeal decision",
       "owner_role": "pm-backend",
@@ -5150,6 +5175,31 @@
         "merged_pr": 2688,
         "merged_at": "2026-08-07T00:08:01Z",
         "at": "2026-08-07T02:05:57Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-gdpr-raw-db-error-leak",
+      "action": "api handlers gdpr raw db error leak",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d api-handlers score=2 vector=security) | gc1-reconcile 2026-11-16T08:38:19Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-16T00:27:09Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 2,
+        "vector": "security",
+        "generated": "2026-09-03T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3560,
+        "merged_at": "2026-11-16T04:31:10Z",
+        "at": "2026-11-16T08:38:19Z"
       }
     },
     {
@@ -9594,6 +9644,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-networkstatus-navigator-guard",
+      "action": "ppt web core networkstatus navigator guard",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d ppt-web-core score=1 vector=bug) | gc1-reconcile 2026-11-16T08:38:19Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T00:28:30Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-07T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3561,
+        "merged_at": "2026-11-16T08:30:35Z",
+        "at": "2026-11-16T08:38:19Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-notfound-i18n-gap",
       "action": "ppt-web route wrappers render 8 hardcoded English 'X not found' fallbacks — sk/cs/de users see untranslated text",
       "owner_role": "pm-backend",
@@ -11650,6 +11725,31 @@
         "vector": "bug"
       },
       "dispatcher_merged": "2026-08-17T08:41:00Z"
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-full-page-reload-nav",
+      "action": "ppt web ui moderation full page reload nav",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-15T00:28:30Z (tier1d ppt-web-ui score=1 vector=bug) | gc1-reconcile 2026-11-16T08:38:19Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T00:28:30Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-06T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3562,
+        "merged_at": "2026-11-16T08:30:16Z",
+        "at": "2026-11-16T08:38:19Z"
+      }
     },
     {
       "id": "code-review-ppt-web-ui-moderation-no-i18n",
@@ -13950,6 +14050,31 @@
         "merged_pr": 2800,
         "merged_at": "2026-08-20T06:33:46Z",
         "at": "2026-08-20T06:35:31Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-suggestions-stub-popular",
+      "action": "reality server suggestions stub popular",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-14T20:26:05Z (tier1d reality-server score=1 vector=bug) | gc1-reconcile 2026-11-16T08:38:19Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-14T20:26:05Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-10T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3553,
+        "merged_at": "2026-11-16T04:30:45Z",
+        "at": "2026-11-16T08:38:19Z"
       }
     },
     {
@@ -28576,6 +28701,24 @@
         "merged_pr": 2686,
         "merged_at": "2026-08-07T00:07:46Z",
         "at": "2026-08-07T02:05:57Z"
+      }
+    },
+    {
+      "id": "pm-security-audit-null-unit-scope-authorization-2026-11-16",
+      "action": "Audit routes with optional unit_id or null-scope for the missing-owner-check pattern from #3554, and add a negative cross-owner test",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-16 | gc1-reconcile 2026-11-16T08:38:19Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3564,
+        "merged_at": "2026-11-16T08:35:48Z",
+        "at": "2026-11-16T08:38:19Z"
       }
     },
     {
