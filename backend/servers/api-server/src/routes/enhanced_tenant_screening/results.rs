@@ -49,7 +49,7 @@ pub(super) async fn list_ai_results(
 
     match result {
         Ok(results) => Json(results).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        Err(e) => super::db_error(e),
     }
 }
 
@@ -74,7 +74,7 @@ pub(super) async fn get_ai_result(
     match result {
         Ok(Some(result)) => Json(result).into_response(),
         Ok(None) => (StatusCode::NOT_FOUND, "AI result not found").into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        Err(e) => super::db_error(e),
     }
 }
 
@@ -105,11 +105,11 @@ pub(super) async fn get_risk_factors(
                 .await
             {
                 Ok(factors) => Json(factors).into_response(),
-                Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+                Err(e) => super::db_error(e),
             }
         }
         Ok(None) => (StatusCode::NOT_FOUND, "AI result not found").into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        Err(e) => super::db_error(e),
     };
     rls.release().await;
     response
@@ -135,7 +135,7 @@ pub(super) async fn get_complete_screening_data(
 
     match result {
         Ok(data) => Json(data).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        Err(e) => super::db_error(e),
     }
 }
 
@@ -237,7 +237,7 @@ pub(super) async fn run_ai_scoring(
                 .await
             {
                 Ok(result) => (StatusCode::CREATED, Json(result)).into_response(),
-                Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+                Err(e) => super::db_error(e),
             }
         }
         Ok(None) => {
@@ -251,7 +251,7 @@ pub(super) async fn run_ai_scoring(
                     .into_response()
             }
         }
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        Err(e) => super::db_error(e),
     };
     rls.release().await;
     response

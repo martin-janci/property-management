@@ -35,7 +35,7 @@ pub(super) async fn list_provider_configs(
 
     match result {
         Ok(configs) => Json(configs).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        Err(e) => super::db_error(e),
     }
 }
 
@@ -59,7 +59,7 @@ pub(super) async fn create_provider_config(
 
     match result {
         Ok(config) => (StatusCode::CREATED, Json(config)).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        Err(e) => super::db_error(e),
     }
 }
 
@@ -84,7 +84,7 @@ pub(super) async fn get_provider_config(
     match result {
         Ok(Some(config)) => Json(config).into_response(),
         Ok(None) => (StatusCode::NOT_FOUND, "Provider config not found").into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        Err(e) => super::db_error(e),
     }
 }
 
@@ -109,7 +109,7 @@ pub(super) async fn delete_provider_config(
     match result {
         Ok(true) => StatusCode::NO_CONTENT.into_response(),
         Ok(false) => (StatusCode::NOT_FOUND, "Provider config not found").into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        Err(e) => super::db_error(e),
     }
 }
 
@@ -147,6 +147,6 @@ pub(super) async fn update_provider_status(
     match result {
         Ok(true) => StatusCode::OK.into_response(),
         Ok(false) => (StatusCode::NOT_FOUND, "Provider config not found").into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        Err(e) => super::db_error(e),
     }
 }
