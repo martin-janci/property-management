@@ -8,7 +8,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { sanitizeHref } from './sanitize-url';
+import { sanitizeHref, sanitizeRedirectPath } from './sanitize-url';
 
 describe('sanitizeHref', () => {
   it('neutralizes a javascript: href', () => {
@@ -48,5 +48,64 @@ describe('sanitizeHref', () => {
     expect(sanitizeHref('   ')).toBeNull();
     expect(sanitizeHref(null)).toBeNull();
     expect(sanitizeHref(undefined)).toBeNull();
+  });
+});
+
+/**
+ * Same-origin redirect-target validation for post-login / post-SSO-callback
+ * navigation (open-redirect defense). Unlike `sanitizeHref`, a protocol-relative
+ * `//host` target must be REJECTED here — it leaves the current origin.
+ *
+ * IG3: the backslash cases below ("/\\evil.com", "/\\/\\evil.com", and the
+ * control-char-prefixed variants) pass the old naive
+ * `startsWith('/') && !startsWith('//')` check but resolve to an off-origin
+ * absolute URL in the browser — they only return '/' once the URL-origin check
+ * in `sanitizeRedirectPath` lands.
+ */
+describe('sanitizeRedirectPath', () => {
+  it('honours a genuine same-origin relative path', () => {
+    expect(sanitizeRedirectPath('/dashboard/agency')).toBe('/dashboard/agency');
+    expect(sanitizeRedirectPath('/')).toBe('/');
+  });
+
+  it('preserves query string and fragment on a same-origin path', () => {
+    expect(sanitizeRedirectPath('/listings/foo?page=2#results')).toBe(
+      '/listings/foo?page=2#results'
+    );
+  });
+
+  it('rejects a protocol-relative target', () => {
+    expect(sanitizeRedirectPath('//evil.com')).toBe('/');
+    expect(sanitizeRedirectPath('//evil.com/path')).toBe('/');
+  });
+
+  it('rejects backslash-based protocol-relative bypasses', () => {
+    // Browsers (and the WHATWG URL parser for special schemes) normalise "\" to
+    // "/", so each of these is really a protocol-relative URL to evil.com.
+    expect(sanitizeRedirectPath('/\\evil.com')).toBe('/');
+    expect(sanitizeRedirectPath('/\\/\\evil.com')).toBe('/');
+    expect(sanitizeRedirectPath('\\/\\/evil.com')).toBe('/');
+    expect(sanitizeRedirectPath('/\\\\evil.com')).toBe('/');
+  });
+
+  it('rejects targets with leading control chars / whitespace that browsers strip', () => {
+    expect(sanitizeRedirectPath('/\t/evil.com')).toBe('/');
+    expect(sanitizeRedirectPath('\u0000//evil.com')).toBe('/');
+    expect(sanitizeRedirectPath('  //evil.com')).toBe('/');
+  });
+
+  it('rejects absolute URLs and dangerous schemes', () => {
+    expect(sanitizeRedirectPath('https://evil.com')).toBe('/');
+    expect(sanitizeRedirectPath('http://evil.com/x')).toBe('/');
+    expect(sanitizeRedirectPath('javascript:alert(1)')).toBe('/');
+    expect(sanitizeRedirectPath('data:text/html,<script>alert(1)</script>')).toBe('/');
+  });
+
+  it('rejects relative (non-path-absolute) and empty / nullish input', () => {
+    expect(sanitizeRedirectPath('listings/foo')).toBe('/');
+    expect(sanitizeRedirectPath('')).toBe('/');
+    expect(sanitizeRedirectPath('   ')).toBe('/');
+    expect(sanitizeRedirectPath(null)).toBe('/');
+    expect(sanitizeRedirectPath(undefined)).toBe('/');
   });
 });
