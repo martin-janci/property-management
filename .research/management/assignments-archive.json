@@ -6806,6 +6806,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-mobile-rn-deeplink-pending-cross-user",
+      "branch": "auto-impl/code-review-mobile-rn-deeplink-pending-c-bbbe1891",
+      "status": "done",
+      "claimed_at": "2026-11-16T14:37:26Z",
+      "last_updated": "2026-11-16T14:43:33Z",
+      "status_changed_at": "2026-11-16T14:43:33Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": "2026-11-16T14:43:33Z",
+      "specialist": "react-native",
+      "implementer_summary": "[stale-backlog: already fixed+tested on dev via merged PR #3568 (DeepLinkHandler clears pendingLink on logout + user-boundary isolation; test present). No PR opened — duplicate.]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-mobile-rn-deeplink-url-listener-leak",
       "branch": "auto-impl/code-review-mobile-rn-deeplink-url-liste-253f56c3",
       "status": "merged",
@@ -24994,6 +25016,28 @@
       "merge_attempted_at": "2026-11-15T12:34:15Z"
     },
     {
+      "task_id": "hotfix-no-test-pr-3497",
+      "branch": "auto-impl/hotfix-no-test-pr-3497-ecc94f46",
+      "status": "done",
+      "claimed_at": "2026-11-16T14:37:26Z",
+      "last_updated": "2026-11-16T14:43:33Z",
+      "status_changed_at": "2026-11-16T14:43:33Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": "2026-11-16T14:43:33Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "[stale-premise: PR #3497 DID ship the regression test (test_book_facility_fails_honestly_* live on dev in api-server/src/services/voice_commands.rs). Nothing to add — no PR.]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -28935,5 +28979,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-16T14:38:20Z"
+  "archived_at": "2026-11-16T14:43:33Z"
 }

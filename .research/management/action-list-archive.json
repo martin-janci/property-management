@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-16T14:38:43Z",
+  "archived_at": "2026-11-16T14:43:33Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -6898,6 +6898,30 @@
       "retry_of": "code-review-mobile-rn-deeplink-init-unhandled",
       "retry_round": 1,
       "gc1_closed": "ghost-noop 2026-07-12T08:38:52Z"
+    },
+    {
+      "id": "code-review-mobile-rn-deeplink-pending-cross-user",
+      "action": "mobile-rn DeepLinkManager.pendingLink never cleared on logout — shared-device deep-link intent crosses user boundary",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-15T04:24:57Z (score=2 conf=high vector=security) | gc1-reconcile 2026-11-16T14:43:33Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T04:24:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "security"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "done",
+        "merged_pr": null,
+        "merged_at": "2026-11-16T14:43:33Z",
+        "at": "2026-11-16T14:43:33Z"
+      }
     },
     {
       "id": "code-review-mobile-rn-deeplink-url-listener-leak",
@@ -27413,6 +27437,30 @@
         "merged_pr": 3548,
         "merged_at": "2026-11-15T12:35:52Z",
         "at": "2026-11-15T14:26:21Z"
+      }
+    },
+    {
+      "id": "hotfix-no-test-pr-3497",
+      "action": "PR #3497 fix(api-server) voice book-facility false-success — shipped without regression test",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-15T04:24:57Z (score=2 conf=high vector=test-gap) | gc1-reconcile 2026-11-16T14:43:33Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T04:24:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "done",
+        "merged_pr": null,
+        "merged_at": "2026-11-16T14:43:33Z",
+        "at": "2026-11-16T14:43:33Z"
       }
     },
     {
