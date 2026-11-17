@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-11-16T03:12:00Z",
-  "last_run_ms": 7200000,
-  "last_pr_seen": 3559,
-  "last_issue_seen": 3544,
-  "last_commit_sha": "3d459ec4aaae6af7a005efa919f936170f3802b6",
+  "last_run_iso": "2026-11-17T03:27:06Z",
+  "last_run_ms": 906000,
+  "last_pr_seen": 3581,
+  "last_issue_seen": 3584,
+  "last_commit_sha": "deaa47ca726ac6e7a0e0a47d96398857f1f1ae33",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -746,6 +746,16 @@
       "runs_seen": 1,
       "last_seen": "2026-11-16",
       "recent_churn": 244
+    },
+    "backend/servers/api-server/src/services/notification_digest.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-17",
+      "recent_churn": 2
+    },
+    "backend/crates/db/src/repositories/granular_notification.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-17",
+      "recent_churn": 2
     }
   },
   "seen_signals": [
@@ -782,6 +792,7 @@
     "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
     "churn-hotspot-backend-servers-reality-server-src-routes-listings-rs",
     "churn-hotspot-backend/Cargo.toml",
+    "churn-hotspot-backend/crates/db/src/repositories/granular_notification.rs",
     "churn-hotspot-backend/crates/db/src/repositories/registry.rs",
     "churn-hotspot-backend/crates/db/src/repositories/rental.rs",
     "churn-hotspot-backend/crates/db/tests/suite_4.rs",
@@ -809,6 +820,7 @@
     "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
     "churn-hotspot-backend/servers/api-server/src/services/actions/api_call.rs",
     "churn-hotspot-backend/servers/api-server/src/services/auth_policy.rs",
+    "churn-hotspot-backend/servers/api-server/src/services/notification_digest.rs",
     "churn-hotspot-backend/servers/api-server/src/services/oauth.rs",
     "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
     "churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs",
@@ -927,6 +939,9 @@
     "code-review-api-core-api-call-client-build-expect",
     "code-review-api-core-apns-jwt-per-send-mint",
     "code-review-api-core-client-ip-cf-spoof",
+    "code-review-api-core-digest-abandoned-no-terminal-state",
+    "code-review-api-core-digest-candidates-inner-join-refresh-tokens",
+    "code-review-api-core-digest-sweep-lock-release-leak",
     "code-review-api-core-dispute-fsm-no-tests",
     "code-review-api-core-docgen-summarize-char-boundary-panic",
     "code-review-api-core-equipment-idor",
@@ -1476,7 +1491,7 @@
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-11-09",
-    "api-core": "2026-11-04",
+    "api-core": "2026-11-17",
     "reality-server": "2026-11-16",
     "ppt-web-ui": "2026-11-08",
     "ppt-web-core": "2026-11-04",
@@ -1485,8 +1500,8 @@
     "mobile-native-kmp": "2026-11-04"
   },
   "stats": {
-    "runs": 120,
-    "vectors_created": 547,
+    "runs": 121,
+    "vectors_created": 552,
     "plans_created": 38,
     "quiet_days": 8,
     "auto_fix_count": 0
@@ -1502,7 +1517,7 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 6,
+    "next_index": 7,
     "role_last_run": {
       "pm-tech-lead": "2026-10-22",
       "pm-backend": "2026-10-26",
@@ -1510,12 +1525,12 @@
       "pm-qa": "2026-11-09",
       "pm-devops": "2026-11-13",
       "pm-security": "2026-11-16",
-      "pm-data": "2026-10-16",
+      "pm-data": "2026-11-17",
       "pm-integration": "2026-10-19",
-      "pm-scrum-master": "2026-11-16"
+      "pm-scrum-master": "2026-11-17"
     }
   },
   "coverage_cursor": {
-    "next_index": 4
+    "next_index": 5
   }
 }

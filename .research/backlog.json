@@ -15958,12 +15958,14 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #3486"
+        "PR #3486",
+        "PR #3581"
       ],
       "evidence": [
-        "PR #3486 shipped an access-model shift (public→protected) on 4 ppt-web route files (community.tsx, disputes.tsx, messaging.tsx, neighbors.tsx) without touching any docs/screens/ppt/*.md. Best-effort heuristic — the screen docs for community/disputes/messaging/neighbors likely still describe the pre-protection flow."
+        "PR #3486 shipped an access-model shift (public→protected) on 4 ppt-web route files (community.tsx, disputes.tsx, messaging.tsx, neighbors.tsx) without touching any docs/screens/ppt/*.md. Best-effort heuristic — the screen docs for community/disputes/messaging/neighbors likely still describe the pre-protection flow.",
+        "resolved: PR #3581 merged 2026-11-17 — screen-map-drift-pr-3486-ppt: sync ppt screen-maps with PR #3486 ProtectedRoute gating"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/community.tsx",
@@ -15972,7 +15974,7 @@
         "frontend/apps/ppt-web/src/routes/groups/neighbors.tsx"
       ],
       "created_at": "2026-11-15",
-      "updated_at": "2026-11-15",
+      "updated_at": "2026-11-17",
       "plan": null
     },
     {
@@ -15981,18 +15983,20 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #3482"
+        "PR #3482",
+        "PR #3580"
       ],
       "evidence": [
-        "PR #3482 shipped a visibility shift on frontend/apps/ppt-web/src/routes/groups/core.tsx (gating /settings/privacy to authenticated users only) without touching any docs/screens/ppt/*.md. Best-effort heuristic — no privacy-settings.md exists; the accessibility-settings.md doc does not reflect the new auth gate."
+        "PR #3482 shipped a visibility shift on frontend/apps/ppt-web/src/routes/groups/core.tsx (gating /settings/privacy to authenticated users only) without touching any docs/screens/ppt/*.md. Best-effort heuristic — no privacy-settings.md exists; the accessibility-settings.md doc does not reflect the new auth gate.",
+        "resolved: PR #3580 merged 2026-11-17 — screen-map-drift-pr-3482-ppt: sync ppt/privacy-settings with PR #3482 auth gate"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/core.tsx"
       ],
       "created_at": "2026-11-15",
-      "updated_at": "2026-11-15",
+      "updated_at": "2026-11-17",
       "plan": null
     },
     {
@@ -16228,6 +16232,108 @@
       ],
       "created_at": "2026-11-16",
       "updated_at": "2026-11-16",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-notification-digest-rs",
+      "title": "notification_digest.rs is a repeat churn hotspot (digest subsystem)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3574",
+        "PR #3576"
+      ],
+      "evidence": [
+        "notification_digest.rs changed in 2 merged PRs this run (#3574 abandoned-send surfacing, #3576 digest worker replica claim); digest subsystem hotspot — see related code-review-findings for concrete bugs"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/notification_digest.rs"
+      ],
+      "created_at": "2026-11-17",
+      "updated_at": "2026-11-17",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-granular-notification-rs",
+      "title": "granular_notification.rs repo is a repeat churn hotspot (digest subsystem)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3574",
+        "PR #3576"
+      ],
+      "evidence": [
+        "granular_notification.rs repo changed in 2 merged PRs this run (#3574, #3576) co-moving with notification_digest.rs; a Phase 1.5 review found a silent-cohort-drop INNER JOIN here"
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/granular_notification.rs"
+      ],
+      "created_at": "2026-11-17",
+      "updated_at": "2026-11-17",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-digest-candidates-inner-join-refresh-tokens",
+      "title": "find_inactive_digest_candidates INNER JOIN silently excludes users without a refresh-tokens row",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-17 (api-core)"
+      ],
+      "evidence": [
+        "backend/crates/db/src/repositories/granular_notification.rs:1002 — find_inactive_digest_candidates joins users to last_activity (derived from refresh_tokens.MAX(last_used_at)) with INNER JOIN; any opted-in user whose refresh_tokens row was expired/pruned (or who never had one) is silently excluded from the digest sweep — exactly the long-tail inactive users the digest exists to re-engage. Fix: LEFT JOIN last_activity la … WHERE COALESCE(la.last_active, u.created_at) < $1."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/granular_notification.rs"
+      ],
+      "created_at": "2026-11-17",
+      "updated_at": "2026-11-17",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-digest-abandoned-no-terminal-state",
+      "title": "report_abandoned has no persisted abandoned_at — abandoned digests are log-only",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-17 (api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/notification_digest.rs:226-252 — report_abandoned surfaces aged-out digest rows only via a tracing::error! log line; notification_digests schema (migration 00061) has no column to mark a row terminally abandoned, so the DB cannot distinguish 'still inside retry window, pending retry' from 'exhausted retry window, giving up'. Log-pipeline loss or restart around the boundary tick (poll_interval=1h) → the abandoned row is invisible forever. Add e.g. abandoned_at TIMESTAMPTZ and set it when report_abandoned picks the row up."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/notification_digest.rs"
+      ],
+      "created_at": "2026-11-17",
+      "updated_at": "2026-11-17",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-digest-sweep-lock-release-leak",
+      "title": "release_digest_sweep returns a failed-unlock connection to the pool (advisory-lock leak)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-17 (api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/notification_digest.rs:193-195 — release_digest_sweep is best-effort: on error the connection is returned to the pool with the session-scoped pg_advisory_lock still held. The docstring says 'self-heals when the connection closes' but Postgres pool connections can live indefinitely; the same connection could be re-acquired on later try_claim_digest_sweep calls, where pg_try_advisory_lock returns true for an already-held lock (ref-count += 1), then one pg_advisory_unlock only decrements to 1, leaving the lock held after 'successful' release. Safer: on release error, mark the connection unusable (drop without return) or close it explicitly instead of returning it to the pool."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/notification_digest.rs"
+      ],
+      "created_at": "2026-11-17",
+      "updated_at": "2026-11-17",
       "plan": null
     }
   ]

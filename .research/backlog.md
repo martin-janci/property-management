@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-11-16 03:12 UTC by routine</sub>
+<sub>Last regenerated: 2026-11-17 03:17 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -48,15 +48,17 @@
 | 3 | security | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | `backend/servers/api-server/src/routes/ai.rs` (+1) | code-review api-core 2026-05-23 (+2) | 2026-05-25 | done | plans/_archive/security-voice-device-idor.md |
 | 3 | security | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | `backend/servers/api-server/src/routes/signatures.rs` (+2) | issue #439 (+3) | 2026-05-25 | done | plans/_archive/security-ssrf-outbound-url-validation.md |
 | 3 | security | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | `backend/servers/api-server/src/routes/ai.rs` (+1) | code-review api-core 2026-05-25 (+2) | 2026-05-25 | done | plans/_archive/security-equipment-idor.md |
+| 2 | bug | report_abandoned has no persisted abandoned_at — abandoned digests are log-only | `backend/servers/api-server/src/services/notification_digest.rs` | rotating-expert-review 2026-11-17 (api-core) | 2026-11-17 | open | — |
+| 2 | bug | find_inactive_digest_candidates INNER JOIN silently excludes users without a refresh-tokens row | `backend/crates/db/src/repositories/granular_notification.rs` | rotating-expert-review 2026-11-17 (api-core) | 2026-11-17 | open | — |
+| 2 | test-gap | PR #3482 gated /settings/privacy behind ProtectedRoute without updating docs/screens/ppt/ | `frontend/apps/ppt-web/src/routes/groups/core.tsx` | PR #3482 (+1) | 2026-11-17 | done | — |
+| 2 | test-gap | PR #3486 gated community/disputes/messaging/neighbors behind ProtectedRoute without updating docs/screens/ppt/ | `frontend/apps/ppt-web/src/routes/groups/community.tsx` (+3) | PR #3486 (+1) | 2026-11-17 | done | — |
 | 2 | test-gap | Screen-map drift: PR #3546 faults URL-param validation without docs/screens/ppt update | `frontend/apps/ppt-web/src/routes/groups/faults.tsx` (+2) | PR #3546 | 2026-11-16 | open | — |
 | 2 | test-gap | Screen-map drift: PR #3559 login open-redirect fix without docs/screens/reality update | `frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx` (+3) | PR #3559 | 2026-11-16 | open | — |
-| 2 | security | mobile-rn DeepLinkManager.pendingLink never cleared on logout — shared-device deep-link intent crosses user boundary | `frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts` (+2) | Phase 1.5 rotating expert review 2026-11-15 mobile-rn | 2026-11-15 | open | — |
-| 2 | bug | mobile-rn ReportFaultScreen category chips always render English — locale switch leaves 7 chips in EN while rest of form translates | `frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx` (+2) | Phase 1.5 rotating expert review 2026-11-15 mobile-rn | 2026-11-15 | open | — |
-| 2 | test-gap | PR #3482 gated /settings/privacy behind ProtectedRoute without updating docs/screens/ppt/ | `frontend/apps/ppt-web/src/routes/groups/core.tsx` | PR #3482 | 2026-11-15 | open | — |
-| 2 | test-gap | PR #3486 gated community/disputes/messaging/neighbors behind ProtectedRoute without updating docs/screens/ppt/ | `frontend/apps/ppt-web/src/routes/groups/community.tsx` (+3) | PR #3486 | 2026-11-15 | open | — |
-| 2 | test-gap | PR #3524 i18n leaf-parity fix on top-churn pl.json without a parity test — follow-up #3531 re-opened the same gap | `frontend/apps/ppt-web/messages/pl.json` (+2) | PR #3524 (+1) | 2026-11-15 | open | — |
-| 2 | test-gap | PR #3525 fix(api-handlers) non-admin peer-role mutation — privilege-escalation fix without a cross-tenant test | `backend/servers/api-server/src/routes/organizations/members.rs` | PR #3525 | 2026-11-15 | open | — |
-| 2 | test-gap | PR #3497 fix(api-server) voice book-facility false-success — shipped without regression test | `backend/servers/api-server/src/services/voice_commands.rs` | PR #3497 | 2026-11-15 | open | — |
+| 2 | security | mobile-rn DeepLinkManager.pendingLink never cleared on logout — shared-device deep-link intent crosses user boundary | `frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts` (+2) | Phase 1.5 rotating expert review 2026-11-15 mobile-rn | 2026-11-15 | done | — |
+| 2 | bug | mobile-rn ReportFaultScreen category chips always render English — locale switch leaves 7 chips in EN while rest of form translates | `frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx` (+2) | Phase 1.5 rotating expert review 2026-11-15 mobile-rn | 2026-11-15 | done | — |
+| 2 | test-gap | PR #3524 i18n leaf-parity fix on top-churn pl.json without a parity test — follow-up #3531 re-opened the same gap | `frontend/apps/ppt-web/messages/pl.json` (+2) | PR #3524 (+1) | 2026-11-15 | dropped | — |
+| 2 | test-gap | PR #3525 fix(api-handlers) non-admin peer-role mutation — privilege-escalation fix without a cross-tenant test | `backend/servers/api-server/src/routes/organizations/members.rs` | PR #3525 | 2026-11-15 | done | — |
+| 2 | test-gap | PR #3497 fix(api-server) voice book-facility false-success — shipped without regression test | `backend/servers/api-server/src/services/voice_commands.rs` | PR #3497 | 2026-11-15 | done | — |
 | 2 | refactor | ppt-web messages/en.json churn-hotspot — base-locale key additions driving i18n  | `frontend/apps/ppt-web/messages/en.json` | git-log 14d sweep 2026-11-13 (+1) | 2026-11-13 | done | — |
 | 2 | bug | reality-server list_import_jobs reports `total` as page length, breaking client pagination | `backend/servers/reality-server/src/routes/imports.rs` | rotating-expert-review [reality-server] | 2026-11-09 | dropped | — |
 | 2 | bug | reality-server imports.rs create/update_import_job store user `source_url` without validate_external_url (SSRF parity gap vs agency_imports) | `backend/servers/reality-server/src/routes/imports.rs` | PR #3367 (+1) | 2026-11-09 | done | — |
@@ -276,6 +278,9 @@
 | 2 | refactor | documents.rs churn-hot — 10,659 lines over 14d | `backend/servers/api-server/src/routes/documents.rs` | git log origin/main since 2026-05-06 (+2) | 2026-05-25 | done | — |
 | 2 | refactor | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | `backend/servers/api-server/src/handlers/auth/mod.rs` (+2) | code-review api-handlers 2026-05-23 (+1) | 2026-05-24 | done | — |
 | 2 | security | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | `backend/servers/api-server/src/handlers/voting/mod.rs` (+4) | issue #160 (+2) | 2026-05-23 | done | — |
+| 1 | refactor | release_digest_sweep returns a failed-unlock connection to the pool (advisory-lock leak) | `backend/servers/api-server/src/services/notification_digest.rs` | rotating-expert-review 2026-11-17 (api-core) | 2026-11-17 | open | — |
+| 1 | refactor | granular_notification.rs repo is a repeat churn hotspot (digest subsystem) | `backend/crates/db/src/repositories/granular_notification.rs` | PR #3574 (+1) | 2026-11-17 | open | — |
+| 1 | refactor | notification_digest.rs is a repeat churn hotspot (digest subsystem) | `backend/servers/api-server/src/services/notification_digest.rs` | PR #3574 (+1) | 2026-11-17 | open | — |
 | 1 | bug | reality-server record_view: comment claims existence check but handler does not verify + no per-IP throttle | `backend/servers/reality-server/src/routes/listings.rs` (+1) | rotating-expert-review 2026-11-16 | 2026-11-16 | open | — |
 | 1 | test-gap | reality-server ListingSummary (/listings search) emits bare UUID; SEO slug only on /featured | `backend/servers/reality-server/src/routes/listings.rs` (+1) | rotating-expert-review 2026-11-16 | 2026-11-16 | open | — |
 | 1 | refactor | Churn hotspot: reality-server routes/listings.rs (slug + category i18n sweeps) | `backend/servers/reality-server/src/routes/listings.rs` | churn | 2026-11-16 | open | — |

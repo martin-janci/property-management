@@ -1,57 +1,48 @@
 # Project State — PPT (Property Management)
 
-<sub>Generated: 2026-11-16T20:38:36Z — Scrum Master coverage upkeep refresh (task pm-scrum-master-coverage-scan-refresh; cursor idx 3 → epic-79)</sub>
+<sub>Generated: 2026-11-17T03:17:29Z — Scrum Master synthesis + pm-data (rotation index 6 → 7). Coverage cursor advanced idx 4 → 5 (epic-7a re-checked, next epic-80).</sub>
 
 ## Executive summary
 
-Sprint (Epic 6 / 7A / 8A / 10A — Announcements, Documents, Notifications & OAuth) and all six tracked epics are **done**. `coverage.json` holds 49/49 stories done (0 partial or not-started), so gap-driven planning has no candidates. Work has moved to the improvement backlog (63 open action-list items after today's merge). 17 code-review and gh-issue PRs merged in this window — a continued dispatcher burst — all hardening on already-shipped surfaces, with no coverage story flipped. `coverage.json` + this file refreshed **2026-11-16** (upkeep scan; rotating cursor re-checked epic-79, Reality Portal API client integration — 79-1..79-4 still done). Confirmed: **49/49 stories done** and **epic rollups 6/6 done** in `sprint-status.yaml` — coverage and rollups remain 100%.
+Sprint (Epic 6 / 7A / 8A / 10A) and all six tracked epics remain **done**; `coverage.json` holds 49/49 stories done (0 partial or not-started), so delivery work is entirely on the improvement track. 22 PRs (#3560-#3581) merged in this window — mostly raw-DB-error sanitize sweeps and digest-subsystem hardening (#3574 abandoned-send surfacing, #3576 digest worker replica-claim, #3570 quiet-hours master gate). The Phase 1.5 rotating review of `api-core` surfaced three more digest-correctness findings (INNER-JOIN silently excludes inactive-user cohort, no `abandoned_at` terminal state, advisory-lock release leak), and two new follow-up issues (#3583 RLS super-admin context bleed, #3584 mobile biome gate downgrade) opened against just-merged work. The digest/notification data path is the main churn hotspot and the right pm-data focus.
 
 ## Sprint progress
 
 - **Sprint:** Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth
 - **Epics done:** 6 of 6 (100%)
-- **Coverage (last scan 2026-11-16):** 49 of 49 stories done
+- **Coverage (last upkeep 2026-11-17):** 49 of 49 stories done; rotating cursor re-checked epic-7a (Document Upload/Folder/Permissions/Download/Share — 5 stories still done).
 
-## Shipped since last run (2026-11-15T11:30:00Z → 2026-11-16T03:12:00Z)
+## Shipped since last run (2026-11-16T03:12:00Z → 2026-11-17T03:17:29Z)
 
-- #3558 reality-web currency-code RangeError crash
-- #3559 reality-web login open-redirect (backslash)
-- #3557 ppt-web errorHandler 403 mislabel
-- #3555 api-core notify send-before-stamp duplicate
-- #3556 api-core payment-reminders batch abort
-- #3554 api-handlers delegation null-unit owner check
-- #3552 reality-server listing slug is-uuid
-- #3551 reality-server categories hardcoded sk labels
-- #3550 ppt-web signature-modal raw error
-- #3549 ppt-web reports route stub analytics
-- #3548 gh-issue-3544 feedback mount (issue closed)
-- #3546 ppt-web faults URL-param unvalidated cast
-- #3547 ppt-web nav aria-label i18n
-- #3545 mobile-rn imagecompress width-only resize
-- #3543 mobile-rn feedback-manager no auth token
-- #3542 gh-issue-3531 i18n sweep
-- #3541 ppt-web facilities isManager hardcoded true
+- 7 raw-DB-error sanitize PRs: #3560 GDPR handlers, #3563 ai-workflows, #3569 tenant-screening, #3572 ESG reporting, #3575 property valuation, plus #3565 cross-tenant 404 contract sweep on moderation mutations and #3573 /refresh swallowed-revoke error.
+- Digest subsystem hardening: #3574 surface abandoned digest sends, #3576 digest worker replica claim (advisory lock), #3570 quiet-hours master gate on weekends.
+- Security and authz: #3564 unit-scoped cross-owner delegation authz regression (audit found no un-fixed gap), #3571 regression test for PR #3525 peer-role privilege escalation, #3568 RN deep-link pending singleton isolated by user, #3577 tenant-config RLS clear no longer swallowed.
+- ppt-web fixes: #3561 useNetworkStatus navigator/window guard, #3562 moderation View Content via SPA router.
+- mobile-rn: #3566 react-hooks + i18n lint rules adopted warn-only for one sprint, #3567 ReportFault category chips via i18n.
+- Planning and docs: #3578 coverage/project-state refresh, #3579 JWT iss/aud (#3427) + Dependabot majors sequenced behind the swagger-ui egress fix, #3580 + #3581 screen-map drift syncs.
 
 ## What's next
 
-1. **[high] [pm-scrum-master]** Unblock mobile-native/KMP and swagger-ui egress in the cloud runner (#2652, #2966). Claimable work is a small share of the backlog, and backend security PRs cannot compile.
-2. **[high] [pm-scrum-master]** Triage the stalled reviews #2555 and #2559 (110 days). Merge them, close them, or explicitly defer them.
-3. **[high] [pm-scrum-master]** Run the cross-tenant 404 contract sweep and close the open IDOR retries #2944/#2945/#2946 once the build is unblocked.
-4. **[high] [pm-security]** Audit routes with optional `unit_id` or null-scope for the missing-owner-check pattern from #3554, and add a negative cross-owner test.
-
-<sub>Done 2026-11-16: coverage scan refresh (`coverage.json` + this file re-stamped, epic rollups & coverage reconfirmed 100%).</sub>
+1. **[high] [pm-scrum-master]** Fix digest-candidates INNER JOIN in `granular_notification.rs find_inactive_digest_candidates` (LEFT JOIN with `COALESCE(la.last_active, u.created_at)`) and add a regression test for a user with no `refresh_tokens` row.
+2. **[high] [pm-scrum-master]** Add terminal abandoned state for digests (`abandoned_at` column via new migration, set in `report_abandoned`) so abandoned rows are queryable, not log-only.
+3. **[high] [pm-scrum-master]** Triage issue #3583 (RLS super-admin context bleed, follow-up to #3577) and confirm whether pooled connections can retain a super-admin RLS context.
+4. **[high] [pm-devops]** Unblock the cloud-runner backend compile — utoipa-swagger-ui egress 403 (#2966) blocks api-server builds and keeps #3583 / digest fixes / #3427 unverifiable locally.
+5. **[high] [pm-scrum-master]** Triage stalled PRs #2555 and #2559 (~110 days) — merge, close, or explicitly defer.
 
 ## Blockers
 
-- **All backend-touching dispatcher tasks, including IDOR retries #2944/#2945/#2946** — utoipa-swagger-ui egress 403 (#2966) makes api-server unbuildable in the cloud runner — owner: `pm-devops`
-- **mobile-native KMP backlog** (create-listing, inquiries contract, http timeout, pagination cap, SSO error body) — KMP builds are unclaimable in the cloud runner (#2652) — owner: `pm-devops`
-- **#3427 JWT iss/aud hardening** — labeled blocked; needs operator triage — owner: `pm-security`
-- **PRs #2555 and #2559** — stalled 110 days; accounting trio, blocked on the build — owner: `pm-tech-lead`
+- utoipa-swagger-ui egress 403 (#2966) makes api-server unbuildable in the cloud runner; digest fixes and #3583 cannot be compiled or tested there — owner: pm-devops.
+- mobile-native KMP builds unclaimable in the cloud runner (#2652) — owner: pm-devops.
+- #3427 JWT iss/aud hardening labeled blocked and sequenced behind the egress fix by #3579 — owner: pm-security.
+- PRs #2555 and #2559 (accounting trio) stalled 110+ days; no merge/close/defer decision recorded — owner: pm-tech-lead.
 
 ## Role focus today
 
-`pm-scrum-master` (always-on), `pm-security` (rotation index 5)
+- **pm-scrum-master** (always-on) — delivery synthesis + 6 next-actions.
+- **pm-data** (rotation idx 6) — digest/analytics correctness lens; next rotation advances to **pm-integration** (idx 7).
 
-## Role notes
+### pm-data — one-line summary
+ppt-web has a `trackEvent` sink, admin-web has onboarding analytics, mobile has no evident analytics layer, and the three Phase 1.5 digest findings are all reporting-correctness defects (cohort drop, no terminal state, no digest metrics). Full role analysis in `roles/pm-data.md`.
 
-- **pm-security:** No auth/JWT changes in the last 5 backend commits. The only security-relevant change is #3554 (null-unit delegation owner check); sibling-path audit requested. Open deep-link pending singleton (mobile-rn, score 2) and KMP SSO error body (score 2) remain. #3560 (gdpr raw DB error leak) is in review.
+### pm-scrum-master — one-line summary
+22 PRs merged this window on improvement-track hardening; three digest-subsystem code-review findings landed right behind #3574/#3576, so the hotspot risk is bundle-or-ship-separately rather than drift. Full role analysis via `shipped_since_last_run` + `next_actions` in `action-list.json`.

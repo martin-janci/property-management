@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-11-16T03:12:00Z",
+  "generated": "2026-11-17T03:17:29Z",
   "items": [
     {
       "id": "pm-devops-swagger-ui-egress-blocking-security-2026-10-01",
@@ -381,6 +381,106 @@
       "impact": "low",
       "mitigation": "Run a scan now and keep the cursor rotation",
       "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-digest-subsystem-churn-repeat",
+      "risk": "Digest subsystem churn: notification_digest.rs and granular_notification.rs were touched twice each in this window, and 3 new findings landed right after #3574/#3576. A third touch without a design pass risks the repeated-churn pattern.",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Batch the 3 findings into one plan/PR with a single design review",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-digest-inner-join-silently-drops-cohort",
+      "risk": "Digest candidates INNER JOIN silently excludes long-tail inactive users, which is the audience the digest targets. Notification volume is understated with no error signal.",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Ship the LEFT JOIN fix with a regression test first",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-digest-abandoned-log-only",
+      "risk": "Abandoned digests exist only as a tracing::error! line, so a log-pipeline loss or restart at the boundary tick makes them invisible permanently.",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Add an abandoned_at terminal state",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-cloud-runner-backend-egress-blocks-verify",
+      "risk": "Backend security and data fixes (#3583, digest fixes, #3427) cannot compile in the cloud runner while swagger-ui egress (#2966) is unresolved, so verification relies on CI alone.",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Prioritize the egress fix (pm-devops); keep backend PRs small and CI-gated",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-mobile-lint-warn-only-stuck",
+      "risk": "Warn-only lint gates on mobile (#3566) may never be promoted, which is what #3584 flags.",
+      "probability": "medium",
+      "impact": "low",
+      "mitigation": "Set a dated promotion criterion",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-data-digest-kpis-biased-by-inner-join",
+      "risk": "Digest engagement and re-activation KPIs are biased, because the cohort with no live refresh token (the long-tail inactive users) is excluded without any record",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "LEFT JOIN fix, then backfill the cohort size and report it as excluded_by_filter",
+      "owner_role": "pm-data",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-data-abandoned-digests-visible-only-in-logs",
+      "risk": "Abandoned digests are visible only in logs, so after log loss or a restart the failure rate is under-reported and cannot be audited",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Add abandoned_at and alert on count",
+      "owner_role": "pm-data",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-data-advisory-lock-leak-skips-sweep-silently",
+      "risk": "A leaked session advisory lock can make the sweep skip runs silently, creating unreported gaps in digest delivery data",
+      "probability": "low",
+      "impact": "medium",
+      "mitigation": "Detach or close the connection on release error; emit a sweep-skipped counter",
+      "owner_role": "pm-data",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-data-mobile-no-analytics-sink",
+      "risk": "Mobile has no evident analytics layer, so mobile fault-report attempt and conversion funnels cannot be measured and web and mobile metric definitions may diverge",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Agree one event catalogue and a shared event schema",
+      "owner_role": "pm-data",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-data-late-added-events-no-baseline",
+      "risk": "Events added late to features that have already shipped have no baseline, so before/after comparisons are weak",
+      "probability": "medium",
+      "impact": "low",
+      "mitigation": "Make events part of the story definition of done",
+      "owner_role": "pm-data",
       "trigger": null,
       "status": "open"
     }

@@ -172,7 +172,7 @@
       "action": "PR #3482 gated /settings/privacy behind ProtectedRoute without updating docs/screens/ppt/",
       "owner_role": "pm-qa",
       "priority": "low",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-backlog-refill 2026-11-15T04:24:57Z (score=2 conf=medium vector=test-gap)",
       "deadline": null,
       "dependency": null,
@@ -182,14 +182,16 @@
         "plan": null,
         "score": 2,
         "vector": "test-gap"
-      }
+      },
+      "resolved_by": "PR #3580",
+      "resolved_at": "2026-11-17"
     },
     {
       "id": "screen-map-drift-pr-3486-ppt",
       "action": "PR #3486 gated community/disputes/messaging/neighbors behind ProtectedRoute without updating docs/screens/ppt/",
       "owner_role": "pm-qa",
       "priority": "low",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-backlog-refill 2026-11-15T04:24:57Z (score=2 conf=medium vector=test-gap)",
       "deadline": null,
       "dependency": null,
@@ -199,7 +201,9 @@
         "plan": null,
         "score": 2,
         "vector": "test-gap"
-      }
+      },
+      "resolved_by": "PR #3581",
+      "resolved_at": "2026-11-17"
     },
     {
       "id": "churn-hotspot-frontend-apps-ppt-web-messages-cs-json",
@@ -558,9 +562,11 @@
       "priority": "medium",
       "dependency": "none",
       "depends_on": [],
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "pm-analysis 2026-11-16"
+      "source": "pm-analysis 2026-11-16",
+      "resolved_by": "PR #3579",
+      "resolved_at": "2026-11-17"
     },
     {
       "id": "pm-scrum-master-mark-merged-action-items-done-2026-11-16",
@@ -921,7 +927,106 @@
         "vector": "bug",
         "generated": "2026-09-02T00:00:00Z"
       }
+    },
+    {
+      "id": "pm-scrum-master-fix-digest-candidates-inner-join-2026-11-17",
+      "action": "Fix digest-candidates INNER JOIN in granular_notification.rs find_inactive_digest_candidates (use LEFT JOIN with COALESCE(la.last_active, u.created_at)) and add a regression test with a user who has no refresh_tokens row",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-17"
+    },
+    {
+      "id": "pm-scrum-master-add-digest-abandoned-at-column-2026-11-17",
+      "action": "Add terminal abandoned state for digests (abandoned_at column via new migration, set in report_abandoned) so abandoned rows are queryable, not log-only",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-17"
+    },
+    {
+      "id": "pm-scrum-master-triage-rls-superadmin-context-bleed-3583-2026-11-17",
+      "action": "Triage #3583 (RLS super-admin context bleed, follow-up to #3577) and confirm whether pooled connections can retain a super-admin RLS context",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-17"
+    },
+    {
+      "id": "pm-scrum-master-fix-digest-sweep-lock-release-leak-2026-11-17",
+      "action": "Fix digest sweep advisory-lock release leak (drop or close the connection on release error instead of returning it to the pool)",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-17"
+    },
+    {
+      "id": "pm-scrum-master-resolve-mobile-biome-gate-3584-2026-11-17",
+      "action": "Resolve #3584 (mobile biome gate downgrade) by deciding the warn-to-error promotion date for the #3566 lint rules",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-17"
+    },
+    {
+      "id": "pm-scrum-master-review-draft-prs-3582-3585-3586-2026-11-17",
+      "action": "Review draft PRs #3582 (T33 quarantine tests), #3585 and #3586 (ppt-web locale churn plans), then mark ready or close",
+      "owner_role": "pm-scrum-master",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-17"
+    },
+    {
+      "id": "pm-data-define-digest-kpis-counters-2026-11-17",
+      "action": "Define digest KPIs and emit counters (candidates_considered, sent, failed, abandoned, excluded_by_filter) plus a per-sweep summary log or metric",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-17"
+    },
+    {
+      "id": "pm-data-add-trackevent-mobile-moderation-2026-11-17",
+      "action": "Add trackEvent calls for fault_report_submitted/failed (mobile ReportFault) and moderation route decisions (SPA), with a name, trigger and property schema; mobile needs an equivalent sink",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-17"
+    },
+    {
+      "id": "pm-data-backfill-kpi-definitions-stories-2026-11-17",
+      "action": "Backfill KPI definitions for shipped stories in sprint-status.yaml or the epic docs, and add an events/KPI column to the story template",
+      "owner_role": "pm-data",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-17"
     }
   ],
-  "generated": "2026-11-16T03:12:00Z"
+  "generated": "2026-11-17T03:17:29Z"
 }

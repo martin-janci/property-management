@@ -1,0 +1,183 @@
+{
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/notification_digest.rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-11-16T03:12:00Z..HEAD",
+      "score_delta": 1,
+      "evidence": "notification_digest.rs changed in 2 merged PRs this run (#3574, #3576) — digest-send abandon + replica-claim worker",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/granular_notification.rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-11-16T03:12:00Z..HEAD",
+      "score_delta": 1,
+      "evidence": "granular_notification.rs repo changed in 2 merged PRs this run (#3574, #3576) co-moving with notification_digest.rs",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-api-core-digest-candidates-inner-join-refresh-tokens",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/crates/db/src/repositories/granular_notification.rs:1002 — `find_inactive_digest_candidates` joins `users` to `last_activity` (derived from `refresh_tokens.MAX(last_used_at)`) with INNER JOIN; any opted-in user whose refresh_tokens row was expired/pruned (or who never had one) is silently excluded from the digest sweep — exactly the long-tail inactive users the digest exists to re-engage. Fix: `LEFT JOIN last_activity la ... WHERE COALESCE(la.last_active, u.created_at) < $1`."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-digest-abandoned-no-terminal-state",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/notification_digest.rs:226-252 — `report_abandoned` surfaces aged-out digest rows only via a `tracing::error!` log line; `notification_digests` schema (migration 00061) has no column to mark a row terminally abandoned, so the DB cannot distinguish 'still inside retry window, pending retry' from 'exhausted retry window, giving up'. Log pipeline loss, missed alerts, or process restart around the boundary tick (poll_interval=1h) → the abandoned row is invisible forever. Add e.g. `abandoned_at TIMESTAMPTZ` and set it when `report_abandoned` picks the row up."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-digest-sweep-lock-release-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/services/notification_digest.rs:193-195 — `release_digest_sweep` is best-effort: on error the connection is returned to the pool with the session-scoped `pg_advisory_lock` still held. The docstring says 'self-heals when the connection closes' but Postgres pool connections can live indefinitely; the same connection could be re-acquired on later `try_claim_digest_sweep` calls, where `pg_try_advisory_lock` returns true for an already-held lock (ref-count += 1), then one `pg_advisory_unlock` only decrements to 1, leaving the lock held after 'successful' release. Safer: on release error, mark the connection unusable (drop without return) or close it explicitly instead of returning it to the pool."
+      ],
+      "expert": "rust"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-11-17.md && head -1 | grep ^# 2026-11-17",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev vs current state.json cursors/seen_signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] unique == length",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq filter non-cumulative seen signals score_delta != 0",
+      "observed": "0",
+      "expected": "0 (count)"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq [.items[] score > 8] length == 0 + decay check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "each new plan has annotation"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --name-only --diff-filter=A plans/ *.md count",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets/private-hostnames in staged diff (ex baseline docs)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists no failed phases",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all 19 prev-run plan slugs still present in plans/ or _archive/",
+      "observed": "19/19",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "staged _archive count >= HEAD _archive count",
+      "observed": "24>=24",
+      "expected": "monotonic"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "jq auto_fix_actions caps + idempotency",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "mgmt artifacts valid + pm_cursor=7 + coverage_cursor=5 advanced",
+      "observed": "pm 6->7, cov 4->5",
+      "expected": "both advance"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram token pattern in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

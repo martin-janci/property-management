@@ -132,3 +132,16 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - 2026-11-13: Lag-floor policy for the daily research routine — hard-fail at >48h lag? Owner: pm-devops.
 - 2026-11-13: Dependabot major-review SLA — WIP cap + 72h review window for majors. Owner: pm-devops.
 - 2026-11-13: #3357 dispatcher-stall operator action — likely self-resolved by the 58-PR burst. Owner: pm-scrum-master.
+
+---
+
+## Decisions logged 2026-11-17 (Phase 1.6 — pm-scrum-master + pm-data)
+
+- **NEW (2026-11-17, pm-scrum-master):** Bundle the three digest findings (INNER-JOIN cohort drop, no `abandoned_at` terminal state, advisory-lock release leak) into one plan/PR with a single design review, or ship them separately? A single bundle reduces churn on the two hotspot files. Owner: pm-tech-lead.
+- **NEW (2026-11-17, pm-scrum-master):** Add the `notification_digests.abandoned_at` schema change (new migration) or keep log-only abandonment reporting? Owner: pm-data.
+- **NEW (2026-11-17, pm-scrum-master):** Set the date or criterion to promote the mobile lint rules from warn to error (issue #3584 blocks on it). Owner: pm-frontend.
+- **NEW (2026-11-17, pm-scrum-master):** Merge, close or defer the stalled PRs #2555 and #2559 (now ~110 days). Owner: pm-tech-lead.
+- **NEW (2026-11-17, pm-scrum-master):** Prioritize the swagger-ui egress fix (#2966) ahead of backend-touching backlog work so cloud-runner compile is unblocked. Owner: pm-devops.
+- **NEW (2026-11-17, pm-data):** Define 'abandoned' semantics and retention — soft-terminal column vs. dead-letter table. Owner: backend/architect.
+- **NEW (2026-11-17, pm-data):** Choose the canonical analytics event schema and naming convention, and the mobile analytics sink. Owner: pm/frontend lead.
+- **NEW (2026-11-17, pm-data):** Decide whether inactivity should be computed from `refresh_tokens` or from a dedicated `last_active_at` column. Owner: backend/architect.
