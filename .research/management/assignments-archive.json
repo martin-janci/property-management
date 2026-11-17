@@ -25870,6 +25870,30 @@
       "merge_attempted_at": "2026-11-17T00:27:55Z"
     },
     {
+      "task_id": "pm-scrum-master-decide-jwt-dependabot-majors-2026-11-16",
+      "branch": "auto-impl/pm-scrum-master-decide-jwt-dependabot-ma-1d513d65",
+      "status": "merged",
+      "claimed_at": "2026-11-16T22:25:53Z",
+      "last_updated": "2026-11-17T02:36:42Z",
+      "status_changed_at": "2026-11-17T02:36:42Z",
+      "pr_number": 3579,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3579",
+      "merged_at": "2026-11-17T02:36:42Z",
+      "specialist": "generic",
+      "implementer_summary": "pr=3579 status=done specialist=generic scope_drift=false code_reuse_warn=none note=decision-only ADR jwt-aud-iss-and-dependabot-major-sequencing; VERIFY OK; no dep bumps/JWT code",
+      "reviewer_summary": "verdict=approve head_oid=d6c0b6b26d9a5b5d8fe5157f1bb187d6710d5374 note=docs-only ADR; sequencing sound, all pins/paths/namespace claims verified, CI green, scope_drift=false",
+      "last_reviewed_oid": "d6c0b6b26d9a5b5d8fe5157f1bb187d6710d5374",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-17T02:36:42Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "pm-scrum-master-mobile-rn-lint-hooks-i18n-2026-08-25",
       "branch": "auto-impl/pm-scrum-master-mobile-rn-lint-hooks-i18-9ce28fff",
       "status": "merged",
@@ -28293,6 +28317,54 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "screen-map-drift-pr-3482-ppt",
+      "branch": "auto-impl/screen-map-drift-pr-3482-ppt-ce3551f6",
+      "status": "merged",
+      "claimed_at": "2026-11-16T22:25:53Z",
+      "last_updated": "2026-11-17T02:36:42Z",
+      "status_changed_at": "2026-11-17T02:36:42Z",
+      "pr_number": 3580,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3580",
+      "merged_at": "2026-11-17T02:36:42Z",
+      "specialist": "generic",
+      "implementer_summary": "pr=3580 status=done scope_drift=true note=docs-only screen-map sync ppt/privacy-settings (PR#3482 gate); scope_drift=pm-qa-vs-pm-frontend owner-mapping; validate 174/0; VERIFY OK",
+      "reviewer_summary": "verdict=approve head_oid=5c9b9ebd38b0ae2d6661a991eebb45c713c67820 note=docs-only screen-map sync; code claims verified (ProtectedRoute wrap + regression test exist), CI green, scope_drift benign; posted as COMMENT (self-APPROVE blocked)",
+      "last_reviewed_oid": "5c9b9ebd38b0ae2d6661a991eebb45c713c67820",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-17T02:36:42Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
+      "task_id": "screen-map-drift-pr-3486-ppt",
+      "branch": "auto-impl/screen-map-drift-pr-3486-ppt-c274eaf7",
+      "status": "merged",
+      "claimed_at": "2026-11-16T22:25:53Z",
+      "last_updated": "2026-11-17T02:36:42Z",
+      "status_changed_at": "2026-11-17T02:36:42Z",
+      "pr_number": 3581,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3581",
+      "merged_at": "2026-11-17T02:36:42Z",
+      "specialist": "screens",
+      "implementer_summary": "pr=3581 status=done scope_drift=false note=docs-only synced 16 ppt screen-maps community/disputes/messaging/neighbors (PR#3486 gate); validate 174/0; VERIFY OK",
+      "reviewer_summary": "verdict=approve head_oid=a43fad5bbd1719d6c5f852f37833d25d2ab1b262 note=docs-only screen-map reconciliation; 16 files docs/screens/ppt/**, claims verified, CI green; posted as COMMENT",
+      "last_reviewed_oid": "a43fad5bbd1719d6c5f852f37833d25d2ab1b262",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-17T02:36:42Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "sec-ammonia-supply-chain-audit-2026-07-23",
       "branch": "auto-impl/sec-ammonia-supply-chain-audit-2026-07-2-2c2292ea",
       "status": "failed",
@@ -29245,5 +29317,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-17T00:32:05Z"
+  "archived_at": "2026-11-17T02:36:42Z"
 }

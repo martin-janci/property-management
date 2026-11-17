@@ -1,9 +1,45 @@
 {
-  "generated": "2026-11-16T00:40:24Z",
+  "generated": "2026-11-17T02:38:27Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-11-17T02:38:27Z",
+      "prs_scanned": 15,
+      "clean": [
+        3578,
+        3576,
+        3574,
+        3575,
+        3573,
+        3572,
+        3488,
+        3571,
+        3570,
+        3567,
+        3565,
+        3569,
+        3568
+      ],
+      "with_issues": [
+        {
+          "pr": 3577,
+          "issue": 3583,
+          "findings": 1,
+          "specialist": "rust/pm-security",
+          "note": "failed clear_request_context is now logged (good) but the super-admin SYSTEM-context connection still returns to the pool and can bleed RLS-bypass into the next request; propose discarding (detach+close) the connection on clear failure instead of only logging \u2014 applies to fetch_organization_name and the repo-wide spawn_clear_context Drop convention (security, medium)"
+        },
+        {
+          "pr": 3566,
+          "issue": 3584,
+          "findings": 1,
+          "specialist": "frontend",
+          "note": "biome.json relaxes useHookAtTopLevel + useExhaustiveDependencies from error->warn (not a new adoption); rules-of-hooks is a crash class that can now merge silently, and the 'flip back next sprint' reminder is prose-only in CLAUDE.md. Propose keeping useHookAtTopLevel=error and adding a dated/tracked flip-back guard (regression/conventions, medium)"
+        }
+      ],
+      "note": "15 newest unreviewed PRs merged to dev since the 2026-11-16 run (all merged after that run's cutoff; newest-15 cap lands on #3568..#3578, so #3553-#3564 roll to next run). 13 clean, 2 follow-ups (#3583 for PR #3577, #3584 for PR #3566). Backend sweep is strong: #3576 cross-replica advisory-lock guard on the digest sweep (no double-send) + concurrency regression test; #3574 surfaces digests abandoned past the retry window; #3570 real bug fix \u2014 master quiet_hours gate now applies on weekends (weekend window no longer re-enables DND when master off) w/ regression test; #3565 moderation take-action/decide-appeal map cross-tenant RowNotFound to 404 (existence-oracle closed) w/ seeded-membership authz tests; #3569 tenant-screening raw sqlx-error-leak sweep w/ source-level guard; #3575/#3572/#3573 further error-sanitization + swallowed-error surfacing. Frontend: #3568 shared-device deep-link user-isolation (pending link keyed to user, dropped on logout) \u2014 strong security fix w/ tests; #3567 ReportFault category chips i18n; #3488 wires admin tenant-restore multipart upload w/ tests. #3571 fails-before-fix regression pin for PR #3525 peer-role privilege escalation. #3578 scrum-master coverage upkeep (docs/.research only). No JSON-key-case (PR #473) regressions. PR labels not applied (gh writes 403 in cloud; dedup owned via this artifact)."
+    },
     {
       "run_at": "2026-11-16T00:40:24Z",
       "prs_scanned": 15,
@@ -562,27 +598,6 @@
         3111,
         3072,
         3028
-      ]
-    },
-    {
-      "run_at": "2026-10-24T18:31:01Z",
-      "prs_scanned": 7,
-      "clean": [
-        3156,
-        3151,
-        3147,
-        3146,
-        3148,
-        3145
-      ],
-      "with_issues": [
-        {
-          "pr": 3150,
-          "issue": 3157,
-          "findings": 1,
-          "specialist": "pm-integration",
-          "note": "PR #3150 correctly fixed the compliance client base path (/api/v1/compliance -> /api/v1/aml-dsa) for AML + DSA + moderation \u2014 verified against lib.rs:322 (aml_dsa router mounts aml/dsa/moderation) vs lib.rs:243 (compliance router = audit-logs/gdpr/security only), and the new api.test.ts contract test pins AML/DSA. BUT the base-only fix left three moderation SUB-paths still 404ing against aml_dsa/mod.rs: listModerationCases -> /moderation/cases (backend: /moderation/queue, line 70), getModerationStats -> /moderation/stats (backend: /moderation/queue/stats, line 71), unassignModerationCase -> /moderation/cases/{id}/unassign (no backend route; only assign exists, line 74). The PR contract test only asserted assignModerationCase (which matches) so these slipped through. Filed #3157 (correctness/high) with exact path fixes + a request to extend the contract test. Other moderation calls (getModerationCase, templates, assign, action, appeal/decide) verified correct."
-        }
       ]
     }
   ]
