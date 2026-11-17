@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-17T14:32:39Z",
+  "archived_at": "2026-11-17T16:30:49Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2223,6 +2223,30 @@
         "merged_pr": 3540,
         "merged_at": "2026-11-15T04:38:07Z",
         "at": "2026-11-15T06:26:16Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-messages-pl-json",
+      "action": "ppt-web messages/pl.json churn-hotspot — 4 commits in 2d (i18n leaf-parity sweeps PR #3524 + locale-specific fixes)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-15T04:24:57Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-11-17T16:25:13Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T04:24:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3586,
+        "merged_at": "2026-11-17T14:43:21Z",
+        "at": "2026-11-17T16:25:13Z"
       }
     },
     {
@@ -8828,6 +8852,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-authed-query-roots-drift",
+      "action": "ppt web core authed query roots drift",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d ppt-web-core score=2 vector=bug) | gc1-reconcile 2026-11-17T16:25:13Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T16:26:57Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-04T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3596,
+        "merged_at": "2026-11-17T14:43:21Z",
+        "at": "2026-11-17T16:25:13Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-authed-roots-adhoc-guard-gap",
       "action": "ppt web core authed roots adhoc guard gap",
       "owner_role": "pm-tech-lead",
@@ -10320,6 +10369,31 @@
         "commit": "c0ec52194818393a0020fd9016ce7a4192c55e47",
         "subject": "code-review-ppt-web-core-usewebsocket-subscribe-gate: subscribe when useWebSocket handler arrives after mount (#3152)",
         "at": "2026-10-25T14:25:47Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-validation-error-i18n-gap",
+      "action": "ppt web core validation error i18n gap",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d ppt-web-core score=1 vector=bug) | gc1-reconcile 2026-11-17T16:25:13Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-16T00:27:09Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-04T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3597,
+        "merged_at": "2026-11-17T14:43:21Z",
+        "at": "2026-11-17T16:25:13Z"
       }
     },
     {
@@ -14584,6 +14658,31 @@
         "commit": "27e3fb9ed29e5e056960f63fa02332ed8285d7e7",
         "subject": "code-review-reality-web-auth-ctx-transient-logout: don't log out on transient /users/me failure (#3121)",
         "at": "2026-10-18T22:34:35Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-auth-nav-drops-locale",
+      "action": "reality web auth nav drops locale",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d reality-web score=1 vector=bug) | gc1-reconcile 2026-11-17T16:25:13Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T16:26:57Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-05T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3595,
+        "merged_at": "2026-11-17T14:43:21Z",
+        "at": "2026-11-17T16:25:13Z"
       }
     },
     {
@@ -27587,6 +27686,33 @@
         "merged_pr": 3548,
         "merged_at": "2026-11-15T12:35:52Z",
         "at": "2026-11-15T14:26:21Z"
+      }
+    },
+    {
+      "id": "gh-issue-3583",
+      "action": "Follow-up: failed RLS-context clear is logged but not remediated — super-admin context can bleed across the pooled connection (PR #3577) (Closes #3583)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-11-17T10:26:07Z (#3583) | gc1-reconcile 2026-11-17T16:25:13Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T10:26:07Z",
+      "issue_ref": {
+        "number": 3583,
+        "url": "https://github.com/martin-janci/property-management/issues/3583",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3598,
+        "merged_at": "2026-11-17T14:43:21Z",
+        "at": "2026-11-17T16:25:13Z"
       }
     },
     {

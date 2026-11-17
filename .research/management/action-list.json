@@ -168,59 +168,6 @@
       }
     },
     {
-      "id": "churn-hotspot-frontend-apps-ppt-web-messages-pl-json",
-      "action": "ppt-web messages/pl.json churn-hotspot — 4 commits in 2d (i18n leaf-parity sweeps PR #3524 + locale-specific fixes)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-15T04:24:57Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-15T04:24:57Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-core-org-provider-value-not-memoized",
-      "action": "ppt web core org provider value not memoized",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d ppt-web-core score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-15T16:26:57Z",
-      "signal_ref": {
-        "segment": "ppt-web-core",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-09-25T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-reality-web-auth-nav-drops-locale",
-      "action": "reality web auth nav drops locale",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d reality-web score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-15T16:26:57Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-09-05T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-api-core-digest-worker-no-replica-claim",
       "action": "api core digest worker no replica claim",
       "owner_role": "pm-backend",
@@ -252,42 +199,6 @@
       "signal_ref": {
         "segment": "api-handlers",
         "score": 2,
-        "vector": "bug",
-        "generated": "2026-09-04T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-core-authed-query-roots-drift",
-      "action": "ppt web core authed query roots drift",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d ppt-web-core score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-15T16:26:57Z",
-      "signal_ref": {
-        "segment": "ppt-web-core",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-09-04T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-core-validation-error-i18n-gap",
-      "action": "ppt web core validation error i18n gap",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d ppt-web-core score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-16T00:27:09Z",
-      "signal_ref": {
-        "segment": "ppt-web-core",
-        "score": 1,
         "vector": "bug",
         "generated": "2026-09-04T00:00:00Z"
       }
@@ -832,26 +743,6 @@
       "status": "open",
       "deadline": null,
       "source": "pm-analysis 2026-11-17"
-    },
-    {
-      "id": "gh-issue-3583",
-      "action": "Follow-up: failed RLS-context clear is logged but not remediated — super-admin context can bleed across the pooled connection (PR #3577) (Closes #3583)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-11-17T10:26:07Z (#3583)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-17T10:26:07Z",
-      "issue_ref": {
-        "number": 3583,
-        "url": "https://github.com/martin-janci/property-management/issues/3583",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
     },
     {
       "id": "code-review-ppt-web-toast-announcer-provider-value-not-memoized",
