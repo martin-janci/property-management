@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-17T20:37:18Z",
+  "archived_at": "2026-11-17T22:27:15Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -4890,6 +4890,31 @@
       }
     },
     {
+      "id": "code-review-api-handlers-audit-logs-action-filter-dropped",
+      "action": "api handlers audit logs action filter dropped",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d api-handlers score=1 vector=bug) | gc1-reconcile 2026-11-17T22:22:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-16T00:27:09Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-03T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3602,
+        "merged_at": "2026-11-17T20:36:46Z",
+        "at": "2026-11-17T22:22:51Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-audit-summary-integrity-swallow",
       "action": "api handlers audit summary integrity swallow",
       "owner_role": "pm-backend",
@@ -5514,6 +5539,31 @@
         "commit": "d0387742d3d72c69c31b3d24dc5d8cba4ce43da2",
         "subject": "code-review-api-handlers-mfa-audit-discard: log MFA audit write failures (#3267)",
         "at": "2026-11-04T14:28:07Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-mfa-report-population-mismatch",
+      "action": "api handlers mfa report population mismatch",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d api-handlers score=2 vector=bug) | gc1-reconcile 2026-11-17T22:22:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-16T00:27:09Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-03T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3601,
+        "merged_at": "2026-11-17T20:36:46Z",
+        "at": "2026-11-17T22:22:51Z"
       }
     },
     {
@@ -6463,6 +6513,31 @@
         "merged_pr": 2667,
         "merged_at": "2026-08-06T10:11:34Z",
         "at": "2026-08-06T10:20:23Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-vote-update-no-tenant-rls",
+      "action": "api handlers vote update no tenant rls",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d api-handlers score=2 vector=bug) | gc1-reconcile 2026-11-17T22:22:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-16T00:27:09Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-03T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3603,
+        "merged_at": "2026-11-17T20:36:46Z",
+        "at": "2026-11-17T22:22:51Z"
       }
     },
     {
@@ -10328,6 +10403,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-route-groups-no-protectedroute",
+      "action": "ppt web core route groups no protectedroute",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d ppt-web-core score=2 vector=security) | gc1-reconcile 2026-11-17T22:22:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T00:24:34Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "security",
+        "generated": "2026-09-02T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3606,
+        "merged_at": "2026-11-17T20:36:46Z",
+        "at": "2026-11-17T22:22:51Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-route-query-silent-error",
       "action": "ppt web core route query silent error",
       "owner_role": "pm-backend",
@@ -10609,6 +10709,31 @@
         "commit": "4caa49171c49173c2c741c2000393bba33665653",
         "subject": "code-review-ppt-web-core-ws-pong-timeout-drop: drop redundant client app-level WS heartbeat (#2689)",
         "at": "2026-08-07T00:11:53Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-send-envelope-mismatch",
+      "action": "ppt web core ws send envelope mismatch",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d ppt-web-core score=1 vector=bug) | gc1-reconcile 2026-11-17T22:22:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-16T00:27:09Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-03T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3600,
+        "merged_at": "2026-11-17T20:36:46Z",
+        "at": "2026-11-17T22:22:51Z"
       }
     },
     {
@@ -15863,6 +15988,31 @@
         "merged_pr": 3382,
         "merged_at": "2026-11-10T12:47:00Z",
         "at": "2026-11-10T14:27:10Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-realtor-detail-modal-no-error",
+      "action": "reality web realtor detail modal no error",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d reality-web score=2 vector=bug) | gc1-reconcile 2026-11-17T22:22:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T00:24:34Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-02T08:33:34Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3605,
+        "merged_at": "2026-11-17T20:36:46Z",
+        "at": "2026-11-17T22:22:51Z"
       }
     },
     {

@@ -204,42 +204,6 @@
       }
     },
     {
-      "id": "code-review-api-handlers-mfa-report-population-mismatch",
-      "action": "api handlers mfa report population mismatch",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d api-handlers score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-16T00:27:09Z",
-      "signal_ref": {
-        "segment": "api-handlers",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-09-03T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-api-handlers-vote-update-no-tenant-rls",
-      "action": "api handlers vote update no tenant rls",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d api-handlers score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-16T00:27:09Z",
-      "signal_ref": {
-        "segment": "api-handlers",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-09-03T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-reality-server-import-jobs-total-page-len",
       "action": "reality server import jobs total page len",
       "owner_role": "pm-backend",
@@ -253,42 +217,6 @@
       "signal_ref": {
         "segment": "reality-server",
         "score": 2,
-        "vector": "bug",
-        "generated": "2026-09-03T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-api-handlers-audit-logs-action-filter-dropped",
-      "action": "api handlers audit logs action filter dropped",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d api-handlers score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-16T00:27:09Z",
-      "signal_ref": {
-        "segment": "api-handlers",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-09-03T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-core-ws-send-envelope-mismatch",
-      "action": "ppt web core ws send envelope mismatch",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d ppt-web-core score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-16T00:27:09Z",
-      "signal_ref": {
-        "segment": "ppt-web-core",
-        "score": 1,
         "vector": "bug",
         "generated": "2026-09-03T00:00:00Z"
       }
@@ -471,24 +399,6 @@
       }
     },
     {
-      "id": "code-review-reality-web-realtor-detail-modal-no-error",
-      "action": "reality web realtor detail modal no error",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d reality-web score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-17T00:24:34Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-09-02T08:33:34Z"
-      }
-    },
-    {
       "id": "code-review-reality-web-agent-profile-mock-stub",
       "action": "reality web agent profile mock stub",
       "owner_role": "pm-backend",
@@ -519,24 +429,6 @@
       "first_open_at": "2026-11-17T00:24:34Z",
       "signal_ref": {
         "segment": "api-handlers",
-        "score": 2,
-        "vector": "security",
-        "generated": "2026-09-02T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-core-route-groups-no-protectedroute",
-      "action": "ppt web core route groups no protectedroute",
-      "owner_role": "pm-security",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d ppt-web-core score=2 vector=security)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-17T00:24:34Z",
-      "signal_ref": {
-        "segment": "ppt-web-core",
         "score": 2,
         "vector": "security",
         "generated": "2026-09-02T00:00:00Z"
