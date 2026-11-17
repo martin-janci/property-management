@@ -65,6 +65,8 @@ mod voting_happy_path_tests;
 mod voting_report_tests;
 #[path = "suites/voting_tests.rs"]
 mod voting_tests;
+#[path = "suites/voting_update_cross_tenant_rls_tests.rs"]
+mod voting_update_cross_tenant_rls_tests;
 #[path = "suites/work_order_cross_org_idor_tests.rs"]
 mod work_order_cross_org_idor_tests;
 #[path = "suites/work_orders_happy_path_tests.rs"]
