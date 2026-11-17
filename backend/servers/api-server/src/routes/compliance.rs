@@ -248,12 +248,16 @@ async fn get_audit_summary(
         })
         .collect();
 
-    // Verify integrity (sample check)
+    // Verify integrity (sample check). Propagate a *failed* check (SqlxError)
+    // rather than swallowing it with `.unwrap_or(false)`: an error means the
+    // check could not run (DB/query failure), which `db_error` logs server-side
+    // and surfaces as a 500 — distinct from a genuine `Ok(false)` tampering
+    // signal. Mirrors the sibling `verify_audit_integrity` handler.
     let integrity_ok = state
         .audit_log_repo
         .verify_integrity(Some(1000))
         .await
-        .unwrap_or(false);
+        .map_err(db_error)?;
 
     Ok(Json(AuditSummaryResponse {
         total_entries,
