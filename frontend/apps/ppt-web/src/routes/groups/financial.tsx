@@ -608,7 +608,21 @@ function FinancialReportsPageRoute() {
 export function financialRoutes() {
   return (
     <>
-      <Route path="/financial" element={<FinancialDashboardPageRoute />} />
+      {/* Auth-only (not role-gated): the finance dashboard is resident-reachable
+          — the nav entry carries no `audience: 'manager'` and the payments tab is
+          `managerOnly: false` — so both signed-in managers and residents land
+          here, while the sensitive invoices/budgets/reports sub-routes stay
+          manager-gated below. Wrapped in <ProtectedRoute> so an anonymous visitor
+          is redirected to /login (return URL captured) instead of rendering the
+          page chrome (code-review `…core-route-groups-no-protectedroute`). */}
+      <Route
+        path="/financial"
+        element={
+          <ProtectedRoute>
+            <FinancialDashboardPageRoute />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/financial/invoices"
         element={
@@ -625,7 +639,17 @@ export function financialRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route path="/financial/payments" element={<PaymentManagementPageRoute />} />
+      {/* Auth-only: payments is `managerOnly: false` (residents view their own
+          payments); wrapped in <ProtectedRoute> so an anonymous visitor
+          redirects to /login (return URL captured) rather than rendering. */}
+      <Route
+        path="/financial/payments"
+        element={
+          <ProtectedRoute>
+            <PaymentManagementPageRoute />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/financial/budgets"
         element={

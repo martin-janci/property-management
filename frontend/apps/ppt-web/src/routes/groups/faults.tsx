@@ -692,8 +692,28 @@ function FaultReportsPageRoute() {
 export function faultRoutes() {
   return (
     <>
-      <Route path="/faults" element={<FaultsPageRoute />} />
-      <Route path="/faults/new" element={<CreateFaultPageRoute />} />
+      {/* Auth-only (not role-gated): residents see their own reported faults and
+          can file new ones; managers see the full list. Both require a signed-in
+          user, so wrapped in <ProtectedRoute> like every peer management group —
+          an anonymous visitor is redirected to /login with the return URL
+          captured instead of rendering the page chrome
+          (code-review `…core-route-groups-no-protectedroute`). */}
+      <Route
+        path="/faults"
+        element={
+          <ProtectedRoute>
+            <FaultsPageRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/faults/new"
+        element={
+          <ProtectedRoute>
+            <CreateFaultPageRoute />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/faults/reports"
         element={
@@ -702,7 +722,17 @@ export function faultRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route path="/faults/:faultId" element={<FaultDetailPageRoute />} />
+      {/* Auth-only: fault detail is readable by the reporter/resident and the
+          manager; wrapped in <ProtectedRoute> so an anonymous deep-link
+          redirects to /login (return URL captured) rather than rendering. */}
+      <Route
+        path="/faults/:faultId"
+        element={
+          <ProtectedRoute>
+            <FaultDetailPageRoute />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/faults/:faultId/edit"
         element={

@@ -17,7 +17,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Suspense } from 'react';
+import { type ReactNode, Suspense } from 'react';
 import { MemoryRouter, Routes } from 'react-router-dom';
 import { financialRoutes } from './financial';
 
@@ -31,11 +31,16 @@ vi.mock('react-i18next', async (importOriginal) => ({
   }),
 }));
 
-// ── toast: capture, keep every other component export real (Button/Card/…) ──
+// ── toast: capture, keep every other component export real (Button/Card/…).
+//    ProtectedRoute is neutralised to a pass-through so this test exercises the
+//    page's mutation-error wiring, not the route's auth gate (covered by
+//    core-route-groups-auth-guard.route.test.tsx); mirrors the sibling
+//    financial.dashboard-error test. ──
 const mockShowToast = vi.fn();
 vi.mock('../../components', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../components')>()),
   useToast: () => ({ showToast: mockShowToast }),
+  ProtectedRoute: ({ children }: { children: ReactNode }) => children,
 }));
 
 // ── auth: manager user with an org so the queries enable ──
