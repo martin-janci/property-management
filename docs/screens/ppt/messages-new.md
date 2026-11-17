@@ -43,12 +43,14 @@ context flows through auth.
 ## Notes
 
 ### Specific (recent)
+- 2026-11-16 — PR #3486 wrapped this route in `<ProtectedRoute>` (auth-only, not role-gated) in `frontend/apps/ppt-web/src/routes/groups/messaging.tsx` — matching the guarded peer groups and the `/settings/privacy` precedent. An anonymous visitor is now redirected to `/login` (return-URL captured) instead of rendering page chrome; manager-only in-page actions remain gated via `isManagerRole`. `buildStatus`/`apiStatus` unchanged. Guard regression-covered by `routes/groups/mgmt-routes-auth-guard.route.test.tsx`.
 - 2026-05-18 — audit: stub created from `frontend/apps/ppt-web/src/App.tsx:491`.
 - 2026-05-24 — api-integration: wired to POST /messages/threads (useStartThread) + GET neighbors for recipient list; API only supports single recipient per thread.
 - 2026-06-03 — bugfix (PR #922): recipient list now sourced from the user's first building via `useBuildings` (was `useMessageRecipients(undefined)` → empty/unusable). Added `?recipientId=` preselection passed through as `initialRecipientIds`. Loading state now also waits on the buildings query.
 - 2026-06-25 — group conversations (BIT-244): `toStartThreadRequest` now sends the **full** recipient set as snake_case `recipient_ids` (was collapsed to a single `recipientId`), so multi-select recipients open one N-party thread (UC-05.8 / BIT-183). Backend merge: PR #1848.
 
 ## Agent Log
+- 2026-11-16 — agent: screen-map-drift-pr-3486 — reconciled with merged PR #3486: route now gated behind `<ProtectedRoute>` (auth-only, not role-gated) in `routes/groups/messaging.tsx`; anonymous visitors redirect to `/login`. No route/component/buildStatus/apiStatus change.
 - 2026-11-04 — agent: recipient picker now gets neighbors: the neighbors client maps the snake_case `NeighborView` (every neighbor was filtered out as hidden) and builds auth headers per request (R3 #18). The building list still needs `organization_id` (buildings-contract). Status unchanged.
 - 2026-07-13 — agent: gap-screens-normalize-frontmatter — normalized story-id-style epic ref(s) Epic-6-5 → Epic-6 (strip story suffix); /screens validate clean.
 - 2026-06-25 — agent: group conversations (BIT-244 / PM #972.5b) — `toStartThreadRequest` sends `recipient_ids: string[]` (snake_case wire); reconciled camelCase `recipientId` → snake_case to match backend `StartThreadRequest`. buildStatus/apiStatus unchanged (shipped/complete).

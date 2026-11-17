@@ -35,12 +35,14 @@ the API's `ThreadDetailResponse` to the feature-layer `ThreadWithMessages` type 
 ## Notes
 
 ### Specific (recent)
+- 2026-11-16 — PR #3486 wrapped this route in `<ProtectedRoute>` (auth-only, not role-gated) in `frontend/apps/ppt-web/src/routes/groups/messaging.tsx` — matching the guarded peer groups and the `/settings/privacy` precedent. An anonymous visitor is now redirected to `/login` (return-URL captured) instead of rendering page chrome; manager-only in-page actions remain gated via `isManagerRole`. `buildStatus`/`apiStatus` unchanged. Guard regression-covered by `routes/groups/mgmt-routes-auth-guard.route.test.tsx`.
 - 2026-05-18 — audit: stub created from `frontend/apps/ppt-web/src/App.tsx:492`.
 - 2026-05-24 — api-integration: wired to GET /threads/:id, POST /messages, POST /read; loading skeleton shown while data fetches.
 - 2026-06-22 — attachments (UC-05.9, BIT-208): composer now keeps the real `File` and on send runs request-upload-url → PUT bytes → link per attachment (`useSendMessageWithAttachments`). Received messages lazily resolve their attachments via `useMessageAttachments` and download through short-lived presigned URLs. Client guards: 25 MiB cap + storage allow-list (incl. text/csv). Backend (PR #1702) not yet merged; browser QA against a MinIO stack still pending.
 - 2026-06-25 — group conversations (BIT-244): detail header renders all other participants (`ThreadDetailResponse.otherParticipant` → `participants: ParticipantInfo[]`, backend PR #1848). `formatParticipantNames` already collapses N>2 to "X and N others".
 
 ## Agent Log
+- 2026-11-16 — agent: screen-map-drift-pr-3486 — reconciled with merged PR #3486: route now gated behind `<ProtectedRoute>` (auth-only, not role-gated) in `routes/groups/messaging.tsx`; anonymous visitors redirect to `/login`. No route/component/buildStatus/apiStatus change.
 - 2026-11-04 — agent: messaging client builds the Authorization header per request from the token provider, so a deep-linked thread no longer gets 401 "Missing Authorization header" (R3 #19). Status unchanged.
 - 2026-07-13 — agent: gap-screens-normalize-frontmatter — normalized story-id-style epic ref(s) Epic-6-5 → Epic-6 (strip story suffix); /screens validate clean.
 - 2026-06-25 — agent: group conversations (BIT-244 / PM #972.5b) — `mapApiThreadDetailToUi` maps every other participant from `participants[]`; the N-party header rendering was already in place. No route/status change.

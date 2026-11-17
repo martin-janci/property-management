@@ -86,6 +86,7 @@ owner: pm-frontend
 UC-38 dispute management hub. Manager-side CRUD; resident-side filtered to "my disputes only". 8-state machine + severity + mediator assignment drive the workflow. Audit immutability matters — dispute records may be subpoenaed.
 
 ### Specific (recent)
+- 2026-11-16 — PR #3486 wrapped this route in `<ProtectedRoute>` (auth-only, not role-gated) in `frontend/apps/ppt-web/src/routes/groups/disputes.tsx` — matching the guarded peer groups and the `/settings/privacy` precedent. An anonymous visitor is now redirected to `/login` (return-URL captured) instead of rendering page chrome; manager-only in-page actions remain gated via `isManagerRole`. `buildStatus`/`apiStatus` unchanged. Guard regression-covered by `routes/groups/mgmt-routes-auth-guard.route.test.tsx`.
 
 - 2026-11-03: list uses `GET /api/v1/disputes` (org from JWT; `organization_id`
   must match or 403) instead of the non-existent
@@ -98,6 +99,7 @@ UC-38 dispute management hub. Manager-side CRUD; resident-side filtered to "my d
 - Audit log immutability is engineering concern — flag during implementation kickoff.
 
 ## Agent Log
+- 2026-11-16 — agent: screen-map-drift-pr-3486 — reconciled with merged PR #3486: route now gated behind `<ProtectedRoute>` (auth-only, not role-gated) in `routes/groups/disputes.tsx`; anonymous visitors redirect to `/login`. No route/component/buildStatus/apiStatus change.
 
 <!-- newest entries on top -->
 - 2026-11-04 — agent: list route runs every hook before the organization gate (was "Rendered more hooks than during the previous render"); `useDisputes` is disabled without an org (R3 #1).
