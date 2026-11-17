@@ -4847,6 +4847,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-api-handlers-audit-summary-integrity-swallow",
+      "branch": "auto-impl/code-review-api-handlers-audit-summary-i-b9f73253",
+      "status": "merged",
+      "claimed_at": "2026-11-17T14:31:48Z",
+      "last_updated": "2026-11-17T18:41:22Z",
+      "status_changed_at": "2026-11-17T18:41:22Z",
+      "pr_number": 3599,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3599",
+      "merged_at": "2026-11-17T18:37:59Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=6a041a1b5825505b5824e032558879c405dc4bcb note=correct-tight-fix-unwrap_or-to-map_err(db_error)?; required check+test green, cargo-deny(non-req) unrelated",
+      "last_reviewed_oid": "6a041a1b5825505b5824e032558879c405dc4bcb",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-17T18:36:32Z"
+    },
+    {
       "task_id": "code-review-api-handlers-auth-inactive-revoke-swallowed",
       "branch": "auto-impl/code-review-api-handlers-auth-inactive-r-a60a15d7",
       "status": "merged",
@@ -12091,6 +12113,28 @@
       "reviewer_summary": "verdict=approve head_oid=96d872b8db7993a6c59260e1b4cedc8222a3d075 note=clean-scoped-fix-ci-green-approve-posted-as-comment",
       "last_reviewed_oid": "96d872b8db7993a6c59260e1b4cedc8222a3d075",
       "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-registry-api-client-no-auth",
+      "branch": "auto-impl/code-review-ppt-web-ui-registry-api-clie-96347ec3",
+      "status": "failed",
+      "claimed_at": "2026-11-17T18:32:28Z",
+      "last_updated": "2026-11-17T18:41:22Z",
+      "status_changed_at": "2026-11-17T18:41:22Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked specialist=react-web scope_drift=false code_reuse_warn=none note=false-positive: registry client already authed via useRegistryApi(getToken() useMemo); createRegistryApi attaches Bearer; regression tests lock it in",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -29741,5 +29785,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-17T16:44:09Z"
+  "archived_at": "2026-11-17T18:41:33Z"
 }
