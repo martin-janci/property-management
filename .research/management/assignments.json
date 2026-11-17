@@ -159,18 +159,18 @@
     {
       "task_id": "code-review-reality-web-realtor-detail-modal-no-error",
       "branch": "auto-impl/code-review-reality-web-realtor-detail-m-30b84fb0",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-17T18:32:28Z",
-      "last_updated": "2026-11-17T18:32:28Z",
-      "status_changed_at": "2026-11-17T18:32:28Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-17T18:45:01Z",
+      "status_changed_at": "2026-11-17T18:45:01Z",
+      "pr_number": 3605,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3605",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=3605 status=done specialist=nextjs-web scope_drift=true code_reuse_warn=none note=confirmed finding: RealtorDetailModal save/remove/status mutations had no try/catch; added inline role=alert error + agency.detail{Update,Remove,Status}Error in 6 locales; TDD split; VERIFY OK 591 reality-web tests; drift=owner-hint-only",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -179,5 +179,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-17T18:41:22Z"
+  "generated": "2026-11-17T18:45:01Z"
 }
