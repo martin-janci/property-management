@@ -893,6 +893,18 @@
       "dependency": null,
       "depends_on": [],
       "first_open_at": "2026-11-17T13:01:40.474926Z"
+    },
+    {
+      "id": "tooling-ppt-implement-isolate-scratchpad-per-implementer",
+      "action": "ppt-implement: parallel implementer subagents spawned in the same dispatcher run write their PR-body to a SHARED scratchpad path (pr-body.md), so concurrent siblings clobber each other's file (observed 2026-11-17: authed-query-roots vs validation-i18n implementers collided; one recovered with a task-unique filename). Make the scratchpad path task-unique per implementer (e.g. include task_id or $$ in the filename) in the ppt-implement skill / pr-create step so parallel implementers cannot overwrite each other's transient files. Diffs are unaffected (separate worktrees); only the PR-body file collides.",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "open",
+      "source": "validation-i18n implementer note 2026-11-17 (concurrent scratchpad collision during parallel Phase 4 spawn)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T13:03:05.808447Z"
     }
   ],
   "generated": "2026-11-17T03:17:29Z"
