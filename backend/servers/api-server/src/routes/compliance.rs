@@ -161,7 +161,9 @@ async fn get_audit_logs(
     Query(params): Query<AuditLogQueryParams>,
 ) -> Result<Json<AuditLogListResponse>, (StatusCode, String)> {
     require_super_admin(&user)?;
-    let action = params.action.and_then(|a| parse_audit_action(&a));
+    // Reject an unrecognised action filter (400) instead of silently dropping
+    // it and returning an unfiltered all-actions superset.
+    let action = parse_action_filter(params.action.as_deref())?;
 
     let query = AuditLogQuery {
         user_id: params.user_id,
@@ -276,6 +278,11 @@ async fn get_user_audit_logs(
     Query(params): Query<AuditLogQueryParams>,
 ) -> Result<Json<AuditLogListResponse>, (StatusCode, String)> {
     require_super_admin(&user)?;
+    // Shares AuditLogQueryParams with get_audit_logs. This endpoint filters by
+    // user_id only (via get_user_logs), so a *valid* `action` is not applied
+    // here, but an unrecognised one must still be rejected (400) rather than
+    // silently accepted — same compliance foot-gun as get_audit_logs.
+    parse_action_filter(params.action.as_deref())?;
     let logs = state
         .audit_log_repo
         .get_user_logs(
@@ -816,6 +823,32 @@ async fn get_failed_logins_report(
 // HELPER FUNCTIONS
 // ============================================================================
 
+/// Parse the optional client-supplied `action` filter.
+///
+/// Distinguishes "no filter requested" from "filter requested but
+/// unrecognised":
+/// - `None`            → `Ok(None)`  — client sent no `action`, query all actions.
+/// - `Some(known)`     → `Ok(Some(_))` — scope the query to that action.
+/// - `Some(unknown)`   → `Err(400)`  — reject with the offending value.
+///
+/// Previously the handler used `params.action.and_then(parse_audit_action)`,
+/// which collapsed an *unrecognised* action (a typo like `loign`, or a wrong
+/// token like `user_login`) to `None` — silently dropping the filter and
+/// returning audit logs for ALL actions. That unfiltered 200 superset gave no
+/// indication the filter was ignored, a compliance foot-gun. Returning 400
+/// here forces the caller to see the mistake instead of trusting a bad result.
+fn parse_action_filter(action: Option<&str>) -> Result<Option<AuditAction>, (StatusCode, String)> {
+    match action {
+        None => Ok(None),
+        Some(a) => parse_audit_action(a).map(Some).ok_or_else(|| {
+            (
+                StatusCode::BAD_REQUEST,
+                format!("unknown audit action: {a}"),
+            )
+        }),
+    }
+}
+
 /// Parse audit action from string.
 fn parse_audit_action(s: &str) -> Option<AuditAction> {
     match s.to_lowercase().as_str() {
@@ -911,6 +944,48 @@ mod tests {
         ] {
             let err = require_super_admin(&user_with_role(role)).unwrap_err();
             assert_eq!(err.0, StatusCode::FORBIDDEN);
+        }
+    }
+
+    #[test]
+    fn action_filter_absent_means_no_filter() {
+        // No `action` query param → no filter. This is the ONLY case that may
+        // legitimately widen the query to all actions.
+        assert_eq!(parse_action_filter(None).unwrap(), None);
+    }
+
+    #[test]
+    fn action_filter_accepts_known_value() {
+        // A recognised action parses to its filter so the query stays scoped.
+        // Case-insensitive, mirroring parse_audit_action.
+        assert_eq!(
+            parse_action_filter(Some("login")).unwrap(),
+            Some(AuditAction::Login)
+        );
+        assert_eq!(
+            parse_action_filter(Some("LOGIN")).unwrap(),
+            Some(AuditAction::Login)
+        );
+    }
+
+    #[test]
+    fn action_filter_rejects_unknown_value() {
+        // Regression (compliance foot-gun): a supplied-but-unrecognised action
+        // (typo `loign`, wrong token `user_login`) previously parsed to `None`
+        // and SILENTLY widened the query to ALL actions, returning an
+        // unfiltered 200 superset. It must now be a 400 that names the bad
+        // value — distinguishing "no filter" from "bad filter".
+        for bad in ["not_a_real_action", "loign", "user_login", ""] {
+            let (status, msg) = parse_action_filter(Some(bad)).unwrap_err();
+            assert_eq!(
+                status,
+                StatusCode::BAD_REQUEST,
+                "action={bad:?} must be rejected, not dropped"
+            );
+            assert!(
+                msg.contains(bad),
+                "400 message should name the offending value {bad:?}, got: {msg}"
+            );
         }
     }
 
