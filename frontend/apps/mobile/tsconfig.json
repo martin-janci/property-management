@@ -15,6 +15,7 @@
     "app.config.ts",
     "plugins/withIosBuildConfig.ts",
     "app.config.iosBuildConfig.test.ts",
-    "app.config.icon.test.ts"
+    "app.config.icon.test.ts",
+    "biome-lint-gate.test.ts"
   ]
 }
