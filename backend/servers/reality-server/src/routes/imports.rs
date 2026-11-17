@@ -121,10 +121,10 @@ pub async fn list_import_jobs(
 ) -> Result<Json<ImportJobsResponse>, (axum::http::StatusCode, String)> {
     // Clamp the caller-supplied `limit` before it reaches SQL: a negative value
     // binds into `LIMIT $3` as `LIMIT -1`, which Postgres rejects (surfacing as a
-    // 500), and an arbitrarily large value is a resource-exhaustion vector. Mirror
-    // the `1..=100` convention used by the sibling portal list handlers
-    // (see `routes::portal_listings`).
-    let limit = query.limit.unwrap_or(20).clamp(1, 100);
+    // 500), and an arbitrarily large value is a resource-exhaustion vector. The
+    // `1..=100` cap (`MAX_LIST_LIMIT`) is centralised in `crate::util` and shared
+    // with the sibling portal list handlers.
+    let limit = crate::util::clamp_list_limit(query.limit, 20);
     let jobs = state
         .reality_portal_repo
         .list_import_jobs(

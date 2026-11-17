@@ -6,7 +6,7 @@
 use crate::state::AppState;
 use api_core::extractors::RequestPrincipal;
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     routing::{get, post},
     Json, Router,
 };
@@ -14,7 +14,7 @@ use chrono::{DateTime, Utc};
 use common::url_validation::validate_external_url;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
-use utoipa::ToSchema;
+use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 /// Create agency imports router.
@@ -70,10 +70,26 @@ pub struct ImportJobSummary {
 }
 
 /// Import history response.
+///
+/// `total` is the full count of import jobs for the agency (ignoring
+/// `limit`/`offset`), so clients can page through the whole history — not the
+/// length of the current page.
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ImportHistoryResponse {
     pub jobs: Vec<ImportJobSummary>,
     pub total: i64,
+}
+
+/// Import history query parameters.
+#[derive(Debug, Deserialize, IntoParams, ToSchema)]
+pub struct ImportHistoryQuery {
+    /// Page size. Defaults to 20, clamped to `1..=100` (the documented
+    /// `MAX_LIST_LIMIT` cap) before reaching SQL. Page past the cap with
+    /// `offset`.
+    pub limit: Option<i32>,
+    /// Row offset for pagination. Defaults to 0, clamped to
+    /// `0..=MAX_LIST_OFFSET`.
+    pub offset: Option<i32>,
 }
 
 /// Test provider credentials request.
@@ -141,7 +157,7 @@ pub struct ImportJobDetailResponse {
     get,
     path = "/api/v1/agencies/{id}/imports",
     tag = "AgencyImport",
-    params(("id" = Uuid, Path, description = "Agency ID")),
+    params(("id" = Uuid, Path, description = "Agency ID"), ImportHistoryQuery),
     responses(
         (status = 200, description = "Import history", body = ImportHistoryResponse),
         (status = 401, description = "Unauthorized"),
@@ -154,6 +170,7 @@ pub async fn list_import_history(
     State(state): State<AppState>,
     principal: RequestPrincipal,
     Path(agency_id): Path<Uuid>,
+    Query(query): Query<ImportHistoryQuery>,
 ) -> Result<Json<ImportHistoryResponse>, (axum::http::StatusCode, String)> {
     let mut conn = state
         .acquire_public_conn()
@@ -161,6 +178,15 @@ pub async fn list_import_history(
         .map_err(|e| crate::util::errors::db_error("database error", e))?;
 
     check_agency_membership(&mut conn, agency_id, principal.user_id).await?;
+
+    // Clamp caller-supplied paging before it reaches SQL. The endpoint used to
+    // hardcode `LIMIT 100` with no offset, silently truncating the history for
+    // any agency with more than 100 jobs (and reporting `total` as the page
+    // length, so clients had no way to tell). Now it pages like the sibling
+    // portal list handlers: default page size 20, documented `1..=100` cap,
+    // reachable in full via `offset`.
+    let limit = crate::util::clamp_list_limit(query.limit, 20);
+    let offset = crate::util::clamp_offset_i32(query.offset);
 
     let rows = sqlx::query(
         r#"
@@ -172,15 +198,25 @@ pub async fn list_import_history(
         FROM portal_import_jobs
         WHERE agency_id = $1
         ORDER BY created_at DESC
-        LIMIT 100
+        LIMIT $2 OFFSET $3
         "#,
     )
     .bind(agency_id)
+    .bind(limit)
+    .bind(offset)
     .fetch_all(&mut *conn)
     .await
     .map_err(|e| crate::util::errors::db_error("list import history", e))?;
 
-    let total = rows.len() as i64;
+    // `total` is the full count over the same filter (ignoring limit/offset)
+    // so clients can paginate — not the length of the current page.
+    let total: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM portal_import_jobs WHERE agency_id = $1")
+            .bind(agency_id)
+            .fetch_one(&mut *conn)
+            .await
+            .map_err(|e| crate::util::errors::db_error("count import history", e))?;
+
     let jobs: Vec<ImportJobSummary> = rows
         .into_iter()
         .map(|r| ImportJobSummary {
