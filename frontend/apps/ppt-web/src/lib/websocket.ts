@@ -505,6 +505,14 @@ export class WebSocketService {
 
   /**
    * Send a message through the WebSocket.
+   *
+   * The server parses inbound frames as the canonical `{ event, payload }`
+   * envelope (see {@link ServerWsEnvelope} / `WsEvent` in `ws_notifications.rs`)
+   * — the exact shape {@link parseServerMessage} normalises on receive. We
+   * therefore map the internal {@link WebSocketMessage}'s `type` -> `event` on
+   * the wire and emit only `{ event, payload }`; sending the internal
+   * `{ type, payload, timestamp }` verbatim would surface as `event: undefined`
+   * server-side and be silently dropped.
    */
   send(message: WebSocketMessage): boolean {
     if (!this.isConnected()) {
@@ -513,7 +521,11 @@ export class WebSocketService {
     }
 
     try {
-      this.socket!.send(JSON.stringify(message));
+      const envelope: ServerWsEnvelope = {
+        event: message.type,
+        payload: message.payload,
+      };
+      this.socket!.send(JSON.stringify(envelope));
       return true;
     } catch (error) {
       wsError('[WebSocket] Failed to send message:', error);

@@ -219,3 +219,48 @@ describe('WebSocketService auth transport (security: JWT must not leak into URL)
     service.disconnect();
   });
 });
+
+describe('WebSocketService send (wire contract: emit the { event, payload } envelope)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    MockWebSocket.instances = [];
+    vi.stubGlobal('WebSocket', MockWebSocket);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
+  it('serializes an outbound message as the server { event, payload } envelope, not the internal { type } shape', () => {
+    // Regression: send() used to emit the internal WebSocketMessage verbatim
+    // (`{ type, payload, timestamp }`). The server parses inbound frames as the
+    // canonical `{ event, payload }` envelope (mirroring parseServerMessage /
+    // WsEvent in ws_notifications.rs), so a `type`-keyed frame is seen as
+    // `event: undefined` and silently dropped. The client must map
+    // `type` -> `event` on the wire so the round-trip contract is symmetric.
+    const service = new WebSocketService({ getToken: () => 'jwt-token' });
+
+    service.connect();
+    const socket = MockWebSocket.instances[0];
+    socket.simulateOpen();
+
+    const ok = service.send({
+      type: 'preference.update',
+      payload: { muted: true },
+      timestamp: '2026-01-01T00:00:00.000Z',
+    });
+
+    expect(ok).toBe(true);
+    expect(socket.sent).toHaveLength(1);
+
+    const frame = JSON.parse(socket.sent[0]) as Record<string, unknown>;
+    // Canonical wire envelope: event + payload, keyed exactly as the server expects.
+    expect(frame.event).toBe('preference.update');
+    expect(frame.payload).toEqual({ muted: true });
+    // The internal `type` key must NOT leak onto the wire.
+    expect(frame).not.toHaveProperty('type');
+
+    service.disconnect();
+  });
+});
