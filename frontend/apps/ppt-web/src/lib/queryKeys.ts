@@ -345,7 +345,7 @@ export const queryKeys = {
  * `unit-residents`),
  * and the ad-hoc roots used
  * directly in feature hooks (`developer`, `ocr`, `actionQueue`,
- * `executionLogs`, `executionStats`, `ai-chat`, `predictive-maintenance`,
+ * `execution-logs`, `execution-stats`, `ai-chat`, `predictive-maintenance`,
  * `sentiment`, `notification-analytics`, `notification-triggers`,
  * `financial`, `rentals`, and the `auth`-rooted active-sessions cache).
  *
@@ -411,8 +411,15 @@ export const AUTHED_QUERY_KEY_ROOTS = [
   'developer',
   'ocr',
   'actionQueue',
-  'executionLogs',
-  'executionStats',
+  // Workflow-automation execution monitoring (`useExecutionLogs` /
+  // `useExecutionStats` in @ppt/api-client) keys its tenant-scoped caches under
+  // the kebab-case roots `['execution-logs', orgId, …]` / `['execution-stats',
+  // orgId, …]`. These must match the live roots exactly — the previous
+  // camelCase `executionLogs` / `executionStats` never prefix-matched, so the
+  // execution cache survived logout and leaked into the next session on a
+  // shared workstation (guarded by queryKeys.test.ts inline-root coverage).
+  'execution-logs',
+  'execution-stats',
   'ai-chat',
   'financial',
   'rentals',
