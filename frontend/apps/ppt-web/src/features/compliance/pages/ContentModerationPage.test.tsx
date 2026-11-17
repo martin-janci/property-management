@@ -23,6 +23,12 @@ import { useModerationCases, useModerationStats } from '@ppt/api-client';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToastProvider } from '../../../components';
+import {
+  __clearAnalyticsSinks,
+  type AnalyticsEvent,
+  registerAnalyticsSink,
+} from '../../../lib/analytics';
+import { MODERATION_EVENTS } from '../analytics';
 import { ContentModerationPage } from './ContentModerationPage';
 
 const takeActionMutate = vi.fn();
@@ -311,6 +317,87 @@ describe('ContentModerationPage decision toast feedback', () => {
 
     expect(screen.getByText('Failed to decide appeal. Please try again.')).toBeInTheDocument();
     expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+});
+
+/**
+ * Analytics: the data team wants one canonical `moderation.*` event per
+ * committed decision, fired ONLY after the server mutation succeeds (so events
+ * count real, audited decisions — not dialog submits the API later rejected)
+ * and carrying only the typed decision shape (no rationale text / owner PII).
+ * These drive the mocked mutation's onSuccess/onError exactly as TanStack Query
+ * would and assert the event fans out through the shared analytics bus.
+ */
+describe('ContentModerationPage decision analytics', () => {
+  function optionsFrom(mutateSpy: ReturnType<typeof vi.fn>) {
+    const call = mutateSpy.mock.calls[0];
+    return call[1] as { onSuccess: () => void; onError: (err: unknown) => void };
+  }
+
+  let captured: AnalyticsEvent[];
+
+  beforeEach(() => {
+    captured = [];
+    registerAnalyticsSink((e) => captured.push(e));
+    takeActionMutate.mockClear();
+    decideAppealMutate.mockClear();
+  });
+
+  afterEach(() => {
+    __clearAnalyticsSinks();
+    vi.restoreAllMocks();
+  });
+
+  it('fires moderation.action_taken with the typed action only after the take-action succeeds', () => {
+    renderPage();
+    openTakeActionDialog();
+    fireEvent.change(dialog().getByRole('combobox'), { target: { value: 'remove' } });
+    fireEvent.change(dialog().getByLabelText(/rationale/i), {
+      target: { value: 'violates policy' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /submit action/i }));
+
+    // No event until the server mutation resolves successfully.
+    expect(captured).toHaveLength(0);
+
+    act(() => optionsFrom(takeActionMutate).onSuccess());
+
+    expect(captured).toHaveLength(1);
+    expect(captured[0].event).toBe(MODERATION_EVENTS.actionTaken);
+    expect(captured[0].properties).toEqual({ action_type: 'remove' });
+  });
+
+  it('does not fire moderation.action_taken when the take-action fails', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    renderPage();
+    openTakeActionDialog();
+    fireEvent.change(dialog().getByRole('combobox'), { target: { value: 'warn' } });
+    fireEvent.change(dialog().getByLabelText(/rationale/i), {
+      target: { value: 'violates policy' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /submit action/i }));
+
+    act(() => optionsFrom(takeActionMutate).onError(new Error('boom')));
+
+    expect(captured).toHaveLength(0);
+  });
+
+  it('fires moderation.appeal_decided with the typed decision only after the appeal succeeds', () => {
+    renderPage();
+    openDecideAppealDialog();
+    fireEvent.change(dialog().getByRole('combobox'), { target: { value: 'overturn' } });
+    fireEvent.change(dialog().getByLabelText(/rationale/i), {
+      target: { value: 'appeal is valid' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
+
+    expect(captured).toHaveLength(0);
+
+    act(() => optionsFrom(decideAppealMutate).onSuccess());
+
+    expect(captured).toHaveLength(1);
+    expect(captured[0].event).toBe(MODERATION_EVENTS.appealDecided);
+    expect(captured[0].properties).toEqual({ decision: 'overturn' });
   });
 });
 
