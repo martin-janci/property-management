@@ -3542,6 +3542,13 @@
       "paused": "Zeitplan pausiert.",
       "resumed": "Zeitplan fortgesetzt.",
       "toggleFailed": "Status des Zeitplans konnte nicht geändert werden.",
+      "editErrors": {
+        "invalidCron": "Ein gültiger Cron-Ausdruck ist erforderlich.",
+        "recipientsRequired": "Mindestens ein Empfänger ist erforderlich.",
+        "invalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+        "duplicateEmail": "Diese E-Mail-Adresse wurde bereits hinzugefügt.",
+        "invalidEmailsList": "Ungültige E-Mail-Adressen: {{emails}}"
+      },
       "createErrors": {
         "emptyName": "Der Name des Zeitplans darf nicht leer sein.",
         "invalidFrequency": "Die gewählte Häufigkeit wird nicht unterstützt.",

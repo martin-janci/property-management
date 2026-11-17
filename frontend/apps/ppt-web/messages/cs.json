@@ -3376,6 +3376,13 @@
       "paused": "Plán byl pozastaven.",
       "resumed": "Plán byl obnoven.",
       "toggleFailed": "Nepodařilo se změnit stav plánu.",
+      "editErrors": {
+        "invalidCron": "Je vyžadován platný výraz cron.",
+        "recipientsRequired": "Je vyžadován alespoň jeden příjemce.",
+        "invalidEmail": "Zadejte platnou e-mailovou adresu.",
+        "duplicateEmail": "Tato e-mailová adresa již byla přidána.",
+        "invalidEmailsList": "Neplatné e-mailové adresy: {{emails}}"
+      },
       "createErrors": {
         "emptyName": "Název plánu nesmí být prázdný.",
         "invalidFrequency": "Zvolená frekvence není podporována.",

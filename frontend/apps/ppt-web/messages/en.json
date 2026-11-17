@@ -5812,6 +5812,13 @@
       "paused": "Schedule paused.",
       "resumed": "Schedule resumed.",
       "toggleFailed": "Failed to change schedule status.",
+      "editErrors": {
+        "invalidCron": "A valid cron expression is required.",
+        "recipientsRequired": "At least one recipient is required.",
+        "invalidEmail": "Please enter a valid email address.",
+        "duplicateEmail": "This email address has already been added.",
+        "invalidEmailsList": "Invalid email addresses: {{emails}}"
+      },
       "createErrors": {
         "emptyName": "The schedule name must not be empty.",
         "invalidFrequency": "The selected frequency is not supported.",

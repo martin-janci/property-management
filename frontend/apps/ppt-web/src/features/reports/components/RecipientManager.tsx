@@ -6,6 +6,7 @@
  */
 
 import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface RecipientManagerProps {
   recipients: string[];
@@ -29,6 +30,7 @@ export function RecipientManager({
   error,
   placeholder = 'Enter email address',
 }: RecipientManagerProps) {
+  const { t } = useTranslation();
   const [inputValue, setInputValue] = useState('');
   const [inputError, setInputError] = useState<string | null>(null);
 
@@ -45,12 +47,12 @@ export function RecipientManager({
       }
 
       if (!validateEmail(trimmedEmail)) {
-        setInputError('Please enter a valid email address');
+        setInputError(t('reports.schedule.editErrors.invalidEmail'));
         return;
       }
 
       if (recipients.includes(trimmedEmail)) {
-        setInputError('This email is already added');
+        setInputError(t('reports.schedule.editErrors.duplicateEmail'));
         return;
       }
 
@@ -58,7 +60,7 @@ export function RecipientManager({
       setInputValue('');
       setInputError(null);
     },
-    [recipients, onChange, validateEmail]
+    [recipients, onChange, validateEmail, t]
   );
 
   const removeRecipient = useCallback(
@@ -117,13 +119,15 @@ export function RecipientManager({
 
       if (invalidEmails.length > 0) {
         setInputError(
-          `Invalid emails: ${invalidEmails.slice(0, 3).join(', ')}${invalidEmails.length > 3 ? '...' : ''}`
+          t('reports.schedule.editErrors.invalidEmailsList', {
+            emails: `${invalidEmails.slice(0, 3).join(', ')}${invalidEmails.length > 3 ? '...' : ''}`,
+          })
         );
       }
 
       setInputValue('');
     },
-    [recipients, onChange, validateEmail]
+    [recipients, onChange, validateEmail, t]
   );
 
   return (
