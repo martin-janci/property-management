@@ -948,8 +948,11 @@ impl GranularNotificationRepository {
     /// Find users eligible for a 24h-inactivity email digest (Story 2B.3,
     /// PM #969 gap 1). A user qualifies when they:
     ///   * have opted in via `notification_schedule.digest_enabled = true`,
-    ///   * have been inactive since `inactivity_cutoff` (no refresh-token use —
-    ///     the closest proxy for "last seen", since `users` has no `last_seen`),
+    ///   * have been inactive since `inactivity_cutoff`, measured by the most
+    ///     recent refresh-token use (the closest proxy for "last seen", since
+    ///     `users` has no `last_seen`), falling back to the account's
+    ///     `created_at` for users who have never logged in (no `refresh_tokens`
+    ///     row) — a LEFT JOIN + `COALESCE`, so those accounts are not dropped,
     ///   * are an active, non-deleted account,
     ///   * have at least one unread notification group, and
     ///   * have not had any digest row created since `resend_cutoff` (this
@@ -999,10 +1002,10 @@ impl GranularNotificationRepository {
             FROM users u
             JOIN notification_schedule s ON s.user_id = u.id AND s.digest_enabled = true
             JOIN unread un ON un.user_id = u.id
-            JOIN last_activity la ON la.user_id = u.id
+            LEFT JOIN last_activity la ON la.user_id = u.id
             WHERE u.status = 'active'
               AND u.deleted_at IS NULL
-              AND la.last_active < $1
+              AND COALESCE(la.last_active, u.created_at) < $1
               AND NOT EXISTS (
                   SELECT 1 FROM notification_digests d
                   WHERE d.user_id = u.id
