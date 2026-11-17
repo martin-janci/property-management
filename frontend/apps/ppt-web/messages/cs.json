@@ -189,6 +189,8 @@
       "byPriority": "Podle priority",
       "byViolationType": "Podle typu porušení",
       "overdue_one": "{{count}} případ po termínu (SLA 24 h+)",
+      "overdue_few": "{{count}} případy po termínu (SLA 24 h+)",
+      "overdue_many": "{{count}} případů po termínu (SLA 24 h+)",
       "overdue_other": "{{count}} případů po termínu (SLA 24 h+)"
     },
     "status": {
@@ -5866,8 +5868,12 @@
     "ruleCard": {
       "unknownTrigger": "Neznámý spouštěč",
       "actions_one": "{{count}} akce",
+      "actions_few": "{{count}} akce",
+      "actions_many": "{{count}} akcí",
       "actions_other": "{{count}} akcí",
       "conditions_one": "{{count}} podmínka",
+      "conditions_few": "{{count}} podmínky",
+      "conditions_many": "{{count}} podmínek",
       "conditions_other": "{{count}} podmínek",
       "toggle": "Přepnout {{name}}",
       "totalRuns": "Celkem spuštění:",
@@ -5897,10 +5903,14 @@
       "triggerNotConfigured": "Nenastaveno",
       "conditionsSummaryTitle": "Podmínky",
       "conditionsCount_one": "{{count}} podmínka",
+      "conditionsCount_few": "{{count}} podmínky",
+      "conditionsCount_many": "{{count}} podmínek",
       "conditionsCount_other": "{{count}} podmínek",
       "noConditionsSummary": "Žádné podmínky (spustí se pro všechny spouštěče)",
       "actionsSummaryTitle": "Akce",
       "actionsCount_one": "{{count}} akce",
+      "actionsCount_few": "{{count}} akce",
+      "actionsCount_many": "{{count}} akcí",
       "actionsCount_other": "{{count}} akcí",
       "noActionsSummary": "Žádné nakonfigurované akce",
       "previous": "Zpět",
@@ -6091,6 +6101,8 @@
     "templateCard": {
       "popular": "Oblíbené",
       "actions_one": "{{count}} akce",
+      "actions_few": "{{count}} akce",
+      "actions_many": "{{count}} akcí",
       "actions_other": "{{count}} akcí",
       "uses": "{{count}} použití",
       "moreTags": "+{{count}} dalších",
@@ -6101,8 +6113,7 @@
       "categoryCommunications": "Komunikace",
       "categoryDocuments": "Dokumenty",
       "categoryMaintenance": "Údržba",
-      "categoryGeneral": "Obecné",
-      "actions_few": "{{count}} akce"
+      "categoryGeneral": "Obecné"
     },
     "templatePreview": {
       "popular": "Oblíbené",
@@ -6122,6 +6133,8 @@
       "noActions": "Žádné nakonfigurované akce",
       "tags": "Štítky",
       "usedTimes_one": "Použito {{count}}× jinými uživateli",
+      "usedTimes_few": "Použito {{count}}× jinými uživateli",
+      "usedTimes_many": "Použito {{count}}× jinými uživateli",
       "usedTimes_other": "Použito {{count}}× jinými uživateli",
       "cancel": "Zrušit",
       "useThisTemplate": "Použít tuto šablonu",
