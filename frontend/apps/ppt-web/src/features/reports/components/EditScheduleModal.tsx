@@ -107,16 +107,16 @@ export function EditScheduleModal({
     // previously-valid value while the input shows the invalid text.
     // isValidCron guards against that stale-value submission.
     if (!cronExpression.trim() || !isValidCron(cronExpression)) {
-      newErrors.cronExpression = 'A valid cron expression is required';
+      newErrors.cronExpression = t('reports.schedule.editErrors.invalidCron');
     }
 
     if (recipients.length === 0) {
-      newErrors.recipients = 'At least one recipient is required';
+      newErrors.recipients = t('reports.schedule.editErrors.recipientsRequired');
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [cronExpression, recipients]);
+  }, [cronExpression, recipients, t]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {

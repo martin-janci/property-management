@@ -3542,6 +3542,13 @@
       "paused": "Ütemezés szüneteltetve.",
       "resumed": "Ütemezés folytatva.",
       "toggleFailed": "Nem sikerült módosítani az ütemezés állapotát.",
+      "editErrors": {
+        "invalidCron": "Érvényes cron-kifejezés megadása kötelező.",
+        "recipientsRequired": "Legalább egy címzett megadása kötelező.",
+        "invalidEmail": "Adjon meg érvényes e-mail-címet.",
+        "duplicateEmail": "Ezt az e-mail-címet már hozzáadták.",
+        "invalidEmailsList": "Érvénytelen e-mail-címek: {{emails}}"
+      },
       "createErrors": {
         "emptyName": "Az ütemezés neve nem lehet üres.",
         "invalidFrequency": "A kiválasztott gyakoriság nem támogatott.",

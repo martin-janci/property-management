@@ -3620,6 +3620,13 @@
       "paused": "Harmonogram wstrzymany.",
       "resumed": "Harmonogram wznowiony.",
       "toggleFailed": "Nie udało się zmienić stanu harmonogramu.",
+      "editErrors": {
+        "invalidCron": "Wymagane jest prawidłowe wyrażenie cron.",
+        "recipientsRequired": "Wymagany jest co najmniej jeden odbiorca.",
+        "invalidEmail": "Wprowadź prawidłowy adres e-mail.",
+        "duplicateEmail": "Ten adres e-mail został już dodany.",
+        "invalidEmailsList": "Nieprawidłowe adresy e-mail: {{emails}}"
+      },
       "createErrors": {
         "emptyName": "Nazwa harmonogramu nie może być pusta.",
         "invalidFrequency": "Wybrana częstotliwość nie jest obsługiwana.",
