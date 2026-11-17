@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-17T02:29:53Z",
+  "archived_at": "2026-11-17T04:25:33Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -28532,6 +28532,19 @@
       }
     },
     {
+      "id": "pm-scrum-master-decide-jwt-dependabot-majors-2026-11-16",
+      "action": "Decide on #3427 (first-party JWT iss/aud emit and validate) and on the Dependabot majors (#3444 jsonwebtoken 10 to 11, #3443 utoipa-swagger-ui 9 to 10, #3447 vitest 5). Sequence them after the swagger-ui egress fix.",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-16",
+      "resolved_by": "PR #3579",
+      "resolved_at": "2026-11-17"
+    },
+    {
       "id": "pm-scrum-master-land-voice-device-idor",
       "action": "Land the security-voice-device-idor plan (ready in .research/plans/)",
       "owner_role": "pm-scrum-master",
@@ -31024,6 +31037,44 @@
         "merged_at": "2026-11-06T12:34:35Z",
         "at": "2026-11-06T14:25:26Z"
       }
+    },
+    {
+      "id": "screen-map-drift-pr-3482-ppt",
+      "action": "PR #3482 gated /settings/privacy behind ProtectedRoute without updating docs/screens/ppt/",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-15T04:24:57Z (score=2 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T04:24:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      },
+      "resolved_by": "PR #3580",
+      "resolved_at": "2026-11-17"
+    },
+    {
+      "id": "screen-map-drift-pr-3486-ppt",
+      "action": "PR #3486 gated community/disputes/messaging/neighbors behind ProtectedRoute without updating docs/screens/ppt/",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-15T04:24:57Z (score=2 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T04:24:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      },
+      "resolved_by": "PR #3581",
+      "resolved_at": "2026-11-17"
     },
     {
       "id": "sec-ammonia-supply-chain-audit-2026-07-23",
