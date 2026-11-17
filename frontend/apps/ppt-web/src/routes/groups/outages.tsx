@@ -373,7 +373,20 @@ function EditOutagePageRoute() {
 export function outageRoutes() {
   return (
     <>
-      <Route path="/outages" element={<OutagesPageRoute />} />
+      {/* Auth-only (not role-gated): residents read outages affecting them,
+          managers see the full list. The wrapper's inline <AuthRequiredGate>
+          only covers the authenticated-but-no-org edge case and never redirects;
+          wrapping in <ProtectedRoute> (like every peer management group) means an
+          anonymous visitor is redirected to /login with the return URL captured
+          instead of rendering (code-review `…core-route-groups-no-protectedroute`). */}
+      <Route
+        path="/outages"
+        element={
+          <ProtectedRoute>
+            <OutagesPageRoute />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/outages/new"
         element={
@@ -382,7 +395,17 @@ export function outageRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route path="/outages/:outageId" element={<ViewOutagePageRoute />} />
+      {/* Auth-only: outage detail is readable by any affected signed-in user;
+          wrapped in <ProtectedRoute> so an anonymous deep-link redirects to
+          /login (return URL captured) rather than rendering. */}
+      <Route
+        path="/outages/:outageId"
+        element={
+          <ProtectedRoute>
+            <ViewOutagePageRoute />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/outages/:outageId/edit"
         element={

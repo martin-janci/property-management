@@ -622,7 +622,20 @@ function EditAnnouncementPageRoute() {
 export function announcementRoutes() {
   return (
     <>
-      <Route path="/announcements" element={<AnnouncementsPageRoute />} />
+      {/* Auth-only (not role-gated): managers read all announcements, residents
+          read the published subset — but both must be signed in. Wrapped in
+          <ProtectedRoute> like every peer management group (community, disputes,
+          faults, …) so an anonymous visitor is redirected to /login with the
+          return URL captured, instead of rendering the page chrome
+          (code-review `…core-route-groups-no-protectedroute`). */}
+      <Route
+        path="/announcements"
+        element={
+          <ProtectedRoute>
+            <AnnouncementsPageRoute />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/announcements/new"
         element={
@@ -631,7 +644,17 @@ export function announcementRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route path="/announcements/:announcementId" element={<ViewAnnouncementPageRoute />} />
+      {/* Auth-only: the detail view serves published announcements to any
+          signed-in user; wrapped in <ProtectedRoute> so an anonymous deep-link
+          redirects to /login (return URL captured) rather than rendering. */}
+      <Route
+        path="/announcements/:announcementId"
+        element={
+          <ProtectedRoute>
+            <ViewAnnouncementPageRoute />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/announcements/:announcementId/edit"
         element={
