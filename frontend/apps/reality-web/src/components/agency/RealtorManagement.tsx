@@ -825,27 +825,47 @@ export function RealtorDetailModal({
   const [title, setTitle] = useState(realtor.title || '');
   const [bio, setBio] = useState(realtor.bio || '');
   const [confirmRemove, setConfirmRemove] = useState(false);
+  const [detailError, setDetailError] = useState<string | null>(null);
 
   const handleSave = async () => {
-    await updateRealtor.mutateAsync({
-      agencyId,
-      realtorId: realtor.id,
-      data: { title: title || undefined, bio: bio || undefined },
-    });
-    setIsEditing(false);
+    setDetailError(null);
+    try {
+      await updateRealtor.mutateAsync({
+        agencyId,
+        realtorId: realtor.id,
+        data: { title: title || undefined, bio: bio || undefined },
+      });
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Failed to update realtor:', toSafeLogMessage(error));
+      setDetailError(t('detailUpdateError'));
+    }
   };
 
   const handleRemove = async () => {
-    await removeRealtor.mutateAsync({ agencyId, realtorId: realtor.id });
-    onClose();
+    setDetailError(null);
+    try {
+      await removeRealtor.mutateAsync({ agencyId, realtorId: realtor.id });
+      onClose();
+    } catch (error) {
+      console.error('Failed to remove realtor:', toSafeLogMessage(error));
+      setDetailError(t('detailRemoveError'));
+      setConfirmRemove(false);
+    }
   };
 
   const handleStatusChange = async (status: RealtorStatus) => {
-    await updateRealtor.mutateAsync({
-      agencyId,
-      realtorId: realtor.id,
-      data: { status },
-    });
+    setDetailError(null);
+    try {
+      await updateRealtor.mutateAsync({
+        agencyId,
+        realtorId: realtor.id,
+        data: { status },
+      });
+    } catch (error) {
+      console.error('Failed to update realtor status:', toSafeLogMessage(error));
+      setDetailError(t('detailStatusError'));
+    }
   };
 
   return (
@@ -886,6 +906,12 @@ export function RealtorDetailModal({
         </div>
 
         <div className="modal-body">
+          {detailError && (
+            <div className="detail-error" role="alert" aria-live="assertive">
+              {detailError}
+            </div>
+          )}
+
           {/* Profile Section */}
           <div className="profile-section">
             <div className="avatar">
@@ -1062,6 +1088,16 @@ export function RealtorDetailModal({
 
           .modal-body {
             padding: 24px;
+          }
+
+          .detail-error {
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            background: var(--ppt-color-danger-light);
+            color: var(--ppt-color-danger);
+            border: 1px solid var(--ppt-color-danger);
+            border-radius: 8px;
+            font-size: 14px;
           }
 
           .profile-section {
