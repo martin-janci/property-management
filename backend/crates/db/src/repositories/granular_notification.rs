@@ -1025,7 +1025,10 @@ impl GranularNotificationRepository {
     /// Fetch digest rows whose email has not yet been sent and that were
     /// created since `created_after`, joined with the recipient's address.
     /// Used to retry transient `EmailService` failures without losing the
-    /// already-persisted digest row or creating duplicates. Story 2B.3.
+    /// already-persisted digest row or creating duplicates. Rows already marked
+    /// `abandoned_at` (the terminal give-up state) are excluded so a widened
+    /// retry window can never resurrect a digest that was permanently given up
+    /// on. Story 2B.3.
     pub async fn get_unsent_digests(
         &self,
         created_after: chrono::DateTime<Utc>,
@@ -1044,6 +1047,7 @@ impl GranularNotificationRepository {
             FROM notification_digests d
             JOIN users u ON u.id = d.user_id
             WHERE d.email_sent_at IS NULL
+              AND d.abandoned_at IS NULL
               AND d.created_at > $1
               AND u.status = 'active'
               AND u.deleted_at IS NULL
@@ -1057,32 +1061,44 @@ impl GranularNotificationRepository {
         .await
     }
 
-    /// Fetch the ids of unsent digests that aged out of the retry window during
-    /// the last sweep (`aged_after < created_at <= aged_before`). A digest whose
-    /// email send keeps failing stops being returned by [`Self::get_unsent_digests`]
-    /// once `created_at` falls to/under the resend cutoff; without surfacing it is
-    /// then silently abandoned — never retried and never reported. The digest
-    /// worker calls this each tick with the boundary that rows just crossed, so
-    /// each abandoned digest is logged once instead of vanishing. Story 2B.3.
-    pub async fn get_newly_abandoned_digests(
+    /// Mark unsent digests that have aged out of the retry window as abandoned
+    /// and return their ids. A digest whose email send keeps failing stops being
+    /// returned by [`Self::get_unsent_digests`] once `created_at` falls to/under
+    /// the resend cutoff; before this it was then silently given up on — left in
+    /// the table indistinguishable from a still-pending row and recorded only in
+    /// a log line. This stamps `abandoned_at = now()` on each such row, turning
+    /// abandonment into a durable, queryable terminal state.
+    ///
+    /// Marking is idempotent and "exactly once": the `abandoned_at IS NULL`
+    /// predicate means a row is returned (and stamped) only on the first sweep
+    /// that observes it past the cutoff, so the worker can log each abandoned
+    /// digest exactly once without relying on a narrow tick-boundary window.
+    /// This also makes it robust to skipped ticks (advisory-lock contention,
+    /// restarts): any unsent row past the cutoff is eventually marked rather
+    /// than missed. `limit` bounds the rows marked per call so a large backlog
+    /// drains over successive sweeps. Story 2B.3.
+    pub async fn mark_newly_abandoned_digests(
         &self,
-        aged_after: chrono::DateTime<Utc>,
-        aged_before: chrono::DateTime<Utc>,
+        resend_cutoff: chrono::DateTime<Utc>,
         limit: i64,
     ) -> Result<Vec<Uuid>, SqlxError> {
         sqlx::query_scalar::<_, Uuid>(
             r#"
-            SELECT d.id
-            FROM notification_digests d
-            WHERE d.email_sent_at IS NULL
-              AND d.created_at > $1
-              AND d.created_at <= $2
-            ORDER BY d.created_at ASC
-            LIMIT $3
+            UPDATE notification_digests
+            SET abandoned_at = now()
+            WHERE id IN (
+                SELECT d.id
+                FROM notification_digests d
+                WHERE d.email_sent_at IS NULL
+                  AND d.abandoned_at IS NULL
+                  AND d.created_at <= $1
+                ORDER BY d.created_at ASC
+                LIMIT $2
+            )
+            RETURNING id
             "#,
         )
-        .bind(aged_after)
-        .bind(aged_before)
+        .bind(resend_cutoff)
         .bind(limit)
         .fetch_all(&self.pool)
         .await
