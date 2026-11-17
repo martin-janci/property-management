@@ -189,11 +189,14 @@ impl NotificationDigestWorker {
 
         self.run_sweep(now).await;
 
-        // Release the session-scoped advisory lock. If this fails the lock is
-        // still released when the pooled connection is eventually closed, so a
-        // failure here only delays the next tick's eligibility, never deadlocks.
+        // Release the session-scoped advisory lock. On failure
+        // `release_digest_sweep` discards (detaches + closes) the connection
+        // instead of returning a possibly-still-locked session to the pool, so
+        // the lock is dropped with the torn-down session rather than stranded —
+        // a failure here only delays the next tick's eligibility, never
+        // deadlocks the sweep.
         if let Err(e) = self.granular_repo.release_digest_sweep(lock_conn).await {
-            tracing::warn!(error = %e, "[2B.3] Failed to release digest sweep lock; self-heals when the connection closes");
+            tracing::warn!(error = %e, "[2B.3] Failed to release digest sweep lock; connection discarded so the lock drops with the closed session");
         }
     }
 

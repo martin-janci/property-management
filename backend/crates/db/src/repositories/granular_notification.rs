@@ -4,7 +4,7 @@
 
 use chrono::{NaiveTime, Utc};
 use sqlx::pool::PoolConnection;
-use sqlx::{Error as SqlxError, FromRow, PgPool, Postgres, Row};
+use sqlx::{Connection, Error as SqlxError, FromRow, PgPool, Postgres, Row};
 use uuid::Uuid;
 
 use crate::models::{
@@ -862,14 +862,52 @@ impl GranularNotificationRepository {
     /// (the connection handed out by [`Self::try_claim_digest_sweep`]) and
     /// return the connection to the pool. Unlocking on the same session that
     /// took the lock is required — a mismatched session is a no-op in Postgres.
+    ///
+    /// On the happy path the unlock succeeds and `conn` drops normally, going
+    /// back to the pool lock-free. If the unlock **fails**, the session may
+    /// still hold the advisory lock, so returning it to the pool would strand
+    /// the lock for the connection's whole lifetime: a live, idle, pooled
+    /// session never drops a session-scoped lock on its own, so every future
+    /// tick's `try_claim_digest_sweep` — on every replica — would keep failing
+    /// and digests would silently stop until the process restarts. To prevent
+    /// that we [`PoolConnection::detach`] the connection (severing it from the
+    /// pool so it cannot be recycled) and best-effort hard-close it, which
+    /// tears down the Postgres session and drops the lock. This mirrors the
+    /// "clear or discard" connection-release discipline used elsewhere
+    /// (`db::tenant_context::clear_or_discard`, the scheduler's
+    /// `release_scheduler_conn`). The original unlock error is still returned
+    /// so the caller can log it.
     pub async fn release_digest_sweep(
         &self,
         mut conn: PoolConnection<Postgres>,
     ) -> Result<(), SqlxError> {
-        sqlx::query("SELECT pg_advisory_unlock(hashtextextended('notification_digest_sweep', 0))")
-            .execute(&mut *conn)
-            .await?;
-        Ok(())
+        match sqlx::query(
+            "SELECT pg_advisory_unlock(hashtextextended('notification_digest_sweep', 0))",
+        )
+        .execute(&mut *conn)
+        .await
+        {
+            Ok(_) => {
+                // Lock released; `conn` drops here -> returns to the pool clean.
+                Ok(())
+            }
+            Err(e) => {
+                // The unlock failed, so this session may still hold the lock.
+                // Detach it from the pool so it is NOT recycled, then hard-close
+                // it to tear down the session (which drops the lock). The pool
+                // opens a fresh, lock-free connection on the next acquire.
+                let detached = conn.detach();
+                if let Err(close_err) = detached.close().await {
+                    tracing::warn!(
+                        error = %close_err,
+                        "failed to hard-close digest-sweep connection after a failed \
+                         advisory unlock (already detached from the pool, so it will \
+                         not be reused regardless)"
+                    );
+                }
+                Err(e)
+            }
+        }
     }
 
     /// Create a notification digest.
