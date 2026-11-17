@@ -3,7 +3,8 @@
 //! This module provides utilities to set tenant context for database operations,
 //! enabling PostgreSQL RLS policies to enforce data isolation.
 
-use sqlx::{Error as SqlxError, Executor, Postgres};
+use sqlx::pool::PoolConnection;
+use sqlx::{Connection, Error as SqlxError, Executor, Postgres};
 use tracing::Instrument;
 use uuid::Uuid;
 
@@ -46,32 +47,73 @@ where
     Ok(())
 }
 
+/// Clear the RLS request context on a pooled connection as it is released, and
+/// **discard the connection if the clear fails** so elevated context can never
+/// bleed to the next request (issue #3583, follow-up to #3577).
+///
+/// This consumes the owned [`PoolConnection`]. On the happy path the connection
+/// is dropped normally after a successful `clear_request_context`, returning to
+/// the pool with a clean (non-super-admin, non-global-read) context. If the
+/// clear **fails**, the connection may still hold the RLS-bypassing super-admin
+/// / global-read context it was placed into, so returning it to the pool would
+/// let the next checkout run with tenant isolation disabled. To prevent that we
+/// [`PoolConnection::detach`] it — detaching severs it from the pool, so
+/// dropping it closes the socket instead of recycling it — and best-effort
+/// hard-close it. The pool then opens a fresh, context-free connection on next
+/// demand.
+///
+/// This is the single hardened primitive every connection-release site should
+/// use (`RlsGuard::release`, the `Drop` path via [`spawn_clear_context`], and
+/// SYSTEM-context route handlers), so the "clear or discard" discipline lives
+/// in one place.
+pub async fn clear_or_discard(mut conn: PoolConnection<Postgres>, context_info: &str) {
+    match clear_request_context(&mut *conn).await {
+        Ok(()) => {
+            tracing::trace!(
+                context = %context_info,
+                "RLS context cleared; connection returning to pool"
+            );
+            // `conn` drops here -> returns to the pool with a clean context.
+        }
+        Err(e) => {
+            tracing::error!(
+                error = %e,
+                context = %context_info,
+                "SECURITY: failed to clear RLS context - discarding connection to \
+                 prevent super-admin/elevated context from bleeding across the pool"
+            );
+            // Detach from the pool so the (possibly still-elevated) connection
+            // is NOT recycled, then hard-close it. The pool opens a fresh,
+            // context-free connection on the next acquire.
+            let detached = conn.detach();
+            if let Err(close_err) = detached.close().await {
+                tracing::warn!(
+                    error = %close_err,
+                    context = %context_info,
+                    "failed to hard-close discarded connection (already detached \
+                     from the pool, so it will not be reused regardless)"
+                );
+            }
+        }
+    }
+}
+
 /// Spawn a task to clear RLS context on a connection.
 ///
 /// This is used by Drop implementations that cannot await. The task runs
-/// asynchronously and logs any errors.
+/// asynchronously and, via [`clear_or_discard`], **discards** the connection
+/// if the clear fails rather than letting an elevated context bleed back into
+/// the pool.
 ///
 /// # Safety
 ///
 /// This provides best-effort cleanup. For guaranteed cleanup, always call
 /// `release().await` explicitly before dropping the guard.
-pub fn spawn_clear_context(mut conn: sqlx::pool::PoolConnection<Postgres>, context_info: String) {
+pub fn spawn_clear_context(conn: PoolConnection<Postgres>, context_info: String) {
     let span_context = context_info.clone();
     tokio::spawn(
         async move {
-            if let Err(e) = clear_request_context(&mut *conn).await {
-                tracing::error!(
-                    error = %e,
-                    context = %context_info,
-                    "SECURITY: Failed to clear RLS context in Drop cleanup task - context may bleed"
-                );
-            } else {
-                tracing::debug!(
-                    context = %context_info,
-                    "RLS context cleared via Drop cleanup task"
-                );
-            }
-            // Connection is dropped here, returning to pool with cleared context
+            clear_or_discard(conn, &context_info).await;
         }
         .instrument(tracing::info_span!(
             "bg.tenant_context_eviction",

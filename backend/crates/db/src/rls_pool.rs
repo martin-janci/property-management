@@ -35,7 +35,7 @@
 //! }
 //! ```
 
-use crate::tenant_context::{clear_request_context, set_request_context};
+use crate::tenant_context::{clear_or_discard, clear_request_context, set_request_context};
 use crate::DbPool;
 use sqlx::pool::PoolConnection;
 use sqlx::Postgres;
@@ -182,23 +182,16 @@ impl RlsGuard {
     /// Explicitly release the connection, clearing RLS context.
     ///
     /// This is called automatically on drop, but you can call it explicitly
-    /// if you want to release the connection early.
+    /// if you want to release the connection early. If the context clear fails,
+    /// the connection is discarded (not returned to the pool) to prevent an
+    /// elevated RLS context from bleeding across requests (issue #3583).
     pub async fn release(&mut self) {
-        if let Some(mut conn) = self.conn.take() {
-            if let Err(e) = clear_request_context(&mut *conn).await {
-                tracing::warn!(
-                    error = %e,
-                    tenant_id = %self.tenant_id,
-                    user_id = %self.user_id,
-                    "Failed to clear RLS context on guard release"
-                );
-            } else {
-                tracing::trace!(
-                    tenant_id = %self.tenant_id,
-                    user_id = %self.user_id,
-                    "RLS context cleared on guard release"
-                );
-            }
+        if let Some(conn) = self.conn.take() {
+            clear_or_discard(
+                conn,
+                &format!("RlsGuard(tenant={}, user={})", self.tenant_id, self.user_id),
+            )
+            .await;
         }
     }
 }
