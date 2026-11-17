@@ -14305,6 +14305,30 @@
       "merge_attempted_at": "2026-11-15T04:35:16Z"
     },
     {
+      "task_id": "code-review-reality-web-comparison-timer-leak",
+      "branch": "auto-impl/code-review-reality-web-comparison-timer-cdc625e1",
+      "status": "failed",
+      "claimed_at": "2026-11-17T12:30:24.415227Z",
+      "last_updated": "2026-11-17T12:37:12.901890Z",
+      "status_changed_at": "2026-11-17T12:37:12.901890Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=done specialist=nextjs-web scope_drift=false code_reuse_warn=none note=already-fixed-on-dev: both comparison timers already clearTimeout on unmount; no leaking timer; no PR (no-op)",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "code-review-reality-web-comparison-url-unvalidated-cast",
       "branch": "auto-impl/code-review-reality-web-comparison-url-u-516f36ea",
       "status": "merged",
@@ -25374,6 +25398,30 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "pm-data-define-digest-kpis-counters-2026-11-17",
+      "branch": "auto-impl/pm-data-define-digest-kpis-counters-2026-bf0f4245",
+      "status": "merged",
+      "claimed_at": "2026-11-17T08:26:48Z",
+      "last_updated": "2026-11-17T12:37:12.901890Z",
+      "status_changed_at": "2026-11-17T12:37:12.901890Z",
+      "pr_number": 3594,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3594",
+      "merged_at": "2026-11-17T12:35:35Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3594 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=digest SweepCounters KPIs+metrics crate counters+per-sweep summary in notification_digest.rs; fmt/clippy green, 3 new unit tests pass; backend.yml CI authoritative (21 sandbox no-DB sqlx::test unrelated); drift=emission site api-server (pm-backend)",
+      "reviewer_summary": "verdict=approve head_oid=ea2a0c49cb449d3a30aecddf5601be8cfb82aaa8 note=clean single-file digest-KPI observability; scope-drift justified (emission site is sweep worker); invariant+metrics correct; CI green; posted COMMENT (self-approve blocked)",
+      "last_reviewed_oid": "ea2a0c49cb449d3a30aecddf5601be8cfb82aaa8",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-17T12:33:59.986751Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "pm-devops-dependabot-major-bumps-review-2026-11-13",
       "branch": "auto-impl/pm-devops-dependabot-major-bumps-review-02d3a4f1",
       "status": "merged",
@@ -29529,5 +29577,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-17T10:40:17Z"
+  "archived_at": "2026-11-17T12:44:54Z"
 }

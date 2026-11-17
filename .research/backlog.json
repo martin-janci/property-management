@@ -15865,7 +15865,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "hotspot_history.runs_seen 2→3 with new churn 2026-11-15"
       ],
@@ -15877,7 +15877,12 @@
       ],
       "created_at": "2026-11-15",
       "updated_at": "2026-11-15",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-17T12:25:23Z",
+        "assignment_status": "merged",
+        "pr_number": 3591
+      }
     },
     {
       "id": "hotfix-no-test-pr-3497",
