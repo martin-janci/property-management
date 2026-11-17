@@ -248,12 +248,16 @@ async fn get_audit_summary(
         })
         .collect();
 
-    // Verify integrity (sample check)
+    // Verify integrity (sample check). Propagate a *failed* check (SqlxError)
+    // rather than swallowing it with `.unwrap_or(false)`: an error means the
+    // check could not run (DB/query failure), which `db_error` logs server-side
+    // and surfaces as a 500 — distinct from a genuine `Ok(false)` tampering
+    // signal. Mirrors the sibling `verify_audit_integrity` handler.
     let integrity_ok = state
         .audit_log_repo
         .verify_integrity(Some(1000))
         .await
-        .unwrap_or(false);
+        .map_err(db_error)?;
 
     Ok(Json(AuditSummaryResponse {
         total_entries,
@@ -946,5 +950,72 @@ mod tests {
                 line.trim()
             );
         }
+    }
+
+    #[test]
+    fn integrity_check_errors_are_propagated_not_swallowed() {
+        // Regression: `get_audit_summary` ran the tamper-evidence check with
+        // `verify_integrity(..).await.unwrap_or(false)`, which collapses a
+        // *failed* integrity check (a `SqlxError` — DB outage, query error)
+        // into `integrity_verified: false`. That both (a) silently discards
+        // the real error (no server-side log, no 500) and (b) misreports an
+        // infrastructure failure as genuine audit-log tampering. The result of
+        // an integrity check must be propagated with `?` (via `db_error`, as
+        // the sibling `verify_audit_integrity` handler already does) so an
+        // *error* surfaces as a 500 while only a real `Ok(false)` tampering
+        // signal reaches the response.
+        // Scan only the production portion of the module — the string literals
+        // in this `#[cfg(test)]` block would otherwise match the guard against
+        // themselves (they mention `verify_integrity(` and `.unwrap_or(`).
+        let src = include_str!("compliance.rs");
+        let production = src
+            .split("#[cfg(test)]")
+            .next()
+            .expect("source always has a leading production section");
+
+        // Walk real code lines (skip comments, like the guard above), and for
+        // each `verify_integrity(` call scan its method chain through to the
+        // statement terminator `;`. Assert the chain propagates (`?`) and does
+        // not swallow the Result with `.unwrap_or(`.
+        let code_lines: Vec<&str> = production
+            .lines()
+            .filter(|l| !l.trim_start().starts_with("//"))
+            .collect();
+
+        let mut checked = 0usize;
+        for (i, line) in code_lines.iter().enumerate() {
+            if !line.contains("verify_integrity(") {
+                continue;
+            }
+            // Collect the chain from this line until the first `;`.
+            let mut chain = String::new();
+            for seg in &code_lines[i..] {
+                chain.push_str(seg);
+                chain.push(' ');
+                if seg.contains(';') {
+                    break;
+                }
+            }
+            checked += 1;
+            assert!(
+                !chain.contains(".unwrap_or("),
+                "integrity-check result is swallowed with `.unwrap_or(..)` — a \
+                 failed check would be misreported as tampering and the error \
+                 lost; propagate it with `.map_err(db_error)?` instead. Chain: {}",
+                chain.trim()
+            );
+            assert!(
+                chain.contains('?'),
+                "integrity-check result must be propagated with `?` (via \
+                 `db_error`); chain does not propagate: {}",
+                chain.trim()
+            );
+        }
+
+        assert!(
+            checked >= 2,
+            "expected to find both audit-integrity call sites (summary + verify \
+             handlers); found {checked} — did the guard stop matching?"
+        );
     }
 }
