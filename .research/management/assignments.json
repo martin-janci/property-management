@@ -163,18 +163,18 @@
     {
       "task_id": "pm-scrum-master-triage-rls-superadmin-context-bleed-3583-2026-11-17",
       "branch": "auto-impl/pm-scrum-master-triage-rls-superadmin-co-06c5820c",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-17T04:25:08Z",
-      "last_updated": "2026-11-17T04:25:08Z",
-      "status_changed_at": "2026-11-17T04:25:08Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-17T05:26:24Z",
+      "status_changed_at": "2026-11-17T05:26:24Z",
+      "pr_number": 3589,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3589",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3589 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=CONFIRMED real bug #3583 (medium): super-admin RLS ctx persists on PoolConnection; added db::tenant_context::clear_or_discard (detach+close on failed clear) at all 3 release sites (tenant_config fetch_organization_name, RlsGuard::drop, RlsGuard::release); offline fmt+clippy green 8 crates; DB regression failed_clear_discards_connection quarantined (#[ignore], BIT-351 harness), cargo-test band in CI",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -185,5 +185,5 @@
       "quarantine_reason": null
     }
   ],
-  "generated": "2026-11-17T04:51:42Z"
+  "generated": "2026-11-17T05:26:24Z"
 }
