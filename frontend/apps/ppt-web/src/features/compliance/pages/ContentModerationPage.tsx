@@ -20,6 +20,7 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../../components';
+import { trackModerationActionTaken, trackModerationAppealDecided } from '../analytics';
 import { DecideAppealDialog } from '../components/DecideAppealDialog';
 import type { ModerationCase } from '../components/ModerationCaseCard';
 import { ModerationCaseCard } from '../components/ModerationCaseCard';
@@ -156,8 +157,17 @@ export const ContentModerationPage: React.FC = () => {
   // differ. Factor the shared shape out so the two handlers can't drift — the
   // Toast wiring has been an active churn site (#2856).
   const decisionMutationCallbacks = useCallback(
-    (dialog: 'takeAction' | 'decideAppeal', reset: () => void, logLabel: string) => ({
+    (
+      dialog: 'takeAction' | 'decideAppeal',
+      reset: () => void,
+      logLabel: string,
+      // Emit the canonical `moderation.*` analytics event for this decision.
+      // Fired here (inside onSuccess) so the data team only ever sees real,
+      // server-accepted decisions — never a dialog submit the API rejected.
+      track: () => void
+    ) => ({
       onSuccess: () => {
+        track();
         reset();
         showToast({
           type: 'success',
@@ -196,7 +206,8 @@ export const ContentModerationPage: React.FC = () => {
         decisionMutationCallbacks(
           'takeAction',
           () => setTakeActionCaseId(null),
-          'Failed to take action:'
+          'Failed to take action:',
+          () => trackModerationActionTaken(actionType)
         )
       );
     },
@@ -231,7 +242,8 @@ export const ContentModerationPage: React.FC = () => {
         decisionMutationCallbacks(
           'decideAppeal',
           () => setDecideAppealCaseId(null),
-          'Failed to decide appeal:'
+          'Failed to decide appeal:',
+          () => trackModerationAppealDecided(decision)
         )
       );
     },
