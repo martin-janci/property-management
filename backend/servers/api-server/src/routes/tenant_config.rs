@@ -234,7 +234,21 @@ async fn fetch_organization_name(pool: db::DbPool, org_id: Uuid) -> Option<Strin
     .await
     .ok()
     .flatten();
-    let _ = db::tenant_context::clear_request_context(&mut *conn).await;
+    // Surface (don't swallow) a failed context clear. This connection was put
+    // into the super-admin SYSTEM context above (set_request_context(.., true),
+    // which bypasses RLS); if the clear fails it returns to the pool still
+    // holding that context and the next request on it could bypass tenant
+    // isolation. We can't await cleanup off a Drop here, and there is no API to
+    // poison a single pooled connection, so the actionable response is a loud
+    // SECURITY log — matching the `spawn_clear_context` Drop-path convention.
+    if let Err(e) = db::tenant_context::clear_request_context(&mut *conn).await {
+        tracing::error!(
+            error = %e,
+            organization_id = %org_id,
+            "SECURITY: tenant-config: failed to clear system RLS context after org \
+             name lookup - super-admin context may bleed across the pooled connection"
+        );
+    }
     result
 }
 
