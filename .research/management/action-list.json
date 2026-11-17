@@ -3,7 +3,7 @@
   "items": [
     {
       "id": "pm-devops-unblock-mobile-native-cloud-builds",
-      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) — still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
+      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) \u2014 still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
       "owner_role": "pm-devops",
       "priority": "high",
       "dependency": "none",
@@ -23,7 +23,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-create-listing-not-wired",
-      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded",
+      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub \u2014 form data discarded",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -40,7 +40,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-inquiries-response-contract",
-      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call",
+      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` \u2014 MissingFieldException on every real /inquiries + /realtors/inquiries call",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -91,7 +91,7 @@
     },
     {
       "id": "pm-scrum-master-violations-xtenant-404-contract-sweep-2026-10-28",
-      "action": "Sweep remaining violations mutation handlers for the 403-vs-404 cross-tenant contract (#3187 revealed assign still returns 403) — pattern audit across moderation.rs/aml_dsa.rs after PR #3183 fixed most but not assign",
+      "action": "Sweep remaining violations mutation handlers for the 403-vs-404 cross-tenant contract (#3187 revealed assign still returns 403) \u2014 pattern audit across moderation.rs/aml_dsa.rs after PR #3183 fixed most but not assign",
       "owner_role": "pm-scrum-master",
       "priority": "high",
       "dependency": "pm-security",
@@ -105,7 +105,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-sso-error-body-unguarded",
-      "action": "KMP realtor SSO error-body parsing is unguarded — crashes on non-JSON response",
+      "action": "KMP realtor SSO error-body parsing is unguarded \u2014 crashes on non-JSON response",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -169,7 +169,7 @@
     },
     {
       "id": "churn-hotspot-frontend-apps-ppt-web-messages-pl-json",
-      "action": "ppt-web messages/pl.json churn-hotspot — 4 commits in 2d (i18n leaf-parity sweeps PR #3524 + locale-specific fixes)",
+      "action": "ppt-web messages/pl.json churn-hotspot \u2014 4 commits in 2d (i18n leaf-parity sweeps PR #3524 + locale-specific fixes)",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "open",
@@ -864,7 +864,7 @@
     },
     {
       "id": "gh-issue-3583",
-      "action": "Follow-up: failed RLS-context clear is logged but not remediated — super-admin context can bleed across the pooled connection (PR #3577) (Closes #3583)",
+      "action": "Follow-up: failed RLS-context clear is logged but not remediated \u2014 super-admin context can bleed across the pooled connection (PR #3577) (Closes #3583)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
       "status": "open",
@@ -881,6 +881,18 @@
           "from-merged-review"
         ]
       }
+    },
+    {
+      "id": "code-review-ppt-web-toast-announcer-provider-value-not-memoized",
+      "action": "ppt-web Toast and Announcer context providers pass a fresh object literal as `value` on every render (Toast.tsx:199 `{ showToast, removeToast }`, Announcer.tsx:96 `{ announce }`), forcing all consumers to re-render. Both members are already useCallback-stable, so wrap each provider `value` in `useMemo`. Same symptom class as the org-provider finding (merged #3514); these two were out-of-scope there.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "org-provider implementer investigation 2026-11-17 (surfaced while confirming the org-provider finding was a dup of #3514)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T13:01:40.474926Z"
     }
   ],
   "generated": "2026-11-17T03:17:29Z"
