@@ -26,6 +26,12 @@
 //! Quiet hours are respected: a user inside their quiet-hours window is skipped
 //! this tick (no row created, no email) and naturally picked up on a later tick
 //! once the window has passed.
+//!
+//! The worker runs in every api-server replica, so each sweep is guarded by a
+//! cross-replica Postgres advisory lock (`notification_digest_sweep`): exactly
+//! one replica runs the sweep per tick and peers skip, so digests are never
+//! duplicated (duplicate rows or duplicate emails) when more than one replica
+//! is deployed. See [`GranularNotificationRepository::try_claim_digest_sweep`].
 
 use std::time::Duration;
 
@@ -158,9 +164,41 @@ impl NotificationDigestWorker {
         )
     }
 
-    /// One sweep: retry unsent digests, then build+send new ones. Best-effort;
-    /// never panics so a single bad row can't take down the worker.
+    /// One tick. The worker runs in every api-server replica, so the sweep is
+    /// guarded by a cross-replica advisory lock: without it every replica would
+    /// independently select the same candidates/unsent rows and send duplicate
+    /// digest emails (and `create_digest` would insert duplicate rows). Exactly
+    /// one replica claims the lock and runs [`Self::run_sweep`]; peers that fail
+    /// to claim skip this tick and retry on their next one.
     async fn process_due(&self, now: DateTime<Utc>) {
+        let lock_conn = match self.granular_repo.try_claim_digest_sweep().await {
+            Ok(Some(conn)) => conn,
+            Ok(None) => {
+                tracing::debug!(
+                    "[2B.3] Digest sweep already running on another replica; skipping tick"
+                );
+                return;
+            }
+            Err(e) => {
+                tracing::error!(error = %e, "[2B.3] Failed to claim digest sweep lock; skipping tick");
+                return;
+            }
+        };
+
+        self.run_sweep(now).await;
+
+        // Release the session-scoped advisory lock. If this fails the lock is
+        // still released when the pooled connection is eventually closed, so a
+        // failure here only delays the next tick's eligibility, never deadlocks.
+        if let Err(e) = self.granular_repo.release_digest_sweep(lock_conn).await {
+            tracing::warn!(error = %e, "[2B.3] Failed to release digest sweep lock; self-heals when the connection closes");
+        }
+    }
+
+    /// The claimed sweep: retry unsent digests, then build+send new ones.
+    /// Best-effort; never panics so a single bad row can't take down the worker.
+    /// Only ever called by the replica that won [`Self::process_due`]'s lock.
+    async fn run_sweep(&self, now: DateTime<Utc>) {
         let resend_cutoff = now - chrono::Duration::hours(self.config.resend_window_hours);
         let inactivity_cutoff = now - chrono::Duration::hours(self.config.inactivity_hours);
 

@@ -65,5 +65,7 @@ mod migration_templates_pagination_tests;
 mod my_units_privacy_tests;
 #[path = "suites/news_article_cross_tenant_tests.rs"]
 mod news_article_cross_tenant_tests;
+#[path = "suites/notification_digest_replica_claim_tests.rs"]
+mod notification_digest_replica_claim_tests;
 #[path = "suites/notification_events_repo_tests.rs"]
 mod notification_events_repo_tests;
