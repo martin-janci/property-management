@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-16T22:26:03Z",
+  "archived_at": "2026-11-17T02:29:53Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -28511,6 +28511,24 @@
         "commit": "28bb31f746321150eb1a75843f2574d66a46f065",
         "subject": "pm-qa-vote-partial-cmp-nan-fuzz: NaN-weight fuzz guard for vote winner selection (#1417)",
         "at": "2026-06-16T02:20:29Z"
+      }
+    },
+    {
+      "id": "pm-scrum-master-coverage-scan-refresh-2026-11-16",
+      "action": "Run a coverage scan to refresh coverage.json and project-state.md (both dated 2026-11-13), and confirm that epic rollups and coverage are still 100% done.",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-16 | gc1-reconcile 2026-11-17T02:24:53Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3578,
+        "merged_at": "2026-11-17T00:31:39Z",
+        "at": "2026-11-17T02:24:53Z"
       }
     },
     {
