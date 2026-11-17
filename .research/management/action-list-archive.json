@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-17T04:25:33Z",
+  "archived_at": "2026-11-17T06:36:04Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2127,6 +2127,30 @@
         "merged_pr": 2659,
         "merged_at": "2026-08-04T16:14:31Z",
         "at": "2026-08-04T16:18:03Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-messages-cs-json",
+      "action": "ppt-web messages/cs.json churn-hotspot — 4 commits in 2d (ambient i18n sweeps + UC-52 payments)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-15T04:24:57Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-11-17T06:36:04Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T04:24:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3585,
+        "merged_at": "2026-11-17T06:28:37Z",
+        "at": "2026-11-17T06:36:04Z"
       }
     },
     {
@@ -28249,6 +28273,27 @@
       }
     },
     {
+      "id": "pm-qa-dispatcher-self-test-quarantined-recovery-2026-11-09-retry1",
+      "action": "Add a dispatcher-self-test.sh test case that covers the quarantined-row recovery path so #3357-class stalls fail CI instead of silently queueing [retry 1/2 of failed pm-qa-dispatcher-self-test-quarantined-recovery-2026-11-09]",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-11-17T00:24:33Z (retry_of=pm-qa-dispatcher-self-test-quarantined-recovery-2026-11-09 reason=failed-no-pr cooldown_ok newest_failure=2026-11-09T18:34:56Z) | gc1-reconcile 2026-11-17T06:36:04Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T00:24:33Z",
+      "retry_of": "pm-qa-dispatcher-self-test-quarantined-recovery-2026-11-09",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3582,
+        "merged_at": "2026-11-17T06:28:29Z",
+        "at": "2026-11-17T06:36:04Z"
+      }
+    },
+    {
       "id": "pm-qa-dispute-draft-autosave-coverage",
       "action": "Add dispute draft auto-save tests — i18n key presence + re-render race (#1360, #1364)",
       "owner_role": "pm-qa",
@@ -28514,6 +28559,24 @@
       }
     },
     {
+      "id": "pm-scrum-master-add-digest-abandoned-at-column-2026-11-17",
+      "action": "Add terminal abandoned state for digests (abandoned_at column via new migration, set in report_abandoned) so abandoned rows are queryable, not log-only",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-17 | gc1-reconcile 2026-11-17T06:36:04Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3588,
+        "merged_at": "2026-11-17T06:33:46Z",
+        "at": "2026-11-17T06:36:04Z"
+      }
+    },
+    {
       "id": "pm-scrum-master-coverage-scan-refresh-2026-11-16",
       "action": "Run a coverage scan to refresh coverage.json and project-state.md (both dated 2026-11-13), and confirm that epic rollups and coverage are still 100% done.",
       "owner_role": "pm-scrum-master",
@@ -28543,6 +28606,24 @@
       "source": "pm-analysis 2026-11-16",
       "resolved_by": "PR #3579",
       "resolved_at": "2026-11-17"
+    },
+    {
+      "id": "pm-scrum-master-fix-digest-candidates-inner-join-2026-11-17",
+      "action": "Fix digest-candidates INNER JOIN in granular_notification.rs find_inactive_digest_candidates (use LEFT JOIN with COALESCE(la.last_active, u.created_at)) and add a regression test with a user who has no refresh_tokens row",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-17 | gc1-reconcile 2026-11-17T06:36:04Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3587,
+        "merged_at": "2026-11-17T06:31:37Z",
+        "at": "2026-11-17T06:36:04Z"
+      }
     },
     {
       "id": "pm-scrum-master-land-voice-device-idor",
@@ -28885,6 +28966,24 @@
         "merged_pr": 3370,
         "merged_at": "2026-11-09T22:28:43Z",
         "at": "2026-11-09T22:40:58Z"
+      }
+    },
+    {
+      "id": "pm-scrum-master-triage-rls-superadmin-context-bleed-3583-2026-11-17",
+      "action": "Triage #3583 (RLS super-admin context bleed, follow-up to #3577) and confirm whether pooled connections can retain a super-admin RLS context",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-17 | gc1-reconcile 2026-11-17T06:36:04Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3589,
+        "merged_at": "2026-11-17T06:33:31Z",
+        "at": "2026-11-17T06:36:04Z"
       }
     },
     {

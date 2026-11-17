@@ -168,23 +168,6 @@
       }
     },
     {
-      "id": "churn-hotspot-frontend-apps-ppt-web-messages-cs-json",
-      "action": "ppt-web messages/cs.json churn-hotspot — 4 commits in 2d (ambient i18n sweeps + UC-52 payments)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-15T04:24:57Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-15T04:24:57Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
       "id": "churn-hotspot-frontend-apps-ppt-web-messages-pl-json",
       "action": "ppt-web messages/pl.json churn-hotspot — 4 commits in 2d (i18n leaf-parity sweeps PR #3524 + locale-specific fixes)",
       "owner_role": "pm-tech-lead",
@@ -648,20 +631,6 @@
       }
     },
     {
-      "id": "pm-qa-dispatcher-self-test-quarantined-recovery-2026-11-09-retry1",
-      "action": "Add a dispatcher-self-test.sh test case that covers the quarantined-row recovery path so #3357-class stalls fail CI instead of silently queueing [retry 1/2 of failed pm-qa-dispatcher-self-test-quarantined-recovery-2026-11-09]",
-      "owner_role": "pm-qa",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-11-17T00:24:33Z (retry_of=pm-qa-dispatcher-self-test-quarantined-recovery-2026-11-09 reason=failed-no-pr cooldown_ok newest_failure=2026-11-09T18:34:56Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-17T00:24:33Z",
-      "retry_of": "pm-qa-dispatcher-self-test-quarantined-recovery-2026-11-09",
-      "retry_round": 1
-    },
-    {
       "id": "code-review-reality-web-realtor-detail-modal-no-error",
       "action": "reality web realtor detail modal no error",
       "owner_role": "pm-backend",
@@ -876,39 +845,6 @@
         "vector": "bug",
         "generated": "2026-09-02T00:00:00Z"
       }
-    },
-    {
-      "id": "pm-scrum-master-fix-digest-candidates-inner-join-2026-11-17",
-      "action": "Fix digest-candidates INNER JOIN in granular_notification.rs find_inactive_digest_candidates (use LEFT JOIN with COALESCE(la.last_active, u.created_at)) and add a regression test with a user who has no refresh_tokens row",
-      "owner_role": "pm-scrum-master",
-      "priority": "high",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-17"
-    },
-    {
-      "id": "pm-scrum-master-add-digest-abandoned-at-column-2026-11-17",
-      "action": "Add terminal abandoned state for digests (abandoned_at column via new migration, set in report_abandoned) so abandoned rows are queryable, not log-only",
-      "owner_role": "pm-scrum-master",
-      "priority": "high",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-17"
-    },
-    {
-      "id": "pm-scrum-master-triage-rls-superadmin-context-bleed-3583-2026-11-17",
-      "action": "Triage #3583 (RLS super-admin context bleed, follow-up to #3577) and confirm whether pooled connections can retain a super-admin RLS context",
-      "owner_role": "pm-scrum-master",
-      "priority": "high",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-17"
     },
     {
       "id": "pm-scrum-master-fix-digest-sweep-lock-release-leak-2026-11-17",
