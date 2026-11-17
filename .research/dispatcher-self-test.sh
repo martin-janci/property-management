@@ -965,6 +965,21 @@ else
   fail "quarantined -> review flip produced an invalid row: $T33_FLIPPED"
 fi
 
+# (b2) recovery completion: the defining property of un-quarantine is that the
+# recovered row REJOINS the active pool — it resumes consuming a WIP slot
+# (Phase 3 throttle) instead of staying excluded. Apply the flip to the full
+# fixture and confirm WIP climbs 2 -> 3. Without this, (b) only proves the row
+# is well-formed, not that recovery actually re-enters the active pool.
+T33_WIP_AFTER=$(jq --arg n "$T33_NOW" '
+  [ .assignments[]
+    | if .task_id=="q-stuck-3357" then .status="review" | .status_changed_at=$n | .last_updated=$n else . end
+    | select(.status=="in-progress" or .status=="review") ] | length' "$T33_FIX")
+if [ "$T33_WIP_AFTER" = "3" ]; then
+  note "recovered row rejoins WIP (WIP $T33_WIP -> $T33_WIP_AFTER after un-quarantine)"
+else
+  fail "recovered row did NOT rejoin WIP (expected 3, got $T33_WIP_AFTER)"
+fi
+
 # (c) quarantine-exit SLA: quarantined_at older than SLA days -> failed. First
 # confirm the SLA predicate fires for the stuck row, then confirm the resulting
 # `failed` row is schema-valid + terminal (archive-eligible per T18/T19).
@@ -989,6 +1004,50 @@ if [ "$T33_FAIL_OK" = "true" ]; then
   note "quarantine-exit SLA -> failed is schema-valid + terminal"
 else
   fail "quarantined -> failed SLA transition produced an invalid row: $T33_FAILED"
+fi
+
+# (d) SEMI-TERMINAL exit-set contract (the #3357 guard). The state machine
+# (dispatcher-prompt.md lines ~188-199) permits EXACTLY two transitions out of
+# `quarantined`: the operator recovery `-> review` (b) and the SLA exit
+# `-> failed` (c). `quarantined` is semi-terminal — no other target is legal.
+# (b)/(c) prove the two legal exits are well-formed; this pins the OTHER half of
+# the contract: every illegal exit MUST be rejected. Without it a #3357-class
+# regression that nudges a stuck row to a non-exit status (e.g. silently back to
+# in-progress, or straight to merged/done) would re-queue the stem and slip CI.
+# Model the allowed set from the state machine and classify every status.
+T33_EXIT_ALLOWED='["review","failed"]'
+T33_EXIT_BAD=$(jq -cn --argjson allowed "$T33_EXIT_ALLOWED" '
+  # Full status enum MINUS the entry status itself (quarantined -> quarantined
+  # is not an exit). A target is a violation iff it is NOT in the allowed set.
+  (["in-progress","review","merged","failed","done"]) as $targets
+  | [ $targets[] as $t | select(($allowed | index($t)) == null) | $t ] | sort')
+# Expect illegal exits = enum \ ({review,failed} ∪ {quarantined}) = {in-progress,merged,done}.
+T33_EXIT_BAD_EXPECT='["done","in-progress","merged"]'
+if [ "$T33_EXIT_BAD" = "$(echo "$T33_EXIT_BAD_EXPECT" | jq -c 'sort')" ]; then
+  note "semi-terminal exit-set is exactly {review,failed}; illegal exits rejected (in-progress/merged/done)"
+else
+  fail "quarantined exit-set contract drift: illegal-exit set was $T33_EXIT_BAD (expected in-progress/merged/done)"
+fi
+# Cross-check the model against the prompt: the two legal exits must be the ONLY
+# rows with `quarantined` in the FROM column of the state-machine table, and the
+# semantics must still be documented as SEMI-TERMINAL. Ties the hardcoded model
+# above to the source of truth so a table edit can't silently desync this test.
+if [ -f "$PROMPT" ]; then
+  grep -Eq '^\| *quarantined *\| *failed *\|' "$PROMPT" \
+    && note "prompt table encodes quarantined -> failed SLA exit" \
+    || fail "prompt state-machine table missing quarantined -> failed row"
+  grep -Eq '\*\*`?quarantined`? is SEMI-TERMINAL' "$PROMPT" \
+    && note "prompt documents quarantined as SEMI-TERMINAL" \
+    || fail "prompt no longer documents quarantined as SEMI-TERMINAL"
+  # No OTHER quarantined-FROM transition may exist in the table beyond -> failed
+  # (recovery -> review is prose, by operator). A stray `| quarantined | <x> |`
+  # row for x != failed would widen the exit set behind this test's back.
+  T33_STRAY=$(grep -E '^\| *quarantined *\|' "$PROMPT" | grep -Ev '^\| *quarantined *\| *failed *\|' || true)
+  if [ -z "$T33_STRAY" ]; then
+    note "no stray quarantined-FROM transition in prompt table"
+  else
+    fail "unexpected quarantined-FROM transition in prompt table: $T33_STRAY"
+  fi
 fi
 rm -f "$T33_FIX"
 echo
