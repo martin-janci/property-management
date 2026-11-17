@@ -274,4 +274,54 @@ mod tests {
         );
         assert_eq!(surfaced.len(), 1, "exactly one row crossed the boundary");
     }
+
+    /// Backdate a user's `created_at` to `hours_ago` in the past, simulating an
+    /// account that registered long ago.
+    async fn backdate_created_at(pool: &sqlx::PgPool, user_id: Uuid, hours_ago: i64) {
+        let when = Utc::now() - Duration::hours(hours_ago);
+        sqlx::query("UPDATE users SET created_at = $2 WHERE id = $1")
+            .bind(user_id)
+            .bind(when)
+            .execute(pool)
+            .await
+            .unwrap();
+    }
+
+    /// Regression (PM #969 gap 1): a user who registered long ago but has never
+    /// logged in has NO `refresh_tokens` row, so the old INNER JOIN on
+    /// `last_activity` silently dropped them from the candidate set — they would
+    /// never receive an inactivity digest. The LEFT JOIN + `COALESCE(la.last_active,
+    /// u.created_at)` falls back to the registration time, so an opted-in account
+    /// that has been inactive since sign-up (and has unread notifications) still
+    /// qualifies.
+    #[sqlx::test(migrator = "crate::MIGRATOR")]
+    async fn never_logged_in_user_falls_back_to_created_at(pool: sqlx::PgPool) {
+        let repo = GranularNotificationRepository::new(pool.clone());
+        let user = make_user(&pool, "never-logged-in@example.com").await;
+        // No `set_last_active` call: this account has zero refresh_tokens rows.
+        // It registered 48h ago (> the 24h inactivity cutoff) and never signed in.
+        backdate_created_at(&pool, user, 48).await;
+        set_digest_enabled(&pool, user, true).await;
+        add_group(&pool, user, "fault", 3, false).await;
+
+        let now = Utc::now();
+        let candidates = repo
+            .find_inactive_digest_candidates(
+                now - Duration::hours(24),
+                now - Duration::hours(20),
+                100,
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(
+            candidates.len(),
+            1,
+            "a never-logged-in but long-registered opted-in user with unread \
+             notifications must be a digest candidate"
+        );
+        assert_eq!(candidates[0].user_id, user);
+        assert_eq!(candidates[0].email, "never-logged-in@example.com");
+        assert_eq!(candidates[0].notification_count, 3);
+    }
 }
