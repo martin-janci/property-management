@@ -5,10 +5,13 @@
  * Calls reality-server `POST /api/v1/users/register`.
  */
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { type FormEvent, useState } from 'react';
+// Locale-aware `Link`/`useRouter` from `@/i18n/routing` keep the active
+// `/[locale]/…` prefix on internal links and the "back to sign in" redirect.
+// `next/link` + `next/navigation` would drop the locale, sending the user to a
+// non-localized route (matches the login + SSO callback pages).
+import { Link, useRouter } from '@/i18n/routing';
 import { AuthApiError, register } from '@/lib/auth-api';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
