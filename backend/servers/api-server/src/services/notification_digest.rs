@@ -17,11 +17,13 @@
 //!      have unread notification groups, aggregates per-category unread counts,
 //!      persists a digest row, and emails a localized summary with an
 //!      unsubscribe link.
-//!   3. Surfaces any digest that has exhausted the retry window: a row whose
-//!      email send kept failing drops out of step 1 once it ages past the
-//!      resend window, so it would otherwise be silently abandoned. Each such
-//!      row is logged once (at error level) as it crosses the window boundary,
-//!      so a persistent send failure is never dropped without a trace.
+//!   3. Marks any digest that has exhausted the retry window as abandoned: a
+//!      row whose email send kept failing drops out of step 1 once it ages past
+//!      the resend window, so it would otherwise be silently given up on. Each
+//!      such row is stamped with a durable `abandoned_at` timestamp (a
+//!      queryable terminal state) and logged once at error level, so a
+//!      persistent send failure is both recorded in the table and never dropped
+//!      without a trace.
 //!
 //! Quiet hours are respected: a user inside their quiet-hours window is skipped
 //! this tick (no row created, no email) and naturally picked up on a later tick
@@ -216,21 +218,25 @@ impl NotificationDigestWorker {
         }
     }
 
-    /// Surface digests that have exhausted the retry window. A digest whose
-    /// email send kept failing stops being picked up by [`Self::retry_unsent`]
-    /// once it ages past the resend window; without this it would be silently
-    /// abandoned — never retried and never reported. We query the rows that
-    /// crossed the window boundary during this tick and log each one once at
-    /// error level so operators can act on the permanent failure. Returns the
-    /// number surfaced. Best-effort: a query error is logged, not propagated.
+    /// Record digests that have exhausted the retry window as abandoned. A
+    /// digest whose email send kept failing stops being picked up by
+    /// [`Self::retry_unsent`] once it ages past the resend window; without this
+    /// it would be silently given up on — never retried and never recorded. We
+    /// stamp `abandoned_at` on each newly aged-out row, turning abandonment into
+    /// a durable, queryable terminal state (not just a log line), and log each
+    /// one once at error level so operators can act on the permanent failure.
+    /// The DB mark is idempotent (only rows with `abandoned_at IS NULL` are
+    /// stamped), so a row is recorded and logged exactly once even across
+    /// skipped ticks. Returns the number newly abandoned. Best-effort: a query
+    /// error is logged, not propagated.
     async fn report_abandoned(&self, resend_cutoff: DateTime<Utc>) -> usize {
-        // Rows whose `created_at` fell into `(resend_cutoff - poll_interval,
-        // resend_cutoff]` just aged out of the retry window during this sweep.
-        let aged_after =
-            resend_cutoff - chrono::Duration::seconds(self.config.poll_interval_secs as i64);
+        // Any unsent, not-yet-abandoned row created at or before the resend
+        // cutoff has aged out of the retry window. `abandoned_at IS NULL` in the
+        // repo query makes this mark-once, so we no longer need a tick-boundary
+        // window to avoid re-reporting.
         match self
             .granular_repo
-            .get_newly_abandoned_digests(aged_after, resend_cutoff, self.config.batch_limit)
+            .mark_newly_abandoned_digests(resend_cutoff, self.config.batch_limit)
             .await
         {
             Ok(ids) => {
@@ -239,13 +245,13 @@ impl NotificationDigestWorker {
                         count = ids.len(),
                         digest_ids = ?ids,
                         resend_window_hours = self.config.resend_window_hours,
-                        "[2B.3] Digest email permanently failed — exhausted the retry window and will no longer be retried; manual follow-up may be required"
+                        "[2B.3] Digest email permanently failed — exhausted the retry window and marked abandoned; manual follow-up may be required"
                     );
                 }
                 ids.len()
             }
             Err(e) => {
-                tracing::warn!(error = %e, "[2B.3] Failed to query abandoned digests for surfacing");
+                tracing::warn!(error = %e, "[2B.3] Failed to mark abandoned digests");
                 0
             }
         }

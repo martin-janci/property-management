@@ -426,6 +426,12 @@ pub struct NotificationDigest {
     pub email_sent_at: Option<DateTime<Utc>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub push_sent_at: Option<DateTime<Utc>>,
+    /// Set when the digest's email send exhausted the retry window and was
+    /// permanently given up on — a durable, queryable terminal state. `None`
+    /// means the digest is either delivered (`email_sent_at` set) or still
+    /// pending/retrying. See `GranularNotificationRepository::mark_newly_abandoned_digests`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub abandoned_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
 }
 
