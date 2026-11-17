@@ -204,24 +204,6 @@
       }
     },
     {
-      "id": "code-review-api-handlers-audit-summary-integrity-swallow",
-      "action": "api handlers audit summary integrity swallow",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d api-handlers score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-16T00:27:09Z",
-      "signal_ref": {
-        "segment": "api-handlers",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-09-03T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-api-handlers-mfa-report-population-mismatch",
       "action": "api handlers mfa report population mismatch",
       "owner_role": "pm-backend",
@@ -579,24 +561,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-ui-registry-api-client-no-auth",
-      "action": "ppt web ui registry api client no auth",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d ppt-web-ui score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-17T00:24:34Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-09-02T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-reality-server-suggestions-hardcoded-sk-region",
       "action": "reality server suggestions hardcoded sk region",
       "owner_role": "pm-backend",
@@ -749,6 +713,154 @@
       "dependency": null,
       "depends_on": [],
       "first_open_at": "2026-11-17T13:03:05.808447Z"
+    },
+    {
+      "id": "gh-issue-3604",
+      "action": "cargo-deny (non-required check) red on dev — remediate RUSTSEC advisories: chrono/chrono-tz unmaintained, AES-auth + zip-extract vulns (Closes #3604)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-11-17T20:34:24Z (#3604)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T20:34:24Z",
+      "issue_ref": {
+        "number": 3604,
+        "url": "https://github.com/martin-janci/property-management/issues/3604",
+        "labels": [
+          "security",
+          "backend",
+          "follow-up"
+        ]
+      }
+    },
+    {
+      "id": "code-review-api-core-digest-abandoned-no-terminal-state",
+      "action": "report_abandoned has no persisted abandoned_at — abandoned digests are log-only",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-17T20:34:55Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T20:34:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-api-core-digest-candidates-inner-join-refresh-tokens",
+      "action": "find_inactive_digest_candidates INNER JOIN silently excludes users without a refresh-tokens row",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-17T20:34:55Z (score=2 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T20:34:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-granular-notification-rs",
+      "action": "granular_notification.rs repo is a repeat churn hotspot (digest subsystem)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-17T20:34:55Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T20:34:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-notification-digest-rs",
+      "action": "notification_digest.rs is a repeat churn hotspot (digest subsystem)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-17T20:34:55Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T20:34:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "code-review-api-core-digest-sweep-lock-release-leak",
+      "action": "release_digest_sweep returns a failed-unlock connection to the pool (advisory-lock leak)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-17T20:34:55Z (score=1 conf=medium vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T20:34:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "code-review-reality-web-inquiry-type-raw-enum-retry1",
+      "action": "[stale-resolved @ 2026-11-10T09:10:40Z: finding already fixed on dev (inquiry-type.ts helper + all locales present, landed c5d7ca5); implementer confirmed no diff needed, no PR] reality web inquiry type raw enum [retry 1/2 of failed code-review-reality-web-inquiry-type-raw-enum]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-17T20:34:55Z (retry_of=code-review-reality-web-inquiry-type-raw-enum reason=failed-no-pr cooldown_ok newest_failure=2026-11-10T09:08:44Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T20:34:55Z",
+      "retry_of": "code-review-reality-web-inquiry-type-raw-enum",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-reality-server-import-jobs-limit-unclamped-retry1",
+      "action": "reality server import jobs limit unclamped [retry 1/2 of failed code-review-reality-server-import-jobs-limit-unclamped]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-17T20:34:55Z (retry_of=code-review-reality-server-import-jobs-limit-unclamped reason=failed-no-pr cooldown_ok newest_failure=2026-11-10T12:47:00Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T20:34:55Z",
+      "retry_of": "code-review-reality-server-import-jobs-limit-unclamped",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-mobile-rn-voting-quorum-divzero-retry1",
+      "action": "mobile rn voting quorum divzero [retry 1/2 of failed code-review-mobile-rn-voting-quorum-divzero]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-17T20:34:55Z (retry_of=code-review-mobile-rn-voting-quorum-divzero reason=failed-no-pr cooldown_ok newest_failure=2026-11-10T16:41:17Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T20:34:55Z",
+      "retry_of": "code-review-mobile-rn-voting-quorum-divzero",
+      "retry_round": 1
     }
   ],
   "generated": "2026-11-17T03:17:29Z"

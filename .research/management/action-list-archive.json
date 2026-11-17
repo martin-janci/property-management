@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-17T16:44:09Z",
+  "archived_at": "2026-11-17T20:37:18Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -4887,6 +4887,31 @@
         "commit": "bef62a87ce1b6b4adfb8ab219b1a0039e92ff856",
         "subject": "code-review-api-handlers-assign-violation-no-member-check: enforce assignee org membership in assign_violation (#3181)",
         "at": "2026-10-27T02:40:23Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-audit-summary-integrity-swallow",
+      "action": "api handlers audit summary integrity swallow",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d api-handlers score=2 vector=bug) | gc1-reconcile 2026-11-17T20:34:05Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-16T00:27:09Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-03T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3599,
+        "merged_at": "2026-11-17T18:37:59Z",
+        "at": "2026-11-17T20:34:05Z"
       }
     },
     {
@@ -12455,6 +12480,31 @@
         "merged_pr": 3538,
         "merged_at": "2026-11-15T04:37:42Z",
         "at": "2026-11-15T06:26:16Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-api-client-no-auth",
+      "action": "ppt web ui registry api client no auth",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d ppt-web-ui score=2 vector=bug) | gc1-reconcile 2026-11-17T20:34:05Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T00:24:34Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-02T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-17T20:34:05Z"
       }
     },
     {
