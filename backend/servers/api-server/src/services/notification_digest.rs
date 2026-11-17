@@ -35,11 +35,12 @@
 //! duplicated (duplicate rows or duplicate emails) when more than one replica
 //! is deployed. See [`GranularNotificationRepository::try_claim_digest_sweep`].
 
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use chrono::{DateTime, Utc};
 use db::models::Locale;
 use db::{repositories::GranularNotificationRepository, DbPool};
+use metrics::counter;
 use tokio::time::interval;
 use tracing::Instrument;
 
@@ -49,6 +50,120 @@ use super::quiet_hours;
 /// Digest period type recorded on every row. The 24h-inactivity sweep is a
 /// `daily` digest (the schema CHECK allows `hourly`/`daily`/`weekly`).
 const DIGEST_TYPE: &str = "daily";
+
+// --- Digest sweep KPI metric names (Prometheus counters) -------------------
+//
+// One flat `notification_digest_*_total` family, matching the repo's
+// `metrics`-crate convention (snake_case, `_total` suffix — see
+// `observability.rs`). Each is incremented once per claimed sweep with that
+// sweep's tally, so rate() over the series yields digests/sec by outcome.
+
+/// Sweeps actually run by this replica (the replica that won the advisory lock).
+const METRIC_SWEEPS: &str = "notification_digest_sweeps_total";
+/// Candidate digest rows the sweep looked at (retry rows + new candidates).
+const METRIC_CANDIDATES: &str = "notification_digest_candidates_considered_total";
+/// Digests successfully emailed and durably marked sent.
+const METRIC_SENT: &str = "notification_digest_sent_total";
+/// Email send (or sent-but-mark) attempts that failed — retried or abandoned.
+const METRIC_FAILED: &str = "notification_digest_failed_total";
+/// Candidates skipped by a filter (quiet hours) and deferred to a later tick.
+const METRIC_EXCLUDED: &str = "notification_digest_excluded_by_filter_total";
+/// Digest rows newly marked abandoned (exhausted the retry window).
+const METRIC_ABANDONED: &str = "notification_digest_abandoned_total";
+
+/// Per-sweep KPI tally for the digest worker.
+///
+/// Filled as the sweep processes rows, then emitted exactly once per claimed
+/// sweep — both as a single structured summary log line and as the
+/// `notification_digest_*_total` Prometheus counters. The send-path outcomes
+/// are mutually exclusive and recorded through the `record_*` helpers, so the
+/// invariant `candidates_considered == sent + failed + excluded_by_filter`
+/// always holds by construction. `abandoned` is a separate terminal-state
+/// tally (the aged-out retry window), independent of the candidates looked at
+/// this tick, so it is not folded into `candidates_considered`.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+struct SweepCounters {
+    /// Send-path candidate rows looked at this tick (retry rows + new candidates).
+    candidates_considered: usize,
+    /// Digests successfully emailed and marked sent this tick.
+    sent: usize,
+    /// Send attempts that failed this tick (send error, persist error, or a
+    /// sent-but-not-marked row that will be retried).
+    failed: usize,
+    /// Candidates skipped by the quiet-hours filter (deferred, not sent).
+    excluded_by_filter: usize,
+    /// Digest rows newly marked abandoned this tick (exhausted the retry window).
+    abandoned: usize,
+}
+
+impl SweepCounters {
+    /// A considered candidate that was emailed and durably marked sent.
+    fn record_sent(&mut self) {
+        self.candidates_considered += 1;
+        self.sent += 1;
+    }
+
+    /// A considered candidate whose send attempt failed (will retry/abandon).
+    fn record_failed(&mut self) {
+        self.candidates_considered += 1;
+        self.failed += 1;
+    }
+
+    /// A considered candidate skipped by a filter (quiet hours) this tick.
+    fn record_excluded(&mut self) {
+        self.candidates_considered += 1;
+        self.excluded_by_filter += 1;
+    }
+
+    /// Fold another phase's tally (e.g. the retry phase into the sweep total).
+    fn merge(&mut self, other: SweepCounters) {
+        self.candidates_considered += other.candidates_considered;
+        self.sent += other.sent;
+        self.failed += other.failed;
+        self.excluded_by_filter += other.excluded_by_filter;
+        self.abandoned += other.abandoned;
+    }
+
+    /// True when the sweep did anything worth an info-level summary beyond the
+    /// always-on metrics (keeps idle ticks quiet in the logs).
+    fn did_work(&self) -> bool {
+        self.candidates_considered > 0 || self.abandoned > 0
+    }
+
+    /// Emit the per-sweep KPI counters. Called once per claimed sweep so the
+    /// Prometheus series always exist after the first sweep (a 0 increment
+    /// registers the series without perturbing the rate).
+    fn emit_metrics(&self) {
+        counter!(METRIC_SWEEPS).increment(1);
+        counter!(METRIC_CANDIDATES).increment(self.candidates_considered as u64);
+        counter!(METRIC_SENT).increment(self.sent as u64);
+        counter!(METRIC_FAILED).increment(self.failed as u64);
+        counter!(METRIC_EXCLUDED).increment(self.excluded_by_filter as u64);
+        counter!(METRIC_ABANDONED).increment(self.abandoned as u64);
+    }
+}
+
+/// Pre-register the digest sweep counters with the Prometheus exporter so they
+/// carry help text and appear in `/metrics` before the first sweep increments
+/// them. Called once when the worker starts (matches the `describe_*` pattern
+/// used in `observability.rs` / `rag_metrics.rs`).
+fn describe_sweep_metrics() {
+    metrics::describe_counter!(METRIC_SWEEPS, "Digest sweeps run by this replica");
+    metrics::describe_counter!(
+        METRIC_CANDIDATES,
+        "Digest candidate rows considered per sweep (retry rows + new candidates)"
+    );
+    metrics::describe_counter!(METRIC_SENT, "Digest emails successfully sent");
+    metrics::describe_counter!(METRIC_FAILED, "Digest send attempts that failed");
+    metrics::describe_counter!(
+        METRIC_EXCLUDED,
+        "Digest candidates excluded by a filter (quiet hours)"
+    );
+    metrics::describe_counter!(
+        METRIC_ABANDONED,
+        "Digest rows marked abandoned after exhausting the retry window"
+    );
+}
 
 /// Configuration for the inactivity digest worker.
 #[derive(Debug, Clone)]
@@ -153,6 +268,7 @@ impl NotificationDigestWorker {
                     inactivity_hours = self.config.inactivity_hours,
                     "[2B.3] NotificationDigestWorker started"
                 );
+                describe_sweep_metrics();
                 let mut ticker = interval(Duration::from_secs(self.config.poll_interval_secs));
                 loop {
                     ticker.tick().await;
@@ -203,20 +319,34 @@ impl NotificationDigestWorker {
     /// The claimed sweep: retry unsent digests, then build+send new ones.
     /// Best-effort; never panics so a single bad row can't take down the worker.
     /// Only ever called by the replica that won [`Self::process_due`]'s lock.
+    ///
+    /// Tallies the per-sweep KPIs across every phase and emits them exactly
+    /// once — as the `notification_digest_*_total` Prometheus counters (always)
+    /// and as a single structured summary log line (when the sweep did work).
     async fn run_sweep(&self, now: DateTime<Utc>) {
+        let started = Instant::now();
         let resend_cutoff = now - chrono::Duration::hours(self.config.resend_window_hours);
         let inactivity_cutoff = now - chrono::Duration::hours(self.config.inactivity_hours);
 
-        let retried = self.retry_unsent(resend_cutoff, now).await;
-        let sent = self.send_new(inactivity_cutoff, resend_cutoff, now).await;
-        let abandoned = self.report_abandoned(resend_cutoff).await;
+        let mut counters = SweepCounters::default();
+        counters.merge(self.retry_unsent(resend_cutoff, now).await);
+        counters.merge(self.send_new(inactivity_cutoff, resend_cutoff, now).await);
+        counters.abandoned += self.report_abandoned(resend_cutoff).await;
 
-        if retried > 0 || sent > 0 || abandoned > 0 {
+        let elapsed_ms = started.elapsed().as_millis();
+
+        // Always export the counters so the Prometheus series stay live even on
+        // idle sweeps; only log a summary line when there was something to say.
+        counters.emit_metrics();
+        if counters.did_work() {
             tracing::info!(
-                retried = retried,
-                sent = sent,
-                abandoned = abandoned,
-                "[2B.3] NotificationDigestWorker tick complete"
+                candidates_considered = counters.candidates_considered,
+                sent = counters.sent,
+                failed = counters.failed,
+                excluded_by_filter = counters.excluded_by_filter,
+                abandoned = counters.abandoned,
+                elapsed_ms = elapsed_ms as u64,
+                "[2B.3] NotificationDigestWorker sweep complete"
             );
         }
     }
@@ -260,9 +390,14 @@ impl NotificationDigestWorker {
         }
     }
 
-    /// Re-attempt digest rows whose email send previously failed. Returns the
-    /// number successfully sent this tick.
-    async fn retry_unsent(&self, resend_cutoff: DateTime<Utc>, now: DateTime<Utc>) -> usize {
+    /// Re-attempt digest rows whose email send previously failed. Returns this
+    /// phase's KPI tally (candidates looked at, sent, failed, excluded).
+    async fn retry_unsent(
+        &self,
+        resend_cutoff: DateTime<Utc>,
+        now: DateTime<Utc>,
+    ) -> SweepCounters {
+        let mut counters = SweepCounters::default();
         let pending = match self
             .granular_repo
             .get_unsent_digests(resend_cutoff, self.config.batch_limit)
@@ -271,13 +406,13 @@ impl NotificationDigestWorker {
             Ok(rows) => rows,
             Err(e) => {
                 tracing::error!(error = %e, "[2B.3] Failed to fetch unsent digests for retry");
-                return 0;
+                return counters;
             }
         };
 
-        let mut sent = 0usize;
         for d in pending {
             if self.is_in_quiet_hours(d.user_id, now).await {
+                counters.record_excluded();
                 continue;
             }
             let locale = Locale::parse(&d.locale);
@@ -294,26 +429,30 @@ impl NotificationDigestWorker {
                 Ok(()) => {
                     if let Err(e) = self.granular_repo.mark_digest_email_sent(d.digest_id).await {
                         tracing::warn!(digest_id = %d.digest_id, error = %e, "[2B.3] Re-sent digest email but failed to mark sent; may resend");
+                        counters.record_failed();
                         continue;
                     }
-                    sent += 1;
+                    counters.record_sent();
                 }
                 Err(e) => {
                     tracing::warn!(digest_id = %d.digest_id, error = %e, "[2B.3] Retry of digest email failed; will retry next tick");
+                    counters.record_failed();
                 }
             }
         }
-        sent
+        counters
     }
 
     /// Find inactive opted-in users with pending notifications, persist a digest
-    /// row, and email it. Returns the number of digests emailed this tick.
+    /// row, and email it. Returns this phase's KPI tally (candidates looked at,
+    /// sent, failed, excluded).
     async fn send_new(
         &self,
         inactivity_cutoff: DateTime<Utc>,
         resend_cutoff: DateTime<Utc>,
         now: DateTime<Utc>,
-    ) -> usize {
+    ) -> SweepCounters {
+        let mut counters = SweepCounters::default();
         let candidates = match self
             .granular_repo
             .find_inactive_digest_candidates(
@@ -326,19 +465,15 @@ impl NotificationDigestWorker {
             Ok(rows) => rows,
             Err(e) => {
                 tracing::error!(error = %e, "[2B.3] Failed to fetch inactivity digest candidates");
-                return 0;
+                return counters;
             }
         };
 
-        if candidates.is_empty() {
-            return 0;
-        }
-
-        let mut sent = 0usize;
         for c in candidates {
             // Respect quiet hours: defer the whole digest (no row, no email)
             // until the user is outside their quiet-hours window.
             if self.is_in_quiet_hours(c.user_id, now).await {
+                counters.record_excluded();
                 continue;
             }
 
@@ -362,6 +497,7 @@ impl NotificationDigestWorker {
                 Ok(d) => d,
                 Err(e) => {
                     tracing::error!(user_id = %c.user_id, error = %e, "[2B.3] Failed to persist digest row");
+                    counters.record_failed();
                     continue;
                 }
             };
@@ -375,17 +511,19 @@ impl NotificationDigestWorker {
                 Ok(()) => {
                     if let Err(e) = self.granular_repo.mark_digest_email_sent(digest.id).await {
                         tracing::warn!(digest_id = %digest.id, error = %e, "[2B.3] Sent digest email but failed to mark sent; may resend");
+                        counters.record_failed();
                         continue;
                     }
-                    sent += 1;
+                    counters.record_sent();
                     tracing::debug!(user_id = %c.user_id, digest_id = %digest.id, count = c.notification_count, "[2B.3] Sent inactivity digest");
                 }
                 Err(e) => {
                     tracing::warn!(user_id = %c.user_id, digest_id = %digest.id, error = %e, "[2B.3] Digest email send failed; row preserved for retry");
+                    counters.record_failed();
                 }
             }
         }
-        sent
+        counters
     }
 
     /// True when the user is currently inside their quiet-hours window. A user
@@ -401,5 +539,94 @@ impl NotificationDigestWorker {
                 false
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Every send-path outcome bumps `candidates_considered`, so the KPI
+    /// invariant `candidates_considered == sent + failed + excluded_by_filter`
+    /// holds by construction — the guarantee the summary line and dashboards
+    /// rely on. `abandoned` is a separate terminal tally and must NOT be folded
+    /// into candidates.
+    #[test]
+    fn counters_preserve_send_path_invariant() {
+        let mut c = SweepCounters::default();
+        c.record_sent();
+        c.record_sent();
+        c.record_failed();
+        c.record_excluded();
+        c.record_excluded();
+        c.record_excluded();
+        c.abandoned += 4; // terminal state, independent of the send path
+
+        assert_eq!(c.sent, 2);
+        assert_eq!(c.failed, 1);
+        assert_eq!(c.excluded_by_filter, 3);
+        assert_eq!(
+            c.candidates_considered,
+            c.sent + c.failed + c.excluded_by_filter,
+            "candidates_considered must equal the sum of send-path outcomes"
+        );
+        assert_eq!(c.candidates_considered, 6);
+        assert_eq!(c.abandoned, 4, "abandoned is not folded into candidates");
+    }
+
+    /// `merge` folds two phases' tallies field-wise, so the sweep total is the
+    /// retry phase plus the new-send phase. Regression guard: an off-by-one or
+    /// dropped field here silently corrupts every per-sweep KPI.
+    #[test]
+    fn merge_sums_all_fields() {
+        let mut total = SweepCounters {
+            candidates_considered: 3,
+            sent: 2,
+            failed: 1,
+            excluded_by_filter: 0,
+            abandoned: 0,
+        };
+        total.merge(SweepCounters {
+            candidates_considered: 5,
+            sent: 1,
+            failed: 2,
+            excluded_by_filter: 2,
+            abandoned: 7,
+        });
+
+        assert_eq!(
+            total,
+            SweepCounters {
+                candidates_considered: 8,
+                sent: 3,
+                failed: 3,
+                excluded_by_filter: 2,
+                abandoned: 7,
+            }
+        );
+    }
+
+    /// `did_work` gates the info-level summary line: idle sweeps (no candidates,
+    /// nothing abandoned) stay quiet, while any considered candidate or
+    /// abandonment produces the summary.
+    #[test]
+    fn did_work_reflects_activity() {
+        assert!(!SweepCounters::default().did_work());
+
+        let mut only_excluded = SweepCounters::default();
+        only_excluded.record_excluded();
+        assert!(
+            only_excluded.did_work(),
+            "an excluded candidate is still activity"
+        );
+
+        let only_abandoned = SweepCounters {
+            abandoned: 1,
+            ..Default::default()
+        };
+        assert!(
+            only_abandoned.did_work(),
+            "an abandonment alone warrants the summary"
+        );
     }
 }
