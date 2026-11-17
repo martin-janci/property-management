@@ -139,6 +139,31 @@ const ppptWebSources = import.meta.glob<string>('../**/*.{ts,tsx}', {
 const API_CLIENT_IMPORT_RE = /import\s+(?:type\s+)?\{([^}]*)\}\s+from\s+['"]@ppt\/api-client['"]/g;
 
 /**
+ * Matches an inline query-key whose first segment is a string literal, e.g.
+ * `queryKey: ['execution-logs', orgId, query]`. Many feature hooks and page-level
+ * `invalidateQueries`/`removeQueries` calls key off a raw string root instead of
+ * a `*Keys` factory, so they are invisible to the factory-derived coverage above.
+ * Those ad-hoc roots are exactly where logout-purge drift hides: a hook keys its
+ * cache under `execution-logs` while the allow-list carries a mismatched
+ * `executionLogs`, so `removeQueries({ queryKey: ['executionLogs'] })` never
+ * prefix-matches and the tenant-scoped cache leaks into the next session.
+ */
+const INLINE_QUERY_KEY_ROOT_RE = /queryKey:\s*\[\s*['"]([a-zA-Z0-9_-]+)['"]/g;
+
+/**
+ * Every raw-string query-key root used inline in a ppt-web production module.
+ * Each is a first-segment root that `removeQueries` prefix-matches on logout, so
+ * every one must appear in `AUTHED_QUERY_KEY_ROOTS` or its cache survives logout.
+ */
+const inlineQueryKeyRoots = new Set<string>();
+for (const [path, source] of Object.entries(ppptWebSources)) {
+  if (/\.(test|spec)\.tsx?$/.test(path)) continue; // production modules only
+  for (const match of source.matchAll(INLINE_QUERY_KEY_ROOT_RE)) {
+    inlineQueryKeyRoots.add(match[1]);
+  }
+}
+
+/**
  * Every `*Keys` factory ppt-web imports directly from `@ppt/api-client` in a
  * production (non-test) module. A route group that pulls a key factory in this
  * way owns its cache explicitly, so that factory must be enumerated in the
@@ -276,6 +301,28 @@ describe('AUTHED_QUERY_KEY_ROOTS logout-purge coverage', () => {
           `consumedApiClientFactories (logout-purge coverage unenforced): ${unlisted.join(', ')}`
       ).toEqual([]);
     });
+  });
+
+  // Ad-hoc raw-string query roots used inline in feature hooks / page-level
+  // invalidations. These bypass every `*Keys` factory, so the factory-derived
+  // checks above cannot see them — yet they are still auth-/tenant-scoped roots
+  // that must be purged on logout. This block catches the exact drift class that
+  // let the workflow-automation execution cache (`execution-logs` /
+  // `execution-stats`, keyed by `orgId`) survive logout while the allow-list
+  // carried only the mismatched camelCase `executionLogs` / `executionStats`.
+  describe('inline raw-string query roots (auto-discovered)', () => {
+    // Guard against a silently-empty scan (moved tree / typo'd glob) vacuously
+    // passing with zero coverage.
+    it('discovers at least one inline query root', () => {
+      expect(inlineQueryKeyRoots.size).toBeGreaterThan(0);
+    });
+
+    it.each([...inlineQueryKeyRoots].sort().map((root) => [root]))(
+      'covers inline queryKey root "%s"',
+      (root) => {
+        expect(allowlist).toContain(root);
+      }
+    );
   });
 
   it('has no duplicate roots', () => {
