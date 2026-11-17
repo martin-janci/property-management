@@ -904,6 +904,48 @@ mod tests {
     }
 
     #[test]
+    fn action_filter_absent_means_no_filter() {
+        // No `action` query param → no filter. This is the ONLY case that may
+        // legitimately widen the query to all actions.
+        assert_eq!(parse_action_filter(None).unwrap(), None);
+    }
+
+    #[test]
+    fn action_filter_accepts_known_value() {
+        // A recognised action parses to its filter so the query stays scoped.
+        // Case-insensitive, mirroring parse_audit_action.
+        assert_eq!(
+            parse_action_filter(Some("login")).unwrap(),
+            Some(AuditAction::Login)
+        );
+        assert_eq!(
+            parse_action_filter(Some("LOGIN")).unwrap(),
+            Some(AuditAction::Login)
+        );
+    }
+
+    #[test]
+    fn action_filter_rejects_unknown_value() {
+        // Regression (compliance foot-gun): a supplied-but-unrecognised action
+        // (typo `loign`, wrong token `user_login`) previously parsed to `None`
+        // and SILENTLY widened the query to ALL actions, returning an
+        // unfiltered 200 superset. It must now be a 400 that names the bad
+        // value — distinguishing "no filter" from "bad filter".
+        for bad in ["not_a_real_action", "loign", "user_login", ""] {
+            let (status, msg) = parse_action_filter(Some(bad)).unwrap_err();
+            assert_eq!(
+                status,
+                StatusCode::BAD_REQUEST,
+                "action={bad:?} must be rejected, not dropped"
+            );
+            assert!(
+                msg.contains(bad),
+                "400 message should name the offending value {bad:?}, got: {msg}"
+            );
+        }
+    }
+
+    #[test]
     fn db_error_does_not_leak_raw_detail_to_client() {
         // Regression: compliance handlers previously bubbled `e.to_string()`
         // straight to the client, leaking table/column names and SQL fragments.
