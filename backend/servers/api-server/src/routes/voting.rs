@@ -543,16 +543,29 @@ async fn update_vote(
         anonymous_voting: req.anonymous_voting,
     };
 
-    // Note: update() doesn't have an RLS version yet
-    let vote = state.vote_repo.update(id, data).await.map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new(
-                "DATABASE_ERROR",
-                format!("Failed to update vote: {}", e),
-            )),
-        )
-    })?;
+    // Org-scoped write: `update_for_org` folds the caller's tenant into the
+    // UPDATE's WHERE (`AND organization_id = $2`) and runs on the RLS
+    // connection, so the write itself is tenant-scoped — not merely gated by
+    // the read above. A cross-tenant id matches zero rows → `None` → 404.
+    let vote = state
+        .vote_repo
+        .update_for_org(id, rls.tenant_id(), data, &mut **rls.conn())
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    format!("Failed to update vote: {}", e),
+                )),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Vote not found")),
+            )
+        })?;
 
     rls.release().await;
     Ok(Json(vote))

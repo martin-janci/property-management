@@ -1146,26 +1146,48 @@ impl VoteRepository {
         Ok(votes)
     }
 
-    /// Update vote details (only in draft status).
-    pub async fn update(&self, id: Uuid, data: UpdateVote) -> Result<Vote, SqlxError> {
+    /// Update vote details (draft only), scoped to `organization_id`.
+    ///
+    /// Org-scoped / RLS-aware variant of the former pool-bypass `update`: folds
+    /// the owning org into the `WHERE` clause and runs on the caller's executor
+    /// (pass `&mut **rls.conn()`), so a vote belonging to another org matches
+    /// zero rows and resolves to `None` (route 404). The write is tenant-scoped
+    /// on its own — not merely gated by a preceding org-scoped read — so a
+    /// refactor that removes or reorders that read gate can no longer turn this
+    /// into a cross-tenant write.
+    ///
+    /// `organization_id` precedes the executor so callers can pass
+    /// `rls.tenant_id()` and `&mut **rls.conn()` in one call, mirroring
+    /// [`find_poll_by_id_for_org`](Self::find_poll_by_id_for_org).
+    pub async fn update_for_org<'e, E>(
+        &self,
+        id: Uuid,
+        organization_id: Uuid,
+        data: UpdateVote,
+        executor: E,
+    ) -> Result<Option<Vote>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let vote = sqlx::query_as::<_, Vote>(
             r#"
             UPDATE votes
             SET
-                title = COALESCE($2, title),
-                description = COALESCE($3, description),
-                start_at = COALESCE($4, start_at),
-                end_at = COALESCE($5, end_at),
-                quorum_type = COALESCE($6::quorum_type, quorum_type),
-                quorum_percentage = COALESCE($7, quorum_percentage),
-                allow_delegation = COALESCE($8, allow_delegation),
-                anonymous_voting = COALESCE($9, anonymous_voting),
+                title = COALESCE($3, title),
+                description = COALESCE($4, description),
+                start_at = COALESCE($5, start_at),
+                end_at = COALESCE($6, end_at),
+                quorum_type = COALESCE($7::quorum_type, quorum_type),
+                quorum_percentage = COALESCE($8, quorum_percentage),
+                allow_delegation = COALESCE($9, allow_delegation),
+                anonymous_voting = COALESCE($10, anonymous_voting),
                 updated_at = NOW()
-            WHERE id = $1 AND status = 'draft'
+            WHERE id = $1 AND organization_id = $2 AND status = 'draft'
             RETURNING id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at
             "#,
         )
         .bind(id)
+        .bind(organization_id)
         .bind(&data.title)
         .bind(&data.description)
         .bind(data.start_at)
@@ -1174,7 +1196,7 @@ impl VoteRepository {
         .bind(data.quorum_percentage)
         .bind(data.allow_delegation)
         .bind(data.anonymous_voting)
-        .fetch_one(&self.pool)
+        .fetch_optional(executor)
         .await?;
 
         Ok(vote)
