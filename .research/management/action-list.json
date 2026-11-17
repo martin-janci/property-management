@@ -702,6 +702,236 @@
         "score": 1,
         "vector": "test-gap"
       }
+    },
+    {
+      "id": "pm-qa-dispatcher-self-test-quarantined-recovery-2026-11-09-retry1",
+      "action": "Add a dispatcher-self-test.sh test case that covers the quarantined-row recovery path so #3357-class stalls fail CI instead of silently queueing [retry 1/2 of failed pm-qa-dispatcher-self-test-quarantined-recovery-2026-11-09]",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-17T00:24:33Z (retry_of=pm-qa-dispatcher-self-test-quarantined-recovery-2026-11-09 reason=failed-no-pr cooldown_ok newest_failure=2026-11-09T18:34:56Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T00:24:33Z",
+      "retry_of": "pm-qa-dispatcher-self-test-quarantined-recovery-2026-11-09",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-reality-web-realtor-detail-modal-no-error",
+      "action": "reality web realtor detail modal no error",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d reality-web score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T00:24:34Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-02T08:33:34Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-agent-profile-mock-stub",
+      "action": "reality web agent profile mock stub",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d reality-web score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T00:24:34Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-02T08:33:34Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-oauth-client-error-leak",
+      "action": "api handlers oauth client error leak",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d api-handlers score=2 vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T00:24:34Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 2,
+        "vector": "security",
+        "generated": "2026-09-02T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-route-groups-no-protectedroute",
+      "action": "ppt web core route groups no protectedroute",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d ppt-web-core score=2 vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T00:24:34Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "security",
+        "generated": "2026-09-02T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-ismanager-stub-true",
+      "action": "ppt web ui facilities ismanager stub true",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d ppt-web-ui score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T00:24:34Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-02T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-api-client-no-auth",
+      "action": "ppt web ui registry api client no auth",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d ppt-web-ui score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T00:24:34Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-02T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-suggestions-hardcoded-sk-region",
+      "action": "reality server suggestions hardcoded sk region",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d reality-server score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T00:24:34Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-02T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-alert-hardcoded-en",
+      "action": "mobile rn alert hardcoded en",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d mobile-rn score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T00:24:34Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-02T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-personmonths-screen-no-i18n",
+      "action": "mobile rn personmonths screen no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d mobile-rn score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T00:24:34Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-02T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-widget-settings-i18n-leak",
+      "action": "mobile rn widget settings i18n leak",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d mobile-rn score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T00:24:34Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-02T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-forms-hardcoded-errors",
+      "action": "ppt web ui facilities forms hardcoded errors",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d ppt-web-ui score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T00:24:34Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-02T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-categories-labels-sk-only",
+      "action": "reality server categories labels sk only",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d reality-server score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T00:24:34Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-02T00:00:00Z"
+      }
     }
   ],
   "generated": "2026-11-16T03:12:00Z"

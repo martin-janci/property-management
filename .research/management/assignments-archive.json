@@ -3625,6 +3625,28 @@
       "merge_attempted_at": "2026-11-16T20:39:26Z"
     },
     {
+      "task_id": "code-review-api-core-digest-worker-no-replica-claim",
+      "branch": "auto-impl/code-review-api-core-digest-worker-no-re-9096ca09",
+      "status": "merged",
+      "claimed_at": "2026-11-16T18:29:59Z",
+      "last_updated": "2026-11-17T00:31:52Z",
+      "status_changed_at": "2026-11-17T00:31:52Z",
+      "pr_number": 3576,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3576",
+      "merged_at": "2026-11-17T00:30:23Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=5a1bfc50caee7cb6159f8aafc8ed65c98ae4007d note=advisory-lock digest sweep guard; sound+tested; posted as COMMENT (self-approval blocked)",
+      "last_reviewed_oid": "5a1bfc50caee7cb6159f8aafc8ed65c98ae4007d",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-17T00:27:55Z"
+    },
+    {
       "task_id": "code-review-api-core-docgen-summarize-char-boundary-panic",
       "branch": "auto-impl/code-review-api-core-docgen-summarize-ch-aa7486bf",
       "status": "merged",
@@ -5888,6 +5910,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-api-handlers-tenant-config-rls-clear-swallowed",
+      "branch": "auto-impl/code-review-api-handlers-tenant-config-r-1daa7763",
+      "status": "merged",
+      "claimed_at": "2026-11-16T18:29:59Z",
+      "last_updated": "2026-11-17T00:31:52Z",
+      "status_changed_at": "2026-11-17T00:31:52Z",
+      "pr_number": 3577,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3577",
+      "merged_at": "2026-11-17T00:30:11Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=dc2aa2978da3e6db6f68522c961174049103a0f6 note=rls-clear-error-now-logged-not-swallowed; posted as COMMENT (self-approval blocked)",
+      "last_reviewed_oid": "dc2aa2978da3e6db6f68522c961174049103a0f6",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-17T00:27:55Z"
     },
     {
       "task_id": "code-review-api-handlers-tenant-export-outdir-path",
@@ -25804,6 +25848,28 @@
       "merge_attempted_at": "2026-08-25T10:33:02Z"
     },
     {
+      "task_id": "pm-scrum-master-coverage-scan-refresh-2026-11-16",
+      "branch": "auto-impl/pm-scrum-master-coverage-scan-refresh-20-bb801283",
+      "status": "merged",
+      "claimed_at": "2026-11-16T20:31:02Z",
+      "last_updated": "2026-11-17T00:31:52Z",
+      "status_changed_at": "2026-11-17T00:31:52Z",
+      "pr_number": 3578,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3578",
+      "merged_at": "2026-11-17T00:31:39Z",
+      "specialist": null,
+      "implementer_summary": "pr=3578 status=done specialist=generic scope_drift=false code_reuse_warn=none note=coverage upkeep refresh (cloud-safe); coverage.json+project-state.md+roadmap.md+state.json re-stamped 2026-11-16; 49/49 stories done 100%; VERIFY OK; draft PR #3578",
+      "reviewer_summary": "verdict=approve head_oid=b0709f7d1703975b634a305bd9ea438f39f72b0a note=docs-data-upkeep-verified-49of49-done-rollups-6of6-ci-green-self-approve-blocked-posted-COMMENT",
+      "last_reviewed_oid": "b0709f7d1703975b634a305bd9ea438f39f72b0a",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-17T00:27:55Z"
+    },
+    {
       "task_id": "pm-scrum-master-mobile-rn-lint-hooks-i18n-2026-08-25",
       "branch": "auto-impl/pm-scrum-master-mobile-rn-lint-hooks-i18-9ce28fff",
       "status": "merged",
@@ -29179,5 +29245,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-16T20:41:09Z"
+  "archived_at": "2026-11-17T00:32:05Z"
 }
