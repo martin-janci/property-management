@@ -137,18 +137,18 @@
     {
       "task_id": "code-review-ppt-web-core-route-groups-no-protectedroute",
       "branch": "auto-impl/code-review-ppt-web-core-route-groups-no-75523ed9",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-17T18:32:28Z",
-      "last_updated": "2026-11-17T18:32:28Z",
-      "status_changed_at": "2026-11-17T18:32:28Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-17T18:56:22Z",
+      "status_changed_at": "2026-11-17T18:56:22Z",
+      "pr_number": 3606,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3606",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=3606 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=wrapped 9 bare authed ppt-web routes (announcements/faults/financial/outages) in auth-only ProtectedRoute matching sibling mgmt-routes fix; IG3 two-commit fails-before-fix; drift=routes/groups outside pm-security owner-areas (justified); payments/invoices keep MANAGER role-gate",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -179,5 +179,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-17T18:45:01Z"
+  "generated": "2026-11-17T18:56:22Z"
 }
