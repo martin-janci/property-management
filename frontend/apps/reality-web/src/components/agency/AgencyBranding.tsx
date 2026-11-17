@@ -9,6 +9,7 @@ import { useAgencyBranding, useMyAgency, useUpdateBranding } from '@ppt/reality-
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useState } from 'react';
+import { toSafeLogMessage } from '@/lib/safe-error';
 import { AgencyLoadError, isNotFoundError, NoAgencyMessage } from './AgencyErrorStates';
 
 export function AgencyBranding() {
@@ -31,6 +32,7 @@ export function AgencyBranding() {
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Initialize from branding data
   useEffect(() => {
@@ -78,20 +80,28 @@ export function AgencyBranding() {
   const handleSave = async () => {
     if (!agency) return;
 
-    await updateBranding.mutateAsync({
-      agencyId: agency.id,
-      data: {
-        logo: logoFile || undefined,
-        coverImage: coverFile || undefined,
-        primaryColor,
-        secondaryColor,
-        accentColor,
-      },
-    });
+    setSaveError(null);
+    try {
+      await updateBranding.mutateAsync({
+        agencyId: agency.id,
+        data: {
+          logo: logoFile || undefined,
+          coverImage: coverFile || undefined,
+          primaryColor,
+          secondaryColor,
+          accentColor,
+        },
+      });
 
-    setHasChanges(false);
-    setLogoFile(null);
-    setCoverFile(null);
+      setHasChanges(false);
+      setLogoFile(null);
+      setCoverFile(null);
+    } catch (error) {
+      // Surface the failure to the user instead of swallowing the rejection —
+      // the save button re-enables (hasChanges stays true) so they can retry.
+      console.error('Failed to save agency branding:', toSafeLogMessage(error));
+      setSaveError(t('saveError'));
+    }
   };
 
   // Distinguish an agency-load failure from a genuine "no agency" state so a
@@ -128,6 +138,12 @@ export function AgencyBranding() {
           {updateBranding.isPending ? t('saving') : t('saveChanges')}
         </button>
       </div>
+
+      {saveError && (
+        <div className="save-error" role="alert" aria-live="assertive">
+          {saveError}
+        </div>
+      )}
 
       <div className="content-grid">
         {/* Logo Section */}
@@ -367,6 +383,16 @@ export function AgencyBranding() {
 
         .save-button:hover:not(:disabled) {
           background: var(--ppt-color-primary-hover);
+        }
+
+        .save-error {
+          margin-bottom: 24px;
+          padding: 12px 16px;
+          background: var(--ppt-bg-danger-subtle, #fef2f2);
+          border: 1px solid var(--ppt-border-danger, #fecaca);
+          border-radius: 8px;
+          color: var(--ppt-fg-danger, #b91c1c);
+          font-size: 14px;
         }
 
         .content-grid {
