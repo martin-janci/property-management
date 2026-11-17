@@ -294,24 +294,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-core-api-default-export-eager-instance",
-      "action": "ppt web core api default export eager instance",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d ppt-web-core score=1 vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-16T00:27:09Z",
-      "signal_ref": {
-        "segment": "ppt-web-core",
-        "score": 1,
-        "vector": "refactor",
-        "generated": "2026-09-03T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-ppt-web-core-ws-send-envelope-mismatch",
       "action": "ppt web core ws send envelope mismatch",
       "owner_role": "pm-backend",

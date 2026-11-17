@@ -8477,6 +8477,28 @@
       "merge_attempted_at": "2026-09-06T10:45:37Z"
     },
     {
+      "task_id": "code-review-ppt-web-core-api-default-export-eager-instance",
+      "branch": "auto-impl/code-review-ppt-web-core-api-default-exp-7c01763e",
+      "status": "failed",
+      "claimed_at": "2026-11-17T16:30:07Z",
+      "last_updated": "2026-11-17T16:43:39Z",
+      "status_changed_at": "2026-11-17T16:43:39Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=done specialist=react-web note=no-op: finding already fixed in dev (export default getApiClient() already removed, zero consumers); empty diff, no PR",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-core-api-default-export-orphan",
       "branch": "auto-impl/code-review-ppt-web-core-api-default-exp-01f2c5ec",
       "status": "merged",
@@ -29719,5 +29741,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-17T14:43:40Z"
+  "archived_at": "2026-11-17T16:44:09Z"
 }

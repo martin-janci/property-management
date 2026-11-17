@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-17T16:30:49Z",
+  "archived_at": "2026-11-17T16:44:09Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -8596,6 +8596,29 @@
         "commit": "32382586b207b306fb966058f39543d4333edc6b",
         "subject": "code-review-ppt-web-core-api-401-no-request-replay: single-flight refresh + replay on 401 (#2942)",
         "at": "2026-09-06T12:25:53Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export-eager-instance",
+      "action": "ppt web core api default export eager instance",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d ppt-web-core score=1 vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-16T00:27:09Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "refactor",
+        "generated": "2026-09-03T00:00:00Z"
+      },
+      "noop_closed": {
+        "reason": "already-fixed-in-dev",
+        "evidence": "export default getApiClient() already removed; zero default-import consumers; implementer returned pr=none no-op",
+        "at": "2026-11-17T16:44:09Z"
       }
     },
     {
