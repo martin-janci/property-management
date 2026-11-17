@@ -674,10 +674,17 @@ async fn get_mfa_status_report(
     mut rls: RlsConnection,
 ) -> Result<Json<MfaStatusReportResponse>, (StatusCode, String)> {
     require_platform_admin(&user)?;
-    // Count users with MFA enabled
+    // Count ACTIVE users with MFA enabled. The enabled count must be scoped to
+    // the same population as `total_users` below (status = 'active'); counting
+    // every `user_2fa` row regardless of owner status would let suspended /
+    // pending / soft-deleted users with an enabled 2FA row inflate the
+    // numerator, driving `mfa_disabled` negative and `adoption_rate` over 100%.
     let (mfa_enabled,): (i64,) = sqlx::query_as(
         r#"
-        SELECT COUNT(*) FROM user_2fa WHERE enabled = true
+        SELECT COUNT(*)
+        FROM user_2fa t
+        JOIN users u ON u.id = t.user_id
+        WHERE t.enabled = true AND u.status = 'active'
         "#,
     )
     .fetch_one(&mut **rls.conn())
