@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-17T10:40:30Z",
+  "archived_at": "2026-11-17T14:32:39Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -27750,6 +27750,24 @@
         "merged_pr": 3592,
         "merged_at": "2026-11-17T10:38:44Z",
         "at": "2026-11-17T10:40:29Z"
+      }
+    },
+    {
+      "id": "pm-data-define-digest-kpis-counters-2026-11-17",
+      "action": "Define digest KPIs and emit counters (candidates_considered, sent, failed, abandoned, excluded_by_filter) plus a per-sweep summary log or metric",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-17 | gc1-reconcile 2026-11-17T14:28:58Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3594,
+        "merged_at": "2026-11-17T12:35:35Z",
+        "at": "2026-11-17T14:28:58Z"
       }
     },
     {

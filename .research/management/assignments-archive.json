@@ -9709,6 +9709,30 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-ppt-web-core-org-provider-value-not-memoized",
+      "branch": "auto-impl/code-review-ppt-web-core-org-provider-va-a6a3bd65",
+      "status": "merged",
+      "claimed_at": "2026-11-17T12:30:24.415227Z",
+      "last_updated": "2026-11-17T14:28:48Z",
+      "status_changed_at": "2026-11-17T14:28:48Z",
+      "pr_number": 3514,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3514",
+      "merged_at": "2026-11-14T12:43:37Z",
+      "specialist": null,
+      "implementer_summary": " [duplicate re-claim resolved: work already merged via PR #3514 on 2026-11-14; reclaimed branch had no merge-base with dev]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "code-review-ppt-web-core-orgprovider-unmemoized",
       "branch": "auto-impl/code-review-ppt-web-core-orgprovider-unm-171d15e0",
       "status": "failed",
@@ -29577,5 +29601,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-17T12:44:54Z"
+  "archived_at": "2026-11-17T14:32:09Z"
 }
