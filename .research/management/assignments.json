@@ -93,8 +93,8 @@
       "quarantine_reason": null
     },
     {
-      "task_id": "pm-scrum-master-fix-digest-sweep-lock-release-leak-2026-11-1",
-      "branch": "auto-impl/pm-scrum-master-fix-digest-sweep-lock-re-a51b437c",
+      "task_id": "pm-scrum-master-fix-digest-sweep-lock-release-leak-2026-11-17",
+      "branch": "auto-impl/pm-scrum-master-fix-digest-sweep-lock-re-81fffa30",
       "status": "in-progress",
       "claimed_at": "2026-11-17T08:26:48Z",
       "last_updated": "2026-11-17T08:26:48Z",
