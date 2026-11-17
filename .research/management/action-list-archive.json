@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-17T06:36:04Z",
+  "archived_at": "2026-11-17T10:40:30Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -27735,6 +27735,24 @@
       }
     },
     {
+      "id": "pm-data-add-trackevent-mobile-moderation-2026-11-17",
+      "action": "Add trackEvent calls for fault_report_submitted/failed (mobile ReportFault) and moderation route decisions (SPA), with a name, trigger and property schema; mobile needs an equivalent sink",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-17 | gc1-reconcile 2026-11-17T10:40:29Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3592,
+        "merged_at": "2026-11-17T10:38:44Z",
+        "at": "2026-11-17T10:40:29Z"
+      }
+    },
+    {
       "id": "pm-devops-app-tsx-merge-queue-confirm",
       "action": "Confirm `app-tsx-merge-queue.yml` is actively serializing App.tsx-touching PRs (carry-over from 2026-05-27). Verify it's wired to the PR ruleset.",
       "owner_role": "pm-devops",
@@ -28626,6 +28644,24 @@
       }
     },
     {
+      "id": "pm-scrum-master-fix-digest-sweep-lock-release-leak-2026-11-17",
+      "action": "Fix digest sweep advisory-lock release leak (drop or close the connection on release error instead of returning it to the pool)",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-17 | gc1-reconcile 2026-11-17T10:40:29Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3593,
+        "merged_at": "2026-11-17T10:39:06Z",
+        "at": "2026-11-17T10:40:29Z"
+      }
+    },
+    {
       "id": "pm-scrum-master-land-voice-device-idor",
       "action": "Land the security-voice-device-idor plan (ready in .research/plans/)",
       "owner_role": "pm-scrum-master",
@@ -28685,6 +28721,24 @@
       "source": "pm-analysis 2026-11-09",
       "resolved_at": "2026-11-13",
       "resolved_by": "resolved by dispatcher burst: 58 PRs merged in 4-day window"
+    },
+    {
+      "id": "pm-scrum-master-resolve-mobile-biome-gate-3584-2026-11-17",
+      "action": "Resolve #3584 (mobile biome gate downgrade) by deciding the warn-to-error promotion date for the #3566 lint rules",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-17 | gc1-reconcile 2026-11-17T10:40:29Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3590,
+        "merged_at": "2026-11-17T10:37:02Z",
+        "at": "2026-11-17T10:40:29Z"
+      }
     },
     {
       "id": "pm-scrum-master-review-accounting-mvp-trio",
@@ -30210,6 +30264,30 @@
       "first_open_at": "2026-08-24T12:27:01Z",
       "retry_of": "repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs",
       "retry_round": 1
+    },
+    {
+      "id": "repeated-churn-frontend-apps-ppt-web-messages-sk-json",
+      "action": "ppt-web messages/sk.json repeated-churn — primary locale touched in 3 of 3 recent runs",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-15T04:24:57Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-11-17T10:40:29Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-15T04:24:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3591,
+        "merged_at": "2026-11-17T10:36:56Z",
+        "at": "2026-11-17T10:40:29Z"
+      }
     },
     {
       "id": "repeated-churn-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",

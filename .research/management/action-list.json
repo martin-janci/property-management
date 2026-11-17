@@ -185,23 +185,6 @@
       }
     },
     {
-      "id": "repeated-churn-frontend-apps-ppt-web-messages-sk-json",
-      "action": "ppt-web messages/sk.json repeated-churn — primary locale touched in 3 of 3 recent runs",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-15T04:24:57Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-15T04:24:57Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
       "id": "code-review-ppt-web-core-org-provider-value-not-memoized",
       "action": "ppt web core org provider value not memoized",
       "owner_role": "pm-backend",
@@ -847,28 +830,6 @@
       }
     },
     {
-      "id": "pm-scrum-master-fix-digest-sweep-lock-release-leak-2026-11-17",
-      "action": "Fix digest sweep advisory-lock release leak (drop or close the connection on release error instead of returning it to the pool)",
-      "owner_role": "pm-scrum-master",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-17"
-    },
-    {
-      "id": "pm-scrum-master-resolve-mobile-biome-gate-3584-2026-11-17",
-      "action": "Resolve #3584 (mobile biome gate downgrade) by deciding the warn-to-error promotion date for the #3566 lint rules",
-      "owner_role": "pm-scrum-master",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-17"
-    },
-    {
       "id": "pm-scrum-master-review-draft-prs-3582-3585-3586-2026-11-17",
       "action": "Review draft PRs #3582 (T33 quarantine tests), #3585 and #3586 (ppt-web locale churn plans), then mark ready or close",
       "owner_role": "pm-scrum-master",
@@ -891,17 +852,6 @@
       "source": "pm-analysis 2026-11-17"
     },
     {
-      "id": "pm-data-add-trackevent-mobile-moderation-2026-11-17",
-      "action": "Add trackEvent calls for fault_report_submitted/failed (mobile ReportFault) and moderation route decisions (SPA), with a name, trigger and property schema; mobile needs an equivalent sink",
-      "owner_role": "pm-data",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-17"
-    },
-    {
       "id": "pm-data-backfill-kpi-definitions-stories-2026-11-17",
       "action": "Backfill KPI definitions for shipped stories in sprint-status.yaml or the epic docs, and add an events/KPI column to the story template",
       "owner_role": "pm-data",
@@ -911,6 +861,26 @@
       "status": "open",
       "deadline": null,
       "source": "pm-analysis 2026-11-17"
+    },
+    {
+      "id": "gh-issue-3583",
+      "action": "Follow-up: failed RLS-context clear is logged but not remediated — super-admin context can bleed across the pooled connection (PR #3577) (Closes #3583)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-11-17T10:26:07Z (#3583)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T10:26:07Z",
+      "issue_ref": {
+        "number": 3583,
+        "url": "https://github.com/martin-janci/property-management/issues/3583",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     }
   ],
   "generated": "2026-11-17T03:17:29Z"

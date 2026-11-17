@@ -25350,6 +25350,30 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "pm-data-add-trackevent-mobile-moderation-2026-11-17",
+      "branch": "auto-impl/pm-data-add-trackevent-mobile-moderation-3dc53ad5",
+      "status": "merged",
+      "claimed_at": "2026-11-17T08:26:48Z",
+      "last_updated": "2026-11-17T10:40:04Z",
+      "status_changed_at": "2026-11-17T10:40:04Z",
+      "pr_number": 3592,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3592",
+      "merged_at": "2026-11-17T10:38:44Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3592 status=partial specialist=react-web scope_drift=true code_reuse_warn=none note=SPA moderation events shipped (moderation.action_taken{action_type}, moderation.appeal_decided{decision}) on mutation onSuccess; verify green (13109 tests); mobile fault events NOT done — RN app has no analytics sink, needs a follow-up to add one first; IG3 two-commit split preserved; draft vs dev",
+      "reviewer_summary": "verdict=approve head_oid=59b0458459b028614def0566928d726a8e0f33d3 note=SPA-slice correct; mobile-gap sanctioned by task text; CI green; posted COMMENT (self-approve blocked)",
+      "last_reviewed_oid": "59b0458459b028614def0566928d726a8e0f33d3",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-17T10:35:45Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "pm-devops-dependabot-major-bumps-review-2026-11-13",
       "branch": "auto-impl/pm-devops-dependabot-major-bumps-review-02d3a4f1",
       "status": "merged",
@@ -25986,6 +26010,30 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "pm-scrum-master-fix-digest-sweep-lock-release-leak-2026-11-17",
+      "branch": "auto-impl/pm-scrum-master-fix-digest-sweep-lock-re-81fffa30",
+      "status": "merged",
+      "claimed_at": "2026-11-17T08:26:48Z",
+      "last_updated": "2026-11-17T10:40:04Z",
+      "status_changed_at": "2026-11-17T10:40:04Z",
+      "pr_number": 3593,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3593",
+      "merged_at": "2026-11-17T10:39:06Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3593 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=release_digest_sweep now detach+close on unlock-err (matches clear_or_discard/release_scheduler_conn); fmt+clippy green locally, DB tests deferred to CI; drift clean under functional owner pm-backend; IG3 skipped (error branch no deterministic failing-first trigger)",
+      "reviewer_summary": "verdict=approve head_oid=eaf71217100b9e3b93732dd40b8711a0e056cc27 note=tight-correct-fix reuses clear_or_discard pattern; scopedrift false-positive (functional owner pm-backend); CI green; posted COMMENT (self-approve blocked)",
+      "last_reviewed_oid": "eaf71217100b9e3b93732dd40b8711a0e056cc27",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-17T10:35:45Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "pm-scrum-master-mobile-rn-lint-hooks-i18n-2026-08-25",
       "branch": "auto-impl/pm-scrum-master-mobile-rn-lint-hooks-i18-9ce28fff",
       "status": "merged",
@@ -26028,6 +26076,30 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "pm-scrum-master-resolve-mobile-biome-gate-3584-2026-11-17",
+      "branch": "auto-impl/pm-scrum-master-resolve-mobile-biome-gat-907a8770",
+      "status": "merged",
+      "claimed_at": "2026-11-17T08:26:48Z",
+      "last_updated": "2026-11-17T10:40:04Z",
+      "status_changed_at": "2026-11-17T10:40:04Z",
+      "pr_number": 3590,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3590",
+      "merged_at": "2026-11-17T10:37:02Z",
+      "specialist": "react-native",
+      "implementer_summary": "pr=3590 status=done specialist=react-native scope_drift=true code_reuse_warn=none note=dated 2026-12-01 flip-back guard test (biome-lint-gate.test.ts)+CLAUDE.md deadline/#3584 ref; biome.json left at warn; drift=mobile tree (expected pm-scrum-master owner); VERIFY OK; Closes #3584",
+      "reviewer_summary": "verdict=approve head_oid=33fdc8589911fd665c89d3b9a2a8a91738cb98e4 note=config+docs+dated-guard-test only; CI green; guard verified (no-op before 2026-12-01, fails after while warn); scope_drift justified (mobile tree); GH review not posted (cannot approve own PR)",
+      "last_reviewed_oid": "33fdc8589911fd665c89d3b9a2a8a91738cb98e4",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-17T10:35:45Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "pm-scrum-master-review-accounting-mvp-trio",
@@ -27514,6 +27586,30 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "repeated-churn-frontend-apps-ppt-web-messages-sk-json",
+      "branch": "auto-impl/repeated-churn-frontend-apps-ppt-web-mes-926cdc0b",
+      "status": "merged",
+      "claimed_at": "2026-11-17T08:26:48Z",
+      "last_updated": "2026-11-17T10:40:04Z",
+      "status_changed_at": "2026-11-17T10:40:04Z",
+      "pr_number": 3591,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3591",
+      "merged_at": "2026-11-17T10:36:56Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3591 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=added ppt-web i18n placeholder-parity guard test (NO-EXTRA); no JSON touched so no #3586 collision; verify green 13106 tests",
+      "reviewer_summary": "verdict=approve head_oid=432da492b46bdea417f9a7798dcd395fb024ce4d note=test-only i18n placeholder-parity guard; CI green; scope clean; GH review not posted (self-approval blocked, bot is PR author)",
+      "last_reviewed_oid": "432da492b46bdea417f9a7798dcd395fb024ce4d",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-17T10:35:45Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "repeated-churn-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
@@ -29433,5 +29529,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-17T06:36:03Z"
+  "archived_at": "2026-11-17T10:40:17Z"
 }
