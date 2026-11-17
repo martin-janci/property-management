@@ -76,3 +76,35 @@ describe('automation template copy', () => {
     expect(templateActionLabel(t, 'custom_action')).toBe('custom_action');
   });
 });
+
+/**
+ * Czech (and Slovak) are CLDR `few`/`many` locales: counts 2–4 take the
+ * nominative-plural "few" form, 5+ take the genitive-plural "other" form.
+ * These automation/moderation count strings previously shipped only `_one`
+ * and `_other` in cs.json, so a count of 2–4 silently fell back to the
+ * genitive `_other` form ("2 akcí" instead of the correct "2 akce").
+ * Guard the full Czech plural ladder so the gap cannot regress.
+ */
+describe('Czech automation/moderation count plurals', () => {
+  it('uses the correct few form for counts 2–4 and other for 5+', async () => {
+    const t = await tFor('cs');
+    // ruleCard — akce (feminine), podmínka (feminine)
+    expect(t('automation.ruleCard.actions', { count: 1 })).toBe('1 akce');
+    expect(t('automation.ruleCard.actions', { count: 2 })).toBe('2 akce');
+    expect(t('automation.ruleCard.actions', { count: 5 })).toBe('5 akcí');
+    expect(t('automation.ruleCard.conditions', { count: 2 })).toBe('2 podmínky');
+    expect(t('automation.ruleCard.conditions', { count: 5 })).toBe('5 podmínek');
+    // builder summary counts
+    expect(t('automation.builder.actionsCount', { count: 2 })).toBe('2 akce');
+    expect(t('automation.builder.conditionsCount', { count: 2 })).toBe('2 podmínky');
+    // templateCard / templatePreview
+    expect(t('automation.templateCard.actions', { count: 2 })).toBe('2 akce');
+    expect(t('automation.templateCard.actions', { count: 5 })).toBe('5 akcí');
+    expect(t('automation.templatePreview.usedTimes', { count: 2 })).toBe(
+      'Použito 2× jinými uživateli'
+    );
+    // moderation overdue — případ (masculine inanimate)
+    expect(t('moderation.stats.overdue', { count: 2 })).toBe('2 případy po termínu (SLA 24 h+)');
+    expect(t('moderation.stats.overdue', { count: 5 })).toBe('5 případů po termínu (SLA 24 h+)');
+  });
+});
