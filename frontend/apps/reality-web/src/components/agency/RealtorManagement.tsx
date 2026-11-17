@@ -809,7 +809,7 @@ export function InviteRealtorModal({
   );
 }
 
-function RealtorDetailModal({
+export function RealtorDetailModal({
   realtor,
   agencyId,
   onClose,
