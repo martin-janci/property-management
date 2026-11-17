@@ -82,19 +82,32 @@ pub async fn clear_or_discard(mut conn: PoolConnection<Postgres>, context_info: 
                 "SECURITY: failed to clear RLS context - discarding connection to \
                  prevent super-admin/elevated context from bleeding across the pool"
             );
-            // Detach from the pool so the (possibly still-elevated) connection
-            // is NOT recycled, then hard-close it. The pool opens a fresh,
-            // context-free connection on the next acquire.
-            let detached = conn.detach();
-            if let Err(close_err) = detached.close().await {
-                tracing::warn!(
-                    error = %close_err,
-                    context = %context_info,
-                    "failed to hard-close discarded connection (already detached \
-                     from the pool, so it will not be reused regardless)"
-                );
-            }
+            discard_poisoned_connection(conn, context_info).await;
         }
+    }
+}
+
+/// Detach a pooled connection from its pool and hard-close it so a
+/// possibly-elevated RLS context can never be recycled onto the next checkout.
+///
+/// Use this at any site that fails to scrub a connection's RLS context —
+/// whether on *release* (see [`clear_or_discard`]) or on *acquire* (e.g.
+/// [`crate::RlsPool::acquire_public`], which clears stale context on checkout):
+/// a connection whose clear failed may still carry the RLS-bypassing
+/// super-admin / global-read context, so it MUST NOT go back to (or out of) the
+/// pool. [`PoolConnection::detach`] severs it from the pool — dropping it then
+/// closes the socket instead of recycling it — and we additionally best-effort
+/// hard-close it. The pool opens a fresh, context-free connection on next
+/// demand (issue #3583, follow-up to #3577).
+pub async fn discard_poisoned_connection(conn: PoolConnection<Postgres>, context_info: &str) {
+    let detached = conn.detach();
+    if let Err(close_err) = detached.close().await {
+        tracing::warn!(
+            error = %close_err,
+            context = %context_info,
+            "failed to hard-close discarded connection (already detached \
+             from the pool, so it will not be reused regardless)"
+        );
     }
 }
 

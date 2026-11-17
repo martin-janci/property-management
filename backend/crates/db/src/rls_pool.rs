@@ -116,17 +116,31 @@ impl RlsPool {
     /// # Safety
     ///
     /// This method explicitly clears any stale RLS context from a previous request
-    /// to prevent context bleeding.
+    /// to prevent context bleeding. If that clear **fails**, the connection may
+    /// still carry the RLS-bypassing super-admin / global-read context of the
+    /// previous request, so this method does NOT hand it to the public caller:
+    /// it discards the connection (detach + hard-close, via
+    /// [`clear_or_discard`]'s sibling [`crate::tenant_context::discard_poisoned_connection`])
+    /// and returns the error. The pool opens a fresh, context-free connection on
+    /// the next acquire (issue #3583).
     pub async fn acquire_public(&self) -> Result<PublicConnection, sqlx::Error> {
         let mut conn = self.inner.acquire().await?;
 
-        // Clear any stale RLS context from previous requests to prevent context bleeding
-        // This is critical: a connection might have super-admin context from a previous request
+        // Clear any stale RLS context from previous requests to prevent context bleeding.
+        // This is critical: a connection might have super-admin context from a previous
+        // request. A *failed* clear is NOT recoverable by logging — the connection could
+        // run the public request with tenant isolation disabled — so we discard it and
+        // fail the acquire rather than return a possibly-elevated connection.
         if let Err(e) = clear_request_context(&mut *conn).await {
-            tracing::warn!(
+            tracing::error!(
                 error = %e,
-                "Failed to clear stale RLS context on public connection acquire"
+                "SECURITY: failed to clear stale RLS context on public connection acquire - \
+                 discarding connection so a stale super-admin/elevated context cannot bleed \
+                 into a public (unauthenticated) request"
             );
+            crate::tenant_context::discard_poisoned_connection(conn, "RlsPool::acquire_public")
+                .await;
+            return Err(e);
         }
 
         Ok(PublicConnection { conn })
