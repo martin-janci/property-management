@@ -907,45 +907,66 @@ fn first_language_tag(header: &str) -> Option<&str> {
         .filter(|tag| !tag.is_empty())
 }
 
+/// Column order for a [`PROPERTY_TYPE_LABELS`] row: `[Slovak, Czech, German,
+/// English]`. [`locale_column`] is the single mapping from a [`Locale`] to its
+/// index here — keep the two in lockstep (a dedicated test asserts this).
+const LABEL_LOCALES: [Locale; 4] = [
+    Locale::Slovak,
+    Locale::Czech,
+    Locale::German,
+    Locale::English,
+];
+
+/// Localized `property_type` labels, one row per known type. Columns follow
+/// [`LABEL_LOCALES`] order (sk, cs, de, en).
+///
+/// This table is the "category i18n sweep" churn hotspot: adding a property
+/// type is a single row here instead of four scattered match arms, and the
+/// fixed-width `[&str; 4]` makes it impossible to add a type while forgetting a
+/// language (which previously fell through to the `capitalize` fallback and
+/// silently shipped a partially-localized label).
+const PROPERTY_TYPE_LABELS: &[(&str, [&str; 4])] = &[
+    ("apartment", ["Byty", "Byty", "Wohnungen", "Apartments"]),
+    ("house", ["Domy", "Domy", "Häuser", "Houses"]),
+    ("land", ["Pozemky", "Pozemky", "Grundstücke", "Land"]),
+    (
+        "commercial",
+        [
+            "Komerčné priestory",
+            "Komerční prostory",
+            "Gewerbeflächen",
+            "Commercial",
+        ],
+    ),
+    ("office", ["Kancelárie", "Kanceláře", "Büros", "Offices"]),
+    ("garage", ["Garáže", "Garáže", "Garagen", "Garages"]),
+    (
+        "parking",
+        ["Parkovanie", "Parkování", "Parkplätze", "Parking"],
+    ),
+    ("storage", ["Sklady", "Sklady", "Lager", "Storage"]),
+];
+
+/// Index of `locale`'s column in a [`PROPERTY_TYPE_LABELS`] row.
+fn locale_column(locale: &Locale) -> usize {
+    match locale {
+        Locale::Slovak => 0,
+        Locale::Czech => 1,
+        Locale::German => 2,
+        Locale::English => 3,
+    }
+}
+
 /// Localized label for a `property_type` enum value, in the given [`Locale`].
+///
+/// Unknown/future values fall back to the capitalized raw key so they still
+/// render (locale-independent).
 fn label_for_property_type(t: &str, locale: &Locale) -> String {
-    let label = match (t, locale) {
-        ("apartment", Locale::Slovak) => "Byty",
-        ("apartment", Locale::Czech) => "Byty",
-        ("apartment", Locale::German) => "Wohnungen",
-        ("apartment", Locale::English) => "Apartments",
-        ("house", Locale::Slovak) => "Domy",
-        ("house", Locale::Czech) => "Domy",
-        ("house", Locale::German) => "Häuser",
-        ("house", Locale::English) => "Houses",
-        ("land", Locale::Slovak) => "Pozemky",
-        ("land", Locale::Czech) => "Pozemky",
-        ("land", Locale::German) => "Grundstücke",
-        ("land", Locale::English) => "Land",
-        ("commercial", Locale::Slovak) => "Komerčné priestory",
-        ("commercial", Locale::Czech) => "Komerční prostory",
-        ("commercial", Locale::German) => "Gewerbeflächen",
-        ("commercial", Locale::English) => "Commercial",
-        ("office", Locale::Slovak) => "Kancelárie",
-        ("office", Locale::Czech) => "Kanceláře",
-        ("office", Locale::German) => "Büros",
-        ("office", Locale::English) => "Offices",
-        ("garage", Locale::Slovak) => "Garáže",
-        ("garage", Locale::Czech) => "Garáže",
-        ("garage", Locale::German) => "Garagen",
-        ("garage", Locale::English) => "Garages",
-        ("parking", Locale::Slovak) => "Parkovanie",
-        ("parking", Locale::Czech) => "Parkování",
-        ("parking", Locale::German) => "Parkplätze",
-        ("parking", Locale::English) => "Parking",
-        ("storage", Locale::Slovak) => "Sklady",
-        ("storage", Locale::Czech) => "Sklady",
-        ("storage", Locale::German) => "Lager",
-        ("storage", Locale::English) => "Storage",
-        // Fallback: capitalize the type so unknown values still render.
-        (other, _) => return capitalize(other),
-    };
-    label.to_string()
+    PROPERTY_TYPE_LABELS
+        .iter()
+        .find(|(key, _)| *key == t)
+        .map(|(_, labels)| labels[locale_column(locale)].to_string())
+        .unwrap_or_else(|| capitalize(t))
 }
 
 fn capitalize(s: &str) -> String {
@@ -1181,6 +1202,37 @@ mod tests {
             label_for_property_type("office", &Locale::English),
             "Offices"
         );
+    }
+
+    #[test]
+    fn locale_column_matches_label_locales_order() {
+        // The table's columns are addressed by `locale_column`; if the two ever
+        // drift, every label silently resolves to the wrong language. Assert the
+        // index map is exactly the inverse of the column-order array.
+        for (col, locale) in LABEL_LOCALES.iter().enumerate() {
+            assert_eq!(
+                locale_column(locale),
+                col,
+                "locale_column({locale:?}) must equal its LABEL_LOCALES index"
+            );
+        }
+    }
+
+    #[test]
+    fn property_type_table_is_complete_and_unique() {
+        // The fixed-width `[&str; 4]` already forces every row to carry all four
+        // languages; this additionally guards against an empty cell or a
+        // duplicated key slipping into the table during a future i18n sweep.
+        let mut seen = std::collections::HashSet::new();
+        for (key, labels) in PROPERTY_TYPE_LABELS {
+            assert!(seen.insert(*key), "duplicate property_type key: {key}");
+            for (col, cell) in labels.iter().enumerate() {
+                assert!(
+                    !cell.is_empty(),
+                    "empty label cell for key {key} column {col}"
+                );
+            }
+        }
     }
 
     #[test]
