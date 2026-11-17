@@ -17,11 +17,16 @@
  * non-default locales (cs/de/en/hu/pl) keep their `/[locale]/...` prefix.
  */
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { type FormEvent, Suspense, useState } from 'react';
 import { FieldInput } from '@/components/forms';
-import { Link } from '@/i18n/routing';
+// Locale-aware `useRouter` from `@/i18n/routing` keeps the active `/[locale]/…`
+// prefix on the post-login redirect. `next/navigation`'s router would drop it
+// and bounce non-default locales (cs/de/en/hu/pl) back to the default. The
+// SSO callback page uses the same import for the same reason. `useSearchParams`
+// still comes from `next/navigation` (next-intl does not re-export it).
+import { Link, useRouter } from '@/i18n/routing';
 import { AuthApiError, login } from '@/lib/auth-api';
 import { useAuth } from '@/lib/auth-context';
 import { sanitizeRedirectPath } from '@/lib/sanitize-url';
