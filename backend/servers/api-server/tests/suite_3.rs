@@ -73,3 +73,5 @@ mod equipment_cross_tenant_idor_tests;
 mod esg_reporting_cross_org_idor_tests;
 #[path = "suites/login_token_role_scope_tests.rs"]
 mod login_token_role_scope_tests;
+#[path = "suites/mfa_status_report_population_tests.rs"]
+mod mfa_status_report_population_tests;
