@@ -1,9 +1,49 @@
 {
-  "generated": "2026-11-17T02:38:27Z",
+  "generated": "2026-11-18T08:38:20Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-11-18T08:38:20Z",
+      "prs_scanned": 15,
+      "clean": [
+        3606,
+        3605,
+        3602,
+        3601,
+        3603,
+        3600,
+        3599,
+        3598,
+        3596,
+        3595,
+        3597,
+        3586,
+        3594,
+        3593,
+        3592
+      ],
+      "with_issues": [],
+      "note": "Dispatcher Phase 2.5 post-merge review (DISPATCHER_OWNED_COMMIT=1). repo=martin-janci/property-management, window=14d (merged>=2026-11-04), base=dev, max_prs=15, labels=follow-up,from-merged-review. Scanned the 15 newest in-window dev merges lacking review since the 2026-11-17T02:38 run: #3606/#3605/#3602/#3601/#3603/#3600/#3599 (2026-11-17 18:37-20:36Z), #3598/#3596/#3595/#3597/#3586 (2026-11-17 14:40-14:43Z), #3594 (12:35Z), #3593/#3592 (10:38-10:39Z). The newest-15 cap lands here; #3590/#3591/#3588/#3589/#3587/#3585/#3582/#3581/#3580/#3579 and the #3553-#3564 tail roll to the next run. ALL 15 CLEAN, 0 follow-ups opened (no-noise rule honoured). This batch is uniformly high-quality, tightly-scoped code-review / scrum-master auto-impl products, each shipping an IG3-style regression test. Security/correctness highlights: #3603 makes the vote UPDATE tenant-scoped on its own (AND organization_id=$2 on update_for_org, RLS conn, cross-tenant->None->404) + direct-write cross-tenant regression suite; #3598 closes prior-run follow-up #3583 by discarding (detach+hard-close) the pooled connection when acquire_public's stale-RLS-context clear FAILS, so a super-admin/global-read context can't bleed into a public request (new acquire-side test quarantined under BIT-351 sqlx::test harness gap, enforced offline); #3606 wraps the bare announcements/faults/financial/outages list+detail route groups in <ProtectedRoute> (anon visitor redirected to /login w/ return URL instead of rendering chrome) + per-group auth-guard tests; #3601 scopes the MFA-adoption enabled count to active users (JOIN users WHERE status='active'), fixing >100% adoption_rate / negative mfa_disabled; #3602 rejects an unrecognised audit action filter with 400 instead of silently widening to an all-actions superset (compliance foot-gun); #3599 propagates the audit-summary integrity-check SqlxError via db_error()? instead of .unwrap_or(false) misreporting infra failure as tampering; #3596 fixes logout-purge drift (useExecutionLogs/Stats key under kebab 'execution-logs'/'execution-stats' while the allow-list carried camelCase roots that never prefix-matched -> tenant cache survived logout on shared workstations) + an auto-discovered inline-raw-root coverage guard; #3593 detaches+closes the digest-sweep connection on a failed advisory unlock so a session-scoped lock can't strand and silently halt digests across all replicas. Also strong: #3600 WS {type}->{event,payload} wire-envelope symmetry + contract test; #3605 RealtorDetailModal inline save/remove/status error surfacing across 6 locales; #3595 reality-web login/register/reset locale preservation via @/i18n/routing (login redirect tested; register/reset are the same mechanical import swap, untested but low-risk - not filed); #3597 report schedule-editing validation errors routed through i18n (6 locales) + source guard; #3586 completes pl/sk/cs _few/_many plural categories + a CLDR-aware Intl.PluralRules completeness guard that closes the leaf-parity blind spot; #3594 per-sweep digest KPIs + Prometheus counters with send-path invariant unit tests; #3592 ppt-web moderation decision analytics fired only on server-accepted decisions, carrying the typed decision union only (no rationale/PII), mobile gap explicitly deferred. No JSON-key-case (PR #473) regressions in the reviewed Rust test diffs (#3603/#3601/#3602/#3599/#3598/#3594/#3593 use no snake_case json[] accessors against camelCase DTOs). Dedup owned via this artifact (prior runs cover through #3578/#3577/#3566). No Task fan-out tool available to this subagent, so all 15 diffs reviewed inline (<=5 concurrency honoured conceptually). GitHub I/O MCP-primary (gh/git writes proxy-403'd): enumeration via list_pull_requests(state=closed, base=dev, sort=updated desc), merged detected by non-null merged_at; diffs via pull_request_read get_diff. No PR label writes (dedup owned via this artifact, matching recent runs); no issues opened so no breadcrumbs. DISPATCHER_OWNED_COMMIT=1: wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to the orchestrator's Phase 6; did NOT touch assignments.json/action-list.json/archives.",
+      "focus_prs": [
+        3606,
+        3605,
+        3602,
+        3601,
+        3603,
+        3600,
+        3599,
+        3598,
+        3596,
+        3595,
+        3597,
+        3586,
+        3594,
+        3593,
+        3592
+      ]
+    },
     {
       "run_at": "2026-11-17T02:38:27Z",
       "prs_scanned": 15,
@@ -542,63 +582,6 @@
         }
       ],
       "note": "Dispatcher Tier 1d demand-driven backlog run (DISPATCHER_OWNED_COMMIT=1). Scanned 7 merged-to-dev PRs in the 14d window not already labeled post-merge-reviewed (3172,3170,3169,3167,3166,3165,3161); the ~40 other in-window merges already carried post-merge-reviewed and were skipped. 5 clean, 2 follow-ups opened (#3174 backend 404-mapping, #3175 reality-web i18n sweep). All 7 PRs labeled post-merge-reviewed; breadcrumbs added on 3167/3166. No commit/push \u2014 artifacts left in working tree for the orchestrator's Phase 6."
-    },
-    {
-      "run_at": "2026-10-25T20:31:08Z",
-      "prs_scanned": 14,
-      "clean": [
-        3159,
-        3160,
-        3153,
-        3152,
-        3154,
-        3070,
-        3074,
-        3107,
-        3120,
-        3111,
-        3028
-      ],
-      "with_issues": [
-        {
-          "pr": 3155,
-          "issue": 3162,
-          "findings": 1,
-          "specialist": "frontend",
-          "note": "reality-web agency profile i18n (code-review-reality-web-agency-page-i18n-gap, merged 10-25). PR correctly extracted all chrome copy on /[locale]/agency/[slug] into next-intl pages.agencyProfile.* (6 locales sk/cs/de/en/pl/hu) with a per-locale coverage + placeholder-preservation test \u2014 solid for the string half. BUT left the numeric half: price still rendered as listing.price.toLocaleString('sk-SK') (page.tsx:277), hardcoding Slovak digit grouping for all six locales. Same class PR #3140 fixed for ListingHeader/AdditionalInfo/AgencyListings by threading useLocale() through shared @/lib/format formatPrice/formatNumber (helpers confirmed to exist at format.ts:36/48); agency page does not import @/lib/format at all, so #3140's pass missed it. Filed #3162 (correctness/i18n, medium) proposing formatPrice(price,currency,useLocale()) + a non-sk-locale regression assertion mirroring #3140's ListingHeader.test.tsx."
-        },
-        {
-          "pr": 3158,
-          "issue": 3163,
-          "findings": 1,
-          "specialist": "pm-integration",
-          "note": "moderation client sub-paths (gh-issue-3157, merged 10-25). PR correctly fixed 2 of the 3 sub-path mismatches #3157 flagged \u2014 listModerationCases -> /moderation/queue and getModerationStats -> /moderation/queue/stats \u2014 and pinned both with a contract test (verified against aml_dsa/mod.rs:70-71). BUT it then CLOSED #3157 as completed (confirmed via issue_read: state=closed/completed, closed_by PR #3158) while leaving the third finding unaddressed: unassignModerationCase still targets POST /moderation/cases/{id}/unassign, for which aml_dsa/mod.rs has NO route (only /moderation/cases/{id}/assign at line 74) \u2014 so that call 404s at runtime and is now UNTRACKED. The #3158 contract test asserts list+stats only, so the path stays uncovered (same test-gap root cause that let #3150 ship incomplete). Filed #3163 (correctness, medium) proposing: add backend unassign route (mirror assign) OR delete the dead client fn after a ppt-web caller audit, plus extend api.test.ts either way. Other moderation calls verified correct (getModerationCase, templates, assign, action, appeal, appeal/decide)."
-        },
-        {
-          "pr": 3072,
-          "issue": 3164,
-          "findings": 1,
-          "specialist": "rust-backend",
-          "note": "violations role authz (code-review-api-handlers-violations-missing-role-authz, merged 10-25). PR added require_manager to 13 privileged mutation handlers in routes/violations.rs and carved out create_appeal + add_comment as intentional self-service \u2014 thorough, with a dedicated role-authz test suite (resident 403 negative + manager 2xx positive controls). BUT add_evidence (violations.rs:337) was left ungated \u2014 only a tenant_id-presence check, so any Resident/Tenant can POST arbitrary evidence onto any violation in their org, tampering with the official enforcement record. Asymmetric with its sibling delete_evidence (line 375), which THIS PR did gate, and add_evidence is NOT in the PR's stated carve-out list (create_appeal/add_comment) \u2014 looks like an oversight, not a deliberate self-service decision. Filed #3164 (security/authz, medium) proposing: gate add_evidence with require_manager + a resident_cannot_add_evidence test, OR document it as an intentional carve-out with a pinning test. Verified add_evidence has no pre-existing role/ownership gate by reading the handler."
-        }
-      ],
-      "note": "Dispatcher Phase 2.5 post-merge review (24h cadence). repo=martin-janci/property-management, window=14d (merged>=2026-10-11), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. 14 net-new in-window merges lacking post-merge-reviewed/no-review-needed: #3159/#3160 (10-25, no prior labels), #3153/#3152/#3154/#3155/#3158/#3070/#3107/#3074/#3120/#3111/#3072/#3028 (all merged 10-25, carried needs-human-review). Everything from #3150 and older already carried post-merge-reviewed from prior runs. Dependabot #3091 is closed-unmerged (no merged_at), skipped. 11 CLEAN, 3 WITH ISSUES (#3155->#3162 i18n, #3158->#3163 moderation unassign, #3072->#3164 add_evidence authz). Scanned 14, opened 3 follow-ups. No Task fan-out tool available to this subagent, so all 14 diffs were reviewed inline. GitHub I/O MCP-primary (gh writes 403-blocked by proxy): enumeration via list_pull_requests(closed, base=dev, sort=updated desc); merged detected by non-null merged_at (MCP 'merged' bool unreliable). PR labels applied via issue_write update preserving needs-human-review. DISPATCHER_OWNED_COMMIT=1: wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to orchestrator Phase 6; did NOT touch assignments.json/action-list.json/archives.",
-      "focus_prs": [
-        3159,
-        3160,
-        3153,
-        3152,
-        3154,
-        3155,
-        3158,
-        3070,
-        3107,
-        3074,
-        3120,
-        3111,
-        3072,
-        3028
-      ]
     }
   ]
 }
