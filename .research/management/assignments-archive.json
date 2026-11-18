@@ -11569,6 +11569,31 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "code-review-ppt-web-ui-facilities-ismanager-stub-true",
+      "branch": "auto-impl/code-review-ppt-web-ui-facilities-ismana-78f3cce1",
+      "status": "merged",
+      "claimed_at": "2026-11-18T14:26:27Z",
+      "last_updated": "2026-11-18T18:35:39Z",
+      "status_changed_at": "2026-11-18T18:35:39Z",
+      "pr_number": 3620,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3620",
+      "merged_at": "2026-11-18T18:34:19Z",
+      "specialist": "nextjs-web",
+      "implementer_summary": "[orphan-linked: PR #3620 opened async by implementer; linked by dispatcher Phase 2]",
+      "reviewer_summary": "verdict=approve head_oid=cba8ab1306a4b8a4fa5ddd1b32c9d8b0d31bb860 note=isManager correctly derived from isManagerRole(user?.role); secure default (undefined->false), reuses shared helper like PendingBookingsPage, scope tight (3 facilities files), regression test asserts non-manager gets no affordance; APPROVE event blocked on self-authored PR so verdict posted as COMMENT review",
+      "last_reviewed_oid": "cba8ab1306a4b8a4fa5ddd1b32c9d8b0d31bb860",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null,
+      "first_open_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-ui-facilities-page-swallows-load-error",
       "branch": "auto-impl/code-review-ppt-web-ui-facilities-page-s-415f0c16",
       "status": "failed",
@@ -25762,6 +25787,30 @@
       "merge_attempted_at": "2026-11-18T10:38:39Z"
     },
     {
+      "task_id": "gh-issue-3618",
+      "branch": "auto-impl/gh-issue-3618-b1422ccb",
+      "status": "merged",
+      "claimed_at": "2026-11-18T12:32:59Z",
+      "last_updated": "2026-11-18T18:35:39Z",
+      "status_changed_at": "2026-11-18T18:35:39Z",
+      "pr_number": 3619,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3619",
+      "merged_at": "2026-11-18T18:33:24Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3619 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=lettre 0.11.23->0.11.24 lock-only; cargo-deny advisories ok (RUSTSEC-2026-0565 gone); fmt/clippy/build green; 3 DB-less workspace tests fail only on missing DATABASE_URL (pre-existing, CI authoritative)",
+      "reviewer_summary": "verdict=approve head_oid=d79a9659151ea81069e90f0f62a0f39df62ee22f note=lockfile-only lettre 0.11.23->0.11.24 remediates RUSTSEC-2026-0565; all CI green (cargo-deny/fmt-clippy/security-tests/test-shards); scope_drift justified; approval posted as COMMENT (self-approve blocked, bot authored PR)",
+      "last_reviewed_oid": "d79a9659151ea81069e90f0f62a0f39df62ee22f",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "hotfix-no-test-pr-3497",
       "branch": "auto-impl/hotfix-no-test-pr-3497-ecc94f46",
       "status": "done",
@@ -30147,5 +30196,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-18T12:42:17Z"
+  "archived_at": "2026-11-18T18:35:44Z"
 }
