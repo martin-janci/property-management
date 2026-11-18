@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-18T14:26:36Z",
+  "archived_at": "2026-11-18T20:43:28Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -11875,6 +11875,31 @@
         "merged_pr": 3541,
         "merged_at": "2026-11-15T06:42:41Z",
         "at": "2026-11-15T06:47:20Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-ismanager-stub-true",
+      "action": "ppt web ui facilities ismanager stub true",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d ppt-web-ui score=2 vector=bug) | gc1-reconcile 2026-11-18T20:43:27Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T00:24:34Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-02T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3620,
+        "merged_at": "2026-11-18T18:34:19Z",
+        "at": "2026-11-18T20:43:27Z"
       }
     },
     {
@@ -28122,6 +28147,33 @@
         "merged_pr": 3608,
         "merged_at": "2026-11-18T10:30:01Z",
         "at": "2026-11-18T10:39:01Z"
+      }
+    },
+    {
+      "id": "gh-issue-3618",
+      "action": "security: bump lettre to >=0.11.24 — RUSTSEC-2026-0565 fails cargo-deny on all backend PRs (Closes #3618)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-11-18T12:28:41Z (#3618) | gc1-reconcile 2026-11-18T20:43:27Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-18T12:28:41Z",
+      "issue_ref": {
+        "number": 3618,
+        "url": "https://github.com/martin-janci/property-management/issues/3618",
+        "labels": [
+          "security",
+          "backend"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3619,
+        "merged_at": "2026-11-18T18:33:24Z",
+        "at": "2026-11-18T20:43:27Z"
       }
     },
     {

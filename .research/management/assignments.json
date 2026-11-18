@@ -164,18 +164,18 @@
     {
       "task_id": "code-review-ppt-web-toast-announcer-provider-value-not-memoized",
       "branch": "auto-impl/code-review-ppt-web-toast-announcer-prov-bc939070",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-18T20:34:11Z",
-      "last_updated": "2026-11-18T20:34:11Z",
-      "status_changed_at": "2026-11-18T20:34:11Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-18T20:45:09Z",
+      "status_changed_at": "2026-11-18T20:45:09Z",
+      "pr_number": 3622,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3622",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=3622 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=memoized Toast+Announcer provider values via useMemo; biome+typecheck clean, 533 vitest pass; IG3 N/A (pure memoization, no behavior change)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -206,5 +206,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-18T20:35:06Z"
+  "generated": "2026-11-18T20:45:09Z"
 }

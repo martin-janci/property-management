@@ -296,24 +296,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-ui-facilities-ismanager-stub-true",
-      "action": "ppt web ui facilities ismanager stub true",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d ppt-web-ui score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-17T00:24:34Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-09-02T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-reality-server-suggestions-hardcoded-sk-region",
       "action": "reality server suggestions hardcoded sk region",
       "owner_role": "pm-backend",
@@ -790,26 +772,6 @@
         "score": 1,
         "vector": "bug",
         "generated": "2026-08-28T00:00:00Z"
-      }
-    },
-    {
-      "id": "gh-issue-3618",
-      "action": "security: bump lettre to >=0.11.24 — RUSTSEC-2026-0565 fails cargo-deny on all backend PRs (Closes #3618)",
-      "owner_role": "pm-security",
-      "priority": "high",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-11-18T12:28:41Z (#3618)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-18T12:28:41Z",
-      "issue_ref": {
-        "number": 3618,
-        "url": "https://github.com/martin-janci/property-management/issues/3618",
-        "labels": [
-          "security",
-          "backend"
-        ]
       }
     }
   ],
