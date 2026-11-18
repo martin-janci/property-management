@@ -1290,7 +1290,8 @@
     "featured": "Odporúčané",
     "yourAgency": "Vaša agentúra",
     "sampleTitle": "Ukážkový názov ponuky",
-    "contactAgent": "Kontaktovať makléra"
+    "contactAgent": "Kontaktovať makléra",
+    "saveError": "Nepodarilo sa uložiť zmeny brandingu. Skúste to znova."
   },
   "agencyInquiries": {
     "title": "Dopyty agentúry",

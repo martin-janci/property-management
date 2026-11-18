@@ -164,6 +164,12 @@ pub struct ListingSummary {
     pub id: Uuid,
     /// Title
     pub title: String,
+    /// URL slug: `{slugified-title}-{uuid}`. The trailing UUID is
+    /// authoritative (the detail handler resolves by it); the title prefix is
+    /// cosmetic/SEO. A bare UUID is still accepted for backward-compatible
+    /// deep links. Mirrors the `slug` field emitted by `/featured`
+    /// (`RichListingSummary`) so search results link to SEO-friendly paths too.
+    pub slug: String,
     /// Short description
     pub description: Option<String>,
     /// Price
@@ -188,9 +194,15 @@ pub struct ListingSummary {
 
 impl From<PublicListingSummary> for ListingSummary {
     fn from(summary: PublicListingSummary) -> Self {
+        // Derive the SEO slug the same way `/featured` does (via
+        // `RichListingSummary`): `{slugified-title}-{uuid}`, degrading to the
+        // bare UUID when the title slugifies to nothing. Computed before `title`
+        // is moved into the struct below.
+        let slug = crate::util::slug::listing_slug(&summary.title, summary.id);
         Self {
             id: summary.id,
             title: summary.title,
+            slug,
             description: summary.description,
             price: summary.price,
             currency: summary.currency,
@@ -1055,6 +1067,69 @@ mod tests {
     #[test]
     fn valid_values_pass_through() {
         assert_eq!(clamp_pagination(Some(3), Some(50)), (3, 50));
+    }
+
+    // --- ListingSummary SEO slug (search `/listings` path) ---
+    //
+    // Regression: the search-results `ListingSummary` previously carried only a
+    // bare UUID `id` and no `slug`, so reality-web had to fall back to the raw
+    // UUID when building listing links — while `/featured` (`RichListingSummary`)
+    // already emitted a title-prefixed SEO slug. These assert the search path
+    // now populates the same `{slugified-title}-{uuid}` slug. They fail against
+    // the old struct, which had no `slug` field to populate.
+
+    fn public_summary(id: Uuid, title: &str) -> PublicListingSummary {
+        PublicListingSummary {
+            id,
+            title: title.to_string(),
+            description: None,
+            price: 100_000,
+            currency: "EUR".to_string(),
+            size_sqm: Some(60),
+            rooms: Some(3),
+            city: "Bratislava".to_string(),
+            property_type: "apartment".to_string(),
+            transaction_type: "sale".to_string(),
+            photo_url: None,
+            published_at: Utc::now(),
+        }
+    }
+
+    #[test]
+    fn summary_slug_is_title_prefixed_not_bare_uuid() {
+        let id = Uuid::parse_str("11111111-2222-3333-4444-555555555555").unwrap();
+        let summary: ListingSummary = public_summary(id, "Beautiful Apartment").into();
+        assert_eq!(
+            summary.slug, "beautiful-apartment-11111111-2222-3333-4444-555555555555",
+            "search results must emit the SEO slug, not a bare UUID"
+        );
+        assert_ne!(
+            summary.slug,
+            id.to_string(),
+            "a title-bearing listing must not degrade to a bare-UUID slug"
+        );
+    }
+
+    #[test]
+    fn summary_slug_matches_featured_slug_for_same_listing() {
+        // The search path and `/featured` must agree on the slug for a given
+        // (title, id) so a listing resolves to the same canonical URL whichever
+        // surface linked to it.
+        let id = Uuid::parse_str("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee").unwrap();
+        let title = "3-izbový byt, Bratislava!";
+        let summary: ListingSummary = public_summary(id, title).into();
+        assert_eq!(summary.slug, crate::util::slug::listing_slug(title, id));
+    }
+
+    #[test]
+    fn summary_slug_degrades_to_bare_uuid_when_title_empty() {
+        let id = Uuid::parse_str("11111111-2222-3333-4444-555555555555").unwrap();
+        let summary: ListingSummary = public_summary(id, "---").into();
+        assert_eq!(
+            summary.slug,
+            id.to_string(),
+            "a title that slugifies to nothing must still yield a resolvable path"
+        );
     }
 
     // --- popular_search_phrase (popular-search suggestions) ---

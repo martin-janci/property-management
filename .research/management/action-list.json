@@ -204,24 +204,6 @@
       }
     },
     {
-      "id": "code-review-reality-server-import-jobs-total-page-len",
-      "action": "reality server import jobs total page len",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d reality-server score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-16T00:27:09Z",
-      "signal_ref": {
-        "segment": "reality-server",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-09-03T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-reality-server-import-history-limit-100-trunc",
       "action": "reality server import history limit 100 trunc",
       "owner_role": "pm-backend",
@@ -237,24 +219,6 @@
         "score": 1,
         "vector": "bug",
         "generated": "2026-09-03T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-reality-web-agency-branding-save-no-error",
-      "action": "reality web agency branding save no error",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d reality-web score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-16T00:27:09Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-09-02T08:33:34Z"
       }
     },
     {
@@ -280,59 +244,8 @@
       "source": "pm-analysis 2026-11-16"
     },
     {
-      "id": "screen-map-drift-pr-3546-ppt",
-      "action": "Screen-map drift: PR #3546 faults URL-param validation without docs/screens/ppt update",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-16T18:25:46Z (score=2 conf=medium vector=test-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-16T18:25:46Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "test-gap"
-      }
-    },
-    {
-      "id": "screen-map-drift-pr-3559-reality",
-      "action": "Screen-map drift: PR #3559 login open-redirect fix without docs/screens/reality update",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-16T18:25:46Z (score=2 conf=medium vector=test-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-16T18:25:46Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "test-gap"
-      }
-    },
-    {
       "id": "churn-hotspot-backend-servers-reality-server-src-routes-listings-rs",
       "action": "Churn hotspot: reality-server routes/listings.rs (slug + category i18n sweeps)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-16T18:25:46Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-16T18:25:46Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
-      "id": "churn-hotspot-frontend-apps-ppt-web-features-reports-trendchart-tsx",
-      "action": "Churn hotspot: ppt-web features/reports/TrendChart.tsx (reports feature rollout)",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "open",
@@ -362,23 +275,6 @@
         "plan": null,
         "score": 1,
         "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-reality-server-search-missing-slug",
-      "action": "reality-server ListingSummary (/listings search) emits bare UUID; SEO slug only on /featured",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-16T18:25:46Z (score=1 conf=medium vector=test-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-16T18:25:46Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "test-gap"
       }
     },
     {
@@ -570,27 +466,6 @@
       "dependency": null,
       "depends_on": [],
       "first_open_at": "2026-11-17T13:03:05.808447Z"
-    },
-    {
-      "id": "gh-issue-3604",
-      "action": "cargo-deny (non-required check) red on dev — remediate RUSTSEC advisories: chrono/chrono-tz unmaintained, AES-auth + zip-extract vulns (Closes #3604)",
-      "owner_role": "pm-security",
-      "priority": "high",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-11-17T20:34:24Z (#3604)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-17T20:34:24Z",
-      "issue_ref": {
-        "number": 3604,
-        "url": "https://github.com/martin-janci/property-management/issues/3604",
-        "labels": [
-          "security",
-          "backend",
-          "follow-up"
-        ]
-      }
     },
     {
       "id": "code-review-api-core-digest-abandoned-no-terminal-state",
@@ -915,6 +790,26 @@
         "score": 1,
         "vector": "bug",
         "generated": "2026-08-28T00:00:00Z"
+      }
+    },
+    {
+      "id": "gh-issue-3618",
+      "action": "security: bump lettre to >=0.11.24 — RUSTSEC-2026-0565 fails cargo-deny on all backend PRs (Closes #3618)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-11-18T12:28:41Z (#3618)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-18T12:28:41Z",
+      "issue_ref": {
+        "number": 3618,
+        "url": "https://github.com/martin-janci/property-management/issues/3618",
+        "labels": [
+          "security",
+          "backend"
+        ]
       }
     }
   ],

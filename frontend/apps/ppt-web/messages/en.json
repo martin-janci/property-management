@@ -6967,6 +6967,7 @@
     "searchDocuments": "Search documents",
     "selectFilesToUpload": "Select files to upload",
     "selectLanguage": "Select language",
+    "sentimentSpike": "Sentiment drop on {{date}}",
     "sentimentTrend": "Sentiment trend",
     "settingsPreview": "Settings preview",
     "tabs": "Tabs",

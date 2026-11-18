@@ -16105,7 +16105,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3559"
       ],
@@ -16120,7 +16120,12 @@
       ],
       "created_at": "2026-11-16",
       "updated_at": "2026-11-16",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-18T14:23:52Z",
+        "assignment_status": "merged",
+        "pr_number": 3613
+      }
     },
     {
       "id": "screen-map-drift-pr-3546-ppt",
@@ -16128,7 +16133,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3546"
       ],
@@ -16142,7 +16147,12 @@
       ],
       "created_at": "2026-11-16",
       "updated_at": "2026-11-16",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-18T14:23:52Z",
+        "assignment_status": "merged",
+        "pr_number": 3614
+      }
     },
     {
       "id": "churn-hotspot-frontend-apps-ppt-web-features-reports-trendchart-tsx",
@@ -16150,7 +16160,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "churn"
       ],
@@ -16162,7 +16172,12 @@
       ],
       "created_at": "2026-11-16",
       "updated_at": "2026-11-16",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-18T14:23:52Z",
+        "assignment_status": "merged",
+        "pr_number": 3615
+      }
     },
     {
       "id": "churn-hotspot-frontend-apps-ppt-web-features-reports-analyticschart-tsx",
@@ -16215,7 +16230,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-11-16"
       ],
@@ -16230,7 +16245,12 @@
       ],
       "created_at": "2026-11-16",
       "updated_at": "2026-11-16",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-18T14:23:52Z",
+        "assignment_status": "merged",
+        "pr_number": 3616
+      }
     },
     {
       "id": "code-review-reality-server-record-view-no-check",
