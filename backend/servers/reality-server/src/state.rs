@@ -893,6 +893,18 @@ pub struct AppState {
     /// never grow past `INQUIRY_RATE_LIMIT_MAX_IPS` entries — memory is capped
     /// inline on every insert, no background sweep task required.
     pub inquiry_rate_limiters: std::sync::Arc<api_core::middleware::TenantRateLimiterSet>,
+    /// Per-IP throttle for the UNAUTHENTICATED listing view beacon
+    /// (`POST /api/v1/listings/{id}/view`, `routes::listings::record_view`).
+    /// The beacon is anonymous and fires on every public page load, so without
+    /// a throttle a single client can inflate a listing's view counter without
+    /// bound (analytics poisoning) and hammer the existence query. Keyed on the
+    /// same spoof-resistant client-IP hash the inquiry throttle uses
+    /// (`routes::inquiries::client_ip_bucket`) but held in a SEPARATE set with a
+    /// higher quota (`VIEW_RATE_LIMIT_RPM`): legitimate browsing produces far
+    /// more views/minute than contact submissions, so the two must not share a
+    /// budget. Bounded like the inquiry set so a rotating-IP flood can't grow
+    /// the map without bound.
+    pub view_rate_limiters: std::sync::Arc<api_core::middleware::TenantRateLimiterSet>,
     /// Number of trusted reverse-proxy hops in front of reality-server, used to
     /// pick a **spoof-resistant** client address out of `X-Forwarded-For` (the
     /// hop our own trusted proxy appended, counted from the right — see
@@ -918,6 +930,13 @@ pub const INQUIRY_RATE_LIMIT_MAX_IPS: usize = 100_000;
 /// rate window; a few minutes lets bursts be counted while keeping the map
 /// small. Buckets idle longer than this are reclaimed on the next insert.
 pub const INQUIRY_RATE_LIMIT_IDLE_TTL: Duration = Duration::from_secs(300);
+
+/// Default per-IP quota (requests/minute) for the anonymous listing view beacon
+/// (`record_view`). Higher than the inquiry quota because a single visitor
+/// legitimately views many listings per minute while browsing, whereas a
+/// view-counter-poisoning bot replays the same listing far more often.
+/// Override with `VIEW_RATE_LIMIT_RPM`.
+pub const VIEW_RATE_LIMIT_RPM: u32 = 120;
 
 impl AppState {
     /// Create a new AppState with database pool.
@@ -991,6 +1010,21 @@ impl AppState {
                 inquiry_max_ips,
             ),
         );
+        // Per-IP throttle for the anonymous listing view beacon. Separate set
+        // from the inquiry limiter (different, higher quota) but same bounded
+        // construction so a rotating-IP flood can't grow the map without bound.
+        let view_rpm = std::env::var("VIEW_RATE_LIMIT_RPM")
+            .ok()
+            .and_then(|v| v.parse::<u32>().ok())
+            .filter(|v| *v > 0)
+            .unwrap_or(VIEW_RATE_LIMIT_RPM);
+        let view_rate_limiters = Arc::new(
+            api_core::middleware::TenantRateLimiterSet::with_default_bounded(
+                view_rpm,
+                INQUIRY_RATE_LIMIT_IDLE_TTL,
+                inquiry_max_ips,
+            ),
+        );
         // Trusted reverse-proxy hop count for spoof-resistant client-IP
         // derivation (default 1 = a single reverse proxy in front of us).
         let inquiry_trusted_proxy_hops = std::env::var("INQUIRY_TRUSTED_PROXY_HOPS")
@@ -1021,6 +1055,8 @@ impl AppState {
             tenant_rate_limiters,
             // Per-IP throttle for unauthenticated inquiry POSTs.
             inquiry_rate_limiters,
+            // Per-IP throttle for the unauthenticated listing view beacon.
+            view_rate_limiters,
             inquiry_trusted_proxy_hops,
         }
     }
