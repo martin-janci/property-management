@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-18T10:45:33Z",
+  "archived_at": "2026-11-18T14:26:36Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -13646,6 +13646,31 @@
       }
     },
     {
+      "id": "code-review-reality-server-import-jobs-total-page-len",
+      "action": "reality server import jobs total page len",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d reality-server score=2 vector=bug) | gc1-reconcile 2026-11-18T14:23:52Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-16T00:27:09Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-03T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3610,
+        "merged_at": "2026-11-18T12:42:17Z",
+        "at": "2026-11-18T14:23:52Z"
+      }
+    },
+    {
       "id": "code-review-reality-server-imports-limit-unclamped",
       "action": "reality-server imports.rs list_import_jobs passes user `limit` to SQL unclamped - negative LIMIT 500s, huge LIMIT is unbounded",
       "owner_role": "pm-backend",
@@ -14351,6 +14376,30 @@
         "at": "2026-08-25T20:29:20Z",
         "landed_pr": 2812,
         "merged_at": "2026-08-20T14:31:06Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-search-missing-slug",
+      "action": "reality-server ListingSummary (/listings search) emits bare UUID; SEO slug only on /featured",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-16T18:25:46Z (score=1 conf=medium vector=test-gap) | gc1-reconcile 2026-11-18T14:23:52Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-16T18:25:46Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "test-gap"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3616,
+        "merged_at": "2026-11-18T12:42:17Z",
+        "at": "2026-11-18T14:23:52Z"
       }
     },
     {
