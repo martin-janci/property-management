@@ -30,6 +30,7 @@ Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, e
 ## Notes
 
 ### Specific (recent)
+- 2026-11-18 — **auth guard (PR #3606)**: `/faults/:faultId` is now wrapped in `<ProtectedRoute>` (auth-only, not role-gated) in `routes/groups/faults.tsx` — previously a bare `<Route>` that rendered the detail chrome for an anonymous deep-link. The reporter/resident and the manager can read fault detail, but both must be signed in; an anonymous deep-link is now redirected to `/login` (return URL captured). `buildStatus`/`apiStatus` unchanged. Guard regression-covered by `routes/groups/core-route-groups-auth-guard.route.test.tsx`.
 - 2026-05-18 — audit: stub created from `frontend/apps/ppt-web/src/App.tsx:499`.
 
 ## Agent Log
@@ -40,6 +41,8 @@ Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, e
 ## Agent Log
 
 <!-- newest entries on top -->
+
+- 2026-11-18 — agent: screen-map-drift-pr-3606-ppt — reconciled with merged PR #3606: the previously-bare `/faults/:faultId` detail route is now wrapped in `<ProtectedRoute>` (auth-only) in `routes/groups/faults.tsx`; anonymous deep-links redirect to `/login` (return URL captured). No route/component/status change — docs-only.
 
 - 2026-11-09 — agent: gap-audit-r7 — photo upload enabled (presigned documents/upload-url → PUT → POST attachments; server now requires an org-scoped storage key and returns presigned read URLs); reporter can withdraw a `new` fault (POST /faults/{id}/withdraw); attachment contract fixed (client read file_url/file_name, server sends storage_url/original_filename).
 
