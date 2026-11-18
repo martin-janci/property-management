@@ -161,6 +161,9 @@ async fn get_audit_logs(
     Query(params): Query<AuditLogQueryParams>,
 ) -> Result<Json<AuditLogListResponse>, (StatusCode, String)> {
     require_super_admin(&user)?;
+    // Reject malformed pagination (negative limit/offset) with a 400 before it
+    // reaches SQL and surfaces as an opaque 500 — see `validate_pagination`.
+    validate_pagination(params.limit, params.offset)?;
     // Reject an unrecognised action filter (400) instead of silently dropping
     // it and returning an unfiltered all-actions superset.
     let action = parse_action_filter(params.action.as_deref())?;
@@ -278,6 +281,9 @@ async fn get_user_audit_logs(
     Query(params): Query<AuditLogQueryParams>,
 ) -> Result<Json<AuditLogListResponse>, (StatusCode, String)> {
     require_super_admin(&user)?;
+    // Reject malformed pagination (negative limit/offset) with a 400 before it
+    // reaches SQL and surfaces as an opaque 500 — see `validate_pagination`.
+    validate_pagination(params.limit, params.offset)?;
     // Shares AuditLogQueryParams with get_audit_logs. This endpoint filters by
     // user_id only (via get_user_logs), so a *valid* `action` is not applied
     // here, but an unrecognised one must still be rejected (400) rather than
@@ -823,6 +829,38 @@ async fn get_failed_logins_report(
 // HELPER FUNCTIONS
 // ============================================================================
 
+/// Validate client-supplied pagination parameters.
+///
+/// `limit` and `offset` map straight onto SQL `LIMIT`/`OFFSET`, which
+/// PostgreSQL rejects when negative ("LIMIT must not be negative" / "OFFSET
+/// must not be negative"). Without an up-front check a client that sends
+/// `?limit=-1` or `?offset=-5` trips that error deep in the repository, where
+/// [`db_error`] turns it into an opaque 500 — a server-error response to what
+/// is really malformed client input. Reject negatives here with a 400 that
+/// names the offending value, mirroring how [`parse_action_filter`] surfaces
+/// bad input instead of letting it reach the query.
+///
+/// Only the lower bound is enforced here: the upper bound on `limit` is clamped
+/// downstream (`AuditLogRepository::{query,get_user_logs}` apply `.min(1000)`),
+/// so an over-large `limit` is a safe no-op rather than a client error.
+fn validate_pagination(
+    limit: Option<i64>,
+    offset: Option<i64>,
+) -> Result<(), (StatusCode, String)> {
+    for (name, value) in [("limit", limit), ("offset", offset)] {
+        match value {
+            Some(v) if v < 0 => {
+                return Err((
+                    StatusCode::BAD_REQUEST,
+                    format!("{name} must not be negative: {v}"),
+                ));
+            }
+            _ => {}
+        }
+    }
+    Ok(())
+}
+
 /// Parse the optional client-supplied `action` filter.
 ///
 /// Distinguishes "no filter requested" from "filter requested but
@@ -987,6 +1025,38 @@ mod tests {
                 "400 message should name the offending value {bad:?}, got: {msg}"
             );
         }
+    }
+
+    #[test]
+    fn pagination_accepts_absent_and_non_negative() {
+        // No params, zero, and ordinary positive values are all fine.
+        assert!(validate_pagination(None, None).is_ok());
+        assert!(validate_pagination(Some(0), Some(0)).is_ok());
+        assert!(validate_pagination(Some(100), Some(500)).is_ok());
+        // An over-large limit is NOT a client error: the repository clamps the
+        // upper bound (`.min(1000)`), so it is a safe no-op here, not a 400.
+        assert!(validate_pagination(Some(1_000_000), None).is_ok());
+    }
+
+    #[test]
+    fn pagination_rejects_negative_limit_or_offset() {
+        // Regression (compliance foot-gun): a negative limit/offset maps
+        // straight onto SQL LIMIT/OFFSET, which PostgreSQL rejects — surfacing
+        // as an opaque 500 (via db_error) for what is really malformed client
+        // input. It must now be a 400 that names the offending value.
+        let (status, msg) = validate_pagination(Some(-1), None).unwrap_err();
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert!(msg.contains("limit") && msg.contains("-1"), "got: {msg}");
+
+        let (status, msg) = validate_pagination(None, Some(-5)).unwrap_err();
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert!(msg.contains("offset") && msg.contains("-5"), "got: {msg}");
+
+        // A valid limit does not excuse a negative offset.
+        assert_eq!(
+            validate_pagination(Some(10), Some(-1)).unwrap_err().0,
+            StatusCode::BAD_REQUEST
+        );
     }
 
     #[test]
