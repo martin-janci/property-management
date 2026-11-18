@@ -5237,6 +5237,7 @@
     "searchDocuments": "Dokumente suchen",
     "selectFilesToUpload": "Dateien zum Hochladen auswählen",
     "selectLanguage": "Sprache auswählen",
+    "sentimentSpike": "Stimmungsabfall am {{date}}",
     "sentimentTrend": "Stimmungstrend",
     "settingsPreview": "Einstellungsvorschau",
     "tabs": "Registerkarten",

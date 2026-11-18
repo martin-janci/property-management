@@ -5151,6 +5151,7 @@
     "searchDocuments": "Hledat dokumenty",
     "selectFilesToUpload": "Vyberte soubory k nahrání",
     "selectLanguage": "Vybrat jazyk",
+    "sentimentSpike": "Pokles nálady dne {{date}}",
     "sentimentTrend": "Trend nálady",
     "settingsPreview": "Náhled nastavení",
     "tabs": "Karty",
