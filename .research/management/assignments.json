@@ -117,18 +117,18 @@
     {
       "task_id": "gh-issue-3618",
       "branch": "auto-impl/gh-issue-3618-b1422ccb",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-18T12:32:59Z",
-      "last_updated": "2026-11-18T12:32:59Z",
-      "status_changed_at": "2026-11-18T12:32:59Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-18T13:14:20Z",
+      "status_changed_at": "2026-11-18T13:14:20Z",
+      "pr_number": 3619,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3619",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3619 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=lettre 0.11.23->0.11.24 lock-only; cargo-deny advisories ok (RUSTSEC-2026-0565 gone); fmt/clippy/build green; 3 DB-less workspace tests fail only on missing DATABASE_URL (pre-existing, CI authoritative)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -137,5 +137,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-18T12:32:59Z"
+  "generated": "2026-11-18T13:14:20Z"
 }
