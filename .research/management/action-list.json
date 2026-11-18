@@ -240,24 +240,6 @@
       }
     },
     {
-      "id": "code-review-reality-web-agency-branding-save-no-error",
-      "action": "reality web agency branding save no error",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d reality-web score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-16T00:27:09Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-09-02T08:33:34Z"
-      }
-    },
-    {
       "id": "pm-scrum-master-cloud-runner-kmp-swagger-ui-egress-unblock-2026-11-16",
       "action": "Unblock mobile-native/KMP and swagger-ui egress in the cloud runner (#2652, #2966). Claimable work is a small share of the backlog, and backend security PRs cannot compile.",
       "owner_role": "pm-scrum-master",

@@ -91,28 +91,6 @@
       "merge_attempted_at": null
     },
     {
-      "task_id": "code-review-reality-web-agency-branding-save-no-error",
-      "branch": "auto-impl/code-review-reality-web-agency-branding-01103d20",
-      "status": "review",
-      "claimed_at": "2026-11-17T22:26:54Z",
-      "last_updated": "2026-11-18T08:39:06Z",
-      "status_changed_at": "2026-11-18T00:30:11Z",
-      "pr_number": 3607,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/3607",
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": "verdict=approve head_oid=f714b8327a2b9c7e226927125e18916aef9a5987 note=try/catch+inline-alert;i18n-6-locales;tests+IG3;CI-green",
-      "last_reviewed_oid": "f714b8327a2b9c7e226927125e18916aef9a5987",
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
       "task_id": "churn-hotspot-backend-servers-reality-server-src-routes-listings-rs",
       "branch": "auto-impl/churn-hotspot-backend-servers-reality-se-9da81f91",
       "status": "review",
@@ -183,5 +161,5 @@
       "quarantine_reason": null
     }
   ],
-  "generated": "2026-11-18T10:38:39Z"
+  "generated": "2026-11-18T10:45:33Z"
 }

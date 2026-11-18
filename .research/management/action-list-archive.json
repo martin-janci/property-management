@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-18T10:39:08Z",
+  "archived_at": "2026-11-18T10:45:33Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -14686,6 +14686,31 @@
         "merged_pr": 3481,
         "merged_at": "2026-11-13T12:46:38Z",
         "at": "2026-11-13T12:47:10Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-agency-branding-save-no-error",
+      "action": "reality web agency branding save no error",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d reality-web score=2 vector=bug) | gc1-reconcile 2026-11-18T10:45:33Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-16T00:27:09Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-02T08:33:34Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3607,
+        "merged_at": "2026-11-18T10:45:16Z",
+        "at": "2026-11-18T10:45:33Z"
       }
     },
     {
