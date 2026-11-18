@@ -13258,6 +13258,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-reality-server-import-jobs-total-page-len",
+      "branch": "auto-impl/code-review-reality-server-import-jobs-t-eef812af",
+      "status": "merged",
+      "claimed_at": "2026-11-17T22:26:54Z",
+      "last_updated": "2026-11-18T12:42:17Z",
+      "status_changed_at": "2026-11-18T12:42:17Z",
+      "pr_number": 3610,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3610",
+      "merged_at": "2026-11-18T12:42:17Z",
+      "specialist": null,
+      "implementer_summary": " [branch-updated with dev: cargo-deny advisory fix #3608]",
+      "reviewer_summary": "verdict=approve head_oid=7192b72e893032349bbd00f90766ff2e91b08cbf note=correct-scoped-count-fix-tested;self-pr-comment",
+      "last_reviewed_oid": "7192b72e893032349bbd00f90766ff2e91b08cbf",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-reality-server-imports-limit-unclamped",
       "branch": "auto-impl/code-review-reality-server-imports-limit-6317f18b",
       "status": "merged",
@@ -13928,6 +13950,30 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-08-20T14:29:16Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
+      "task_id": "code-review-reality-server-search-missing-slug",
+      "branch": "auto-impl/code-review-reality-server-search-missin-9618d76f",
+      "status": "merged",
+      "claimed_at": "2026-11-18T00:30:11Z",
+      "last_updated": "2026-11-18T12:42:17Z",
+      "status_changed_at": "2026-11-18T12:42:17Z",
+      "pr_number": 3616,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3616",
+      "merged_at": "2026-11-18T12:42:17Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3616 status=done specialist=rust-backend scope_drift=true note=added slug field+populate via util::slug::listing_slug on /listings ListingSummary (mirrors /featured)+3 tests; fmt/clippy clean 173/173 unit pass; only failures pre-existing DB-less sqlx::test deferred to CI [branch-updated with dev: cargo-deny advisory fix #3608]",
+      "reviewer_summary": "verdict=approve head_oid=c3f32ba332faf9a784e3c6e5ae8fc556647aac3b note=slug-parity correct; reuses listing_slug helper; cargo-deny preexisting/unrelated",
+      "last_reviewed_oid": "c3f32ba332faf9a784e3c6e5ae8fc556647aac3b",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
       "quarantined_at": null,
       "quarantine_reason": null
     },
@@ -30101,5 +30147,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-18T10:45:33Z"
+  "archived_at": "2026-11-18T12:42:17Z"
 }
