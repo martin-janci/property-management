@@ -142,18 +142,18 @@
     {
       "task_id": "tooling-ppt-implement-isolate-scratchpad-per-implementer",
       "branch": "auto-impl/tooling-ppt-implement-isolate-scratchpad-7bb8828b",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-18T20:34:11Z",
-      "last_updated": "2026-11-18T20:34:11Z",
-      "status_changed_at": "2026-11-18T20:34:11Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-18T20:49:58Z",
+      "status_changed_at": "2026-11-18T20:49:58Z",
+      "pr_number": 3623,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3623",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "generic",
+      "implementer_summary": "pr=3623 status=done specialist=generic scope_drift=true note=added pr-body-path.sh (task-unique PR-body scratchpad) + wired ppt-implement Step5 & ppt-pr-create Step4 to --body-file; self-test PASS, VERIFY OK; drift=.claude/skills/** (justified); scripts pushed mode 644 (push_files cannot set +x)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -184,5 +184,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-18T20:45:56Z"
+  "generated": "2026-11-18T20:49:58Z"
 }
