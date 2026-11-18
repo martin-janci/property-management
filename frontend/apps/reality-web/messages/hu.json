@@ -1283,7 +1283,8 @@
     "featured": "Kiemelt",
     "yourAgency": "Az Ön ügynöksége",
     "sampleTitle": "Minta hirdetéscím",
-    "contactAgent": "Ügynök megkeresése"
+    "contactAgent": "Ügynök megkeresése",
+    "saveError": "A márkázási módosítások mentése nem sikerült. Kérjük, próbálja újra."
   },
   "agencyInquiries": {
     "title": "Ügynökségi érdeklődések",

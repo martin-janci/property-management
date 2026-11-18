@@ -1290,7 +1290,8 @@
     "featured": "Featured",
     "yourAgency": "Your Agency",
     "sampleTitle": "Sample Listing Title",
-    "contactAgent": "Contact Agent"
+    "contactAgent": "Contact Agent",
+    "saveError": "Failed to save branding changes. Please try again."
   },
   "agencyInquiries": {
     "title": "Agency inquiries",
