@@ -9,42 +9,21 @@ import { listFacilities } from '@ppt/api-client';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useAuth } from '../../../contexts';
+import { isManagerRole } from '../../../routes/shared';
 import { FacilityList } from '../components';
 
 const PAGE_SIZE = 10;
 
-/**
- * Hook to determine if the current user has manager privileges.
- *
- * This controls visibility of manager-only features (create, edit facilities).
- * Note: Backend still enforces authorization - this is for UI display only.
- *
- * Integration steps when AuthContext is implemented:
- * 1. Import useAuth from the auth context
- * 2. Extract user role from the authenticated user
- * 3. Return true if role is 'manager' or 'admin'
- *
- * Example implementation:
- * ```typescript
- * function useIsManager(): boolean {
- *   const { user } = useAuth();
- *   return user?.role === 'manager' || user?.role === 'admin';
- * }
- * ```
- *
- * @returns true if user has manager privileges, false otherwise
- */
-function useIsManager(): boolean {
-  // Placeholder: Returns true during development to enable all manager features.
-  // Replace with actual role check when AuthContext is implemented for ppt-web.
-  // See frontend/apps/mobile/src/contexts/AuthContext.tsx for reference implementation.
-  return true;
-}
-
 export function FacilitiesPage() {
   const { buildingId } = useParams<{ buildingId: string }>();
   const navigate = useNavigate();
-  const isManager = useIsManager();
+  // Manager-only affordances (create/edit, pending approvals) are gated on the
+  // authenticated user's role — mirrors isManagerRole() usage elsewhere in
+  // ppt-web (e.g. PendingBookingsPage). Backend still enforces authorization;
+  // this is UI display only.
+  const { user } = useAuth();
+  const isManager = isManagerRole(user?.role);
   const { t } = useTranslation();
 
   const [facilities, setFacilities] = useState<FacilitySummary[]>([]);
