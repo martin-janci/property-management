@@ -1312,4 +1312,36 @@ mod tests {
         assert_eq!(first_language_tag("sk"), Some("sk"));
         assert_eq!(first_language_tag(""), None);
     }
+
+    // --- region resolution for suggestions seed city (derive, don't hardcode sk) ---
+
+    #[test]
+    fn region_query_param_takes_precedence_and_is_normalized() {
+        // Explicit region wins over the env fallback and is lower-cased/trimmed.
+        assert_eq!(resolve_region(Some("CZ")), "cz");
+        assert_eq!(resolve_region(Some("  de ")), "de");
+    }
+
+    #[test]
+    fn region_defaults_to_sk_when_param_blank_and_env_unset() {
+        // Blank/whitespace param is ignored; with REGION unset the default is
+        // the Slovak origin deployment, preserving historical behavior.
+        // (Run in a process where REGION is not exported.)
+        if std::env::var_os("REGION").is_none() {
+            assert_eq!(resolve_region(None), DEFAULT_REGION);
+            assert_eq!(resolve_region(Some("   ")), DEFAULT_REGION);
+        }
+    }
+
+    #[test]
+    fn default_city_follows_region_and_falls_back_to_bratislava() {
+        // The previously hardcoded seed city is now region-derived; sk and any
+        // unknown/EU/local region still map to Bratislava (existing default).
+        assert_eq!(default_city_for_region("sk"), "Bratislava");
+        assert_eq!(default_city_for_region("cz"), "Praha");
+        assert_eq!(default_city_for_region("de"), "Wien");
+        assert_eq!(default_city_for_region("eu"), "Bratislava");
+        assert_eq!(default_city_for_region("local"), "Bratislava");
+        assert_eq!(default_city_for_region("zz-unknown"), "Bratislava");
+    }
 }
