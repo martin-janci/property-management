@@ -328,6 +328,8 @@
       "errorTitle": "A mappa athelyezesekor hiba tortent"
     },
     "detailLoadError": "A dokumentum nem tölthető be",
+    "openErrorTitle": "A dokumentum nem nyitható meg",
+    "openErrorMessage": "A fájlnézegető nem érhető el ezen az eszközön.",
     "notFound": "A dokumentum nem található"
   },
   "settings": {
@@ -438,7 +440,7 @@
   },
   "widgets": {
     "addedTitle": "Widget hozzaadva",
-    "addedMessage": "A widget be lett allitva.",
+    "addedMessage": "A(z) {{name}} widget be lett állítva.",
     "updatedTitle": "Widgetek frissitve",
     "updatedMessage": "Minden widget frissítésre került.",
     "emptyText": "Még nincsenek beállított widgetek."

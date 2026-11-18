@@ -370,6 +370,8 @@
       "errorTitle": "Priecinok sa nepodarilo presunout"
     },
     "detailLoadError": "Nepodarilo sa načítať dokument",
+    "openErrorTitle": "Dokument sa nepodarilo otvoriť",
+    "openErrorMessage": "Prehliadač súborov nie je na tomto zariadení dostupný.",
     "notFound": "Dokument sa nenašiel"
   },
   "settings": {
@@ -480,7 +482,7 @@
   },
   "widgets": {
     "addedTitle": "Widget pridany",
-    "addedMessage": "Widget bol nakonfigurovany.",
+    "addedMessage": "Widget {{name}} bol nakonfigurovaný.",
     "updatedTitle": "Widgety aktualizovane",
     "updatedMessage": "Všetky widgety boli obnovené.",
     "emptyText": "Zatiaľ nie sú nakonfigurované žiadne widgety."

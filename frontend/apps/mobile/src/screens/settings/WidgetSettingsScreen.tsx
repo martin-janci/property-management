@@ -74,21 +74,24 @@ export function WidgetSettingsScreen({ onNavigate }: WidgetSettingsScreenProps) 
         await bridge.configureWidget(newConfig);
         setConfigs((prev) => [...prev, newConfig]);
 
-        Alert.alert('Widget Added', `${widgetMeta?.name ?? type} widget has been configured.`);
+        Alert.alert(
+          t('widgets.addedTitle'),
+          t('widgets.addedMessage', { name: widgetMeta?.name ?? type })
+        );
       } else if (!enabled && existingConfig) {
         await bridge.removeWidget(existingConfig.id);
         setConfigs((prev) => prev.filter((c) => c.id !== existingConfig.id));
       }
     },
-    [configs, availableTypes, bridge]
+    [configs, availableTypes, bridge, t]
   );
 
   const handleRefreshAll = useCallback(async () => {
     setIsLoading(true);
     await bridge.updateAllWidgets();
     setIsLoading(false);
-    Alert.alert('Widgets Updated', 'All widgets have been refreshed.');
-  }, [bridge]);
+    Alert.alert(t('widgets.updatedTitle'), t('widgets.updatedMessage'));
+  }, [bridge, t]);
 
   if (isLoading) {
     return (

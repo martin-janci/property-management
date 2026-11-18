@@ -370,6 +370,8 @@
       "errorTitle": "Slozku se nepodarilo presunout"
     },
     "detailLoadError": "Nepodařilo se načíst dokument",
+    "openErrorTitle": "Dokument se nepodařilo otevřít",
+    "openErrorMessage": "Prohlížeč souborů není na tomto zařízení dostupný.",
     "notFound": "Dokument nebyl nalezen"
   },
   "settings": {
@@ -480,7 +482,7 @@
   },
   "widgets": {
     "addedTitle": "Widget pridan",
-    "addedMessage": "Widget byl nakonfigurovan.",
+    "addedMessage": "Widget {{name}} byl nakonfigurován.",
     "updatedTitle": "Widgety aktualizovany",
     "updatedMessage": "Všechny widgety byly obnoveny.",
     "emptyText": "Zatím nejsou nakonfigurovány žádné widgety."
