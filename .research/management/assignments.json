@@ -231,18 +231,18 @@
     {
       "task_id": "code-review-reality-server-record-view-no-check",
       "branch": "auto-impl/code-review-reality-server-record-view-n-df877633",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-18T00:30:11Z",
-      "last_updated": "2026-11-18T08:31:50Z",
-      "status_changed_at": "2026-11-18T08:31:50Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-18T09:40:16Z",
+      "status_changed_at": "2026-11-18T09:40:16Z",
+      "pr_number": 3617,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3617",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3617 status=done specialist=rust-backend scope_drift=false note=record_view 404s unknown listings (status=active existence check)+per-IP throttle via new view_rate_limiters; VERIFY OK 21914df; 3 tests; draft",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -277,5 +277,5 @@
       "quarantine_reason": null
     }
   ],
-  "generated": "2026-11-18T09:24:47Z"
+  "generated": "2026-11-18T09:40:16Z"
 }
