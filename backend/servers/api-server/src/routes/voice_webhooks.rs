@@ -67,17 +67,12 @@ fn voice_oauth_error_response(
     client_message: &'static str,
     detail: impl std::fmt::Display,
 ) -> (StatusCode, Json<ErrorResponse>) {
+    // The upstream `detail` (provider endpoints, client ids, raw transport
+    // errors) is logged server-side only. The response body carries just the
+    // static `client_message` — never the detail (code-review: oauth client
+    // error leak).
     tracing::error!(error = %detail, error_code = code, "voice OAuth upstream call failed");
-    // COMMIT 1 (regression-test proof): the body still embeds the upstream
-    // `detail`, preserving the pre-fix leak so the accompanying test fails.
-    // The follow-up `fix:` commit swaps this for `client_message` alone.
-    (
-        status,
-        Json(ErrorResponse::new(
-            code,
-            format!("{client_message}: {detail}"),
-        )),
-    )
+    (status, Json(ErrorResponse::new(code, client_message)))
 }
 
 /// Map a fail-closed encryption error to an HTTP 500.
@@ -1909,8 +1904,7 @@ mod tests {
     /// which can embed internal hosts, client ids, or bearer credentials.
     #[test]
     fn voice_oauth_error_response_does_not_leak_upstream_detail() {
-        let sensitive =
-            "connect error: dns failure for secret-internal-host.oauth.example:443 \
+        let sensitive = "connect error: dns failure for secret-internal-host.oauth.example:443 \
              (bearer AKIA-LEAKED-SECRET)";
 
         for (code, message) in [
