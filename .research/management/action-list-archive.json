@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-17T22:27:15Z",
+  "archived_at": "2026-11-18T00:30:20Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2127,6 +2127,30 @@
         "merged_pr": 2659,
         "merged_at": "2026-08-04T16:14:31Z",
         "at": "2026-08-04T16:18:03Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-features-reports-analyticschart-tsx",
+      "action": "Churn hotspot: ppt-web features/reports/AnalyticsChart.tsx (reports feature rollout)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-11-16T18:25:46Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-11-18T00:25:00Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-16T18:25:46Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-18T00:25:00Z"
       }
     },
     {

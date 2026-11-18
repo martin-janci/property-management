@@ -16169,7 +16169,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "churn"
       ],
@@ -16181,7 +16181,12 @@
       ],
       "created_at": "2026-11-16",
       "updated_at": "2026-11-16",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-18T00:25:01Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "churn-hotspot-backend-servers-reality-server-src-routes-listings-rs",
