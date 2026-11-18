@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-18T00:30:20Z",
+  "archived_at": "2026-11-18T08:54:49Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3755,6 +3755,24 @@
         "merged_pr": 2926,
         "merged_at": "2026-09-02T00:25:42Z",
         "at": "2026-09-02T00:32:55Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-fcm-oauth-token-stale",
+      "action": "[CLOSED-STALE: FCM token refresh already implemented in dev push_fanout.rs] api core fcm oauth token stale",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-18T00:25:54Z (tier1d api-core score=3 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-18T00:25:54Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 3,
+        "vector": "bug",
+        "generated": "2026-08-28T00:00:00Z"
       }
     },
     {
@@ -14832,6 +14850,24 @@
         "commit": "d8121221dceaf40687d91b7964cb75328ddb84f4",
         "subject": "code-review-reality-web-agent-profile-mock-data: wire /realtor/[id] to real data + honest contact (#3225)",
         "at": "2026-11-04T00:32:46Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-agent-profile-mock-stub",
+      "action": "[CLOSED-STALE: already fixed in cd88a22 2026-11-17] reality web agent profile mock stub",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d reality-web score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T00:24:34Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-02T08:33:34Z"
       }
     },
     {
