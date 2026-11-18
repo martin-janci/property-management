@@ -261,6 +261,75 @@ ignore = [
     # aws-sigv4 / elliptic-curve ship releases reaching crypto-bigint 0.6.x (the
     # patched line), or sooner if a 0.5.x backport appears. Tracked by GH #3168.
     "RUSTSEC-2026-0387",
+
+    # RUSTSEC-2026-0545 / RUSTSEC-2026-0548 (added 2026-10-22 / 2026-10-17,
+    # GH #3604) — two more `zip` crate advisories, handled identically to the
+    # -0367/-0368/-0369/-0429 zip ignores above and with the same TWO-line split:
+    #   -0545  WinZip AES (AE-1/AE-2) entries: the 10-byte HMAC authentication
+    #          code is read/checked only after the declared compressed size is
+    #          consumed, so a truncated or empty AES entry is accepted WITHOUT the
+    #          auth check (AES-CTR ciphertext is bit-flippable and AE-2 carries no
+    #          CRC-32, so a modified archive decrypts to altered contents silently).
+    #          Patched floor `>= 9.0.0`; only reachable when READING AES-encrypted
+    #          entries with a password via the `aes-crypto` feature
+    #          (e.g. `ZipArchive::by_name_decrypt`).
+    #   -0548  `ZipStreamReader::visit`/`extract` use the LOCAL-header entry name,
+    #          which can differ from the central directory `ZipArchive` lists —
+    #          a parser-differential that lets a crafted archive write files under
+    #          names a prior `ZipArchive` check never saw. Patched floor `>= 9.0.5`
+    #          (the fix is an opt-in `enforce_header_consistency` check).
+    #
+    #   * zip 9.0.x (the REACHABLE line, via `rust_xlsxwriter` 0.100 for the
+    #     api-server xlsx export) is already PATCHED — Cargo.lock resolves it to
+    #     zip 9.0.5, which satisfies BOTH floors (>= 9.0.0 and >= 9.0.5). It is
+    #     deliberately NOT swept up by these ignores: the `[bans]` zip guard below
+    #     (patched floor raised 9.0.0 -> 9.0.5 to cover -0548) trips if that line
+    #     ever drops below 9.0.5. rust_xlsxwriter only WRITES xlsx and never
+    #     extracts or AES-decrypts, so neither advisory is reachable on it anyway.
+    #
+    #   * zip 3.0.0 is transitively pinned by `utoipa-swagger-ui 9.0.2` as a BUILD
+    #     dependency (`zip ^3.0`), used only by that crate's build script to unpack
+    #     the vendored Swagger-UI dist bundle — a FIXED, trusted archive, not
+    #     untrusted input, at build time only, with no runtime path, no password
+    #     decrypt and no `aes-crypto` feature. It cannot reach the fix without a
+    #     major utoipa 6 migration off our pinned utoipa 5 OpenAPI stack, out of
+    #     scope here — exactly as documented for the -0367/-0368/-0369/-0429 zip
+    #     ignores above. These ignores exist SOLELY to cover that un-upgradable
+    #     3.0.0 line; its vulnerable AES-decrypt / ZipStreamReader-extract paths
+    #     are not exercised.
+    # Follow-up (GH #3124/#3604): remove together with the -0367/-0368/-0369/-0429
+    # ignores and the `[bans]` zip guard once utoipa-swagger-ui ships a
+    # utoipa-5-compatible release on zip >= 9.0.5 (or the OpenAPI stack migrates to
+    # utoipa 6), so the zip 3.0.0 line leaves the tree entirely.
+    "RUSTSEC-2026-0545",
+    "RUSTSEC-2026-0548",
+
+    # RUSTSEC-2026-0543 (chrono) / RUSTSEC-2026-0555 (chrono-tz) — both added
+    # 2026-09-14 (chronotope/chrono#1768), GH #3604. Both crates are flagged
+    # `unmaintained`: INFORMATIONAL advisories (the upstream repos went read-only),
+    # NOT security vulnerabilities, with `patched = []` — there is NO safe upgrade,
+    # every version is "affected". Recommended alternatives are `jiff` / `time`.
+    #
+    # Unlike the transitive unmaintained notices that `unmaintained = "workspace"`
+    # (top of this file) deliberately lets through, chrono and chrono-tz are DIRECT
+    # `[workspace.dependencies]` (`chrono = { version = "0.4", ... }`,
+    # `chrono-tz = "0.10"`), so the workspace-scoped unmaintained check fires on
+    # them and fails the advisories job. chrono is woven through the entire backend
+    # — 350+ source files across every crate (db models / `sqlx` row types, all
+    # servers, common, domain + API types) use `chrono::{DateTime, Utc, NaiveDate,
+    # ...}`, and `sqlx 0.9` itself re-exports chrono types on the DB boundary. A
+    # migration to jiff/time is a large, cross-cutting refactor touching the DB
+    # type mapping and every timestamp in the API surface — out of scope for a
+    # dependency-hygiene pass, and not worth rushing when no actual vulnerability
+    # is involved.
+    #
+    # Scoped + time-boxed per policy: suppress the two unmaintained notices with a
+    # tracked migration follow-up rather than open-ended.
+    # REMOVAL / RE-EVALUATION DEADLINE: 2027-05-31 — by then either migrate the
+    # workspace off chrono (to jiff/time) or re-confirm the time-box with a fresh
+    # tracking note. Tracked by GH #3604.
+    "RUSTSEC-2026-0543",
+    "RUSTSEC-2026-0555",
 ]
 
 [bans]
@@ -312,21 +381,24 @@ deny = [
     # with the -0382 ignore once the AWS SDK drops rustls 0.21.
     { name = "rustls-webpki", version = ">=0.103.0, <0.103.16", reason = "RUSTSEC-2026-0382 patched-floor guard — the reachable rustls-webpki 0.103.x line must be >= 0.103.16; the -0382 advisory ignore is scoped to the un-upgradable AWS-pinned 0.101.7 line, so an unpatched 0.103.0–0.103.15 must trip cargo-deny rather than be swept up by it (GH #3134)" },
 
-    # zip PATCHED-FLOOR GUARD for RUSTSEC-2026-0367/-0368/-0369 (GH #3124). The
-    # three zip extraction advisories are patched in zip 9.0.0. The reachable zip
-    # line (via `rust_xlsxwriter`, xlsx export) is bumped to 9.0.5 in Cargo.lock,
-    # which clears them there. The -0367/-0368/-0369 ignores on the `[advisories]`
-    # list exist ONLY to cover the un-upgradable zip 3.0.0 pulled by
-    # `utoipa-swagger-ui 9.0.2`'s build script (pinned `zip ^3.0`). Because an ID
-    # ignore is global, a future in-range downgrade of the rust_xlsxwriter zip
-    # line onto the vulnerable 8.x range (a bad `cargo update` / Dependabot
-    # lockfile move, or a rust_xlsxwriter revert) would otherwise be silently
-    # swept up by those ignores. This ban denies exactly the 4.x–8.x window, so
-    # such a regression trips `cargo deny check bans` instead. It intentionally
-    # does NOT touch zip 3.0.0 (< 4.0.0 — the utoipa-pinned line the ignore
-    # covers) or the patched zip >= 9.0.0 (outside the range). Lift together with
-    # the -0367/-0368/-0369 ignores once utoipa-swagger-ui moves to zip >= 9.0.0.
-    { name = "zip", version = ">=4.0.0, <9.0.0", reason = "RUSTSEC-2026-0367/-0368/-0369 patched-floor guard — the reachable zip line (rust_xlsxwriter) must be >= 9.0.0; the advisory ignore is scoped to the un-upgradable zip 3.0.0 utoipa-swagger-ui build-dep line, so an unpatched zip 4.0.0–8.x must trip cargo-deny rather than be swept up by it (GH #3124)" },
+    # zip PATCHED-FLOOR GUARD for RUSTSEC-2026-0367/-0368/-0369/-0429 (floor
+    # 9.0.0) AND RUSTSEC-2026-0545/-0548 (GH #3124/#3604). The extraction
+    # advisories are patched in zip 9.0.0, EXCEPT -0548 whose fix lands in zip
+    # 9.0.5 — so the unified patched floor this guard enforces is 9.0.5 (the
+    # higher of the two), not 9.0.0. The reachable zip line (via `rust_xlsxwriter`,
+    # xlsx export) is resolved to 9.0.5 in Cargo.lock, which clears all of them
+    # there. The matching advisory-id ignores on the `[advisories]` list exist
+    # ONLY to cover the un-upgradable zip 3.0.0 pulled by `utoipa-swagger-ui
+    # 9.0.2`'s build script (pinned `zip ^3.0`). Because an ID ignore is global, a
+    # future in-range downgrade of the rust_xlsxwriter zip line onto the vulnerable
+    # 4.x–9.0.4 window (a bad `cargo update` / Dependabot lockfile move, or a
+    # rust_xlsxwriter revert) would otherwise be silently swept up by those
+    # ignores. This ban denies exactly the 4.0.0–9.0.4 window, so such a regression
+    # trips `cargo deny check bans` instead. It intentionally does NOT touch
+    # zip 3.0.0 (< 4.0.0 — the utoipa-pinned line the ignores cover) or the patched
+    # zip >= 9.0.5 (outside the range). Lift together with the zip advisory ignores
+    # once utoipa-swagger-ui moves to zip >= 9.0.5.
+    { name = "zip", version = ">=4.0.0, <9.0.5", reason = "RUSTSEC-2026-0367/-0368/-0369/-0429 + -0545/-0548 patched-floor guard — the reachable zip line (rust_xlsxwriter) must be >= 9.0.5 (-0548's fix floor); the advisory ignores are scoped to the un-upgradable zip 3.0.0 utoipa-swagger-ui build-dep line, so an unpatched zip 4.0.0–9.0.4 must trip cargo-deny rather than be swept up by them (GH #3124/#3604)" },
 
     # ammonia PATCHED-FLOOR GUARD for RUSTSEC-2026-0373 + RUSTSEC-2026-0533
     # (added 2026-10-23, GH #3130/#3143; extended 2026-11-13, GH #3498).

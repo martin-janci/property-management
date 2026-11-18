@@ -14774,19 +14774,20 @@
       "title": "KMP realtor SSO error-body parsing is unguarded — crashes on non-JSON response",
       "vector": "bug",
       "confidence": "medium",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "rotating-expert-review 2026-11-03 mobile-native-kmp (dispatcher Tier-1d)"
       ],
       "evidence": [
-        "See .research/signals/2026-11-03-mobile-native-kmp-tier1d.json for full finding. Catch-up for 2026-11-03 skipped run."
+        "See .research/signals/2026-11-03-mobile-native-kmp-tier1d.json for full finding. Catch-up for 2026-11-03 skipped run.",
+        "decayed: no new signals in 14 days — score 2 → 1"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/"
       ],
       "created_at": "2026-11-04",
-      "updated_at": "2026-11-04",
+      "updated_at": "2026-11-18",
       "plan": null
     },
     {
@@ -16169,7 +16170,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "churn"
       ],
@@ -16181,7 +16182,12 @@
       ],
       "created_at": "2026-11-16",
       "updated_at": "2026-11-16",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-18T00:25:01Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "churn-hotspot-backend-servers-reality-server-src-routes-listings-rs",
@@ -16254,20 +16260,22 @@
       "title": "notification_digest.rs is a repeat churn hotspot (digest subsystem)",
       "vector": "refactor",
       "confidence": "high",
-      "score": 1,
+      "score": 2,
       "status": "open",
       "sources": [
         "PR #3574",
-        "PR #3576"
+        "PR #3576",
+        "commit log 2026-11-18"
       ],
       "evidence": [
-        "notification_digest.rs changed in 2 merged PRs this run (#3574 abandoned-send surfacing, #3576 digest worker replica claim); digest subsystem hotspot — see related code-review-findings for concrete bugs"
+        "notification_digest.rs changed in 2 merged PRs this run (#3574 abandoned-send surfacing, #3576 digest worker replica claim); digest subsystem hotspot — see related code-review-findings for concrete bugs",
+        "repeated-churn: file changed in 2 consecutive runs (2026-11-17, 2026-11-18); +1 this run"
       ],
       "files": [
         "backend/servers/api-server/src/services/notification_digest.rs"
       ],
       "created_at": "2026-11-17",
-      "updated_at": "2026-11-17",
+      "updated_at": "2026-11-18",
       "plan": null
     },
     {
@@ -16275,20 +16283,22 @@
       "title": "granular_notification.rs repo is a repeat churn hotspot (digest subsystem)",
       "vector": "refactor",
       "confidence": "high",
-      "score": 1,
+      "score": 2,
       "status": "open",
       "sources": [
         "PR #3574",
-        "PR #3576"
+        "PR #3576",
+        "commit log 2026-11-18"
       ],
       "evidence": [
-        "granular_notification.rs repo changed in 2 merged PRs this run (#3574, #3576) co-moving with notification_digest.rs; a Phase 1.5 review found a silent-cohort-drop INNER JOIN here"
+        "granular_notification.rs repo changed in 2 merged PRs this run (#3574, #3576) co-moving with notification_digest.rs; a Phase 1.5 review found a silent-cohort-drop INNER JOIN here",
+        "repeated-churn: file changed in 2 consecutive runs (2026-11-17, 2026-11-18); +1 this run"
       ],
       "files": [
         "backend/crates/db/src/repositories/granular_notification.rs"
       ],
       "created_at": "2026-11-17",
-      "updated_at": "2026-11-17",
+      "updated_at": "2026-11-18",
       "plan": null
     },
     {
@@ -16297,18 +16307,20 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #3585",
         "rotating-expert-review 2026-11-17 (api-core)"
       ],
       "evidence": [
-        "backend/crates/db/src/repositories/granular_notification.rs:1002 — find_inactive_digest_candidates joins users to last_activity (derived from refresh_tokens.MAX(last_used_at)) with INNER JOIN; any opted-in user whose refresh_tokens row was expired/pruned (or who never had one) is silently excluded from the digest sweep — exactly the long-tail inactive users the digest exists to re-engage. Fix: LEFT JOIN last_activity la … WHERE COALESCE(la.last_active, u.created_at) < $1."
+        "backend/crates/db/src/repositories/granular_notification.rs:1002 — find_inactive_digest_candidates joins users to last_activity (derived from refresh_tokens.MAX(last_used_at)) with INNER JOIN; any opted-in user whose refresh_tokens row was expired/pruned (or who never had one) is silently excluded from the digest sweep — exactly the long-tail inactive users the digest exists to re-engage. Fix: LEFT JOIN last_activity la … WHERE COALESCE(la.last_active, u.created_at) < $1.",
+        "resolved: PR #3585 (fall back to created_at for never-logged-in users) — INNER JOIN on refresh_tokens removed; current query uses LEFT JOIN last_activity + COALESCE(la.last_active, u.created_at)"
       ],
       "files": [
         "backend/crates/db/src/repositories/granular_notification.rs"
       ],
       "created_at": "2026-11-17",
-      "updated_at": "2026-11-17",
+      "updated_at": "2026-11-18",
       "plan": null
     },
     {
@@ -16317,18 +16329,20 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #3587",
         "rotating-expert-review 2026-11-17 (api-core)"
       ],
       "evidence": [
-        "backend/servers/api-server/src/services/notification_digest.rs:226-252 — report_abandoned surfaces aged-out digest rows only via a tracing::error! log line; notification_digests schema (migration 00061) has no column to mark a row terminally abandoned, so the DB cannot distinguish 'still inside retry window, pending retry' from 'exhausted retry window, giving up'. Log-pipeline loss or restart around the boundary tick (poll_interval=1h) → the abandoned row is invisible forever. Add e.g. abandoned_at TIMESTAMPTZ and set it when report_abandoned picks the row up."
+        "backend/servers/api-server/src/services/notification_digest.rs:226-252 — report_abandoned surfaces aged-out digest rows only via a tracing::error! log line; notification_digests schema (migration 00061) has no column to mark a row terminally abandoned, so the DB cannot distinguish 'still inside retry window, pending retry' from 'exhausted retry window, giving up'. Log-pipeline loss or restart around the boundary tick (poll_interval=1h) → the abandoned row is invisible forever. Add e.g. abandoned_at TIMESTAMPTZ and set it when report_abandoned picks the row up.",
+        "resolved: PR #3587 (add terminal abandoned_at state) — abandoned_at column added, report_abandoned stamps SET abandoned_at = now(), queries filter abandoned_at IS NULL"
       ],
       "files": [
         "backend/servers/api-server/src/services/notification_digest.rs"
       ],
       "created_at": "2026-11-17",
-      "updated_at": "2026-11-17",
+      "updated_at": "2026-11-18",
       "plan": null
     },
     {
@@ -16337,18 +16351,105 @@
       "vector": "refactor",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #3591",
         "rotating-expert-review 2026-11-17 (api-core)"
       ],
       "evidence": [
-        "backend/servers/api-server/src/services/notification_digest.rs:193-195 — release_digest_sweep is best-effort: on error the connection is returned to the pool with the session-scoped pg_advisory_lock still held. The docstring says 'self-heals when the connection closes' but Postgres pool connections can live indefinitely; the same connection could be re-acquired on later try_claim_digest_sweep calls, where pg_try_advisory_lock returns true for an already-held lock (ref-count += 1), then one pg_advisory_unlock only decrements to 1, leaving the lock held after 'successful' release. Safer: on release error, mark the connection unusable (drop without return) or close it explicitly instead of returning it to the pool."
+        "backend/servers/api-server/src/services/notification_digest.rs:193-195 — release_digest_sweep is best-effort: on error the connection is returned to the pool with the session-scoped pg_advisory_lock still held. The docstring says 'self-heals when the connection closes' but Postgres pool connections can live indefinitely; the same connection could be re-acquired on later try_claim_digest_sweep calls, where pg_try_advisory_lock returns true for an already-held lock (ref-count += 1), then one pg_advisory_unlock only decrements to 1, leaving the lock held after 'successful' release. Safer: on release error, mark the connection unusable (drop without return) or close it explicitly instead of returning it to the pool.",
+        "resolved: PR #3591 (discard digest-sweep connection when advisory-unlock fails) — release_digest_sweep detaches + hard-closes the connection on unlock failure"
       ],
       "files": [
         "backend/servers/api-server/src/services/notification_digest.rs"
       ],
       "created_at": "2026-11-17",
-      "updated_at": "2026-11-17",
+      "updated_at": "2026-11-18",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-compliance-rs",
+      "title": "Churn hotspot: api-server routes/compliance.rs (compliance wave churn)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "commit log 2026-11-18"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/compliance.rs changed in 3 commits this run (new hotspot)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/compliance.rs"
+      ],
+      "created_at": "2026-11-18",
+      "updated_at": "2026-11-18",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3606-ppt",
+      "title": "Screen-map drift: PR #3606 wrap route groups in ProtectedRoute without docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3606"
+      ],
+      "evidence": [
+        "PR #3606 touched frontend/apps/ppt-web/src/routes/groups/{announcements,faults,financial,outages}.tsx + a route-auth-guard test; no docs/screens/ppt/*.md update in the PR"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/announcements.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/outages.tsx"
+      ],
+      "created_at": "2026-11-18",
+      "updated_at": "2026-11-18",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3595-reality",
+      "title": "Screen-map drift: PR #3595 preserve locale in reality-web auth navigation without docs/screens/reality update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3595"
+      ],
+      "evidence": [
+        "PR #3595 touched frontend/apps/reality-web/src/app/[locale]/auth/{login,register,reset-password}/page.tsx; no docs/screens/reality/*.md update in the PR"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/login/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/register/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/reset-password/page.tsx"
+      ],
+      "created_at": "2026-11-18",
+      "updated_at": "2026-11-18",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-3380",
+      "title": "Stalled review: PR #3380 (reality-web analytics i18n) — 8d, no reviewDecision",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3380"
+      ],
+      "evidence": [
+        "PR #3380 open since 2026-11-10; last update 2026-11-17; only COMMENTED reviews (author + copilot-pull-request-reviewer bot), no APPROVED/CHANGES_REQUESTED"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/dashboard/analytics/page.tsx"
+      ],
+      "created_at": "2026-11-18",
+      "updated_at": "2026-11-18",
       "plan": null
     }
   ]

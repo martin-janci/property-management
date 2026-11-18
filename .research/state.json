@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-11-17T03:27:06Z",
-  "last_run_ms": 906000,
-  "last_pr_seen": 3581,
-  "last_issue_seen": 3584,
-  "last_commit_sha": "deaa47ca726ac6e7a0e0a47d96398857f1f1ae33",
+  "last_run_iso": "2026-11-18T03:15:25Z",
+  "last_run_ms": 5000,
+  "last_pr_seen": 3606,
+  "last_issue_seen": 3611,
+  "last_commit_sha": "8b111657270759801dd4c7e740cfa2566ce90782",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -748,14 +748,19 @@
       "recent_churn": 244
     },
     "backend/servers/api-server/src/services/notification_digest.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-11-17",
-      "recent_churn": 2
+      "runs_seen": 2,
+      "last_seen": "2026-11-18",
+      "recent_churn": 3
     },
     "backend/crates/db/src/repositories/granular_notification.rs": {
+      "runs_seen": 2,
+      "last_seen": "2026-11-18",
+      "recent_churn": 3
+    },
+    "backend/servers/api-server/src/routes/compliance.rs": {
       "runs_seen": 1,
-      "last_seen": "2026-11-17",
-      "recent_churn": 2
+      "last_seen": "2026-11-18",
+      "recent_churn": 3
     }
   },
   "seen_signals": [
@@ -806,6 +811,7 @@
     "churn-hotspot-backend/servers/api-server/src/routes/announcements.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/auth.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/competitive.rs",
+    "churn-hotspot-backend/servers/api-server/src/routes/compliance.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/documents.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/integrations.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/integrations/install.rs",
@@ -1336,6 +1342,7 @@
     "repeated-churn-backend-servers-api-server-src-routes-forms-rs",
     "repeated-churn-backend-servers-api-server-src-routes-reports-rs",
     "repeated-churn-backend-servers-api-server-tests-oauth-integration-tests-rs",
+    "repeated-churn-backend/crates/db/src/repositories/granular_notification.rs",
     "repeated-churn-backend/servers/api-server/src/routes/announcements.rs",
     "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
     "repeated-churn-backend/servers/api-server/src/routes/documents.rs",
@@ -1344,6 +1351,7 @@
     "repeated-churn-backend/servers/api-server/src/routes/organizations.rs",
     "repeated-churn-backend/servers/api-server/src/routes/reports.rs",
     "repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs",
+    "repeated-churn-backend/servers/api-server/src/services/notification_digest.rs",
     "repeated-churn-backend/servers/api-server/src/services/push_fanout.rs",
     "repeated-churn-backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs",
     "repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs",
@@ -1400,6 +1408,8 @@
     "screen-map-drift-pr-3486-ppt",
     "screen-map-drift-pr-3546-ppt",
     "screen-map-drift-pr-3559-reality",
+    "screen-map-drift-pr-3595-reality",
+    "screen-map-drift-pr-3606-ppt",
     "screen-map-drift-pr-460-reality",
     "screen-map-drift-pr-464-ppt",
     "screen-map-drift-pr-547-ppt",
@@ -1419,6 +1429,7 @@
     "stalled-review-pr-3075",
     "stalled-review-pr-3108",
     "stalled-review-pr-3119",
+    "stalled-review-pr-3380",
     "stalled-review-pr-988",
     "standing-scan-admin-web-noop-save-paths",
     "standing-scan-aml-review-decision-cast",
@@ -1500,8 +1511,8 @@
     "mobile-native-kmp": "2026-11-04"
   },
   "stats": {
-    "runs": 121,
-    "vectors_created": 552,
+    "runs": 122,
+    "vectors_created": 556,
     "plans_created": 38,
     "quiet_days": 8,
     "auto_fix_count": 0
