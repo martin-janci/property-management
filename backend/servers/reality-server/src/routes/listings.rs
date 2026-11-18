@@ -468,7 +468,8 @@ pub async fn get_listing(
     path = "/api/v1/listings/suggestions",
     tag = "Listings",
     params(
-        ("city" = Option<String>, Query, description = "Current city for nearby suggestions")
+        ("city" = Option<String>, Query, description = "Current city for nearby suggestions"),
+        ("region" = Option<String>, Query, description = "Deployment region (sk, cz, de, eu) selecting the default seed city when `city` is omitted; falls back to the REGION env var, then sk")
     ),
     responses(
         (status = 200, description = "Search suggestions", body = SuggestionsResponse)
@@ -480,10 +481,14 @@ pub async fn get_suggestions(
     headers: HeaderMap,
 ) -> Result<Json<SuggestionsResponse>, (axum::http::StatusCode, String)> {
     let locale = resolve_locale(params.get("locale").map(|s| s.as_str()), &headers);
+    // Derive the seed region from the request (or deployment) instead of
+    // hardcoding Slovakia. The default city for nearby-city suggestions then
+    // follows the region rather than always being Bratislava.
+    let region = resolve_region(params.get("region").map(|s| s.as_str()));
     let city = params
         .get("city")
         .map(|s| s.as_str())
-        .unwrap_or("Bratislava");
+        .unwrap_or_else(|| default_city_for_region(&region));
 
     let cities = state
         .portal_repo
@@ -917,6 +922,42 @@ fn first_language_tag(header: &str) -> Option<&str> {
         .next()
         .map(|tag| tag.split(';').next().unwrap_or(tag).trim())
         .filter(|tag| !tag.is_empty())
+}
+
+/// Deployment region assumed when neither a `region` query param nor the
+/// `REGION` env var is set. The Slovak portal is the origin deployment, so
+/// `sk` is the default — this keeps the historical seed city (Bratislava) for
+/// callers that don't pass a region, preserving existing behavior.
+const DEFAULT_REGION: &str = "sk";
+
+/// Resolve the deployment region used for region-dependent defaults (e.g. the
+/// seed city for nearby-city suggestions when the request carries no `city`).
+///
+/// Precedence: explicit `region` query param, then the `REGION` env var (set
+/// per deployment — see reality-server `CLAUDE.md` "Multi-Region": sk, cz, eu,
+/// local), then [`DEFAULT_REGION`] (`sk`). The value is trimmed and lowercased
+/// so `SK`/`sk` and a padded env var resolve the same.
+fn resolve_region(query_region: Option<&str>) -> String {
+    if let Some(r) = query_region.map(str::trim).filter(|s| !s.is_empty()) {
+        return r.to_lowercase();
+    }
+    std::env::var("REGION")
+        .ok()
+        .map(|r| r.trim().to_lowercase())
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| DEFAULT_REGION.to_string())
+}
+
+/// Seed city for "nearby cities" suggestions when the request doesn't carry an
+/// explicit `city`. Chosen per region so a Czech or German visitor isn't shown
+/// Slovak cities by default. Unknown / EU / local regions fall back to the
+/// Slovak capital, preserving the endpoint's historical default.
+fn default_city_for_region(region: &str) -> &'static str {
+    match region {
+        "cz" => "Praha",
+        "de" | "at" => "Wien",
+        _ => "Bratislava",
+    }
 }
 
 /// Localized label for a `property_type` enum value, in the given [`Locale`].
