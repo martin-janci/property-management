@@ -164,6 +164,12 @@ pub struct ListingSummary {
     pub id: Uuid,
     /// Title
     pub title: String,
+    /// URL slug: `{slugified-title}-{uuid}`. The trailing UUID is
+    /// authoritative (the detail handler resolves by it); the title prefix is
+    /// cosmetic/SEO. A bare UUID is still accepted for backward-compatible
+    /// deep links. Mirrors the `slug` field emitted by `/featured`
+    /// (`RichListingSummary`) so search results link to SEO-friendly paths too.
+    pub slug: String,
     /// Short description
     pub description: Option<String>,
     /// Price
@@ -188,9 +194,15 @@ pub struct ListingSummary {
 
 impl From<PublicListingSummary> for ListingSummary {
     fn from(summary: PublicListingSummary) -> Self {
+        // Derive the SEO slug the same way `/featured` does (via
+        // `RichListingSummary`): `{slugified-title}-{uuid}`, degrading to the
+        // bare UUID when the title slugifies to nothing. Computed before `title`
+        // is moved into the struct below.
+        let slug = crate::util::slug::listing_slug(&summary.title, summary.id);
         Self {
             id: summary.id,
             title: summary.title,
+            slug,
             description: summary.description,
             price: summary.price,
             currency: summary.currency,
@@ -1067,8 +1079,7 @@ mod tests {
         let id = Uuid::parse_str("11111111-2222-3333-4444-555555555555").unwrap();
         let summary: ListingSummary = public_summary(id, "Beautiful Apartment").into();
         assert_eq!(
-            summary.slug,
-            "beautiful-apartment-11111111-2222-3333-4444-555555555555",
+            summary.slug, "beautiful-apartment-11111111-2222-3333-4444-555555555555",
             "search results must emit the SEO slug, not a bare UUID"
         );
         assert_ne!(
