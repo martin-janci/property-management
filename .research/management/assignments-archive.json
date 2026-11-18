@@ -3715,6 +3715,28 @@
       "merge_attempted_at": "2026-11-16T20:39:26Z"
     },
     {
+      "task_id": "code-review-api-core-digest-sweep-lock-release-leak",
+      "branch": "auto-impl/code-review-api-core-digest-sweep-lock-r-08625e01",
+      "status": "failed",
+      "claimed_at": "2026-11-18T20:34:11Z",
+      "last_updated": "2026-11-18T20:45:56Z",
+      "status_changed_at": "2026-11-18T20:45:56Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=done note=already-resolved-on-dev: release_digest_sweep (granular_notification.rs) already detaches+hard-closes+tracing::warn on unlock-fail and returns orig error (dup of merged #3591/#3593); no-op, no PR. [dispatcher: failed/no-op to prevent re-claim of stale backlog item]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-api-core-digest-worker-no-replica-claim",
       "branch": "auto-impl/code-review-api-core-digest-worker-no-re-9096ca09",
       "status": "merged",
@@ -30196,5 +30218,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-18T18:35:44Z"
+  "archived_at": "2026-11-18T20:45:56Z"
 }
