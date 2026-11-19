@@ -15,6 +15,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -92,8 +93,12 @@ export function AnnouncerProvider({ children }: AnnouncerProviderProps) {
     };
   }, []);
 
+  // Memoize the context value so consumers don't re-render on every provider
+  // render. `announce` is useCallback-stable, so the value is stable too.
+  const contextValue = useMemo(() => ({ announce }), [announce]);
+
   return (
-    <AnnouncerContext.Provider value={{ announce }}>
+    <AnnouncerContext.Provider value={contextValue}>
       {children}
       {/* Polite announcements - waits for current speech */}
       <div role="status" aria-live="polite" aria-atomic="true" className="aria-announcer">

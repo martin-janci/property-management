@@ -57,18 +57,6 @@ impl RentalRepository {
         Ok(guest)
     }
 
-    /// Find guest by ID.
-    pub async fn find_guest_by_id(&self, id: Uuid) -> Result<Option<RentalGuest>, SqlxError> {
-        let guest = sqlx::query_as::<_, RentalGuest>(sqlx::AssertSqlSafe(format!(
-            "SELECT {GUEST_COLUMNS} FROM rental_guests WHERE id = $1"
-        )))
-        .bind(id)
-        .fetch_optional(&self.pool)
-        .await?;
-
-        Ok(guest)
-    }
-
     /// Find guest by ID scoped to an organization.
     ///
     /// SECURITY (#804): prevents reading another org's guest PII by UUID.
@@ -83,57 +71,6 @@ impl RentalRepository {
         .bind(id)
         .bind(org_id)
         .fetch_optional(&self.pool)
-        .await?;
-
-        Ok(guest)
-    }
-
-    /// Update guest.
-    pub async fn update_guest(
-        &self,
-        id: Uuid,
-        data: UpdateGuest,
-    ) -> Result<RentalGuest, SqlxError> {
-        let guest = sqlx::query_as::<_, RentalGuest>(sqlx::AssertSqlSafe(format!(
-            r#"
-            UPDATE rental_guests SET
-                first_name = COALESCE($2, first_name),
-                last_name = COALESCE($3, last_name),
-                date_of_birth = COALESCE($4, date_of_birth),
-                nationality = COALESCE($5, nationality),
-                id_type = COALESCE($6, id_type),
-                id_number = COALESCE($7, id_number),
-                id_issuing_country = COALESCE($8, id_issuing_country),
-                id_expiry_date = COALESCE($9, id_expiry_date),
-                id_document_url = COALESCE($10, id_document_url),
-                email = COALESCE($11, email),
-                phone = COALESCE($12, phone),
-                address_street = COALESCE($13, address_street),
-                address_city = COALESCE($14, address_city),
-                address_postal_code = COALESCE($15, address_postal_code),
-                address_country = COALESCE($16, address_country),
-                updated_at = NOW()
-            WHERE id = $1
-            RETURNING {GUEST_COLUMNS}
-            "#
-        )))
-        .bind(id)
-        .bind(&data.first_name)
-        .bind(&data.last_name)
-        .bind(data.date_of_birth)
-        .bind(&data.nationality)
-        .bind(&data.id_type)
-        .bind(&data.id_number)
-        .bind(&data.id_issuing_country)
-        .bind(data.id_expiry_date)
-        .bind(&data.id_document_url)
-        .bind(&data.email)
-        .bind(&data.phone)
-        .bind(&data.address_street)
-        .bind(&data.address_city)
-        .bind(&data.address_postal_code)
-        .bind(&data.address_country)
-        .fetch_one(&self.pool)
         .await?;
 
         Ok(guest)
@@ -191,26 +128,6 @@ impl RentalRepository {
         .bind(&data.address_country)
         .bind(org_id)
         .fetch_optional(&self.pool)
-        .await?;
-
-        Ok(guest)
-    }
-
-    /// Register guest (mark as registered).
-    pub async fn register_guest(&self, id: Uuid) -> Result<RentalGuest, SqlxError> {
-        let guest = sqlx::query_as::<_, RentalGuest>(sqlx::AssertSqlSafe(format!(
-            r#"
-            UPDATE rental_guests SET
-                status = $2::guest_registration_status,
-                registered_at = NOW(),
-                updated_at = NOW()
-            WHERE id = $1
-            RETURNING {GUEST_COLUMNS}
-            "#
-        )))
-        .bind(id)
-        .bind(guest_status::REGISTERED)
-        .fetch_one(&self.pool)
         .await?;
 
         Ok(guest)
@@ -312,32 +229,6 @@ impl RentalRepository {
         Ok(rows)
     }
 
-    /// Get booking with guests.
-    pub async fn get_booking_with_guests(
-        &self,
-        booking_id: Uuid,
-    ) -> Result<Option<BookingWithGuests>, SqlxError> {
-        let booking = self.find_booking_by_id(booking_id).await?;
-        if booking.is_none() {
-            return Ok(None);
-        }
-        let booking = booking.unwrap();
-
-        let guests = self.get_guests_for_booking(booking_id).await?;
-
-        // Check if registration is complete (all guests registered)
-        let registration_complete = !guests.is_empty()
-            && guests.iter().all(|g| {
-                g.status == guest_status::REGISTERED || g.status == guest_status::REPORTED
-            });
-
-        Ok(Some(BookingWithGuests {
-            booking,
-            guests,
-            registration_complete,
-        }))
-    }
-
     /// Get booking with guests scoped to an organization.
     ///
     /// SECURITY (#804): resolves the booking via the org-scoped lookup so a
@@ -377,16 +268,6 @@ impl RentalRepository {
                 .bind(org_id)
                 .execute(&self.pool)
                 .await?;
-
-        Ok(result.rows_affected() > 0)
-    }
-
-    /// Delete guest.
-    pub async fn delete_guest(&self, id: Uuid) -> Result<bool, SqlxError> {
-        let result = sqlx::query(r#"DELETE FROM rental_guests WHERE id = $1"#)
-            .bind(id)
-            .execute(&self.pool)
-            .await?;
 
         Ok(result.rows_affected() > 0)
     }

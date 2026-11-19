@@ -1,30 +1,43 @@
-# pm-integration — 2026-10-19
+# pm-integration — 2026-11-19
 
-_Rotating-role run (next_index 7 → 0, wrap). Last run: 2026-07-24 — ~3 months stale, so this is a fresh integration lens on the current merge/build-gate stack._
+<sub>Rotating role — last run 2026-10-19 (31 days). Focus: API contracts, generated clients, external integrations, dependency hygiene.</sub>
 
 ## Summary
 
-Integration-contract surface is quiet this run — the two merged PRs (#3121 reality-web auth-context, #3122 ppt-web useAmlDashboard) are client-side cushions over existing surfaces and do not change any external contract. The signal of the day is a merge-queue failure mode: #3124 cargo-deny advisories (RUSTSEC-2026-0368/0369 on zip 8.6.0 via rust_xlsxwriter) now vetoes every backend merge, independently of #2966 (which already vetoes every backend build). The twin lock means a green PR still cannot land.
+Two contract themes stand out this sprint.
+1. **reality-server `/listings`** gained a `slug` field on `ListingSummary` (#3616) — additive, but client-side regeneration (TS `@ppt/reality-api-client`, KMP, iOS) and the canonical-identifier decision are unverified.
+2. **Compliance pagination hardening (#3627)** and **voice OAuth error sanitization (#3621)** tightened error contracts, but compliance list responses may still echo an unclamped `limit`, and the voice account-linking error shape hasn't been checked against Alexa/Google (RFC 6749 §5.2) expectations.
+
+`sprint-status.yaml` shows all tracked epics done, so this is a hotspot/PR-driven read. The cargo-deny advisories blocker (#3604, closed via #3608 + #3619) remains the recurring merge-queue risk pattern.
 
 ## Next actions
 
-| # | Priority | Dependency | Action | Definition of done |
-|---|---|---|---|---|
-| 1 | medium | none | Audit integration-touching PRs since 2026-10-17 for OpenAPI / TypeSpec drift (draft #3123 is api-core TOTP RNG — no contract impact; recent merged #3121/#3122 are client-side only) | api-validation.yml stays green for the audit window; a one-line note on each PR confirming "no contract delta" or opening a follow-up |
-| 2 | medium | #3124 | Surface the RUSTSEC-exception policy in the cargo-deny CI gate description so #3124-class blockers triage faster next time (bounded deadline, approver captured in the exception row) | cargo-deny CI gate description links the exception policy and names the current triage owner |
-| 3 | low | none | Document the reality-server SSO consumer transient-401 contract vs reality-web auth-context cushion (PR #3121) in docs/api/README.md — ensure client/server treat transient vs permanent 401 symmetrically | docs/api/README.md gains a short section on "transient 401 vs permanent 401" for the SSO introspect / refresh pair |
+| Priority | Action | Dependency | Definition of done |
+|----------|--------|------------|--------------------|
+| high | Confirm #3616 slug reaches OpenAPI/TypeSpec, `@ppt/reality-api-client`, KMP + iOS generated clients; document slug as always-populated; state whether detail lookup accepts slug, id, or both. | pm-qa | api-validation.yml green; generated TS/Kotlin clients contain `slug`; deep-link note states lookup identifier. |
+| medium | Make compliance list routes echo clamped `limit` (not raw param); add test with `limit=5000`; same pattern audit near line 340. | — | Response `limit` equals the limit actually applied; test with over-limit param; OpenAPI documents max 1000 + 400 on negatives. |
+| medium | Verify sanitized `voice_oauth_error_response` bodies follow RFC 6749 §5.2 on Alexa/Google account-linking path. | pm-security | Test asserts body shape + status for `invalid_grant` / `invalid_request` / `server_error`; upstream detail only in logs; voice integration docs updated. |
+| low | Document compliance 400 behaviour for negative limit/offset in TypeSpec/OpenAPI; decide: keep `(StatusCode, String)` or move to standard error envelope. | pm-backend | Spec lists 400 for compliance list endpoints; decision recorded. |
+| low | Verify #3609 property_type i18n helper keeps filter contract on stable enum codes across sk/cs/de/en. | pm-qa | Test or spec note confirms locale-independent filter query values. |
+| high (carry) | Triage #3604 outcome (cargo-deny advisories) and record a bounded exception policy, same failure vetoed merges on 2026-10-19 (#3124). | pm-security | Advisory fixed or exception recorded in `deny.toml` with deadline + approver; cargo-deny gate green on dev. |
 
 ## Risks
 
-| Risk | P | I | Mitigation |
-|---|---|---|---|
-| External-dependency drift surface: cargo-deny can veto every backend merge on any new RUSTSEC advisory landing on a transitive dep (today: rust_xlsxwriter → zip 8.6.0 → RUSTSEC-2026-0368/0369). Integration velocity collapses to zero on advisory bursts; no SLA on how fast exceptions get triaged. | medium | high | Introduce a bounded cargo-deny exception window with a deadline tracked in dispatcher backlog; add CI gate description text that links the exception policy and names the current triage owner. |
-| api-client regen drift: PR #3122 touched @ppt/api-client compliance types (AML flags). If api-validation.yml did not regenerate cleanly against the typespec snapshot, downstream frontends could silently diverge on nullable flag defaults. | low | medium | Spot-check api-validation.yml on PR #3122; open a follow-up to regenerate if the client bump was not part of the merge. |
+- **slug client drift (medium / medium)** — additive field may not propagate to generated clients; strict-decode clients could fail; mitigation: run spec/client regen in CI, keep field additive, clients tolerant of unknown fields.
+- **compliance `limit` echo mismatch (medium / low)** — paging clients that use `limit` to detect last page could mis-paginate or loop; mitigation: echo effective limit + document semantics in spec.
+- **voice OAuth sanitized shape drift (low / medium)** — could break Alexa/Google linking if sanitized message/status drifts; mitigation: contract test + alert on upstream-failure log.
+- **cargo-deny advisories recurring (medium / high)** — can block all backend merges; non-required gate so regressions may be silent; mitigation: bounded exception window with owner + deadline, surface triage owner in CI gate description.
+- **listings.rs + compliance.rs spec drift (medium / medium)** — churn hotspots receive contract-adjacent edits without evidence that OpenAPI/TypeSpec was updated in the same PRs; mitigation: require `no contract delta` or spec-update line in PR descriptions touching these files.
 
 ## Open questions
 
-- Is the SSO consumer's 401 handling in reality-web auth-context (PR #3121) symmetric with the api-server /auth/refresh contract? Post-condition should be: both sides treat transient 401 as retriable only when the server includes `WWW-Authenticate: Bearer error="invalid_token"`; a bare 401 remains permanent-logout. The PR adds the client cushion but we have no explicit server-side contract line to point to.
+- Was OpenAPI/TypeSpec + generated clients updated in #3616 (slug) and #3627 (400 on negative pagination)? Diffs not inspected this run.
+- Does the reality-server detail endpoint resolve by slug, UUID, or both now that search results expose slug?
+- Is the clamped `limit` (max 1000) applied consistently across all compliance list handlers? Only the audit-log handler confirmed.
+- Is there a contract test for Alexa/Google account-linking error responses beyond the unit test around voice_webhooks.rs:1906?
 
 ## Decisions needed
 
-- Formalize the RUSTSEC-exception policy (max deadline, approver, surfacing in CI gate description) — owner: pm-security. Trigger: the #3124 cargo-deny gate is the second instance of this failure mode this quarter; without a policy, each occurrence stalls the merge queue until it's hand-triaged under pressure.
+- Standard error envelope vs plain-text `(StatusCode, String)` for compliance validation errors — **pm-backend**
+- RUSTSEC exception policy (max deadline, approver, CI gate surfacing) — **pm-security**
+- Whether `slug` becomes canonical public identifier for reality listings (UUID kept for back-compat) — **pm-product**

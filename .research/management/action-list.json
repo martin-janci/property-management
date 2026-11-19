@@ -233,34 +233,6 @@
       "source": "pm-analysis 2026-11-16"
     },
     {
-      "id": "pm-scrum-master-mark-merged-action-items-done-2026-11-16",
-      "action": "Mark as done in action-list the items already merged this window: errorhandler-403-mislabel, currency-code-rangeerror, login-open-redirect-backslash. Check that the 17 merges are reflected in the backlog.",
-      "owner_role": "pm-scrum-master",
-      "priority": "low",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-16"
-    },
-    {
-      "id": "churn-hotspot-backend-servers-reality-server-src-routes-listings-rs",
-      "action": "Churn hotspot: reality-server routes/listings.rs (slug + category i18n sweeps)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-16T18:25:46Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-16T18:25:46Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
       "id": "code-review-reality-server-record-view-no-check",
       "action": "reality-server record_view: comment claims existence check but handler does not verify + no per-IP throttle",
       "owner_role": "pm-backend",
@@ -275,24 +247,6 @@
         "plan": null,
         "score": 1,
         "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-api-handlers-oauth-client-error-leak",
-      "action": "api handlers oauth client error leak",
-      "owner_role": "pm-security",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d api-handlers score=2 vector=security)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-17T00:24:34Z",
-      "signal_ref": {
-        "segment": "api-handlers",
-        "score": 2,
-        "vector": "security",
-        "generated": "2026-09-02T00:00:00Z"
       }
     },
     {
@@ -314,96 +268,6 @@
       }
     },
     {
-      "id": "code-review-mobile-rn-alert-hardcoded-en",
-      "action": "mobile rn alert hardcoded en",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d mobile-rn score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-17T00:24:34Z",
-      "signal_ref": {
-        "segment": "mobile-rn",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-09-02T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-mobile-rn-personmonths-screen-no-i18n",
-      "action": "mobile rn personmonths screen no i18n",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d mobile-rn score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-17T00:24:34Z",
-      "signal_ref": {
-        "segment": "mobile-rn",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-09-02T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-mobile-rn-widget-settings-i18n-leak",
-      "action": "mobile rn widget settings i18n leak",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d mobile-rn score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-17T00:24:34Z",
-      "signal_ref": {
-        "segment": "mobile-rn",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-09-02T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-facilities-forms-hardcoded-errors",
-      "action": "ppt web ui facilities forms hardcoded errors",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d ppt-web-ui score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-17T00:24:34Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-09-02T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-reality-server-categories-labels-sk-only",
-      "action": "reality server categories labels sk only",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d reality-server score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-17T00:24:34Z",
-      "signal_ref": {
-        "segment": "reality-server",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-09-02T00:00:00Z"
-      }
-    },
-    {
       "id": "pm-scrum-master-review-draft-prs-3582-3585-3586-2026-11-17",
       "action": "Review draft PRs #3582 (T33 quarantine tests), #3585 and #3586 (ppt-web locale churn plans), then mark ready or close",
       "owner_role": "pm-scrum-master",
@@ -413,187 +277,6 @@
       "status": "open",
       "deadline": null,
       "source": "pm-analysis 2026-11-17"
-    },
-    {
-      "id": "pm-data-backfill-kpi-definitions-stories-2026-11-17",
-      "action": "Backfill KPI definitions for shipped stories in sprint-status.yaml or the epic docs, and add an events/KPI column to the story template",
-      "owner_role": "pm-data",
-      "priority": "low",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-17"
-    },
-    {
-      "id": "code-review-ppt-web-toast-announcer-provider-value-not-memoized",
-      "action": "ppt-web Toast and Announcer context providers pass a fresh object literal as `value` on every render (Toast.tsx:199 `{ showToast, removeToast }`, Announcer.tsx:96 `{ announce }`), forcing all consumers to re-render. Both members are already useCallback-stable, so wrap each provider `value` in `useMemo`. Same symptom class as the org-provider finding (merged #3514); these two were out-of-scope there.",
-      "owner_role": "pm-frontend",
-      "priority": "low",
-      "status": "open",
-      "source": "org-provider implementer investigation 2026-11-17 (surfaced while confirming the org-provider finding was a dup of #3514)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-17T13:01:40.474926Z"
-    },
-    {
-      "id": "tooling-ppt-implement-isolate-scratchpad-per-implementer",
-      "action": "ppt-implement: parallel implementer subagents spawned in the same dispatcher run write their PR-body to a SHARED scratchpad path (pr-body.md), so concurrent siblings clobber each other's file (observed 2026-11-17: authed-query-roots vs validation-i18n implementers collided; one recovered with a task-unique filename). Make the scratchpad path task-unique per implementer (e.g. include task_id or $$ in the filename) in the ppt-implement skill / pr-create step so parallel implementers cannot overwrite each other's transient files. Diffs are unaffected (separate worktrees); only the PR-body file collides.",
-      "owner_role": "pm-devops",
-      "priority": "low",
-      "status": "open",
-      "source": "validation-i18n implementer note 2026-11-17 (concurrent scratchpad collision during parallel Phase 4 spawn)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-17T13:03:05.808447Z"
-    },
-    {
-      "id": "code-review-api-core-digest-abandoned-no-terminal-state",
-      "action": "report_abandoned has no persisted abandoned_at — abandoned digests are log-only",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-17T20:34:55Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-17T20:34:55Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-api-core-digest-candidates-inner-join-refresh-tokens",
-      "action": "find_inactive_digest_candidates INNER JOIN silently excludes users without a refresh-tokens row",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-17T20:34:55Z (score=2 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-17T20:34:55Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "churn-hotspot-backend-crates-db-src-repositories-granular-notification-rs",
-      "action": "granular_notification.rs repo is a repeat churn hotspot (digest subsystem)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-17T20:34:55Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-17T20:34:55Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
-      "id": "churn-hotspot-backend-servers-api-server-src-services-notification-digest-rs",
-      "action": "notification_digest.rs is a repeat churn hotspot (digest subsystem)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-17T20:34:55Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-17T20:34:55Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
-      "id": "code-review-reality-web-inquiry-type-raw-enum-retry1",
-      "action": "[stale-resolved @ 2026-11-10T09:10:40Z: finding already fixed on dev (inquiry-type.ts helper + all locales present, landed c5d7ca5); implementer confirmed no diff needed, no PR] reality web inquiry type raw enum [retry 1/2 of failed code-review-reality-web-inquiry-type-raw-enum]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-11-17T20:34:55Z (retry_of=code-review-reality-web-inquiry-type-raw-enum reason=failed-no-pr cooldown_ok newest_failure=2026-11-10T09:08:44Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-17T20:34:55Z",
-      "retry_of": "code-review-reality-web-inquiry-type-raw-enum",
-      "retry_round": 1
-    },
-    {
-      "id": "code-review-reality-server-import-jobs-limit-unclamped-retry1",
-      "action": "reality server import jobs limit unclamped [retry 1/2 of failed code-review-reality-server-import-jobs-limit-unclamped]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-11-17T20:34:55Z (retry_of=code-review-reality-server-import-jobs-limit-unclamped reason=failed-no-pr cooldown_ok newest_failure=2026-11-10T12:47:00Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-17T20:34:55Z",
-      "retry_of": "code-review-reality-server-import-jobs-limit-unclamped",
-      "retry_round": 1
-    },
-    {
-      "id": "code-review-mobile-rn-voting-quorum-divzero-retry1",
-      "action": "mobile rn voting quorum divzero [retry 1/2 of failed code-review-mobile-rn-voting-quorum-divzero]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-11-17T20:34:55Z (retry_of=code-review-mobile-rn-voting-quorum-divzero reason=failed-no-pr cooldown_ok newest_failure=2026-11-10T16:41:17Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-17T20:34:55Z",
-      "retry_of": "code-review-mobile-rn-voting-quorum-divzero",
-      "retry_round": 1
-    },
-    {
-      "id": "code-review-api-core-notif-push-channel-noop",
-      "action": "api core notif push channel noop",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-18T00:25:54Z (tier1d api-core score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-18T00:25:54Z",
-      "signal_ref": {
-        "segment": "api-core",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-30T18:33:25Z"
-      }
-    },
-    {
-      "id": "code-review-api-core-vote-reminder-spam-5min",
-      "action": "api core vote reminder spam 5min",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-18T00:25:54Z (tier1d api-core score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-18T00:25:54Z",
-      "signal_ref": {
-        "segment": "api-core",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-30T18:33:25Z"
-      }
     },
     {
       "id": "code-review-reality-server-import-fetch-ssrf-revalidation",
@@ -626,42 +309,6 @@
       "first_open_at": "2026-11-18T00:25:54Z",
       "signal_ref": {
         "segment": "api-core",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-28T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-api-core-rental-dead-unscoped-idor",
-      "action": "api core rental dead unscoped idor",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-18T00:25:54Z (tier1d api-core score=2 vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-18T00:25:54Z",
-      "signal_ref": {
-        "segment": "api-core",
-        "score": 2,
-        "vector": "refactor",
-        "generated": "2026-08-28T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-core-init-no-exp-check",
-      "action": "ppt web core init no exp check",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-18T00:25:54Z (tier1d ppt-web-core score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-18T00:25:54Z",
-      "signal_ref": {
-        "segment": "ppt-web-core",
         "score": 2,
         "vector": "bug",
         "generated": "2026-08-28T00:00:00Z"
@@ -758,57 +405,6 @@
       }
     },
     {
-      "id": "screen-map-drift-pr-3595-reality",
-      "action": "Screen-map drift: PR #3595 preserve locale in reality-web auth navigation without docs/screens/reality update",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-18T22:26:56Z (score=2 conf=medium vector=test-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-18T22:26:56Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "test-gap"
-      }
-    },
-    {
-      "id": "screen-map-drift-pr-3606-ppt",
-      "action": "Screen-map drift: PR #3606 wrap route groups in ProtectedRoute without docs/screens/ppt update",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-18T22:26:56Z (score=2 conf=medium vector=test-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-18T22:26:56Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "test-gap"
-      }
-    },
-    {
-      "id": "churn-hotspot-backend-servers-api-server-src-routes-compliance-rs",
-      "action": "Churn hotspot: api-server routes/compliance.rs (compliance wave churn)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-18T22:26:56Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-18T22:26:56Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
       "id": "stalled-review-pr-3380",
       "action": "Stalled review: PR #3380 (reality-web analytics i18n) — 8d, no reviewDecision",
       "owner_role": "pm-devops",
@@ -852,7 +448,419 @@
       "first_open_at": "2026-11-18T22:26:56Z",
       "retry_of": "code-review-api-core-jwt-no-aud-iss",
       "retry_round": 1
+    },
+    {
+      "id": "code-review-ppt-web-core-financial-dash-no-error-state",
+      "action": "ppt web core financial dash no error state",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-19T02:27:15Z (tier1d ppt-web-core score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T02:27:15Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-27T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-crmconn-create-no-error",
+      "action": "reality web crmconn create no error",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-19T02:27:15Z (tier1d reality-web score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T02:27:15Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-27T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-feedimport-create-no-error",
+      "action": "reality web feedimport create no error",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-19T02:27:15Z (tier1d reality-web score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T02:27:15Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-27T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-listings-no-error-state",
+      "action": "reality web listings no error state",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-19T02:27:15Z (tier1d reality-web score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T02:27:15Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-27T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-listings-url-nan-query",
+      "action": "reality web listings url nan query",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-19T02:27:15Z (tier1d reality-web score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T02:27:15Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-27T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-orgprovider-unmemoized-value",
+      "action": "ppt web core orgprovider unmemoized value",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-19T02:27:15Z (tier1d ppt-web-core score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T02:27:15Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-27T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-account-routes-i18n",
+      "action": "reality web account routes i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-19T02:27:15Z (tier1d reality-web score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T02:27:15Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-27T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-import-delete-toggle-unhandled",
+      "action": "reality web import delete toggle unhandled",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-19T02:27:15Z (tier1d reality-web score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T02:27:15Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-27T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-slovak-i18n",
+      "action": "reality web listing edit slovak i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-19T02:27:15Z (tier1d reality-web score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T02:27:15Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-27T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-query-invalidation-dead",
+      "action": "ppt web core ws query invalidation dead",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-19T02:27:15Z (tier1d ppt-web-core score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T02:27:15Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-26T19:20:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-realtor-account-pages-no-i18n",
+      "action": "reality web realtor account pages no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-19T02:27:15Z (tier1d reality-web score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T02:27:15Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-26T18:36:06Z"
+      }
+    },
+    {
+      "id": "pm-integration-slug-client-propagation",
+      "action": "Confirm #3616 ListingSummary slug reaches OpenAPI/TypeSpec and @ppt/reality-api-client + KMP/iOS clients; document slug as always-populated and state detail-lookup identifier",
+      "owner_role": "pm-integration",
+      "priority": "high",
+      "dependency": "pm-qa",
+      "depends_on": [
+        "UNRESOLVED:pm-qa"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-19"
+    },
+    {
+      "id": "pm-integration-voice-oauth-rfc6749-shape",
+      "action": "Verify sanitized voice_oauth_error_response bodies follow RFC 6749 §5.2 (error+error_description, correct status codes) on Alexa/Google account-linking path; contract test required",
+      "owner_role": "pm-integration",
+      "priority": "medium",
+      "dependency": "pm-security",
+      "depends_on": [
+        "UNRESOLVED:pm-security"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-19"
+    },
+    {
+      "id": "pm-integration-compliance-400-spec",
+      "action": "Document compliance 400 behavior for negative limit/offset in TypeSpec/OpenAPI and decide: keep plain-text (StatusCode, String) or move to standard error envelope",
+      "owner_role": "pm-integration",
+      "priority": "low",
+      "dependency": "pm-backend",
+      "depends_on": [
+        "UNRESOLVED:pm-backend"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-19"
+    },
+    {
+      "id": "pm-integration-property-type-enum-stability",
+      "action": "Verify #3609 property_type i18n helper keeps API filter contract on stable enum codes across sk/cs/de/en; localize labels only in display fields",
+      "owner_role": "pm-integration",
+      "priority": "low",
+      "dependency": "pm-qa",
+      "depends_on": [
+        "UNRESOLVED:pm-qa"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-19"
+    },
+    {
+      "id": "pm-scrum-master-listings-rs-merge-sequence-2026-11-19",
+      "action": "Sequence listings.rs PRs: rebase #3617 (record_view existence + per-IP throttle) and #3628 (suggestions region seed); merge #3617 first (security-flavored)",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "pm-backend",
+      "depends_on": [
+        "UNRESOLVED:pm-backend"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-19"
+    },
+    {
+      "id": "pm-scrum-master-3612-supersede-check-2026-11-19",
+      "action": "Decide fate of #3612 (paginate agency import history): #3610 fixed total; confirm if #3612 still adds page/offset or close as superseded",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "pm-backend",
+      "depends_on": [
+        "UNRESOLVED:pm-backend"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-19"
+    },
+    {
+      "id": "pm-scrum-master-airbnb-env-leak-flake-2026-11-19",
+      "action": "Fix env-var leak in tests/suites/airbnb_install_routes_tests.rs (set_var without cleanup) causing airbnb_oauth_routes_tests flake in parallel suite_1",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "pm-qa",
+      "depends_on": [
+        "UNRESOLVED:pm-qa"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-19"
+    },
+    {
+      "id": "pm-scrum-master-3630-widgetsettings-i18n-merge-2026-11-19",
+      "action": "Land #3630 (mobile WidgetSettings i18n) after CI; remaining no-hardcoded-strings warnings must drain before 2026-12-01 lint flip",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "pm-frontend",
+      "depends_on": [
+        "UNRESOLVED:pm-frontend"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-19"
+    },
+    {
+      "id": "code-review-reality-web-branding-query-unhandled-error",
+      "action": "reality-web useAgencyBranding error path unhandled — silent default-color clobber on fetch failure",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-19T12:28:44Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T12:28:44Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-reality-web-preview-hardcoded-alt-text",
+      "action": "reality-web agency branding preview uses hardcoded English alt text (Preview, Logo)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-19T12:28:44Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T12:28:44Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-reality-web-preview-hardcoded-price",
+      "action": "reality-web agency branding preview shows hardcoded `€450,000` — breaks for de/sk/cs locales",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-19T12:28:44Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T12:28:44Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "repeated-churn-backend-servers-reality-server-src-routes-listings-rs",
+      "action": "reality-server /listings routes/listings.rs hit as repeated churn hotspot (runs_seen=2)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-19T12:28:44Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T12:28:44Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-marketplace-epic68-orphaned-routes-retry1",
+      "action": "ppt web ui marketplace epic68 orphaned routes [retry 1/2 of failed code-review-ppt-web-ui-marketplace-epic68-orphaned-routes]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-19T16:32:00Z (retry_of=code-review-ppt-web-ui-marketplace-epic68-orphaned-routes reason=failed-no-pr cooldown_ok newest_failure=2026-11-12T10:46:14Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T16:32:00Z",
+      "retry_of": "code-review-ppt-web-ui-marketplace-epic68-orphaned-routes",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-ppt-web-ui-ballotquestion-yesno-i18n-retry1",
+      "action": "ppt web ui ballotquestion yesno i18n [retry 1/2 of failed code-review-ppt-web-ui-ballotquestion-yesno-i18n]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-19T16:32:00Z (retry_of=code-review-ppt-web-ui-ballotquestion-yesno-i18n reason=failed-no-pr cooldown_ok newest_failure=2026-11-12T12:37:46Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T16:32:00Z",
+      "retry_of": "code-review-ppt-web-ui-ballotquestion-yesno-i18n",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-ppt-web-ui-filedisputedialog-i18n-retry1",
+      "action": "ppt web ui filedisputedialog i18n [retry 1/2 of failed code-review-ppt-web-ui-filedisputedialog-i18n]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-19T16:32:00Z (retry_of=code-review-ppt-web-ui-filedisputedialog-i18n reason=failed-no-pr cooldown_ok newest_failure=2026-11-12T14:33:52Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T16:32:00Z",
+      "retry_of": "code-review-ppt-web-ui-filedisputedialog-i18n",
+      "retry_round": 1
     }
   ],
-  "generated": "2026-11-17T03:17:29Z"
+  "generated": "2026-11-19T03:14:20Z"
 }

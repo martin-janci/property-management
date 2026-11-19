@@ -16210,19 +16210,26 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "churn"
+        "churn",
+        "commits 2026-11-18..19 (listings.rs 2 touches, 201 line churn)"
       ],
       "evidence": [
-        "backend/servers/reality-server/src/routes/listings.rs: 244 lines churn (2 commits — PR #3552 slug derivation + PR #3551 category i18n)."
+        "backend/servers/reality-server/src/routes/listings.rs: 244 lines churn (2 commits — PR #3552 slug derivation + PR #3551 category i18n).",
+        "2026-11-19 re-emit: 2 touches, 201 line churn — property_type i18n (#3609) + ListingSummary slug (#3616); runs_seen=2"
       ],
       "files": [
         "backend/servers/reality-server/src/routes/listings.rs"
       ],
       "created_at": "2026-11-16",
-      "updated_at": "2026-11-16",
-      "plan": null
+      "updated_at": "2026-11-19",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-19T02:26:18Z",
+        "assignment_status": "merged",
+        "pr_number": 3609
+      }
     },
     {
       "id": "code-review-reality-server-search-missing-slug",
@@ -16281,7 +16288,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3574",
         "PR #3576",
@@ -16296,7 +16303,12 @@
       ],
       "created_at": "2026-11-17",
       "updated_at": "2026-11-18",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-19T12:27:49Z",
+        "assignment_status": "merged",
+        "pr_number": 3633
+      }
     },
     {
       "id": "churn-hotspot-backend-crates-db-src-repositories-granular-notification-rs",
@@ -16304,7 +16316,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3574",
         "PR #3576",
@@ -16319,7 +16331,12 @@
       ],
       "created_at": "2026-11-17",
       "updated_at": "2026-11-18",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-19T12:27:49Z",
+        "assignment_status": "merged",
+        "pr_number": 3632
+      }
     },
     {
       "id": "code-review-api-core-digest-candidates-inner-join-refresh-tokens",
@@ -16393,7 +16410,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "commit log 2026-11-18"
       ],
@@ -16405,7 +16422,12 @@
       ],
       "created_at": "2026-11-18",
       "updated_at": "2026-11-18",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-19T02:26:18Z",
+        "assignment_status": "merged",
+        "pr_number": 3627
+      }
     },
     {
       "id": "screen-map-drift-pr-3606-ppt",
@@ -16413,7 +16435,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3606"
       ],
@@ -16428,7 +16450,12 @@
       ],
       "created_at": "2026-11-18",
       "updated_at": "2026-11-18",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-19T02:26:18Z",
+        "assignment_status": "merged",
+        "pr_number": 3625
+      }
     },
     {
       "id": "screen-map-drift-pr-3595-reality",
@@ -16436,7 +16463,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3595"
       ],
@@ -16450,7 +16477,12 @@
       ],
       "created_at": "2026-11-18",
       "updated_at": "2026-11-18",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-19T02:26:18Z",
+        "assignment_status": "merged",
+        "pr_number": 3624
+      }
     },
     {
       "id": "stalled-review-pr-3380",
@@ -16470,6 +16502,86 @@
       ],
       "created_at": "2026-11-18",
       "updated_at": "2026-11-18",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-backend-servers-reality-server-src-routes-listings-rs",
+      "title": "reality-server /listings routes/listings.rs hit as repeated churn hotspot (runs_seen=2)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "commits 2026-11-18..19 (listings.rs 2 touches, 201 line churn)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/listings.rs now runs_seen=2 (prev 2026-11-16, now 2026-11-19); churn this run 201 lines — property_type i18n + ListingSummary slug"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/listings.rs"
+      ],
+      "created_at": "2026-11-19",
+      "updated_at": "2026-11-19",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-branding-query-unhandled-error",
+      "title": "reality-web useAgencyBranding error path unhandled — silent default-color clobber on fetch failure",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-19 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx:24 — useAgencyBranding destructures only data/isLoading; no isError/error handling, mirror of Issue #2343 that was just fixed for useMyAgency (lines 20-23, 110-112). On a 5xx or network failure the form renders with hardcoded defaults #2563eb/#1e40af/#10b981; a Save overwrites real branding with the default palette (silent data clobber)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx"
+      ],
+      "created_at": "2026-11-19",
+      "updated_at": "2026-11-19",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-preview-hardcoded-alt-text",
+      "title": "reality-web agency branding preview uses hardcoded English alt text (Preview, Logo)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-19 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx:290 — `<img ... alt=\"Preview\">` hardcoded English; same at :304 for alt=\"Logo\". All other images use t(logoAlt)/t(coverAlt); reality-web supports sk, cs, de, en — a11y contract breaks for non-English locales."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx"
+      ],
+      "created_at": "2026-11-19",
+      "updated_at": "2026-11-19",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-preview-hardcoded-price",
+      "title": "reality-web agency branding preview shows hardcoded `€450,000` — breaks for de/sk/cs locales",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-19 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx:312 — literal \"€450,000\" in preview price block; not wrapped in t(...) nor formatted via Intl.NumberFormat(locale). On de/sk/cs the thousand separator is `.` and decimal is `,` so continental readers parse the preview as €450.00 — misrepresents sample price for ~3 of 4 supported locales."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx"
+      ],
+      "created_at": "2026-11-19",
+      "updated_at": "2026-11-19",
       "plan": null
     }
   ]

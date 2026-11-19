@@ -202,24 +202,29 @@ impl NotificationDigestConfig {
     /// - `NOTIFICATION_DIGEST_RESEND_WINDOW_HOURS` (default `20`)
     /// - `NOTIFICATION_DIGEST_BATCH_LIMIT` (default `200`)
     pub fn from_env() -> Self {
+        Self::from_lookup(|key| std::env::var(key).ok())
+    }
+
+    /// Pure core of [`Self::from_env`]: build the config from an arbitrary
+    /// key→value `lookup` instead of the process environment. Extracted so the
+    /// parse/default/fallback semantics are unit-testable without mutating
+    /// process-global env state (which races across parallel tests). `from_env`
+    /// is the thin `std::env::var` adapter over this; keep the two in lockstep.
+    fn from_lookup(lookup: impl Fn(&str) -> Option<String>) -> Self {
         let default = Self::default();
-        let enabled = std::env::var("NOTIFICATION_DIGEST_ENABLED")
+        let enabled = lookup("NOTIFICATION_DIGEST_ENABLED")
             .map(|v| v != "false" && v != "0")
             .unwrap_or(default.enabled);
-        let poll_interval_secs = std::env::var("NOTIFICATION_DIGEST_INTERVAL_SECS")
-            .ok()
+        let poll_interval_secs = lookup("NOTIFICATION_DIGEST_INTERVAL_SECS")
             .and_then(|v| v.parse().ok())
             .unwrap_or(default.poll_interval_secs);
-        let inactivity_hours = std::env::var("NOTIFICATION_DIGEST_INACTIVITY_HOURS")
-            .ok()
+        let inactivity_hours = lookup("NOTIFICATION_DIGEST_INACTIVITY_HOURS")
             .and_then(|v| v.parse().ok())
             .unwrap_or(default.inactivity_hours);
-        let resend_window_hours = std::env::var("NOTIFICATION_DIGEST_RESEND_WINDOW_HOURS")
-            .ok()
+        let resend_window_hours = lookup("NOTIFICATION_DIGEST_RESEND_WINDOW_HOURS")
             .and_then(|v| v.parse().ok())
             .unwrap_or(default.resend_window_hours);
-        let batch_limit = std::env::var("NOTIFICATION_DIGEST_BATCH_LIMIT")
-            .ok()
+        let batch_limit = lookup("NOTIFICATION_DIGEST_BATCH_LIMIT")
             .and_then(|v| v.parse().ok())
             .unwrap_or(default.batch_limit);
         Self {
@@ -545,6 +550,95 @@ impl NotificationDigestWorker {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Build a `from_lookup`-compatible closure from a fixed set of key/value
+    /// pairs — a deterministic stand-in for the process environment so the
+    /// config-parsing semantics are testable without mutating global env state.
+    fn lookup_from(pairs: &[(&str, &str)]) -> impl Fn(&str) -> Option<String> {
+        let owned: std::collections::HashMap<String, String> = pairs
+            .iter()
+            .map(|(k, v)| ((*k).to_string(), (*v).to_string()))
+            .collect();
+        move |key: &str| owned.get(key).cloned()
+    }
+
+    /// The compiled-in defaults are churn-prone magic numbers (24h inactivity,
+    /// 20h resend window, hourly poll, 200/batch). Pin them so an accidental
+    /// edit to the `Default` impl is caught, and confirm an empty lookup yields
+    /// exactly the defaults (every var falls back).
+    #[test]
+    fn from_lookup_empty_yields_defaults() {
+        let parsed = NotificationDigestConfig::from_lookup(lookup_from(&[]));
+        let default = NotificationDigestConfig::default();
+
+        assert!(default.enabled);
+        assert_eq!(default.poll_interval_secs, 3600);
+        assert_eq!(default.inactivity_hours, 24);
+        assert_eq!(default.resend_window_hours, 20);
+        assert_eq!(default.batch_limit, 200);
+
+        assert_eq!(parsed.enabled, default.enabled);
+        assert_eq!(parsed.poll_interval_secs, default.poll_interval_secs);
+        assert_eq!(parsed.inactivity_hours, default.inactivity_hours);
+        assert_eq!(parsed.resend_window_hours, default.resend_window_hours);
+        assert_eq!(parsed.batch_limit, default.batch_limit);
+    }
+
+    /// `enabled` is intentionally permissive: ONLY the literals `"false"` and
+    /// `"0"` disable the worker; every other value (including typos and `"no"`)
+    /// leaves it enabled, and a missing var keeps the default. Characterizes the
+    /// exact fail-open semantics so a future "tidy-up" can't silently flip them.
+    #[test]
+    fn enabled_flag_only_false_or_zero_disables() {
+        let dis = |v: &str| {
+            NotificationDigestConfig::from_lookup(lookup_from(&[(
+                "NOTIFICATION_DIGEST_ENABLED",
+                v,
+            )]))
+            .enabled
+        };
+        assert!(!dis("false"), "\"false\" disables");
+        assert!(!dis("0"), "\"0\" disables");
+        assert!(dis("true"), "\"true\" stays enabled");
+        assert!(dis("1"), "\"1\" stays enabled");
+        assert!(dis(""), "empty string is not a disable token");
+        assert!(dis("no"), "\"no\" is NOT a disable token (fail-open)");
+        assert!(dis("False"), "case-sensitive: \"False\" does not disable");
+        // Missing var → compiled-in default (enabled).
+        assert!(NotificationDigestConfig::from_lookup(lookup_from(&[])).enabled);
+    }
+
+    /// Numeric vars parse when valid and fall back to the default when the value
+    /// is unparsable (empty, non-numeric, or wrong sign for the unsigned field)
+    /// — the worker must never fail to start over a malformed env value.
+    #[test]
+    fn numeric_vars_parse_or_fall_back() {
+        let default = NotificationDigestConfig::default();
+
+        // All valid → all taken.
+        let parsed = NotificationDigestConfig::from_lookup(lookup_from(&[
+            ("NOTIFICATION_DIGEST_INTERVAL_SECS", "60"),
+            ("NOTIFICATION_DIGEST_INACTIVITY_HOURS", "48"),
+            ("NOTIFICATION_DIGEST_RESEND_WINDOW_HOURS", "12"),
+            ("NOTIFICATION_DIGEST_BATCH_LIMIT", "10"),
+        ]));
+        assert_eq!(parsed.poll_interval_secs, 60);
+        assert_eq!(parsed.inactivity_hours, 48);
+        assert_eq!(parsed.resend_window_hours, 12);
+        assert_eq!(parsed.batch_limit, 10);
+
+        // Garbage / wrong-type → each field independently falls back.
+        let parsed = NotificationDigestConfig::from_lookup(lookup_from(&[
+            ("NOTIFICATION_DIGEST_INTERVAL_SECS", "-5"), // negative into u64 → fail
+            ("NOTIFICATION_DIGEST_INACTIVITY_HOURS", "abc"),
+            ("NOTIFICATION_DIGEST_RESEND_WINDOW_HOURS", ""),
+            ("NOTIFICATION_DIGEST_BATCH_LIMIT", "3.5"),
+        ]));
+        assert_eq!(parsed.poll_interval_secs, default.poll_interval_secs);
+        assert_eq!(parsed.inactivity_hours, default.inactivity_hours);
+        assert_eq!(parsed.resend_window_hours, default.resend_window_hours);
+        assert_eq!(parsed.batch_limit, default.batch_limit);
+    }
 
     /// Every send-path outcome bumps `candidates_considered`, so the KPI
     /// invariant `candidates_considered == sent + failed + excluded_by_filter`
