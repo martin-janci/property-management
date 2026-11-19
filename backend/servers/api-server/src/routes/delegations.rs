@@ -204,7 +204,10 @@ pub async fn create_delegation(
         ));
     }
 
-    // If unit_id is provided, verify user owns it
+    // Verify the caller is actually an owner before any delegation is created.
+    // - unit-scoped delegation: must own that specific unit.
+    // - all-units delegation (unit_id omitted): must own at least one unit, otherwise
+    //   a non-owner could create a building-wide delegation without any ownership.
     if let Some(unit_id) = req.unit_id {
         let owners = match state
             .unit_repo
@@ -230,6 +233,30 @@ pub async fn create_delegation(
                 Json(ErrorResponse::new(
                     "NOT_OWNER",
                     "You must be an owner of the unit to create delegations",
+                )),
+            ));
+        }
+    } else {
+        // All-units delegation: the caller must own at least one unit.
+        let owned_units = match state.unit_repo.get_user_units(auth.user_id).await {
+            Ok(units) => units,
+            Err(e) => {
+                tracing::error!(error = %e, "Failed to list caller's units");
+                rls.release().await;
+                return Err((
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new("DB_ERROR", "Database error")),
+                ));
+            }
+        };
+
+        if owned_units.is_empty() {
+            rls.release().await;
+            return Err((
+                StatusCode::FORBIDDEN,
+                Json(ErrorResponse::new(
+                    "NOT_OWNER",
+                    "You must be an owner of at least one unit to create delegations",
                 )),
             ));
         }

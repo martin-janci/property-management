@@ -32,6 +32,7 @@ Note: a `ppt/report-fault` screen-map already exists (mobile-oriented). This stu
 ## Notes
 
 ### Specific (recent)
+- 2026-11-18 — **auth guard (PR #3606)**: `/faults/new` is now wrapped in `<ProtectedRoute>` (auth-only, not role-gated) in `routes/groups/faults.tsx` — previously a bare `<Route>` that rendered the form chrome for an anonymous visitor. Residents and managers can file faults, but both must be signed in; an anonymous visitor is now redirected to `/login` (return URL captured). `buildStatus`/`apiStatus` unchanged. Guard regression-covered by `routes/groups/core-route-groups-auth-guard.route.test.tsx`.
 - 2026-05-18 — audit: stub created from `frontend/apps/ppt-web/src/App.tsx:498`.
 
 ## Agent Log
@@ -41,6 +42,8 @@ Note: a `ppt/report-fault` screen-map already exists (mobile-oriented). This stu
 ## Agent Log
 
 <!-- newest entries on top -->
+
+- 2026-11-18 — agent: screen-map-drift-pr-3606-ppt — reconciled with merged PR #3606: the previously-bare `/faults/new` route is now wrapped in `<ProtectedRoute>` (auth-only) in `routes/groups/faults.tsx`; anonymous visitors redirect to `/login` (return URL captured). No route/component/status change — docs-only.
 
 - 2026-11-09 — agent: gap-audit-r7 — photo picker re-enabled; photos are attached after create via the presigned flow, failures reported in a warning toast.
 

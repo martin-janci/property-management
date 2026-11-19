@@ -39,7 +39,7 @@ pub(super) async fn get_reports(
 
     match result {
         Ok(reports) => Json(reports).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        Err(e) => super::db_error(e),
     }
 }
 
@@ -68,7 +68,7 @@ pub(super) async fn create_report(
 
     match result {
         Ok(report) => (StatusCode::CREATED, Json(report)).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        Err(e) => super::db_error(e),
     }
 }
 
@@ -95,7 +95,7 @@ pub(super) async fn get_statistics(
 
     match result {
         Ok(stats) => Json(stats).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        Err(e) => super::db_error(e),
     }
 }
 
@@ -118,6 +118,6 @@ pub(super) async fn get_risk_distribution(
 
     match result {
         Ok(dist) => Json(dist).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        Err(e) => super::db_error(e),
     }
 }

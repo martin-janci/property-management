@@ -440,21 +440,14 @@ impl Scheduler {
 
     /// Send reminders for votes ending soon.
     pub(super) async fn send_vote_reminders(&self) -> Result<(), sqlx::Error> {
-        // Find active votes ending within the reminder window
-        let reminder_cutoff =
-            chrono::Utc::now() + chrono::Duration::days(self.config.vote_reminder_days_before);
-
-        let votes_ending_soon: Vec<db::models::Vote> = sqlx::query_as(
-            r#"
-            SELECT * FROM votes
-            WHERE status = 'active'
-              AND end_at <= $1
-              AND end_at > NOW()
-            "#,
-        )
-        .bind(reminder_cutoff)
-        .fetch_all(&self.pool)
-        .await?;
+        // Active votes ending within the reminder window that have NOT been
+        // reminded in the last ~5 minutes. The persistent `last_reminder_at`
+        // dedup lives in the repo query so the ~60s tick can't re-spam
+        // non-voters for the whole window (mirrors payment-reminder #1790).
+        let votes_ending_soon = self
+            .vote_repo
+            .find_votes_due_for_reminder(self.config.vote_reminder_days_before)
+            .await?;
 
         let mut reminders_sent = 0u64;
 
@@ -493,6 +486,16 @@ impl Scheduler {
                             sent_count = sent,
                             "Sent vote reminder notifications"
                         );
+                        // Stamp the vote so subsequent ticks within the
+                        // ~5-minute dedup window skip it. Failure here is
+                        // logged but not fatal — the next tick re-evaluates.
+                        if let Err(e) = self.vote_repo.mark_vote_reminder_sent(vote.id).await {
+                            tracing::warn!(
+                                vote_id = %vote.id,
+                                error = %e,
+                                "Failed to stamp vote last_reminder_at — next tick may resend"
+                            );
+                        }
                     }
                     Err(e) => {
                         tracing::error!(

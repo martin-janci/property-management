@@ -4,12 +4,7 @@
  * Owns the reports route-wrapper components and the `<Route>` table fragment.
  * Extracted from App.tsx to isolate reports work.
  */
-import type {
-  CreateReportSchedule,
-  CronScheduleUpdateRequest,
-  PeriodComparison,
-  TrendAnalysis,
-} from '@ppt/api-client';
+import type { CreateReportSchedule, CronScheduleUpdateRequest } from '@ppt/api-client';
 import {
   ApiError,
   useCreateSchedule,
@@ -217,36 +212,17 @@ function ReportsPageRoute() {
   // pause/resume/executions. `onDeleteSchedule` / `onRunScheduleNow` are left
   // unpassed on purpose rather than wired to a fabricated route; they stay inert
   // until the api-server adds DELETE /schedules/{id} and POST /schedules/{id}/run.
+  //
+  // The former dashboard/analytics props (kpis, buildings, trendAnalysis,
+  // trendLines, periodComparison) were removed with the unwired analytics tab —
+  // no `/api/v1/reports/analytics/*` or `/trends/*` endpoint exists
+  // (code-review-ppt-web-core-reports-route-stub-analytics).
   return (
     <ReportsPage
-      organizationId={organizationId}
       dataSources={[]}
       reports={[]}
       schedules={schedulesData?.schedules ?? []}
       isLoading={schedulesLoading}
-      kpis={[]}
-      buildings={[]}
-      trendAnalysis={
-        {
-          metric: '',
-          period: 'monthly',
-          current_value: 0,
-          previous_value: 0,
-          change: 0,
-          change_percentage: 0,
-          trend: 'stable' as const,
-          anomalies: [],
-        } as TrendAnalysis
-      }
-      trendLines={[]}
-      periodComparison={
-        {
-          metric: '',
-          periods: [],
-          difference: 0,
-          difference_percentage: 0,
-        } as PeriodComparison
-      }
       onCreateSchedule={handleCreateSchedule}
       onUpdateSchedule={handleUpdateSchedule}
       onToggleSchedule={handleToggleSchedule}

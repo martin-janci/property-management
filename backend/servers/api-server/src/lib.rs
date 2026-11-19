@@ -280,6 +280,8 @@ pub fn route_table() -> Router<AppState> {
         .nest("/api/v1/onboarding", routes::onboarding::router())
         // Help routes
         .nest("/api/v1/help", routes::help::router())
+        // General in-app feedback / bug reports (mobile FeedbackManager) — #3544
+        .nest("/api/v1/feedback", routes::feedback::router())
         // GDPR routes
         .nest("/api/v1/gdpr", routes::gdpr::router())
         // Compliance routes

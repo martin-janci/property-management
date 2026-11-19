@@ -15,7 +15,7 @@
 
 use crate::common::seed_org;
 use api_server::services::accounting::AccountingService;
-use db::repositories::AccountingRepository;
+use db::repositories::{AccConfigRepository, AccountingRepository};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -159,7 +159,10 @@ async fn best_scoring_invoice_wins_over_strictly_worse_candidate(pool: PgPool) {
     let _partial = seed_invoice(&pool, org, contact, "INV-PARTIAL", 500, "VS100").await;
     let (stmt, line) = seed_statement_line(&pool, org, 100, "VS100").await;
 
-    let svc = AccountingService::new(AccountingRepository::new(pool.clone()));
+    let svc = AccountingService::new(
+        AccountingRepository::new(pool.clone()),
+        AccConfigRepository::new(pool.clone()),
+    );
     let mut conn = pool.acquire().await.unwrap();
     set_ctx(&mut conn, org).await;
     svc.run_payment_matcher(&mut conn, org, stmt)
@@ -188,7 +191,10 @@ async fn genuinely_tied_candidates_are_all_surfaced(pool: PgPool) {
     let b = seed_invoice(&pool, org, contact, "INV-B", 50, "VSTIE").await;
     let (stmt, line) = seed_statement_line(&pool, org, 100, "VSTIE").await;
 
-    let svc = AccountingService::new(AccountingRepository::new(pool.clone()));
+    let svc = AccountingService::new(
+        AccountingRepository::new(pool.clone()),
+        AccConfigRepository::new(pool.clone()),
+    );
     let mut conn = pool.acquire().await.unwrap();
     set_ctx(&mut conn, org).await;
     svc.run_payment_matcher(&mut conn, org, stmt)
@@ -226,7 +232,10 @@ async fn counterparty_iban_breaks_a_vs_amount_tie(pool: PgPool) {
     let _b = seed_invoice(&pool, org, contact_b, "INV-B", 100, "VSIBAN").await;
     let (stmt, line) = seed_statement_line_iban(&pool, org, 100, "VSIBAN", "sk111000").await;
 
-    let svc = AccountingService::new(AccountingRepository::new(pool.clone()));
+    let svc = AccountingService::new(
+        AccountingRepository::new(pool.clone()),
+        AccConfigRepository::new(pool.clone()),
+    );
     let mut conn = pool.acquire().await.unwrap();
     set_ctx(&mut conn, org).await;
     svc.run_payment_matcher(&mut conn, org, stmt)

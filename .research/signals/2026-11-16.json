@@ -1,0 +1,212 @@
+{
+  "generated": "2026-11-16T03:10:00Z",
+  "signals": [
+    {
+      "id": "screen-map-drift-pr-3559-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3559",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3559 touched frontend/apps/reality-web/src/app/[locale]/auth/{callback,login}/page.tsx (open-redirect backslash hardening) without updating docs/screens/reality/auth-login.md or auth-callback.md — screen docs may not reflect the post-login redirect-sanitization step."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3546-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3546",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3546 touched frontend/apps/ppt-web/src/routes/groups/faults.tsx (URL-param validation for faults list) without touching any docs/screens/ppt/*.md. Best-effort heuristic — faults-list.md / fault-detail.md may not reflect the new URL-param validation contract."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-features-reports-trendchart-tsx",
+      "type": "churn-hotspot",
+      "source": "churn",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/reports/components/TrendChart.tsx: 274 lines churn (1 commit this run)."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-features-reports-analyticschart-tsx",
+      "type": "churn-hotspot",
+      "source": "churn",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/reports/components/AnalyticsChart.tsx: 266 lines churn (1 commit this run)."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-reality-server-src-routes-listings-rs",
+      "type": "churn-hotspot",
+      "source": "churn",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/listings.rs: 244 lines churn (2 commits this run — PR #3552 slug derivation + PR #3551 category i18n)."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-search-missing-slug",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/listings.rs:162 — ListingSummary (emitted by /api/v1/listings search endpoint and by From<PublicListingSummary>) does NOT carry a slug field, only id: Uuid. The new SEO slug was added only to RichListingSummary (lines 526-535) returned by /featured.",
+        "backend/servers/reality-server/src/routes/listings.rs:189 — impl From<PublicListingSummary> for ListingSummary never derives a slug, so frontends consuming /listings results still have nothing but a bare UUID to build the detail URL — the SEO fix lands on the homepage rail but NOT on the search results page that drives most traffic.",
+        "backend/servers/reality-server/tests/suites/listings_tests.rs:70 — search_returns_200_empty_result and search_with_query_param_returns_200 assert only status codes; no test parses the body and asserts that search rows carry a slug the client can navigate to."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-record-view-no-check",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/listings.rs:960-967 — comment says 'only return a hard error when the listing genuinely does not exist' but handler never verifies listing exists before calling track_view and unconditionally returns 204.",
+        "backend/servers/reality-server/src/routes/listings.rs:964 — track_view(id, 'website') fires unauthenticated for any parseable UUID with no per-IP throttle; anonymous POST /api/v1/listings/<random-uuid>/view in a loop can inflate listing_analytics with orphan/duplicate rows.",
+        "backend/servers/reality-server/tests/suites/listings_tests.rs:164-177 — test locks in 204-for-unknown behavior; either comment is wrong or existence check should be added."
+      ],
+      "expert": "rust"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-11-16.md && head -1 == # 2026-11-16",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no double-scored signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score > 8 and no open items 14d+ to decay",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "any count — no adversarial-pass annotations needed"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans this run",
+      "observed": "0",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ staged",
+      "observed": "0 non-research files",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md == regen",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed-phase cursor advance",
+      "observed": "no failed phases",
+      "expected": "no failed phases"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present",
+      "observed": "19/19 plans present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "24 == 24",
+      "expected": ">= HEAD count"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md == regen",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "0 actions (no candidate)",
+      "expected": "within caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid",
+      "observed": "all OK; cc advanced 2→3; pm advanced 5→6",
+      "expected": "all OK"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram secret",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}

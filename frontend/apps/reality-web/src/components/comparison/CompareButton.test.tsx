@@ -19,11 +19,18 @@ import type { ListingSummary } from '@ppt/reality-api-client';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+// Stub next-intl so localized strings resolve in jsdom without a
+// NextIntlClientProvider. Returning the key keeps the wiring exercised.
+vi.mock('next-intl', () => ({
+  useTranslations: () => (key: string) => `comparison.${key}`,
+}));
+
 // Isolate the button from the real ComparisonProvider — we only need to drive
 // the "comparison is full" branch that arms the warning timer.
 const mockAddToComparison = vi.fn();
 const mockRemoveFromComparison = vi.fn();
 vi.mock('../../lib/comparison-context', () => ({
+  MAX_COMPARISON_ITEMS: 4,
   useComparison: () => ({
     isInComparison: () => false,
     addToComparison: mockAddToComparison,

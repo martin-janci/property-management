@@ -1,0 +1,202 @@
+{
+  "generated_at": "2026-11-18T03:15:15Z",
+  "run": 122,
+  "trigger_text": "",
+  "lag_hours": 23,
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/notification_digest.rs",
+      "type": "churn-hotspot",
+      "source": "commit log 2026-11-17 → 2026-11-18",
+      "score_delta": 0,
+      "evidence": "3 commits this run (cumulative re-emit; no score bump per Phase 1 dedup rule)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/compliance.rs",
+      "type": "churn-hotspot",
+      "source": "commit log 2026-11-17 → 2026-11-18",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/routes/compliance.rs changed in 3 commits this run (new hotspot)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/granular_notification.rs",
+      "type": "churn-hotspot",
+      "source": "commit log 2026-11-17 → 2026-11-18",
+      "score_delta": 0,
+      "evidence": "3 commits this run (cumulative re-emit; no score bump)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/services/notification_digest.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history runs_seen=2",
+      "score_delta": 1,
+      "evidence": "notification_digest.rs churn-seen in 2 consecutive runs (2026-11-17 recent_churn=2, 2026-11-18 recent_churn=3)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/crates/db/src/repositories/granular_notification.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history runs_seen=2",
+      "score_delta": 1,
+      "evidence": "granular_notification.rs churn-seen in 2 consecutive runs (2026-11-17 recent_churn=2, 2026-11-18 recent_churn=3)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-3606-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3606",
+      "score_delta": 2,
+      "evidence": "PR #3606 touched frontend/apps/ppt-web/src/routes/groups/{announcements,faults,financial,outages}.tsx without updating docs/screens/ppt/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-3595-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3595",
+      "score_delta": 2,
+      "evidence": "PR #3595 touched frontend/apps/reality-web/src/app/[locale]/auth/{login,register,reset-password}/page.tsx without updating docs/screens/reality/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "stalled-review-pr-3380",
+      "type": "stalled-review",
+      "source": "PR #3380",
+      "score_delta": 1,
+      "evidence": "PR #3380 open since 2026-11-10 (8d); last update 2026-11-17; only COMMENTED reviews (author + copilot-pull-request-reviewer bot); no APPROVED/CHANGES_REQUESTED",
+      "confidence": "medium",
+      "candidate_vector": "dx"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs + head -1 match",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev state",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq items id unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signals seen-set offender filter",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq cap + decay (sso-error-body 2->1)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans",
+      "observed": "vacuous",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --name-only --diff-filter=A plans",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets in diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases",
+      "observed": "vacuous",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present",
+      "observed": "vacuous (no deletions)",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length checks",
+      "observed": "0 actions, kill switch not set, no candidates",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped - gate is no-op",
+      "observed": "noop",
+      "expected": "noop"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram token value",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

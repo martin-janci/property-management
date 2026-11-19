@@ -61,6 +61,9 @@
     "buttonResend": "Wyślij ponownie",
     "buttonView": "Zobacz",
     "detailTitle": "Szczegóły agenta",
+    "detailUpdateError": "Nie udało się zapisać zmian. Spróbuj ponownie.",
+    "detailRemoveError": "Nie udało się usunąć agenta. Spróbuj ponownie.",
+    "detailStatusError": "Nie udało się zaktualizować statusu. Spróbuj ponownie.",
     "formLabelBio": "Biografia",
     "statTotalSales": "Łączna sprzedaż",
     "statRating": "Ocena",
@@ -168,6 +171,20 @@
     "transactionType": {
       "sale": "Na sprzedaż",
       "rent": "Do wynajęcia"
+    },
+    "button": {
+      "add": "Porównaj",
+      "comparing": "Porównywanie",
+      "addTitle": "Dodaj do porównania",
+      "removeTitle": "Usuń z porównania",
+      "maxWarning": "Maksymalnie {max} nieruchomości. Najpierw usuń jedną."
+    },
+    "tray": {
+      "count": "{count}/{max} nieruchomości do porównania",
+      "clearAll": "Wyczyść wszystko",
+      "thumbnailAlt": "Miniatura: {title}",
+      "compareNeedMore": "Porównaj (co najmniej {min})",
+      "compareReady": "Porównaj {count} nieruchomości"
     }
   },
   "contact": {
@@ -1266,7 +1283,8 @@
     "featured": "Wyróżnione",
     "yourAgency": "Twoja agencja",
     "sampleTitle": "Przykładowy tytuł oferty",
-    "contactAgent": "Skontaktuj się z agentem"
+    "contactAgent": "Skontaktuj się z agentem",
+    "saveError": "Nie udało się zapisać zmian brandingu. Spróbuj ponownie."
   },
   "agencyInquiries": {
     "title": "Zapytania agencji",

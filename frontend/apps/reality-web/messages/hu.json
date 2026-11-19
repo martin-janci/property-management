@@ -61,6 +61,9 @@
     "buttonResend": "Újraküldés",
     "buttonView": "Megtekintés",
     "detailTitle": "Ügynök részletei",
+    "detailUpdateError": "A módosítások mentése nem sikerült. Kérjük, próbálja újra.",
+    "detailRemoveError": "Az ügynök eltávolítása nem sikerült. Kérjük, próbálja újra.",
+    "detailStatusError": "Az állapot frissítése nem sikerült. Kérjük, próbálja újra.",
     "formLabelBio": "Bemutatkozás",
     "statTotalSales": "Összes eladás",
     "statRating": "Értékelés",
@@ -168,6 +171,20 @@
     "transactionType": {
       "sale": "Eladó",
       "rent": "Kiadó"
+    },
+    "button": {
+      "add": "Összehasonlítás",
+      "comparing": "Összehasonlítás alatt",
+      "addTitle": "Hozzáadás az összehasonlításhoz",
+      "removeTitle": "Eltávolítás az összehasonlításból",
+      "maxWarning": "Legfeljebb {max} ingatlan. Előbb távolítson el egyet."
+    },
+    "tray": {
+      "count": "{count}/{max} ingatlan az összehasonlításhoz",
+      "clearAll": "Összes törlése",
+      "thumbnailAlt": "{title} indexképe",
+      "compareNeedMore": "Összehasonlítás (legalább {min})",
+      "compareReady": "{count} ingatlan összehasonlítása"
     }
   },
   "contact": {
@@ -1266,7 +1283,8 @@
     "featured": "Kiemelt",
     "yourAgency": "Az Ön ügynöksége",
     "sampleTitle": "Minta hirdetéscím",
-    "contactAgent": "Ügynök megkeresése"
+    "contactAgent": "Ügynök megkeresése",
+    "saveError": "A márkázási módosítások mentése nem sikerült. Kérjük, próbálja újra."
   },
   "agencyInquiries": {
     "title": "Ügynökségi érdeklődések",

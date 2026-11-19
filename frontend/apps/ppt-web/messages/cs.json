@@ -189,6 +189,8 @@
       "byPriority": "Podle priority",
       "byViolationType": "Podle typu porušení",
       "overdue_one": "{{count}} případ po termínu (SLA 24 h+)",
+      "overdue_few": "{{count}} případy po termínu (SLA 24 h+)",
+      "overdue_many": "{{count}} případů po termínu (SLA 24 h+)",
       "overdue_other": "{{count}} případů po termínu (SLA 24 h+)"
     },
     "status": {
@@ -2230,7 +2232,9 @@
       "pendingReconciliationTitle": "Čeká na spárování",
       "recentPayments": "Poslední platby",
       "matchFailed": "Platbu se nepodařilo spárovat",
-      "autoMatchFailed": "Platby se nepodařilo automaticky spárovat"
+      "autoMatchFailed": "Platby se nepodařilo automaticky spárovat",
+      "loadFailed": "Nepodařilo se načíst platby",
+      "retry": "Zkusit znovu"
     },
     "budget": {
       "overBudget": "Překročený rozpočet",
@@ -2958,6 +2962,10 @@
         "title": "Přístup odepřen",
         "message": "Nemáte oprávnění provést tuto akci."
       },
+      "FORBIDDEN": {
+        "title": "Přístup odepřen",
+        "message": "Nemáte oprávnění provést tuto akci."
+      },
       "VALIDATION_ERROR": {
         "title": "Chyba ověření",
         "message": "Zkontrolujte prosím chyby ve formuláři."
@@ -3124,8 +3132,6 @@
     "completeIn60Seconds": "Většinu úkolů dokončíte za méně než 60 sekund",
     "recentActivity": "Poslední aktivita",
     "activity": {
-      "meterReadingSubmitted": "Odečet měřiče odeslán",
-      "faultReported": "Závada nahlášena",
       "announcementPublished": "Nové oznámení: {{title}}",
       "faultReportedByYou": "Nahlásili jste poruchu: {{title}}",
       "loading": "Načítá se aktivita…",
@@ -3370,6 +3376,13 @@
       "paused": "Plán byl pozastaven.",
       "resumed": "Plán byl obnoven.",
       "toggleFailed": "Nepodařilo se změnit stav plánu.",
+      "editErrors": {
+        "invalidCron": "Je vyžadován platný výraz cron.",
+        "recipientsRequired": "Je vyžadován alespoň jeden příjemce.",
+        "invalidEmail": "Zadejte platnou e-mailovou adresu.",
+        "duplicateEmail": "Tato e-mailová adresa již byla přidána.",
+        "invalidEmailsList": "Neplatné e-mailové adresy: {{emails}}"
+      },
       "createErrors": {
         "emptyName": "Název plánu nesmí být prázdný.",
         "invalidFrequency": "Zvolená frekvence není podporována.",
@@ -5109,6 +5122,7 @@
     "loadingDocuments": "Načítají se dokumenty",
     "loadingFolders": "Načítají se složky",
     "loadingPreview": "Načítá se náhled",
+    "mainNavigation": "Hlavní navigace",
     "moveDocuments": "Přesunout dokumenty",
     "moveDown": "Posunout dolů",
     "moveUp": "Posunout nahoru",
@@ -5118,6 +5132,7 @@
     "newRootFolder": "Nová kořenová složka",
     "newSubfolder": "Nová podsložka",
     "nextPage": "Další strana",
+    "openMenu": "Otevřít menu",
     "pdfNavigation": "Navigace v PDF",
     "pdfPreview": "Náhled PDF",
     "pinnedAnnouncements": "Připnutá oznámení",
@@ -5125,6 +5140,7 @@
     "postOptionsMenu": "Nabídka možností příspěvku",
     "previousPage": "Předchozí strana",
     "progress": "Průběh",
+    "publicNavigation": "Navigace webu",
     "reactions": "Reakce",
     "removeOption": "Odebrat možnost",
     "renameFolder": "Přejmenovat složku",
@@ -5135,6 +5151,7 @@
     "searchDocuments": "Hledat dokumenty",
     "selectFilesToUpload": "Vyberte soubory k nahrání",
     "selectLanguage": "Vybrat jazyk",
+    "sentimentSpike": "Pokles nálady dne {{date}}",
     "sentimentTrend": "Trend nálady",
     "settingsPreview": "Náhled nastavení",
     "tabs": "Karty",
@@ -5859,8 +5876,12 @@
     "ruleCard": {
       "unknownTrigger": "Neznámý spouštěč",
       "actions_one": "{{count}} akce",
+      "actions_few": "{{count}} akce",
+      "actions_many": "{{count}} akcí",
       "actions_other": "{{count}} akcí",
       "conditions_one": "{{count}} podmínka",
+      "conditions_few": "{{count}} podmínky",
+      "conditions_many": "{{count}} podmínek",
       "conditions_other": "{{count}} podmínek",
       "toggle": "Přepnout {{name}}",
       "totalRuns": "Celkem spuštění:",
@@ -5890,10 +5911,14 @@
       "triggerNotConfigured": "Nenastaveno",
       "conditionsSummaryTitle": "Podmínky",
       "conditionsCount_one": "{{count}} podmínka",
+      "conditionsCount_few": "{{count}} podmínky",
+      "conditionsCount_many": "{{count}} podmínek",
       "conditionsCount_other": "{{count}} podmínek",
       "noConditionsSummary": "Žádné podmínky (spustí se pro všechny spouštěče)",
       "actionsSummaryTitle": "Akce",
       "actionsCount_one": "{{count}} akce",
+      "actionsCount_few": "{{count}} akce",
+      "actionsCount_many": "{{count}} akcí",
       "actionsCount_other": "{{count}} akcí",
       "noActionsSummary": "Žádné nakonfigurované akce",
       "previous": "Zpět",
@@ -6084,6 +6109,8 @@
     "templateCard": {
       "popular": "Oblíbené",
       "actions_one": "{{count}} akce",
+      "actions_few": "{{count}} akce",
+      "actions_many": "{{count}} akcí",
       "actions_other": "{{count}} akcí",
       "uses": "{{count}} použití",
       "moreTags": "+{{count}} dalších",
@@ -6094,8 +6121,7 @@
       "categoryCommunications": "Komunikace",
       "categoryDocuments": "Dokumenty",
       "categoryMaintenance": "Údržba",
-      "categoryGeneral": "Obecné",
-      "actions_few": "{{count}} akce"
+      "categoryGeneral": "Obecné"
     },
     "templatePreview": {
       "popular": "Oblíbené",
@@ -6115,6 +6141,8 @@
       "noActions": "Žádné nakonfigurované akce",
       "tags": "Štítky",
       "usedTimes_one": "Použito {{count}}× jinými uživateli",
+      "usedTimes_few": "Použito {{count}}× jinými uživateli",
+      "usedTimes_many": "Použito {{count}}× jinými uživateli",
       "usedTimes_other": "Použito {{count}}× jinými uživateli",
       "cancel": "Zrušit",
       "useThisTemplate": "Použít tuto šablonu",
@@ -6789,6 +6817,7 @@
       "notesPlaceholder": "Doplňující informace k odečtu...",
       "submitReading": "Odeslat odečet",
       "errors": {
+        "valueRequired": "Zadejte platný stav měřidla",
         "valueNegative": "Stav měřidla nemůže být záporný",
         "valueLowerThanLast": "Stav měřidla nemůže být nižší než při posledním odečtu",
         "dateRequired": "Zadejte datum odečtu",
@@ -7099,9 +7128,6 @@
   },
   "shell": {
     "brand": "Správa nemovitostí",
-    "mainNavigation": "Hlavní navigace",
-    "openMenu": "Otevřít menu",
-    "closeMenu": "Zavřít menu",
     "createAccount": "Vytvořit účet",
     "sections": {
       "overview": "Přehled",
@@ -7131,7 +7157,6 @@
       "guest": "Host",
       "real_estate_agent": "Realitní makléř"
     },
-    "publicNavigation": "Navigace webu",
     "inbox": {
       "title": "Oznámení",
       "unreadMarker": "Nepřečtené:",

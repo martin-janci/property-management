@@ -81,9 +81,20 @@ pub fn router() -> Router<AppState> {
         .route("/statistics", get(get_statistics))
 }
 
-/// Map a `sqlx::Error` to a 500 response.
+/// Map a `sqlx::Error` to a sanitized 500 response.
+///
+/// ESG reporting handlers must never surface raw SQLx / DB errors to the
+/// caller: their `Display` output leaks table and column names, SQL fragments,
+/// and connection details. Log the full error server-side (`tracing::error!`)
+/// for operators and return an opaque 500 to the client — mirroring how the
+/// other api-server routes handle DB failures (e.g. `compliance`, `my_units`,
+/// `unit_residents`).
 fn internal_error(e: sqlx::Error) -> (StatusCode, String) {
-    (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+    tracing::error!(error = %e, "esg reporting query failed");
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        "Internal server error".to_string(),
+    )
 }
 
 // =============================================================================
@@ -853,4 +864,27 @@ async fn get_statistics(
         .map_err(internal_error);
     rls.release().await;
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Every ESG reporting handler funnels DB failures through
+    /// [`internal_error`]. It must return a generic body and never echo the raw
+    /// sqlx error (table/column names, query fragments, connection detail) back
+    /// to the client — the regression guard for the `e.to_string()` leak.
+    #[test]
+    fn internal_error_never_leaks_raw_sqlx_detail() {
+        // A sqlx error whose Display carries internals a client must not see.
+        let secret = "esg_metrics.secret_column: internal constraint detail";
+        let (status, body) = internal_error(sqlx::Error::Protocol(secret.to_string()));
+
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert!(
+            !body.contains(secret),
+            "error body leaked raw sqlx detail: {body}"
+        );
+        assert_eq!(body, "Internal server error");
+    }
 }

@@ -3,7 +3,8 @@
 //! Provides database operations for per-event and per-channel notification preferences.
 
 use chrono::{NaiveTime, Utc};
-use sqlx::{Error as SqlxError, FromRow, PgPool, Row};
+use sqlx::pool::PoolConnection;
+use sqlx::{Connection, Error as SqlxError, FromRow, PgPool, Postgres, Row};
 use uuid::Uuid;
 
 use crate::models::{
@@ -16,6 +17,59 @@ use crate::models::{
 #[derive(Clone)]
 pub struct GranularNotificationRepository {
     pool: PgPool,
+}
+
+/// Per-channel enable overrides parsed from a single role-default
+/// `event_preferences` entry. Each field is `None` when the source JSON omitted
+/// the channel key or gave a non-boolean value — which flows through to
+/// [`GranularNotificationRepository::upsert_event_preference`] as "no override"
+/// (the `COALESCE(..., default/existing)` branch) rather than an explicit
+/// true/false.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct ChannelOverrides {
+    push: Option<bool>,
+    email: Option<bool>,
+    in_app: Option<bool>,
+}
+
+/// Parse a role-default `event_preferences` JSONB blob into per-event channel
+/// overrides, exactly as [`GranularNotificationRepository::apply_role_defaults_to_user`]
+/// consumes it.
+///
+/// Shape contract (characterized by the unit tests in this module):
+/// - a non-object top-level value yields an empty result (nothing is applied);
+/// - each top-level entry whose value is itself a JSON object becomes one
+///   `(event_type, ChannelOverrides)` pair; entries with a non-object value are
+///   skipped;
+/// - within an entry, `push` / `email` / `in_app` each become `Some(bool)` only
+///   when present as a JSON boolean, otherwise `None`.
+///
+/// Extracted as a pure (DB-free) function so this fiddly JSON-shape handling —
+/// the part of the role-defaults path most prone to churn — can be unit-tested
+/// in isolation without a Postgres fixture.
+fn parse_role_event_preferences(
+    event_preferences: serde_json::Value,
+) -> Vec<(String, ChannelOverrides)> {
+    let serde_json::Value::Object(prefs) = event_preferences else {
+        return Vec::new();
+    };
+
+    prefs
+        .into_iter()
+        .filter_map(|(event_type, settings)| {
+            let serde_json::Value::Object(channels) = settings else {
+                return None;
+            };
+            Some((
+                event_type,
+                ChannelOverrides {
+                    push: channels.get("push").and_then(|v| v.as_bool()),
+                    email: channels.get("email").and_then(|v| v.as_bool()),
+                    in_app: channels.get("in_app").and_then(|v| v.as_bool()),
+                },
+            ))
+        })
+        .collect()
 }
 
 /// A user eligible for a 24h-inactivity email digest (Story 2B.3, PM #969 gap 1).
@@ -562,18 +616,17 @@ impl GranularNotificationRepository {
             None => return Ok(0),
         };
 
-        // Parse event preferences from JSONB
-        if let serde_json::Value::Object(prefs) = defaults.event_preferences {
-            for (event_type, settings) in prefs {
-                if let serde_json::Value::Object(channels) = settings {
-                    let push = channels.get("push").and_then(|v| v.as_bool());
-                    let email = channels.get("email").and_then(|v| v.as_bool());
-                    let in_app = channels.get("in_app").and_then(|v| v.as_bool());
-
-                    self.upsert_event_preference(user_id, &event_type, push, email, in_app)
-                        .await?;
-                }
-            }
+        // Parse event preferences from JSONB (pure helper — see
+        // `parse_role_event_preferences`), then apply each override.
+        for (event_type, overrides) in parse_role_event_preferences(defaults.event_preferences) {
+            self.upsert_event_preference(
+                user_id,
+                &event_type,
+                overrides.push,
+                overrides.email,
+                overrides.in_app,
+            )
+            .await?;
         }
 
         // Apply quiet hours if set
@@ -819,6 +872,96 @@ impl GranularNotificationRepository {
     // Notification Digests (Epic 29, Story 29.3)
     // ========================================================================
 
+    /// Try to claim the single cross-replica lease for the inactivity-digest
+    /// sweep (Story 2B.3). Returns the connection that now *holds* the
+    /// `notification_digest_sweep` advisory lock, or `None` when another
+    /// api-server replica currently holds it.
+    ///
+    /// The digest worker runs in every api-server process. Before this guard,
+    /// each replica independently ran the same sweep every tick: both selected
+    /// the same inactivity candidates and both `create_digest` + emailed them
+    /// (duplicate rows *and* duplicate emails), and both fetched the same
+    /// unsent rows via `get_unsent_digests` and re-emailed them. Holding one
+    /// Postgres advisory lock for the whole sweep makes exactly one replica run
+    /// it per tick; peers that fail to claim skip and retry next tick.
+    ///
+    /// This is a **session-scoped** `pg_try_advisory_lock` held on the returned
+    /// connection — deliberately *not* the transaction-scoped
+    /// `pg_advisory_xact_lock` the idempotency middleware prefers. The sweep
+    /// sends email over SMTP, which must never run inside a DB transaction (it
+    /// would sit `idle in transaction` across the network send), so a
+    /// transaction-scoped lock is the wrong tool here. The caller MUST pass the
+    /// returned connection back to [`Self::release_digest_sweep`] when the sweep
+    /// finishes; if the process dies mid-sweep the connection closes and
+    /// Postgres drops the lock, so the lease is self-healing.
+    pub async fn try_claim_digest_sweep(
+        &self,
+    ) -> Result<Option<PoolConnection<Postgres>>, SqlxError> {
+        let mut conn = self.pool.acquire().await?;
+        let acquired: bool = sqlx::query_scalar(
+            "SELECT pg_try_advisory_lock(hashtextextended('notification_digest_sweep', 0))",
+        )
+        .fetch_one(&mut *conn)
+        .await?;
+        if acquired {
+            Ok(Some(conn))
+        } else {
+            Ok(None)
+        }
+    }
+
+    /// Release the `notification_digest_sweep` advisory lock held on `conn`
+    /// (the connection handed out by [`Self::try_claim_digest_sweep`]) and
+    /// return the connection to the pool. Unlocking on the same session that
+    /// took the lock is required — a mismatched session is a no-op in Postgres.
+    ///
+    /// On the happy path the unlock succeeds and `conn` drops normally, going
+    /// back to the pool lock-free. If the unlock **fails**, the session may
+    /// still hold the advisory lock, so returning it to the pool would strand
+    /// the lock for the connection's whole lifetime: a live, idle, pooled
+    /// session never drops a session-scoped lock on its own, so every future
+    /// tick's `try_claim_digest_sweep` — on every replica — would keep failing
+    /// and digests would silently stop until the process restarts. To prevent
+    /// that we [`PoolConnection::detach`] the connection (severing it from the
+    /// pool so it cannot be recycled) and best-effort hard-close it, which
+    /// tears down the Postgres session and drops the lock. This mirrors the
+    /// "clear or discard" connection-release discipline used elsewhere
+    /// (`db::tenant_context::clear_or_discard`, the scheduler's
+    /// `release_scheduler_conn`). The original unlock error is still returned
+    /// so the caller can log it.
+    pub async fn release_digest_sweep(
+        &self,
+        mut conn: PoolConnection<Postgres>,
+    ) -> Result<(), SqlxError> {
+        match sqlx::query(
+            "SELECT pg_advisory_unlock(hashtextextended('notification_digest_sweep', 0))",
+        )
+        .execute(&mut *conn)
+        .await
+        {
+            Ok(_) => {
+                // Lock released; `conn` drops here -> returns to the pool clean.
+                Ok(())
+            }
+            Err(e) => {
+                // The unlock failed, so this session may still hold the lock.
+                // Detach it from the pool so it is NOT recycled, then hard-close
+                // it to tear down the session (which drops the lock). The pool
+                // opens a fresh, lock-free connection on the next acquire.
+                let detached = conn.detach();
+                if let Err(close_err) = detached.close().await {
+                    tracing::warn!(
+                        error = %close_err,
+                        "failed to hard-close digest-sweep connection after a failed \
+                         advisory unlock (already detached from the pool, so it will \
+                         not be reused regardless)"
+                    );
+                }
+                Err(e)
+            }
+        }
+    }
+
     /// Create a notification digest.
     #[allow(clippy::too_many_arguments)]
     pub async fn create_digest(
@@ -895,8 +1038,11 @@ impl GranularNotificationRepository {
     /// Find users eligible for a 24h-inactivity email digest (Story 2B.3,
     /// PM #969 gap 1). A user qualifies when they:
     ///   * have opted in via `notification_schedule.digest_enabled = true`,
-    ///   * have been inactive since `inactivity_cutoff` (no refresh-token use —
-    ///     the closest proxy for "last seen", since `users` has no `last_seen`),
+    ///   * have been inactive since `inactivity_cutoff`, measured by the most
+    ///     recent refresh-token use (the closest proxy for "last seen", since
+    ///     `users` has no `last_seen`), falling back to the account's
+    ///     `created_at` for users who have never logged in (no `refresh_tokens`
+    ///     row) — a LEFT JOIN + `COALESCE`, so those accounts are not dropped,
     ///   * are an active, non-deleted account,
     ///   * have at least one unread notification group, and
     ///   * have not had any digest row created since `resend_cutoff` (this
@@ -946,10 +1092,10 @@ impl GranularNotificationRepository {
             FROM users u
             JOIN notification_schedule s ON s.user_id = u.id AND s.digest_enabled = true
             JOIN unread un ON un.user_id = u.id
-            JOIN last_activity la ON la.user_id = u.id
+            LEFT JOIN last_activity la ON la.user_id = u.id
             WHERE u.status = 'active'
               AND u.deleted_at IS NULL
-              AND la.last_active < $1
+              AND COALESCE(la.last_active, u.created_at) < $1
               AND NOT EXISTS (
                   SELECT 1 FROM notification_digests d
                   WHERE d.user_id = u.id
@@ -969,7 +1115,10 @@ impl GranularNotificationRepository {
     /// Fetch digest rows whose email has not yet been sent and that were
     /// created since `created_after`, joined with the recipient's address.
     /// Used to retry transient `EmailService` failures without losing the
-    /// already-persisted digest row or creating duplicates. Story 2B.3.
+    /// already-persisted digest row or creating duplicates. Rows already marked
+    /// `abandoned_at` (the terminal give-up state) are excluded so a widened
+    /// retry window can never resurrect a digest that was permanently given up
+    /// on. Story 2B.3.
     pub async fn get_unsent_digests(
         &self,
         created_after: chrono::DateTime<Utc>,
@@ -988,6 +1137,7 @@ impl GranularNotificationRepository {
             FROM notification_digests d
             JOIN users u ON u.id = d.user_id
             WHERE d.email_sent_at IS NULL
+              AND d.abandoned_at IS NULL
               AND d.created_at > $1
               AND u.status = 'active'
               AND u.deleted_at IS NULL
@@ -996,6 +1146,49 @@ impl GranularNotificationRepository {
             "#,
         )
         .bind(created_after)
+        .bind(limit)
+        .fetch_all(&self.pool)
+        .await
+    }
+
+    /// Mark unsent digests that have aged out of the retry window as abandoned
+    /// and return their ids. A digest whose email send keeps failing stops being
+    /// returned by [`Self::get_unsent_digests`] once `created_at` falls to/under
+    /// the resend cutoff; before this it was then silently given up on — left in
+    /// the table indistinguishable from a still-pending row and recorded only in
+    /// a log line. This stamps `abandoned_at = now()` on each such row, turning
+    /// abandonment into a durable, queryable terminal state.
+    ///
+    /// Marking is idempotent and "exactly once": the `abandoned_at IS NULL`
+    /// predicate means a row is returned (and stamped) only on the first sweep
+    /// that observes it past the cutoff, so the worker can log each abandoned
+    /// digest exactly once without relying on a narrow tick-boundary window.
+    /// This also makes it robust to skipped ticks (advisory-lock contention,
+    /// restarts): any unsent row past the cutoff is eventually marked rather
+    /// than missed. `limit` bounds the rows marked per call so a large backlog
+    /// drains over successive sweeps. Story 2B.3.
+    pub async fn mark_newly_abandoned_digests(
+        &self,
+        resend_cutoff: chrono::DateTime<Utc>,
+        limit: i64,
+    ) -> Result<Vec<Uuid>, SqlxError> {
+        sqlx::query_scalar::<_, Uuid>(
+            r#"
+            UPDATE notification_digests
+            SET abandoned_at = now()
+            WHERE id IN (
+                SELECT d.id
+                FROM notification_digests d
+                WHERE d.email_sent_at IS NULL
+                  AND d.abandoned_at IS NULL
+                  AND d.created_at <= $1
+                ORDER BY d.created_at ASC
+                LIMIT $2
+            )
+            RETURNING id
+            "#,
+        )
+        .bind(resend_cutoff)
         .bind(limit)
         .fetch_all(&self.pool)
         .await
@@ -1051,5 +1244,108 @@ impl GranularNotificationRepository {
         .bind(digest_id)
         .fetch_all(&self.pool)
         .await
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{parse_role_event_preferences, ChannelOverrides};
+    use serde_json::json;
+
+    // Characterization tests for `parse_role_event_preferences`, the pure
+    // JSON-shape handling that drives `apply_role_defaults_to_user`. These run
+    // without a database and pin the current behavior so future refactors of
+    // this churn-hot file stay behavior-preserving.
+
+    #[test]
+    fn non_object_top_level_yields_empty() {
+        // A null / array / scalar `event_preferences` applies nothing.
+        assert!(parse_role_event_preferences(json!(null)).is_empty());
+        assert!(parse_role_event_preferences(json!([1, 2, 3])).is_empty());
+        assert!(parse_role_event_preferences(json!("fault_created")).is_empty());
+        assert!(parse_role_event_preferences(json!(42)).is_empty());
+    }
+
+    #[test]
+    fn empty_object_yields_empty() {
+        assert!(parse_role_event_preferences(json!({})).is_empty());
+    }
+
+    #[test]
+    fn full_channel_set_is_extracted() {
+        let out = parse_role_event_preferences(json!({
+            "fault_created": { "push": true, "email": false, "in_app": true }
+        }));
+        assert_eq!(
+            out,
+            vec![(
+                "fault_created".to_string(),
+                ChannelOverrides {
+                    push: Some(true),
+                    email: Some(false),
+                    in_app: Some(true),
+                },
+            )]
+        );
+    }
+
+    #[test]
+    fn missing_or_non_bool_channels_become_none() {
+        // Missing `in_app`, and a non-boolean `email` -> both None; only a real
+        // JSON boolean produces Some(_).
+        let out = parse_role_event_preferences(json!({
+            "vote_opened": { "push": true, "email": "yes" }
+        }));
+        assert_eq!(
+            out,
+            vec![(
+                "vote_opened".to_string(),
+                ChannelOverrides {
+                    push: Some(true),
+                    email: None,
+                    in_app: None,
+                },
+            )]
+        );
+    }
+
+    #[test]
+    fn non_object_entry_values_are_skipped() {
+        // The `fault_created` entry is a scalar, not an object, so it is dropped;
+        // the object entry is kept.
+        let out = parse_role_event_preferences(json!({
+            "fault_created": true,
+            "vote_opened": { "push": false }
+        }));
+        assert_eq!(
+            out,
+            vec![(
+                "vote_opened".to_string(),
+                ChannelOverrides {
+                    push: Some(false),
+                    email: None,
+                    in_app: None,
+                },
+            )]
+        );
+    }
+
+    #[test]
+    fn empty_entry_object_keeps_event_with_all_none() {
+        // An event present with an empty settings object still produces a pair
+        // (so `upsert_event_preference` is called with all-None overrides),
+        // distinct from a skipped non-object entry.
+        let out = parse_role_event_preferences(json!({ "comment_added": {} }));
+        assert_eq!(
+            out,
+            vec![(
+                "comment_added".to_string(),
+                ChannelOverrides {
+                    push: None,
+                    email: None,
+                    in_app: None,
+                },
+            )]
+        );
     }
 }

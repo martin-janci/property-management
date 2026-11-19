@@ -23,10 +23,26 @@ import { useModerationCases, useModerationStats } from '@ppt/api-client';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToastProvider } from '../../../components';
+import {
+  __clearAnalyticsSinks,
+  type AnalyticsEvent,
+  registerAnalyticsSink,
+} from '../../../lib/analytics';
+import { MODERATION_EVENTS } from '../analytics';
 import { ContentModerationPage } from './ContentModerationPage';
 
 const takeActionMutate = vi.fn();
 const decideAppealMutate = vi.fn();
+
+// "View Content" must route via the SPA router (useNavigate), not a full-page
+// reload (window.location.href) that drops client state and flashes the shell.
+// Mock only useNavigate so a real Router isn't required and we can observe the
+// navigation target.
+const navigateSpy = vi.fn();
+vi.mock('react-router-dom', async (importActual) => {
+  const actual = await importActual<typeof import('react-router-dom')>();
+  return { ...actual, useNavigate: () => navigateSpy };
+});
 
 // Two pending cases (each renders a "Take Action" button) and two appealed cases
 // (each renders a "Decide Appeal" button) so a dialog can be opened for one case
@@ -188,6 +204,31 @@ describe('ContentModerationPage decision flow', () => {
 });
 
 /**
+ * Regression: "View Content" must navigate through the SPA router so the manager
+ * keeps client state (filters, scroll, React tree) and the shell doesn't flash.
+ * The Phase-1 flow used `window.location.href = …`, a full-page reload. The fix
+ * routes via react-router's `useNavigate`.
+ */
+describe('ContentModerationPage view-content navigation', () => {
+  beforeEach(() => {
+    navigateSpy.mockClear();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('navigates to the case detail route via the SPA router, not a full-page reload', () => {
+    renderPage();
+
+    fireEvent.click(screen.getAllByRole('button', { name: /view content/i })[0]);
+
+    expect(navigateSpy).toHaveBeenCalledTimes(1);
+    expect(navigateSpy).toHaveBeenCalledWith('/compliance/moderation/cases/pending-1');
+  });
+});
+
+/**
  * Toast feedback + dialog-reset behavior shared by BOTH decision mutations
  * (take-action and decide-appeal). The two submit handlers were refactored to
  * share one `decisionMutationCallbacks` helper (dedupe of the #2856 Toast
@@ -276,6 +317,87 @@ describe('ContentModerationPage decision toast feedback', () => {
 
     expect(screen.getByText('Failed to decide appeal. Please try again.')).toBeInTheDocument();
     expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+});
+
+/**
+ * Analytics: the data team wants one canonical `moderation.*` event per
+ * committed decision, fired ONLY after the server mutation succeeds (so events
+ * count real, audited decisions — not dialog submits the API later rejected)
+ * and carrying only the typed decision shape (no rationale text / owner PII).
+ * These drive the mocked mutation's onSuccess/onError exactly as TanStack Query
+ * would and assert the event fans out through the shared analytics bus.
+ */
+describe('ContentModerationPage decision analytics', () => {
+  function optionsFrom(mutateSpy: ReturnType<typeof vi.fn>) {
+    const call = mutateSpy.mock.calls[0];
+    return call[1] as { onSuccess: () => void; onError: (err: unknown) => void };
+  }
+
+  let captured: AnalyticsEvent[];
+
+  beforeEach(() => {
+    captured = [];
+    registerAnalyticsSink((e) => captured.push(e));
+    takeActionMutate.mockClear();
+    decideAppealMutate.mockClear();
+  });
+
+  afterEach(() => {
+    __clearAnalyticsSinks();
+    vi.restoreAllMocks();
+  });
+
+  it('fires moderation.action_taken with the typed action only after the take-action succeeds', () => {
+    renderPage();
+    openTakeActionDialog();
+    fireEvent.change(dialog().getByRole('combobox'), { target: { value: 'remove' } });
+    fireEvent.change(dialog().getByLabelText(/rationale/i), {
+      target: { value: 'violates policy' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /submit action/i }));
+
+    // No event until the server mutation resolves successfully.
+    expect(captured).toHaveLength(0);
+
+    act(() => optionsFrom(takeActionMutate).onSuccess());
+
+    expect(captured).toHaveLength(1);
+    expect(captured[0].event).toBe(MODERATION_EVENTS.actionTaken);
+    expect(captured[0].properties).toEqual({ action_type: 'remove' });
+  });
+
+  it('does not fire moderation.action_taken when the take-action fails', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    renderPage();
+    openTakeActionDialog();
+    fireEvent.change(dialog().getByRole('combobox'), { target: { value: 'warn' } });
+    fireEvent.change(dialog().getByLabelText(/rationale/i), {
+      target: { value: 'violates policy' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /submit action/i }));
+
+    act(() => optionsFrom(takeActionMutate).onError(new Error('boom')));
+
+    expect(captured).toHaveLength(0);
+  });
+
+  it('fires moderation.appeal_decided with the typed decision only after the appeal succeeds', () => {
+    renderPage();
+    openDecideAppealDialog();
+    fireEvent.change(dialog().getByRole('combobox'), { target: { value: 'overturn' } });
+    fireEvent.change(dialog().getByLabelText(/rationale/i), {
+      target: { value: 'appeal is valid' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
+
+    expect(captured).toHaveLength(0);
+
+    act(() => optionsFrom(decideAppealMutate).onSuccess());
+
+    expect(captured).toHaveLength(1);
+    expect(captured[0].event).toBe(MODERATION_EVENTS.appealDecided);
+    expect(captured[0].properties).toEqual({ decision: 'overturn' });
   });
 });
 

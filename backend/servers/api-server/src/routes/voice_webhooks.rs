@@ -45,6 +45,36 @@ type HmacSha256 = Hmac<Sha256>;
 /// `(access_ciphertext, refresh_ciphertext, access_hash)`.
 type EncryptedVoiceTokens = (String, Option<String>, Option<Vec<u8>>);
 
+/// Client-facing message for a failed voice OAuth authorization-code exchange.
+///
+/// The upstream provider error (`VoiceOAuthManager::exchange_code`) routinely
+/// embeds provider endpoints, client identifiers and raw transport detail. That
+/// detail is logged server-side and MUST NOT be echoed to the caller
+/// (code-review: oauth client error leak). Mirrors the policy already applied
+/// to the sibling exchange handler in `routes/ai/voice.rs`.
+const OAUTH_EXCHANGE_FAILED_MESSAGE: &str = "Authorization code exchange failed";
+
+/// Client-facing message for a failed voice OAuth token refresh. Same non-leak
+/// policy as [`OAUTH_EXCHANGE_FAILED_MESSAGE`].
+const OAUTH_REFRESH_FAILED_MESSAGE: &str = "Token refresh failed";
+
+/// Build the client response for a failed upstream voice OAuth call (code
+/// exchange or token refresh). The upstream `detail` is logged server-side;
+/// callers pass a static, non-revealing `client_message` for the body.
+fn voice_oauth_error_response(
+    status: StatusCode,
+    code: &'static str,
+    client_message: &'static str,
+    detail: impl std::fmt::Display,
+) -> (StatusCode, Json<ErrorResponse>) {
+    // The upstream `detail` (provider endpoints, client ids, raw transport
+    // errors) is logged server-side only. The response body carries just the
+    // static `client_message` — never the detail (code-review: oauth client
+    // error leak).
+    tracing::error!(error = %detail, error_code = code, "voice OAuth upstream call failed");
+    (status, Json(ErrorResponse::new(code, client_message)))
+}
+
 /// Map a fail-closed encryption error to an HTTP 500.
 ///
 /// Issue #765: persisted voice OAuth tokens must always be encrypted; when
@@ -528,13 +558,11 @@ async fn oauth_token_exchange(
             .exchange_code(voice_platform, &request.auth_code, &redirect_uri)
             .await
             .map_err(|e| {
-                tracing::error!("OAuth token exchange failed: {}", e);
-                (
+                voice_oauth_error_response(
                     StatusCode::BAD_REQUEST,
-                    Json(ErrorResponse::new(
-                        "OAUTH_EXCHANGE_FAILED",
-                        format!("Failed to exchange authorization code: {}", e),
-                    )),
+                    "OAUTH_EXCHANGE_FAILED",
+                    OAUTH_EXCHANGE_FAILED_MESSAGE,
+                    e,
                 )
             })?;
 
@@ -812,13 +840,11 @@ async fn oauth_token_refresh(
                 .refresh_token(voice_platform, &refresh_token)
                 .await
                 .map_err(|e| {
-                    tracing::error!("Token refresh failed: {}", e);
-                    (
+                    voice_oauth_error_response(
                         StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ErrorResponse::new(
-                            "TOKEN_REFRESH_FAILED",
-                            format!("Failed to refresh token: {}", e),
-                        )),
+                        "TOKEN_REFRESH_FAILED",
+                        OAUTH_REFRESH_FAILED_MESSAGE,
+                        e,
                     )
                 })?;
 
@@ -1871,6 +1897,44 @@ fn build_google_link_account_response(session_id: &str) -> GoogleActionsResponse
 mod tests {
     use super::*;
     use axum::http::{HeaderMap, HeaderValue};
+
+    /// Regression (code-review: oauth client error leak): the client-facing
+    /// body for a failed voice OAuth exchange / refresh must carry only the
+    /// static, non-revealing message — never the upstream provider detail,
+    /// which can embed internal hosts, client ids, or bearer credentials.
+    #[test]
+    fn voice_oauth_error_response_does_not_leak_upstream_detail() {
+        let sensitive = "connect error: dns failure for secret-internal-host.oauth.example:443 \
+             (bearer AKIA-LEAKED-SECRET)";
+
+        for (code, message) in [
+            ("OAUTH_EXCHANGE_FAILED", OAUTH_EXCHANGE_FAILED_MESSAGE),
+            ("TOKEN_REFRESH_FAILED", OAUTH_REFRESH_FAILED_MESSAGE),
+        ] {
+            let (status, body) =
+                voice_oauth_error_response(StatusCode::BAD_REQUEST, code, message, sensitive);
+            assert_eq!(status, StatusCode::BAD_REQUEST);
+
+            let json = serde_json::to_string(&body.0).expect("serialize ErrorResponse");
+            assert!(
+                !json.contains("secret-internal-host"),
+                "leaked upstream host in {code} body: {json}"
+            );
+            assert!(
+                !json.contains("AKIA-LEAKED-SECRET"),
+                "leaked credential in {code} body: {json}"
+            );
+            assert!(
+                !json.contains("dns failure"),
+                "leaked transport detail in {code} body: {json}"
+            );
+            assert_eq!(body.0.code, code, "error code altered: {json}");
+            assert_eq!(
+                body.0.message, message,
+                "client body must be exactly the sanitized message: {json}"
+            );
+        }
+    }
 
     // --- helpers ---------------------------------------------------------
 

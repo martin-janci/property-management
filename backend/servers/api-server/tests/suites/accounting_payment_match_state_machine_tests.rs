@@ -18,7 +18,7 @@
 use crate::common::seed_org;
 use api_server::services::accounting::AccountingService;
 use db::models::accounting::InvoiceStatus;
-use db::repositories::AccountingRepository;
+use db::repositories::{AccConfigRepository, AccountingRepository};
 use rust_decimal_macros::dec;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -113,7 +113,10 @@ async fn invoice_state(pool: &PgPool, invoice: Uuid) -> (rust_decimal::Decimal, 
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn confirm_reject_confirm_does_not_inflate_paid_amount(pool: PgPool) {
     let (org, invoice, match_id, user) = seed_match_scenario(&pool, "pap325-replay").await;
-    let svc = AccountingService::new(AccountingRepository::new(pool.clone()));
+    let svc = AccountingService::new(
+        AccountingRepository::new(pool.clone()),
+        AccConfigRepository::new(pool.clone()),
+    );
     let mut conn = pool.acquire().await.unwrap();
     set_ctx(&mut conn, org).await;
 
@@ -163,7 +166,10 @@ async fn confirm_reject_confirm_does_not_inflate_paid_amount(pool: PgPool) {
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn double_confirm_is_idempotent(pool: PgPool) {
     let (org, invoice, match_id, user) = seed_match_scenario(&pool, "pap325-double-confirm").await;
-    let svc = AccountingService::new(AccountingRepository::new(pool.clone()));
+    let svc = AccountingService::new(
+        AccountingRepository::new(pool.clone()),
+        AccConfigRepository::new(pool.clone()),
+    );
     let mut conn = pool.acquire().await.unwrap();
     set_ctx(&mut conn, org).await;
 
@@ -188,7 +194,10 @@ async fn double_confirm_is_idempotent(pool: PgPool) {
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn double_reject_is_idempotent(pool: PgPool) {
     let (org, invoice, match_id, user) = seed_match_scenario(&pool, "pap325-double-reject").await;
-    let svc = AccountingService::new(AccountingRepository::new(pool.clone()));
+    let svc = AccountingService::new(
+        AccountingRepository::new(pool.clone()),
+        AccConfigRepository::new(pool.clone()),
+    );
     let mut conn = pool.acquire().await.unwrap();
     set_ctx(&mut conn, org).await;
 
@@ -214,7 +223,10 @@ async fn double_reject_is_idempotent(pool: PgPool) {
 async fn foreign_tenant_match_is_not_found(pool: PgPool) {
     let (_org_a, invoice_a, match_a, user) = seed_match_scenario(&pool, "r5-match-a").await;
     let org_b = seed_org(&pool, "r5-match-b").await;
-    let svc = AccountingService::new(AccountingRepository::new(pool.clone()));
+    let svc = AccountingService::new(
+        AccountingRepository::new(pool.clone()),
+        AccConfigRepository::new(pool.clone()),
+    );
     let mut conn = pool.acquire().await.unwrap();
     set_ctx(&mut conn, org_b).await;
 

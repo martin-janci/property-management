@@ -35,6 +35,21 @@ pub fn router() -> Router<AppState> {
         .route("/privacy", post(update_privacy_settings))
 }
 
+/// Map a database error to a sanitized HTTP error response.
+///
+/// The raw `sqlx`/database error is logged server-side (where operators can
+/// inspect it) but is never placed in the HTTP response body, so internal DB
+/// details and SQL are not leaked to the client. Mirrors the sanitized-error
+/// convention used by sibling handlers (e.g. `routes/mfa.rs`, which logs via
+/// `tracing::error!` and returns a generic `DATABASE_ERROR` message).
+fn db_error(err: sqlx::Error) -> (StatusCode, String) {
+    tracing::error!(error = %err, "GDPR handler database error");
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        "An internal error occurred. Please try again later.".to_string(),
+    )
+}
+
 // ============================================================================
 // DATA EXPORT ENDPOINTS (Story 9.3)
 // ============================================================================
@@ -60,7 +75,7 @@ async fn request_data_export(
         .data_export_repo
         .has_active_request(user.user_id)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(db_error)?;
 
     if has_active {
         return Err((
@@ -79,7 +94,7 @@ async fn request_data_export(
             include_categories: req.categories,
         })
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(db_error)?;
 
     // Log the data export request
     if let Err(e) = state
@@ -118,7 +133,7 @@ async fn get_export_status(
         .data_export_repo
         .get_by_id(request_id)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .map_err(db_error)?
         .ok_or((
             StatusCode::NOT_FOUND,
             "Export request not found".to_string(),
@@ -158,7 +173,7 @@ async fn download_export(
         .data_export_repo
         .get_by_token(token)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .map_err(db_error)?
         .ok_or((
             StatusCode::NOT_FOUND,
             "Export not found or expired".to_string(),
@@ -210,7 +225,7 @@ async fn download_export(
         .data_export_repo
         .collect_user_data(export_request.user_id, categories)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(db_error)?;
 
     Ok(Json(serde_json::to_value(user_data).unwrap_or_default()))
 }
@@ -298,7 +313,7 @@ async fn get_export_history(
         .data_export_repo
         .get_by_user_id(user.user_id)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(db_error)?;
 
     let history: Vec<ExportHistoryEntry> = exports
         .into_iter()
@@ -355,7 +370,7 @@ async fn request_data_deletion(
         .user_repo
         .find_by_id(user.user_id)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .map_err(db_error)?
         .ok_or((StatusCode::NOT_FOUND, "User not found".to_string()))?;
 
     // Confirmation must match email
@@ -382,7 +397,7 @@ async fn request_data_deletion(
         .user_repo
         .schedule_deletion(user.user_id, scheduled_for)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(db_error)?;
 
     // Log the deletion request
     if let Err(e) = state
@@ -422,7 +437,7 @@ async fn get_deletion_status(
         .user_repo
         .find_by_id(user.user_id)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .map_err(db_error)?
         .ok_or((StatusCode::NOT_FOUND, "User not found".to_string()))?;
 
     match db_user.scheduled_deletion_at {
@@ -457,7 +472,7 @@ async fn cancel_deletion_request(
         .user_repo
         .find_by_id(user.user_id)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .map_err(db_error)?
         .ok_or((StatusCode::NOT_FOUND, "User not found".to_string()))?;
 
     if db_user.scheduled_deletion_at.is_none() {
@@ -472,7 +487,7 @@ async fn cancel_deletion_request(
         .user_repo
         .cancel_scheduled_deletion(user.user_id)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(db_error)?;
 
     // Log the cancellation
     if let Err(e) = state
@@ -539,7 +554,7 @@ async fn get_privacy_settings(
         .user_repo
         .find_by_id(user.user_id)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .map_err(db_error)?
         .ok_or((StatusCode::NOT_FOUND, "User not found".to_string()))?;
 
     let email_verified = db_user.email_verified();
@@ -598,7 +613,7 @@ async fn update_privacy_settings(
         .user_repo
         .find_by_id(user.user_id)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .map_err(db_error)?
         .ok_or((StatusCode::NOT_FOUND, "User not found".to_string()))?;
 
     let old_values = serde_json::json!({
@@ -625,7 +640,7 @@ async fn update_privacy_settings(
     .bind(user.user_id)
     .execute(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     let new_values = serde_json::json!({
         "profile_visibility": new_visibility,
@@ -654,4 +669,35 @@ async fn update_privacy_settings(
 
     // Return updated settings
     get_privacy_settings(State(state), user).await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Regression: a raw database/sqlx error must never be echoed back to the
+    /// client. `db_error` has to log the raw error server-side and return a
+    /// generic, sanitized body instead (matches the sibling-handler convention).
+    #[test]
+    fn db_error_does_not_leak_raw_database_details() {
+        // A raw sqlx error whose Display carries internal DB/SQL details
+        // (table name, constraint name) that must not reach the client.
+        let raw = sqlx::Error::Protocol(
+            "relation \"users\" violates unique constraint \"users_email_key\"".to_string(),
+        );
+        let raw_text = raw.to_string();
+
+        let (status, body) = db_error(raw);
+
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_ne!(
+            body, raw_text,
+            "response body must not echo the raw DB error text"
+        );
+        assert!(
+            !body.contains("users") && !body.contains("constraint"),
+            "response body leaked internal DB details: {body}"
+        );
+        assert_eq!(body, "An internal error occurred. Please try again later.");
+    }
 }

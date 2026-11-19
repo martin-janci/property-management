@@ -9,7 +9,7 @@
 import type { ListingSummary } from '@ppt/reality-api-client';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 
-const MAX_COMPARISON_ITEMS = 4;
+export const MAX_COMPARISON_ITEMS = 4;
 const STORAGE_KEY = 'ppt-comparison';
 
 /**
@@ -127,7 +127,18 @@ export function ComparisonProvider({ children }: { children: React.ReactNode }) 
   }, []);
 
   const generateShareUrl = useCallback(() => {
-    const ids = listings.map((l) => l.id).join(',');
+    // Percent-encode each listing id before placing it in the query string so
+    // an id carrying a URL-reserved character (`&`, `#`, `?`, `=`, space, …)
+    // can't break the link or inject extra query parameters into the shared
+    // `/compare?ids=...` URL. The comma delimiter stays literal: the `/compare`
+    // page reads the already-decoded `searchParams.ids` and splits on `,`, so
+    // encoding each segment round-trips back to the exact original id. Drop any
+    // non-string/empty id defensively.
+    const ids = listings
+      .map((l) => l.id)
+      .filter((id): id is string => typeof id === 'string' && id.length > 0)
+      .map((id) => encodeURIComponent(id))
+      .join(',');
     const baseUrl =
       typeof window !== 'undefined'
         ? window.location.origin

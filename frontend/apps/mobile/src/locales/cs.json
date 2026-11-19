@@ -119,6 +119,13 @@
     "titleMinLength": "Nazev musi mit alespon 5 znaku",
     "categoryLabel": "Kategorie",
     "categoryPlaceholder": "Vyberte kategorii",
+    "categoryPlumbing": "Vodoinstalace",
+    "categoryElectrical": "Elektroinstalace",
+    "categoryStructural": "Konstrukcni",
+    "categoryHvac": "Topeni a klimatizace",
+    "categoryElevator": "Vytah",
+    "categorySecurity": "Bezpecnost",
+    "categoryOther": "Jine",
     "priorityLabel": "Priorita",
     "locationLabel": "Misto",
     "locationPlaceholder": "napr. 3. patro, byt 301",
@@ -363,6 +370,8 @@
       "errorTitle": "Slozku se nepodarilo presunout"
     },
     "detailLoadError": "Nepodařilo se načíst dokument",
+    "openErrorTitle": "Dokument se nepodařilo otevřít",
+    "openErrorMessage": "Prohlížeč souborů není na tomto zařízení dostupný.",
     "notFound": "Dokument nebyl nalezen"
   },
   "settings": {
@@ -473,10 +482,23 @@
   },
   "widgets": {
     "addedTitle": "Widget pridan",
-    "addedMessage": "Widget byl nakonfigurovan.",
+    "addedMessage": "Widget {{name}} byl nakonfigurován.",
     "updatedTitle": "Widgety aktualizovany",
     "updatedMessage": "Všechny widgety byly obnoveny.",
-    "emptyText": "Zatím nejsou nakonfigurovány žádné widgety."
+    "emptyText": "Zatím nejsou nakonfigurovány žádné widgety.",
+    "settingsTitle": "Nastavení widgetů",
+    "notAvailableTitle": "Widgety nejsou dostupné",
+    "notAvailableIos": "Widgety na domovské obrazovce vyžadují iOS 14 nebo novější.",
+    "notAvailableAndroid": "Widgety nejsou na tomto zařízení podporovány.",
+    "availableTitle": "Dostupné widgety",
+    "availableDescription": "Nastavte, které widgety se zobrazí na domovské obrazovce.",
+    "activeTitle": "Aktivní widgety",
+    "metaInfo": "Velikost: {{size}} • Obnovení: {{interval}} min",
+    "remove": "Odebrat",
+    "refreshAll": "🔄 Obnovit všechny widgety",
+    "instructionsTitle": "Jak přidat widgety",
+    "instructionsIos": "1. Podržte prst na domovské obrazovce\n2. Klepněte na tlačítko + vlevo nahoře\n3. Vyhledejte „PPT“\n4. Vyberte velikost widgetu a klepněte na „Přidat widget“",
+    "instructionsAndroid": "1. Podržte prst na domovské obrazovce\n2. Klepněte na „Widgety“\n3. Najděte „PPT Property Management“\n4. Přetáhněte widget na domovskou obrazovku"
   },
   "permissions": {
     "denied": "Opravneni zamitnuto",

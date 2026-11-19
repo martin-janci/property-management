@@ -202,4 +202,151 @@ mod tests {
             .unwrap();
         assert!(unsent_after.is_empty(), "sent digests are not retried");
     }
+
+    /// Insert a digest row and backdate its `created_at` to `hours_ago`,
+    /// leaving `email_sent_at` NULL — i.e. an unsent digest that has aged.
+    async fn aged_unsent_digest(pool: &sqlx::PgPool, user_id: Uuid, hours_ago: i64) -> Uuid {
+        let created = Utc::now() - Duration::hours(hours_ago);
+        sqlx::query(
+            "INSERT INTO notification_digests \
+             (user_id, digest_type, period_start, period_end, notification_count, created_at) \
+             VALUES ($1, 'daily', $2, $3, 3, $4) RETURNING id",
+        )
+        .bind(user_id)
+        .bind(created - Duration::hours(1))
+        .bind(created)
+        .bind(created)
+        .fetch_one(pool)
+        .await
+        .unwrap()
+        .get("id")
+    }
+
+    /// Read the `abandoned_at` timestamp of a digest row (NULL if not abandoned).
+    async fn abandoned_at(pool: &sqlx::PgPool, digest_id: Uuid) -> Option<chrono::DateTime<Utc>> {
+        sqlx::query("SELECT abandoned_at FROM notification_digests WHERE id = $1")
+            .bind(digest_id)
+            .fetch_one(pool)
+            .await
+            .unwrap()
+            .get("abandoned_at")
+    }
+
+    /// A digest whose email send keeps failing drops out of `get_unsent_digests`
+    /// once it ages past the resend window. Before the fix it was then silently
+    /// given up on — never retried and recorded only in a log line.
+    /// `mark_newly_abandoned_digests` stamps a durable `abandoned_at` on each
+    /// aged-out row (a queryable terminal state) and returns its id exactly once,
+    /// so the worker can log it once and operators can query it afterwards.
+    #[sqlx::test(migrator = "crate::MIGRATOR")]
+    async fn aged_out_digest_is_marked_abandoned_once_and_is_queryable(pool: sqlx::PgPool) {
+        let repo = GranularNotificationRepository::new(pool.clone());
+        let user = make_user(&pool, "abandoned@example.com").await;
+
+        let now = Utc::now();
+        // The resend cutoff the worker passes each tick. A full hour of margin
+        // on each side keeps the clock drift between capturing `now` here and
+        // the inserts below from flipping a boundary row across the edge.
+        let resend_cutoff = now - Duration::hours(19);
+
+        // (a) Aged out of the retry window → marked abandoned.
+        let abandoned = aged_unsent_digest(&pool, user, 20).await;
+        // (b) Still retryable (inside the window) → NOT marked.
+        let fresh = aged_unsent_digest(&pool, user, 1).await;
+        // (c) Aged out but already delivered → NOT marked.
+        let sent = aged_unsent_digest(&pool, user, 40).await;
+        repo.mark_digest_email_sent(sent).await.unwrap();
+
+        let marked = repo
+            .mark_newly_abandoned_digests(resend_cutoff, 100)
+            .await
+            .unwrap();
+
+        assert_eq!(marked, vec![abandoned], "exactly the aged-out, unsent row");
+
+        // The terminal state is now durable and queryable, not log-only.
+        assert!(
+            abandoned_at(&pool, abandoned).await.is_some(),
+            "the abandoned digest must carry a persisted abandoned_at timestamp"
+        );
+        assert!(
+            abandoned_at(&pool, fresh).await.is_none(),
+            "a still-retryable digest must not be marked abandoned"
+        );
+        assert!(
+            abandoned_at(&pool, sent).await.is_none(),
+            "a delivered digest must never be marked abandoned"
+        );
+
+        // Idempotent: a second sweep neither re-returns nor re-stamps the row.
+        let marked_again = repo
+            .mark_newly_abandoned_digests(resend_cutoff, 100)
+            .await
+            .unwrap();
+        assert!(
+            marked_again.is_empty(),
+            "an already-abandoned digest must not be reported again"
+        );
+
+        // An abandoned row is terminal: it is not resurrected for retry even if
+        // the retry window is later widened to cover it.
+        let retryable = repo
+            .get_unsent_digests(now - Duration::hours(100), 100)
+            .await
+            .unwrap();
+        assert!(
+            !retryable.iter().any(|d| d.digest_id == abandoned),
+            "an abandoned digest must never be resurrected for retry"
+        );
+    }
+
+    /// Backdate a user's `created_at` to `hours_ago` in the past, simulating an
+    /// account that registered long ago.
+    async fn backdate_created_at(pool: &sqlx::PgPool, user_id: Uuid, hours_ago: i64) {
+        let when = Utc::now() - Duration::hours(hours_ago);
+        sqlx::query("UPDATE users SET created_at = $2 WHERE id = $1")
+            .bind(user_id)
+            .bind(when)
+            .execute(pool)
+            .await
+            .unwrap();
+    }
+
+    /// Regression (PM #969 gap 1): a user who registered long ago but has never
+    /// logged in has NO `refresh_tokens` row, so the old INNER JOIN on
+    /// `last_activity` silently dropped them from the candidate set — they would
+    /// never receive an inactivity digest. The LEFT JOIN + `COALESCE(la.last_active,
+    /// u.created_at)` falls back to the registration time, so an opted-in account
+    /// that has been inactive since sign-up (and has unread notifications) still
+    /// qualifies.
+    #[sqlx::test(migrator = "crate::MIGRATOR")]
+    async fn never_logged_in_user_falls_back_to_created_at(pool: sqlx::PgPool) {
+        let repo = GranularNotificationRepository::new(pool.clone());
+        let user = make_user(&pool, "never-logged-in@example.com").await;
+        // No `set_last_active` call: this account has zero refresh_tokens rows.
+        // It registered 48h ago (> the 24h inactivity cutoff) and never signed in.
+        backdate_created_at(&pool, user, 48).await;
+        set_digest_enabled(&pool, user, true).await;
+        add_group(&pool, user, "fault", 3, false).await;
+
+        let now = Utc::now();
+        let candidates = repo
+            .find_inactive_digest_candidates(
+                now - Duration::hours(24),
+                now - Duration::hours(20),
+                100,
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(
+            candidates.len(),
+            1,
+            "a never-logged-in but long-registered opted-in user with unread \
+             notifications must be a digest candidate"
+        );
+        assert_eq!(candidates[0].user_id, user);
+        assert_eq!(candidates[0].email, "never-logged-in@example.com");
+        assert_eq!(candidates[0].notification_count, 3);
+    }
 }

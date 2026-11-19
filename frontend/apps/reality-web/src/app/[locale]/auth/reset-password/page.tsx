@@ -5,10 +5,15 @@
  * Reads `token` from the URL and submits a new password.
  */
 
-import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { type FormEvent, Suspense, useState } from 'react';
+// Locale-aware `Link`/`useRouter` from `@/i18n/routing` keep the active
+// `/[locale]/…` prefix on internal links and the "go to sign in" redirect.
+// `next/link` + `next/navigation` would drop the locale, sending the user to a
+// non-localized route (matches the login + SSO callback pages). `useSearchParams`
+// still comes from `next/navigation` (next-intl does not re-export it).
+import { Link, useRouter } from '@/i18n/routing';
 import { AuthApiError, confirmPasswordReset } from '@/lib/auth-api';
 
 const MIN_PASSWORD = 8;

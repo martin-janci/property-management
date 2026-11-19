@@ -152,11 +152,11 @@ describe('useDeepLinkRouting', () => {
     const onNavigate = jest.fn();
 
     useDeepLinkRouting(onNavigate, false);
-    expect(manager.setAuthenticated).toHaveBeenLastCalledWith(false);
+    expect(manager.setAuthenticated).toHaveBeenLastCalledWith(false, null);
 
     startRender();
     useDeepLinkRouting(onNavigate, true);
-    expect(manager.setAuthenticated).toHaveBeenLastCalledWith(true);
+    expect(manager.setAuthenticated).toHaveBeenLastCalledWith(true, null);
   });
 
   it('does not re-register or re-initialize when onNavigate identity changes', () => {

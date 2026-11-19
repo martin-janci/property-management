@@ -35,7 +35,7 @@ pub(super) async fn get_pending_queue(
 
     match result {
         Ok(items) => Json(items).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        Err(e) => super::db_error(e),
     }
 }
 
@@ -65,7 +65,7 @@ pub(super) async fn create_queue_item(
 
     match result {
         Ok(item) => (StatusCode::CREATED, Json(item)).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        Err(e) => super::db_error(e),
     }
 }
 
@@ -103,6 +103,6 @@ pub(super) async fn update_queue_status(
     match result {
         Ok(true) => StatusCode::OK.into_response(),
         Ok(false) => (StatusCode::NOT_FOUND, "Queue item not found").into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        Err(e) => super::db_error(e),
     }
 }

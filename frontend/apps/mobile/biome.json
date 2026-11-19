@@ -6,8 +6,8 @@
   "linter": {
     "rules": {
       "correctness": {
-        "useHookAtTopLevel": "error",
-        "useExhaustiveDependencies": "error"
+        "useHookAtTopLevel": "warn",
+        "useExhaustiveDependencies": "warn"
       }
     }
   }

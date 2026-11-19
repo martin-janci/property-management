@@ -168,7 +168,14 @@ export async function compressImagesIfNeeded(
   // preserved so each output lines up with its input uri.
   const compressedUris = await mapWithConcurrency(uris, COMPRESSION_CONCURRENCY, async (uri) => {
     try {
-      const result = await manipulateAsync(uri, [{ resize: { width: maxDimension } }], {
+      // Measure first so we cap the *longest* edge. A width-only `resize`
+      // leaves a tall/portrait photo's height unconstrained, so it can stay
+      // oversized and blow past the compression bounds. expo-image-manipulator
+      // preserves the aspect ratio when only one dimension is given, so we
+      // constrain whichever edge is longer against maxDimension.
+      const { width, height } = await manipulateAsync(uri, []);
+      const resize = height > width ? { height: maxDimension } : { width: maxDimension };
+      const result = await manipulateAsync(uri, [{ resize }], {
         compress: quality,
         format: SaveFormat.JPEG,
       });

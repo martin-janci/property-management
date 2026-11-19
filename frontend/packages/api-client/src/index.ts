@@ -14,6 +14,11 @@ export type { AuthUser } from './auth';
 export * from './auth';
 export * from './budgets';
 export * from './buildings';
+// Re-export the generated client through `./client-default`, which normalizes
+// the generator's compiled-in absolute base URL (`http://localhost:8080`) to a
+// safe relative/same-origin default at package load — so consumers that don't
+// call `client.setConfig()` (e.g. admin-web) never hit an absolute dev host.
+export { client } from './client-default';
 export * from './community';
 export * from './compliance';
 export * from './critical-notifications';
@@ -37,7 +42,6 @@ export * from './forms';
 // Export generated types and client
 // These will be populated after running `pnpm generate`
 export * from './generated';
-export { client } from './generated/client.gen';
 export * from './government-portal';
 export * from './granular-notifications';
 export * from './integrations';
@@ -48,7 +52,11 @@ export * from './leases';
 // can branch on 401/403; `authenticatedFetch` is the raw-`Response` primitive for
 // callers that can't use the generated SDK — multipart uploads and endpoints
 // whose callers read the `Response` themselves (see `./lib/fetch`).
-export { ApiError, authenticatedFetch } from './lib/fetch';
+// `authenticatedFetchJson` is the relative-path JSON sibling the per-module
+// `Api*` classes use internally (centralized Authorization injection + MFA
+// challenge retry + `ApiError` normalization); exported so ad-hoc app call
+// sites (e.g. admin-web hooks) stop hand-rolling `fetch(..., { Authorization })`.
+export { ApiError, authenticatedFetch, authenticatedFetchJson } from './lib/fetch';
 export * from './members';
 export * from './messaging';
 export * from './meters';

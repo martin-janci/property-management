@@ -1,5 +1,40 @@
 # mobile — React Native Mobile App
 
+## Lint gates (React Native) — warn-only rollout
+
+`biome.json` (nested, `extends: "//"`) adopts the rules that close the
+chronic mobile-rn lint-gap risk (stale-closure "ranked-ballot" bugs +
+hardcoded-string i18n fallback bugs). These map the ESLint-era intent onto
+the workspace's Biome gate:
+
+| Intent (ESLint)              | Biome rule / plugin                         | Severity |
+| ---------------------------- | ------------------------------------------- | -------- |
+| `react-hooks/rules-of-hooks` | `correctness.useHookAtTopLevel`             | `warn`   |
+| `react-hooks/exhaustive-deps`| `correctness.useExhaustiveDependencies`     | `warn`   |
+| `i18next/no-literal-string`  | `biome-plugins/no-hardcoded-strings.grit`   | `warn`   |
+
+All three are **blocking** (they run inside the mandatory `pnpm check`
+lint job — mobile `src/` is in the workspace Biome scope) but **warn-only
+for one sprint**: warnings surface in CI/local output without failing the
+gate, giving a sprint to migrate the existing backlog.
+
+### Flip-back: tracked, not a prose TODO (issue #3584)
+
+The warn-only window is **dated and gated**, not a "remember next sprint"
+note. Promote all three severities back to `error` by **2026-12-01**
+(`useHookAtTopLevel` / `useExhaustiveDependencies` in `biome.json`, and
+`severity="error"` in `biome-plugins/no-hardcoded-strings.grit`) once the
+backlog is clear. Do not weaken test gates to get green — fix the flagged
+code instead.
+
+Enforcement lives in `biome-lint-gate.test.ts` (runs in `pnpm --filter
+mobile test`): it pins the rules/plugin as present today and, **once the
+`2026-12-01` deadline passes, fails CI until the severities are back at
+`error`** — so the flip-back cannot be silently forgotten. If more time is
+genuinely needed, bump `FLIP_BACK_DEADLINE` in that test *with a justification
+recorded on [issue #3584](https://github.com/martin-janci/property-management/issues/3584)*
+rather than deleting the guard.
+
 ## Env config — single source of truth
 
 - `.env.<APP_ENV>` → loaded by `app.config.ts` via dotenv →

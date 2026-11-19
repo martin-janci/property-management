@@ -199,7 +199,24 @@ export type DeepLinkHandler = (link: ParsedDeepLink) => void;
 export class DeepLinkManager {
   private handlers: Set<DeepLinkHandler> = new Set();
   private pendingLink: ParsedDeepLink | null = null;
+  /**
+   * The user the queued {@link pendingLink} is reserved for, or `null` when it
+   * was captured with no prior user (claimable by the first user to sign in).
+   *
+   * Security (shared-device): a deep-link intent captured for one account must
+   * never cross a user boundary. A link reserved for user A is dropped rather
+   * than dispatched when a *different* user B authenticates, so a pending
+   * `ppt://faults/<id>` tapped under A's session can't auto-navigate B into a
+   * resource A was directed to.
+   */
+  private pendingLinkUserId: string | null = null;
   private isAuthenticated = false;
+  /**
+   * The most recently authenticated user id. Survives logout on purpose so a
+   * link queued *after* logout is reserved for the account that was just
+   * signed in — not handed to whoever signs in next on a shared device.
+   */
+  private lastUserId: string | null = null;
   /**
    * The `'url'` event subscription. Kept so re-initialisation and teardown can
    * remove the previous listener instead of leaking it (a discarded
@@ -244,14 +261,41 @@ export class DeepLinkManager {
 
   /**
    * Set authentication state.
+   *
+   * @param isAuthenticated whether a user is now signed in.
+   * @param userId the signed-in user's id (when `isAuthenticated`), used to key
+   *   the queued {@link pendingLink} so it cannot cross a user boundary on a
+   *   shared device. Omit / pass `null` when the id is unavailable.
    */
-  setAuthenticated(isAuthenticated: boolean): void {
+  setAuthenticated(isAuthenticated: boolean, userId: string | null = null): void {
     this.isAuthenticated = isAuthenticated;
 
-    // Process pending link if now authenticated
-    if (isAuthenticated && this.pendingLink) {
-      this.dispatchLink(this.pendingLink);
+    if (!isAuthenticated) {
+      // Logout / auth lost. Drop any queued deep link so a pre-logout intent
+      // can never be inherited by the next user to sign in (shared device).
+      // `lastUserId` is deliberately retained: a link queued after this logout
+      // stays reserved for the account that just left, not the next one in.
       this.pendingLink = null;
+      this.pendingLinkUserId = null;
+      return;
+    }
+
+    // Authenticated: remember who, so links queued later (while logged out) are
+    // reserved for this user.
+    this.lastUserId = userId;
+
+    // Process the pending link, but only when it is unreserved (`null`, e.g.
+    // captured on a fresh device before any login) or reserved for the user who
+    // just authenticated. A link reserved for a *different* user is dropped
+    // rather than leaked across the boundary.
+    if (this.pendingLink) {
+      const reservedFor = this.pendingLinkUserId;
+      const link = this.pendingLink;
+      this.pendingLink = null;
+      this.pendingLinkUserId = null;
+      if (reservedFor === null || reservedFor === userId) {
+        this.dispatchLink(link);
+      }
     }
   }
 
@@ -279,8 +323,11 @@ export class DeepLinkManager {
     }
 
     if (parsed.requiresAuth && !this.isAuthenticated) {
-      // Queue for after authentication
+      // Queue for after authentication, reserved for the most recently
+      // signed-in user so a shared device can't hand it to a different account
+      // (see setAuthenticated / pendingLinkUserId).
       this.pendingLink = parsed;
+      this.pendingLinkUserId = this.lastUserId;
       return;
     }
 
@@ -308,6 +355,7 @@ export class DeepLinkManager {
    */
   clearPendingLink(): void {
     this.pendingLink = null;
+    this.pendingLinkUserId = null;
   }
 }
 

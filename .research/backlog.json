@@ -14774,19 +14774,20 @@
       "title": "KMP realtor SSO error-body parsing is unguarded — crashes on non-JSON response",
       "vector": "bug",
       "confidence": "medium",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "rotating-expert-review 2026-11-03 mobile-native-kmp (dispatcher Tier-1d)"
       ],
       "evidence": [
-        "See .research/signals/2026-11-03-mobile-native-kmp-tier1d.json for full finding. Catch-up for 2026-11-03 skipped run."
+        "See .research/signals/2026-11-03-mobile-native-kmp-tier1d.json for full finding. Catch-up for 2026-11-03 skipped run.",
+        "decayed: no new signals in 14 days — score 2 → 1"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/"
       ],
       "created_at": "2026-11-04",
-      "updated_at": "2026-11-04",
+      "updated_at": "2026-11-18",
       "plan": null
     },
     {
@@ -15718,7 +15719,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "git-log 14d sweep 2026-11-13"
       ],
@@ -15730,7 +15731,12 @@
       ],
       "created_at": "2026-11-13",
       "updated_at": "2026-11-13",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-15T00:27:26Z",
+        "assignment_status": "merged",
+        "pr_number": 3524
+      }
     },
     {
       "id": "churn-hotspot-frontend-apps-ppt-web-messages-en-json",
@@ -15765,7 +15771,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "git-log 14d sweep 2026-11-13"
       ],
@@ -15777,7 +15783,12 @@
       ],
       "created_at": "2026-11-13",
       "updated_at": "2026-11-13",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-15T06:26:16Z",
+        "assignment_status": "merged",
+        "pr_number": 3540
+      }
     },
     {
       "id": "code-review-reality-web-realtor-reviews-silent-error",
@@ -15803,6 +15814,775 @@
         "assignment_status": "merged",
         "pr_number": 3518
       }
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-messages-pl-json",
+      "title": "ppt-web messages/pl.json churn-hotspot — 4 commits in 2d (i18n leaf-parity sweeps PR #3524 + locale-specific fixes)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "git-log 14d sweep 2026-11-15"
+      ],
+      "evidence": [
+        "ppt-web messages/pl.json: 4 commits since 2026-11-13 (PR #3524 de/pl/hu parity sweep; PR #3485 errorhandler; PR #3491 route toasts; PR #3500 fault-detail mutations)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/messages/pl.json"
+      ],
+      "created_at": "2026-11-15",
+      "updated_at": "2026-11-15",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-17T16:25:13Z",
+        "assignment_status": "merged",
+        "pr_number": 3586
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-messages-cs-json",
+      "title": "ppt-web messages/cs.json churn-hotspot — 4 commits in 2d (ambient i18n sweeps + UC-52 payments)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "git-log 14d sweep 2026-11-15"
+      ],
+      "evidence": [
+        "ppt-web messages/cs.json: 4 commits since 2026-11-13 (PR #3535 UC-52 payments error; PR #3519 iot.dashboardLoadError; PR #3485/3491 i18n sweeps)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/messages/cs.json"
+      ],
+      "created_at": "2026-11-15",
+      "updated_at": "2026-11-15",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-17T10:25:28Z",
+        "assignment_status": "merged",
+        "pr_number": 3585
+      }
+    },
+    {
+      "id": "repeated-churn-frontend-apps-ppt-web-messages-sk-json",
+      "title": "ppt-web messages/sk.json repeated-churn — primary locale touched in 3 of 3 recent runs",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "hotspot_history.runs_seen 2→3 with new churn 2026-11-15"
+      ],
+      "evidence": [
+        "ppt-web sk.json runs_seen=2 at start of this run (last_seen 2026-11-09); 4 commits since 2026-11-13 push runs_seen=3. Primary locale — translation debt there is highest-visibility for sk tenants. Candidate for a messages-parity CI guard."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/messages/sk.json"
+      ],
+      "created_at": "2026-11-15",
+      "updated_at": "2026-11-15",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-17T12:25:23Z",
+        "assignment_status": "merged",
+        "pr_number": 3591
+      }
+    },
+    {
+      "id": "hotfix-no-test-pr-3497",
+      "title": "PR #3497 fix(api-server) voice book-facility false-success — shipped without regression test",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #3497"
+      ],
+      "evidence": [
+        "PR #3497 (merged 2026-11-13) touched backend/servers/api-server/src/services/voice_commands.rs only — no *test*/*spec* file in diff. voice book-facility correctness fix (prevented reporting success on booking failure) lacks a regression test; next refactor could silently re-break it."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/voice_commands.rs"
+      ],
+      "created_at": "2026-11-15",
+      "updated_at": "2026-11-15",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-16T16:46:27Z",
+        "assignment_status": "done",
+        "pr_number": null
+      }
+    },
+    {
+      "id": "hotfix-no-test-pr-3525",
+      "title": "PR #3525 fix(api-handlers) non-admin peer-role mutation — privilege-escalation fix without a cross-tenant test",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #3525"
+      ],
+      "evidence": [
+        "PR #3525 (merged 2026-11-14) touched backend/servers/api-server/src/routes/organizations/members.rs only — no *test*/*spec* file in diff. Role-escalation guard (peer assigns peer) is exactly the class of fix that must land with an RLS/role-boundary test to prevent regression."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/organizations/members.rs"
+      ],
+      "created_at": "2026-11-15",
+      "updated_at": "2026-11-15",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-16T16:46:27Z",
+        "assignment_status": "merged",
+        "pr_number": 3571
+      }
+    },
+    {
+      "id": "risky-churn-pr-3524-pl-json",
+      "title": "PR #3524 i18n leaf-parity fix on top-churn pl.json without a parity test — follow-up #3531 re-opened the same gap",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "dropped",
+      "sources": [
+        "PR #3524",
+        "Issue #3531"
+      ],
+      "evidence": [
+        "PR #3524 (fix) modified frontend/apps/ppt-web/messages/pl.json — a top-churn file this run — with no test diff. Follow-up Issue #3531 (now closed) documented 455 en keys still missing after the 'parity' PR. Pattern: repeated i18n leaf-parity fixes on the same church files without a messages-parity CI guard."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/messages/pl.json",
+        "frontend/apps/ppt-web/messages/de.json",
+        "frontend/apps/ppt-web/messages/hu.json"
+      ],
+      "created_at": "2026-11-15",
+      "updated_at": "2026-11-15",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-16T22:23:18Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3486-ppt",
+      "title": "PR #3486 gated community/disputes/messaging/neighbors behind ProtectedRoute without updating docs/screens/ppt/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #3486",
+        "PR #3581"
+      ],
+      "evidence": [
+        "PR #3486 shipped an access-model shift (public→protected) on 4 ppt-web route files (community.tsx, disputes.tsx, messaging.tsx, neighbors.tsx) without touching any docs/screens/ppt/*.md. Best-effort heuristic — the screen docs for community/disputes/messaging/neighbors likely still describe the pre-protection flow.",
+        "resolved: PR #3581 merged 2026-11-17 — screen-map-drift-pr-3486-ppt: sync ppt screen-maps with PR #3486 ProtectedRoute gating"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/disputes.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/messaging.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/neighbors.tsx"
+      ],
+      "created_at": "2026-11-15",
+      "updated_at": "2026-11-17",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3482-ppt",
+      "title": "PR #3482 gated /settings/privacy behind ProtectedRoute without updating docs/screens/ppt/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #3482",
+        "PR #3580"
+      ],
+      "evidence": [
+        "PR #3482 shipped a visibility shift on frontend/apps/ppt-web/src/routes/groups/core.tsx (gating /settings/privacy to authenticated users only) without touching any docs/screens/ppt/*.md. Best-effort heuristic — no privacy-settings.md exists; the accessibility-settings.md doc does not reflect the new auth gate.",
+        "resolved: PR #3580 merged 2026-11-17 — screen-map-drift-pr-3482-ppt: sync ppt/privacy-settings with PR #3482 auth gate"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ],
+      "created_at": "2026-11-15",
+      "updated_at": "2026-11-17",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-feedback-manager-no-auth-token",
+      "title": "mobile-rn FeedbackManager singleton is constructed without ever receiving an auth token — every /api/v1/feedback POST ships unauthenticated",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "done",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-11-15 mobile-rn"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/onboarding/FeedbackManager.ts:290 — `export const feedbackManager = new FeedbackManager(API_BASE_URL, APP_VERSION, BUILD_NUMBER)` is the sole instantiation. Repo-wide grep shows feedbackManager.setAuthToken is never called (only WidgetBridge/WidgetDataProvider and NFCAccessController use setAuthToken on OTHER singletons).",
+        "apiRequest at FeedbackManager.ts:259-272 only sets the bearer header when this.authToken is truthy — since setAuthToken is never called, every POST /api/v1/feedback ships without an auth header. Same bug class as the just-landed PR #3537 code-review-mobile-rn-widget-bridge-auth-token-never-set."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/onboarding/FeedbackManager.ts",
+        "frontend/apps/mobile/src/screens/help/FeedbackScreen.tsx",
+        "frontend/apps/mobile/src/contexts/AuthContext.tsx"
+      ],
+      "created_at": "2026-11-15",
+      "updated_at": "2026-11-15",
+      "plan": "plans/code-review-mobile-rn-feedback-manager-no-auth-token.md",
+      "reconciled": {
+        "at": "2026-11-15T12:23:57Z",
+        "assignment_status": "merged",
+        "pr_number": 3543
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-report-fault-category-chips-english",
+      "title": "mobile-rn ReportFaultScreen category chips always render English — locale switch leaves 7 chips in EN while rest of form translates",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-11-15 mobile-rn"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx:409-421 — getCategoryLabel returns a hard-coded English dictionary {plumbing:'Plumbing', electrical:'Electrical', ...}; author comment admits 'these would ideally come from translations'.",
+        "Line 533 priority chips already use t(`faults.${p.labelKey}`) — the i18n convention exists in the same file; categories just never wired. Every other visible string on this screen (title, placeholders, buttons, errors, offline hints) is translated."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx",
+        "frontend/apps/mobile/src/locales/en/faults.json",
+        "frontend/apps/mobile/src/locales/sk/faults.json"
+      ],
+      "created_at": "2026-11-15",
+      "updated_at": "2026-11-15",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-16T16:46:27Z",
+        "assignment_status": "merged",
+        "pr_number": 3567
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-deeplink-pending-cross-user",
+      "title": "mobile-rn DeepLinkManager.pendingLink never cleared on logout — shared-device deep-link intent crosses user boundary",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-11-15 mobile-rn"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts:201,248-256,309 — DeepLinkManager is a module-level singleton. setAuthenticated(false) does NOT clear this.pendingLink; clearPendingLink is defined at line 309 but never called from any caller (repo-wide grep hits only the definition).",
+        "On a shared-tablet (kiosk/maintenance), user A taps a QR/push `ppt://faults/42` while logged out → handleUrl stores pendingLink. User A leaves; user B signs in and useDeepLinkRouting calls deepLinkManager.setAuthenticated(true), dispatching the stale link → user B lands in user A's fault detail. Same bug class as the #2953 NFC credential leak fix, now for navigation intent."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts",
+        "frontend/apps/mobile/src/hooks/useDeepLinkRouting.ts",
+        "frontend/apps/mobile/src/auth/AuthContext.tsx"
+      ],
+      "created_at": "2026-11-15",
+      "updated_at": "2026-11-15",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-16T16:46:27Z",
+        "assignment_status": "done",
+        "pr_number": null
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3559-reality",
+      "title": "Screen-map drift: PR #3559 login open-redirect fix without docs/screens/reality update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #3559"
+      ],
+      "evidence": [
+        "PR #3559 touched frontend/apps/reality-web/src/app/[locale]/auth/{callback,login}/page.tsx (open-redirect backslash hardening) without updating docs/screens/reality/auth-login.md or auth-callback.md — screen docs may not reflect the post-login redirect-sanitization step. Heuristic — review before promoting."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/login/page.tsx",
+        "docs/screens/reality/auth-login.md",
+        "docs/screens/reality/auth-callback.md"
+      ],
+      "created_at": "2026-11-16",
+      "updated_at": "2026-11-16",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-18T14:23:52Z",
+        "assignment_status": "merged",
+        "pr_number": 3613
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3546-ppt",
+      "title": "Screen-map drift: PR #3546 faults URL-param validation without docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #3546"
+      ],
+      "evidence": [
+        "PR #3546 touched frontend/apps/ppt-web/src/routes/groups/faults.tsx (URL-param validation for faults list) without touching any docs/screens/ppt/*.md — faults-list.md / fault-detail.md may not reflect the new URL-param validation contract. Heuristic — review before promoting."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+        "docs/screens/ppt/faults-list.md",
+        "docs/screens/ppt/fault-detail.md"
+      ],
+      "created_at": "2026-11-16",
+      "updated_at": "2026-11-16",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-18T14:23:52Z",
+        "assignment_status": "merged",
+        "pr_number": 3614
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-features-reports-trendchart-tsx",
+      "title": "Churn hotspot: ppt-web features/reports/TrendChart.tsx (reports feature rollout)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "churn"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/reports/components/TrendChart.tsx: 274 lines churn (1 commit this run — reports feature rollout alongside AnalyticsChart, KPICard, BuildingMetricsCard, PeriodComparisonChart)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/reports/components/TrendChart.tsx"
+      ],
+      "created_at": "2026-11-16",
+      "updated_at": "2026-11-16",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-18T14:23:52Z",
+        "assignment_status": "merged",
+        "pr_number": 3615
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-features-reports-analyticschart-tsx",
+      "title": "Churn hotspot: ppt-web features/reports/AnalyticsChart.tsx (reports feature rollout)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "dropped",
+      "sources": [
+        "churn"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/reports/components/AnalyticsChart.tsx: 266 lines churn (1 commit this run — reports feature rollout)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/reports/components/AnalyticsChart.tsx"
+      ],
+      "created_at": "2026-11-16",
+      "updated_at": "2026-11-16",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-18T00:25:01Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
+    },
+    {
+      "id": "churn-hotspot-backend-servers-reality-server-src-routes-listings-rs",
+      "title": "Churn hotspot: reality-server routes/listings.rs (slug + category i18n sweeps)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "churn",
+        "commits 2026-11-18..19 (listings.rs 2 touches, 201 line churn)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/listings.rs: 244 lines churn (2 commits — PR #3552 slug derivation + PR #3551 category i18n).",
+        "2026-11-19 re-emit: 2 touches, 201 line churn — property_type i18n (#3609) + ListingSummary slug (#3616); runs_seen=2"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/listings.rs"
+      ],
+      "created_at": "2026-11-16",
+      "updated_at": "2026-11-19",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-19T02:26:18Z",
+        "assignment_status": "merged",
+        "pr_number": 3609
+      }
+    },
+    {
+      "id": "code-review-reality-server-search-missing-slug",
+      "title": "reality-server ListingSummary (/listings search) emits bare UUID; SEO slug only on /featured",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "rotating-expert-review 2026-11-16"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/listings.rs:162 — ListingSummary (emitted by /api/v1/listings search endpoint and by From<PublicListingSummary>) does NOT carry a slug field, only id: Uuid. The new SEO slug was added only to RichListingSummary (lines 526-535) returned by /featured.",
+        "backend/servers/reality-server/src/routes/listings.rs:189 — impl From<PublicListingSummary> for ListingSummary never derives a slug, so frontends consuming /listings results still have nothing but a bare UUID to build the detail URL — the SEO fix lands on the homepage rail but NOT on the search results page that drives most traffic.",
+        "backend/servers/reality-server/tests/suites/listings_tests.rs:70 — search_returns_200_empty_result and search_with_query_param_returns_200 assert only status codes; no test parses the body and asserts that search rows carry a slug the client can navigate to."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/listings.rs",
+        "backend/servers/reality-server/tests/suites/listings_tests.rs"
+      ],
+      "created_at": "2026-11-16",
+      "updated_at": "2026-11-16",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-18T14:23:52Z",
+        "assignment_status": "merged",
+        "pr_number": 3616
+      }
+    },
+    {
+      "id": "code-review-reality-server-record-view-no-check",
+      "title": "reality-server record_view: comment claims existence check but handler does not verify + no per-IP throttle",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-16"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/listings.rs:960-967 — comment says only return a hard error when the listing genuinely does not exist but handler never verifies listing exists before calling track_view and unconditionally returns 204 (only failure mode is parse_listing_id returning None). Test record_view_unknown_listing_returns_204 enforces the 204-for-unknown-id contract.",
+        "backend/servers/reality-server/src/routes/listings.rs:964 — track_view(id, website) fires unauthenticated for any parseable UUID with no per-IP throttle at this handler; anonymous POST /api/v1/listings/<random-uuid>/view in a loop can inflate listing_analytics with orphan or duplicate rows.",
+        "backend/servers/reality-server/tests/suites/listings_tests.rs:164-177 — test locks in the 204-for-unknown behavior; either the comment should be fixed to match or an existence check should be added and the test updated."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/listings.rs",
+        "backend/servers/reality-server/tests/suites/listings_tests.rs"
+      ],
+      "created_at": "2026-11-16",
+      "updated_at": "2026-11-16",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-notification-digest-rs",
+      "title": "notification_digest.rs is a repeat churn hotspot (digest subsystem)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #3574",
+        "PR #3576",
+        "commit log 2026-11-18"
+      ],
+      "evidence": [
+        "notification_digest.rs changed in 2 merged PRs this run (#3574 abandoned-send surfacing, #3576 digest worker replica claim); digest subsystem hotspot — see related code-review-findings for concrete bugs",
+        "repeated-churn: file changed in 2 consecutive runs (2026-11-17, 2026-11-18); +1 this run"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/notification_digest.rs"
+      ],
+      "created_at": "2026-11-17",
+      "updated_at": "2026-11-18",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-19T12:27:49Z",
+        "assignment_status": "merged",
+        "pr_number": 3633
+      }
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-granular-notification-rs",
+      "title": "granular_notification.rs repo is a repeat churn hotspot (digest subsystem)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #3574",
+        "PR #3576",
+        "commit log 2026-11-18"
+      ],
+      "evidence": [
+        "granular_notification.rs repo changed in 2 merged PRs this run (#3574, #3576) co-moving with notification_digest.rs; a Phase 1.5 review found a silent-cohort-drop INNER JOIN here",
+        "repeated-churn: file changed in 2 consecutive runs (2026-11-17, 2026-11-18); +1 this run"
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/granular_notification.rs"
+      ],
+      "created_at": "2026-11-17",
+      "updated_at": "2026-11-18",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-19T12:27:49Z",
+        "assignment_status": "merged",
+        "pr_number": 3632
+      }
+    },
+    {
+      "id": "code-review-api-core-digest-candidates-inner-join-refresh-tokens",
+      "title": "find_inactive_digest_candidates INNER JOIN silently excludes users without a refresh-tokens row",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #3585",
+        "rotating-expert-review 2026-11-17 (api-core)"
+      ],
+      "evidence": [
+        "backend/crates/db/src/repositories/granular_notification.rs:1002 — find_inactive_digest_candidates joins users to last_activity (derived from refresh_tokens.MAX(last_used_at)) with INNER JOIN; any opted-in user whose refresh_tokens row was expired/pruned (or who never had one) is silently excluded from the digest sweep — exactly the long-tail inactive users the digest exists to re-engage. Fix: LEFT JOIN last_activity la … WHERE COALESCE(la.last_active, u.created_at) < $1.",
+        "resolved: PR #3585 (fall back to created_at for never-logged-in users) — INNER JOIN on refresh_tokens removed; current query uses LEFT JOIN last_activity + COALESCE(la.last_active, u.created_at)"
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/granular_notification.rs"
+      ],
+      "created_at": "2026-11-17",
+      "updated_at": "2026-11-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-digest-abandoned-no-terminal-state",
+      "title": "report_abandoned has no persisted abandoned_at — abandoned digests are log-only",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #3587",
+        "rotating-expert-review 2026-11-17 (api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/notification_digest.rs:226-252 — report_abandoned surfaces aged-out digest rows only via a tracing::error! log line; notification_digests schema (migration 00061) has no column to mark a row terminally abandoned, so the DB cannot distinguish 'still inside retry window, pending retry' from 'exhausted retry window, giving up'. Log-pipeline loss or restart around the boundary tick (poll_interval=1h) → the abandoned row is invisible forever. Add e.g. abandoned_at TIMESTAMPTZ and set it when report_abandoned picks the row up.",
+        "resolved: PR #3587 (add terminal abandoned_at state) — abandoned_at column added, report_abandoned stamps SET abandoned_at = now(), queries filter abandoned_at IS NULL"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/notification_digest.rs"
+      ],
+      "created_at": "2026-11-17",
+      "updated_at": "2026-11-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-digest-sweep-lock-release-leak",
+      "title": "release_digest_sweep returns a failed-unlock connection to the pool (advisory-lock leak)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "PR #3591",
+        "rotating-expert-review 2026-11-17 (api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/notification_digest.rs:193-195 — release_digest_sweep is best-effort: on error the connection is returned to the pool with the session-scoped pg_advisory_lock still held. The docstring says 'self-heals when the connection closes' but Postgres pool connections can live indefinitely; the same connection could be re-acquired on later try_claim_digest_sweep calls, where pg_try_advisory_lock returns true for an already-held lock (ref-count += 1), then one pg_advisory_unlock only decrements to 1, leaving the lock held after 'successful' release. Safer: on release error, mark the connection unusable (drop without return) or close it explicitly instead of returning it to the pool.",
+        "resolved: PR #3591 (discard digest-sweep connection when advisory-unlock fails) — release_digest_sweep detaches + hard-closes the connection on unlock failure"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/notification_digest.rs"
+      ],
+      "created_at": "2026-11-17",
+      "updated_at": "2026-11-18",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-compliance-rs",
+      "title": "Churn hotspot: api-server routes/compliance.rs (compliance wave churn)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "commit log 2026-11-18"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/compliance.rs changed in 3 commits this run (new hotspot)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/compliance.rs"
+      ],
+      "created_at": "2026-11-18",
+      "updated_at": "2026-11-18",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-19T02:26:18Z",
+        "assignment_status": "merged",
+        "pr_number": 3627
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3606-ppt",
+      "title": "Screen-map drift: PR #3606 wrap route groups in ProtectedRoute without docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #3606"
+      ],
+      "evidence": [
+        "PR #3606 touched frontend/apps/ppt-web/src/routes/groups/{announcements,faults,financial,outages}.tsx + a route-auth-guard test; no docs/screens/ppt/*.md update in the PR"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/announcements.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/outages.tsx"
+      ],
+      "created_at": "2026-11-18",
+      "updated_at": "2026-11-18",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-19T02:26:18Z",
+        "assignment_status": "merged",
+        "pr_number": 3625
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3595-reality",
+      "title": "Screen-map drift: PR #3595 preserve locale in reality-web auth navigation without docs/screens/reality update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #3595"
+      ],
+      "evidence": [
+        "PR #3595 touched frontend/apps/reality-web/src/app/[locale]/auth/{login,register,reset-password}/page.tsx; no docs/screens/reality/*.md update in the PR"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/login/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/register/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/reset-password/page.tsx"
+      ],
+      "created_at": "2026-11-18",
+      "updated_at": "2026-11-18",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-19T02:26:18Z",
+        "assignment_status": "merged",
+        "pr_number": 3624
+      }
+    },
+    {
+      "id": "stalled-review-pr-3380",
+      "title": "Stalled review: PR #3380 (reality-web analytics i18n) — 8d, no reviewDecision",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3380"
+      ],
+      "evidence": [
+        "PR #3380 open since 2026-11-10; last update 2026-11-17; only COMMENTED reviews (author + copilot-pull-request-reviewer bot), no APPROVED/CHANGES_REQUESTED"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/dashboard/analytics/page.tsx"
+      ],
+      "created_at": "2026-11-18",
+      "updated_at": "2026-11-18",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-backend-servers-reality-server-src-routes-listings-rs",
+      "title": "reality-server /listings routes/listings.rs hit as repeated churn hotspot (runs_seen=2)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "commits 2026-11-18..19 (listings.rs 2 touches, 201 line churn)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/listings.rs now runs_seen=2 (prev 2026-11-16, now 2026-11-19); churn this run 201 lines — property_type i18n + ListingSummary slug"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/listings.rs"
+      ],
+      "created_at": "2026-11-19",
+      "updated_at": "2026-11-19",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-branding-query-unhandled-error",
+      "title": "reality-web useAgencyBranding error path unhandled — silent default-color clobber on fetch failure",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-19 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx:24 — useAgencyBranding destructures only data/isLoading; no isError/error handling, mirror of Issue #2343 that was just fixed for useMyAgency (lines 20-23, 110-112). On a 5xx or network failure the form renders with hardcoded defaults #2563eb/#1e40af/#10b981; a Save overwrites real branding with the default palette (silent data clobber)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx"
+      ],
+      "created_at": "2026-11-19",
+      "updated_at": "2026-11-19",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-preview-hardcoded-alt-text",
+      "title": "reality-web agency branding preview uses hardcoded English alt text (Preview, Logo)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-19 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx:290 — `<img ... alt=\"Preview\">` hardcoded English; same at :304 for alt=\"Logo\". All other images use t(logoAlt)/t(coverAlt); reality-web supports sk, cs, de, en — a11y contract breaks for non-English locales."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx"
+      ],
+      "created_at": "2026-11-19",
+      "updated_at": "2026-11-19",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-preview-hardcoded-price",
+      "title": "reality-web agency branding preview shows hardcoded `€450,000` — breaks for de/sk/cs locales",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-19 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx:312 — literal \"€450,000\" in preview price block; not wrapped in t(...) nor formatted via Intl.NumberFormat(locale). On de/sk/cs the thousand separator is `.` and decimal is `,` so continental readers parse the preview as €450.00 — misrepresents sample price for ~3 of 4 supported locales."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx"
+      ],
+      "created_at": "2026-11-19",
+      "updated_at": "2026-11-19",
+      "plan": null
     }
   ]
 }

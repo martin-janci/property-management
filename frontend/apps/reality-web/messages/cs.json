@@ -61,6 +61,9 @@
     "buttonResend": "Odeslat znovu",
     "buttonView": "Zobrazit",
     "detailTitle": "Detaily makléře",
+    "detailUpdateError": "Nepodařilo se uložit změny. Zkuste to znovu.",
+    "detailRemoveError": "Nepodařilo se odstranit makléře. Zkuste to znovu.",
+    "detailStatusError": "Nepodařilo se aktualizovat stav. Zkuste to znovu.",
     "formLabelBio": "Životopis",
     "statTotalSales": "Celkové prodeje",
     "statRating": "Hodnocení",
@@ -168,6 +171,20 @@
     "transactionType": {
       "sale": "K prodeji",
       "rent": "K pronájmu"
+    },
+    "button": {
+      "add": "Porovnat",
+      "comparing": "Porovnává se",
+      "addTitle": "Přidat do porovnání",
+      "removeTitle": "Odebrat z porovnání",
+      "maxWarning": "Maximálně {max} nemovitosti. Nejprve jednu odeberte."
+    },
+    "tray": {
+      "count": "{count}/{max} nemovitostí k porovnání",
+      "clearAll": "Vymazat vše",
+      "thumbnailAlt": "Náhled nemovitosti {title}",
+      "compareNeedMore": "Porovnat (alespoň {min})",
+      "compareReady": "Porovnat {count} nemovitostí"
     }
   },
   "contact": {
@@ -1273,7 +1290,8 @@
     "featured": "Doporučeno",
     "yourAgency": "Vaše agentura",
     "sampleTitle": "Ukázkový název nabídky",
-    "contactAgent": "Kontaktovat makléře"
+    "contactAgent": "Kontaktovat makléře",
+    "saveError": "Nepodařilo se uložit změny brandingu. Zkuste to prosím znovu."
   },
   "agencyInquiries": {
     "title": "Poptávky agentury",

@@ -61,3 +61,5 @@ mod rental_cross_tenant_upsert_tests;
 mod rental_enum_decode_tests;
 #[path = "suites/rental_guest_ical_enum_decode_tests.rs"]
 mod rental_guest_ical_enum_decode_tests;
+#[path = "suites/rental_scoped_isolation_tests.rs"]
+mod rental_scoped_isolation_tests;

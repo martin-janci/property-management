@@ -61,6 +61,9 @@
     "buttonResend": "Erneut senden",
     "buttonView": "Ansehen",
     "detailTitle": "Maklerdetails",
+    "detailUpdateError": "Änderungen konnten nicht gespeichert werden. Bitte versuchen Sie es erneut.",
+    "detailRemoveError": "Der Makler konnte nicht entfernt werden. Bitte versuchen Sie es erneut.",
+    "detailStatusError": "Der Status konnte nicht aktualisiert werden. Bitte versuchen Sie es erneut.",
     "formLabelBio": "Biografie",
     "statTotalSales": "Verkäufe gesamt",
     "statRating": "Bewertung",
@@ -168,6 +171,20 @@
     "transactionType": {
       "sale": "Zum Verkauf",
       "rent": "Zur Miete"
+    },
+    "button": {
+      "add": "Vergleichen",
+      "comparing": "Im Vergleich",
+      "addTitle": "Zum Vergleich hinzufügen",
+      "removeTitle": "Aus dem Vergleich entfernen",
+      "maxWarning": "Maximal {max} Immobilien. Entfernen Sie zuerst eine."
+    },
+    "tray": {
+      "count": "{count}/{max} Immobilien zum Vergleichen",
+      "clearAll": "Alle löschen",
+      "thumbnailAlt": "Vorschaubild für {title}",
+      "compareNeedMore": "Vergleichen (mindestens {min})",
+      "compareReady": "{count} Immobilien vergleichen"
     }
   },
   "contact": {
@@ -1273,7 +1290,8 @@
     "featured": "Empfohlen",
     "yourAgency": "Ihre Agentur",
     "sampleTitle": "Beispiel-Inseratstitel",
-    "contactAgent": "Makler kontaktieren"
+    "contactAgent": "Makler kontaktieren",
+    "saveError": "Branding-Änderungen konnten nicht gespeichert werden. Bitte versuchen Sie es erneut."
   },
   "agencyInquiries": {
     "title": "Agentur-Anfragen",

@@ -41,7 +41,7 @@ pub(super) async fn get_credit_result(
     match result {
         Ok(Some(result)) => Json(result).into_response(),
         Ok(None) => (StatusCode::NOT_FOUND, "Credit result not found").into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        Err(e) => super::db_error(e),
     }
 }
 
@@ -71,7 +71,7 @@ pub(super) async fn create_credit_result(
 
     match result {
         Ok(result) => (StatusCode::CREATED, Json(result)).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        Err(e) => super::db_error(e),
     }
 }
 
@@ -100,7 +100,7 @@ pub(super) async fn get_background_result(
     match result {
         Ok(Some(result)) => Json(result).into_response(),
         Ok(None) => (StatusCode::NOT_FOUND, "Background result not found").into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        Err(e) => super::db_error(e),
     }
 }
 
@@ -130,7 +130,7 @@ pub(super) async fn create_background_result(
 
     match result {
         Ok(result) => (StatusCode::CREATED, Json(result)).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        Err(e) => super::db_error(e),
     }
 }
 
@@ -159,7 +159,7 @@ pub(super) async fn get_eviction_result(
     match result {
         Ok(Some(result)) => Json(result).into_response(),
         Ok(None) => (StatusCode::NOT_FOUND, "Eviction result not found").into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        Err(e) => super::db_error(e),
     }
 }
 
@@ -189,6 +189,6 @@ pub(super) async fn create_eviction_result(
 
     match result {
         Ok(result) => (StatusCode::CREATED, Json(result)).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        Err(e) => super::db_error(e),
     }
 }

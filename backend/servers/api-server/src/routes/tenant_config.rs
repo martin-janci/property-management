@@ -234,7 +234,12 @@ async fn fetch_organization_name(pool: db::DbPool, org_id: Uuid) -> Option<Strin
     .await
     .ok()
     .flatten();
-    let _ = db::tenant_context::clear_request_context(&mut *conn).await;
+    // This connection was put into the super-admin SYSTEM context above
+    // (set_request_context(.., true), which bypasses RLS). Clear it before the
+    // connection returns to the pool; if the clear FAILS the connection is
+    // discarded (detached + closed) rather than recycled, so the elevated
+    // context can never bleed into the next request on it (issue #3583).
+    db::tenant_context::clear_or_discard(conn, "tenant-config: org name lookup").await;
     result
 }
 

@@ -43,6 +43,9 @@ owner: pm-frontend
 
 <!-- tag with [w] / [m] / [w,m] / [-] -->
 
+### Access control (auth gate)
+- [x] [w] Route is wrapped in `<ProtectedRoute>` (ppt-web `routes/groups/core.tsx`) — auth-only, matching every peer `/settings/*` route. An anonymous visitor to `/settings/privacy` is redirected to `/login` instead of rendering the page (it is a per-user GDPR page sourced from `/api/v1/gdpr/*`). Auth-gated, not role-gated. Guarded by `core.privacy-auth.route.test.tsx`.
+
 ### Layout shell
 - [ ] [w] Settings shell with side-nav (Profil / Predvoľby / Prístupnosť / **Súkromie** active / Upozornenia)
 - [ ] [w] Breadcrumb "Nastavenia / Súkromie"; H1 "Súkromie"; lede paragraph
@@ -118,11 +121,13 @@ UC-23 GDPR + session management. The page bundles 4 distinct concerns: data expo
 - Audit-log card shows last 8 entries — full history is downloadable via Export. Implementation: load on demand (collapse/expand); don't fetch full history on page load.
 - 4 locales: SK (canonical) + CS + DE + EN with full string maps inline. Production should pull these into `messages/{loc}.json`. Note: legal phrases ("GDPR čl. 17 ods. 3") must NOT be translated automatically — get a localized legal review for each market.
 - Export "preparing" duration is server-calculated based on attachments size; design shows "~12 minút" as illustrative. Implementation must show a real ETA from the export job's progress endpoint.
+- **Auth gate (PR #3482):** `/settings/privacy` is wrapped in `<ProtectedRoute>` in `routes/groups/core.tsx`. Previously the route rendered `PrivacySettingsPage` with no wrapper, so an anonymous visitor hit the page shell (and the GDPR fetches 401'd client-side) instead of being redirected. The page is auth-only, not role-gated — any signed-in user manages their own GDPR data; managers have no elevated view here. The `core.privacy-auth.route.test.tsx` regression test mounts the settings routes unauthenticated and asserts the redirect to `/login`. This closed a code-review finding (`code-review-ppt-web-core-privacy-route-unprotected`) where privacy was the only unguarded peer among `/settings/*`.
 
 ## Agent Log
 
 <!-- newest entries on top -->
 
+- 2026-11-16 — agent: synced screen-map with PR #3482 — `/settings/privacy` is now wrapped in `<ProtectedRoute>` (auth-gated; anonymous visitors redirect to `/login`), bringing it in line with every peer `/settings/*` route and closing code-review finding `code-review-ppt-web-core-privacy-route-unprotected`. Added an "Access control (auth gate)" checklist section + a Specific note; regression test is `core.privacy-auth.route.test.tsx`. No build/API outcome change — buildStatus stays `shipped`, apiStatus stays `partial` (the wrapper changes access, not the page's build/API surface).
 - 2026-11-04 — agent: localized the whole GDPR page (`gdprPrivacy.*` in all 6 locales): headings, preferences, export history + status labels, deletion prompt/warnings, success/error messages; dates use the active language.
 - 2026-06-02 — agent (gap-sweep): fixed critical auth bug — page used bare `fetch('/api/v1/gdpr/*')` with no Authorization header (401 in prod). Added `features/privacy/gdprClient.ts` (base URL + bearer token) and routed all GDPR calls through it. Account deletion now sends the required `confirmation` (email) instead of `{}` (was always 400). Save now sends only backend-supported fields (profile_visibility, show_contact_info). Marketing/analytics consent still not persisted by backend — tracked as a follow-up issue; apiStatus stays `partial`.
 - 2026-05-09 — agent: design analyzed (pages/ppt-privacy-settings.html — 6 rows: loaded / export-3-state / delete-modal-2 / sessions-3 / consents-just-changed+audit / page-error); flipped ppt-web redesignStatus → in-progress; attached designSource; populated functionality checklist (8 sections covering 6 destructive/non-destructive flows), all states + 6 destructive-flow variants, design-specific notes (confirm-typed-name + GDPR čl. 17 ods. 3 + IP masking + auto-save consent UX); declared 6 sharedComponents; added 1 relatedScreen (accessibility-settings sibling)

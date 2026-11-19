@@ -1,0 +1,246 @@
+{
+  "date": "2026-11-15",
+  "run_iso": "2026-11-15T11:30:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-11-15",
+      "type": "lag_warning",
+      "source": "cadence-check",
+      "score_delta": 0,
+      "evidence": "last_run_iso=2026-11-13T11:30:00Z; now=2026-11-15T11:30:00Z; gap=48h (>36h threshold). Daily cron dropped a slot or Phase 6 push hit CI contention.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/pl.json",
+      "type": "churn-hotspot",
+      "source": "git-log 14d sweep 2026-11-15",
+      "score_delta": 1,
+      "evidence": "ppt-web messages/pl.json: 4 commits since 2026-11-13 (PR #3524 de/pl/hu parity sweep; PR #3485/3491/3500 i18n sweeps). Top-3 raw churn this run, tied with sk/cs/de/hu at 4 commits each.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/cs.json",
+      "type": "churn-hotspot",
+      "source": "git-log 14d sweep 2026-11-15",
+      "score_delta": 1,
+      "evidence": "ppt-web messages/cs.json: 4 commits since 2026-11-13 (PR #3535 UC-52 payments error, #3519 iot.dashboardLoadError, #3485/3491 i18n sweeps).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/sk.json",
+      "type": "churn-hotspot",
+      "source": "git-log 14d sweep 2026-11-15",
+      "score_delta": 0,
+      "evidence": "ppt-web messages/sk.json: 4 commits since 2026-11-13 (PR #3535 UC-52, #3519 iot, #3485/3491 i18n sweeps). Re-emit: already in state.seen_signals (cumulative type); no score_delta applied.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-frontend/apps/ppt-web/messages/sk.json",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen 2→3 with new churn this run",
+      "score_delta": 1,
+      "evidence": "ppt-web messages/sk.json seen in hotspot_history with runs_seen=2 (last_seen 2026-11-09), new churn window adds 4 commits. Instability proxy — sk.json is the primary locale for PPT and has churned in 3 of the last 3 routine runs.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "hotfix-no-test-pr-3497",
+      "type": "hotfix-no-test",
+      "source": "PR #3497",
+      "score_delta": 2,
+      "evidence": "PR #3497 fix(api-server): voice book-facility must not report false success — touched backend/servers/api-server/src/services/voice_commands.rs only, no *test*/*spec* file in diff. Substantive correctness fix shipped without a regression test.",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-3525",
+      "type": "hotfix-no-test",
+      "source": "PR #3525",
+      "score_delta": 2,
+      "evidence": "PR #3525 fix(api-handlers): block non-admin assigning a peer-level org role — touched backend/servers/api-server/src/routes/organizations/members.rs only, no *test*/*spec* file in diff. Privilege-escalation fix shipped without a regression test — the exact bug class that needs a cross-tenant RLS test.",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "risky-churn-pr-3524-pl-json",
+      "type": "risky-churn",
+      "source": "PR #3524",
+      "score_delta": 2,
+      "evidence": "PR #3524 (fix) modified frontend/apps/ppt-web/messages/pl.json — a top-churn file this run — with no test diff. i18n leaf-parity sweeps on top-churn messages files without a key-parity regression test keep landing follow-ups (#3531 reopened the same gap after PR #3524 claimed resolution).",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-3486-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3486",
+      "score_delta": 2,
+      "evidence": "PR #3486 gate community/disputes/messaging/neighbors routes behind ProtectedRoute — touched frontend/apps/ppt-web/src/routes/groups/community.tsx, disputes.tsx, messaging.tsx, neighbors.tsx without updating any docs/screens/ppt/*.md. The access-model shift (public→protected) is a user-visible behavior change not reflected in the screen-map.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-3482-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3482",
+      "score_delta": 2,
+      "evidence": "PR #3482 gate /settings/privacy behind ProtectedRoute — touched frontend/apps/ppt-web/src/routes/groups/core.tsx without updating docs/screens/ppt/accessibility-settings.md or a privacy-settings.md. Access-model shift not reflected in screen-map.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "code-review-mobile-rn-feedback-manager-no-auth-token",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating expert review 2026-11-15 mobile-rn",
+      "score_delta": 3,
+      "evidence": "frontend/apps/mobile/src/onboarding/FeedbackManager.ts:290 — `export const feedbackManager = new FeedbackManager(...)` is the sole instantiation; repo-wide grep shows feedbackManager.setAuthToken is never called. apiRequest() at line 259 only sets the bearer header when this.authToken is truthy → every /api/v1/feedback POST ships without auth. Same bug class as the just-landed #3537 widget-bridge-auth-token-never-set.",
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-mobile-rn-report-fault-category-chips-english",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating expert review 2026-11-15 mobile-rn",
+      "score_delta": 2,
+      "evidence": "frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx:409-421 — getCategoryLabel returns a hard-coded English dictionary {plumbing:'Plumbing', electrical:'Electrical', ...}; author comment explicitly admits 'these would ideally come from translations'. Priority chips four blocks below use t(`faults.${p.labelKey}`) — convention exists, chips just never wired. Locale switch (sk/cs/de/pl/hu) renders chips in English while the rest of the form translates.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-rn-deeplink-pending-cross-user",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating expert review 2026-11-15 mobile-rn",
+      "score_delta": 2,
+      "evidence": "frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts:201,248-256,309 — DeepLinkManager is a module singleton; setAuthenticated(false) does NOT clear this.pendingLink; clearPendingLink is defined but never called from any caller. On shared-device sign-outs, a stale pending deep-link dispatches to the next user when they log in — same bug class as #2953 NFC credential leak, now for navigation intent.",
+      "confidence": "high",
+      "candidate_vector": "security"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq cursor+signal diff vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids == length",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal dedup with cumulative carve-out",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score <= 8 for all + decay honor",
+      "observed": "true (0 open items past decay threshold)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep adversarial-pass annotation for each new plan",
+      "observed": "annotated: passed",
+      "expected": "annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "1 new plan; metadata+headings+capability+mode+files-on-disk",
+      "observed": "all checks passed",
+      "expected": "all checks pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep for secrets/private hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "Phase 1.6 skip listed + pm/coverage cursors unchanged",
+      "observed": "phase-1.6-pm-skipped listed; pm_cursor stays at 5; coverage_cursor stays at 2",
+      "expected": "listed and cursors unchanged"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every HEAD plan slug present in plans/ or plans/_archive/",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count NOW >= HEAD",
+      "observed": "equal (no archive moves this run)",
+      "expected": "NOW >= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency vs history",
+      "observed": "0 actions (no candidate)",
+      "expected": "<= per-run caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped => no-op",
+      "observed": "pm_cursor unchanged — no-op",
+      "expected": "no-op OR all checks pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token literal scan",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched the certainty bar (confidence=high + score>=3 + allowlist) this run"
+}

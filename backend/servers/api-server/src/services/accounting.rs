@@ -9,7 +9,7 @@ use db::models::accounting::{
 use db::repositories::{AccConfigRepository, AccountingRepository};
 use rust_decimal::Decimal;
 use serde::Deserialize;
-use sqlx::PgConnection;
+use sqlx::{Connection, PgConnection};
 use std::collections::HashMap;
 use std::io::Cursor;
 use std::str::FromStr;
@@ -73,7 +73,8 @@ impl AccountingService {
         // Source the statement's own account IBAN from the company's configured
         // bank account (UC-ACC-02.10) rather than a hardcoded placeholder. The
         // company base currency drives currency-matched default selection,
-        // mirroring how invoices/documents resolve the paying account.
+        // mirroring how invoices/documents resolve the paying account. These are
+        // read-only lookups and run before the write transaction opens.
         let base_currency = self
             .config_repo
             .get_company_settings_rls(&mut *executor)
@@ -88,10 +89,27 @@ impl AccountingService {
             .map_err(|e| AppError::Database(e.to_string()))?;
         let account_iban = Self::statement_account_iban(account.as_ref());
 
+        // Atomicity: every DB write for one upload — the `bank_statement` row,
+        // each parsed `bank_statement_line`, and the payment-matcher side
+        // effects — must land together or not at all. Previously each write ran
+        // in the connection's autocommit mode with no enclosing transaction, so
+        // a mid-file failure (an unparseable row, an invalid date on line N, a
+        // DB error) returned an error to the caller while the already-inserted
+        // statement header and its first N-1 lines stayed committed — orphaned,
+        // partial state that a retry then duplicated. Wrap the whole operation
+        // in a single transaction so any `?` below rolls everything back
+        // cleanly. The RLS GUCs are session-scoped (`set_config(..., is_local
+        // => false)` in migration 00006), so they remain in force inside this
+        // transaction on the same connection.
+        let mut tx = executor
+            .begin()
+            .await
+            .map_err(|e| AppError::Database(e.to_string()))?;
+
         // Create statement
         let statement = self
             .repo
-            .create_bank_statement_rls(&mut *executor, tenant_id, filename, None, account_iban)
+            .create_bank_statement_rls(&mut *tx, tenant_id, filename, None, account_iban)
             .await
             .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -119,14 +137,23 @@ impl AccountingService {
             };
 
             self.repo
-                .create_bank_statement_line_rls(&mut *executor, line)
+                .create_bank_statement_line_rls(&mut *tx, line)
                 .await
                 .map_err(|e| AppError::Database(e.to_string()))?;
         }
 
-        // Trigger matcher
-        self.run_payment_matcher(&mut *executor, tenant_id, statement.id)
+        // Trigger matcher on the SAME transaction: `Transaction` derefs to the
+        // underlying `PgConnection`, so `&mut *tx` enlists the matcher's writes
+        // in this transaction too.
+        self.run_payment_matcher(&mut tx, tenant_id, statement.id)
             .await?;
+
+        // Commit only once every write succeeded. On any earlier error `tx` is
+        // dropped unwound, rolling back the statement, its lines, and any
+        // matcher rows.
+        tx.commit()
+            .await
+            .map_err(|e| AppError::Database(e.to_string()))?;
 
         Ok(statement)
     }

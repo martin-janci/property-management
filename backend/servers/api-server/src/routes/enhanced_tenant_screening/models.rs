@@ -36,7 +36,7 @@ pub(super) async fn list_risk_models(
 
     match result {
         Ok(models) => Json(models).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        Err(e) => super::db_error(e),
     }
 }
 
@@ -61,7 +61,7 @@ pub(super) async fn create_risk_model(
 
     match result {
         Ok(model) => (StatusCode::CREATED, Json(model)).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        Err(e) => super::db_error(e),
     }
 }
 
@@ -86,7 +86,7 @@ pub(super) async fn get_risk_model(
     match result {
         Ok(Some(model)) => Json(model).into_response(),
         Ok(None) => (StatusCode::NOT_FOUND, "Risk model not found").into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        Err(e) => super::db_error(e),
     }
 }
 
@@ -111,7 +111,7 @@ pub(super) async fn delete_risk_model(
     match result {
         Ok(true) => StatusCode::NO_CONTENT.into_response(),
         Ok(false) => (StatusCode::NOT_FOUND, "Risk model not found").into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        Err(e) => super::db_error(e),
     }
 }
 
@@ -135,6 +135,6 @@ pub(super) async fn activate_risk_model(
 
     match result {
         Ok(()) => StatusCode::OK.into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        Err(e) => super::db_error(e),
     }
 }

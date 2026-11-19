@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-11-13T11:30:00Z",
+  "last_run_iso": "2026-11-19T03:18:31Z",
   "last_run_ms": 0,
-  "last_pr_seen": 3477,
-  "last_issue_seen": 3466,
-  "last_commit_sha": "2be7d639ebd26b07ff1cae7574d8b1e7",
+  "last_pr_seen": 3627,
+  "last_issue_seen": 3629,
+  "last_commit_sha": "5d14630969bdfb41b6b52a7b4bdbf332d2befea7",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -673,9 +673,9 @@
       "recent_churn": 837
     },
     "frontend/apps/ppt-web/messages/sk.json": {
-      "runs_seen": 2,
-      "last_seen": "2026-11-09",
-      "recent_churn": 3
+      "runs_seen": 3,
+      "last_seen": "2026-11-15",
+      "recent_churn": 4
     },
     "backend/servers/reality-server/src/util/errors.rs": {
       "runs_seen": 1,
@@ -721,6 +721,46 @@
       "runs_seen": 1,
       "last_seen": "2026-11-13",
       "recent_churn": 9
+    },
+    "frontend/apps/ppt-web/messages/pl.json": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-15",
+      "recent_churn": 4
+    },
+    "frontend/apps/ppt-web/messages/cs.json": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-15",
+      "recent_churn": 4
+    },
+    "frontend/apps/ppt-web/src/features/reports/components/TrendChart.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-16",
+      "recent_churn": 274
+    },
+    "frontend/apps/ppt-web/src/features/reports/components/AnalyticsChart.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-16",
+      "recent_churn": 266
+    },
+    "backend/servers/reality-server/src/routes/listings.rs": {
+      "runs_seen": 2,
+      "last_seen": "2026-11-19",
+      "recent_churn": 201
+    },
+    "backend/servers/api-server/src/services/notification_digest.rs": {
+      "runs_seen": 2,
+      "last_seen": "2026-11-18",
+      "recent_churn": 3
+    },
+    "backend/crates/db/src/repositories/granular_notification.rs": {
+      "runs_seen": 2,
+      "last_seen": "2026-11-18",
+      "recent_churn": 3
+    },
+    "backend/servers/api-server/src/routes/compliance.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-18",
+      "recent_churn": 3
     }
   },
   "seen_signals": [
@@ -755,7 +795,9 @@
     "churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs",
     "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs",
     "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
+    "churn-hotspot-backend-servers-reality-server-src-routes-listings-rs",
     "churn-hotspot-backend/Cargo.toml",
+    "churn-hotspot-backend/crates/db/src/repositories/granular_notification.rs",
     "churn-hotspot-backend/crates/db/src/repositories/registry.rs",
     "churn-hotspot-backend/crates/db/src/repositories/rental.rs",
     "churn-hotspot-backend/crates/db/tests/suite_4.rs",
@@ -769,6 +811,7 @@
     "churn-hotspot-backend/servers/api-server/src/routes/announcements.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/auth.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/competitive.rs",
+    "churn-hotspot-backend/servers/api-server/src/routes/compliance.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/documents.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/integrations.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/integrations/install.rs",
@@ -783,6 +826,7 @@
     "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
     "churn-hotspot-backend/servers/api-server/src/services/actions/api_call.rs",
     "churn-hotspot-backend/servers/api-server/src/services/auth_policy.rs",
+    "churn-hotspot-backend/servers/api-server/src/services/notification_digest.rs",
     "churn-hotspot-backend/servers/api-server/src/services/oauth.rs",
     "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
     "churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs",
@@ -816,6 +860,8 @@
     "churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts",
     "churn-hotspot-frontend-apps-mobile-app-config-ts",
     "churn-hotspot-frontend-apps-mobile-src-hooks-useOfflineSupport-test-ts",
+    "churn-hotspot-frontend-apps-ppt-web-features-reports-analyticschart-tsx",
+    "churn-hotspot-frontend-apps-ppt-web-features-reports-trendchart-tsx",
     "churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-mappers-test-tsx",
     "churn-hotspot-frontend/apps/admin-web/src/features/help/HelpSidebar.test.tsx",
     "churn-hotspot-frontend/apps/admin-web/src/features/layout-editor/LayoutEditorPage.tsx",
@@ -835,9 +881,11 @@
     "churn-hotspot-frontend/apps/mobile/src/screens/outages/OutagesScreen.transforms.test.ts",
     "churn-hotspot-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
     "churn-hotspot-frontend/apps/ppt-web/e2e/auth-refresh.spec.ts",
+    "churn-hotspot-frontend/apps/ppt-web/messages/cs.json",
     "churn-hotspot-frontend/apps/ppt-web/messages/de.json",
     "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
     "churn-hotspot-frontend/apps/ppt-web/messages/hu.json",
+    "churn-hotspot-frontend/apps/ppt-web/messages/pl.json",
     "churn-hotspot-frontend/apps/ppt-web/messages/sk.json",
     "churn-hotspot-frontend/apps/ppt-web/src/App.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/contexts/AuthContext.api-client-unauthorized.test.tsx",
@@ -897,6 +945,9 @@
     "code-review-api-core-api-call-client-build-expect",
     "code-review-api-core-apns-jwt-per-send-mint",
     "code-review-api-core-client-ip-cf-spoof",
+    "code-review-api-core-digest-abandoned-no-terminal-state",
+    "code-review-api-core-digest-candidates-inner-join-refresh-tokens",
+    "code-review-api-core-digest-sweep-lock-release-leak",
     "code-review-api-core-dispute-fsm-no-tests",
     "code-review-api-core-docgen-summarize-char-boundary-panic",
     "code-review-api-core-equipment-idor",
@@ -981,9 +1032,11 @@
     "code-review-mobile-rn-auth-restore-stale-token",
     "code-review-mobile-rn-biometric-prompt-i18n",
     "code-review-mobile-rn-deeplink-init-unhandled",
+    "code-review-mobile-rn-deeplink-pending-cross-user",
     "code-review-mobile-rn-deeplink-url-listener-leak",
     "code-review-mobile-rn-detail-back-button-hardcoded-en",
     "code-review-mobile-rn-fault-photos-silently-dropped",
+    "code-review-mobile-rn-feedback-manager-no-auth-token",
     "code-review-mobile-rn-hardcoded-empty-error-i18n",
     "code-review-mobile-rn-hardcoded-locale",
     "code-review-mobile-rn-meter-reading-no-numeric-validation",
@@ -996,6 +1049,7 @@
     "code-review-mobile-rn-outages-news-header-chip-i18n",
     "code-review-mobile-rn-outages-transforms-untested",
     "code-review-mobile-rn-push-debug-console-log",
+    "code-review-mobile-rn-report-fault-category-chips-english",
     "code-review-mobile-rn-report-fault-fake-submit",
     "code-review-mobile-rn-screens-mock-data",
     "code-review-mobile-rn-thread-send-silent-fail",
@@ -1100,10 +1154,12 @@
     "code-review-reality-server-portal-listing-price-unvalidated",
     "code-review-reality-server-price-map-cache-unbounded",
     "code-review-reality-server-realtors-mark-inquiry-read-idor",
+    "code-review-reality-server-record-view-no-check",
     "code-review-reality-server-register-account-enumeration",
     "code-review-reality-server-report-contact-unvalidated",
     "code-review-reality-server-reports-status-filter-unvalidated",
     "code-review-reality-server-saved-search-error-string-status",
+    "code-review-reality-server-search-missing-slug",
     "code-review-reality-server-sso-introspect-negcache-poison",
     "code-review-reality-server-sso-per-call-client-no-timeout",
     "code-review-reality-server-submit-report-no-rate-limit",
@@ -1113,6 +1169,7 @@
     "code-review-reality-web-agency-import-i18n",
     "code-review-reality-web-agency-page-i18n-gap",
     "code-review-reality-web-auth-ctx-transient-logout",
+    "code-review-reality-web-branding-query-unhandled-error",
     "code-review-reality-web-callback-hardcoded-login-string",
     "code-review-reality-web-comparison-parse-shape",
     "code-review-reality-web-comparison-share-all-or-nothing",
@@ -1131,6 +1188,8 @@
     "code-review-reality-web-listingform-nan-validation",
     "code-review-reality-web-listingform-no-i18n",
     "code-review-reality-web-listings-page-no-error-state",
+    "code-review-reality-web-preview-hardcoded-alt-text",
+    "code-review-reality-web-preview-hardcoded-price",
     "code-review-reality-web-price-alert-markread-silent-fail",
     "code-review-reality-web-profile-mock-data",
     "code-review-reality-web-protectedroute-i18n",
@@ -1229,6 +1288,8 @@
     "hotfix-no-test-pr-1289-api-ecosystem",
     "hotfix-no-test-pr-1292-mfa-rls",
     "hotfix-no-test-pr-2547",
+    "hotfix-no-test-pr-3497",
+    "hotfix-no-test-pr-3525",
     "hotfix-no-test-pr-497",
     "hotfix-no-test-pr-532",
     "hotfix-no-test-pr-553",
@@ -1273,6 +1334,7 @@
     "lag-warning-2026-11-04",
     "lag-warning-2026-11-09",
     "lag-warning-2026-11-13",
+    "lag-warning-2026-11-15",
     "lag-warning-supplement-2026-08-31",
     "merged-review-followup-issue-2366",
     "merged-review-followup-issue-2575",
@@ -1283,6 +1345,8 @@
     "repeated-churn-backend-servers-api-server-src-routes-forms-rs",
     "repeated-churn-backend-servers-api-server-src-routes-reports-rs",
     "repeated-churn-backend-servers-api-server-tests-oauth-integration-tests-rs",
+    "repeated-churn-backend-servers-reality-server-src-routes-listings-rs",
+    "repeated-churn-backend/crates/db/src/repositories/granular_notification.rs",
     "repeated-churn-backend/servers/api-server/src/routes/announcements.rs",
     "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
     "repeated-churn-backend/servers/api-server/src/routes/documents.rs",
@@ -1291,15 +1355,18 @@
     "repeated-churn-backend/servers/api-server/src/routes/organizations.rs",
     "repeated-churn-backend/servers/api-server/src/routes/reports.rs",
     "repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs",
+    "repeated-churn-backend/servers/api-server/src/services/notification_digest.rs",
     "repeated-churn-backend/servers/api-server/src/services/push_fanout.rs",
     "repeated-churn-backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs",
     "repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs",
     "repeated-churn-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
     "repeated-churn-frontend/apps/ppt-web/messages/en.json",
+    "repeated-churn-frontend/apps/ppt-web/messages/sk.json",
     "repeated-churn-frontend/apps/ppt-web/src/App.tsx",
     "repeated-churn-frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
     "resolution-check-2026-08-31-drift-2894",
     "resolution-check-2026-08-31-drift-2895",
+    "risky-churn-pr-3524-pl-json",
     "risky-churn-pr-963-main-rs",
     "risky-churn-pr-992-app-tsx",
     "screen-map-drift-pr-1033-ppt",
@@ -1341,6 +1408,12 @@
     "screen-map-drift-pr-3313-reality",
     "screen-map-drift-pr-3317-ppt",
     "screen-map-drift-pr-3317-reality",
+    "screen-map-drift-pr-3482-ppt",
+    "screen-map-drift-pr-3486-ppt",
+    "screen-map-drift-pr-3546-ppt",
+    "screen-map-drift-pr-3559-reality",
+    "screen-map-drift-pr-3595-reality",
+    "screen-map-drift-pr-3606-ppt",
     "screen-map-drift-pr-460-reality",
     "screen-map-drift-pr-464-ppt",
     "screen-map-drift-pr-547-ppt",
@@ -1360,6 +1433,7 @@
     "stalled-review-pr-3075",
     "stalled-review-pr-3108",
     "stalled-review-pr-3119",
+    "stalled-review-pr-3380",
     "stalled-review-pr-988",
     "standing-scan-admin-web-noop-save-paths",
     "standing-scan-aml-review-decision-cast",
@@ -1432,18 +1506,18 @@
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-11-09",
-    "api-core": "2026-11-04",
-    "reality-server": "2026-11-04",
+    "api-core": "2026-11-17",
+    "reality-server": "2026-11-16",
     "ppt-web-ui": "2026-11-08",
     "ppt-web-core": "2026-11-04",
-    "reality-web": "2026-11-13",
-    "mobile-rn": "2026-11-03",
+    "reality-web": "2026-11-19",
+    "mobile-rn": "2026-11-15",
     "mobile-native-kmp": "2026-11-04"
   },
   "stats": {
-    "runs": 118,
-    "vectors_created": 529,
-    "plans_created": 37,
+    "runs": 123,
+    "vectors_created": 560,
+    "plans_created": 38,
     "quiet_days": 8,
     "auto_fix_count": 0
   },
@@ -1458,20 +1532,20 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 5,
+    "next_index": 0,
     "role_last_run": {
       "pm-tech-lead": "2026-10-22",
       "pm-backend": "2026-10-26",
       "pm-frontend": "2026-10-28",
       "pm-qa": "2026-11-09",
       "pm-devops": "2026-11-13",
-      "pm-security": "2026-10-01",
-      "pm-data": "2026-10-16",
-      "pm-integration": "2026-10-19",
-      "pm-scrum-master": "2026-11-13"
+      "pm-security": "2026-11-16",
+      "pm-data": "2026-11-17",
+      "pm-integration": "2026-11-19",
+      "pm-scrum-master": "2026-11-19"
     }
   },
   "coverage_cursor": {
-    "next_index": 2
+    "next_index": 6
   }
 }

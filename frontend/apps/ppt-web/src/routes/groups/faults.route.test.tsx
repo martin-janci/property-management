@@ -236,6 +236,45 @@ describe('FaultsPageRoute API wiring (gap-79-1)', () => {
   });
 });
 
+describe('FaultsPageRoute URL filter param validation', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseFaultStatistics.mockReturnValue({ data: undefined });
+    mockUseUnits.mockReturnValue({ data: undefined });
+    mockUseFaults.mockReturnValue({
+      data: { faults: [], count: 0 },
+      isLoading: false,
+      error: null,
+      refetch: noopRefetch,
+    });
+  });
+
+  /** The query object threaded into the first useFaults call. */
+  function firstFaultQuery() {
+    return mockUseFaults.mock.calls[0]?.[0] as Record<string, unknown> | undefined;
+  }
+
+  it('drops non-enum status/category/priority URL params (no bad request)', async () => {
+    renderFaultsRoute('/faults?status=garbage&category=bogus&priority=nonsense');
+    await screen.findByText('No faults found.', {}, { timeout: 5000 });
+
+    const query = firstFaultQuery();
+    expect(query?.status).toBeUndefined();
+    expect(query?.category).toBeUndefined();
+    expect(query?.priority).toBeUndefined();
+  });
+
+  it('forwards valid enum status/category/priority URL params', async () => {
+    renderFaultsRoute('/faults?status=new&category=plumbing&priority=high');
+    await screen.findByText('No faults found.', {}, { timeout: 5000 });
+
+    const query = firstFaultQuery();
+    expect(query?.status).toBe('new');
+    expect(query?.category).toBe('plumbing');
+    expect(query?.priority).toBe('high');
+  });
+});
+
 describe('CreateFaultPageRoute (nav-fixes)', () => {
   beforeEach(() => {
     vi.clearAllMocks();

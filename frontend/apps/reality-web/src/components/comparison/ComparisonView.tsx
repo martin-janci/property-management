@@ -12,6 +12,8 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useComparison } from '../../lib/comparison-context';
+import { formatPrice as formatPriceIntl } from '../../lib/format';
+import { parseListingSummary } from './listingSummarySchema';
 
 interface ComparisonRow {
   /** Stable, translation-independent identifier (used for keys + highlight logic). */
@@ -42,15 +44,15 @@ export function ComparisonView() {
   );
 
   // Format price with the listing's actual currency, in the active locale.
+  // Routes through the shared `formatPrice` helper, which guards an invalid
+  // or missing `currency` (a symbol, empty, or non-ISO-4217 value from
+  // untrusted listing data) instead of letting Intl.NumberFormat throw
+  // `RangeError: Invalid currency code` and crash the whole comparison render.
   const formatPrice = useMemo(
     () => (value: string | number | undefined, listing?: ListingSummary) => {
       if (value === undefined) return '-';
       const currency = listing?.currency ?? 'EUR';
-      return new Intl.NumberFormat(locale, {
-        style: 'currency',
-        currency,
-        maximumFractionDigits: 0,
-      }).format(Number(value));
+      return formatPriceIntl(Number(value), locale, { currency });
     },
     [locale]
   );
@@ -124,6 +126,22 @@ export function ComparisonView() {
     [t, formatPrice]
   );
 
+  // Shape-guard the listings before rendering. `listings` arrives from the
+  // comparison context, whose persistence guard (`isStoredListing`) only
+  // requires a string `id` — a tampered/corrupt localStorage entry (or a
+  // malformed body that slipped past an older loader) can therefore carry
+  // only `{ id }` and still rehydrate into state. This component then
+  // dereferences fields that guard does NOT verify (`slug` for the detail
+  // href, `title`, `address.city`/`district`), so an incomplete entry renders
+  // a broken column (`/listings/undefined`, empty title) or worse. Run every
+  // entry through `parseListingSummary` — the same boundary guard the shared
+  // `?ids=` loader uses — and render only the entries that carry the minimum
+  // renderable shape, dropping malformed ones instead of trusting them.
+  const renderableListings = useMemo(
+    () => listings.filter((l) => parseListingSummary(l) !== null),
+    [listings]
+  );
+
   const showToast = (message: string, type: 'success' | 'info' = 'success') => {
     setToast({ message, type });
     // Clear a still-pending dismiss timer before re-arming so back-to-back
@@ -137,7 +155,7 @@ export function ComparisonView() {
     }, 3000);
   };
 
-  if (listings.length === 0) {
+  if (renderableListings.length === 0) {
     return (
       <div className="empty-state">
         <div className="empty-icon">📊</div>
@@ -195,9 +213,9 @@ export function ComparisonView() {
 
   // Check if all listings use the same currency
   const currenciesMatch = () => {
-    if (listings.length < 2) return true;
-    const firstCurrency = listings[0]?.currency ?? 'EUR';
-    return listings.every((l: ListingSummary) => (l.currency ?? 'EUR') === firstCurrency);
+    if (renderableListings.length < 2) return true;
+    const firstCurrency = renderableListings[0]?.currency ?? 'EUR';
+    return renderableListings.every((l: ListingSummary) => (l.currency ?? 'EUR') === firstCurrency);
   };
 
   const getHighlightClass = (row: ComparisonRow, listing: ListingSummary) => {
@@ -216,7 +234,7 @@ export function ComparisonView() {
     // cast let a string slip through to `Math.min(...)` / `Math.max(...)`,
     // which coerces non-numeric strings to `NaN` and silently breaks the
     // best-value highlight. Narrow to finite numbers with a real type guard.
-    const values = listings
+    const values = renderableListings
       .map((l: ListingSummary) => row.getValue(l))
       .filter((v): v is number => typeof v === 'number' && Number.isFinite(v));
     if (values.length < 2) return '';
@@ -296,7 +314,7 @@ export function ComparisonView() {
           <thead>
             <tr>
               <th className="label-column">{t('propertyHeader')}</th>
-              {listings.map((listing: ListingSummary) => (
+              {renderableListings.map((listing: ListingSummary) => (
                 <th key={listing.id} className="property-column">
                   <div className="property-header">
                     <Link href={`/listings/${listing.slug}`} className="property-link">
@@ -326,7 +344,7 @@ export function ComparisonView() {
             {comparisonRows.map((row) => (
               <tr key={row.id}>
                 <td className="label-cell">{row.label}</td>
-                {listings.map((listing: ListingSummary) => {
+                {renderableListings.map((listing: ListingSummary) => {
                   const value = row.getValue(listing);
                   const formatted = row.format ? row.format(value, listing) : (value ?? '-');
                   const highlightClass = getHighlightClass(row, listing);

@@ -14,6 +14,32 @@ import { MfaWindowProvider } from '../components/MfaWindowChip';
 import { Dashboard } from './Dashboard';
 
 // ---------------------------------------------------------------------------
+// i18next mock (Dashboard uses useTranslation)
+//
+// Returns the `defaultValue` (mirroring the real i18next fallback for a
+// missing key) and interpolates any `{{var}}` placeholders from the options
+// object, so these behavior tests keep asserting on the English copy rather
+// than on translation keys. This mirrors the convention in
+// TenantLifecyclePage.test.tsx.
+// ---------------------------------------------------------------------------
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, opts?: Record<string, unknown> & { defaultValue?: string }) => {
+      let out = opts?.defaultValue ?? key;
+      if (opts) {
+        for (const [k, v] of Object.entries(opts)) {
+          if (k === 'defaultValue') continue;
+          out = out.replace(new RegExp(`{{\\s*${k}\\s*}}`, 'g'), String(v));
+        }
+      }
+      return out;
+    },
+    i18n: { changeLanguage: vi.fn() },
+  }),
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
+}));
+
+// ---------------------------------------------------------------------------
 // Providers helper
 // ---------------------------------------------------------------------------
 
