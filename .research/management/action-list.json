@@ -315,24 +315,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-core-init-no-exp-check",
-      "action": "ppt web core init no exp check",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-18T00:25:54Z (tier1d ppt-web-core score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-18T00:25:54Z",
-      "signal_ref": {
-        "segment": "ppt-web-core",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-28T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-ppt-web-core-no-runtime-token-refresh",
       "action": "ppt web core no runtime token refresh",
       "owner_role": "pm-backend",
