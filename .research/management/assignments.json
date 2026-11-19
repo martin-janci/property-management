@@ -139,18 +139,18 @@
     {
       "task_id": "churn-hotspot-backend-servers-api-server-src-services-notification-digest-rs",
       "branch": "auto-impl/churn-hotspot-backend-servers-api-server-22745448",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-19T08:28:48Z",
-      "last_updated": "2026-11-19T08:28:48Z",
-      "status_changed_at": "2026-11-19T08:28:48Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-19T09:16:33Z",
+      "status_changed_at": "2026-11-19T09:14:52Z",
+      "pr_number": 3633,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3633",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3633 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=characterized notification_digest config parsing; behavior-preserving extract of from_env into pure from_lookup + 3 unit tests; fmt+clippy green, digest subset 6/6 pass; the 21 api-server failures are DATABASE_URL-blocked sqlx tests (no Postgres), none in digest — CI authoritative; draft PR #3633. scope_drift advisory (pm-tech-lead role hint vs task-named churn file)",
+      "reviewer_summary": "verdict=approve head_oid=282a4edf108fb6e59297d43ac78869b873a971a2 note=behavior-preserving from_env->from_lookup extraction + 3 deterministic characterization tests; refactor equivalence verified exact (.ok() collapses NotPresent/NotUnicode to None matching original); scope_drift benign (task-named hotspot); reuse none; 21 reported failures DB/network env-blocked unrelated; posted as COMMENT (bot cannot APPROVE own PR)",
+      "last_reviewed_oid": "282a4edf108fb6e59297d43ac78869b873a971a2",
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -159,5 +159,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-19T09:08:08Z"
+  "generated": "2026-11-19T09:16:33Z"
 }
