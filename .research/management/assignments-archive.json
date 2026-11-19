@@ -4003,6 +4003,29 @@
       "merge_attempted_at": "2026-08-02T10:12:56Z"
     },
     {
+      "task_id": "code-review-api-core-idempotency-commit-swallow",
+      "branch": "auto-impl/code-review-api-core-idempotency-commit-34d5f7fe",
+      "status": "merged",
+      "claimed_at": "2026-11-19T14:31:09Z",
+      "last_updated": "2026-11-19T18:29:28Z",
+      "status_changed_at": "2026-11-19T18:29:28Z",
+      "pr_number": 3640,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3640",
+      "merged_at": "2026-11-19T18:28:02Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3640 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=fixed swallowed tx.commit() on idempotency store path (api-core) -> 500 on failed commit; IG3 two-commit split (test 8bda98f/fix 5fb1e4a) deferred-constraint-trigger; fmt+clippy -p api-core green; DB test deferred to CI; draft PR #3640",
+      "reviewer_summary": "verdict=approve head_oid=5fb1e4aa8a1fdf2281cefac923ee786b56bf500e note=correct-surgical-commit-check-plus-deferred-trigger-regression-test-ci-green",
+      "last_reviewed_oid": "5fb1e4aa8a1fdf2281cefac923ee786b56bf500e",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "generated": null
+    },
+    {
       "task_id": "code-review-api-core-idempotency-lock-cancel-leak",
       "branch": "auto-impl/code-review-api-core-idempotency-lock-ca-1067b64b",
       "status": "merged",
@@ -30749,5 +30772,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-19T16:43:29Z"
+  "archived_at": "2026-11-19T18:35:43Z"
 }
