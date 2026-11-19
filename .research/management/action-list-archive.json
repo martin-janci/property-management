@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-19T10:41:24Z",
+  "archived_at": "2026-11-19T12:41:38Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1102,6 +1102,30 @@
       }
     },
     {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-granular-notification-rs",
+      "action": "granular_notification.rs repo is a repeat churn hotspot (digest subsystem)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-17T20:34:55Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-11-19T12:27:48Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T20:34:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3632,
+        "merged_at": "2026-11-19T10:34:51Z",
+        "at": "2026-11-19T12:27:48Z"
+      }
+    },
+    {
       "id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
       "action": "Churn hotspot: backend/crates/db/src/repositories/reality_portal.rs (+59/−28 in PR #1297 PAP-142 IDOR scoping)",
       "owner_role": "pm-backend",
@@ -1373,6 +1397,30 @@
         "merged_pr": 1813,
         "merged_at": "2026-06-24T02:26:53Z",
         "at": "2026-06-25T12:13:32Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-notification-digest-rs",
+      "action": "notification_digest.rs is a repeat churn hotspot (digest subsystem)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-17T20:34:55Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-11-19T12:27:48Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T20:34:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3633,
+        "merged_at": "2026-11-19T10:32:50Z",
+        "at": "2026-11-19T12:27:48Z"
       }
     },
     {
@@ -8719,6 +8767,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-10T16:43:35Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-voting-quorum-divzero-retry1",
+      "action": "mobile rn voting quorum divzero [retry 1/2 of failed code-review-mobile-rn-voting-quorum-divzero]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-11-17T20:34:55Z (retry_of=code-review-mobile-rn-voting-quorum-divzero reason=failed-no-pr cooldown_ok newest_failure=2026-11-10T16:41:17Z) | gc1-reconcile 2026-11-19T12:27:48Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T20:34:55Z",
+      "retry_of": "code-review-mobile-rn-voting-quorum-divzero",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-19T12:27:48Z"
       }
     },
     {

@@ -16288,7 +16288,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3574",
         "PR #3576",
@@ -16303,7 +16303,12 @@
       ],
       "created_at": "2026-11-17",
       "updated_at": "2026-11-18",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-19T12:27:49Z",
+        "assignment_status": "merged",
+        "pr_number": 3633
+      }
     },
     {
       "id": "churn-hotspot-backend-crates-db-src-repositories-granular-notification-rs",
@@ -16311,7 +16316,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3574",
         "PR #3576",
@@ -16326,7 +16331,12 @@
       ],
       "created_at": "2026-11-17",
       "updated_at": "2026-11-18",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-19T12:27:49Z",
+        "assignment_status": "merged",
+        "pr_number": 3632
+      }
     },
     {
       "id": "code-review-api-core-digest-candidates-inner-join-refresh-tokens",
