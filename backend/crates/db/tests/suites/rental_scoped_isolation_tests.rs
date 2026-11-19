@@ -203,12 +203,11 @@ async fn update_booking_for_org_rejects_foreign_org(pool: PgPool) {
         "cross-tenant update_booking_for_org must match no row"
     );
     // The booking's guest_name must be untouched by the foreign write.
-    let name: String =
-        sqlx::query_scalar("SELECT guest_name FROM rental_bookings WHERE id = $1")
-            .bind(a.booking)
-            .fetch_one(&pool)
-            .await
-            .unwrap();
+    let name: String = sqlx::query_scalar("SELECT guest_name FROM rental_bookings WHERE id = $1")
+        .bind(a.booking)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
     assert_eq!(name, "Iso Guest", "foreign update must not mutate the row");
 }
 
@@ -245,12 +244,11 @@ async fn update_guest_for_org_rejects_foreign_org(pool: PgPool) {
             .is_none(),
         "cross-tenant update_guest_for_org must match no row"
     );
-    let first: String =
-        sqlx::query_scalar("SELECT first_name FROM rental_guests WHERE id = $1")
-            .bind(a.guest)
-            .fetch_one(&pool)
-            .await
-            .unwrap();
+    let first: String = sqlx::query_scalar("SELECT first_name FROM rental_guests WHERE id = $1")
+        .bind(a.guest)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
     assert_eq!(first, "Ada", "foreign update must not mutate the guest");
 }
 
@@ -267,12 +265,11 @@ async fn register_guest_for_org_rejects_foreign_org(pool: PgPool) {
             .is_none(),
         "cross-tenant register_guest_for_org must match no row"
     );
-    let status: String =
-        sqlx::query_scalar("SELECT status::text FROM rental_guests WHERE id = $1")
-            .bind(a.guest)
-            .fetch_one(&pool)
-            .await
-            .unwrap();
+    let status: String = sqlx::query_scalar("SELECT status::text FROM rental_guests WHERE id = $1")
+        .bind(a.guest)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
     assert_eq!(status, "pending", "foreign register must not flip status");
 }
 

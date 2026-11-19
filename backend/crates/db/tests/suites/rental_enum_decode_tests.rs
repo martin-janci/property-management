@@ -115,21 +115,6 @@ async fn seed(pool: &PgPool) -> (Uuid, Uuid, Uuid, Uuid) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-async fn find_booking_by_id_decodes_platform_and_status_enums(pool: PgPool) {
-    let (_org, _unit, _conn, booking_id) = seed(&pool).await;
-    let repo = RentalRepository::new(pool.clone());
-
-    // Pre-fix this is a bare `SELECT *` and 500s decoding `platform`/`status`.
-    let booking = repo
-        .find_booking_by_id(booking_id)
-        .await
-        .expect("find_booking_by_id must decode the rental enums (BIT-113)")
-        .expect("booking row exists");
-    assert_eq!(booking.platform, "airbnb");
-    assert_eq!(booking.status, "confirmed");
-}
-
-#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn find_booking_for_org_decodes_enums(pool: PgPool) {
     let (org_id, _unit, _conn, booking_id) = seed(&pool).await;
     let repo = RentalRepository::new(pool.clone());
@@ -144,13 +129,17 @@ async fn find_booking_for_org_decodes_enums(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-async fn update_booking_returning_decodes_enums(pool: PgPool) {
-    let (_org, _unit, _conn, booking_id) = seed(&pool).await;
+async fn update_booking_for_org_returning_decodes_enums(pool: PgPool) {
+    let (org_id, _unit, _conn, booking_id) = seed(&pool).await;
     let repo = RentalRepository::new(pool.clone());
 
-    // update_booking returns its row via RETURNING — the enum columns must decode.
+    // update_booking_for_org returns its row via RETURNING — the enum columns
+    // must decode. (The unscoped `update_booking` was removed as a dead IDOR
+    // footgun; the org-scoped variant is the only write path and uses the same
+    // `BOOKING_COLUMNS` RETURNING projection.)
     let updated = repo
-        .update_booking(
+        .update_booking_for_org(
+            org_id,
             booking_id,
             UpdateBooking {
                 guest_name: Some("Renamed Guest".to_string()),
@@ -168,7 +157,8 @@ async fn update_booking_returning_decodes_enums(pool: PgPool) {
             },
         )
         .await
-        .expect("update_booking RETURNING must decode the rental enums (BIT-113)");
+        .expect("update_booking_for_org RETURNING must decode the rental enums (BIT-113)")
+        .expect("booking row matched for org");
     assert_eq!(updated.guest_name, "Renamed Guest");
     assert_eq!(updated.platform, "airbnb");
     assert_eq!(updated.status, "confirmed");

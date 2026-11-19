@@ -2,8 +2,8 @@
 //! cleaning_fee}` are NULLABLE `DECIMAL(12,2)` columns (migration 00051), but the
 //! `RentalBooking` model decoded them with `#[sqlx(try_from = "Decimal")]`, which
 //! forces a NON-NULL `Decimal` decode first and fails with "unexpected null" on
-//! any booking row whose amount/fee is NULL. `find_booking_by_id` does a bare
-//! `SELECT * FROM rental_bookings`, so such a row could never be loaded.
+//! any booking row whose amount/fee is NULL. The org-scoped
+//! `find_booking_for_org` reads the row, so such a row could never be loaded.
 //!
 //! This test inserts a booking with all three financial columns left NULL and
 //! loads it through the repository, so it fails on `main` (decode error) and
@@ -18,9 +18,9 @@ use uuid::Uuid;
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
 #[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
-async fn find_booking_by_id_decodes_null_fees(pool: PgPool) {
+async fn find_booking_for_org_decodes_null_fees(pool: PgPool) {
     // Super-admin context satisfies the rental_bookings RLS policies for seeding
-    // and for the unscoped by-id read below.
+    // and for the org-scoped read below.
     sqlx::query("SELECT set_request_context($1, $2, $3)")
         .bind(Option::<Uuid>::None)
         .bind(Option::<Uuid>::None)
@@ -78,9 +78,9 @@ async fn find_booking_by_id_decodes_null_fees(pool: PgPool) {
 
     let repo = RentalRepository::new(pool.clone());
     let booking = repo
-        .find_booking_by_id(booking_id)
+        .find_booking_for_org(org_id, booking_id)
         .await
-        .expect("find_booking_by_id must decode a NULL-fee booking (issue #1422)")
+        .expect("find_booking_for_org must decode a NULL-fee booking (issue #1422)")
         .expect("booking row exists");
 
     assert_eq!(booking.total_amount, None);
