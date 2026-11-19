@@ -163,7 +163,14 @@ class ErrorBoundaryInternal extends Component<ErrorBoundaryInternalProps, ErrorB
             </div>
             <h1 className="error-boundary-title">{displayTitle}</h1>
             <p className="error-boundary-message">{translations.message}</p>
-            {error && (
+            {/*
+             * The raw `error.message` can carry internal server/DB/stack detail
+             * and ships English regardless of locale, so it is NEVER surfaced to
+             * the user in a production build — only the generic i18n copy above
+             * is shown. The raw detail is kept for debugging in development only.
+             * Mirrors `devDetail` in `lib/describeError` and `errorHandler`.
+             */}
+            {import.meta.env.DEV && error && (
               <p className="error-boundary-details">
                 <code>{error.message}</code>
               </p>
