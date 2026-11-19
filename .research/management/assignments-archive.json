@@ -1241,6 +1241,28 @@
       "merge_attempted_at": "2026-06-24T02:25:33Z"
     },
     {
+      "task_id": "churn-hotspot-backend-crates-db-src-repositories-granular-notification-rs",
+      "branch": "auto-impl/churn-hotspot-backend-crates-db-src-repo-a019b6c5",
+      "status": "merged",
+      "claimed_at": "2026-11-19T08:28:48Z",
+      "last_updated": "2026-11-19T10:41:05Z",
+      "status_changed_at": "2026-11-19T10:41:05Z",
+      "pr_number": 3632,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3632",
+      "merged_at": "2026-11-19T10:34:51Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3632 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=extracted private parse_role_event_preferences helper + 6 DB-free characterization tests in db/granular_notification.rs (behavior-preserving, public API unchanged); fmt+clippy-p-db+db-unit-tests(6/6) green; full-band verify env-blocked only (no Postgres/OOM under concurrent sibling) — draft PR vs dev for CI; drift=task-directed backend change vs pm-tech-lead docs owner-label",
+      "reviewer_summary": "verdict=approve head_oid=f91eff71cba1e023838ccdd4289f0dc0f3dde0ed note=behavior-preserving-extraction+6-char-tests; posted as COMMENT (cannot approve own-authored PR); scope_drift benign (single target file); CI no failures",
+      "last_reviewed_oid": "f91eff71cba1e023838ccdd4289f0dc0f3dde0ed",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
       "branch": "auto-impl/churn-hotspot-backend-crates-db-src-repo-d467ac04",
       "status": "failed",
@@ -1505,6 +1527,28 @@
       "reclaim_attempts": 1,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-06-24T02:25:33Z"
+    },
+    {
+      "task_id": "churn-hotspot-backend-servers-api-server-src-services-notification-digest-rs",
+      "branch": "auto-impl/churn-hotspot-backend-servers-api-server-22745448",
+      "status": "merged",
+      "claimed_at": "2026-11-19T08:28:48Z",
+      "last_updated": "2026-11-19T10:41:05Z",
+      "status_changed_at": "2026-11-19T10:41:05Z",
+      "pr_number": 3633,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3633",
+      "merged_at": "2026-11-19T10:32:50Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3633 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=characterized notification_digest config parsing; behavior-preserving extract of from_env into pure from_lookup + 3 unit tests; fmt+clippy green, digest subset 6/6 pass; the 21 api-server failures are DATABASE_URL-blocked sqlx tests (no Postgres), none in digest — CI authoritative; draft PR #3633. scope_drift advisory (pm-tech-lead role hint vs task-named churn file)",
+      "reviewer_summary": "verdict=approve head_oid=282a4edf108fb6e59297d43ac78869b873a971a2 note=behavior-preserving from_env->from_lookup extraction + 3 deterministic characterization tests; refactor equivalence verified exact (.ok() collapses NotPresent/NotUnicode to None matching original); scope_drift benign (task-named hotspot); reuse none; 21 reported failures DB/network env-blocked unrelated; posted as COMMENT (bot cannot APPROVE own PR)",
+      "last_reviewed_oid": "282a4edf108fb6e59297d43ac78869b873a971a2",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "churn-hotspot-backend-servers-api-server-src-services-workflow_executor-rs",
@@ -30595,5 +30639,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-19T08:38:34Z"
+  "archived_at": "2026-11-19T10:41:24Z"
 }

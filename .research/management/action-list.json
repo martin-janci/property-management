@@ -366,24 +366,6 @@
       "retry_round": 1
     },
     {
-      "id": "code-review-api-core-notif-push-channel-noop",
-      "action": "api core notif push channel noop",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-18T00:25:54Z (tier1d api-core score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-18T00:25:54Z",
-      "signal_ref": {
-        "segment": "api-core",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-30T18:33:25Z"
-      }
-    },
-    {
       "id": "code-review-api-core-vote-reminder-spam-5min",
       "action": "api core vote reminder spam 5min",
       "owner_role": "pm-backend",

@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-19T06:42:22Z",
+  "archived_at": "2026-11-19T10:41:24Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -4035,6 +4035,31 @@
         "merged_pr": 2680,
         "merged_at": "2026-08-06T12:17:51Z",
         "at": "2026-08-06T12:19:51Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-notif-push-channel-noop",
+      "action": "api core notif push channel noop",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-18T00:25:54Z (tier1d api-core score=2 vector=bug) | gc1-reconcile 2026-11-19T10:25:33Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-18T00:25:54Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-30T18:33:25Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-19T10:25:33Z"
       }
     },
     {
