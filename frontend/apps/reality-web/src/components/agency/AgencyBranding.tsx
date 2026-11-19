@@ -21,7 +21,13 @@ export function AgencyBranding() {
     error: agencyErrorObj,
     refetch: refetchAgency,
   } = useMyAgency();
-  const { data: branding, isLoading } = useAgencyBranding(agency?.id || '');
+  const {
+    data: branding,
+    isLoading,
+    isError: brandingError,
+    error: brandingErrorObj,
+    refetch: refetchBranding,
+  } = useAgencyBranding(agency?.id || '');
   const updateBranding = useUpdateBranding();
 
   const [primaryColor, setPrimaryColor] = useState('#2563eb');
@@ -116,6 +122,18 @@ export function AgencyBranding() {
 
   if (agencyLoading || isLoading) {
     return <BrandingSkeleton />;
+  }
+
+  // A branding fetch failure (transport/server error) must NOT fall through to
+  // the form rendered against the default colour state: the form would show the
+  // fallback palette (#2563eb/#1e40af/#10b981) as if it were the agency's saved
+  // branding, and a Save from there would clobber the stored branding with those
+  // defaults. A 404 is the expected "no branding configured yet" state for a
+  // freshly created agency, so only non-404 errors surface the error state;
+  // a 404 keeps the form with defaults as the legitimate empty state
+  // (Issue sibling of #2343 — branding query error path was unhandled).
+  if (brandingError && !isNotFoundError(brandingErrorObj)) {
+    return <AgencyLoadError onRetry={() => refetchBranding()} />;
   }
 
   return (
