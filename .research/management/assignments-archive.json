@@ -8587,6 +8587,28 @@
       "merge_attempted_at": "2026-11-15T04:35:16Z"
     },
     {
+      "task_id": "code-review-mobile-rn-widget-settings-i18n-leak",
+      "branch": "auto-impl/code-review-mobile-rn-widget-settings-i1-fc4e49cd",
+      "status": "merged",
+      "claimed_at": "2026-11-19T02:29:30Z",
+      "last_updated": "2026-11-19T04:44:41Z",
+      "status_changed_at": "2026-11-19T04:44:41Z",
+      "pr_number": 3630,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3630",
+      "merged_at": "2026-11-19T04:44:41Z",
+      "specialist": "react-native",
+      "implementer_summary": "pr=3630 status=done specialist=react-native scope_drift=true code_reuse_warn=none note=WidgetSettingsScreen i18n leak fixed: 11 strings routed through t() + 13 widgets.* keys x6 locales; TDD split (test:ab23e8c fails, fix:d4a2ffc), VERIFY OK 955 tests; scope_drift = owner-hint mismatch only (all 8 files under frontend/apps/mobile/); draft PR #3630",
+      "reviewer_summary": "verdict=approve head_oid=d4a2ffc08ffc31d1be8ce3b5463e9f4cb07936bf note=clean-i18n-scope-ok-ci-green-approve-posted-as-comment-self-pr",
+      "last_reviewed_oid": "d4a2ffc08ffc31d1be8ce3b5463e9f4cb07936bf",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-19T04:44:41Z"
+    },
+    {
       "task_id": "code-review-ppt-web-aml-review-decision-untrusted-cast",
       "branch": "auto-impl/code-review-ppt-web-aml-review-decision-f9251644",
       "status": "merged",
@@ -10180,6 +10202,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 1,
       "merge_attempted_at": "2026-08-12T16:41:50Z"
+    },
+    {
+      "task_id": "code-review-ppt-web-core-personmonths-raw-fetch-noauth",
+      "branch": "auto-impl/code-review-ppt-web-core-personmonths-ra-ee78d92c",
+      "status": "failed",
+      "claimed_at": "2026-11-19T04:34:07Z",
+      "last_updated": "2026-11-19T04:44:41Z",
+      "status_changed_at": "2026-11-19T04:44:41Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=blocked specialist=react-web scope_drift=false code_reuse_warn=none note=already-fixed-on-dev: person-months api.ts uses authenticatedFetch + useBuildingUnits getApiClient() (regression test present); dup of landed fix (dbd036609/a38a48a67); no raw fetch remains; no PR",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "code-review-ppt-web-core-privacy-route-unprotected",
@@ -30463,5 +30507,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-19T02:37:38Z"
+  "archived_at": "2026-11-19T04:44:42Z"
 }
