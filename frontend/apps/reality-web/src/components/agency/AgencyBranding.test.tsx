@@ -31,10 +31,25 @@ vi.mock('@ppt/reality-api-client', () => ({
   useUpdateBranding: vi.fn(),
 }));
 
-import { useUpdateBranding } from '@ppt/reality-api-client';
+import { useAgencyBranding, useUpdateBranding } from '@ppt/reality-api-client';
 import { AgencyBranding } from './AgencyBranding';
 
 const mockUseUpdateBranding = vi.mocked(useUpdateBranding);
+const mockUseAgencyBranding = vi.mocked(useAgencyBranding);
+
+// The default happy-path branding return re-applied in beforeEach so the
+// branding-error suite below can override it without leaking into other tests.
+const okBranding = {
+  data: {
+    primaryColor: '#111111',
+    secondaryColor: '#222222',
+    accentColor: '#333333',
+  },
+  isLoading: false,
+  isError: false,
+  error: null,
+  refetch: vi.fn(),
+} as unknown as ReturnType<typeof useAgencyBranding>;
 
 // The save button is disabled until the form is dirty; nudging a colour input
 // flips `hasChanges` so the button becomes clickable.
@@ -47,6 +62,9 @@ function makeChange() {
 describe('AgencyBranding — save error handling', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // clearAllMocks resets the vi.mock factory's default implementation, so
+    // restore the happy-path branding return for this suite.
+    mockUseAgencyBranding.mockReturnValue(okBranding);
   });
 
   it('shows an inline error alert when the save mutation fails', async () => {
@@ -127,5 +145,68 @@ describe('AgencyBranding — save error handling', () => {
     await waitFor(() => {
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
+  });
+});
+
+describe('AgencyBranding — branding fetch error handling', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseUpdateBranding.mockReturnValue({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    } as unknown as ReturnType<typeof useUpdateBranding>);
+  });
+
+  function mockBrandingError(status: number) {
+    mockUseAgencyBranding.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { status },
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useAgencyBranding>);
+  }
+
+  it('shows the load-error state (not the form) when the branding query fails with a server error', () => {
+    // Regression: before the fix the error path was unhandled — isLoading went
+    // false, branding stayed undefined, and the form rendered against the
+    // default colour state, so a save would clobber the stored branding with
+    // defaults. The failure must surface a retry affordance instead.
+    mockBrandingError(500);
+
+    render(<AgencyBranding />);
+
+    expect(screen.getByRole('alert')).toHaveTextContent('loadErrorTitle');
+    expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument();
+    // The colour-editing form must NOT be rendered on a transient fetch error.
+    expect(screen.queryByLabelText(/primaryColor/i)).not.toBeInTheDocument();
+  });
+
+  it('retrying a failed branding fetch calls refetch', () => {
+    const refetch = vi.fn();
+    mockUseAgencyBranding.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { status: 503 },
+      refetch,
+    } as unknown as ReturnType<typeof useAgencyBranding>);
+
+    render(<AgencyBranding />);
+    fireEvent.click(screen.getByRole('button', { name: /retry/i }));
+
+    expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('treats a 404 branding response as the empty state and still renders the form', () => {
+    // A freshly created agency has no branding row yet (404). That is the
+    // legitimate "no branding configured" state, not a failure — the form
+    // must render with the fallback palette so the user can set branding up.
+    mockBrandingError(404);
+
+    render(<AgencyBranding />);
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/primaryColor/i)).toBeInTheDocument();
   });
 });
