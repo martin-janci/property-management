@@ -162,7 +162,7 @@ async fn get_listing_unparseable_slug_returns_404(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-async fn record_view_unknown_listing_returns_204(pool: PgPool) {
+async fn record_view_unknown_listing_returns_404(pool: PgPool) {
     let router = listings_router(pool);
     let id = Uuid::new_v4();
     let status = common::send(
@@ -172,6 +172,24 @@ async fn record_view_unknown_listing_returns_204(pool: PgPool) {
         None,
     )
     .await;
-    // record_view is best-effort analytics — errors are logged, never surfaced.
+    // record_view must verify the listing exists before recording analytics: a
+    // view beacon for a non-existent (or non-public) id is a 404, not a silent
+    // 204 that poisons analytics. Regression guard for the stale
+    // "performs an existence check" comment that the handler never honoured.
+    assert_eq!(status, axum::http::StatusCode::NOT_FOUND);
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn record_view_active_listing_returns_204(pool: PgPool) {
+    let listing_id = seed_active_listing(&pool, "view-ok").await;
+    let router = listings_router(pool);
+    let status = common::send(
+        &router,
+        Method::POST,
+        &format!("/api/v1/listings/{listing_id}/view"),
+        None,
+    )
+    .await;
+    // A real, active listing records the view and returns 204.
     assert_eq!(status, axum::http::StatusCode::NO_CONTENT);
 }

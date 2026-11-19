@@ -1046,6 +1046,7 @@ fn capitalize(s: &str) -> String {
 )]
 pub async fn record_view(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Path(id_or_slug): Path<String>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
     // Accept both the SEO slug (`title-<uuid>`) and a bare UUID, matching the
@@ -1054,9 +1055,51 @@ pub async fn record_view(
         axum::http::StatusCode::NOT_FOUND,
         "Listing not found".to_string(),
     ))?;
-    // `track_view` is best-effort — analytics shouldn't break the page on
-    // a transient db hiccup. Log and return 204 either way; only return a
-    // hard error when the listing genuinely doesn't exist.
+
+    // Per-IP throttle FIRST (cheap, in-memory) so a flood never reaches the DB
+    // existence query below, and so the anonymous beacon can't be replayed to
+    // inflate a listing's view counter without bound. Keyed on the same
+    // spoof-resistant client-IP bucket the inquiry throttle uses, but against a
+    // dedicated higher-quota limiter set (`view_rate_limiters`).
+    let key =
+        crate::routes::inquiries::client_ip_bucket(&headers, state.inquiry_trusted_proxy_hops);
+    if state.view_rate_limiters.check(key).await
+        == api_core::middleware::RateLimitDecision::DenyTooManyRequests
+    {
+        tracing::warn!(%id, "Listing view rate limit tripped");
+        return Err((
+            axum::http::StatusCode::TOO_MANY_REQUESTS,
+            "Too many requests. Please try again in a minute.".to_string(),
+        ));
+    }
+
+    // Existence check. The handler's documented contract is 404 for a missing
+    // listing, and analytics must not be recorded for a non-existent id.
+    // Restrict to `status = 'active'` so this unauthenticated endpoint can't be
+    // used as an existence oracle for draft/archived listings (same guard as
+    // `reports`/`compare`): the response shape collapses to "is there a public
+    // listing with this id?", matching what an honest visitor sees.
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| crate::util::errors::db_error("acquire connection for view", e))?;
+    let listing_exists: bool = sqlx::query_scalar(
+        "SELECT EXISTS(SELECT 1 FROM listings WHERE id = $1 AND status = 'active')",
+    )
+    .bind(id)
+    .fetch_one(&mut *conn)
+    .await
+    .map_err(|e| crate::util::errors::db_error("check listing for view", e))?;
+    if !listing_exists {
+        return Err((
+            axum::http::StatusCode::NOT_FOUND,
+            "Listing not found".to_string(),
+        ));
+    }
+
+    // `track_view` is best-effort — analytics shouldn't break the page on a
+    // transient db hiccup. The listing is known to exist at this point, so log
+    // and return 204 on a transient failure.
     if let Err(e) = state.reality_portal_repo.track_view(id, "website").await {
         tracing::warn!(%id, error = %e, "Failed to track listing view (non-fatal)");
     }
@@ -1108,6 +1151,41 @@ mod tests {
     #[test]
     fn valid_values_pass_through() {
         assert_eq!(clamp_pagination(Some(3), Some(50)), (3, 50));
+    }
+
+    // --- record_view per-IP throttle ---
+    //
+    // The anonymous view beacon fires on every public page load, so without a
+    // per-IP throttle a single client can replay it to inflate a listing's view
+    // counter without bound. This proves the reused `TenantRateLimiterSet`,
+    // keyed by the same spoof-resistant `client_ip_bucket` the handler uses,
+    // eventually denies a flood from one IP with `DenyTooManyRequests` (mapped
+    // to HTTP 429 by `record_view`).
+    #[tokio::test]
+    async fn view_beacon_burst_from_one_ip_trips_rate_limit() {
+        use api_core::middleware::{RateLimitDecision, TenantRateLimiterSet};
+
+        // Small quota keeps the test fast; the handler uses VIEW_RATE_LIMIT_RPM.
+        let limiter = TenantRateLimiterSet::with_default_bounded(
+            3,
+            std::time::Duration::from_secs(60),
+            1_000,
+        );
+        let mut headers = HeaderMap::new();
+        headers.insert("x-forwarded-for", "203.0.113.7".parse().unwrap());
+        let key = crate::routes::inquiries::client_ip_bucket(&headers, 1);
+
+        let mut denied = false;
+        for _ in 0..50 {
+            if limiter.check(key).await == RateLimitDecision::DenyTooManyRequests {
+                denied = true;
+                break;
+            }
+        }
+        assert!(
+            denied,
+            "a per-IP burst on the view beacon must eventually be throttled (429)"
+        );
     }
 
     // --- ListingSummary SEO slug (search `/listings` path) ---
