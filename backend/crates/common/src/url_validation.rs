@@ -818,4 +818,48 @@ mod tests {
             vec![SocketAddr::new("93.184.216.34".parse().unwrap(), 443)]
         );
     }
+
+    /// Per-hop SSRF re-validation of redirect targets. `validate_external_url`
+    /// guards only the *initial* URL; a client that follows redirects must
+    /// re-run the guard on every hop, or an initially-valid feed/import URL can
+    /// be bounced onto a blocked/internal host (or a cross-origin host that
+    /// would receive forwarded credentials) after the initial check passed.
+    #[test]
+    fn validate_redirect_hop_refuses_blocked_internal_and_cross_origin_targets() {
+        let original = "https://feed.example.com/listings.xml";
+
+        // A redirect onto a private / cloud-metadata host must be refused on the
+        // hop — only hop re-validation catches it (the initial URL was valid).
+        assert!(
+            validate_redirect_hop("https://10.0.0.1/internal", original, 0).is_err(),
+            "a redirect to a private (10.0.0.0/8) host must be refused"
+        );
+        assert!(
+            validate_redirect_hop("https://169.254.169.254/latest/meta-data/", original, 0)
+                .is_err(),
+            "a redirect to the cloud-metadata host must be refused"
+        );
+
+        // A cross-origin redirect to an otherwise-valid public host is refused
+        // (credential-leak / SSRF hardening) — the SSRF range checks cannot see
+        // this because the attacker host is an ordinary public https host.
+        let err = validate_redirect_hop("https://attacker.example/collect", original, 0)
+            .expect_err("a cross-origin redirect must be refused");
+        assert!(
+            err.contains("cross-origin"),
+            "refusal must cite the cross-origin guard, got: {err}"
+        );
+
+        // Same origin, different path → allowed (guards against over-broad pinning).
+        assert!(
+            validate_redirect_hop("https://feed.example.com/page2.xml", original, 0).is_ok(),
+            "a same-origin redirect (identical scheme/host/port) must still be followed"
+        );
+
+        // A chain that has reached the hop limit → refused.
+        assert_eq!(
+            validate_redirect_hop("https://feed.example.com/x", original, MAX_REDIRECT_HOPS),
+            Err("too many redirects".to_string())
+        );
+    }
 }
